@@ -108,8 +108,8 @@ class AuditSink:
                 (event.ts, event.code, event.user_id, event.subject, event.detail),
             )
             self.conn.commit()
-        except sqlite3.Error:
-            log.exception("audit.record_failed code=%s subject=%s", code, subject)
+        except sqlite3.Error as exc:
+            log.exception("audit.record_failed code=%s subject=%s", code, subject, extra={"err": str(exc)})
             raise
         log.info(
             "audit.record code=%s user=%s subject=%s",

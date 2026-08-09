@@ -29,7 +29,13 @@ export const InputSchema = z.object({
   rules: z.array(RuleInputSchema).min(1),
 });
 
-const StatusSchema = z.enum(["pass", "fail", "warn", "pending"]);
+export enum StatusType {
+  Pass = "pass",
+  Fail = "fail",
+  Warn = "warn",
+  Pending = "pending",
+}
+const StatusSchema = z.nativeEnum(StatusType);
 const DebugValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const ResultSchema = z.object({
   status: StatusSchema,

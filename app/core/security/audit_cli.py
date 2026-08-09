@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         sink.conn = conn
         events = sink.query(code=args.code, limit=args.limit)
     except sqlite3.Error as exc:
-        log.exception("audit_cli.query_failed")
+        log.exception("audit_cli.query_failed", extra={"err": str(exc)})
         print(f"query failed: {exc}", file=sys.stderr)
         return 1
     finally:

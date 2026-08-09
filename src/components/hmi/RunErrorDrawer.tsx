@@ -10,17 +10,18 @@ export function RunErrorDrawer({
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
-  const isSuccess = !error;
+  const isFail = error !== null;
 
   useEffect(() => {
-    if (isSuccess) return;
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (KeyboardKeyType.isEscape(e.key)) onClose();
-    };
-    window.addEventListener("keydown", onKey);
+    if (isFail) {
+      closeRef.current?.focus();
+      const onKey = (e: KeyboardEvent) => {
+        if (KeyboardKeyType.isEscape(e.key)) onClose();
+      };
+      window.addEventListener("keydown", onKey);
 
-    return () => window.removeEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }
   }, [error, onClose]);
 
   if (!error) return null;

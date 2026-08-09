@@ -82,9 +82,9 @@ def _apply_one(conn: sqlite3.Connection, n: int, f: Path) -> None:
     started = time.monotonic()
     try:
         safe_executescript(conn, sql)
-    except sqlite3.Error as err:
-        log.error("migrate.apply failed migration=%s err=%s", f.name, err)
-        raise MigrationFailed(f"{f.name}: {err}") from err
+    except sqlite3.Error as exc:
+        log.error("migrate.apply_failed", extra={"migration": f.name, "err": str(exc)})
+        raise MigrationFailed(f"{f.name}: {exc}") from exc
     elapsed = time.monotonic() - started
     if elapsed > MIGRATION_TIMEOUT_S:
         raise MigrationTimeout(f"{f.name} took {elapsed:.1f}s")

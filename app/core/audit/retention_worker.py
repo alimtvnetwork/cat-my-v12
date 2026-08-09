@@ -252,6 +252,7 @@ class AuditRetentionWorker:
                 "horizon=%d sqlite_err=%s code=%s",
                 cid, policy.value, horizon, type(exc).__name__,
                 CODE_SEC_RETENTION_FAILED,
+                extra={"err": str(exc)},
             )
             error = "E_AUDIT_RETENTION_UNCAUGHT"
             # Spec 40 A.1: never swallow; surface rolled-up failure.
