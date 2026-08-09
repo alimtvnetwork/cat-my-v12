@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "license.schema.json",
+  "title": "license IPC group",
+  "description": "Request and response schemas for licensed feature reads.",
+  "$defs": {
+    "license.features.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "license.features.read" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "license.features.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_FEATURES_READ", "E_FEATURES_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["features"],
+          "properties": { "features": { "type": "array", "items": { "type": "string" } } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

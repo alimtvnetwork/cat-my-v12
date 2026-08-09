@@ -1,0 +1,20 @@
+sequenceDiagram
+  participant Shell
+  participant Feed
+  participant Worker
+
+  Shell->>Feed: GET manifest.json
+  Feed-->>Shell: {version, url, sha256, sig}
+  Shell->>Shell: verify manifest signature (Ed25519)
+  Shell->>Feed: GET artifact
+  Feed-->>Shell: binary bytes
+  Shell->>Shell: verify sha256 + artifact signature
+  Shell->>Worker: pre-migration hook (export schema)
+  Shell->>Worker: graceful stop (POST /shutdown, 5s)
+  Shell->>Shell: atomic rename binaries
+  Shell->>Shell: backup SQLite -> backups/pre-<version>
+  Shell->>Shell: run migrations in order
+  Shell->>Shell: restart shell -> spawn new worker
+  Worker-->>Shell: /healthz 200
+  Shell-->>Shell: emit I_SHELL_UPGRADED
+  Note over Shell,Worker: On failure at any step:<br/>restore binaries + backup,<br/>emit E_SHELL_UPDATE_FAILED

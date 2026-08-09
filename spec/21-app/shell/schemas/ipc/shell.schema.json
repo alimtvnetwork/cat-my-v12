@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shell.schema.json",
+  "title": "shell IPC group",
+  "description": "Request and response schemas for shell readiness and shutdown.",
+  "$defs": {
+    "shell.ready.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "shell.ready.probe" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "shell.ready.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_SHELL_READY", "E_SHELL_BOOT_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["shellVersion", "workerVersion", "featureFlags"],
+          "properties": {
+            "shellVersion": { "type": "string" },
+            "workerVersion": { "type": "string" },
+            "featureFlags": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "shell.shutdown.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "shell.shutdown.request" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "shell.shutdown.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "const": "I_SHELL_SHUTDOWN" },
+        "data": {
+          "type": "object",
+          "required": ["accepted"],
+          "properties": { "accepted": { "type": "boolean" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

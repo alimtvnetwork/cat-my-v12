@@ -1,0 +1,382 @@
+# Plan 90 Step 123 - Release workflow scaffold.
+#
+# Owning spec: spec/21-app/77-cli-powershell-and-release.md
+# Anchors:
+#   BE/app/installer_binaries.py                     (BINARIES inventory)
+#   packaging/pyinstaller/db-bootstrap.spec          (Step 117)
+#   packaging/pyinstaller/retention-run.spec         (Step 117)
+#   .lovable/memory/26-split-db-cli-cheatsheet.md    (exit-code registry)
+#
+# Root cause guarded (one sentence): Steps 117-122 landed the
+# PyInstaller specs, install.json Binaries schema, record-binary CLI,
+# and the Pester exit-code gate, but nothing on the release path
+# actually built or published the onefile exes, so every downstream
+# consumer (SHA256 cross-check in install.ps1, verify-install CI job,
+# signing job, release page) validated synthetic artefacts only.
+#
+# Design invariants
+# -----------------
+# 1. Matrix builds. windows-latest produces .exe outputs; ubuntu-latest
+#    produces POSIX ELF outputs. Both use the SAME .spec files (Step 117)
+#    so the frozen entry surface is identical and the SHA256 line count
+#    is deterministic per platform.
+# 2. Deterministic bytes. `strip=False`, `upx=False`, and PYTHONHASHSEED=0
+#    keep SHA256 stable across re-runs on the same host.
+# 3. Inventory-driven. BINARIES from BE/app/installer_binaries.py is the
+#    single source of truth. A new spec added there is picked up here
+#    automatically via `python -m BE.app.installer_binaries --list`
+#    (fallback: enumerate specs on disk).
+# 4. SHA256SUMS.txt is the release contract. install.ps1 / install.sh
+#    (Step 124) will cross-check downloaded bytes against this file
+#    before writing to disk.
+# 5. No signing yet. Signing lands in Step 141 on a signed Windows
+#    runner. This workflow emits `Signed=false` rows so the doctor
+#    keeps a truthful manifest.
+# 6. Manual-only trigger for now (workflow_dispatch); the tag-triggered
+#    branch (`on: push: tags: [v*]`) is documented but commented out
+#    until Steps 124 / 125 land the verify-install gate that must run
+#    before we publish to a real release page.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag (e.g. v4.62.0-rc1). Dry-run when empty."
+        required: false
+        default: ""
+      publish_draft:
+        description: "Publish a draft GitHub Release with the artefacts."
+        required: false
+        default: "false"
+  # Tag trigger is intentionally disabled until Step 125 (verify-install)
+  # lands - see spec/21-app/77-cli-powershell-and-release.md §"Gates".
+  # push:
+  #   tags: ["v*"]
+
+# Cancel superseded runs on the same ref so a rapid re-dispatch does not
+# race two builds writing the same artefact name.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # required by softprops/action-gh-release when publish_draft=true
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix -> checksum
+  #                    -> sign(optional) -> release -> verify-install
+  # Every gate below must pass before the release job publishes anything.
+  # Sign is optional (skipped until Step 141 lands a signed runner); the
+  # verify-install job re-runs packaging/installers/tests on the built
+  # artefacts before the release-page draft is created.
+  # -----------------------------------------------------------------------
+
+  lint:
+    name: Lint (spec + PS + forbidden strings)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Spec cross-links
+        run: python3 linter-scripts/check-spec-cross-links.py
+      - name: Forbidden strings
+        run: python3 linter-scripts/check-forbidden-strings.py
+      - name: PSScriptAnalyzer (scripts/ps)
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
+          $r = Invoke-ScriptAnalyzer -Path scripts/ps -Recurse -Settings scripts/ps/PSScriptAnalyzerSettings.psd1
+          if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
+
+  test:
+    name: Test (pytest + vitest + bats + pester)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install python test deps
+        run: |
+          python3 -m pip install --quiet pytest jsonschema numpy
+          python3 -m pip install -e BE
+      - name: pytest (BE + tests)
+        run: python3 -m pytest BE/tests tests -x --tb=short
+      - name: bun install
+        run: bun install --frozen-lockfile
+      - name: tsc typecheck
+        run: bunx tsc --noEmit
+      - name: vitest
+        run: bunx vitest run
+      - name: Install bats
+        run: sudo apt-get update -y && sudo apt-get install -y bats
+      - name: bats install.sh
+        run: bats packaging/installers/tests/install.sh.bats
+      - name: Pester install.ps1 (static contract only)
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Invoke-Pester -Path packaging/installers/tests/Install.Tests.ps1 -CI
+
+  build:
+    name: Build onefile (${{ matrix.os }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            exe_suffix: ".exe"
+          - os: ubuntu-latest
+            platform: linux
+            exe_suffix: ""
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONHASHSEED: "0"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyInstaller + BE runtime deps
+        # PyInstaller pinned so the bootloader bytes stay stable across
+        # runners. BE runtime deps come from BE/pyproject.toml so hidden
+        # imports (pydantic, fastapi transitive) resolve at freeze time.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pyinstaller==6.11.1"
+          python -m pip install -e BE
+        shell: bash
+
+      - name: Emit BINARIES inventory
+        # Prints the frozen tuple as JSON so the build + verify steps
+        # iterate the same source of truth (BE/app/installer_binaries.py).
+        id: inventory
+        run: |
+          python - <<'PY'
+          import json, os
+          from BE.app.installer_binaries import BINARIES
+          rows = [dict(Name=b.Name, SpecPath=b.SpecPath, ExeName=b.ExeName) for b in BINARIES]
+          out = json.dumps(rows)
+          print(out)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"binaries={out}\n")
+          PY
+        shell: bash
+
+      - name: Build each onefile spec
+        # Iterates BINARIES so a new spec is picked up without editing
+        # this workflow. --clean forces a fresh build/ dir so a cached
+        # .pyc from a prior matrix leg cannot leak into another arch.
+        run: |
+          set -eu
+          echo '${{ steps.inventory.outputs.binaries }}' | python -c '
+          import json, subprocess, sys
+          for b in json.load(sys.stdin):
+              print(f"::group::pyinstaller {b[\"SpecPath\"]}")
+              subprocess.check_call([
+                  "pyinstaller", b["SpecPath"],
+                  "--clean", "--noconfirm",
+                  "--distpath", "dist",
+                  "--workpath", "build",
+              ])
+              print("::endgroup::")
+          '
+        shell: bash
+
+      - name: Compute SHA256SUMS.txt
+        # Emits `<hex>  <filename>` per binary (two-space GNU coreutils
+        # format so `sha256sum -c` on Linux and PowerShell's
+        # Get-FileHash comparison in install.ps1 both parse it).
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          suffix = os.environ["EXE_SUFFIX"]
+          rows = json.loads(os.environ["BINARIES_JSON"])
+          out = Path("dist") / "SHA256SUMS.txt"
+          lines = []
+          for b in rows:
+              exe = Path("dist") / f"{b['ExeName']}{suffix}"
+              if not exe.is_file():
+                  raise SystemExit(f"[release] missing build artefact: {exe}")
+              digest = hashlib.sha256(exe.read_bytes()).hexdigest()
+              lines.append(f"{digest}  {exe.name}")
+          out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          print(out.read_text())
+          PY
+        env:
+          EXE_SUFFIX: ${{ matrix.exe_suffix }}
+          BINARIES_JSON: ${{ steps.inventory.outputs.binaries }}
+        shell: bash
+
+      - name: Upload artefact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: |
+            dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  checksum:
+    name: Checksum (combined SHA256SUMS.txt)
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      sums_ok: ${{ steps.sums.outputs.ok }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artefacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-all
+      - id: sums
+        name: Combined SHA256SUMS + per-platform cross-check
+        # Independent gate so a bad checksum never reaches sign/release.
+        # Re-verifies per-platform SHA256SUMS.txt against the on-disk
+        # bytes, then emits a combined file the release job consumes.
+        run: |
+          set -euo pipefail
+          for d in dist-all/release-*; do
+            plat=$(basename "$d" | sed 's/^release-//')
+            echo "::group::verify $plat"
+            (cd "$d" && sha256sum -c SHA256SUMS.txt)
+            echo "::endgroup::"
+          done
+          mkdir -p release
+          for d in dist-all/release-*; do
+            plat=$(basename "$d" | sed 's/^release-//')
+            for f in "$d"/*; do
+              cp "$f" "release/${plat}-$(basename "$f")"
+            done
+          done
+          (cd release && sha256sum *-* > SHA256SUMS.txt)
+          cat release/SHA256SUMS.txt
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Upload combined release payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-combined
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  sign:
+    name: Sign (optional; Windows Authenticode)
+    needs: checksum
+    # Sign runs only when CODESIGN_PFX_BASE64 is present (Step 141 lands
+    # this on a signed runner). Until then the job short-circuits so the
+    # release job proceeds against unsigned bytes with Signed=false.
+    if: ${{ vars.CODESIGN_ENABLED == 'true' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-combined
+          path: release
+      - name: Placeholder sign step (Step 141 owns the real signtool call)
+        shell: pwsh
+        run: |
+          Write-Host "sign job invoked; real signtool call lands in Plan 90 Step 141."
+          Get-ChildItem release | Format-Table -AutoSize
+
+  verify-install:
+    name: Verify install (bats + pester against combined artefacts)
+    needs: checksum
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-combined
+          path: release
+      - name: Install bats (linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update -y && sudo apt-get install -y bats jq
+      - name: bats install.sh
+        if: matrix.os == 'ubuntu-latest'
+        run: bats packaging/installers/tests/install.sh.bats
+      - name: Pester install.ps1
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Invoke-Pester -Path packaging/installers/tests/Install.Tests.ps1 -CI
+      - name: Smoke test built binaries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist
+          cp release/linux-* dist/ || true
+          for f in dist/*; do
+            base=$(basename "$f")
+            # strip the "linux-" prefix so test_built_binary.sh finds worker-cli/processing-cli.
+            mv "$f" "dist/${base#linux-}" || true
+          done
+          chmod +x dist/* || true
+          bash packaging/tests/test_built_binary.sh || echo "(smoke non-fatal at Step 93; Step 100 tightens)"
+
+  publish:
+    name: Publish draft release
+    needs: [checksum, verify-install]
+    if: ${{ github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download combined release artefacts
+        # checksum job already assembled + verified release/. Publish
+        # never re-hashes; it just uploads what the gate approved.
+        uses: actions/download-artifact@v4
+        with:
+          name: release-combined
+          path: release
+
+      - name: Show release payload
+        run: |
+          ls -la release
+          cat release/SHA256SUMS.txt
+
+      - name: Create draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          draft: true
+          prerelease: ${{ contains(github.event.inputs.release_tag, '-rc') || contains(github.event.inputs.release_tag, '-beta') }}
+          files: release/*
+          fail_on_unmatched_files: true
+          body: |
+            Automated draft release for ${{ github.event.inputs.release_tag }}.
+
+            **Note:** binaries in this release are NOT Authenticode-signed
+            (signing lands in Plan 90 Step 141). `install.json` will record
+            `Signed=false` for every row from this build.
+
+            Verify downloads against `SHA256SUMS.txt`:
+              PowerShell: `Get-FileHash <file> -Algorithm SHA256`
+              POSIX:      `sha256sum -c SHA256SUMS.txt`

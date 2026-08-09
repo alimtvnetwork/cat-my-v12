@@ -1,0 +1,19 @@
+graph LR
+  User[Operator]
+  subgraph Desktop [Desktop machine]
+    Shell[Chromium Shell<br/>Tauri host]
+    Renderer[Renderer<br/>WebView]
+    Worker[Python Worker]
+    DB[(SQLite<br/>audit.db + app.db)]
+    Cam[Capture device]
+  end
+  Feed[Update feed<br/>updates.project-domain]
+  Cloud[Supabase<br/>publishable]
+
+  User -->|clicks| Renderer
+  Renderer -->|IPC HTTP+WS<br/>127.0.0.1| Shell
+  Shell --> Worker
+  Worker --> DB
+  Worker --> Cam
+  Shell -->|poll manifest| Feed
+  Renderer -.optional.-> Cloud

@@ -1,0 +1,1618 @@
+{
+  "$comment": "Canonical Plan 86 seed bundle. Shape frozen by SS-10-frozen-seed-surface-matrix.md at v3.802.0. Legacy nested bundle.json remains for the pre-Plan-86 orchestrator. Do NOT restructure this file: add rows to slice arrays only. All 13 slice keys MUST remain present even when empty. All 6 profiles MUST remain declared. See SS-08 for id prefixes and SS-09 for write order.",
+  "version": "2.0.0",
+  "schemaVersion": "plan86.v2",
+  "profiles": [
+    {
+      "id": "prof-default-pcb",
+      "name": "Sample PCB",
+      "isDefault": true
+    },
+    {
+      "id": "prof-soic-inspection",
+      "name": "SOIC-8 Line",
+      "isDefault": false
+    },
+    {
+      "id": "prof-connector-bank",
+      "name": "Connector Bank",
+      "isDefault": false
+    },
+    {
+      "id": "prof-blister-qa",
+      "name": "Blister Pack QA",
+      "isDefault": false
+    },
+    {
+      "id": "prof-empty-preview",
+      "name": "Empty Preview",
+      "isDefault": false
+    },
+    {
+      "id": "prof-error-preview",
+      "name": "Error Preview",
+      "isDefault": false
+    },
+    {
+      "id": "prof-ui-craft-demo",
+      "name": "UI Craft Demo",
+      "isDefault": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-solder",
+      "name": "Solder",
+      "color": "#E5484D",
+      "order": 10,
+      "description": "Solder joints, bridges, fillet checks."
+    },
+    {
+      "id": "cat-placement",
+      "name": "Placement",
+      "color": "#3E63DD",
+      "order": 20,
+      "description": "Component presence, offset, rotation."
+    },
+    {
+      "id": "cat-marking",
+      "name": "Marking",
+      "color": "#F5A623",
+      "order": 30,
+      "description": "RefDes, polarity dots, printed text (OCR)."
+    },
+    {
+      "id": "cat-barcode",
+      "name": "Barcode",
+      "color": "#30A46C",
+      "order": 40,
+      "description": "1D and 2D barcode read and verify."
+    },
+    {
+      "id": "cat-pill-blister",
+      "name": "Pill blister",
+      "color": "#8E4EC6",
+      "order": 50,
+      "description": "Pill presence and pocket count on blister packs."
+    },
+    {
+      "id": "cat-carrier-tape",
+      "name": "Carrier tape",
+      "color": "#0091FF",
+      "order": 60,
+      "description": "Pocket presence for reel/tape packaging."
+    },
+    {
+      "id": "cat-surface",
+      "name": "Surface defects",
+      "color": "#BDEE63",
+      "order": 70,
+      "description": "Scratches, contamination, discoloration."
+    },
+    {
+      "id": "cat-uncategorised",
+      "name": "Uncategorised",
+      "color": "#8F8F8F",
+      "order": 999,
+      "description": "Fallback bucket for rules without an explicit category."
+    }
+  ],
+  "cameras": [
+    {
+      "id": "cam-basler-aca1920",
+      "alias": "c1",
+      "name": "Basler acA1920-40um",
+      "vendor": "Basler",
+      "model": "acA1920-40um",
+      "resolution": {
+        "w": 1920,
+        "h": 1200
+      },
+      "pixelSizeUm": 5.86,
+      "interface": "USB3",
+      "colorMode": "mono",
+      "order": 10
+    },
+    {
+      "id": "cam-basler-aca2440-c",
+      "alias": "c2",
+      "name": "Basler acA2440-35uc",
+      "vendor": "Basler",
+      "model": "acA2440-35uc",
+      "resolution": {
+        "w": 2448,
+        "h": 2048
+      },
+      "pixelSizeUm": 3.45,
+      "interface": "USB3",
+      "colorMode": "color",
+      "order": 20
+    },
+    {
+      "id": "cam-ids-ui3260",
+      "alias": "c3",
+      "name": "IDS UI-3260CP Rev.2",
+      "vendor": "IDS",
+      "model": "UI-3260CP Rev.2",
+      "resolution": {
+        "w": 1936,
+        "h": 1216
+      },
+      "pixelSizeUm": 5.86,
+      "interface": "GigE",
+      "colorMode": "mono",
+      "order": 30
+    },
+    {
+      "id": "cam-flir-bfs-u3-51s5",
+      "alias": "c4",
+      "name": "FLIR Blackfly S BFS-U3-51S5",
+      "vendor": "FLIR",
+      "model": "BFS-U3-51S5C",
+      "resolution": {
+        "w": 2448,
+        "h": 2048
+      },
+      "pixelSizeUm": 3.45,
+      "interface": "USB3",
+      "colorMode": "color",
+      "order": 40
+    },
+    {
+      "id": "cam-webcam-fallback",
+      "alias": "c9",
+      "name": "Webcam (demo fallback)",
+      "vendor": "Generic",
+      "model": "UVC",
+      "resolution": {
+        "w": 1280,
+        "h": 720
+      },
+      "pixelSizeUm": 3.0,
+      "interface": "USB2",
+      "colorMode": "color",
+      "order": 900
+    }
+  ],
+  "micSettings": [
+    {
+      "id": "mic-default-stub",
+      "alias": "m0",
+      "name": "Default (silent stub)",
+      "vendor": "Generic",
+      "model": "None",
+      "sampleRateHz": 16000,
+      "channels": 1,
+      "gainDb": 0,
+      "noiseSuppression": false,
+      "isDefault": true,
+      "order": 10,
+      "description": "Facade-required default. Emits no audio; safe fallback."
+    },
+    {
+      "id": "mic-usb-condenser",
+      "alias": "m1",
+      "name": "USB Condenser (Blue Yeti)",
+      "vendor": "Blue",
+      "model": "Yeti",
+      "sampleRateHz": 48000,
+      "channels": 2,
+      "gainDb": 6,
+      "noiseSuppression": true,
+      "isDefault": false,
+      "order": 20,
+      "description": "Studio-grade capture for line-side voice notes."
+    },
+    {
+      "id": "mic-line-array",
+      "alias": "m2",
+      "name": "Line array (Shure MXA310)",
+      "vendor": "Shure",
+      "model": "MXA310",
+      "sampleRateHz": 48000,
+      "channels": 4,
+      "gainDb": 12,
+      "noiseSuppression": true,
+      "isDefault": false,
+      "order": 30,
+      "description": "Ceiling array for shop-floor operator commentary."
+    },
+    {
+      "id": "mic-headset-boom",
+      "alias": "m3",
+      "name": "Headset boom (Jabra Evolve)",
+      "vendor": "Jabra",
+      "model": "Evolve2 65",
+      "sampleRateHz": 24000,
+      "channels": 1,
+      "gainDb": 3,
+      "noiseSuppression": true,
+      "isDefault": false,
+      "order": 40,
+      "description": "Individual operator headset for narrated inspection."
+    }
+  ],
+  "swatches": [
+    {
+      "id": "sw-pcb-green",
+      "name": "PCB green",
+      "hex": "#0B6E4F",
+      "role": "substrate",
+      "order": 10
+    },
+    {
+      "id": "sw-solder-silver",
+      "name": "Solder silver",
+      "hex": "#C0C0C0",
+      "role": "solder",
+      "order": 20
+    },
+    {
+      "id": "sw-copper-pad",
+      "name": "Copper pad",
+      "hex": "#B87333",
+      "role": "pad",
+      "order": 30
+    },
+    {
+      "id": "sw-silkscreen-white",
+      "name": "Silkscreen white",
+      "hex": "#F5F5F5",
+      "role": "marking",
+      "order": 40
+    },
+    {
+      "id": "sw-polarity-dot",
+      "name": "Polarity dot",
+      "hex": "#111111",
+      "role": "marking",
+      "order": 50
+    },
+    {
+      "id": "sw-pill-white",
+      "name": "Pill white",
+      "hex": "#F0EFEA",
+      "role": "product",
+      "order": 60
+    },
+    {
+      "id": "sw-pill-red",
+      "name": "Pill red",
+      "hex": "#C0392B",
+      "role": "product",
+      "order": 70
+    },
+    {
+      "id": "sw-blister-foil",
+      "name": "Blister foil",
+      "hex": "#7A7A7A",
+      "role": "packaging",
+      "order": 80
+    },
+    {
+      "id": "sw-alert-red",
+      "name": "Alert red",
+      "hex": "#D14343",
+      "role": "ui-verdict",
+      "order": 900
+    },
+    {
+      "id": "sw-ok-green",
+      "name": "OK green",
+      "hex": "#2E9E5B",
+      "role": "ui-verdict",
+      "order": 910
+    }
+  ],
+  "propertyPresets": [
+    {
+      "id": "pp-ocr-refdes-default",
+      "name": "OCR: RefDes default",
+      "kind": "ocr",
+      "props": {
+        "minConfidence": 0.72,
+        "allowChars": "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        "lang": "eng",
+        "deskew": true
+      }
+    },
+    {
+      "id": "pp-barcode-datamatrix-a",
+      "name": "Barcode: Data Matrix A",
+      "kind": "barcode",
+      "props": {
+        "symbology": "datamatrix",
+        "minGrade": "B",
+        "quietZonePx": 4
+      }
+    },
+    {
+      "id": "pp-barcode-code128-a",
+      "name": "Barcode: Code 128 A",
+      "kind": "barcode",
+      "props": {
+        "symbology": "code128",
+        "minGrade": "C",
+        "quietZonePx": 6
+      }
+    },
+    {
+      "id": "pp-blob-solder-fillet",
+      "name": "Blob: solder fillet",
+      "kind": "blob",
+      "props": {
+        "minAreaPx": 40,
+        "maxAreaPx": 4000,
+        "circularityMin": 0.35
+      }
+    },
+    {
+      "id": "pp-blob-pill-presence",
+      "name": "Blob: pill presence",
+      "kind": "blob",
+      "props": {
+        "minAreaPx": 300,
+        "maxAreaPx": 6000,
+        "circularityMin": 0.55
+      }
+    },
+    {
+      "id": "pp-color-swatch-tolerance",
+      "name": "Color swatch: LAB dE2000",
+      "kind": "color",
+      "props": {
+        "space": "LAB",
+        "deltaEMax": 6.0,
+        "sampleRadiusPx": 8
+      },
+      "swatchId": "sw-polarity-dot"
+    },
+    {
+      "id": "pp-presence-template",
+      "name": "Presence: template match",
+      "kind": "presence",
+      "props": {
+        "matchThreshold": 0.82,
+        "rotationTolerance": 5
+      }
+    },
+    {
+      "id": "pp-verdict-count-exact",
+      "name": "Verdict: exact count",
+      "kind": "verdict",
+      "props": {
+        "op": "==",
+        "expected": 10
+      }
+    }
+  ],
+  "settings": [
+    {
+      "id": "set-theme",
+      "key": "app.theme",
+      "value": "dark",
+      "type": "enum",
+      "options": ["dark", "light", "system"],
+      "label": "Theme",
+      "group": "appearance",
+      "order": 10
+    },
+    {
+      "id": "set-density",
+      "key": "app.density",
+      "value": "cozy",
+      "type": "enum",
+      "options": ["compact", "cozy", "comfortable"],
+      "label": "UI density",
+      "group": "appearance",
+      "order": 20
+    },
+    {
+      "id": "set-hud-follows-shape",
+      "key": "editor.hudFollowsShape",
+      "value": true,
+      "type": "boolean",
+      "label": "HUD follows selected shape",
+      "group": "editor",
+      "order": 30
+    },
+    {
+      "id": "set-autosave-ms",
+      "key": "editor.autosaveMs",
+      "value": 1500,
+      "type": "number",
+      "min": 250,
+      "max": 10000,
+      "step": 250,
+      "label": "Autosave interval (ms)",
+      "group": "editor",
+      "order": 40
+    },
+    {
+      "id": "set-telemetry",
+      "key": "app.telemetry",
+      "value": false,
+      "type": "boolean",
+      "label": "Send anonymous telemetry",
+      "group": "privacy",
+      "order": 50
+    },
+    {
+      "id": "set-error-drawer-hotkey",
+      "key": "app.errorDrawerHotkey",
+      "value": "Ctrl+Shift+E",
+      "type": "hotkey",
+      "label": "Error history hotkey",
+      "group": "shortcuts",
+      "order": 60
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-default-pcb-refdes",
+      "profileId": "prof-default-pcb",
+      "name": "Default PCB: RefDes verify",
+      "description": "OCR reference designators + polarity dot on the shipped sample PCB.",
+      "defaultCameraId": "cam-basler-aca2440-c",
+      "defaultRulesetId": "rs-refdes-verify",
+      "paletteSwatchIds": ["sw-pcb-green", "sw-silkscreen-white", "sw-polarity-dot"],
+      "order": 10,
+      "isSample": true
+    },
+    {
+      "id": "proj-default-pcb-missing",
+      "profileId": "prof-default-pcb",
+      "name": "Default PCB: missing parts",
+      "description": "Template-match placement check against the golden board.",
+      "defaultCameraId": "cam-basler-aca2440-c",
+      "defaultRulesetId": "rs-missing-components",
+      "paletteSwatchIds": ["sw-pcb-green", "sw-copper-pad", "sw-alert-red", "sw-ok-green"],
+      "order": 20,
+      "isSample": true
+    },
+    {
+      "id": "proj-soic-solder",
+      "profileId": "prof-soic-inspection",
+      "name": "SOIC: solder joints",
+      "description": "Anchored SOIC pin rows, solder bridge verdict.",
+      "defaultCameraId": "cam-basler-aca1920",
+      "defaultRulesetId": "rs-ic-solder-joint-inspection",
+      "paletteSwatchIds": ["sw-pcb-green", "sw-solder-silver", "sw-copper-pad"],
+      "order": 30,
+      "isSample": false
+    },
+    {
+      "id": "proj-soic-general-fillet",
+      "profileId": "prof-soic-inspection",
+      "name": "SOIC: general fillet",
+      "description": "General solder fillet blob check with scratch mask.",
+      "defaultCameraId": "cam-basler-aca1920",
+      "defaultRulesetId": "rs-solder-joints",
+      "paletteSwatchIds": ["sw-solder-silver", "sw-copper-pad"],
+      "order": 40,
+      "isSample": false
+    },
+    {
+      "id": "proj-connector-barcode",
+      "profileId": "prof-connector-bank",
+      "name": "Connector bank: barcode",
+      "description": "Read tray barcode label on connector bank.",
+      "defaultCameraId": "cam-ids-ui3260",
+      "defaultRulesetId": "rs-barcode-read",
+      "paletteSwatchIds": ["sw-blister-foil", "sw-silkscreen-white"],
+      "order": 50,
+      "isSample": false
+    },
+    {
+      "id": "proj-blister-pill-grid",
+      "profileId": "prof-blister-qa",
+      "name": "Blister: pill presence grid",
+      "description": "Grid over blister, blob-detect each pocket.",
+      "defaultCameraId": "cam-flir-bfs-u3-51s5",
+      "defaultRulesetId": "rs-pill-presence-grid",
+      "paletteSwatchIds": ["sw-blister-foil", "sw-pill-white", "sw-pill-red"],
+      "order": 60,
+      "isSample": true
+    },
+    {
+      "id": "proj-blister-pocket-count",
+      "profileId": "prof-blister-qa",
+      "name": "Blister: pocket count",
+      "description": "Verdict: exactly 10 pockets present.",
+      "defaultCameraId": "cam-flir-bfs-u3-51s5",
+      "defaultRulesetId": "rs-blister-pocket-count",
+      "paletteSwatchIds": ["sw-blister-foil", "sw-alert-red", "sw-ok-green"],
+      "order": 70,
+      "isSample": true
+    },
+    {
+      "id": "proj-carrier-tape-pockets",
+      "profileId": "prof-blister-qa",
+      "name": "Carrier tape: reel pockets",
+      "description": "Blob presence at each reel pocket, 12px pitch.",
+      "defaultCameraId": "cam-ids-ui3260",
+      "defaultRulesetId": "rs-carrier-tape-pocket",
+      "paletteSwatchIds": ["sw-blister-foil", "sw-solder-silver"],
+      "order": 80,
+      "isSample": false
+    },
+    {
+      "id": "proj-empty-preview",
+      "profileId": "prof-empty-preview",
+      "name": "Empty state",
+      "description": "Reserved for empty-state UI previews. Intentionally has no ruleset attached.",
+      "defaultCameraId": "cam-webcam-fallback",
+      "defaultRulesetId": null,
+      "paletteSwatchIds": [],
+      "order": 900,
+      "isSample": false
+    },
+    {
+      "id": "proj-error-preview",
+      "profileId": "prof-error-preview",
+      "name": "Error state",
+      "description": "Reserved for error-state UI previews. Points at a valid ruleset for parity.",
+      "defaultCameraId": "cam-webcam-fallback",
+      "defaultRulesetId": "rs-barcode-read",
+      "paletteSwatchIds": ["sw-alert-red"],
+      "order": 910,
+      "isSample": false
+    },
+    {
+      "id": "proj-ui-craft-demo-showcase",
+      "profileId": "prof-ui-craft-demo",
+      "name": "UI Craft: rule kind showcase",
+      "description": "Plan 87 Step 27 demo: every rule kind on a single project for UI polish walkthroughs.",
+      "defaultCameraId": "cam-basler-aca2440-c",
+      "defaultRulesetId": "rs-rule-kind-showcase",
+      "paletteSwatchIds": ["sw-pcb-green", "sw-silkscreen-white", "sw-ok-green", "sw-alert-red"],
+      "order": 920,
+      "isSample": true
+    }
+  ],
+  "rulesets": [
+    {
+      "id": "rs-ic-solder-joint-inspection",
+      "name": "IC solder joint inspection",
+      "categoryId": "cat-solder",
+      "description": "Anchors both pin rows on a SOIC, verifies no solder bridges.",
+      "order": 10,
+      "ruleIds": [
+        "rule-ic-body-r",
+        "rule-pin-row-top-s",
+        "rule-pin-row-bottom-s",
+        "rule-solder-bridge-e"
+      ]
+    },
+    {
+      "id": "rs-solder-joints",
+      "name": "Solder joints",
+      "categoryId": "cat-solder",
+      "description": "General solder fillet presence with scratch-mask ignore region.",
+      "order": 20,
+      "ruleIds": ["rule-solder-fillet-k", "rule-scratch-mask-r"]
+    },
+    {
+      "id": "rs-refdes-verify",
+      "name": "RefDes verify",
+      "categoryId": "cat-marking",
+      "description": "OCR the reference designator, check polarity dot and color swatch.",
+      "order": 30,
+      "ruleIds": ["rule-refdes-ocr-r", "rule-polarity-dot-c", "rule-color-swatch-check-c"]
+    },
+    {
+      "id": "rs-missing-components",
+      "name": "Missing components",
+      "categoryId": "cat-placement",
+      "description": "Template-match against a known-good component slot.",
+      "order": 40,
+      "ruleIds": ["rule-missing-component-e"]
+    },
+    {
+      "id": "rs-barcode-read",
+      "name": "Barcode read",
+      "categoryId": "cat-barcode",
+      "description": "Read Data Matrix and Code 128 with grade thresholds.",
+      "order": 50,
+      "ruleIds": ["rule-barcode-datamatrix-r", "rule-barcode-code128-r"]
+    },
+    {
+      "id": "rs-pill-presence-grid",
+      "name": "Pill presence grid",
+      "categoryId": "cat-pill-blister",
+      "description": "Grid over blister, blob-detect each pocket.",
+      "order": 60,
+      "ruleIds": ["rule-pill-pocket-grid-r", "rule-pill-presence-k"]
+    },
+    {
+      "id": "rs-blister-pocket-count",
+      "name": "Blister pocket count",
+      "categoryId": "cat-pill-blister",
+      "description": "Assert exactly 10 pockets present.",
+      "order": 70,
+      "ruleIds": ["rule-blister-pocket-count-e"]
+    },
+    {
+      "id": "rs-carrier-tape-pocket",
+      "name": "Carrier tape pocket",
+      "categoryId": "cat-carrier-tape",
+      "description": "Blob presence at each reel pocket, pitched 12px.",
+      "order": 80,
+      "ruleIds": ["rule-carrier-tape-pocket-k"]
+    },
+    {
+      "id": "rs-rule-kind-showcase",
+      "name": "Rule kind showcase",
+      "description": "One rule per supported kind/type: ROI, rect, circle, polygon, freehand, text, OCR, barcode, color, presence, absence, ignore, math.",
+      "order": 900,
+      "ruleIds": [
+        "rule-showcase-roi-master-r",
+        "rule-showcase-rect-r",
+        "rule-showcase-circle-c",
+        "rule-showcase-polygon-p",
+        "rule-showcase-freehand-f",
+        "rule-showcase-text-t",
+        "rule-showcase-ocr-o",
+        "rule-showcase-barcode-b",
+        "rule-showcase-color-k",
+        "rule-showcase-presence-e",
+        "rule-showcase-absence-a",
+        "rule-showcase-ignore-i",
+        "rule-showcase-math-m"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule-ic-body-r",
+      "name": "IC body ROI",
+      "kind": "rect",
+      "type": "roi",
+      "rulesetId": "rs-ic-solder-joint-inspection",
+      "categoryId": "cat-placement",
+      "roiId": "roi-ic-body",
+      "geometry": {
+        "x": 420,
+        "y": 260,
+        "w": 260,
+        "h": 120,
+        "rot": 0
+      }
+    },
+    {
+      "id": "rule-pin-row-top-s",
+      "name": "Top pin row anchor",
+      "kind": "anchor",
+      "type": "anchor",
+      "rulesetId": "rs-ic-solder-joint-inspection",
+      "categoryId": "cat-solder",
+      "roiId": "roi-pin-row-top",
+      "geometry": {
+        "cx": 550,
+        "cy": 258,
+        "count": 8,
+        "pitch": 32
+      }
+    },
+    {
+      "id": "rule-pin-row-bottom-s",
+      "name": "Bottom pin row anchor",
+      "kind": "anchor",
+      "type": "anchor",
+      "rulesetId": "rs-ic-solder-joint-inspection",
+      "categoryId": "cat-solder",
+      "roiId": "roi-pin-row-bottom",
+      "geometry": {
+        "cx": 550,
+        "cy": 382,
+        "count": 8,
+        "pitch": 32
+      }
+    },
+    {
+      "id": "rule-solder-bridge-e",
+      "name": "Solder bridge verdict",
+      "kind": "verdict",
+      "type": "presence-negative",
+      "rulesetId": "rs-ic-solder-joint-inspection",
+      "categoryId": "cat-solder",
+      "roiId": "roi-pin-row-top",
+      "params": {
+        "threshold": 0.72,
+        "maxBridges": 0
+      }
+    },
+    {
+      "id": "rule-solder-fillet-k",
+      "name": "Solder fillet blob",
+      "kind": "blob",
+      "type": "presence",
+      "rulesetId": "rs-solder-joints",
+      "categoryId": "cat-solder",
+      "roiId": "roi-fillet-window",
+      "params": {
+        "minArea": 40,
+        "maxArea": 900,
+        "shape": "convex"
+      }
+    },
+    {
+      "id": "rule-refdes-ocr-r",
+      "name": "RefDes OCR",
+      "kind": "rect",
+      "type": "ocr",
+      "rulesetId": "rs-refdes-verify",
+      "categoryId": "cat-marking",
+      "roiId": "roi-refdes-window",
+      "params": {
+        "pattern": "^[UDRCJQ]\\d{1,3}$",
+        "minConfidence": 0.85
+      }
+    },
+    {
+      "id": "rule-polarity-dot-c",
+      "name": "Polarity dot circle",
+      "kind": "circle",
+      "type": "presence",
+      "rulesetId": "rs-refdes-verify",
+      "categoryId": "cat-marking",
+      "roiId": "roi-polarity-dot",
+      "geometry": {
+        "cx": 512,
+        "cy": 300,
+        "r": 6
+      },
+      "params": {
+        "minContrast": 0.35
+      }
+    },
+    {
+      "id": "rule-missing-component-e",
+      "name": "Missing component",
+      "kind": "verdict",
+      "type": "absence",
+      "rulesetId": "rs-missing-components",
+      "categoryId": "cat-placement",
+      "roiId": "roi-component-slot",
+      "params": {
+        "reference": "template://cap-0603",
+        "similarity": 0.6
+      }
+    },
+    {
+      "id": "rule-barcode-datamatrix-r",
+      "name": "Data Matrix read",
+      "kind": "rect",
+      "type": "barcode",
+      "rulesetId": "rs-barcode-read",
+      "categoryId": "cat-barcode",
+      "roiId": "roi-dm-window",
+      "params": {
+        "symbology": "DATAMATRIX",
+        "minGrade": "B"
+      }
+    },
+    {
+      "id": "rule-barcode-code128-r",
+      "name": "Code 128 read",
+      "kind": "rect",
+      "type": "barcode",
+      "rulesetId": "rs-barcode-read",
+      "categoryId": "cat-barcode",
+      "roiId": "roi-c128-window",
+      "params": {
+        "symbology": "CODE128",
+        "minGrade": "C"
+      }
+    },
+    {
+      "id": "rule-pill-pocket-grid-r",
+      "name": "Pill pocket grid",
+      "kind": "rect",
+      "type": "grid",
+      "rulesetId": "rs-pill-presence-grid",
+      "categoryId": "cat-pill-blister",
+      "roiId": "roi-blister-grid",
+      "geometry": {
+        "x": 120,
+        "y": 90,
+        "w": 800,
+        "h": 480,
+        "rot": 0
+      },
+      "params": {
+        "cols": 5,
+        "rows": 2
+      }
+    },
+    {
+      "id": "rule-pill-presence-k",
+      "name": "Pill presence blob",
+      "kind": "blob",
+      "type": "presence",
+      "rulesetId": "rs-pill-presence-grid",
+      "categoryId": "cat-pill-blister",
+      "roiId": "roi-blister-cell",
+      "params": {
+        "minArea": 800,
+        "maxArea": 4200,
+        "shape": "round"
+      }
+    },
+    {
+      "id": "rule-blister-pocket-count-e",
+      "name": "Blister pocket count",
+      "kind": "verdict",
+      "type": "count",
+      "rulesetId": "rs-blister-pocket-count",
+      "categoryId": "cat-pill-blister",
+      "roiId": "roi-blister-grid",
+      "params": {
+        "expected": 10,
+        "tolerance": 0
+      }
+    },
+    {
+      "id": "rule-carrier-tape-pocket-k",
+      "name": "Carrier tape pocket",
+      "kind": "blob",
+      "type": "presence",
+      "rulesetId": "rs-carrier-tape-pocket",
+      "categoryId": "cat-carrier-tape",
+      "roiId": "roi-tape-pocket",
+      "params": {
+        "pitch": 12,
+        "minArea": 40
+      }
+    },
+    {
+      "id": "rule-scratch-mask-r",
+      "name": "Scratch mask (ignore)",
+      "kind": "rect",
+      "type": "ignore",
+      "rulesetId": "rs-solder-joints",
+      "categoryId": "cat-surface",
+      "roiId": "roi-scratch-mask",
+      "geometry": {
+        "x": 80,
+        "y": 40,
+        "w": 60,
+        "h": 20,
+        "rot": 0
+      }
+    },
+    {
+      "id": "rule-color-swatch-check-c",
+      "name": "Color swatch check",
+      "kind": "circle",
+      "type": "color",
+      "rulesetId": "rs-refdes-verify",
+      "categoryId": "cat-marking",
+      "roiId": "roi-color-target",
+      "geometry": {
+        "cx": 640,
+        "cy": 400,
+        "r": 14
+      },
+      "params": {
+        "targetLab": [55, 12, -8],
+        "deltaE": 3.5
+      }
+    },
+    {
+      "id": "rule-showcase-roi-master-r",
+      "name": "Showcase: ROI region",
+      "kind": "rect",
+      "type": "roi",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-placement",
+      "roiId": "roi-showcase-master",
+      "geometry": {
+        "x": 40,
+        "y": 40,
+        "w": 400,
+        "h": 300,
+        "rot": 0
+      }
+    },
+    {
+      "id": "rule-showcase-rect-r",
+      "name": "Showcase: Rect shape",
+      "kind": "rect",
+      "type": "shape",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-placement",
+      "geometry": {
+        "x": 60,
+        "y": 60,
+        "w": 120,
+        "h": 80,
+        "rot": 0
+      }
+    },
+    {
+      "id": "rule-showcase-circle-c",
+      "name": "Showcase: Circle shape",
+      "kind": "circle",
+      "type": "shape",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-placement",
+      "geometry": {
+        "cx": 300,
+        "cy": 180,
+        "r": 40
+      }
+    },
+    {
+      "id": "rule-showcase-polygon-p",
+      "name": "Showcase: Polygon shape",
+      "kind": "polygon",
+      "type": "shape",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-surface",
+      "geometry": {
+        "points": [
+          [80, 220],
+          [180, 200],
+          [220, 300],
+          [100, 320]
+        ]
+      }
+    },
+    {
+      "id": "rule-showcase-freehand-f",
+      "name": "Showcase: Freehand mask",
+      "kind": "freehand",
+      "type": "mask",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-surface",
+      "geometry": {
+        "strokes": [
+          {
+            "points": [
+              [10, 10],
+              [20, 15],
+              [30, 25],
+              [45, 40],
+              [60, 55],
+              [80, 60]
+            ],
+            "width": 6
+          }
+        ]
+      }
+    },
+    {
+      "id": "rule-showcase-text-t",
+      "name": "Showcase: Text label",
+      "kind": "text",
+      "type": "annotation",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-marking",
+      "geometry": {
+        "x": 420,
+        "y": 40,
+        "w": 200,
+        "h": 32
+      },
+      "text": "Inspection zone A"
+    },
+    {
+      "id": "rule-showcase-ocr-o",
+      "name": "Showcase: OCR read",
+      "kind": "ocr",
+      "type": "read",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-marking",
+      "geometry": {
+        "x": 420,
+        "y": 80,
+        "w": 220,
+        "h": 40,
+        "rot": 0
+      },
+      "params": {
+        "expected": "REV-A",
+        "minConfidence": 0.85,
+        "charset": "A-Z0-9-"
+      }
+    },
+    {
+      "id": "rule-showcase-barcode-b",
+      "name": "Showcase: Barcode verify",
+      "kind": "barcode",
+      "type": "read",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-barcode",
+      "geometry": {
+        "x": 420,
+        "y": 140,
+        "w": 220,
+        "h": 80,
+        "rot": 0
+      },
+      "params": {
+        "symbology": "DataMatrix",
+        "expectedRegex": "^LP-[0-9]{6}$"
+      }
+    },
+    {
+      "id": "rule-showcase-color-k",
+      "name": "Showcase: Color check",
+      "kind": "color",
+      "type": "measurement",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-marking",
+      "geometry": {
+        "cx": 320,
+        "cy": 260,
+        "r": 18
+      },
+      "params": {
+        "targetLab": [62, 20, -4],
+        "deltaE": 3.0
+      }
+    },
+    {
+      "id": "rule-showcase-presence-e",
+      "name": "Showcase: Presence check",
+      "kind": "presence",
+      "type": "verdict",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-placement",
+      "geometry": {
+        "x": 60,
+        "y": 60,
+        "w": 120,
+        "h": 80,
+        "rot": 0
+      },
+      "params": {
+        "minCoverage": 0.85
+      }
+    },
+    {
+      "id": "rule-showcase-absence-a",
+      "name": "Showcase: Absence check",
+      "kind": "absence",
+      "type": "verdict",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-solder",
+      "geometry": {
+        "x": 200,
+        "y": 260,
+        "w": 80,
+        "h": 80,
+        "rot": 0
+      },
+      "params": {
+        "maxCoverage": 0.05
+      }
+    },
+    {
+      "id": "rule-showcase-ignore-i",
+      "name": "Showcase: Ignore region",
+      "kind": "ignore",
+      "type": "mask",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-uncategorised",
+      "geometry": {
+        "x": 600,
+        "y": 320,
+        "w": 80,
+        "h": 80,
+        "rot": 0
+      }
+    },
+    {
+      "id": "rule-showcase-math-m",
+      "name": "Showcase: Math derived",
+      "kind": "math",
+      "type": "derived",
+      "rulesetId": "rs-rule-kind-showcase",
+      "categoryId": "cat-uncategorised",
+      "params": {
+        "expression": "(presence('rule-showcase-presence-e') && !absence('rule-showcase-absence-a')) ? 'pass' : 'fail'",
+        "inputs": ["rule-showcase-presence-e", "rule-showcase-absence-a"]
+      }
+    }
+  ],
+  "samples": [
+    {
+      "id": "smp-pcb-refdes-01",
+      "projectId": "proj-default-pcb-refdes",
+      "name": "PCB refdes: front lit",
+      "capturedAt": "2026-05-11T09:12:00Z",
+      "cameraId": "cam-basler-aca2440-c",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["golden", "front"],
+      "order": 10
+    },
+    {
+      "id": "smp-pcb-refdes-02",
+      "projectId": "proj-default-pcb-refdes",
+      "name": "PCB refdes: rotated 3deg",
+      "capturedAt": "2026-05-11T09:14:00Z",
+      "cameraId": "cam-basler-aca2440-c",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["rotated"],
+      "order": 20
+    },
+    {
+      "id": "smp-pcb-missing-01",
+      "projectId": "proj-default-pcb-missing",
+      "name": "PCB missing R42",
+      "capturedAt": "2026-05-11T09:20:00Z",
+      "cameraId": "cam-basler-aca2440-c",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["defect", "missing"],
+      "order": 30
+    },
+    {
+      "id": "smp-soic-solder-01",
+      "projectId": "proj-soic-solder",
+      "name": "SOIC-16 good",
+      "capturedAt": "2026-05-11T10:02:00Z",
+      "cameraId": "cam-basler-aca1920",
+      "image": {
+        "kind": "still",
+        "width": 1920,
+        "height": 1200,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["golden"],
+      "order": 40
+    },
+    {
+      "id": "smp-soic-solder-02",
+      "projectId": "proj-soic-solder",
+      "name": "SOIC-16 bridge pin 3-4",
+      "capturedAt": "2026-05-11T10:05:00Z",
+      "cameraId": "cam-basler-aca1920",
+      "image": {
+        "kind": "still",
+        "width": 1920,
+        "height": 1200,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["defect", "bridge"],
+      "order": 50
+    },
+    {
+      "id": "smp-soic-fillet-01",
+      "projectId": "proj-soic-general-fillet",
+      "name": "SOIC fillet reference",
+      "capturedAt": "2026-05-11T10:12:00Z",
+      "cameraId": "cam-basler-aca1920",
+      "image": {
+        "kind": "still",
+        "width": 1920,
+        "height": 1200,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["reference"],
+      "order": 60
+    },
+    {
+      "id": "smp-connector-barcode-01",
+      "projectId": "proj-connector-barcode",
+      "name": "Connector tray label",
+      "capturedAt": "2026-05-11T11:00:00Z",
+      "cameraId": "cam-ids-ui3260",
+      "image": {
+        "kind": "still",
+        "width": 1936,
+        "height": 1216,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["barcode"],
+      "order": 70
+    },
+    {
+      "id": "smp-blister-pill-01",
+      "projectId": "proj-blister-pill-grid",
+      "name": "Blister full 10-pocket",
+      "capturedAt": "2026-05-11T12:00:00Z",
+      "cameraId": "cam-flir-bfs-u3-51s5",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["golden"],
+      "order": 80
+    },
+    {
+      "id": "smp-blister-pill-02",
+      "projectId": "proj-blister-pill-grid",
+      "name": "Blister missing pocket 7",
+      "capturedAt": "2026-05-11T12:04:00Z",
+      "cameraId": "cam-flir-bfs-u3-51s5",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["defect", "missing"],
+      "order": 90
+    },
+    {
+      "id": "smp-blister-count-01",
+      "projectId": "proj-blister-pocket-count",
+      "name": "Blister count OK",
+      "capturedAt": "2026-05-11T12:10:00Z",
+      "cameraId": "cam-flir-bfs-u3-51s5",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["golden"],
+      "order": 100
+    },
+    {
+      "id": "smp-carrier-tape-01",
+      "projectId": "proj-carrier-tape-pockets",
+      "name": "Carrier reel strip",
+      "capturedAt": "2026-05-11T13:00:00Z",
+      "cameraId": "cam-ids-ui3260",
+      "image": {
+        "kind": "still",
+        "width": 1936,
+        "height": 1216,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["reference"],
+      "order": 110
+    },
+    {
+      "id": "smp-empty-preview-01",
+      "projectId": "proj-empty-preview",
+      "name": "Empty preview placeholder",
+      "capturedAt": "2026-05-11T14:00:00Z",
+      "cameraId": "cam-webcam-fallback",
+      "image": {
+        "kind": "placeholder",
+        "width": 1280,
+        "height": 720,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["empty-state"],
+      "order": 900
+    },
+    {
+      "id": "smp-error-preview-01",
+      "projectId": "proj-error-preview",
+      "name": "Error preview placeholder",
+      "capturedAt": "2026-05-11T14:05:00Z",
+      "cameraId": "cam-webcam-fallback",
+      "image": {
+        "kind": "placeholder",
+        "width": 1280,
+        "height": 720,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["error-state"],
+      "order": 910
+    },
+    {
+      "id": "smp-ui-craft-demo-01",
+      "projectId": "proj-ui-craft-demo-showcase",
+      "name": "UI Craft demo: golden PCB",
+      "capturedAt": "2026-07-20T09:00:00Z",
+      "cameraId": "cam-basler-aca2440-c",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["golden", "ui-craft"],
+      "order": 920
+    },
+    {
+      "id": "smp-ui-craft-demo-02",
+      "projectId": "proj-ui-craft-demo-showcase",
+      "name": "UI Craft demo: defect variant",
+      "capturedAt": "2026-07-20T09:02:00Z",
+      "cameraId": "cam-basler-aca2440-c",
+      "image": {
+        "kind": "still",
+        "width": 2448,
+        "height": 2048,
+        "dataUrl": null,
+        "checksum": null
+      },
+      "tags": ["defect", "ui-craft"],
+      "order": 930
+    }
+  ],
+  "commands": [
+    {
+      "id": "cmd-open-project",
+      "title": "Open project\u2026",
+      "hotkey": "Ctrl+O",
+      "group": "navigation",
+      "action": "project.open",
+      "icon": "folder-open",
+      "order": 10
+    },
+    {
+      "id": "cmd-new-ruleset",
+      "title": "New rule set",
+      "hotkey": "Ctrl+Shift+N",
+      "group": "rules",
+      "action": "ruleset.create",
+      "icon": "plus-square",
+      "order": 20
+    },
+    {
+      "id": "cmd-focus-address-bar",
+      "title": "Focus address bar",
+      "hotkey": "Ctrl+L",
+      "group": "navigation",
+      "action": "shell.focusAddressBar",
+      "icon": "search",
+      "order": 30
+    },
+    {
+      "id": "cmd-toggle-error-drawer",
+      "title": "Toggle error history",
+      "hotkey": "Ctrl+Shift+E",
+      "group": "diagnostics",
+      "action": "errors.toggleDrawer",
+      "icon": "alert-circle",
+      "order": 40
+    },
+    {
+      "id": "cmd-apply-seed-default",
+      "title": "Apply seed: Default PCB",
+      "hotkey": null,
+      "group": "developer",
+      "action": "seed.applyProfile",
+      "icon": "database",
+      "order": 100,
+      "args": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "cmd-apply-seed-soic",
+      "title": "Apply seed: SOIC inspection",
+      "hotkey": null,
+      "group": "developer",
+      "action": "seed.applyProfile",
+      "icon": "database",
+      "order": 110,
+      "args": {
+        "profileId": "prof-soic-inspection"
+      }
+    },
+    {
+      "id": "cmd-apply-seed-blister",
+      "title": "Apply seed: Blister QA",
+      "hotkey": null,
+      "group": "developer",
+      "action": "seed.applyProfile",
+      "icon": "database",
+      "order": 120,
+      "args": {
+        "profileId": "prof-blister-qa"
+      }
+    },
+    {
+      "id": "cmd-reset-profile",
+      "title": "Reset current profile",
+      "hotkey": null,
+      "group": "developer",
+      "action": "seed.resetProfile",
+      "icon": "refresh-cw",
+      "order": 130
+    },
+    {
+      "id": "cmd-apply-seed-ui-craft-demo",
+      "title": "Apply seed: UI Craft Demo",
+      "hotkey": null,
+      "group": "developer",
+      "action": "seed.applyProfile",
+      "icon": "sparkles",
+      "order": 140,
+      "args": {
+        "profileId": "prof-ui-craft-demo"
+      }
+    }
+  ],
+  "emptyStates": [
+    {
+      "id": "es-projects-empty",
+      "surface": "projects.list",
+      "title": "No projects yet",
+      "body": "Create your first project or apply a seed profile from the command palette.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-rulesets-empty",
+      "surface": "rulesets.list",
+      "title": "No rule sets in this project",
+      "body": "Create a rule set to start defining inspection logic, or apply a seed profile.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-categories-empty",
+      "surface": "categories.list",
+      "title": "No categories yet",
+      "body": "Categories group related rules. Apply a seed profile to see examples.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-rules-empty",
+      "surface": "ruleset.editor",
+      "title": "No rules in this set",
+      "body": "Add rules from the toolbox or paste from another rule set.",
+      "ctaLabel": null,
+      "ctaCommandId": null
+    },
+    {
+      "id": "es-samples-empty",
+      "surface": "sample.library",
+      "title": "No samples captured",
+      "body": "Capture from a camera or apply a seed profile to preload example samples.",
+      "ctaLabel": "Apply SOIC Inspection seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-soic-inspection"
+      }
+    },
+    {
+      "id": "es-trial-empty",
+      "surface": "trial.run",
+      "title": "No trial runs yet",
+      "body": "Run a project to record trial results, or apply a seed profile that includes sample runs.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-results-empty",
+      "surface": "results.dashboard",
+      "title": "No results to show",
+      "body": "Results appear here after running a project. Apply a seed profile to preview.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-errors-log-empty",
+      "surface": "errors.log",
+      "title": "No errors logged",
+      "body": "Runtime errors appear here with a correlation id and stack trace.",
+      "ctaLabel": null,
+      "ctaCommandId": null
+    },
+    {
+      "id": "es-errors-empty",
+      "surface": "errors.drawer",
+      "title": "No recent errors",
+      "body": "Runtime errors appear here with a correlation id you can share with support.",
+      "ctaLabel": null,
+      "ctaCommandId": null
+    },
+    {
+      "id": "es-setup-rules-empty",
+      "surface": "setup.rules",
+      "title": "No rules defined",
+      "body": "Draw a region on the canvas to add a rule, or apply a seed profile to see examples.",
+      "ctaLabel": "Apply Default PCB seed",
+      "ctaCommandId": "cmd:apply-seed-profile",
+      "ctaArgs": {
+        "profileId": "prof-default-pcb"
+      }
+    },
+    {
+      "id": "es-commands-empty",
+      "surface": "commandPalette",
+      "title": "No matching commands",
+      "body": "Try a broader search term or clear filters.",
+      "ctaLabel": null,
+      "ctaCommandId": null
+    }
+  ],
+  "errorScenarios": [
+    {
+      "id": "err-seed-bundle-invalid",
+      "code": "E_SEED_BUNDLE_INVALID",
+      "surface": "seed.orchestrator",
+      "severity": "critical",
+      "message": "Seed bundle failed schema validation.",
+      "hint": "Check .lovable/plans/subtasks/86 SS-10 for the frozen matrix."
+    },
+    {
+      "id": "err-seed-fk-broken",
+      "code": "E_SEED_FK_BROKEN",
+      "surface": "seed.orchestrator",
+      "severity": "critical",
+      "message": "Seed bundle has an unresolved reference.",
+      "hint": "Ensure every projectId/categoryId/cameraId exists in its slice."
+    },
+    {
+      "id": "err-facade-write-failed",
+      "code": "E_FACADE_WRITE_FAILED",
+      "surface": "facade.upsertMany",
+      "severity": "error",
+      "message": "Facade rejected a bulk upsert.",
+      "hint": "Inspect the correlationId in the error drawer."
+    },
+    {
+      "id": "err-camera-unavailable",
+      "code": "E_CAMERA_UNAVAILABLE",
+      "surface": "camera.capture",
+      "severity": "warning",
+      "message": "Camera is not responding.",
+      "hint": "Switch to the webcam fallback (c9) or reconnect."
+    },
+    {
+      "id": "err-storage-quota-exceeded",
+      "code": "E_STORAGE_QUOTA_EXCEEDED",
+      "surface": "storage.write",
+      "severity": "error",
+      "message": "Browser storage quota exceeded.",
+      "hint": "Clear old samples or apply the empty-preview profile."
+    },
+    {
+      "id": "err-ui-craft-demo-preview",
+      "code": "E_UI_CRAFT_DEMO_PREVIEW",
+      "surface": "ai.testing.runner",
+      "severity": "warning",
+      "message": "Sample AI-Testing run flagged 2 of 26 rules under the demo threshold.",
+      "hint": "Plan 87 Step 27 demo scenario: open AI Testing to review the seeded run."
+    }
+  ]
+}

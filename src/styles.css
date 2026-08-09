@@ -1,0 +1,4923 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Theme accent: change ONE value below to reskin every accent surface.
+ *   Purple: oklch(0.62 0.24 300)
+ *   Cyan  : oklch(0.76 0.145 210)
+ *   Emerald: oklch(0.72 0.17 154)
+ *   Amber : oklch(0.80 0.16 82)
+ * The whole app reads --ca-primary; keep this the single source of truth.
+ */
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ * Accepted SS-01 HMI palette: Dark Slate, locked 2026-07-15.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Control Automation HMI tokens (locked v0.20.0) */
+  --color-ca-bg: var(--ca-bg);
+  --color-ca-panel: var(--ca-panel);
+  --color-ca-panel-2: var(--ca-panel-2);
+  --color-ca-border: var(--ca-border);
+  --color-ca-chrome: var(--ca-chrome);
+  --color-ca-chrome-ink: var(--ca-chrome-ink);
+  --color-ca-ink: var(--ca-ink);
+  --color-ca-ink-muted: var(--ca-ink-muted);
+  --color-ca-viewport: var(--ca-viewport);
+  --color-ca-primary: var(--ca-primary);
+  --color-ca-on-primary: var(--ca-on-primary);
+  --color-ca-select: var(--ca-select);
+  --color-ca-ok: var(--ca-ok);
+  --color-ca-ng: var(--ca-ng);
+  --color-ca-warn: var(--ca-warn);
+  --color-ca-focus-ring: var(--ca-focus-ring);
+  --color-ca-focus: var(--ca-focus-ring);
+  --ca-focus: var(--ca-focus-ring);
+  --color-ca-scrim: var(--ca-scrim);
+
+  /* Plan 90 Step 130 - CLI log surface tokens.
+   * These map log severities to Tailwind utilities (text-cli-log-info,
+   * bg-cli-log-line-bg, etc.) so log rows never hardcode hex or
+   * ca-ok/ca-ng/ca-warn (which are HMI status colors, not log severities).
+   * Contrast is validated in the :root (dark) and .dark inverse blocks
+   * against --ca-bg per WCAG AA (>= 4.5:1 for body text). Do NOT reuse
+   * these tokens for buttons or badges; they are tuned for dense mono
+   * log rows on --cli-log-line-bg, not for large UI fills.
+   */
+  --color-cli-log-info: var(--cli-log-info);
+  --color-cli-log-warn: var(--cli-log-warn);
+  --color-cli-log-error: var(--cli-log-error);
+  --color-cli-log-debug: var(--cli-log-debug);
+  --color-cli-log-line-bg: var(--cli-log-line-bg);
+
+  /* HMI elevation / focus tokens - subtle modern depth */
+  --shadow-hmi-panel: 0 1px 2px oklch(0 0 0 / 0.35), 0 0 0 1px var(--ca-border);
+  --shadow-hmi-modal: 0 24px 48px -12px oklch(0 0 0 / 0.6), 0 0 0 1px var(--ca-border);
+  --shadow-hmi-popover: 0 12px 24px -8px oklch(0 0 0 / 0.45), 0 0 0 1px var(--ca-border);
+  --shadow-hmi-glow: 0 0 0 1px var(--ca-primary), 0 0 24px -4px oklch(0.65 0.18 250 / 0.35);
+
+  /* HMI typography size tokens (canonical app UI scale) */
+  --font-display: "Ubuntu", "Poppins", system-ui, sans-serif;
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-hmi:
+    "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-hmi-mono: ui-monospace, "SF Mono", Menlo, Consolas, "JetBrains Mono", monospace;
+  --text-hmi-title: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
+  --text-hmi-header: clamp(1.125rem, 1rem + 0.55vw, 1.4rem);
+  --text-hmi-body: clamp(0.9375rem, 0.88rem + 0.28vw, 1.0625rem);
+  --text-hmi-tile: clamp(0.875rem, 0.82rem + 0.25vw, 1rem);
+  --text-hmi-counter: clamp(1.875rem, 1.4rem + 2.2vw, 2.75rem);
+  --text-hmi-badge: clamp(0.8125rem, 0.78rem + 0.15vw, 0.9375rem);
+  --text-hmi-caption: clamp(0.75rem, 0.72rem + 0.15vw, 0.875rem);
+
+  /* Plan 87 step 2: single spacing scale. Every padding / gap in the app
+     resolves through --space-* (4/8/12/16/24/32) so density can be tuned
+     from one multiplier (--space-scale). The legacy --spacing-hmi-*
+     tokens are kept as aliases so existing utilities keep working. */
+  --space-scale: 1;
+  --space-1: calc(0.25rem * var(--space-scale)); /*  4px */
+  --space-2: calc(0.5rem * var(--space-scale)); /*  8px */
+  --space-3: calc(0.75rem * var(--space-scale)); /* 12px */
+  --space-4: calc(clamp(0.875rem, 0.8rem + 0.35vw, 1.125rem) * var(--space-scale)); /* ~16px */
+  --space-5: calc(clamp(1rem, 0.85rem + 0.6vw, 1.375rem) * var(--space-scale)); /* ~20px */
+  --space-6: calc(clamp(1.125rem, 0.9rem + 0.9vw, 1.75rem) * var(--space-scale)); /* ~24px */
+  --space-8: calc(clamp(1.5rem, 1.1rem + 1.5vw, 2.5rem) * var(--space-scale)); /* ~32px */
+
+  /* Legacy HMI aliases: keep in lockstep with --space-*. Do NOT edit
+     these values directly. Change --space-* or --space-scale instead. */
+  --spacing-hmi-1: var(--space-1);
+  --spacing-hmi-2: var(--space-2);
+  --spacing-hmi-3: var(--space-3);
+  --spacing-hmi-4: var(--space-4);
+  --spacing-hmi-5: var(--space-5);
+  --spacing-hmi-6: var(--space-6);
+  --spacing-hmi-8: var(--space-8);
+  --spacing-hmi-titlebar: 2rem; /* 32px, fixed grid row */
+  --spacing-hmi-actionbar: 2.5rem; /* 40px, fixed grid row */
+  --spacing-hmi-ribbon: 4.5rem; /* 72px, fixed grid row */
+  --spacing-hmi-bottombar: 2.75rem; /* 44px, fixed grid row */
+  /* Step 1 (Plan 88): canonical status-bar height token. StatusBar
+     consumes it as its inline block-size so downstream layouts can
+     reserve/compute against a single source of truth. Kept in sync
+     with the h-8 (2rem) StatusBar footer. */
+  --status-bar-h: 2rem;
+
+  /* Shared item-row padding scale. Every "row-of-items" surface
+     (hero CTAs, secondary buttons, utility chips, list rows, table cells)
+     picks one tier so horizontal + vertical padding stays in lockstep
+     across the app. Values scale by breakpoint so the visual rhythm
+     survives mobile, tablet, and desktop. Consumed by the @utility
+     blocks item-pad-chip / item-pad-btn / item-pad-cta and item-row-gap
+     below - do NOT hardcode px-hmi-* + py-hmi-* per component. */
+  --pad-item-x-sm: var(--space-3);
+  --pad-item-y-sm: var(--space-2);
+  --pad-item-x-md: var(--space-4);
+  --pad-item-y-md: var(--space-2);
+  --pad-item-x-lg: var(--space-4);
+  --pad-item-y-lg: var(--space-3);
+  --gap-item-row: var(--space-2);
+
+  /* Panel chrome tokens (plan 65 step 1). Photoshop-grade dockable panels.
+     panel-titlebar: title-bar row height for every dockable panel.
+     panel-control: hit-target size for chevron / close controls (>= 32px per
+     WCAG 2.5.5 AAA and Command 23 rule 1). panel-icon: icon glyph size inside
+     that control. dock-rail: width of the minimized icon-only rail strip.
+     panel-min: minimum panel width when docked. */
+  --panel-titlebar-height: 2.25rem; /* 36px */
+  --panel-control-size: 2rem; /* 32px hit target */
+  --panel-icon-size: 1.125rem; /* 18px glyph */
+  --panel-dock-rail: 2.5rem; /* 40px icon-only strip */
+  --panel-min-width: 15rem; /* 240px */
+  --panel-focus-ring: 0 0 0 2px var(--ca-primary);
+
+  /* HMI motion tokens (plan 30 step 23) - duration + easing */
+  --motion-instant: 0ms;
+  --motion-fast: 120ms; /* micro-interactions: hover, focus ring */
+  --motion-base: 200ms; /* default: popover, dropdown, toggle */
+  --motion-slow: 320ms; /* modal enter, drawer, route transition */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* accelerate + decelerate */
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1); /* decisive UI moves */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Chip hover/active tokens. Single source of truth for every chip-style
+     control (utility strip chips, QuickAction pills, tag pills). Change
+     values here to retune every chip in one place. */
+  --chip-transition-duration: var(--motion-base);
+  --chip-transition-easing: var(--ease-standard);
+  --chip-transition-props: background-color, border-color, box-shadow, color;
+  --chip-glow-tone: var(--ca-primary); /* per-instance override */
+  --chip-glow-ring-alpha: 35%;
+  --chip-glow-halo-alpha: 60%;
+  --chip-glow-shadow:
+    0 0 0 1px color-mix(in oklab, var(--chip-glow-tone) var(--chip-glow-ring-alpha), transparent),
+    0 10px 24px -14px
+      color-mix(in oklab, var(--chip-glow-tone) var(--chip-glow-halo-alpha), transparent);
+  --chip-active-scale: 0.99;
+
+  /* HMI elevation tokens (plan 30 step 24) - semantic layering */
+  --elevation-0: none;
+  --elevation-1: var(--shadow-hmi-panel); /* resting panels, cards */
+  --elevation-2: var(--shadow-hmi-popover); /* popovers, dropdowns, tooltips */
+  --elevation-3: var(--shadow-hmi-modal); /* modals, drawers */
+  --elevation-4: var(--shadow-hmi-glow); /* focus/selection halo on canvas */
+
+  --editor-topbar-height: 72px;
+  --editor-ribbon-width: 98px;
+  --editor-rail-width: 432px;
+  --editor-status-height: 42px;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* Control Automation HMI palette - Dark Slate (SS-01 accepted variant, 2026) */
+  --ca-bg: oklch(0.145 0.012 248);
+  --ca-panel: oklch(0.205 0.014 248);
+  --ca-panel-2: oklch(0.255 0.017 248);
+  --ca-border: oklch(0.36 0.018 248);
+  --ca-chrome: oklch(0.18 0.015 248);
+  --ca-chrome-ink: oklch(0.98 0.004 248);
+  --ca-ink: oklch(0.965 0.005 248);
+  --ca-ink-muted: oklch(0.735 0.018 248);
+  --ca-viewport: oklch(0.105 0.011 248);
+  --ca-primary: oklch(0.62 0.24 300); /* accent switch: see top of file */
+  --ca-on-primary: oklch(
+    0.985 0.005 300
+  ); /* near-white ink for use on --ca-primary fills; WCAG AA on the accent purple */
+  --ca-select: oklch(0.62 0.24 300);
+  --ca-ok: oklch(0.76 0.17 154);
+  --ca-ng: oklch(0.68 0.22 25);
+  --ca-warn: oklch(0.82 0.16 82);
+  --ca-focus-ring: oklch(0.76 0.145 210);
+  --ca-scrim: oklch(0.08 0.006 248 / 0.72);
+
+  /* Plan 90 Step 130 - CLI log tokens, dark theme.
+   * Contrast against --ca-bg (L=0.145) is >= 4.5:1 for all four
+   * severities (L>=0.68). --cli-log-line-bg is a subtle stripe used
+   * for alternating log rows on top of --ca-panel.
+   */
+  --cli-log-info: oklch(0.82 0.12 210); /* cyan */
+  --cli-log-warn: oklch(0.85 0.15 82); /* amber */
+  --cli-log-error: oklch(0.72 0.2 25); /* red */
+  --cli-log-debug: oklch(0.7 0.02 248); /* muted gray */
+  --cli-log-line-bg: oklch(0.22 0.014 248 / 0.55);
+
+  /* Home workflow tone tokens (icon fg, ring, corner-glow) */
+  --home-tone-cyan-ink: oklch(0.82 0.14 210);
+  --home-tone-cyan-ring: oklch(0.82 0.14 210 / 0.35);
+  --home-tone-cyan-glow: oklch(0.65 0.18 210 / 0.22);
+  --home-tone-amber-ink: oklch(0.82 0.16 82);
+  --home-tone-amber-ring: oklch(0.82 0.16 82 / 0.35);
+  --home-tone-amber-glow: oklch(0.7 0.16 82 / 0.2);
+  --home-tone-green-ink: oklch(0.78 0.17 154);
+  --home-tone-green-ring: oklch(0.78 0.17 154 / 0.35);
+  --home-tone-green-glow: oklch(0.65 0.18 154 / 0.2);
+  --home-tone-violet-ink: oklch(0.75 0.18 300);
+  --home-tone-violet-ring: oklch(0.75 0.18 300 / 0.35);
+  --home-tone-violet-glow: oklch(0.62 0.24 300 / 0.22);
+
+  /* Home layout tokens */
+  --home-card-min-h: clamp(8.5rem, 6.5rem + 8vw, 12rem);
+  --home-card-radius: var(--radius-2xl);
+  --home-icon-radius: var(--radius-xl);
+  --home-card-border: oklch(1 0 0 / 0.08);
+  --home-card-border-hover: oklch(1 0 0 / 0.2);
+  --home-title-size: clamp(1.25rem, 0.95rem + 1.2vw, 1.75rem);
+  --home-hero-size: clamp(2.25rem, 1.4rem + 4.2vw, 4.5rem);
+  /* Section title scales one tier below the workflow card title so the two
+     baselines share a rhythm (same font family, weight, leading, tracking)
+     while the card headings still lead the visual hierarchy. */
+  --home-section-title-size: clamp(1rem, 0.85rem + 0.6vw, 1.25rem);
+
+  /* --------------------------------------------------------------------- */
+  /* Notification / toast tokens (spec/03-error-manage/02-error-architecture/03-notification-colors.md). */
+  /* HSL triples so consumers can compose alpha via hsl(var(--x) / <a>).   */
+  /* Light-mode values.                                                   */
+  /* --------------------------------------------------------------------- */
+  --toast-bg: 220 13% 18%;
+  --toast-fg: 0 0% 98%;
+  --toast-border: 220 13% 25%;
+  --toast-desc: 215 15% 72%;
+  --toast-shadow: 0px 10px 28px rgba(0, 0, 0, 0.4), 0px 2px 8px rgba(0, 0, 0, 0.25);
+  --toast-success-bg: 142 76% 95%;
+  --toast-success-border: 142 76% 80%;
+  --toast-success-fg: 142 76% 25%;
+  --toast-error-bg: 0 72% 96%;
+  --toast-error-border: 0 72% 60%;
+  --toast-error-fg: 0 72% 38%;
+  --toast-warning-bg: 38 92% 95%;
+  --toast-warning-border: 38 92% 75%;
+  --toast-warning-fg: 38 92% 28%;
+  --toast-info-bg: 217 91% 96%;
+  --toast-info-border: 217 91% 78%;
+  --toast-info-fg: 217 91% 32%;
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+
+  /* Dark-mode toast tokens (see :root above for the source of truth). */
+  --toast-bg: 220 13% 14%;
+  --toast-fg: 0 0% 98%;
+  --toast-border: 220 13% 22%;
+  --toast-desc: 215 15% 65%;
+  --toast-success-bg: 120 45% 12%;
+  --toast-success-border: 120 45% 26%;
+  --toast-success-fg: 120 45% 75%;
+  --toast-error-bg: 0 72% 15%;
+  --toast-error-border: 0 72% 30%;
+  --toast-error-fg: 0 72% 82%;
+  --toast-warning-bg: 38 92% 13%;
+  --toast-warning-border: 38 92% 26%;
+  --toast-warning-fg: 38 92% 78%;
+  --toast-info-bg: 217 91% 13%;
+  --toast-info-border: 217 91% 26%;
+  --toast-info-fg: 217 91% 80%;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------
+ * Light theme variant (v3.610.0)
+ * ---------------------------------------------------------------------
+ * The historic app is dark-only. `.light` on <html> (set by
+ * `ThemeController`) opts a session into a paper-white HMI palette
+ * while keeping the accent (`--ca-primary`), status (`--ca-ok`,
+ * `--ca-ng`, `--ca-warn`), and focus tokens visually consistent so
+ * dashboards, badges, and focus rings do not need per-theme forks.
+ *
+ * The translucent sticky Titlebar uses `--ca-chrome` inside a
+ * `color-mix(...transparent)` gradient plus `backdrop-blur-md`; the
+ * light overrides below give it a soft off-white glass surface that
+ * still separates from the content area (via a slightly darker
+ * `--ca-bg`) instead of the near-black chrome used in dark mode.
+ */
+html.light {
+  /* HMI chrome / surfaces */
+  --ca-bg: oklch(0.985 0.003 248);
+  --ca-panel: oklch(0.965 0.005 248);
+  --ca-panel-2: oklch(0.935 0.006 248);
+  --ca-border: oklch(0.86 0.008 248);
+  --ca-chrome: oklch(0.99 0.003 248);
+  --ca-chrome-ink: oklch(0.2 0.02 248);
+  --ca-ink: oklch(0.2 0.02 248);
+  --ca-ink-muted: oklch(0.46 0.02 248);
+  --ca-viewport: oklch(0.955 0.005 248);
+  --ca-scrim: oklch(0.2 0.02 248 / 0.45);
+
+  /* Plan 90 Step 130 - CLI log tokens, light theme.
+   * Contrast against --ca-bg (L=0.985) is >= 4.5:1 for all four
+   * severities (L<=0.5). --cli-log-line-bg is a very subtle stripe
+   * that reads on top of the light --ca-panel.
+   */
+  --cli-log-info: oklch(0.44 0.14 210);
+  --cli-log-warn: oklch(0.48 0.15 82);
+  --cli-log-error: oklch(0.46 0.2 25);
+  --cli-log-debug: oklch(0.46 0.02 248);
+  --cli-log-line-bg: oklch(0.93 0.006 248 / 0.6);
+
+  /* Shadcn semantic tokens flip to light values (mirrors :root) */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.42 0.02 258);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --border: oklch(0.9 0.008 255);
+  --input: oklch(0.9 0.008 255);
+  --ring: oklch(0.62 0.04 258);
+
+  /* Elevation: lighter, tighter shadows for the glass chrome */
+  --shadow-hmi-panel: 0 1px 2px oklch(0.2 0.02 248 / 0.08), 0 0 0 1px var(--ca-border);
+  --shadow-hmi-modal: 0 24px 48px -12px oklch(0.2 0.02 248 / 0.22), 0 0 0 1px var(--ca-border);
+  --shadow-hmi-popover: 0 12px 24px -8px oklch(0.2 0.02 248 / 0.18), 0 0 0 1px var(--ca-border);
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--ca-bg);
+    color: var(--ca-ink);
+    font-family: var(--font-hmi);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: 0;
+  }
+}
+
+@utility hmi-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:
+    "tnum" 1,
+    "cv11" 1;
+  font-family: var(--font-hmi-mono);
+  letter-spacing: -0.01em;
+}
+
+/* Plan 90 Step 131 - CLI log row typography.
+ * Single source of truth for log-row typography across sessions log tail,
+ * IPC SSE tail, doctor output, and any future dense mono log surface.
+ * Consumes Step 130 tokens (--color-cli-log-line-bg, --color-cli-log-*) so
+ * log rows never hardcode hex, never borrow HMI ca-ok/ca-ng/ca-warn (those
+ * are large-fill status colors, not body-text-tuned severity), and never
+ * drift between the four log surfaces. Pair with text-cli-log-info /
+ * text-cli-log-warn / text-cli-log-error / text-cli-log-debug on the row
+ * or a child span to color severity; the utility itself is severity-neutral.
+ */
+@utility log-row {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:
+    "tnum" 1,
+    "zero" 1,
+    "ss01" 1;
+  font-size: 0.8125rem; /* 13px - dense but legible on ca-bg */
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  background-color: var(--color-cli-log-line-bg);
+  color: var(--ca-fg);
+  padding-block: 0.125rem;
+  padding-inline: 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@utility hmi-focus-ring {
+  /* Keyboard focus: 2px outline + soft halo. Both outline and box-shadow
+     paint outside layout so there is zero position shift when focus lands.
+     Halo fades in over 160ms; reduced-motion snaps instantly (see media
+     query below). Consistent across QuickActionButton chips, utility
+     strip chips, and any other opt-in interactive surface. */
+  transition:
+    outline-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+  &:focus-visible {
+    outline: 2px solid var(--ca-focus-ring);
+    outline-offset: 2px;
+    box-shadow:
+      0 0 0 4px color-mix(in oklab, var(--ca-focus-ring) 22%, transparent),
+      0 8px 20px -12px color-mix(in oklab, var(--ca-focus-ring) 55%, transparent);
+    animation: hmi-focus-ring-in 180ms ease-out;
+  }
+}
+
+@keyframes hmi-focus-ring-in {
+  from {
+    outline-color: color-mix(in oklab, var(--ca-focus-ring) 0%, transparent);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  to {
+    outline-color: var(--ca-focus-ring);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hmi-focus-ring:focus-visible {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Plan 87: inset keyboard focus ring for triggers that live inside a
+   parent with `overflow-hidden` (e.g. the top Menubar, tab strips).
+   The global `:focus-visible` fallback uses `outline-offset: 2px`,
+   which gets clipped by the parent and reads as a partial/broken
+   ring. This utility keeps the ring visually attached to the trigger
+   by painting it *inside* the element (negative offset + inner
+   box-shadow halo), so Tab / Shift+Tab / Escape all restore the same
+   stable ring regardless of container clipping.
+
+   The ring color, width, and modality escalation stay in sync with
+   `--ca-focus-ring` and the `html[data-input-modality="keyboard"]`
+   selector at the bottom of this file. */
+@utility hmi-focus-ring-inset {
+  transition:
+    outline-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+  &:focus-visible {
+    outline: 2px solid var(--ca-focus-ring);
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 4px color-mix(in oklab, var(--ca-focus-ring) 18%, transparent);
+  }
+}
+
+/* Keyboard modality: bump to 3px inset ring + brighter halo so Tab /
+   Shift+Tab operators get the same high-contrast treatment as the
+   global fallback, without breaking out of the clipping container. */
+html[data-input-modality="keyboard"] .hmi-focus-ring-inset:focus-visible {
+  outline-width: 3px;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 5px color-mix(in oklab, var(--ca-focus-ring) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hmi-focus-ring-inset:focus-visible {
+    transition: none;
+  }
+}
+
+/* Plan 87: stable scrollbar gutter so opening the mobile drawer (Radix
+   Sheet locks body scroll and toggles the scrollbar) never reflows the
+   page horizontally. `stable` reserves the gutter at all times, so
+   locked/unlocked scroll produces identical layout width. */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Plan 87: mobile drawer stability. The drawer surface is composited on
+   its own layer so slide-in/out animates via transform only (no layout
+   invalidation), and pointer/touch scrolling stays contained inside the
+   drawer rather than chaining to the underlying page. Reduced-motion
+   users get an instant open/close with no transform transition. */
+@utility hmi-drawer-surface {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  contain: layout paint;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hmi-drawer-surface,
+  [data-slot="sheet-content"].hmi-drawer-surface {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Plan 87 step 17: canonical focus-ring tokens. Use `ca-focus-ring` on
+   custom interactive containers (cards, tiles, div-based rows) that
+   fall outside the global `:where(...)` fallback, and `ca-focus-ring-inset`
+   when the parent clips overflow (list rows, sticky headers). Both keep
+   the ring color in sync with `--ca-focus` and the keyboard-modality
+   escalation defined at the bottom of this file.
+
+   v3.908.0 fix: previously these utilities applied `outline` unconditionally,
+   so every element that opted in rendered a permanent teal outline that read
+   as a broken/stuck focus state. Scoped to `:focus-visible` so the ring only
+   appears on keyboard focus, matching the global `:where(...)` fallback. */
+@utility ca-focus-ring {
+  border-radius: 4px;
+  &:focus-visible {
+    outline: 2px solid var(--ca-focus);
+    outline-offset: 2px;
+  }
+}
+
+@utility ca-focus-ring-inset {
+  border-radius: 4px;
+  &:focus-visible {
+    outline: 2px solid var(--ca-focus);
+    outline-offset: -2px;
+  }
+}
+
+@utility hmi-viewport-grid {
+  background-image:
+    linear-gradient(to right, oklch(1 0 0 / 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@utility hmi-surface {
+  background-color: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  border-radius: 0.5rem;
+}
+
+/*
+ * Plan 87 Step 25: motion polish primitives.
+ *
+ * Two utilities that standardize decorative entry animations at 160ms
+ * with an ease-out curve. Both self-suppress under
+ * `prefers-reduced-motion: reduce` so screen readers, vestibular-
+ * sensitive users, and low-power modes see the final state instantly
+ * with no fade or slide. Use `motion-panel-in` for docked/floating
+ * panel reveals (Properties HUD, LayersPanel, drawers) and
+ * `motion-toast-in` for toast entries (sonner classNames.toast).
+ *
+ * Motion-driven components should also gate JS-timed sequences behind
+ * `useReducedMotion()` from `@/hooks/useReducedMotion`.
+ */
+@keyframes ca-motion-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ca-motion-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility motion-panel-in {
+  animation: ca-motion-panel-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility motion-toast-in {
+  animation: ca-motion-toast-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* Responsive scaling of the shared item-row padding tokens.
+   Mobile values live on :root above; sm/lg widen them so every
+   consumer of item-pad-* / item-row-gap breathes at the same
+   breakpoints without each component redeclaring its own
+   sm:/lg: chain. */
+@media (min-width: 640px) {
+  :root {
+    --pad-item-x-sm: var(--space-4);
+    --pad-item-y-sm: var(--space-2);
+    --pad-item-x-md: var(--space-4);
+    --pad-item-y-md: var(--space-3);
+    --pad-item-x-lg: var(--space-6);
+    --pad-item-y-lg: var(--space-3);
+    --gap-item-row: var(--space-3);
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --pad-item-x-sm: var(--space-4);
+    --pad-item-y-sm: var(--space-3);
+    --pad-item-x-md: var(--space-6);
+    --pad-item-y-md: var(--space-3);
+    --pad-item-x-lg: var(--space-8);
+    --pad-item-y-lg: var(--space-4);
+    --gap-item-row: var(--space-4);
+  }
+}
+
+/* Item padding tiers. Pick one per component; never mix ad-hoc
+   px-hmi-* / py-hmi-* on item rows. */
+@utility item-pad-chip {
+  padding: var(--pad-item-y-sm) var(--pad-item-x-sm);
+}
+@utility item-pad-btn {
+  padding: var(--pad-item-y-md) var(--pad-item-x-md);
+}
+@utility item-pad-cta {
+  padding: var(--pad-item-y-lg) var(--pad-item-x-lg);
+}
+@utility item-row-gap {
+  gap: var(--gap-item-row);
+}
+
+/* Shared chip hover/active behavior. Applies the standardized transition
+   timing, easing, and glow (ring + halo) to any chip-style control.
+   Set `--chip-glow-tone` inline (via style) to theme per instance;
+   defaults to --ca-primary. Never re-declare transition-duration or
+   box-shadow at the callsite: change the tokens in :root instead. */
+@utility hmi-chip-hover {
+  transition-property: var(--chip-transition-props);
+  transition-duration: var(--chip-transition-duration);
+  transition-timing-function: var(--chip-transition-easing);
+
+  &:hover {
+    border-color: color-mix(in oklab, var(--chip-glow-tone) 60%, var(--ca-border));
+    box-shadow: var(--chip-glow-shadow);
+  }
+
+  &:active {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--chip-glow-tone) 55%, transparent),
+      0 4px 12px -8px color-mix(in oklab, var(--chip-glow-tone) 70%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hmi-chip-hover {
+    transition: none;
+  }
+}
+
+/* Canonical icon+label inline wrapper. Single source of truth for
+   vertical alignment of every item row (chip, btn, cta). line-height
+   is inherited, so child spans do not need to repeat leading-none. */
+@utility item-inline {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.editor-shell-grid {
+  display: grid;
+  grid-template-rows: var(--editor-topbar-height) 1fr var(--editor-status-height);
+  grid-template-columns: var(--editor-ribbon-width) 1fr var(--editor-rail-width);
+  transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: grid-template-columns;
+}
+
+.editor-shell-grid[data-ribbon-collapsed="true"] {
+  grid-template-columns: 28px 1fr var(--editor-rail-width);
+}
+
+.editor-shell-grid[data-rail-collapsed="true"] {
+  grid-template-columns: var(--editor-ribbon-width) 1fr 28px;
+}
+
+.editor-shell-grid[data-ribbon-collapsed="true"][data-rail-collapsed="true"] {
+  grid-template-columns: 28px 1fr 28px;
+}
+
+.editor-shell-panel-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1) 60ms,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.editor-shell-ribbon[data-collapsed="true"] .editor-shell-panel-content {
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+  transition:
+    opacity 140ms cubic-bezier(0.4, 0, 1, 1),
+    transform 200ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.editor-shell-rail[data-collapsed="true"] .editor-shell-panel-content {
+  opacity: 0;
+  transform: translateX(8px);
+  pointer-events: none;
+  transition:
+    opacity 140ms cubic-bezier(0.4, 0, 1, 1),
+    transform 200ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-shell-grid,
+  .editor-shell-panel-content {
+    transition: none;
+  }
+}
+
+.editor-tool-ribbon-divider {
+  display: block;
+  width: 60%;
+  height: 1px;
+  margin: 4px auto;
+  background: var(--ca-border);
+}
+
+/* Panel chrome (plan 65 step 7). Enforces professional sizing: 36px title
+   bar, 32x32 hit targets, 18px glyphs. Do not override in component files.
+   The `.panel-chrome-control` selector matches every button rendered by
+   PanelChrome.tsx. */
+.panel-chrome-titlebar {
+  min-height: var(--panel-titlebar-height);
+  gap: var(--spacing-hmi-2);
+  touch-action: none;
+  overflow: hidden;
+  min-width: 0;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+.panel-chrome-titlebar:hover {
+  background: color-mix(in oklab, var(--ca-chrome) 86%, var(--ca-primary));
+}
+.panel-chrome-grip {
+  color: var(--ca-ink-muted);
+  cursor: grab;
+  width: 1rem;
+}
+.panel-chrome-grip svg {
+  width: 1rem;
+  height: 1rem;
+}
+.panel-chrome-titlebar:hover .panel-chrome-grip {
+  color: var(--ca-primary);
+}
+.panel-chrome-control {
+  width: var(--panel-control-size);
+  height: var(--panel-control-size);
+  border: 1px solid transparent;
+  color: color-mix(in oklab, var(--ca-chrome-ink) 72%, transparent);
+  position: relative;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+.panel-chrome-control[data-panel-control="close"],
+.panel-chrome-control[data-panel-control="minimize"] {
+  background: color-mix(in oklab, var(--ca-panel-2) 58%, transparent);
+  border-color: color-mix(in oklab, var(--ca-border) 72%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--ca-chrome-ink) 8%, transparent);
+}
+.panel-chrome-control:hover {
+  background: color-mix(in oklab, var(--ca-panel-2) 82%, var(--ca-primary));
+  border-color: color-mix(in oklab, var(--ca-border) 72%, var(--ca-primary));
+  color: var(--ca-chrome-ink);
+}
+.panel-chrome-control:focus-visible {
+  box-shadow: var(--panel-focus-ring);
+  outline: none;
+}
+.panel-chrome-control[data-panel-control="close"]:hover {
+  background: color-mix(in oklab, var(--ca-ng) 34%, var(--ca-panel-2));
+  border-color: color-mix(in oklab, var(--ca-ng) 74%, var(--ca-border));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--ca-chrome-ink) 16%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--ca-ng) 24%, transparent);
+  color: color-mix(in oklab, var(--ca-chrome-ink) 88%, var(--ca-ng));
+}
+.panel-chrome-control[data-panel-control="minimize"]:hover {
+  background: color-mix(in oklab, var(--ca-warn) 18%, var(--ca-panel-2));
+  border-color: color-mix(in oklab, var(--ca-warn) 48%, var(--ca-border));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--ca-chrome-ink) 14%, transparent);
+  color: var(--ca-warn);
+}
+.panel-chrome-control-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+.panel-chrome-control svg {
+  width: var(--panel-icon-size);
+  height: var(--panel-icon-size);
+  stroke-width: 2;
+}
+.panel-chrome-control[data-panel-control="close"] svg,
+.panel-chrome-control[data-panel-control="minimize"] svg {
+  stroke-width: 2.35;
+}
+.panel-chrome-panel-icon svg {
+  width: var(--panel-icon-size);
+  height: var(--panel-icon-size);
+}
+.panel-chrome[data-collapsed="true"] {
+  min-height: var(--panel-titlebar-height);
+}
+
+/* Dock slot (plan 65 step 7). */
+.panel-dock-slot {
+  min-width: var(--panel-min-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-hmi-2);
+  position: relative;
+}
+
+.panel-dock-slot.hidden {
+  display: none;
+}
+
+.panel-dock-slot[data-dock-slot="left"],
+.panel-dock-slot[data-dock-slot="right"] {
+  flex-direction: row;
+  align-items: stretch;
+  flex: 0 0 var(--dock-size, 280px);
+  width: var(--dock-size, 280px);
+}
+/* Left dock hosts the compact vertical Tools toolbox by default. Override
+   the generic panel minimum so the column is a true icon rail. */
+.panel-dock-slot[data-dock-slot="left"] {
+  min-width: 0;
+  flex: 0 0 52px !important;
+  flex-basis: 52px !important;
+  width: 52px !important;
+  max-width: 52px;
+  min-height: 0;
+  gap: 0;
+}
+
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome {
+  border-radius: var(--radius-sm);
+  flex: 0 0 52px;
+  min-width: 0;
+  width: 52px;
+  max-width: 52px;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-dock-slot-column,
+.panel-dock-slot[data-dock-slot="left"] [data-panel-drag-id] {
+  flex: 0 0 52px;
+  gap: 0;
+  max-width: 52px;
+  min-width: 0;
+  width: 52px;
+}
+/* Left dock hosts the compact Tools toolbox. Keep only the collapse control
+   in a 24px title strip so the rail reads as a tool palette, not a window. */
+.panel-dock-slot[data-dock-slot="left"] {
+  --panel-titlebar-height: 1.5rem; /* 24px */
+  --panel-control-size: 1.5rem; /* 24px hit target */
+  --panel-icon-size: 0.875rem; /* 14px glyph */
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-titlebar {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+  min-height: 24px;
+}
+.panel-dock-slot[data-dock-slot="left"] [data-panel-id="tools"] .panel-chrome-titlebar h2,
+.panel-dock-slot[data-dock-slot="left"]
+  [data-panel-id="tools"]
+  .panel-chrome-control[data-panel-control="close"] {
+  display: none;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-titlebar h2 {
+  max-width: none;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-hint,
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-panel-icon {
+  display: none;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-grip {
+  display: none;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-control[data-panel-control="minimize"] {
+  display: none;
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-body {
+  overflow: hidden;
+  width: 50px;
+}
+.panel-dock-slot[data-dock-slot="right"] .panel-chrome-titlebar {
+  padding-left: var(--spacing-hmi-3);
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-chrome-control svg {
+  height: 1rem;
+  width: 1rem;
+}
+.panel-dock-slot[data-dock-slot="top"] {
+  --panel-titlebar-height: 1.75rem;
+  --panel-control-size: 1.5rem;
+  --panel-icon-size: 0.85rem;
+  flex: 0 0 var(--dock-size, 84px);
+  height: var(--dock-size, 84px);
+  min-width: 0;
+}
+.panel-dock-slot[data-dock-slot="bottom"] {
+  flex-direction: column;
+  flex: 0 0 var(--dock-size, 220px);
+  height: var(--dock-size, 220px);
+}
+.panel-dock-slot-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-hmi-2);
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.panel-dock-slot[data-dock-slot="right"] .panel-chrome {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.panel-dock-slot[data-dock-slot="right"] [data-panel-drag-id] {
+  display: flex;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-dock-slot[data-dock-slot="right"] .panel-chrome-body {
+  min-height: 0;
+}
+/* Plan 65 step 27: at <640px the whole workspace stacks vertically, so
+   left / right slots also lay out top-to-bottom and their minimized rail
+   pins to the top edge instead of the outer edge. */
+@media (max-width: 639.98px) {
+  .panel-dock-slot,
+  .panel-dock-slot[data-dock-slot="left"],
+  .panel-dock-slot[data-dock-slot="right"] {
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+    width: auto;
+  }
+  .panel-dock-slot .panel-dock-rail {
+    width: auto;
+    height: var(--panel-dock-rail);
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--ca-border);
+  }
+}
+.panel-dock-slot[data-drop-active="true"] {
+  outline: 2px dashed var(--ca-primary);
+  outline-offset: -2px;
+  background: color-mix(in oklab, var(--ca-primary) 8%, transparent);
+}
+/* Plan 65 step 13: always-visible drop hint while any panel drag is in
+   flight, weaker than the hovered state above so the two stack cleanly. */
+.panel-dock-slot[data-drag-active="true"][data-drop-active="false"] {
+  outline: 1px dashed color-mix(in oklab, var(--ca-primary) 55%, transparent);
+  outline-offset: -2px;
+  min-width: var(--panel-min-width);
+  min-height: calc(var(--panel-titlebar-height) * 2);
+}
+
+.panel-dock-slot[data-dock-slot="left"][data-drag-active="true"][data-drop-active="false"] {
+  min-width: 0;
+}
+/* Plan 67 step 3: strong hover highlight when a direct-drag pointer is over
+   a valid dock target (dnd-kit isOver does not fire for pointer drags). */
+.panel-dock-slot[data-drop-hover="true"] {
+  outline: 2px solid var(--ca-primary);
+  outline-offset: -2px;
+  background: color-mix(in oklab, var(--ca-primary) 14%, transparent);
+  transition:
+    background 120ms ease-out,
+    outline-color 120ms ease-out;
+}
+[data-panel-drag-id][data-dragging="true"] .panel-chrome,
+.panel-floating-window[data-dragging="true"] .panel-chrome {
+  opacity: 0.88;
+  outline: 1px solid var(--ca-primary);
+}
+.panel-dock-rail {
+  width: var(--panel-dock-rail);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-hmi-1);
+  padding: var(--spacing-hmi-1);
+  background: var(--ca-chrome);
+  border-right: 1px solid var(--ca-border);
+}
+/* Plan 65 step 14: horizontal variant for the bottom dock. */
+.panel-dock-rail-horizontal {
+  width: auto;
+  height: var(--panel-dock-rail);
+  flex-direction: row;
+  border-right: none;
+  border-bottom: 1px solid var(--ca-border);
+}
+.panel-dock-slot[data-dock-slot="top"] .panel-dock-rail {
+  width: auto;
+  height: var(--panel-dock-rail);
+  flex-direction: row;
+  border-right: none;
+  border-bottom: 1px solid var(--ca-border);
+}
+.panel-dock-rail-btn {
+  width: calc(var(--panel-dock-rail) - (var(--spacing-hmi-1) * 2));
+  height: calc(var(--panel-dock-rail) - (var(--spacing-hmi-1) * 2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--ca-panel);
+  color: var(--ca-chrome-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.panel-dock-rail-btn:hover {
+  background: var(--ca-panel-2);
+  border-color: var(--ca-border);
+}
+.panel-dock-rail-btn:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+
+/* Plan 65 step 35: dock resize handle. 6px hit target on the inner
+   edge of each dock; hover / active tint keeps it discoverable without
+   drawing a permanent seam. */
+.panel-dock-resize {
+  position: absolute;
+  z-index: 5;
+  background: transparent;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+  touch-action: none;
+}
+.panel-dock-resize:hover,
+.panel-dock-resize:active {
+  background: color-mix(in oklab, var(--ca-primary) 45%, transparent);
+}
+.panel-dock-slot[data-dock-slot="left"] .panel-dock-resize {
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+  cursor: col-resize;
+}
+.panel-dock-slot[data-dock-slot="top"] .panel-dock-resize {
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 6px;
+  cursor: row-resize;
+}
+.panel-dock-slot[data-dock-slot="right"] .panel-dock-resize {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: col-resize;
+}
+.panel-dock-slot[data-dock-slot="bottom"] .panel-dock-resize {
+  left: 0;
+  right: 0;
+  top: -3px;
+  height: 6px;
+  cursor: row-resize;
+}
+@media (max-width: 639.98px) {
+  /* Below the mobile stacking breakpoint the whole workspace stacks
+     vertically, so horizontal resize handles are meaningless. */
+  .panel-dock-slot[data-dock-slot="left"] .panel-dock-resize,
+  .panel-dock-slot[data-dock-slot="right"] .panel-dock-resize {
+    display: none;
+  }
+}
+
+/* Floating window (plan 65 step 7). */
+.panel-floating-window {
+  position: fixed;
+  min-width: var(--panel-min-width);
+  min-height: calc(var(--panel-titlebar-height) * 2);
+  box-shadow: var(--elevation-2);
+  border-radius: var(--radius-md);
+  background: var(--ca-panel);
+  z-index: 60;
+}
+.panel-floating-window[data-dragging="true"] {
+  box-shadow: var(--elevation-3);
+  cursor: grabbing;
+}
+
+.editor-shell-topbar,
+.editor-shell-status {
+  grid-column: 1 / 4;
+}
+
+.editor-shell-ribbon,
+.editor-shell-canvas,
+.editor-shell-rail {
+  min-height: 0;
+}
+
+.editor-shell-ribbon,
+.editor-shell-rail {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-shell-canvas {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.min-viewport-unsupported {
+  display: none;
+}
+
+.editor-topbar-button {
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+.editor-topbar-button svg {
+  width: 14px;
+  height: 14px;
+}
+.editor-topbar-button:hover {
+  background: var(--ca-panel);
+  border-color: var(--ca-primary);
+}
+.editor-topbar-button:focus-visible {
+  outline: 2px solid var(--ca-focus-ring);
+  outline-offset: 2px;
+}
+
+.editor-topbar-button-primary {
+  background: var(--ca-primary);
+  border-color: var(--ca-primary);
+  color: var(--ca-bg);
+}
+
+.editor-topbar-button-primary:hover {
+  background: color-mix(in oklab, var(--ca-primary) 86%, var(--ca-ink));
+  border-color: color-mix(in oklab, var(--ca-primary) 86%, var(--ca-ink));
+}
+
+/* Publish split-button: main action + caret trigger sharing one pill. */
+.editor-topbar-split {
+  display: inline-flex;
+  align-items: stretch;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+.editor-topbar-split > .editor-topbar-button {
+  border-radius: 0;
+  height: 28px;
+}
+.editor-topbar-split > .editor-topbar-button:first-child {
+  border-top-left-radius: var(--radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
+  border-right-width: 0;
+}
+.editor-topbar-split > .editor-topbar-button:last-child {
+  border-top-right-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+  padding: 0 6px;
+  border-left: 1px solid color-mix(in oklab, var(--ca-bg) 30%, transparent);
+}
+
+/* Preview + Publish duo: Preview segment leads the split, Publish primary trails. */
+.editor-topbar-split {
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+}
+.editor-topbar-split > .editor-topbar-segment-button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ca-ink);
+}
+.editor-topbar-split > .editor-topbar-segment-button:first-child {
+  border-top-left-radius: var(--radius-sm);
+  border-bottom-left-radius: var(--radius-sm);
+}
+.editor-topbar-split > .editor-topbar-segment-button:hover {
+  background: var(--ca-panel);
+}
+.editor-topbar-split > .editor-topbar-segment-divider {
+  align-self: center;
+  height: 16px;
+}
+
+.editor-topbar-segment {
+  display: inline-flex;
+  align-items: stretch;
+  height: 28px;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  background: var(--ca-panel-2);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+.editor-topbar-segment-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+  border: 0;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    padding var(--motion-fast) var(--ease-standard);
+}
+.editor-topbar-segment-button:hover {
+  background: var(--ca-panel);
+}
+.editor-topbar-segment-button:focus-visible {
+  outline: 2px solid var(--ca-focus-ring);
+  outline-offset: -2px;
+}
+.editor-topbar-segment-button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.editor-topbar-segment-button[data-emphasis="true"] {
+  color: var(--ca-primary);
+}
+.editor-topbar-segment-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--ca-border);
+  opacity: 0.7;
+}
+
+/* Icon-first hover-expand label: collapses to 0-width via CSS grid,
+   animates open on hover/focus. Keeps hit target stable. */
+.editor-topbar-label {
+  display: inline-grid;
+  grid-template-columns: 0fr;
+  overflow: hidden;
+  transition: grid-template-columns var(--motion-fast) var(--ease-standard);
+}
+.editor-topbar-label > span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.editor-topbar-segment-button:hover .editor-topbar-label,
+.editor-topbar-segment-button:focus-visible .editor-topbar-label,
+.editor-topbar-segment-button[data-emphasis="true"] .editor-topbar-label {
+  grid-template-columns: 1fr;
+}
+.editor-topbar-segment-button:hover .editor-topbar-label > span,
+.editor-topbar-segment-button:focus-visible .editor-topbar-label > span,
+.editor-topbar-segment-button[data-emphasis="true"] .editor-topbar-label > span {
+  opacity: 1;
+  padding-left: 4px;
+}
+
+.editor-topbar-kbd {
+  display: none;
+  align-items: center;
+  gap: 1px;
+  margin-left: 6px;
+  padding: 1px 5px;
+  min-height: 16px;
+  border: 1px solid var(--ca-border);
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--ca-panel) 60%, transparent);
+  color: var(--ca-ink-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.editor-topbar-kbd-sep {
+  margin: 0 1px;
+  opacity: 0.55;
+}
+.editor-topbar-kbd-on-primary {
+  border-color: color-mix(in oklab, var(--ca-bg) 40%, transparent);
+  background: color-mix(in oklab, var(--ca-bg) 18%, transparent);
+  color: color-mix(in oklab, var(--ca-bg) 88%, var(--ca-ink));
+}
+/* Only reveal shortcut chips on hover/focus for icon-first segment buttons.
+   Publish (primary button) still shows its kbd inline at wide widths. */
+.editor-topbar-segment-button .editor-topbar-kbd {
+  display: none;
+}
+@media (min-width: 900px) {
+  .editor-topbar-button .editor-topbar-kbd {
+    display: inline-flex;
+  }
+  .editor-topbar-segment-button:hover .editor-topbar-kbd,
+  .editor-topbar-segment-button:focus-visible .editor-topbar-kbd {
+    display: inline-flex;
+  }
+}
+.editor-shell[data-density="compact"] .editor-topbar-kbd {
+  display: none;
+}
+
+.editor-save-pill {
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  color: var(--ca-ink-muted);
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  font-weight: 700;
+  gap: var(--spacing-hmi-2);
+  min-height: 38px;
+  padding: 0 var(--spacing-hmi-3);
+}
+
+.editor-topbar-tab {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  min-height: 44px;
+  padding: var(--spacing-hmi-2) var(--spacing-hmi-4);
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-body);
+  font-weight: 700;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+.editor-topbar-tab:hover {
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+}
+.editor-topbar-tab:focus-visible {
+  outline: 2px solid var(--ca-focus-ring);
+  outline-offset: 2px;
+}
+
+.editor-topbar-tab-active {
+  background: color-mix(in oklab, var(--ca-primary) 16%, var(--ca-panel-2));
+  border-color: color-mix(in oklab, var(--ca-primary) 62%, var(--ca-border));
+  color: var(--ca-ink);
+}
+
+.editor-tool-ribbon {
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    var(--ca-panel),
+    color-mix(in oklab, var(--ca-panel) 84%, var(--ca-bg))
+  );
+  border-right: 1px solid var(--ca-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  padding: 4px 0;
+  /* Very narrow rails: allow vertical scroll so tiles never clip, and
+     shrink outer padding so the 36px tile always fits its container. */
+  min-width: 50px;
+  width: 50px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  container-type: inline-size;
+}
+
+/* Container-query responsive rail: when the rail column collapses under
+   the standard tile+padding budget, drop side padding to zero so the 36px
+   tile stays fully visible instead of clipping. */
+@container (max-width: 52px) {
+  .editor-tool-ribbon {
+    padding-left: 0;
+    padding-right: 0;
+    gap: 4px;
+  }
+}
+
+.editor-tool-ribbon [data-testid="tool-ribbon-more"] {
+  height: 36px;
+  width: 36px;
+}
+
+.panel-dock-slot[data-dock-slot="top"] .editor-tool-ribbon,
+.panel-dock-slot[data-dock-slot="bottom"] .editor-tool-ribbon {
+  align-items: center;
+  border-right: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--spacing-hmi-1) var(--spacing-hmi-2);
+  gap: var(--spacing-hmi-1);
+}
+
+/* Compact tiles for a floating tools window so a torn-out panel stays a
+   small vertical column instead of stretching to fill its rect. */
+.panel-floating-window .editor-tool-ribbon {
+  border-right: 0;
+  padding: var(--spacing-hmi-1);
+  gap: var(--spacing-hmi-1);
+  /* Hug the tool tiles so the floating window shows no big empty band
+     under the last tile. `height: auto` lets the ribbon collapse to its
+     content while the floating chrome sizes to match. */
+  height: auto;
+  min-height: 0;
+}
+
+.panel-floating-window[data-panel-id="tools"] {
+  /* The Tools toolbox is a single narrow column; the floating chrome
+     should shrink around its content instead of holding a fixed rect
+     inherited from the source dock. */
+  height: auto !important;
+  min-width: 4.5rem;
+  min-height: 0;
+}
+
+.panel-floating-window[data-panel-id="tools"] .panel-chrome {
+  min-width: 0;
+}
+
+.panel-floating-window[data-panel-id="tools"] .panel-chrome-titlebar {
+  gap: 2px;
+  padding-inline: 4px;
+}
+
+.panel-floating-window[data-panel-id="tools"] .panel-chrome-titlebar h2 {
+  min-width: 0;
+  max-width: none;
+}
+
+.panel-floating-window[data-panel-id="tools"] .panel-chrome-body {
+  overflow: hidden;
+}
+
+/* Top-dock ribbon: compact tiles + slimmer "More" so the whole strip
+   fits inside the 68px dock without overflow. */
+.panel-dock-slot[data-dock-slot="top"] .editor-tool-more {
+  height: 40px;
+  width: 48px;
+  gap: 0;
+  font-size: 10px;
+}
+.panel-dock-slot[data-dock-slot="top"] .editor-tool-more svg {
+  height: 1rem;
+  width: 1rem;
+}
+.panel-dock-slot[data-dock-slot="top"] .panel-chrome {
+  border-radius: var(--radius-sm);
+}
+.panel-dock-slot[data-dock-slot="top"] .panel-chrome-titlebar {
+  min-height: var(--panel-titlebar-height);
+  padding-left: var(--spacing-hmi-1);
+  padding-right: var(--spacing-hmi-1);
+  gap: var(--spacing-hmi-1);
+}
+.panel-dock-slot[data-dock-slot="top"] .panel-chrome-titlebar h2 {
+  max-width: 7rem;
+  font-size: 0.75rem;
+}
+
+.editor-tool-more {
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+  display: inline-flex;
+  flex-direction: column;
+  font-size: var(--text-hmi-caption);
+  font-weight: 800;
+  gap: var(--spacing-hmi-1);
+  height: 56px;
+  justify-content: center;
+  width: 56px;
+}
+
+.editor-tool-more:hover {
+  background: color-mix(in oklab, var(--ca-primary) 10%, var(--ca-panel-2));
+  border-color: var(--ca-primary);
+}
+
+.editor-tool-more:focus-visible {
+  outline: 2px solid var(--ca-focus-ring);
+  outline-offset: 2px;
+}
+
+.editor-tool-more svg {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.editor-tool-more-item {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink-muted);
+  cursor: not-allowed;
+  display: flex;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  justify-content: space-between;
+  opacity: 0.65;
+  padding: var(--spacing-hmi-2);
+  width: 100%;
+}
+
+.editor-tool-tile {
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--spacing-hmi-1);
+  justify-content: center;
+  font-size: var(--text-hmi-tile);
+  font-weight: 800;
+  /* Needed so the ::before accent stripe on the selected state can anchor
+     to the tile's left edge without shifting layout. */
+  position: relative;
+  overflow: hidden;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.editor-tool-tile-size-36 {
+  height: 36px;
+  width: 36px;
+}
+.editor-tool-tile-size-40 {
+  height: 40px;
+  width: 40px;
+}
+.editor-tool-tile-size-44 {
+  height: 44px;
+  width: 44px;
+}
+.editor-tool-tile-size-48 {
+  height: 48px;
+  width: 48px;
+}
+.editor-tool-tile-size-56 {
+  height: 56px;
+  width: 56px;
+}
+.editor-tool-tile-size-64 {
+  height: 64px;
+  width: 64px;
+}
+.editor-tool-tile-size-72 {
+  height: 72px;
+  width: 72px;
+}
+
+/* Icon-only tile: hides the label, centers the glyph, and keeps the
+   square hit area. Used for the compact left-rail Tools palette so the
+   panel hugs the icons. The label remains as aria-label / native title
+   so hover tooltips still surface it. */
+.editor-tool-tile-compact {
+  gap: 0;
+  padding: 0;
+  flex: 0 0 auto;
+}
+.editor-tool-tile-compact > span {
+  height: 18px;
+  width: 18px;
+}
+.editor-tool-tile-compact svg {
+  height: 18px;
+  width: 18px;
+}
+
+/* Subtle divider between logical tool groups in the left rail. Renders as a
+   short hairline centered under a group of tiles to communicate grouping
+   without adding heavy chrome. */
+.editor-tool-group-divider {
+  align-self: stretch;
+  height: 1px;
+  margin: 4px 8px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in oklab, var(--ca-border) 80%, transparent) 20%,
+    color-mix(in oklab, var(--ca-border) 80%, transparent) 80%,
+    transparent
+  );
+  border: 0;
+  pointer-events: none;
+}
+
+.editor-tool-tile:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ca-primary) 10%, var(--ca-panel-2));
+  border-color: var(--ca-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ca-primary) 55%, transparent);
+}
+
+.editor-tool-tile-selected {
+  background: color-mix(in oklab, var(--ca-primary) 22%, var(--ca-panel-2));
+  border-color: var(--ca-primary);
+  color: var(--ca-ink);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--ca-primary) 70%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--ca-primary) 45%, transparent),
+    0 6px 16px -8px color-mix(in oklab, var(--ca-primary) 55%, transparent);
+}
+
+/* Accent stripe on the leading edge of the armed tool tile. Renders as a
+   thin vertical bar so operators can spot the active tool instantly, even
+   in peripheral vision, without relying on subtle background tint alone. */
+.editor-tool-tile-selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(
+    180deg,
+    var(--ca-primary),
+    color-mix(in oklab, var(--ca-primary) 60%, var(--ca-select))
+  );
+  box-shadow: 0 0 8px color-mix(in oklab, var(--ca-primary) 70%, transparent);
+  pointer-events: none;
+}
+
+/* Top-docked / horizontal ribbon: flip the stripe to the bottom edge so it
+   still reads as "armed" without colliding with the tile's icon. */
+.panel-dock-slot[data-dock-slot="top"] .editor-tool-tile-selected::before,
+.panel-dock-slot[data-dock-slot="bottom"] .editor-tool-tile-selected::before {
+  left: 4px;
+  right: 4px;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(
+    90deg,
+    var(--ca-primary),
+    color-mix(in oklab, var(--ca-primary) 60%, var(--ca-select))
+  );
+}
+
+.editor-rail-header {
+  align-items: center;
+  border-bottom: 1px solid var(--ca-border);
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  min-height: 58px;
+  /* Reserve room on the left for the rail collapse toggle (22px @ left:4px). */
+  padding: 0 var(--spacing-hmi-4) 0 36px;
+  font-size: var(--text-hmi-header);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.editor-rail-count {
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  color: var(--ca-ink-muted);
+  font-family: var(--font-hmi-mono);
+  font-size: var(--text-hmi-badge);
+  padding: var(--spacing-hmi-1) var(--spacing-hmi-2);
+}
+
+.editor-ruleset-bar {
+  align-items: center;
+  background: var(--ca-panel-2);
+  border-bottom: 1px solid var(--ca-border);
+  display: grid;
+  gap: var(--spacing-hmi-3);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: var(--spacing-hmi-3) var(--spacing-hmi-4);
+}
+
+.editor-ruleset-button {
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  color: var(--ca-ink);
+  display: inline-flex;
+  font-size: var(--text-hmi-body);
+  font-weight: 700;
+  gap: var(--spacing-hmi-2);
+  min-height: 40px;
+  padding: 0 var(--spacing-hmi-3);
+}
+
+.editor-ruleset-button:hover {
+  background: var(--ca-panel);
+  border-color: var(--ca-primary);
+}
+
+.editor-rule-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3px;
+  min-height: 34px;
+  padding: 3px 6px 3px 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  position: relative;
+  container-type: inline-size;
+
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+/* Drop indicators for layer drag-and-drop. `-before` and `-after` render a
+   crisp 2px bar hugging the row edge; `-into` outlines the whole row so it
+   is visually distinct from an adjacency drop. */
+.editor-rule-row-drop-before::before,
+.editor-rule-row-drop-after::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 2px;
+  background: var(--ca-select);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ca-select) 40%, transparent);
+}
+.editor-rule-row-drop-before::before {
+  top: -1px;
+}
+.editor-rule-row-drop-after::after {
+  bottom: -1px;
+}
+.editor-rule-row-drop-into {
+  outline: 2px solid var(--ca-select);
+  outline-offset: -2px;
+  background: color-mix(in oklab, var(--ca-select) 10%, transparent);
+}
+
+/* v3.976: drag handle is a pure overlay. It no longer participates in the
+   row's flex layout, so it cannot push content right or reserve a gutter
+   when the row is idle. Absolute-positioned over the left edge, hidden
+   until the row is hovered / focused / selected. */
+.editor-rule-row [data-layer-drag-handle] {
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 20px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.35;
+  pointer-events: auto;
+  cursor: grab;
+  color: var(--ca-ink-muted);
+  z-index: 2;
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.editor-rule-row [data-layer-drag-handle]:active {
+  cursor: grabbing;
+}
+.editor-rule-row [data-layer-drag-handle] svg {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+}
+.editor-rule-row:hover [data-layer-drag-handle],
+.editor-rule-row:focus-within [data-layer-drag-handle],
+.editor-rule-row[data-focused="true"] [data-layer-drag-handle],
+.editor-rule-row[data-selected="true"] [data-layer-drag-handle] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Plan 87 step 15: left accent bar signals hover/selected state at a
+   glance without adding to the row's horizontal footprint. Kept behind
+   ::before so it never intercepts pointer events. */
+.editor-rule-row::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background var(--motion-fast) var(--ease-standard);
+  pointer-events: none;
+}
+
+.editor-rule-row:hover {
+  background: color-mix(in oklab, var(--ca-panel-2) 72%, var(--ca-panel));
+}
+
+.editor-rule-row:hover::before {
+  background: color-mix(in oklab, var(--ca-ink-muted) 40%, transparent);
+}
+
+/* Keyboard-focused row (roving tabindex owner) gets an inset focus ring
+   so it is visible even when not selected. Complements the button's own
+   focus-visible outline. */
+.editor-rule-row[data-focused="true"] {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ca-focus) 55%, transparent);
+}
+
+.editor-rule-row-selected {
+  background: color-mix(in oklab, var(--ca-select) 12%, var(--ca-panel-2));
+  border-color: color-mix(in oklab, var(--ca-primary) 74%, var(--ca-border));
+  outline: 0;
+}
+
+.editor-rule-row-selected::before {
+  background: var(--ca-primary);
+}
+
+.editor-rule-row-main {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 1px 2px;
+  text-align: left;
+}
+
+.editor-rule-kind-badge {
+  align-items: center;
+  background: color-mix(in oklab, var(--kind-color, var(--ca-select)) 22%, var(--ca-bg));
+  border: 1px solid color-mix(in oklab, var(--kind-color, var(--ca-select)) 65%, var(--ca-border));
+  border-radius: var(--radius-sm);
+  color: var(--kind-color, var(--ca-ink));
+  display: inline-flex;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.editor-rule-kind-badge svg {
+  height: 15px;
+  width: 15px;
+}
+
+.editor-rule-name {
+  color: var(--ca-ink);
+  display: block;
+  font-size: var(--text-hmi-body);
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-rule-meta {
+  color: var(--ca-ink-muted);
+  display: block;
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-rule-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 1px;
+  margin-left: auto;
+  container-type: inline-size;
+}
+
+.editor-rule-icon {
+  display: grid;
+  height: 20px;
+  place-items: center;
+  width: 20px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink-muted);
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.editor-rule-icon svg {
+  height: 12px;
+  width: 12px;
+}
+
+/* Narrow rows: shrink action buttons so rule name has room and rows stay aligned */
+@container (max-width: 260px) {
+  .editor-rule-row .editor-rule-icon,
+  .editor-rule-actions .editor-rule-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .editor-rule-row .editor-rule-icon svg,
+  .editor-rule-actions .editor-rule-icon svg {
+    width: 11px;
+    height: 11px;
+  }
+}
+
+/* v3.977: order badge is a leading overlay pinned to the row's left edge
+   so it does not reserve flex width and cannot push the rule content
+   (kind icon + name) further right. Row-main now anchors at the same
+   left offset whether or not a badge is present, matching the section
+   header gutter and the base row grid. */
+.editor-rule-order-badge {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 76%, var(--ca-panel));
+  border: 1px solid color-mix(in oklab, var(--ca-border) 78%, transparent);
+  border-radius: 4px;
+  color: var(--ca-ink);
+  display: inline-flex;
+  font-family: var(--font-hmi-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  height: 18px;
+  min-width: 20px;
+  padding: 0 4px;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.92;
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.editor-rule-row:hover .editor-rule-order-badge,
+.editor-rule-row:focus-within .editor-rule-order-badge,
+.editor-rule-row[data-focused="true"] .editor-rule-order-badge,
+.editor-rule-row[data-selected="true"] .editor-rule-order-badge {
+  opacity: 1;
+}
+/* v3.979: hover/focus/selected must NOT reposition the badge. Geometry is
+   locked in the base rule (top:50%, translateY(-50%)); only color/opacity
+   changes are allowed. Repositioning to top-left was read as the row
+   "gluing"/sliding right on hover. */
+.editor-rule-row:hover .editor-rule-order-badge,
+.editor-rule-row:focus-within .editor-rule-order-badge,
+.editor-rule-row[data-focused="true"] .editor-rule-order-badge,
+.editor-rule-row[data-selected="true"] .editor-rule-order-badge {
+  border-color: color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
+  color: var(--ca-ink);
+}
+
+.editor-rule-icon:hover {
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+}
+
+.editor-rule-icon-danger:hover {
+  color: var(--ca-ng);
+}
+
+.editor-layers-header {
+  align-items: center;
+  border-bottom: 1px solid var(--ca-border);
+  color: var(--ca-ink-muted);
+  display: flex;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  justify-content: space-between;
+  letter-spacing: 0.04em;
+  min-height: 26px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.editor-layer-section-head {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 82%, var(--ca-panel));
+  border-bottom: 1px solid var(--ca-border);
+  color: var(--ca-ink-muted);
+  display: flex;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  gap: var(--spacing-hmi-1);
+  justify-content: space-between;
+  letter-spacing: 0.04em;
+  min-height: 24px;
+  padding: 2px 8px 2px 6px;
+  position: sticky;
+  text-transform: uppercase;
+  top: 0;
+  z-index: 1;
+}
+
+.editor-layer-section-head svg {
+  height: 12px;
+  width: 12px;
+}
+
+.editor-layer-group-row {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 42%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent);
+  color: var(--ca-ink);
+  display: flex;
+  font-size: var(--text-hmi-caption);
+  gap: var(--spacing-hmi-1);
+  min-height: 30px;
+  padding: 3px 8px 3px 12px;
+}
+
+.inspector-tabbar-row {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-chrome) 54%, transparent);
+  border-bottom: 1px solid var(--ca-border);
+  display: flex;
+  gap: 0;
+  min-height: 28px;
+  padding: 2px 8px 2px 12px;
+}
+
+.inspector-tabbar-label {
+  align-items: baseline;
+  color: var(--ca-ink-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  gap: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inspector-tabbar-sep {
+  color: color-mix(in oklab, var(--ca-ink-muted) 60%, transparent);
+  font-weight: 500;
+}
+
+/* Inline underlined tabs mounted inside the panel titlebar (v3.965.0).
+   Replaces the previous stacked title + segmented pill row so the
+   Rules/Properties/Preview inspector uses a single ~32px header band. */
+.inspector-tabs-inline-mount {
+  gap: 0;
+}
+
+.inspector-tabs-inline {
+  align-items: stretch;
+  display: inline-flex;
+  gap: 2px;
+  height: 100%;
+  min-width: 0;
+}
+
+.inspector-tab-underline {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: color-mix(in oklab, var(--ca-ink) 55%, transparent);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-hmi-display, "Ubuntu", sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  height: 100%;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  padding: 0 10px;
+  position: relative;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+
+.inspector-tab-underline:hover {
+  color: color-mix(in oklab, var(--ca-ink) 85%, transparent);
+}
+
+.inspector-tab-underline[data-active="true"] {
+  color: var(--ca-ink);
+  border-bottom-color: var(--ca-primary);
+  box-shadow: 0 -1px 6px -2px color-mix(in oklab, var(--ca-primary) 60%, transparent);
+  font-weight: 600;
+}
+
+.inspector-tab-underline-label {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Legacy pill classes kept for other tab renderers (unused for rules panel). */
+.inspector-tabbar-pills {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 60%, var(--ca-panel));
+  border: 1px solid color-mix(in oklab, var(--ca-border) 70%, transparent);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+}
+
+.inspector-tab-pill {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--ca-ink-muted);
+  display: inline-flex;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  height: 22px;
+  justify-content: center;
+  padding-inline: 10px;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.inspector-tab-pill:hover {
+  color: var(--ca-ink);
+}
+
+.inspector-tab-pill[data-active="true"] {
+  background: color-mix(in oklab, var(--ca-primary) 22%, var(--ca-panel));
+  color: var(--ca-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
+}
+
+.inspector-tab {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink-muted);
+  display: inline-flex;
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  height: 26px;
+  justify-content: center;
+  min-width: 0;
+  padding-inline: 4px;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.inspector-tab:hover {
+  color: var(--ca-ink);
+}
+
+.inspector-tab[data-active="true"] {
+  background: color-mix(in oklab, var(--ca-panel) 88%, var(--ca-primary));
+  border-color: color-mix(in oklab, var(--ca-primary) 42%, var(--ca-border));
+  color: var(--ca-ink);
+}
+
+/* Unified fancy scrollbar for editor scroll containers. */
+.editor-scroll-fancy {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--ca-primary) 45%, transparent) transparent;
+}
+.editor-scroll-fancy::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.editor-scroll-fancy::-webkit-scrollbar-track {
+  background: transparent;
+}
+.editor-scroll-fancy::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--ca-primary) 40%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.editor-scroll-fancy::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--ca-primary) 65%, transparent);
+  background-clip: padding-box;
+}
+.editor-scroll-fancy::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.editor-canvas-wrap {
+  background: var(--ca-viewport);
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.editor-canvas-hud {
+  align-items: center;
+  backdrop-filter: blur(12px);
+  background: color-mix(in oklab, var(--ca-panel) 82%, transparent);
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  color: var(--ca-ink);
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  font-weight: 800;
+  gap: var(--spacing-hmi-2);
+  left: var(--spacing-hmi-4);
+  min-height: 36px;
+  padding: 0 var(--spacing-hmi-2);
+  position: absolute;
+  top: var(--spacing-hmi-4);
+}
+
+.editor-canvas-hud-secondary {
+  color: var(--ca-ink-muted);
+  font-family: var(--font-hmi-mono);
+  font-size: var(--text-hmi-badge);
+}
+
+.editor-canvas-zoom {
+  bottom: var(--spacing-hmi-4);
+  left: var(--spacing-hmi-4);
+  top: auto;
+}
+
+.editor-canvas-zoom-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-hmi-mono);
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  height: 30px;
+  justify-content: center;
+  min-width: 34px;
+  padding: 0 var(--spacing-hmi-2);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.editor-canvas-zoom-btn:hover {
+  background: color-mix(in oklab, var(--ca-primary) 20%, transparent);
+  border-color: var(--ca-primary);
+}
+.editor-canvas-zoom-btn:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+.editor-canvas-zoom-reset {
+  min-width: 56px;
+}
+
+.editor-canvas-sample {
+  bottom: var(--spacing-hmi-4);
+  right: var(--spacing-hmi-4);
+  top: auto;
+  left: auto;
+  gap: var(--spacing-hmi-1);
+  max-width: calc(100% - 12rem);
+}
+.editor-canvas-sample-trigger {
+  max-width: 14rem;
+  min-width: 10rem;
+  padding-right: var(--spacing-hmi-2);
+}
+
+.editor-canvas-sample-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-canvas-menu {
+  background: color-mix(in oklab, var(--ca-panel) 98%, transparent);
+  border-color: var(--ca-border);
+  box-shadow: var(--elevation-2);
+  color: var(--ca-ink);
+  min-width: 14rem;
+}
+
+.editor-canvas-menu-item {
+  color: var(--ca-ink);
+  font-family: var(--font-hmi-mono);
+  font-size: var(--text-hmi-caption);
+}
+
+.editor-canvas-menu-item:focus {
+  background: color-mix(in oklab, var(--ca-primary) 24%, var(--ca-panel-2));
+  color: var(--ca-ink);
+}
+
+.editor-canvas-focus-popover {
+  align-items: stretch;
+  background: color-mix(in oklab, var(--ca-panel) 96%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  bottom: calc(100% + var(--spacing-hmi-2));
+  color: var(--ca-ink);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-hmi-badge);
+  gap: var(--spacing-hmi-2);
+  padding: var(--spacing-hmi-2);
+  position: absolute;
+  right: 0;
+  width: 240px;
+  z-index: 3;
+}
+.editor-canvas-focus-row {
+  align-items: center;
+  display: grid;
+  gap: var(--spacing-hmi-2);
+  grid-template-columns: 90px 1fr 40px;
+}
+.editor-canvas-focus-row:has(> input[type="checkbox"]) {
+  grid-template-columns: 18px 1fr;
+}
+.editor-canvas-focus-value {
+  color: var(--ca-ink-muted);
+  font-family: var(--font-hmi-mono);
+  text-align: right;
+}
+
+.editor-canvas-focus-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-hmi-1);
+}
+.editor-canvas-focus-preset-btn {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 90%, transparent);
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 var(--spacing-hmi-2);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+.editor-canvas-focus-preset-btn:hover {
+  background: color-mix(in oklab, var(--ca-select) 18%, var(--ca-panel-2));
+  border-color: var(--ca-select);
+}
+.editor-canvas-focus-preset-btn:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+.editor-canvas-focus-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.editor-canvas-focus-reset-btn {
+  background: transparent;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink-muted);
+  cursor: pointer;
+  font-size: var(--text-hmi-badge);
+  min-height: 26px;
+  padding: 0 var(--spacing-hmi-3);
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.editor-canvas-focus-reset-btn:hover {
+  border-color: var(--ca-select);
+  color: var(--ca-ink);
+}
+.editor-canvas-focus-reset-btn:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+
+.editor-canvas-focus-modes {
+  align-items: center;
+  display: grid;
+  gap: var(--spacing-hmi-1);
+}
+.editor-canvas-focus-modes-label {
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-badge);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.editor-canvas-focus-modes-btns {
+  display: grid;
+  gap: var(--spacing-hmi-1);
+  grid-template-columns: repeat(3, 1fr);
+}
+.editor-canvas-focus-mode-btn {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 90%, transparent);
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 var(--spacing-hmi-2);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.editor-canvas-focus-mode-btn:hover {
+  border-color: var(--ca-select);
+}
+.editor-canvas-focus-mode-btn.is-active {
+  background: color-mix(in oklab, var(--ca-select) 26%, var(--ca-panel-2));
+  border-color: var(--ca-select);
+  color: var(--ca-ink);
+}
+.editor-canvas-focus-mode-btn:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+
+.editor-preview-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-hmi-2);
+  border-bottom: 1px solid var(--ca-border);
+  background: color-mix(in oklab, var(--ca-panel) 92%, transparent);
+  padding: var(--spacing-hmi-3);
+}
+.inspector-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--ca-border);
+}
+.inspector-section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-hmi-1);
+  width: 100%;
+  /* Compact CAD Toolbar: tighter left padding so section titles align
+     with panel body content instead of feeling like a separate island. */
+  padding: 6px var(--spacing-hmi-2) 6px var(--spacing-hmi-2);
+  background: color-mix(in oklab, var(--ca-panel) 96%, transparent);
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  border: 0;
+}
+.inspector-section-head:hover {
+  background: color-mix(in oklab, var(--ca-panel) 88%, var(--ca-ink) 12%);
+}
+.inspector-section-chevron {
+  display: inline-block;
+  transition: transform 120ms ease;
+  color: var(--ca-ink-muted);
+  font-size: 12px;
+  width: 12px;
+}
+.inspector-section-chevron[data-open="true"] {
+  transform: rotate(90deg);
+}
+.inspector-section-title {
+  flex: 1 1 auto;
+}
+.inspector-section-body {
+  display: flex;
+  flex-direction: column;
+}
+.inspector-section[data-open="false"] > .inspector-section-body {
+  display: none;
+}
+/* Legacy inspector-section-toolbar (Expand/Collapse all row). Kept for
+   the palette command surface but no longer rendered in RightRail; the
+   Compact CAD Toolbar theme folds these into the ⋯ menu on
+   RulesRailHeader. */
+.inspector-section-toolbar {
+  display: flex;
+  gap: var(--spacing-hmi-2);
+  padding: var(--spacing-hmi-2) var(--spacing-hmi-3);
+  border-bottom: 1px solid var(--ca-border);
+  background: color-mix(in oklab, var(--ca-panel) 96%, transparent);
+}
+.inspector-section-toolbar-button {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  font-size: var(--text-hmi-caption);
+  color: var(--ca-ink-muted);
+  background: transparent;
+  border: 1px solid var(--ca-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.inspector-section-toolbar-button:hover {
+  color: var(--ca-ink);
+  background: color-mix(in oklab, var(--ca-panel) 88%, var(--ca-ink) 12%);
+}
+
+/* Compact CAD Toolbar: dense 28px rail header (RulesRailHeader). */
+.rules-rail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-hmi-2);
+  min-height: 28px;
+  padding: 2px 6px 2px 10px;
+  border-bottom: 1px solid var(--ca-border);
+  background: color-mix(in oklab, var(--ca-panel) 96%, transparent);
+}
+.rules-rail-count {
+  font-family: var(--font-hmi-mono);
+  font-size: var(--text-hmi-caption);
+  letter-spacing: 0.04em;
+  color: var(--ca-ink-muted);
+  text-transform: uppercase;
+}
+.rules-rail-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--ca-ink-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+.rules-rail-menu-trigger:hover,
+.rules-rail-menu-trigger[data-state="open"] {
+  color: var(--ca-ink);
+  border-color: var(--ca-border);
+  background: color-mix(in oklab, var(--ca-panel) 88%, var(--ca-ink) 12%);
+}
+
+/* Plan 88 step 3: right-rail collapsible panel primitive */
+.rail-panel-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+}
+.rail-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-hmi-2);
+  min-height: 28px;
+  padding: 2px var(--spacing-hmi-3);
+  background: color-mix(in oklab, var(--ca-panel) 92%, var(--ca-ink) 8%);
+  border-bottom: 1px solid var(--ca-border);
+}
+.rail-panel-head-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 1px 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+  text-align: left;
+}
+.rail-panel-chevron {
+  transition: transform 160ms ease;
+  flex: 0 0 auto;
+  color: var(--ca-ink-muted);
+}
+.rail-panel-chevron[data-open="true"] {
+  transform: rotate(90deg);
+}
+.rail-panel-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rail-panel-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.rail-panel-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ca-ink-muted);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+.rail-panel-icon-button:hover {
+  color: var(--ca-ink);
+  background: color-mix(in oklab, var(--ca-panel) 82%, var(--ca-ink) 18%);
+  border-color: var(--ca-border);
+}
+.rail-panel-body-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  min-width: 0;
+  overflow: hidden;
+  transition: grid-template-rows 160ms ease;
+}
+.rail-panel-section[data-open="false"] > .rail-panel-body-wrap {
+  grid-template-rows: 0fr;
+}
+.rail-panel-body {
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-panel-chevron,
+  .rail-panel-icon-button,
+  .rail-panel-body-wrap {
+    transition: none;
+  }
+}
+
+/* Plan 88 step 6: nested rail-panel-section visual hierarchy. When a
+   .rail-panel-section is rendered inside another .rail-panel-body
+   (Properties -> Bounds/Acceptance/...), demote the child head so parent
+   and child are visually distinct and remove the doubled 1px seam where
+   the parent body meets the first child's top border. */
+.rail-panel-body .rail-panel-section {
+  border-bottom: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent 40%);
+  background: transparent;
+}
+.rail-panel-body .rail-panel-section:last-child {
+  border-bottom: 0;
+}
+.rail-panel-body .rail-panel-head {
+  padding: 2px var(--spacing-hmi-3);
+  background: transparent;
+  border-bottom: 1px dashed color-mix(in oklab, var(--ca-border) 55%, transparent 45%);
+}
+.rail-panel-body .rail-panel-section[data-open="false"] > .rail-panel-head {
+  border-bottom-style: solid;
+  border-bottom-color: color-mix(in oklab, var(--ca-border) 40%, transparent 60%);
+}
+.rail-panel-body .rail-panel-head-toggle {
+  font-weight: 500;
+  color: var(--ca-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: calc(var(--text-hmi-caption) - 1px);
+}
+.rail-panel-body .rail-panel-section[data-open="true"] > .rail-panel-head .rail-panel-head-toggle {
+  color: var(--ca-ink);
+}
+
+/* v3.941.0: unified right-rail density. `data-density` on `.right-rail`
+   drives padding, header heights, and icon sizing across every panel
+   inside the rail (rules list, inspector tabs, properties sub-panels)
+   so users get one knob instead of per-panel tweaks. The comfortable
+   variant is the existing default; compact tightens the same tokens
+   without touching layout structure. */
+.right-rail[data-density="compact"] .rail-panel-head {
+  padding: 2px var(--spacing-hmi-2);
+}
+.right-rail[data-density="compact"] .rail-panel-body .rail-panel-head {
+  padding: 1px var(--spacing-hmi-2) 1px calc(var(--spacing-hmi-2) + 6px);
+}
+.right-rail[data-density="compact"] .rail-panel-head-toggle {
+  font-size: calc(var(--text-hmi-caption) - 1px);
+  padding: 1px 0;
+  gap: 4px;
+}
+.right-rail[data-density="compact"] .rail-panel-icon-button {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+.right-rail[data-density="compact"] .rail-panel-icon-button svg {
+  width: 10px;
+  height: 10px;
+}
+.right-rail[data-density="compact"] .rail-panel-chevron {
+  width: 10px;
+  height: 10px;
+}
+.right-rail[data-density="compact"] .rail-panel-head-actions {
+  gap: 1px;
+}
+.right-rail[data-density="compact"] .rail-panel-body {
+  font-size: calc(var(--text-hmi-body) - 1px);
+}
+.right-rail[data-density="compact"] .editor-layers-toolbar {
+  padding: 2px var(--spacing-hmi-2);
+  gap: 2px;
+}
+.right-rail[data-density="compact"] .editor-rule-icon {
+  width: 20px;
+  height: 20px;
+}
+.right-rail[data-density="compact"] .editor-rule-icon svg {
+  width: 11px;
+  height: 11px;
+}
+.right-rail[data-density="compact"] .editor-rule-row {
+  min-height: 30px;
+  /* v3.990: left padding bumped to 10px so the rule icon has breathing
+     room from the row border (matches base row's 12px minus the tighter
+     compact gap). Prevents the icon looking glued to the edge. */
+  padding: 2px 5px 2px 10px;
+}
+
+.right-rail[data-density="compact"] .editor-rule-kind-badge {
+  height: 20px;
+  width: 20px;
+}
+.right-rail[data-density="compact"] .editor-rule-kind-badge svg {
+  height: 13px;
+  width: 13px;
+}
+.right-rail[data-density="compact"] .editor-rule-meta {
+  display: none;
+}
+
+/* v3.942.0: extend density scoping to the whole editor shell so the
+   left tools rail, editor top bar, and any floating (torn-out) panels
+   pick up the same Compact/Comfortable knob as the right rail. Stamped
+   `data-density` on `.editor-shell` cascades to descendants and to
+   floating windows via a matching attribute on `.panel-floating-window`. */
+.editor-shell[data-density="compact"] [data-testid="tools-palette"] {
+  width: 32px;
+  padding-block: 2px;
+  gap: 1px;
+}
+.editor-shell[data-density="compact"] [data-testid="tools-palette"] button {
+  width: 28px;
+  height: 28px;
+}
+.editor-shell[data-density="compact"] [data-testid="tools-palette"] svg {
+  width: 14px;
+  height: 14px;
+}
+.editor-shell[data-density="compact"] .editor-shell-topbar {
+  --editor-topbar-height: 44px;
+}
+.editor-shell[data-density="compact"] .editor-topbar-button {
+  height: 26px;
+  padding-inline: 8px;
+  font-size: calc(var(--text-hmi-body) - 1px);
+  gap: 4px;
+}
+.editor-shell[data-density="compact"] .editor-topbar-button svg {
+  width: 14px;
+  height: 14px;
+}
+.editor-shell[data-density="compact"] .editor-save-pill {
+  font-size: calc(var(--text-hmi-caption));
+  padding: 1px 6px;
+}
+.panel-floating-window[data-density="compact"] .panel-chrome {
+  font-size: calc(var(--text-hmi-body) - 1px);
+}
+.panel-floating-window[data-density="compact"] .rail-panel-head {
+  padding: 2px var(--spacing-hmi-2);
+}
+.panel-floating-window[data-density="compact"] .rail-panel-icon-button {
+  width: 16px;
+  height: 16px;
+}
+.panel-floating-window[data-density="compact"] .rail-panel-icon-button svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* v3.949.0: floating Rules panel compaction. The floating window frame
+   already provides collapse/close; per-section eye+X buttons are noise
+   inside it. Also tighten the inspector search/chip strip and toolbar. */
+.panel-floating-window .rail-panel-head-actions .rail-panel-icon-button {
+  display: none;
+}
+.panel-floating-window .rail-panel-head {
+  padding: 2px 6px;
+  min-height: 22px;
+}
+.panel-floating-window .rail-panel-title {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ca-ink-muted);
+}
+.panel-floating-window .rail-panel-body {
+  padding: 0;
+}
+/* Inspector sections in floating OR docked panels don't need per-section
+   eye/close - the panel chrome + Window menu already handle visibility. */
+.editor-properties-panel .rail-panel-head-actions .rail-panel-icon-button {
+  display: none;
+}
+.editor-properties-panel .rail-panel-head {
+  min-height: 24px;
+  padding: 2px var(--spacing-hmi-3);
+  min-width: 0;
+}
+.editor-properties-panel .rail-panel-body {
+  padding: 0;
+  overflow: hidden;
+}
+.editor-properties-panel .rail-panel-head-actions:empty {
+  display: none;
+}
+.editor-properties-panel input,
+.editor-properties-panel select {
+  min-height: 28px;
+  min-width: 0;
+}
+.editor-properties-panel input[type="number"] {
+  min-height: 24px;
+}
+.panel-floating-window [data-testid="inspector-search"] {
+  padding-inline: 6px;
+  padding-block: 2px;
+  font-size: 11px;
+}
+.panel-floating-window [data-testid="inspector-section-chips"] {
+  padding: 4px 6px;
+}
+.panel-floating-window [data-testid="properties-panel-scroll"] select,
+.panel-floating-window [data-testid="properties-panel-scroll"] input[type="text"],
+.panel-floating-window [data-testid="properties-panel-scroll"] input[type="search"],
+.panel-floating-window [data-testid="properties-panel-scroll"] input[type="number"] {
+  min-height: 22px;
+}
+.panel-floating-window .inspector-tab {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+/* Densified Properties chrome (v3.964.0, pass 3). */
+.editor-properties-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px var(--spacing-hmi-3);
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+}
+.editor-properties-identity-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  min-width: 0;
+}
+.editor-properties-name {
+  height: 22px;
+  line-height: 22px;
+  min-width: 0;
+  flex: 1 1 auto;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ca-ink);
+  border-radius: 3px;
+  text-overflow: ellipsis;
+}
+.editor-properties-name:hover,
+.editor-properties-name:focus {
+  background: var(--ca-panel);
+  border-color: var(--ca-border);
+  outline: none;
+}
+.editor-properties-name.is-invalid {
+  border-color: var(--ca-ng);
+}
+.editor-properties-kind {
+  height: 22px;
+  background: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--ca-ink);
+  border-radius: 3px;
+  flex: none;
+}
+.editor-properties-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ca-ink-muted);
+  background: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  border-radius: 9px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.editor-properties-meta-chip[data-role="id"] {
+  color: var(--ca-ink);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+.editor-properties-meta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  color: var(--ca-ink-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  flex: none;
+}
+.editor-properties-meta-btn:hover {
+  color: var(--ca-ink);
+  background: var(--ca-panel);
+  border-color: var(--ca-border);
+}
+.editor-properties-meta-btn[aria-pressed="true"] {
+  color: var(--ca-ink);
+  background: var(--ca-panel);
+  border-color: var(--ca-border);
+}
+.editor-properties-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 3px var(--spacing-hmi-3);
+  min-height: 20px;
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+}
+.editor-properties-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ca-ink-muted);
+}
+.editor-properties-status-dot[data-tone="ok"] {
+  color: var(--ca-ok, #16a34a);
+}
+.editor-properties-status-dot[data-tone="warn"] {
+  color: #d97706;
+}
+.editor-properties-status-dot[data-tone="err"] {
+  color: var(--ca-ng, #dc2626);
+}
+.editor-properties-status-dot[data-tone="muted"] {
+  color: var(--ca-ink-muted);
+}
+
+/* V3 cards: colored left stripe = verdict, inline status per card.
+   Fix pass: 2px muted stripe (only err/warn hold saturation), no clip so
+   nested rail-panel-body-wrap grid rows can expand, tighter body padding. */
+.editor-properties-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  isolation: isolate;
+  overflow: visible;
+  border: 1px solid var(--ca-border);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--ca-panel) 94%, transparent);
+  padding-left: 0;
+}
+.editor-properties-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  border-radius: 2px 0 0 2px;
+  background: color-mix(in oklab, var(--ca-ink-muted) 35%, transparent);
+}
+.editor-properties-card[data-tone="ok"]::before {
+  background: color-mix(in oklab, var(--ca-ok) 55%, transparent);
+}
+.editor-properties-card[data-tone="warn"]::before {
+  background: var(--ca-warn);
+}
+.editor-properties-card[data-tone="err"]::before {
+  background: var(--ca-ng);
+}
+.editor-properties-card[data-tone="muted"]::before {
+  background: color-mix(in oklab, var(--ca-ink-muted) 30%, transparent);
+}
+
+/* Nested rail sections inside cards: kill duplicate borders/backgrounds. */
+.editor-properties-card > .rail-panel-section,
+.editor-properties-card .rail-panel-section {
+  border: 0;
+  background: transparent;
+  min-width: 0;
+  max-width: 100%;
+}
+.editor-properties-card > .rail-panel-section > .rail-panel-head {
+  min-height: 24px;
+  padding: 2px 8px;
+  background: transparent;
+  border-bottom: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent);
+}
+.editor-properties-card > .rail-panel-section[data-open="false"] > .rail-panel-head {
+  border-bottom: 0;
+}
+.editor-properties-card .rail-panel-body {
+  overflow: hidden;
+  min-width: 0;
+}
+.editor-properties-card .editor-properties-bounds,
+.editor-properties-card .editor-properties-empty-row {
+  border-bottom: 0;
+  background: transparent;
+  padding: 6px 8px;
+}
+.editor-properties-card .editor-properties-bounds {
+  min-height: 32px;
+}
+.editor-properties-section,
+.editor-properties-static-section {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border-top: 0;
+  gap: 0;
+  padding: 0;
+}
+.editor-properties-section-head,
+.editor-properties-static-head {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 8px 2px 10px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent);
+}
+.editor-properties-section-title,
+.editor-properties-static-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ca-ink);
+  font-size: calc(var(--text-hmi-caption) - 1px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.editor-properties-section-body,
+.editor-properties-static-body {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: min-content;
+  overflow: visible;
+}
+
+.editor-properties-panel {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: props;
+}
+
+.editor-properties-scroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--status-bar-h, 2rem) + var(--spacing-hmi-2));
+}
+
+.editor-properties-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border: 1px dashed var(--ca-border);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--ca-panel) 96%, transparent);
+  font-size: 10px;
+  color: var(--ca-ink-muted);
+}
+.editor-properties-legend-title {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ca-ink-muted);
+}
+.editor-properties-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.editor-properties-legend-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--ca-border);
+}
+.editor-properties-legend-swatch[data-tone="ok"] {
+  background: var(--ca-ok, #16a34a);
+}
+.editor-properties-legend-swatch[data-tone="warn"] {
+  background: #d97706;
+}
+.editor-properties-legend-swatch[data-tone="err"] {
+  background: var(--ca-ng, #dc2626);
+}
+.editor-properties-legend-swatch[data-tone="muted"] {
+  background: color-mix(in oklab, var(--ca-ink-muted) 60%, transparent);
+}
+.editor-properties-legend-label {
+  color: var(--ca-ink);
+}
+
+.editor-properties-inline-status {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ca-ink-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-properties-inline-status[data-tone="ok"] {
+  color: var(--ca-ok);
+}
+.editor-properties-inline-status[data-tone="warn"] {
+  color: var(--ca-warn);
+}
+.editor-properties-inline-status[data-tone="err"] {
+  color: var(--ca-ng);
+}
+.editor-properties-inline-status b {
+  font-weight: 700;
+  color: var(--ca-ink);
+}
+
+.editor-kind-panel {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-hmi-2);
+  border-top: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.editor-kind-panel-head {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.editor-kind-panel-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-header);
+  font-weight: 700;
+}
+
+.editor-kind-panel-rule-name {
+  min-width: 0;
+  max-width: 44%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+}
+
+.editor-kind-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.editor-kind-field-label,
+.editor-kind-field-row {
+  min-width: 0;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-body);
+}
+
+.editor-kind-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editor-kind-value {
+  flex: none;
+  color: var(--ca-ink-muted);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.editor-kind-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-bg);
+  padding: 4px 8px;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-body);
+}
+
+.editor-kind-range {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--ca-primary);
+}
+
+.editor-mask-panel {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-hmi-2);
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.editor-mask-panel-head {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Issue 40 Turn 1: when the properties panel is narrowed below ~220px
+   there is no room for the upload button next to the "Shape mask (off)"
+   title. Collapse to a single column and left-align the actions so the
+   button stays fully visible instead of clipping off the right edge. */
+@container props (max-width: 220px) {
+  .editor-mask-panel-head {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+  .editor-mask-panel-actions {
+    justify-content: flex-start;
+  }
+}
+
+.editor-mask-panel-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-mask-panel-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.editor-mask-upload,
+.editor-mask-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+  color: var(--ca-ink);
+}
+
+.editor-mask-upload {
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 8px;
+  font-size: var(--text-hmi-caption);
+}
+
+.editor-mask-icon-button {
+  height: 24px;
+  width: 24px;
+}
+
+.editor-mask-upload:hover,
+.editor-mask-icon-button:hover:not(:disabled) {
+  background: var(--ca-panel-2);
+}
+
+.editor-mask-icon-button:disabled {
+  opacity: 0.4;
+}
+
+.editor-mask-empty {
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+  line-height: 1.35;
+}
+
+.editor-properties-verdict {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 4px var(--spacing-hmi-3);
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+}
+.editor-properties-verdict-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+.editor-properties-verdict-chip svg {
+  flex: none;
+}
+.editor-properties-verdict-chip:hover:not(:disabled) {
+  color: var(--ca-ink);
+  border-color: color-mix(in oklab, var(--ca-border) 40%, var(--ca-ink) 60%);
+}
+.editor-properties-verdict-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.editor-properties-verdict-chip[data-active="true"] {
+  color: white;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 40%, transparent);
+}
+.editor-properties-verdict-chip[data-verdict="present"][data-active="true"] {
+  background: var(--ca-ok, #16a34a);
+  color: white;
+}
+.editor-properties-verdict-chip[data-verdict="absent"][data-active="true"] {
+  background: var(--ca-ng, #dc2626);
+  color: white;
+}
+.editor-properties-verdict-chip[data-verdict="ignore"][data-active="true"] {
+  background: color-mix(in oklab, var(--ca-ink) 55%, var(--ca-panel));
+  color: var(--ca-panel);
+}
+.editor-properties-bounds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) 26px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 0;
+  background: var(--ca-panel-2);
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+}
+.editor-properties-bounds > .editor-properties-aspect-btn {
+  grid-row: 1 / span 2;
+  grid-column: 3;
+  justify-self: end;
+  align-self: stretch;
+  height: auto;
+  min-height: 26px;
+}
+/* Issue 40 Turn 1: Bounds row was a single 4-column strip with a 24px
+   aspect-lock cell tacked on the right. At narrow rail widths each
+   column collapsed below the input's readable width (label chip + digits
+   + `px` suffix) and the right-most inputs were clipped mid-field.
+   Below 320px, keep a 2-column grid where the aspect button
+   takes its own cell on row 2. Below 200px, hide the `px` suffix so the
+   input keeps at least ~2 digits visible. */
+@container props (max-width: 320px) {
+  .editor-properties-bounds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 4px;
+  }
+  .editor-properties-bounds > .editor-properties-aspect-btn {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: end;
+    height: 26px;
+  }
+}
+@container props (max-width: 180px) {
+  .editor-properties-bounds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-properties-bounds > .editor-properties-aspect-btn {
+    grid-column: auto;
+    justify-self: end;
+  }
+}
+@container props (max-width: 200px) {
+  .editor-properties-num {
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+  .editor-properties-num-suffix {
+    display: none;
+  }
+}
+.editor-properties-num {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 14px;
+  align-items: center;
+  height: 26px;
+  min-width: 0;
+  background: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.editor-properties-num.is-invalid {
+  border-color: var(--ca-ng);
+}
+.editor-properties-num-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ca-ink-muted);
+  letter-spacing: 0.04em;
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+}
+.editor-properties-num-label:hover {
+  color: var(--ca-ink);
+  background: color-mix(in oklab, var(--ca-panel) 70%, var(--ca-panel-2) 30%);
+}
+.editor-properties-num-suffix {
+  font-size: 9px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ca-ink-muted);
+  padding-right: 2px;
+  letter-spacing: 0.02em;
+}
+.editor-properties-num > input {
+  height: 24px;
+  min-height: 24px !important;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--ca-ink);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  text-align: right;
+}
+.editor-properties-bounds-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  min-width: 0;
+}
+.editor-properties-num > input:focus {
+  background: color-mix(in oklab, var(--ca-panel) 70%, var(--ca-panel-2) 30%);
+}
+.editor-properties-num > input::-webkit-outer-spin-button,
+.editor-properties-num > input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.editor-properties-num > input[type="number"] {
+  -moz-appearance: textfield;
+}
+.editor-properties-aspect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--ca-ink-muted);
+  background: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.editor-properties-aspect-btn:hover:not(:disabled) {
+  color: var(--ca-ink);
+}
+.editor-properties-aspect-btn[data-active="true"] {
+  color: var(--ca-primary);
+  border-color: color-mix(in oklab, var(--ca-primary) 55%, transparent);
+  background: color-mix(in oklab, var(--ca-primary) 15%, var(--ca-panel));
+}
+.editor-properties-empty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--spacing-hmi-3);
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+  font-size: 11px;
+}
+.editor-properties-empty-label {
+  font-weight: 600;
+  color: var(--ca-ink);
+  font-size: 11px;
+}
+.editor-properties-empty-value {
+  color: var(--ca-ink-muted);
+  flex: 1;
+}
+.editor-properties-empty-link {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ca-accent, #2563eb);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.editor-properties-empty-link:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ca-accent, #2563eb) 10%, transparent);
+  border-color: color-mix(in oklab, var(--ca-accent, #2563eb) 30%, transparent);
+}
+.editor-properties-empty-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.editor-acceptance-panel {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--ca-panel-2);
+  padding: 8px;
+  overflow: visible;
+}
+.editor-acceptance-toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+}
+.editor-acceptance-add {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+.editor-acceptance-add-main,
+.editor-acceptance-add-menu {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-caption);
+  font-weight: 600;
+}
+.editor-acceptance-add-main {
+  min-width: 0;
+  gap: 4px;
+  border-right: 0;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.editor-acceptance-add-main span,
+.editor-acceptance-add-main svg {
+  flex: none;
+}
+.editor-acceptance-add-menu {
+  flex: none;
+  justify-content: center;
+  width: 30px;
+  padding: 0;
+}
+.editor-acceptance-add-main:hover:not(:disabled),
+.editor-acceptance-add-menu:hover:not(:disabled) {
+  background: var(--ca-panel-2);
+}
+.editor-acceptance-add-main:disabled,
+.editor-acceptance-add-menu:disabled {
+  opacity: 0.5;
+}
+.editor-acceptance-menu-item {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  text-align: left;
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-caption);
+}
+.editor-acceptance-menu-item:hover {
+  background: var(--ca-panel-2);
+}
+.editor-acceptance-list {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.editor-acceptance-condition {
+  display: grid;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+  padding: 8px;
+}
+.editor-acceptance-condition-head {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.editor-acceptance-index {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+  font-variant-numeric: tabular-nums;
+}
+.editor-acceptance-actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+.editor-acceptance-icon-button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel);
+  color: var(--ca-ink);
+}
+.editor-acceptance-icon-button:hover:not(:disabled) {
+  background: var(--ca-panel-2);
+}
+.editor-acceptance-icon-button:disabled {
+  opacity: 0.4;
+}
+.editor-acceptance-field {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+}
+.editor-acceptance-label-line {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1.25;
+}
+.editor-acceptance-muted {
+  color: color-mix(in oklab, var(--ca-ink-muted) 70%, transparent);
+}
+.editor-acceptance-select,
+.editor-acceptance-text,
+.editor-acceptance-number {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-body);
+}
+.editor-acceptance-select,
+.editor-acceptance-text {
+  padding: 4px 8px;
+}
+.editor-acceptance-color-row,
+.editor-acceptance-range-row {
+  display: grid;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+}
+.editor-acceptance-color-row {
+  grid-template-columns: 48px minmax(0, 1fr);
+}
+.editor-acceptance-range-row {
+  grid-template-columns: minmax(0, 1fr) 64px;
+}
+.editor-acceptance-color {
+  width: 48px;
+  height: 36px;
+  min-width: 0;
+  cursor: pointer;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+}
+.editor-acceptance-color:disabled {
+  opacity: 0.5;
+}
+.editor-acceptance-range {
+  width: 100%;
+  min-width: 0;
+}
+.editor-acceptance-number {
+  padding: 4px 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@container props (max-width: 240px) {
+  .editor-acceptance-toolbar {
+    justify-content: flex-start;
+  }
+  .editor-acceptance-condition-head,
+  .editor-acceptance-color-row,
+  .editor-acceptance-range-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-acceptance-actions {
+    justify-content: flex-start;
+  }
+  .editor-acceptance-color {
+    width: 100%;
+  }
+  .editor-acceptance-number {
+    width: 100%;
+  }
+}
+/* Keyboard focus rings for Properties panel controls.
+   All interactive elements (section head toggles, hide/close icons,
+   + Add condition, name/kind inputs, bounds fields, aspect-lock)
+   surface a 2px accent ring in keyboard mode so tab-through is legible. */
+.editor-properties-panel
+  :is(
+    .rail-panel-head-toggle,
+    .rail-panel-icon-button,
+    .editor-properties-empty-link,
+    .editor-properties-name,
+    .editor-properties-static-head button,
+    .editor-properties-bounds input,
+    .editor-properties-bounds button,
+    input,
+    select,
+    button,
+    [role="button"]
+  ):focus-visible {
+  outline: 2px solid var(--ca-accent, #2563eb);
+  outline-offset: 1px;
+  border-radius: 3px;
+  z-index: 1;
+}
+.editor-properties-panel .rail-panel-head-toggle:focus-visible {
+  outline-offset: 2px;
+}
+/* Highlight the whole card when its header toggle has keyboard focus so
+   the operator can see which collapsible section is active at a glance. */
+.editor-properties-card:focus-within {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ca-accent, #2563eb) 45%, transparent);
+}
+.editor-properties-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--ca-border);
+  background: var(--ca-panel-2);
+  color: var(--ca-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.editor-properties-badge[data-tone="on"] {
+  background: color-mix(in oklab, var(--ca-accent, #2563eb) 22%, var(--ca-panel));
+  color: var(--ca-accent, #2563eb);
+  border-color: color-mix(in oklab, var(--ca-accent, #2563eb) 45%, transparent);
+}
+.editor-properties-more {
+  display: flex;
+  flex-direction: column;
+}
+.editor-properties-more > * + * {
+  border-top: 1px solid var(--ca-border);
+}
+
+/* Flat More-options tabs (Mask / Focus / Kind). Replaces nested collapsibles. */
+.editor-properties-more-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent);
+  flex-wrap: wrap;
+}
+.editor-properties-more-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ca-ink-muted);
+  background: var(--ca-panel);
+  border: 1px solid var(--ca-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.editor-properties-more-tab:hover {
+  color: var(--ca-ink);
+}
+.editor-properties-more-tab[aria-pressed="true"] {
+  color: var(--ca-accent, #2563eb);
+  border-color: color-mix(in oklab, var(--ca-accent, #2563eb) 55%, transparent);
+  background: color-mix(in oklab, var(--ca-accent, #2563eb) 15%, var(--ca-panel));
+}
+.editor-properties-more-body {
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.editor-preview-settings-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.editor-preview-settings-title {
+  color: var(--ca-ink);
+  font-size: var(--text-hmi-body);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.editor-preview-settings-hint {
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+}
+.editor-preview-settings-modes {
+  display: grid;
+  gap: var(--spacing-hmi-1);
+  grid-template-columns: repeat(3, 1fr);
+}
+.editor-preview-settings-mode {
+  align-items: center;
+  background: color-mix(in oklab, var(--ca-panel-2) 92%, transparent);
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-sm);
+  color: var(--ca-ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 var(--spacing-hmi-2);
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+.editor-preview-settings-mode:hover {
+  border-color: var(--ca-select);
+}
+.editor-preview-settings-mode.is-active {
+  background: color-mix(in oklab, var(--ca-select) 26%, var(--ca-panel-2));
+  border-color: var(--ca-select);
+  color: var(--ca-ink);
+}
+.editor-preview-settings-mode:focus-visible {
+  outline: 2px solid var(--ca-focus);
+  outline-offset: 2px;
+}
+.editor-preview-settings-peek {
+  align-items: center;
+  color: var(--ca-ink);
+  display: grid;
+  font-size: var(--text-hmi-badge);
+  gap: var(--spacing-hmi-2);
+  grid-template-columns: 18px auto 1fr;
+}
+.editor-preview-settings-peek-hint {
+  color: var(--ca-ink-muted);
+  font-size: var(--text-hmi-caption);
+  text-align: right;
+}
+
+.editor-shell input[type="range"] {
+  accent-color: var(--ca-primary);
+  min-height: 34px;
+  width: 100%;
+}
+
+.editor-shell input[type="checkbox"] {
+  accent-color: var(--ca-primary);
+  height: 18px;
+  width: 18px;
+}
+
+.editor-shell input[type="text"],
+.editor-shell input[type="number"],
+.editor-shell textarea {
+  border-radius: var(--radius-md);
+  min-height: 44px;
+}
+
+.editor-shell textarea {
+  min-height: 96px;
+}
+
+.editor-shell aside section {
+  border-top: 1px solid var(--ca-border);
+  gap: var(--spacing-hmi-4);
+  padding: var(--spacing-hmi-4);
+}
+
+/* v3.980: the generic aside section padding above is for form/settings
+   sections, not the Rules list sections. Rules and Categories already own
+   their gutter through .editor-layer-section-head and .editor-rule-row, so
+   the inherited 16px padding created the persistent empty left strip. */
+.editor-shell aside section[data-layer-section] {
+  border-top: 0;
+  gap: 0;
+  padding: 0;
+}
+
+/* v3.981: Properties renders nested sections as compact cards and editor
+   bodies. The generic aside section rule above is for settings forms only;
+   without this reset it adds 16px padding and borders to every nested
+   Bounds/Mask/Kind section, causing clipped right edges and text overlap. */
+.editor-shell aside .editor-properties-panel .rail-panel-section {
+  border-top: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.editor-shell
+  aside
+  .editor-properties-panel
+  :is(
+    .editor-properties-section,
+    .editor-acceptance-panel,
+    [data-panel-section="properties.more"]
+  ) {
+  border-top: 0;
+  gap: 0;
+  padding: 0;
+}
+
+.editor-shell aside .editor-properties-panel .editor-acceptance-panel {
+  gap: 8px;
+  padding: 8px;
+}
+/* v3.991: Bounds row keeps its own tight grid gap + inner padding so
+   X/Y/W/H inputs render at readable width and text is not vertically
+   clipped by the generic aside-section reset above. */
+.editor-shell aside .editor-properties-panel .editor-properties-bounds {
+  border-top: 0;
+  padding: 8px var(--spacing-hmi-3);
+  gap: 6px;
+  row-gap: 4px;
+  align-items: center;
+}
+.editor-shell aside .editor-properties-panel .editor-properties-num {
+  height: 26px;
+}
+.editor-shell aside .editor-properties-panel .editor-properties-num > input {
+  height: 24px;
+  min-height: 24px !important;
+  line-height: 24px;
+}
+
+.editor-shell aside .editor-properties-panel .editor-kind-panel,
+.editor-shell aside .editor-properties-panel .editor-mask-panel {
+  padding: 8px;
+}
+
+.editor-shell aside .editor-properties-panel .editor-kind-panel {
+  gap: var(--spacing-hmi-2);
+}
+
+.editor-shell aside .editor-properties-panel .editor-mask-panel {
+  gap: var(--spacing-hmi-2);
+}
+
+.editor-shell aside section h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.editor-shell fieldset label {
+  border-radius: var(--radius-md);
+}
+
+.editor-status-strip {
+  align-items: center;
+  background: var(--ca-chrome);
+  border-top: 1px solid var(--ca-border);
+  color: var(--ca-chrome-ink);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  height: 100%;
+  padding: 0 var(--spacing-hmi-4);
+}
+
+.editor-log-chip {
+  align-items: center;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  gap: var(--spacing-hmi-2);
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0 var(--spacing-hmi-2);
+}
+
+.editor-log-chip:hover {
+  background: var(--ca-panel-2);
+}
+
+.editor-log-code {
+  display: inline-block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-save-state {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--spacing-hmi-2);
+}
+
+.editor-save-state-button {
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: var(--radius-md);
+  color: var(--ca-ink);
+  display: inline-flex;
+  font-size: var(--text-hmi-badge);
+  font-weight: 800;
+  gap: var(--spacing-hmi-1);
+  min-height: 32px;
+  padding: 0 var(--spacing-hmi-2);
+}
+
+.editor-save-state-button:hover:not(:disabled) {
+  background: var(--ca-panel-2);
+  border-color: var(--ca-primary);
+}
+
+.editor-save-state-button:disabled {
+  color: var(--ca-ink-muted);
+  opacity: 0.45;
+}
+
+/* Tablet: keep three-column HMI but tighter */
+@media (min-width: 768px) and (max-width: 1439px) {
+  :root {
+    --editor-ribbon-width: 88px;
+    --editor-rail-width: 380px;
+    --editor-topbar-height: 64px;
+    --editor-status-height: 38px;
+  }
+
+  .editor-rail-header {
+    font-size: var(--text-hmi-body);
+  }
+}
+
+/* Small tablet / large phone: shrink chrome and rail */
+@media (min-width: 560px) and (max-width: 767px) {
+  :root {
+    --editor-ribbon-width: 64px;
+    --editor-rail-width: 280px;
+    --editor-topbar-height: 56px;
+    --editor-status-height: 34px;
+  }
+
+  .editor-rail-header {
+    font-size: var(--text-hmi-caption);
+  }
+}
+
+/* Phone: auto-collapse rail so canvas stays usable; user can toggle open */
+@media (max-width: 559px) {
+  :root {
+    --editor-ribbon-width: 52px;
+    --editor-rail-width: 78vw;
+    --editor-topbar-height: 52px;
+    --editor-status-height: 32px;
+  }
+
+  .editor-rail-header {
+    font-size: var(--text-hmi-caption);
+  }
+
+  /* Force rail to sit above canvas so it doesn't squeeze the viewport */
+  .editor-shell-grid .editor-shell-rail {
+    position: absolute;
+    top: var(--editor-topbar-height);
+    bottom: var(--editor-status-height);
+    right: 0;
+    width: var(--editor-rail-width);
+    max-width: 78vw;
+    z-index: 20;
+    background: var(--ca-panel);
+    border-left: 1px solid var(--ca-border);
+    box-shadow: var(--shadow-hmi-modal);
+    transform: translateX(0);
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .editor-shell-grid .editor-shell-rail[data-collapsed="true"] {
+    transform: translateX(calc(100% - 28px));
+  }
+
+  .editor-shell-grid,
+  .editor-shell-grid[data-rail-collapsed="true"],
+  .editor-shell-grid[data-ribbon-collapsed="true"],
+  .editor-shell-grid[data-ribbon-collapsed="true"][data-rail-collapsed="true"] {
+    grid-template-columns: var(--editor-ribbon-width) 1fr 0;
+    position: relative;
+  }
+
+  .editor-shell-grid[data-ribbon-collapsed="true"] {
+    grid-template-columns: 28px 1fr 0;
+  }
+}
+
+.hmi-frame-scanline {
+  animation: hmi-frame-scan 1.6s linear infinite;
+}
+
+@keyframes hmi-frame-scan {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(436px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 1ms;
+    --motion-base: 1ms;
+    --motion-slow: 1ms;
+  }
+  .hmi-frame-scanline {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Neutralize hover-driven motion (transforms/lifts) that are triggered
+     by :hover state directly rather than via CSS animations, so the global
+     duration overrides above still leave a visible jump. */
+  *:hover,
+  *:focus,
+  *:active {
+    transform: none !important;
+  }
+  button:not(:disabled):not([data-no-lift]):hover,
+  button:not(:disabled):not([data-no-lift]):active,
+  .btn-lift:hover:not(:disabled) {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  /* Top-nav underline: kill the opacity fade entirely under reduced-motion.
+     The global `*::after { transition-duration: 1ms }` above already makes
+     it near-instant, but disabling the transition property outright means
+     the underline snaps between hidden/hover/active/open states with zero
+     interpolation — matching the spec: "shorten or disable underline
+     transitions". Selector matches both group triggers and Window trigger. */
+  [data-testid="topnav-trigger"]::after {
+    transition: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------
+ * Global button polish: stationary hover with soft accent glow.
+ * Applies to every <button>; skips disabled and buttons opting out
+ * via [data-no-lift]. Uses --ca-primary so the accent switch above
+ * changes the glow color everywhere.
+ * --------------------------------------------------------------- */
+@layer base {
+  button {
+    transition:
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease;
+  }
+  button:not(:disabled):not([data-no-lift]):hover {
+    box-shadow: 0 6px 18px -8px color-mix(in oklab, var(--ca-primary) 55%, transparent);
+  }
+  button:not(:disabled):not([data-no-lift]):active {
+    box-shadow: 0 2px 6px -4px color-mix(in oklab, var(--ca-primary) 45%, transparent);
+  }
+}
+
+@utility btn-lift {
+  /*
+   * Plan 64 step 56: hover uses only box-shadow + border-color transitions.
+   * transform/translateY is forbidden per spec 24/40-menu-anti-jitter.md
+   * because it triggers layout shift on adjacent flex/grid siblings that
+   * measure children by border box.
+   */
+  transition:
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  &:hover:not(:disabled) {
+    box-shadow: 0 8px 22px -10px color-mix(in oklab, var(--ca-primary) 60%, transparent);
+  }
+}
+
+@keyframes editor-ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/*
+ * Plan 64 Section C - app-shell tokens (steps 51, 55).
+ * Fixed heights and menu-item spacing prevent hover-induced layout shift.
+ * See spec/24-app-ui-design-system/38-header-breadcrumb.md and 40-menu-anti-jitter.md.
+ */
+:root {
+  --header-h: 40px;
+  --header-crumb-h: 24px;
+  --menu-item-h: 32px;
+  --menu-item-px: 12px;
+  --menu-item-py: 6px;
+  --menu-item-gap: 4px;
+}
+
+/*
+ * Header density: user-toggleable comfortable vs compact header.
+ * `<header data-density="compact">` shrinks the row heights and the
+ * embedded menubar so the right cluster remains vertically centered
+ * on the reduced row. The 3-column grid in Titlebar uses `justify-self`
+ * for each cluster, so density changes never introduce collisions.
+ */
+.app-titlebar[data-density="compact"] {
+  --header-h: 32px;
+  --header-crumb-h: 22px;
+}
+
+.app-titlebar[data-density="compact"] [aria-label="Application menu"] {
+  height: 1.75rem;
+}
+
+.app-titlebar[data-density="compact"] [data-testid="topnav-trigger"] {
+  height: 1.5rem;
+  padding-inline: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.app-titlebar[data-density="compact"] [data-testid="header-density-toggle"] {
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+.app-titlebar {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--ca-chrome) 92%, white 2%), var(--ca-chrome)),
+    var(--ca-chrome);
+}
+
+.app-titlebar-breadcrumb {
+  display: flex;
+}
+
+.app-titlebar [aria-label="Application menu"] {
+  height: 2.125rem;
+  border-color: color-mix(in oklab, var(--ca-border) 78%, transparent);
+  background: color-mix(in oklab, var(--ca-panel) 76%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.04);
+  scrollbar-width: none;
+}
+
+.app-titlebar [aria-label="Application menu"]::-webkit-scrollbar {
+  display: none;
+}
+
+.app-breadcrumb ol {
+  gap: 0.375rem;
+}
+
+/* Plan 87 Step 5: chip-style breadcrumbs.
+   Root cause fixed here: links had `border: 1px solid transparent` and no
+   background at rest, so crumbs read as text-until-hover while the leaf
+   already rendered as a tinted pill. Give every crumb a resting chip
+   surface so the trail is visually consistent; hover raises the tint,
+   current keeps the primary-tinted pill. */
+.app-breadcrumb-link,
+.app-breadcrumb-current {
+  min-height: 1.5rem;
+  align-items: center;
+  border: 1px solid var(--ca-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 0.5rem;
+  max-width: min(15rem, 28vw);
+  background: color-mix(in oklab, var(--ca-panel) 82%, transparent);
+}
+
+.app-breadcrumb-sep {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.55;
+}
+
+.panel-chrome-hint {
+  height: calc(var(--panel-control-size) * 0.875);
+  width: calc(var(--panel-control-size) * 0.875);
+}
+
+.panel-chrome-hint svg {
+  height: calc(var(--panel-icon-size) * 0.875);
+  width: calc(var(--panel-icon-size) * 0.875);
+}
+
+.app-breadcrumb-link {
+  color: var(--ca-ink-muted);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.app-breadcrumb-link:hover {
+  background: color-mix(in oklab, var(--ca-primary) 14%, var(--ca-panel));
+  border-color: color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
+  color: var(--ca-chrome-ink);
+}
+
+.app-breadcrumb-current {
+  background: color-mix(in oklab, var(--ca-primary) 18%, var(--ca-panel));
+  border-color: color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
+  color: var(--ca-chrome-ink);
+  max-width: min(28rem, 44vw);
+  font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+  .app-titlebar-breadcrumb {
+    display: flex;
+  }
+
+  .app-breadcrumb-link,
+  .app-breadcrumb-current {
+    max-width: 9rem;
+  }
+}
+
+/* Plan 64 step 96: global a11y focus fallback. Any interactive element
+   that lacks a component-specific :focus-visible style still gets a
+   visible focus ring on keyboard focus. Component styles above override
+   this fallback because they set their own outline explicitly. */
+:where(
+  a,
+  button,
+  [role="button"],
+  [role="link"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="option"],
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]
+):focus-visible {
+  outline: 2px solid var(--ca-focus, hsl(var(--ring)));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Plan 100 Phase F step 55: strengthen focus rings while the last
+ * input modality is keyboard (see `useInputModality` +
+ * `InputModalityTracker`). `<html data-input-modality="keyboard">` is
+ * set on the first Tab / Arrow / letter keydown and cleared on any
+ * pointer press, so pointer-first flows keep the softer 2px ring while
+ * keyboard operators get a high-contrast 3px ring with a wider offset. */
+html[data-input-modality="keyboard"]
+  :where(
+    a,
+    button,
+    [role="button"],
+    [role="link"],
+    [role="menuitem"],
+    [role="tab"],
+    [role="option"],
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]
+  ):focus-visible {
+  outline-width: 3px;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ca-focus, hsl(var(--ring))) 40%, transparent);
+}
+
+/* Plan 75 - Issue 15: hide the global Home fallback when the app-shell
+ * titlebar (which already includes a Home link) is mounted. */
+body:has([data-app-shell="true"]) .global-home-affordance {
+  display: none;
+}
+
+/* Plan 58 slice-2 gap #1: hide the fixed AgentLogo (cat-my-ui wordmark)
+ * when the app-shell Titlebar is mounted. Both compete for the same
+ * top-left rectangle and produce a visible double-brand overlap on every
+ * HmiShell route. Mirrors the Plan 75 hide-when-titlebar pattern above.
+ * Rollback: delete this rule block. */
+body:has([data-app-shell="true"]) .agent-logo-fixed {
+  display: none;
+}
+
+/* Plan 63: hide global app-shell nav slot on routes that mount an HmiShell
+ * titlebar (the titlebar already includes primary nav). Fixed top-center
+ * on shell-less routes so users always have discoverable navigation. */
+.app-shell-nav-global {
+  position: fixed;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  pointer-events: auto;
+}
+body:has([data-app-shell="true"]) .app-shell-nav-global,
+body:has([data-app-shell="true"]) .standard-app-shell-nav {
+  display: none;
+}
+
+/* Plan 63: sidebar drawer trigger. Fixed top-right FAB, hidden when the
+ * shell titlebar is mounted. The Sheet portal renders at document root
+ * regardless; only the trigger button is positioned. */
+.app-shell-sidebar-fab {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 40;
+  pointer-events: auto;
+}
+body:has([data-app-shell="true"]) .app-shell-sidebar-fab {
+  display: none;
+}
+
+/* --------------------------------------------------------------------- */
+/* Plan 80: modern-CSS "fluid" pass. Adds container queries, view          */
+/* transitions, interpolate-size, layered depth glass, and scroll-driven   */
+/* micro-affordances. All rules are additive: they degrade gracefully in   */
+/* browsers without support (feature-queried) and never break the app.    */
+/* --------------------------------------------------------------------- */
+
+/* Smooth width/height transitions between auto and length values.
+   Progressive enhancement: silently ignored where unsupported. */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
+/* View Transitions across route changes. The router opts in by wrapping
+   navigations in document.startViewTransition() when available; the
+   default cross-fade below feels calmer than a hard swap. */
+@supports (view-transition-name: root) {
+  :root {
+    view-transition-name: root;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
+}
+
+/* Fluid glass surface: real backdrop-filter, no vendor prefixes.
+   Uses color-mix so it re-tints with the accent variable. */
+@utility ca-glass {
+  background: color-mix(in oklab, var(--ca-panel) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 80%, var(--ca-primary) 6%);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, white 8%, transparent) inset,
+    0 20px 40px -18px color-mix(in oklab, black 65%, transparent);
+}
+
+/* Fluent stationary hover used on cards + tiles. Pairs with focus-visible. */
+@utility ca-lift {
+  transition:
+    box-shadow var(--motion-base, 200ms) var(--ease-standard),
+    border-color var(--motion-fast, 120ms) var(--ease-standard);
+}
+.ca-lift:hover {
+  border-color: color-mix(in oklab, var(--ca-border) 40%, var(--ca-primary) 45%);
+  box-shadow: var(--shadow-hmi-popover);
+}
+
+/* Container-query hook for dockable panels: components can respond to
+   their PANEL width, not the viewport. Use with @container queries in
+   consumer stylesheets or Tailwind arbitrary variants. */
+@utility ca-container {
+  container-type: inline-size;
+  container-name: ca-panel;
+}
+
+/* Scroll-driven progress underline for long lists (status bar, run
+   result). Cheap, GPU-composited, respects reduced motion. */
+@utility ca-scroll-progress {
+  position: relative;
+}
+@supports (animation-timeline: scroll()) {
+  .ca-scroll-progress::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      var(--ca-primary),
+      color-mix(in oklab, var(--ca-primary) 40%, transparent)
+    );
+    transform-origin: left;
+    animation: ca-scroll-x linear both;
+    animation-timeline: scroll(nearest);
+  }
+  @keyframes ca-scroll-x {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ca-scroll-progress::after {
+      animation: none;
+    }
+  }
+}
+
+/* Subtle inner-glow ring used for selected chips and active palette rail
+   icons. Uses color-mix to derive from the current accent. */
+@utility ca-ring-glow {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--ca-primary) 60%, transparent),
+    0 0 12px -2px color-mix(in oklab, var(--ca-primary) 55%, transparent);
+}
+
+/* Slick focus polish that reads on both light and dark chrome without
+   overriding the accessibility fallback :focus-visible defined earlier. */
+@utility ca-focus-fluid {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition:
+    outline-color var(--motion-fast, 120ms) var(--ease-standard),
+    box-shadow var(--motion-fast, 120ms) var(--ease-standard);
+}
+.ca-focus-fluid:focus-visible {
+  outline-color: color-mix(in oklab, var(--ca-focus-ring) 90%, white 10%);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ca-focus-ring) 30%, transparent);
+}
+
+/* Plan 100 §13 step 14: Alt-mnemonic reveal. Hidden by default, shown only
+   while Alt is held (see src/components/shortcuts/AltMnemonicLayer.tsx). */
+[data-mnemonic] > u {
+  text-decoration: none;
+}
+html[data-alt-mnemonic="on"] [data-mnemonic] > u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Plan 87 step 16: shared skeleton primitive.
+   One class powers SkeletonLine/Block/Circle in
+   `src/components/ui/skeleton-primitives.tsx`. Uses ca-panel tokens so the
+   pulse matches surrounding surfaces instead of bleeding a primary tint,
+   and honors prefers-reduced-motion by holding a mid-tone instead of
+   animating. */
+.ca-skeleton {
+  background: color-mix(in oklab, var(--ca-panel-2) 78%, var(--ca-panel));
+  animation: ca-skeleton-pulse 1.4s var(--ease-standard, ease-in-out) infinite;
+  will-change: opacity;
+}
+
+@keyframes ca-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ca-skeleton {
+    animation: none;
+    opacity: 0.75;
+  }
+}
+
+/* Plan 88 follow-up (density pass): hide non-essential row buttons until
+ * the row is hovered, focused, or selected. Keeps functionality + tests
+ * intact (buttons stay in DOM and clickable via testing-library), but
+ * removes visual noise so the primary label + kind badge dominate. Uses
+ * opacity so pointer-events remain active for programmatic tools. */
+.editor-rule-row [data-optional] {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+/* v3.947.0: selected rows no longer force actions visible - they eat name
+   width on narrow rails. Only hover / focus-within / keyboard focus reveal. */
+.editor-rule-row:hover [data-optional],
+.editor-rule-row:focus-within [data-optional],
+.editor-rule-row[data-focused="true"] [data-optional] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor-rule-row [data-optional] {
+    transition: none;
+  }
+}

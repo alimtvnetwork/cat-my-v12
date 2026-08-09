@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "home.summary.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": {
+          "type": "string"
+        },
+        "method": {
+          "const": "home.summary.read"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "home.summary.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": {
+          "type": "string"
+        },
+        "code": {
+          "enum": ["I_HOME_SUMMARY_READ"]
+        },
+        "data": {
+          "type": "object",
+          "required": ["openErrors"],
+          "properties": {
+            "openErrors": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

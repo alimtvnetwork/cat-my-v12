@@ -1,0 +1,292 @@
+# Plan 90 Step 125 - verify-install CI gate.
+#
+# Owning spec: spec/21-app/77-cli-powershell-and-release.md §Gates.
+# Anchors:
+#   packaging/installers/install.sh   (--verify-only, exit 6)
+#   packaging/installers/install.ps1  (-VerifyOnly,  exit 9533)
+#   bin/install-verify-sums.py        (Step 124)
+#   BE/app/installer_binaries.py      (BINARIES inventory)
+#
+# Root cause guarded (one sentence): Step 124 wired both installers
+# through bin/install-verify-sums.py but nothing in CI actually ran
+# install.sh / install.ps1 end-to-end against a fabricated release
+# directory, so a broken pre-doctor checksum block (missing exit
+# translation, wrong flag name, silent "skipped" fallback re-introduced)
+# would only be caught by a human on a Windows box.
+#
+# Design invariants
+# -----------------
+# 1. Fabricate, do not build. We do NOT invoke PyInstaller here (the
+#    release workflow owns that path). We synthesise fake exes matching
+#    BE.app.installer_binaries.BINARIES and their SHA256SUMS.txt so the
+#    job is fast (~30s) and self-contained.
+# 2. Two cases per OS. HAPPY = digests match -> installer exits 0.
+#    TAMPERED = one binary flipped by one byte -> installer exits
+#    6 (POSIX) / 9533 (Windows). Any other exit fails the job.
+# 3. --verify-only / -VerifyOnly is the CI contract. It short-circuits
+#    after the checksum block so we never need a real .venv, doctor,
+#    or plan renderer inside CI.
+# 4. Missing-BinariesDir case. Also asserts install.sh --install and
+#    install.ps1 -Install refuse to run without APP_BINARIES_DIR (exit
+#    2) - the removal of the Step-124 "skipped" fallback.
+
+name: verify-install
+
+on:
+  pull_request:
+    paths:
+      - "packaging/installers/**"
+      - "bin/install-verify-sums.py"
+      - "BE/app/installer_checksums.py"
+      - "BE/app/installer_binaries.py"
+      - ".github/workflows/verify-install.yml"
+  push:
+    branches: [main]
+  # Plan 90 Step 95 - post-publish smoke. Callers (release.yml `publish`
+  # job) invoke this workflow with the just-published tag; the
+  # `post-publish-smoke` job curls install.ps1 from the release asset URL
+  # on a real windows-latest runner and asserts `worker-cli version` emits
+  # a Universal Envelope with IsSuccess=true.
+  workflow_call:
+    inputs:
+      release_tag:
+        description: "Git tag of the just-published release to smoke-test."
+        type: string
+        required: true
+      release_repo:
+        description: "owner/repo of the release (default: current repo)."
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: verify-install-${{ github.ref }}-${{ inputs.release_tag || 'pr' }}
+  cancel-in-progress: true
+
+jobs:
+  posix:
+    name: install.sh --verify-only (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install BE (editable) so BINARIES + installer_checksums import
+        run: python -m pip install -e BE
+
+      - name: Fabricate release dir (happy path)
+        id: fabricate
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p .ci-release
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from BE.app.installer_binaries import BINARIES
+          out = Path('.ci-release')
+          out.mkdir(exist_ok=True)
+          lines = []
+          for b in BINARIES:
+              # POSIX leg -> no suffix; matches release.yml exe_suffix=''.
+              payload = f"ci-fake:{b.Name}\n".encode()
+              (out / b.ExeName).write_bytes(payload)
+              digest = hashlib.sha256(payload).hexdigest()
+              lines.append(f"{digest}  {b.ExeName}")
+          (out / 'SHA256SUMS.txt').write_text("\n".join(lines) + "\n")
+          print((out / 'SHA256SUMS.txt').read_text())
+          PY
+          # Fake python executable path so install.sh's -x check passes
+          # (we short-circuit via --verify-only before it is invoked for
+          # anything beyond the checksum block, but the guard runs early).
+          ln -s "$(command -v python)" .ci-release/py
+          echo "PYTHON_EXE=$PWD/.ci-release/py" >>"$GITHUB_ENV"
+          echo "APP_BINARIES_DIR=$PWD/.ci-release" >>"$GITHUB_ENV"
+
+      - name: HAPPY - install.sh --install --verify-only exits 0
+        shell: bash
+        run: |
+          set +e
+          bash packaging/installers/install.sh --install --verify-only
+          rc=$?
+          set -e
+          echo "exit=$rc"
+          [ "$rc" -eq 0 ] || { echo "FAIL: expected 0 got $rc"; exit 1; }
+
+      - name: TAMPERED - flip one byte, expect exit 6
+        shell: bash
+        run: |
+          set -eu
+          # Pick the first BINARIES row and mutate its bytes.
+          target=$(python -c "from BE.app.installer_binaries import BINARIES; print(BINARIES[0].ExeName)")
+          printf 'x' >> ".ci-release/${target}"
+          set +e
+          bash packaging/installers/install.sh --install --verify-only
+          rc=$?
+          set -e
+          echo "exit=$rc"
+          [ "$rc" -eq 6 ] || { echo "FAIL: expected 6 got $rc"; exit 1; }
+
+      - name: MISSING BINARIES DIR - install.sh --install exits 2
+        shell: bash
+        run: |
+          set +e
+          env -u APP_BINARIES_DIR PYTHON_EXE="$PYTHON_EXE" \
+              bash packaging/installers/install.sh --install
+          rc=$?
+          set -e
+          echo "exit=$rc"
+          [ "$rc" -eq 2 ] || { echo "FAIL: expected 2 got $rc"; exit 1; }
+
+  windows:
+    name: install.ps1 -VerifyOnly (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install BE (editable)
+        shell: bash
+        run: python -m pip install -e BE
+
+      - name: Provision fake .venv so $VenvPython check passes
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p .venv/Scripts
+          # Copy the runner python into the expected venv layout so the
+          # early $VenvPython existence check does not fire 9530.
+          cp "$(command -v python)" ".venv/Scripts/python.exe"
+
+      - name: Fabricate release dir (happy path)
+        shell: bash
+        run: |
+          set -eu
+          mkdir -p .ci-release
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from BE.app.installer_binaries import BINARIES
+          out = Path('.ci-release')
+          out.mkdir(exist_ok=True)
+          lines = []
+          for b in BINARIES:
+              # Windows leg -> .exe suffix (matches release.yml).
+              name = f"{b.ExeName}.exe"
+              payload = f"ci-fake:{b.Name}\r\n".encode()
+              (out / name).write_bytes(payload)
+              digest = hashlib.sha256(payload).hexdigest()
+              lines.append(f"{digest} *{name}")
+          (out / 'SHA256SUMS.txt').write_text("\n".join(lines) + "\n")
+          print((out / 'SHA256SUMS.txt').read_text())
+          PY
+          echo "APP_BINARIES_DIR=$PWD/.ci-release" >>"$GITHUB_ENV"
+
+      - name: HAPPY - install.ps1 -Install -VerifyOnly exits 0
+        shell: pwsh
+        run: |
+          & packaging/installers/install.ps1 -Install -VerifyOnly
+          $rc = $LASTEXITCODE
+          Write-Host "exit=$rc"
+          if ($rc -ne 0) { throw "FAIL: expected 0 got $rc" }
+
+      - name: TAMPERED - flip one byte, expect exit 9533
+        shell: pwsh
+        run: |
+          $target = (python -c "from BE.app.installer_binaries import BINARIES; print(BINARIES[0].ExeName + '.exe')").Trim()
+          Add-Content -Path ".ci-release/$target" -Value 'x' -NoNewline
+          & packaging/installers/install.ps1 -Install -VerifyOnly
+          $rc = $LASTEXITCODE
+          Write-Host "exit=$rc"
+          if ($rc -ne 9533) { throw "FAIL: expected 9533 got $rc" }
+
+      - name: MISSING BINARIES DIR - install.ps1 -Install exits 2
+        shell: pwsh
+        run: |
+          $env:APP_BINARIES_DIR = ""
+          & packaging/installers/install.ps1 -Install
+          $rc = $LASTEXITCODE
+          Write-Host "exit=$rc"
+          if ($rc -ne 2) { throw "FAIL: expected 2 got $rc" }
+
+  # ---------------------------------------------------------------------
+  # Plan 90 Step 95 - post-publish smoke on a real Windows runner.
+  #
+  # Root cause guarded (one sentence): the pre-publish `posix` and
+  # `windows` jobs above verify install.sh / install.ps1 against
+  # fabricated release directories, so a broken release-page asset
+  # URL, a missing SHA256SUMS.txt upload, or a `worker-cli` binary
+  # that segfaults on a clean host would only be caught by the first
+  # end-user download.
+  #
+  # This job runs ONLY on `workflow_call` (release.yml invokes it
+  # after `publish` succeeds), curls install.ps1 from the just-tagged
+  # release, runs it in `-Install -VerifyOnly` mode against the
+  # downloaded assets, then executes `worker-cli version` and asserts
+  # the Universal Envelope reports IsSuccess=true.
+  # ---------------------------------------------------------------------
+  post-publish-smoke:
+    name: Post-publish smoke (curl install.ps1 from release)
+    if: ${{ github.event_name == 'workflow_call' && inputs.release_tag != '' }}
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_REPO: ${{ inputs.release_repo != '' && inputs.release_repo || github.repository }}
+    steps:
+      - name: Download install.ps1 from the release tag
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $uri = "https://github.com/$env:RELEASE_REPO/releases/download/$env:RELEASE_TAG/install.ps1"
+          Write-Host "GET $uri"
+          Invoke-WebRequest -Uri $uri -OutFile install.ps1 -UseBasicParsing
+          if (-not (Test-Path install.ps1)) { throw "install.ps1 not downloaded" }
+          Get-Item install.ps1 | Format-List Length,LastWriteTime
+
+      - name: Download release binaries + SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          $base = "https://github.com/$env:RELEASE_REPO/releases/download/$env:RELEASE_TAG"
+          foreach ($name in @('worker-cli.exe','processing-cli.exe','SHA256SUMS.txt')) {
+            Invoke-WebRequest -Uri "$base/$name" -OutFile "release/$name" -UseBasicParsing
+          }
+          Get-ChildItem release | Format-Table Name,Length
+
+      - name: install.ps1 -Install -VerifyOnly against downloaded assets
+        shell: pwsh
+        env:
+          APP_BINARIES_DIR: ${{ github.workspace }}\release
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & ./install.ps1 -Install -VerifyOnly
+          $rc = $LASTEXITCODE
+          Write-Host "install.ps1 exit=$rc"
+          if ($rc -ne 0) { throw "Post-publish install.ps1 failed rc=$rc" }
+
+      - name: worker-cli version emits IsSuccess=true envelope
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = & release\worker-cli.exe version | Out-String
+          Write-Host "----- worker-cli version stdout -----"
+          Write-Host $out
+          $env = $out | ConvertFrom-Json
+          if (-not $env.Status.IsSuccess) {
+            throw "Envelope IsSuccess=false: $($env.Status | ConvertTo-Json -Compress)"
+          }
+          if ($env.Results[0].Name -ne 'worker-cli') {
+            throw "Unexpected Results[0].Name: $($env.Results[0].Name)"
+          }
+          Write-Host "OK: worker-cli version envelope IsSuccess=true, Name=worker-cli"

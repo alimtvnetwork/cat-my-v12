@@ -1,0 +1,188 @@
+flowchart TD
+  m_audit_retention(["audit.retention"])
+  d_audit_retention_req["audit.retention.req"]
+  m_audit_retention -->|req| d_audit_retention_req
+  d_audit_retention_res["audit.retention.res"]
+  m_audit_retention -->|res| d_audit_retention_res
+  m_capture_device(["capture.device"])
+  d_capture_device_req["capture.device.req"]
+  m_capture_device -->|req| d_capture_device_req
+  d_capture_device_res["capture.device.res"]
+  m_capture_device -->|res| d_capture_device_res
+  m_capture_frame(["capture.frame"])
+  d_capture_frame_req["capture.frame.req"]
+  m_capture_frame -->|req| d_capture_frame_req
+  d_capture_frame_stream["capture.frame.stream"]
+  m_capture_frame -->|stream| d_capture_frame_stream
+  m_capture_vendor_discover(["capture.vendor.discover"])
+  d_capture_vendor_discover_req["capture.vendor.discover.req"]
+  m_capture_vendor_discover -->|req| d_capture_vendor_discover_req
+  d_capture_vendor_discover_res["capture.vendor.discover.res"]
+  m_capture_vendor_discover -->|res| d_capture_vendor_discover_res
+  m_capture_vendor_select(["capture.vendor.select"])
+  d_capture_vendor_select_req["capture.vendor.select.req"]
+  m_capture_vendor_select -->|req| d_capture_vendor_select_req
+  d_capture_vendor_select_res["capture.vendor.select.res"]
+  m_capture_vendor_select -->|res| d_capture_vendor_select_res
+  m_capture_vendor_smoke(["capture.vendor.smoke"])
+  d_capture_vendor_smoke_req["capture.vendor.smoke.req"]
+  m_capture_vendor_smoke -->|req| d_capture_vendor_smoke_req
+  d_capture_vendor_smoke_res["capture.vendor.smoke.res"]
+  m_capture_vendor_smoke -->|res| d_capture_vendor_smoke_res
+  m_config_patch(["config.patch"])
+  d_config_patch_req["config.patch.req"]
+  m_config_patch -->|req| d_config_patch_req
+  d_config_patch_res["config.patch.res"]
+  m_config_patch -->|res| d_config_patch_res
+  m_device(["device"])
+  d_device_req["device.req"]
+  m_device -->|req| d_device_req
+  d_device_res["device.res"]
+  m_device -->|res| d_device_res
+  m_empty(["empty"])
+  d_empty_req["empty.req"]
+  m_empty -->|req| d_empty_req
+  m_errors_list(["errors.list"])
+  d_errors_list_req["errors.list.req"]
+  m_errors_list -->|req| d_errors_list_req
+  d_errors_list_res["errors.list.res"]
+  m_errors_list -->|res| d_errors_list_res
+  m_events(["events"])
+  d_events_req["events.req"]
+  m_events -->|req| d_events_req
+  d_events_res["events.res"]
+  m_events -->|res| d_events_res
+  m_frame(["frame"])
+  d_frame_req["frame.req"]
+  m_frame -->|req| d_frame_req
+  d_frame_stream["frame.stream"]
+  m_frame -->|stream| d_frame_stream
+  m_home_summary(["home.summary"])
+  d_home_summary_req["home.summary.req"]
+  m_home_summary -->|req| d_home_summary_req
+  d_home_summary_res["home.summary.res"]
+  m_home_summary -->|res| d_home_summary_res
+  m_kv(["kv"])
+  d_kv_req["kv.req"]
+  m_kv -->|req| d_kv_req
+  m_license(["license"])
+  d_license_req["license.req"]
+  m_license -->|req| d_license_req
+  d_license_res["license.res"]
+  m_license -->|res| d_license_res
+  m_license_features(["license.features"])
+  d_license_features_req["license.features.req"]
+  m_license_features -->|req| d_license_features_req
+  d_license_features_res["license.features.res"]
+  m_license_features -->|res| d_license_features_res
+  m_license_verify(["license.verify"])
+  d_license_verify_req["license.verify.req"]
+  m_license_verify -->|req| d_license_verify_req
+  d_license_verify_res["license.verify.res"]
+  m_license_verify -->|res| d_license_verify_res
+  m_lighting_write(["lighting.write"])
+  d_lighting_write_req["lighting.write.req"]
+  m_lighting_write -->|req| d_lighting_write_req
+  d_lighting_write_res["lighting.write.res"]
+  m_lighting_write -->|res| d_lighting_write_res
+  m_mode(["mode"])
+  d_mode_res["mode.res"]
+  m_mode -->|res| d_mode_res
+  m_ok(["ok"])
+  d_ok_res["ok.res"]
+  m_ok -->|res| d_ok_res
+  m_ops_events(["ops.events"])
+  d_ops_events_req["ops.events.req"]
+  m_ops_events -->|req| d_ops_events_req
+  d_ops_events_res["ops.events.res"]
+  m_ops_events -->|res| d_ops_events_res
+  d_ops_events_stream["ops.events.stream"]
+  m_ops_events -->|stream| d_ops_events_stream
+  m_reference(["reference"])
+  d_reference_res["reference.res"]
+  m_reference -->|res| d_reference_res
+  m_reference_capture(["reference.capture"])
+  d_reference_capture_req["reference.capture.req"]
+  m_reference_capture -->|req| d_reference_capture_req
+  d_reference_capture_res["reference.capture.res"]
+  m_reference_capture -->|res| d_reference_capture_res
+  m_results_list(["results.list"])
+  d_results_list_req["results.list.req"]
+  m_results_list -->|req| d_results_list_req
+  d_results_list_res["results.list.res"]
+  m_results_list -->|res| d_results_list_res
+  m_retention(["retention"])
+  d_retention_req["retention.req"]
+  m_retention -->|req| d_retention_req
+  d_retention_res["retention.res"]
+  m_retention -->|res| d_retention_res
+  m_retention_write(["retention.write"])
+  d_retention_write_req["retention.write.req"]
+  m_retention_write -->|req| d_retention_write_req
+  d_retention_write_res["retention.write.res"]
+  m_retention_write -->|res| d_retention_write_res
+  m_roi(["roi"])
+  d_roi_req["roi.req"]
+  m_roi -->|req| d_roi_req
+  d_roi_res["roi.res"]
+  m_roi -->|res| d_roi_res
+  m_roi_write(["roi.write"])
+  d_roi_write_req["roi.write.req"]
+  m_roi_write -->|req| d_roi_write_req
+  d_roi_write_res["roi.write.res"]
+  m_roi_write -->|res| d_roi_write_res
+  m_run_mode(["run.mode"])
+  d_run_mode_req["run.mode.req"]
+  m_run_mode -->|req| d_run_mode_req
+  d_run_mode_res["run.mode.res"]
+  m_run_mode -->|res| d_run_mode_res
+  m_run_start(["run.start"])
+  d_run_start_req["run.start.req"]
+  m_run_start -->|req| d_run_start_req
+  d_run_start_res["run.start.res"]
+  m_run_start -->|res| d_run_start_res
+  m_run_started(["run.started"])
+  d_run_started_res["run.started.res"]
+  m_run_started -->|res| d_run_started_res
+  m_run_state(["run.state"])
+  d_run_state_req["run.state.req"]
+  m_run_state -->|req| d_run_state_req
+  d_run_state_stream["run.state.stream"]
+  m_run_state -->|stream| d_run_state_stream
+  m_run_steps(["run.steps"])
+  d_run_steps_req["run.steps.req"]
+  m_run_steps -->|req| d_run_steps_req
+  d_run_steps_res["run.steps.res"]
+  m_run_steps -->|res| d_run_steps_res
+  m_run_stop(["run.stop"])
+  d_run_stop_req["run.stop.req"]
+  m_run_stop -->|req| d_run_stop_req
+  d_run_stop_res["run.stop.res"]
+  m_run_stop -->|res| d_run_stop_res
+  m_run_stopped(["run.stopped"])
+  d_run_stopped_res["run.stopped.res"]
+  m_run_stopped -->|res| d_run_stopped_res
+  m_shell_ready(["shell.ready"])
+  d_shell_ready_req["shell.ready.req"]
+  m_shell_ready -->|req| d_shell_ready_req
+  d_shell_ready_res["shell.ready.res"]
+  m_shell_ready -->|res| d_shell_ready_res
+  m_shell_shutdown(["shell.shutdown"])
+  d_shell_shutdown_req["shell.shutdown.req"]
+  m_shell_shutdown -->|req| d_shell_shutdown_req
+  d_shell_shutdown_res["shell.shutdown.res"]
+  m_shell_shutdown -->|res| d_shell_shutdown_res
+  m_steps(["steps"])
+  d_steps_res["steps.res"]
+  m_steps -->|res| d_steps_res
+  m_trigger_write(["trigger.write"])
+  d_trigger_write_req["trigger.write.req"]
+  m_trigger_write -->|req| d_trigger_write_req
+  d_trigger_write_res["trigger.write.res"]
+  m_trigger_write -->|res| d_trigger_write_res
+  m_vendor_select(["vendor.select"])
+  d_vendor_select_req["vendor.select.req"]
+  m_vendor_select -->|req| d_vendor_select_req
+  m_vendors(["vendors"])
+  d_vendors_res["vendors.res"]
+  m_vendors -->|res| d_vendors_res

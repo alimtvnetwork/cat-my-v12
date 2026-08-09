@@ -1,0 +1,44 @@
+{
+  "plan": "20",
+  "files": [
+    {
+      "file": "40-error-manage.md",
+      "checks": {
+        "acceptance_checklist": true,
+        "facade_binding": null,
+        "retention_codes": null,
+        "no_enum_drift": true,
+        "codes_registered": true
+      },
+      "unregistered_codes": [],
+      "score": 100.0
+    },
+    {
+      "file": "51-security-and-config-modules.md",
+      "checks": {
+        "acceptance_checklist": true,
+        "facade_binding": null,
+        "retention_codes": null,
+        "no_enum_drift": true,
+        "codes_registered": true
+      },
+      "unregistered_codes": [],
+      "score": 100.0
+    },
+    {
+      "file": "68-v2-audit-retention.md",
+      "checks": {
+        "acceptance_checklist": true,
+        "facade_binding": true,
+        "retention_codes": true,
+        "no_enum_drift": true,
+        "codes_registered": true
+      },
+      "unregistered_codes": [],
+      "score": 100.0
+    }
+  ],
+  "mean": 100.0,
+  "blockers": [],
+  "threshold_pass": true
+}

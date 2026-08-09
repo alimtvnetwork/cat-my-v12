@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "results.schema.json",
+  "title": "results IPC group",
+  "description": "Request and response schemas for paginated inspection results.",
+  "$defs": {
+    "results.list.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "results.list" },
+        "params": {
+          "type": "object",
+          "required": ["page", "pageSize"],
+          "properties": {
+            "runId": { "type": "string" },
+            "page": { "type": "integer", "minimum": 1 },
+            "pageSize": { "type": "integer", "minimum": 1, "maximum": 200 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "results.list.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_RESULTS_LISTED", "E_RESULTS_LIST_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["items", "page", "pageSize", "total"],
+          "properties": {
+            "items": { "type": "array", "items": { "$ref": "#/$defs/result.item" } },
+            "page": { "type": "integer", "minimum": 1 },
+            "pageSize": { "type": "integer", "minimum": 1 },
+            "total": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "result.item": {
+      "type": "object",
+      "required": ["id", "verdict", "score"],
+      "properties": {
+        "id": { "type": "string" },
+        "verdict": { "enum": ["pass", "fail", "review"] },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

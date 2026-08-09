@@ -1,0 +1,32 @@
+{
+  "source": "tests/fixtures/security/denial_sample.jsonl",
+  "windows": {
+    "window_15m": {
+      "buckets": 4,
+      "first_ts": 1750000000,
+      "last_ts": 1750014400,
+      "p50": 2,
+      "p95": 4,
+      "p99": 4,
+      "rows": 10
+    },
+    "window_1m": {
+      "buckets": 5,
+      "first_ts": 1750000000,
+      "last_ts": 1750014400,
+      "p50": 2,
+      "p95": 4,
+      "p99": 4,
+      "rows": 10
+    },
+    "window_5m": {
+      "buckets": 4,
+      "first_ts": 1750000000,
+      "last_ts": 1750014400,
+      "p50": 2,
+      "p95": 4,
+      "p99": 4,
+      "rows": 10
+    }
+  }
+}

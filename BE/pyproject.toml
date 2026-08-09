@@ -1,0 +1,40 @@
+[project]
+name = "be"
+version = "0.1.0"
+description = "Control Automation public HTTP surface (FastAPI). See Plan 88, spec/21-app/backend-implementation-request-v1.md."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "httpx>=0.27",
+  "ruff>=0.7",
+  "mypy>=1.13",
+]
+camera-daheng = [
+  "gxipy>=2.0",
+]
+
+[project.scripts]
+be-dev = "BE.main:dev"
+worker-cli = "BE.cli.worker.main:main"
+processing-cli = "BE.cli.processing.main:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RET"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["BE/tests"]

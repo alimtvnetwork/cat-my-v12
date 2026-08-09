@@ -1,0 +1,54 @@
+%% Projects aggregate - Plan 64 step 19
+%% Rendered PNG: 03-projects.png (pending)
+erDiagram
+    PROJECT ||--o{ PROJECT_RULE_SET : "wires"
+    PROJECT ||--o{ PROJECT_CATEGORY : "targets"
+    PROJECT ||--|| CAMERA_SETTING : "uses"
+    PROJECT ||--|| LIGHTING_SETTING : "uses"
+    RULE_SET ||--o{ PROJECT_RULE_SET : "referenced by"
+    CATEGORY ||--o{ PROJECT_CATEGORY : "referenced by"
+
+    PROJECT {
+        uuid id PK
+        string name
+        string status "Draft|Ready|Archived"
+        uuid camera_setting_id FK
+        uuid lighting_setting_id FK
+        timestamp opened_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    PROJECT_RULE_SET {
+        uuid id PK
+        uuid project_id FK
+        uuid rule_set_id FK
+        string override_mode "Reference|Snapshot"
+        uuid snapshot_id "populated when Snapshot"
+        int sequence
+    }
+    PROJECT_CATEGORY {
+        uuid id PK
+        uuid project_id FK
+        uuid category_id FK
+        bool auto_apply
+    }
+    CAMERA_SETTING {
+        uuid id PK
+        string name
+        int width_px
+        int height_px
+        float fov_deg
+        int shutter_us
+        int gain_db
+        int pockets
+        string device_id
+        json vendor_json
+    }
+    LIGHTING_SETTING {
+        uuid id PK
+        string name
+        int channels
+        json channel_intensity_json
+        int strobe_ms
+        string mode "Continuous|Strobe|External"
+    }

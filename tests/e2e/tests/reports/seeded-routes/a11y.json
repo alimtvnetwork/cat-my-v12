@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "profile": "prof-default-pcb",
+  "ruleset": "wcag2a+wcag2aa",
+  "blockingImpacts": ["critical", "serious"],
+  "totalBlocking": 0,
+  "totalViolations": 0,
+  "routes": [
+    {
+      "route": "/projects",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/projects/proj-default-pcb-refdes",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/projects/proj-default-pcb-refdes/categories",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/projects/proj-default-pcb-refdes/rulesets",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/projects/proj-default-pcb-refdes/rulesets/rs-refdes-verify",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/settings",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    },
+    {
+      "route": "/errors",
+      "violations": [],
+      "blockingCount": 0,
+      "totalCount": 0
+    }
+  ]
+}

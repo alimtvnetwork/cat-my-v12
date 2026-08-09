@@ -1,0 +1,17 @@
+[Unit]
+Description=vision-app Task-DB retention worker (Plan 90 Step 103)
+Documentation=file://${APP_DATA_ROOT}/docs/spec/21-app/78-retention-schedule.md
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=${PYTHON_EXE} ${RETENTION_SCRIPT} --loop --interval-hours ${INTERVAL_HOURS} --retention-days ${RETENTION_DAYS}
+Environment=APP_DATA_ROOT=${APP_DATA_ROOT}
+Restart=on-failure
+RestartSec=30
+# Stop signal matches the CLI's own SIGINT/SIGTERM handling from spec 78.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+[Install]
+WantedBy=default.target

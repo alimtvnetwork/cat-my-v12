@@ -1,0 +1,15 @@
+%% Method: settings.capture.device.write
+%% Group schema: ../../schemas/ipc/settings.schema.json
+%% Map row: ../../05-ui-to-backend-map.md (routes/settings.camera.tsx)
+sequenceDiagram
+    autonumber
+    participant UI as routes/settings.camera.tsx
+    participant IPC as pywebview IPC
+    participant W as Python worker
+    participant DB as SQLite / vendor
+    UI->>IPC: settings.capture.device.write req (save)
+    IPC->>W: dispatch { cid, method, params }
+    W->>DB: perform work
+    DB-->>W: result or error
+    W-->>IPC: res { cid, code, data }
+    IPC-->>UI: I_* on success / E_* on failure

@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.12, pytest-9.1.1, pluggy-1.6.0
+rootdir: /dev-server/BE
+configfile: pyproject.toml
+plugins: anyio-4.14.2
+collected 13 items
+
+BE/tests/app/rules/test_problem_taxonomy.py .....                        [ 38%]
+BE/tests/cli/worker/test_help_system.py ........                         [100%]
+
+=============================== warnings summary ===============================
+../nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_mode
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 13 passed, 1 warning in 0.39s =========================

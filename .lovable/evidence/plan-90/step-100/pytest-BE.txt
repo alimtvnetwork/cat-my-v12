@@ -1,0 +1,40 @@
+               ^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 0
+
+tests/routes/test_cli_observability.py:80: KeyError
+---------------------------- Captured stdout setup -----------------------------
+{"ts": "2026-07-21T20:49:23.217525+00:00", "level": "INFO", "logger": "BE.main", "message": "be_app_created", "CorrelationId": null, "operation": "startup", "code": null, "subject_id": null, "env": "dev", "port": 8787}
+------------------------------ Captured log setup ------------------------------
+INFO     BE.main:main.py:64 be_app_created
+----------------------------- Captured stdout call -----------------------------
+{"ts": "2026-07-21T20:49:23.226241+00:00", "level": "WARNING", "logger": "BE.errors", "message": "app_error", "CorrelationId": "8f0d2d10-b33a-48bd-a92c-f545da793a2d", "operation": "GET /api/cli/sessions", "code": "E_BE_BAD_REQUEST", "subject_id": null}
+{"ts": "2026-07-21T20:49:23.227739+00:00", "level": "INFO", "logger": "httpx", "message": "HTTP Request: GET http://testserver/api/cli/sessions?source=bogus \"HTTP/1.1 400 Bad Request\"", "CorrelationId": null, "operation": null, "code": null, "subject_id": null}
+------------------------------ Captured log call -------------------------------
+WARNING  BE.errors:handlers.py:63 app_error
+INFO     httpx:_client.py:1025 HTTP Request: GET http://testserver/api/cli/sessions?source=bogus "HTTP/1.1 400 Bad Request"
+=============================== warnings summary ===============================
+../../nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1624
+  /nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1624: PytestConfigWarning: No files were found in testpaths; consider removing or adjusting your testpaths configuration. Searching recursively from the current directory instead.
+    self.args, self.args_source = self._decide_args(
+
+../../nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1464
+  /nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_mode
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /nix/store/pbvm3gac17hj4gwkjp92xwdspbi9dvnx-sandbox-python-env/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/app/rules/test_problem_taxonomy.py::test_every_problem_call_uses_enum_member
+FAILED tests/app/rules/test_problem_taxonomy.py::test_every_registered_code_is_reachable
+FAILED tests/app/test_verify_install_workflow.py::test_workflow_exists_and_parses
+FAILED tests/cli/worker/test_help_system.py::test_every_subcommand_has_helptext
+FAILED tests/routes/test_cli_observability.py::test_empty_when_log_root_missing
+FAILED tests/routes/test_cli_observability.py::test_lists_sessions_newest_first
+FAILED tests/routes/test_cli_observability.py::test_source_filter - KeyError:...
+FAILED tests/routes/test_cli_observability.py::test_limit_bounds - KeyError: ...
+FAILED tests/routes/test_cli_observability.py::test_bad_source - KeyError: 0
+9 failed, 1409 passed, 2 skipped, 3 warnings in 40.68s

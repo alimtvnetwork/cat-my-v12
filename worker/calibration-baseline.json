@@ -1,0 +1,524 @@
+{
+  "per_kind": {
+    "C": {
+      "n": 6,
+      "threshold": 0.01,
+      "f1": 1.0,
+      "tp": 3,
+      "fp": 0,
+      "tn": 3,
+      "fn": 0,
+      "separation": {
+        "midpoint": 0.5,
+        "margin": 1.0,
+        "separable": true,
+        "pass_min": 1.0,
+        "fail_max": 0.0
+      },
+      "distributions": {
+        "pass": {
+          "n": 3,
+          "min": 1.0,
+          "max": 1.0,
+          "mean": 1.0,
+          "std": 0.0,
+          "p05": 1.0,
+          "p25": 1.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0,
+          "histogram": [0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+          "raw": [1.0, 1.0, 1.0]
+        },
+        "fail": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "mean": 0.0,
+          "std": 0.0,
+          "p05": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p95": 0.0,
+          "histogram": [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "raw": [0.0, 0.0, 0.0]
+        }
+      }
+    },
+    "E": {
+      "n": 6,
+      "threshold": 0.51,
+      "f1": 1.0,
+      "tp": 3,
+      "fp": 0,
+      "tn": 3,
+      "fn": 0,
+      "separation": {
+        "midpoint": 0.75,
+        "margin": 0.5,
+        "separable": true,
+        "pass_min": 1.0,
+        "fail_max": 0.5
+      },
+      "distributions": {
+        "pass": {
+          "n": 3,
+          "min": 1.0,
+          "max": 1.0,
+          "mean": 1.0,
+          "std": 0.0,
+          "p05": 1.0,
+          "p25": 1.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0,
+          "histogram": [0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+          "raw": [1.0, 1.0, 1.0]
+        },
+        "fail": {
+          "n": 3,
+          "min": 0.5,
+          "max": 0.5,
+          "mean": 0.5,
+          "std": 0.0,
+          "p05": 0.5,
+          "p25": 0.5,
+          "p50": 0.5,
+          "p75": 0.5,
+          "p95": 0.5,
+          "histogram": [0, 0, 0, 0, 0, 3, 0, 0, 0, 0],
+          "raw": [0.5, 0.5, 0.5]
+        }
+      }
+    },
+    "K": {
+      "n": 6,
+      "threshold": 0.01,
+      "f1": 1.0,
+      "tp": 3,
+      "fp": 0,
+      "tn": 3,
+      "fn": 0,
+      "separation": {
+        "midpoint": 0.4394,
+        "margin": 0.8789,
+        "separable": true,
+        "pass_min": 0.8789,
+        "fail_max": 0.0
+      },
+      "distributions": {
+        "pass": {
+          "n": 3,
+          "min": 0.8789,
+          "max": 1.0,
+          "mean": 0.9596,
+          "std": 0.0571,
+          "p05": 0.891,
+          "p25": 0.9394,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0,
+          "histogram": [0, 0, 0, 0, 0, 0, 0, 0, 1, 2],
+          "raw": [1.0, 1.0, 0.8789]
+        },
+        "fail": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "mean": 0.0,
+          "std": 0.0,
+          "p05": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p95": 0.0,
+          "histogram": [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "raw": [0.0, 0.0, 0.0]
+        }
+      }
+    },
+    "R": {
+      "n": 6,
+      "threshold": 0.01,
+      "f1": 1.0,
+      "tp": 3,
+      "fp": 0,
+      "tn": 3,
+      "fn": 0,
+      "separation": {
+        "midpoint": 0.4944,
+        "margin": 0.9889,
+        "separable": true,
+        "pass_min": 0.9889,
+        "fail_max": 0.0
+      },
+      "distributions": {
+        "pass": {
+          "n": 3,
+          "min": 0.9889,
+          "max": 1.0,
+          "mean": 0.9944,
+          "std": 0.0045,
+          "p05": 0.9894,
+          "p25": 0.9917,
+          "p50": 0.9944,
+          "p75": 0.9972,
+          "p95": 0.9994,
+          "histogram": [0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+          "raw": [1.0, 0.9944, 0.9889]
+        },
+        "fail": {
+          "n": 3,
+          "min": 0.0,
+          "max": 0.0,
+          "mean": 0.0,
+          "std": 0.0,
+          "p05": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p95": 0.0,
+          "histogram": [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "raw": [0.0, 0.0, 0.0]
+        }
+      }
+    },
+    "S": {
+      "n": 6,
+      "threshold": 0.21,
+      "f1": 1.0,
+      "tp": 3,
+      "fp": 0,
+      "tn": 3,
+      "fn": 0,
+      "separation": {
+        "midpoint": 0.5837,
+        "margin": 0.7636,
+        "separable": true,
+        "pass_min": 0.9656,
+        "fail_max": 0.2019
+      },
+      "distributions": {
+        "pass": {
+          "n": 3,
+          "min": 0.9656,
+          "max": 0.995,
+          "mean": 0.9756,
+          "std": 0.0137,
+          "p05": 0.9656,
+          "p25": 0.9659,
+          "p50": 0.9663,
+          "p75": 0.9806,
+          "p95": 0.9921,
+          "histogram": [0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+          "raw": [0.9656, 0.995, 0.9663]
+        },
+        "fail": {
+          "n": 3,
+          "min": 0.1025,
+          "max": 0.2019,
+          "mean": 0.1685,
+          "std": 0.0467,
+          "p05": 0.1123,
+          "p25": 0.1517,
+          "p50": 0.201,
+          "p75": 0.2015,
+          "p95": 0.2018,
+          "histogram": [0, 1, 2, 0, 0, 0, 0, 0, 0, 0],
+          "raw": [0.1025, 0.2019, 0.201]
+        }
+      }
+    }
+  },
+  "detail": [
+    {
+      "name": "colour_pass_0",
+      "kind": "C",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "mean_diff": 10.0,
+        "match_fraction": 1.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "colour_fail_0",
+      "kind": "C",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_diff": 270.9243469238281,
+        "match_fraction": 0.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "colour_pass_1",
+      "kind": "C",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "mean_diff": 9.0,
+        "match_fraction": 1.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "colour_fail_1",
+      "kind": "C",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_diff": 271.5529479980469,
+        "match_fraction": 0.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "colour_pass_2",
+      "kind": "C",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "mean_diff": 8.0,
+        "match_fraction": 1.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "colour_fail_2",
+      "kind": "C",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_diff": 272.18377685546875,
+        "match_fraction": 0.0,
+        "tolerance": 40.0
+      }
+    },
+    {
+      "name": "reference_pass_0",
+      "kind": "R",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "mean_abs_diff": 0.0
+      }
+    },
+    {
+      "name": "reference_fail_0",
+      "kind": "R",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_abs_diff": 110.0
+      }
+    },
+    {
+      "name": "reference_pass_1",
+      "kind": "R",
+      "score": 0.994,
+      "expected": "pass",
+      "debug": {
+        "mean_abs_diff": 0.3333333432674408
+      }
+    },
+    {
+      "name": "reference_fail_1",
+      "kind": "R",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_abs_diff": 110.0
+      }
+    },
+    {
+      "name": "reference_pass_2",
+      "kind": "R",
+      "score": 0.989,
+      "expected": "pass",
+      "debug": {
+        "mean_abs_diff": 0.6666666865348816
+      }
+    },
+    {
+      "name": "reference_fail_2",
+      "kind": "R",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "mean_abs_diff": 110.0
+      }
+    },
+    {
+      "name": "edges_pass_0",
+      "kind": "K",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "edge_fraction": 0.3055555555555556
+      }
+    },
+    {
+      "name": "edges_fail_0",
+      "kind": "K",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "edge_fraction": 0.0
+      }
+    },
+    {
+      "name": "edges_pass_1",
+      "kind": "K",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "edge_fraction": 0.2632638888888889
+      }
+    },
+    {
+      "name": "edges_fail_1",
+      "kind": "K",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "edge_fraction": 0.0
+      }
+    },
+    {
+      "name": "edges_pass_2",
+      "kind": "K",
+      "score": 0.879,
+      "expected": "pass",
+      "debug": {
+        "edge_fraction": 0.21972222222222224
+      }
+    },
+    {
+      "name": "edges_fail_2",
+      "kind": "K",
+      "score": 0.0,
+      "expected": "fail",
+      "debug": {
+        "edge_fraction": 0.0
+      }
+    },
+    {
+      "name": "shape_pass_0",
+      "kind": "S",
+      "score": 0.966,
+      "expected": "pass",
+      "debug": {
+        "fill_fraction": 0.48277777777777775,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "shape_pass_1",
+      "kind": "S",
+      "score": 0.995,
+      "expected": "pass",
+      "debug": {
+        "fill_fraction": 0.4975,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "shape_pass_2",
+      "kind": "S",
+      "score": 0.966,
+      "expected": "pass",
+      "debug": {
+        "fill_fraction": 0.516875,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "shape_fail_0",
+      "kind": "S",
+      "score": 0.103,
+      "expected": "fail",
+      "debug": {
+        "fill_fraction": 0.05125,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "shape_fail_1",
+      "kind": "S",
+      "score": 0.202,
+      "expected": "fail",
+      "debug": {
+        "fill_fraction": 0.10097222222222223,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "shape_fail_2",
+      "kind": "S",
+      "score": 0.201,
+      "expected": "fail",
+      "debug": {
+        "fill_fraction": 0.8995138888888888,
+        "expected": 0.5
+      }
+    },
+    {
+      "name": "empty_pass_0",
+      "kind": "E",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "non_background_fraction": 0.0
+      }
+    },
+    {
+      "name": "empty_fail_0",
+      "kind": "E",
+      "score": 0.5,
+      "expected": "fail",
+      "debug": {
+        "non_background_fraction": 0.5
+      }
+    },
+    {
+      "name": "empty_pass_1",
+      "kind": "E",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "non_background_fraction": 0.0
+      }
+    },
+    {
+      "name": "empty_fail_1",
+      "kind": "E",
+      "score": 0.5,
+      "expected": "fail",
+      "debug": {
+        "non_background_fraction": 0.5
+      }
+    },
+    {
+      "name": "empty_pass_2",
+      "kind": "E",
+      "score": 1.0,
+      "expected": "pass",
+      "debug": {
+        "non_background_fraction": 0.0
+      }
+    },
+    {
+      "name": "empty_fail_2",
+      "kind": "E",
+      "score": 0.5,
+      "expected": "fail",
+      "debug": {
+        "non_background_fraction": 0.5
+      }
+    }
+  ]
+}

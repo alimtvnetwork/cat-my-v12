@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "home.schema.json",
+  "title": "home IPC group",
+  "description": "Request and response schemas for home summary IPC.",
+  "$defs": {
+    "home.summary.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "home.summary.read" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "home.summary.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_HOME_SUMMARY_READ", "E_HOME_SUMMARY_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["activeRunId", "cameraReady", "openErrors"],
+          "properties": {
+            "activeRunId": { "type": ["string", "null"] },
+            "cameraReady": { "type": "boolean" },
+            "openErrors": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

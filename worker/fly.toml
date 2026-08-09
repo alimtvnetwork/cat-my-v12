@@ -1,0 +1,25 @@
+# Reference Fly.io deploy config. Copy to your own app name before first
+# deploy: `fly launch --copy-config --name <app>` or edit `app =` below.
+app = "control-automation-validator"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  LOG_LEVEL = "INFO"
+  WORKER_VERSION = "0.1.0"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "setup.schema.json",
+  "title": "setup IPC group",
+  "description": "Request and response schemas for setup IPC.",
+  "$defs": {
+    "reference.capture.req": { "$ref": "#/$defs/empty.req" },
+    "reference.capture.res": { "$ref": "#/$defs/reference.res" },
+    "roi.write.req": { "$ref": "#/$defs/roi.req" },
+    "roi.write.res": { "$ref": "#/$defs/roi.res" },
+    "empty.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "type": "string" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "roi.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "setup.roi.write" },
+        "params": {
+          "type": "object",
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "reference.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_REFERENCE_CAPTURED", "E_REFERENCE_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["referenceId"],
+          "properties": { "referenceId": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "roi.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_ROI_WRITTEN", "E_ROI_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["roiId"],
+          "properties": { "roiId": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

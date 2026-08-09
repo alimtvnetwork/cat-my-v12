@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Pre-commit hook: block commits when IPC schema $defs or UI-backend map
+# coverage checks fail in strict mode.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+# Or run:                 bash .githooks/install.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Only run when relevant files are staged. Anything under the shell IPC
+# schema tree, the UI-backend map, the linter scripts themselves, or code
+# that could contain server-fn call sites picked up by the linter.
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -Eq \
+  '^(spec/21-app/shell/|linter-scripts/(check-(ui-backend-map|ipc-examples)|fixtures/(ui-backend-map|ipc-examples))|src/|app/)'; then
+  exit 0
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "pre-commit: python3 not found, skipping IPC coverage checks" >&2
+  exit 0
+fi
+
+fail() {
+  echo >&2
+  echo "pre-commit: $1 failed (strict mode)." >&2
+  echo "pre-commit: fix the reported errors or run \`git commit --no-verify\` to bypass." >&2
+  exit 1
+}
+
+echo "pre-commit: UI-backend map coverage (strict)…"
+python3 linter-scripts/check-ui-backend-map.py --strict-schema \
+  || fail "check-ui-backend-map.py --strict-schema"
+
+echo "pre-commit: IPC example payloads validate…"
+python3 linter-scripts/check-ipc-examples.py \
+  || fail "check-ipc-examples.py"
+
+echo "pre-commit: IPC TypeScript types up-to-date…"
+python3 linter-scripts/generate-ipc-types.py >/dev/null
+if ! git diff --exit-code --quiet -- src/generated/ipc-types.ts; then
+  echo >&2 "pre-commit: src/generated/ipc-types.ts is out of date."
+  echo >&2 "pre-commit: run \`python3 linter-scripts/generate-ipc-types.py\` and stage the result."
+  exit 1
+fi
+
+echo "pre-commit: OK"

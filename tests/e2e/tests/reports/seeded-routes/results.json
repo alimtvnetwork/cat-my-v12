@@ -1,0 +1,51 @@
+[
+  {
+    "path": "/projects",
+    "body_len": 504,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/projects/proj-default-pcb-refdes",
+    "body_len": 299,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/projects/proj-default-pcb-refdes/categories",
+    "body_len": 310,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/projects/proj-default-pcb-refdes/rulesets",
+    "body_len": 309,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/projects/proj-default-pcb-refdes/rulesets/rs-refdes-verify",
+    "body_len": 326,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/settings",
+    "body_len": 2269,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  },
+  {
+    "path": "/errors",
+    "body_len": 391,
+    "errors": [],
+    "ok": true,
+    "reasons": []
+  }
+]

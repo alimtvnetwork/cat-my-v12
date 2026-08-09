@@ -1,0 +1,15 @@
+%% Method: errors.list
+%% Group schema: ../../schemas/ipc/errors.schema.json
+%% Map row: ../../05-ui-to-backend-map.md (routes/errors.tsx)
+sequenceDiagram
+    autonumber
+    participant UI as routes/errors.tsx
+    participant IPC as pywebview IPC
+    participant W as Python worker
+    participant DB as SQLite / vendor
+    UI->>IPC: errors.list req (mount)
+    IPC->>W: dispatch { cid, method, params }
+    W->>DB: perform work
+    DB-->>W: result or error
+    W-->>IPC: res { cid, code, data }
+    IPC-->>UI: I_* on success / E_* on failure

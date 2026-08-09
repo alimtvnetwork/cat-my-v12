@@ -1,0 +1,610 @@
+{
+  "version": "1.0.0",
+  "projects": [
+    {
+      "name": "Bottle Line Inspection",
+      "cameraName": "Reference USB Cam",
+      "micSettingsName": "Clean room baseline",
+      "categories": ["Label", "Cap", "Fill Level"],
+      "rulesets": [
+        {
+          "name": "Front Label Presence",
+          "categoryName": "Label",
+          "rules": [
+            {
+              "name": "Label ROI",
+              "kind": "R",
+              "family": "rect",
+              "x": 120,
+              "y": 200,
+              "width": 320,
+              "height": 220
+            },
+            {
+              "name": "Logo Match",
+              "kind": "C",
+              "family": "rect",
+              "x": 180,
+              "y": 240,
+              "width": 180,
+              "height": 90
+            }
+          ]
+        },
+        {
+          "name": "Cap Torque Mark",
+          "categoryName": "Cap",
+          "rules": [
+            {
+              "name": "Cap Region",
+              "kind": "R",
+              "family": "rect",
+              "x": 200,
+              "y": 40,
+              "width": 200,
+              "height": 120
+            },
+            {
+              "name": "Torque Indicator",
+              "kind": "K",
+              "family": "rect",
+              "x": 240,
+              "y": 60,
+              "width": 120,
+              "height": 80
+            }
+          ]
+        },
+        {
+          "name": "Fill Height",
+          "categoryName": "Fill Level",
+          "rules": [
+            {
+              "name": "Neck Anchor",
+              "kind": "S",
+              "family": "anchor",
+              "x": 300,
+              "y": 140,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "name": "Meniscus Edge",
+              "kind": "E",
+              "family": "rect",
+              "x": 220,
+              "y": 160,
+              "width": 200,
+              "height": 40
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PCB Assembly Check",
+      "cameraName": "Basler acA1920",
+      "micSettingsName": "Diagnostic capture",
+      "categories": ["Components", "Solder", "Text"],
+      "rulesets": [
+        {
+          "name": "IC Placement",
+          "categoryName": "Components",
+          "rules": [
+            {
+              "name": "IC Body",
+              "kind": "R",
+              "family": "rect",
+              "x": 90,
+              "y": 90,
+              "width": 260,
+              "height": 180
+            },
+            {
+              "name": "Pin 1 Marker",
+              "kind": "C",
+              "family": "rect",
+              "x": 95,
+              "y": 95,
+              "width": 40,
+              "height": 40
+            }
+          ]
+        },
+        {
+          "name": "Silkscreen OCR",
+          "categoryName": "Text",
+          "rules": [
+            {
+              "name": "Part Number ROI",
+              "kind": "R",
+              "family": "rect",
+              "x": 60,
+              "y": 320,
+              "width": 300,
+              "height": 60
+            }
+          ]
+        },
+        {
+          "name": "Solder Joint Blob",
+          "categoryName": "Solder",
+          "rules": [
+            {
+              "name": "Joint Cluster",
+              "kind": "K",
+              "family": "rect",
+              "x": 40,
+              "y": 40,
+              "width": 400,
+              "height": 300
+            }
+          ]
+        },
+        {
+          "name": "IC Solder Joint Inspection",
+          "categoryName": "Solder",
+          "rules": [
+            {
+              "name": "IC Bounding Box",
+              "kind": "R",
+              "family": "rect",
+              "x": 80,
+              "y": 80,
+              "width": 280,
+              "height": 200
+            },
+            {
+              "name": "Pin Row Anchor",
+              "kind": "S",
+              "family": "anchor",
+              "x": 82,
+              "y": 180,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "name": "Joint Blob Cluster",
+              "kind": "K",
+              "family": "rect",
+              "x": 85,
+              "y": 85,
+              "width": 270,
+              "height": 190
+            },
+            {
+              "name": "Bridge Verdict",
+              "kind": "E",
+              "family": "rect",
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Blister Pack QA",
+      "cameraName": "Basler acA1920",
+      "micSettingsName": "Line-side ambient",
+      "categories": ["Pill Count", "Foil", "Barcode"],
+      "rulesets": [
+        {
+          "name": "Pill Presence Grid",
+          "categoryName": "Pill Count",
+          "rules": [
+            {
+              "name": "Pack Area",
+              "kind": "R",
+              "family": "rect",
+              "x": 40,
+              "y": 40,
+              "width": 520,
+              "height": 320
+            },
+            {
+              "name": "Cavity Blob",
+              "kind": "K",
+              "family": "rect",
+              "x": 60,
+              "y": 60,
+              "width": 80,
+              "height": 80
+            }
+          ]
+        },
+        {
+          "name": "Blister Pocket Count",
+          "categoryName": "Pill Count",
+          "rules": [
+            {
+              "name": "Pack Frame",
+              "kind": "R",
+              "family": "rect",
+              "x": 30,
+              "y": 30,
+              "width": 540,
+              "height": 340
+            },
+            {
+              "name": "Row Anchor",
+              "kind": "S",
+              "family": "anchor",
+              "x": 30,
+              "y": 60,
+              "width": 20,
+              "height": 20
+            },
+            {
+              "name": "Cavity Count",
+              "kind": "K",
+              "family": "rect",
+              "x": 40,
+              "y": 60,
+              "width": 520,
+              "height": 300
+            }
+          ]
+        },
+        {
+          "name": "Lot Code Barcode",
+          "categoryName": "Barcode",
+          "rules": [
+            {
+              "name": "Barcode ROI",
+              "kind": "R",
+              "family": "rect",
+              "x": 380,
+              "y": 20,
+              "width": 180,
+              "height": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Carrier Tape Line 3",
+      "cameraName": "FLIR Blackfly S",
+      "micSettingsName": "Line-side ambient",
+      "categories": ["Pill Count", "Components"],
+      "rulesets": [
+        {
+          "name": "Carrier Tape Pocket",
+          "categoryName": "Pill Count",
+          "rules": [
+            {
+              "name": "Tape Frame",
+              "kind": "R",
+              "family": "rect",
+              "x": 20,
+              "y": 60,
+              "width": 600,
+              "height": 200
+            },
+            {
+              "name": "Sprocket Anchor",
+              "kind": "S",
+              "family": "anchor",
+              "x": 30,
+              "y": 80,
+              "width": 16,
+              "height": 16
+            },
+            {
+              "name": "Pocket Blob",
+              "kind": "K",
+              "family": "rect",
+              "x": 40,
+              "y": 90,
+              "width": 560,
+              "height": 160
+            },
+            {
+              "name": "Pocket Yield",
+              "kind": "E",
+              "family": "rect",
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SOIC-8 Line",
+      "cameraName": "Basler acA1920",
+      "micSettingsName": "Diagnostic capture",
+      "categories": ["Components", "Solder"],
+      "rulesets": [
+        {
+          "name": "SOIC-8 Body Presence",
+          "categoryName": "Components",
+          "rules": [
+            {
+              "name": "Body ROI",
+              "kind": "R",
+              "family": "rect",
+              "x": 120,
+              "y": 100,
+              "width": 260,
+              "height": 160
+            },
+            {
+              "name": "Pin 1 Dot",
+              "kind": "C",
+              "family": "rect",
+              "x": 130,
+              "y": 110,
+              "width": 32,
+              "height": 32
+            }
+          ]
+        },
+        {
+          "name": "SOIC-8 Lead Solder",
+          "categoryName": "Solder",
+          "rules": [
+            {
+              "name": "Left Lead Row",
+              "kind": "K",
+              "family": "rect",
+              "x": 95,
+              "y": 120,
+              "width": 30,
+              "height": 140
+            },
+            {
+              "name": "Right Lead Row",
+              "kind": "K",
+              "family": "rect",
+              "x": 380,
+              "y": 120,
+              "width": 30,
+              "height": 140
+            },
+            {
+              "name": "Solder Verdict",
+              "kind": "E",
+              "family": "rect",
+              "x": 0,
+              "y": 0,
+              "width": 0,
+              "height": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "categories": [
+    { "name": "Label", "description": "Front/back label presence and print quality" },
+    { "name": "Cap", "description": "Cap seating, torque mark, and closure integrity" },
+    { "name": "Fill Level", "description": "Meniscus and neck fill height checks" },
+    { "name": "Components", "description": "IC placement, orientation, and body match" },
+    { "name": "Solder", "description": "Solder joint blob and coverage inspection" },
+    { "name": "Text", "description": "OCR of part numbers, lot codes, and silkscreen" },
+    { "name": "Pill Count", "description": "Cavity presence and pill count per blister" },
+    { "name": "Foil", "description": "Foil seal presence and tear detection" },
+    { "name": "Barcode", "description": "1D/2D barcode and DataMatrix decoding" }
+  ],
+  "ruleTemplates": [
+    {
+      "id": "tmpl-label-presence",
+      "label": "Label presence ROI",
+      "kind": "R",
+      "suggestedCategory": "Label",
+      "description": "Rectangular ROI over the label area. Combine with a logo match to confirm presence.",
+      "defaults": {
+        "name": "Label ROI",
+        "kind": "R",
+        "family": "rect",
+        "x": 120,
+        "y": 200,
+        "width": 320,
+        "height": 220
+      }
+    },
+    {
+      "id": "tmpl-logo-match",
+      "label": "Logo template match",
+      "kind": "C",
+      "suggestedCategory": "Label",
+      "description": "Circle/template match sized for a small brand mark inside the label ROI.",
+      "defaults": {
+        "name": "Logo Match",
+        "kind": "C",
+        "family": "rect",
+        "x": 180,
+        "y": 240,
+        "width": 180,
+        "height": 90
+      }
+    },
+    {
+      "id": "tmpl-ocr-lot-code",
+      "label": "OCR lot / date code",
+      "kind": "K",
+      "suggestedCategory": "Text",
+      "description": "OCR ROI shaped for a single-line lot code. Widen height for multi-line.",
+      "defaults": {
+        "name": "Lot Code OCR",
+        "kind": "K",
+        "family": "rect",
+        "x": 60,
+        "y": 320,
+        "width": 300,
+        "height": 60
+      }
+    },
+    {
+      "id": "tmpl-fill-anchor",
+      "label": "Fill-level anchor + edge",
+      "kind": "S",
+      "suggestedCategory": "Fill Level",
+      "description": "Anchor fiducial for the bottle neck. Pair with a meniscus edge rule downstream.",
+      "defaults": {
+        "name": "Neck Anchor",
+        "kind": "S",
+        "family": "anchor",
+        "x": 300,
+        "y": 140,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "id": "tmpl-math-verdict",
+      "label": "Math verdict combiner",
+      "kind": "E",
+      "description": "Expression rule that combines upstream measurements into a single pass/fail number.",
+      "defaults": {
+        "name": "Verdict",
+        "kind": "E",
+        "family": "rect",
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      }
+    }
+  ],
+  "toolPresets": [
+    {
+      "id": "tool-roi-circle",
+      "label": "ROI",
+      "toolId": "kind:C",
+      "description": "Circle region of interest. Hold Shift while resizing to keep it a perfect circle.",
+      "params": { "section": "primary", "hotkey": "1" }
+    },
+    {
+      "id": "tool-roi-rect",
+      "label": "Rect",
+      "toolId": "kind:R",
+      "description": "Rectangular region of interest.",
+      "params": { "section": "primary", "hotkey": "2" }
+    },
+    {
+      "id": "tool-ocr",
+      "label": "OCR",
+      "toolId": "kind:K",
+      "description": "Optical character recognition ROI.",
+      "params": { "section": "primary", "hotkey": "3" }
+    },
+    {
+      "id": "tool-text",
+      "label": "Text",
+      "toolId": "kind:S",
+      "description": "Static text label overlay.",
+      "params": { "section": "primary", "hotkey": "4" }
+    },
+    {
+      "id": "tool-math",
+      "label": "Math",
+      "toolId": "kind:E",
+      "description": "Expression / math combiner rule.",
+      "params": { "section": "primary", "hotkey": "5" }
+    },
+    {
+      "id": "tool-anchor",
+      "label": "Anchor",
+      "toolId": "kind:R",
+      "description": "Anchor point. Locks a fiducial so downstream rules track part shift. Coming soon.",
+      "params": { "section": "upcoming" }
+    },
+    {
+      "id": "tool-blob",
+      "label": "Blob",
+      "toolId": "kind:R",
+      "description": "Connected blob detector. Counts bright or dark clusters above a threshold. Coming soon.",
+      "params": { "section": "upcoming" }
+    },
+    {
+      "id": "tool-color",
+      "label": "Color",
+      "toolId": "kind:R",
+      "description": "Color area. Measures pixel ratio matching a target hue window. Coming soon.",
+      "params": { "section": "upcoming" }
+    },
+    {
+      "id": "tool-edge",
+      "label": "Edge",
+      "toolId": "kind:R",
+      "description": "Edge finder. Locates a straight edge and reports position. Coming soon.",
+      "params": { "section": "upcoming" }
+    },
+    {
+      "id": "tool-barcode",
+      "label": "Bar",
+      "toolId": "kind:R",
+      "description": "1D and 2D barcode reader. Decodes DataMatrix, QR, and Code128. Coming soon.",
+      "params": { "section": "upcoming" }
+    }
+  ],
+  "sampleImages": [
+    {
+      "id": "pcb-default",
+      "label": "SOIC pocket reference",
+      "category": "carrier-tape",
+      "pocketCount": 4,
+      "fov": "Default pocket FOV",
+      "assetId": "pocket-4-chip"
+    },
+    {
+      "id": "carrier-tape-1",
+      "label": "SOIC chip, 1 pocket",
+      "category": "carrier-tape",
+      "pocketCount": 1,
+      "fov": "Macro FOV",
+      "assetId": "pocket-1-chip"
+    },
+    {
+      "id": "carrier-tape-2",
+      "label": "SOIC chips, 2 pockets",
+      "category": "carrier-tape",
+      "pocketCount": 2,
+      "fov": "Narrow FOV",
+      "assetId": "pocket-2-chip"
+    },
+    {
+      "id": "carrier-tape-3",
+      "label": "SOIC chips, 3 pockets",
+      "category": "carrier-tape",
+      "pocketCount": 3,
+      "fov": "Standard FOV",
+      "assetId": "pocket-3-chip"
+    },
+    {
+      "id": "carrier-tape-4",
+      "label": "SOIC chips, 4 pockets",
+      "category": "carrier-tape",
+      "pocketCount": 4,
+      "fov": "Wide FOV",
+      "assetId": "pocket-4-chip"
+    }
+  ],
+  "programs": [
+    {
+      "id": "prog-bottle-label",
+      "name": "Bottle Line, Label QA",
+      "projectName": "Bottle Line Inspection",
+      "rulesetName": "Front Label Presence"
+    },
+    {
+      "id": "prog-pcb-ic",
+      "name": "PCB, IC Placement Check",
+      "projectName": "PCB Assembly Check",
+      "rulesetName": "IC Placement"
+    },
+    {
+      "id": "prog-blister-count",
+      "name": "Blister, Pill Presence",
+      "projectName": "Blister Pack QA",
+      "rulesetName": "Pill Presence Grid"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+sequenceDiagram
+  participant OS
+  participant Shell
+  participant Worker
+  participant Renderer
+
+  OS->>Shell: launch
+  Shell->>Shell: acquire single-instance lock
+  Shell->>Shell: open splash + mint bearer token
+  Shell->>Shell: run SQLite migrations
+  Shell->>Worker: spawn (env: PORT=0, TOKEN, DATA_DIR)
+  Worker->>Worker: bind 127.0.0.1:random
+  Worker-->>Shell: stdout "READY {port}"
+  loop until 200 or 30s
+    Shell->>Worker: GET /healthz
+  end
+  Worker-->>Shell: 200 ready
+  Shell-->>Shell: emit I_SHELL_READY
+  Shell->>Renderer: create WebView, inject {port, token, version}
+  Renderer->>Shell: load app://index.html
+  Shell->>Shell: close splash

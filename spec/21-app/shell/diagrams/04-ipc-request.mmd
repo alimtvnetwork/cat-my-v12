@@ -1,0 +1,21 @@
+sequenceDiagram
+  participant UI as Renderer
+  participant IPC as Shell IPC
+  participant W as Worker
+
+  UI->>IPC: POST /rpc<br/>Bearer + cid + method + params
+  IPC->>IPC: verify bearer (constant-time)
+  IPC->>W: forward envelope
+  W->>W: validate JSON Schema
+  W->>W: dedupe by cid (60s LRU)
+  alt success
+    W-->>IPC: {cid, ok:true, result}
+    IPC-->>UI: 200 result
+  else validation or logic error
+    W-->>IPC: {cid, ok:false, error:{code,message,hint,retryable}}
+    IPC-->>UI: 200 error envelope (E_*)
+  else timeout > 5s
+    IPC-->>UI: E_SHELL_IPC_TIMEOUT retryable=true
+  else backpressure
+    IPC-->>UI: E_SHELL_IPC_BACKPRESSURE 503
+  end

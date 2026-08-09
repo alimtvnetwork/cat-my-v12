@@ -1,0 +1,16 @@
+[Unit]
+Description=vision-app retention loop launcher (Plan 90 Step 103)
+Documentation=file://${APP_DATA_ROOT}/docs/spec/21-app/79-installer-retention-timing.md
+
+[Timer]
+# The service is itself a --loop process; the timer only relaunches it
+# on boot or after a crash-recovery gap. Do NOT set OnUnitActiveSec
+# below to a tick cadence: cadence is owned by the CLI's --interval-hours.
+OnBootSec=2min
+OnUnitActiveSec=${INTERVAL_HOURS}h
+RandomizedDelaySec=${RANDOMIZED_DELAY_MIN}min
+Persistent=true
+Unit=vision-app-retention.service
+
+[Install]
+WantedBy=timers.target

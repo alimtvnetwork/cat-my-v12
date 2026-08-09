@@ -1,0 +1,157 @@
+# 06 — State + Persistence
+
+**Version:** 1.0 (draft)  
+**Owner:** Plan 30  
+**Depends on:** `04-rule-layers.md`, `05-rule-controller.md`, SS-01 (schema), SS-04 (migration)
+
+---
+
+## Purpose
+
+Single store, single write surface, single undo stack. Every mutation in the editor goes through this module — no component holds editor state locally, and no other module writes to `programs/*.json`.
+
+---
+
+## Store shape (Zustand)
+
+Module: `src/lib/editor/store.ts` (impl step 71).
+
+```ts
+type EditorState = {
+  // programs
+  programs: Record<ProgramId, Program>;
+  activeProgramId: ProgramId | null;
+
+  // rules per program
+  rulesByProgram: Record<ProgramId, Rule[]>; // stack order, index 0 = bottom
+
+  // ui
+  selection: RuleId[]; // see 04-rule-layers.md contract
+  activeTool: "select" | "rect" | "circle" | "polygon";
+  view: { zoom: number; panX: number; panY: number }; // NOT persisted
+  drawer: { lighting: boolean };
+
+  // history
+  history: {
+    past: Patch[]; // capped at 50
+    future: Patch[];
+    coalesceKey: string | null; // drag session id
+  };
+
+  // logging
+  correlationId: string | null; // set per user gesture
+};
+```
+
+`Rule` matches SS-01 (`id`, `name`, `kind`, `shape`, `zIndex`, `visible`, `locked`, `threshold`, `enabled`, `createdAt`, + kind-specific params).
+
+## Actions (thunks)
+
+Every action:
+
+1. Generates or reuses `correlationId`.
+2. Records the inverse patch into `history.past` (or coalesces).
+3. Applies the change.
+4. Emits one structured log line.
+5. Schedules a persistence write (debounced 300 ms).
+
+Public API:
+
+- `setActiveProgram(id)`
+- `addRule(rule)` / `updateRule(id, partial)` / `removeRule(id)` / `duplicateRule(id)`
+- `moveRule(id, toIndex)` — reorder
+- `toggleVisibility(id)` / `toggleLock(id)` / `renameRule(id, name)`
+- `setSelection(ids)` / `clearSelection()`
+- `setActiveTool(tool)` / `setView(view)`
+- `undo()` / `redo()`
+- `beginGesture(label)` / `endGesture()` — bracket drag / typing sessions for coalescing
+
+Nothing else may `set()` the store directly (enforced by keeping the raw setter unexported).
+
+## Derived selectors
+
+Colocated with the store (impl step 71). Consumed by `StatusStrip`, `RuleList`, `RuleController`:
+
+- `selectActiveRules(state) → Rule[]`
+- `selectSelectedRule(state) → Rule | null` (only when `selection.length === 1`)
+- `selectRuleById(state, id)`
+- `selectRuleDependents(state, id)` — used by Delete confirmation for `Math` references
+- `selectDirty(state)` — has unsaved edits
+- `selectRuleCount(state)`
+
+Every selector is memoized (`reselect`-style equality), no derived state in components.
+
+## Persistence
+
+- Bridge: `src/lib/persist.ts` (`loadJson`, `saveJson`, `PERSIST_KEYS`) — already in-tree, reused.
+- Path: `programs/<programId>.json`.
+- Write: debounced 300 ms after the last mutation; also flushed on route unmount and `visibilitychange → hidden`.
+- Read: on `setActiveProgram`; on failure emits `E_UI_CANVAS_LOAD` (see `07-errors-logging.md`), toast, and falls back to empty program.
+- View state (`view`, `drawer.lighting`, `activeTool`, `selection`, `correlationId`, `history`) is **NOT** persisted.
+
+Serialization shape (v2, current):
+
+```json
+{
+  "schemaVersion": 2,
+  "programId": "prg_01H…",
+  "name": "Program 01",
+  "rules": [
+    /* Rule[] per SS-01 */
+  ],
+  "updatedAt": 1720000000000
+}
+```
+
+## Migration (forward-only)
+
+- Migrations live in `src/lib/editor/migrations/` (impl step 89).
+- Each migration is `(prev: unknown) => Next` with a version bump.
+- On load, run migrations in order until `schemaVersion` matches. Never write back to a lower version.
+- v1 → v2 mapping is documented in `SS-04-migration-plan.md`; if v1 data isn't present in the repo, ship the migration function anyway with a unit test seeded from `SS-04`.
+
+## Undo stack
+
+- Ring buffer, capacity **50**. Oldest entry discarded when full.
+- Each entry: `{ id, inverse: Patch, forward: Patch, label: string, coalesceKey: string | null }`.
+- `undo()`: apply `inverse`, push to `future`. `redo()`: apply `forward`, push to `past`.
+- Any action other than `undo` / `redo` clears `future`.
+
+### Coalescing rules
+
+Sequential mutations coalesce into one entry when ALL are true:
+
+1. Same rule id (or same reorder session).
+2. Same field family (all `shape.*`, all `threshold`, all `name`).
+3. Within the same `beginGesture` / `endGesture` bracket, OR within 400 ms of the previous mutation.
+
+Concretely:
+
+- Shape drag / resize / rotate = one entry per gesture (bracketed by pointerdown/pointerup).
+- Slider drag = one entry per gesture (bracketed by pointerdown/pointerup on the slider thumb).
+- Typing in a name/expression field = one entry per focus session (bracketed by focus/blur).
+- Kind switch, add, delete, duplicate, reorder = always their own entry.
+
+Non-coalescing actions clear the `coalesceKey`.
+
+## Correlation IDs
+
+- One `correlationId` per user gesture (drag session, click, keystroke burst).
+- Generated by `beginGesture(label)` with `crypto.randomUUID().slice(0, 12)`.
+- Every log line emitted between `beginGesture` and `endGesture` carries the same id.
+- `07-errors-logging.md` defines the log format; this file guarantees the id lifecycle.
+
+## Acceptance
+
+| #    | Scenario                             | Expected                                                     |
+| ---- | ------------------------------------ | ------------------------------------------------------------ |
+| S-1  | Draw rect, reload page               | Rule persisted, geometry identical                           |
+| S-2  | 60 rapid slider ticks                | One undo entry, one log line coalesced                       |
+| S-3  | Undo 51 times                        | Only 50 undoable; 51st is a no-op                            |
+| S-4  | Load v1 file                         | Migrated to v2 in memory; write persists v2                  |
+| S-5  | `visibilitychange → hidden` mid-edit | Pending write flushed within 100 ms                          |
+| S-6  | Persistence write fails              | Toast + `E_UI_CANVAS_LOAD` log; store keeps in-memory state  |
+| S-7  | Kind switch                          | Single undo entry, kind-specific defaults applied            |
+| S-8  | Reorder drag with ESC                | No undo entry, original order restored                       |
+| S-9  | Delete rule referenced by Math       | Confirm dialog lists dependents from `selectRuleDependents`  |
+| S-10 | Two tabs open on same program        | Last-write-wins; `updatedAt` compared on load, warn on stale |

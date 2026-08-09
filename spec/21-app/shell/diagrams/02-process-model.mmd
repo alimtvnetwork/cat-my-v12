@@ -1,0 +1,23 @@
+flowchart TB
+  subgraph ShellProc [Shell process - Rust/Tauri]
+    Main[Main thread<br/>UI events + updater]
+    IPC[IPC thread<br/>bearer + proxy]
+    Sup[Supervisor thread<br/>healthz probe]
+  end
+  subgraph RendererProc [Renderer process - Chromium WebView]
+    UI[React UI<br/>app://]
+    Preload[Preload<br/>window.__SHELL_IPC__]
+  end
+  subgraph WorkerProc [Worker process - Python]
+    Boot[app.supervisor.boot]
+    Dispatch[Dispatcher pool]
+    Audit[Audit sink SQLite]
+  end
+
+  Main --> IPC
+  Main --> Sup
+  Sup -.probe.-> Boot
+  Preload --> IPC
+  IPC --> Boot
+  Boot --> Dispatch
+  Boot --> Audit

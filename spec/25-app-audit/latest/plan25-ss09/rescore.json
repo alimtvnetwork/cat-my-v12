@@ -1,0 +1,109 @@
+{
+  "blockers": [],
+  "mean": 100.0,
+  "registered_code_count": 313,
+  "registered_codes_source": "spec/21-app/40-error-manage.md",
+  "results": [
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": null,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "50-capture-modules.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": null,
+        "codes_registered": true,
+        "facade_binding": null,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "51-security-and-config-modules.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": true,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "63-v2-vendor-pylon.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": true,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "64-v2-vendor-spinnaker.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": true,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "65-v2-vendor-vimba.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": true,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "66-v2-vendor-discovery.md",
+      "score": 100,
+      "unregistered": []
+    },
+    {
+      "checks": {
+        "acceptance_checklist": true,
+        "backlinks": true,
+        "codes_registered": true,
+        "facade_binding": true,
+        "no_enum_drift": true
+      },
+      "enum_drift": [],
+      "file": "67-v2-discovery-contract.md",
+      "score": 100,
+      "unregistered": []
+    }
+  ],
+  "scope": [
+    "50-capture-modules.md",
+    "51-security-and-config-modules.md",
+    "63-v2-vendor-pylon.md",
+    "64-v2-vendor-spinnaker.md",
+    "65-v2-vendor-vimba.md",
+    "66-v2-vendor-discovery.md",
+    "67-v2-discovery-contract.md"
+  ],
+  "threshold_pass": true
+}

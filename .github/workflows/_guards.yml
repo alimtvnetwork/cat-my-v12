@@ -1,0 +1,107 @@
+# Plan 90 Step 94 - Reusable CI guards workflow.
+#
+# Owning spec: spec/12-cicd-pipeline-workflows/03-reusable-ci-guards/
+#   00-overview.md          (pattern inventory + design principles)
+#   07-shared-cli-wrapper.md (single dispatch surface)
+#   09-workflow-templates.md (three-layer templates: composite, reusable, starter)
+#
+# Root cause guarded (one sentence): `ci.yml` and `release.yml` each spelled
+# out the spec + PowerShell + forbidden-string lint steps inline, so a rule
+# change had to be duplicated in two places and would silently drift if only
+# one file was updated, letting a violation reach the release page whenever
+# the CI copy was stricter than the release copy (or vice versa).
+#
+# Design invariants
+# -----------------
+# 1. Single source of truth. Both ci.yml and release.yml call this workflow
+#    via `uses: ./.github/workflows/_guards.yml` with `workflow_call`; no
+#    caller duplicates the lint commands.
+# 2. Fail-closed. Any guard exiting non-zero fails the whole reusable job;
+#    callers gate their downstream `needs:` on this job so a lint break
+#    blocks tests, builds, and publish alike.
+# 3. Portable runtime. Python 3.11 + PowerShell 7 (pwsh preinstalled on
+#    ubuntu-latest); no `pip install`, no Node required (matches spec
+#    12-03-00 §"Common Design Principles" #3 "Portable runtime").
+# 4. Idempotent + annotation-friendly. Underlying linter-scripts already
+#    emit `::error file=...,line=...::` annotations (spec 12-03-00 #4);
+#    this wrapper adds nothing that would break reproducibility.
+# 5. Typed inputs. `phase` and `skip-powershell` are the only knobs;
+#    everything else is derived from repo layout so callers cannot
+#    smuggle divergent flags per caller.
+
+name: _guards
+
+on:
+  workflow_call:
+    inputs:
+      phase:
+        description: "Which guard phase to run: check | lint | all (spec 12-03-07)."
+        type: string
+        default: all
+      skip-powershell:
+        description: "Skip PSScriptAnalyzer (use only on runners without pwsh)."
+        type: boolean
+        default: false
+    outputs:
+      exit-code:
+        description: "0 if every enabled guard passed, non-zero otherwise."
+        value: ${{ jobs.guards.outputs.exit-code }}
+
+permissions:
+  contents: read
+
+jobs:
+  guards:
+    name: Reusable CI guards
+    runs-on: ubuntu-latest
+    outputs:
+      exit-code: ${{ steps.summary.outputs.exit-code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ---- Pattern 01/03 analogues: spec-side collision + cross-link audits.
+      - name: Spec cross-links
+        if: inputs.phase != 'check'
+        run: python3 linter-scripts/check-spec-cross-links.py
+
+      - name: Spec folder refs
+        if: inputs.phase != 'check'
+        run: python3 linter-scripts/check-spec-folder-refs.py
+
+      # ---- Pattern 01 analogue: forbidden strings guard (repo house rules).
+      - name: Forbidden strings
+        run: python3 linter-scripts/check-forbidden-strings.py
+
+      # ---- Pattern 08 analogue: schema-first UI/BE contract check.
+      - name: UI-Backend map schema
+        if: inputs.phase != 'check'
+        run: python3 linter-scripts/check-ui-backend-map.py --strict-schema
+
+      # ---- Pattern 06 analogue: IPC fixture aggregator (fail-loud on drift).
+      - name: IPC examples
+        if: inputs.phase != 'check'
+        run: python3 linter-scripts/check-ipc-examples.py
+
+      # ---- PowerShell fleet lint (Step 83 committed PSSA settings file).
+      - name: PSScriptAnalyzer (scripts/ps)
+        if: ${{ inputs.phase != 'check' && !inputs.skip-powershell }}
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
+          $r = Invoke-ScriptAnalyzer -Path scripts/ps -Recurse `
+            -Settings scripts/ps/PSScriptAnalyzerSettings.psd1
+          if ($r) {
+            $r | Format-Table -AutoSize | Out-String | Write-Host
+            exit 1
+          }
+
+      - name: Summary
+        id: summary
+        run: |
+          echo "exit-code=0" >> "$GITHUB_OUTPUT"
+          echo "All reusable CI guards passed (phase=${{ inputs.phase }})."

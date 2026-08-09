@@ -1,0 +1,13 @@
+flowchart TD
+  UI[UI action needs permission]
+  UI --> Check{permissions.json<br/>has grant?}
+  Check -- yes --> Proceed[proceed]
+  Check -- no --> Prompt[OS-native prompt]
+  Prompt --> Granted{granted?}
+  Granted -- yes --> Persist[store grant<br/>I_SEC_PERMISSION_GRANTED]
+  Persist --> Proceed
+  Granted -- no --> Deny[I_SEC_PERMISSION_DENIED]
+  Deny --> Blocked[E_SEC_PERMISSION_MISSING to caller]
+  Proceed --> Watch[subscribe permissions.stream]
+  Watch --> Revoked{OS revoked?}
+  Revoked -- yes --> Reprompt[I_SEC_PERMISSION_REVOKED<br/>re-prompt on next use]

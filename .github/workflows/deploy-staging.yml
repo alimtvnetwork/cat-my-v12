@@ -1,0 +1,92 @@
+name: Deploy staging
+
+# Runs on every published GitHub release: deploys the validation worker to the
+# staging Fly app via worker/deploy.sh, then smoke-checks /healthz. Also
+# available as workflow_dispatch for manual reruns of the same release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      fly_app:
+        description: "Fly app name to deploy (defaults to secrets.FLY_STAGING_APP)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy.sh --env staging + /healthz
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      VALIDATION_WORKER_TOKEN: ${{ secrets.VALIDATION_WORKER_TOKEN }}
+      FLY_APP: ${{ inputs.fly_app || secrets.FLY_STAGING_APP }}
+      HEALTH_PATH: /healthz
+      HEALTH_RETRIES: "18"
+      HEALTH_SLEEP: "5"
+    steps:
+      - name: Guard required secrets
+        run: |
+          set -eu
+          test -n "${FLY_API_TOKEN:-}"           || { echo "missing secret FLY_API_TOKEN"; exit 1; }
+          test -n "${VALIDATION_WORKER_TOKEN:-}" || { echo "missing secret VALIDATION_WORKER_TOKEN"; exit 1; }
+          test -n "${FLY_APP:-}"                 || { echo "missing FLY_STAGING_APP (or workflow input fly_app)"; exit 1; }
+
+      - uses: actions/checkout@v4
+
+      - name: Install flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to staging
+        run: |
+          set -eu
+          chmod +x worker/deploy.sh
+          ./worker/deploy.sh --env staging "$FLY_APP"
+
+      - name: Resolve hostname
+        id: host
+        run: |
+          set -eu
+          host="$(flyctl status --app "$FLY_APP" --json 2>/dev/null \
+            | awk -F'"' '/"Hostname"/ {print $4; exit}')"
+          if [ -z "$host" ]; then host="${FLY_APP}.fly.dev"; fi
+          echo "url=https://${host}${HEALTH_PATH}" >> "$GITHUB_OUTPUT"
+          echo "resolved: https://${host}${HEALTH_PATH}"
+
+      - name: /healthz smoke check
+        run: |
+          set -eu
+          url="${{ steps.host.outputs.url }}"
+          i=0
+          while [ "$i" -lt "$HEALTH_RETRIES" ]; do
+            code="$(curl -fsS -o /tmp/healthz.json -w '%{http_code}' --max-time 10 "$url" || true)"
+            if [ "$code" = "200" ] && grep -q '"ok"[[:space:]]*:[[:space:]]*true' /tmp/healthz.json; then
+              echo "healthz OK ($url)"
+              cat /tmp/healthz.json
+              exit 0
+            fi
+            echo "attempt $((i+1))/$HEALTH_RETRIES: http=$code, retrying in ${HEALTH_SLEEP}s"
+            i=$((i + 1))
+            sleep "$HEALTH_SLEEP"
+          done
+          echo "healthz did not return ok=true within $((HEALTH_RETRIES * HEALTH_SLEEP))s" >&2
+          [ -s /tmp/healthz.json ] && cat /tmp/healthz.json >&2 || true
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Staging deploy"
+            echo ""
+            echo "- release: \`${{ github.event.release.tag_name || github.ref_name }}\`"
+            echo "- fly app: \`${FLY_APP}\`"
+            echo "- healthz: ${{ steps.host.outputs.url }}"
+            echo "- status:  ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

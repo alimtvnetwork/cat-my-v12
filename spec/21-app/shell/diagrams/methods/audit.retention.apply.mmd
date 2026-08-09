@@ -1,0 +1,15 @@
+%% Method: audit.retention.apply
+%% Group schema: ../../schemas/ipc/ops.schema.json
+%% Map row: ../../05-ui-to-backend-map.md (components/ops/audit-retention-tile.tsx)
+sequenceDiagram
+    autonumber
+    participant UI as components/ops/audit-retention-tile.tsx
+    participant IPC as pywebview IPC
+    participant W as Python worker
+    participant DB as SQLite / vendor
+    UI->>IPC: audit.retention.apply req (apply)
+    IPC->>W: dispatch { cid, method, params }
+    W->>DB: perform work
+    DB-->>W: result or error
+    W-->>IPC: res { cid, code, data }
+    IPC-->>UI: I_* on success / E_* on failure

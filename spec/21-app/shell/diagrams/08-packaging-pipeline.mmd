@@ -1,0 +1,18 @@
+flowchart LR
+  Src[Source repo]
+  Src --> Vite[Vite build -> dist/]
+  Src --> PyI[PyInstaller/Nuitka -> dist/worker/]
+  Src --> Tauri[cargo tauri build]
+  Vite --> Tauri
+  PyI --> Tauri
+  Tauri --> Bundles{Per-OS bundle}
+  Bundles --> Win[.msi + .exe]
+  Bundles --> Mac[.dmg]
+  Bundles --> Lin[.AppImage + .deb]
+  Win --> SignW[Authenticode sign]
+  Mac --> SignM[Developer ID sign + notarytool]
+  Lin --> SignL[GPG detached sig]
+  SignW --> SBOM[CycloneDX SBOM + Cosign]
+  SignM --> SBOM
+  SignL --> SBOM
+  SBOM --> Feed[Publish to updates feed]

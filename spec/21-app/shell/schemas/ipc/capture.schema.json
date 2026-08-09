@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "capture.schema.json",
+  "title": "capture IPC group",
+  "description": "Request, response, and stream schemas for capture device and vendor IPC.",
+  "$defs": {
+    "capture.frame.req": { "$ref": "#/$defs/frame.req" },
+    "capture.frame.stream": { "$ref": "#/$defs/frame.stream" },
+    "capture.vendor.discover.req": { "$ref": "#/$defs/empty.req" },
+    "capture.vendor.discover.res": { "$ref": "#/$defs/vendors.res" },
+    "capture.vendor.select.req": { "$ref": "#/$defs/vendor.select.req" },
+    "capture.vendor.select.res": { "$ref": "#/$defs/ok.res" },
+    "capture.vendor.smoke.req": { "$ref": "#/$defs/empty.req" },
+    "capture.vendor.smoke.res": { "$ref": "#/$defs/ok.res" },
+    "capture.device.req": { "$ref": "#/$defs/empty.req" },
+    "capture.device.res": { "$ref": "#/$defs/device.res" },
+    "empty.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "type": "string" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "frame.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "capture.frame.subscribe" },
+        "params": {
+          "type": "object",
+          "required": ["deviceId", "fps"],
+          "properties": {
+            "deviceId": { "type": "string" },
+            "fps": { "type": "integer", "minimum": 1, "maximum": 120 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "vendor.select.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "capture.vendor.select" },
+        "params": {
+          "type": "object",
+          "required": ["vendor", "serial"],
+          "properties": { "vendor": { "type": "string" }, "serial": { "type": "string" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "frame.stream": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_FRAME_SUBSCRIBED", "E_FRAME_SUBSCRIBE_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["streamId", "codec"],
+          "properties": {
+            "streamId": { "type": "string" },
+            "codec": { "enum": ["mjpeg", "h264", "raw"] }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "vendors.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_VENDOR_DISCOVERED", "E_VENDOR_DISCOVERY_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["vendors"],
+          "properties": {
+            "vendors": { "type": "array", "items": { "$ref": "#/$defs/vendor.item" } }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "device.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_CAPTURE_DEVICE_READ", "E_CAPTURE_DEVICE_FAILED"] },
+        "data": { "$ref": "#/$defs/vendor.item" },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ok.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "type": "string", "pattern": "^[IEW]_[A-Z0-9_]+$" },
+        "data": { "type": "object" },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "vendor.item": {
+      "type": "object",
+      "required": ["vendor", "serial"],
+      "properties": {
+        "vendor": { "type": "string" },
+        "serial": { "type": "string" },
+        "model": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

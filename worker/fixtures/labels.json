@@ -1,0 +1,458 @@
+[
+  {
+    "name": "colour_pass_0",
+    "path": "data/colour_pass_0.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "colour_fail_0",
+    "path": "data/colour_fail_0.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "colour_pass_1",
+    "path": "data/colour_pass_1.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "colour_fail_1",
+    "path": "data/colour_fail_1.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "colour_pass_2",
+    "path": "data/colour_pass_2.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "colour_fail_2",
+    "path": "data/colour_fail_2.png",
+    "kind": "C",
+    "params": {
+      "targetRgb": [230, 20, 30],
+      "tolerance": 40
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "reference_pass_0",
+    "path": "data/reference_pass_0.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "reference_fail_0",
+    "path": "data/reference_fail_0.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "reference_pass_1",
+    "path": "data/reference_pass_1.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "reference_fail_1",
+    "path": "data/reference_fail_1.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "reference_pass_2",
+    "path": "data/reference_pass_2.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "reference_fail_2",
+    "path": "data/reference_fail_2.png",
+    "kind": "R",
+    "params": {
+      "referenceRgb": [120, 130, 140]
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "edges_pass_0",
+    "path": "data/edges_pass_0.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "edges_fail_0",
+    "path": "data/edges_fail_0.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "edges_pass_1",
+    "path": "data/edges_pass_1.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "edges_fail_1",
+    "path": "data/edges_fail_1.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "edges_pass_2",
+    "path": "data/edges_pass_2.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "edges_fail_2",
+    "path": "data/edges_fail_2.png",
+    "kind": "K",
+    "params": {},
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "shape_pass_0",
+    "path": "data/shape_pass_0.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "shape_pass_1",
+    "path": "data/shape_pass_1.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "shape_pass_2",
+    "path": "data/shape_pass_2.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "shape_fail_0",
+    "path": "data/shape_fail_0.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "shape_fail_1",
+    "path": "data/shape_fail_1.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "shape_fail_2",
+    "path": "data/shape_fail_2.png",
+    "kind": "S",
+    "params": {
+      "threshold": 128,
+      "expectedFill": 0.5
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "empty_pass_0",
+    "path": "data/empty_pass_0.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "empty_fail_0",
+    "path": "data/empty_fail_0.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "empty_pass_1",
+    "path": "data/empty_pass_1.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "empty_fail_1",
+    "path": "data/empty_fail_1.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  },
+  {
+    "name": "empty_pass_2",
+    "path": "data/empty_pass_2.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "pass"
+  },
+  {
+    "name": "empty_fail_2",
+    "path": "data/empty_fail_2.png",
+    "kind": "E",
+    "params": {
+      "backgroundRgb": [255, 255, 255],
+      "tolerance": 25
+    },
+    "roi": {
+      "x": 40,
+      "y": 40,
+      "width": 120,
+      "height": 120
+    },
+    "expected": "fail"
+  }
+]

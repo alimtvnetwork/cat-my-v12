@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run.schema.json",
+  "title": "run IPC group",
+  "description": "Request, response, and stream schemas for run control IPC.",
+  "$defs": {
+    "run.state.req": { "$ref": "#/$defs/empty.req" },
+    "run.state.stream": { "$ref": "#/$defs/state.event" },
+    "run.start.req": {
+      "type": "object",
+      "required": ["cid", "method", "idempotencyKey", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "run.start" },
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "params": {
+          "type": "object",
+          "required": ["rulesetId", "lotId"],
+          "properties": { "rulesetId": { "type": "string" }, "lotId": { "type": "string" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "run.start.res": { "$ref": "#/$defs/run.started.res" },
+    "run.stop.req": { "$ref": "#/$defs/empty.req" },
+    "run.stop.res": { "$ref": "#/$defs/run.stopped.res" },
+    "run.mode.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "run.mode.set" },
+        "params": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": { "mode": { "enum": ["auto", "manual", "setup"] } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "run.mode.res": { "$ref": "#/$defs/mode.res" },
+    "run.steps.req": { "$ref": "#/$defs/empty.req" },
+    "run.steps.res": { "$ref": "#/$defs/steps.res" },
+    "empty.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "type": "string" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "state.event": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_RUN_SUBSCRIBED", "E_RUN_SUBSCRIBE_FAILED"] },
+        "data": { "$ref": "#/$defs/run.state" },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "run.started.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_RUN_STARTED", "E_RUN_START_FAILED"] },
+        "data": { "$ref": "#/$defs/start.data" },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "run.stopped.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_RUN_STOPPED", "E_RUN_STOP_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["stoppedAt"],
+          "properties": { "stoppedAt": { "type": "string", "format": "date-time" } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "mode.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_RUN_MODE_SET", "E_RUN_MODE_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": { "mode": { "enum": ["auto", "manual", "setup"] } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "steps.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_STEPS_LISTED", "E_STEPS_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["steps"],
+          "properties": { "steps": { "type": "array", "items": { "type": "string" } } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "run.state": {
+      "type": "object",
+      "required": ["status", "runId"],
+      "properties": {
+        "status": { "enum": ["idle", "running", "stopping", "error"] },
+        "runId": { "type": ["string", "null"] },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "start.data": {
+      "type": "object",
+      "required": ["runId", "startedAt"],
+      "properties": {
+        "runId": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ops.schema.json",
+  "title": "ops IPC group",
+  "description": "Request, response, and stream schemas for ops events and audit retention.",
+  "$defs": {
+    "ops.events.req": { "$ref": "#/$defs/events.req" },
+    "ops.events.res": { "$ref": "#/$defs/events.res" },
+    "ops.events.stream": { "$ref": "#/$defs/events.res" },
+    "audit.retention.req": { "$ref": "#/$defs/empty.req" },
+    "audit.retention.res": { "$ref": "#/$defs/audit.retention.res" },
+    "events.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "type": "string" },
+        "params": {
+          "type": "object",
+          "properties": {
+            "subject": { "type": "string" },
+            "limit": { "type": "integer", "minimum": 1, "maximum": 500 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "empty.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "audit.retention.apply" },
+        "params": { "type": "object", "additionalProperties": false }
+      },
+      "additionalProperties": false
+    },
+    "events.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": {
+          "enum": [
+            "I_OPS_EVENTS_READ",
+            "I_OPS_SUBSCRIBED",
+            "E_OPS_EVENTS_FAILED",
+            "E_OPS_SUBSCRIBE_FAILED"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "required": ["items"],
+          "properties": { "items": { "type": "array", "items": { "$ref": "#/$defs/event.item" } } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "audit.retention.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "enum": ["I_SEC_AUDIT_PRUNED", "E_SEC_RETENTION_FAILED"] },
+        "data": {
+          "type": "object",
+          "required": ["pruned"],
+          "properties": { "pruned": { "type": "integer", "minimum": 0 } },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "event.item": {
+      "type": "object",
+      "required": ["code", "ts", "subject"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[IEW]_[A-Z0-9_]+$" },
+        "ts": { "type": "string", "format": "date-time" },
+        "subject": { "type": "string" },
+        "correlationId": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

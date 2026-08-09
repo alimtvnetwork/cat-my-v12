@@ -1,0 +1,31 @@
+flowchart LR
+  subgraph Routes
+    R1[index] --> M1[home.summary.read]
+    R2[run] --> M2[run.start / run.stop / run.state.subscribe]
+    R3[results] --> M3[results.list]
+    R4[errors] --> M4[errors.list]
+    R5[settings.index] --> M5[settings.audit.retention.write]
+    R6[settings.camera] --> M6[settings.capture.device.write]
+    R7[settings.license] --> M7[settings.license.verify]
+    R8[settings.lighting] --> M8[settings.lighting.write]
+    R9[settings.trigger] --> M9[settings.trigger.write]
+    R10[setup.reference] --> M10[setup.reference.capture]
+    R11[setup.roi] --> M11[setup.roi.write]
+    R12[ops] --> M12[ops.events.list]
+  end
+  subgraph HMI
+    H1[DeviceDiscoveryPanel] --> MH1[capture.vendor.discover/select]
+    H2[FeatureGate] --> MH2[license.features.read]
+    H3[StatusLog] --> MH3[ops.events.subscribe WS]
+    H4[Viewport] --> MH4[capture.frame.subscribe WS]
+    H5[ModeHeader] --> MH5[run.mode.set]
+  end
+  subgraph OpsTiles
+    O1[audit-retention-tile] --> MO1[audit.retention.apply]
+    O2[capture-device-panel] --> MO2[capture.device.read]
+    O3[vendor-smoke] --> MO3[capture.vendor.smoke]
+  end
+  M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M10 & M11 & M12 --> Worker
+  MH1 & MH2 & MH3 & MH4 & MH5 --> Worker
+  MO1 & MO2 & MO3 --> Worker
+  Worker[[Python Worker]]

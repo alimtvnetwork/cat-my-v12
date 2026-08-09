@@ -1,0 +1,606 @@
+<!doctype html><meta charset="utf-8" />
+<title>IPC Schema Coverage Report</title>
+<style>
+  body {
+    font: 14px system-ui;
+    margin: 2rem;
+    max-width: 1100px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+  }
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f4f4f4;
+  }
+  .resolved {
+    color: #0a7a2f;
+    font-weight: 600;
+  }
+  .fixture-only {
+    color: #a06400;
+    font-weight: 600;
+  }
+  .unused {
+    color: #999;
+  }
+  .missing {
+    color: #b00020;
+    font-weight: 600;
+  }
+  code {
+    background: #f4f4f4;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+</style>
+<h1>IPC Schema Coverage Report</h1>
+<ul>
+  <li>Schema files: <b>10</b></li>
+  <li>Total <code>$defs</code>: <b>80</b></li>
+  <li>Referenced in spec: <b>0</b> (0.0%)</li>
+  <li>Fixture-only: <b>2</b></li>
+  <li>Unused: <b>78</b></li>
+  <li>Missing: <b>1</b></li>
+</ul>
+<h2>Per-schema coverage</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Schema</th>
+      <th>$def</th>
+      <th>Status</th>
+      <th>Referenced from</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.device.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.device.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.frame.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.frame.stream</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.discover.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.discover.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.select.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.select.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.smoke.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>capture.vendor.smoke.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>device.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>empty.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>frame.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>frame.stream</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>ok.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>vendor.item</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>vendor.select.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>capture.schema.json</code></td>
+      <td><code>vendors.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>errors.schema.json</code></td>
+      <td><code>error.item</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>errors.schema.json</code></td>
+      <td><code>errors.list.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>errors.schema.json</code></td>
+      <td><code>errors.list.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>home.schema.json</code></td>
+      <td><code>home.summary.req</code></td>
+      <td class="fixture-only">fixture-only</td>
+      <td>
+        linter-scripts/fixtures/ipc-examples/bad/spec/21-app/shell/examples.md,
+        linter-scripts/fixtures/ipc-examples/good/spec/21-app/shell/examples.md
+      </td>
+    </tr>
+    <tr>
+      <td><code>home.schema.json</code></td>
+      <td><code>home.summary.res</code></td>
+      <td class="fixture-only">fixture-only</td>
+      <td>linter-scripts/fixtures/ipc-examples/good/spec/21-app/shell/examples.md</td>
+    </tr>
+    <tr>
+      <td><code>license.schema.json</code></td>
+      <td><code>license.features.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>license.schema.json</code></td>
+      <td><code>license.features.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>audit.retention.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>audit.retention.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>empty.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>event.item</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>events.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>events.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>ops.events.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>ops.events.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>ops.schema.json</code></td>
+      <td><code>ops.events.stream</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>results.schema.json</code></td>
+      <td><code>result.item</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>results.schema.json</code></td>
+      <td><code>results.list.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>results.schema.json</code></td>
+      <td><code>results.list.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>empty.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>mode.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.mode.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.mode.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.start.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.start.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.started.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.state</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.state.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.state.stream</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.steps.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.steps.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.stop.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.stop.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>run.stopped.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>start.data</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>state.event</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>run.schema.json</code></td>
+      <td><code>steps.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>capture.device.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>capture.device.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>config.patch.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>config.patch.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>device.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>device.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>kv.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>license.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>license.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>license.verify.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>license.verify.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>lighting.write.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>lighting.write.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>ok.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>retention.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>retention.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>retention.write.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>retention.write.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>trigger.write.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>settings.schema.json</code></td>
+      <td><code>trigger.write.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>empty.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>reference.capture.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>reference.capture.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>reference.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>roi.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>roi.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>roi.write.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>setup.schema.json</code></td>
+      <td><code>roi.write.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>shell.schema.json</code></td>
+      <td><code>shell.ready.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>shell.schema.json</code></td>
+      <td><code>shell.ready.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>shell.schema.json</code></td>
+      <td><code>shell.shutdown.req</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><code>shell.schema.json</code></td>
+      <td><code>shell.shutdown.res</code></td>
+      <td class="unused">unused</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Missing $defs (referenced but not defined)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Ref</th>
+      <th>Referenced from</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="missing"><code>nope.missing.req</code></td>
+      <td>linter-scripts/fixtures/ipc-examples/bad/spec/21-app/shell/examples.md</td>
+    </tr>
+  </tbody>
+</table>

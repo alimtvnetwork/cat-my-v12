@@ -1,0 +1,27 @@
+{
+  "projectName": "Control Automation",
+  "feDir": ".",
+  "beDir": "BE",
+  "fePort": 8080,
+  "bePort": 8787,
+  "pythonVenv": ".venv",
+  "openBrowser": true,
+  "defaultMode": "seed",
+  "healthPath": "/healthz",
+  "logDir": ".logs/launcher",
+  "healthTimeoutSeconds": 30,
+  "commands": {
+    "feInstall": "bun install",
+    "feDev": "bun run dev",
+    "feBuild": "bun run build",
+    "fePreview": "bun run preview",
+    "feTest": "bunx vitest run",
+    "beTest": "-m pytest"
+  },
+  "prerequisites": {
+    "node": true,
+    "bun": true,
+    "python": true
+  },
+  "cleanPaths": ["node_modules/.vite", "dist", ".output", ".logs/launcher"]
+}

@@ -1,0 +1,67 @@
+%% User assets (shapes, JS functions, imported blobs) - Plan 64 step 21
+%% Rendered PNG: 05-user-assets.png (pending)
+erDiagram
+    SHAPE ||--o{ SHAPE_VERSION : "history"
+    JS_FUNCTION ||--o{ JS_FUNCTION_VERSION : "history"
+    IMPORTED_ASSET ||--o{ IMPORT_PROVENANCE : "sourced from"
+    RULE_SET ||--o{ SHAPE : "owns"
+    RULE_SET ||--o{ JS_FUNCTION : "owns"
+    RULE_SET ||--o{ IMPORTED_ASSET : "imported into"
+
+    SHAPE {
+        uuid id PK
+        uuid rule_set_id FK
+        string name
+        text svg_path
+        json holes_json
+        int view_box_w
+        int view_box_h
+        string checksum_sha256
+        int current_version
+        timestamp created_at
+    }
+    SHAPE_VERSION {
+        uuid id PK
+        uuid shape_id FK
+        int version
+        text svg_path
+        json holes_json
+        string checksum_sha256
+        timestamp created_at
+        uuid created_by FK
+    }
+    JS_FUNCTION {
+        uuid id PK
+        uuid rule_set_id FK "nullable = global"
+        string name
+        text source
+        string checksum_sha256
+        int current_version
+        string sandbox_profile "strict|network-none|host-io"
+    }
+    JS_FUNCTION_VERSION {
+        uuid id PK
+        uuid js_function_id FK
+        int version
+        text source
+        string checksum_sha256
+        timestamp created_at
+    }
+    IMPORTED_ASSET {
+        uuid id PK
+        uuid rule_set_id FK
+        string kind "shape-svg|mask-raster|js|json|yaml|zip"
+        string original_name
+        string checksum_sha256
+        int size_bytes
+        timestamp imported_at
+    }
+    IMPORT_PROVENANCE {
+        uuid id PK
+        uuid imported_asset_id FK
+        string source_kind "file-upload|url|clipboard|api"
+        string source_ref
+        string signature_status "unsigned|verified|failed"
+        uuid imported_by FK
+        timestamp at
+    }

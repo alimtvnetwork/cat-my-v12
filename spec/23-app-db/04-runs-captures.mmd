@@ -1,0 +1,48 @@
+%% Runs and captures - Plan 64 step 20
+%% Rendered PNG: 04-runs-captures.png (pending)
+erDiagram
+    PROJECT ||--o{ RUN : "produced"
+    RUN ||--o{ CAPTURE : "yields"
+    CAPTURE ||--o{ RULE_RESULT : "graded by"
+    CAPTURE ||--o{ CAPTURE_ASSET : "has"
+    RULE ||--o{ RULE_RESULT : "evaluates"
+
+    RUN {
+        uuid id PK
+        uuid project_id FK
+        uuid op_id "running op"
+        string status "Queued|Running|Stopping|Completed|Failed|Cancelled"
+        timestamp started_at
+        timestamp finished_at
+        int captures_total
+        int captures_pass
+        int captures_fail
+        string trigger "Manual|TestImage|External"
+    }
+    CAPTURE {
+        uuid id PK
+        uuid run_id FK
+        int sequence
+        timestamp taken_at
+        string source "Camera|TestImage"
+        string image_ref "path relative to data root"
+        string verdict "Pass|Fail|Error"
+    }
+    RULE_RESULT {
+        uuid id PK
+        uuid capture_id FK
+        uuid rule_id FK
+        string verdict "Pass|Fail|Error"
+        float score
+        json details_json
+        int duration_ms
+    }
+    CAPTURE_ASSET {
+        uuid id PK
+        uuid capture_id FK
+        string kind "raw|annotated|mask|overlay"
+        string image_ref
+        int width_px
+        int height_px
+        string checksum_sha256
+    }

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "settings.schema.json",
+  "title": "settings IPC group",
+  "description": "Request and response schemas for settings writes.",
+  "$defs": {
+    "retention.write.req": { "$ref": "#/$defs/retention.req" },
+    "retention.write.res": { "$ref": "#/$defs/retention.res" },
+    "capture.device.req": { "$ref": "#/$defs/device.req" },
+    "capture.device.res": { "$ref": "#/$defs/device.res" },
+    "license.verify.req": { "$ref": "#/$defs/license.req" },
+    "license.verify.res": { "$ref": "#/$defs/license.res" },
+    "lighting.write.req": { "$ref": "#/$defs/kv.req" },
+    "lighting.write.res": { "$ref": "#/$defs/ok.res" },
+    "trigger.write.req": { "$ref": "#/$defs/kv.req" },
+    "trigger.write.res": { "$ref": "#/$defs/ok.res" },
+    "config.patch.req": { "$ref": "#/$defs/kv.req" },
+    "config.patch.res": { "$ref": "#/$defs/ok.res" },
+    "retention.req": {
+      "type": "object",
+      "required": ["cid", "method", "idempotencyKey", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "settings.audit.retention.write" },
+        "idempotencyKey": { "type": "string" },
+        "params": {
+          "type": "object",
+          "required": ["days"],
+          "properties": {
+            "days": { "type": "integer", "minimum": 1 },
+            "reason": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "retention.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": {
+          "enum": ["I_SEC_AUDIT_RETENTION_WRITTEN", "E_SEC_RETENTION_FAILED", "E_SEC_ROLE_DENIED"]
+        },
+        "data": {
+          "type": "object",
+          "required": ["days", "effectiveAt"],
+          "properties": {
+            "days": { "type": "integer", "minimum": 1 },
+            "effectiveAt": { "type": "string", "format": "date-time" }
+          },
+          "additionalProperties": false
+        },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "device.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "settings.capture.device.write" },
+        "params": {
+          "type": "object",
+          "required": ["vendor", "serial"],
+          "properties": { "vendor": { "type": "string" }, "serial": { "type": "string" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "device.res": { "$ref": "#/$defs/ok.res" },
+    "license.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "const": "settings.license.verify" },
+        "params": {
+          "type": "object",
+          "required": ["licenseKey"],
+          "properties": { "licenseKey": { "type": "string" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "license.res": { "$ref": "#/$defs/ok.res" },
+    "kv.req": {
+      "type": "object",
+      "required": ["cid", "method", "params"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "method": { "type": "string" },
+        "params": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "ok.res": {
+      "type": "object",
+      "required": ["cid", "code", "data"],
+      "properties": {
+        "cid": { "type": "string", "format": "uuid" },
+        "code": { "type": "string", "pattern": "^[IEW]_[A-Z0-9_]+$" },
+        "data": { "type": "object" },
+        "remediation": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

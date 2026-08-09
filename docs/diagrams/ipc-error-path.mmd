@@ -1,0 +1,271 @@
+flowchart LR
+  classDef broken stroke:#b00020,color:#b00020,stroke-width:2px;
+  s_capture_schema_json["capture.schema.json"]
+  d_capture_device_req(["capture.device.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_device_req
+  class d_capture_device_req broken;
+  d_capture_device_res(["capture.device.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_device_res
+  class d_capture_device_res broken;
+  d_capture_frame_req(["capture.frame.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_frame_req
+  class d_capture_frame_req broken;
+  d_capture_frame_stream(["capture.frame.stream"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_frame_stream
+  class d_capture_frame_stream broken;
+  d_capture_vendor_discover_req(["capture.vendor.discover.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_discover_req
+  class d_capture_vendor_discover_req broken;
+  d_capture_vendor_discover_res(["capture.vendor.discover.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_discover_res
+  class d_capture_vendor_discover_res broken;
+  d_capture_vendor_select_req(["capture.vendor.select.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_select_req
+  class d_capture_vendor_select_req broken;
+  d_capture_vendor_select_res(["capture.vendor.select.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_select_res
+  class d_capture_vendor_select_res broken;
+  d_capture_vendor_smoke_req(["capture.vendor.smoke.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_smoke_req
+  class d_capture_vendor_smoke_req broken;
+  d_capture_vendor_smoke_res(["capture.vendor.smoke.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_vendor_smoke_res
+  class d_capture_vendor_smoke_res broken;
+  d_device_res(["device.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_device_res
+  class d_device_res broken;
+  d_empty_req(["empty.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_empty_req
+  class d_empty_req broken;
+  d_frame_req(["frame.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_frame_req
+  class d_frame_req broken;
+  d_frame_stream(["frame.stream"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_frame_stream
+  class d_frame_stream broken;
+  d_ok_res(["ok.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_ok_res
+  class d_ok_res broken;
+  d_vendor_item(["vendor.item"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_vendor_item
+  class d_vendor_item broken;
+  d_vendor_select_req(["vendor.select.req"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_vendor_select_req
+  class d_vendor_select_req broken;
+  d_vendors_res(["vendors.res"])
+  s_capture_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_vendors_res
+  class d_vendors_res broken;
+  s_errors_schema_json["errors.schema.json"]
+  d_error_item(["error.item"])
+  s_errors_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_error_item
+  class d_error_item broken;
+  d_errors_list_req(["errors.list.req"])
+  s_errors_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_errors_list_req
+  class d_errors_list_req broken;
+  d_errors_list_res(["errors.list.res"])
+  s_errors_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_errors_list_res
+  class d_errors_list_res broken;
+  s_home_schema_json["home.schema.json"]
+  d_home_summary_req(["home.summary.req"])
+  s_home_schema_json --> d_home_summary_req
+  d_home_summary_res(["home.summary.res"])
+  s_home_schema_json --> d_home_summary_res
+  s_license_schema_json["license.schema.json"]
+  d_license_features_req(["license.features.req"])
+  s_license_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_features_req
+  class d_license_features_req broken;
+  d_license_features_res(["license.features.res"])
+  s_license_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_features_res
+  class d_license_features_res broken;
+  s_ops_schema_json["ops.schema.json"]
+  d_audit_retention_req(["audit.retention.req"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_audit_retention_req
+  class d_audit_retention_req broken;
+  d_audit_retention_res(["audit.retention.res"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_audit_retention_res
+  class d_audit_retention_res broken;
+  d_empty_req(["empty.req"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_empty_req
+  class d_empty_req broken;
+  d_event_item(["event.item"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_event_item
+  class d_event_item broken;
+  d_events_req(["events.req"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_events_req
+  class d_events_req broken;
+  d_events_res(["events.res"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_events_res
+  class d_events_res broken;
+  d_ops_events_req(["ops.events.req"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_ops_events_req
+  class d_ops_events_req broken;
+  d_ops_events_res(["ops.events.res"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_ops_events_res
+  class d_ops_events_res broken;
+  d_ops_events_stream(["ops.events.stream"])
+  s_ops_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_ops_events_stream
+  class d_ops_events_stream broken;
+  s_results_schema_json["results.schema.json"]
+  d_result_item(["result.item"])
+  s_results_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_result_item
+  class d_result_item broken;
+  d_results_list_req(["results.list.req"])
+  s_results_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_results_list_req
+  class d_results_list_req broken;
+  d_results_list_res(["results.list.res"])
+  s_results_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_results_list_res
+  class d_results_list_res broken;
+  s_run_schema_json["run.schema.json"]
+  d_empty_req(["empty.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_empty_req
+  class d_empty_req broken;
+  d_mode_res(["mode.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_mode_res
+  class d_mode_res broken;
+  d_run_mode_req(["run.mode.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_mode_req
+  class d_run_mode_req broken;
+  d_run_mode_res(["run.mode.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_mode_res
+  class d_run_mode_res broken;
+  d_run_start_req(["run.start.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_start_req
+  class d_run_start_req broken;
+  d_run_start_res(["run.start.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_start_res
+  class d_run_start_res broken;
+  d_run_started_res(["run.started.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_started_res
+  class d_run_started_res broken;
+  d_run_state(["run.state"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_state
+  class d_run_state broken;
+  d_run_state_req(["run.state.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_state_req
+  class d_run_state_req broken;
+  d_run_state_stream(["run.state.stream"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_state_stream
+  class d_run_state_stream broken;
+  d_run_steps_req(["run.steps.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_steps_req
+  class d_run_steps_req broken;
+  d_run_steps_res(["run.steps.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_steps_res
+  class d_run_steps_res broken;
+  d_run_stop_req(["run.stop.req"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_stop_req
+  class d_run_stop_req broken;
+  d_run_stop_res(["run.stop.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_stop_res
+  class d_run_stop_res broken;
+  d_run_stopped_res(["run.stopped.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_run_stopped_res
+  class d_run_stopped_res broken;
+  d_start_data(["start.data"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_start_data
+  class d_start_data broken;
+  d_state_event(["state.event"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_state_event
+  class d_state_event broken;
+  d_steps_res(["steps.res"])
+  s_run_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_steps_res
+  class d_steps_res broken;
+  s_settings_schema_json["settings.schema.json"]
+  d_capture_device_req(["capture.device.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_device_req
+  class d_capture_device_req broken;
+  d_capture_device_res(["capture.device.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_capture_device_res
+  class d_capture_device_res broken;
+  d_config_patch_req(["config.patch.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_config_patch_req
+  class d_config_patch_req broken;
+  d_config_patch_res(["config.patch.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_config_patch_res
+  class d_config_patch_res broken;
+  d_device_req(["device.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_device_req
+  class d_device_req broken;
+  d_device_res(["device.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_device_res
+  class d_device_res broken;
+  d_kv_req(["kv.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_kv_req
+  class d_kv_req broken;
+  d_license_req(["license.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_req
+  class d_license_req broken;
+  d_license_res(["license.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_res
+  class d_license_res broken;
+  d_license_verify_req(["license.verify.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_verify_req
+  class d_license_verify_req broken;
+  d_license_verify_res(["license.verify.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_license_verify_res
+  class d_license_verify_res broken;
+  d_lighting_write_req(["lighting.write.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_lighting_write_req
+  class d_lighting_write_req broken;
+  d_lighting_write_res(["lighting.write.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_lighting_write_res
+  class d_lighting_write_res broken;
+  d_ok_res(["ok.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_ok_res
+  class d_ok_res broken;
+  d_retention_req(["retention.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_retention_req
+  class d_retention_req broken;
+  d_retention_res(["retention.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_retention_res
+  class d_retention_res broken;
+  d_retention_write_req(["retention.write.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_retention_write_req
+  class d_retention_write_req broken;
+  d_retention_write_res(["retention.write.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_retention_write_res
+  class d_retention_write_res broken;
+  d_trigger_write_req(["trigger.write.req"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_trigger_write_req
+  class d_trigger_write_req broken;
+  d_trigger_write_res(["trigger.write.res"])
+  s_settings_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_trigger_write_res
+  class d_trigger_write_res broken;
+  s_setup_schema_json["setup.schema.json"]
+  d_empty_req(["empty.req"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_empty_req
+  class d_empty_req broken;
+  d_reference_capture_req(["reference.capture.req"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_reference_capture_req
+  class d_reference_capture_req broken;
+  d_reference_capture_res(["reference.capture.res"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_reference_capture_res
+  class d_reference_capture_res broken;
+  d_reference_res(["reference.res"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_reference_res
+  class d_reference_res broken;
+  d_roi_req(["roi.req"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_roi_req
+  class d_roi_req broken;
+  d_roi_res(["roi.res"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_roi_res
+  class d_roi_res broken;
+  d_roi_write_req(["roi.write.req"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_roi_write_req
+  class d_roi_write_req broken;
+  d_roi_write_res(["roi.write.res"])
+  s_setup_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_roi_write_res
+  class d_roi_write_res broken;
+  s_shell_schema_json["shell.schema.json"]
+  d_shell_ready_req(["shell.ready.req"])
+  s_shell_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_shell_ready_req
+  class d_shell_ready_req broken;
+  d_shell_ready_res(["shell.ready.res"])
+  s_shell_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_shell_ready_res
+  class d_shell_ready_res broken;
+  d_shell_shutdown_req(["shell.shutdown.req"])
+  s_shell_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_shell_shutdown_req
+  class d_shell_shutdown_req broken;
+  d_shell_shutdown_res(["shell.shutdown.res"])
+  s_shell_schema_json ==>|E_SPEC_UI_MAP_ORPHAN unused| d_shell_shutdown_res
+  class d_shell_shutdown_res broken;

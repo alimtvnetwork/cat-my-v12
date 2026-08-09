@@ -1,0 +1,366 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  spec-linters:
+    name: Spec + IPC linters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linter deps
+        run: python3 -m pip install --quiet jsonschema
+
+      # Fails the build with a non-zero exit if coverage drops (any orphan
+      # method, missing $defs entry, unmapped caller, or drifted diagram).
+      # Error code surfaced: E_SPEC_UI_MAP_ORPHAN.
+      - name: IPC + UI-backend-map coverage (strict)
+        run: python3 linter-scripts/check-ui-backend-map.py --strict-schema
+
+      # Validates every example payload under spec/21-app/shell/schemas/ipc/examples/
+      # against its schema, and every fixture under linter-scripts/fixtures/ipc-examples/
+      # (good/ must pass, bad/ must fail).
+      - name: IPC example payloads validate against schemas
+        run: python3 linter-scripts/check-ipc-examples.py
+
+      # Regenerate TS types from $defs and fail if the committed file drifts.
+      - name: IPC TypeScript types up-to-date
+        run: |
+          python3 linter-scripts/generate-ipc-types.py
+          git diff --exit-code -- src/generated/ipc-types.ts
+
+      # Repository-wide spec + cross-link linters that already exist.
+      - name: Spec cross-links
+        run: python3 linter-scripts/check-spec-cross-links.py
+
+      - name: Spec folder refs
+        run: python3 linter-scripts/check-spec-folder-refs.py
+
+      - name: Forbidden strings
+        run: python3 linter-scripts/check-forbidden-strings.py
+
+      # Fails if worker/calibration-report.json regresses vs the committed
+      # baseline (margin drop, midpoint drift, separability flip, or a
+      # sub-floor margin). Refresh with `--update-baseline` when intentional.
+      - name: Calibration report regression
+        run: python3 linter-scripts/check-calibration-regression.py
+
+  frontend-checks:
+    name: Frontend lint + typecheck + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      # Blocking typecheck gate. Runs FIRST so parser/syntax errors
+      # (e.g. TS1005 "'}' expected") fail the job before any slower
+      # check burns CI minutes. Two passes:
+      #  1) tsgo  - fast Go-based typechecker used in local dev
+      #  2) tsc   - stock TypeScript compiler, authoritative on parser
+      #             diagnostics; catches TS1xxx syntax errors tsgo may
+      #             classify differently
+      # Either pass failing fails the workflow.
+      - name: Typecheck (tsc)
+        run: bunx tsc --noEmit
+      - name: Typecheck (tsc, authoritative syntax gate)
+        run: bunx tsc --noEmit --pretty false
+      # Composed lint: eslint + magic-strings guard (Plan 43 slice-2).
+      # Coding-guidelines gate (see .lovable/coding-guidelines/coding-guidelines.md).
+      # Prettier runs against files changed vs the PR base (or last commit on
+      # push) so the enforcement is forward-only: existing unformatted files
+      # do not fail CI, but any file you touch must be formatted. Recover with
+      # `bun run format` locally, or `bun run format:check` for the whole tree.
+      - name: Prettier (format check on changed files)
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          if [ -z "${BASE_SHA}" ]; then BASE_SHA="HEAD~1"; fi
+          git fetch --no-tags --depth=50 origin "${{ github.base_ref || 'main' }}" || true
+          CHANGED=$(git diff --name-only --diff-filter=ACMRTUXB "${BASE_SHA}"...HEAD \
+            | grep -Ei '\.(ts|tsx|js|jsx|mjs|cjs|json|css|md|yml|yaml)$' \
+            | grep -Ev '^(node_modules|dist|\.output|\.vinxi|worker/calibration|worker/fixtures)' \
+            | grep -Ev '(routeTree\.gen\.ts|package-lock\.json|bun\.lock|pnpm-lock\.yaml)$' || true)
+          if [ -z "${CHANGED}" ]; then
+            echo "No formattable files changed."
+            exit 0
+          fi
+          echo "Checking:"; echo "${CHANGED}"
+          echo "${CHANGED}" | xargs bunx prettier --check
+      - name: bun run lint
+        run: bun run lint
+      - name: vitest
+        run: bunx vitest run
+
+  python-tests:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test deps
+        run: |
+          python3 -m pip install --quiet pytest jsonschema numpy
+      - name: Run pytest
+        run: python3 -m pytest tests -x --tb=short
+      - name: Run API Envelope Verification
+        run: |
+          # Start uvicorn in the background
+          python3 -m uvicorn BE.main:app --port 8000 &
+          UVICORN_PID=$!
+          sleep 5
+          bash scripts/verify-api.sh
+          kill $UVICORN_PID
+
+  psscriptanalyzer:
+    name: PSScriptAnalyzer (scripts/ps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # pwsh is preinstalled on ubuntu-latest runners; install the analyzer once.
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
+      # Lint the whole wrapper fleet (Common.psm1 + every .ps1). Any Error
+      # or Warning severity finding fails the job. Plan 90 Step 116.
+      - name: Analyze scripts/ps
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path scripts/ps -Recurse `
+            -Settings scripts/ps/PSScriptAnalyzerSettings.psd1
+          if ($results) {
+            $results | Format-Table -AutoSize | Out-String | Write-Host
+            Write-Error "PSScriptAnalyzer reported $($results.Count) finding(s)."
+            exit 1
+          }
+          Write-Host "PSScriptAnalyzer: clean."
+
+  pester-wrappers:
+    name: Pester (scripts/ps exit-code contract)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # pwsh is preinstalled on ubuntu-latest runners. Install Pester 5+
+      # (BeforeAll / $script: scoping) once, then run tests/pester/.
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -Scope CurrentUser -Force -SkipPublisherCheck -MinimumVersion 5.0.0
+      # Plan 90 Step 120: locks 9510/9511/9530/9531 wrapper exit contract.
+      - name: Run Pester harness
+        shell: pwsh
+        run: |
+          $r = Invoke-Pester -Path tests/pester -Output Detailed -PassThru
+          if ($r.FailedCount -gt 0) {
+            Write-Error "Pester reported $($r.FailedCount) failing test(s)."
+            exit 1
+          }
+
+  mermaid-render:
+    name: Render .mmd diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install mmdc
+        run: npm install -g @mermaid-js/mermaid-cli
+      # Regenerate first so a stale committed diagram fails here, then
+      # render every authored .mmd and compare against .sha256 snapshots.
+      - name: Regenerate error diagrams
+        run: python3 linter-scripts/generate-error-diagrams.py
+      - name: Fail on unrendered or drifted diagrams
+        run: bash scripts/render-mmd-check.sh
+
+  denial-evidence:
+    name: Denial replay + evidence CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: python3 -m pip install --quiet pytest jsonschema numpy
+      # 1) Replay harness unit tests must pass before we trust the CLI output.
+      - name: Denial replay harness
+        run: python3 -m pytest tests/unit/test_denial_replay_harness.py -x --tb=short
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+      # 2) End-to-end CLI: JSONL -> baseline -> markdown + HTML tradeoff.
+      - name: Denial evidence CLI (offline replay)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          mkdir -p out/denial-evidence
+          python3 scripts/security/denial_evidence_cli.py \
+            --in tests/fixtures/security/denial_sample.jsonl \
+            --out-dir out/denial-evidence
+          test -s out/denial-evidence/denial_evidence.md
+          test -s out/denial-evidence/denial_tradeoff.html
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: denial-evidence
+          path: |
+            out/denial-evidence/denial_evidence.md
+            out/denial-evidence/denial_tradeoff.html
+          if-no-files-found: error
+          retention-days: 30
+
+  visual-regression:
+    name: Visual regression gate (I-CX-04)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      # Install the Chromium build @playwright/test expects. No PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      # is exported, so tests/visual/routes.spec.ts falls back to the bundled binary.
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+      # Start the Vite dev server in the background. routes.spec.ts reads VISUAL_BASE_URL,
+      # defaulting to http://localhost:8080 which matches `vite dev`.
+      - name: Start dev server
+        run: |
+          bun run dev > /tmp/vite-dev.log 2>&1 &
+          echo $! > /tmp/vite-dev.pid
+      - name: Wait for dev server (port 8080)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080 > /dev/null; then
+              echo "dev server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "dev server did not become ready in 60s"
+          cat /tmp/vite-dev.log || true
+          exit 1
+      # Blocking gate: fails the workflow on any diff over VISUAL_DIFF.maxDiffPixelRatio.
+      # Scope: routes.spec.ts (14 baselines, two-run evidence v3.748.0 + v3.749.0)
+      # and header-spacing.spec.ts (DOM measurements, two-run evidence v3.753.0).
+      - name: Playwright visual suite (routes + header-spacing)
+        run: bunx playwright test tests/visual/routes.spec.ts tests/visual/header-spacing.spec.ts
+      - name: Stop dev server
+        if: always()
+        run: |
+          if [ -f /tmp/vite-dev.pid ]; then
+            kill "$(cat /tmp/vite-dev.pid)" 2>/dev/null || true
+          fi
+      - name: Upload diff artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-diffs
+          path: |
+            tests/reports/screenshots/plan69/actual
+            tests/reports/screenshots/plan69/diff
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload dev server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-devlog
+          path: /tmp/vite-dev.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  alignment-suite:
+    name: Alignment (${{ matrix.engine }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    env:
+      E2E_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          bun install --frozen-lockfile
+          python3 -m pip install --quiet playwright pillow numpy
+          python3 -m playwright install --with-deps ${{ matrix.engine }}
+      - name: Start dev server
+        run: |
+          bun run dev > /tmp/vite-dev.log 2>&1 &
+          echo $! > /tmp/vite-dev.pid
+      - name: Wait for dev server (port 8080)
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8080 > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/vite-dev.log || true
+          exit 1
+      # Primary gates. Each suite sets `E2E_BROWSER` and writes its
+      # reports/screenshots into an engine-suffixed directory so chromium
+      # and webkit runs don't overwrite each other.
+      - name: padding_tokens_visual.py
+        run: python3 tests/e2e/padding_tokens_visual.py
+      - name: padding_tokens_wrap.py
+        run: python3 tests/e2e/padding_tokens_wrap.py
+      - name: item_rows_long_labels.py
+        run: python3 tests/e2e/item_rows_long_labels.py
+      - name: home_visual_regression.py
+        run: python3 tests/e2e/home_visual_regression.py
+      - name: topnav_hover_focus_states.py
+        run: python3 tests/e2e/topnav_hover_focus_states.py
+      - name: topnav_underline_sync.py
+        run: python3 tests/e2e/topnav_underline_sync.py
+      - name: editor_settings_visual_regression.py
+        run: python3 tests/e2e/editor_settings_visual_regression.py
+      - name: diff_heatmaps.py
+        run: python3 tests/e2e/diff_heatmaps.py
+      - name: Stop dev server
+        if: always()
+        run: |
+          [ -f /tmp/vite-dev.pid ] && kill "$(cat /tmp/vite-dev.pid)" 2>/dev/null || true
+      - name: Emit alignment summary (on failure)
+        if: failure()
+        run: node scripts/alignment-check-summary.mjs
+      - name: Upload alignment reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alignment-reports-${{ matrix.engine }}
+          path: |
+            tests/reports/padding-tokens*/**
+            tests/reports/padding-tokens-wrap*/**
+            tests/reports/item-rows-long-labels*/**
+            tests/reports/home-regression/**
+            tests/reports/diff-heatmaps/**
+            tests/reports/alignment/**
+            tests/reports/item-rows-contrast.json
+            /tmp/vite-dev.log
+          if-no-files-found: warn
+          retention-days: 14

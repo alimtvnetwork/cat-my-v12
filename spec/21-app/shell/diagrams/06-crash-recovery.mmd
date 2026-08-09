@@ -1,0 +1,11 @@
+stateDiagram-v2
+  [*] --> Healthy
+  Healthy --> WorkerCrash: /healthz fails 3x
+  WorkerCrash --> Respawning: supervisor kills + spawn
+  Respawning --> Healthy: /healthz 200
+  Respawning --> Degraded: 3 respawns within 60s
+  Degraded --> Healthy: manual restart or /healthz 200
+  Healthy --> RendererCrash: window unresponsive
+  RendererCrash --> Healthy: reload WebView
+  Healthy --> ShellCrash: panic
+  ShellCrash --> [*]: OS exit, next launch reports E_SHELL_PREVIOUS_UNCLEAN_EXIT
