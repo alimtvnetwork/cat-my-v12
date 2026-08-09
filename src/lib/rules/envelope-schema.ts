@@ -66,8 +66,7 @@ export const RuleSetEnvelopeZ = z
   .strict();
 
 export type ValidationResult =
-  | { ok: true; envelope: RuleSetEnvelope }
-  | { ok: false; message: string };
+  { ok: true; envelope: RuleSetEnvelope } | { ok: false; message: string };
 
 export function validateEnvelopeJson(text: string): ValidationResult {
   let raw: unknown;

@@ -90,7 +90,11 @@ describe("observedColor", () => {
   });
 
   it("returns null for an empty ROI", () => {
-    const out = observedColor(ColorModeType.Current, new Uint8ClampedArray(0), { r: 0, g: 0, b: 0 });
+    const out = observedColor(ColorModeType.Current, new Uint8ClampedArray(0), {
+      r: 0,
+      g: 0,
+      b: 0,
+    });
     expect(out).toBeNull();
   });
 });

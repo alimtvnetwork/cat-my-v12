@@ -44,35 +44,17 @@ No existing keys are renamed or removed.
   "$schema": "./config.schema.json",
   "Version": "1.3.0",
   "Categories": {
-    "Rag": {
-      /* unchanged from 1.2.x */
-    },
-    "Validation": {
-      /* unchanged */
-    },
-    "Update": {
-      /* unchanged */
-    },
-    "MainWorker": {
-      /* new — see §4 */
-    },
+    "Rag": {/* unchanged from 1.2.x */},
+    "Validation": {/* unchanged */},
+    "Update": {/* unchanged */},
+    "MainWorker": {/* new — see §4 */},
   },
   "Tables": {
-    "Role": {
-      /* see spec/19/14 §3 */
-    },
-    "EnumPage": {
-      /* see spec/19/14 §3 */
-    },
-    "RolePageAccess": {
-      /* see spec/19/14 §3 */
-    },
-    "WorkerNodeStatus": {
-      /* see spec/19/14 §3 */
-    },
-    "AuthMechanism": {
-      /* see spec/19/14 §3 */
-    },
+    "Role": {/* see spec/19/14 §3 */},
+    "EnumPage": {/* see spec/19/14 §3 */},
+    "RolePageAccess": {/* see spec/19/14 §3 */},
+    "WorkerNodeStatus": {/* see spec/19/14 §3 */},
+    "AuthMechanism": {/* see spec/19/14 §3 */},
   },
 }
 ```

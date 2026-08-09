@@ -11,24 +11,48 @@
 // upstream UI can route on `E_BE_BAD_REQUEST` / `E_BE_CONFLICT` etc.
 
 import { putDraft, type RuleSetEnvelope } from "./draftStore";
-import { beFetch } from "@/lib/be-fetch";
+
+export interface SaveRuleSetError extends Error {
+  code: string;
+  httpStatus: number;
+  backendMessage: string;
+}
+
+function toSaveError(status: number, body: unknown): SaveRuleSetError {
+  const errors = (body as { Errors?: { Code?: string; BackendMessage?: string } } | null)?.Errors;
+  const code = errors?.Code ?? "E_BE_UNKNOWN";
+  const msg = errors?.BackendMessage ?? `PUT /rules failed with HTTP ${status}`;
+  const err = new Error(msg) as SaveRuleSetError;
+  err.code = code;
+  err.httpStatus = status;
+  err.backendMessage = msg;
+
+  return err;
+}
 
 /**
  * PUT the envelope to `/rules/{RuleSetId}` and mirror the committed response
- * back into IndexedDB. Throws `EnvelopeError` on any non-2xx response.
+ * back into IndexedDB. Throws `SaveRuleSetError` on any non-2xx response.
  */
 export async function saveRuleSet(envelope: RuleSetEnvelope): Promise<RuleSetEnvelope> {
-  const resp = await beFetch<RuleSetEnvelope>(`/rules/${envelope.RuleSetId}`, {
+  const resp = await fetch(`/rules/${envelope.RuleSetId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(envelope),
   });
+  const body = await resp.json().catch(() => null);
 
-  const results = resp.Results;
+  if (resp.ok === false) {
+    throw toSaveError(resp.status, body);
+  }
+
+  const results = (body as { Results?: RuleSetEnvelope[] } | null)?.Results;
   const committed = results && results.length > 0 ? results[0] : null;
 
   if (!committed) {
-    throw new Error("E_BE_UNKNOWN: empty Results on save");
+    throw toSaveError(resp.status, {
+      Errors: { Code: "E_BE_UNKNOWN", BackendMessage: "empty Results on save" },
+    });
   }
 
   await putDraft(committed);

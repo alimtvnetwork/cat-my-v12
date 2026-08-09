@@ -89,7 +89,7 @@ export const getObservabilitySessions = createServerFn({ method: "GET" })
       const env = await beFetch<SessionsPage>(
         url,
         { headers: { accept: "application/json" } },
-        { suppressCapture: true }
+        { suppressCapture: true },
       );
       const payload = env.Results[0];
 
@@ -103,10 +103,7 @@ export const getObservabilitySessions = createServerFn({ method: "GET" })
         err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
       const envErr = err as EnvelopeError;
 
-      if (
-        isEnvelope &&
-        (envErr.responseStatus === 404 || envErr.code === "E_BE_UNAVAILABLE")
-      ) {
+      if (isEnvelope && (envErr.responseStatus === 404 || envErr.code === "E_BE_UNAVAILABLE")) {
         return {
           items: [],
           total: 0,

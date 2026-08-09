@@ -40,6 +40,7 @@ Plan 88 Step 5 (`27-config-surface.md` PATCH) is paused. Any commit made against
 When you answer, I will `mv` this file into `.lovable/ambiguous-questions/02-ambiguity-resolved/01-code-need-to-follow-guidelines.md`, append a `## Resolution` section, then execute.
 
 ## Resolution
+
 Target: Entire codebase.
 Scope: Whole repo.
 Action: Audit codebase, fix query wrappers, Enums, and booleans.

@@ -31,57 +31,64 @@ Route map: `/`, `/setup`, `/settings/{camera,trigger,lighting}`, `/setup/roi`, `
 ### 4.1 Color tokens (SS-04, SS-12) — `--hmi-*` namespace
 
 **Chrome (window frames, title bar)**
-| Token | Hex | Use |
-|---|---|---|
+
+| Token              | Hex       | Use                                 |
+| ------------------ | --------- | ----------------------------------- |
 | `--hmi-chrome-900` | `#2b2b2b` | Deep bezel / titlebar text on light |
-| `--hmi-chrome-800` | `#3a3a3a` | |
-| `--hmi-chrome-700` | `#4a4a4a` | App title bar background |
-| `--hmi-chrome-600` | `#6b6b6b` | Muted chrome |
+| `--hmi-chrome-800` | `#3a3a3a` |                                     |
+| `--hmi-chrome-700` | `#4a4a4a` | App title bar background            |
+| `--hmi-chrome-600` | `#6b6b6b` | Muted chrome                        |
 
 **Panels (tool config, side rails)**
-| Token | Hex | Use |
-|---|---|---|
-| `--hmi-panel-100` | `#f2f2f2` | Lightest surface |
-| `--hmi-panel-200` | `#e6e6e6` | |
-| `--hmi-panel-300` | `#d4d4d4` | Default panel bg |
+
+| Token             | Hex       | Use                          |
+| ----------------- | --------- | ---------------------------- |
+| `--hmi-panel-100` | `#f2f2f2` | Lightest surface             |
+| `--hmi-panel-200` | `#e6e6e6` |                              |
+| `--hmi-panel-300` | `#d4d4d4` | Default panel bg             |
 | `--hmi-panel-400` | `#b8b8b8` | Panel borders (hairline 1px) |
 
 **Viewport (camera canvas)**
-| Token | Hex |
-|---|---|
-| `--hmi-viewport-bg` | `#1a1a1a` |
+
+| Token                 | Hex       |
+| --------------------- | --------- |
+| `--hmi-viewport-bg`   | `#1a1a1a` |
 | `--hmi-viewport-grid` | `#2a2a2a` |
 
 **Functional accents**
-| Token | Hex | Use |
-|---|---|---|
-| `--hmi-accent-primary` | `#1e78c8` | **Run** / primary action |
-| `--hmi-accent-primary-hover` | `#2a8ad8` | Hover state |
-| `--hmi-accent-select` | `#f5c800` | Selected tool tile / anchor |
-| `--hmi-accent-select-strong` | `#f39c00` | Active tab underline |
+
+| Token                        | Hex       | Use                         |
+| ---------------------------- | --------- | --------------------------- |
+| `--hmi-accent-primary`       | `#1e78c8` | **Run** / primary action    |
+| `--hmi-accent-primary-hover` | `#2a8ad8` | Hover state                 |
+| `--hmi-accent-select`        | `#f5c800` | Selected tool tile / anchor |
+| `--hmi-accent-select-strong` | `#f39c00` | Active tab underline        |
 
 **Status**
-| Token | Hex |
-|---|---|
-| `--hmi-status-ok` | `#2ea043` (green) |
-| `--hmi-status-ng` | `#d13438` (red) |
-| `--hmi-status-warn` | `#e8a317` |
-| `--hmi-status-info` | `#1e78c8` |
+
+| Token               | Hex               |
+| ------------------- | ----------------- |
+| `--hmi-status-ok`   | `#2ea043` (green) |
+| `--hmi-status-ng`   | `#d13438` (red)   |
+| `--hmi-status-warn` | `#e8a317`         |
+| `--hmi-status-info` | `#1e78c8`         |
 
 **ROI overlays (drawn on viewport)**
-| Token | Hex | Stroke |
-|---|---|---|
-| `--hmi-roi-search` | `#f5c800` | Dashed |
-| `--hmi-roi-model` | `#2ea043` | Solid |
-| `--hmi-roi-mask` | `#d13438` | Hatched |
-| (anchor) | `#f5c800` | Crosshair |
+
+| Token              | Hex       | Stroke    |
+| ------------------ | --------- | --------- |
+| `--hmi-roi-search` | `#f5c800` | Dashed    |
+| `--hmi-roi-model`  | `#2ea043` | Solid     |
+| `--hmi-roi-mask`   | `#d13438` | Hatched   |
+| (anchor)           | `#f5c800` | Crosshair |
 
 **Text**
-| Token | Hex |
-|---|---|
+
+| Token                  | Hex       |
+| ---------------------- | --------- |
 | `--hmi-text-on-chrome` | `#f2f2f2` |
-| `--hmi-text-on-panel` | `#1a1a1a` |
-| `--hmi-text-muted` | `#6b6b6b` |
+| `--hmi-text-on-panel`  | `#1a1a1a` |
+| `--hmi-text-muted`     | `#6b6b6b` |
 
 ### 4.2 Typography (SS-05, SS-12)
 
@@ -104,12 +111,13 @@ Route map: `/`, `/setup`, `/settings/{camera,trigger,lighting}`, `/setup/roi`, `
 ### 4.3 Spacing & layout grid (SS-08)
 
 4px base grid. Fixed heights:
-| Region | Height |
-|---|---|
-| Titlebar | 32px |
-| Action header | 40px |
-| Tool ribbon | 72px |
-| Bottom action bar | 44px |
+
+| Region            | Height |
+| ----------------- | ------ |
+| Titlebar          | 32px   |
+| Action header     | 40px   |
+| Tool ribbon       | 72px   |
+| Bottom action bar | 44px   |
 
 Spacing scale: `4 · 8 · 12 · 16 · 24 · 32`. Radii: `0 · 2 · 4px` (panels are near-square). Borders: hairline 1px, strong 2px.
 

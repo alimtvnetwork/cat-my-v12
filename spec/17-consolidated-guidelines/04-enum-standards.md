@@ -14,13 +14,13 @@
 
 ## Universal Rules (All Languages)
 
-| Rule              | Requirement                                                                        |
+| Rule | Requirement |
 | ----------------- | ---------------------------------------------------------------------------------- | ---- |
-| No magic strings  | Never compare against raw string literals — always use enum constants              |
+| No magic strings | Never compare against raw string literals — always use enum constants |
 | PascalCase values | Enum members/cases use PascalCase (`Production`, not `PRODUCTION` or `production`) |
-| One definition    | String representations defined **once**, co-located with the enum type             |
-| Exhaustive switch | Every `switch`/`match` on an enum must have a `default` branch                     |
-| No string unions  | Use proper `enum` syntax — never `type Foo = 'a'                                   | 'b'` |
+| One definition | String representations defined **once**, co-located with the enum type |
+| Exhaustive switch | Every `switch`/`match` on an enum must have a `default` branch |
+| No string unions | Use proper `enum` syntax — never `type Foo = 'a'                                   | 'b'` |
 
 ---
 

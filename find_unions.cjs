@@ -1,26 +1,28 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 function walk(dir) {
   let results = [];
   const list = fs.readdirSync(dir);
-  list.forEach(file => {
+  list.forEach((file) => {
     file = path.join(dir, file);
     const stat = fs.statSync(file);
     if (stat && stat.isDirectory()) {
       results = results.concat(walk(file));
-    } else if (file.endsWith('.ts') || file.endsWith('.tsx')) {
+    } else if (file.endsWith(".ts") || file.endsWith(".tsx")) {
       results.push(file);
     }
   });
   return results;
 }
-const files = walk('./src');
-files.forEach(file => {
-  const content = fs.readFileSync(file, 'utf8');
+const files = walk("./src");
+files.forEach((file) => {
+  const content = fs.readFileSync(file, "utf8");
   // Find string union types like type Foo = 'a' | 'b'
-  const matches = content.match(/type\s+[A-Za-z0-9_]+\s*=\s*(?:'[^']+'|"[^"]+")(?:\s*\|\s*(?:'[^']+'|"[^"]+"))+/g);
+  const matches = content.match(
+    /type\s+[A-Za-z0-9_]+\s*=\s*(?:'[^']+'|"[^"]+")(?:\s*\|\s*(?:'[^']+'|"[^"]+"))+/g,
+  );
   if (matches) {
-     console.log('FILE:', file);
-     matches.forEach(m => console.log('  ', m));
+    console.log("FILE:", file);
+    matches.forEach((m) => console.log("  ", m));
   }
 });

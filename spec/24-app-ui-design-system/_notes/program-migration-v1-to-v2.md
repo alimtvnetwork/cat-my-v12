@@ -10,14 +10,14 @@
 
 ## v1 -> v2 delta
 
-| Field                | v1            | v2                                                                           | Reason                              |
+| Field | v1 | v2 | Reason |
 | -------------------- | ------------- | ---------------------------------------------------------------------------- | ----------------------------------- | ---------- | ---------------------------- | --- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema`             | absent or `1` | `2`                                                                          | Version stamp.                      |
-| `rules[].kind`       | `"presence"   | "count"`                                                                     | `"C"                                | "R"        | "K"                          | "S" | "E"` | Align with `04-rule-layers.md` C/R/K/S/E. Map: `presence -> C`, `count -> R`. Unknown kinds -> log `W_UI_MIGRATE_UNKNOWN_KIND` and drop the rule. |
-| `rules[].shape.type` | `"rect"       | "poly"`                                                                      | `"rectangle"                        | "polygon"` | Match canvas geometry names. |
-| `rules[].params`     | flat map      | `{ ...flat, thresholds: { ok, ng } }` if `okThreshold`/`ngThreshold` existed | Group thresholds. Old keys deleted. |
-| `meta.savedAt`       | ISO string    | ISO string, unchanged                                                        | Passthrough.                        |
-| `meta.editorVersion` | absent        | current app version                                                          | Stamped by migration.               |
+| `schema` | absent or `1` | `2` | Version stamp. |
+| `rules[].kind` | `"presence"   | "count"` | `"C"                                | "R"        | "K"                          | "S" | "E"` | Align with `04-rule-layers.md` C/R/K/S/E. Map: `presence -> C`, `count -> R`. Unknown kinds -> log `W_UI_MIGRATE_UNKNOWN_KIND` and drop the rule. |
+| `rules[].shape.type` | `"rect"       | "poly"` | `"rectangle"                        | "polygon"` | Match canvas geometry names. |
+| `rules[].params` | flat map | `{ ...flat, thresholds: { ok, ng } }` if `okThreshold`/`ngThreshold` existed | Group thresholds. Old keys deleted. |
+| `meta.savedAt` | ISO string | ISO string, unchanged | Passthrough. |
+| `meta.editorVersion` | absent | current app version | Stamped by migration. |
 
 Anything not listed is copied verbatim.
 

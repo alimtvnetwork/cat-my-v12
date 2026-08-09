@@ -110,18 +110,19 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
       const isEnvelope =
         err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
       const envErr = isEnvelope ? (err as EnvelopeError) : null;
-      
-      const title = envErr 
+
+      const title = envErr
         ? `${envErr.code}${envErr.responseStatus ? ` (HTTP ${envErr.responseStatus})` : ""}`
         : "Component Failed to Load";
-      const message = envErr ? envErr.backendMessage : (err.message || String(err));
+      const message = envErr ? envErr.backendMessage : err.message || String(err);
 
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center text-muted-foreground">
           <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-6 max-w-md w-full">
             <h2 className="mb-2 text-lg font-semibold text-destructive">{title}</h2>
             <p className="mb-4 text-sm">
-              An unexpected error prevented this section from rendering. The error has been captured.
+              An unexpected error prevented this section from rendering. The error has been
+              captured.
             </p>
             <pre className="mb-4 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded bg-background p-2 text-left text-xs text-foreground">
               {message}

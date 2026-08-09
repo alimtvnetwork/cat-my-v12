@@ -29,7 +29,11 @@ export function ConditionTypeSelect({
   ariaLabel = "Condition type",
 }: ConditionTypeSelectProps) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as ConditionTypeType)} disabled={disabled}>
+    <Select
+      value={value}
+      onValueChange={(v) => onChange(v as ConditionTypeType)}
+      disabled={disabled}
+    >
       <SelectTrigger className="h-7 w-[9rem] text-xs" aria-label={ariaLabel}>
         <SelectValue />
       </SelectTrigger>

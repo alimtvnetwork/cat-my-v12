@@ -18,10 +18,7 @@
 // Consumers land in Steps 106 (`cli.tsx` sidebar tabs), 107-111 (sessions +
 // SSE tail), 112 (IPC inbox), 113 (rules table), 116 (samples grid).
 
-import {
-  type QueryKey,
-  type UseQueryOptions,
-} from "@tanstack/react-query";
+import { type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { useAppQuery, type AppQueryResult } from "./use-app-query";
 
 import type { Envelope, EnvelopeAttributes, EnvelopeError } from "@/lib/be-fetch";

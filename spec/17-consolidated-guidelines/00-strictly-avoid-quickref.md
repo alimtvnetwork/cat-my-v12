@@ -79,16 +79,16 @@ Sequence numbers are stable — never renumber, only append.
 
 ## Code style 🔴 CODE RED
 
-| ⛔ Don't                                                 | ✅ Do                                                             |
+| ⛔ Don't | ✅ Do |
 | -------------------------------------------------------- | ----------------------------------------------------------------- | ------------------ | ----------------------------------------- |
-| Nested `if` blocks (zero-nesting is absolute)            | Guard clauses, named booleans, helper extraction                  |
-| Functions > 15 lines (Go ceiling 30)                     | Extract helpers                                                   |
-| `any` in TypeScript                                      | Generics, `unknown` + narrowing                                   |
-| `interface{}` / `any` in Go exported APIs                | Concrete types or generics                                        |
-| `unwrap()` in Rust production code                       | `?` operator + `thiserror`                                        |
-| Magic strings / numbers in conditions                    | Named constant or enum                                            |
-| Bare `true`/`false` as positional argument               | Named constant from `boolFlags.ts` (CODE-RED-024)                 |
-| Mixing `&&` and `                                        |                                                                   | ` in one condition | Extract sub-expression to a named boolean |
+| Nested `if` blocks (zero-nesting is absolute) | Guard clauses, named booleans, helper extraction |
+| Functions > 15 lines (Go ceiling 30) | Extract helpers |
+| `any` in TypeScript | Generics, `unknown` + narrowing |
+| `interface{}` / `any` in Go exported APIs | Concrete types or generics |
+| `unwrap()` in Rust production code | `?` operator + `thiserror` |
+| Magic strings / numbers in conditions | Named constant or enum |
+| Bare `true`/`false` as positional argument | Named constant from `boolFlags.ts` (CODE-RED-024) |
+| Mixing `&&` and `                                       |                                                                   |` in one condition | Extract sub-expression to a named boolean |
 | `else` after a `return` / `throw` / `break` / `continue` | Drop the `else`; the next statement is implicitly the else branch |
 
 ## Suppressions

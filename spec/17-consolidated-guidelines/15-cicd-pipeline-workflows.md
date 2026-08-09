@@ -67,8 +67,8 @@ on:
 # Scheduled Scans
 on:
   schedule:
-    - cron: "0 9 * * 1"  # Weekly Monday 9:00 UTC
-  workflow_dispatch:       # Manual trigger
+    - cron: "0 9 * * 1" # Weekly Monday 9:00 UTC
+  workflow_dispatch: # Manual trigger
 ```
 
 ### Concurrency Control

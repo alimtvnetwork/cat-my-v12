@@ -43,12 +43,12 @@ Both scripts MUST produce identical output for the same inputs.
 
 The script resolves "latest release" through a tiered fallback:
 
-| Tier | Source                                                       | Used when                         |
+| Tier | Source | Used when |
 | ---- | ------------------------------------------------------------ | --------------------------------- | --------------------- |
-| 1    | `git tag --sort=-v:refname                                   | head -1` (local)                  | Repo has tags locally |
-| 2    | GitHub Releases API: `/repos/<owner>/<repo>/releases/latest` | Online check                      |
-| 3    | `latest.json` from release assets                            | Tier 2 unavailable / rate-limited |
-| 4    | Embedded version constant                                    | Fully offline                     |
+| 1 | `git tag --sort=-v:refname                                   | head -1` (local) | Repo has tags locally |
+| 2 | GitHub Releases API: `/repos/<owner>/<repo>/releases/latest` | Online check |
+| 3 | `latest.json` from release assets | Tier 2 unavailable / rate-limited |
+| 4 | Embedded version constant | Fully offline |
 
 Each tier should print _which_ tier produced the answer so the user
 can interpret a stale result.

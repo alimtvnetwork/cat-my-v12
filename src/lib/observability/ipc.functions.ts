@@ -92,11 +92,7 @@ export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
     const url =
       `${beBaseUrl()}/observability/sessions/${data.cliInvocationId}/ipc` +
       (qs.size ? `?${qs}` : "");
-    const env = await beFetch<IpcPage>(
-      url,
-      {},
-      { suppressCapture: true }
-    );
+    const env = await beFetch<IpcPage>(url, {}, { suppressCapture: true });
     const payload = env.Results[0];
 
     if (payload === undefined) {

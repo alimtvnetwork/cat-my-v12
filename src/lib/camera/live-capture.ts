@@ -171,8 +171,7 @@ export interface LiveCameraStream {
 }
 
 export type OpenCameraResult =
-  | { ok: true; stream: LiveCameraStream }
-  | { ok: false; error: CameraCapabilityError };
+  { ok: true; stream: LiveCameraStream } | { ok: false; error: CameraCapabilityError };
 
 /**
  * Acquire a live MediaStream with owned teardown. Every track stops on

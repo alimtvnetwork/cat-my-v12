@@ -38,8 +38,7 @@ export interface CameraDeviceSummary {
 }
 
 export type CameraCapability =
-  | { ok: true; devices: CameraDeviceSummary[] }
-  | { ok: false; error: CameraCapabilityError };
+  { ok: true; devices: CameraDeviceSummary[] } | { ok: false; error: CameraCapabilityError };
 
 // DOMException.name -> our stable code. Names per MediaDevices spec + WebKit
 // legacy synonyms. Keep the switch exhaustive so unknown names fall through

@@ -36,7 +36,7 @@ User reports the Projects area UI looks broken and project creation does not wor
 ## Fix scope
 
 Addressed inside plan 64 steps 71-85 (project section rebuild).
-**_ End Patch
+**\_ End Patch
 _** Add File: .lovable/issues/17-menu-hover-jitter-and-padding.md
 
 # Menu items shift on hover, padding too tight
@@ -63,7 +63,7 @@ Hovering over top-nav / setup menu items causes the item box to shift horizontal
 ## Fix scope
 
 Plan 64 steps 55-58.
-**_ End Patch
+**\_ End Patch
 _** Add File: .lovable/issues/18-header-duplicated-control-automation.md
 
 # Header duplicates "Control Automation" and wastes vertical space
@@ -89,7 +89,7 @@ The global header repeats the "Control Automation" title/section on every page, 
 ## Fix scope
 
 Plan 64 steps 51-54.
-**_ End Patch
+**\_ End Patch
 _** Add File: .lovable/issues/19-rules-editor-program-panel-and-layer-arrow.md
 
 # Rules editor: legacy Program panel + narrow Layers with left arrow
@@ -113,7 +113,7 @@ Inside the rule editor, a legacy "Program" panel is shown. Rule Layers rows are 
 ## Fix scope
 
 Plan 64 steps 59-70.
-**_ End Patch
+**\_ End Patch
 _** Add File: .lovable/ambiguity-questions/01-ui-v2-open-questions.md
 
 # Ambiguity questions for UI v2 (spec 24/09)

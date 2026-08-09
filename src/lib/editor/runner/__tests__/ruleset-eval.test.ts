@@ -24,7 +24,10 @@ function presenceCond(id: string): PresenceCondition {
   return {
     id,
     type: ConditionTypeType.Presence,
-    params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence], Mode: PresenceModeType.Present },
+    params: {
+      ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence],
+      Mode: PresenceModeType.Present,
+    },
   };
 }
 function rule(id: string, conditions: RuleCondition[]): EditorRuleV3 {
@@ -61,7 +64,12 @@ function makeEval(fails: Set<string>): ConditionEvaluator {
         ReasonCodeType: "ColorDeltaE",
       };
     }
-    return { conditionId: cond.id, type: cond.type, verdict: VerdictType.Pass, ReasonCodeType: "OK" };
+    return {
+      conditionId: cond.id,
+      type: cond.type,
+      verdict: VerdictType.Pass,
+      ReasonCodeType: "OK",
+    };
   };
 }
 describe("evaluateRuleset - AND-merge (spec 47 s6)", () => {

@@ -99,8 +99,8 @@ flowchart LR
   end
 
 subgraph BE[Backend / FastAPI]
-ROUTE[BE/app/routes/*]
-SVC[BE/app/services/*]
+ROUTE[BE/app/routes/_]
+SVC[BE/app/services/_]
 REPO[BE/app/repos/*]
 BEFAC[BE/app/facades/<vendor>_facade.py]
 BEDOM[BE/app/domain/cat_<concept>.py]

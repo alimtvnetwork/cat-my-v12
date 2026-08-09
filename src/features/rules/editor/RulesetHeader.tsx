@@ -6,7 +6,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ValidationModeToggle } from "@/features/rules/editor/ValidationModeToggle";
-import { VALIDATION_MODE_DESCRIPTION, type ValidationModeType } from "@/types/rules/ValidationModeType";
+import {
+  VALIDATION_MODE_DESCRIPTION,
+  type ValidationModeType,
+} from "@/types/rules/ValidationModeType";
 
 export interface RulesetHeaderProps {
   name: string;

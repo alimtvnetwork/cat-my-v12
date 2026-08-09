@@ -54,7 +54,9 @@ export const RuleRow = forwardRef<HTMLLIElement, RuleRowProps>(function RuleRow(
   const Icon = KIND_ICON[rule.kind];
   const color = KIND_COLOR[rule.kind];
   const isSkipped = verdict === VerdictEnum.Skip;
-  const reasonLabel = ReasonCodeType ? (REASON_CODE_LABEL[ReasonCodeType] ?? ReasonCodeType) : undefined;
+  const reasonLabel = ReasonCodeType
+    ? (REASON_CODE_LABEL[ReasonCodeType] ?? ReasonCodeType)
+    : undefined;
   const verdictTitle = verdict && reasonLabel ? `${verdict}: ${reasonLabel}` : undefined;
   const VerdictIcon =
     verdict === VerdictEnum.Pass

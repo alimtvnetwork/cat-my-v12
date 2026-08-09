@@ -33,14 +33,15 @@ Source: `useCodeBlockEvents.ts` → creates handlers from 3 files:
    - After **2000ms**, revert all changes
 
 **Decoding map:**
-| Encoded | Decoded |
-|---------|---------|
-| `&#10;` | `\n` |
-| `&#39;` | `'` |
-| `&amp;` | `&` |
-| `&lt;` | `<` |
-| `&gt;` | `>` |
-| `&quot;` | `"` |
+
+| Encoded  | Decoded |
+| -------- | ------- |
+| `&#10;`  | `\n`    |
+| `&#39;`  | `'`     |
+| `&amp;`  | `&`     |
+| `&lt;`   | `<`     |
+| `&gt;`   | `>`     |
+| `&quot;` | `"`     |
 
 ---
 
@@ -101,12 +102,13 @@ Source: `useCodeBlockEvents.ts` → creates handlers from 3 files:
 4. Set `--code-font-size` on the wrapper element
 
 **Constants:**
-| Name | Value |
-|------|-------|
-| `DEFAULT_FONT_SIZE` | 18px |
-| `MIN_FONT_SIZE` | 12px |
-| `MAX_FONT_SIZE` | 32px |
-| `FONT_SIZE_STEP` | 2px |
+
+| Name                | Value |
+| ------------------- | ----- |
+| `DEFAULT_FONT_SIZE` | 18px  |
+| `MIN_FONT_SIZE`     | 12px  |
+| `MAX_FONT_SIZE`     | 32px  |
+| `FONT_SIZE_STEP`    | 2px   |
 
 ---
 

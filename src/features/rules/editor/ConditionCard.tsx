@@ -6,7 +6,10 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { makeDefaultCondition, type RuleCondition } from "@/lib/editor/schema";
-import { ConditionTypeType, type ConditionTypeType as ConditionTypeT } from "@/types/rules/ConditionTypeType";
+import {
+  ConditionTypeType,
+  type ConditionTypeType as ConditionTypeT,
+} from "@/types/rules/ConditionTypeType";
 import { ConditionTypeSelect } from "./ConditionTypeSelect";
 import { SameImageParamsPanel } from "./SameImageParamsPanel";
 import { PresenceParamsPanel } from "./PresenceParamsPanel";

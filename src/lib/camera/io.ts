@@ -28,8 +28,7 @@ export function exportCameraLibraryJson(lib: CameraLibrary): string {
 }
 
 export type ImportResult =
-  | { ok: true; entries: CameraSetting[] }
-  | { ok: false; errors: CameraValidationError[] };
+  { ok: true; entries: CameraSetting[] } | { ok: false; errors: CameraValidationError[] };
 
 export function importCameraLibraryJson(text: string): ImportResult {
   let parsed: unknown;

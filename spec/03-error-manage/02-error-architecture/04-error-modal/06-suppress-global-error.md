@@ -40,9 +40,7 @@ function showGlobalError(
   const { captureError, captureException, openErrorModal } = useErrorStore.getState();
 
   if (isApiClientError(error)) {
-    const captured = captureError(error.apiError, {
-      /* request metadata */
-    });
+    const captured = captureError(error.apiError, {/* request metadata */});
 
     if (error.apiError.code === "E9005") {
       openErrorModal(captured);

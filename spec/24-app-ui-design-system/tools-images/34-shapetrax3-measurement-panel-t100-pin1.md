@@ -39,15 +39,16 @@ The main overview dashboard for a specific configured tool (ShapeTrax3), showing
 `--------. - ms` (Execution Time, currently blank)
 
 _(Data Table)_
-| | `Measured` | `Lower` | `Upper` |
-|---|---|---|---|
-| `Count` | `---` | `---` | `---` |
-| `Judged Label` | | | |
-| `Pos. X` | `---` | `---` | `---` |
-| `Pos. Y` | `---` | `---` | `---` |
-| `Angle` | `---` | `---` | `---` |
-| `Match %` | `---` | `30.000` | `---` |
-| `Scale` | `---` | `---` | `---` |
+
+|                | `Measured` | `Lower`  | `Upper` |
+| -------------- | ---------- | -------- | ------- |
+| `Count`        | `---`      | `---`    | `---`   |
+| `Judged Label` |            |          |         |
+| `Pos. X`       | `---`      | `---`    | `---`   |
+| `Pos. Y`       | `---`      | `---`    | `---`   |
+| `Angle`        | `---`      | `---`    | `---`   |
+| `Match %`      | `---`      | `30.000` | `---`   |
+| `Scale`        | `---`      | `---`    | `---`   |
 
 `1/2 [ < ] [ > ]`
 `[Edit]`

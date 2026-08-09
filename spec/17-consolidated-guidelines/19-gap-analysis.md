@@ -116,14 +116,14 @@ All five critical handoff files now publish explicit Source-Folder Coverage Maps
 
 Weighting by "how badly will another AI mess up without this file":
 
-| Category                                 | Handoff Weight | Score   | Weighted       |
+| Category | Handoff Weight | Score | Weighted |
 | ---------------------------------------- | -------------- | ------- | -------------- | ------- |
-| Core coding + enums (02, 03, 04)         | 35%            | 97%     | 34.0           |
-| Database + architecture (05, 06, 17, 18) | 25%            | 93.0%   | 23.3           |
-| WP plugin (20)                           | 15%            | **92%** | **13.8**       |
-| CI/CD + infra (10, 15)                   | 15%            | 91.5%   | 13.7           |
-| UI + meta (07-09, 11-14, 16, 21)         | 10%            | 81.4%   | **87.9%**      | **8.8** |
-| **Total**                                | **100%**       |         | **98.0 / 100** |
+| Core coding + enums (02, 03, 04) | 35% | 97% | 34.0 |
+| Database + architecture (05, 06, 17, 18) | 25% | 93.0% | 23.3 |
+| WP plugin (20) | 15% | **92%** | **13.8** |
+| CI/CD + infra (10, 15) | 15% | 91.5% | 13.7 |
+| UI + meta (07-09, 11-14, 16, 21) | 10% | 81.4% | **87.9%** | **8.8** |
+| **Total** | **100%** | | **98.0 / 100** |
 
 ---
 
