@@ -17,8 +17,8 @@ import type { EditorRule } from "@/lib/editor/types";
 import { cn } from "@/lib/utils";
 import type { VerdictType } from "@/lib/editor/runner/types";
 import { VerdictType as VerdictEnum } from "@/lib/editor/runner/types";
-import type { ReasonCode } from "@/types/rules/ReasonCode";
-import { REASON_CODE_LABEL } from "@/types/rules/ReasonCode";
+import type { ReasonCodeType } from "@/types/rules/ReasonCodeType";
+import { REASON_CODE_LABEL } from "@/types/rules/ReasonCodeType";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
@@ -33,7 +33,7 @@ export interface RuleRowProps {
   onKeyboardReorder: (id: string, direction: "up" | "down") => void;
   /** Plan 42 step 28: last-run verdict for this rule (Sequential UI polish). */
   verdict?: VerdictType;
-  reasonCode?: ReasonCode;
+  ReasonCodeType?: ReasonCodeType;
 }
 
 export const RuleRow = forwardRef<HTMLLIElement, RuleRowProps>(function RuleRow(
@@ -47,14 +47,14 @@ export const RuleRow = forwardRef<HTMLLIElement, RuleRowProps>(function RuleRow(
     onToggleLocked,
     onKeyboardReorder,
     verdict,
-    reasonCode,
+    ReasonCodeType,
   },
   ref,
 ) {
   const Icon = KIND_ICON[rule.kind];
   const color = KIND_COLOR[rule.kind];
   const isSkipped = verdict === VerdictEnum.Skip;
-  const reasonLabel = reasonCode ? (REASON_CODE_LABEL[reasonCode] ?? reasonCode) : undefined;
+  const reasonLabel = ReasonCodeType ? (REASON_CODE_LABEL[ReasonCodeType] ?? ReasonCodeType) : undefined;
   const verdictTitle = verdict && reasonLabel ? `${verdict}: ${reasonLabel}` : undefined;
   const VerdictIcon =
     verdict === VerdictEnum.Pass
@@ -108,7 +108,7 @@ export const RuleRow = forwardRef<HTMLLIElement, RuleRowProps>(function RuleRow(
       tabIndex={selected ? 0 : -1}
       data-rule-id={rule.id}
       data-verdict={verdict ?? undefined}
-      data-reason-code={reasonCode ?? undefined}
+      data-reason-code={ReasonCodeType ?? undefined}
       data-testid={`rule-row-${rule.id}`}
       title={isSkipped ? undefined : verdictTitle}
       onClick={(e) => onSelect(rule.id, e.shiftKey || e.metaKey || e.ctrlKey)}

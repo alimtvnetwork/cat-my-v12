@@ -106,7 +106,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
         code: OpsEventCodeType.AuditBundleExportDenied,
         subject: "audit.export",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_UNAUTHORIZED`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_UNAUTHORIZED`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_UNAUTHORIZED", `correlationId=${correlationId}`);
@@ -117,7 +117,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
         code: OpsEventCodeType.AuditBundleExportDenied,
         subject: "audit.export",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExport`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExport`,
       });
 
       throw new CaptureError(
@@ -132,7 +132,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
           code: OpsEventCodeType.AuditBundleExportDenied,
           subject: "audit.export",
           actor: context.userId,
-          detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportSigned`,
+          detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportSigned`,
         });
 
         throw new CaptureError(
@@ -148,7 +148,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
           code: OpsEventCodeType.AuditBundleExportDenied,
           subject: "audit.export",
           actor: context.userId,
-          detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportAdmin`,
+          detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportAdmin`,
         });
 
         throw new CaptureError(
@@ -170,7 +170,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_WINDOW_TOO_WIDE`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_WINDOW_TOO_WIDE`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_WINDOW_TOO_WIDE", `correlationId=${correlationId}`);
@@ -224,7 +224,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
           code: OpsEventCodeType.AuditBundleExportFailed,
           subject: "audit.export",
           actor: context.userId,
-          detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_SCHEMA_UNSUPPORTED`,
+          detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_SCHEMA_UNSUPPORTED`,
         });
 
         throw new CaptureError(
@@ -246,7 +246,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
             code: OpsEventCodeType.AuditBundleExportFailed,
             subject: "audit.export",
             actor: context.userId,
-            detail: `correlationId=${correlationId} bundleId=${bundleId} reasonCode=E_AUDIT_EXPORT_SIZE_CAP bytes=${byteLen} count=${eventCount}`,
+            detail: `correlationId=${correlationId} bundleId=${bundleId} ReasonCodeType=E_AUDIT_EXPORT_SIZE_CAP bytes=${byteLen} count=${eventCount}`,
           });
 
           throw new CaptureError(
@@ -273,7 +273,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_EMPTY_WINDOW bundleId=${bundleId}`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_EMPTY_WINDOW bundleId=${bundleId}`,
       });
 
       throw new CaptureError(
@@ -311,7 +311,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export",
         actor: context.userId,
-        detail: `correlationId=${correlationId} bundleId=${bundleId} reasonCode=E_AUDIT_EXPORT_STORAGE_FAILED bytes=${byteLen}`,
+        detail: `correlationId=${correlationId} bundleId=${bundleId} ReasonCodeType=E_AUDIT_EXPORT_STORAGE_FAILED bytes=${byteLen}`,
       });
 
       throw new CaptureError(
@@ -361,7 +361,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
         code: OpsEventCodeType.AuditBundleExportDenied,
         subject: "audit.export.download_url",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_UNAUTHORIZED`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_UNAUTHORIZED`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_UNAUTHORIZED", `correlationId=${correlationId}`);
@@ -372,7 +372,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
         code: OpsEventCodeType.AuditBundleExportDenied,
         subject: "audit.export.download_url",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportSigned`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_FEATURE_LOCKED feature=AuditBundleExportSigned`,
       });
 
       throw new CaptureError(
@@ -388,7 +388,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export.download_url",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_BAD_PATH`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_BAD_PATH`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_BAD_PATH", `correlationId=${correlationId}`);
@@ -402,7 +402,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export.download_url",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_BAD_PATH`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_BAD_PATH`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_BAD_PATH", `correlationId=${correlationId}`);
@@ -422,7 +422,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export.download_url",
         actor: context.userId,
-        detail: `correlationId=${correlationId} reasonCode=E_AUDIT_EXPORT_SIGNED_URL_FAILED storagePath=${data.storagePath}`,
+        detail: `correlationId=${correlationId} ReasonCodeType=E_AUDIT_EXPORT_SIGNED_URL_FAILED storagePath=${data.storagePath}`,
       });
 
       throw new CaptureError("E_AUDIT_EXPORT_SIGNED_URL_FAILED", `correlationId=${correlationId}`);

@@ -24,6 +24,7 @@ import sqlite3
 import time
 from dataclasses import dataclass
 
+from app.core.db import safe_execute
 from .audit_sink import AuditSink
 
 log = logging.getLogger("ca.security.retention")
@@ -41,15 +42,11 @@ class AuditLogRetention:
             log.debug("audit.retention.skipped reason=disabled")
             return 0
         horizon = int(now if now is not None else time.time()) - int(self.max_age_seconds)
-        try:
-            cur = self.sink.conn.execute(
-                "DELETE FROM audit_log WHERE ts < ?", (horizon,)
-            )
-            removed = cur.rowcount or 0
-            self.sink.conn.commit()
-        except sqlite3.Error:
-            log.exception("audit.retention.failed horizon=%s", horizon)
-            raise
+        cur = safe_execute(self.sink.conn, 
+            "DELETE FROM audit_log WHERE ts < ?", (horizon,)
+        )
+        removed = cur.rowcount or 0
+        self.sink.conn.commit()
         if removed > 0:
             self.sink.record(
                 CODE_AUDIT_PRUNED,

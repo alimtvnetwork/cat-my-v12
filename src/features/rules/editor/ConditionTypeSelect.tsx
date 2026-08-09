@@ -12,12 +12,12 @@ import {
 import {
   ALL_CONDITION_TYPES,
   CONDITION_TYPE_LABEL,
-  type ConditionType,
-} from "@/types/rules/ConditionType";
+  type ConditionTypeType,
+} from "@/types/rules/ConditionTypeType";
 
 export interface ConditionTypeSelectProps {
-  value: ConditionType;
-  onChange: (next: ConditionType) => void;
+  value: ConditionTypeType;
+  onChange: (next: ConditionTypeType) => void;
   disabled?: boolean;
   ariaLabel?: string;
 }
@@ -29,7 +29,7 @@ export function ConditionTypeSelect({
   ariaLabel = "Condition type",
 }: ConditionTypeSelectProps) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as ConditionType)} disabled={disabled}>
+    <Select value={value} onValueChange={(v) => onChange(v as ConditionTypeType)} disabled={disabled}>
       <SelectTrigger className="h-7 w-[9rem] text-xs" aria-label={ariaLabel}>
         <SelectValue />
       </SelectTrigger>

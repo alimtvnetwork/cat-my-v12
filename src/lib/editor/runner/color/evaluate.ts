@@ -11,12 +11,12 @@ import { VerdictType } from "@/lib/editor/runner/types";
 //  - Dense2 : compare params.ExpectedColor to the largest of k=2 clusters.
 //  - Dense3 : compare params.ExpectedColor to the largest of k=3 clusters.
 //
-// The threshold is params.DeltaEThreshold; verdict FAIL uses reasonCode
+// The threshold is params.DeltaEThreshold; verdict FAIL uses ReasonCodeType
 // "ColorDeltaE"; empty ROI yields "EmptyRoi" (spec 48 s7).
 
 import type { ColorCondition } from "@/lib/editor/schema";
-import { ColorMode } from "@/types/rules/ColorMode";
-import { ReasonCode } from "@/types/rules/ReasonCode";
+import { ColorModeType } from "@/types/rules/ColorModeType";
+import { ReasonCodeType } from "@/types/rules/ReasonCodeType";
 import { type ConditionResult } from "../types";
 import { hexToRgb, rgbToHex, rgbToLab, type Lab, type Rgb } from "./lab";
 import { deltaE2000 } from "./delta-e";
@@ -33,11 +33,11 @@ export interface ColorEvalOptions {
 }
 
 /**
- * Compute the observed color for a ROI given the ColorMode.
+ * Compute the observed color for a ROI given the ColorModeType.
  * Returns null when the ROI has zero pixels.
  */
 export function observedColor(
-  mode: ColorMode,
+  mode: ColorModeType,
   roiRgba: Uint8ClampedArray,
   expected: Rgb,
   seed = 1,
@@ -46,14 +46,14 @@ export function observedColor(
 
   if (n === 0) return null;
 
-  if (mode === ColorMode.Picked) {
+  if (mode === ColorModeType.Picked) {
     // Picked: the observed value IS the expected swatch — comparing yields
-    // ΔE 0. Callers still route through the evaluator so the reasonCode /
+    // ΔE 0. Callers still route through the evaluator so the ReasonCodeType /
     // shape stays uniform.
     return { ...expected };
   }
 
-  if (mode === ColorMode.Current) {
+  if (mode === ColorModeType.Current) {
     let R = 0,
       G = 0,
       B = 0;
@@ -66,7 +66,7 @@ export function observedColor(
     return { r: R / n, g: G / n, b: B / n };
   }
 
-  const k = mode === ColorMode.Dense2 ? 2 : 3;
+  const k = mode === ColorModeType.Dense2 ? 2 : 3;
   const samples: Lab[] = new Array(n);
   for (let i = 0, p = 0; i < roiRgba.length; i += 4, p++) {
     samples[p] = rgbToLab(roiRgba[i]!, roiRgba[i + 1]!, roiRgba[i + 2]!);
@@ -116,7 +116,7 @@ export function evaluateColorCondition(
       conditionId: cond.id,
       type: cond.type,
       verdict: VerdictType.Fail,
-      reasonCode: ReasonCode.EmptyRoi,
+      ReasonCodeType: ReasonCodeType.EmptyRoi,
       message: "ROI has zero pixels",
     };
   }
@@ -128,7 +128,7 @@ export function evaluateColorCondition(
       conditionId: cond.id,
       type: cond.type,
       verdict: VerdictType.Fail,
-      reasonCode: ReasonCode.EmptyRoi,
+      ReasonCodeType: ReasonCodeType.EmptyRoi,
       message: "ROI produced no samples",
     };
   }
@@ -143,7 +143,7 @@ export function evaluateColorCondition(
       conditionId: cond.id,
       type: cond.type,
       verdict: VerdictType.Fail,
-      reasonCode: ReasonCode.ColorDeltaE,
+      ReasonCodeType: ReasonCodeType.ColorDeltaE,
       message: `ΔE ${dE.toFixed(2)} > ${threshold} (observed ${rgbToHex(observed.r, observed.g, observed.b)}, expected ${cond.params.ExpectedColor})`,
     };
   }
@@ -152,7 +152,7 @@ export function evaluateColorCondition(
     conditionId: cond.id,
     type: cond.type,
     verdict: VerdictType.Pass,
-    reasonCode: ReasonCode.OK,
+    ReasonCodeType: ReasonCodeType.OK,
     message: `ΔE ${dE.toFixed(2)} ≤ ${threshold}`,
   };
 }

@@ -118,7 +118,7 @@ describe("project bundle camera parity (I-SU-05 slice 5)", () => {
       frameRateHz: 30,
       pockets: 1,
       roi: null,
-      colorMode: "Mono8",
+      ColorModeType: "Mono8",
       notes: "",
       createdAt: 1,
       updatedAt: 2,

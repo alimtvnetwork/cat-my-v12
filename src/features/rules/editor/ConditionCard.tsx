@@ -6,7 +6,7 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { makeDefaultCondition, type RuleCondition } from "@/lib/editor/schema";
-import { ConditionType, type ConditionType as ConditionTypeT } from "@/types/rules/ConditionType";
+import { ConditionTypeType, type ConditionTypeType as ConditionTypeT } from "@/types/rules/ConditionTypeType";
 import { ConditionTypeSelect } from "./ConditionTypeSelect";
 import { SameImageParamsPanel } from "./SameImageParamsPanel";
 import { PresenceParamsPanel } from "./PresenceParamsPanel";
@@ -70,11 +70,11 @@ interface ParamsSlotProps {
 
 function ParamsSlot({ condition, onChange, onPickColor }: ParamsSlotProps) {
   switch (condition.type) {
-    case ConditionType.SameImage:
+    case ConditionTypeType.SameImage:
       return <SameImageParamsPanel condition={condition} />;
-    case ConditionType.Presence:
+    case ConditionTypeType.Presence:
       return <PresenceParamsPanel condition={condition} onChange={onChange} />;
-    case ConditionType.Color:
+    case ConditionTypeType.Color:
       return (
         <ColorParamsPanel condition={condition} onChange={onChange} onPickColor={onPickColor} />
       );

@@ -90,9 +90,9 @@ export function isPersistenceErrorCode(value: unknown): value is PersistenceErro
 }
 
 // Plan 42 step 10 (spec 47 s6, spec 49 s6). AppError-side dotted codes that
-// pair with the PascalCase `ReasonCode` union in
-// `src/types/rules/ReasonCode.ts`. The runner logs these; the UI shows the
-// paired ReasonCode via the label registry.
+// pair with the PascalCase `ReasonCodeType` union in
+// `src/types/rules/ReasonCodeType.ts`. The runner logs these; the UI shows the
+// paired ReasonCodeType via the label registry.
 export const RULE_RUNNER_ERROR_CODES = [
   "rule.condition.eval.threw",
   "rule.condition.color.deltaE",

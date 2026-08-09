@@ -96,7 +96,7 @@ export function RulesList({ emptyLabel = "No rules yet", results }: RulesListPro
             onToggleLocked={(id, next) => setLocked([id], next)}
             onKeyboardReorder={handleReorder}
             verdict={r?.verdict}
-            reasonCode={r?.reasonCode}
+            ReasonCodeType={r?.ReasonCodeType}
           />
         );
       })}

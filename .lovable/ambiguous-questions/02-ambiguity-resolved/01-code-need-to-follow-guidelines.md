@@ -1,6 +1,6 @@
 # Ambiguity 01 - "code need to follow guidelines"
 
-Status: open
+Status: resolved
 Opened: 2026-07-21 (v3.987.0)
 Blocking: Plan 88 Step 5 (and any code-touching step) until resolved.
 
@@ -38,3 +38,9 @@ Plan 88 Step 5 (`27-config-surface.md` PATCH) is paused. Any commit made against
 ## Resolution flow
 
 When you answer, I will `mv` this file into `.lovable/ambiguous-questions/02-ambiguity-resolved/01-code-need-to-follow-guidelines.md`, append a `## Resolution` section, then execute.
+
+## Resolution
+Target: Entire codebase.
+Scope: Whole repo.
+Action: Audit codebase, fix query wrappers, Enums, and booleans.
+Conflict rule: Follow `spec/03-error-manage` and `.lovable/memory` guidelines directly.

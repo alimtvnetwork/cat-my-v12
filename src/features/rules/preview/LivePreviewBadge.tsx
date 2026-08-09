@@ -8,7 +8,7 @@ import { RunStatusType } from "@/types/run/RunStatus";
 import { CheckCircle2, XCircle, Loader2, AlertTriangle, MinusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LivePreviewState } from "./useLivePreview";
-import { REASON_CODE_LABEL } from "@/types/rules/ReasonCode";
+import { REASON_CODE_LABEL } from "@/types/rules/ReasonCodeType";
 
 export interface LivePreviewBadgeProps {
   state: LivePreviewState;
@@ -57,8 +57,8 @@ export function LivePreviewBadge({ state, className }: LivePreviewBadgeProps) {
 
   if (!result) return null;
 
-  const { verdict, reasonCode } = result;
-  const label = REASON_CODE_LABEL[reasonCode] ?? reasonCode;
+  const { verdict, ReasonCodeType } = result;
+  const label = REASON_CODE_LABEL[ReasonCodeType] ?? ReasonCodeType;
   const tone =
     verdict === "PASS"
       ? "border-ca-ok/40 bg-ca-ok/10 text-ca-ok"

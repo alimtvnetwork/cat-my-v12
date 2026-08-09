@@ -15,6 +15,7 @@ import json
 import logging
 import sqlite3
 import time
+from app.core.db import safe_execute
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -59,6 +60,7 @@ class InvalidSecurityError(ValueError):
 
     code = "E_CFG_INVALID_SECURITY"
 
+MIN_SECURITY_VALUE = 1
 
 def _validate_security_payload(value: dict[str, Any]) -> None:
     """Enforce spec 69 §1: positive ints, no bools, known keys only."""
@@ -67,9 +69,9 @@ def _validate_security_payload(value: dict[str, Any]) -> None:
     for k, v in value.items():
         if k not in SECURITY_DEFAULTS:
             raise InvalidSecurityError(f"security.{k} is not a recognised key")
-        if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+        if isinstance(v, bool) or not isinstance(v, int) or v < MIN_SECURITY_VALUE:
             raise InvalidSecurityError(
-                f"security.{k} must be an int >= 1, got {v!r}"
+                f"security.{k} must be an int >= {MIN_SECURITY_VALUE}, got {v!r}"
             )
 
 
@@ -78,6 +80,8 @@ RETENTION_KEYS: tuple[str, ...] = ("enabled", "policy", "cadenceHours")
 RETENTION_POLICIES: tuple[str, ...] = (
     "RetentionShort", "RetentionStandard", "RetentionLong", "RetentionForensic",
 )
+MIN_RETENTION_HOURS = 1
+MAX_RETENTION_HOURS = 168
 
 
 class InvalidRetentionError(ValueError):
@@ -105,9 +109,9 @@ def _validate_retention_payload(value: dict[str, Any]) -> None:
         )
     if "cadenceHours" in value:
         v = value["cadenceHours"]
-        if isinstance(v, bool) or not isinstance(v, int) or v < 1 or v > 168:
+        if isinstance(v, bool) or not isinstance(v, int) or v < MIN_RETENTION_HOURS or v > MAX_RETENTION_HOURS:
             raise InvalidRetentionError(
-                f"audit.retention.cadenceHours must be int in [1, 168], got {v!r}"
+                f"audit.retention.cadenceHours must be int in [{MIN_RETENTION_HOURS}, {MAX_RETENTION_HOURS}], got {v!r}"
             )
 
 
@@ -139,7 +143,7 @@ class SettingsStore:
     rate_limiter: DenialRateLimiter | None = None
 
     def __post_init__(self) -> None:
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             CREATE TABLE IF NOT EXISTS settings (
                 section TEXT PRIMARY KEY,
@@ -150,7 +154,7 @@ class SettingsStore:
             """
         )
         # Roles in their OWN table — never on a user/profile row.
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             CREATE TABLE IF NOT EXISTS user_roles (
                 user_id TEXT NOT NULL,
@@ -166,7 +170,8 @@ class SettingsStore:
             return
         try:
             self.audit.record(code, subject, user_id=user_id, detail=detail)
-        except Exception:
+        except Exception as exc:
+            log.exception("settings_store.audit_failed", extra={"err": str(exc)})
             # Sink already logs+re-raises internally; catching here would hide
             # the failure. Re-raise so operators see the audit outage.
             raise
@@ -181,7 +186,7 @@ class SettingsStore:
             self._audit(CODE_NOT_AUTHENTICATED, f"settings:{section}",
                         user_id=None, detail="read")
             raise
-        row = self.conn.execute(
+        row = safe_execute(self.conn, 
             "SELECT value_json FROM settings WHERE section=?", (section,)
         ).fetchone()
         log.info("settings.read user=%s section=%s hit=%s",
@@ -226,14 +231,14 @@ class SettingsStore:
         # detail carries the true prior/next diff. `sqlite3` in the default
         # isolation level opens an implicit transaction on the next write,
         # so this SELECT sees a stable snapshot.
-        prior_row = self.conn.execute(
+        prior_row = safe_execute(self.conn, 
             "SELECT value_json FROM settings WHERE section=?", (section,)
         ).fetchone()
         prior_value: dict[str, Any] | None = (
             json.loads(prior_row[0]) if prior_row else None
         )
         payload = json.dumps(value, sort_keys=True)
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             INSERT INTO settings(section, value_json, updated_at, updated_by)
             VALUES (?, ?, ?, ?)
@@ -263,8 +268,8 @@ class SettingsStore:
             if self.rate_limiter is not None:
                 try:
                     apply_security_settings(self, token, self.rate_limiter)
-                except Exception:
-                    log.exception("settings.security.hot_reload_failed")
+                except Exception as exc:
+                    log.exception("settings.security.hot_reload_failed", extra={"err": str(exc)})
                     raise
         else:
             self._audit(CODE_ADMIN_WRITE, f"settings:{section}",
@@ -328,7 +333,7 @@ class SettingsStore:
                     ),
                 )
             raise
-        prior_row = self.conn.execute(
+        prior_row = safe_execute(self.conn, 
             "SELECT value_json FROM settings WHERE section=?", ("capture",)
         ).fetchone()
         prior_value: dict[str, Any] = json.loads(prior_row[0]) if prior_row else {}
@@ -336,7 +341,7 @@ class SettingsStore:
         next_value["vendor"] = vendor
         next_value["serial"] = serial
         payload = json.dumps(next_value, sort_keys=True)
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             INSERT INTO settings(section, value_json, updated_at, updated_by)
             VALUES (?, ?, ?, ?)
@@ -399,14 +404,14 @@ class SettingsStore:
             self._audit(CODE_ROLE_DENIED, "settings.audit.retention",
                         user_id=pre_uid, detail="retention_write requires admin")
             raise
-        prior_row = self.conn.execute(
+        prior_row = safe_execute(self.conn, 
             "SELECT value_json FROM settings WHERE section=?", ("audit",)
         ).fetchone()
         prior_value: dict[str, Any] = json.loads(prior_row[0]) if prior_row else {}
         next_value = dict(prior_value)
         next_value.update(policy)
         payload = json.dumps(next_value, sort_keys=True)
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             INSERT INTO settings(section, value_json, updated_at, updated_by)
             VALUES (?, ?, ?, ?)

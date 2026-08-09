@@ -32,7 +32,7 @@ function baslerCamera(now: number): CameraSetting {
     triggerMode: "Hardware",
     frameRateHz: 40,
     pockets: 1,
-    colorMode: "Mono8",
+    ColorModeType: "Mono8",
     notes: "Line-side PCB solder inspection. Telecentric lens, hardware-triggered.",
   };
 }
@@ -58,7 +58,7 @@ function flirCamera(now: number): CameraSetting {
     triggerMode: "Continuous",
     frameRateHz: 60,
     pockets: 8,
-    colorMode: "Mono8",
+    ColorModeType: "Mono8",
     notes: "Carrier-tape reel feeder camera. 8 pockets per frame, USB3.",
   };
 }
@@ -84,7 +84,7 @@ function usbReferenceCamera(now: number): CameraSetting {
     triggerMode: "Continuous",
     frameRateHz: 30,
     pockets: 1,
-    colorMode: "RGB8",
+    ColorModeType: "RGB8",
     notes: "Bench reference camera over browser MediaDevices. Use for demos and shape smoke tests.",
   };
 }

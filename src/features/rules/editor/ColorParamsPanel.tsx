@@ -4,7 +4,7 @@
 // exposed; other modes derive ExpectedColor at runtime, so the swatch is
 // read-only for them per spec 48.
 import { Pipette } from "lucide-react";
-import { ALL_COLOR_MODES, COLOR_MODE_LABEL, ColorMode } from "@/types/rules/ColorMode";
+import { ALL_COLOR_MODES, COLOR_MODE_LABEL, ColorModeType } from "@/types/rules/ColorModeType";
 import type { ColorCondition } from "@/lib/editor/schema";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export interface ColorParamsPanelProps {
 
 export function ColorParamsPanel({ condition, onChange, onPickColor }: ColorParamsPanelProps) {
   const { params } = condition;
-  const isPicked = params.Mode === ColorMode.Picked;
+  const isPicked = params.Mode === ColorModeType.Picked;
   const hexValid = HEX_RE.test(params.ExpectedColor);
 
   function patch(next: Partial<ColorCondition["params"]>) {
@@ -42,7 +42,7 @@ export function ColorParamsPanel({ condition, onChange, onPickColor }: ColorPara
 
   function handleMode(value: string) {
     if (!value) return;
-    patch({ Mode: value as ColorMode });
+    patch({ Mode: value as ColorModeType });
   }
 
   function handleHex(e: React.ChangeEvent<HTMLInputElement>) {

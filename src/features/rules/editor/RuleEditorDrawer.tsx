@@ -17,9 +17,9 @@ import type { EditorRule } from "@/lib/editor/types";
 import type { RuleCondition, Ruleset, EditorRuleV3 } from "@/lib/editor/schema";
 import { RULESET_SCHEMA_VERSION } from "@/lib/editor/schema";
 import {
-  ValidationMode,
-  type ValidationMode as ValidationModeT,
-} from "@/types/rules/ValidationMode";
+  ValidationModeType,
+  type ValidationModeType as ValidationModeT,
+} from "@/types/rules/ValidationModeType";
 import type { ConditionEvaluator } from "@/lib/editor/runner/types";
 import { useLivePreview } from "@/features/rules/preview/useLivePreview";
 import { LivePreviewBadge } from "@/features/rules/preview/LivePreviewBadge";
@@ -42,8 +42,8 @@ export interface RuleEditorDrawerProps {
   evaluator?: ConditionEvaluator;
   /** Overrides the default 250 ms live-preview debounce. */
   livePreviewDebounceMs?: number;
-  /** ValidationMode used to build the single-rule preview ruleset. */
-  validationMode?: ValidationModeT;
+  /** ValidationModeType used to build the single-rule preview ruleset. */
+  ValidationModeType?: ValidationModeT;
 }
 
 // Runtime shape of a v3 rule as it lives in the store. The store types are
@@ -59,7 +59,7 @@ export function RuleEditorDrawer({
   onPickColor,
   evaluator,
   livePreviewDebounceMs,
-  validationMode = ValidationMode.Parallel,
+  ValidationModeType = ValidationModeType.Parallel,
 }: RuleEditorDrawerProps) {
   const rule = useRulesStore((s) =>
     ruleId
@@ -77,7 +77,7 @@ export function RuleEditorDrawer({
   // edits; the hook's own 250 ms trailing-edge debounce keeps it cheap.
   const previewRuleset = useMemo<Ruleset | null>(() => {
     if (!rule) return null;
-    // The runner only reads `conditions` + `validationMode`; the store rule
+    // The runner only reads `conditions` + `ValidationModeType`; the store rule
     // is still v2-ish and may lack `controller`. Cast via unknown so the
     // preview envelope stays typed as `Ruleset` without demanding fields
     // the evaluator does not consume.
@@ -88,10 +88,10 @@ export function RuleEditorDrawer({
 
     return {
       version: RULESET_SCHEMA_VERSION,
-      validationMode,
+      ValidationModeType,
       rules: [previewRule],
     };
-  }, [rule, conditions, validationMode]);
+  }, [rule, conditions, ValidationModeType]);
 
   const preview = useLivePreview(previewRuleset, {
     evaluator,

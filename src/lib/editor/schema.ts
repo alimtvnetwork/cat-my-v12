@@ -10,17 +10,17 @@ import { PresenceModeType } from "@/lib/enums/editor";
 // upgrades v1 payloads forward-only.
 
 import type { EditorRule, EditorRuleKind } from "@/lib/editor/types";
-import { ConditionType, isConditionType } from "@/types/rules/ConditionType";
-import { ColorMode, isColorMode } from "@/types/rules/ColorMode";
+import { ConditionTypeType, isConditionType } from "@/types/rules/ConditionTypeType";
+import { ColorModeType, isColorMode } from "@/types/rules/ColorModeType";
 import { isPresenceMode } from "@/types/rules/PresenceModeType";
 import {
-  ValidationMode,
+  ValidationModeType,
   DEFAULT_VALIDATION_MODE,
   isValidationMode,
-} from "@/types/rules/ValidationMode";
+} from "@/types/rules/ValidationModeType";
 
 // Plan 42 step 7. Bump from 2 to 3 covers both spec 47 (rule conditions) and
-// spec 49 (ValidationMode on the ruleset root). v2 payloads migrate forward
+// spec 49 (ValidationModeType on the ruleset root). v2 payloads migrate forward
 // only; see migrateRuleV2ToV3 in migrations.ts.
 export const RULESET_SCHEMA_VERSION = 3 as const;
 export const SUPPORTED_RULESET_VERSIONS = [1, 2, 3] as const;
@@ -186,40 +186,40 @@ export interface PresenceConditionParams {
 }
 
 export interface ColorConditionParams {
-  Mode: ColorMode;
+  Mode: ColorModeType;
   ExpectedColor: string;
   DeltaE: number;
 }
 
 export interface SameImageCondition {
   id: string;
-  type: typeof ConditionType.SameImage;
+  type: typeof ConditionTypeType.SameImage;
   params: SameImageConditionParams;
 }
 
 export interface PresenceCondition {
   id: string;
-  type: typeof ConditionType.Presence;
+  type: typeof ConditionTypeType.Presence;
   params: PresenceConditionParams;
 }
 
 export interface ColorCondition {
   id: string;
-  type: typeof ConditionType.Color;
+  type: typeof ConditionTypeType.Color;
   params: ColorConditionParams;
 }
 
 export type RuleCondition = SameImageCondition | PresenceCondition | ColorCondition;
 
 export const DEFAULT_CONDITION_PARAMS = {
-  [ConditionType.SameImage]: {} as SameImageConditionParams,
-  [ConditionType.Presence]: {
+  [ConditionTypeType.SameImage]: {} as SameImageConditionParams,
+  [ConditionTypeType.Presence]: {
     Mode: PresenceModeType.Present,
     Threshold: 0.5,
     MinBlobPx: 10,
   } satisfies PresenceConditionParams,
-  [ConditionType.Color]: {
-    Mode: ColorMode.Current,
+  [ConditionTypeType.Color]: {
+    Mode: ColorModeType.Current,
     ExpectedColor: "#000000",
     DeltaE: 3.0,
   } satisfies ColorConditionParams,
@@ -233,18 +233,18 @@ export interface EditorRuleV3 extends EditorRuleV2 {
 // Ruleset root envelope (spec 49 s3). Persisted alongside the rules array.
 export interface Ruleset {
   version: typeof RULESET_SCHEMA_VERSION;
-  validationMode: ValidationMode;
+  ValidationModeType: ValidationModeType;
   rules: EditorRuleV3[];
 }
 
 export function makeDefaultCondition(type: RuleCondition["type"], id: string): RuleCondition {
   switch (type) {
-    case ConditionType.SameImage:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionType.SameImage] } };
-    case ConditionType.Presence:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionType.Presence] } };
-    case ConditionType.Color:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionType.Color] } };
+    case ConditionTypeType.SameImage:
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.SameImage] } };
+    case ConditionTypeType.Presence:
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence] } };
+    case ConditionTypeType.Color:
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Color] } };
     default: {
       const _exhaustive: never = type;
 
@@ -264,9 +264,9 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
   if (!c.params || typeof c.params !== "object") return false;
   const p = c.params as Record<string, unknown>;
   switch (c.type) {
-    case ConditionType.SameImage:
+    case ConditionTypeType.SameImage:
       return true;
-    case ConditionType.Presence:
+    case ConditionTypeType.Presence:
       return (
         isPresenceMode(p.Mode) &&
         typeof p.Threshold === "number" &&
@@ -274,7 +274,7 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
         typeof p.MinBlobPx === "number" &&
         Number.isFinite(p.MinBlobPx)
       );
-    case ConditionType.Color:
+    case ConditionTypeType.Color:
       return (
         isColorMode(p.Mode) &&
         typeof p.ExpectedColor === "string" &&
@@ -288,7 +288,7 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
   }
 }
 
-export function isValidationModeValue(v: unknown): v is ValidationMode {
+export function isValidationModeValue(v: unknown): v is ValidationModeType {
   return isValidationMode(v);
 }
 

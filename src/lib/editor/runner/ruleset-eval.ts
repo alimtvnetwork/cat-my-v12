@@ -1,20 +1,20 @@
 import { VerdictType } from "@/lib/editor/runner/types";
-// Plan 42 step 24. Ruleset-level dispatch over `validationMode`.
+// Plan 42 step 24. Ruleset-level dispatch over `ValidationModeType`.
 //
 //  - Parallel   (spec 49 s4): every rule is evaluated. Ruleset verdict is
 //    the AND-merge of rule verdicts (first non-PASS wins; ties broken by
 //    order).
 //  - Sequential (spec 49 s5-6): rules run top-to-bottom. On the first
-//    non-PASS the remaining rules are marked SKIP with reasonCode
+//    non-PASS the remaining rules are marked SKIP with ReasonCodeType
 //    `SequentialShortCircuit`; their conditions are NOT evaluated. This
 //    also feeds the canvas overlay dim + tooltip in step 24.
 //
 // A top-level exception (evaluator throws outside a rule's own try/catch)
-// aborts the ruleset with reasonCode `RulesetEval` per step 27; already-
+// aborts the ruleset with ReasonCodeType `RulesetEval` per step 27; already-
 // computed rule results are preserved so the UI can show partial state.
 
-import { ValidationMode } from "@/types/rules/ValidationMode";
-import { ReasonCode } from "@/types/rules/ReasonCode";
+import { ValidationModeType } from "@/types/rules/ValidationModeType";
+import { ReasonCodeType } from "@/types/rules/ReasonCodeType";
 import type { Ruleset } from "@/lib/editor/schema";
 import {
   type ConditionEvaluator,
@@ -31,12 +31,12 @@ function shortCircuitSkip(rule: {
   return {
     ruleId: rule.id,
     verdict: VerdictType.Skip,
-    reasonCode: ReasonCode.SequentialShortCircuit,
+    ReasonCodeType: ReasonCodeType.SequentialShortCircuit,
     conditions: rule.conditions.map((c) => ({
       conditionId: c.id,
       type: c.type,
       verdict: VerdictType.Skip,
-      reasonCode: ReasonCode.SequentialShortCircuit,
+      ReasonCodeType: ReasonCodeType.SequentialShortCircuit,
     })),
   };
 }
@@ -48,11 +48,11 @@ export async function evaluateRuleset(
   try {
     const results: RuleResult[] = [];
     let rulesetVerdict: RulesetResult["verdict"] = VerdictType.Pass;
-    let rulesetReason: RulesetResult["reasonCode"] = ReasonCode.OK;
+    let rulesetReason: RulesetResult["ReasonCodeType"] = ReasonCodeType.OK;
     let isTripped = false;
 
     for (const rule of ruleset.rules) {
-      if (isTripped && ruleset.validationMode === ValidationMode.Sequential) {
+      if (isTripped && ruleset.ValidationModeType === ValidationModeType.Sequential) {
         const skipped = shortCircuitSkip(rule);
         results.push(skipped);
         continue;
@@ -64,18 +64,18 @@ export async function evaluateRuleset(
       if (r.verdict !== VerdictType.Pass) {
         if (rulesetVerdict === VerdictType.Pass) {
           rulesetVerdict = r.verdict;
-          rulesetReason = r.reasonCode;
+          rulesetReason = r.ReasonCodeType;
         }
 
         isTripped = true;
       }
     }
 
-    return { verdict: rulesetVerdict, reasonCode: rulesetReason, rules: results };
+    return { verdict: rulesetVerdict, ReasonCodeType: rulesetReason, rules: results };
   } catch (err) {
     return {
       verdict: VerdictType.Error,
-      reasonCode: ReasonCode.RulesetEval,
+      ReasonCodeType: ReasonCodeType.RulesetEval,
       rules: [],
       // Attach a message via a synthetic rule so downstream consumers can log.
       // Intentionally not typed onto RulesetResult to keep the surface minimal.

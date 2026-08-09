@@ -9,7 +9,7 @@ import { z } from "zod";
 export const CameraVendor = z.enum(["Pylon", "Spinnaker", "Vimba", "GenericV4L2"]);
 export const FocusMode = z.enum(["Manual", "Auto"]);
 export const TriggerMode = z.enum(["Software", "Hardware", "Continuous"]);
-export const ColorMode = z.enum(["Mono8", "Mono12", "RGB8", "Bayer_RG8"]);
+export const ColorModeType = z.enum(["Mono8", "Mono12", "RGB8", "Bayer_RG8"]);
 
 export const RoiSchema = z
   .object({
@@ -42,7 +42,7 @@ export const CameraSettingSchema = z
     frameRateHz: z.number().positive(),
     pockets: z.number().int().min(1, "Pockets must be at least 1"),
     roi: RoiSchema.default(null),
-    colorMode: ColorMode,
+    ColorModeType: ColorModeType,
     notes: z.string().max(500).default(""),
     createdAt: z.number().int(),
     updatedAt: z.number().int(),
@@ -108,7 +108,7 @@ export function makeDefaultCameraSetting(now: number = Date.now()): CameraSettin
     frameRateHz: 30,
     pockets: 1,
     roi: null,
-    colorMode: "Mono8",
+    ColorModeType: "Mono8",
     notes: "",
     createdAt: now,
     updatedAt: now,

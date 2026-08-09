@@ -380,8 +380,8 @@ function CameraEditor({
           <Field label="Color mode">
             <select
               className={inputCls}
-              value={entry.colorMode}
-              onChange={(e) => onPatch({ colorMode: e.target.value as CameraSetting["colorMode"] })}
+              value={entry.ColorModeType}
+              onChange={(e) => onPatch({ ColorModeType: e.target.value as CameraSetting["ColorModeType"] })}
             >
               <option value="Mono8">Mono8</option>
               <option value="Mono12">Mono12</option>

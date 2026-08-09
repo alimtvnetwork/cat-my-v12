@@ -6,7 +6,7 @@
 - **Enum Naming Convention**: Every Enum must end with the suffix `Type` (e.g., `ChainEventTriggerType`, `EditorToolFamilyType`).
 - **Boolean State Convention**: Boolean state checks must use explicit variables (e.g., `if (isFail)`) instead of relying on implicit truthiness.
 
-## 2. Query Wrapper (Pending Implementation)
+## 2. Query Wrapper (Implemented)
 
 - **Goal**: Implement a unified Query Wrapper across PHP, Python, and TypeScript.
 - **Requirements**:

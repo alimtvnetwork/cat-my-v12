@@ -23,7 +23,7 @@ import {
   makeDefaultCondition,
   isRuleCondition,
 } from "@/lib/editor/schema";
-import { ConditionType } from "@/types/rules/ConditionType";
+import { ConditionTypeType } from "@/types/rules/ConditionTypeType";
 
 export class MigrationError extends Error {
   readonly code = "E_UI_RULE_MIGRATE_FAIL" as const;
@@ -239,7 +239,7 @@ export function migrateRuleV2ToV3(rule: EditorRuleV2 | EditorRuleV3, index = 0):
     };
   }
 
-  const seed = makeDefaultCondition(ConditionType.SameImage, `${rule.id}:c1`);
+  const seed = makeDefaultCondition(ConditionTypeType.SameImage, `${rule.id}:c1`);
 
   return { ...(rule as EditorRuleV2), conditions: [seed] };
 }

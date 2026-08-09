@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Iterable
 
+from app.core.db import safe_execute
 from app.core.security.audit_sink import AuditSink
 
 log = logging.getLogger("ca.audit.retention_worker")
@@ -206,7 +207,7 @@ class AuditRetentionWorker:
                     )
                     break
                 try:
-                    cur = self.sink.conn.execute(
+                    cur = safe_execute(self.sink.conn, 
                         "DELETE FROM audit_log WHERE ts < ? AND rowid IN ("
                         "  SELECT rowid FROM audit_log WHERE ts < ? LIMIT ?"
                         ")",

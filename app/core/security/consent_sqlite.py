@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sqlite3
 
+from app.core.db import safe_execute
 from app.core.security.consent import ConsentRecord, ConsentSink
 
 
@@ -12,7 +13,7 @@ class SqliteConsentSink(ConsentSink):
         self._conn = conn
 
     def on_grant(self, record: ConsentRecord) -> None:
-        self._conn.execute(
+        safe_execute(self._conn, 
             "INSERT INTO ConsentGrant"
             " (consentId, taskId, runSessionId, purpose, dataClassesJson,"
             "  destination, grantedBy, grantedAt)"
@@ -31,7 +32,7 @@ class SqliteConsentSink(ConsentSink):
         self._conn.commit()
 
     def on_consume(self, consent_id: str, destination: str, consumed_at: str) -> None:
-        self._conn.execute(
+        safe_execute(self._conn, 
             "UPDATE ConsentGrant SET consumedAt=?, consumedDestination=?"
             " WHERE consentId=? AND consumedAt IS NULL",
             (consumed_at, destination, consent_id),

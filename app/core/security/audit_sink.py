@@ -62,13 +62,15 @@ class AuditEvent:
 
 import sqlite3
 
+from app.core.db import safe_execute
+
 
 @dataclass
 class AuditSink:
     conn: sqlite3.Connection
 
     def __post_init__(self) -> None:
-        self.conn.execute(
+        safe_execute(self.conn, 
             """
             CREATE TABLE IF NOT EXISTS audit_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,7 +82,7 @@ class AuditSink:
             )
             """
         )
-        self.conn.execute("CREATE INDEX IF NOT EXISTS ix_audit_code ON audit_log(code)")
+        safe_execute(self.conn, "CREATE INDEX IF NOT EXISTS ix_audit_code ON audit_log(code)")
         self.conn.commit()
 
     def record(
@@ -101,7 +103,7 @@ class AuditSink:
             detail=detail,
         )
         try:
-            self.conn.execute(
+            safe_execute(self.conn, 
                 "INSERT INTO audit_log(ts, code, user_id, subject, detail) VALUES (?,?,?,?,?)",
                 (event.ts, event.code, event.user_id, event.subject, event.detail),
             )
@@ -123,5 +125,5 @@ class AuditSink:
             args = (code,)
         sql += " ORDER BY id DESC LIMIT ?"
         args = (*args, limit)
-        rows = self.conn.execute(sql, args).fetchall()
+        rows = safe_execute(self.conn, sql, args).fetchall()
         return [AuditEvent(ts=r[0], code=r[1], user_id=r[2], subject=r[3], detail=r[4]) for r in rows]

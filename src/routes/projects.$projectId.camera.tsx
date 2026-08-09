@@ -157,7 +157,7 @@ function ProjectCameraTab() {
           <dt className="text-ca-ink-muted">Frame rate</dt>
           <dd className="text-ca-ink">{bound.frameRateHz} Hz</dd>
           <dt className="text-ca-ink-muted">Color mode</dt>
-          <dd className="text-ca-ink">{bound.colorMode}</dd>
+          <dd className="text-ca-ink">{bound.ColorModeType}</dd>
           <dt className="text-ca-ink-muted">Pockets</dt>
           <dd className="text-ca-ink">{bound.pockets}</dd>
         </dl>

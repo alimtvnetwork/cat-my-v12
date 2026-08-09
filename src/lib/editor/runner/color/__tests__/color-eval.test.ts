@@ -1,6 +1,6 @@
 // Plan 42 step 26. Color evaluator unit tests: Lab round-trip, ΔE 2000
 // spot-checks against Sharma et al. reference pairs, deterministic k-means
-// dominance for Dense2/Dense3, and verdict/reasonCode shape for the
+// dominance for Dense2/Dense3, and verdict/ReasonCodeType shape for the
 // evaluator entry point.
 
 import { describe, it, expect } from "vitest";
@@ -8,8 +8,8 @@ import { rgbToLab, hexToRgb } from "../lab";
 import { deltaE2000 } from "../delta-e";
 import { kmeansLab } from "../kmeans";
 import { evaluateColorCondition, observedColor } from "../evaluate";
-import { ColorMode } from "@/types/rules/ColorMode";
-import { ConditionType } from "@/types/rules/ConditionType";
+import { ColorModeType } from "@/types/rules/ColorModeType";
+import { ConditionTypeType } from "@/types/rules/ConditionTypeType";
 import type { ColorCondition } from "@/lib/editor/schema";
 
 function fill(n: number, r: number, g: number, b: number, out: number[]): void {
@@ -20,10 +20,10 @@ function buf(rgba: number[]): Uint8ClampedArray {
   return new Uint8ClampedArray(rgba);
 }
 
-function makeCond(mode: ColorMode, hex: string): ColorCondition {
+function makeCond(mode: ColorModeType, hex: string): ColorCondition {
   return {
     id: "c1",
-    type: ConditionType.Color,
+    type: ConditionTypeType.Color,
     params: { Mode: mode, ExpectedColor: hex, DeltaE: 5 },
   };
 }
@@ -67,7 +67,7 @@ describe("observedColor", () => {
     const rgba: number[] = [];
     fill(2, 100, 0, 0, rgba);
     fill(2, 0, 100, 0, rgba);
-    const out = observedColor(ColorMode.Current, buf(rgba), { r: 0, g: 0, b: 0 });
+    const out = observedColor(ColorModeType.Current, buf(rgba), { r: 0, g: 0, b: 0 });
     expect(out).not.toBeNull();
     expect(out!.r).toBeCloseTo(50, 6);
     expect(out!.g).toBeCloseTo(50, 6);
@@ -78,51 +78,51 @@ describe("observedColor", () => {
     const rgba: number[] = [];
     fill(60, 10, 200, 10, rgba);
     fill(10, 200, 10, 10, rgba);
-    const out = observedColor(ColorMode.Dense2, buf(rgba), { r: 0, g: 0, b: 0 }, 3);
+    const out = observedColor(ColorModeType.Dense2, buf(rgba), { r: 0, g: 0, b: 0 }, 3);
     expect(out!.g).toBe(200);
     expect(out!.r).toBe(10);
   });
 
   it("Picked returns the expected color unchanged", () => {
     const rgba = buf([250, 250, 250, 255]);
-    const out = observedColor(ColorMode.Picked, rgba, { r: 12, g: 34, b: 56 });
+    const out = observedColor(ColorModeType.Picked, rgba, { r: 12, g: 34, b: 56 });
     expect(out).toEqual({ r: 12, g: 34, b: 56 });
   });
 
   it("returns null for an empty ROI", () => {
-    const out = observedColor(ColorMode.Current, new Uint8ClampedArray(0), { r: 0, g: 0, b: 0 });
+    const out = observedColor(ColorModeType.Current, new Uint8ClampedArray(0), { r: 0, g: 0, b: 0 });
     expect(out).toBeNull();
   });
 });
 
 describe("evaluateColorCondition", () => {
   it("passes when ΔE is within threshold (Current mode, uniform ROI)", () => {
-    const cond = makeCond(ColorMode.Current, "#ff0000");
+    const cond = makeCond(ColorModeType.Current, "#ff0000");
     const rgba: number[] = [];
     fill(16, 255, 0, 0, rgba);
     const res = evaluateColorCondition(cond, buf(rgba));
     expect(res.verdict).toBe("PASS");
-    expect(res.reasonCode).toBe("OK");
+    expect(res.ReasonCodeType).toBe("OK");
   });
 
   it("fails with ColorDeltaE when the observed color differs", () => {
-    const cond = makeCond(ColorMode.Current, "#ff0000");
+    const cond = makeCond(ColorModeType.Current, "#ff0000");
     const rgba: number[] = [];
     fill(16, 0, 0, 255, rgba);
     const res = evaluateColorCondition(cond, buf(rgba), { threshold: 5 });
     expect(res.verdict).toBe("FAIL");
-    expect(res.reasonCode).toBe("ColorDeltaE");
+    expect(res.ReasonCodeType).toBe("ColorDeltaE");
   });
 
   it("returns EmptyRoi for a zero-pixel ROI", () => {
-    const cond = makeCond(ColorMode.Current, "#000000");
+    const cond = makeCond(ColorModeType.Current, "#000000");
     const res = evaluateColorCondition(cond, new Uint8ClampedArray(0));
     expect(res.verdict).toBe("FAIL");
-    expect(res.reasonCode).toBe("EmptyRoi");
+    expect(res.ReasonCodeType).toBe("EmptyRoi");
   });
 
   it("Picked mode PASSes trivially (ΔE 0 against itself)", () => {
-    const cond = makeCond(ColorMode.Picked, "#336699");
+    const cond = makeCond(ColorModeType.Picked, "#336699");
     const rgba: number[] = [];
     fill(4, 20, 20, 20, rgba);
     const res = evaluateColorCondition(cond, buf(rgba));
@@ -130,7 +130,7 @@ describe("evaluateColorCondition", () => {
   });
 
   it("Dense2 picks the dominant cluster to compare", () => {
-    const cond = makeCond(ColorMode.Dense2, "#ff0000"); // expects red
+    const cond = makeCond(ColorModeType.Dense2, "#ff0000"); // expects red
     const rgba: number[] = [];
     fill(80, 255, 0, 0, rgba); // dominant red
     fill(20, 0, 0, 255, rgba); // minority blue

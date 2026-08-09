@@ -6,7 +6,7 @@
 //  - spec/21-app/47 s6  : per-rule AND-merge across conditions
 //  - spec/21-app/49 s4-6: parallel vs sequential ruleset semantics
 
-import type { ReasonCode } from "@/types/rules/ReasonCode";
+import type { ReasonCodeType } from "@/types/rules/ReasonCodeType";
 import type { RuleCondition, EditorRuleV3, Ruleset } from "@/lib/editor/schema";
 
 export enum VerdictType {
@@ -20,20 +20,20 @@ export interface ConditionResult {
   conditionId: string;
   type: RuleCondition["type"];
   verdict: VerdictType;
-  reasonCode: ReasonCode;
+  ReasonCodeType: ReasonCodeType;
   message?: string;
 }
 
 export interface RuleResult {
   ruleId: string;
   verdict: VerdictType;
-  reasonCode: ReasonCode;
+  ReasonCodeType: ReasonCodeType;
   conditions: ConditionResult[];
 }
 
 export interface RulesetResult {
   verdict: VerdictType;
-  reasonCode: ReasonCode;
+  ReasonCodeType: ReasonCodeType;
   rules: RuleResult[];
 }
 

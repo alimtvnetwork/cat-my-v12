@@ -7,8 +7,8 @@ import { Plus } from "lucide-react";
 import {
   ALL_CONDITION_TYPES,
   CONDITION_TYPE_LABEL,
-  type ConditionType,
-} from "@/types/rules/ConditionType";
+  type ConditionTypeType,
+} from "@/types/rules/ConditionTypeType";
 import { makeDefaultCondition, type RuleCondition } from "@/lib/editor/schema";
 import { nextConditionId } from "@/lib/editor/store/ids";
 import {
@@ -37,7 +37,7 @@ export function RuleConditionsEditor({
 }: RuleConditionsEditorProps) {
   const isMinimum = conditions.length <= 1;
 
-  function handleAdd(type: ConditionType) {
+  function handleAdd(type: ConditionTypeType) {
     const c = makeDefaultCondition(type, nextConditionId());
     onChange([...conditions, c]);
     logger.info("I_UI_CONDITION_ADDED", { ruleId, conditionId: c.id, type });
@@ -99,9 +99,9 @@ export function RuleConditionsEditor({
   );
 }
 
-function AddConditionMenu({ onAdd }: { onAdd: (t: ConditionType) => void }) {
+function AddConditionMenu({ onAdd }: { onAdd: (t: ConditionTypeType) => void }) {
   return (
-    <Select onValueChange={(v) => onAdd(v as ConditionType)}>
+    <Select onValueChange={(v) => onAdd(v as ConditionTypeType)}>
       <SelectTrigger className="h-8 w-[9.5rem]" aria-label="Add condition">
         <Plus className="mr-1 h-3.5 w-3.5" />
         <SelectValue placeholder="Add condition" />

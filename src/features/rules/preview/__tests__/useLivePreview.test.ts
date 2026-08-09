@@ -8,13 +8,13 @@ import { describe, it, expect, vi } from "vitest";
 import { evaluateRuleset } from "@/lib/editor/runner/ruleset-eval";
 import type { ConditionEvaluator } from "@/lib/editor/runner/types";
 import type { Ruleset } from "@/lib/editor/schema";
-import { ValidationMode } from "@/types/rules/ValidationMode";
+import { ValidationModeType } from "@/types/rules/ValidationModeType";
 
 function emptyRuleset(): Ruleset {
   return {
     schemaVersion: 3,
     rules: [],
-    validationMode: ValidationMode.Parallel,
+    ValidationModeType: ValidationModeType.Parallel,
   } as unknown as Ruleset;
 }
 
@@ -23,7 +23,7 @@ describe("useLivePreview supporting contract", () => {
     const evaluator: ConditionEvaluator = vi.fn();
     const res = await evaluateRuleset(emptyRuleset(), evaluator);
     expect(res.verdict).toBe("PASS");
-    expect(res.reasonCode).toBe("OK");
+    expect(res.ReasonCodeType).toBe("OK");
     expect(evaluator).not.toHaveBeenCalled();
   });
 });

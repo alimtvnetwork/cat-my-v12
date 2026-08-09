@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterator
 
+from app.core.db import safe_execute, safe_executescript
+
 log = logging.getLogger("audit.sink_sqlite")
 
 # LOCKED column set - see spec 72 §72.3. Do NOT edit without a spec revision.
@@ -94,7 +96,7 @@ class AuditPersistenceFacade:
         """Open, run schema check, close. Raises AuditSinkUnavailable on failure."""
         try:
             with self._connect() as conn:
-                conn.executescript(AUDIT_EVENTS_DDL)
+                safe_executescript(conn, AUDIT_EVENTS_DDL)
                 conn.commit()
         except (sqlite3.Error, OSError) as exc:
             log.error("audit.sink.self_test_failed", extra={"code": "E_AUDIT_SINK_UNAVAILABLE", "err": str(exc)})
@@ -104,7 +106,7 @@ class AuditPersistenceFacade:
     def append_event(self, event: AuditEvent) -> AuditEvent:
         try:
             with self._connect() as conn:
-                conn.execute(
+                safe_execute(conn, 
                     "INSERT INTO audit_events (event_id, ts, code, policy, correlation_id, actor, payload, schema_version) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                     (
@@ -168,7 +170,7 @@ class AuditPersistenceFacade:
         args.append(int(limit))
         try:
             with self._connect() as conn:
-                for row in conn.execute(sql, args):
+                for row in safe_execute(conn, sql, args):
                     yield AuditEvent(
                         event_id=row[0],
                         ts=row[1],
@@ -188,7 +190,7 @@ class AuditPersistenceFacade:
         """Delete oldest `<= limit` rows for `policy` where ts < cutoff_ts. Returns row count."""
         try:
             with self._connect() as conn:
-                cur = conn.execute(
+                cur = safe_execute(conn, 
                     "DELETE FROM audit_events "
                     "WHERE event_id IN ("
                     "  SELECT event_id FROM audit_events "
@@ -221,6 +223,6 @@ class AuditPersistenceFacade:
     def _connect(self) -> sqlite3.Connection:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(self._db_path)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
+        safe_execute(conn, "PRAGMA journal_mode=WAL")
+        safe_execute(conn, "PRAGMA foreign_keys=ON")
         return conn

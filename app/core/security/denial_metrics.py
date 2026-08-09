@@ -33,6 +33,7 @@ PERCENTILE_KEYS = (("p50", 50), ("p95", 95), ("p99", 99))
 # Optional labels; anything else is dropped in strict mode and reported to
 # the audit callback in audited mode. Anchored by spec 21-app/69a Methodology.
 VALID_LABELS = ("attack", "legit")
+DEFAULT_WINDOW_SECONDS = 60
 
 
 class EvidenceRowError(ValueError):
@@ -208,7 +209,7 @@ def per_actor_minute_counts(rows: Sequence[DenialRow]) -> list[int]:
     """
     buckets: dict[tuple[str, int], int] = {}
     for r in rows:
-        key = (r.user_id or "__anon__", r.ts // 60)
+        key = (r.user_id or "__anon__", r.ts // DEFAULT_WINDOW_SECONDS)
         buckets[key] = buckets.get(key, 0) + 1
     return sorted(buckets.values())
 
@@ -323,7 +324,7 @@ def _bucket_labels(rows: Sequence[DenialRow]) -> dict[tuple[str, int], tuple[int
     counts: dict[tuple[str, int], int] = {}
     votes: dict[tuple[str, int], dict[str, int]] = {}
     for r in rows:
-        key = (r.user_id or "__anon__", r.ts // 60)
+        key = (r.user_id or "__anon__", r.ts // DEFAULT_WINDOW_SECONDS)
         counts[key] = counts.get(key, 0) + 1
         if r.label in ("attack", "legit"):
             v = votes.setdefault(key, {})

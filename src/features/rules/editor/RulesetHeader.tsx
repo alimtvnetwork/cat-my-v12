@@ -1,18 +1,18 @@
 // Plan 42 step 14. Ruleset-level header. Presentational shell that surfaces
-// the ruleset name and the ValidationMode toggle (spec 50 s2). Deliberately
+// the ruleset name and the ValidationModeType toggle (spec 50 s2). Deliberately
 // stateless: the editor page owns the ruleset root and passes controlled
 // props. Wiring to the persistence facade lands in a later step.
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ValidationModeToggle } from "@/features/rules/editor/ValidationModeToggle";
-import { VALIDATION_MODE_DESCRIPTION, type ValidationMode } from "@/types/rules/ValidationMode";
+import { VALIDATION_MODE_DESCRIPTION, type ValidationModeType } from "@/types/rules/ValidationModeType";
 
 export interface RulesetHeaderProps {
   name: string;
   ruleCount: number;
-  validationMode: ValidationMode;
-  onValidationModeChange: (next: ValidationMode) => void;
+  ValidationModeType: ValidationModeType;
+  onValidationModeChange: (next: ValidationModeType) => void;
   disabled?: boolean;
   className?: string;
   actionsSlot?: React.ReactNode;
@@ -22,7 +22,7 @@ export const RulesetHeader = React.memo(function RulesetHeader(props: RulesetHea
   const {
     name,
     ruleCount,
-    validationMode,
+    ValidationModeType,
     onValidationModeChange,
     disabled,
     className,
@@ -46,14 +46,14 @@ export const RulesetHeader = React.memo(function RulesetHeader(props: RulesetHea
           <span className="mx-1.5 text-border" aria-hidden="true">
             •
           </span>
-          <span title={VALIDATION_MODE_DESCRIPTION[validationMode]}>
-            {VALIDATION_MODE_DESCRIPTION[validationMode]}
+          <span title={VALIDATION_MODE_DESCRIPTION[ValidationModeType]}>
+            {VALIDATION_MODE_DESCRIPTION[ValidationModeType]}
           </span>
         </p>
       </div>
       <div className="flex items-center gap-2">
         <ValidationModeToggle
-          value={validationMode}
+          value={ValidationModeType}
           onChange={onValidationModeChange}
           disabled={disabled}
         />

@@ -10,9 +10,13 @@ import sqlite3
 import time
 from pathlib import Path
 
+from app.core.db import safe_execute, safe_executescript
+
 log = logging.getLogger(__name__)
 
 MIGRATION_TIMEOUT_S = 60
+WAL_CONNECTION_TIMEOUT_S = 5.0
+WAL_BUSY_TIMEOUT_MS = 5000
 BOOTSTRAP_SCHEMA_VERSION_SQL = (
     "CREATE TABLE IF NOT EXISTS SchemaVersion ("
     "version INTEGER PRIMARY KEY, appliedAt TEXT NOT NULL)"
@@ -42,17 +46,17 @@ class MigrationTimeout(MigrationError):
 
 
 def _open_wal(db_path: Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(str(db_path), timeout=5.0, isolation_level=None)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute("PRAGMA foreign_keys=ON")  # F-79: enforce referential integrity
+    conn = sqlite3.connect(str(db_path), timeout=WAL_CONNECTION_TIMEOUT_S, isolation_level=None)
+    safe_execute(conn, "PRAGMA journal_mode=WAL")
+    safe_execute(conn, "PRAGMA synchronous=NORMAL")
+    safe_execute(conn, f"PRAGMA busy_timeout={WAL_BUSY_TIMEOUT_MS}")
+    safe_execute(conn, "PRAGMA foreign_keys=ON")  # F-79: enforce referential integrity
     return conn
 
 
 def _current_version(conn: sqlite3.Connection) -> int:
-    conn.execute(BOOTSTRAP_SCHEMA_VERSION_SQL)
-    row = conn.execute("SELECT max(version) FROM SchemaVersion").fetchone()
+    safe_execute(conn, BOOTSTRAP_SCHEMA_VERSION_SQL)
+    row = safe_execute(conn, "SELECT max(version) FROM SchemaVersion").fetchone()
     if row is None or row[0] is None:
         return -1
     return int(row[0])
@@ -77,7 +81,7 @@ def _apply_one(conn: sqlite3.Connection, n: int, f: Path) -> None:
     sql = f.read_text(encoding="utf-8")
     started = time.monotonic()
     try:
-        conn.executescript(sql)
+        safe_executescript(conn, sql)
     except sqlite3.Error as err:
         log.error("migrate.apply failed migration=%s err=%s", f.name, err)
         raise MigrationFailed(f"{f.name}: {err}") from err

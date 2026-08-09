@@ -81,7 +81,7 @@ export function useLivePreview(
           if (runId !== runIdRef.current) return; // stale
           logEvent("info", "I_UI_LIVE_PREVIEW_RUN", {
             verdict: result.verdict,
-            reasonCode: result.reasonCode,
+            ReasonCodeType: result.ReasonCodeType,
             rules: result.rules.length,
             elapsedMs: Math.round(performance.now() - startedAt),
           });
