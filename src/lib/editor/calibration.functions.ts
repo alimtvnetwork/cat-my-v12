@@ -13,6 +13,8 @@ import { HttpMethod } from "@/lib/constants";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { QueryWrapper } from "@/lib/utils/query-wrapper";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const StatusSchema = z.object({
   state: z.enum(["idle", "running", "done", "error"]),
@@ -70,12 +72,16 @@ export const startCalibration = createServerFn({ method: HttpMethod.Post })
   .handler(async ({ context }): Promise<CalibrationStart> => {
     await assertAdminInline(context.supabase, context.userId);
     const { url, token } = readEnv();
-    const res = await fetch(`${url}/calibrate`, {
-      method: HttpMethod.Post,
-      headers: authHeaders(token),
+    const res = await QueryWrapper(async () => {
+      const r = await fetch(`${url}/calibrate`, {
+        method: HttpMethod.Post,
+        headers: authHeaders(token),
+      });
+      if (r.ok === false) throw new Error(`worker /calibrate returned ${r.status}`);
+      return r;
     });
 
-    if (res.ok === false) throw new Error(`worker /calibrate returned ${res.status}`);
+    if (!res) throw new Error("worker /calibrate failed");
 
     return StartSchema.parse(await res.json());
   });
@@ -85,9 +91,13 @@ export const getCalibrationJobStatus = createServerFn({ method: HttpMethod.Get }
   .handler(async ({ context }): Promise<CalibrationStatus> => {
     await assertAdminInline(context.supabase, context.userId);
     const { url, token } = readEnv();
-    const res = await fetch(`${url}/calibrate/status`, { headers: authHeaders(token) });
+    const res = await QueryWrapper(async () => {
+      const r = await fetch(`${url}/calibrate/status`, { headers: authHeaders(token) });
+      if (r.ok === false) throw new Error(`worker /calibrate/status returned ${r.status}`);
+      return r;
+    });
 
-    if (res.ok === false) throw new Error(`worker /calibrate/status returned ${res.status}`);
+    if (!res) throw new Error("worker /calibrate/status failed");
 
     return StatusSchema.parse(await res.json());
   });
@@ -104,9 +114,13 @@ export const getCalibrationReport = createServerFn({ method: HttpMethod.Get })
   .handler(async ({ context }) => {
     await assertAdminInline(context.supabase, context.userId);
     const { url, token } = readEnv();
-    const res = await fetch(`${url}/calibration-report`, { headers: authHeaders(token) });
+    const res = await QueryWrapper(async () => {
+      const r = await fetch(`${url}/calibration-report`, { headers: authHeaders(token) });
+      if (r.ok === false) throw new Error(`worker /calibration-report returned ${r.status}`);
+      return r;
+    });
 
-    if (res.ok === false) throw new Error(`worker /calibration-report returned ${res.status}`);
+    if (!res) throw new Error("worker /calibration-report failed");
 
     return ReportSchema.parse(await res.json());
   });
