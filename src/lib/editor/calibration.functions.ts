@@ -14,7 +14,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { QueryWrapper } from "@/lib/utils/query-wrapper";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const StatusSchema = z.object({
   state: z.enum(["idle", "running", "done", "error"]),
