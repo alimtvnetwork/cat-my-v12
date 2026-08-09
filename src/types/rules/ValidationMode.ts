@@ -3,8 +3,8 @@
 // non-PASS (see spec/21-app/49-validation-order.md).
 
 export enum ValidationModeType {
-  Parallel = 'parallel',
-  Sequential = 'sequential',
+  Parallel = "parallel",
+  Sequential = "sequential",
 }
 
 export const VALIDATION_MODE_LABEL: Readonly<Record<ValidationModeType, string>> = Object.freeze({
@@ -12,12 +12,13 @@ export const VALIDATION_MODE_LABEL: Readonly<Record<ValidationModeType, string>>
   [ValidationModeType.Sequential]: "Sequential",
 });
 
-export const VALIDATION_MODE_DESCRIPTION: Readonly<Record<ValidationModeType, string>> = Object.freeze({
-  [ValidationModeType.Parallel]:
-    "Every rule is evaluated. Ruleset verdict is the AND-merge of all rule verdicts (v2-equivalent).",
-  [ValidationModeType.Sequential]:
-    "Rules run top-to-bottom. On the first FAIL or ERROR, remaining rules are marked Skipped.",
-});
+export const VALIDATION_MODE_DESCRIPTION: Readonly<Record<ValidationModeType, string>> =
+  Object.freeze({
+    [ValidationModeType.Parallel]:
+      "Every rule is evaluated. Ruleset verdict is the AND-merge of all rule verdicts (v2-equivalent).",
+    [ValidationModeType.Sequential]:
+      "Rules run top-to-bottom. On the first FAIL or ERROR, remaining rules are marked Skipped.",
+  });
 
 export const ALL_VALIDATION_MODES: readonly ValidationModeType[] = Object.freeze([
   ValidationModeType.Parallel,

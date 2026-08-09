@@ -6,16 +6,19 @@
 // registry.
 
 export enum ReasonCodeType {
-  OK = 'OK',
-  ColorDeltaE = 'ColorDeltaE',
-  EmptyRoi = 'EmptyRoi',
-  RuleConditionEval = 'RuleConditionEval',
-  SequentialShortCircuit = 'SequentialShortCircuit',
-  RulesetEval = 'RulesetEval',
+  OK = "OK",
+  ColorDeltaE = "ColorDeltaE",
+  EmptyRoi = "EmptyRoi",
+  RuleConditionEval = "RuleConditionEval",
+  SequentialShortCircuit = "SequentialShortCircuit",
+  RulesetEval = "RulesetEval",
 }
 
 export function isReasonCode(value: unknown): value is ReasonCodeType {
-  return typeof value === "string" && (Object.values(ReasonCodeType) as readonly string[]).includes(value);
+  return (
+    typeof value === "string" &&
+    (Object.values(ReasonCodeType) as readonly string[]).includes(value)
+  );
 }
 
 /** Human labels; matched by `src/lib/display-labels.ts` when rendering verdicts. */

@@ -67,7 +67,7 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
     path: "/setup/rules/rule-fixture-0001",
     description: "Rule editor full page, seeded fixture (Plan 83 item 23)",
     seed: "rules",
-    waitForSelector: '.editor-shell',
+    waitForSelector: ".editor-shell",
   },
   {
     slug: "projects-hub",

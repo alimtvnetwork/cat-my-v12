@@ -307,8 +307,7 @@ function SchemaHintPanel({ item }: { item: IpcItem }) {
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 
 type RequeueOutcome =
-  | { ok: true; message: string }
-  | { ok: false; code: string; message: string; resolution?: string };
+  { ok: true; message: string } | { ok: false; code: string; message: string; resolution?: string };
 
 async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
   try {

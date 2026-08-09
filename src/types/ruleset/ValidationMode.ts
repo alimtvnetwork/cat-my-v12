@@ -2,8 +2,8 @@
 // Sequential adds short-circuit semantics where layer order is authoritative.
 
 export enum ValidationModeType {
-  Parallel = 'parallel',
-  Sequential = 'sequential',
+  Parallel = "parallel",
+  Sequential = "sequential",
 }
 
 export const VALIDATION_MODE_LABEL: Readonly<Record<ValidationModeType, string>> = Object.freeze({

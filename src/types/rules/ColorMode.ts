@@ -2,10 +2,10 @@
 // two or three most dominant colors in the ROI; Picked is the eyedropper.
 
 export enum ColorModeType {
-  Current = 'current',
-  Dense2 = 'dense-2',
-  Dense3 = 'dense-3',
-  Picked = 'picked',
+  Current = "current",
+  Dense2 = "dense-2",
+  Dense3 = "dense-3",
+  Picked = "picked",
 }
 
 export const COLOR_MODE_LABEL: Readonly<Record<ColorModeType, string>> = Object.freeze({

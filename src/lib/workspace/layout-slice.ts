@@ -394,8 +394,7 @@ export const useWorkspaceLayoutStore = create<WorkspaceLayoutState>()(
       // initial state below.
       merge: (persistedState, currentState) => {
         const p = persistedState as
-          | { panels?: Record<string, unknown>; dockSizes?: Partial<DockSizes> }
-          | undefined;
+          { panels?: Record<string, unknown>; dockSizes?: Partial<DockSizes> } | undefined;
         const hasPersistedPanels = !!p?.panels && Object.keys(p.panels).length > 0;
         const mergedSizes: DockSizes = {
           top: clampDockSize("top", p?.dockSizes?.top ?? DEFAULT_DOCK_SIZES.top),

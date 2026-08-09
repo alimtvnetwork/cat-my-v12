@@ -3,9 +3,9 @@
 // in the sibling enums PresenceModeType and ColorModeType. No logic ships here.
 
 export enum ConditionTypeType {
-  SameImage = 'same-image',
-  Presence = 'presence',
-  Color = 'color',
+  SameImage = "same-image",
+  Presence = "presence",
+  Color = "color",
 }
 
 export const CONDITION_TYPE_LABEL: Readonly<Record<ConditionTypeType, string>> = Object.freeze({
