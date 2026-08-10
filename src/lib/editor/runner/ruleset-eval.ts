@@ -52,7 +52,7 @@ export async function evaluateRuleset(
     let isTripped = false;
 
     for (const rule of ruleset.rules) {
-      if (isTripped && ruleset.ValidationModeType === ValidationModeType.Sequential) {
+      if (isTripped && ruleset.validationMode === ValidationModeType.Sequential) {
         const skipped = shortCircuitSkip(rule);
         results.push(skipped);
         continue;

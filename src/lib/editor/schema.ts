@@ -10,7 +10,7 @@ import { PresenceModeType } from "@/lib/enums/editor";
 // upgrades v1 payloads forward-only.
 
 import type { EditorRule, EditorRuleKind } from "@/lib/editor/types";
-import { ConditionTypeType, isConditionType } from "@/types/rules/ConditionTypeType";
+import { ConditionTypeType, isConditionTypeType } from "@/types/rules/ConditionTypeType";
 import { ColorModeType, isColorMode } from "@/types/rules/ColorModeType";
 import { isPresenceMode } from "@/types/rules/PresenceModeType";
 import {
@@ -233,18 +233,18 @@ export interface EditorRuleV3 extends EditorRuleV2 {
 // Ruleset root envelope (spec 49 s3). Persisted alongside the rules array.
 export interface Ruleset {
   version: typeof RULESET_SCHEMA_VERSION;
-  ValidationModeType: ValidationModeType;
+  validationMode: ValidationModeType;
   rules: EditorRuleV3[];
 }
 
 export function makeDefaultCondition(type: RuleCondition["type"], id: string): RuleCondition {
   switch (type) {
     case ConditionTypeType.SameImage:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.SameImage] } };
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.SameImage] } } as SameImageCondition;
     case ConditionTypeType.Presence:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence] } };
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence] } } as PresenceCondition;
     case ConditionTypeType.Color:
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Color] } };
+      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Color] } } as ColorCondition;
     default: {
       const _exhaustive: never = type;
 
@@ -259,7 +259,7 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
 
   if (typeof c.id !== "string" || c.id.length === 0) return false;
 
-  if (isConditionType(c.type) === false) return false;
+  if (isConditionTypeType(c.type) === false) return false;
 
   if (!c.params || typeof c.params !== "object") return false;
   const p = c.params as Record<string, unknown>;

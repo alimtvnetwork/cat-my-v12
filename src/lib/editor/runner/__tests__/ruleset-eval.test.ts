@@ -7,6 +7,7 @@ import { VerdictType } from "@/lib/editor/runner/types";
 import { describe, it, expect } from "vitest";
 import { ConditionTypeType } from "@/types/rules/ConditionTypeType";
 import { ValidationModeType } from "@/types/rules/ValidationModeType";
+import { ReasonCodeType } from "@/types/rules/ReasonCodeType";
 import type {
   EditorRuleV3,
   Ruleset,
@@ -50,7 +51,7 @@ function ruleset(
   mode: (typeof ValidationModeType)[keyof typeof ValidationModeType],
   rules: EditorRuleV3[],
 ): Ruleset {
-  return { version: RULESET_SCHEMA_VERSION, ValidationModeType: mode, rules };
+  return { version: RULESET_SCHEMA_VERSION, validationMode: mode, rules };
 }
 // evaluator that fails for a given (ruleId, condId) tuple set.
 function makeEval(fails: Set<string>): ConditionEvaluator {
@@ -61,14 +62,14 @@ function makeEval(fails: Set<string>): ConditionEvaluator {
         conditionId: cond.id,
         type: cond.type,
         verdict: VerdictType.Fail,
-        ReasonCodeType: "ColorDeltaE",
+        ReasonCodeType: ReasonCodeType.ColorDeltaE,
       };
     }
     return {
       conditionId: cond.id,
       type: cond.type,
       verdict: VerdictType.Pass,
-      ReasonCodeType: "OK",
+      ReasonCodeType: ReasonCodeType.OK,
     };
   };
 }

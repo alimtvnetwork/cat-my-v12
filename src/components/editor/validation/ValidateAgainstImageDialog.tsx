@@ -346,7 +346,7 @@ export function ValidateAgainstImageDialog({
           map = Object.fromEntries(
             Object.entries(remote.data.results).map(([id, r]) => [
               id,
-              { ...r, stub: false } as ValidationResult,
+              { ...r, stub: false } as unknown as ValidationResult,
             ]),
           );
         }

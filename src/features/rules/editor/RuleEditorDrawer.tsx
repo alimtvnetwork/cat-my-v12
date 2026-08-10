@@ -43,7 +43,7 @@ export interface RuleEditorDrawerProps {
   /** Overrides the default 250 ms live-preview debounce. */
   livePreviewDebounceMs?: number;
   /** ValidationModeType used to build the single-rule preview ruleset. */
-  ValidationModeType?: ValidationModeT;
+  validationModeType?: ValidationModeT;
 }
 
 // Runtime shape of a v3 rule as it lives in the store. The store types are
@@ -59,7 +59,7 @@ export function RuleEditorDrawer({
   onPickColor,
   evaluator,
   livePreviewDebounceMs,
-  ValidationModeType = ValidationModeType.Parallel,
+  validationModeType = ValidationModeType.Parallel,
 }: RuleEditorDrawerProps) {
   const rule = useRulesStore((s) =>
     ruleId
@@ -88,10 +88,10 @@ export function RuleEditorDrawer({
 
     return {
       version: RULESET_SCHEMA_VERSION,
-      ValidationModeType,
+      validationMode: validationModeType,
       rules: [previewRule],
     };
-  }, [rule, conditions, ValidationModeType]);
+  }, [rule, conditions, validationModeType]);
 
   const preview = useLivePreview(previewRuleset, {
     evaluator,
