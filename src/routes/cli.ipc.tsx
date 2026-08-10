@@ -307,7 +307,8 @@ function SchemaHintPanel({ item }: { item: IpcItem }) {
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 
 type RequeueOutcome =
-  { ok: true; message: string } | { ok: false; code: string; message: string; resolution?: string };
+  | { isSuccess: true; isFail: false; message: string }
+  | { isSuccess: false; isFail: true; code: string; message: string; resolution?: string };
 
 async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
   try {
@@ -317,11 +318,12 @@ async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
       body: JSON.stringify({}),
     });
 
-    return { ok: true, message: "Requeued" };
+    return { isSuccess: true, isFail: false, message: "Requeued" };
   } catch (err) {
     if (err instanceof EnvelopeError) {
       return {
-        ok: false,
+        isSuccess: false,
+        isFail: true,
         code: err.code,
         message: err.backendMessage,
       };
@@ -329,7 +331,8 @@ async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
     console.error("[cli.ipc.requeue] transport failure", { msgId, err });
 
     return {
-      ok: false,
+      isSuccess: false,
+      isFail: true,
       code: "E_FE_TRANSPORT",
       message: err instanceof Error ? err.message : String(err),
     };
@@ -647,23 +650,23 @@ function CliIpcRoute() {
                                 role="status"
                                 className={cn(
                                   "flex items-start gap-hmi-2 rounded-hmi-sm border p-hmi-2 text-hmi-caption",
-                                  requeueState[key]!.outcome!.ok
+                                  requeueState[key]!.outcome!.isSuccess
                                     ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                                     : "border-destructive/40 text-destructive",
                                 )}
                               >
-                                {requeueState[key]!.outcome!.ok ? (
+                                {requeueState[key]!.outcome!.isSuccess ? (
                                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                                 ) : (
                                   <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                                 )}
                                 <div className="flex flex-col gap-1">
                                   <div className="font-medium">
-                                    {requeueState[key]!.outcome!.ok
+                                    {requeueState[key]!.outcome!.isSuccess
                                       ? (requeueState[key]!.outcome as { message: string }).message
                                       : `${(requeueState[key]!.outcome as { code: string }).code}: ${(requeueState[key]!.outcome as { message: string }).message}`}
                                   </div>
-                                  {requeueState[key]!.outcome!.ok === false &&
+                                  {requeueState[key]!.outcome!.isFail &&
                                     (requeueState[key]!.outcome as { resolution?: string })
                                       .resolution && (
                                       <div className="text-ca-ink-muted">

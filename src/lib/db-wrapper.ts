@@ -14,18 +14,29 @@
 
 import { beFetch, BeFetchOptions, Envelope } from "@/lib/be-fetch";
 
+export type QueryResult<T> = 
+  | { isSuccess: true; isFail: false; data: T; error: null }
+  | { isSuccess: false; isFail: true; data: null; error: Error };
+
 /**
  * Execute an API query and automatically log failures.
+ * Returns a QueryResult containing explicit `isSuccess` and `isFail` properties
+ * instead of throwing, aligning with the backend Python structure.
  * 
  * @param input The request URL or Request object
  * @param init Fetch options
  * @param opts beFetch options
- * @returns The parsed Envelope
+ * @returns A strictly typed QueryResult
  */
 export async function executeApiQuery<T = unknown>(
   input: RequestInfo | URL,
   init?: RequestInit,
   opts?: BeFetchOptions,
-): Promise<Envelope<T>> {
-  return beFetch<T>(input, init, opts);
+): Promise<QueryResult<T>> {
+  try {
+    const envelope = await beFetch<T>(input, init, opts);
+    return { isSuccess: true, isFail: false, data: envelope.Results as T, error: null };
+  } catch (error) {
+    return { isSuccess: false, isFail: true, data: null, error: error instanceof Error ? error : new Error(String(error)) };
+  }
 }

@@ -114,9 +114,9 @@ class LocalStorageCameraFacade implements CameraFacade {
     const st = this.ensureStore();
 
     if (st) {
-      const ok = st.upsert(entry);
+      const isFail = !st.upsert(entry);
 
-      if (!ok) {
+      if (isFail) {
         return {
           ok: false,
           kind: "persist",
