@@ -1,3 +1,16 @@
+
+export enum HintTooltipAlignType {
+  Start = "start",
+  Center = "center",
+  End = "end",
+}
+
+export enum HintTooltipSideType {
+  Top = "top",
+  Bottom = "bottom",
+  Left = "left",
+  Right = "right",
+}
 // Shared hint tooltip. Wraps a single trigger element with a Radix
 // tooltip that shows a short label, an optional secondary description,
 // and optional keyboard shortcut chips. Kept intentionally small so it
@@ -14,8 +27,8 @@ interface Props {
   // Rendered as kbd chips at the bottom of the tooltip. Pass display
   // strings like ["Ctrl", "N"] or ["Shift", "Drag"]. Skipped when empty.
   shortcut?: readonly string[];
-  side?: "top" | "bottom" | "left" | "right";
-  align?: "start" | "center" | "end";
+  side?: HintTooltipSideType;
+  align?: HintTooltipAlignType;
   delayMs?: number;
   children: ReactElement;
 }

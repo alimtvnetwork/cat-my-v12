@@ -1,3 +1,10 @@
+
+export enum SectionPropsHeadingLevelType {
+  H1 = "h1",
+  H2 = "h2",
+  H3 = "h3",
+  H4 = "h4",
+}
 // Plan 87 step 3: shared Section primitive.
 //
 // Root cause this component fixes, in one sentence:
@@ -44,7 +51,7 @@ export interface SectionProps extends Omit<HTMLAttributes<HTMLElement>, "title">
   /** Chrome variant. */
   variant?: SectionVariant;
   /** Heading level tag; defaults to h2. */
-  headingLevel?: "h1" | "h2" | "h3" | "h4";
+  headingLevel?: SectionPropsHeadingLevelType;
   /** Applied to the inner content wrapper (after the header). */
   bodyClassName?: string;
 }

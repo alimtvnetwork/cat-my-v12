@@ -1,3 +1,8 @@
+
+export enum RightRailDirectionType {
+  Up = "up",
+  Down = "down",
+}
 // Plan 35 step 14: RightRail is now a thin shell. The Compact CAD Toolbar
 // theme (chosen 2026-07) removed the redundant "RULES" title row (the
 // outer panel chrome already labels this "Rules") and folded Export /
@@ -16,7 +21,7 @@ export interface RightRailProps {
   onSelect: (id: string) => void;
   onToggleHidden: (id: string) => void;
   onToggleLocked: (id: string) => void;
-  onReorder: (id: string, direction: "up" | "down") => void;
+  onReorder: (id: string, direction: RightRailDirectionType) => void;
   onUpdateParams: (id: string, params: EditorRuleParams) => void;
   onDelete?: (id: string) => void;
   onDuplicate?: (id: string) => void;

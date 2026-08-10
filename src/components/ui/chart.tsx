@@ -1,3 +1,9 @@
+
+export enum ChartIndicatorType {
+  Line = "line",
+  Dot = "dot",
+  Dashed = "dashed",
+}
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
@@ -99,7 +105,7 @@ const ChartTooltipContent = React.forwardRef<
     React.ComponentProps<"div"> & {
       hideLabel?: boolean;
       hideIndicator?: boolean;
-      indicator?: "line" | "dot" | "dashed";
+      indicator?: ChartIndicatorType;
       nameKey?: string;
       labelKey?: string;
     }

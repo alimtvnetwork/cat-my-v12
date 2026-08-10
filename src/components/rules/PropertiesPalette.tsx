@@ -1,3 +1,22 @@
+
+export enum ModeToggleTilePropsModeType {
+  Rail = "rail",
+  Accordion = "accordion",
+  Tabs = "tabs",
+}
+
+export enum PropertyPaletteIdType {
+  Info = "info",
+  History = "history",
+  Adjust = "adjust",
+  Grid = "grid",
+  Brush = "brush",
+  Layers = "layers",
+  Type = "type",
+  Paragraph = "paragraph",
+  Css = "css",
+  Image = "image",
+}
 import { PropertiesPaneIdType } from "@/lib/ui-prefs-store";
 // Plan 79 step 30 / Plan 80 step 16. V4 Properties palette shell.
 //
@@ -47,21 +66,10 @@ import { TypePane } from "./properties/TypePane";
 import { ParagraphPane } from "./properties/ParagraphPane";
 import { CssPane } from "./properties/CssPane";
 import { ImagePane } from "./properties/ImagePane";
-
-export type PropertyPaletteId =
-  | "info"
-  | "history"
-  | "adjust"
-  | "grid"
-  | "brush"
-  | "layers"
-  | "type"
-  | "paragraph"
-  | "css"
-  | "image";
+import { PropertyPaletteIdType } from "./PropertiesPalette";
 
 interface PaletteEntry {
-  id: PropertyPaletteId;
+  id: PropertyPaletteIdType;
   label: string;
   hint: string;
   Icon: typeof Info;
@@ -121,8 +129,8 @@ const PALETTES: readonly PaletteEntry[] = [
 ];
 
 interface Props {
-  active?: PropertyPaletteId;
-  onChange?: (id: PropertyPaletteId) => void;
+  active?: PropertyPaletteIdType;
+  onChange?: (id: PropertyPaletteIdType) => void;
   /** Optional context for per-kind pane persistence (accordion mode). */
   ruleKind?: PropertiesPaletteRuleKind;
 }
@@ -143,7 +151,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     ruleKind ??
     PropertiesPaletteRuleKindType.Rule;
   const remembered = openByKind[kindKey];
-  const [internal, setInternal] = useState<PropertyPaletteId>(remembered ?? "info");
+  const [internal, setInternal] = useState<PropertyPaletteIdType>(remembered ?? "info");
   const activeId = active ?? remembered ?? internal;
   const activeEntry = PALETTES.find((p) => p.id === activeId) ?? PALETTES[0];
 
@@ -196,7 +204,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.sharedKind, activeId]);
 
-  const select = (id: PropertyPaletteId) => {
+  const select = (id: PropertyPaletteIdType) => {
     if (isPaletteApplicable(id, selection.sharedKind) === false) {
       logger.info("I_UI_PROPERTIES_PALETTE_SELECT_BLOCKED", {
         palette: id,
@@ -250,9 +258,9 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
 }
 
 interface RailBodyProps {
-  activeId: PropertyPaletteId;
+  activeId: PropertyPaletteIdType;
   activeEntry: PaletteEntry;
-  onSelect: (id: PropertyPaletteId) => void;
+  onSelect: (id: PropertyPaletteIdType) => void;
   onToggleMode: () => void;
   sharedKind: import("@/lib/editor/types").EditorRule["kind"] | null;
 }
@@ -301,8 +309,8 @@ function RailBody({ activeId, activeEntry, onSelect, onToggleMode, sharedKind }:
 }
 
 interface AccordionBodyProps {
-  activeId: PropertyPaletteId;
-  onSelect: (id: PropertyPaletteId) => void;
+  activeId: PropertyPaletteIdType;
+  onSelect: (id: PropertyPaletteIdType) => void;
   onToggleMode: () => void;
   sharedKind: import("@/lib/editor/types").EditorRule["kind"] | null;
 }
@@ -369,7 +377,7 @@ function AccordionBody({ activeId, onSelect, onToggleMode, sharedKind }: Accordi
 }
 
 interface ModeToggleTileProps {
-  mode: "rail" | "accordion" | "tabs";
+  mode: ModeToggleTilePropsModeType;
   onToggle: () => void;
 }
 
@@ -423,16 +431,16 @@ export type InspectorTabId = InspectorTabIdType;
 interface InspectorTab {
   id: InspectorTabId;
   label: string;
-  panes: readonly PropertyPaletteId[];
+  panes: readonly PropertyPaletteIdType[];
 }
 
 const INSPECTOR_TABS: readonly InspectorTab[] = [
-  { id: InspectorTabIdType.Transform, label: "Transform", panes: ["info", "grid", "image"] },
+  { id: InspectorTabIdType.Transform, label: "Transform", panes: [PropertyPaletteIdType.Info, "grid", "image"] },
   { id: InspectorTabIdType.Style, label: "Style", panes: ["adjust", "brush", "type", "paragraph"] },
   { id: InspectorTabIdType.Rules, label: "Rules", panes: ["history", "css", "layers"] },
 ];
 
-function tabForPane(id: PropertyPaletteId): InspectorTabId {
+function tabForPane(id: PropertyPaletteIdType): InspectorTabId {
   for (const tab of INSPECTOR_TABS) {
     if (tab.panes.includes(id)) return tab.id;
   }
@@ -441,8 +449,8 @@ function tabForPane(id: PropertyPaletteId): InspectorTabId {
 }
 
 interface TabbedBodyProps {
-  activeId: PropertyPaletteId;
-  onSelect: (id: PropertyPaletteId) => void;
+  activeId: PropertyPaletteIdType;
+  onSelect: (id: PropertyPaletteIdType) => void;
   onToggleMode: () => void;
   sharedKind: import("@/lib/editor/types").EditorRule["kind"] | null;
 }
@@ -540,7 +548,7 @@ function TabbedBody({ activeId, onSelect, onToggleMode, sharedKind }: TabbedBody
   );
 }
 
-function PaletteBody({ id }: { id: PropertyPaletteId }) {
+function PaletteBody({ id }: { id: PropertyPaletteIdType }) {
   switch (id) {
     case "info":
       return <InfoPane />;

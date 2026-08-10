@@ -1,3 +1,30 @@
+
+export enum SidebarSizeType {
+  Sm = "sm",
+  Md = "md",
+}
+
+export enum SidebarCollapsibleType {
+  Offcanvas = "offcanvas",
+  Icon = "icon",
+  None = "none",
+}
+
+export enum SidebarVariantType {
+  Sidebar = "sidebar",
+  Floating = "floating",
+  Inset = "inset",
+}
+
+export enum SidebarSideType {
+  Left = "left",
+  Right = "right",
+}
+
+export enum SidebarContextPropsStateType {
+  Expanded = "expanded",
+  Collapsed = "collapsed",
+}
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -26,7 +53,7 @@ const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContextProps = {
-  state: "expanded" | "collapsed";
+  state: SidebarContextPropsStateType;
   open: boolean;
   setOpen: (open: boolean) => void;
   openMobile: boolean;
@@ -154,9 +181,9 @@ SidebarProvider.displayName = "SidebarProvider";
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    side?: "left" | "right";
-    variant?: "sidebar" | "floating" | "inset";
-    collapsible?: "offcanvas" | "icon" | "none";
+    side?: SidebarSideType;
+    variant?: SidebarVariantType;
+    collapsible?: SidebarCollapsibleType;
   }
 >(
   (
@@ -691,7 +718,7 @@ const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentProps<"a"> & {
     asChild?: boolean;
-    size?: "sm" | "md";
+    size?: SidebarSizeType;
     isActive?: boolean;
   }
 >(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {

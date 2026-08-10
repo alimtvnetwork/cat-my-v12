@@ -1,3 +1,11 @@
+
+export enum FloatingInspectorPropsKindType {
+  R = "R",
+  C = "C",
+  K = "K",
+  S = "S",
+  E = "E",
+}
 import {
   useCallback,
   useEffect,
@@ -30,7 +38,7 @@ interface OpenDetail {
 export interface FloatingInspectorProps {
   title: string;
   hasSelection: boolean;
-  kind?: "R" | "C" | "K" | "S" | "E";
+  kind?: FloatingInspectorPropsKindType;
   children: ReactNode;
 }
 

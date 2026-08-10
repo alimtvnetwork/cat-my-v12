@@ -1,3 +1,9 @@
+
+export enum InfoPaneActionType {
+  Lock = "lock",
+  Hide = "hide",
+  Delete = "delete",
+}
 // Plan 80 step 19. Info pane wired to live selected ROI from useRulesStore.
 // Plan 100 Phase E step 24: multi-select summary. When N > 1 ROIs are
 // selected, show a compact aggregate (count, shared kind or "mixed",
@@ -24,7 +30,7 @@ export function InfoPane() {
   const setHidden = useRulesStore((s) => s.setHidden);
   const deleteRules = useRulesStore((s) => s.deleteRules);
 
-  const runAggregate = (action: "lock" | "hide" | "delete") => {
+  const runAggregate = (action: InfoPaneActionType) => {
     const ids = [...selection.ids];
 
     if (ids.length < 2) return;

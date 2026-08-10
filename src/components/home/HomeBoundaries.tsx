@@ -1,3 +1,8 @@
+
+export enum HomeBoundariesToneType {
+  Muted = "muted",
+  Error = "error",
+}
 // Boundaries + fallbacks for the home route. Keep the HmiShell (top nav)
 // mounted so the layout never disappears, even when data fetches fail.
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
@@ -12,7 +17,7 @@ function HomeFallback({
   body,
   action,
 }: {
-  tone: "muted" | "error";
+  tone: HomeBoundariesToneType;
   title: string;
   body: string;
   action?: ReactNode;

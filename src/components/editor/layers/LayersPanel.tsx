@@ -1,3 +1,8 @@
+
+export enum FlatEntryKindType {
+  GroupHeader = "group-header",
+  Layer = "layer",
+}
 import { ReorderPositionType } from "@/lib/editor/store/rules-slice";
 // Plan 35 step 9: LayersPanel. Photoshop-style ordered list of rules
 // with optional groups. Rules and categories render as separate sections,
@@ -46,7 +51,7 @@ export interface LayersPanelProps {
 }
 
 interface FlatEntry {
-  kind: "group-header" | "layer";
+  kind: FlatEntryKindType;
   id: string;
   groupId?: string;
   rule?: EditorRule;

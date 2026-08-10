@@ -1,3 +1,8 @@
+
+export enum AuditRetentionTileToneType {
+  Info = "info",
+  Fault = "fault",
+}
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
@@ -181,7 +186,7 @@ function HeaderCell({
 }: {
   label: string;
   value: string;
-  tone?: "info" | "fault";
+  tone?: AuditRetentionTileToneType;
 }) {
   const cls = tone === "fault" ? "text-ca-status-ng" : "text-ca-ink";
 

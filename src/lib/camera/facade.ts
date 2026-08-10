@@ -32,12 +32,12 @@ function newCorrelationId(): string {
 export type CameraReferrerResolver = (id: string) => string[];
 
 export type CameraSaveOutcome =
-  | { ok: true; isFail: false; entry: CameraSetting }
+  | { ok: true, isFail: false; entry: CameraSetting }
   | { ok: false; isFail: true; kind: "validation"; errors: CameraValidationError[]; correlationId: string }
   | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
 export type CameraRemoveOutcome =
-  | { ok: true }
+  | { ok: true, isFail: false }
   | { ok: false; isFail: true; kind: "referenced"; projects: string[]; correlationId: string }
   | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
@@ -181,7 +181,7 @@ class LocalStorageCameraFacade implements CameraFacade {
         };
       }
 
-      return { ok: true };
+      return { ok: true, isFail: false };
     }
     // Fallback path: mutate library directly via localStorage.
     const s = browserStorage();
@@ -197,14 +197,14 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     const raw = s.getItem(CAMERA_LIBRARY_STORAGE_KEY);
 
-    if (!raw) return { ok: true };
+    if (!raw) return { ok: true, isFail: false };
     try {
       const lib = JSON.parse(raw);
       const next = deleteCameraSetting(lib, id);
       s.setItem(CAMERA_LIBRARY_STORAGE_KEY, JSON.stringify(next));
       for (const l of this.listeners) l();
 
-      return { ok: true };
+      return { ok: true, isFail: false };
     } catch (err) {
       return {
         ok: false, isFail: true,

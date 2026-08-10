@@ -1,3 +1,8 @@
+
+export enum RunOrderQuickBarEdgeType {
+  Start = "start",
+  End = "end",
+}
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { HudAnchorType } from "@/lib/editor/hud-position";
 import { RuleKindType } from "@/types/rules/RuleKind";
@@ -2489,7 +2494,7 @@ function RunOrderQuickBar({
   disabled?: boolean;
   onJump: (zeroIdx: number) => void;
   onStep: (dir: -1 | 1) => void;
-  onEdge: (edge: "start" | "end") => void;
+  onEdge: (edge: RunOrderQuickBarEdgeType) => void;
 }) {
   const oneBased = Math.max(1, currentIndex + 1);
   const [draft, setDraft] = useState<string>(String(oneBased));

@@ -1,3 +1,8 @@
+
+export enum EditorSetupExperienceDirectionType {
+  Up = "up",
+  Down = "down",
+}
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CanvasViewport } from "../canvas";
@@ -309,7 +314,7 @@ export function EditorSetupExperience({
   );
 
   const reorder = useCallback(
-    (id: string, direction: "up" | "down") => {
+    (id: string, direction: EditorSetupExperienceDirectionType) => {
       const items = useRulesStore.getState().rules;
       const index = items.findIndex((r) => r.id === id);
 

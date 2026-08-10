@@ -1,3 +1,14 @@
+
+export enum RuleCreateDialogKindModeType {
+  Both = "both",
+  Rule = "rule",
+  Category = "category",
+}
+
+export enum RuleCreateDialogInitialKindType {
+  Rule = "Rule",
+  Category = "Category",
+}
 // Plan 81 step 13. Two-column create/duplicate dialog for the rules
 // library. Left column collects name + kind + optional pocket size; right
 // column shows a live preview of the row that will land in the list, so
@@ -47,9 +58,9 @@ interface Props {
    */
   sourceConditions?: readonly RuleCondition[];
   /** Initial kind. Category disables the pocket size field. */
-  initialKind?: "Rule" | "Category";
+  initialKind?: RuleCreateDialogInitialKindType;
   /** Limit which kind can be created in route-specific flows. */
-  kindMode?: "both" | "rule" | "category";
+  kindMode?: RuleCreateDialogKindModeType;
 }
 
 export function RuleCreateDialog({

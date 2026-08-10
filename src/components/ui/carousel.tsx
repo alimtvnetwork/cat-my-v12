@@ -1,3 +1,8 @@
+
+export enum CarouselPropsOrientationType {
+  Horizontal = "horizontal",
+  Vertical = "vertical",
+}
 import * as React from "react";
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -14,7 +19,7 @@ type CarouselPlugin = UseCarouselParameters[1];
 type CarouselProps = {
   opts?: CarouselOptions;
   plugins?: CarouselPlugin;
-  orientation?: "horizontal" | "vertical";
+  orientation?: CarouselPropsOrientationType;
   setApi?: (api: CarouselApi) => void;
 };
 

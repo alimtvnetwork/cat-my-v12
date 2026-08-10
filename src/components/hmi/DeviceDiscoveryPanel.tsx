@@ -1,3 +1,9 @@
+
+export enum DeviceDiscoveryPanelCallerType {
+  GetDiscoveredDevices = "getDiscoveredDevices",
+  SelectCaptureDevice = "selectCaptureDevice",
+  ClientGate = "client-gate",
+}
 import { ErrorSourceType } from "@/lib/errors/error-record";
 import { FeatureNameType } from "@/lib/license";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -79,7 +85,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
   // failure so tests and screen readers still get a live alert region.
   const surfaceFailure = useCallback(
     (
-      caller: "getDiscoveredDevices" | "selectCaptureDevice" | "client-gate",
+      caller: DeviceDiscoveryPanelCallerType,
       failure: CaptureFailure,
       raw?: unknown,
     ) => {

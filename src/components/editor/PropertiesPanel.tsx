@@ -1,3 +1,8 @@
+
+export enum PropertiesPanelToneType {
+  On = "on",
+  Off = "off",
+}
 import { EditorRuleKindType } from "@/lib/editor/types";
 // PropertiesPanel, docked-inspector densification pass 3 (v3.964.0).
 //
@@ -281,7 +286,7 @@ function freshVerdictId(): string {
   return `ac-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function CountBadge({ n, tone, label }: { n: number; tone: "on" | "off"; label?: string }) {
+function CountBadge({ n, tone, label }: { n: number; tone: PropertiesPanelToneType; label?: string }) {
   return (
     <span
       className="editor-properties-badge"

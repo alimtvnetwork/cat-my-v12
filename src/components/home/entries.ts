@@ -1,9 +1,23 @@
+
+export enum HomeEntryToType {
+  Projects = "/projects",
+  Setup = "/setup",
+  Run = "/run",
+  AiTesting = "/ai-testing",
+}
+
+export enum HomeEntryIdType {
+  Projects = "projects",
+  Setup = "setup",
+  TrialRun = "trial-run",
+  AiTesting = "ai-testing",
+}
 export interface HomeEntry {
-  id: "projects" | "setup" | "trial-run" | "ai-testing";
+  id: HomeEntryIdType;
   label: string;
   description: string;
   icon: string;
-  to: "/projects" | "/setup" | "/run" | "/ai-testing";
+  to: HomeEntryToType;
 }
 
 export const HOME_ENTRIES: readonly HomeEntry[] = [

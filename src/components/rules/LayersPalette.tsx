@@ -1,3 +1,8 @@
+
+export enum LayersPaletteCodeType {
+  IUiLayerVisToggle = "I_UI_LAYER_VIS_TOGGLE",
+  IUiLayerLockToggle = "I_UI_LAYER_LOCK_TOGGLE",
+}
 // Plan 79 step 32. V4 Layers palette (right-bottom dock).
 //
 // Root cause the palette fixes, in one sentence: the V4 spec requires a
@@ -81,7 +86,7 @@ export function LayersPalette({ rule }: Props) {
   const toggle = (
     id: string,
     key: keyof RowState,
-    code: "I_UI_LAYER_VIS_TOGGLE" | "I_UI_LAYER_LOCK_TOGGLE",
+    code: LayersPaletteCodeType,
   ) => {
     setState((prev) => {
       const cur = prev[id] ?? { visible: true, locked: false };

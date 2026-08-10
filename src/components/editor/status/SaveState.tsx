@@ -1,9 +1,15 @@
+
+export enum SaveStatePropsStateType {
+  Saved = "Saved",
+  Dirty = "Dirty",
+  Saving = "Saving...",
+}
 import { Redo2, Undo2 } from "lucide-react";
 
 export interface SaveStateProps {
   undo: number;
   redo: number;
-  state: "Saved" | "Dirty" | "Saving...";
+  state: SaveStatePropsStateType;
   onUndo?: () => void;
   onRedo?: () => void;
 }

@@ -1,3 +1,9 @@
+
+export enum CanvasViewportPresetType {
+  Subtle = "subtle",
+  Standard = "standard",
+  Strong = "strong",
+}
 import { EditorPreviewModeType } from "@/lib/editor/preview-mode-store";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IMAGE_BOUNDS, applyWheel, clampPan, coverView, screenToImage } from "@/lib/editor/coords";
@@ -262,7 +268,7 @@ export function CanvasViewport({
     }
   }, [focusDim, focusBlur, focusIsolate, spotlightHydrated]);
 
-  const applySpotlightPreset = (preset: "subtle" | "standard" | "strong") => {
+  const applySpotlightPreset = (preset: CanvasViewportPresetType) => {
     if (preset === "subtle") {
       setFocusDim(0.3);
       setFocusBlur(3);

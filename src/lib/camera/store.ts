@@ -61,11 +61,11 @@ function loadLibrary(storage: StorageLike, onFailure: (f: CameraFailure) => void
 function saveLibrary(
   storage: StorageLike,
   lib: CameraLibrary,
-): { ok: true } | { ok: false; isFail: true; failure: CameraFailure } {
+): { ok: true, isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
   try {
     storage.setItem(CAMERA_LIBRARY_STORAGE_KEY, JSON.stringify(lib));
 
-    return { ok: true };
+    return { ok: true, isFail: false };
   } catch (err) {
     return {
       ok: false, isFail: true,
@@ -165,7 +165,7 @@ export function findCameraSettingById(id: string): CameraSetting | null {
  */
 export function upsertCameraSettingSync(
   entry: CameraSetting,
-): { ok: true } | { ok: false; isFail: true; failure: CameraFailure } {
+): { ok: true, isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
   const s = browserStorage();
 
   if (!s) {
@@ -183,5 +183,5 @@ export function upsertCameraSettingSync(
 
   if (w.ok === false) return { ok: false, isFail: true, failure: w.failure };
 
-  return { ok: true };
+  return { ok: true, isFail: false };
 }

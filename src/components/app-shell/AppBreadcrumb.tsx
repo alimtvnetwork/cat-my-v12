@@ -1,3 +1,8 @@
+
+export enum AppBreadcrumbPropsVariantType {
+  Band = "band",
+  Inline = "inline",
+}
 import { useState } from "react";
 import { Link, useHydrated, useMatches } from "@tanstack/react-router";
 import { Home, MoreHorizontal, ChevronRight } from "lucide-react";
@@ -74,7 +79,7 @@ export interface AppBreadcrumbProps {
    * `"inline"` drops the border/background so the breadcrumb can nest
    * inside the Titlebar's `<header>` as a 28px sub-row (plan 65 step 22).
    */
-  variant?: "band" | "inline";
+  variant?: AppBreadcrumbPropsVariantType;
 }
 
 export function AppBreadcrumb({ variant = "band" }: AppBreadcrumbProps = {}) {

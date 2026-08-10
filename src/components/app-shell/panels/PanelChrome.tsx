@@ -1,3 +1,10 @@
+
+export enum PanelChromeIntentType {
+  Default = "default",
+  Collapse = "collapse",
+  Minimize = "minimize",
+  Close = "close",
+}
 /**
  * Plan 65 step 7 (SS-02): PanelChrome.
  *
@@ -55,7 +62,7 @@ function ChromeControl({
   label: string;
   onClick?: () => void;
   children: React.ReactNode;
-  intent?: "default" | "collapse" | "minimize" | "close";
+  intent?: PanelChromeIntentType;
   "data-testid"?: string;
 }) {
   return (

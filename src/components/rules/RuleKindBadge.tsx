@@ -1,3 +1,8 @@
+
+export enum RuleKindBadgePropsSizeType {
+  Sm = "sm",
+  Md = "md",
+}
 // Plan 81 step 12 (shared): per-condition kind token, extracted so every
 // rule list surface (setup, project picker, project rules section) renders
 // the same Circle / Rect / OCR / String / Expr pill. Falls back to a muted
@@ -16,7 +21,7 @@ const KIND_LABEL: Record<string, string> = {
 
 export interface RuleKindBadgeProps {
   rule: Pick<Rule, "conditions">;
-  size?: "sm" | "md";
+  size?: RuleKindBadgePropsSizeType;
 }
 
 export function RuleKindBadge({ rule, size = "md" }: RuleKindBadgeProps): ReactElement {

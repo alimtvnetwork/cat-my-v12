@@ -1,3 +1,8 @@
+
+export enum ApplyThemeClassResolvedType {
+  Light = "light",
+  Dark = "dark",
+}
 /**
  * ThemeController: single side-effect component that mirrors the
  * persisted `theme` preference from `useUiPrefsStore` onto <html>.
@@ -29,7 +34,7 @@ function resolveTheme(theme: ThemeVariant): "light" | "dark" {
   return theme;
 }
 
-function applyThemeClass(resolved: "light" | "dark") {
+function applyThemeClass(resolved: ApplyThemeClassResolvedType) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.classList.toggle("dark", resolved === "dark");

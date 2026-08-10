@@ -1,3 +1,8 @@
+
+export enum EmptyStateActionVariantType {
+  Primary = "primary",
+  Secondary = "secondary",
+}
 // Plan 81 step 17. Unified empty-state primitive.
 //
 // Root cause it addresses: every list surface (rules, projects, settings
@@ -18,7 +23,7 @@ export interface EmptyStateAction {
   label: string;
   onClick: () => void;
   testId?: string;
-  variant?: "primary" | "secondary";
+  variant?: EmptyStateActionVariantType;
 }
 
 interface Props {

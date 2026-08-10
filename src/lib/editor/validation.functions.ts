@@ -59,7 +59,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
     if (parsed.ok === false) {
       console.warn("[validation.functions] worker URL invalid", { reason: parsed.reason });
 
-      return { configured: false, ok: false, isFail: true, reason: parsed.reason };
+      return { configured: false, ok: false, reason: parsed.reason };
     }
 
     const endpoint = parsed.endpoint;

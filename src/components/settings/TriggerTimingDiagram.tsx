@@ -1,10 +1,15 @@
+
+export enum TriggerTimingDiagramPropsEdgeType {
+  Rising = "rising",
+  Falling = "falling",
+}
 // Plan 81 step 9: pure-SVG timing chart for the trigger settings page.
 // Renders a stylized digital signal with an edge marker (rising/falling)
 // and a shaded debounce window scaled to the configured milliseconds.
 // No side effects; safe to render on SSR.
 
 export interface TriggerTimingDiagramProps {
-  edge: "rising" | "falling";
+  edge: TriggerTimingDiagramPropsEdgeType;
   debounceMs: number;
   source: string;
 }

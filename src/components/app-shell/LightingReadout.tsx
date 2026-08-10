@@ -1,3 +1,10 @@
+
+export enum LightingReadoutKeyType {
+  Exposure = "exposure",
+  Gain = "gain",
+  Enhance = "enhance",
+  Darken = "darken",
+}
 // Plan 67 step 17 (SU-05): compact HUD readout of the current lighting
 // controls. Subscribes to `useLightingStore` so every surface that mounts
 // this component reflects live edits from `/settings/lighting` (or any
@@ -16,7 +23,7 @@ import { Lightbulb, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useLightingStore } from "@/lib/lighting/store";
 
 const FIELDS: readonly {
-  key: "exposure" | "gain" | "enhance" | "darken";
+  key: LightingReadoutKeyType;
   label: string;
 }[] = [
   { key: "exposure", label: "Exposure" },

@@ -1,3 +1,10 @@
+
+export enum PanelSearchPaletteCmdType {
+  ExpandSections = "expand-sections",
+  CollapseSections = "collapse-sections",
+  ResetLayout = "reset-layout",
+  CollapseOtherPanels = "collapse-other-panels",
+}
 /**
  * Editor-scoped panel search palette (plan 65 SS-03).
  *
@@ -46,7 +53,7 @@ export function PanelSearchPalette() {
   };
 
   const handleCommand = (
-    cmd: "expand-sections" | "collapse-sections" | "reset-layout" | "collapse-other-panels",
+    cmd: PanelSearchPaletteCmdType,
   ) => {
     const state = useWorkspaceLayoutStore.getState();
 

@@ -54,7 +54,7 @@ export const useWorkerHealthStore = create<WorkerHealthState>((set, get) => ({
     const promise = (async () => {
       try {
         // `checkWorkerHealth` is a `createServerFn` that always resolves,
-        // even on network failure it returns `{ ok: false, isFail: true, reason }`.
+        // even on network failure it returns `{ ok: false, reason }`.
         const h = (await checkWorkerHealth()) as WorkerHealth;
         const prev = get().health;
         // Re-arm dismissal on any ok -> not-ok transition so a fresh
@@ -71,7 +71,7 @@ export const useWorkerHealthStore = create<WorkerHealthState>((set, get) => ({
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         console.warn("[worker-health] refresh failed", err);
-        const fallback: WorkerHealth = { configured: false, ok: false, isFail: true, reason: message };
+        const fallback: WorkerHealth = { configured: false, ok: false, reason: message };
         const prev = get().health;
         const rearm = prev?.ok === true;
         set({
