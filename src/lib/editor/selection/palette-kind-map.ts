@@ -16,12 +16,12 @@
 //   `aria-disabled` + no-op click) so layout / tile positions stay
 //   stable across selections.
 import { EditorRuleKindType, type EditorRule } from "@/lib/editor/types";
-import type { PropertyPaletteId } from "@/components/rules/PropertiesPalette";
+import type { PropertyPaletteIdType } from "@/components/rules/PropertiesPalette";
 
 type Kind = EditorRule["kind"];
 
 // Whitelist per pane. Panes with `null` mean "applicable to every kind".
-const APPLICABLE_KINDS: Record<PropertyPaletteId, ReadonlySet<Kind> | null> = {
+const APPLICABLE_KINDS: Record<PropertyPaletteIdType, ReadonlySet<Kind> | null> = {
   info: null,
   history: null,
   adjust: null,
@@ -34,7 +34,7 @@ const APPLICABLE_KINDS: Record<PropertyPaletteId, ReadonlySet<Kind> | null> = {
   image: null,
 };
 
-export function isPaletteApplicable(id: PropertyPaletteId, sharedKind: Kind | null): boolean {
+export function isPaletteApplicable(id: PropertyPaletteIdType, sharedKind: Kind | null): boolean {
   if (sharedKind == null) return true;
   const allowed = APPLICABLE_KINDS[id];
 
@@ -48,9 +48,9 @@ export function isPaletteApplicable(id: PropertyPaletteId, sharedKind: Kind | nu
  * inapplicable after a selection change, callers use this to land on
  * `info` (always applicable) instead of leaving a disabled pane open.
  */
-export function fallbackPaletteFor(sharedKind: Kind | null): PropertyPaletteId {
+export function fallbackPaletteFor(sharedKind: Kind | null): PropertyPaletteIdType {
   // `info` is unconditionally applicable per the whitelist above.
   void sharedKind;
 
-  return "info";
+  return PropertyPaletteIdType.Info;
 }

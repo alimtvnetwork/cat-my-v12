@@ -1,8 +1,8 @@
 
 export enum InfoPaneActionType {
-  Lock = "lock",
-  Hide = "hide",
-  Delete = "delete",
+  Lock = InfoPaneActionType.Lock,
+  Hide = InfoPaneActionType.Hide,
+  Delete = InfoPaneActionType.Delete,
 }
 // Plan 80 step 19. Info pane wired to live selected ROI from useRulesStore.
 // Plan 100 Phase E step 24: multi-select summary. When N > 1 ROIs are
@@ -37,13 +37,13 @@ export function InfoPane() {
     logger.info("I_UI_INFO_PANE_AGGREGATE_ACTION", { action, count: ids.length });
     try {
       switch (action) {
-        case "lock":
+        case InfoPaneActionType.Lock:
           setLocked(ids, true);
           return;
-        case "hide":
+        case InfoPaneActionType.Hide:
           setHidden(ids, true);
           return;
-        case "delete":
+        case InfoPaneActionType.Delete:
           deleteRules(ids);
           return;
       }
@@ -140,12 +140,12 @@ export function InfoPane() {
             aria-label="Aggregate ROI actions"
             className="grid grid-cols-2 gap-hmi-1"
           >
-            <AggregateButton icon={Lock} label="Lock" onClick={() => runAggregate("lock")} />
-            <AggregateButton icon={EyeOff} label="Hide" onClick={() => runAggregate("hide")} />
+            <AggregateButton icon={Lock} label="Lock" onClick={() => runAggregate(InfoPaneActionType.Lock)} />
+            <AggregateButton icon={EyeOff} label="Hide" onClick={() => runAggregate(InfoPaneActionType.Hide)} />
             <AggregateButton
               icon={Trash2}
               label="Delete"
-              onClick={() => runAggregate("delete")}
+              onClick={() => runAggregate(InfoPaneActionType.Delete)}
               destructive
             />
           </div>

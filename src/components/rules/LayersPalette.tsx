@@ -1,7 +1,7 @@
 
 export enum LayersPaletteCodeType {
-  IUiLayerVisToggle = "I_UI_LAYER_VIS_TOGGLE",
-  IUiLayerLockToggle = "I_UI_LAYER_LOCK_TOGGLE",
+  IUiLayerVisToggle = LayersPaletteCodeType.IUiLayerVisToggle,
+  IUiLayerLockToggle = LayersPaletteCodeType.IUiLayerLockToggle,
 }
 // Plan 79 step 32. V4 Layers palette (right-bottom dock).
 //
@@ -160,7 +160,7 @@ export function LayersPalette({ rule }: Props) {
                       type="button"
                       aria-pressed={rs.visible}
                       aria-label={rs.visible ? "Hide layer" : "Show layer"}
-                      onClick={() => toggle(layer.id, "visible", "I_UI_LAYER_VIS_TOGGLE")}
+                      onClick={() => toggle(layer.id, "visible", LayersPaletteCodeType.IUiLayerVisToggle)}
                       className="flex h-4 w-4 items-center justify-center rounded-sm text-ca-ink-muted transition hover:text-ca-ink"
                     >
                       {rs.visible ? (
@@ -173,7 +173,7 @@ export function LayersPalette({ rule }: Props) {
                       type="button"
                       aria-pressed={rs.locked}
                       aria-label={rs.locked ? "Unlock layer" : "Lock layer"}
-                      onClick={() => toggle(layer.id, "locked", "I_UI_LAYER_LOCK_TOGGLE")}
+                      onClick={() => toggle(layer.id, "locked", LayersPaletteCodeType.IUiLayerLockToggle)}
                       className="flex h-4 w-4 items-center justify-center rounded-sm text-ca-ink-muted transition hover:text-ca-ink"
                     >
                       {rs.locked ? (

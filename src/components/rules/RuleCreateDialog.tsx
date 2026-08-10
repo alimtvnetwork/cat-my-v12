@@ -76,7 +76,7 @@ export function RuleCreateDialog({
   const titleId = useId();
   const descId = useId();
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<"Rule" | "Category">(initialKind);
+  const [kind, setKind] = useState<RuleCreateDialogInitialKindType>(initialKind as any);
   const [pocketSize, setPocketSize] = useState<PocketSize | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const availableKinds = useMemo(() => {

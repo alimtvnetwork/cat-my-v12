@@ -101,7 +101,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         { source: `hmi/DeviceDiscovery.${caller}` },
       );
       reportError(
-        caller === "client-gate" ? ErrorSourceType.Manual : ErrorSourceType.ServerFn,
+        caller === DeviceDiscoveryPanelCallerType.ClientGate ? ErrorSourceType.Manual : ErrorSourceType.ServerFn,
         raw ?? new Error(failure.message),
         {
           caller,

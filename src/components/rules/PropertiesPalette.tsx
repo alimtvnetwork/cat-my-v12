@@ -1,4 +1,9 @@
 
+export enum PropertiesPaletteModeType {
+  Rail = "rail",
+  Accordion = "accordion",
+  Tabs = "tabs",
+}
 export enum ModeToggleTilePropsModeType {
   Rail = "rail",
   Accordion = "accordion",
@@ -66,7 +71,7 @@ import { TypePane } from "./properties/TypePane";
 import { ParagraphPane } from "./properties/ParagraphPane";
 import { CssPane } from "./properties/CssPane";
 import { ImagePane } from "./properties/ImagePane";
-import { PropertyPaletteIdType } from "./PropertiesPalette";
+
 
 interface PaletteEntry {
   id: PropertyPaletteIdType;
@@ -77,51 +82,51 @@ interface PaletteEntry {
 
 const PALETTES: readonly PaletteEntry[] = [
   {
-    id: "info",
+    id: PropertyPaletteIdType.Info,
     label: "Info",
     hint: "ROI position, size, rotation, and pocket assignment.",
     Icon: Info,
   },
   {
-    id: "history",
+    id: PropertyPaletteIdType.History,
     label: "History",
     hint: "Undo / redo stack for the rule editor session.",
     Icon: History,
   },
   {
-    id: "adjust",
+    id: PropertyPaletteIdType.Adjust,
     label: "Adjustments",
     hint: "Threshold, contrast, gain, and other numeric knobs.",
     Icon: SlidersHorizontal,
   },
-  { id: "grid", label: "Grid & guides", hint: "Snap, grid density, guide lines.", Icon: Grid3x3 },
+  { id: PropertyPaletteIdType.Grid, label: "Grid & guides", hint: "Snap, grid density, guide lines.", Icon: Grid3x3 },
   {
-    id: "brush",
+    id: PropertyPaletteIdType.Brush,
     label: "Brush & swatches",
     hint: "Stroke width, dash, saved colors for freehand shapes.",
     Icon: Brush,
   },
   {
-    id: "layers",
+    id: PropertyPaletteIdType.Layers,
     label: "Layers shortcut",
     hint: "Jump to the Layers palette at the bottom.",
     Icon: Layers,
   },
-  { id: "type", label: "Type", hint: "Font, size, weight for OCR / text overlays.", Icon: Type },
+  { id: PropertyPaletteIdType.Type, label: "Type", hint: "Font, size, weight for OCR / text overlays.", Icon: Type },
   {
-    id: "paragraph",
+    id: PropertyPaletteIdType.Paragraph,
     label: "Paragraph",
     hint: "Alignment and line-height for text overlays.",
     Icon: AlignLeft,
   },
   {
-    id: "css",
+    id: PropertyPaletteIdType.Css,
     label: "CSS",
     hint: "Raw JSON view of the current ROI for power users.",
     Icon: FileCode2,
   },
   {
-    id: "image",
+    id: PropertyPaletteIdType.Image,
     label: "Image",
     hint: "Reference image adjustments (rotate, mirror, crop).",
     Icon: ImageIcon,
@@ -136,7 +141,7 @@ interface Props {
 }
 
 export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
-  const mode = useUiPrefsStore((s) => s.propertiesPaletteMode);
+  const mode = useUiPrefsStore((s) => s.propertiesPaletteMode as unknown as PropertiesPaletteModeType);
   const toggleMode = useUiPrefsStore((s) => s.togglePropertiesPaletteMode);
   const openByKind = useUiPrefsStore((s) => s.propertiesPaletteOpenPaneByKind);
   const setOpenPane = useUiPrefsStore((s) => s.setPropertiesPaletteOpenPane);
@@ -151,7 +156,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     ruleKind ??
     PropertiesPaletteRuleKindType.Rule;
   const remembered = openByKind[kindKey];
-  const [internal, setInternal] = useState<PropertyPaletteIdType>(remembered ?? "info");
+  const [internal, setInternal] = useState<PropertyPaletteIdType>((remembered as PropertyPaletteIdType | undefined) ?? PropertyPaletteIdType.Info);
   const activeId = active ?? remembered ?? internal;
   const activeEntry = PALETTES.find((p) => p.id === activeId) ?? PALETTES[0];
 
@@ -167,15 +172,15 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     const next = selection.ids.length;
     prevSelectionCountRef.current = next;
 
-    if (prev === 0 && next > 0 && activeId !== "info") {
+    if (prev === 0 && next > 0 && activeId !== PropertyPaletteIdType.Info) {
       logger.info("I_UI_PROPERTIES_PALETTE_AUTO_INFO", {
         selectedCount: next,
         priorPalette: activeId,
       });
       setOpenPane(kindKey, PropertiesPaneIdType.Info);
 
-      if (onChange) onChange("info");
-      else setInternal("info");
+      if (onChange) onChange(PropertyPaletteIdType.Info);
+      else setInternal(PropertyPaletteIdType.Info);
     }
     // activeId intentionally omitted: we only react to selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -215,7 +220,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     }
 
     logger.info("I_UI_PROPERTIES_PALETTE_SELECT", { palette: id });
-    setOpenPane(kindKey, id as PropertiesPaneIdType);
+    setOpenPane(kindKey, id as unknown as PropertiesPaneIdType);
 
     if (onChange) onChange(id);
     else setInternal(id);
@@ -229,14 +234,14 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
         data-mode={mode}
         className="flex min-h-0 flex-row-reverse border-l border-ca-border bg-ca-panel"
       >
-        {mode === "accordion" ? (
+        {mode === PropertiesPaletteModeType.Accordion ? (
           <AccordionBody
             activeId={activeId}
             onSelect={select}
             onToggleMode={toggleMode}
             sharedKind={selection.sharedKind}
           />
-        ) : mode === "tabs" ? (
+        ) : mode === PropertiesPaletteModeType.Tabs ? (
           <TabbedBody
             activeId={activeId}
             onSelect={select}
@@ -283,7 +288,7 @@ function RailBody({ activeId, activeEntry, onSelect, onToggleMode, sharedKind }:
             onSelect={() => onSelect(entry.id)}
           />
         ))}
-        <ModeToggleTile mode="rail" onToggle={onToggleMode} />
+        <ModeToggleTile mode={ModeToggleTilePropsModeType.Rail} onToggle={onToggleMode} />
       </div>
       <div
         data-testid="properties-palette-body"
@@ -324,7 +329,7 @@ function AccordionBody({ activeId, onSelect, onToggleMode, sharedKind }: Accordi
     >
       <div className="flex items-center justify-between border-b border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1 text-[11px] uppercase tracking-wide text-ca-ink-muted">
         <span className="truncate">Properties</span>
-        <ModeToggleTile mode="accordion" onToggle={onToggleMode} />
+        <ModeToggleTile mode={ModeToggleTilePropsModeType.Accordion} onToggle={onToggleMode} />
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {PALETTES.map((entry) => {
@@ -435,9 +440,9 @@ interface InspectorTab {
 }
 
 const INSPECTOR_TABS: readonly InspectorTab[] = [
-  { id: InspectorTabIdType.Transform, label: "Transform", panes: [PropertyPaletteIdType.Info, "grid", "image"] },
-  { id: InspectorTabIdType.Style, label: "Style", panes: ["adjust", "brush", "type", "paragraph"] },
-  { id: InspectorTabIdType.Rules, label: "Rules", panes: ["history", "css", "layers"] },
+  { id: InspectorTabIdType.Transform, label: "Transform", panes: [PropertyPaletteIdType.Info, PropertyPaletteIdType.Grid, PropertyPaletteIdType.Image] },
+  { id: InspectorTabIdType.Style, label: "Style", panes: [PropertyPaletteIdType.Adjust, PropertyPaletteIdType.Brush, PropertyPaletteIdType.Type, PropertyPaletteIdType.Paragraph] },
+  { id: InspectorTabIdType.Rules, label: "Rules", panes: [PropertyPaletteIdType.History, PropertyPaletteIdType.Css, PropertyPaletteIdType.Layers] },
 ];
 
 function tabForPane(id: PropertyPaletteIdType): InspectorTabId {
@@ -472,7 +477,7 @@ function TabbedBody({ activeId, onSelect, onToggleMode, sharedKind }: TabbedBody
     >
       <div className="flex items-center justify-between border-b border-ca-border bg-ca-panel-2 px-hmi-2 py-hmi-1 text-[11px] uppercase tracking-wide text-ca-ink-muted">
         <span className="truncate">Inspector</span>
-        <ModeToggleTile mode="tabs" onToggle={onToggleMode} />
+        <ModeToggleTile mode={ModeToggleTilePropsModeType.Tabs} onToggle={onToggleMode} />
       </div>
       <div
         role="tablist"

@@ -22,33 +22,33 @@ export interface HomeEntry {
 
 export const HOME_ENTRIES: readonly HomeEntry[] = [
   {
-    id: "projects",
+    id: HomeEntryIdType.Projects as any,
     label: "Projects",
     description:
       "Create a project or open an existing one to reach setup, rules, images, test, and run.",
     icon: "▦",
-    to: "/projects",
+    to: HomeEntryToType.Projects as any,
   },
   {
-    id: "setup",
+    id: HomeEntryIdType.Setup as any,
     label: "Setup",
     description:
       "Configure rules, camera, lighting, trigger, ROI, and reference for the active project.",
     icon: "⚙",
-    to: "/setup",
+    to: HomeEntryToType.Setup as any,
   },
   {
-    id: "trial-run",
+    id: HomeEntryIdType.TrialRun as any,
     label: "Trial run",
     description: "Run the current rule set against a batch and review pass or fail outcomes.",
     icon: "▶",
-    to: "/run",
+    to: HomeEntryToType.Run as any,
   },
   {
-    id: "ai-testing",
+    id: HomeEntryIdType.AiTesting as any,
     label: "AI testing",
     description: "Evaluate rules with AI gate, review history, and tune thresholds.",
     icon: "◈",
-    to: "/ai-testing",
+    to: HomeEntryToType.AiTesting as any,
   },
 ] as const;

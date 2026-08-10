@@ -35,7 +35,7 @@ class MathParser {
 
     if (this.current().kind !== "eof") return failEvaluation(MathIssueReasonType.MathParse);
 
-    return { ok: true, ok === false: false, value: left.value, pass: compare(operator, left.value, right.value) };
+    return { ok: true, isFail: false, value: left.value, pass: compare(operator, left.value, right.value) };
   }
 
   private parseAdd(): MathNumericResult {
@@ -234,13 +234,13 @@ function mapValue(result: MathNumericResult, fn: (value: number) => number): Mat
 }
 
 function ok(value: number): MathNumericResult {
-  return Number.isFinite(value) ? { ok: true, ok === false: false, value } : fail(MathIssueReasonType.MathParse);
+  return Number.isFinite(value) ? { ok: true, isFail: false, value } : fail(MathIssueReasonType.MathParse);
 }
 
 function fail(reason: MathIssueReason): MathNumericResult {
-  return { ok: false, ok === false: true, reason };
+  return { ok: false, isFail: true, reason };
 }
 
 function failEvaluation(reason: MathIssueReason): MathEvaluation {
-  return { ok: false, ok === false: true, reason };
+  return { ok: false, isFail: true, reason };
 }

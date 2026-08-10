@@ -23,7 +23,7 @@ export enum SidebarSideType {
 
 export enum SidebarContextPropsStateType {
   Expanded = "expanded",
-  Collapsed = "collapsed",
+  Collapsed = SidebarContextPropsStateType.Collapsed,
 }
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
@@ -134,9 +134,9 @@ const SidebarProvider = React.forwardRef<
       return () => window.removeEventListener("keydown", handleKeyDown);
     }, [toggleSidebar]);
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
+    // We add a state so that we can do data-state="expanded" or SidebarContextPropsStateType.Collapsed.
     // This makes it easier to style the sidebar with Tailwind classes.
-    const state = open ? "expanded" : "collapsed";
+    const state = open ? "expanded" : SidebarContextPropsStateType.Collapsed;
 
     const contextValue = React.useMemo<SidebarContextProps>(
       () => ({
@@ -600,7 +600,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          hidden={state !== SidebarContextPropsStateType.Collapsed || isMobile}
           {...tooltip}
         />
       </Tooltip>
