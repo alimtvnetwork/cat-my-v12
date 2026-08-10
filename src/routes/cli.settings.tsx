@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 /**
  * Route: `/cli/settings` - effective-config accordion.
  *
@@ -242,7 +243,7 @@ function LayerPanel({ view, effective, exposedFields, views }: LayerPanelProps) 
       <AccordionTrigger className="px-4 hover:no-underline">
         <div className="flex flex-1 items-center justify-between gap-3 pr-4">
           <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="font-mono text-[10px]">
+            <Badge variant={EmptyStateActionVariantType.Secondary} className="font-mono text-[10px]">
               #{precedence + 1}
             </Badge>
             <span className="font-medium capitalize">{name}</span>

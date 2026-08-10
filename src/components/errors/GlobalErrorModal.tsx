@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { ErrorExportFormatType } from "@/lib/errors/export";
 // Plan 71 Step 9: Global Error Modal.
 // Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §5
@@ -560,7 +561,7 @@ export function GlobalErrorModal() {
               ) : null}
               <Button
                 type="button"
-                variant="secondary"
+                variant={EmptyStateActionVariantType.Secondary}
                 size="sm"
                 onClick={() => currentError && void copyDiagnostics(currentError)}
                 aria-label="Copy diagnostics including correlation id, stack trace, and context"

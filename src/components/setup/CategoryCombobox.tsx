@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import * as React from "react";
 import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -165,7 +166,7 @@ export function CategoryCombobox({
       {value.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {value.map((v) => (
-            <Badge key={v} variant="secondary" className="gap-1 pr-1">
+            <Badge key={v} variant={EmptyStateActionVariantType.Secondary} className="gap-1 pr-1">
               {v}
               <button
                 type="button"

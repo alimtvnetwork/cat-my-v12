@@ -188,7 +188,7 @@ const Sidebar = React.forwardRef<
 >(
   (
     {
-      side = "left",
+      side = SidebarSideType.Left,
       variant = "sidebar",
       collapsible = "offcanvas",
       className,
@@ -243,7 +243,7 @@ const Sidebar = React.forwardRef<
         ref={ref}
         className="group peer hidden text-sidebar-foreground md:block"
         data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-collapsible={state === SidebarContextPropsStateType.Collapsed ? collapsible : ""}
         data-variant={variant}
         data-side={side}
       >
@@ -261,7 +261,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-            side === "left"
+            side === SidebarSideType.Left
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
             // Adjust the padding for floating and inset variants.

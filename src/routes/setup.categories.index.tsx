@@ -1,3 +1,6 @@
+import { RuleCreateDialogKindModeType } from "@/components/rules/RuleCreateDialog";
+import { RuleCreateDialogInitialKindType } from "@/components/rules/RuleCreateDialog";
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { SectionIdType } from "@/components/nav/SectionTopBar";
 import { useMemo, useRef, useState, type ReactElement, type MouseEvent } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -237,7 +240,7 @@ function SetupCategoriesPage(): ReactElement {
                 ? [
                     {
                       label: "Clear search",
-                      variant: "secondary",
+                      variant: EmptyStateActionVariantType.Secondary,
                       onClick: () => setQuery(""),
                       testId: "setup-categories-empty-clear",
                     },
@@ -272,8 +275,8 @@ function SetupCategoriesPage(): ReactElement {
         }}
         onSubmit={submitCreate}
         existingNames={all.map((r) => r.name)}
-        initialKind="Category"
-        kindMode="category"
+        initialKind={RuleCreateDialogInitialKindType.Category}
+        kindMode={RuleCreateDialogKindModeType.Category}
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
       />
     </div>

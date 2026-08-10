@@ -30,11 +30,11 @@ export enum TriggerSourceType {
   Profinet = "profinet",
 }
 export type TriggerSource = TriggerSourceType;
-export enum TriggerEdgeType {
+export enum TriggerTimingDiagramPropsEdgeType {
   Rising = "rising",
   Falling = "falling",
 }
-export type TriggerEdge = TriggerEdgeType;
+export type TriggerEdge = TriggerTimingDiagramPropsEdgeType;
 
 export interface TriggerConfig {
   source: TriggerSource;
@@ -44,7 +44,7 @@ export interface TriggerConfig {
 
 const DEFAULT_TRIGGER: TriggerConfig = {
   source: TriggerSourceType.Software,
-  edge: TriggerEdgeType.Rising,
+  edge: TriggerTimingDiagramPropsEdgeType.Rising,
   debounceMs: 5,
 };
 
@@ -154,7 +154,7 @@ function TriggerSettings() {
             description="Rising or falling detection with a debounce window (0-100 ms) that suppresses noise."
           >
             <div role="radiogroup" aria-label="Trigger edge" className="flex gap-hmi-2">
-              {([TriggerEdgeType.Rising, TriggerEdgeType.Falling] as const).map((e) => {
+              {([TriggerTimingDiagramPropsEdgeType.Rising, TriggerTimingDiagramPropsEdgeType.Falling] as const).map((e) => {
                 const active = config.edge === e;
 
                 return (

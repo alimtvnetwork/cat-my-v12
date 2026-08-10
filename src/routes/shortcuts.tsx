@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 // Plan 87 step 19: read-only keyboard shortcut cheatsheet.
 //
 // The existing `settings/shortcuts` route (`src/routes/settings.shortcuts.tsx`)
@@ -171,7 +172,7 @@ function ShortcutsCheatsheet() {
                 {
                   label: "Clear search",
                   onClick: () => setQuery(""),
-                  variant: "secondary",
+                  variant: EmptyStateActionVariantType.Secondary,
                   testId: "cheatsheet-empty-clear",
                 },
               ]}

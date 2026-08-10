@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 // Rulesets list (Plan 34, step 13). Lists rule sets for the current
 // project and offers a New button; step 14 (SS-03) will land the
@@ -84,7 +85,7 @@ function RulesetsList() {
                         label: seeded.cta.label,
                         onClick: seeded.cta.onClick,
                         testId: seeded.cta.testId,
-                        variant: "secondary" as const,
+                        variant: EmptyStateActionVariantType.Secondary as const,
                       },
                     ]
                   : undefined

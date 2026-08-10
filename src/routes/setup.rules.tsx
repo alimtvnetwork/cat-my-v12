@@ -1,3 +1,6 @@
+import { RuleCreateDialogKindModeType } from "@/components/rules/RuleCreateDialog";
+import { RuleCreateDialogInitialKindType } from "@/components/rules/RuleCreateDialog";
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { RuleAuditSourceType } from "@/lib/rules/audit-store";
 import { SectionIdType } from "@/components/nav/SectionTopBar";
 // Plan 79 step 22. V4 rule library list.
@@ -656,7 +659,7 @@ function SetupRulesPage() {
                 ? [
                     {
                       label: "Clear search",
-                      variant: "secondary",
+                      variant: EmptyStateActionVariantType.Secondary,
                       onClick: () => setQuery(""),
                       testId: "setup-rules-empty-clear",
                     },
@@ -669,7 +672,7 @@ function SetupRulesPage() {
                     },
                     {
                       label: "Manage Categories",
-                      variant: "secondary",
+                      variant: EmptyStateActionVariantType.Secondary,
                       onClick: () => void navigate({ to: "/setup/categories" }),
                       testId: "setup-rules-empty-manage-categories",
                     },
@@ -699,8 +702,8 @@ function SetupRulesPage() {
         }}
         onSubmit={submitCreate}
         existingNames={all.map((r) => r.name)}
-        initialKind="Rule"
-        kindMode="rule"
+        initialKind={RuleCreateDialogInitialKindType.Rule}
+        kindMode={RuleCreateDialogKindModeType.Rule}
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
         sourceConditions={dialog?.mode === "duplicate" ? dialog.source.conditions : undefined}
       />

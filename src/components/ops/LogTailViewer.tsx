@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 /**
  * Plan 90 Step 76 - `LogTailViewer` UI component.
  *
@@ -122,7 +123,7 @@ export function LogTailViewer({
     if (status === "error" || consecutiveFailures > 0) {
       return {
         label: `retrying (${consecutiveFailures})`,
-        variant: "secondary" as const,
+        variant: EmptyStateActionVariantType.Secondary as const,
       };
     }
 
@@ -130,7 +131,7 @@ export function LogTailViewer({
 
     if (status === "ended") return { label: "ended", variant: "outline" as const };
 
-    if (status === "connecting") return { label: "connecting", variant: "secondary" as const };
+    if (status === "connecting") return { label: "connecting", variant: EmptyStateActionVariantType.Secondary as const };
 
     return { label: status, variant: "outline" as const };
   }, [status, gaveUp, consecutiveFailures, runId]);

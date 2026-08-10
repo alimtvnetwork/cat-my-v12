@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { CommandIdType } from "@/lib/command-bus";
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import { SectionIdType } from "@/components/nav/SectionTopBar";
@@ -479,7 +480,7 @@ function ProjectsIndex() {
                         label: seededAction.cta.label,
                         onClick: seededAction.cta.onClick,
                         testId: seededAction.cta.testId,
-                        variant: "secondary" as const,
+                        variant: EmptyStateActionVariantType.Secondary as const,
                       },
                     ]
                   : []),
@@ -487,7 +488,7 @@ function ProjectsIndex() {
                   label: "Create project",
                   onClick: openDialog,
                   testId: "projects-empty-create",
-                  variant: "primary",
+                  variant: EmptyStateActionVariantType.Primary,
                 },
               ]}
               testId="projects-empty"
@@ -502,7 +503,7 @@ function ProjectsIndex() {
                   label: "Clear filter",
                   onClick: () => setPrefs((p) => ({ ...p, query: "" })),
                   testId: "projects-nomatch-clear",
-                  variant: "secondary",
+                  variant: EmptyStateActionVariantType.Secondary,
                 },
               ]}
               testId="projects-nomatch"

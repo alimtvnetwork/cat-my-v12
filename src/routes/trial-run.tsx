@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import { SectionIdType } from "@/components/nav/SectionTopBar";
 // Top-level Trial run picker. Home tile "Trial run" lands here; user picks
@@ -84,7 +85,7 @@ export function ProjectPicker({
                         label: seeded.cta.label,
                         onClick: seeded.cta.onClick,
                         testId: seeded.cta.testId,
-                        variant: "secondary" as const,
+                        variant: EmptyStateActionVariantType.Secondary as const,
                       },
                     ]
                   : []),

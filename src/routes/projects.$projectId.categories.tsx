@@ -1,3 +1,4 @@
+import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Tag, Trash2, FolderPlus, Layers } from "lucide-react";
@@ -82,7 +83,7 @@ function ProjectCategoriesTab() {
                           label: seeded.cta.label,
                           onClick: seeded.cta.onClick,
                           testId: seeded.cta.testId,
-                          variant: "secondary" as const,
+                          variant: EmptyStateActionVariantType.Secondary as const,
                         },
                       ]
                     : undefined
