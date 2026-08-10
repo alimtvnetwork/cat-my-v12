@@ -261,3 +261,54 @@ export async function beFetch<T = unknown>(
 
   return envelope as Envelope<T>;
 }
+
+export interface SafeFetchResult<T = unknown, E = EnvelopeError> {
+  isSuccess: boolean;
+  isFail: boolean;
+  data?: Envelope<T>;
+  error?: E;
+}
+
+/**
+ * Wrapper around beFetch that returns a standard result envelope instead of throwing.
+ */
+export async function safeBeFetch<T = unknown>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  opts?: BeFetchOptions,
+): Promise<SafeFetchResult<T>> {
+  try {
+    const data = await beFetch<T>(input, init, opts);
+
+    return {
+      isSuccess: true,
+      isFail: false,
+      data,
+    };
+  } catch (err) {
+    let error: EnvelopeError;
+    if (err instanceof EnvelopeError) {
+      error = err;
+    } else {
+      error = new EnvelopeError({
+        code: "E_UNKNOWN_SAFE_FETCH",
+        backendMessage: err instanceof Error ? err.message : String(err),
+        endpoint: urlOf(input),
+        method: methodOf(input, init),
+        responseStatus: 0,
+        correlationId: opts?.correlationId ?? "",
+        envelope: null,
+        cause: err,
+      });
+      // The original beFetch captures errors. We only need to capture here if it wasn't an EnvelopeError
+      // thrown by beFetch. Since beFetch wraps all its throws in EnvelopeError, this path is rare.
+      capture(error, init?.body, opts?.suppressCapture ?? false);
+    }
+
+    return {
+      isSuccess: false,
+      isFail: true,
+      error,
+    };
+  }
+}
