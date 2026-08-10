@@ -58,34 +58,34 @@ export const HealthSchema = z.object({
 /**
  * Pure helper that validates VALIDATION_WORKER_URL. Kept exported so unit
  * tests can exercise it without spinning up a server function. Returns
- * `{ ok: true, endpoint }` on success or `{ ok: false, reason }` on a
+ * `{ ok: true, isFail: false, endpoint }` on success or `{ ok: false, isFail: true, reason }` on a
  * config error. Never throws.
  */
 export function parseWorkerHealthzEndpoint(
   url: string | undefined,
-): { ok: true; endpoint: string } | { ok: false; reason: string } {
-  if (!url) return { ok: false, reason: "VALIDATION_WORKER_URL not set" };
+): { ok: true; isFail: false; endpoint: string } | { ok: false; isFail: true; reason: string } {
+  if (!url) return { ok: false, isFail: true, reason: "VALIDATION_WORKER_URL not set" };
   const trimmed = url.trim();
 
-  if (trimmed === "") return { ok: false, reason: "VALIDATION_WORKER_URL is empty" };
+  if (trimmed === "") return { ok: false, isFail: true, reason: "VALIDATION_WORKER_URL is empty" };
   let base: URL;
   try {
     base = new URL(trimmed);
   } catch {
     return {
-      ok: false,
+      ok: false, isFail: true,
       reason: `VALIDATION_WORKER_URL is not a valid URL: ${JSON.stringify(trimmed)}`,
     };
   }
 
   if (base.protocol !== "http:" && base.protocol !== "https:") {
     return {
-      ok: false,
+      ok: false, isFail: true,
       reason: `VALIDATION_WORKER_URL protocol must be http or https, got ${base.protocol}`,
     };
   }
 
-  return { ok: true, endpoint: `${base.toString().replace(/\/$/, "")}/healthz` };
+  return { ok: true, isFail: false, endpoint: `${base.toString().replace(/\/$/, "")}/healthz` };
 }
 
 export enum ScoreErrorCodeType {
@@ -111,8 +111,8 @@ export interface ScoreError {
 }
 
 export type ScoreResult =
-  | { ok: true; data: z.infer<typeof ResponseSchema>; attempts: number; elapsedMs: number }
-  | { ok: false; error: ScoreError };
+  | { ok: true; isFail: false; data: z.infer<typeof ResponseSchema>; attempts: number; elapsedMs: number }
+  | { ok: false; isFail: true; error: ScoreError };
 
 export const MAX_ATTEMPTS = 3;
 export const BASE_BACKOFF_MS = 400;

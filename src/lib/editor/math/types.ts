@@ -6,10 +6,10 @@ export enum MathIssueReasonType {
 export type MathIssueReason = MathIssueReasonType;
 
 export type MathNumericResult =
-  { ok: true; value: number } | { ok: false; reason: MathIssueReason };
+  { ok: true; isFail: false; value: number } | { ok: false; isFail: true; reason: MathIssueReason };
 
 export type MathEvaluation =
-  { ok: true; pass: boolean; value: number } | { ok: false; reason: MathIssueReason };
+  { ok: true; isFail: false; pass: boolean; value: number } | { ok: false; isFail: true; reason: MathIssueReason };
 
 export enum MathTokenKindType {
   Number = "number",

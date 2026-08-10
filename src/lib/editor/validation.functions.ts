@@ -59,7 +59,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
     if (parsed.ok === false) {
       console.warn("[validation.functions] worker URL invalid", { reason: parsed.reason });
 
-      return { configured: false, ok: false, reason: parsed.reason };
+      return { configured: false, ok: false, isFail: true, reason: parsed.reason };
     }
 
     const endpoint = parsed.endpoint;
@@ -73,7 +73,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
       if (res.ok === false) {
         return {
           configured: true,
-          ok: false,
+          ok: false, isFail: true,
           reason: `worker returned ${res.status}`,
           latencyMs: Date.now() - started,
         };
@@ -84,7 +84,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
       if (parsed.success === false || parsed.data.ok === false) {
         return {
           configured: true,
-          ok: false,
+          ok: false, isFail: true,
           reason: "healthz payload not ok",
           latencyMs: Date.now() - started,
         };
@@ -92,7 +92,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
 
       return {
         configured: true,
-        ok: true,
+        ok: true, isFail: false,
         engine: parsed.data.engine,
         version: parsed.data.version,
         latencyMs: Date.now() - started,
@@ -103,7 +103,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
 
       return {
         configured: true,
-        ok: false,
+        ok: false, isFail: true,
         reason: message,
         latencyMs: Date.now() - started,
       };
@@ -120,7 +120,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
 
     if (!url) {
       return {
-        ok: false,
+        ok: false, isFail: true,
         error: {
           code: ScoreErrorCodeType.WORKER_NOT_CONFIGURED,
           message:
@@ -245,7 +245,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
       });
 
       return {
-        ok: true,
+        ok: true, isFail: false,
         data: parsed.data,
         attempts: attempt,
         elapsedMs: Date.now() - startedAll,
@@ -253,7 +253,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
     }
 
     return {
-      ok: false,
+      ok: false, isFail: true,
       error:
         lastError ??
         ({

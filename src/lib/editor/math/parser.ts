@@ -35,7 +35,7 @@ class MathParser {
 
     if (this.current().kind !== "eof") return failEvaluation(MathIssueReasonType.MathParse);
 
-    return { ok: true, value: left.value, pass: compare(operator, left.value, right.value) };
+    return { ok: true, isFail: false, value: left.value, pass: compare(operator, left.value, right.value) };
   }
 
   private parseAdd(): MathNumericResult {
@@ -89,6 +89,7 @@ class MathParser {
     const property = this.advance();
 
     if (property.kind !== "identifier" || property.text !== "value")
+
       return fail(MathIssueReasonType.MathParse);
     const value = this.values[name];
 
@@ -121,6 +122,7 @@ class MathParser {
     if (first.ok === false) return first;
 
     if (this.takeKind(MathTokenKindType.Comma) === false)
+
       return fail(MathIssueReasonType.MathParse);
     const second = this.parseAdd();
 
@@ -195,6 +197,7 @@ class MathParser {
 
 function combine(operator: string, left: number, right: number): MathNumericResult {
   if ((operator === "/" || operator === "%") && right === 0)
+
     return fail(MathIssueReasonType.MathDivZero);
 
   if (operator === "+") return ok(left + right);
@@ -231,13 +234,13 @@ function mapValue(result: MathNumericResult, fn: (value: number) => number): Mat
 }
 
 function ok(value: number): MathNumericResult {
-  return Number.isFinite(value) ? { ok: true, value } : fail(MathIssueReasonType.MathParse);
+  return Number.isFinite(value) ? { ok: true, isFail: false, value } : fail(MathIssueReasonType.MathParse);
 }
 
 function fail(reason: MathIssueReason): MathNumericResult {
-  return { ok: false, reason };
+  return { ok: false, isFail: true, reason };
 }
 
 function failEvaluation(reason: MathIssueReason): MathEvaluation {
-  return { ok: false, reason };
+  return { ok: false, isFail: true, reason };
 }

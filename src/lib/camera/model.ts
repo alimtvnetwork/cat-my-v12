@@ -122,13 +122,13 @@ export interface CameraValidationError {
 
 export function validateCameraSetting(
   entry: unknown,
-): { ok: true; value: CameraSetting } | { ok: false; errors: CameraValidationError[] } {
+): { ok: true; isFail: false; value: CameraSetting } | { ok: false; isFail: true; errors: CameraValidationError[] } {
   const r = CameraSettingSchema.safeParse(entry);
 
-  if (r.success) return { ok: true, value: r.data };
+  if (r.success) return { ok: true, isFail: false, value: r.data };
 
   return {
-    ok: false,
+    ok: false, isFail: true,
     errors: r.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
   };
 }

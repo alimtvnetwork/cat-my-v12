@@ -43,6 +43,7 @@ export function updateRuleGesture(
   bounds: EditorRect,
 ): EditorGesture {
   if (gesture.family === EditorToolFamilyType.Rect)
+
     return updateRectGesture(gesture, image, modifiers, bounds);
 
   return updateAnchorGesture(gesture, image, modifiers, bounds);
@@ -54,6 +55,7 @@ export function commitRuleGesture(
   id: string,
 ): EditorRule | null {
   if (gesture.family === EditorToolFamilyType.Rect)
+
     return commitRectGesture(gesture, existingRules, id);
 
   return commitAnchorGesture(gesture, existingRules, id);

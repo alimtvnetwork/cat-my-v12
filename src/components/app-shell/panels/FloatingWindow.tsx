@@ -113,9 +113,9 @@ export function FloatingWindow({
     const isHandle = (e.target as Element).closest("[data-panel-drag-handle]");
 
     if (isControl) return;
-    const isInvalidHandle = !isHandle;
-
-    if (isInvalidHandle) return;
+    if (!isHandle) {
+      return;
+    }
 
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -131,9 +131,9 @@ export function FloatingWindow({
   };
   const moveDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const s = startRef.current;
-    const isMissingStart = !s;
-
-    if (isMissingStart) return;
+    if (!s) {
+      return;
+    }
     const next = { x: e.clientX - s.x, y: e.clientY - s.y };
 
     if (Math.hypot(next.x, next.y) >= 8) hasMovedRef.current = true;
@@ -144,9 +144,7 @@ export function FloatingWindow({
     setDelta(next);
   };
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
-    const isStationary = !hasMovedRef.current;
-
-    if (isStationary) {
+    if (!hasMovedRef.current) {
       startRef.current = null;
       samplesRef.current = [];
       onDragChange?.(false);
@@ -156,9 +154,7 @@ export function FloatingWindow({
 
     const s = startRef.current;
     startRef.current = null;
-    const isMissingStart = !s;
-
-    if (isMissingStart) {
+    if (!s) {
       onDragChange?.(false);
       hasMovedRef.current = false;
 

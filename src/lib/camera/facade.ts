@@ -32,14 +32,14 @@ function newCorrelationId(): string {
 export type CameraReferrerResolver = (id: string) => string[];
 
 export type CameraSaveOutcome =
-  | { ok: true; entry: CameraSetting }
-  | { ok: false; kind: "validation"; errors: CameraValidationError[]; correlationId: string }
-  | { ok: false; kind: "persist"; message: string; correlationId: string };
+  | { ok: true; isFail: false; entry: CameraSetting }
+  | { ok: false; isFail: true; kind: "validation"; errors: CameraValidationError[]; correlationId: string }
+  | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
 export type CameraRemoveOutcome =
   | { ok: true }
-  | { ok: false; kind: "referenced"; projects: string[]; correlationId: string }
-  | { ok: false; kind: "persist"; message: string; correlationId: string };
+  | { ok: false; isFail: true; kind: "referenced"; projects: string[]; correlationId: string }
+  | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
 export interface CameraFacade {
   list(): CameraSetting[];
@@ -104,7 +104,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (validated.ok === false) {
       return {
-        ok: false,
+        ok: false, isFail: true,
         kind: "validation",
         errors: validated.errors,
         correlationId: newCorrelationId(),
@@ -118,14 +118,14 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (isFail) {
         return {
-          ok: false,
+          ok: false, isFail: true,
           kind: "persist",
           message: "camera store rejected upsert",
           correlationId: newCorrelationId(),
         };
       }
 
-      return { ok: true, entry };
+      return { ok: true, isFail: false, entry };
     }
     // No browser (SSR / tests without stub): fall back to sync helper.
     const r = upsertCameraSettingSync(entry);
@@ -135,7 +135,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (f.kind === "validation") {
         return {
-          ok: false,
+          ok: false, isFail: true,
           kind: "validation",
           errors: f.errors,
           correlationId: newCorrelationId(),
@@ -143,7 +143,7 @@ class LocalStorageCameraFacade implements CameraFacade {
       }
 
       return {
-        ok: false,
+        ok: false, isFail: true,
         kind: "persist",
         message: f.message,
         correlationId: newCorrelationId(),
@@ -152,7 +152,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     for (const l of this.listeners) l();
 
-    return { ok: true, entry };
+    return { ok: true, isFail: false, entry };
   }
 
   remove(id: string): CameraRemoveOutcome {
@@ -160,7 +160,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (referrers.length > 0) {
       return {
-        ok: false,
+        ok: false, isFail: true,
         kind: "referenced",
         projects: referrers,
         correlationId: newCorrelationId(),
@@ -174,7 +174,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (!removed) {
         return {
-          ok: false,
+          ok: false, isFail: true,
           kind: "persist",
           message: `camera id not found: ${id}`,
           correlationId: newCorrelationId(),
@@ -188,7 +188,7 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (!s) {
       return {
-        ok: false,
+        ok: false, isFail: true,
         kind: "persist",
         message: "no browser storage",
         correlationId: newCorrelationId(),
@@ -207,7 +207,7 @@ class LocalStorageCameraFacade implements CameraFacade {
       return { ok: true };
     } catch (err) {
       return {
-        ok: false,
+        ok: false, isFail: true,
         kind: "persist",
         message: String(err),
         correlationId: newCorrelationId(),

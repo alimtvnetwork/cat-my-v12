@@ -171,7 +171,7 @@ export interface LiveCameraStream {
 }
 
 export type OpenCameraResult =
-  { ok: true; stream: LiveCameraStream } | { ok: false; error: CameraCapabilityError };
+  { ok: true; isFail: false; stream: LiveCameraStream } | { ok: false; isFail: true; error: CameraCapabilityError };
 
 /**
  * Acquire a live MediaStream with owned teardown. Every track stops on
@@ -193,7 +193,7 @@ export async function openCameraStream(
     };
     console.error("[camera-live] openCameraStream failed", error);
 
-    return { ok: false, error };
+    return { ok: false, isFail: true, error };
   }
 
   let raw: MediaStream;
@@ -203,7 +203,7 @@ export async function openCameraStream(
     const error = toCapabilityError(err);
     console.error("[camera-live] openCameraStream failed", error);
 
-    return { ok: false, error };
+    return { ok: false, isFail: true, error };
   }
 
   let isClosed = false;
@@ -254,5 +254,5 @@ export async function openCameraStream(
 
   console.info(`[camera-live] stream opened (${tracks.length} track(s))`);
 
-  return { ok: true, stream: { stream: raw, close, onExternalEnd } };
+  return { ok: true, isFail: false, stream: { stream: raw, close, onExternalEnd } };
 }

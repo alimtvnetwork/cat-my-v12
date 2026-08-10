@@ -341,6 +341,7 @@ export function applySetBounds(
       r.width === clamped.width &&
       r.height === clamped.height
     )
+
       return r;
     hasChanged = true;
 

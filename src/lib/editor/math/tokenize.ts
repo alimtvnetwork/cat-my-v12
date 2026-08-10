@@ -36,12 +36,15 @@ function readNextToken(input: string, index: number): ReadResult | null {
   if (isIdentifierStart(char)) return readIdentifier(input, index);
 
   if (char === "(")
+
     return { token: { kind: MathTokenKindType.Leftparen, text: char }, index: index + 1 };
 
   if (char === ")")
+
     return { token: { kind: MathTokenKindType.Rightparen, text: char }, index: index + 1 };
 
   if (char === ",")
+
     return { token: { kind: MathTokenKindType.Comma, text: char }, index: index + 1 };
 
   if (char === ".") return { token: { kind: MathTokenKindType.Dot, text: char }, index: index + 1 };
@@ -83,10 +86,12 @@ function readOperator(input: string, index: number): ReadResult | null {
   const two = input.slice(index, index + 2);
 
   if (TWO_CHAR_OPERATORS.has(two))
+
     return { token: { kind: MathTokenKindType.Operator, text: two }, index: index + 2 };
   const one = input[index];
 
   if (ONE_CHAR_OPERATORS.has(one))
+
     return { token: { kind: MathTokenKindType.Operator, text: one }, index: index + 1 };
 
   return null;

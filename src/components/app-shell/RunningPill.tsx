@@ -70,9 +70,9 @@ export function RunningPill() {
 
   // Load persisted position once hydrated so SSR and first client render match.
   useEffect(() => {
-    const isPendingHydration = !hydrated;
-
-    if (isPendingHydration) return;
+    if (!hydrated) {
+      return;
+    }
     const saved = loadPillPos();
 
     if (saved) {
@@ -85,9 +85,9 @@ export function RunningPill() {
 
   // Reclamp on viewport resize so the pill never escapes offscreen.
   useEffect(() => {
-    const isPendingHydration = !hydrated;
-
-    if (isPendingHydration) return;
+    if (!hydrated) {
+      return;
+    }
     const onResize = () => {
       setPos((p: PillPos | null) =>
         p ? clampPillPos(p, window.innerWidth, window.innerHeight) : p,
@@ -100,9 +100,9 @@ export function RunningPill() {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      const isMissingPos = !pos;
-
-      if (isMissingPos) return;
+      if (!pos) {
+        return;
+      }
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
       dragRef.current = {
         startX: e.clientX,
@@ -117,15 +117,16 @@ export function RunningPill() {
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
-    const isIdle = !d;
-
-    if (isIdle) return;
+    if (!d) {
+      return;
+    }
     const dx = e.clientX - d.startX;
     const dy = e.clientY - d.startY;
-    const isStationary = !d.moved;
     const isBelowThreshold = Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD_PX;
 
-    if (isStationary && isBelowThreshold) return;
+    if (!d.moved && isBelowThreshold) {
+      return;
+    }
     d.moved = true;
     setPos(
       clampPillPos({ x: d.origX + dx, y: d.origY + dy }, window.innerWidth, window.innerHeight),
@@ -156,16 +157,14 @@ export function RunningPill() {
     [pos],
   );
 
-  const isPendingHydration = !hydrated;
-  const isMissingPos = !pos;
-  const lacksOps = ops.length === 0;
-
-  if (isPendingHydration || lacksOps || isMissingPos) return null;
+  if (!hydrated || ops.length === 0 || !pos) {
+    return null;
+  }
 
   const jump = (targetRoute: string | undefined) => {
-    const isMissingRoute = !targetRoute;
-
-    if (isMissingRoute) return;
+    if (!targetRoute) {
+      return;
+    }
     console.info("[running-pill] click-to-jump", targetRoute);
     // targetRoute is a string; use `to` cast so TanStack navigate accepts it.
     navigate({ to: targetRoute }).catch((err) => {

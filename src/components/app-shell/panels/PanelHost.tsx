@@ -74,9 +74,9 @@ function groupByDock(panels: Record<string, PanelState>) {
   };
   for (const p of PANELS) {
     const state = panels[p.id];
-    const isClosed = !state?.open;
-
-    if (isClosed) continue;
+    if (!state?.open) {
+      continue;
+    }
     const dock = DockSlotType.isHidden(state.dock) ? p.defaultDock : state.dock;
 
     if (buckets[dock]) buckets[dock].push(p.id);
@@ -169,9 +169,9 @@ function handleDragEnd(event: DragEndEvent) {
   const kind = event.active.data.current?.kind as
     PanelModeType.Dock | PanelModeType.Float | undefined;
   const panelId = (event.active.data.current?.panelId as string | undefined) ?? null;
-  const isMissingPanelId = !panelId;
-
-  if (isMissingPanelId) return;
+  if (!panelId) {
+    return;
+  }
   const state = useWorkspaceLayoutStore.getState();
 
   if (PanelModeType.isFloat(kind)) {
@@ -186,10 +186,9 @@ function handleDragEnd(event: DragEndEvent) {
     }
 
     const currentRect = state.panels[panelId]?.floatingRect;
-    const isMissingRect = !currentRect;
-    const isMissingDelta = !event.delta;
-
-    if (isMissingRect || isMissingDelta) return;
+    if (!currentRect || !event.delta) {
+      return;
+    }
     const next: FloatingRect = {
       x: currentRect.x + event.delta.x,
       y: currentRect.y + event.delta.y,
@@ -245,10 +244,11 @@ function DockedDraggable({ panelId, onDragChange, children }: DockedDraggablePro
     let match: Element | null = null;
     for (const el of els) {
       const dockEl = el.closest("[data-dock-slot]");
-      const isMissingDockEl = !dockEl;
       const isHidden = dockEl?.classList.contains("hidden");
 
-      if (isMissingDockEl || isHidden) continue;
+      if (!dockEl || isHidden) {
+        continue;
+      }
       const s = dockEl.getAttribute("data-dock-slot");
 
       if (s && s !== sourceDock) {
@@ -271,9 +271,9 @@ function DockedDraggable({ panelId, onDragChange, children }: DockedDraggablePro
     const isHandle = (e.target as Element).closest("[data-panel-drag-handle]");
 
     if (isControl) return;
-    const isInvalidHandle = !isHandle;
-
-    if (isInvalidHandle) return;
+    if (!isHandle) {
+      return;
+    }
     const rect = nodeRef.current?.getBoundingClientRect();
 
     if (rect) startRef.current = { x: e.clientX, y: e.clientY, rect };
@@ -285,9 +285,9 @@ function DockedDraggable({ panelId, onDragChange, children }: DockedDraggablePro
   };
   const moveDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const s = startRef.current;
-    const isMissingStart = !s;
-
-    if (isMissingStart) return;
+    if (!s) {
+      return;
+    }
     const next = { x: e.clientX - s.x, y: e.clientY - s.y };
 
     if (Math.hypot(next.x, next.y) >= DRAG_OUT_THRESHOLD_PX) hasMovedRef.current = true;
@@ -454,10 +454,7 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps) {
           const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
           const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
           const hasAny = allIds.length > 0;
-          const isEmptySlot = !hasAny;
-          const isIdle = !isDragActive;
-
-          if (isEmptySlot && isIdle) {
+          if (!hasAny && !isDragActive) {
             return <DockSlot key={slot} slot={slot} className="hidden" dragActive={false} />;
           }
 
@@ -482,10 +479,7 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps) {
               const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
               const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
               const hasAny = allIds.length > 0;
-              const isEmptySlot = !hasAny;
-              const isIdle = !isDragActive;
-
-              if (isEmptySlot && isIdle) {
+              if (!hasAny && !isDragActive) {
                 return (
                   <DockSlot key={position} slot={position} className="hidden" dragActive={false} />
                 );
@@ -530,10 +524,7 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps) {
           const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
           const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
           const hasAny = allIds.length > 0;
-          const isEmptySlot = !hasAny;
-          const isIdle = !isDragActive;
-
-          if (isEmptySlot && isIdle) {
+          if (!hasAny && !isDragActive) {
             return <DockSlot key={slot} slot={slot} className="hidden" dragActive={false} />;
           }
 
@@ -553,9 +544,9 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps) {
       </div>
       {buckets[DockSlotType.Floating].map((id) => {
         const def = getPanel(id);
-        const isMissingDef = !def;
-
-        if (isMissingDef) return null;
+        if (!def) {
+          return null;
+        }
         const state = panels[id];
         const rect = state.floatingRect ?? { x: 120, y: 120, width: 320, height: 240 };
 

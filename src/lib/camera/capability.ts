@@ -38,7 +38,7 @@ export interface CameraDeviceSummary {
 }
 
 export type CameraCapability =
-  { ok: true; devices: CameraDeviceSummary[] } | { ok: false; error: CameraCapabilityError };
+  { ok: true; isFail: false; devices: CameraDeviceSummary[] } | { ok: false; isFail: true; error: CameraCapabilityError };
 
 // DOMException.name -> our stable code. Names per MediaDevices spec + WebKit
 // legacy synonyms. Keep the switch exhaustive so unknown names fall through
@@ -48,12 +48,15 @@ function mapDomExceptionName(name: string): CameraCapabilityErrorCode {
     case "NotAllowedError":
     case "SecurityError":
     case "PermissionDeniedError": // legacy WebKit
+
       return CameraCapabilityErrorCodeType.E_CAMERA_PERMISSION_DENIED;
     case "NotFoundError":
     case "DevicesNotFoundError": // legacy Chrome
+
       return CameraCapabilityErrorCodeType.E_CAMERA_NOT_FOUND;
     case "NotReadableError":
     case "TrackStartError": // legacy
+
       return CameraCapabilityErrorCodeType.E_CAMERA_IN_USE;
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
@@ -90,7 +93,7 @@ export interface ProbeOptions {
 
 /**
  * Probe camera availability. Never throws: every failure lands in
- * `{ ok: false, error }`. Also logs a single INFO/ERROR line so silent
+ * `{ ok: false, isFail: true, error }`. Also logs a single INFO/ERROR line so silent
  * failure is impossible (spec 03 error-manage requirement).
  */
 export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<CameraCapability> {
@@ -105,7 +108,7 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
     };
     console.error("[camera-capability] probe failed", error);
 
-    return { ok: false, error };
+    return { ok: false, isFail: true, error };
   }
 
   let stream: MediaStream | null = null;
@@ -115,7 +118,7 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
     const error = toCapabilityError(err);
     console.error("[camera-capability] probe failed", error);
 
-    return { ok: false, error };
+    return { ok: false, isFail: true, error };
   }
 
   // Enumerate AFTER getUserMedia so labels are populated (per spec, labels
@@ -150,5 +153,5 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
 
   console.info(`[camera-capability] probe ok deviceCount=${devices.length}`);
 
-  return { ok: true, devices };
+  return { ok: true, isFail: false, devices };
 }

@@ -85,10 +85,10 @@ function BadgeNumberField({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(String(Math.round(value)));
   const [invalid, setInvalid] = useState(false);
-  const isNonEditing = !editing;
-
   useEffect(() => {
-    if (isNonEditing) setDraft(String(Math.round(value)));
+    if (!editing) {
+      setDraft(String(Math.round(value)));
+    }
   }, [value, editing]);
   // Effective bounds: guard against inverted ranges (e.g. when the sibling
   // dimension is already at the canvas edge). If max < min, collapse to min
@@ -386,10 +386,10 @@ export function SelectionOverlay({
   // rule's kind. Scoped to `hud` so they override any route-scope
   // shortcut that also binds those keys, and only registered while a
   // rule is selected so they never fire without a target.
-  const isNonRule = !rule;
-
   useEffect(() => {
-    if (isNonRule) return;
+    if (!rule) {
+      return;
+    }
     const presets = getPresetsForKind(rule.kind);
 
     if (presets.length === 0) return;
@@ -429,7 +429,9 @@ export function SelectionOverlay({
   // are excluded via `when` per V4 §14.
 
   useEffect(() => {
-    if (isNonRule) return;
+    if (!rule) {
+      return;
+    }
     const unregister = registerShortcut({
       id: "hud.rename",
       scope: ShortcutScopeBaseType.Hud,
@@ -457,10 +459,10 @@ export function SelectionOverlay({
     lastSelId.current = id;
   }, [rule?.id]);
 
-  const isNonContextMenu = !contextMenu;
-
   useEffect(() => {
-    if (isNonContextMenu) return;
+    if (!contextMenu) {
+      return;
+    }
     const closePointer = (e: PointerEvent) => {
       const root = menuElRef.current;
 
@@ -657,12 +659,13 @@ export function SelectionOverlay({
   // "Cannot update a component (LastLogChip) while rendering a different
   // component (SelectionOverlay)", which cascades into the Setup error
   // boundary as "Rendered fewer hooks than expected" on the next render.
-  const isIdle = !rule && !contextMenu;
   useEffect(() => {
-    if (isIdle) logger.info("I_UI_SELECTION_OVERLAY_IDLE");
-  }, [isIdle]);
+    if (!rule && !contextMenu) {
+      logger.info("I_UI_SELECTION_OVERLAY_IDLE");
+    }
+  }, [rule, contextMenu]);
 
-  if (isIdle) {
+  if (!rule && !contextMenu) {
     return null;
   }
 

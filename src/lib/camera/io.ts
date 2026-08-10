@@ -28,7 +28,7 @@ export function exportCameraLibraryJson(lib: CameraLibrary): string {
 }
 
 export type ImportResult =
-  { ok: true; entries: CameraSetting[] } | { ok: false; errors: CameraValidationError[] };
+  { ok: true; isFail: false; entries: CameraSetting[] } | { ok: false; isFail: true; errors: CameraValidationError[] };
 
 export function importCameraLibraryJson(text: string): ImportResult {
   let parsed: unknown;
@@ -36,27 +36,27 @@ export function importCameraLibraryJson(text: string): ImportResult {
     parsed = JSON.parse(text);
   } catch (err) {
     return {
-      ok: false,
+      ok: false, isFail: true,
       errors: [{ path: "$", message: `Invalid JSON: ${(err as Error).message}` }],
     };
   }
 
   if (!parsed || typeof parsed !== "object") {
-    return { ok: false, errors: [{ path: "$", message: "Root must be an object" }] };
+    return { ok: false, isFail: true, errors: [{ path: "$", message: "Root must be an object" }] };
   }
 
   const obj = parsed as { kind?: unknown; version?: unknown; entries?: unknown };
 
   if (obj.kind !== "ca.camera.library") {
-    return { ok: false, errors: [{ path: "kind", message: 'Expected "ca.camera.library"' }] };
+    return { ok: false, isFail: true, errors: [{ path: "kind", message: 'Expected "ca.camera.library"' }] };
   }
 
   if (obj.version !== 1) {
-    return { ok: false, errors: [{ path: "version", message: "Unsupported version, expected 1" }] };
+    return { ok: false, isFail: true, errors: [{ path: "version", message: "Unsupported version, expected 1" }] };
   }
 
   if (Array.isArray(obj.entries) === false) {
-    return { ok: false, errors: [{ path: "entries", message: "Must be an array" }] };
+    return { ok: false, isFail: true, errors: [{ path: "entries", message: "Must be an array" }] };
   }
 
   const errors: CameraValidationError[] = [];
@@ -70,7 +70,7 @@ export function importCameraLibraryJson(text: string): ImportResult {
         errors.push({ path: `entries[${idx}].${e.path}`, message: e.message });
   });
 
-  if (errors.length > 0) return { ok: false, errors };
+  if (errors.length > 0) return { ok: false, isFail: true, errors };
 
-  return { ok: true, entries };
+  return { ok: true, isFail: false, entries };
 }

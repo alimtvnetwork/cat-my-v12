@@ -30,13 +30,13 @@ export function PaletteFrame({ id, title, children }: PaletteFrameProps) {
   const hydrated = usePaletteStore((s) => s.hydrated);
   const setState = usePaletteStore((s) => s.set);
   const hydrate = usePaletteStore((s) => s.hydrate);
-  const isUnhydrated = !hydrated;
-
   useEffect(() => {
-    if (isUnhydrated) hydrate();
+    if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
-  if (state.mode === "hidden") return null;
+  if (state.mode === "hidden") {
+    return null;
+  }
 
   const toggleMax = () =>
     setState(id, {
