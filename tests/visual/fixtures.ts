@@ -83,15 +83,18 @@ function fixtureProjectsState() {
  *   - "empty": clear the camera library so the unbound project renders
  *     the "No CameraSetting records yet" empty-state hint.
  */
-export type FixtureLibraryMode = "with-camera" | "empty";
+export enum FixtureLibraryModeType {
+  WithCamera = "with-camera",
+  Empty = "empty",
+}
 
 export async function installProjectCameraFixtures(
   page: Page,
-  libraryMode: FixtureLibraryMode = "with-camera",
+  libraryMode: FixtureLibraryModeType = FixtureLibraryModeType.WithCamera,
 ): Promise<void> {
   const projectsEnvelope = { state: fixtureProjectsState(), version: 0 };
   const cameraLibrary =
-    libraryMode === "with-camera" ? { entries: [fixtureCamera()] } : { entries: [] };
+    libraryMode === FixtureLibraryModeType.WithCamera ? { entries: [fixtureCamera()] } : { entries: [] };
   await page.evaluate(
     ({ projectsKey, projectsValue, cameraKey, cameraValue }) => {
       window.localStorage.setItem(projectsKey, projectsValue);
