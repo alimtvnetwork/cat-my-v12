@@ -6,6 +6,7 @@ import { GlobalNav } from "../hmi/GlobalNav";
  * do NOT mount an `HmiShell` titlebar.
  */
 export function AppShellNav() {
+
   return (
     <div
       className="app-shell-nav-global"
