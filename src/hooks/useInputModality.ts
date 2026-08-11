@@ -84,4 +84,4 @@ export function InputModalityTracker(): null {
 
 export function useInputModality(): Modality {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
+}

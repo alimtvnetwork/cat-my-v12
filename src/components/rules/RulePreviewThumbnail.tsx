@@ -135,4 +135,4 @@ export function RulePreviewThumbnail({ rule, width = 40, height = 26, className 
       </svg>
     </span>
   );
-}
+}

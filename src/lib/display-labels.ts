@@ -114,4 +114,4 @@ export function formatUiText(value: unknown): string {
       (_match, key: string, val: string) =>
         `${formatIdentifierLabel(key)} ${formatIdentifierLabel(val)}`,
     );
-}
+}

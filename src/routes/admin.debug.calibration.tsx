@@ -236,4 +236,4 @@ function ReportCard({ report }: { report: CalibrationReport | null }) {
       </table>
     </section>
   );
-}
+}

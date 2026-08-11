@@ -158,4 +158,4 @@ describe("ImageSamplesSection reordering", () => {
     await fresh.__hydrate();
     expect(fresh.listByProject("p1").map((s) => s.id)).toEqual(["b", "a", "c"]);
   });
-});
+});

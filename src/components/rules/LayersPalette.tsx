@@ -382,14 +382,19 @@ export function LayersPalette({ rule }: Props) {
 function channelSwatch(id: ChannelId): string {
   switch (id) {
     case "r":
+
       return "#ef4444";
     case "g":
+
       return "#22c55e";
     case "b":
+
       return "#3b82f6";
     case "a":
+
       return "repeating-conic-gradient(#94a3b8 0 25%, #cbd5e1 0 50%) 50% / 8px 8px";
     default:
+
       return "linear-gradient(90deg,#ef4444,#22c55e,#3b82f6)";
   }
 }

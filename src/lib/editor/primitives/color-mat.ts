@@ -198,4 +198,4 @@ export function evaluateColorMat(input: ColorMatInput, params: ColorMatParams): 
   }
 
   return { pass: true, reason: "ok", coverage, matched, total };
-}
+}

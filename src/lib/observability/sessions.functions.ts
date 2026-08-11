@@ -113,6 +113,7 @@ export const getObservabilitySessions = createServerFn({ method: "GET" })
           nextCursor: null,
         };
       }
+
       throw err;
     }
   });

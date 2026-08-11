@@ -110,21 +110,26 @@ function VendorRadioGroup({ vendor, vendors, onChange, describedBy }: VendorRadi
       case "ArrowDown":
         e.preventDefault();
         focus(idx + 1, true);
+
         return;
       case "ArrowLeft":
       case "ArrowUp":
         e.preventDefault();
         focus(idx - 1, true);
+
         return;
       case "Home":
         e.preventDefault();
         focus(0, true);
+
         return;
       case "End":
         e.preventDefault();
         focus(vendors.length - 1, true);
+
         return;
       default:
+
         return;
     }
   };

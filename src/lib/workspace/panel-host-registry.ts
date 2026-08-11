@@ -60,4 +60,4 @@ export function usePanelHostMounted(): boolean {
 export function __resetPanelHostRegistryForTests(): void {
   count = 0;
   listeners.clear();
-}
+}

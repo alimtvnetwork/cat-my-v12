@@ -589,16 +589,22 @@ function KindEditor({
 }) {
   switch (rule.kind) {
     case "R":
+
       return <RectRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "C":
+
       return <CircleRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "K":
+
       return <OcrRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "S":
+
       return <TextRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "E":
+
       return <MathRuleEditor rule={rule} onChange={onUpdateParams} />;
     default:
+
       return null;
   }
 }
@@ -684,4 +690,4 @@ function MoreOptionsTabs({
       </div>
     </section>
   );
-}
+}

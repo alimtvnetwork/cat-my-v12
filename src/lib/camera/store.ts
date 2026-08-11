@@ -184,4 +184,4 @@ export function upsertCameraSettingSync(
   if (w.ok === false) return { ok: false, isFail: true, failure: w.failure };
 
   return { ok: true, isFail: false };
-}
+}

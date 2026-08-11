@@ -170,4 +170,4 @@ export class HomeErrorBoundary extends Component<{ children: ReactNode }, HomeBo
 
     return this.props.children;
   }
-}
+}

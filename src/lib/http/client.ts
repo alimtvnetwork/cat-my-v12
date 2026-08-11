@@ -4,4 +4,4 @@ import { resolveBackendUrl } from "@/lib/data-source";
 
 export function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   return globalThis.fetch(resolveBackendUrl(input), init);
-}
+}

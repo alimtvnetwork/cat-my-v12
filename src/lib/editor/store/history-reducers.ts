@@ -50,4 +50,4 @@ export function applyRedoHistory(state: HistoryState): HistoryApplyResult {
   const past = [...state.past, entry].slice(-UNDO_CAPACITY);
 
   return { state: { past, future }, entry };
-}
+}

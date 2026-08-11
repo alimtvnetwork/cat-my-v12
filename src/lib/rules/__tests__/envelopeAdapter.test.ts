@@ -130,4 +130,4 @@ describe("projectRulesetToEnvelope", () => {
     const { envelope } = projectRulesetToEnvelope(rs, { version: 7 });
     expect(envelope.Version).toBe(7);
   });
-});
+});

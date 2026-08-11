@@ -70,4 +70,4 @@ export function LineToolControls({ params, onChange }: LineToolControlsProps) {
       </label>
     </div>
   );
-}
+}

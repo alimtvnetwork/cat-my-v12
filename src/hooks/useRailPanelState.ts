@@ -109,6 +109,7 @@ export function useRailPanelState(): UseRailPanelStateResult {
         ev.key.startsWith(STORAGE_PREFIX) === false ||
         ev.key.endsWith(HIDDEN_SUFFIX) === false
       )
+
         return;
       const storageKey = ev.key.slice(STORAGE_PREFIX.length, ev.key.length - HIDDEN_SUFFIX.length);
 

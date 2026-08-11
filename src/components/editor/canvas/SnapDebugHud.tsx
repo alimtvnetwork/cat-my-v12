@@ -103,4 +103,4 @@ export function SnapDebugHud({ debug, guides, zoom, tolerancePx }: Props) {
       )}
     </div>
   );
-}
+}

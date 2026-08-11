@@ -114,4 +114,4 @@ export function useMenuShortcuts(bindings: readonly MenuShortcutBinding[]): void
 
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [bindings]);
-}
+}

@@ -46,4 +46,4 @@ export function ConditionTypeSelect({
       </SelectContent>
     </Select>
   );
-}
+}

@@ -87,4 +87,4 @@ describe("runProject", () => {
     expect(out.disabled).toEqual([]);
     expect(out.pass).toBe(1);
   });
-});
+});

@@ -188,4 +188,4 @@ export function makeRuleFacade(): RuleFacade {
 /** Test-only override. */
 export function __setRuleFacadeForTests(f: RuleFacade | null): void {
   cached = f;
-}
+}

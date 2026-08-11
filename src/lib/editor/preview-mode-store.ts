@@ -179,4 +179,4 @@ export function subscribe(cb: Listener): () => void {
   return () => {
     listeners.delete(cb);
   };
-}
+}

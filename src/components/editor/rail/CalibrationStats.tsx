@@ -50,4 +50,4 @@ export function CalibrationStats({ kind }: CalibrationStatsProps) {
       </div>
     </div>
   );
-}
+}

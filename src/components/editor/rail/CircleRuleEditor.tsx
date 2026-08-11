@@ -128,4 +128,4 @@ function NumericSlider({ label, value, min, max, onChange }: NumericSliderProps)
       />
     </label>
   );
-}
+}

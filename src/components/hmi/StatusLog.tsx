@@ -44,4 +44,4 @@ export function StatusLog({ entries }: { entries: StatusLogEntry[] }) {
       )}
     </ul>
   );
-}
+}

@@ -155,4 +155,4 @@ export function createMemoryDomainFacade<T extends DomainRow>(slice: SliceKey): 
   };
 
   return facade;
-}
+}

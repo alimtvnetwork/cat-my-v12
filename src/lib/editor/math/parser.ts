@@ -243,4 +243,4 @@ function fail(reason: MathIssueReason): MathNumericResult {
 
 function failEvaluation(reason: MathIssueReason): MathEvaluation {
   return { ok: false, isFail: true, reason };
-}
+}

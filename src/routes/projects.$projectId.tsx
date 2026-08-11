@@ -63,6 +63,7 @@ function getProjectActive(pathname: string): string {
   if (pathname.endsWith("/trial-run")) return "trial-run";
 
   if (pathname.endsWith("/ai-testing") || pathname.endsWith("/ai-testing-history"))
+
     return "ai-testing";
 
   return "overview";

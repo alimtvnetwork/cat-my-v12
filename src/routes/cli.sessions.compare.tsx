@@ -158,6 +158,7 @@ function bucketFor(level: unknown): LevelBucket {
   const l = typeof level === "string" ? level.toLowerCase() : "";
 
   if (l === LevelBucketType.Error || l === "critical" || l === "fatal")
+
     return LevelBucketType.Error;
 
   if (l === ValidationStatus.Warn || l === "warning") return LevelBucketType.Warn;

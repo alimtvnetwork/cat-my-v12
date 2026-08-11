@@ -91,4 +91,4 @@ export function importChainEventsJson(text: string): ChainEventImportResult {
   }
 
   return { store: { version: 1, events: kept }, errors };
-}
+}

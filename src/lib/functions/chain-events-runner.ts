@@ -70,6 +70,7 @@ function raceTimeout<T>(
   ms: number | undefined,
 ): Promise<{ ok: true; value: T } | { ok: false; code: "ce.run.timeout"; message: string }> {
   if (!ms || Number.isFinite(ms) === false || ms <= 0)
+
     return p.then((value) => ({ ok: true, value }));
 
   return new Promise((resolve) => {

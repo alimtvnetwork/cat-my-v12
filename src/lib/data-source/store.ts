@@ -193,4 +193,4 @@ export function __resetDataSourceForTests(): void {
 }
 
 export const DATA_SOURCE_STORAGE_KEY = STORAGE_KEY;
-export const BACKEND_BASE_URL_STORAGE_KEY = BASE_URL_STORAGE_KEY;
+export const BACKEND_BASE_URL_STORAGE_KEY = BASE_URL_STORAGE_KEY;

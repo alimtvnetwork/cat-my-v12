@@ -647,4 +647,4 @@ function ErrorBanner({ error }: { error: ScoreError | { code: "CLIENT"; message:
       ) : null}
     </div>
   );
-}
+}

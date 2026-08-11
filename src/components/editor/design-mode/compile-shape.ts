@@ -47,16 +47,22 @@ function escapeXml(value: string): string {
   return value.replace(/[<>&"']/g, (ch) => {
     switch (ch) {
       case "<":
+
         return "&lt;";
       case ">":
+
         return "&gt;";
       case "&":
+
         return "&amp;";
       case '"':
+
         return "&quot;";
       case "'":
+
         return "&apos;";
       default:
+
         return ch;
     }
   });
@@ -85,4 +91,4 @@ export function compileDesignShape(
     viewBoxH: bounds.height,
     pointCount: reduced.length,
   };
-}
+}

@@ -69,4 +69,4 @@ export function EmptyState({
       {action ? <div className="mt-hmi-1">{action}</div> : null}
     </div>
   );
-}
+}

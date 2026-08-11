@@ -200,8 +200,10 @@ export function FloatingInspector({ title, hasSelection, kind, children }: Float
           break;
         case "Escape":
           setOpen(false);
+
           return;
         default:
+
           return;
       }
 

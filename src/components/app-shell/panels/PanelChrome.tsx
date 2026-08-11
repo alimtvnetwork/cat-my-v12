@@ -65,7 +65,6 @@ function ChromeControl({
   intent?: PanelChromeIntentType;
   "data-testid"?: string;
 }) {
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -107,16 +106,17 @@ function ChromeControl({
 
 function getPanelHint(panelId: string): string | null {
   if (panelId === "tools")
+
     return "Tools stay on the left: draw, select, and edit inspection regions.";
 
   if (panelId === "rules")
+
     return "Rules stay on the right: review checks, order, visibility, and validation.";
 
   return null;
 }
 
 function PanelHint({ hint, title }: { hint: string; title: string }) {
-
   return (
     <TooltipProvider delayDuration={180}>
       <Tooltip>

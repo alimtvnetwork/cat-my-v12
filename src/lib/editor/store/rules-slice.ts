@@ -726,4 +726,4 @@ export const useRulesStore = create<RulesStore>((set, get) => ({
   __resetForTests: (state) => {
     set({ ...INITIAL_STATE, ...state });
   },
-}));
+}));

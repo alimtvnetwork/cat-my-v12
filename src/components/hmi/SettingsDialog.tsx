@@ -45,4 +45,4 @@ export const SettingsDialog = forwardRef<HTMLDivElement, SettingsDialogProps>(
       </div>
     );
   },
-);
+);

@@ -62,4 +62,4 @@ export function SettingsCard({
       <div className="mt-hmi-3">{children}</div>
     </section>
   );
-}
+}

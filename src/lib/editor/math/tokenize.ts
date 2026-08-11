@@ -111,4 +111,4 @@ function isIdentifierStart(char: string): boolean {
 
 function isIdentifierPart(char: string): boolean {
   return /[A-Za-z0-9_]/.test(char);
-}
+}

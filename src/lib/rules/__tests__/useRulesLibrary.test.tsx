@@ -84,4 +84,4 @@ describe("useRulesLibrary", () => {
     const { result } = renderHook(() => useRulesLibrary());
     await expect(result.current.remove(UNCATEGORIZED_RULE_ID)).rejects.toThrow(/Built-in category/);
   });
-});
+});

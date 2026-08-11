@@ -17,6 +17,7 @@ export async function QueryWrapper<T>(
 ): Promise<T | null> {
   try {
     const result = await queryFn();
+
     return result;
   } catch (error) {
     if (!context.suppressCapture) {
@@ -36,6 +37,7 @@ export async function QueryWrapper<T>(
       }
     }
     console.error("[QueryWrapper] Query failed:", error, context);
+
     throw error;
   }
-}
+}

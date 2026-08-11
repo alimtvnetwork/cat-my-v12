@@ -90,4 +90,4 @@ export namespace ToolType {
   export function isFreehand(val: string | null | undefined): boolean {
     return val === ToolType.Freehand;
   }
-}
+}

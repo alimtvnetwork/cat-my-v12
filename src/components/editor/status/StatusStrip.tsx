@@ -28,4 +28,4 @@ export function StatusStrip({ undo, redo, state, onUndo, onRedo }: StatusStripPr
       </div>
     </div>
   );
-}
+}

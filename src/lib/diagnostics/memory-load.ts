@@ -93,4 +93,4 @@ export function loadMemoryDiagnostics(): MemoryLoadResult {
 function safeGlob(result: Record<string, unknown>, errors: string[]): Record<string, unknown> {
   // Static analysis handles the glob, we just return the result (or log errors if it somehow throws, though eager globs throw at build time).
   return result || {};
-}
+}

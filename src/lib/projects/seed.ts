@@ -245,4 +245,4 @@ export function autoSeedIfEmpty(projects: readonly CatSeedProject[]): SeedResult
   console.info("[projects/seed] autoSeedIfEmpty applied", result);
 
   return result;
-}
+}

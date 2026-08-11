@@ -55,4 +55,4 @@ function TaskRow({ task }: { task: HomeTask }) {
       </div>
     </article>
   );
-}
+}

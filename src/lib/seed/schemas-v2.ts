@@ -271,6 +271,7 @@ function formatShortLegacy(i: SeedIssue): string {
   if (i.expected === "frozen profile present") return `missing frozen profile: ${i.got ?? ""}`;
 
   if (i.message.startsWith("duplicate id"))
+
     return `duplicate id in ${i.path.split("[")[0]}: ${i.got ?? ""}`;
 
   if (i.message === "unsupported slice") return `unsupported slice: ${i.path}`;
@@ -555,4 +556,4 @@ export function parseSeedBundleV2(raw: unknown): SeedBundleV2 {
   }
 
   return parsed;
-}
+}

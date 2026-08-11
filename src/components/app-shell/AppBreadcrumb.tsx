@@ -6,12 +6,10 @@ export enum AppBreadcrumbPropsVariantType {
 
 export namespace AppBreadcrumbPropsVariantType {
   export function isBand(val: unknown): val is AppBreadcrumbPropsVariantType.Band {
-
     return val === AppBreadcrumbPropsVariantType.Band;
   }
 
   export function isInline(val: unknown): val is AppBreadcrumbPropsVariantType.Inline {
-
     return val === AppBreadcrumbPropsVariantType.Inline;
   }
 }
@@ -76,7 +74,7 @@ export function buildCrumbsFromMatches(
     .reduce<Crumb[]>((acc, seg) => {
       const to = `${acc.length > 0 ? acc[acc.length - 1].to : ""}/${seg}`;
       const paramName = shouldUseResolvers ? paramMap.get(seg) : undefined;
-      
+
       return [...acc, { to, label: resolveCrumb(seg, paramName) }];
     }, []);
 }

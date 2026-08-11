@@ -41,4 +41,4 @@ export function SaveState({ undo, redo, state, onUndo, onRedo }: SaveStateProps)
       <span className={state === "Dirty" ? "text-ca-warn" : ""}>{state}</span>
     </span>
   );
-}
+}

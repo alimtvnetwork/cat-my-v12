@@ -35,6 +35,7 @@ export async function executeApiQuery<T = unknown>(
 ): Promise<QueryResult<T>> {
   try {
     const envelope = await beFetch<T>(input, init, opts);
+
     return { isSuccess: true, isFail: false, data: envelope.Results as T, error: null };
   } catch (error) {
     return {
@@ -44,4 +45,4 @@ export async function executeApiQuery<T = unknown>(
       error: error instanceof Error ? error : new Error(String(error)),
     };
   }
-}
+}

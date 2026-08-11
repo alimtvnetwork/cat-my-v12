@@ -30,4 +30,4 @@ export const ALL_APP_EVENTS: readonly AppEvent[] = Object.freeze([
 
 export function isAppEvent(value: unknown): value is AppEvent {
   return typeof value === "string" && (ALL_APP_EVENTS as readonly string[]).includes(value);
-}
+}

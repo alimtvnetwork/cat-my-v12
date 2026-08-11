@@ -160,4 +160,4 @@ describe("useSaveRuleSet", () => {
     // The second (successful) save must remain the committed state.
     expect(result.current.state.kind).toBe("saved");
   });
-});
+});

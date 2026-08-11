@@ -61,4 +61,4 @@ export class MicSettingsValidationError extends Error {
     super(`MicSettings failed schema validation (${issues.length} issue(s))`);
     this.name = "MicSettingsValidationError";
   }
-}
+}

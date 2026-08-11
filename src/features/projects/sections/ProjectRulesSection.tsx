@@ -190,6 +190,7 @@ export function ProjectRulesSection({ project, rulesets }: ProjectRulesSectionPr
     if (
       window.confirm("Remove this ruleset from the project? The ruleset will be deleted.") === false
     )
+
       return;
     try {
       deleteRuleset(id);
@@ -478,4 +479,4 @@ function IconBtn({
       <Icon aria-hidden size={16} />
     </button>
   );
-}
+}

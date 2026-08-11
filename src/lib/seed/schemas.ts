@@ -113,4 +113,4 @@ export const catSeedBundleSchema: z.ZodType<CatSeedBundle> = z.object({
  */
 export function parseCatSeedBundle(raw: unknown): CatSeedBundle {
   return catSeedBundleSchema.parse(raw);
-}
+}

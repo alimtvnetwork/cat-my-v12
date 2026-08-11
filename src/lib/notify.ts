@@ -70,4 +70,4 @@ export function notifyWarning(title: string, opts: NotifyOptions = {}): ToastId 
 /** Dismiss a toast raised by any of the helpers above. */
 export function dismissNotification(id: ToastId): void {
   toast.dismiss(id);
-}
+}

@@ -379,4 +379,4 @@ function Slider({ label, min, max, step, value, format, onChange }: SliderProps)
       />
     </label>
   );
-}
+}

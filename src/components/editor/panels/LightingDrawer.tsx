@@ -171,4 +171,4 @@ function Slider({ label, value, min, max, step, onChange }: SliderProps) {
       />
     </label>
   );
-}
+}

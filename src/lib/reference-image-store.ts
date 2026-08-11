@@ -48,4 +48,4 @@ export function subscribe(cb: Listener): () => void {
   listeners.add(cb);
 
   return () => listeners.delete(cb);
-}
+}

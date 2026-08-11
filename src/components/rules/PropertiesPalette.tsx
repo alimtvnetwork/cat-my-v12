@@ -556,26 +556,37 @@ function TabbedBody({ activeId, onSelect, onToggleMode, sharedKind }: TabbedBody
 function PaletteBody({ id }: { id: PropertyPaletteIdType }) {
   switch (id) {
     case "info":
+
       return <InfoPane />;
     case "history":
+
       return <HistoryPane />;
     case "adjust":
+
       return <AdjustPane />;
     case "grid":
+
       return <GridPane />;
     case "brush":
+
       return <SwatchesPane />;
     case "layers":
+
       return <LayersShortcutPane />;
     case "type":
+
       return <TypePane />;
     case "paragraph":
+
       return <ParagraphPane />;
     case "css":
+
       return <CssPane />;
     case "image":
+
       return <ImagePane />;
     default:
+
       return null;
   }
 }
@@ -660,4 +671,4 @@ function RailTile({ entry, active, disabled, onSelect }: RailTileProps) {
       </TooltipContent>
     </Tooltip>
   );
-}
+}

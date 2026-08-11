@@ -230,4 +230,4 @@ export function lookupErrorCode(code: string | undefined | null): ErrorCodeMeta 
 /** For tests / debug tools. Do not mutate. */
 export function listRegisteredErrorCodes(): ErrorCodeMeta[] {
   return Object.values(E_CODE_REGISTRY);
-}
+}

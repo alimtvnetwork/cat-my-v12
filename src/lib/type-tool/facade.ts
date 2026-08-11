@@ -158,4 +158,4 @@ export function useTypeToolPrefs(): TypeToolPrefs {
     typeToolFacade.getSnapshot,
     typeToolFacade.getSnapshot,
   );
-}
+}

@@ -177,4 +177,4 @@ describe("ImageSamplesFacade", () => {
     expect(rows.map((s) => s.id)).toEqual(["b", "a", "c"]);
     expect(rows.map((s) => s.orderIndex)).toEqual([0, 1, 2]);
   });
-});
+});

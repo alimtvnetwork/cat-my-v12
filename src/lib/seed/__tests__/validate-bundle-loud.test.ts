@@ -45,4 +45,4 @@ describe("validateBundleLoud", () => {
     const combined = logger.error.mock.calls.map((c) => c[0]).join("\n");
     expect(combined).toMatch(/samples\[0\]\.projectId/);
   });
-});
+});

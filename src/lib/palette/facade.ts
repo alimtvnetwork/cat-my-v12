@@ -259,4 +259,4 @@ export function makePaletteFacade(): PaletteFacade {
 /** Test-only override. */
 export function __setPaletteFacadeForTests(f: PaletteFacade | null): void {
   cached = f;
-}
+}

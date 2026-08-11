@@ -580,4 +580,4 @@ export function ReferenceImageCard() {
       )}
     </section>
   );
-}
+}

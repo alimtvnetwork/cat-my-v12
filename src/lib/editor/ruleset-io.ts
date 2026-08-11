@@ -245,4 +245,4 @@ export function parseRuleSet(text: string): ParsedRuleSet {
 
     throw err;
   }
-}
+}

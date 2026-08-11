@@ -141,4 +141,4 @@ export function CaptureRequestDebugPanel() {
       ) : null}
     </aside>
   );
-}
+}

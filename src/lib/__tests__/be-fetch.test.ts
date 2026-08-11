@@ -161,4 +161,4 @@ describe("beFetch", () => {
     ).rejects.toBeInstanceOf(EnvelopeError);
     expect(useErrorStore.getState().currentError).toBeNull();
   });
-});
+});

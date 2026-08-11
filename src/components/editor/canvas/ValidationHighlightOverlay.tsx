@@ -65,6 +65,7 @@ export function ValidationHighlightOverlay({ rules, viewport, canvasSize }: Prop
     !status ||
     (status !== ValidationStatusType.Fail && status !== ValidationStatusType.Warn)
   )
+
     return null;
   const tone = TONE[status];
   const tl = imageToScreen({ x: target.x, y: target.y }, viewport);

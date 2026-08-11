@@ -59,4 +59,4 @@ export const logger = {
   info: (code: string, fields?: LogFields) => write(LogLevelType.Info, code, fields),
   warn: (code: string, fields?: LogFields) => write(LogLevelType.Warn, code, fields),
   error: (code: string, fields?: LogFields) => write(LogLevelType.Error, code, fields),
-};
+};

@@ -107,4 +107,4 @@ export function SeedSlot<K extends CatSeedBundleSlice>({
   }
 
   return <>{children(data as NonNullable<CatSeedBundle[K]>)}</>;
-}
+}

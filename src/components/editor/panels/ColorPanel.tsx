@@ -84,4 +84,4 @@ function Swatch({ label, color }: { label: string; color: string | null }) {
       <span>{label}</span>
     </div>
   );
-}
+}

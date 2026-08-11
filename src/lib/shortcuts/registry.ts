@@ -176,4 +176,4 @@ export function useShortcuts(): ShortcutDefinition[] {
   useEffect(() => subscribe(() => setDefs(getSnapshot())), []);
 
   return defs;
-}
+}

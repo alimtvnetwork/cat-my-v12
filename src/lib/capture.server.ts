@@ -163,4 +163,4 @@ export async function selectDeviceWithAudit(
 
     throw new Error("E_SEC_AUDIT_FAILED: selection rolled back");
   }
-}
+}

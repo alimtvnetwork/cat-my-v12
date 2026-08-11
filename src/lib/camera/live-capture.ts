@@ -22,19 +22,25 @@ function mapDomExceptionName(name: string): CameraCapabilityError["code"] {
     case "NotAllowedError":
     case "SecurityError":
     case "PermissionDeniedError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_PERMISSION_DENIED;
     case "NotFoundError":
     case "DevicesNotFoundError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_NOT_FOUND;
     case "NotReadableError":
     case "TrackStartError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_IN_USE;
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_CONSTRAINT;
     case "AbortError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_ABORTED;
     default:
+
       return CameraCapabilityErrorCodeType.E_CAMERA_UNKNOWN;
   }
 }

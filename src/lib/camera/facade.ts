@@ -241,4 +241,4 @@ export function makeCameraFacade(): CameraFacade {
 
 export function __setCameraFacadeForTests(f: CameraFacade | null): void {
   cached = f;
-}
+}

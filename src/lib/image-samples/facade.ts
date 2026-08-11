@@ -236,4 +236,4 @@ export function makeImageSamplesFacade(): ImageSamplesFacade {
 
 export function __setImageSamplesFacadeForTests(f: ImageSamplesFacade | null): void {
   cached = f;
-}
+}

@@ -158,4 +158,4 @@ describe("evaluateBarcode", () => {
     expect(r.error).toBe("wasm not ready");
     expect(r.decoded).toBeNull();
   });
-});
+});

@@ -194,4 +194,4 @@ export function useSeededRulesForRuleset(rulesetId: string | null | undefined): 
 
 export function useSeededCategories(): CategoryRow[] {
   return useSeededSlice(categoriesFacade);
-}
+}

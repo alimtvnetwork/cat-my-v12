@@ -78,4 +78,4 @@ describe("errors/history-facade", () => {
     await clearPersistedErrorHistory();
     expect(await loadErrorHistory()).toEqual([]);
   });
-});
+});

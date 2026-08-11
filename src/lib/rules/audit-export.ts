@@ -43,8 +43,10 @@ function csvEscape(value: unknown): string {
 function cellValue(e: RuleAuditEvent, col: CsvColumn): unknown {
   switch (col) {
     case "iso":
+
       return new Date(e.timestamp).toISOString();
     default:
+
       return e[col];
   }
 }
@@ -92,4 +94,4 @@ export function downloadRuleAudit(events: RuleAuditEvent[], format: RuleAuditExp
   console.info(`[rule-audit/export] downloaded format=${format} count=${events.length}`);
 }
 
-export const __TEST__ = { CSV_COLUMNS };
+export const __TEST__ = { CSV_COLUMNS };

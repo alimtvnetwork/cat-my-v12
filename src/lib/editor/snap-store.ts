@@ -178,4 +178,4 @@ export function __resetSnapStoreForTests(): void {
   state = { ...DEFAULT_SNAP };
   isHydrated = false;
   listeners.clear();
-}
+}

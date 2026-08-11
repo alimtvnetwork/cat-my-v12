@@ -15,4 +15,4 @@ export function usePaletteState(ruleId: string): PaletteState {
 
 export function usePaletteFacade() {
   return makePaletteFacade();
-}
+}

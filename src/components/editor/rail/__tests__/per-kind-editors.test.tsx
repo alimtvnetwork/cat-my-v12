@@ -129,4 +129,4 @@ describe("per-kind editors: control isolation", () => {
       });
     });
   }
-});
+});

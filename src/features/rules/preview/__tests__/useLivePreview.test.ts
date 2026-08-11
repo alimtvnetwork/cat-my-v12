@@ -26,4 +26,4 @@ describe("useLivePreview supporting contract", () => {
     expect(res.ReasonCodeType).toBe("OK");
     expect(evaluator).not.toHaveBeenCalled();
   });
-});
+});

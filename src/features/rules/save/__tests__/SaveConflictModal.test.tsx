@@ -113,4 +113,4 @@ describe("SaveConflictModal", () => {
       expect((pick("save-conflict-overwrite") as HTMLButtonElement).disabled).toBe(false),
     );
   });
-});
+});

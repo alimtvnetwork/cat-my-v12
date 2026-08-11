@@ -41,4 +41,4 @@ export function writeFacadeJson<T>(fullKey: string, value: T): void {
   makeProjectRepositoryFacade()
     .writeItem(fullKey, JSON.stringify(value))
     .catch((err) => console.warn("[facade-json] write failed", fullKey, err));
-}
+}

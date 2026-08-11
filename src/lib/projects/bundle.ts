@@ -167,6 +167,7 @@ export function detectBundleFormat(fileName: string, mimeType?: string): BundleF
   if (lower.endsWith(".yaml") || lower.endsWith(".yml")) return BundleFormatType.Yaml;
 
   if (mimeType && (mimeType.includes(BundleFormatType.Yaml) || mimeType.includes("yml")))
+
     return BundleFormatType.Yaml;
 
   return BundleFormatType.Json;
@@ -205,4 +206,4 @@ export async function buildSqliteZipPlaceholder(bundle: ProjectBundle): Promise<
 
 export function sqliteZipFilename(projectName: string): string {
   return bundleFilenameFor(projectName, BundleFormatType.Json).replace(/\.json$/, ".sqlite.zip");
-}
+}

@@ -96,4 +96,4 @@ export namespace WorkerStateType {
   export function isError(val: string | null | undefined): boolean {
     return val === WorkerStateType.Error;
   }
-}
+}

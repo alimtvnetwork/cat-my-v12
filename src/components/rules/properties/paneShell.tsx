@@ -51,4 +51,4 @@ export function Slider({
       className="ca-focus-fluid h-1 w-24 cursor-pointer accent-ca-primary"
     />
   );
-}
+}

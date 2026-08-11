@@ -32,6 +32,7 @@ export function readConditions(rule: EditorRule): AcceptanceCondition[] {
       const parsed = JSON.parse(raw);
 
       if (Array.isArray(parsed))
+
         return parsed.map(normalize).filter(Boolean) as AcceptanceCondition[];
     } catch {
       // fall through to legacy migration
@@ -367,6 +368,7 @@ function IconButton({
 
 function coercePresence(v: unknown): PresenceModeType {
   const val = v as string | null | undefined;
+
   return PresenceModeType.isPresent(val) || PresenceModeType.isAbsent(val)
     ? (v as PresenceModeType)
     : PresenceModeType.Ignore;
@@ -396,4 +398,4 @@ function clampPct(n: number): number {
   if (n > 100) return 100;
 
   return Math.round(n);
-}
+}

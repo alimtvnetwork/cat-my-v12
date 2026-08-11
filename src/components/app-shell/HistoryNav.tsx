@@ -38,7 +38,6 @@ export function computeRouteParent(pathname: string): string | null {
 }
 
 function computeNextHistoryState(router: any) {
-
   return {
     canBack: router.history.canGoBack(),
     canForward: (router.history as any).index < router.history.length - 1,

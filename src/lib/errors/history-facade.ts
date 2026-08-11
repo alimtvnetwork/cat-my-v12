@@ -28,6 +28,7 @@ export async function loadErrorHistory(): Promise<CapturedError[]> {
     );
   } catch (err) {
     console.warn("[errors/history] load failed", err);
+
     return [];
   }
 }
@@ -47,4 +48,4 @@ export async function clearPersistedErrorHistory(): Promise<void> {
   }
 }
 export const __ERROR_HISTORY_STORAGE_KEY = HISTORY_KEY;
-export const __ERROR_HISTORY_MAX = MAX_HISTORY;
+export const __ERROR_HISTORY_MAX = MAX_HISTORY;

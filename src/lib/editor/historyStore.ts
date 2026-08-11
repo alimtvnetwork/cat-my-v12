@@ -113,4 +113,4 @@ export function useHistory(): Snapshot {
     historyStore.getSnapshot,
     historyStore.getSnapshot,
   );
-}
+}

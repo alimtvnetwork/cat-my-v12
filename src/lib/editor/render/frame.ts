@@ -1195,4 +1195,4 @@ function drawDebugLegend(
     ctx.fillText(it.label, x + pad + swatchW + gap, cy + 4);
   });
   ctx.restore();
-}
+}

@@ -145,10 +145,13 @@ function textMatches(decoded: string, expected: string, mode: BarcodeParams["mat
   if (expected.length === 0) return true;
   switch (mode) {
     case BarcodeMatchModeType.Exact:
+
       return decoded === expected;
     case BarcodeMatchModeType.Prefix:
+
       return decoded.startsWith(expected);
     case BarcodeMatchModeType.Contains:
+
       return decoded.includes(expected);
     case BarcodeMatchModeType.Regex:
       try {
@@ -200,4 +203,4 @@ export async function evaluateBarcode(
   }
 
   return { pass: true, reason: "ok", decoded };
-}
+}

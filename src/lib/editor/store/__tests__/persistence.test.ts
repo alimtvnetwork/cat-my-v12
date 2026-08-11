@@ -74,4 +74,4 @@ describe("editor rules persistence", () => {
     expect(r1.isLocked).toBe(true);
     expect(r2.isHidden).toBe(true);
   });
-});
+});

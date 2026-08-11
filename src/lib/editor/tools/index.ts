@@ -74,4 +74,4 @@ import { EditorRuleKindType } from "../types";
 
 function isRectKind(kind: EditorRuleKind): kind is EditorRuleKindType.C | EditorRuleKindType.R {
   return kind === EditorRuleKindType.C || kind === EditorRuleKindType.R;
-}
+}

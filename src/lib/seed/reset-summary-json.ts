@@ -152,4 +152,4 @@ export async function copyResetSummaryJson(payload: ResetSummaryJson): Promise<b
   } catch {
     return false;
   }
-}
+}

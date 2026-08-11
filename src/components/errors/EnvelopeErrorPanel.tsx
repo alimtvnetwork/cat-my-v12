@@ -99,4 +99,4 @@ export function EnvelopeErrorPanel({ err, forceShowFrames = false }: EnvelopeErr
       )}
     </div>
   );
-}
+}

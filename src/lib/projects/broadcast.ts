@@ -72,4 +72,4 @@ export function subscribeFacadeWrites(cb: (msg: FacadeWriteMessage) => void): ()
 
 export function getFacadeBroadcastOrigin(): string {
   return ORIGIN;
-}
+}

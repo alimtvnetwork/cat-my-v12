@@ -111,4 +111,4 @@ export async function withSdkRetry<T>(
   throw lastErr ?? new CaptureError("E_INTERNAL", "withSdkRetry exhausted", cid);
 }
 
-export const __test__ = { PERMANENT_CODES, TRANSIENT_CODES, computeDelay, isPermanent };
+export const __test__ = { PERMANENT_CODES, TRANSIENT_CODES, computeDelay, isPermanent };

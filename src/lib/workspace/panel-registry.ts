@@ -168,4 +168,4 @@ export function getPanel(id: string): PanelDef | undefined {
 
 export function isPanelId(id: string): boolean {
   return PANEL_INDEX.has(id);
-}
+}

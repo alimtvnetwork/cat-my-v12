@@ -50,4 +50,4 @@ describe("autoSeedRulesIfEmpty", () => {
     expect(second).toBeNull();
     expect(makeRuleFacade().list()).toHaveLength(firstCount);
   });
-});
+});

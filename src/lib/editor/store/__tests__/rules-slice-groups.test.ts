@@ -161,4 +161,4 @@ describe("applyReplaceAll + snapshot hydration", () => {
     const next = applyReplaceAll(state([]), [rule("a")], undefined, [g]);
     expect(next.groups).toEqual([]);
   });
-});
+});

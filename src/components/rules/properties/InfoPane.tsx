@@ -39,12 +39,15 @@ export function InfoPane() {
       switch (action) {
         case InfoPaneActionType.Lock:
           setLocked(ids, true);
+
           return;
         case InfoPaneActionType.Hide:
           setHidden(ids, true);
+
           return;
         case InfoPaneActionType.Delete:
           deleteRules(ids);
+
           return;
       }
     } catch (err) {
@@ -195,4 +198,4 @@ function AggregateButton({ icon: Icon, label, onClick, destructive }: AggregateB
       <span>{label}</span>
     </button>
   );
-}
+}

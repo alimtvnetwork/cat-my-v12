@@ -151,4 +151,4 @@ export function upsertCameraSetting(
 
 export function deleteCameraSetting(lib: CameraLibrary, id: string): CameraLibrary {
   return { entries: lib.entries.filter((e) => e.id !== id) };
-}
+}

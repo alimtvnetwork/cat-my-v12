@@ -70,4 +70,4 @@ describe("useMicSettingsLibrary", () => {
       MicSettingsReferencedError,
     );
   });
-});
+});

@@ -18,15 +18,20 @@ function channelWeight(channel: ImageChannel, bin: number): number {
   const t = bin / (HISTOGRAM_BINS - 1);
   switch (channel) {
     case "r":
+
       return 0.6 + 0.4 * t;
     case "g":
+
       return 0.6 + 0.4 * (1 - Math.abs(0.5 - t) * 2);
     case "b":
+
       return 0.6 + 0.4 * (1 - t);
     case "a":
+
       return 1;
     case "rgb":
     default:
+
       return 1;
   }
 }

@@ -1046,6 +1046,7 @@ function ResultSection({
 }) {
   const grouped = useMemo(() => {
     if (!summary)
+
       return [] as Array<{
         rulesetId: string;
         rulesetName: string;
@@ -1162,4 +1163,4 @@ function VerdictPill({ verdict }: { verdict: ProjectRunSummary["verdict"] }) {
       {b.label}
     </span>
   );
-}
+}

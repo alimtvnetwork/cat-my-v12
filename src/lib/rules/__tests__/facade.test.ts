@@ -130,4 +130,4 @@ describe("RuleFacade subscription + persistence", () => {
     await f2.__hydrate();
     expect(f2.list().map((r) => r.id)).toEqual(["A"]);
   });
-});
+});

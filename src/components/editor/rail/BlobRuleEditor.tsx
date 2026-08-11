@@ -144,4 +144,4 @@ function NumericSlider({ label, value, min, max, step, onChange }: NumericSlider
       />
     </label>
   );
-}
+}

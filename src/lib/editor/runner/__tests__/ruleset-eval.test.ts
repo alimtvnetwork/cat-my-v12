@@ -65,6 +65,7 @@ function makeEval(fails: Set<string>): ConditionEvaluator {
         ReasonCodeType: ReasonCodeType.ColorDeltaE,
       };
     }
+
     return {
       conditionId: cond.id,
       type: cond.type,
@@ -145,4 +146,4 @@ describe("evaluateRuleset - Sequential short-circuit (spec 49 s5-6)", () => {
     expect(r.rules[0]!.verdict).toBe(VerdictType.Error);
     expect(r.rules[0]!.conditions[0]!.ReasonCodeType).toBe("RuleConditionEval");
   });
-});
+});

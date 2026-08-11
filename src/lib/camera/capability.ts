@@ -60,10 +60,13 @@ function mapDomExceptionName(name: string): CameraCapabilityErrorCode {
       return CameraCapabilityErrorCodeType.E_CAMERA_IN_USE;
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_CONSTRAINT;
     case "AbortError":
+
       return CameraCapabilityErrorCodeType.E_CAMERA_ABORTED;
     default:
+
       return CameraCapabilityErrorCodeType.E_CAMERA_UNKNOWN;
   }
 }

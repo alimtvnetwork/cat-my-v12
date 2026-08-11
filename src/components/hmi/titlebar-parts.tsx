@@ -143,4 +143,4 @@ function CommandPaletteTrigger() {
       </kbd>
     </button>
   );
-}
+}

@@ -489,4 +489,4 @@ function downloadBlob(filename: string, contents: string, mime: string): void {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-}
+}

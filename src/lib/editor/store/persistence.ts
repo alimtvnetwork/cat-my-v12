@@ -172,4 +172,4 @@ export function enableRulesPersistence(scope: string): () => void {
 /** Test-only helper: wipe the persisted snapshot for a scope. */
 export async function __clearPersistedRulesForTests(scope: string): Promise<void> {
   await facade.removeItem(storageKey(scope));
-}
+}

@@ -164,4 +164,4 @@ function modifiers(event: PointerEvent): ToolModifierKeys {
 
 function release(canvas: HTMLCanvasElement, pointerId: number): void {
   if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
-}
+}

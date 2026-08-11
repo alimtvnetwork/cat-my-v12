@@ -1606,14 +1606,19 @@ export function SelectionOverlay({
               const snap = Math.round(deg / 45) % 4;
               switch (snap) {
                 case 0:
+
                   return "ew-resize";
                 case 1:
+
                   return "nwse-resize";
                 case 2:
+
                   return "ns-resize";
                 case 3:
+
                   return "nesw-resize";
                 default:
+
                   return "ew-resize";
               }
             };
@@ -2597,4 +2602,4 @@ function RunOrderQuickBar({
       </button>
     </div>
   );
-}
+}

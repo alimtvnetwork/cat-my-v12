@@ -396,6 +396,7 @@ export function TopMenuBar() {
                   const locked =
                     isActionEntry(item) === false &&
                     Boolean(running && item.lockDuringRun && !active);
+
                   return (
                     <MenubarItemRow
                       key={`item-${idx}`}
@@ -820,4 +821,4 @@ function MenubarActionRow({ item, isHydrated }: { item: ActionEntry; isHydrated:
       ) : null}
     </MenubarItem>
   );
-}
+}

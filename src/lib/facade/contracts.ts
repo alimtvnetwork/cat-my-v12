@@ -106,4 +106,4 @@ export function parseFacadeRows<T>(
  */
 export function serializeFacadeRows<T>(rows: readonly T[]): string {
   return JSON.stringify(rows);
-}
+}

@@ -82,4 +82,4 @@ describe("useCategoryOptions", () => {
     await waitFor(() => expect(result.current.options).toEqual(["Bottles"]));
     expect(result.current.options).not.toContain("Caps");
   });
-});
+});

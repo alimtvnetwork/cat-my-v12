@@ -219,4 +219,4 @@ export function installEditorTestHooks(): void {
     },
   };
   (window as unknown as { __editorTestHooks: EditorTestHooks }).__editorTestHooks = hooks;
-}
+}

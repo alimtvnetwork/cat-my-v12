@@ -82,4 +82,4 @@ export async function evaluateRuleset(
       ...({ message: err instanceof Error ? err.message : String(err) } as object),
     };
   }
-}
+}

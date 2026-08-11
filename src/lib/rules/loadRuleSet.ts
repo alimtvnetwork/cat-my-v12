@@ -36,6 +36,7 @@ function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
     });
   }
   const message = err instanceof Error ? err.message : String(err);
+
   return new LoadRuleSetError({
     code: "E_BE_UNKNOWN",
     backendMessage: message,
@@ -75,8 +76,9 @@ export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
       ...committed,
       DraftMeta: { ...committed.DraftMeta, Origin: DraftOriginType.Server },
     });
+
     return committed;
   } catch (err) {
     throw wrapLoadError(err, url);
   }
-}
+}

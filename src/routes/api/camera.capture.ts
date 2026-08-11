@@ -161,4 +161,4 @@ export const Route = createFileRoute("/api/camera/capture")({
       },
     },
   },
-});
+});

@@ -16,4 +16,4 @@ export function ActionBar({ left, right }: ActionBarProps) {
       <div className="flex items-center gap-hmi-2">{right}</div>
     </footer>
   );
-}
+}

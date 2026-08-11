@@ -81,6 +81,7 @@ export function dockMaxSize(slot: keyof DockSizes): number {
 
 function clampDockSize(slot: keyof DockSizes, px: number): number {
   if (Number.isFinite(px))
+
     return Math.max(dockMinSize(slot), Math.min(dockMaxSize(slot), Math.round(px)));
 
   return dockMinSize(slot);
@@ -413,4 +414,4 @@ export const useWorkspaceLayoutStore = create<WorkspaceLayoutState>()(
       partialize: (state) => ({ panels: state.panels, dockSizes: state.dockSizes }),
     },
   ),
-);
+);

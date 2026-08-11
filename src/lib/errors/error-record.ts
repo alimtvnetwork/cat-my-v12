@@ -59,4 +59,4 @@ export function makeErrorRecord(
     detail,
     timestamp: Date.now(),
   };
-}
+}

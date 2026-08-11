@@ -43,4 +43,4 @@ export function subscribeOcrResults(listener: Listener): () => void {
 export function __resetOcrResultsForTests(): void {
   results.clear();
   listeners.clear();
-}
+}

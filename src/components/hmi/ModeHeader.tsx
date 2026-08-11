@@ -18,4 +18,4 @@ export function ModeHeader({ title, actions }: ModeHeaderProps) {
       {actions ? <div className="flex items-center gap-1.5">{actions}</div> : null}
     </section>
   );
-}
+}

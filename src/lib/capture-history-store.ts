@@ -105,4 +105,4 @@ export function subscribeCaptureHistory(cb: Listener): () => void {
   return () => {
     listeners.delete(cb);
   };
-}
+}
