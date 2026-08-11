@@ -35,11 +35,12 @@
  */
 import { pausePollOnError } from "@/lib/react-query/poll";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+
 import { useAppQuery } from "@/hooks/use-app-query";
 import { AlertTriangle, Loader2, RefreshCw, ScrollText } from "lucide-react";
 
-import { listRules, type CatRuleWire } from "@/lib/observability/rules.functions";
+import { useBackend } from "@/lib/backend/provider";
+import { type CatRuleWire } from "@/lib/backend/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -98,10 +99,13 @@ function EnabledBadge({ enabled }: { enabled: boolean }) {
 }
 
 function CliRulesRoute() {
-  const fetchRules = useServerFn(listRules);
+  const backend = useBackend();
   const query = useAppQuery({
     queryKey: ["cli-rules"],
-    queryFn: () => fetchRules({ data: {} }),
+    queryFn: async () => {
+      const res = await backend.rules.list();
+      return res.Results[0];
+    },
     refetchInterval: pausePollOnError(10_000),
     refetchIntervalInBackground: false,
     meta: { hasVisibility: false },

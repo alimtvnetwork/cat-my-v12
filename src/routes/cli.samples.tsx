@@ -39,7 +39,6 @@
 import { pausePollOnError } from "@/lib/react-query/poll";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useAppQuery } from "@/hooks/use-app-query";
 import {
   AlertTriangle,
@@ -51,7 +50,8 @@ import {
   Search,
 } from "lucide-react";
 
-import { listSamples, type CatSampleWire } from "@/lib/observability/samples.functions";
+import { useBackend } from "@/lib/backend/provider";
+import { type CatSampleWire } from "@/lib/backend/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,10 +105,13 @@ function formatCapturedAt(iso?: string): string {
 }
 
 function CliSamplesRoute() {
-  const fetchSamples = useServerFn(listSamples);
+  const backend = useBackend();
   const query = useAppQuery({
     queryKey: ["cli-samples"],
-    queryFn: () => fetchSamples({ data: {} }),
+    queryFn: async () => {
+      const res = await backend.samples.list();
+      return res.Results[0];
+    },
     refetchInterval: pausePollOnError(15_000),
     refetchIntervalInBackground: false,
     meta: { hasVisibility: false },

@@ -62,7 +62,6 @@ import { DraftOriginType } from "@/lib/rules/draftStore";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ScrollText } from "lucide-react";
 import { CliRouteNotFound } from "@/components/cli/CliRouteNotFound";
-import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppQuery } from "@/hooks/use-app-query";
 import { useAppMutation } from "@/hooks/use-app-mutation";
@@ -71,7 +70,7 @@ import { AlertTriangle, ArrowLeft, Check, GitCompare, Loader2, Play, Save } from
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { listRules } from "@/lib/observability/rules.functions";
+import { useBackend } from "@/lib/backend/provider";
 import {
   getDraft,
   putDraft,
@@ -176,11 +175,14 @@ function RuleEditor() {
   const { ruleId } = Route.useParams();
   const router = useRouter();
   const qc = useQueryClient();
-  const listRulesFn = useServerFn(listRules);
+  const backend = useBackend();
 
   const rulesQuery = useAppQuery({
     queryKey: ["cli-rules"],
-    queryFn: () => listRulesFn({ data: {} }),
+    queryFn: async () => {
+      const res = await backend.rules.list();
+      return res.Results[0];
+    },
     staleTime: 10_000,
   });
 

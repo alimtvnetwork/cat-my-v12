@@ -21,4 +21,35 @@ export interface Envelope<T = unknown> {
 
 export interface BackendClient {
   ping(): Promise<Envelope<{ pong: boolean }>>;
+  rules: {
+    list(): Promise<Envelope<{ items: CatRuleWire[]; total: number; provider?: string }>>;
+  };
+  samples: {
+    list(): Promise<Envelope<{ items: CatSampleWire[]; total: number; provider?: string }>>;
+  };
+}
+
+export interface CatRuleWire {
+  RuleId: number;
+  LegacyRuleId?: string;
+  RuleKind: string;
+  OrderIndex: number;
+  ParamsJson: string;
+  IsActive: boolean;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+}
+
+export interface CatSampleWire {
+  SampleId: number;
+  LegacySampleId?: string;
+  Label: string;
+  ImageFilePath: string;
+  WidthPx?: number;
+  HeightPx?: number;
+  Channels?: number;
+  SizeBytes?: number;
+  Sha256?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
 }
