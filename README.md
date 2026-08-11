@@ -34,30 +34,37 @@ You switch modes from the homepage or from Settings. The chosen backend URL is r
 | Plan index       | [`.lovable/plans/index.md`](.lovable/plans/index.md)   |
 | Project memory   | [`mem/index.md`](mem/index.md)                         |
 
-## Getting started
+## Local dev (BE+FE+Shell)
 
 On Windows (or anywhere with PowerShell 7), one file does everything:
 
 ```powershell
-.\run.ps1 -Install -Full   # first time: install deps, then start backend + frontend
-.\run.ps1                  # day to day: frontend only, seeded demo data
+.\run.ps1                  # Start backend (8787), frontend (5173), and chromium shell
+.\run.ps1 -NoShell         # Skip launching Chromium
 .\run.ps1 -Help            # every mode and flag, explained
 ```
 
-`run.ps1` is standalone, configured by `run.config.json`, and opens the browser
-already pointed at the right data mode. Details: [docs/launcher/README.md](docs/launcher/README.md).
+On POSIX systems (Linux/macOS), use the shell script:
+
+```bash
+./run.sh                   # Start backend, frontend, and chromium shell
+./run.sh --no-shell        # Skip launching Chromium
+./run.sh --help            # every mode and flag, explained
+```
+
+`run.ps1` and `run.sh` are standalone and automatically bundle the backend (`BE/`) and frontend together.
 
 Prefer to drive it by hand?
 
 ```bash
-# Frontend (http://localhost:8080)
+# Frontend (http://localhost:5173)
 bun install
-bun run dev
+bun run dev --port 5173
 
 # Backend (http://localhost:8787)
 cd BE
 pip install -e .
-uvicorn BE.main:create_app --factory --port 8787
+uv run --project BE uvicorn BE.main:app --port 8787
 ```
 
 Once both are up, open the app and use the **Seed / Backend** toggle on the homepage (or in Settings) to point the UI at your local backend. The backend base URL is editable and persisted in `localStorage` under `app.backend.baseUrl`.
