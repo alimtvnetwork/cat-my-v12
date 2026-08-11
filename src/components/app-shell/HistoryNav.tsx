@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 /* eslint-disable react-refresh/only-export-components -- `computeRouteParent` is a pure helper co-located with the component so the unit test can import it directly; extracting it adds a two-line module for no runtime benefit. */
 
@@ -24,30 +24,37 @@ import { HtmlTag } from "@/lib/enums/html";
 export function computeRouteParent(pathname: string): string | null {
   const trimmed = pathname.replace(/\/+$/, "");
 
-  if (trimmed === "" || trimmed === "/") return null;
+  if (trimmed === "" || trimmed === "/") {
+    return null;
+  }
+
   const idx = trimmed.lastIndexOf("/");
 
-  if (idx <= 0) return "/";
+  if (idx <= 0) {
+    return "/";
+  }
 
   return trimmed.slice(0, idx);
 }
 
-function useHistoryState(): { canBack: boolean; canForward: boolean } {
-  const router = useRouter();
-  const [state, setState] = useState(() => ({
+function computeNextHistoryState(router: any) {
+  return {
     canBack: router.history.canGoBack(),
     canForward: (router.history as any).index < router.history.length - 1,
-  }));
+  };
+}
+
+function useHistoryState(): { canBack: boolean; canForward: boolean } {
+  const router = useRouter();
+  const [state, setState] = useState(() => computeNextHistoryState(router));
+
   useEffect(() => {
-    function sync() {
-      const next = {
-        canBack: router.history.canGoBack(),
-        canForward: (router.history as any).index < router.history.length - 1,
-      };
+    const sync = () => {
+      const next = computeNextHistoryState(router);
       setState((prev) =>
         prev.canBack === next.canBack && prev.canForward === next.canForward ? prev : next,
       );
-    }
+    };
 
     sync();
 
@@ -58,13 +65,23 @@ function useHistoryState(): { canBack: boolean; canForward: boolean } {
 }
 
 export function isTypingTarget(el: EventTarget | null): boolean {
-  if (el === null || typeof el !== "object") return false;
+  const isObject = el !== null && typeof el === "object";
+
+  if (isObject === false) {
+    return false;
+  }
+
   const node = el as { tagName?: unknown; isContentEditable?: unknown };
   const tag = typeof node.tagName === "string" ? node.tagName : "";
+  const isTargetTag = HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag);
+  const isContentEditable = node.isContentEditable === true;
+  const isTyping = isTargetTag || isContentEditable;
 
-  if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return true;
+  if (isTyping) {
+    return true;
+  }
 
-  return node.isContentEditable === true;
+  return false;
 }
 
 export function HistoryNav() {
@@ -94,37 +111,33 @@ export function HistoryNav() {
   }, [router, canForward]);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const onKey = (e: KeyboardEvent) => {
+      const isAltOnly = e.altKey && e.ctrlKey === false && e.metaKey === false && e.shiftKey === false;
+      const shouldHandle = isAltOnly && isTypingTarget(e.target) === false && KeyboardKeyType.isArrowLeftOrRight(e.key);
 
-      if (isTypingTarget(e.target)) return;
-      switch (e.key) {
-        case KeyboardKeyType.ArrowLeft:
-          e.preventDefault();
-          back();
-          break;
-        case KeyboardKeyType.ArrowRight:
-          e.preventDefault();
-          forward();
-          break;
+      if (shouldHandle === false) {
+        return;
       }
-    }
+
+      e.preventDefault();
+      KeyboardKeyType.isArrowLeft(e.key) ? back() : forward();
+    };
 
     window.addEventListener("keydown", onKey);
 
     return () => window.removeEventListener("keydown", onKey);
   }, [back, forward]);
 
-  const backDisabled = !canBack && parent === null;
-  const forwardDisabled = !canForward;
+  const isBackDisabled = canBack === false && parent === null;
+  const isForwardDisabled = canForward === false;
 
   return (
     <div className="flex items-center gap-1" role="group" aria-label="History navigation">
       <button
         type="button"
         onClick={back}
-        disabled={backDisabled}
-        aria-disabled={backDisabled}
+        disabled={isBackDisabled}
+        aria-disabled={isBackDisabled}
         aria-label="Go back"
         data-testid="history-back"
         title={
@@ -137,8 +150,8 @@ export function HistoryNav() {
       <button
         type="button"
         onClick={forward}
-        disabled={forwardDisabled}
-        aria-disabled={forwardDisabled}
+        disabled={isForwardDisabled}
+        aria-disabled={isForwardDisabled}
         aria-label="Go forward"
         data-testid="history-forward"
         title="Forward (Alt+Right)"

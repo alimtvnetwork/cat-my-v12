@@ -16,85 +16,47 @@ import { ShortcutScopeBaseType } from "@/lib/shortcuts/scopes";
  *    Chosen to avoid clashes with browser shortcuts (Ctrl+Shift+R hard
  *    reload, Ctrl+R reload, Cmd+Shift+0 zoom reset on some browsers).
  */
+function toggleSnapGrid() {
+  const isCurrentlyEnabled = getSnapState().enabled === true;
+  const isNextSnapEnabled = isCurrentlyEnabled === false;
+
+  setSnapEnabled(isNextSnapEnabled);
+  notifySuccess(isNextSnapEnabled ? "Snap to grid: on" : "Snap to grid: off");
+}
+
+function openErrorHistory() {
+  const s = useErrorStore.getState();
+
+  s.openHistoryDrawer();
+  console.info(`[hotkey] error-history drawer opened count=${s.history.length}`);
+}
+
+function registerLayoutShortcuts(onReset: () => void, onSnap: () => void, onError: () => void) {
+  const scope = ShortcutScopeBaseType.Global;
+
+  return [
+    registerShortcut({ id: "layout.reset.ctrl", scope, combo: "Ctrl+Alt+0", label: "Reset workspace layout", group: "Workspace", run: onReset }),
+    registerShortcut({ id: "layout.reset.meta", scope, combo: "Meta+Alt+0", label: "Reset workspace layout (⌘)", group: "Workspace", run: onReset }),
+    registerShortcut({ id: "editor.snap.toggle.ctrl", scope, combo: "Ctrl+;", label: "Toggle snap to grid", group: "Editor", run: onSnap }),
+    registerShortcut({ id: "editor.snap.toggle.meta", scope, combo: "Meta+;", label: "Toggle snap to grid (⌘)", group: "Editor", run: onSnap }),
+    registerShortcut({ id: "errors.history.ctrl", scope, combo: "Ctrl+Shift+E", label: "Open error history", group: "Errors", run: onError }),
+    registerShortcut({ id: "errors.history.meta", scope, combo: "Meta+Shift+E", label: "Open error history (⌘)", group: "Errors", run: onError }),
+  ];
+}
+
 export function LayoutHotkeys() {
   const resetLayout = useWorkspaceLayoutStore((s) => s.resetLayout);
 
   useEffect(() => {
-    const resetHandler = () => {
+    const onReset = () => {
       resetLayout();
       notifySuccess("Workspace layout reset");
     };
-    const snapHandler = () => {
-      const next = !getSnapState().enabled;
-      setSnapEnabled(next);
-      notifySuccess(next ? "Snap to grid: on" : "Snap to grid: off");
-    };
-    // Plan 83 backlog #26: Ctrl/Cmd+Shift+E opens the dedicated Error History
-    // drawer. Distinct from the Global Error Modal so users can browse the
-    // full session log without losing the currently focused error.
-    const errorHistoryHandler = () => {
-      const s = useErrorStore.getState();
-      s.openHistoryDrawer();
-      console.info(`[hotkey] error-history drawer opened count=${s.history.length}`);
-    };
 
-    // Plan 100 §13 step 15: migrate onto registry. Register both Ctrl
-    // and Meta variants so the same intent works on Windows/Linux and
-    // macOS without a bespoke `mod` matcher.
-    const unsubs = [
-      registerShortcut({
-        id: "layout.reset.ctrl",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Ctrl+Alt+0",
-        label: "Reset workspace layout",
-        group: "Workspace",
-        run: resetHandler,
-      }),
-      registerShortcut({
-        id: "layout.reset.meta",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Meta+Alt+0",
-        label: "Reset workspace layout (⌘)",
-        group: "Workspace",
-        run: resetHandler,
-      }),
-      // Photoshop parity: Ctrl+; toggles grid/guides.
-      registerShortcut({
-        id: "editor.snap.toggle.ctrl",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Ctrl+;",
-        label: "Toggle snap to grid",
-        group: "Editor",
-        run: snapHandler,
-      }),
-      registerShortcut({
-        id: "editor.snap.toggle.meta",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Meta+;",
-        label: "Toggle snap to grid (⌘)",
-        group: "Editor",
-        run: snapHandler,
-      }),
-      registerShortcut({
-        id: "errors.history.ctrl",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Ctrl+Shift+E",
-        label: "Open error history",
-        group: "Errors",
-        run: errorHistoryHandler,
-      }),
-      registerShortcut({
-        id: "errors.history.meta",
-        scope: ShortcutScopeBaseType.Global,
-        combo: "Meta+Shift+E",
-        label: "Open error history (⌘)",
-        group: "Errors",
-        run: errorHistoryHandler,
-      }),
-    ];
+    const unsubs = registerLayoutShortcuts(onReset, toggleSnapGrid, openErrorHistory);
 
     return () => {
-      for (const u of unsubs) u();
+      unsubs.forEach((unsubscribe) => unsubscribe());
     };
   }, [resetLayout]);
 
