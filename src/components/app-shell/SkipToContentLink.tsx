@@ -3,6 +3,7 @@
 // past the titlebar / breadcrumb / menubar directly to the `<main>`
 // landmark (id="app-main" in HmiShell). Visually hidden until focused.
 export function SkipToContentLink() {
+
   return (
     <a
       href="#app-main"
