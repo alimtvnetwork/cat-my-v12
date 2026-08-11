@@ -1,0 +1,1252 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BE",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Get Healthz",
+        "description": "Liveness probe. Always 200 unless the process is dead.",
+        "operationId": "get_healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta": {
+      "get": {
+        "summary": "Get Meta",
+        "description": "Return backend build metadata for FE feature gating.",
+        "operationId": "get_meta_meta_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules": {
+      "get": {
+        "summary": "List Rules",
+        "description": "List rules via the active `RuleFacade` (default: empty in-memory).",
+        "operationId": "list_rules_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules/{rule_id}": {
+      "get": {
+        "summary": "Get Rule",
+        "description": "Fetch one rule via the active `RuleFacade`.\n\nThe facade owns the `E_BE_NOT_FOUND` decision; this handler only validates\nthe path param and lets `AppError` propagate to the Step-13 handlers.",
+        "operationId": "get_rule_rules__rule_id__get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Save Rule Set",
+        "description": "Persist a `RuleSetEnvelope` from the FE Save button (Plan 90 Step 133).\n\nBody MUST be a `RuleSetEnvelope` (PascalCase) identical to the FE draft.\nThe path `{rule_id}` must match `body.RuleSetId`; a mismatch is\n`E_BE_BAD_REQUEST` (400). Payload validation errors surface as 400 via\n`parse_envelope`. Facade may raise `E_BE_CONFLICT` on stale versions.",
+        "operationId": "save_rule_set_rules__rule_id__put",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules/{rule_id}/set": {
+      "get": {
+        "summary": "Get Rule Set",
+        "description": "Return the server-committed `RuleSetEnvelope` for `rule_id` (Plan 90 Step 142).\n\nSeparate path from `GET /rules/{id}` (which returns a `CatRule`) so the\ntwo shapes never overload the same URL. FE `loadRuleSet.ts` targets\nthis endpoint. Facade raises `E_BE_NOT_FOUND` (404) when the rule set\nwas never saved; propagated as-is by the Step-13 handlers.",
+        "operationId": "get_rule_set_rules__rule_id__set_get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/samples": {
+      "get": {
+        "summary": "List Samples",
+        "description": "List samples via the active `SampleFacade` (default: empty in-memory).",
+        "operationId": "list_samples_samples_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Sample",
+        "description": "Insert a sample via `SampleFacade.upsert_sample` (Plan 90 Step 145).\n\nPOST allows the client to mint a specific `id` (the samples slice uses\nmonotonic client-side integer aliases per `src/lib/ids/int-alias.ts`, so\nthe id is authoritative, not server-assigned). Idempotent by id: a second\nPOST with the same id updates the row rather than 409-ing, matching the\nfacade's upsert semantics. Bad payload \u2192 400 `E_BE_BAD_REQUEST`.",
+        "operationId": "create_sample_samples_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/samples/{sample_id}": {
+      "get": {
+        "summary": "Get Sample",
+        "description": "Fetch one sample via the active `SampleFacade`.",
+        "operationId": "get_sample_samples__sample_id__get",
+        "parameters": [
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Sample",
+        "description": "Update a sample via `SampleFacade.upsert_sample` with path/body id check.",
+        "operationId": "update_sample_samples__sample_id__put",
+        "parameters": [
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Sample",
+        "description": "Remove a sample via `SampleFacade.delete_sample`.\n\nMissing id \u2192 facade raises `E_BE_NOT_FOUND` (404) per the Step-144\ncontract; propagated by the Step-13 envelope handler. Success returns\nan envelope with an empty `Results` object so clients can uniformly\nread `Status.IsSuccess` without a shape switch.",
+        "operationId": "delete_sample_samples__sample_id__delete",
+        "parameters": [
+          {
+            "name": "sample_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sample Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/sessions": {
+      "get": {
+        "summary": "List Sessions",
+        "description": "List recent CLI invocations from Root-DB, ordered per ``sort``/``dir``.\n\nPagination\n----------\nResponse includes ``nextCursor`` (opaque string or ``null``). When\nnon-null, pass it back verbatim as ``?cursor=<token>`` to fetch the\nnext page under the same ``sort``/``dir``/filters. Do not decode or\nfabricate cursors; the server treats invalid tokens as bad input.",
+        "operationId": "list_sessions_observability_sessions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..500, default 50",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "1..500, default 50"
+          },
+          {
+            "name": "cli",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "worker-cli | processing-cli",
+              "title": "Cli"
+            },
+            "description": "worker-cli | processing-cli"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "active | success | failure",
+              "title": "Status"
+            },
+            "description": "active | success | failure"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "StartedAt | CliName | Status | DurationMs",
+              "title": "Sort"
+            },
+            "description": "StartedAt | CliName | Status | DurationMs"
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "asc | desc (default desc)",
+              "title": "Dir"
+            },
+            "description": "asc | desc (default desc)"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "opaque cursor from nextCursor",
+              "title": "Cursor"
+            },
+            "description": "opaque cursor from nextCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/sessions": {
+      "get": {
+        "summary": "Get Cli Sessions",
+        "description": "Enumerate CLI JSONL session files on disk, newest first.",
+        "operationId": "get_cli_sessions_api_cli_sessions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..500, default 50",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "1..500, default 50"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "worker-cli | processing-cli | be",
+              "title": "Source"
+            },
+            "description": "worker-cli | processing-cli | be"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/sessions/{run_id}/log": {
+      "get": {
+        "summary": "Get Cli Session Log",
+        "description": "SSE tail of a CLI session's JSONL log by `RunId`.\n\nReturns `404 E_BE_NOT_FOUND` if no session on disk carries this RunId.\nOn success, emits `data:` frames per JSONL line followed by an `end`\nevent carrying the final line cursor for resumable polling.",
+        "operationId": "get_cli_session_log_api_cli_sessions__run_id__log_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "since_line",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "1-based; skip first N lines",
+              "default": 0,
+              "title": "Since Line"
+            },
+            "description": "1-based; skip first N lines"
+          },
+          {
+            "name": "max_lines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "description": "1..5000",
+              "default": 1000,
+              "title": "Max Lines"
+            },
+            "description": "1..5000"
+          },
+          {
+            "name": "follow",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Poll for new lines up to 30s",
+              "default": false,
+              "title": "Follow"
+            },
+            "description": "Poll for new lines up to 30s"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/sessions/{run_id}": {
+      "get": {
+        "summary": "Get Cli Session",
+        "description": "Return a session `Summary` + last `tail` JSONL `Records`.\n\n404 `E_BE_NOT_FOUND` when no session on disk carries this RunId, so\nstale UI deep-links fail loudly instead of returning empty data.",
+        "operationId": "get_cli_session_api_cli_sessions__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "tail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "trailing record count, 1..1000",
+              "default": 200,
+              "title": "Tail"
+            },
+            "description": "trailing record count, 1..1000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/status": {
+      "get": {
+        "summary": "Get Cli Status",
+        "description": "Aggregate CLI widget status: latest worker+processing sessions and IPC backlog.\n\nRead-only, side-effect free. Missing log/IPC roots degrade to empty\nvalues rather than 500 so the global status widget in `__root` never\ncrashes the app shell.",
+        "operationId": "get_cli_status_api_cli_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/sessions/{run_id}/export": {
+      "get": {
+        "summary": "Export Cli Session",
+        "description": "Return a `.zip` bundle of the session's log + entry envelope + IPC.\n\n404 `E_BE_NOT_FOUND` when no session on disk carries this RunId.\n413 `E_BE_TOO_LARGE` when the combined artefacts exceed 64 MiB, so a\nrunaway session cannot hand a huge blob to the browser.",
+        "operationId": "export_cli_session_api_cli_sessions__run_id__export_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/sessions/{cli_invocation_id}/logs": {
+      "get": {
+        "summary": "Tail Session Logs",
+        "description": "Return a page of JSONL log lines for a CLI invocation.",
+        "operationId": "tail_session_logs_observability_sessions__cli_invocation_id__logs_get",
+        "parameters": [
+          {
+            "name": "cli_invocation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Cli Invocation Id"
+            }
+          },
+          {
+            "name": "tail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..2000, default 200",
+              "default": 200,
+              "title": "Tail"
+            },
+            "description": "1..2000, default 200"
+          },
+          {
+            "name": "after_offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "resume byte offset; overrides tail",
+              "title": "After Offset"
+            },
+            "description": "resume byte offset; overrides tail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/sessions/{cli_invocation_id}/ipc": {
+      "get": {
+        "summary": "Tail Session Ipc",
+        "description": "Return a page of IPC messages for a CLI invocation's mailbox.",
+        "operationId": "tail_session_ipc_observability_sessions__cli_invocation_id__ipc_get",
+        "parameters": [
+          {
+            "name": "cli_invocation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Cli Invocation Id"
+            }
+          },
+          {
+            "name": "mailbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "worker-out|processing-in|processing-out|main-in",
+              "title": "Mailbox"
+            },
+            "description": "worker-out|processing-in|processing-out|main-in"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..500, default 100",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "1..500, default 100"
+          },
+          {
+            "name": "include_acked",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "include .msg.ack.json files",
+              "default": false,
+              "title": "Include Acked"
+            },
+            "description": "include .msg.ack.json files"
+          },
+          {
+            "name": "after_msg_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "return messages with MsgId > cursor",
+              "title": "After Msg Id"
+            },
+            "description": "return messages with MsgId > cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/runs": {
+      "get": {
+        "summary": "List Runs",
+        "operationId": "list_runs_observability_runs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..200, default 50",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "1..200, default 50"
+          },
+          {
+            "name": "verdict",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pass | Fail | Error",
+              "title": "Verdict"
+            },
+            "description": "Pass | Fail | Error"
+          },
+          {
+            "name": "task_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task Id"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/runs/{run_session_id}": {
+      "get": {
+        "summary": "Get Run",
+        "operationId": "get_run_observability_runs__run_session_id__get",
+        "parameters": [
+          {
+            "name": "run_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Run Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/runs/{run_session_id}/rules": {
+      "get": {
+        "summary": "List Run Rules",
+        "operationId": "list_run_rules_observability_runs__run_session_id__rules_get",
+        "parameters": [
+          {
+            "name": "run_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Run Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/runs/{run_session_id}/rules/{rule_result_id}/artifacts": {
+      "get": {
+        "summary": "List Rule Artifacts",
+        "operationId": "list_rule_artifacts_observability_runs__run_session_id__rules__rule_result_id__artifacts_get",
+        "parameters": [
+          {
+            "name": "run_session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Run Session Id"
+            }
+          },
+          {
+            "name": "rule_result_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "title": "Rule Result Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observability/retention": {
+      "get": {
+        "summary": "List Retention",
+        "description": "Return the newest ``limit`` retention audit rows (newest-first).",
+        "operationId": "list_retention_observability_retention_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..500, default 50",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "1..500, default 50"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "single-shot | loop | loop-halt",
+              "title": "Mode"
+            },
+            "description": "single-shot | loop | loop-halt"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/config/user": {
+      "get": {
+        "summary": "Get User Config",
+        "description": "Return the user-layer store and its JSON-Schema for the writer form.",
+        "operationId": "get_user_config_api_cli_config_user_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post User Config",
+        "description": "Write user-layer overrides. Body: {\"values\": {field: value, ...}}.\n\nUnknown keys raise E_BE_BAD_REQUEST. Passing `null` clears the field.",
+        "operationId": "post_user_config_api_cli_config_user_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/config/effective": {
+      "get": {
+        "summary": "Get Effective Config",
+        "description": "Return the 5-layer effective-config resolution for `/cli/settings`.",
+        "operationId": "get_effective_config_api_cli_config_effective_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cli/doctor": {
+      "post": {
+        "summary": "Post Doctor",
+        "description": "Run all preflight probes and return per-check verdicts.\n\nResponse payload shape:\n    {\n      \"IsHealthy\": bool,      # overall AND of probes\n      \"TotalProbes\": int,\n      \"UnhealthyCount\": int,\n      \"Probes\": [\n        {\"Tier\": str, \"IsHealthy\": bool, \"Detail\": str,\n         \"Remediation\"?: str}\n      ]\n    }",
+        "operationId": "post_doctor_api_cli_doctor_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
