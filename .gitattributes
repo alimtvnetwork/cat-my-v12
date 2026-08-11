@@ -1,0 +1,4 @@
+
+# Plan 88 Step 29: sdk directory is binary safe
+sdk/** -text -diff -merge
+
