@@ -28,8 +28,6 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 85 - plan83-residual-shepherd - pending - see `pending/85-plan83-residual-shepherd.md`
 - 88 - backend-implementation-v1-150-steps - pending - see `pending/88-backend-implementation-v1-150-steps.md`
 - 89 - error-manage-01-error-resolution - pending - see `pending/89-error-manage-01-error-resolution.md`
-- 90 - worker-and-processing-cli - pending (200 steps: CLI substrate 1-100, UI 101-150, Daheng SDK adapter 151-199, release 200; Phase 12 progress 98/100 DONE, Step 99 this entry, Step 100 = closeout) - 2026-07-21 - see `pending/90-worker-and-processing-cli.md`; human entry point: `README.md` §"Install (PowerShell)" (L177) + §"Local dev" (L214); CI substrate: `.github/workflows/{ci,release,verify-install,vulnerability-scan,_guards}.yml`; installer: `packaging/installers/{install.ps1,install.sh}` + tests under `packaging/installers/tests/`; PS wrappers: `scripts/ps/Invoke-{WorkerCli,ProcessingCli,DbBootstrap}.ps1` + `scripts/ps/Common.psm1`; release notes assembler: `packaging/release-notes/generate.py`; specs: `spec/21-app/{74-worker-cli,75-processing-cli,77-cli-powershell-and-release}.md` + `spec/21-app/06-split-db-digest.md` (split-DB) + `spec/16-generic-release/03-install-scripts.md` + `spec/12-cicd-pipeline-workflows/{03-vulnerability-scanning,07-release-body-and-changelog}.md`
-- 91 - enums-boolean-refactor - pending - see `pending/91-enums-boolean-refactor.md`
 
 ## Completed
 
