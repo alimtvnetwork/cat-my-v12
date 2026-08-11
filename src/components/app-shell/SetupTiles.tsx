@@ -43,6 +43,7 @@ const TILES: readonly Tile[] = [
 ] as const;
 
 export function SetupTiles() {
+
   return (
     <section
       aria-label="Setup"
