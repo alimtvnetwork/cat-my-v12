@@ -1,6 +1,6 @@
 ---
 Slug: run-scripts-and-chromium-shell
-Status: pending
+Status: completed
 Created: 2026-07-21
 Parent: 88-backend-implementation-v1-150-steps
 ---

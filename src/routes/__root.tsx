@@ -69,6 +69,7 @@ import { AltMnemonicLayer } from "../components/shortcuts/AltMnemonicLayer";
 import { InputModalityTracker } from "../hooks/useInputModality";
 import { InlineEditNavigationGuard } from "../components/shell/InlineEditNavigationGuard";
 import { LiveAnnouncer } from "../components/a11y/LiveAnnouncer";
+import { BackendProvider } from "../lib/backend/provider";
 
 function NotFoundComponent() {
   return (
@@ -273,6 +274,7 @@ function RootComponent() {
           and shadcn semantic tokens flip together. Mounted once at the
           root so every route inherits the same resolved theme. */}
       <ThemeController />
+      <BackendProvider>
       {/* Plan 72 step 11: UI seed facade provider. Wraps the entire tree so
           every route can call useSeedContext / useSeedBundle / useSeedSlice.
           `SeedProvider` owns one `UiSeedFacade` instance and logs source +
@@ -297,6 +299,7 @@ function RootComponent() {
           <Outlet />
         </EnvelopeErrorBoundary>
       </SeedProvider>
+      </BackendProvider>
       {/* Spec/21-app/40 §6 - BugError modal surfaced from anywhere via `ca:bug-error`. */}
       <BugErrorModal />
       {/* Plan 43 slice-1: global error dialog (Dev/Test) + toast (Prod). */}
