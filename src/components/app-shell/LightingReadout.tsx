@@ -5,6 +5,25 @@ export enum LightingReadoutKeyType {
   Enhance = "enhance",
   Darken = "darken",
 }
+
+export namespace LightingReadoutKeyType {
+  export function isExposure(val: unknown): val is LightingReadoutKeyType.Exposure {
+    return val === LightingReadoutKeyType.Exposure;
+  }
+  export function isGain(val: unknown): val is LightingReadoutKeyType.Gain {
+    return val === LightingReadoutKeyType.Gain;
+  }
+  export function isEnhance(val: unknown): val is LightingReadoutKeyType.Enhance {
+    return val === LightingReadoutKeyType.Enhance;
+  }
+  export function isDarken(val: unknown): val is LightingReadoutKeyType.Darken {
+    return val === LightingReadoutKeyType.Darken;
+  }
+  export function isVariant(val: unknown): val is LightingReadoutKeyType {
+    return Object.values(LightingReadoutKeyType).includes(val as LightingReadoutKeyType);
+  }
+}
+
 // Plan 67 step 17 (SU-05): compact HUD readout of the current lighting
 // controls. Subscribes to `useLightingStore` so every surface that mounts
 // this component reflects live edits from `/settings/lighting` (or any
@@ -26,12 +45,13 @@ const FIELDS: readonly {
   key: LightingReadoutKeyType;
   label: string;
 }[] = [
-  { key: "exposure", label: "Exposure" },
-  { key: "gain", label: "Gain" },
-  { key: "enhance", label: "Enhance" },
-  { key: "darken", label: "Darken" },
+  { key: LightingReadoutKeyType.Exposure, label: "Exposure" },
+  { key: LightingReadoutKeyType.Gain, label: "Gain" },
+  { key: LightingReadoutKeyType.Enhance, label: "Enhance" },
+  { key: LightingReadoutKeyType.Darken, label: "Darken" },
 ];
 
+// lint-allow: function-length reason="JSX template" max=100
 export function LightingReadout() {
   // Selecting a fresh object literal from zustand without a shallow
   // equality function returns a new reference on every store tick, which
@@ -56,7 +76,8 @@ export function LightingReadout() {
     hydrate();
   }, [hydrate]);
 
-  const nonDefault = FIELDS.some(({ key }) => controls[key] !== 0);
+  const hasTunedValues = FIELDS.some(({ key }) => controls[key] !== 0);
+  const isDefault = !hasTunedValues;
 
   return (
     <section
@@ -74,7 +95,7 @@ export function LightingReadout() {
         <div className="min-w-0">
           <h3 className="text-sm font-semibold tracking-tight text-ca-ink">Lighting profile</h3>
           <p className="text-xs text-ca-ink-muted">
-            {nonDefault ? "Tuned values apply to every capture." : "Using built-in defaults."}
+            {hasTunedValues ? "Tuned values apply to every capture." : "Using built-in defaults."}
           </p>
         </div>
       </div>
@@ -110,7 +131,7 @@ export function LightingReadout() {
             console.info("[lighting-readout] reset click");
             reset();
           }}
-          disabled={!nonDefault}
+          disabled={isDefault}
           data-testid="lighting-readout-reset"
           className="hmi-focus-ring inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-3 py-1.5 text-xs text-ca-ink transition-colors hover:border-ca-primary/60 hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
