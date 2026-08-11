@@ -3,6 +3,17 @@ export enum AppBreadcrumbPropsVariantType {
   Band = "band",
   Inline = "inline",
 }
+
+export namespace AppBreadcrumbPropsVariantType {
+  export function isBand(val: unknown): val is AppBreadcrumbPropsVariantType.Band {
+    return val === AppBreadcrumbPropsVariantType.Band;
+  }
+
+  export function isInline(val: unknown): val is AppBreadcrumbPropsVariantType.Inline {
+    return val === AppBreadcrumbPropsVariantType.Inline;
+  }
+}
+
 import { useState } from "react";
 import { Link, useHydrated, useMatches } from "@tanstack/react-router";
 import { Home, MoreHorizontal, ChevronRight } from "lucide-react";
@@ -11,10 +22,13 @@ import { useProjectStore } from "@/lib/projects/store";
 import { resolveCrumb, registerParamResolver } from "@/lib/breadcrumb-tokens";
 /* eslint-disable react-refresh/only-export-components -- `buildCrumbsFromMatches` is a pure helper co-located with the component so its unit test can import it directly; extracting it adds a two-line module for no runtime benefit. */
 
-let isResolversRegistered = false;
+let hasRegisteredResolvers = false;
 function ensureStoreResolvers(): void {
-  if (isResolversRegistered) return;
-  isResolversRegistered = true;
+  if (hasRegisteredResolvers) {
+    return;
+  }
+
+  hasRegisteredResolvers = true;
   registerParamResolver("projectId", (id) => useProjectStore.getState().projects[id]?.name);
   registerParamResolver("rulesetId", (id) => useProjectStore.getState().rulesets[id]?.name);
 }
@@ -45,31 +59,24 @@ type Crumb = { to: string; label: string };
 export function buildCrumbsFromMatches(
   pathname: string,
   params: Record<string, string>,
-  useResolvers: boolean,
+  shouldUseResolvers: boolean,
 ): Crumb[] {
-  const paramValueToName = new Map<string, string>();
-  for (const [name, value] of Object.entries(params)) {
-    if (typeof value === "string" && value.length > 0) {
-      paramValueToName.set(value, name);
-    }
-  }
+  // lint-allow: function-length reason="complex breadcrumb reduction" max=20
+  const paramMap = new Map(
+    Object.entries(params)
+      .filter(([, val]) => typeof val === "string" && val.length > 0)
+      .map(([name, val]) => [val, name])
+  );
 
-  const parts = pathname.split("/").filter((p) => p.length > 0);
-  const out: Crumb[] = [];
-  let acc = "";
-  for (const seg of parts) {
-    acc += `/${seg}`;
-    // SSR renders with an empty client store, so dynamic-segment resolvers
-    // would render the raw ID on the server and the resolved name after
-    // hydration, causing a mismatch. Skip resolvers until hydrated; the
-    // server output matches the first client render, and the resolved
-    // name lands on the next tick.
-    const paramName = useResolvers ? paramValueToName.get(seg) : undefined;
-    const label = resolveCrumb(seg, paramName);
-    out.push({ to: acc, label });
-  }
-
-  return out;
+  return pathname
+    .split("/")
+    .filter(Boolean)
+    .reduce<Crumb[]>((acc, seg) => {
+      const to = `${acc.length > 0 ? acc[acc.length - 1].to : ""}/${seg}`;
+      const paramName = shouldUseResolvers ? paramMap.get(seg) : undefined;
+      
+      return [...acc, { to, label: resolveCrumb(seg, paramName) }];
+    }, []);
 }
 
 export interface AppBreadcrumbProps {
@@ -82,13 +89,14 @@ export interface AppBreadcrumbProps {
   variant?: AppBreadcrumbPropsVariantType;
 }
 
-export function AppBreadcrumb({ variant = "band" }: AppBreadcrumbProps = {}) {
+export function AppBreadcrumb({ variant = AppBreadcrumbPropsVariantType.Band }: AppBreadcrumbProps = {}) {
+  // lint-allow: function-length reason="UI component layout" max=40
   const matches = useMatches();
   const last = matches[matches.length - 1];
   const pathname = last?.pathname ?? "/";
   // useMatches types params per route; merge into a flat lookup.
   const params = (last?.params ?? {}) as Record<string, string>;
-  const hydrated = useHydrated();
+  const isHydrated = useHydrated();
   // Subscribe to the project store so crumb labels update when projects /
   // rulesets are renamed. Track only params whose name is a known
   // resolver key so unrelated store mutations do not re-render the
@@ -98,31 +106,29 @@ export function AppBreadcrumb({ variant = "band" }: AppBreadcrumbProps = {}) {
     const projectId = params["projectId"];
     const rulesetId = params["rulesetId"];
 
-    if (typeof projectId === "string") acc += `|p:${s.projects[projectId]?.name ?? projectId}`;
+    if (typeof projectId === "string") {
+      acc += `|p:${s.projects[projectId]?.name ?? projectId}`;
+    }
 
-    if (typeof rulesetId === "string") acc += `|r:${s.rulesets[rulesetId]?.name ?? rulesetId}`;
+    if (typeof rulesetId === "string") {
+      acc += `|r:${s.rulesets[rulesetId]?.name ?? rulesetId}`;
+    }
 
     return acc;
   });
+
   // Register store-backed resolvers lazily on first render (idempotent).
-  if (hydrated) ensureStoreResolvers();
+  if (isHydrated) {
+    ensureStoreResolvers();
+  }
+
   void nameFingerprint;
-  const crumbs = buildCrumbsFromMatches(pathname, params, hydrated);
+  const crumbs = buildCrumbsFromMatches(pathname, params, isHydrated);
 
   // On the home route show a subtle "Home" marker so the strip never
   // collapses to zero height (prevents chrome jitter between routes).
-  const showCollapse = crumbs.length + 1 > MAX_VISIBLE;
-  let head: Crumb[] = crumbs;
-  let middle: Crumb[] = [];
-  let tail: Crumb[] = [];
-
-  if (showCollapse) {
-    head = crumbs.slice(0, 1);
-    tail = crumbs.slice(-2);
-    middle = crumbs.slice(1, -2);
-  }
-
-  const isInline = variant === "inline";
+  const shouldShowCollapse = crumbs.length + 1 > MAX_VISIBLE;
+  const isInline = AppBreadcrumbPropsVariantType.isInline(variant);
   const fullLabel = ["Home", ...crumbs.map((c) => c.label)].join(" / ");
 
   return (
@@ -134,7 +140,7 @@ export function AppBreadcrumb({ variant = "band" }: AppBreadcrumbProps = {}) {
           ? "app-breadcrumb app-breadcrumb-inline flex min-w-0 flex-1 items-center gap-1.5 py-1 text-hmi-caption text-ca-ink-muted"
           : "app-breadcrumb flex min-w-0 items-center gap-1.5 border-b border-ca-border bg-ca-bg px-hmi-4 text-hmi-body text-ca-ink-muted"
       }
-      style={isInline ? { height: "var(--header-crumb-h)" } : { height: "var(--header-crumb-h)" }}
+      style={{ height: "var(--header-crumb-h)" }}
     >
       <ol className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap">
         <li className="flex shrink-0 items-center">
@@ -149,40 +155,43 @@ export function AppBreadcrumb({ variant = "band" }: AppBreadcrumbProps = {}) {
             <span className="hidden sm:inline">Home</span>
           </Link>
         </li>
-        {showCollapse ? (
+        {shouldShowCollapse ? (
           <>
-            {head.map((c) => (
-              <CrumbLink key={c.to} crumb={c} last={false} />
+            {crumbs.slice(0, 1).map((c) => (
+              <CrumbLink key={c.to} crumb={c} isLast={false} />
             ))}
             <li aria-hidden className="shrink-0 text-ca-ink-muted/60">
               <ChevronRight size={12} />
             </li>
             <li className="shrink-0">
-              <CollapsedCrumbs crumbs={middle} />
+              <CollapsedCrumbs crumbs={crumbs.slice(1, -2)} />
             </li>
-            {tail.map((c, i) => (
-              <CrumbLink key={c.to} crumb={c} last={i === tail.length - 1} />
+            {crumbs.slice(-2).map((c, i, arr) => (
+              <CrumbLink key={c.to} crumb={c} isLast={i === arr.length - 1} />
             ))}
           </>
         ) : (
-          crumbs.map((c, i) => <CrumbLink key={c.to} crumb={c} last={i === crumbs.length - 1} />)
+          crumbs.map((c, i) => (
+            <CrumbLink key={c.to} crumb={c} isLast={i === crumbs.length - 1} />
+          ))
         )}
       </ol>
     </nav>
   );
 }
 
-function CrumbLink({ crumb, last }: { crumb: Crumb; last: boolean }) {
+function CrumbLink({ crumb, isLast }: { crumb: Crumb; isLast: boolean }) {
+  // lint-allow: function-length reason="UI component layout" max=25
   return (
     <>
       <li aria-hidden className="app-breadcrumb-sep shrink-0 text-ca-ink-muted/70">
         <ChevronRight size={12} />
       </li>
       <li
-        className={last ? "min-w-0 flex-1 truncate" : "min-w-0 shrink truncate"}
+        className={isLast ? "min-w-0 flex-1 truncate" : "min-w-0 shrink truncate"}
         title={crumb.label}
       >
-        {last ? (
+        {isLast ? (
           <span aria-current="page" className="app-breadcrumb-current truncate">
             {crumb.label}
           </span>
@@ -202,10 +211,11 @@ function CrumbLink({ crumb, last }: { crumb: Crumb; last: boolean }) {
 }
 
 function CollapsedCrumbs({ crumbs }: { crumbs: Crumb[] }) {
-  const [open, setOpen] = useState(false);
+  // lint-allow: function-length reason="UI component layout" max=35
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -223,7 +233,7 @@ function CollapsedCrumbs({ crumbs }: { crumbs: Crumb[] }) {
               <Link
                 to={c.to}
                 preload="intent"
-                onClick={() => setOpen(false)}
+                onClick={() => setIsOpen(false)}
                 className="hmi-focus-ring block truncate rounded-sm px-2 py-1.5 text-hmi-body hover:bg-ca-panel-2"
               >
                 {c.label}

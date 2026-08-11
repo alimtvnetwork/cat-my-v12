@@ -11,22 +11,10 @@ export function LiveAnnouncer(): ReactElement {
 
   return (
     <>
-      <div
-        data-testid="a11y-live-polite"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div data-testid="a11y-live-polite" role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {polite}
       </div>
-      <div
-        data-testid="a11y-live-assertive"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div data-testid="a11y-live-assertive" role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">
         {assertive}
       </div>
     </>
