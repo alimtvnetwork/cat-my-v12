@@ -30,6 +30,7 @@ export interface MinimizedRailProps {
 }
 
 function orientationFor(slot: MinimizedRailProps["slot"]): MinimizedRailOrientation {
+
   return DockSlotType.isTop(slot) || DockSlotType.isBottom(slot)
     ? MinimizedRailOrientationType.Horizontal
     : MinimizedRailOrientationType.Vertical;
