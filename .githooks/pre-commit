@@ -12,9 +12,9 @@ cd "$REPO_ROOT"
 
 # Only run when relevant files are staged. Anything under the shell IPC
 # schema tree, the UI-backend map, the linter scripts themselves, or code
-# that could contain server-fn call sites picked up by the linter.
+# that could contain server-fn call sites picked up by the linter, or backend BE/ code.
 if ! git diff --cached --name-only --diff-filter=ACMR | grep -Eq \
-  '^(spec/21-app/shell/|linter-scripts/(check-(ui-backend-map|ipc-examples)|fixtures/(ui-backend-map|ipc-examples))|src/|app/)'; then
+  '^(spec/21-app/shell/|linter-scripts/(check-(ui-backend-map|ipc-examples)|fixtures/(ui-backend-map|ipc-examples))|src/|app/|BE/)'; then
   exit 0
 fi
 
@@ -47,3 +47,15 @@ if ! git diff --exit-code --quiet -- src/generated/ipc-types.ts; then
 fi
 
 echo "pre-commit: OK"
+
+echo "pre-commit: Ruff fixing backend files…"
+BE_CHANGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^BE/.*\.py$' || true)
+if [ -n "$BE_CHANGED" ]; then
+  if command -v ruff >/dev/null 2>&1; then
+    echo "$BE_CHANGED" | xargs ruff check --fix
+    echo "$BE_CHANGED" | xargs git add
+  else
+    echo "pre-commit: ruff not found, skipping backend lint fixes" >&2
+  fi
+fi
+

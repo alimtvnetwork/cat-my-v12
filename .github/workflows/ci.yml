@@ -367,3 +367,21 @@ jobs:
             /tmp/vite-dev.log
           if-no-files-found: warn
           retention-days: 14
+
+  be-lint:
+    name: Backend lint + typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python3 -m pip install --quiet ruff mypy
+          python3 -m pip install -e ./BE[dev] || python3 -m pip install ./BE
+      - name: Run ruff
+        run: python3 -m ruff check BE/
+      - name: Run mypy
+        run: python3 -m mypy BE/
+

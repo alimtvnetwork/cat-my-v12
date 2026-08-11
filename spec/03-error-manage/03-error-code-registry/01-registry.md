@@ -169,6 +169,7 @@ WPP retains 13000-13999.
 
 | Module                          | Prefix  | Range       | Frontend Sub-range | Error Codes Doc                                                     |
 | ------------------------------- | ------- | ----------- | ------------------ | ------------------------------------------------------------------- |
+| Backend Core                    | `BE`    | 4000-4999   | N/A                | `spec/03-error-manage/03-error-code-registry.md`                    |
 | GSearch CLI Core                | `GS`    | 7000-7099   | 7050-7069          | `spec/09-gsearch-cli/01-backend/15-error-codes.md`                  |
 | BRun CLI                        | `BR`    | 7100-7599   | 7150-7169          | `spec/10-brun-cli/01-backend/06-error-handling.md`                  |
 | GSearch Movie Search            | `GS`    | 7600-7609   | N/A                | `spec/09-gsearch-cli/01-backend/`                                   |
