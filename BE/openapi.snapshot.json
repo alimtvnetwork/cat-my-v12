@@ -1,3 +1,4 @@
+{"ts": "2026-08-11T17:01:17.419383+00:00", "level": "INFO", "logger": "BE.main", "message": "be_app_created", "CorrelationId": null, "operation": "startup", "code": null, "subject_id": null, "env": "dev", "port": 8787}
 {
   "openapi": "3.1.0",
   "info": {
@@ -5,6 +6,27 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/system/status": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Get System Status",
+        "operationId": "get_system_status_system_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_SystemStatus_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Get Healthz",
@@ -1194,6 +1216,48 @@
   },
   "components": {
     "schemas": {
+      "Envelope_SystemStatus_": {
+        "properties": {
+          "isSuccess": {
+            "type": "boolean",
+            "title": "Issuccess"
+          },
+          "isFail": {
+            "type": "boolean",
+            "title": "Isfail"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SystemStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "isSuccess",
+          "isFail",
+          "status"
+        ],
+        "title": "Envelope[SystemStatus]"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1206,6 +1270,29 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "SystemStatus": {
+        "properties": {
+          "uptime": {
+            "type": "integer",
+            "title": "Uptime"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uptime",
+          "version",
+          "status"
+        ],
+        "title": "SystemStatus"
       },
       "ValidationError": {
         "properties": {
