@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from BE.src.api.router import api_router
 
 from BE.config import Settings, get_settings
 from BE.errors.handlers import register_exception_handlers
@@ -36,9 +37,14 @@ logger = logging.getLogger("BE.main")
 
 def _install_cors(app: FastAPI, settings: Settings) -> None:
     """Attach CORS from settings; dev-only origins by default."""
+    origins = list(settings.cors_origins)
+    if "http://localhost:5173" not in origins:
+        origins.append("http://localhost:5173")
+    if "chrome-extension://*" not in origins:
+        origins.append("chrome-extension://*")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(settings.cors_origins),
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -53,6 +59,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="BE", version="1.0.0")
     _install_cors(app, cfg)
     register_exception_handlers(app)
+
+    @app.middleware("http")
+    async def echo_correlation_id(request: Request, call_next):
+        correlation_id = request.headers.get("X-Correlation-Id")
+        response = await call_next(request)
+        if correlation_id:
+            response.headers["X-Correlation-Id"] = correlation_id
+        return response
+
+    app.include_router(api_router)
     app.include_router(health_route.router)
     app.include_router(meta_route.router)
     app.include_router(rules_route.router)
