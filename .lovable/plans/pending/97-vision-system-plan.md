@@ -136,17 +136,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 106. Base grid and ROI selection UI. - Subtask 6
 - [x] 107. Base grid and ROI selection UI. - Subtask 7
 - [x] 108. Base grid and ROI selection UI. - Subtask 8
-- [ ] 109. Base grid and ROI selection UI. - Subtask 9
-- [ ] 110. Base grid and ROI selection UI. - Subtask 10
+- [x] 109. Base grid and ROI selection UI. - Subtask 9
+- [x] 110. Base grid and ROI selection UI. - Subtask 10
 
 ### Phase 12: Region of Interest (ROI) (Part 2)
-- [ ] 111. Shift tolerance handling. - Subtask 1
-- [ ] 112. Shift tolerance handling. - Subtask 2
-- [ ] 113. Shift tolerance handling. - Subtask 3
-- [ ] 114. Shift tolerance handling. - Subtask 4
-- [ ] 115. Shift tolerance handling. - Subtask 5
-- [ ] 116. Shift tolerance handling. - Subtask 6
-- [ ] 117. Shift tolerance handling. - Subtask 7
+- [x] 111. Shift tolerance handling. - Subtask 1
+- [x] 112. Shift tolerance handling. - Subtask 2
+- [x] 113. Shift tolerance handling. - Subtask 3
+- [x] 114. Shift tolerance handling. - Subtask 4
+- [x] 115. Shift tolerance handling. - Subtask 5
+- [x] 116. Shift tolerance handling. - Subtask 6
+- [x] 117. Shift tolerance handling. - Subtask 7
 - [ ] 118. Shift tolerance handling. - Subtask 8
 - [ ] 119. Shift tolerance handling. - Subtask 9
 - [ ] 120. Shift tolerance handling. - Subtask 10

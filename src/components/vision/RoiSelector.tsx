@@ -47,6 +47,16 @@ export function RoiSelector() {
             <div className="absolute inset-0 flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-sm">
               Camera Feed Placeholder
             </div>
+            {/* Shift Tolerance Zone */}
+            <div
+              className="absolute border border-dashed border-primary/50 bg-primary/5 pointer-events-none"
+              style={{
+                left: `max(0%, calc(${Math.min(Math.max(roi.x, 0), 100)}% - ${roi.shiftTolerance}px))`,
+                top: `max(0%, calc(${Math.min(Math.max(roi.y, 0), 100)}% - ${roi.shiftTolerance}px))`,
+                width: `min(100%, calc(${Math.min(Math.max(roi.width, 0), 100 - roi.x)}% + ${roi.shiftTolerance * 2}px))`,
+                height: `min(100%, calc(${Math.min(Math.max(roi.height, 0), 100 - roi.y)}% + ${roi.shiftTolerance * 2}px))`,
+              }}
+            />
             {/* ROI Bounding Box */}
             <div 
               className="absolute border-2 border-primary bg-primary/20"
