@@ -36,6 +36,13 @@ export interface PatternConfig {
   inverseLogic: boolean;
 }
 
+export interface PinConsistencySettings {
+  enabled: boolean;
+  expectedPinCount: number;
+  pitchTolerance: number; // mm or pixels
+  lengthTolerance: number;
+}
+
 export interface Mask {
   id: string;
   type: 'RECTANGLE' | 'CIRCLE' | 'POLYGON';
@@ -60,6 +67,7 @@ export interface RoiSettings {
   colorSettings?: ColorSettings;
   shapeTrax3?: ShapeTrax3Settings;
   patternConfig?: PatternConfig;
+  pinConsistency?: PinConsistencySettings;
 }
 
 export interface CameraSettings {

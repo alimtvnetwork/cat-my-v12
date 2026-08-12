@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings, Mask, ColorSettings, ShapeTrax3Settings, PatternConfig } from './types';
+import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings, Mask, ColorSettings, ShapeTrax3Settings, PatternConfig, PinConsistencySettings } from './types';
 
 interface VisionState {
   segments: RecipeSegment[];
@@ -19,6 +19,7 @@ interface VisionState {
   setColorSettings: (segmentId: string, colorSettings: Partial<ColorSettings>) => void;
   setShapeTrax3Settings: (segmentId: string, shapeTrax3Settings: Partial<ShapeTrax3Settings>) => void;
   setPatternConfig: (segmentId: string, patternConfig: Partial<PatternConfig>) => void;
+  setPinConsistencySettings: (segmentId: string, pinConsistencySettings: Partial<PinConsistencySettings>) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
 }
@@ -64,6 +65,12 @@ const mockSegments: RecipeSegment[] = [
           edgeStrength: 50,
           polarity: 'ANY',
           inverseLogic: false,
+        },
+        pinConsistency: {
+          enabled: false,
+          expectedPinCount: 4,
+          pitchTolerance: 0.1,
+          lengthTolerance: 0.2,
         }
       }
     },
@@ -309,6 +316,31 @@ export const useVisionStore = create<VisionState>((set) => ({
                 inverseLogic: false,
                 ...roi.patternConfig,
                 ...patternConfig,
+              }
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  setPinConsistencySettings: (segmentId, pinConsistencySettings) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId) {
+        const roi = s.visionSettings.roi || { x: 0, y: 0, width: 100, height: 100, shiftTolerance: 10, masks: [] };
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...roi,
+              pinConsistency: {
+                enabled: false,
+                expectedPinCount: 4,
+                pitchTolerance: 0.1,
+                lengthTolerance: 0.2,
+                ...roi.pinConsistency,
+                ...pinConsistencySettings,
               }
             }
           }
