@@ -324,7 +324,7 @@ async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
 
     return { isSuccess: true, isFail: false, message: "Requeued" };
   } catch (err) {
-    if (err instanceof EnvelopeError) {
+    if (EnvelopeError.is(err)) {
       return {
         isSuccess: false,
         isFail: true,

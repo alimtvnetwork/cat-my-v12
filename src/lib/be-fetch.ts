@@ -95,6 +95,18 @@ export class EnvelopeError extends Error {
     this.envelope = init.envelope;
     this.cause = init.cause;
   }
+
+  public get isMissingOrUnavailable(): boolean {
+    return (
+      this.responseStatus === 404 ||
+      this.responseStatus === 403 ||
+      this.code === "E_BE_UNAVAILABLE"
+    );
+  }
+
+  public static is(err: unknown): err is EnvelopeError {
+    return err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
+  }
 }
 
 export interface BeFetchOptions {

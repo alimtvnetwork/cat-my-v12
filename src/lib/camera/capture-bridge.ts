@@ -199,7 +199,7 @@ export async function captureReferenceFromCamera(
   } catch (err) {
     clearTimeout(timeoutId);
 
-    if (err instanceof EnvelopeError) {
+    if (EnvelopeError.is(err)) {
       const { kind, level, logCode } = mapEnvelopeErrorToCamera(err);
       capture[level](
         logCode,

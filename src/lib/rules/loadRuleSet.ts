@@ -23,7 +23,7 @@ export class LoadRuleSetError extends EnvelopeError {
 
 function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
   if (err instanceof LoadRuleSetError) return err;
-  if (err instanceof EnvelopeError) {
+  if (EnvelopeError.is(err)) {
     return new LoadRuleSetError({
       code: err.code,
       backendMessage: err.backendMessage,

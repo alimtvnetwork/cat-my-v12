@@ -107,8 +107,7 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
       // or throwing (which unmounts the RootComponent and destroys the GlobalErrorModal).
       // This keeps the React tree alive, allowing the GlobalErrorModal to appear on top.
       const err = this.state.errorToRethrow as Error;
-      const isEnvelope =
-        err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
+      const isEnvelope = EnvelopeError.is(err);
       const envErr = isEnvelope ? (err as EnvelopeError) : null;
 
       const title = envErr

@@ -99,16 +99,7 @@ export const getObservabilitySessions = createServerFn({ method: "GET" })
 
       return PayloadSchema.parse(payload);
     } catch (err) {
-      const isEnvelope =
-        err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
-      const envErr = err as EnvelopeError;
-
-      if (
-        isEnvelope &&
-        (envErr.responseStatus === 404 ||
-          envErr.responseStatus === 403 ||
-          envErr.code === "E_BE_UNAVAILABLE")
-      ) {
+      if (EnvelopeError.is(err) && err.isMissingOrUnavailable) {
         return {
           items: [],
           total: 0,
