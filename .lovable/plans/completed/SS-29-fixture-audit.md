@@ -1,3 +1,6 @@
+---
+status: completed
+---
 # SS-29: Fixture Audit (Plan 86 Step 29)
 
 Evidence-based inventory of hardcoded fixture arrays vs. facade/store reads in
