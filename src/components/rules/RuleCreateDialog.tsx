@@ -70,8 +70,8 @@ export function RuleCreateDialog({
   existingNames,
   sourceName,
   sourceConditions,
-  initialKind = "Rule",
-  kindMode = "both",
+  initialKind = RuleCreateDialogInitialKindType.Rule,
+  kindMode = RuleCreateDialogKindModeType.Both,
 }: Props) {
   const titleId = useId();
   const descId = useId();
@@ -80,17 +80,17 @@ export function RuleCreateDialog({
   const [pocketSize, setPocketSize] = useState<PocketSize | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const availableKinds = useMemo(() => {
-    if (kindMode === "rule") return ["Rule"] as const;
+    if (kindMode === RuleCreateDialogKindModeType.Rule) return [RuleCreateDialogInitialKindType.Rule] as const;
 
-    if (kindMode === "category") return ["Category"] as const;
+    if (kindMode === RuleCreateDialogKindModeType.Category) return [RuleCreateDialogInitialKindType.Category] as const;
 
-    return ["Rule", "Category"] as const;
+    return [RuleCreateDialogInitialKindType.Rule, RuleCreateDialogInitialKindType.Category] as const;
   }, [kindMode]);
   const isClosed = !open;
 
   useEffect(() => {
     if (isClosed) return;
-    setKind(kindMode === "rule" ? "Rule" : kindMode === "category" ? "Category" : initialKind);
+    setKind(kindMode === RuleCreateDialogKindModeType.Rule ? RuleCreateDialogInitialKindType.Rule : kindMode === RuleCreateDialogKindModeType.Category ? RuleCreateDialogInitialKindType.Category : initialKind);
     setPocketSize(undefined);
     setName(sourceName ? `Copy of ${sourceName}` : "");
     setSubmitting(false);
@@ -171,7 +171,7 @@ export function RuleCreateDialog({
                 <div role="radiogroup" aria-label="Entry kind" className="flex gap-hmi-2">
                   {availableKinds.map((k) => {
                     const active = kind === k;
-                    const Icon = k === "Rule" ? Sparkles : FolderOpen;
+                    const Icon = k === RuleCreateDialogInitialKindType.Rule ? Sparkles : FolderOpen;
 
                     return (
                       <label

@@ -1,5 +1,4 @@
-import { EditorToolFamilyType } from "@/lib/editor/types";
-import { type RuleKindType } from "@/types/rules/RuleKind";
+import { EditorToolFamilyType, EditorRuleKindType } from "@/lib/editor/types";
 import { CatSeedRuleFamilyType } from "@/lib/seed";
 // Sample-data seeding for local testing.
 //
@@ -39,7 +38,7 @@ function mkEditorRule(seed: CatSeedRule): EditorRule {
     isHidden: false,
     isLocked: false,
     name: seed.name,
-    kind: seed.kind as unknown as RuleKindType,
+    kind: seed.kind as unknown as EditorRuleKindType,
     family,
     x: seed.x,
     y: seed.y,

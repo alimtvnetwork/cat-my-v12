@@ -16,7 +16,7 @@
 //   `aria-disabled` + no-op click) so layout / tile positions stay
 //   stable across selections.
 import { EditorRuleKindType, type EditorRule } from "@/lib/editor/types";
-import type { PropertyPaletteIdType } from "@/components/rules/PropertiesPalette";
+import { PropertyPaletteIdType } from "@/components/rules/PropertiesPalette";
 
 type Kind = EditorRule["kind"];
 

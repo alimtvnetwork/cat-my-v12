@@ -23,7 +23,7 @@ export enum SidebarSideType {
 
 export enum SidebarContextPropsStateType {
   Expanded = "expanded",
-  Collapsed = SidebarContextPropsStateType.Collapsed,
+  Collapsed = "collapsed",
 }
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
@@ -136,7 +136,7 @@ const SidebarProvider = React.forwardRef<
 
     // We add a state so that we can do data-state="expanded" or SidebarContextPropsStateType.Collapsed.
     // This makes it easier to style the sidebar with Tailwind classes.
-    const state = open ? "expanded" : SidebarContextPropsStateType.Collapsed;
+    const state = open ? SidebarContextPropsStateType.Expanded : SidebarContextPropsStateType.Collapsed;
 
     const contextValue = React.useMemo<SidebarContextProps>(
       () => ({

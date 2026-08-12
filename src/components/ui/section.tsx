@@ -74,7 +74,7 @@ export const Section = forwardRef<HTMLElement, SectionProps>(function Section(
     description,
     density = SectionDensityType.Comfortable,
     variant = SectionVariantType.Panel,
-    headingLevel = "h2",
+    headingLevel = SectionPropsHeadingLevelType.H2,
     className,
     bodyClassName,
     children,
@@ -82,9 +82,9 @@ export const Section = forwardRef<HTMLElement, SectionProps>(function Section(
   },
   ref,
 ) {
-  const HeadingTag = headingLevel;
+  const HeadingTag = headingLevel as "h1" | "h2" | "h3" | "h4";
   const showHeader = Boolean(title || headerAside || description);
-  const chrome = variant === "panel" ? "rounded-lg border border-ca-border bg-ca-panel" : "";
+  const chrome = variant === SectionVariantType.Panel ? "rounded-lg border border-ca-border bg-ca-panel" : "";
 
   return (
     <section

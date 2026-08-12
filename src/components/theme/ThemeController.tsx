@@ -22,23 +22,23 @@ export enum ApplyThemeClassResolvedType {
 import { useEffect } from "react";
 import { useUiPrefsStore, type ThemeVariant, type UiFlavor } from "@/lib/ui-prefs-store";
 
-function resolveTheme(theme: ThemeVariant): "light" | "dark" {
+function resolveTheme(theme: ThemeVariant): ApplyThemeClassResolvedType {
   if (theme === "system") {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return "dark";
+      return ApplyThemeClassResolvedType.Dark;
     }
 
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? ApplyThemeClassResolvedType.Dark : ApplyThemeClassResolvedType.Light;
   }
 
-  return theme;
+  return theme as unknown as ApplyThemeClassResolvedType;
 }
 
 function applyThemeClass(resolved: ApplyThemeClassResolvedType) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.classList.toggle("dark", resolved === "dark");
-  root.classList.toggle("light", resolved === "light");
+  root.classList.toggle("dark", resolved === ApplyThemeClassResolvedType.Dark);
+  root.classList.toggle("light", resolved === ApplyThemeClassResolvedType.Light);
   root.setAttribute("data-theme", resolved);
   root.style.colorScheme = resolved;
 }
@@ -59,7 +59,7 @@ export function ThemeController() {
 
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyThemeClass(mq.matches ? "dark" : "light");
+    const onChange = () => applyThemeClass(mq.matches ? ApplyThemeClassResolvedType.Dark : ApplyThemeClassResolvedType.Light);
     mq.addEventListener("change", onChange);
 
     return () => mq.removeEventListener("change", onChange);

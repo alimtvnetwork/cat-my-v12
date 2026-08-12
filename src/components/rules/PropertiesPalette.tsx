@@ -201,7 +201,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
         to: target,
         sharedKind: selection.sharedKind,
       });
-      setOpenPane(kindKey, target as PropertiesPaneIdType);
+      setOpenPane(kindKey, target as unknown as PropertiesPaneIdType);
 
       if (onChange) onChange(target);
       else setInternal(target);
