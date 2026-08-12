@@ -36,6 +36,10 @@ export async function fetchBackend<T = unknown>(
   if (!headers.has("X-Correlation-Id")) {
     headers.set("X-Correlation-Id", correlationId);
   }
+  if (!headers.has("X-Request-Id")) {
+    const requestId = globalThis.crypto?.randomUUID?.() || `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    headers.set("X-Request-Id", requestId);
+  }
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }

@@ -90,7 +90,7 @@ def _find_log_file(log_root: Path, subcmd: str) -> Path:
 
 def test_e2e_probe_memory_success(tmp_path: Path) -> None:
     log_root = tmp_path / "logs"
-    r = _run(["probe", "--provider", "memory"], log_root)
+    r = _run(["probe", "--provider", "inmemory"], log_root)
     assert r.returncode == int(ExitCode.Ok), f"rc={r.returncode} stderr={r.stderr!r}"
     env = _assert_single_envelope(r.stdout)
     assert env["Status"]["IsSuccess"] is True
@@ -109,7 +109,7 @@ def test_e2e_probe_memory_success(tmp_path: Path) -> None:
 
 def test_e2e_probe_vendor_rejected(tmp_path: Path) -> None:
     log_root = tmp_path / "logs"
-    r = _run(["probe", "--provider", "vendor"], log_root)
+    r = _run(["probe", "--provider", "daheng"], log_root)
     assert r.returncode == int(ExitCode.VendorError), (
         f"vendor path must exit VendorError(5), got {r.returncode}; stderr={r.stderr!r}"
     )
@@ -174,7 +174,7 @@ def test_e2e_help_exits_zero_and_stdout_is_help(tmp_path: Path) -> None:
 
 def test_e2e_failure_still_writes_log(tmp_path: Path) -> None:
     log_root = tmp_path / "logs"
-    r = _run(["probe", "--provider", "vendor"], log_root)
+    r = _run(["probe", "--provider", "daheng"], log_root)
     assert r.returncode == int(ExitCode.VendorError)
     log_path = _find_log_file(log_root, "probe")
     assert log_path.stat().st_size > 0, f"log file empty after failure: {log_path}"

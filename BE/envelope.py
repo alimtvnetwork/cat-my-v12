@@ -63,6 +63,7 @@ class Attributes(BaseModel):
     PerPage: int = 0
     TotalPages: int = 0
     CurrentPage: int = 0
+    TraceId: str | None = None
 
 
 class Navigation(BaseModel):
@@ -131,6 +132,8 @@ def _attributes(
     total_records: int | None = None,
 ) -> Attributes:
     """Compute the derived Attributes booleans from `Results` length."""
+    from BE.middleware.request_id import request_id_ctx
+
     count = len(results)
     total = total_records if total_records is not None else count
     return Attributes(
@@ -140,6 +143,7 @@ def _attributes(
         IsMultiple=count > 1,
         IsEmpty=count == 0,
         TotalRecords=total,
+        TraceId=request_id_ctx.get(),
     )
 
 

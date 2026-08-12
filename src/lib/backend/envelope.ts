@@ -19,6 +19,7 @@ export const EnvelopeAttributesSchema = z.object({
   PerPage: z.number().optional(),
   TotalPages: z.number().optional(),
   CurrentPage: z.number().optional(),
+  TraceId: z.string().optional().nullable(),
 });
 
 export const EnvelopeErrorsWireSchema = z.object({
