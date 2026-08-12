@@ -180,17 +180,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 142. Color picking to 2-bit grayscale conversion tools. - Subtask 2
 - [x] 143. Color picking to 2-bit grayscale conversion tools. - Subtask 3
 - [x] 144. Color picking to 2-bit grayscale conversion tools. - Subtask 4
-- [ ] 145. Color picking to 2-bit grayscale conversion tools. - Subtask 5
-- [ ] 146. Color picking to 2-bit grayscale conversion tools. - Subtask 6
-- [ ] 147. Color picking to 2-bit grayscale conversion tools. - Subtask 7
-- [ ] 148. Color picking to 2-bit grayscale conversion tools. - Subtask 8
-- [ ] 149. Color picking to 2-bit grayscale conversion tools. - Subtask 9
-- [ ] 150. Color picking to 2-bit grayscale conversion tools. - Subtask 10
+- [x] 145. Color picking to 2-bit grayscale conversion tools. - Subtask 5
+- [x] 146. Color picking to 2-bit grayscale conversion tools. - Subtask 6
+- [x] 147. Color picking to 2-bit grayscale conversion tools. - Subtask 7
+- [x] 148. Color picking to 2-bit grayscale conversion tools. - Subtask 8
+- [x] 149. Color picking to 2-bit grayscale conversion tools. - Subtask 9
+- [x] 150. Color picking to 2-bit grayscale conversion tools. - Subtask 10
 
 ### Phase 16: Validation Tools (Pattern Search 1)
-- [ ] 151. ShapeTrax3 layout implementation. - Subtask 1
-- [ ] 152. ShapeTrax3 layout implementation. - Subtask 2
-- [ ] 153. ShapeTrax3 layout implementation. - Subtask 3
+- [x] 151. ShapeTrax3 layout implementation. - Subtask 1
+- [x] 152. ShapeTrax3 layout implementation. - Subtask 2
+- [x] 153. ShapeTrax3 layout implementation. - Subtask 3
 - [ ] 154. ShapeTrax3 layout implementation. - Subtask 4
 - [ ] 155. ShapeTrax3 layout implementation. - Subtask 5
 - [ ] 156. ShapeTrax3 layout implementation. - Subtask 6
