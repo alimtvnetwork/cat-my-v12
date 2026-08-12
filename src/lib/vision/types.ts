@@ -1,6 +1,8 @@
 export interface VisionSettings {
   id: string;
   name: string;
+  camera?: CameraSettings;
+  cameraSettings?: CameraSettings;
 }
 
 export type TriggerMode = 'INTERNAL' | 'EXTERNAL';
@@ -17,4 +19,8 @@ export interface CameraSettings {
   lighting: number;
   exposure: number;
   focus: number;
+}
+
+export interface RecipeSegment {
+  visionSettings?: VisionSettings;
 }

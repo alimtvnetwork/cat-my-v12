@@ -72,17 +72,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 52. Implement CRUD for segments. - Subtask 2
 - [x] 53. Implement CRUD for segments. - Subtask 3
 - [x] 54. Implement CRUD for segments. - Subtask 4
-- [ ] 55. Implement CRUD for segments. - Subtask 5
-- [ ] 56. Implement CRUD for segments. - Subtask 6
-- [ ] 57. Implement CRUD for segments. - Subtask 7
-- [ ] 58. Implement CRUD for segments. - Subtask 8
-- [ ] 59. Implement CRUD for segments. - Subtask 9
-- [ ] 60. Implement CRUD for segments. - Subtask 10
+- [x] 55. Implement CRUD for segments. - Subtask 5
+- [x] 56. Implement CRUD for segments. - Subtask 6
+- [x] 57. Implement CRUD for segments. - Subtask 7
+- [x] 58. Implement CRUD for segments. - Subtask 8
+- [x] 59. Implement CRUD for segments. - Subtask 9
+- [x] 60. Implement CRUD for segments. - Subtask 10
 
 ### Phase 7: Camera Settings Context (Part 1)
-- [ ] 61. Extract global camera state to segment-local. - Subtask 1
-- [ ] 62. Extract global camera state to segment-local. - Subtask 2
-- [ ] 63. Extract global camera state to segment-local. - Subtask 3
+- [x] 61. Extract global camera state to segment-local. - Subtask 1
+- [x] 62. Extract global camera state to segment-local. - Subtask 2
+- [x] 63. Extract global camera state to segment-local. - Subtask 3
 - [ ] 64. Extract global camera state to segment-local. - Subtask 4
 - [ ] 65. Extract global camera state to segment-local. - Subtask 5
 - [ ] 66. Extract global camera state to segment-local. - Subtask 6

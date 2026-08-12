@@ -9,6 +9,9 @@ interface VisionState {
   deleteSegment: (id: string) => void;
   renameSegment: (id: string, name: string) => void;
   addSegment: () => void;
+  setCameraSettings: (segmentId: string, settings: Partial<CameraSettings>) => void;
+  duplicateSegment: (id: string) => void;
+  reorderSegments: (ids: string[]) => void;
 }
 
 const mockSegments: RecipeSegment[] = [
@@ -48,5 +51,52 @@ export const useVisionStore = create<VisionState>((set) => ({
       segments: [...state.segments, newSegment],
       activeSegmentId: newId,
     };
+  }),
+  setCameraSettings: (segmentId, settings) => set((state) => ({
+    segments: state.segments.map((s) =>
+      s.visionSettings && s.visionSettings.id === segmentId
+        ? {
+            ...s,
+            visionSettings: {
+              ...s.visionSettings,
+              camera: { ...s.visionSettings.camera, ...settings } as CameraSettings,
+              cameraSettings: { ...s.visionSettings.cameraSettings, ...settings } as CameraSettings,
+            },
+          }
+        : s
+    ),
+  })),
+  duplicateSegment: (id) => set((state) => {
+    const segmentToDuplicate = state.segments.find((s) => s.visionSettings.id === id);
+    if (!segmentToDuplicate) return state;
+
+    const newId = crypto.randomUUID();
+    const newSegment: RecipeSegment = {
+      ...segmentToDuplicate,
+      visionSettings: {
+        ...segmentToDuplicate.visionSettings,
+        id: newId,
+        name: `${segmentToDuplicate.visionSettings.name} (Copy)`,
+      },
+    };
+
+    const index = state.segments.findIndex((s) => s.visionSettings.id === id);
+    const newSegments = [...state.segments];
+    newSegments.splice(index + 1, 0, newSegment);
+
+    return {
+      segments: newSegments,
+      activeSegmentId: newId,
+    };
+  }),
+  reorderSegments: (ids) => set((state) => {
+    const idToSegment = new Map(state.segments.map(s => [s.visionSettings.id, s]));
+    const newSegments = ids
+      .map(id => idToSegment.get(id))
+      .filter((s): s is RecipeSegment => s !== undefined);
+    
+    const remainingSegments = state.segments.filter(s => !ids.includes(s.visionSettings.id));
+    
+    return { segments: [...newSegments, ...remainingSegments] };
   }),
 }));

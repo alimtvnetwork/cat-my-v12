@@ -2,7 +2,24 @@ import React from 'react';
 import { useVisionStore } from '../../lib/vision/store';
 
 export function SegmentSelector() {
-  const { segments, activeSegmentId, setActiveSegment, addSegment } = useVisionStore();
+  const { segments, activeSegmentId, setActiveSegment, addSegment, renameSegment, deleteSegment } = useVisionStore();
+
+  const handleRename = () => {
+    if (!activeSegmentId) return;
+    const segment = segments.find(s => s.visionSettings.id === activeSegmentId);
+    const currentName = segment?.visionSettings.name || '';
+    const newName = window.prompt('Enter new segment name:', currentName);
+    if (newName !== null && newName.trim() !== '') {
+      renameSegment(activeSegmentId, newName.trim());
+    }
+  };
+
+  const handleDelete = () => {
+    if (!activeSegmentId) return;
+    if (window.confirm('Are you sure you want to delete this segment?')) {
+      deleteSegment(activeSegmentId);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -28,6 +45,20 @@ export function SegmentSelector() {
           className="mt-1 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
         >
           Add Segment
+        </button>
+        <button
+          onClick={handleRename}
+          disabled={!activeSegmentId}
+          className="mt-1 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Rename
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={!activeSegmentId}
+          className="mt-1 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Delete
         </button>
       </div>
     </div>
