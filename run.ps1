@@ -11,12 +11,16 @@ Port for the backend server. Default is 8787.
 .PARAMETER FePort
 Port for the frontend server. Default is 5173.
 
+.PARAMETER HostIp
+Host IP to bind the backend. Default is 127.0.0.1. WARNING: Do not use 0.0.0.0 in non-dev environments.
+
 .PARAMETER NoShell
 Skip packaging and launching the Chromium shell.
 #>
 param(
     [int]$BePort = 8787,
     [int]$FePort = 5173,
+    [string]$HostIp = "127.0.0.1",
     [switch]$NoShell
 )
 
@@ -26,7 +30,7 @@ $jobs = @()
 
 try {
     Write-Host "Starting backend on port $BePort..."
-    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host 127.0.0.1 --port $BePort"
+    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort"
     $jobs += $backendProcess
 
     Write-Host "Waiting for backend..."

@@ -4,6 +4,7 @@
 # Defaults
 BE_PORT=8787
 FE_PORT=5173
+BE_HOST="127.0.0.1"
 NO_SHELL=0
 
 # Parse arguments
@@ -11,12 +12,14 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --be-port) BE_PORT="$2"; shift ;;
         --fe-port) FE_PORT="$2"; shift ;;
+        --host) BE_HOST="$2"; shift ;;
         --no-shell) NO_SHELL=1 ;;
         --help|-h)
             echo "Usage: ./run.sh [options]"
             echo "Options:"
             echo "  --be-port PORT    Port for backend (default: 8787)"
             echo "  --fe-port PORT    Port for frontend (default: 5173)"
+            echo "  --host IP         Host to bind backend (default: 127.0.0.1). WARNING: Do not use 0.0.0.0 in non-dev environments."
             echo "  --no-shell        Skip launching Chromium shell"
             echo "  --help, -h        Show this help message"
             exit 0
@@ -50,8 +53,8 @@ trap cleanup EXIT INT TERM
 
 # Start backend
 echo "Starting backend on port $BE_PORT..."
-# Using explicit 127.0.0.1 bind as required by security guidelines for dev
-uv run --project BE uvicorn BE.main:app --host 127.0.0.1 --port "$BE_PORT" &
+# Using explicit bind as required by security guidelines for dev
+uv run --project BE uvicorn BE.main:app --host "$BE_HOST" --port "$BE_PORT" &
 BE_PID=$!
 PIDS+=("$BE_PID")
 

@@ -11,6 +11,7 @@ const targets = [
   { path: "CHANGELOG.md", needle: tag },
   { path: "RELEASE_NOTES.md", needle: tag },
   { path: "README.md", needle: tag },
+  { path: "BE/pyproject.toml", needle: `version = "${version}"` },
 ];
 
 let failed = false;

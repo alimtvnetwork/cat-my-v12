@@ -6,6 +6,7 @@ Owner: app team
 Created: 2026-07-21
 Related command: `.lovable/spec/commands/40-backend-mode-toggle-and-sdk-facade.md`
 Related plan: `.lovable/plans/pending/88-backend-implementation-v1-150-steps.md`
+Related ADR: `docs/adr/0001-backend-mode-and-facade.md`
 Gap log driving this revision: `docs/plans/88/spec-gaps.md`
 
 ## Purpose

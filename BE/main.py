@@ -98,7 +98,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "code": None,
             "subject_id": None,
             "env": cfg.env.value,
+            "host": cfg.host,
             "port": cfg.port,
+            "version": app.version,
         },
     )
     return app

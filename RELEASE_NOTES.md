@@ -378,6 +378,10 @@ Plan 90 Step 122: **Extend the Pester harness to cover `Register-RetentionTask.p
 
 - Plan 88 Step 3: Backend Implementation Request v1 frozen as `accepted`. All conflicts flagged in Step 2's gap log are resolved in the request body and mirrored into the guideline digest. Error codes now `E_<AREA>_<CONDITION>`, AppError PascalCase with no wire stack, SDK facade folders under `BE/app/facades/` + `src/lib/facades/`, localStorage key `ui.backend.baseUrl`, config knobs + correlation-ID + egress warn + launcher env contract promoted into the request. Unblocks Steps 4-7.
 
+## v3.984.0 - 2026-08-12
+
+- Plan 88 Step 125: Added Backend Mode toggle and initial BE scaffold. Implemented `BE/` skeleton with FastAPI, SDK facade rules, and the `SEED` vs `BACKEND` mode toggle for the UI. (Draft, unshipped).
+
 ## v3.982.0 - 2026-07-21
 
 Fixed the two broken UI issues from `assets/ui/70-*`, `71-*`, `72-*`:

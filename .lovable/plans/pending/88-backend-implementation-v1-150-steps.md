@@ -14,6 +14,7 @@ Captured inputs:
 - Command: `.lovable/spec/commands/40-backend-mode-toggle-and-sdk-facade.md`
 - Issue: `.lovable/issues/38-home-lacks-backend-mode-toggle-and-sdk-facade.md`
 - Spec: `spec/21-app/backend-implementation-request-v1.md`
+- ADR: `docs/adr/0001-backend-mode-and-facade.md`
 
 Depth links:
 
