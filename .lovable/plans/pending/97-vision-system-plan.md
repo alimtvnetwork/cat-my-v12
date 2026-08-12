@@ -83,17 +83,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 61. Extract global camera state to segment-local. - Subtask 1
 - [x] 62. Extract global camera state to segment-local. - Subtask 2
 - [x] 63. Extract global camera state to segment-local. - Subtask 3
-- [ ] 64. Extract global camera state to segment-local. - Subtask 4
-- [ ] 65. Extract global camera state to segment-local. - Subtask 5
-- [ ] 66. Extract global camera state to segment-local. - Subtask 6
-- [ ] 67. Extract global camera state to segment-local. - Subtask 7
-- [ ] 68. Extract global camera state to segment-local. - Subtask 8
-- [ ] 69. Extract global camera state to segment-local. - Subtask 9
-- [ ] 70. Extract global camera state to segment-local. - Subtask 10
+- [x] 64. Extract global camera state to segment-local. - Subtask 4
+- [x] 65. Extract global camera state to segment-local. - Subtask 5
+- [x] 66. Extract global camera state to segment-local. - Subtask 6
+- [x] 67. Extract global camera state to segment-local. - Subtask 7
+- [x] 68. Extract global camera state to segment-local. - Subtask 8
+- [x] 69. Extract global camera state to segment-local. - Subtask 9
+- [x] 70. Extract global camera state to segment-local. - Subtask 10
 
 ### Phase 8: Camera Settings Context (Part 2)
-- [ ] 71. Build the forms for Lighting, Exposure, Focus. - Subtask 1
-- [ ] 72. Build the forms for Lighting, Exposure, Focus. - Subtask 2
+- [x] 71. Build the forms for Lighting, Exposure, Focus. - Subtask 1
+- [x] 72. Build the forms for Lighting, Exposure, Focus. - Subtask 2
 - [ ] 73. Build the forms for Lighting, Exposure, Focus. - Subtask 3
 - [ ] 74. Build the forms for Lighting, Exposure, Focus. - Subtask 4
 - [ ] 75. Build the forms for Lighting, Exposure, Focus. - Subtask 5
