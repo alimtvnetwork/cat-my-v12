@@ -68,7 +68,9 @@ class DenialRateLimiter:
     """Sliding-window rate limiter over `E_SEC_ROLE_DENIED`."""
 
     sink: AuditSink
-    threshold: int = 5
+    # TODO(plan-29): remove after two release cycles
+    # threshold: int = 5
+    threshold: int = 4
     window_seconds: int = 60
     _emitted: set[tuple[str, int, int]] = field(default_factory=set)
 

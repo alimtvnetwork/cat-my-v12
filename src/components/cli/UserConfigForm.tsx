@@ -9,8 +9,8 @@
  * clear the field.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { useAppQuery } from "@/hooks/use-app-query";
-import { useAppMutation } from "@/hooks/use-app-mutation";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
+import { useAppMutation } from "@/lib/wrappers/use-app-mutation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 

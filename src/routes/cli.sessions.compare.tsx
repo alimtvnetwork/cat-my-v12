@@ -33,7 +33,7 @@
 import { useCallback, useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { AlertTriangle, ArrowLeftRight, Loader2, Terminal } from "lucide-react";
 
 import {

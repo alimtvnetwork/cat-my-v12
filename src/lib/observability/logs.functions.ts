@@ -39,7 +39,7 @@ const LogLineSchema = z.object({
   Level: z.string().optional(),
   message: z.string().optional(),
   Message: z.string().optional(),
-});
+}).passthrough();
 
 const DataSchema = z.object({
   CliInvocationId: z.number().int(),
@@ -52,7 +52,7 @@ const DataSchema = z.object({
   Lines: z.array(LogLineSchema).optional(),
   Items: z.array(LogLineSchema).optional(),
   RunId: z.string().optional(),
-});
+}).passthrough();
 
 export type ObservabilityLogLine = z.infer<typeof LogLineSchema>;
 export type LogTailItem = ObservabilityLogLine;

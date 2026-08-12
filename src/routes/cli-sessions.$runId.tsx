@@ -18,7 +18,7 @@
  * the stream connects.
  */
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 

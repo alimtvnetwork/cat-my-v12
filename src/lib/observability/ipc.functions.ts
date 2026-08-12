@@ -52,7 +52,7 @@ const IpcMessageSchema = z.object({
   Seq: z.number().optional(),
   IsAcked: z.boolean().optional(),
   Payload: z.any().optional(),
-});
+}).passthrough();
 
 const DataSchema = z.object({
   items: z.array(IpcMessageSchema),
@@ -64,7 +64,7 @@ const DataSchema = z.object({
   MailboxPath: z.string().optional(),
   IsTruncated: z.boolean().optional(),
   Count: z.number().int().optional(),
-});
+}).passthrough();
 
 export type ObservabilityIpcMessage = z.infer<typeof IpcMessageSchema>;
 export type IpcItem = ObservabilityIpcMessage;

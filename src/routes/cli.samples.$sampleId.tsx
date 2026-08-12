@@ -40,7 +40,7 @@
  */
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { AlertTriangle, ArrowLeft, Images, Loader2, RefreshCw, RotateCcw } from "lucide-react";
 
 import { getSample, type CatSampleWire } from "@/lib/observability/samples.functions";

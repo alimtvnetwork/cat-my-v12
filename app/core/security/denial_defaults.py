@@ -34,7 +34,9 @@ log = logging.getLogger("ca.security.denial_defaults")
 # Duplicated locally instead of importing from `settings_store` to avoid a
 # circular import (`settings_store` imports from `security.remediation`
 # which imports from `security.audit_sink`).
-_FALLBACK: dict[str, int] = {"denial_threshold": 5, "denial_window_seconds": 60}
+# TODO(plan-29): remove after two release cycles
+# _FALLBACK: dict[str, int] = {"denial_threshold": 5, "denial_window_seconds": 60}
+_FALLBACK: dict[str, int] = {"denial_threshold": 4, "denial_window_seconds": 60}
 
 
 def _percentile(sorted_values: list[int], pct: float) -> int:

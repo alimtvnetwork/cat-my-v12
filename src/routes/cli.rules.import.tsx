@@ -42,7 +42,7 @@ import { DraftOriginType } from "@/lib/rules/draftStore";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CliRouteNotFound } from "@/components/cli/CliRouteNotFound";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAppMutation } from "@/hooks/use-app-mutation";
+import { useAppMutation } from "@/lib/wrappers/use-app-mutation";
 import { useCallback, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, CheckCircle2, FileJson, Loader2, Upload } from "lucide-react";
 

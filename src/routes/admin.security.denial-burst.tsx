@@ -11,7 +11,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { useMemo } from "react";
 import { getDenialBurstWindow } from "@/lib/security-telemetry.functions";
 import { computeBurstPercentiles } from "@/lib/denial-burst-query";

@@ -27,7 +27,7 @@
 import { pausePollOnError } from "@/lib/react-query/poll";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { Loader2, RefreshCw, AlertTriangle, Terminal } from "lucide-react";
 
 import {

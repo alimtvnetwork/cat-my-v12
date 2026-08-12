@@ -39,7 +39,7 @@
 import { pausePollOnError } from "@/lib/react-query/poll";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAppQuery } from "@/hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import {
   AlertTriangle,
   ChevronLeft,

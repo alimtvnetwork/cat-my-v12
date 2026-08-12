@@ -18,7 +18,7 @@
  * `cli.settings.tsx` for visual consistency across the page.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { useAppMutation } from "@/hooks/use-app-mutation";
+import { useAppMutation } from "@/lib/wrappers/use-app-mutation";
 import { AlertTriangle, CheckCircle2, RefreshCw, Stethoscope } from "lucide-react";
 import { useEffect, useState } from "react";
 

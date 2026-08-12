@@ -63,8 +63,8 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ScrollText } from "lucide-react";
 import { CliRouteNotFound } from "@/components/cli/CliRouteNotFound";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAppQuery } from "@/hooks/use-app-query";
-import { useAppMutation } from "@/hooks/use-app-mutation";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
+import { useAppMutation } from "@/lib/wrappers/use-app-mutation";
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, Check, GitCompare, Loader2, Play, Save } from "lucide-react";
 

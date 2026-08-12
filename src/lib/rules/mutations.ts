@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useAppMutation } from "@/hooks/use-app-mutation";
+import { useAppMutation } from "@/lib/wrappers/use-app-mutation";
 import { getDraft, putDraft, type RuleSetEnvelope, type RuleItem } from "./draftStore";
 import { saveRuleSet } from "./saveRuleSet";
 import { getPersistRulesServerSide } from "@/lib/data-source/store";
