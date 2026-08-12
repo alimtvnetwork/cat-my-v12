@@ -4,9 +4,9 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
-- 29 - denial-burst-threshold-tuning - pending - see `pending/29-denial-burst-threshold-tuning.md`
-- 35 - ui-ux-photoshop-layers-overhaul - pending - see `pending/35-ui-ux-photoshop-layers-overhaul.md`
-- 36 - ui-app-shell-and-src-v3-port - pending - see `pending/36-ui-app-shell-and-src-v3-port.md`
+- 29 - denial-burst-threshold-tuning - pending - see `completed/29-denial-burst-threshold-tuning.md`
+- 35 - ui-ux-photoshop-layers-overhaul - pending - see `completed/35-ui-ux-photoshop-layers-overhaul.md`
+- 36 - ui-app-shell-and-src-v3-port - pending - see `completed/36-ui-app-shell-and-src-v3-port.md`
 - 40 - tools-images-spec-docs - pending - see `pending/40-tools-images-spec-docs.md`
 - 41 - keyboard-dnd-and-code-quality-pass - pending - see `pending/41-keyboard-dnd-and-code-quality-pass.md`
 - 44 - plan43-execution-slice-1 - pending - see `completed/44-plan43-execution-slice-1.md`

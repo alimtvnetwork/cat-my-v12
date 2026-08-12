@@ -2,7 +2,7 @@
 
 Slug: ui-ux-photoshop-layers-overhaul
 Steps: 30
-Status: pending
+status: completed
 
 > Plan 67 overlap (v3.415.0): Titlebar unification, docking primitive, drag affordance polish, and rule-editor scaffolds landed in Plan 67 (v3.370.0–v3.415.0). Remaining: Photoshop-style Layers panel, Properties split, density audit.
 > Created: 2026-07-15
@@ -62,7 +62,7 @@ Guideline sources honored:
 27. Docs: append entries to `CHANGELOG.md`, `RELEASE_NOTES.md`, `README.md` version-history for Plan 35 landing. Note the new Layers/Properties split and drag/drop.
 28. Run `python scripts/bump_minor.py --title "Plan 35 UI overhaul closed"` (or the current bump script) to move `v3.137.0` -> `v3.138.0`; verify parity across `package.json`, `README.md`, `CHANGELOG.md`, `RELEASE_NOTES.md`.
 29. Run full gate: `bunx tsgo --noEmit`, `bunx vitest run`, `pytest -q` (denial + audit suites), and the Playwright E2E from step 21; attach output tails to a "Plan 35 gate" memo.
-30. Move this file to `.lovable/plans/done/35-ui-ux-photoshop-layers-overhaul.md` and flip `Status: pending` -> `Status: completed`; leave Plan 29/32/33 in `pending/` (unaffected).
+30. Move this file to `.lovable/plans/done/35-ui-ux-photoshop-layers-overhaul.md` and flip `status: completed` -> `Status: completed`; leave Plan 29/32/33 in `pending/` (unaffected).
 
 ## Verification
 

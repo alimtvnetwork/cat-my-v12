@@ -2,7 +2,7 @@
 title: UI App-Shell Overhaul + src_v3 Port (50 steps, max enforcement)
 slug: ui-app-shell-and-src-v3-port
 plan: 36
-status: pending
+status: completed
 created: 2026-07-16
 revised: 2026-07-16
 subtasks_dir: .lovable/plans/subtasks/36-ui-app-shell-and-src-v3-port/
