@@ -28,17 +28,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 16. Create and populate vision-system memory files. - Subtask 6
 - [x] 17. Create and populate vision-system memory files. - Subtask 7
 - [x] 18. Create and populate vision-system memory files. - Subtask 8
-- [ ] 19. Create and populate vision-system memory files. - Subtask 9
-- [ ] 20. Create and populate vision-system memory files. - Subtask 10
+- [x] 19. Create and populate vision-system memory files. - Subtask 9
+- [x] 20. Create and populate vision-system memory files. - Subtask 10
 
 ### Phase 3: Core Components Foundation (Types)
-- [ ] 21. Create base types and interfaces for the new vision state. - Subtask 1
-- [ ] 22. Create base types and interfaces for the new vision state. - Subtask 2
-- [ ] 23. Create base types and interfaces for the new vision state. - Subtask 3
-- [ ] 24. Create base types and interfaces for the new vision state. - Subtask 4
-- [ ] 25. Create base types and interfaces for the new vision state. - Subtask 5
-- [ ] 26. Create base types and interfaces for the new vision state. - Subtask 6
-- [ ] 27. Create base types and interfaces for the new vision state. - Subtask 7
+- [x] 21. Create base types and interfaces for the new vision state. - Subtask 1
+- [x] 22. Create base types and interfaces for the new vision state. - Subtask 2
+- [x] 23. Create base types and interfaces for the new vision state. - Subtask 3
+- [x] 24. Create base types and interfaces for the new vision state. - Subtask 4
+- [x] 25. Create base types and interfaces for the new vision state. - Subtask 5
+- [x] 26. Create base types and interfaces for the new vision state. - Subtask 6
+- [x] 27. Create base types and interfaces for the new vision state. - Subtask 7
 - [ ] 28. Create base types and interfaces for the new vision state. - Subtask 8
 - [ ] 29. Create base types and interfaces for the new vision state. - Subtask 9
 - [ ] 30. Create base types and interfaces for the new vision state. - Subtask 10
