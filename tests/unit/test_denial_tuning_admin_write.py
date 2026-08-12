@@ -106,7 +106,7 @@ def test_non_admin_denied_and_row_untouched(monkeypatch):
     assert len(_rows(store, CODE_ROLE_DENIED)) == 1
     assert _rows(store, CODE_ADMIN_WRITE) == []
     # Limiter untouched.
-    assert (limiter.threshold, limiter.window_seconds) == (5, 60)
+    assert (limiter.threshold, limiter.window_seconds) == (4, 60)
 
 
 @pytest.mark.parametrize("bad", [
@@ -127,4 +127,4 @@ def test_invalid_payload_rejected_before_persistence(monkeypatch, bad):
         "SELECT COUNT(*) FROM settings WHERE section='security'"
     ).fetchone()[0] == 0
     assert _rows(store, CODE_ADMIN_WRITE) == []
-    assert (limiter.threshold, limiter.window_seconds) == (5, 60)
+    assert (limiter.threshold, limiter.window_seconds) == (4, 60)

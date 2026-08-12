@@ -22,6 +22,8 @@ class DenialAlert:
 
 class DenialRateLimiter:
     def __init__(self, sink: AuditSink, threshold: int = 4, window_seconds: int = 60):
+        if threshold <= 0 or window_seconds <= 0:
+            raise ValueError("threshold and window_seconds must be positive")
         self.sink = sink
         self.threshold = threshold
         self.window_seconds = window_seconds
@@ -38,6 +40,8 @@ class DenialRateLimiter:
         }
 
     def reload(self, *, threshold: int, window_seconds: int) -> None:
+        if threshold <= 0 or window_seconds <= 0:
+            raise ValueError("threshold and window_seconds must be positive")
         self.threshold = threshold
         self.window_seconds = window_seconds
         self._emitted.clear()

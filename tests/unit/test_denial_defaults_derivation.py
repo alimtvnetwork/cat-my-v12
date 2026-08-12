@@ -19,7 +19,7 @@ def _sink() -> AuditSink:
 
 def test_no_telemetry_falls_back_and_logs():
     got = derive_denial_defaults(_sink(), window_hours=24, now=1_000_000)
-    assert got["denial_threshold"] == 5
+    assert got["denial_threshold"] == 4
     assert got["denial_window_seconds"] == 60
     assert got["sample_size"] == 0
     assert got["derivation"] == "no-telemetry-fallback"

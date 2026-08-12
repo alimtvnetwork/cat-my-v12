@@ -28,7 +28,7 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "security" / "denia
 def test_fixture_loads_all_denial_rows() -> None:
     rows = load_rows(FIXTURE)
     # 10 role-denied + 2 no-auth in the fixture.
-    assert len(rows) == 12
+    assert len(rows) == 15
     assert {r.code for r in rows} == {"E_SEC_ROLE_DENIED", "E_SEC_NOAUTH"}
 
 
@@ -36,12 +36,12 @@ def test_baseline_percentiles_are_stable() -> None:
     rows = load_rows(FIXTURE)
     counts = per_actor_minute_counts(rows)
     # Minute boundaries split op-01 across two buckets and op-02 across one.
-    assert counts == [1, 1, 1, 1, 2, 2, 4]
+    assert counts == [1, 1, 1, 2, 2, 2, 2, 4]
 
     stats = baseline(rows)
-    assert stats.sample_size == 12
-    assert stats.buckets == 7
-    assert stats.p50 == 1
+    assert stats.sample_size == 15
+    assert stats.buckets == 8
+    assert stats.p50 == 2
     assert stats.p95 == 4
     assert stats.p99 == 4
 

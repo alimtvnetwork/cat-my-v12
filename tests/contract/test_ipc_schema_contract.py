@@ -48,7 +48,7 @@ def _extract(md_root: Path, schema_dir: Path) -> list[tuple[str, str, dict, dict
     ref_index, roots = CHK.build_ref_index(schema_dir)
     for md in sorted(md_root.rglob("*.md")):
         try:
-            text = md.read_text(encoding="utf-8")
+            text = md.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
         for match in BLOCK_RE.finditer(text):
