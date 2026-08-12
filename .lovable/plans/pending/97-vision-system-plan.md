@@ -50,17 +50,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 34. Scaffold Zustand stores for vision state. - Subtask 4
 - [x] 35. Scaffold Zustand stores for vision state. - Subtask 5
 - [x] 36. Scaffold Zustand stores for vision state. - Subtask 6
-- [ ] 37. Scaffold Zustand stores for vision state. - Subtask 7
-- [ ] 38. Scaffold Zustand stores for vision state. - Subtask 8
-- [ ] 39. Scaffold Zustand stores for vision state. - Subtask 9
-- [ ] 40. Scaffold Zustand stores for vision state. - Subtask 10
+- [x] 37. Scaffold Zustand stores for vision state. - Subtask 7
+- [x] 38. Scaffold Zustand stores for vision state. - Subtask 8
+- [x] 39. Scaffold Zustand stores for vision state. - Subtask 9
+- [x] 40. Scaffold Zustand stores for vision state. - Subtask 10
 
 ### Phase 5: Recipe Segments UI (Part 1)
-- [ ] 41. Build segment selection logic. - Subtask 1
-- [ ] 42. Build segment selection logic. - Subtask 2
-- [ ] 43. Build segment selection logic. - Subtask 3
-- [ ] 44. Build segment selection logic. - Subtask 4
-- [ ] 45. Build segment selection logic. - Subtask 5
+- [x] 41. Build segment selection logic. - Subtask 1
+- [x] 42. Build segment selection logic. - Subtask 2
+- [x] 43. Build segment selection logic. - Subtask 3
+- [x] 44. Build segment selection logic. - Subtask 4
+- [x] 45. Build segment selection logic. - Subtask 5
 - [ ] 46. Build segment selection logic. - Subtask 6
 - [ ] 47. Build segment selection logic. - Subtask 7
 - [ ] 48. Build segment selection logic. - Subtask 8
