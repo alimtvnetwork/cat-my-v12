@@ -372,7 +372,7 @@ export function TopMenuBar() {
         <span
           aria-hidden
           data-testid="active-section-label"
-          className="hidden shrink-0 items-center rounded-md bg-ca-primary/12 px-2 py-0.5 text-[12px] font-semibold text-ca-primary sm:inline-flex"
+          className="hidden shrink-0 items-center rounded-md bg-ca-primary/12 px-2 py-0.5 text-[12px] font-semibold text-ca-primary sm:inline-flex lg:hidden"
         >
           {activeLabel}
         </span>
@@ -388,7 +388,7 @@ export function TopMenuBar() {
           </span>
         ) : null}
 
-        <Menubar className="hidden border-none bg-transparent p-0 sm:flex">
+        <Menubar className="hidden border-none bg-transparent p-0 lg:flex">
           {GROUPS.map((group) => (
             <MenubarMenu key={group.id}>
               <MenuTriggerWithMnemonic group={group} groupActive={isGroupActive(group, pathname)} />
@@ -419,7 +419,7 @@ export function TopMenuBar() {
           {showWindowMenu ? <WindowMenubarGroup /> : null}
         </Menubar>
       </nav>
-      <div className="sm:hidden">
+      <div className="lg:hidden">
         <MobileMenu
           navigate={navigate}
           pathname={pathname}

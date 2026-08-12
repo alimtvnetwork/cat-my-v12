@@ -4611,11 +4611,9 @@ html {
 }
 
 .app-breadcrumb-current {
-  background: color-mix(in oklab, var(--ca-primary) 18%, var(--ca-panel));
-  border-color: color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
   color: var(--ca-chrome-ink);
   max-width: min(28rem, 44vw);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 @media (max-width: 767.98px) {
