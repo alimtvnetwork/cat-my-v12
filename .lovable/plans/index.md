@@ -34,4 +34,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 46, 70-78, 84, 86, 87 - see `completed/` directory listing.
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
 - 91 - ui-flavors-modern-vs-standard - completed - see `completed/91-ui-flavors-modern-vs-standard.md`
+- 92 - ci-cd-and-codebase - completed - see `completed/92-ci-cd-and-codebase.md`
+- 92 - ci-cd-ts-remediation - completed - see `completed/92-ci-cd-ts-remediation.md`
+- 92 - code-quality-and-wrappers - completed - see `completed/92-code-quality-and-wrappers.md`
 - SS-29 - fixture-audit - completed - see `completed/SS-29-fixture-audit.md`
