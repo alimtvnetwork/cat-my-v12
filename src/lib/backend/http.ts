@@ -104,7 +104,7 @@ export async function fetchBackend<T = unknown>(
     throw e;
   }
 
-  const isFail = envelope.Status.IsFailed || !response.ok;
+  const isFail = envelope.Status.IsFailed || response.ok === false;
   if (isFail) {
     const wireCode = envelope.Errors?.Code || "E_NET";
     const meta = lookupErrorCode(wireCode);
