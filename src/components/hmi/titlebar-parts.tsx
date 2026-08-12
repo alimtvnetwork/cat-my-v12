@@ -25,6 +25,7 @@ import { FlavorToggle } from "@/components/theme/FlavorToggle";
 import { KeyboardModeIndicator } from "@/components/hmi/KeyboardModeIndicator";
 import { AddressBar } from "@/components/shell/AddressBar";
 import { Search as SearchIcon } from "lucide-react";
+import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 
 export function HeaderBrand() {
   return (
@@ -102,6 +103,9 @@ export function HeaderActions({ right }: HeaderActionsProps) {
       />
       <CommandPaletteTrigger />
       <TopMenuBar />
+      <div className="flex items-center mx-1">
+        <UiModeSwitch />
+      </div>
       <FlavorToggle />
       <ThemeToggle />
       <HeaderDensityToggle />

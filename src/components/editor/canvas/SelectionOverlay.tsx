@@ -1673,8 +1673,12 @@ export function SelectionOverlay({
             // hugs the right canvas edge so buttons never render off-canvas.
             const GAP = 8;
             const STRIP_W = 28; // one column of 24px buttons + padding
-            const flipLeft = br.x + GAP + STRIP_W > IMAGE_BOUNDS.width;
-            const left = flipLeft ? tl.x - GAP - STRIP_W : br.x + GAP;
+            let left = br.x + GAP;
+            if (left + STRIP_W > canvasSize.width) {
+              left = tl.x - GAP - STRIP_W;
+            }
+            // clamp left to stay on screen
+            left = Math.max(8, Math.min(left, canvasSize.width - STRIP_W - 8));
             const top = tl.y;
 
             return (

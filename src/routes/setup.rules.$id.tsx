@@ -17,6 +17,8 @@ import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import type { RuleId } from "@/lib/rules/model";
 import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { EditorSetupExperience } from "@/components/editor";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardPatternSearch } from "@/components/editor/standard/StandardPatternSearch";
 
 export const Route = createFileRoute("/setup/rules/$id")({
   staticData: { crumb: "Rule editor" },
@@ -52,11 +54,19 @@ function RuleEditorRoute() {
     }
   }, [rule, navigate]);
 
+  const { mode } = useUiMode();
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
       <SectionTopBar section={SectionIdType.Home} active="setup" />
       {rule && !rule.isCategory ? (
-        <EditorSetupExperience />
+        <div className="flex flex-1 flex-col min-h-0">
+          {mode === UiModeType.Standard ? (
+            <StandardPatternSearch />
+          ) : (
+            <EditorSetupExperience />
+          )}
+        </div>
       ) : rule ? null : (
         <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">
           Rule was deleted or the link is stale.

@@ -2104,50 +2104,34 @@ html {
   }
 }
 
-/* v3.977: order badge is a leading overlay pinned to the row's left edge
-   so it does not reserve flex width and cannot push the rule content
-   (kind icon + name) further right. Row-main now anchors at the same
-   left offset whether or not a badge is present, matching the section
-   header gutter and the base row grid. */
+/* v3.977: order badge was a floating overlay, but it looked unprofessional.
+   Now it's a clean inline column right-aligned before the main content. */
 .editor-rule-order-badge {
-  position: absolute;
-  left: 2px;
-  top: 50%;
-  transform: translateY(-50%);
   align-items: center;
-  background: color-mix(in oklab, var(--ca-panel-2) 76%, var(--ca-panel));
-  border: 1px solid color-mix(in oklab, var(--ca-border) 78%, transparent);
+  background: color-mix(in oklab, var(--ca-panel-2) 60%, transparent);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 60%, transparent);
   border-radius: 4px;
-  color: var(--ca-ink);
+  color: var(--ca-ink-muted);
   display: inline-flex;
   font-family: var(--font-hmi-mono);
-  font-size: 11px;
+  font-size: 9px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  height: 18px;
-  min-width: 20px;
-  padding: 0 4px;
+  width: 18px;
+  height: 14px;
   justify-content: center;
   line-height: 1;
   pointer-events: none;
-  z-index: 1;
-  opacity: 0.92;
-  transition: opacity var(--motion-fast) var(--ease-standard);
+  flex-shrink: 0;
+  transition: all var(--motion-fast) var(--ease-standard);
+  margin-right: 4px;
 }
 .editor-rule-row:hover .editor-rule-order-badge,
 .editor-rule-row:focus-within .editor-rule-order-badge,
 .editor-rule-row[data-focused="true"] .editor-rule-order-badge,
 .editor-rule-row[data-selected="true"] .editor-rule-order-badge {
-  opacity: 1;
-}
-/* v3.979: hover/focus/selected must NOT reposition the badge. Geometry is
-   locked in the base rule (top:50%, translateY(-50%)); only color/opacity
-   changes are allowed. Repositioning to top-left was read as the row
-   "gluing"/sliding right on hover. */
-.editor-rule-row:hover .editor-rule-order-badge,
-.editor-rule-row:focus-within .editor-rule-order-badge,
-.editor-rule-row[data-focused="true"] .editor-rule-order-badge,
-.editor-rule-row[data-selected="true"] .editor-rule-order-badge {
-  border-color: color-mix(in oklab, var(--ca-primary) 55%, var(--ca-border));
+  background: var(--ca-panel-2);
+  border-color: var(--ca-border);
   color: var(--ca-ink);
 }
 

@@ -156,6 +156,7 @@ export function EditorTopBar({ isDirty, onSave, onPublish, savedAt = null }: Edi
           </button>
         </div>
         <div className="editor-topbar-split" role="group" aria-label="Preview and publish actions">
+          <div className="flex items-center pr-2 border-r border-ca-border/40 mr-2 h-6" />
           <button
             type="button"
             onClick={() => notifySuccess("Preview opened in a new tab.")}

@@ -164,7 +164,13 @@ function isGroupActive(group: MenuGroup, pathname: string): boolean {
 }
 
 function isSetupEditorPath(pathname: string): boolean {
-  return pathname === "/setup" || pathname === "/setup/roi" || pathname === "/setup/reference";
+  return (
+    pathname === "/setup" ||
+    pathname === "/setup/roi" ||
+    pathname === "/setup/reference" ||
+    pathname === "/setup/rules" ||
+    pathname.startsWith("/setup/rules/")
+  );
 }
 
 function isRulesetEditorPath(pathname: string): boolean {
@@ -410,7 +416,7 @@ export function TopMenuBar() {
               </MenubarContent>
             </MenubarMenu>
           ))}
-          {showWindowMenuGated ? <WindowMenubarGroup /> : null}
+          {showWindowMenu ? <WindowMenubarGroup /> : null}
         </Menubar>
       </nav>
       <div className="sm:hidden">
@@ -418,7 +424,7 @@ export function TopMenuBar() {
           navigate={navigate}
           pathname={pathname}
           running={running}
-          showWindowMenu={showWindowMenuGated}
+          showWindowMenu={showWindowMenu}
         />
       </div>
     </>
