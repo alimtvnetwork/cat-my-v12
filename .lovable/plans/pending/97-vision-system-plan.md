@@ -94,17 +94,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 ### Phase 8: Camera Settings Context (Part 2)
 - [x] 71. Build the forms for Lighting, Exposure, Focus. - Subtask 1
 - [x] 72. Build the forms for Lighting, Exposure, Focus. - Subtask 2
-- [ ] 73. Build the forms for Lighting, Exposure, Focus. - Subtask 3
-- [ ] 74. Build the forms for Lighting, Exposure, Focus. - Subtask 4
-- [ ] 75. Build the forms for Lighting, Exposure, Focus. - Subtask 5
-- [ ] 76. Build the forms for Lighting, Exposure, Focus. - Subtask 6
-- [ ] 77. Build the forms for Lighting, Exposure, Focus. - Subtask 7
-- [ ] 78. Build the forms for Lighting, Exposure, Focus. - Subtask 8
-- [ ] 79. Build the forms for Lighting, Exposure, Focus. - Subtask 9
-- [ ] 80. Build the forms for Lighting, Exposure, Focus. - Subtask 10
+- [x] 73. Build the forms for Lighting, Exposure, Focus. - Subtask 3
+- [x] 74. Build the forms for Lighting, Exposure, Focus. - Subtask 4
+- [x] 75. Build the forms for Lighting, Exposure, Focus. - Subtask 5
+- [x] 76. Build the forms for Lighting, Exposure, Focus. - Subtask 6
+- [x] 77. Build the forms for Lighting, Exposure, Focus. - Subtask 7
+- [x] 78. Build the forms for Lighting, Exposure, Focus. - Subtask 8
+- [x] 79. Build the forms for Lighting, Exposure, Focus. - Subtask 9
+- [x] 80. Build the forms for Lighting, Exposure, Focus. - Subtask 10
 
 ### Phase 9: Trigger Modes (Part 1)
-- [ ] 81. Internal vs External mode toggles. - Subtask 1
+- [x] 81. Internal vs External mode toggles. - Subtask 1
 - [ ] 82. Internal vs External mode toggles. - Subtask 2
 - [ ] 83. Internal vs External mode toggles. - Subtask 3
 - [ ] 84. Internal vs External mode toggles. - Subtask 4

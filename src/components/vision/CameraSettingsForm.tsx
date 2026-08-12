@@ -16,7 +16,8 @@ export function CameraSettingsForm() {
   const cameraSettings = activeSegment.visionSettings?.cameraSettings || activeSegment.visionSettings?.camera || {
     lighting: 0,
     exposure: 0,
-    focus: 0
+    focus: 0,
+    triggerMode: 'Internal'
   };
 
   const handleChange = (key: keyof typeof cameraSettings, value: number) => {
@@ -25,66 +26,108 @@ export function CameraSettingsForm() {
     }
   };
 
+  const handleStringChange = (key: string, value: string) => {
+    if (activeSegmentId) {
+      setCameraSettings(activeSegmentId, { [key]: value });
+    }
+  };
+
   return (
-    <div className="p-4 bg-white rounded-md border border-gray-200 shadow-sm">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Camera Settings</h3>
-      <div className="space-y-4">
+    <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Camera Settings</h3>
+      <div className="space-y-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Lighting</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Mode</label>
           <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={cameraSettings.lighting}
-              onChange={(e) => handleChange('lighting', Number(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              value={cameraSettings.lighting}
-              onChange={(e) => handleChange('lighting', Number(e.target.value))}
-              className="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-            />
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-indigo-600"
+                name="triggerMode"
+                value="Internal"
+                checked={cameraSettings.triggerMode === 'Internal' || !cameraSettings.triggerMode}
+                onChange={(e) => handleStringChange('triggerMode', e.target.value)}
+              />
+              <span className="ml-2 text-sm text-gray-700">Internal</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                className="form-radio text-indigo-600"
+                name="triggerMode"
+                value="External"
+                checked={cameraSettings.triggerMode === 'External'}
+                onChange={(e) => handleStringChange('triggerMode', e.target.value)}
+              />
+              <span className="ml-2 text-sm text-gray-700">External</span>
+            </label>
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Exposure</label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={cameraSettings.exposure}
-              onChange={(e) => handleChange('exposure', Number(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              value={cameraSettings.exposure}
-              onChange={(e) => handleChange('exposure', Number(e.target.value))}
-              className="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-            />
+      </div>
+      
+      <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
+        <h4 className="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-5">Camera Basics</h4>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Lighting</label>
+            <div className="flex items-center space-x-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={cameraSettings.lighting}
+                onChange={(e) => handleChange('lighting', Number(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+              <input
+                type="number"
+                value={cameraSettings.lighting}
+                onChange={(e) => handleChange('lighting', Number(e.target.value))}
+                className="w-20 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow duration-200"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Exposure</label>
+            <div className="flex items-center space-x-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={cameraSettings.exposure}
+                onChange={(e) => handleChange('exposure', Number(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+              <input
+                type="number"
+                value={cameraSettings.exposure}
+                onChange={(e) => handleChange('exposure', Number(e.target.value))}
+                className="w-20 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-shadow duration-200"
+              />
+            </div>
+          </div>
+          <div className="pt-6 mt-4 border-t border-gray-100">
+          <h4 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Optics</h4>
+          <div className="bg-slate-50 p-5 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <label className="block text-sm font-medium text-slate-700 mb-3">Manual Focus</label>
+            <div className="flex items-center gap-5">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={cameraSettings.focus}
+                onChange={(e) => handleChange('focus', Number(e.target.value))}
+                className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
+              />
+              <input
+                type="number"
+                value={cameraSettings.focus}
+                onChange={(e) => handleChange('focus', Number(e.target.value))}
+                className="w-24 rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-medium px-3 py-2 border bg-white hover:border-slate-400 transition-colors"
+              />
+            </div>
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Focus</label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={cameraSettings.focus}
-              onChange={(e) => handleChange('focus', Number(e.target.value))}
-              className="flex-1"
-            />
-            <input
-              type="number"
-              value={cameraSettings.focus}
-              onChange={(e) => handleChange('focus', Number(e.target.value))}
-              className="w-20 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-            />
-          </div>
         </div>
       </div>
     </div>
