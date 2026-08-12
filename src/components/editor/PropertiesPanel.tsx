@@ -649,7 +649,7 @@ function MoreOptionsTabs({
     {
       id: MoreTabType.Mask,
       label: "Mask",
-      badge: <CountBadge n={maskCount} tone={maskCount > 0 ? "on" : "off"} />,
+      badge: <CountBadge n={maskCount} tone={maskCount > 0 ? PropertiesPanelToneType.On : PropertiesPanelToneType.Off} />,
     },
     {
       id: MoreTabType.Focus,
@@ -657,7 +657,7 @@ function MoreOptionsTabs({
       badge: (
         <CountBadge
           n={focusEnabled ? 1 : 0}
-          tone={focusEnabled ? "on" : "off"}
+          tone={focusEnabled ? PropertiesPanelToneType.On : PropertiesPanelToneType.Off}
           label={focusEnabled ? "on" : "off"}
         />
       ),

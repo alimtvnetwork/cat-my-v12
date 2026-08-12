@@ -1,8 +1,5 @@
 
-export enum EditorSetupExperienceDirectionType {
-  Up = "up",
-  Down = "down",
-}
+import { RightRailDirectionType } from "../rail/RightRail";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CanvasViewport } from "../canvas";
@@ -314,17 +311,17 @@ export function EditorSetupExperience({
   );
 
   const reorder = useCallback(
-    (id: string, direction: EditorSetupExperienceDirectionType) => {
+    (id: string, direction: RightRailDirectionType) => {
       const items = useRulesStore.getState().rules;
       const index = items.findIndex((r) => r.id === id);
 
       if (index < 0) return;
-      const target = direction === "up" ? index - 1 : index + 1;
+      const target = direction === RightRailDirectionType.Up ? index - 1 : index + 1;
 
       if (target < 0 || target >= items.length) return;
       // reorderRules removes the moving ids from the rest list, then inserts
       // at targetIndex; the intended visual neighbor becomes the anchor.
-      const restTargetIndex = direction === "up" ? target : target;
+      const restTargetIndex = direction === RightRailDirectionType.Up ? target : target;
       storeReorder([id], restTargetIndex);
       setIsDirty(true);
     },

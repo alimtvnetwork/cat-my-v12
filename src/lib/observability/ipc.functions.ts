@@ -77,29 +77,30 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
-  .inputValidator((raw) => InputSchema.parse(raw))
-  .handler(async ({ data }): Promise<IpcPage> => {
-    const qs = new URLSearchParams();
+  export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
+    .inputValidator((raw) => InputSchema.parse(raw))
+    .handler(async ({ data }): Promise<any> => {
+      const qs = new URLSearchParams();
+  
+      if (data.mailbox) qs.set("mailbox", data.mailbox);
+  
+      if (data.limit !== undefined) qs.set("limit", String(data.limit));
+  
+      if (data.includeAcked) qs.set("include_acked", "true");
+  
+      if (data.afterMsgId) qs.set("after_msg_id", data.afterMsgId);
+      const url =
+        `${beBaseUrl()}/observability/sessions/${data.cliInvocationId}/ipc` +
+        (qs.size ? `?${qs}` : "");
+      const env = await beFetch<IpcPage>(url, {}, { suppressCapture: true });
+      const payload = env.Results[0];
+  
+      if (payload === undefined) {
+        throw new Error(
+          `BE_ENVELOPE_EMPTY: /observability/sessions/${data.cliInvocationId}/ipc returned no Results`,
+        );
+      }
+  
+      return DataSchema.parse(payload) as any;
+    });
 
-    if (data.mailbox) qs.set("mailbox", data.mailbox);
-
-    if (data.limit !== undefined) qs.set("limit", String(data.limit));
-
-    if (data.includeAcked) qs.set("include_acked", "true");
-
-    if (data.afterMsgId) qs.set("after_msg_id", data.afterMsgId);
-    const url =
-      `${beBaseUrl()}/observability/sessions/${data.cliInvocationId}/ipc` +
-      (qs.size ? `?${qs}` : "");
-    const env = await beFetch<IpcPage>(url, {}, { suppressCapture: true });
-    const payload = env.Results[0];
-
-    if (payload === undefined) {
-      throw new Error(
-        `BE_ENVELOPE_EMPTY: /observability/sessions/${data.cliInvocationId}/ipc returned no Results`,
-      );
-    }
-
-    return DataSchema.parse(payload);
-  });

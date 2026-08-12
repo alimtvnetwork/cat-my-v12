@@ -120,7 +120,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         setDevices(res.devices);
         setScannedAt(new Date(res.scannedAt).toLocaleTimeString());
       })
-      .catch((err) => surfaceFailure("getDiscoveredDevices", toFailure(err), err));
+      .catch((err) => surfaceFailure(DeviceDiscoveryPanelCallerType.GetDiscoveredDevices, toFailure(err), err));
   }, [discover, surfaceFailure]);
 
   useEffect(() => {
@@ -131,7 +131,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
     setLastFailure(null);
     // Client-side Casbin-style gate mirrors the server's requireServerFeature.
     if (device.vendor !== activeVendor && !multiVendorAllowed) {
-      surfaceFailure("client-gate", {
+      surfaceFailure(DeviceDiscoveryPanelCallerType.ClientGate, {
         code: "E_LIC_FEATURE_DENIED",
         message: CAPTURE_ERROR_COPY.E_LIC_FEATURE_DENIED,
         correlationId: null,
@@ -145,7 +145,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         setDevices(res.devices);
         onVendorSelected(res.vendor);
       })
-      .catch((err) => surfaceFailure("selectCaptureDevice", toFailure(err), err));
+      .catch((err) => surfaceFailure(DeviceDiscoveryPanelCallerType.SelectCaptureDevice, toFailure(err), err));
   };
 
   return (

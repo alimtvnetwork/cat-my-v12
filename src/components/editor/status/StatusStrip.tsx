@@ -1,9 +1,5 @@
 
-export enum StatusStripPropsStateType {
-  Saved = "Saved",
-  Dirty = "Dirty",
-  Saving = "Saving...",
-}
+import { SaveStatePropsStateType } from "./SaveState";
 import { FpsBadge } from "./FpsBadge";
 import { LastLogChip } from "./LastLogChip";
 import { SaveState } from "./SaveState";
@@ -11,7 +7,7 @@ import { SaveState } from "./SaveState";
 export interface StatusStripProps {
   undo: number;
   redo: number;
-  state: StatusStripPropsStateType;
+  state: SaveStatePropsStateType;
   onUndo?: () => void;
   onRedo?: () => void;
 }

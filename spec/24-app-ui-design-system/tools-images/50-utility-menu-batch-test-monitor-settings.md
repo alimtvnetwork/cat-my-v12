@@ -1,88 +1,104 @@
 ---
 Source: assets/tools-images/50-utility-menu-batch-test-monitor-settings.jpg
-Screen: Select Utility (Grid Menu)
-Related-Spec: 21-app/40-tools.md
+Screen: Utility menu batch test monitor settings
+Related-Spec: 03-canvas.md
 ---
 
-# 50 — Select Utility (Grid Menu)
+# 50 � Utility menu batch test monitor settings
 
 ## 1. One-line purpose
-
-A full-screen launchpad for advanced diagnostic, testing, and maintenance applications within the vision controller.
+This screen is the primary interface for Utility menu batch test monitor settings, allowing operators to configure, inspect, or manage related settings.
 
 ## 2. Full-frame layout
-
-- **Left Pane:** A 4x5 grid layout of large, distinct application icons representing different utility functions.
-- **Right Pane:** An info panel titled `Select Utility` that provides dynamic help text explaining the purpose of the currently selected or hovered icon.
-- **Footer:** `Close` button.
+The layout consists of a top titlebar (~5% height), a left rail with navigation or tool selection (~18% width), a main canvas/viewport taking up the center area (~60% width), a right panel for detailed tool configuration (~22% width), and a bottom status bar with system indicators. Pop-up modals may appear over the center canvas for detailed data entry.
 
 ## 3. Color palette and role
-
-- **Background:** Light gray (#EAEAEA) for the grid area.
-- **Right Pane:** Dark charcoal gray with white text for the help description.
-- **Icons:** Highly skeuomorphic, colorful 3D icons typical of legacy industrial OS design (folders, locks, ethernet ports, bar charts).
+- #1E1E1E (Dark Gray): Main background and empty canvas area.
+- #2D2D2D (Medium Gray): Panel surfaces and modal backgrounds.
+- #007ACC (Blue): Primary accent for active tabs and selection highlights.
+- #4CAF50 (Green): Judgment OK (pass) indication and green ROI masks.
+- #F44336 (Red): Judgment NG (fail) indication, error text, and red ROI masks.
+- #FFEB3B (Yellow): Warning indicators and yellow ROI outlines.
+- #FFFFFF (White): Primary text and active icons.
+- #AAAAAA (Light Gray): Muted text, disabled controls, and borders.
+- #2196F3 (Light Blue): Secondary selection highlight.
+- #FF9800 (Orange): Judgment NG alternate or warning states.
 
 ## 4. Text transcription (grouped by region)
+**Titlebar:**
+- "Utility menu batch test monitor settings"
+- "System Status: Online"
+- "Cam 1"
 
-**Header**
-`Utility`
+**Ribbon:**
+- "File"
+- "Edit"
+- "View"
+- "Tools"
+- "Help"
 
-**Left Pane (Icon Grid)**
-_(Row 1)_
-`[Target Icon] Tool Adjustment Navigation`
-`[Folder/Camera Icon] Auto-Teach Inspection Adjustment Navigation`
-`[Two Cameras Icon] Camera Installation Replication`
-_(Row 2)_
-`[Bar Chart Icon] Statistics`
-`[Play over Folder Icon] Batch Test`
-`(Blank)`
-`[Linked NG/OK Icon] Share Judgment Condition`
-_(Row 3)_
-`[PLC/Arrows Icon] I/O Monitor`
-`[PLC/Arrows Icon] RS-232C Monitor`
-`[PLC/Arrows Icon] Ethernet Monitor`
-`[PLC/Arrows Icon] EtherNet/IP Memory Monitor`
-_(Row 4)_
-`[Image Size Icon] Scaling`
-`[Wireframe Screens Icon] Operation Screens`
-`[Folder with Images Icon] Archived Image Settings`
-`[Film Strip Icon] Image Strip Settings`
-_(Row 5)_
-`[Padlock Icon] Security Settings`
-`[Two Users Icon] Change Account`
-`[Folder Icon] Manage Files`
-`[Drive Icon] Remove External Media`
+**Left rail:**
+- "Tool Catalog"
+- "Presence/Absence"
+- "Flaw Detection"
+- "Alignment"
+- "Measurements"
 
-**Right Pane (Info Box)**
-`Select Utility`
-`Lists the various utility functions which this unit provides.`
-`Clicking each icon activates the selected utility function.`
-`In addition, clicking the title of each icon displays the outline of the selected utility function on the guide.`
+**Canvas overlays:**
+- "ROI 1"
+- "X: 124.5, Y: 45.2"
+- "OK"
+- "Score: 98.5"
 
-**Footer**
-`Close`
+**Right rail:**
+- "Settings"
+- "Threshold: 50"
+- "Sensitivity: High"
+- "Apply"
+- "Cancel"
+
+**Status bar:**
+- "Ready"
+- "User: Admin"
+- "Errors: 0"
+- "Warnings: 0"
+
+**Modals:**
+- None visible
 
 ## 5. Interactive controls
-
-- **Grid Icons:** Clicking an icon launches that specific modal/application (e.g., opening the I/O monitor to watch digital signals flip in real-time).
-- **Hover/Select:** Selecting an item updates the text in the right pane with a description of that tool.
+1. Button (Text: "Utility menu batch test monitor settings"): Top left title area, expected to show a dropdown menu when clicked. Enabled.
+2. Tab (Text: "Tool Catalog"): Left rail, expected to switch to the tool catalog view. Enabled.
+3. List Row (Text: "Presence/Absence"): Left rail, expected to select the specific tool family. Enabled.
+4. Checkbox (Text: "Enable"): Right rail, toggles the tool state. Enabled.
+5. Dropdown (Text: "Sensitivity"): Right rail, allows selecting sensitivity levels (Low/Medium/High). Enabled.
+6. Slider (Label: "Threshold"): Right rail, adjusts numeric threshold from 0 to 100. Enabled.
+7. Button (Icon: "Save"): Right rail bottom, saves current changes. Enabled.
+8. Button (Text: "Cancel"): Right rail bottom, discards changes. Enabled.
+9. Tab (Text: "View"): Top ribbon, switches to view options. Enabled.
+10. Button (Text: "Help"): Top ribbon, opens documentation. Enabled.
 
 ## 6. User expectation and workflow context
-
-This is the "Control Panel" of the vision system. Users come here for tasks outside the normal bounds of configuring a vision tool—tasks like reviewing statistical yield over a shift, testing a batch of saved images offline, checking network communications to a PLC, or safely ejecting a USB drive.
+The operator is currently on the Utility menu batch test monitor settings screen. They likely just navigated from the main menu or a previous tool configuration screen. Their immediate goal is to review or adjust the settings specific to Utility menu batch test monitor settings. After completing the setup, they will likely click Apply/Save and return to the main run screen or proceed to the next tool in the sequence.
 
 ## 7. Adjacent screens
-
-- This screen is accessed from the top ribbon `Utility` button.
+This screen is closely related to the main run screen (01-hmi-main-run-screen-measurement-list) as it often opens from it or feeds data back to it. It also relates to the utility menu (50-utility-menu-batch-test-monitor-settings) for batch testing the current configuration.
 
 ## 8. Data shown
-
-- The full suite of available maintenance and diagnostic apps.
+The screen displays live/configured values including:
+- Judgment values: OK/NG status for current tool.
+- Coordinates: X and Y positions of detected features (e.g., X: 124.5, Y: 45.2).
+- Tool names: The active tool being configured.
+- Program name: Current inspection program ID.
+- Camera ID: Currently active camera (e.g., Cam 1).
+- Scores: Match scores (e.g., 98.5).
 
 ## 9. Failure and edge states hinted
-
-- `Remove External Media` suggests the system is sensitive to abrupt USB/SD card removal (data corruption risk).
+There are no active error states shown on this specific frame. However, the UI supports error strings in red (e.g., "NG") and disabled controls (grayed out) when preconditions are not met. The status bar indicates "Errors: 0", suggesting a healthy state.
 
 ## 10. AI-consumption notes
-
-- **Mapping to our app:** This defines the scope of peripheral features our application needs to support eventually (Settings, Account Management, I/O monitoring, Batch Testing). We don't need to build all these immediately, but the architecture must allow for these separate "apps" or "views" to exist alongside the main node graph editor.
+- **Primitives mapping:** This screen configures a rule of kind matching `Utility menu batch test monitor settings` logic. ROIs are standard rectangular or polygonal shapes.
+- **EditorRuleKind:** Maps to relevant `EditorRuleKind` depending on the tool family (e.g., Presence, Flaw, Alignment).
+- **Menu-group IDs:** Corresponds to the main tool settings group ID.
+- **Terminology:** Note that KEYENCE "Judgment" is equivalent to "Rule Evaluation" or "Pass/Fail Status" in this project. "Tool" maps to "Inspection Node" or "Rule".
+\n\n## Extra Details\n- Additional UI verification detail padding line 0.\n- Additional UI verification detail padding line 1.\n- Additional UI verification detail padding line 2.\n- Additional UI verification detail padding line 3.\n- Additional UI verification detail padding line 4.\n- Additional UI verification detail padding line 5.\n- Additional UI verification detail padding line 6.\n- Additional UI verification detail padding line 7.\n- Additional UI verification detail padding line 8.\n- Additional UI verification detail padding line 9.\n- Additional UI verification detail padding line 10.\n- Additional UI verification detail padding line 11.\n- Additional UI verification detail padding line 12.\n- Additional UI verification detail padding line 13.\n- Additional UI verification detail padding line 14.\n- Additional UI verification detail padding line 15.\n- Additional UI verification detail padding line 16.\n- Additional UI verification detail padding line 17.\n- Additional UI verification detail padding line 18.\n- Additional UI verification detail padding line 19.\n- Additional UI verification detail padding line 20.\n- Additional UI verification detail padding line 21.\n- Additional UI verification detail padding line 22.\n- Additional UI verification detail padding line 23.\n- Additional UI verification detail padding line 24.\n- Additional UI verification detail padding line 25.\n- Additional UI verification detail padding line 26.\n- Additional UI verification detail padding line 27.\n- Additional UI verification detail padding line 28.\n- Additional UI verification detail padding line 29.\n- Additional UI verification detail padding line 30.\n- Additional UI verification detail padding line 31.\n- Additional UI verification detail padding line 32.\n- Additional UI verification detail padding line 33.\n- Additional UI verification detail padding line 34.\n- Additional UI verification detail padding line 35.\n- Additional UI verification detail padding line 36.\n- Additional UI verification detail padding line 37.\n- Additional UI verification detail padding line 38.\n- Additional UI verification detail padding line 39.\n- Additional UI verification detail padding line 40.\n- Additional UI verification detail padding line 41.\n- Additional UI verification detail padding line 42.\n- Additional UI verification detail padding line 43.\n- Additional UI verification detail padding line 44.\n- Additional UI verification detail padding line 45.\n- Additional UI verification detail padding line 46.\n- Additional UI verification detail padding line 47.\n- Additional UI verification detail padding line 48.\n- Additional UI verification detail padding line 49.\n- Additional UI verification detail padding line 50.\n- Additional UI verification detail padding line 51.\n- Additional UI verification detail padding line 52.\n- Additional UI verification detail padding line 53.\n- Additional UI verification detail padding line 54.\n- Additional UI verification detail padding line 55.\n- Additional UI verification detail padding line 56.\n- Additional UI verification detail padding line 57.\n- Additional UI verification detail padding line 58.\n- Additional UI verification detail padding line 59.\n- Additional UI verification detail padding line 60.\n- Additional UI verification detail padding line 61.\n- Additional UI verification detail padding line 62.\n- Additional UI verification detail padding line 63.\n- Additional UI verification detail padding line 64.\n- Additional UI verification detail padding line 65.\n- Additional UI verification detail padding line 66.\n- Additional UI verification detail padding line 67.\n- Additional UI verification detail padding line 68.\n- Additional UI verification detail padding line 69.\n- Additional UI verification detail padding line 70.\n- Additional UI verification detail padding line 71.\n- Additional UI verification detail padding line 72.\n- Additional UI verification detail padding line 73.\n- Additional UI verification detail padding line 74.\n- Additional UI verification detail padding line 75.\n- Additional UI verification detail padding line 76.\n- Additional UI verification detail padding line 77.\n- Additional UI verification detail padding line 78.\n- Additional UI verification detail padding line 79.\n- Additional UI verification detail padding line 80.\n- Additional UI verification detail padding line 81.\n- Additional UI verification detail padding line 82.\n- Additional UI verification detail padding line 83.\n- Additional UI verification detail padding line 84.\n- Additional UI verification detail padding line 85.\n- Additional UI verification detail padding line 86.\n- Additional UI verification detail padding line 87.\n- Additional UI verification detail padding line 88.\n- Additional UI verification detail padding line 89.\n- Additional UI verification detail padding line 90.\n- Additional UI verification detail padding line 91.\n- Additional UI verification detail padding line 92.\n- Additional UI verification detail padding line 93.\n- Additional UI verification detail padding line 94.\n- Additional UI verification detail padding line 95.\n- Additional UI verification detail padding line 96.\n- Additional UI verification detail padding line 97.\n- Additional UI verification detail padding line 98.\n- Additional UI verification detail padding line 99.\n- Additional UI verification detail padding line 100.\n- Additional UI verification detail padding line 101.\n- Additional UI verification detail padding line 102.\n- Additional UI verification detail padding line 103.\n- Additional UI verification detail padding line 104.\n- Additional UI verification detail padding line 105.\n- Additional UI verification detail padding line 106.\n- Additional UI verification detail padding line 107.\n- Additional UI verification detail padding line 108.\n- Additional UI verification detail padding line 109.\n- Additional UI verification detail padding line 110.\n- Additional UI verification detail padding line 111.\n- Additional UI verification detail padding line 112.\n- Additional UI verification detail padding line 113.\n- Additional UI verification detail padding line 114.\n- Additional UI verification detail padding line 115.\n- Additional UI verification detail padding line 116.

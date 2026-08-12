@@ -38,7 +38,7 @@ export function SaveState({ undo, redo, state, onUndo, onRedo }: SaveStateProps)
         {redo}
       </button>
       <span className="px-hmi-2 text-ca-ink-muted">·</span>
-      <span className={state === "Dirty" ? "text-ca-warn" : ""}>{state}</span>
+      <span className={state === SaveStatePropsStateType.Dirty ? "text-ca-warn" : ""}>{state}</span>
     </span>
   );
 }

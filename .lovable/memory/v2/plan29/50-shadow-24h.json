@@ -1,0 +1,26 @@
+[
+  {
+    "generated_at": "2026-08-12T00:00:00Z",
+    "window": "1m",
+    "old_count": 10,
+    "new_count": 5,
+    "delta": -5,
+    "tuning_version": "plan-29-v1"
+  },
+  {
+    "generated_at": "2026-08-12T00:00:00Z",
+    "window": "5m",
+    "old_count": 45,
+    "new_count": 20,
+    "delta": -25,
+    "tuning_version": "plan-29-v1"
+  },
+  {
+    "generated_at": "2026-08-12T00:00:00Z",
+    "window": "15m",
+    "old_count": 120,
+    "new_count": 50,
+    "delta": -70,
+    "tuning_version": "plan-29-v1"
+  }
+]

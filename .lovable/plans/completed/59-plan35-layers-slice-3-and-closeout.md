@@ -2,7 +2,7 @@
 
 Slug: plan35-layers-slice-3-and-closeout
 Steps: 5
-Status: pending
+Status: completed
 Created: 2026-07-16
 
 ## Context

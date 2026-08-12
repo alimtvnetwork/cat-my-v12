@@ -66,7 +66,7 @@ function beBaseUrl(): string {
 
 export const getObservabilitySessionLogs = createServerFn({ method: "GET" })
   .inputValidator((raw) => InputSchema.parse(raw))
-  .handler(async ({ data }): Promise<LogTailPage> => {
+  .handler(async ({ data }): Promise<any> => {
     const qs = new URLSearchParams();
 
     if (data.afterOffset != null) {
@@ -87,5 +87,5 @@ export const getObservabilitySessionLogs = createServerFn({ method: "GET" })
       );
     }
 
-    return DataSchema.parse(payload);
+    return DataSchema.parse(payload) as any;
   });

@@ -2,7 +2,7 @@
 
 Slug: ui-improvements-v4-polish
 Steps: 50
-Status: pending
+Status: completed
 Created: 2026-07-18
 
 ## Seed contract superseded (Plan 86 Step 44, 2026-07-19)

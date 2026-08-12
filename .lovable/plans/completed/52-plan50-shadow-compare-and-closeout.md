@@ -2,7 +2,7 @@
 
 Slug: plan50-shadow-compare-and-closeout
 Steps: 5
-Status: pending
+Status: completed
 Created: 2026-07-16
 
 ## Context

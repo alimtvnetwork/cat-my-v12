@@ -23,6 +23,20 @@ export class SeedBackendClient implements BackendClient {
           provider: "SeedClient"
         }]
       };
+    },
+    create: async (payload: Partial<CatRuleWire>): Promise<Envelope<CatRuleWire>> => {
+      return {
+        Status: { IsSuccess: true, IsFailed: false, Code: 201, Message: "Created", Timestamp: new Date().toISOString() },
+        Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: false, IsSingle: true, IsMultiple: false, IsEmpty: false },
+        Results: [{
+          RuleId: 3,
+          RuleKind: payload.RuleKind || "EdgeDetection",
+          OrderIndex: payload.OrderIndex || 0,
+          ParamsJson: payload.ParamsJson || "{}",
+          IsActive: payload.IsActive ?? true,
+          UpdatedAt: "-"
+        }]
+      };
     }
   };
 
