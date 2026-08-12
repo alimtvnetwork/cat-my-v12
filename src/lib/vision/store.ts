@@ -63,6 +63,7 @@ const mockSegments: RecipeSegment[] = [
           enabled: false,
           edgeStrength: 50,
           polarity: 'ANY',
+          inverseLogic: false,
         }
       }
     },
@@ -305,6 +306,7 @@ export const useVisionStore = create<VisionState>((set) => ({
                 enabled: false,
                 edgeStrength: 50,
                 polarity: 'ANY',
+                inverseLogic: false,
                 ...roi.patternConfig,
                 ...patternConfig,
               }

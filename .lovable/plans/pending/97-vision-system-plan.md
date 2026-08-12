@@ -202,17 +202,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 ### Phase 17: Validation Tools (Pattern Search 2)
 - [x] 161. Generic pattern config and preview. - Subtask 1
 - [x] 162. Generic pattern config and preview. - Subtask 2
-- [ ] 163. Generic pattern config and preview. - Subtask 3
-- [ ] 164. Generic pattern config and preview. - Subtask 4
-- [ ] 165. Generic pattern config and preview. - Subtask 5
-- [ ] 166. Generic pattern config and preview. - Subtask 6
-- [ ] 167. Generic pattern config and preview. - Subtask 7
-- [ ] 168. Generic pattern config and preview. - Subtask 8
-- [ ] 169. Generic pattern config and preview. - Subtask 9
-- [ ] 170. Generic pattern config and preview. - Subtask 10
+- [x] 163. Generic pattern config and preview. - Subtask 3
+- [x] 164. Generic pattern config and preview. - Subtask 4
+- [x] 165. Generic pattern config and preview. - Subtask 5
+- [x] 166. Generic pattern config and preview. - Subtask 6
+- [x] 167. Generic pattern config and preview. - Subtask 7
+- [x] 168. Generic pattern config and preview. - Subtask 8
+- [x] 169. Generic pattern config and preview. - Subtask 9
+- [x] 170. Generic pattern config and preview. - Subtask 10
 
 ### Phase 18: Validation Tools (Defect/Scratch)
-- [ ] 171. Inverse logic implementation. - Subtask 1
+- [x] 171. Inverse logic implementation. - Subtask 1
 - [ ] 172. Inverse logic implementation. - Subtask 2
 - [ ] 173. Inverse logic implementation. - Subtask 3
 - [ ] 174. Inverse logic implementation. - Subtask 4

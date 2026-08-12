@@ -33,6 +33,7 @@ export interface PatternConfig {
   enabled: boolean;
   edgeStrength: number;
   polarity: 'ANY' | 'DARK_TO_LIGHT' | 'LIGHT_TO_DARK';
+  inverseLogic: boolean;
 }
 
 export interface Mask {

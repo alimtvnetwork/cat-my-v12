@@ -17,6 +17,7 @@ export function PatternConfigTool() {
     enabled: false,
     edgeStrength: 50,
     polarity: 'ANY',
+    inverseLogic: false,
   };
 
   const segmentId = activeSegment.visionSettings.id;
@@ -31,6 +32,10 @@ export function PatternConfigTool() {
 
   const handlePolarityChange = (value: PatternConfig['polarity']) => {
     setPatternConfig(segmentId, { polarity: value });
+  };
+
+  const handleInverseLogicChange = (checked: boolean) => {
+    setPatternConfig(segmentId, { inverseLogic: checked });
   };
 
   return (
@@ -74,6 +79,17 @@ export function PatternConfigTool() {
                   <SelectItem value="LIGHT_TO_DARK">Light to Dark only</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+              <Label htmlFor="switch-inverse-logic" className="text-sm font-medium cursor-pointer">
+                Inverse Logic (Fail if pattern found)
+              </Label>
+              <Switch
+                id="switch-inverse-logic"
+                checked={patternConfig.inverseLogic}
+                onCheckedChange={handleInverseLogicChange}
+              />
             </div>
           </div>
         </CardContent>
