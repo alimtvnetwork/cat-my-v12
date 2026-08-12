@@ -8,15 +8,15 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 
 ## Checklist
 ### Phase 1: Asset Renaming & Restructuring
-- [ ] 1. Rename images and organize folders. - Subtask 1
-- [ ] 2. Rename images and organize folders. - Subtask 2
-- [ ] 3. Rename images and organize folders. - Subtask 3
-- [ ] 4. Rename images and organize folders. - Subtask 4
-- [ ] 5. Rename images and organize folders. - Subtask 5
-- [ ] 6. Rename images and organize folders. - Subtask 6
-- [ ] 7. Rename images and organize folders. - Subtask 7
-- [ ] 8. Rename images and organize folders. - Subtask 8
-- [ ] 9. Rename images and organize folders. - Subtask 9
+- [x] 1. Rename images and organize folders. - Subtask 1
+- [x] 2. Rename images and organize folders. - Subtask 2
+- [x] 3. Rename images and organize folders. - Subtask 3
+- [x] 4. Rename images and organize folders. - Subtask 4
+- [x] 5. Rename images and organize folders. - Subtask 5
+- [x] 6. Rename images and organize folders. - Subtask 6
+- [x] 7. Rename images and organize folders. - Subtask 7
+- [x] 8. Rename images and organize folders. - Subtask 8
+- [x] 9. Rename images and organize folders. - Subtask 9
 - [ ] 10. Rename images and organize folders. - Subtask 10
 
 ### Phase 2: Memory Scaffolding
