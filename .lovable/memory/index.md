@@ -114,3 +114,4 @@ Read this file first. Every entry below is a file in `.lovable/memory/`. For the
 - Lint state: 0 errors, 0 warnings. Real hook fixes landed in `CanvasViewport.tsx`, `run.tsx`, `DeviceDiscoveryPanel.tsx`, `admin.security.denial-burst.tsx`.
 - Playwright smoke at v3.232.0: `/`, `/projects`, `/settings/camera` render clean, no pageerror or console.error.
 - Deferred: sync of `spec/21-app/40..43*.md` with the reality-aligned registries remains open (doc-only, no code impact).
+- vision-system-concepts: Concepts learned from 11 August session (Device vs Circuit, Camera Settings, Trigger Mode, etc.)
