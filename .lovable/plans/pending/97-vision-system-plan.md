@@ -147,17 +147,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 115. Shift tolerance handling. - Subtask 5
 - [x] 116. Shift tolerance handling. - Subtask 6
 - [x] 117. Shift tolerance handling. - Subtask 7
-- [ ] 118. Shift tolerance handling. - Subtask 8
-- [ ] 119. Shift tolerance handling. - Subtask 9
-- [ ] 120. Shift tolerance handling. - Subtask 10
+- [x] 118. Shift tolerance handling. - Subtask 8
+- [x] 119. Shift tolerance handling. - Subtask 9
+- [x] 120. Shift tolerance handling. - Subtask 10
 
 ### Phase 13: Masking UI (Part 1)
-- [ ] 121. Drawing tools for masking. - Subtask 1
-- [ ] 122. Drawing tools for masking. - Subtask 2
-- [ ] 123. Drawing tools for masking. - Subtask 3
-- [ ] 124. Drawing tools for masking. - Subtask 4
-- [ ] 125. Drawing tools for masking. - Subtask 5
-- [ ] 126. Drawing tools for masking. - Subtask 6
+- [x] 121. Drawing tools for masking. - Subtask 1
+- [x] 122. Drawing tools for masking. - Subtask 2
+- [x] 123. Drawing tools for masking. - Subtask 3
+- [x] 124. Drawing tools for masking. - Subtask 4
+- [x] 125. Drawing tools for masking. - Subtask 5
+- [x] 126. Drawing tools for masking. - Subtask 6
 - [ ] 127. Drawing tools for masking. - Subtask 7
 - [ ] 128. Drawing tools for masking. - Subtask 8
 - [ ] 129. Drawing tools for masking. - Subtask 9
