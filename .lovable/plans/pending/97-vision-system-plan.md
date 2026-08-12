@@ -17,17 +17,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 7. Rename images and organize folders. - Subtask 7
 - [x] 8. Rename images and organize folders. - Subtask 8
 - [x] 9. Rename images and organize folders. - Subtask 9
-- [ ] 10. Rename images and organize folders. - Subtask 10
+- [x] 10. Rename images and organize folders. - Subtask 10
 
 ### Phase 2: Memory Scaffolding
-- [ ] 11. Create and populate vision-system memory files. - Subtask 1
-- [ ] 12. Create and populate vision-system memory files. - Subtask 2
-- [ ] 13. Create and populate vision-system memory files. - Subtask 3
-- [ ] 14. Create and populate vision-system memory files. - Subtask 4
-- [ ] 15. Create and populate vision-system memory files. - Subtask 5
-- [ ] 16. Create and populate vision-system memory files. - Subtask 6
-- [ ] 17. Create and populate vision-system memory files. - Subtask 7
-- [ ] 18. Create and populate vision-system memory files. - Subtask 8
+- [x] 11. Create and populate vision-system memory files. - Subtask 1
+- [x] 12. Create and populate vision-system memory files. - Subtask 2
+- [x] 13. Create and populate vision-system memory files. - Subtask 3
+- [x] 14. Create and populate vision-system memory files. - Subtask 4
+- [x] 15. Create and populate vision-system memory files. - Subtask 5
+- [x] 16. Create and populate vision-system memory files. - Subtask 6
+- [x] 17. Create and populate vision-system memory files. - Subtask 7
+- [x] 18. Create and populate vision-system memory files. - Subtask 8
 - [ ] 19. Create and populate vision-system memory files. - Subtask 9
 - [ ] 20. Create and populate vision-system memory files. - Subtask 10
 
