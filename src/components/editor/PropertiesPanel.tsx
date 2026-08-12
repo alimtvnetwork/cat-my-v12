@@ -246,7 +246,7 @@ export function PropertiesPanel({
                 <span id="properties-acceptance-title" className="editor-properties-section-title">
                   Acceptance
                 </span>
-                <CountBadge n={acceptanceCount} tone="on" />
+                <CountBadge n={acceptanceCount} tone={PropertiesPanelToneType.On} />
               </header>
               <div
                 className="editor-properties-section-body"
