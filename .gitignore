@@ -46,3 +46,4 @@ __pycache__/
 test-results/
 tests/reports/
 .lovable/temp/
+.lovable/temp/

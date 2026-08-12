@@ -478,9 +478,12 @@ function PrimaryCta() {
       ) : null}
 
       {top ? (
-        <span className="item-inline text-hmi-caption text-ca-ink-muted">
-          Last opened {new Date(top.openedAt).toLocaleDateString()}
-        </span>
+        <>
+          <h2 className="sr-only">Pick a workflow</h2>
+          <span className="item-inline text-hmi-caption text-ca-ink-muted">
+            Last opened {new Date(top.openedAt).toLocaleDateString()}
+          </span>
+        </>
       ) : (
         <>
           <h2 className="sr-only">Pick a workflow</h2>
