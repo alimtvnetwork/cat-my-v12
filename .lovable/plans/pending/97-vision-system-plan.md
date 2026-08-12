@@ -213,15 +213,15 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 
 ### Phase 18: Validation Tools (Defect/Scratch)
 - [x] 171. Inverse logic implementation. - Subtask 1
-- [ ] 172. Inverse logic implementation. - Subtask 2
-- [ ] 173. Inverse logic implementation. - Subtask 3
-- [ ] 174. Inverse logic implementation. - Subtask 4
-- [ ] 175. Inverse logic implementation. - Subtask 5
-- [ ] 176. Inverse logic implementation. - Subtask 6
-- [ ] 177. Inverse logic implementation. - Subtask 7
-- [ ] 178. Inverse logic implementation. - Subtask 8
-- [ ] 179. Inverse logic implementation. - Subtask 9
-- [ ] 180. Inverse logic implementation. - Subtask 10
+- [x] 172. Inverse logic implementation. - Subtask 2
+- [x] 173. Inverse logic implementation. - Subtask 3
+- [x] 174. Inverse logic implementation. - Subtask 4
+- [x] 175. Inverse logic implementation. - Subtask 5
+- [x] 176. Inverse logic implementation. - Subtask 6
+- [x] 177. Inverse logic implementation. - Subtask 7
+- [x] 178. Inverse logic implementation. - Subtask 8
+- [x] 179. Inverse logic implementation. - Subtask 9
+- [x] 180. Inverse logic implementation. - Subtask 10
 
 ### Phase 19: Validation Tools (Edge Width)
 - [ ] 181. Pin consistency checks. - Subtask 1
