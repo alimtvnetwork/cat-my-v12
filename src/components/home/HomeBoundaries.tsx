@@ -22,14 +22,14 @@ function HomeFallback({
   body: string;
   action?: ReactNode;
 }) {
-  const border = tone === "error" ? "border-ca-ng/60" : "border-ca-border";
+  const border = tone === HomeBoundariesToneType.Error ? "border-ca-ng/60" : "border-ca-border";
 
   return (
     <HmiShell title="Home">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-hmi-3 px-hmi-6 py-hmi-8">
         <div
           className={`flex flex-col gap-hmi-2 border ${border} bg-ca-panel p-hmi-6`}
-          role={tone === "error" ? "alert" : undefined}
+          role={tone === HomeBoundariesToneType.Error ? "alert" : undefined}
         >
           <h1 className="font-display text-hmi-header font-black uppercase tracking-tight text-ca-ink">
             {title}
@@ -43,7 +43,7 @@ function HomeFallback({
 }
 
 export function HomePending() {
-  return <HomeFallback tone="muted" title="Loading home..." body="Fetching workflow status." />;
+  return <HomeFallback tone={HomeBoundariesToneType.Muted} title="Loading home..." body="Fetching workflow status." />;
 }
 
 export function HomeError({ error, reset }: { error: Error; reset: () => void }) {
@@ -58,7 +58,7 @@ export function HomeError({ error, reset }: { error: Error; reset: () => void })
 
   return (
     <HomeFallback
-      tone="error"
+      tone={HomeBoundariesToneType.Error}
       title="Home data unavailable"
       body={`Something went wrong loading the home data: ${message}. The rest of the app is still usable via the top menu.`}
       action={<RetryButton reset={reset} />}

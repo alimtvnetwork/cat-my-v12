@@ -2,7 +2,7 @@
 
 Slug: settings-rules-and-misc-polish
 Steps: 20
-Status: pending
+Status: completed
 Created: 2026-07-18
 
 ## Context

@@ -1,7 +1,7 @@
 
 export enum LayersPaletteCodeType {
-  IUiLayerVisToggle = LayersPaletteCodeType.IUiLayerVisToggle,
-  IUiLayerLockToggle = LayersPaletteCodeType.IUiLayerLockToggle,
+  IUiLayerVisToggle = "I_UI_LAYER_VIS_TOGGLE",
+  IUiLayerLockToggle = "I_UI_LAYER_LOCK_TOGGLE",
 }
 // Plan 79 step 32. V4 Layers palette (right-bottom dock).
 //
@@ -91,7 +91,7 @@ export function LayersPalette({ rule }: Props) {
     setState((prev) => {
       const cur = prev[id] ?? { visible: true, locked: false };
       const next = { ...cur, [key]: !cur[key] };
-      logger.info(code, { layer: id, next: String(next[key]) });
+      logger.info(String(code), { layer: id, next: String(next[key]) });
 
       return { ...prev, [id]: next };
     });

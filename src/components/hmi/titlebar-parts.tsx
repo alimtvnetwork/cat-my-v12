@@ -16,7 +16,7 @@
 
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AppBreadcrumb } from "@/components/app-shell/AppBreadcrumb";
+import { AppBreadcrumb, AppBreadcrumbPropsVariantType } from "@/components/app-shell/AppBreadcrumb";
 import { HistoryNav } from "@/components/app-shell/HistoryNav";
 import { TopMenuBar } from "@/components/nav/TopMenuBar";
 import { HeaderDensityToggle } from "@/components/hmi/HeaderDensityToggle";
@@ -62,7 +62,7 @@ export function HeaderCrumbs({ showBreadcrumb, program }: HeaderCrumbsProps) {
   if (showBreadcrumb) {
     return (
       <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-        <AppBreadcrumb variant="inline" />
+        <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />
         <AddressBar />
       </div>
     );

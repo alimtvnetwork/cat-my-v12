@@ -21,9 +21,9 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 63 - plan36-nav-sidebar-port - completed - see `completed/63-plan36-nav-sidebar-port.md`
 - 79 - ui-improvements-v4 - pending - see `pending/79-ui-improvements-v4.md`
 - 80 - ui-improvements-v4-polish - pending - see `pending/80-ui-improvements-v4-polish.md`
-- 81 - settings-rules-and-misc-polish - pending - see `pending/81-settings-rules-and-misc-polish.md`
-- 82 - plan100-ui-v4-100steps - pending - see `pending/82-plan100-ui-v4-100steps.md`
-- 83 - plan50-ui-completion-and-seed-hardening - pending - see `pending/83-plan50-ui-completion-and-seed-hardening.md`
+- 81 - settings-rules-and-misc-polish - completed - see `completed/81-settings-rules-and-misc-polish.md`
+- 82 - plan100-ui-v4-100steps - completed - see `completed/82-plan100-ui-v4-100steps.md`
+- 83 - plan50-ui-completion-and-seed-hardening - completed - see `completed/83-plan50-ui-completion-and-seed-hardening.md`
 - 84 - next-20-onboarding-and-pending-drive - pending - see `pending/84-next-20-onboarding-and-pending-drive.md`
 - 85 - plan83-residual-shepherd - pending - see `pending/85-plan83-residual-shepherd.md`
 - 88 - backend-implementation-v1-150-steps - pending - see `pending/88-backend-implementation-v1-150-steps.md`

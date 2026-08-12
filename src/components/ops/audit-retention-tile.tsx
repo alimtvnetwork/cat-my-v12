@@ -150,7 +150,7 @@ export function AuditRetentionTile() {
         <HeaderCell
           label="Clock skew (ms)"
           value={String(status?.clockSkewMs ?? 0)}
-          tone={skewFault ? "fault" : "info"}
+          tone={skewFault ? AuditRetentionTileToneType.Fault : AuditRetentionTileToneType.Info}
         />
       </div>
 
@@ -188,7 +188,7 @@ function HeaderCell({
   value: string;
   tone?: AuditRetentionTileToneType;
 }) {
-  const cls = tone === "fault" ? "text-ca-status-ng" : "text-ca-ink";
+  const cls = tone === AuditRetentionTileToneType.Fault ? "text-ca-status-ng" : "text-ca-ink";
 
   return (
     <div className="border border-ca-border bg-ca-panel-2 p-hmi-2">
