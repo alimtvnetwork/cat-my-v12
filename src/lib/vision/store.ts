@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings, Mask } from './types';
+import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings, Mask, ColorSettings, ShapeTrax3Settings, PatternConfig } from './types';
 
 interface VisionState {
   segments: RecipeSegment[];
@@ -17,6 +17,8 @@ interface VisionState {
   removeMask: (segmentId: string, maskId: string) => void;
   updateMask: (segmentId: string, maskId: string, updates: Partial<Mask>) => void;
   setColorSettings: (segmentId: string, colorSettings: Partial<ColorSettings>) => void;
+  setShapeTrax3Settings: (segmentId: string, shapeTrax3Settings: Partial<ShapeTrax3Settings>) => void;
+  setPatternConfig: (segmentId: string, patternConfig: Partial<PatternConfig>) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
 }
@@ -49,6 +51,18 @@ const mockSegments: RecipeSegment[] = [
           threshold: 128,
           invert: false,
           colorMap: 'grayscale',
+          keyColor: '#ffffff'
+        },
+        shapeTrax3: {
+          enabled: false,
+          matchScore: 80,
+          rotationTolerance: 5,
+          scaleTolerance: 5,
+        },
+        patternConfig: {
+          enabled: false,
+          edgeStrength: 50,
+          polarity: 'ANY',
         }
       }
     },
@@ -244,6 +258,55 @@ export const useVisionStore = create<VisionState>((set) => ({
                 colorMap: 'grayscale',
                 ...roi.colorSettings,
                 ...colorSettings,
+              }
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  setShapeTrax3Settings: (segmentId, shapeTrax3Settings) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId) {
+        const roi = s.visionSettings.roi || { x: 0, y: 0, width: 100, height: 100, shiftTolerance: 10, masks: [] };
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...roi,
+              shapeTrax3: {
+                enabled: false,
+                matchScore: 80,
+                rotationTolerance: 5,
+                scaleTolerance: 5,
+                ...roi.shapeTrax3,
+                ...shapeTrax3Settings,
+              }
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  setPatternConfig: (segmentId, patternConfig) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId) {
+        const roi = s.visionSettings.roi || { x: 0, y: 0, width: 100, height: 100, shiftTolerance: 10, masks: [] };
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...roi,
+              patternConfig: {
+                enabled: false,
+                edgeStrength: 50,
+                polarity: 'ANY',
+                ...roi.patternConfig,
+                ...patternConfig,
               }
             }
           }

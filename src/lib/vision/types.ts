@@ -22,6 +22,19 @@ export interface VisionSettings {
 
 export type TriggerMode = 'INTERNAL' | 'EXTERNAL';
 
+export interface ShapeTrax3Settings {
+  enabled: boolean;
+  matchScore: number;
+  rotationTolerance: number;
+  scaleTolerance: number;
+}
+
+export interface PatternConfig {
+  enabled: boolean;
+  edgeStrength: number;
+  polarity: 'ANY' | 'DARK_TO_LIGHT' | 'LIGHT_TO_DARK';
+}
+
 export interface Mask {
   id: string;
   type: 'RECTANGLE' | 'CIRCLE' | 'POLYGON';
@@ -33,6 +46,7 @@ export interface ColorSettings {
   threshold: number;
   invert: boolean;
   colorMap: string; // 'grayscale' | '2-bit' | etc
+  keyColor?: string;
 }
 
 export interface RoiSettings {
@@ -43,6 +57,8 @@ export interface RoiSettings {
   shiftTolerance: number;
   masks?: Mask[];
   colorSettings?: ColorSettings;
+  shapeTrax3?: ShapeTrax3Settings;
+  patternConfig?: PatternConfig;
 }
 
 export interface CameraSettings {

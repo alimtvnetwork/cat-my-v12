@@ -191,17 +191,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 151. ShapeTrax3 layout implementation. - Subtask 1
 - [x] 152. ShapeTrax3 layout implementation. - Subtask 2
 - [x] 153. ShapeTrax3 layout implementation. - Subtask 3
-- [ ] 154. ShapeTrax3 layout implementation. - Subtask 4
-- [ ] 155. ShapeTrax3 layout implementation. - Subtask 5
-- [ ] 156. ShapeTrax3 layout implementation. - Subtask 6
-- [ ] 157. ShapeTrax3 layout implementation. - Subtask 7
-- [ ] 158. ShapeTrax3 layout implementation. - Subtask 8
-- [ ] 159. ShapeTrax3 layout implementation. - Subtask 9
-- [ ] 160. ShapeTrax3 layout implementation. - Subtask 10
+- [x] 154. ShapeTrax3 layout implementation. - Subtask 4
+- [x] 155. ShapeTrax3 layout implementation. - Subtask 5
+- [x] 156. ShapeTrax3 layout implementation. - Subtask 6
+- [x] 157. ShapeTrax3 layout implementation. - Subtask 7
+- [x] 158. ShapeTrax3 layout implementation. - Subtask 8
+- [x] 159. ShapeTrax3 layout implementation. - Subtask 9
+- [x] 160. ShapeTrax3 layout implementation. - Subtask 10
 
 ### Phase 17: Validation Tools (Pattern Search 2)
-- [ ] 161. Generic pattern config and preview. - Subtask 1
-- [ ] 162. Generic pattern config and preview. - Subtask 2
+- [x] 161. Generic pattern config and preview. - Subtask 1
+- [x] 162. Generic pattern config and preview. - Subtask 2
 - [ ] 163. Generic pattern config and preview. - Subtask 3
 - [ ] 164. Generic pattern config and preview. - Subtask 4
 - [ ] 165. Generic pattern config and preview. - Subtask 5
