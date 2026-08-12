@@ -105,15 +105,15 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 
 ### Phase 9: Trigger Modes (Part 1)
 - [x] 81. Internal vs External mode toggles. - Subtask 1
-- [ ] 82. Internal vs External mode toggles. - Subtask 2
-- [ ] 83. Internal vs External mode toggles. - Subtask 3
-- [ ] 84. Internal vs External mode toggles. - Subtask 4
-- [ ] 85. Internal vs External mode toggles. - Subtask 5
-- [ ] 86. Internal vs External mode toggles. - Subtask 6
-- [ ] 87. Internal vs External mode toggles. - Subtask 7
-- [ ] 88. Internal vs External mode toggles. - Subtask 8
-- [ ] 89. Internal vs External mode toggles. - Subtask 9
-- [ ] 90. Internal vs External mode toggles. - Subtask 10
+- [x] 82. Internal vs External mode toggles. - Subtask 2
+- [x] 83. Internal vs External mode toggles. - Subtask 3
+- [x] 84. Internal vs External mode toggles. - Subtask 4
+- [x] 85. Internal vs External mode toggles. - Subtask 5
+- [x] 86. Internal vs External mode toggles. - Subtask 6
+- [x] 87. Internal vs External mode toggles. - Subtask 7
+- [x] 88. Internal vs External mode toggles. - Subtask 8
+- [x] 89. Internal vs External mode toggles. - Subtask 9
+- [x] 90. Internal vs External mode toggles. - Subtask 10
 
 ### Phase 10: Trigger Modes (Part 2)
 - [ ] 91. Handler/PLC signal scaffolding. - Subtask 1

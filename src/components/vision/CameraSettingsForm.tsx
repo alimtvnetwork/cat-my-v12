@@ -17,7 +17,8 @@ export function CameraSettingsForm() {
     lighting: 0,
     exposure: 0,
     focus: 0,
-    triggerMode: 'Internal'
+    triggerMode: 'Internal',
+    triggerDelay: 0
   };
 
   const handleChange = (key: keyof typeof cameraSettings, value: number) => {
@@ -37,32 +38,58 @@ export function CameraSettingsForm() {
       <h3 className="text-lg font-semibold text-gray-900 mb-6">Camera Settings</h3>
       <div className="space-y-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Mode</label>
-          <div className="flex items-center space-x-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio text-indigo-600"
-                name="triggerMode"
-                value="Internal"
-                checked={cameraSettings.triggerMode === 'Internal' || !cameraSettings.triggerMode}
-                onChange={(e) => handleStringChange('triggerMode', e.target.value)}
-              />
-              <span className="ml-2 text-sm text-gray-700">Internal</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio text-indigo-600"
-                name="triggerMode"
-                value="External"
-                checked={cameraSettings.triggerMode === 'External'}
-                onChange={(e) => handleStringChange('triggerMode', e.target.value)}
-              />
-              <span className="ml-2 text-sm text-gray-700">External</span>
-            </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Trigger Mode</label>
+          <div className="flex p-1 space-x-1 bg-gray-100/80 rounded-lg w-fit border border-gray-200/50">
+            <button
+              type="button"
+              onClick={() => handleStringChange('triggerMode', 'Internal')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                cameraSettings.triggerMode === 'Internal' || !cameraSettings.triggerMode
+                  ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Internal
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStringChange('triggerMode', 'External')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                cameraSettings.triggerMode === 'External'
+                  ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              External
+            </button>
           </div>
         </div>
+        {cameraSettings.triggerMode === 'External' && (
+          <div className="flex gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Source</label>
+              <select
+                className="w-32 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                value={cameraSettings.triggerSource || 'Line 1'}
+                onChange={(e) => handleStringChange('triggerSource', e.target.value)}
+              >
+                <option value="Line 1">Line 1</option>
+                <option value="Line 2">Line 2</option>
+                <option value="Line 3">Line 3</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Delay (ms)</label>
+              <input
+                type="number"
+                min="0"
+                value={cameraSettings.triggerDelay || 0}
+                onChange={(e) => handleChange('triggerDelay', Number(e.target.value))}
+                className="w-32 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
