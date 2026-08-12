@@ -1,8 +1,18 @@
+export interface HandlerSettings {
+  outputs: {
+    ready: boolean;
+    busy: boolean;
+    pass: boolean;
+    fail: boolean;
+  };
+}
+
 export interface VisionSettings {
   id: string;
   name: string;
   camera?: CameraSettings;
   cameraSettings?: CameraSettings;
+  handlerSettings?: HandlerSettings;
 }
 
 export type TriggerMode = 'INTERNAL' | 'EXTERNAL';

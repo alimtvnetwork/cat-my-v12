@@ -116,15 +116,15 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 90. Internal vs External mode toggles. - Subtask 10
 
 ### Phase 10: Trigger Modes (Part 2)
-- [ ] 91. Handler/PLC signal scaffolding. - Subtask 1
-- [ ] 92. Handler/PLC signal scaffolding. - Subtask 2
-- [ ] 93. Handler/PLC signal scaffolding. - Subtask 3
-- [ ] 94. Handler/PLC signal scaffolding. - Subtask 4
-- [ ] 95. Handler/PLC signal scaffolding. - Subtask 5
-- [ ] 96. Handler/PLC signal scaffolding. - Subtask 6
-- [ ] 97. Handler/PLC signal scaffolding. - Subtask 7
-- [ ] 98. Handler/PLC signal scaffolding. - Subtask 8
-- [ ] 99. Handler/PLC signal scaffolding. - Subtask 9
+- [x] 91. Handler/PLC signal scaffolding. - Subtask 1
+- [x] 92. Handler/PLC signal scaffolding. - Subtask 2
+- [x] 93. Handler/PLC signal scaffolding. - Subtask 3
+- [x] 94. Handler/PLC signal scaffolding. - Subtask 4
+- [x] 95. Handler/PLC signal scaffolding. - Subtask 5
+- [x] 96. Handler/PLC signal scaffolding. - Subtask 6
+- [x] 97. Handler/PLC signal scaffolding. - Subtask 7
+- [x] 98. Handler/PLC signal scaffolding. - Subtask 8
+- [x] 99. Handler/PLC signal scaffolding. - Subtask 9
 - [ ] 100. Handler/PLC signal scaffolding. - Subtask 10
 
 ### Phase 11: Region of Interest (ROI) (Part 1)

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment } from './types';
+import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings } from './types';
 
 interface VisionState {
   segments: RecipeSegment[];
@@ -10,6 +10,7 @@ interface VisionState {
   renameSegment: (id: string, name: string) => void;
   addSegment: () => void;
   setCameraSettings: (segmentId: string, settings: Partial<CameraSettings>) => void;
+  setHandlerOutputs: (segmentId: string, outputs: Partial<HandlerSettings['outputs']>) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
 }
@@ -19,6 +20,14 @@ const mockSegments: RecipeSegment[] = [
     visionSettings: {
       id: 'mock-1',
       name: 'Initial Settings',
+      handlerSettings: {
+        outputs: {
+          ready: true,
+          busy: false,
+          pass: false,
+          fail: false,
+        },
+      },
     },
   },
 ];
@@ -62,6 +71,29 @@ export const useVisionStore = create<VisionState>((set) => ({
               camera: { ...s.visionSettings.camera, ...settings } as CameraSettings,
               cameraSettings: { ...s.visionSettings.cameraSettings, ...settings } as CameraSettings,
             },
+          }
+        : s
+    ),
+  })),
+  setHandlerOutputs: (segmentId, outputs) => set((state) => ({
+    segments: state.segments.map((s) =>
+      s.visionSettings && s.visionSettings.id === segmentId
+        ? {
+            ...s,
+            visionSettings: {
+              ...s.visionSettings,
+              handlerSettings: {
+                ...s.visionSettings.handlerSettings,
+                outputs: {
+                  ready: false,
+                  busy: false,
+                  pass: false,
+                  fail: false,
+                  ...s.visionSettings.handlerSettings?.outputs,
+                  ...outputs,
+                }
+              }
+            }
           }
         : s
     ),
