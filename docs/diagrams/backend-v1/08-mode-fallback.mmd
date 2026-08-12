@@ -1,6 +1,12 @@
-flowchart TD
-    A[Incoming Request] --> B{Valid Target URL?}
-    B -- Yes --> C[Proceed with Target Mode]
-    B -- No --> D[Log Warning & Fallback to Default Mode]
-    D --> C
-    C --> E[Return Response]
+sequenceDiagram
+    participant C as Client
+    participant R as Router / Gateway
+    participant H as Handler
+    
+    C->>R: Request with invalid mode URL (e.g. /mode/invalid)
+    R->>H: Validate mode
+    H-->>R: Mode Not Found / Invalid
+    
+    Note over R: Fallback triggered
+    
+    R-->>C: Redirect / Fallback to default mode URL

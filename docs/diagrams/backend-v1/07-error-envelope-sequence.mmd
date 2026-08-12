@@ -1,14 +1,20 @@
 sequenceDiagram
-    autonumber
-    participant Client
-    participant Backend as Backend Service
-    participant External as External Dependency
-
-    Client->>Backend: Request
-    Backend->>External: Call external service
-    External--xBackend: 5xx Error (e.g. 503)
-    Backend-->>Backend: Wait (exponential backoff)
-    Backend->>External: Retry call
-    External--xBackend: 5xx Error (e.g. 503)
-    Backend-->>Backend: Format Error Envelope
-    Backend-->>Client: HTTP Response (Error Envelope)
+    participant C as Client
+    participant A as API Gateway / Backend
+    participant S as Downstream Service
+    
+    C->>A: Request API Endpoint
+    A->>S: Forward Request
+    S--xA: Error Response (e.g. 500 / Timeout)
+    
+    Note over A,S: Retry Strategy Initiated
+    
+    A->>S: Retry Attempt 1
+    S--xA: Error Response
+    
+    A->>S: Retry Attempt 2 (Max Retries Reached)
+    S--xA: Error Response
+    
+    Note over A: Construct standard Error Envelope
+    
+    A-->>C: 5xx / 4xx HTTP Response<br/>{ code, message, details }
