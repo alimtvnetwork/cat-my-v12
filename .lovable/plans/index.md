@@ -27,8 +27,11 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 84 - next-20-onboarding-and-pending-drive - completed - see `completed/84-next-20-onboarding-and-pending-drive.md`
 - 85 - plan83-residual-shepherd - completed - see `completed/85-plan83-residual-shepherd.md`
 - 88 - backend-implementation-v1-150-steps - completed - see `completed/88-backend-implementation-v1-150-steps.md`
-- 89 - error-manage-01-error-resolution - pending - see `pending/89-error-manage-01-error-resolution.md`
+- 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
 
 ## Completed
 
 - 46, 70-78, 84, 86, 87 - see `completed/` directory listing.
+- 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
+- 91 - ui-flavors-modern-vs-standard - completed - see `completed/91-ui-flavors-modern-vs-standard.md`
+- SS-29 - fixture-audit - completed - see `completed/SS-29-fixture-audit.md`
