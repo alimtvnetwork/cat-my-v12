@@ -61,17 +61,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 43. Build segment selection logic. - Subtask 3
 - [x] 44. Build segment selection logic. - Subtask 4
 - [x] 45. Build segment selection logic. - Subtask 5
-- [ ] 46. Build segment selection logic. - Subtask 6
-- [ ] 47. Build segment selection logic. - Subtask 7
-- [ ] 48. Build segment selection logic. - Subtask 8
-- [ ] 49. Build segment selection logic. - Subtask 9
-- [ ] 50. Build segment selection logic. - Subtask 10
+- [x] 46. Build segment selection logic. - Subtask 6
+- [x] 47. Build segment selection logic. - Subtask 7
+- [x] 48. Build segment selection logic. - Subtask 8
+- [x] 49. Build segment selection logic. - Subtask 9
+- [x] 50. Build segment selection logic. - Subtask 10
 
 ### Phase 6: Recipe Segments UI (Part 2)
-- [ ] 51. Implement CRUD for segments. - Subtask 1
-- [ ] 52. Implement CRUD for segments. - Subtask 2
-- [ ] 53. Implement CRUD for segments. - Subtask 3
-- [ ] 54. Implement CRUD for segments. - Subtask 4
+- [x] 51. Implement CRUD for segments. - Subtask 1
+- [x] 52. Implement CRUD for segments. - Subtask 2
+- [x] 53. Implement CRUD for segments. - Subtask 3
+- [x] 54. Implement CRUD for segments. - Subtask 4
 - [ ] 55. Implement CRUD for segments. - Subtask 5
 - [ ] 56. Implement CRUD for segments. - Subtask 6
 - [ ] 57. Implement CRUD for segments. - Subtask 7
