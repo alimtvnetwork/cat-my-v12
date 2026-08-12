@@ -10,6 +10,10 @@ export {
   setBackendBaseUrl,
   useBackendBaseUrl,
   resolveBackendUrl,
+  getPersistRulesServerSide,
+  setPersistRulesServerSide,
+  usePersistRulesServerSide,
+  PERSIST_RULES_STORAGE_KEY_EXPORT,
   type DataSource,
   type SetDataSourceOptions,
 } from "./store";

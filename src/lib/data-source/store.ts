@@ -14,9 +14,11 @@ export type DataSource = DataSourceType;
 
 const STORAGE_KEY = "ca.data-source";
 const BASE_URL_STORAGE_KEY = "ca.data-source.baseUrl";
+const PERSIST_RULES_STORAGE_KEY = "ca.data-source.persistRules";
 const KNOWN: readonly DataSource[] = [DataSourceType.Seed, DataSourceType.Backend];
 const listeners = new Set<() => void>();
 const baseUrlListeners = new Set<() => void>();
+const persistRulesListeners = new Set<() => void>();
 
 /** Default backend base URL. Empty string means same-origin. */
 export const DEFAULT_BACKEND_BASE_URL = "";
@@ -58,8 +60,21 @@ function readInitialBaseUrl(): string {
   }
 }
 
+function readInitialPersistRules(): boolean | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PERSIST_RULES_STORAGE_KEY);
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 let current: DataSource = readInitial();
 let currentBaseUrl: string = readInitialBaseUrl();
+let currentPersistRules: boolean | null = readInitialPersistRules();
 let isWiredStorage = false;
 
 function ensureStorageBridge(): void {
@@ -82,6 +97,10 @@ function emit(): void {
 
 function emitBaseUrl(): void {
   for (const l of baseUrlListeners) l();
+}
+
+function emitPersistRules(): void {
+  for (const l of persistRulesListeners) l();
 }
 
 export function getDataSource(): DataSource {
@@ -176,12 +195,62 @@ export function resolveBackendUrl(path: string): string {
   return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
+export function getPersistRulesServerSide(): boolean {
+  if (currentPersistRules !== null) return currentPersistRules;
+  return current === DataSourceType.Backend;
+}
+
+export function setPersistRulesServerSide(next: boolean, opts: { reason?: string } = {}): void {
+  if (next === currentPersistRules) return;
+  const prev = currentPersistRules;
+  currentPersistRules = next;
+  try {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PERSIST_RULES_STORAGE_KEY, next ? "true" : "false");
+    }
+  } catch {
+    // ignore
+  }
+
+  console.info("[data-source] persistRules changed", {
+    prev,
+    next,
+    reason: opts.reason ?? "user",
+  });
+  emitPersistRules();
+}
+
+function subscribePersistRules(listener: () => void): () => void {
+  persistRulesListeners.add(listener);
+
+  return () => {
+    persistRulesListeners.delete(listener);
+  };
+}
+
+export function usePersistRulesServerSide(): boolean {
+  return useSyncExternalStore(
+    (listener) => {
+      const u1 = subscribePersistRules(listener);
+      const u2 = subscribe(listener);
+      return () => {
+        u1();
+        u2();
+      };
+    },
+    getPersistRulesServerSide,
+    () => false
+  );
+}
+
 /** Test-only. */
 export function __resetDataSourceForTests(): void {
   current = DataSourceType.Seed;
   currentBaseUrl = DEFAULT_BACKEND_BASE_URL;
+  currentPersistRules = null;
   listeners.clear();
   baseUrlListeners.clear();
+  persistRulesListeners.clear();
   try {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -193,4 +262,5 @@ export function __resetDataSourceForTests(): void {
 }
 
 export const DATA_SOURCE_STORAGE_KEY = STORAGE_KEY;
-export const BACKEND_BASE_URL_STORAGE_KEY = BASE_URL_STORAGE_KEY;
+export const BACKEND_BASE_URL_STORAGE_KEY = BASE_URL_STORAGE_KEY;
+export const PERSIST_RULES_STORAGE_KEY_EXPORT = PERSIST_RULES_STORAGE_KEY;

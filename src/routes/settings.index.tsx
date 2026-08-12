@@ -25,7 +25,13 @@ import { SettingsCard } from "@/components/settings/SettingsCard";
 import { SettingsGroup } from "@/components/settings/SettingsGroup";
 import { SettingsDisclosure } from "@/components/settings/SettingsDisclosure";
 import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
-import { setBackendBaseUrl, useBackendBaseUrl, useDataSource } from "@/lib/data-source";
+import {
+  setBackendBaseUrl,
+  useBackendBaseUrl,
+  useDataSource,
+  setPersistRulesServerSide,
+  usePersistRulesServerSide,
+} from "@/lib/data-source";
 import { apiFetch } from "@/lib/http/client";
 import {
   RetentionStepper,
@@ -880,6 +886,7 @@ function DataSourceCard() {
   const [draft, setDraft] = useState<string>(baseUrl);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const persistRules = usePersistRulesServerSide();
   const [probing, setProbing] = useState(false);
   const [probeResult, setProbeResult] = useState<null | { ok: boolean; message: string }>(null);
 
@@ -985,6 +992,20 @@ function DataSourceCard() {
         Stored per-browser under <code>ca.data-source.baseUrl</code>. Switching to Backend probes{" "}
         <code>/api/health</code> against this URL before enabling live mode.
       </p>
+      <div className="mt-hmi-4 border-t border-ca-border pt-hmi-4">
+        <label className="flex items-center gap-hmi-2 text-hmi-body text-ca-ink">
+          <input
+            type="checkbox"
+            checked={persistRules}
+            onChange={(e) => setPersistRulesServerSide(e.target.checked, { reason: "settings" })}
+            className="h-4 w-4 accent-ca-select"
+          />
+          Persist rules server-side
+        </label>
+        <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">
+          Defaults to ON in Backend mode. When disabled, rule mutations only update local IndexedDB.
+        </p>
+      </div>
     </SettingsCard>
   );
 }

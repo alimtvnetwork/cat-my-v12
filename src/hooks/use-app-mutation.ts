@@ -3,9 +3,7 @@ import {
   type UseMutationOptions,
   type UseMutationResult,
 } from "@tanstack/react-query";
-import { reportError } from "@/lib/errors/error-bus";
-import { ErrorSourceType } from "@/lib/errors/error-record";
-import { useEffect } from "react";
+import { useErrorStore } from "@/lib/errors/errorStore";
 
 export type AppMutationResult<
   TData = unknown,
@@ -25,16 +23,17 @@ export function useAppMutation<
 >(
   options: UseMutationOptions<TData, TError, TVariables, TContext>,
 ): AppMutationResult<TData, TError, TVariables, TContext> {
-  const result = useMutation(options);
-
-  useEffect(() => {
-    const hasError = !!result.error;
-    if (hasError && options.meta?.hasVisibility !== false) {
-      reportError(ErrorSourceType.ServerFn, result.error, {
-        mutationKey: options.mutationKey,
-      });
-    }
-  }, [result.error, options.mutationKey, options.meta?.hasVisibility]);
+  const result = useMutation({
+    ...options,
+    onError: (err, variables, context) => {
+      if (options.meta?.suppressGlobalError !== true) {
+        useErrorStore.getState().captureError(err, {
+          context: { mutationKey: options.mutationKey },
+        });
+      }
+      (options.onError as any)?.(err, variables, context);
+    },
+  });
 
   return {
     ...result,

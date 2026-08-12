@@ -8,7 +8,7 @@ import { showGlobalError } from "./lib/errors/notify";
 declare module "@tanstack/react-query" {
   interface Register {
     queryMeta: { hasVisibility?: boolean };
-    mutationMeta: { hasVisibility?: boolean };
+    mutationMeta: { hasVisibility?: boolean; suppressGlobalError?: boolean };
   }
 }
 
