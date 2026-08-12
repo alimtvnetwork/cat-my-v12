@@ -115,7 +115,7 @@ def active_call_files(roots: list[Path], repo_root: Path) -> set[str]:
         for path in root.rglob("*.tsx"):
             text = path.read_text(encoding="utf-8", errors="replace")
             if CALL_RE.search(text):
-                files.add(str(path.relative_to(repo_root)))
+                files.add(path.relative_to(repo_root).as_posix())
     return files
 
 
