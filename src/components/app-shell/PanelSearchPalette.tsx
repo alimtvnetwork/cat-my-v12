@@ -57,10 +57,10 @@ export function PanelSearchPalette() {
   ) => {
     const state = useWorkspaceLayoutStore.getState();
 
-    if (cmd === "expand-sections") broadcastInspectorSections(true);
-    else if (cmd === "collapse-sections") broadcastInspectorSections(false);
-    else if (cmd === "reset-layout") state.resetLayout();
-    else if (cmd === "collapse-other-panels") {
+    if (cmd === PanelSearchPaletteCmdType.ExpandSections) broadcastInspectorSections(true);
+    else if (cmd === PanelSearchPaletteCmdType.CollapseSections) broadcastInspectorSections(false);
+    else if (cmd === PanelSearchPaletteCmdType.ResetLayout) state.resetLayout();
+    else if (cmd === PanelSearchPaletteCmdType.CollapseOtherPanels) {
       const firstOpen = PANELS.find(
         (p) => state.panels[p.id]?.open && !state.panels[p.id].minimized,
       );
@@ -90,25 +90,25 @@ export function PanelSearchPalette() {
         <CommandGroup heading="Commands">
           <CommandItem
             value="expand all sections inspector"
-            onSelect={() => handleCommand("expand-sections")}
+            onSelect={() => handleCommand(PanelSearchPaletteCmdType.ExpandSections)}
           >
             Expand all inspector sections
           </CommandItem>
           <CommandItem
             value="collapse all sections inspector"
-            onSelect={() => handleCommand("collapse-sections")}
+            onSelect={() => handleCommand(PanelSearchPaletteCmdType.CollapseSections)}
           >
             Collapse all inspector sections
           </CommandItem>
           <CommandItem
             value="collapse other panels workspace"
-            onSelect={() => handleCommand("collapse-other-panels")}
+            onSelect={() => handleCommand(PanelSearchPaletteCmdType.CollapseOtherPanels)}
           >
             Collapse other panels
           </CommandItem>
           <CommandItem
             value="reset workspace layout"
-            onSelect={() => handleCommand("reset-layout")}
+            onSelect={() => handleCommand(PanelSearchPaletteCmdType.ResetLayout)}
           >
             Reset workspace layout
           </CommandItem>

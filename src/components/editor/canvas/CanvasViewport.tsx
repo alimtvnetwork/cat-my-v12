@@ -269,11 +269,11 @@ export function CanvasViewport({
   }, [focusDim, focusBlur, focusIsolate, spotlightHydrated]);
 
   const applySpotlightPreset = (preset: CanvasViewportPresetType) => {
-    if (preset === "subtle") {
+    if (preset === CanvasViewportPresetType.Subtle) {
       setFocusDim(0.3);
       setFocusBlur(3);
       setFocusIsolate(false);
-    } else if (preset === "standard") {
+    } else if (preset === CanvasViewportPresetType.Standard) {
       setFocusDim(0.55);
       setFocusBlur(6);
       setFocusIsolate(false);
@@ -1067,7 +1067,7 @@ export function CanvasViewport({
               <button
                 type="button"
                 className="editor-canvas-focus-preset-btn"
-                onClick={() => applySpotlightPreset("subtle")}
+                onClick={() => applySpotlightPreset(CanvasViewportPresetType.Subtle)}
                 title="Light dim, small blur"
               >
                 Subtle
@@ -1075,7 +1075,7 @@ export function CanvasViewport({
               <button
                 type="button"
                 className="editor-canvas-focus-preset-btn"
-                onClick={() => applySpotlightPreset("standard")}
+                onClick={() => applySpotlightPreset(CanvasViewportPresetType.Standard)}
                 title="Balanced dim and blur"
               >
                 Standard
@@ -1083,7 +1083,7 @@ export function CanvasViewport({
               <button
                 type="button"
                 className="editor-canvas-focus-preset-btn"
-                onClick={() => applySpotlightPreset("strong")}
+                onClick={() => applySpotlightPreset(CanvasViewportPresetType.Strong)}
                 title="Strong dim and blur"
               >
                 Strong

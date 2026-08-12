@@ -1,8 +1,8 @@
 
 export enum InfoPaneActionType {
-  Lock = InfoPaneActionType.Lock,
-  Hide = InfoPaneActionType.Hide,
-  Delete = InfoPaneActionType.Delete,
+  Lock = "Lock",
+  Hide = "Hide",
+  Delete = "Delete",
 }
 // Plan 80 step 19. Info pane wired to live selected ROI from useRulesStore.
 // Plan 100 Phase E step 24: multi-select summary. When N > 1 ROIs are

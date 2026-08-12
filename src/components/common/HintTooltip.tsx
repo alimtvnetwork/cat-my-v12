@@ -37,8 +37,8 @@ export function HintTooltip({
   label,
   description,
   shortcut,
-  side = "top",
-  align = "center",
+  side = HintTooltipSideType.Top,
+  align = HintTooltipAlignType.Center,
   delayMs = 350,
   children,
 }: Props) {

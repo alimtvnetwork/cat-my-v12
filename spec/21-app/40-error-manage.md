@@ -310,3 +310,5 @@ Deliberately not created on the TS side: `ErrorCode`, `IpcChannel`, `CameraVendo
 - `IpcChannel`, `CameraVendor`, `PixelFormat`, `SampleBucket` had zero call sites in `src/**` and one of them (`CameraVendor`) even invented vendor names that conflicted with `CaptureVendor` in `src/lib/capture.shared.ts`.
 
 Guardrails on the TS side: `scripts/check-magic-strings.sh --strict` (bash grep) and `no-restricted-syntax` in `eslint.config.js` block re-inlining the three registered categories. Both run in `bun run lint` and in the `frontend-checks` CI job.
+
+| W_SEC_DENIAL_BURST_ALERT | security | Emitted when burst crosses p99 threshold. Dashboard: /admin/security/denial-burst |

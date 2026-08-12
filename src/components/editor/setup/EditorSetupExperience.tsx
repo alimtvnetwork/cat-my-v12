@@ -449,8 +449,8 @@ export function EditorSetupExperience({
           else if (action === "delete") deleteOne(id);
           else if (action === "toggleLock") toggleLocked(id);
           else if (action === "toggleHidden") toggleHidden(id);
-          else if (action === "moveUp") reorder(id, "up");
-          else if (action === "moveDown") reorder(id, "down");
+          else if (action === "moveUp") reorder(id, RightRailDirectionType.Up);
+          else if (action === "moveDown") reorder(id, RightRailDirectionType.Down);
           else if (action === "bringToFront") {
             const items = useRulesStore.getState().rules;
             reorderToIndex(id, Math.max(0, items.length - 1));

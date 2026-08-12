@@ -56,7 +56,7 @@ function ChromeControl({
   label,
   onClick,
   children,
-  intent = "default",
+  intent = PanelChromeIntentType.Default,
   "data-testid": testId,
 }: {
   label: string;
@@ -211,7 +211,7 @@ export const PanelChrome = React.forwardRef<HTMLDivElement, PanelChromeProps>(
             <ChromeControl
               label={collapsed ? `Expand ${chromeTitle}` : `Collapse ${chromeTitle}`}
               onClick={onToggleCollapse}
-              intent="collapse"
+              intent={PanelChromeIntentType.Collapse}
               data-testid={`panel-${panelId}-toggle`}
             >
               {collapsed ? <ChevronRight /> : <ChevronDown />}
@@ -257,7 +257,7 @@ export const PanelChrome = React.forwardRef<HTMLDivElement, PanelChromeProps>(
               <ChromeControl
                 label={`Minimize ${chromeTitle}`}
                 onClick={onMinimize}
-                intent="minimize"
+                intent={PanelChromeIntentType.Minimize}
                 data-testid={`panel-${panelId}-minimize`}
               >
                 <Minus />
@@ -267,7 +267,7 @@ export const PanelChrome = React.forwardRef<HTMLDivElement, PanelChromeProps>(
               <ChromeControl
                 label={`Close ${chromeTitle}`}
                 onClick={onClose}
-                intent="close"
+                intent={PanelChromeIntentType.Close}
                 data-testid={`panel-${panelId}-close`}
               >
                 <X />

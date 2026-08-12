@@ -10,7 +10,7 @@
  * health probe must not hijack the UI.
  */
 import { useEffect, useMemo, useState } from "react";
-import { useAppQuery } from "../../hooks/use-app-query";
+import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getCliStatus, type CliStatus } from "../../lib/observability/status.functions";

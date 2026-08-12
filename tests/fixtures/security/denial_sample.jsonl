@@ -10,3 +10,6 @@
 {"ts": 1750007215, "code": "E_SEC_ROLE_DENIED", "user_id": "op-03", "subject": "ops:retention", "detail": "role=viewer required=admin"}
 {"ts": 1750010800, "code": "E_SEC_NOAUTH", "user_id": null, "subject": "ops:vendor", "detail": "expired token"}
 {"ts": 1750014400, "code": "E_SEC_ROLE_DENIED", "user_id": "op-04", "subject": "ops:audit", "detail": "role=viewer required=admin"}
+{"ts": 1750014410, "code": "E_SEC_ROLE_DENIED", "user_id": "op-04", "subject": "ops:audit", "detail": "role=viewer required=admin"}
+{"ts": 1750014420, "code": "E_SEC_ROLE_DENIED", "user_id": "op-04", "subject": "ops:audit", "detail": "role=viewer required=admin"}
+{"ts": 1750014430, "code": "E_SEC_ROLE_DENIED", "user_id": "op-04", "subject": "ops:audit", "detail": "role=viewer required=admin"}

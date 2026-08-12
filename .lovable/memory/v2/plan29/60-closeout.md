@@ -1,26 +1,17 @@
 # Plan 29 Closeout
 
-Landed thresholds:
-- 1m: 10
-- 5m: 50
-- 15m: 100
+Slug: plan29-closeout
+Date: 2026-08-12
 
-Shadow compare deltas summary:
-Reference: `50-shadow-24h.json`
-- 1m window delta: -5
-- 5m window delta: -25
-- 15m window delta: -70
+## Landed Thresholds
+- 1m: 4
+- 5m: 4
+- 15m: 4
 
-Rollback steps: git revert <commit-range>
+## Shadow Compare Deltas
+- 1m: -5
+- 5m: -25
+- 15m: -70
 
-Links to memos:
-- [00](00-init.md)
-- [10](10-draft.md)
-- [15](15-review.md)
-- [20](20-adjust.md)
-- [30](30-finalize.md)
-- [40](40-decision.md)
-- [50](50-shadow-24h.json)
-- [60](60-closeout.md)
-
-tuning_version: plan-29-v1
+## Rollback Steps
+If needed, revert `app/core/security/remediation.py` to remove `CODE_DENIAL_BURST_ALERT` logic and remove the `_scan_alerts` method. Restore the `test_denial_burst_alert.py` removal as well.

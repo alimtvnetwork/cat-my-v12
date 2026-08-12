@@ -19,7 +19,7 @@
 // SSE tail), 112 (IPC inbox), 113 (rules table), 116 (samples grid).
 
 import { type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
-import { useAppQuery, type AppQueryResult } from "./use-app-query";
+import { useAppQuery, type AppQueryResult } from "@/lib/wrappers/use-app-query";
 
 import type { Envelope, EnvelopeAttributes, EnvelopeError } from "@/lib/be-fetch";
 

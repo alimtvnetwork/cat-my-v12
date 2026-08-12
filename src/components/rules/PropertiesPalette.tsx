@@ -157,7 +157,7 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     PropertiesPaletteRuleKindType.Rule;
   const remembered = openByKind[kindKey];
   const [internal, setInternal] = useState<PropertyPaletteIdType>((remembered as PropertyPaletteIdType | undefined) ?? PropertyPaletteIdType.Info);
-  const activeId = active ?? remembered ?? internal;
+  const activeId = (active ?? remembered ?? internal) as PropertyPaletteIdType;
   const activeEntry = PALETTES.find((p) => p.id === activeId) ?? PALETTES[0];
 
   // Plan 100 Phase E step 23: selection bridge. When the canvas selection

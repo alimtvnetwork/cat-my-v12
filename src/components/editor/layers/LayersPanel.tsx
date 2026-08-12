@@ -137,14 +137,14 @@ export function LayersPanel({
       const ruleIds = g.ruleIds.filter((id) => rules.some((r) => r.id === id && !r.isCategory));
 
       if (ruleIds.length === 0) continue;
-      out.push({ kind: "group-header", id: `g:${g.id}`, groupId: g.id, group: { ...g, ruleIds } });
+      out.push({ kind: FlatEntryKindType.GroupHeader, id: `g:${g.id}`, groupId: g.id, group: { ...g, ruleIds } });
 
       if (!collapsed[g.id]) {
         for (const rid of ruleIds) {
           const r = rules.find((rr) => rr.id === rid);
 
           if (r) {
-            out.push({ kind: "layer", id: `r:${r.id}`, rule: r, indented: true });
+            out.push({ kind: FlatEntryKindType.Layer, id: `r:${r.id}`, rule: r, indented: true });
             grouped.add(r.id);
           }
         }
@@ -157,7 +157,7 @@ export function LayersPanel({
       if (r.isCategory) continue;
 
       if (grouped.has(r.id)) continue;
-      out.push({ kind: "layer", id: `r:${r.id}`, rule: r });
+      out.push({ kind: FlatEntryKindType.Layer, id: `r:${r.id}`, rule: r });
     }
 
     return out;
@@ -167,12 +167,12 @@ export function LayersPanel({
     () =>
       rules
         .filter((r) => r.isCategory)
-        .map((rule) => ({ kind: "layer", id: `c:${rule.id}`, rule })),
+        .map((rule) => ({ kind: FlatEntryKindType.Layer, id: `c:${rule.id}`, rule })),
     [rules],
   );
 
   const sections = useMemo<LayerSection[]>(() => {
-    const ruleCount = ruleEntries.filter((e) => e.kind === "layer").length;
+    const ruleCount = ruleEntries.filter((e) => e.kind === FlatEntryKindType.Layer).length;
     const categoryCount = categoryEntries.length;
 
     return [
@@ -189,7 +189,7 @@ export function LayersPanel({
   const entries = useMemo(() => sections.flatMap((section) => section.entries), [sections]);
 
   const orderedRuleIds = useMemo(
-    () => entries.filter((e) => e.kind === "layer" && e.rule).map((e) => e.rule!.id),
+    () => entries.filter((e) => e.kind === FlatEntryKindType.Layer && e.rule).map((e) => e.rule!.id),
     [entries],
   );
   const groupedIds = useMemo(() => {
@@ -411,7 +411,7 @@ export function LayersPanel({
         {sections.map((section) => (
           <LayerTypeSection key={section.kind} section={section}>
             {section.entries.map((e) =>
-              e.kind === "group-header" && e.group ? (
+              e.kind === FlatEntryKindType.GroupHeader && e.group ? (
                 <GroupHeader
                   key={e.id}
                   group={e.group}

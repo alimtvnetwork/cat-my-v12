@@ -2312,7 +2312,7 @@ export function SelectionOverlay({
                   onEdge={(edge) => {
                     onAction(
                       menuRule.id,
-                      edge === "start"
+                      edge === RunOrderQuickBarEdgeType.Start
                         ? RuleActionKindType.Sendtoback
                         : RuleActionKindType.Bringtofront,
                     );
@@ -2537,7 +2537,7 @@ function RunOrderQuickBar({
         title="Send to Back (run first)"
         aria-label="Send to Back"
         disabled={disabled || atStart}
-        onClick={() => onEdge("start")}
+        onClick={() => onEdge(RunOrderQuickBarEdgeType.Start)}
         className={btn}
       >
         <ArrowUpToLine size={12} />
@@ -2595,7 +2595,7 @@ function RunOrderQuickBar({
         title="Bring to Front (run last)"
         aria-label="Bring to Front"
         disabled={disabled || atEnd}
-        onClick={() => onEdge("end")}
+        onClick={() => onEdge(RunOrderQuickBarEdgeType.End)}
         className={btn}
       >
         <ArrowDownToLine size={12} />

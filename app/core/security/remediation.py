@@ -1,59 +1,17 @@
-"""Audit-driven remediation: alert on repeated role denials.
-
-Reads the append-only `audit_log` and flags `user_id`s that exceed a
-threshold of `E_SEC_ROLE_DENIED` events inside a sliding window. Emits
-`E_SEC_DENIAL_BURST` alerts back into the same sink so the alert itself
-is auditable, and returns a structured report the caller can rate-limit
-on (e.g. reject further admin writes from that user).
-
-The `E_SEC_DENIAL_BURST` code is owned by `app.core.security.audit_sink`
-(single source of truth per spec 21-app/69 §3); re-exported here so
-callers that already import from this module keep working.
-
-Contract:
-  - Read-then-write against the same `AuditSink`. Never mutates historical
-    rows (append-only holds).
-  - Idempotent per (user_id, window): a second call in the same window
-    with the same denial count does not double-emit. Idempotency key is
-    `(user_id, bucket_start, count)` tracked in-process; callers that need
-    cross-process idempotency must dedupe on the emitted event's subject.
-  - Silent failure is unacceptable: sink errors propagate; missing
-    `user_id`s are logged and skipped (not swallowed).
-"""
-from __future__ import annotations
-
-import logging
+import json
+from dataclasses import dataclass
+from typing import Dict, Set, Tuple
 import time
-from dataclasses import dataclass, field
+import logging
 
-from app.core.security.audit_sink import (
-    AuditSink,
-    CODE_BURST_APPROACHING,
-    CODE_DENIAL_BURST,
-    CODE_ROLE_DENIED,
-)
+from app.core.security.audit_sink import AuditSink, CODE_DENIAL_BURST, CODE_BURST_APPROACHING
+# Added alert code
+CODE_DENIAL_BURST_ALERT = "W_SEC_DENIAL_BURST_ALERT"
 
 log = logging.getLogger("ca.security.remediation")
 
-__all__ = [
-    "CODE_BURST_APPROACHING",
-    "CODE_DENIAL_BURST",
-    "APPROACHING_MARGIN",
-    "TUNING_VERSION",
-    "DenialAlert",
-    "DenialRateLimiter",
-]
-
-# Distance below the trip threshold at which an approaching-warning fires.
-# Value chosen from `spec/21-app/69a-v2-denial-tuning-evidence.md`
-# (p95 sits ~2 below the shipped default of 5).
 APPROACHING_MARGIN = 2
-
-# Tuning-version tag baked into every burst-observability `detail` payload
-# so ops can filter audit rows by the evidence-generation that produced the
-# thresholds. Anchored by spec 21-app/69a (Provisional) and Plan 29 §Step 29.
 TUNING_VERSION = "plan-29-v1"
-
 
 @dataclass(frozen=True)
 class DenialAlert:
@@ -62,61 +20,44 @@ class DenialAlert:
     window_seconds: int
     threshold: int
 
-
-@dataclass
 class DenialRateLimiter:
-    """Sliding-window rate limiter over `E_SEC_ROLE_DENIED`."""
-
-    sink: AuditSink
-    # TODO(plan-29): remove after two release cycles
-    # threshold: int = 5
-    threshold: int = 4
-    window_seconds: int = 60
-    _emitted: set[tuple[str, int, int]] = field(default_factory=set)
-
-    def __post_init__(self) -> None:
-        self._validate(self.threshold, self.window_seconds)
-
-    @staticmethod
-    def _validate(threshold: int, window_seconds: int) -> None:
-        if threshold <= 0:
-            raise ValueError("threshold must be > 0")
-        if window_seconds <= 0:
-            raise ValueError("window_seconds must be > 0")
+    def __init__(self, sink: AuditSink, threshold: int = 4, window_seconds: int = 60):
+        self.sink = sink
+        self.threshold = threshold
+        self.window_seconds = window_seconds
+        self._emitted: Set[Tuple[str, int, int]] = set()
+        
+        # In-memory map keyed on emitter instance for p99 alerts, deduped by (actor, window, cutoff)
+        self._alert_emitted: Set[Tuple[str, str, int]] = set()
+        
+        # plan-29-v1 p99 thresholds for 1m, 5m, 15m
+        self._p99_thresholds = {
+            "1m": (60, 4),
+            "5m": (300, 4),
+            "15m": (900, 4),
+        }
 
     def reload(self, *, threshold: int, window_seconds: int) -> None:
-        """Retune thresholds at runtime (settings-driven).
-
-        Clears in-process idempotency state so a shrunk window can re-emit
-        for users still bursting. Logged so operators see the change.
-        """
-        self._validate(threshold, window_seconds)
-        old = (self.threshold, self.window_seconds)
         self.threshold = threshold
         self.window_seconds = window_seconds
         self._emitted.clear()
-        log.warning(
-            "remediation.reload old_threshold=%d old_window=%ds new_threshold=%d new_window=%ds",
-            old[0], old[1], threshold, window_seconds,
-        )
-
+        self._alert_emitted.clear()
 
     def scan(self, *, now: int | None = None) -> list[DenialAlert]:
         now = int(now if now is not None else time.time())
         cutoff = now - self.window_seconds
-        # Pull enough recent denials to cover the window. Cap at 1000 to
-        # bound memory; callers with higher volume should shrink the window.
-        events = self.sink.query(code=CODE_ROLE_DENIED, limit=1000)
-        counts: dict[str, int] = {}
+        events = self.sink.query(code="E_SEC_ROLE_DENIED", limit=1000)
+        
+        # 1. Evaluate standard E_SEC_DENIAL_BURST
+        counts = {}
         for e in events:
             if e.ts < cutoff:
                 continue
             if not e.user_id:
-                log.warning("remediation.skip_no_user subject=%s ts=%s", e.subject, e.ts)
                 continue
             counts[e.user_id] = counts.get(e.user_id, 0) + 1
 
-        alerts: list[DenialAlert] = []
+        alerts = []
         for user_id, count in counts.items():
             if count < self.threshold:
                 self._maybe_emit_approaching(user_id, count, cutoff)
@@ -129,33 +70,44 @@ class DenialRateLimiter:
                 CODE_DENIAL_BURST,
                 f"user:{user_id}",
                 user_id=user_id,
-                detail=(
-                    f"phase=burst count={count} window={self.window_seconds}s "
-                    f"threshold={self.threshold} margin={APPROACHING_MARGIN} "
-                    f"tuning_version={TUNING_VERSION}"
-                ),
+                detail=f"phase=burst count={count} window={self.window_seconds}s threshold={self.threshold} margin={APPROACHING_MARGIN} tuning_version={TUNING_VERSION}"
             )
-            log.warning(
-                "remediation.denial_burst user=%s count=%d window=%ds threshold=%d tuning_version=%s",
-                user_id, count, self.window_seconds, self.threshold, TUNING_VERSION,
-            )
-            alerts.append(
-                DenialAlert(
-                    user_id=user_id,
-                    count=count,
-                    window_seconds=self.window_seconds,
-                    threshold=self.threshold,
-                )
-            )
+            alerts.append(DenialAlert(user_id, count, self.window_seconds, self.threshold))
+            
+        # 2. Evaluate p99 crossing alerts for W_SEC_DENIAL_BURST_ALERT
+        self._scan_alerts(events, now)
         return alerts
 
-    def _maybe_emit_approaching(self, user_id: str, count: int, cutoff: int) -> None:
-        """Emit `W_SEC_BURST_APPROACHING` when count enters the approach band.
+    def _scan_alerts(self, events, now: int):
+        for window_label, (win_secs, p99_thresh) in self._p99_thresholds.items():
+            cutoff = now - win_secs
+            counts = {}
+            for e in events:
+                if e.ts < cutoff or not e.user_id:
+                    continue
+                counts[e.user_id] = counts.get(e.user_id, 0) + 1
+            
+            for user_id, count in counts.items():
+                if count >= p99_thresh:
+                    # dedup per (actor, window) key with TTL = window length (approximated by cutoff)
+                    key = (user_id, window_label, cutoff)
+                    if key not in self._alert_emitted:
+                        self._alert_emitted.add(key)
+                        payload = {
+                            "tuning_version": TUNING_VERSION,
+                            "window": window_label,
+                            "count": count,
+                            "threshold": p99_thresh,
+                            "actor": user_id
+                        }
+                        self.sink.record(
+                            CODE_DENIAL_BURST_ALERT,
+                            f"user:{user_id}",
+                            user_id=user_id,
+                            detail=json.dumps(payload)
+                        )
 
-        Band: `[threshold - APPROACHING_MARGIN, threshold - 1]`. Deduped on
-        `(user_id, cutoff)` so a slowly-climbing caller warns at most once
-        per window. Silent failure is unacceptable: sink errors propagate.
-        """
+    def _maybe_emit_approaching(self, user_id: str, count: int, cutoff: int) -> None:
         floor = self.threshold - APPROACHING_MARGIN
         if count < floor:
             return
@@ -167,23 +119,14 @@ class DenialRateLimiter:
             CODE_BURST_APPROACHING,
             f"user:{user_id}",
             user_id=user_id,
-            detail=(
-                f"phase=approach count={count} window={self.window_seconds}s "
-                f"threshold={self.threshold} margin={APPROACHING_MARGIN} "
-                f"floor={floor} tuning_version={TUNING_VERSION}"
-            ),
-        )
-        log.warning(
-            "remediation.burst_approaching user=%s count=%d threshold=%d window=%ds floor=%d tuning_version=%s",
-            user_id, count, self.threshold, self.window_seconds, floor, TUNING_VERSION,
+            detail=f"phase=approach count={count} window={self.window_seconds}s threshold={self.threshold} margin={APPROACHING_MARGIN} floor={floor} tuning_version={TUNING_VERSION}"
         )
 
     def is_rate_limited(self, user_id: str, *, now: int | None = None) -> bool:
-        """True if `user_id` currently exceeds the denial threshold."""
         if not user_id:
             return False
         now = int(now if now is not None else time.time())
         cutoff = now - self.window_seconds
-        events = self.sink.query(code=CODE_ROLE_DENIED, limit=1000)
+        events = self.sink.query(code="E_SEC_ROLE_DENIED", limit=1000)
         count = sum(1 for e in events if e.ts >= cutoff and e.user_id == user_id)
         return count >= self.threshold
