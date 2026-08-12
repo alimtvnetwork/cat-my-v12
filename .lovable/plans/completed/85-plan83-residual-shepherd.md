@@ -2,7 +2,7 @@
 
 Slug: plan83-residual-shepherd
 Steps: 20
-Status: pending
+Status: completed
 Created: 2026-07-19
 Predecessor: Plan 84 (completed at v3.787.0)
 Drives: Plan 83 residual (~39 of 50 steps)

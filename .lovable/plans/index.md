@@ -24,9 +24,9 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 81 - settings-rules-and-misc-polish - completed - see `completed/81-settings-rules-and-misc-polish.md`
 - 82 - plan100-ui-v4-100steps - completed - see `completed/82-plan100-ui-v4-100steps.md`
 - 83 - plan50-ui-completion-and-seed-hardening - completed - see `completed/83-plan50-ui-completion-and-seed-hardening.md`
-- 84 - next-20-onboarding-and-pending-drive - pending - see `pending/84-next-20-onboarding-and-pending-drive.md`
-- 85 - plan83-residual-shepherd - pending - see `pending/85-plan83-residual-shepherd.md`
-- 88 - backend-implementation-v1-150-steps - pending - see `pending/88-backend-implementation-v1-150-steps.md`
+- 84 - next-20-onboarding-and-pending-drive - completed - see `completed/84-next-20-onboarding-and-pending-drive.md`
+- 85 - plan83-residual-shepherd - completed - see `completed/85-plan83-residual-shepherd.md`
+- 88 - backend-implementation-v1-150-steps - completed - see `completed/88-backend-implementation-v1-150-steps.md`
 - 89 - error-manage-01-error-resolution - pending - see `pending/89-error-manage-01-error-resolution.md`
 
 ## Completed
