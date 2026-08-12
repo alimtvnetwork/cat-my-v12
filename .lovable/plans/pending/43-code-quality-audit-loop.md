@@ -17,7 +17,7 @@ Based on a codebase-wide audit against `.lovable/coding-guidelines/coding-guidel
 
 ### Slice 1: Magic Strings Purge
 
-- [ ] Sweep `src/components/editor/` and extract raw strings (excluding routing/class names) into typed Enums or Constants.
+- [x] Sweep `src/components/editor/` and extract raw strings (excluding routing/class names) into typed Enums or Constants.
 - [ ] Sweep `src/routes/` and extract magic strings.
 - [ ] Sweep `src/lib/` and extract magic strings.
       _(Note: Create specific sub-plans per folder if the agent hits token limits)._

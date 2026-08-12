@@ -2,7 +2,7 @@
 
 Slug: plan29-threshold-derivation
 Steps: 5
-Status: pending
+Status: done
 Created: 2026-07-16
 
 ## Context
