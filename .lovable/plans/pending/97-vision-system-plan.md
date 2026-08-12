@@ -158,17 +158,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 124. Drawing tools for masking. - Subtask 4
 - [x] 125. Drawing tools for masking. - Subtask 5
 - [x] 126. Drawing tools for masking. - Subtask 6
-- [ ] 127. Drawing tools for masking. - Subtask 7
-- [ ] 128. Drawing tools for masking. - Subtask 8
-- [ ] 129. Drawing tools for masking. - Subtask 9
-- [ ] 130. Drawing tools for masking. - Subtask 10
+- [x] 127. Drawing tools for masking. - Subtask 7
+- [x] 128. Drawing tools for masking. - Subtask 8
+- [x] 129. Drawing tools for masking. - Subtask 9
+- [x] 130. Drawing tools for masking. - Subtask 10
 
 ### Phase 14: Masking UI (Part 2)
-- [ ] 131. State management for drawn masks. - Subtask 1
-- [ ] 132. State management for drawn masks. - Subtask 2
-- [ ] 133. State management for drawn masks. - Subtask 3
-- [ ] 134. State management for drawn masks. - Subtask 4
-- [ ] 135. State management for drawn masks. - Subtask 5
+- [x] 131. State management for drawn masks. - Subtask 1
+- [x] 132. State management for drawn masks. - Subtask 2
+- [x] 133. State management for drawn masks. - Subtask 3
+- [x] 134. State management for drawn masks. - Subtask 4
+- [x] 135. State management for drawn masks. - Subtask 5
 - [ ] 136. State management for drawn masks. - Subtask 6
 - [ ] 137. State management for drawn masks. - Subtask 7
 - [ ] 138. State management for drawn masks. - Subtask 8

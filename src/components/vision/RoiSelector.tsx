@@ -17,7 +17,10 @@ export function RoiSelector() {
     width: 100,
     height: 100,
     shiftTolerance: 10,
+    masks: [],
   };
+
+  const masks = roi.masks || [];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -59,7 +62,7 @@ export function RoiSelector() {
             />
             {/* ROI Bounding Box */}
             <div 
-              className="absolute border-2 border-primary bg-primary/20"
+              className="absolute border-2 border-primary bg-primary/20 overflow-hidden"
               style={{
                 left: `${Math.min(Math.max(roi.x, 0), 100)}%`,
                 top: `${Math.min(Math.max(roi.y, 0), 100)}%`,
@@ -71,6 +74,32 @@ export function RoiSelector() {
               <div className="absolute top-0 right-0 w-2 h-2 bg-primary -mr-1 -mt-1 cursor-nesw-resize" />
               <div className="absolute bottom-0 left-0 w-2 h-2 bg-primary -ml-1 -mb-1 cursor-nesw-resize" />
               <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary -mr-1 -mb-1 cursor-nwse-resize" />
+
+              {/* Render Masks */}
+              {masks.map(mask => {
+                if (mask.type === 'RECTANGLE') {
+                  return (
+                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30" style={{
+                      left: '20%', top: '20%', width: '40%', height: '40%' // Mock placement relative to ROI
+                    }} />
+                  );
+                }
+                if (mask.type === 'CIRCLE') {
+                  return (
+                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30 rounded-full" style={{
+                      left: '50%', top: '50%', width: '30%', height: '30%', transform: 'translate(-50%, -50%)' // Mock placement relative to ROI
+                    }} />
+                  );
+                }
+                if (mask.type === 'POLYGON') {
+                   return (
+                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30" style={{
+                      left: '10%', top: '60%', width: '60%', height: '30%', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' // Mock polygon
+                    }} />
+                  );
+                }
+                return null;
+              })}
             </div>
           </div>
 
