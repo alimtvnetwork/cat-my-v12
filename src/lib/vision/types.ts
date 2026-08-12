@@ -22,12 +22,27 @@ export interface VisionSettings {
 
 export type TriggerMode = 'INTERNAL' | 'EXTERNAL';
 
+export interface Mask {
+  id: string;
+  type: 'RECTANGLE' | 'CIRCLE' | 'POLYGON';
+  points: { x: number; y: number }[];
+  radius?: number;
+}
+
+export interface ColorSettings {
+  threshold: number;
+  invert: boolean;
+  colorMap: string; // 'grayscale' | '2-bit' | etc
+}
+
 export interface RoiSettings {
   x: number;
   y: number;
   width: number;
   height: number;
   shiftTolerance: number;
+  masks?: Mask[];
+  colorSettings?: ColorSettings;
 }
 
 export interface CameraSettings {

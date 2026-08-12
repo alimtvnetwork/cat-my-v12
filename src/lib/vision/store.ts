@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings } from './types';
+import type { VisionSettings, TriggerMode, RoiSettings, CameraSettings, RecipeSegment, HandlerSettings, Mask } from './types';
 
 interface VisionState {
   segments: RecipeSegment[];
@@ -13,6 +13,10 @@ interface VisionState {
   setHandlerInputs: (segmentId: string, inputs: Partial<HandlerSettings['inputs']>) => void;
   setHandlerOutputs: (segmentId: string, outputs: Partial<HandlerSettings['outputs']>) => void;
   setRoi: (segmentId: string, roi: Partial<RoiSettings>) => void;
+  addMask: (segmentId: string, mask: Mask) => void;
+  removeMask: (segmentId: string, maskId: string) => void;
+  updateMask: (segmentId: string, maskId: string, updates: Partial<Mask>) => void;
+  setColorSettings: (segmentId: string, colorSettings: Partial<ColorSettings>) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
 }
@@ -40,6 +44,12 @@ const mockSegments: RecipeSegment[] = [
         width: 50,
         height: 50,
         shiftTolerance: 5,
+        masks: [],
+        colorSettings: {
+          threshold: 128,
+          invert: false,
+          colorMap: 'grayscale',
+        }
       }
     },
   },
@@ -157,6 +167,7 @@ export const useVisionStore = create<VisionState>((set) => ({
                 width: 0,
                 height: 0,
                 shiftTolerance: 0,
+                masks: [],
                 ...s.visionSettings.roi,
                 ...roi,
               },
@@ -164,6 +175,82 @@ export const useVisionStore = create<VisionState>((set) => ({
           }
         : s
     ),
+  })),
+  addMask: (segmentId, mask) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId) {
+        const roi = s.visionSettings.roi || { x: 0, y: 0, width: 100, height: 100, shiftTolerance: 10, masks: [] };
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...roi,
+              masks: [...(roi.masks || []), mask],
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  removeMask: (segmentId, maskId) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId && s.visionSettings.roi) {
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...s.visionSettings.roi,
+              masks: s.visionSettings.roi.masks?.filter(m => m.id !== maskId) || [],
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  updateMask: (segmentId, maskId, updates) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId && s.visionSettings.roi) {
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...s.visionSettings.roi,
+              masks: s.visionSettings.roi.masks?.map(m => m.id === maskId ? { ...m, ...updates } : m) || [],
+            }
+          }
+        };
+      }
+      return s;
+    }),
+  })),
+  setColorSettings: (segmentId, colorSettings) => set((state) => ({
+    segments: state.segments.map((s) => {
+      if (s.visionSettings && s.visionSettings.id === segmentId) {
+        const roi = s.visionSettings.roi || { x: 0, y: 0, width: 100, height: 100, shiftTolerance: 10, masks: [] };
+        return {
+          ...s,
+          visionSettings: {
+            ...s.visionSettings,
+            roi: {
+              ...roi,
+              colorSettings: {
+                threshold: 128,
+                invert: false,
+                colorMap: 'grayscale',
+                ...roi.colorSettings,
+                ...colorSettings,
+              }
+            }
+          }
+        };
+      }
+      return s;
+    }),
   })),
   duplicateSegment: (id) => set((state) => {
     const segmentToDuplicate = state.segments.find((s) => s.visionSettings.id === id);

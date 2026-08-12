@@ -169,17 +169,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 133. State management for drawn masks. - Subtask 3
 - [x] 134. State management for drawn masks. - Subtask 4
 - [x] 135. State management for drawn masks. - Subtask 5
-- [ ] 136. State management for drawn masks. - Subtask 6
-- [ ] 137. State management for drawn masks. - Subtask 7
-- [ ] 138. State management for drawn masks. - Subtask 8
-- [ ] 139. State management for drawn masks. - Subtask 9
-- [ ] 140. State management for drawn masks. - Subtask 10
+- [x] 136. State management for drawn masks. - Subtask 6
+- [x] 137. State management for drawn masks. - Subtask 7
+- [x] 138. State management for drawn masks. - Subtask 8
+- [x] 139. State management for drawn masks. - Subtask 9
+- [x] 140. State management for drawn masks. - Subtask 10
 
 ### Phase 15: Grayscaling Setup
-- [ ] 141. Color picking to 2-bit grayscale conversion tools. - Subtask 1
-- [ ] 142. Color picking to 2-bit grayscale conversion tools. - Subtask 2
-- [ ] 143. Color picking to 2-bit grayscale conversion tools. - Subtask 3
-- [ ] 144. Color picking to 2-bit grayscale conversion tools. - Subtask 4
+- [x] 141. Color picking to 2-bit grayscale conversion tools. - Subtask 1
+- [x] 142. Color picking to 2-bit grayscale conversion tools. - Subtask 2
+- [x] 143. Color picking to 2-bit grayscale conversion tools. - Subtask 3
+- [x] 144. Color picking to 2-bit grayscale conversion tools. - Subtask 4
 - [ ] 145. Color picking to 2-bit grayscale conversion tools. - Subtask 5
 - [ ] 146. Color picking to 2-bit grayscale conversion tools. - Subtask 6
 - [ ] 147. Color picking to 2-bit grayscale conversion tools. - Subtask 7
