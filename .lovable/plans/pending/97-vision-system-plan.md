@@ -125,17 +125,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 97. Handler/PLC signal scaffolding. - Subtask 7
 - [x] 98. Handler/PLC signal scaffolding. - Subtask 8
 - [x] 99. Handler/PLC signal scaffolding. - Subtask 9
-- [ ] 100. Handler/PLC signal scaffolding. - Subtask 10
+- [x] 100. Handler/PLC signal scaffolding. - Subtask 10
 
 ### Phase 11: Region of Interest (ROI) (Part 1)
-- [ ] 101. Base grid and ROI selection UI. - Subtask 1
-- [ ] 102. Base grid and ROI selection UI. - Subtask 2
-- [ ] 103. Base grid and ROI selection UI. - Subtask 3
-- [ ] 104. Base grid and ROI selection UI. - Subtask 4
-- [ ] 105. Base grid and ROI selection UI. - Subtask 5
-- [ ] 106. Base grid and ROI selection UI. - Subtask 6
-- [ ] 107. Base grid and ROI selection UI. - Subtask 7
-- [ ] 108. Base grid and ROI selection UI. - Subtask 8
+- [x] 101. Base grid and ROI selection UI. - Subtask 1
+- [x] 102. Base grid and ROI selection UI. - Subtask 2
+- [x] 103. Base grid and ROI selection UI. - Subtask 3
+- [x] 104. Base grid and ROI selection UI. - Subtask 4
+- [x] 105. Base grid and ROI selection UI. - Subtask 5
+- [x] 106. Base grid and ROI selection UI. - Subtask 6
+- [x] 107. Base grid and ROI selection UI. - Subtask 7
+- [x] 108. Base grid and ROI selection UI. - Subtask 8
 - [ ] 109. Base grid and ROI selection UI. - Subtask 9
 - [ ] 110. Base grid and ROI selection UI. - Subtask 10
 

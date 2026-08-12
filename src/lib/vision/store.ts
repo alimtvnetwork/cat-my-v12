@@ -10,7 +10,9 @@ interface VisionState {
   renameSegment: (id: string, name: string) => void;
   addSegment: () => void;
   setCameraSettings: (segmentId: string, settings: Partial<CameraSettings>) => void;
+  setHandlerInputs: (segmentId: string, inputs: Partial<HandlerSettings['inputs']>) => void;
   setHandlerOutputs: (segmentId: string, outputs: Partial<HandlerSettings['outputs']>) => void;
+  setRoi: (segmentId: string, roi: Partial<RoiSettings>) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
 }
@@ -21,6 +23,10 @@ const mockSegments: RecipeSegment[] = [
       id: 'mock-1',
       name: 'Initial Settings',
       handlerSettings: {
+        inputs: {
+          triggerIn: false,
+          partPresent: true,
+        },
         outputs: {
           ready: true,
           busy: false,
@@ -28,6 +34,13 @@ const mockSegments: RecipeSegment[] = [
           fail: false,
         },
       },
+      roi: {
+        x: 10,
+        y: 10,
+        width: 50,
+        height: 50,
+        shiftTolerance: 5,
+      }
     },
   },
 ];
@@ -75,6 +88,34 @@ export const useVisionStore = create<VisionState>((set) => ({
         : s
     ),
   })),
+  setHandlerInputs: (segmentId, inputs) => set((state) => ({
+    segments: state.segments.map((s) =>
+      s.visionSettings && s.visionSettings.id === segmentId
+        ? {
+            ...s,
+            visionSettings: {
+              ...s.visionSettings,
+              handlerSettings: {
+                ...s.visionSettings.handlerSettings,
+                inputs: {
+                  triggerIn: false,
+                  partPresent: false,
+                  ...s.visionSettings.handlerSettings?.inputs,
+                  ...inputs,
+                },
+                outputs: {
+                  ready: false,
+                  busy: false,
+                  pass: false,
+                  fail: false,
+                  ...s.visionSettings.handlerSettings?.outputs,
+                }
+              }
+            }
+          }
+        : s
+    ),
+  })),
   setHandlerOutputs: (segmentId, outputs) => set((state) => ({
     segments: state.segments.map((s) =>
       s.visionSettings && s.visionSettings.id === segmentId
@@ -84,6 +125,11 @@ export const useVisionStore = create<VisionState>((set) => ({
               ...s.visionSettings,
               handlerSettings: {
                 ...s.visionSettings.handlerSettings,
+                inputs: {
+                  triggerIn: false,
+                  partPresent: false,
+                  ...s.visionSettings.handlerSettings?.inputs,
+                },
                 outputs: {
                   ready: false,
                   busy: false,
@@ -94,6 +140,27 @@ export const useVisionStore = create<VisionState>((set) => ({
                 }
               }
             }
+          }
+        : s
+    ),
+  })),
+  setRoi: (segmentId, roi) => set((state) => ({
+    segments: state.segments.map((s) =>
+      s.visionSettings && s.visionSettings.id === segmentId
+        ? {
+            ...s,
+            visionSettings: {
+              ...s.visionSettings,
+              roi: {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                shiftTolerance: 0,
+                ...s.visionSettings.roi,
+                ...roi,
+              },
+            },
           }
         : s
     ),

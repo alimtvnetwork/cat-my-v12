@@ -1,4 +1,8 @@
 export interface HandlerSettings {
+  inputs: {
+    triggerIn: boolean;
+    partPresent: boolean;
+  };
   outputs: {
     ready: boolean;
     busy: boolean;
@@ -13,6 +17,7 @@ export interface VisionSettings {
   camera?: CameraSettings;
   cameraSettings?: CameraSettings;
   handlerSettings?: HandlerSettings;
+  roi?: RoiSettings;
 }
 
 export type TriggerMode = 'INTERNAL' | 'EXTERNAL';
