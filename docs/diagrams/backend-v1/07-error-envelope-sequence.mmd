@@ -1,0 +1,14 @@
+sequenceDiagram
+    autonumber
+    participant Client
+    participant Backend as Backend Service
+    participant External as External Dependency
+
+    Client->>Backend: Request
+    Backend->>External: Call external service
+    External--xBackend: 5xx Error (e.g. 503)
+    Backend-->>Backend: Wait (exponential backoff)
+    Backend->>External: Retry call
+    External--xBackend: 5xx Error (e.g. 503)
+    Backend-->>Backend: Format Error Envelope
+    Backend-->>Client: HTTP Response (Error Envelope)

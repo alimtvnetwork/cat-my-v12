@@ -90,3 +90,7 @@ Per `spec/coding-guidelines/python.md`:
 ## Default endpoint
 
 `http://127.0.0.1:8787` (locked by Plan 88 D-001; matches FE `localStorage` key `ui.backend.baseUrl` default from Step 47).
+
+## Windows Service Mode (Future Work)
+
+Running the BE as a Windows Service is deferred. See Step 92 notes for requirements regarding NSSM or native Python Windows service bindings.

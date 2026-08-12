@@ -59,6 +59,10 @@ export default tseslint.config(
               message:
                 "E_BUG_SAMPLE_LEAK: read samples through useSampleLibrary() (src/lib/editor/useSampleLibrary.ts). Direct imports of SAMPLE_LIBRARY/SAMPLE_POV_MAP outside the adapter are forbidden.",
             },
+            {
+              group: ["sdk/*", "sdk/**"],
+              message: "E_BUG_SDK_LEAK: UI must not import backend/sdk code directly.",
+            },
           ],
         },
       ],

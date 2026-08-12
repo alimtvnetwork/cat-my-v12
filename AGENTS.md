@@ -13,3 +13,6 @@
 
 > [!NOTE]
 > **Compound Keyboard Keys**: Always use compound helpers from KeyboardKeyType (e.g. KeyboardKeyType.isEnterOrSpace(key)) rather than chaining conditions (||) to comply with P4a complexity limits.
+
+> [!TIP]
+> **Future Agents**: Please refer to Command 40 and Plan 88 for historical context and ongoing execution steps regarding the latest backend v1 specifications.

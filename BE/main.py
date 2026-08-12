@@ -11,6 +11,9 @@ Guideline: spec/coding-guidelines/python.md (functions ≤ 15 lines, typed at bo
 from __future__ import annotations
 
 import logging
+import signal
+import sys
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from BE.src.api.router import api_router
@@ -41,7 +44,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     """Build the FastAPI app with logging, CORS, and envelope handlers wired."""
     cfg = settings or get_settings()
     configure_logging(cfg.log_level)
-    app = FastAPI(title="BE", version="1.0.0")
+    
+    def sigterm_handler(signum, frame):
+        logger.info("sigterm_received", extra={"operation": "shutdown"})
+        logging.shutdown()
+        sys.exit(0)
+
+    try:
+        signal.signal(signal.SIGTERM, sigterm_handler)
+    except Exception:
+        pass
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        yield
+        logger.info("lifespan_shutdown", extra={"operation": "shutdown"})
+        logging.shutdown()
+
+    app = FastAPI(title="BE", version="1.0.0", lifespan=lifespan)
     
     install_cors(app, cfg)
     app.add_middleware(RateLimitMiddleware)

@@ -10,6 +10,12 @@ export class HttpBackendClient implements BackendClient {
     list: async (): Promise<Envelope<{ items: CatRuleWire[]; total: number; provider?: string }>> => {
       return fetchBackend<{ items: CatRuleWire[]; total: number; provider?: string }>("rules");
     },
+    create: async (payload: Partial<CatRuleWire>): Promise<Envelope<CatRuleWire>> => {
+      return fetchBackend<CatRuleWire>("rules", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
   };
 
   samples = {

@@ -64,6 +64,7 @@ Read this file first. Every entry below is a file in `.lovable/memory/`. For the
 - Project chain expansion: `flatten(rules.map(r => [...r.appliesBefore, r])).dedupeByIdKeepFirst()`. Cycles rejected at save.
 - Every new persistence surface goes through `src/lib/<domain>/facade.ts`; every fake facade gets a TODO under `.lovable/pending-facades/`.
 - Every V4 screen ships with seed data (2 categories, 4 rules with X3 chained on X1/X2, 2 camera settings, 1 mic settings, `My Proj 1`).
+- Backend mode + SDK facade rule (Command 40)
 
 ## Plan 28 closure (v3.5.0 - 2026-07-14)
 

@@ -384,4 +384,5 @@ jobs:
         run: python3 -m ruff check BE/
       - name: Run mypy
         run: python3 -m mypy BE/
-
+      - name: Run SDK Facade check
+        run: bash scripts/be-lint.sh

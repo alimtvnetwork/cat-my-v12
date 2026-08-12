@@ -1,0 +1,6 @@
+flowchart TD
+    A[Incoming Request] --> B{Valid Target URL?}
+    B -- Yes --> C[Proceed with Target Mode]
+    B -- No --> D[Log Warning & Fallback to Default Mode]
+    D --> C
+    C --> E[Return Response]

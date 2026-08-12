@@ -23,6 +23,7 @@ export interface BackendClient {
   ping(): Promise<Envelope<{ pong: boolean }>>;
   rules: {
     list(): Promise<Envelope<{ items: CatRuleWire[]; total: number; provider?: string }>>;
+    create(payload: Partial<CatRuleWire>): Promise<Envelope<CatRuleWire>>;
   };
   samples: {
     list(): Promise<Envelope<{ items: CatSampleWire[]; total: number; provider?: string }>>;

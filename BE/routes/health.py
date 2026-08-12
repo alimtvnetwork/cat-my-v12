@@ -53,4 +53,31 @@ async def get_healthz(request: Request) -> JSONResponse:
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
+@router.get("/health/deep")
+async def get_health_deep(request: Request) -> JSONResponse:
+    """Deep health check covering sub-dependencies (repo, sdkFacade). Always ok for v1."""
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    cfg = get_settings()
+    payload = {
+        "status": "ok",
+        "uptime_s": _uptime_s(),
+        "env": cfg.env.value,
+        "subchecks": {
+            "repo": "ok",
+            "sdkFacade": "ok"
+        }
+    }
+    logger.info(
+        "health_deep",
+        extra={
+            "CorrelationId": correlation_id,
+            "operation": "GET /health/deep",
+            "code": None,
+            "subject_id": None,
+        },
+    )
+    envelope = success(payload, requested_at=str(request.url))
+    return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
+
+
 __all__ = ["router"]
