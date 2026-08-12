@@ -11,12 +11,13 @@ def _client() -> TestClient:
     return TestClient(create_app())
 
 
-def test_list_samples_empty_envelope() -> None:
+def test_list_samples() -> None:
     resp = _client().get("/samples")
     assert resp.status_code == 200
     body = resp.json()
     assert body["Status"]["IsSuccess"] is True
-    assert body["Results"] == [{"items": [], "total": 0, "provider": "InMemorySampleFacade"}]
+    assert body["Results"][0]["total"] == 3
+    assert body["Results"][0]["provider"] == "InMemorySamplesRepo"
     assert "X-Correlation-Id" in resp.headers
 
 

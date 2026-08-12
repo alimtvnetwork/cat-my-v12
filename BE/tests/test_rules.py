@@ -16,7 +16,7 @@ def test_list_rules_empty_envelope() -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["Status"]["IsSuccess"] is True
-    assert body["Results"] == [{"items": [], "total": 0, "provider": "InMemoryRuleFacade"}]
+    assert body["Results"] == [{"items": [], "total": 0, "provider": "InMemoryRulesRepo"}]
     assert "X-Correlation-Id" in resp.headers
 
 
