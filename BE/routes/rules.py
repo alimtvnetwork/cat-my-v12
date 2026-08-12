@@ -1,7 +1,7 @@
-"""GET /rules and GET /rules/{rule_id} — stub CRUD, facade-only.
+"""GET /rules and GET /rules/{rule_id} — stub CRUD, repo-only.
 
 Spec: spec/21-app/backend-implementation-request-v1.md
-Step 18 lands wire-only stubs so Steps 20-22 (RuleProvider facade) have a real
+Step 18 lands wire-only stubs so Steps 20-22 (RuleProvider repo) have a real
 caller signature to match, and Step 30 (FE typed client) has stable URLs. No
 provider is wired yet: `list` returns an empty envelope, `get` always raises
 `AppError(E_BE_NOT_FOUND)` which flows through Step-13 handlers into the frozen
@@ -10,7 +10,7 @@ project's monotonic integer-alias rule (src/lib/ids/int-alias.ts); non-numeric
 IDs → `E_BE_BAD_REQUEST` (400).
 
 Never imports from repo-root `sdk/` — that's `E_BUG_SDK_LEAK` per SS-02.
-Provider hookup lands in Steps 20-22 via `BE/app/facades/`.
+Provider hookup lands in Steps 20-22 via `BE/app/repos/`.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from BE.app.domain.rule_set import parse_envelope
-from BE.app.facades import get_rule_facade
+from BE.repos.rules_repo import get_rules_repo
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -52,10 +52,10 @@ def _parse_rule_id(raw: str) -> int:
 
 @router.get("")
 async def list_rules(request: Request) -> JSONResponse:
-    """List rules via the active `RuleFacade` (default: empty in-memory)."""
+    """List rules via the active `RulesRepo` (default: empty in-memory)."""
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-    facade = get_rule_facade()
-    items = [r.to_wire() for r in facade.list_rules()]
+    repo = get_rules_repo()
+    items = [r.to_wire() for r in repo.list_rules()]
     logger.info(
         "rules_list",
         extra={
@@ -65,22 +65,22 @@ async def list_rules(request: Request) -> JSONResponse:
             "subject_id": None,
         },
     )
-    payload = {"items": items, "total": len(items), "provider": type(facade).__name__}
+    payload = {"items": items, "total": len(items), "provider": type(repo).__name__}
     envelope = success(payload, requested_at=str(request.url))
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
 @router.get("/{rule_id}")
 async def get_rule(rule_id: str, request: Request) -> JSONResponse:
-    """Fetch one rule via the active `RuleFacade`.
+    """Fetch one rule via the active `RulesRepo`.
 
-    The facade owns the `E_BE_NOT_FOUND` decision; this handler only validates
+    The repo owns the `E_BE_NOT_FOUND` decision; this handler only validates
     the path param and lets `AppError` propagate to the Step-13 handlers.
     """
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     parsed = _parse_rule_id(rule_id)
-    facade = get_rule_facade()
-    rule = facade.get_rule(parsed)
+    repo = get_rules_repo()
+    rule = repo.get_rule(parsed)
     logger.info(
         "rules_get",
         extra={
@@ -119,8 +119,8 @@ async def save_rule_set(rule_id: str, request: Request) -> JSONResponse:
             "path rule_id must match body.RuleSetId",
             {"path": parsed_id, "body": envelope.RuleSetId},
         )
-    facade = get_rule_facade()
-    committed = facade.save_rule_set(envelope)
+    repo = get_rules_repo()
+    committed = repo.save_rule_set(envelope)
     logger.info(
         "rules_save",
         extra={
@@ -145,8 +145,8 @@ async def get_rule_set(rule_id: str, request: Request) -> JSONResponse:
     """
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     parsed_id = _parse_rule_id(rule_id)
-    facade = get_rule_facade()
-    envelope = facade.get_rule_set(parsed_id)
+    repo = get_rules_repo()
+    envelope = repo.get_rule_set(parsed_id)
     logger.info(
         "rules_set_get",
         extra={

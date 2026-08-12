@@ -1,4 +1,4 @@
-"""GET /samples and GET /samples/{sample_id} — stub CRUD, facade-only.
+"""GET /samples and GET /samples/{sample_id} — stub CRUD, repo-only.
 
 Spec: spec/21-app/backend-implementation-request-v1.md
 Mirrors `BE/routes/rules.py` (Step 18) so Step 20 can design `SampleProvider`
@@ -6,7 +6,7 @@ and `RuleProvider` Protocols as a matched pair (same list/get shape, same
 error contract). Sample ids follow the same monotonic positive-int alias
 rule as rules (`src/lib/ids/int-alias.ts`); non-numeric / ≤0 → 400
 `E_BE_BAD_REQUEST`; valid id → 404 `E_BE_NOT_FOUND` until Step 20 wires the
-in-memory `SampleProvider` under `BE/app/facades/`.
+in-memory `SampleProvider` under `BE/app/repos/`.
 
 Never imports from repo-root `sdk/` — would trip `E_BUG_SDK_LEAK` per SS-02.
 """
@@ -19,7 +19,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from BE.app.domain.cat_sample import CatSample
-from BE.app.facades import get_sample_facade
+from BE.repos.samples_repo import get_samples_repo
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -118,10 +118,10 @@ def _parse_sample_id(raw: str) -> int:
 
 @router.get("")
 async def list_samples(request: Request) -> JSONResponse:
-    """List samples via the active `SampleFacade` (default: empty in-memory)."""
+    """List samples via the active `SamplesRepo` (default: empty in-memory)."""
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-    facade = get_sample_facade()
-    items = [s.to_wire() for s in facade.list_samples()]
+    repo = get_samples_repo()
+    items = [s.to_wire() for s in repo.list_samples()]
     logger.info(
         "samples_list",
         extra={
@@ -131,18 +131,18 @@ async def list_samples(request: Request) -> JSONResponse:
             "subject_id": None,
         },
     )
-    payload = {"items": items, "total": len(items), "provider": type(facade).__name__}
+    payload = {"items": items, "total": len(items), "provider": type(repo).__name__}
     envelope = success(payload, requested_at=str(request.url))
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
 @router.get("/{sample_id}")
 async def get_sample(sample_id: str, request: Request) -> JSONResponse:
-    """Fetch one sample via the active `SampleFacade`."""
+    """Fetch one sample via the active `SamplesRepo`."""
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     parsed = _parse_sample_id(sample_id)
-    facade = get_sample_facade()
-    sample = facade.get_sample(parsed)
+    repo = get_samples_repo()
+    sample = repo.get_sample(parsed)
     logger.info(
         "samples_get",
         extra={
@@ -167,19 +167,19 @@ async def _read_json(request: Request) -> object:
 
 @router.post("")
 async def create_sample(request: Request) -> JSONResponse:
-    """Insert a sample via `SampleFacade.upsert_sample` (Plan 90 Step 145).
+    """Insert a sample via `SamplesRepo.upsert_sample` (Plan 90 Step 145).
 
     POST allows the client to mint a specific `id` (the samples slice uses
     monotonic client-side integer aliases per `src/lib/ids/int-alias.ts`, so
     the id is authoritative, not server-assigned). Idempotent by id: a second
     POST with the same id updates the row rather than 409-ing, matching the
-    facade's upsert semantics. Bad payload → 400 `E_BE_BAD_REQUEST`.
+    repo's upsert semantics. Bad payload → 400 `E_BE_BAD_REQUEST`.
     """
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     raw = await _read_json(request)
     sample = _parse_sample_body(raw)
-    facade = get_sample_facade()
-    committed = facade.upsert_sample(sample)
+    repo = get_samples_repo()
+    committed = repo.upsert_sample(sample)
     logger.info(
         "samples_create",
         extra={
@@ -199,13 +199,13 @@ async def create_sample(request: Request) -> JSONResponse:
 
 @router.put("/{sample_id}")
 async def update_sample(sample_id: str, request: Request) -> JSONResponse:
-    """Update a sample via `SampleFacade.upsert_sample` with path/body id check."""
+    """Update a sample via `SamplesRepo.upsert_sample` with path/body id check."""
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     parsed = _parse_sample_id(sample_id)
     raw = await _read_json(request)
     sample = _parse_sample_body(raw, expected_id=parsed)
-    facade = get_sample_facade()
-    committed = facade.upsert_sample(sample)
+    repo = get_samples_repo()
+    committed = repo.upsert_sample(sample)
     logger.info(
         "samples_update",
         extra={
@@ -221,17 +221,17 @@ async def update_sample(sample_id: str, request: Request) -> JSONResponse:
 
 @router.delete("/{sample_id}")
 async def delete_sample(sample_id: str, request: Request) -> JSONResponse:
-    """Remove a sample via `SampleFacade.delete_sample`.
+    """Remove a sample via `SamplesRepo.delete_sample`.
 
-    Missing id → facade raises `E_BE_NOT_FOUND` (404) per the Step-144
+    Missing id → repo raises `E_BE_NOT_FOUND` (404) per the Step-144
     contract; propagated by the Step-13 envelope handler. Success returns
     an envelope with an empty `Results` object so clients can uniformly
     read `Status.IsSuccess` without a shape switch.
     """
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     parsed = _parse_sample_id(sample_id)
-    facade = get_sample_facade()
-    facade.delete_sample(parsed)
+    repo = get_samples_repo()
+    repo.delete_sample(parsed)
     logger.info(
         "samples_delete",
         extra={
