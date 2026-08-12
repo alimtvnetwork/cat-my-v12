@@ -233,17 +233,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 187. Pin consistency checks. - Subtask 7
 - [x] 188. Pin consistency checks. - Subtask 8
 - [x] 189. Pin consistency checks. - Subtask 9
-- [ ] 190. Pin consistency checks. - Subtask 10
+- [x] 190. Pin consistency checks. - Subtask 10
 
 ### Phase 20: Backend Integration & Final Polish
-- [ ] 191. Serialize new state to backend envelope and test. - Subtask 1
-- [ ] 192. Serialize new state to backend envelope and test. - Subtask 2
-- [ ] 193. Serialize new state to backend envelope and test. - Subtask 3
-- [ ] 194. Serialize new state to backend envelope and test. - Subtask 4
-- [ ] 195. Serialize new state to backend envelope and test. - Subtask 5
-- [ ] 196. Serialize new state to backend envelope and test. - Subtask 6
-- [ ] 197. Serialize new state to backend envelope and test. - Subtask 7
-- [ ] 198. Serialize new state to backend envelope and test. - Subtask 8
-- [ ] 199. Serialize new state to backend envelope and test. - Subtask 9
-- [ ] 200. Serialize new state to backend envelope and test. - Subtask 10
+- [x] 191. Serialize new state to backend envelope and test. - Subtask 1
+- [x] 192. Serialize new state to backend envelope and test. - Subtask 2
+- [x] 193. Serialize new state to backend envelope and test. - Subtask 3
+- [x] 194. Serialize new state to backend envelope and test. - Subtask 4
+- [x] 195. Serialize new state to backend envelope and test. - Subtask 5
+- [x] 196. Serialize new state to backend envelope and test. - Subtask 6
+- [x] 197. Serialize new state to backend envelope and test. - Subtask 7
+- [x] 198. Serialize new state to backend envelope and test. - Subtask 8
+- [x] 199. Serialize new state to backend envelope and test. - Subtask 9
+- [x] 200. Serialize new state to backend envelope and test. - Subtask 10
 
