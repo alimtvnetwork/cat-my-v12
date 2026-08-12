@@ -18,6 +18,7 @@ import { StatusPill, toneForExitCode } from "./status-pill";
 import { WorkerStateType, StatusToneType } from "@/lib/enums/ui";
 import { cn } from "../../lib/utils";
 import { pausePollOnError } from "../../lib/react-query/poll";
+import { useDataSource, DataSourceType } from "../../lib/data-source/store";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -67,8 +68,13 @@ function useTabVisibility(): boolean {
 }
 
 export function GlobalCliStatusWidget() {
+  const dataSource = useDataSource();
   const tabVisible = useTabVisibility();
   const fetchStatus = useServerFn(getCliStatus);
+
+  if (dataSource !== DataSourceType.Backend) {
+    return null;
+  }
 
   const query = useAppQuery<CliStatus, Error>({
     queryKey: ["cli", "status"],

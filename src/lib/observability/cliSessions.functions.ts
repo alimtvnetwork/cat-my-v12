@@ -60,7 +60,30 @@ export const getCliSessions = createServerFn({ method: "GET" })
 
     if (data.source) qs.set("source", data.source);
     const url = `${beBaseUrl()}/api/cli/sessions${qs.size ? `?${qs}` : ""}`;
-    const env = await beFetch<CliSessionsPage>(url);
+    let env;
+    try {
+      env = await beFetch<CliSessionsPage>(url);
+    } catch (err) {
+      const isEnvelope =
+        err instanceof Error && (err.name === "EnvelopeError" || "responseStatus" in err);
+      const envErr = err as any;
+
+      if (
+        isEnvelope &&
+        (envErr.responseStatus === 404 ||
+          envErr.responseStatus === 403 ||
+          envErr.code === "E_BE_UNAVAILABLE")
+      ) {
+        return {
+          items: [],
+          total: 0,
+          limit: data.limit ?? 50,
+        };
+      }
+
+      throw err;
+    }
+
     const payload = env.Results[0];
 
     if (payload === undefined) {

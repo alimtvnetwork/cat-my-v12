@@ -103,7 +103,12 @@ export const getObservabilitySessions = createServerFn({ method: "GET" })
         err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
       const envErr = err as EnvelopeError;
 
-      if (isEnvelope && (envErr.responseStatus === 404 || envErr.code === "E_BE_UNAVAILABLE")) {
+      if (
+        isEnvelope &&
+        (envErr.responseStatus === 404 ||
+          envErr.responseStatus === 403 ||
+          envErr.code === "E_BE_UNAVAILABLE")
+      ) {
         return {
           items: [],
           total: 0,

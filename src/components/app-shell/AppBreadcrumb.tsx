@@ -137,7 +137,7 @@ export function AppBreadcrumb({ variant = AppBreadcrumbPropsVariantType.Band }: 
       title={fullLabel}
       className={
         isInline
-          ? "app-breadcrumb app-breadcrumb-inline flex min-w-0 flex-1 items-center gap-1.5 py-1 text-hmi-caption text-ca-ink-muted"
+          ? "app-breadcrumb app-breadcrumb-inline hidden min-w-0 flex-1 items-center gap-1.5 py-1 text-hmi-caption text-ca-ink-muted sm:flex"
           : "app-breadcrumb flex min-w-0 items-center gap-1.5 border-b border-ca-border bg-ca-bg px-hmi-4 text-hmi-body text-ca-ink-muted"
       }
       style={{ height: "var(--header-crumb-h)" }}
