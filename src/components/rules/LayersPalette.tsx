@@ -259,7 +259,9 @@ export function LayersPalette({ rule }: Props) {
                 <span className={["flex-1 truncate", ch.visible ? "" : "opacity-50"].join(" ")}>
                   {ch.label}
                 </span>
-                <span className="tabular-nums text-[11px] text-ca-ink-muted">{ch.order + 1}</span>
+                <span className="flex items-center justify-center min-w-[20px] h-4 rounded bg-ca-panel-2/50 border border-ca-border/50 font-mono text-[10px] font-medium text-ca-ink-muted tabular-nums">
+                  {ch.order + 1}
+                </span>
                 <button
                   type="button"
                   aria-label={`Move ${ch.label} up`}
@@ -342,7 +344,9 @@ export function LayersPalette({ rule }: Props) {
                   <span className={["flex-1 truncate", p.visible ? "" : "opacity-50"].join(" ")}>
                     {p.name}
                   </span>
-                  <span className="tabular-nums text-[11px] text-ca-ink-muted">{p.order + 1}</span>
+                  <span className="flex items-center justify-center min-w-[20px] h-4 rounded bg-ca-panel-2/50 border border-ca-border/50 font-mono text-[10px] font-medium text-ca-ink-muted tabular-nums">
+                    {p.order + 1}
+                  </span>
                   <button
                     type="button"
                     aria-label={`Move ${p.name} up`}

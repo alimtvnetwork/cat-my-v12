@@ -4,18 +4,27 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-08-12T17:18:00Z, Session V5: Resolve UI breakages in Vision app, execute write-memory-v3, and register self-looping directive.
 - 2026-08-10T04:01:00Z, Session V4: Write strictly-avoid.md, commit TS Enum refactors, prepare Query Wrapper spec, resolve `beFetch` dual-package hazard.
 - 2026-08-09T19:38:00Z, Session V3: Fix UI overlap glitch, cleanup pycache from git, enforce enum/boolean rules.
 - 2026-07-21T00:00:00Z, Plan 90 Steps 145-146 recorded (compare-sessions view, dev-frames toggle); memory index refreshed.
 
 ## 1. Read First (always, in order)
 
-1. `readme.md` (root) - project status, ship state, audit banner, plan pointers.
-2. `.lovable/what-to-read.md` (this file) - onboarding map.
-3. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
-4. `.lovable/prompt.md` -> `.lovable/prompts/index.md` - prompt registry, latest `next-task` prompt.
-5. `.lovable/coding-guidelines/coding-guidelines.md` - hard coding rules.
-6. `agents.md` - agent operating rules for this repo.
+1. `.lovable/what-to-read.md` (this file) - authoritative read-list pointer
+2. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
+3. `.lovable/coding-guidelines.md` - coding rules and boundaries
+4. `.lovable/plans/index.md` - active roadmap and completed items
+5. `.lovable/suggestions.md` and `.lovable/suggestions/index.md` - active and historical suggestions
+6. `.lovable/strictly-avoid.md` - forbidden patterns
+7. `.lovable/cicd-index.md` and every file under `.lovable/cicd-issues/`
+8. `.lovable/issues/`, `.lovable/pending-issues/`, `.lovable/solved-issues/`
+9. `.lovable/spec/commands/` - spec auditing and directives
+10. `.lovable/ambiguous-questions/01-new-ambiguity/` and `02-ambiguity-resolved/`
+11. `.lovable/prompts/index.md` - prompt registry
+12. `.lovable/memory/workflow/` - current workflow state
+13. `spec/` (relevant folders including error management)
+14. `README.md` (root) - project status, ship state
 
 ## 2. Folder Structure
 
@@ -92,11 +101,12 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 | Task                                | Must-read (in this order)                                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Any code change                     | `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines/coding-guidelines.md`, `spec/02-coding-guidelines/` (language-specific) |
-| Add a feature                       | `.lovable/memory/index.md`, latest `.lovable/plans/pending/*.md`, relevant `spec/21-app/*.md`, `spec/22-app-issues/`                  |
-| Add a unit test                     | `pytest.ini`, mirror layout under `tests/unit/`, follow `spec/04-database-conventions/04-testing-strategy.md` when DB-touching        |
-| Add an integration/e2e test         | `tests/integration/` or `tests/e2e/` conventions; `tests/e2e/playwright_smoke.py` reference                                           |
-| Write/edit a spec                   | `spec/01-spec-authoring-guide/`, `spec/_template.md`, `.lovable/memory/06-spec-map.md`                                                |
+| Before any task (always)            | The full "Read First" list above in section 1                                                                                         |
+| Before writing code                 | `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/` (language-specific)                   |
+| Before adding a feature             | `.lovable/memory/index.md`, latest `.lovable/plans/pending/*.md`, relevant `spec/21-app/*.md`, `spec/22-app-issues/`                  |
+| Before adding a unit test           | `pytest.ini`, mirror layout under `tests/unit/`, follow `spec/04-database-conventions/04-testing-strategy.md` when DB-touching        |
+| Before adding an integration test   | `tests/integration/` or `tests/e2e/` conventions; `tests/e2e/playwright_smoke.py` reference                                           |
+| Before writing a spec               | `spec/01-spec-authoring-guide/`, `spec/_template.md`, `.lovable/memory/06-spec-map.md`                                                |
 | DB schema / migration               | `spec/04-database-conventions/`, `spec/23-app-db/`, `app/core/io/migrations/`, GRANT + RLS rules in agent directives                  |
 | UI change                           | `.lovable/memory/04-design-system.md`, `src/styles.css`, `spec/24-app-ui-design-system/`, `spec/07-design-system/`                    |
 | Routing / server fn                 | `src/router.tsx`, `src/routes/readme.md`, TanStack Start rules in agent directives                                                    |

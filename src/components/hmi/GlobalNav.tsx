@@ -1,6 +1,8 @@
 import { RunStatusType } from "@/types/run/RunStatus";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useRunStore } from "@/lib/run-store";
+import { FlavorToggle } from "../theme/FlavorToggle";
+import { WindowMenu } from "../app-shell/WindowMenu";
 
 const LINKS = [
   { to: "/setup", label: "Setup", lockDuringRun: true },
@@ -61,6 +63,10 @@ export function GlobalNav() {
           Live
         </span>
       )}
+      <div className="ml-auto flex items-center gap-2 pl-4">
+        <WindowMenu />
+        <FlavorToggle />
+      </div>
     </nav>
   );
 }

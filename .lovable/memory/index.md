@@ -40,7 +40,8 @@ Read this file first. Every entry below is a file in `.lovable/memory/`. For the
 | [specs/01-query-wrapper-and-types.md](./specs/01-query-wrapper-and-types.md)                             | Query wrapper plan and strict TS type rules (no string unions, required Enum Type suffix, explicit booleans)                    | When adding API endpoints or performing refactors                     |
 | [workflow/02-session-v4-summary.md](./workflow/02-session-v4-summary.md)                                 | Summary of Session V4 (Strict TS rules applied, type errors pending, run.ps1 test pending)                                      | General session reference                                             |
 | [workflow/03-session-v4-bugfix-summary.md](./workflow/03-session-v4-bugfix-summary.md)                   | Bugfix session mapping the Vite instanceof hazard for `EnvelopeError` and the UI updates for `EnvelopeErrorBoundary`.           | General session reference                                             |
-
+| [workflow/04-session-v5-ui-fixes.md](./workflow/04-session-v5-ui-fixes.md)                               | Session V5 workflow state mapping the UI breakages fixes.                                                                       | General session reference                                             |
+| [learned/97-write-memory-v3.md](./learned/97-write-memory-v3.md)                                         | Session memory capturing UI breakages fixes and user's directive for self-looping on the next command.                          | When starting or auditing task execution styles                       |
 ## Cross-references
 
 - Onboarding prompt: `.lovable/prompts/32-read-memory.md` (alias: "read memory")

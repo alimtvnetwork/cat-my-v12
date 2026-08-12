@@ -108,11 +108,13 @@ export function GlobalCliStatusWidget() {
   const lastError = status?.LastErrorCode ?? null;
   const unavailable = !status && !query.isPending;
 
-  const title = unavailable
-    ? "CLI status unavailable (BE unreachable or no log root)"
-    : `Worker: ${STATE_LABEL[workerState]}. IPC pending: ${ipcPending}${ipcTruncated ? "+" : ""}. ${
-        lastError ? `Last error: ${lastError}.` : "No recent errors."
-      }`;
+  if (unavailable) {
+    return null;
+  }
+
+  const title = `Worker: ${STATE_LABEL[workerState]}. IPC pending: ${ipcPending}${ipcTruncated ? "+" : ""}. ${
+    lastError ? `Last error: ${lastError}.` : "No recent errors."
+  }`;
 
   return (
     <div
@@ -129,19 +131,19 @@ export function GlobalCliStatusWidget() {
         )}
       >
         <StatusPill
-          tone={unavailable ? StatusToneType.Muted : workerTone}
-          label={`CLI: ${unavailable ? "n/a" : STATE_LABEL[workerState]}`}
+          tone={workerTone}
+          label={`CLI: ${STATE_LABEL[workerState]}`}
           dot
           data-testid="cli-worker-pill"
         />
-        {!unavailable && ipcPending > 0 && (
+        {ipcPending > 0 && (
           <StatusPill
             tone={ipcPending > 100 ? StatusToneType.Destructive : StatusToneType.Info}
             label={`IPC ${ipcPending}${ipcTruncated ? "+" : ""}`}
             data-testid="cli-ipc-backlog"
           />
         )}
-        {!unavailable && lastError && (
+        {lastError && (
           <StatusPill
             tone={StatusToneType.Destructive}
             label={lastError}

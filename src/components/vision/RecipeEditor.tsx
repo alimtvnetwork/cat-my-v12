@@ -33,11 +33,11 @@ export function RecipeEditor() {
 
   return (
     <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-950">
-      <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-10">
-        <div className="flex-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-10 gap-4">
+        <div className="flex-1 w-full sm:w-auto overflow-hidden">
           <SegmentSelector />
         </div>
-        <div className="ml-4 flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
           <Button onClick={handleSave} className="flex items-center">
             <Save className="w-4 h-4 mr-2" />
             Save Recipe

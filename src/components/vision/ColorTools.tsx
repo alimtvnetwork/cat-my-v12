@@ -16,6 +16,7 @@ export function ColorTools() {
     threshold: 128,
     invert: false,
     colorMap: 'grayscale',
+    keyColor: '#ffffff'
   };
 
   const segmentId = activeSegment.visionSettings.id;
@@ -30,6 +31,10 @@ export function ColorTools() {
 
   const handleColorMapChange = (value: string) => {
     setColorSettings(segmentId, { colorMap: value });
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColorSettings(segmentId, { keyColor: e.target.value });
   };
 
   return (
@@ -77,9 +82,23 @@ export function ColorTools() {
                 <SelectItem value="grayscale">Grayscale</SelectItem>
                 <SelectItem value="2-bit">2-bit (Black/White)</SelectItem>
                 <SelectItem value="heatmap">Heatmap (Jet)</SelectItem>
+                <SelectItem value="key-color">Key Color Extraction</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {colorSettings.colorMap === 'key-color' && (
+            <div className="flex items-center space-x-3">
+              <Label htmlFor="key-color">Key Color</Label>
+              <input
+                type="color"
+                id="key-color"
+                value={colorSettings.keyColor || '#ffffff'}
+                onChange={handleColorChange}
+                className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

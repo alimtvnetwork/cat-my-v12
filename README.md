@@ -94,7 +94,7 @@ This repo tracks work in the open. If you want to know why something looks the w
 - **`.lovable/plans/`** - audits, planning docs, and per-plan working notes.
 - **`.lovable/memory/`** - closeout memos written when a plan finishes.
 - **`.lovable/pending-facades/`** - facade backlog (SDK wrappers, camera/rules/samples adapters).
-- **`.lovable/what-to-read.md`** - suggested reading trail for a fresh contributor.
+- **`.lovable/what-to-read.md`** - authoritative read-list pointer (must be read before taking action).
 
 ## Recently shipped
 

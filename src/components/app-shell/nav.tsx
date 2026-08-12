@@ -8,7 +8,7 @@ import { GlobalNav } from "../hmi/GlobalNav";
 export function AppShellNav() {
   return (
     <div
-      className="app-shell-nav-global"
+      className="app-shell-nav-global hidden lg:block"
       data-testid="app-shell-nav"
       aria-label="Global navigation"
     >

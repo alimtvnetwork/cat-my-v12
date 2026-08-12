@@ -26,7 +26,7 @@ export function SegmentSelector() {
       <label htmlFor="segment-select" className="block text-sm font-medium text-gray-700 mb-2">
         Select Vision Segment
       </label>
-      <div className="flex gap-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
         <select
           id="segment-select"
           value={activeSegmentId || ''}

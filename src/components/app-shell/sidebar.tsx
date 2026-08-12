@@ -45,7 +45,7 @@ export function AppShellSidebar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="app-shell-sidebar-fab" data-testid="app-shell-sidebar">
+    <div className="app-shell-sidebar-fab lg:hidden" data-testid="app-shell-sidebar">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           aria-label="Open menu"

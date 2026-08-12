@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Settings, Home, Camera, Sun, Info, Target, LayoutDashboard } from "lucide-react";
+import { FlavorToggle } from "../theme/FlavorToggle";
+import { WindowMenu } from "./WindowMenu";
 
 export function StandardAppShellNav() {
   return (
@@ -46,6 +48,8 @@ export function StandardAppShellNav() {
       </div>
 
       <div className="flex items-center gap-2">
+        <WindowMenu />
+        <FlavorToggle />
         <Link
           to="/settings"
           className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
