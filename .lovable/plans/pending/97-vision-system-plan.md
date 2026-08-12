@@ -39,17 +39,17 @@ Refactor the Vision System UI based on the 11-Aug session. Renaming assets, buil
 - [x] 25. Create base types and interfaces for the new vision state. - Subtask 5
 - [x] 26. Create base types and interfaces for the new vision state. - Subtask 6
 - [x] 27. Create base types and interfaces for the new vision state. - Subtask 7
-- [ ] 28. Create base types and interfaces for the new vision state. - Subtask 8
-- [ ] 29. Create base types and interfaces for the new vision state. - Subtask 9
-- [ ] 30. Create base types and interfaces for the new vision state. - Subtask 10
+- [x] 28. Create base types and interfaces for the new vision state. - Subtask 8
+- [x] 29. Create base types and interfaces for the new vision state. - Subtask 9
+- [x] 30. Create base types and interfaces for the new vision state. - Subtask 10
 
 ### Phase 4: Core Components Foundation (Stores)
-- [ ] 31. Scaffold Zustand stores for vision state. - Subtask 1
-- [ ] 32. Scaffold Zustand stores for vision state. - Subtask 2
-- [ ] 33. Scaffold Zustand stores for vision state. - Subtask 3
-- [ ] 34. Scaffold Zustand stores for vision state. - Subtask 4
-- [ ] 35. Scaffold Zustand stores for vision state. - Subtask 5
-- [ ] 36. Scaffold Zustand stores for vision state. - Subtask 6
+- [x] 31. Scaffold Zustand stores for vision state. - Subtask 1
+- [x] 32. Scaffold Zustand stores for vision state. - Subtask 2
+- [x] 33. Scaffold Zustand stores for vision state. - Subtask 3
+- [x] 34. Scaffold Zustand stores for vision state. - Subtask 4
+- [x] 35. Scaffold Zustand stores for vision state. - Subtask 5
+- [x] 36. Scaffold Zustand stores for vision state. - Subtask 6
 - [ ] 37. Scaffold Zustand stores for vision state. - Subtask 7
 - [ ] 38. Scaffold Zustand stores for vision state. - Subtask 8
 - [ ] 39. Scaffold Zustand stores for vision state. - Subtask 9
