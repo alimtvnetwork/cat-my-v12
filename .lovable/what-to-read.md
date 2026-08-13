@@ -4,6 +4,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-08-13T00:00:00Z, Plan 98: Architecture & code observations + consolidation plan added under `.lovable/plans/architecture-and-code-observations.md` and `pending/98-architecture-consolidation-improvements.md`. Read before backend/runtime integration work.
 - 2026-08-12T17:18:00Z, Session V5: Resolve UI breakages in Vision app, execute write-memory-v3, and register self-looping directive.
 - 2026-08-10T04:01:00Z, Session V4: Write strictly-avoid.md, commit TS Enum refactors, prepare Query Wrapper spec, resolve `beFetch` dual-package hazard.
 - 2026-08-09T19:38:00Z, Session V3: Fix UI overlap glitch, cleanup pycache from git, enforce enum/boolean rules.
@@ -15,6 +16,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 2. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
 3. `.lovable/coding-guidelines.md` - coding rules and boundaries
 4. `.lovable/plans/index.md` - active roadmap and completed items
+4b. `.lovable/plans/architecture-and-code-observations.md` - architecture review snapshot (Aug 2026); improvement tracks in `pending/98-architecture-consolidation-improvements.md`
 5. `.lovable/suggestions.md` and `.lovable/suggestions/index.md` - active and historical suggestions
 6. `.lovable/strictly-avoid.md` - forbidden patterns
 7. `.lovable/cicd-index.md` and every file under `.lovable/cicd-issues/`
