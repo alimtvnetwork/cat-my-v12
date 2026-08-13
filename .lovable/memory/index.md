@@ -48,6 +48,7 @@ Read this file first. Every entry below is a file in `.lovable/memory/`. For the
 - Prompt registry: `.lovable/prompt.md`
 - Live plans: Plan 23 (blind-AI remediation) **complete**, archived under `.lovable/plans/done/`. Latest next-task prompt: `.lovable/prompts/277-next-task.md`.
 - Active plan (Plan 100 UI V4 100-step polish): `.lovable/plans/pending/82-plan100-ui-v4-100steps.md`. Spec: `spec/21-app/53-ui-improvements-v4.md` §12-21 (Plan 100 references, fullscreen + shortcuts, address bar, properties bridge, HUD follow, seed fixtures per screen, inline edit, padding baseline, rules vs categories, error funnel). Subtasks under `.lovable/plans/subtasks/82-plan100-ui-v4-100steps/`. Commands 29-35 under `.lovable/spec/commands/`. Issues I-28..I-34 under `.lovable/issues/`. Screenshots `spec/21-app/53-ui-improvements-v4-assets/plan82/upload-71..76.png`.
+- Future Active plan (Standard UI / Vision System 400-task breakdown): `.lovable/plans/pending/99-vision-standard-ui-400-tasks.md`. Instruction saved for later execution.
 - `mem://index.md` — high-level design brief and tokens
 
 - [Enums + results shape](.lovable/memory/09-enums-and-results-shape.md) — PascalCase enums, 4-digit image seq, per-image ruleSet, safeZone metrics
