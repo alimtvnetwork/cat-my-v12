@@ -121,4 +121,6 @@ def dev() -> None:
     )
 
 
-__all__ = ["create_app", "dev"]
+__all__ = ["create_app", "dev", "app"]
+
+app = create_app()

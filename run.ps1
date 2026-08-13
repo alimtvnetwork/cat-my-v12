@@ -34,7 +34,7 @@ try {
     $jobs += $backendProcess
 
     Write-Host "Waiting for backend..."
-    .\scripts\dev\wait-for-http.ps1 -Url "http://localhost:$BePort/health" -TimeoutSec 30
+    .\scripts\dev\wait-for-http.ps1 -Url "http://localhost:$BePort/healthz" -TimeoutSec 30
 
     Write-Host "Starting frontend on port $FePort..."
     $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --port $FePort"

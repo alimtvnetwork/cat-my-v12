@@ -20,7 +20,7 @@ dev = [
   "mypy>=1.13",
 ]
 camera-daheng = [
-  "gxipy>=2.0",
+  # "gxipy>=2.0", # Removed for local dev without SDK
 ]
 
 [project.scripts]
