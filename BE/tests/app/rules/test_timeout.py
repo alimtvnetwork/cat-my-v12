@@ -17,11 +17,11 @@ import json
 
 import pytest
 
-from BE.app.rules.kernel import predicates as _predicates
-from BE.app.rules.kernel import telemetry as _telemetry
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.loader import load_bundle
-from BE.app.rules.kernel.models import (
+from rule_kernel import predicates as _predicates
+from rule_kernel import telemetry as _telemetry
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.loader import load_bundle
+from rule_kernel.models import (
     RuleBundle, RuleContext, RuleJudgment, RuleSpec, RuleStatus, Verdict,
 )
 from BE.errors.apperror import AppError
@@ -137,7 +137,7 @@ def test_over_budget_becomes_timeout_error(register_pass, monkeypatch, caplog):
     rule = RuleSpec(id="r1", name="n", kind="_TimeoutFast",
                     status=RuleStatus.ACTIVE, params={}, timeout_ms=100)
     bundle = RuleBundle(bundle_id="b", version=1, mode="full", rules=(rule,))
-    with caplog.at_level("WARNING", logger="BE.app.rules.kernel.engine"):
+    with caplog.at_level("WARNING", logger="rule_kernel.engine"):
         result = evaluate_bundle(_ctx(), bundle)
     j = result.judgments[0]
     assert j.verdict is Verdict.ERROR

@@ -42,15 +42,17 @@ Memory: .lovable/memory/features/facade-and-seed.md
 
 ## Index
 
-- 01 Rule facade, `src/lib/rules/facade.ts`
-- 02 Category alias, `src/lib/rules/facade.ts` (same store as Rule, `isCategory` filter)
-- 03 MicSettings facade, `src/lib/mic-settings/facade.ts`
-- 04 CameraSetting facade wrap, `src/lib/camera/facade.ts` around existing store
-- 05 Project facade (V4 extended), `src/lib/projects/facade.ts`
-- 06 Swatches facade, `src/lib/swatches/facade.ts` (original Plan 79 TODO; superseded by 11)
-- 07 Image Samples facade, `src/lib/image-samples/facade.ts` (Plan 86 slice `samples`)
-- 08 Canvas Prefs facade, `src/lib/canvas-prefs/facade.ts` (Plan 86 slice `propertyPresets` — Grid + Adjust)
-- 09 Type Tool facade, `src/lib/type-tool/facade.ts` (Plan 86 slice `propertyPresets` — Type + Paragraph)
-- 10 Palette State facade, `src/lib/palette/facade.ts` (Plan 86 slice `propertyPresets` — Layers / Channels / Paths)
-- 11 Swatches facade v2, `src/lib/swatches/facade.ts` (Plan 86 slice `swatches`; reconciles with 06)
-- 12 Non-domain slices (`settings`, `commands`, `emptyStates`, `errorScenarios`) — Plan 86, facades TBD in Step 29+
+| ID | Domain / Slice | File | Status | Notes |
+|----|----------------|------|--------|-------|
+| 01 | Rule | `src/lib/rules/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 02 | Category alias | `src/lib/rules/facade.ts` | Merge | Duplicate of 01 |
+| 03 | MicSettings | `src/lib/mic-settings/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 04 | CameraSetting | `src/lib/camera/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 05 | Project | `src/lib/projects/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 06 | Swatches (original) | `src/lib/swatches/facade.ts` | Merge | Superseded by 11 |
+| 07 | Image Samples | `src/lib/image-samples/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 08 | Canvas Prefs | `src/lib/canvas-prefs/facade.ts` | Merge | Duplicate of propertyPresets |
+| 09 | Type Tool | `src/lib/type-tool/facade.ts` | Merge | Duplicate of propertyPresets |
+| 10 | Palette State | `src/lib/palette/facade.ts` | Keep | Consolidates propertyPresets |
+| 11 | Swatches v2 | `src/lib/swatches/facade.ts` | Keep | Schedule under Plan 98 follow-up |
+| 12 | Non-domain slices | N/A | Defer | To be determined in Plan 86 Step 29+ |

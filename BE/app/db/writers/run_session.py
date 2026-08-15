@@ -47,7 +47,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from BE.app.rules.kernel.dashboard import aggregate_runs
+from rule_kernel.dashboard import aggregate_runs
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

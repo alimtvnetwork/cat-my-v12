@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from BE.app.rules.kernel import (
+from rule_kernel import (
     RuleBundle, RuleContext, RuleSpec, Verdict, evaluate_bundle,
 )
-from BE.app.rules.kernel.models import RuleStatus
-import BE.app.rules.evaluators  # noqa: F401
+from rule_kernel.models import RuleStatus
+import rule_kernel.evaluators  # noqa: F401
 
 
 def _ctx() -> RuleContext:

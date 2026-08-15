@@ -109,4 +109,48 @@ describe("HttpBackendClient", () => {
     await expect(client.ping()).rejects.toThrow("E_INVALID_URL");
     expect(showToastError).toHaveBeenCalled();
   });
+
+  it("throws BackendHttpError on failure envelope", async () => {
+    server.use(
+      http.get("http://localhost:8000/ping", () => {
+        return HttpResponse.json({
+          Status: { IsSuccess: false, IsFailed: true, Code: 400, Message: "Bad Request", Timestamp: new Date().toISOString() },
+          Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: true, IsSingle: false, IsMultiple: false, IsEmpty: true },
+          Errors: { Code: "E_BE_BAD_REQUEST", BackendMessage: "Bad Input" }
+        }, { status: 400 });
+      })
+    );
+    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    const client = new HttpBackendClient();
+    let error;
+    try {
+      await client.ping();
+    } catch (e) {
+      error = e as any;
+    }
+    expect(error).toBeDefined();
+    expect(error.name).toBe("BackendHttpError");
+    expect(error.code).toBe("E_BE_BAD_REQUEST");
+    expect(showToastError).toHaveBeenCalled();
+  });
+
+  it("throws BackendHttpError with E9005 on non-JSON response", async () => {
+    server.use(
+      http.get("http://localhost:8000/ping", () => {
+        return HttpResponse.text("<html>Not Found</html>", { status: 404 });
+      })
+    );
+    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    const client = new HttpBackendClient();
+    let error;
+    try {
+      await client.ping();
+    } catch (e) {
+      error = e as any;
+    }
+    expect(error).toBeDefined();
+    expect(error.name).toBe("BackendHttpError");
+    expect(error.code).toBe("E9005");
+    expect(showToastError).toHaveBeenCalled();
+  });
 });

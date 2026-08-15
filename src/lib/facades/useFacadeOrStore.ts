@@ -13,6 +13,17 @@
 import { useSyncExternalStore, useRef } from "react";
 import type { DomainFacade, DomainRow } from "./domain-facade";
 import { getActiveProfile, subscribeActiveProfile } from "@/lib/seed/active-profile";
+import type { SliceKey } from "@/lib/seed/schemas-v2";
+
+const FACADE_ONLY_SLICES = new Set<SliceKey>([
+  "samples",
+  "swatches",
+  "propertyPresets",
+  "settings",
+  "commands",
+  "emptyStates",
+  "errorScenarios",
+]);
 
 const warned = new WeakSet<DomainFacade<DomainRow>>();
 
@@ -50,7 +61,17 @@ export function useFacadeOrStore<T extends DomainRow, F>(
 
   const profile = getActiveProfile();
 
-  if (profile === null) return fallback();
+  if (profile === null) {
+    // DEV-only warning: if the slice is strictly facade-only, returning the
+    // legacy fallback might mask a missing profile on routes that require v2 seeds.
+    if (import.meta.env?.DEV && FACADE_ONLY_SLICES.has(facade.slice)) {
+      console.warn(
+        `[useFacadeOrStore] dev warning: slice "${facade.slice}" is facade-only but profile is null. ` +
+        `Ensure this route does not require a v2 seed.`
+      );
+    }
+    return fallback();
+  }
 
   if (typeof facade.snapshot !== "function") {
     if (warned.has(facade as DomainFacade<DomainRow>) === false) {

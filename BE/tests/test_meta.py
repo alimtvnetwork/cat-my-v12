@@ -27,10 +27,11 @@ def test_meta_envelope_shape() -> None:
 def test_meta_capabilities_are_literals() -> None:
     data = _client().get("/meta").json()["Results"][0]
     caps = data["capabilities"]
-    assert set(caps.keys()) == {"camera", "rules", "samples"}
-    allowed = {"stub", "in-memory", "vendor"}
-    for name, value in caps.items():
-        assert value in allowed, f"{name}={value!r} not in {allowed}"
+    assert caps == {
+        "camera": "stub",
+        "rules": "in-memory",
+        "samples": "in-memory",
+    }
 
 
 def test_meta_echoes_correlation_id() -> None:

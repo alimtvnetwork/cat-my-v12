@@ -21,10 +21,10 @@ from __future__ import annotations
 
 import pytest
 
-from BE.app.rules.kernel import predicates
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.loader import _RULE_KINDS  # type: ignore[attr-defined]
-from BE.app.rules.kernel.models import (
+from rule_kernel import predicates
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.loader import _RULE_KINDS  # type: ignore[attr-defined]
+from rule_kernel.models import (
     RuleBundle,
     RuleContext,
     RuleJudgment,
@@ -75,7 +75,7 @@ def test_no_kind_remains_unsupported_stub() -> None:
     non_ocr = predicates.known_kinds() - {"OcrText"}
     for kind in non_ocr:
         pred = predicates.get(kind)
-        assert pred.__module__.startswith("BE.app.rules.evaluators"), (
+        assert pred.__module__.startswith("rule_kernel.evaluators"), (
             f"kind {kind!r} still points at stub {pred.__module__}"
         )
 

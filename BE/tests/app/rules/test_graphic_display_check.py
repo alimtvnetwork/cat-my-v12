@@ -8,9 +8,9 @@ import numpy as np
 import pytest
 
 from BE.app.rules import evaluators as _register  # noqa: F401
-from BE.app.rules.kernel import predicates
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.models import (
+from rule_kernel import predicates
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.models import (
     RuleBundle,
     RuleContext,
     RuleSpec,

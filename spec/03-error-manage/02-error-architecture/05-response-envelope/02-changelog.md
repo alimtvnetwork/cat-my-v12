@@ -5,6 +5,8 @@
 
 All notable milestones in the design, migration, and adoption of the Universal Response Envelope are documented here.
 
+> Plan 88 Step 10 shipped `{ok,data,error}`; later refactored to PascalCase `Status/Attributes/Results/Errors`. FE adapter: `src/lib/backend/envelope.ts`.
+
 ---
 
 ## v3.0.0 — 2026-03-09 · Global Version Bump

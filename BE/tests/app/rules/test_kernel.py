@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import pytest
 
-from BE.app.rules.kernel import (
+from rule_kernel import (
     RuleBundle,
     RuleContext,
     RuleSpec,
     Verdict,
     evaluate_bundle,
 )
-from BE.app.rules.kernel.models import RuleStatus
+from rule_kernel.models import RuleStatus
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode, default_http_status
 

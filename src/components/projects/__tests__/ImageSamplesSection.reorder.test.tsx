@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor, act, fireEvent } from "@testing-library/react";
-import { ImageSamplesSection } from "../ProjectEditorSections";
+import { ImageSamplesSection } from "../sections/ProjectImageSamplesSection";
 import {
   makeImageSamplesFacade,
   __setImageSamplesFacadeForTests,

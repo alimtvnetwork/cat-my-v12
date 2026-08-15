@@ -19,11 +19,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import BE.app.rules.evaluators  # noqa: F401  side-effect: registers predicate
-from BE.app.rules.evaluators.flaw_detect import evaluate_flaw_detect
-from BE.app.rules.kernel import predicates
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.models import (
+import rule_kernel.evaluators  # noqa: F401  side-effect: registers predicate
+from rule_kernel.evaluators.flaw_detect import evaluate_flaw_detect
+from rule_kernel import predicates
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.models import (
     RuleBundle,
     RuleContext,
     RuleSpec,

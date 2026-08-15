@@ -4,7 +4,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
-- 98 - architecture-consolidation-improvements - pending - see `pending/98-architecture-consolidation-improvements.md` (observations: `architecture-and-code-observations.md`)
+
 - 99 - vision-standard-ui-400-tasks - pending - see `pending/99-vision-standard-ui-400-tasks.md`
 - 29 - denial-burst-threshold-tuning - pending - see `completed/29-denial-burst-threshold-tuning.md`
 - 35 - ui-ux-photoshop-layers-overhaul - pending - see `completed/35-ui-ux-photoshop-layers-overhaul.md`
@@ -33,6 +33,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Completed
 
+- 98 - architecture-consolidation-improvements - completed - see `completed/98-architecture-consolidation-improvements.md` (observations: `architecture-and-code-observations.md`)
 - 46, 70-78, 84, 86, 87 - see `completed/` directory listing.
 - 97 - vision-system-plan - completed - see `completed/97-vision-system-plan.md`
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`

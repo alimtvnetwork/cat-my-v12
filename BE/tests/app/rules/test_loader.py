@@ -20,8 +20,8 @@ from typing import Any
 
 import pytest
 
-from BE.app.rules.kernel.loader import load_bundle
-from BE.app.rules.kernel.models import RuleStatus
+from rule_kernel.loader import load_bundle
+from rule_kernel.models import RuleStatus
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

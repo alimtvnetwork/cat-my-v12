@@ -79,7 +79,8 @@ Once both are up, open the app and use the **Seed / Backend** toggle on the home
 | `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)     |
 | `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor) |
 | `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                 |
-| `docs/`                                  | Diagrams, runbooks, verification notes                              |
+| `docs/`                                  | Diagrams, runbooks, verification notes, and [runtime map](docs/architecture/runtime-map.md) |
+| `docs/architecture/`                     | Runtime map, integration tests, architecture decisions              |
 | `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                    |
 | `tests/`                                 | Contract, integration, unit, and visual tests                       |
 | `.lovable/`                              | Plans, memory, prompts, completed-work archive                      |

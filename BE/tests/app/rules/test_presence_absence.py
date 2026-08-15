@@ -11,7 +11,7 @@ Bad-input taxonomy:
     (E_RULE_EVAL_FAILED, ReasonCode=RuleBadInput). Engine converts to
     Error judgment (never silent Pass).
 End-to-end through `evaluate_bundle`:
-  - Registration side effect fires on `import BE.app.rules.evaluators`.
+  - Registration side effect fires on `import rule_kernel.evaluators`.
   - Active PresenceAbsence rule increments pass_count / fail_count, not
     silent/error, and rolls up per spec 22 §4.
 """
@@ -21,11 +21,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import BE.app.rules.evaluators  # noqa: F401  side-effect: registers predicate
-from BE.app.rules.evaluators.presence_absence import evaluate_presence_absence
-from BE.app.rules.kernel import predicates
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.models import (
+import rule_kernel.evaluators  # noqa: F401  side-effect: registers predicate
+from rule_kernel.evaluators.presence_absence import evaluate_presence_absence
+from rule_kernel import predicates
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.models import (
     RuleBundle,
     RuleContext,
     RuleSpec,

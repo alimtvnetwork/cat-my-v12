@@ -7,7 +7,7 @@ Public HTTP surface for Control Automation. FastAPI + uvicorn, Python 3.11.
 - Plan: `.lovable/plans/pending/88-backend-implementation-v1-150-steps.md`
 - Subtask layout: `.lovable/plans/subtasks/88-backend-implementation-v1-150-steps/SS-02-be-scaffold.md`
 
-Status: skeleton (Plan 88 Step 7 shipped). Modules raise `NotImplementedError` until their owning step lands.
+Status: progressively implementing Plan 88.
 
 ## Layout
 
@@ -25,8 +25,12 @@ BE/
   routes/
     health.py              # GET /health (Step 16)
     meta.py                # GET /meta (Step 17)
-    rules.py               # rules CRUD stubs (Step 18)
+    rules.py               # rules CRUD in-memory (Step 18)
     samples.py             # GET /samples mirroring FE seed (Step 19)
+    observability/         # GET /observability/* IPC/logs/runs/sessions (Step 35+)
+    cli_observability.py   # CLI entrypoints for observability
+    cli_config.py          # CLI entrypoints for config
+    cli_doctor.py          # CLI entrypoints for doctor
   sdk_facade/              # NOTE: SS-02 doc says `sdk-facade/`; disk uses `sdk_facade/`
                            # because Python import identifiers ban hyphens.
     __init__.py            # SdkFacade Protocol + SDK_FACADE_VERSION (Step 20)
@@ -76,7 +80,7 @@ LOVABLE_HW_DAHENG=1 pytest BE/tests/hardware
 - HTTP handlers in `BE/routes/**` MUST call `BE/sdk_facade/**`. Never import from repo-root `sdk/` directly.
 - Vendor SDK handles (camera, storage, transport-layer objects) MUST NOT cross the facade boundary. Copy buffers before releasing SDK memory.
 - Every error at the boundary uses one wire code from `spec/21-app/40-error-manage.md` Appendix A (SCREAMING*SNAKE `E*<AREA>\_<CONDITION>`).
-- Envelope contract: `{ "ok": bool, "data": T | null, "error": { "code": str, "message": str, "details": object } | null }`.
+- Envelope contract: PascalCase envelope (`Status/Attributes/Results/Errors`). See `BE/envelope.py` and `src/lib/backend/envelope.ts`.
 
 ## Coding guidelines
 
@@ -94,3 +98,5 @@ Per `spec/coding-guidelines/python.md`:
 ## Windows Service Mode (Future Work)
 
 Running the BE as a Windows Service is deferred. See Step 92 notes for requirements regarding NSSM or native Python Windows service bindings.
+
+Last verified: 2026-08-16

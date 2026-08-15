@@ -13,12 +13,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from BE.app.rules.kernel import (
+from rule_kernel import (
     RuleBundle, RuleContext, RuleSpec, Verdict, evaluate_bundle, predicates,
 )
-from BE.app.rules.kernel import telemetry
-from BE.app.rules.kernel.models import RuleStatus, RuleJudgment
-import BE.app.rules.evaluators  # noqa: F401  register real evaluators
+from rule_kernel import telemetry
+from rule_kernel.models import RuleStatus, RuleJudgment
+import rule_kernel.evaluators  # noqa: F401  register real evaluators
 
 
 def _frame(fill: int = 200, size: int = 40) -> np.ndarray:

@@ -4,6 +4,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-08-16T01:43:26Z, Plan 98: Added Architecture state section (1b) with links to runtime map, facade policy, and implementation status.
 - 2026-08-13T00:00:00Z, Plan 98: Architecture & code observations + consolidation plan added under `.lovable/plans/architecture-and-code-observations.md` and `pending/98-architecture-consolidation-improvements.md`. Read before backend/runtime integration work.
 - 2026-08-12T17:18:00Z, Session V5: Resolve UI breakages in Vision app, execute write-memory-v3, and register self-looping directive.
 - 2026-08-10T04:01:00Z, Session V4: Write strictly-avoid.md, commit TS Enum refactors, prepare Query Wrapper spec, resolve `beFetch` dual-package hazard.
@@ -27,6 +28,13 @@ Read this file first when starting any task in this repo. It maps every folder a
 12. `.lovable/memory/workflow/` - current workflow state
 13. `spec/` (relevant folders including error management)
 14. `README.md` (root) - project status, ship state
+
+## 1b. Architecture state (read before backend work)
+
+1. [Architecture and Code Observations](plans/architecture-and-code-observations.md)
+2. [Runtime Map](../docs/architecture/runtime-map.md)
+3. [Facade Migration Policy](memory/features/facade-migration-policy.md)
+4. [Shell Implementation Status](../spec/21-app/shell/03-implementation-status.md)
 
 ## 2. Folder Structure
 

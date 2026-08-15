@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from BE.app.rules.kernel.problems import ALL_CODES, BundleProblemCode
+from rule_kernel.problems import ALL_CODES, BundleProblemCode
 
 _LOADER = Path("BE/app/rules/kernel/loader.py")
 
@@ -71,7 +71,7 @@ def test_every_registered_code_is_reachable() -> None:
 
 
 def test_runtime_guard_rejects_string_code() -> None:
-    from BE.app.rules.kernel.loader import _problem
+    from rule_kernel.loader import _problem
     import pytest
     with pytest.raises(TypeError, match="BundleProblemCode"):
         _problem("<x>", "RuleKindUnknown", "should fail")  # type: ignore[arg-type]

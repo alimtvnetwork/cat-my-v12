@@ -36,8 +36,8 @@ router = APIRouter()
 
 _CAPABILITIES: Final[dict[str, str]] = {
     "camera": "stub",
-    "rules": "stub",
-    "samples": "stub",
+    "rules": "in-memory",
+    "samples": "in-memory",
 }
 from BE.sdk_facade import SDK_FACADE_VERSION as _SDK_FACADE_VERSION
 

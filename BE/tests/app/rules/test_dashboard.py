@@ -14,7 +14,7 @@ import math
 
 import pytest
 
-from BE.app.rules.kernel.dashboard import (
+from rule_kernel.dashboard import (
     DashboardAggregate,
     LatencyStats,
     _coerce_latency,

@@ -12,15 +12,15 @@ from __future__ import annotations
 
 import pytest
 
-from BE.app.rules.kernel.engine import evaluate_bundle
-from BE.app.rules.kernel.models import (
+from rule_kernel.engine import evaluate_bundle
+from rule_kernel.models import (
     RuleBundle,
     RuleContext,
     RuleSpec,
     RuleStatus,
     Verdict,
 )
-from BE.app.rules.kernel.tolerance import (
+from rule_kernel.tolerance import (
     ResolvedTolerance,
     ToleranceKind,
     ToleranceProfile,
@@ -340,7 +340,7 @@ def test_engine_injects_resolved_tolerances_into_metadata():
     We assert this by injecting a probe evaluator via the predicates
     registry that captures its RuleContext.
     """
-    from BE.app.rules.kernel import predicates as reg
+    from rule_kernel import predicates as reg
 
     captured: dict = {}
 
@@ -349,7 +349,7 @@ def test_engine_injects_resolved_tolerances_into_metadata():
         captured["resolved"] = ctx.metadata["ResolvedTolerances"][rule.id]
         return _pass_judgment(rule)
 
-    from BE.app.rules.kernel.models import RuleJudgment as _RJ
+    from rule_kernel.models import RuleJudgment as _RJ
 
     def _pass_judgment(rule):
         return _RJ(rule_id=rule.id, verdict=Verdict.PASS, message="ok",
@@ -383,8 +383,8 @@ def test_engine_deactivation_is_not_short_circuit():
                         rules=(bad, ok))
 
     # Register a passing probe for PresenceAbsence
-    from BE.app.rules.kernel import predicates as reg
-    from BE.app.rules.kernel.models import RuleJudgment as _RJ
+    from rule_kernel import predicates as reg
+    from rule_kernel.models import RuleJudgment as _RJ
 
     def probe(ctx, rule):
         return _RJ(rule_id=rule.id, verdict=Verdict.PASS, message="",
