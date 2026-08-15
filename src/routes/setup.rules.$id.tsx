@@ -10,15 +10,16 @@ import { SectionIdType } from "@/components/nav/SectionTopBar";
 //   - Renders name + minimal placeholder metadata to prove the route is
 //     wired end-to-end before the real editor ships.
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SectionTopBar } from "@/components/nav/SectionTopBar";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import type { RuleId } from "@/lib/rules/model";
 import { fromIntId } from "@/lib/rules/rule-id-alias";
-import { EditorSetupExperience } from "@/components/editor";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
-import { StandardPatternSearch } from "@/components/editor/standard/StandardPatternSearch";
+import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
+import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
+import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
 
 export const Route = createFileRoute("/setup/rules/$id")({
   staticData: { crumb: "Rule editor" },
@@ -55,13 +56,20 @@ function RuleEditorRoute() {
   }, [rule, navigate]);
 
   const { mode } = useUiMode();
+  
+  // Provide dummy state for settings since the parent needs to own it
+  const [settings, setSettings] = React.useState(createDefaultPatternSearchSettings("T106"));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
       <SectionTopBar section={SectionIdType.Home} active="setup" />
       {rule && !rule.isCategory ? (
         <div className="flex flex-1 flex-col min-h-0">
-          {mode === UiModeType.Standard ? <StandardPatternSearch /> : <EditorSetupExperience />}
+          {mode === UiModeType.Standard ? (
+            <StandardPatternSearch settings={settings} onChange={setSettings} />
+          ) : (
+            <ModernPatternSearch settings={settings} onChange={setSettings} />
+          )}
         </div>
       ) : rule ? null : (
         <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">

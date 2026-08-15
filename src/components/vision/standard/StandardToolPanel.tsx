@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PatternSearchSettings } from "@/domain/vision/settings";
+import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { PatternRegionTab } from "./tabs/PatternRegionTab";
 import { SearchRegionTab } from "./tabs/SearchRegionTab";
 import { PlaceholderTabs } from "./tabs/PlaceholderTabs";

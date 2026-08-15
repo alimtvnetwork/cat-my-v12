@@ -1,6 +1,7 @@
 import React from "react";
-import { PatternSearchSettings } from "@/domain/vision/settings";
-import { PatternShapes, ShapeType } from "@/domain/vision/shapes";
+import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import { PatternShapes } from "@/domain/vision/pattern-search";
+import { ShapeType } from "@/domain/vision/shapes";
 
 export function PatternRegionTab({
   settings,

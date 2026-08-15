@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { PatternSearchSettings } from "@/domain/vision/settings";
+import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { Geometry, ShapeType } from "@/domain/vision/shapes";
 
 export function StandardCanvas({

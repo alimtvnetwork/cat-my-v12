@@ -102,13 +102,13 @@ export const useVisionStore = create<VisionState>((set) => ({
   setActiveSegment: (id) => set({ activeSegmentId: id }),
   deleteSegment: (id) =>
     set((state) => ({
-      segments: state.segments.filter((s) => s.visionSettings.id !== id),
+      segments: state.segments.filter((s) => s.visionSettings?.id !== id),
       activeSegmentId: state.activeSegmentId === id ? null : state.activeSegmentId,
     })),
   renameSegment: (id, name) =>
     set((state) => ({
       segments: state.segments.map((s) =>
-        s.visionSettings.id === id ? { ...s, visionSettings: { ...s.visionSettings, name } } : s,
+        s.visionSettings?.id === id ? { ...s, visionSettings: { ...s.visionSettings, name } } : s,
       ),
     })),
   addSegment: () =>
@@ -422,8 +422,8 @@ export const useVisionStore = create<VisionState>((set) => ({
     })),
   duplicateSegment: (id) =>
     set((state) => {
-      const segmentToDuplicate = state.segments.find((s) => s.visionSettings.id === id);
-      if (!segmentToDuplicate) return state;
+      const segmentToDuplicate = state.segments.find((s) => s.visionSettings?.id === id);
+      if (!segmentToDuplicate || !segmentToDuplicate.visionSettings) return state;
 
       const newId = crypto.randomUUID();
       const newSegment: RecipeSegment = {
@@ -435,7 +435,7 @@ export const useVisionStore = create<VisionState>((set) => ({
         },
       };
 
-      const index = state.segments.findIndex((s) => s.visionSettings.id === id);
+      const index = state.segments.findIndex((s) => s.visionSettings?.id === id);
       const newSegments = [...state.segments];
       newSegments.splice(index + 1, 0, newSegment);
 
@@ -446,12 +446,12 @@ export const useVisionStore = create<VisionState>((set) => ({
     }),
   reorderSegments: (ids) =>
     set((state) => {
-      const idToSegment = new Map(state.segments.map((s) => [s.visionSettings.id, s]));
+      const idToSegment = new Map(state.segments.map((s) => [s.visionSettings?.id, s]));
       const newSegments = ids
         .map((id) => idToSegment.get(id))
         .filter((s): s is RecipeSegment => s !== undefined);
 
-      const remainingSegments = state.segments.filter((s) => !ids.includes(s.visionSettings.id));
+      const remainingSegments = state.segments.filter((s) => !s.visionSettings?.id || !ids.includes(s.visionSettings.id));
 
       return { segments: [...newSegments, ...remainingSegments] };
     }),

@@ -1,5 +1,5 @@
 import React from "react";
-import { PatternSearchSettings, ImageSourceType, RenderModeType } from "@/domain/vision/settings";
+import { PatternSearchSettings, ImageSourceType, RenderModeType } from "@/domain/vision/pattern-search";
 import { RefreshCw, ZoomIn, ZoomOut, Maximize, MousePointer2 } from "lucide-react";
 
 export function StandardImageToolbar({
