@@ -110,4 +110,4 @@ function applyRedo(
   set(result.state);
   applySnapshot(result.entry.after);
   logger.info("I_UI_REDO", { kind: result.entry.kind, remaining: selectRedoCount(result.state) });
-}
+}

@@ -70,4 +70,4 @@ export function ruleIdsInMarquee(rect: MarqueeRect, rules: readonly EditorRule[]
   }
 
   return out;
-}
+}

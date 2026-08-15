@@ -1,4 +1,3 @@
-
 export enum LightingReadoutKeyType {
   Exposure = "exposure",
   Gain = "gain",

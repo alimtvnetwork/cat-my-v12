@@ -61,14 +61,15 @@ function loadLibrary(storage: StorageLike, onFailure: (f: CameraFailure) => void
 function saveLibrary(
   storage: StorageLike,
   lib: CameraLibrary,
-): { ok: true, isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
+): { ok: true; isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
   try {
     storage.setItem(CAMERA_LIBRARY_STORAGE_KEY, JSON.stringify(lib));
 
     return { ok: true, isFail: false };
   } catch (err) {
     return {
-      ok: false, isFail: true,
+      ok: false,
+      isFail: true,
       failure: { kind: "persist", message: "Failed to write camera library", cause: err },
     };
   }
@@ -165,12 +166,13 @@ export function findCameraSettingById(id: string): CameraSetting | null {
  */
 export function upsertCameraSettingSync(
   entry: CameraSetting,
-): { ok: true, isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
+): { ok: true; isFail: false } | { ok: false; isFail: true; failure: CameraFailure } {
   const s = browserStorage();
 
   if (!s) {
     return {
-      ok: false, isFail: true,
+      ok: false,
+      isFail: true,
       failure: { kind: "persist", message: "No browser storage for camera library" },
     };
   }
@@ -178,10 +180,11 @@ export function upsertCameraSettingSync(
   const current = loadLibrary(s, () => {});
   const r = upsertCameraSetting(current, entry);
 
-  if (r.errors.length > 0) return { ok: false, isFail: true, failure: { kind: "validation", errors: r.errors } };
+  if (r.errors.length > 0)
+    return { ok: false, isFail: true, failure: { kind: "validation", errors: r.errors } };
   const w = saveLibrary(s, r.library);
 
   if (w.ok === false) return { ok: false, isFail: true, failure: w.failure };
 
   return { ok: true, isFail: false };
-}
+}

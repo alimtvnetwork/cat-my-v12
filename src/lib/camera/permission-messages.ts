@@ -65,4 +65,4 @@ export function messageForCameraError(error: CameraCapabilityError): CameraPermi
 /** Convenience: for logging / tests, the raw table. Do NOT mutate. */
 export const CAMERA_PERMISSION_MESSAGES: Readonly<
   Record<CameraCapabilityErrorCode, CameraPermissionMessage>
-> = MESSAGES;
+> = MESSAGES;

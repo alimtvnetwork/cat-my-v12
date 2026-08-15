@@ -15,10 +15,10 @@ Coding guidelines (`spec/02-coding-guidelines/00-overview.md`):
 
 Violations observed:
 
-| File | ~Lines | Issues |
-|------|--------|--------|
-| `src/routes/__root.tsx` | 762 | Boot, seed orchestration, error providers, shell layout |
-| `src/components/projects/ProjectEditorSections.tsx` | 1,112 | UI + business logic monolith |
+| File                                                | ~Lines | Issues                                                  |
+| --------------------------------------------------- | ------ | ------------------------------------------------------- |
+| `src/routes/__root.tsx`                             | 762    | Boot, seed orchestration, error providers, shell layout |
+| `src/components/projects/ProjectEditorSections.tsx` | 1,112  | UI + business logic monolith                            |
 
 These files are high-churn and hard to test in isolation.
 

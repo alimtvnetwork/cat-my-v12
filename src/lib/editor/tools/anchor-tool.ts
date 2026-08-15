@@ -163,4 +163,4 @@ export function editorKindLabel(kind: EditorRuleKind): string {
   if (kind === "S") return "Text";
 
   return "Math";
-}
+}

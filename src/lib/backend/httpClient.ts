@@ -7,7 +7,9 @@ export class HttpBackendClient implements BackendClient {
   }
 
   rules = {
-    list: async (): Promise<Envelope<{ items: CatRuleWire[]; total: number; provider?: string }>> => {
+    list: async (): Promise<
+      Envelope<{ items: CatRuleWire[]; total: number; provider?: string }>
+    > => {
       return fetchBackend<{ items: CatRuleWire[]; total: number; provider?: string }>("rules");
     },
     create: async (payload: Partial<CatRuleWire>): Promise<Envelope<CatRuleWire>> => {
@@ -19,7 +21,9 @@ export class HttpBackendClient implements BackendClient {
   };
 
   samples = {
-    list: async (): Promise<Envelope<{ items: CatSampleWire[]; total: number; provider?: string }>> => {
+    list: async (): Promise<
+      Envelope<{ items: CatSampleWire[]; total: number; provider?: string }>
+    > => {
       return fetchBackend<{ items: CatSampleWire[]; total: number; provider?: string }>("samples");
     },
   };

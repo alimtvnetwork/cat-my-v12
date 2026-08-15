@@ -86,4 +86,4 @@ export namespace MenuShortcutType {
   export function isToggleDensity(val: string | null | undefined): boolean {
     return val === MenuShortcutType.ToggleDensity;
   }
-}
+}

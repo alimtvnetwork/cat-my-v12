@@ -57,13 +57,13 @@ flowchart TB
 
 ### Process model (spec/21-app/12-runtime-processes.md)
 
-| Process | Module | Role |
-|---------|--------|------|
-| Supervisor | `app/supervisor/boot.py` | Boots first, owns RootDb, spawns children |
-| Capture | `app/capture/` | Camera SDK, writes `images/pending/` via atomic rename |
-| Dispatcher | `app/dispatcher/` | Queue watcher, assigns images to workers |
-| Worker pool | `app/worker/` | Rule evaluation, judgments, image move |
-| UI shell | `chromium-shell/` (today) | Loads built UI, operator session |
+| Process     | Module                    | Role                                                   |
+| ----------- | ------------------------- | ------------------------------------------------------ |
+| Supervisor  | `app/supervisor/boot.py`  | Boots first, owns RootDb, spawns children              |
+| Capture     | `app/capture/`            | Camera SDK, writes `images/pending/` via atomic rename |
+| Dispatcher  | `app/dispatcher/`         | Queue watcher, assigns images to workers               |
+| Worker pool | `app/worker/`             | Rule evaluation, judgments, image move                 |
+| UI shell    | `chromium-shell/` (today) | Loads built UI, operator session                       |
 
 Hot-path sync uses **filesystem `.part` → rename**, not shared memory.
 
@@ -71,17 +71,17 @@ Hot-path sync uses **filesystem `.part` → rename**, not shared memory.
 
 ## 3. Layer Inventory
 
-| Path | Stack | Role |
-|------|-------|------|
-| `src/` | React 19, TanStack Router/Query, Zustand, Tailwind v4, Zod | HMI UI (~900 TS/TSX files) |
-| `BE/` | Python 3.11, FastAPI, pydantic | HTTP API: rules, samples, meta, observability, CLI |
-| `app/` | Python | Live inspection pipeline (capture → dispatch → worker) |
-| `BE/app/` | Python | Domain logic inside BE package (rules kernel, installers, facades) |
-| `worker/` | Python uvicorn | Remote validation scorer for editor (`POST /score`) |
-| `sdk/` | Vendor binaries | Wrapped only via `BE/sdk_facade/**` |
-| `chromium-shell/` | MV3 extension | Desktop shell (spec target: Tauri — not built) |
-| `spec/` | Markdown | Source-of-truth specifications (~1900 files) |
-| `tests/` | Vitest, Playwright, pytest | Unit, contract, E2E, visual (~224+ FE test files) |
+| Path              | Stack                                                      | Role                                                               |
+| ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| `src/`            | React 19, TanStack Router/Query, Zustand, Tailwind v4, Zod | HMI UI (~900 TS/TSX files)                                         |
+| `BE/`             | Python 3.11, FastAPI, pydantic                             | HTTP API: rules, samples, meta, observability, CLI                 |
+| `app/`            | Python                                                     | Live inspection pipeline (capture → dispatch → worker)             |
+| `BE/app/`         | Python                                                     | Domain logic inside BE package (rules kernel, installers, facades) |
+| `worker/`         | Python uvicorn                                             | Remote validation scorer for editor (`POST /score`)                |
+| `sdk/`            | Vendor binaries                                            | Wrapped only via `BE/sdk_facade/**`                                |
+| `chromium-shell/` | MV3 extension                                              | Desktop shell (spec target: Tauri — not built)                     |
+| `spec/`           | Markdown                                                   | Source-of-truth specifications (~1900 files)                       |
+| `tests/`          | Vitest, Playwright, pytest                                 | Unit, contract, E2E, visual (~224+ FE test files)                  |
 
 ---
 
@@ -131,21 +131,21 @@ Hot-path sync uses **filesystem `.part` → rename**, not shared memory.
 
 ### 5.1 Two backends — easy to confuse
 
-| Layer | Path | Default port | Used for |
-|-------|------|--------------|----------|
-| HTTP API | `BE/` | 8787 | Setup, rules CRUD, observability, CLI |
-| Inspection runtime | `app/` | loopback (supervisor) | Live capture, dispatch, worker eval |
+| Layer              | Path   | Default port          | Used for                              |
+| ------------------ | ------ | --------------------- | ------------------------------------- |
+| HTTP API           | `BE/`  | 8787                  | Setup, rules CRUD, observability, CLI |
+| Inspection runtime | `app/` | loopback (supervisor) | Live capture, dispatch, worker eval   |
 
 **Risk:** `BE/app/rules/` and `app/rules/` both exist. Rule evaluation logic can drift between HTTP-side and runtime-side evaluators.
 
 ### 5.2 Spec vs implementation gaps
 
-| Spec / doc says | Code says |
-|-----------------|-----------|
-| Tauri/Rust shell with worker restart | Chromium MV3 extension (`chromium-shell/`) |
-| `AI-01` shell choice still open | Multiple shell docs coexist |
+| Spec / doc says                                 | Code says                                           |
+| ----------------------------------------------- | --------------------------------------------------- |
+| Tauri/Rust shell with worker restart            | Chromium MV3 extension (`chromium-shell/`)          |
+| `AI-01` shell choice still open                 | Multiple shell docs coexist                         |
 | `BE/README.md`: "skeleton, NotImplementedError" | `BE/main.py` mounts many routers, middleware, repos |
-| Plan 88 changelog: `{ok, data, error}` envelope | Current `BE/envelope.py`: PascalCase wire shape |
+| Plan 88 changelog: `{ok, data, error}` envelope | Current `BE/envelope.py`: PascalCase wire shape     |
 
 Onboarding friction: specs often describe **target state** while code reflects **today**.
 
@@ -158,10 +158,10 @@ Coding guidelines (`spec/02-coding-guidelines/00-overview.md`):
 
 Observed violations:
 
-| File | Lines (approx) | Problem |
-|------|----------------|---------|
-| `src/routes/__root.tsx` | ~762 | Boot orchestration + seed + errors + shell in one route |
-| `src/components/projects/ProjectEditorSections.tsx` | ~1,112 | Business logic + UI monolith |
+| File                                                | Lines (approx) | Problem                                                 |
+| --------------------------------------------------- | -------------- | ------------------------------------------------------- |
+| `src/routes/__root.tsx`                             | ~762           | Boot orchestration + seed + errors + shell in one route |
+| `src/components/projects/ProjectEditorSections.tsx` | ~1,112         | Business logic + UI monolith                            |
 
 These are where regressions cluster and tests are hardest to isolate.
 
@@ -235,11 +235,11 @@ Prefer changelog + plan closeout memos once a slice merges.
 
 ### Split DB (spec/05-split-db-architecture/)
 
-| Database | Holds |
-|----------|-------|
-| RootDb | Jobs, tasks, run sessions, error events, settings |
-| TaskDb (per task) | Images, regions, judgments (hot path) |
-| RulesDb (per task) | Rules, overrides, versioned snapshots |
+| Database           | Holds                                             |
+| ------------------ | ------------------------------------------------- |
+| RootDb             | Jobs, tasks, run sessions, error events, settings |
+| TaskDb (per task)  | Images, regions, judgments (hot path)             |
+| RulesDb (per task) | Rules, overrides, versioned snapshots             |
 
 Rules: one writer per DB; immutable rule snapshot per run session; PascalCase columns.
 
@@ -284,28 +284,28 @@ The product vision is coherent. The **integration spine** (supervisor ↔ UI ↔
 
 ## 9. Scale Snapshot (Aug 2026)
 
-| Metric | Approx value |
-|--------|--------------|
-| `src/` TS/TSX files | ~900 |
-| Test files (`*.test.ts(x)`) | ~224+ |
-| Route files | ~70 |
-| Spec markdown files | ~1900 |
-| Python trees | 3 (`app/`, `BE/`, `BE/app/`) |
+| Metric                      | Approx value                 |
+| --------------------------- | ---------------------------- |
+| `src/` TS/TSX files         | ~900                         |
+| Test files (`*.test.ts(x)`) | ~224+                        |
+| Route files                 | ~70                          |
+| Spec markdown files         | ~1900                        |
+| Python trees                | 3 (`app/`, `BE/`, `BE/app/`) |
 
 ---
 
 ## 10. Cross-References
 
-| Topic | Location |
-|-------|----------|
-| Product overview | `README.md`, `spec/21-app/10-app-overview.md` |
-| Runtime processes | `spec/21-app/12-runtime-processes.md` |
-| Shell architecture (target) | `spec/21-app/shell/02-runtime-architecture.md` |
-| BE layout | `BE/README.md` |
-| Coding guidelines | `spec/02-coding-guidelines/00-overview.md` |
-| Error envelope | `spec/03-error-manage/`, `BE/envelope.py`, `src/lib/backend/envelope.ts` |
-| Facade backlog | `.lovable/pending-facades/` |
-| Improvement plans | [`pending/98-architecture-consolidation-improvements.md`](./pending/98-architecture-consolidation-improvements.md) |
+| Topic                       | Location                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Product overview            | `README.md`, `spec/21-app/10-app-overview.md`                                                                      |
+| Runtime processes           | `spec/21-app/12-runtime-processes.md`                                                                              |
+| Shell architecture (target) | `spec/21-app/shell/02-runtime-architecture.md`                                                                     |
+| BE layout                   | `BE/README.md`                                                                                                     |
+| Coding guidelines           | `spec/02-coding-guidelines/00-overview.md`                                                                         |
+| Error envelope              | `spec/03-error-manage/`, `BE/envelope.py`, `src/lib/backend/envelope.ts`                                           |
+| Facade backlog              | `.lovable/pending-facades/`                                                                                        |
+| Improvement plans           | [`pending/98-architecture-consolidation-improvements.md`](./pending/98-architecture-consolidation-improvements.md) |
 
 ---
 

@@ -271,7 +271,6 @@ function formatShortLegacy(i: SeedIssue): string {
   if (i.expected === "frozen profile present") return `missing frozen profile: ${i.got ?? ""}`;
 
   if (i.message.startsWith("duplicate id"))
-
     return `duplicate id in ${i.path.split("[")[0]}: ${i.got ?? ""}`;
 
   if (i.message === "unsupported slice") return `unsupported slice: ${i.path}`;
@@ -439,7 +438,8 @@ export function checkReferentialIntegrity(bundle: SeedBundleV2): SeedIssue[] {
         rulesetIds,
       );
       const parent = bundle.rulesets.find((x) => x.id === rule.rulesetId) as
-        ((typeof bundle.rulesets)[number] & { ruleIds?: string[] }) | undefined;
+        | ((typeof bundle.rulesets)[number] & { ruleIds?: string[] })
+        | undefined;
 
       if (parent && (parent.ruleIds ?? []).includes(rule.id) === false) {
         issues.push({
@@ -556,4 +556,4 @@ export function parseSeedBundleV2(raw: unknown): SeedBundleV2 {
   }
 
   return parsed;
-}
+}

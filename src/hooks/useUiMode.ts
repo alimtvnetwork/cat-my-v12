@@ -19,14 +19,11 @@ export const useUiMode = create<UiModeState>()(
       setMode: (mode) => set({ mode }),
       toggleMode: () =>
         set((state) => ({
-          mode:
-            state.mode === UiModeType.Modern
-              ? UiModeType.Standard
-              : UiModeType.Modern,
+          mode: state.mode === UiModeType.Modern ? UiModeType.Standard : UiModeType.Modern,
         })),
     }),
     {
       name: "ui-mode-storage",
-    }
-  )
+    },
+  ),
 );

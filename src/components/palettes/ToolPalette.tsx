@@ -150,4 +150,4 @@ export function ToolPalette() {
       </div>
     </PaletteFrame>
   );
-}
+}

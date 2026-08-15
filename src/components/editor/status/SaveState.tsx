@@ -1,4 +1,3 @@
-
 export enum SaveStatePropsStateType {
   Saved = "Saved",
   Dirty = "Dirty",
@@ -41,4 +40,4 @@ export function SaveState({ undo, redo, state, onUndo, onRedo }: SaveStateProps)
       <span className={state === SaveStatePropsStateType.Dirty ? "text-ca-warn" : ""}>{state}</span>
     </span>
   );
-}
+}

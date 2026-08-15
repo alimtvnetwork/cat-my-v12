@@ -6,11 +6,13 @@ Status: pending
 Created: 2026-08-14
 
 ## Context
+
 First 100 steps of the 400-step vision standard UI overhaul. This part covers addressing the architecture observations (monolithic components, console.log scattering, instanceof hazards), establishing the static/reference image as the primary mode, and overhauling the "clicking camera" flexible layout.
 
 ## Steps
 
 ### Phase 1: Architecture Observations Remediation (Steps 1-25)
+
 1. **Analyze `ProjectEditorSections.tsx`**
    - **What**: Identify logical splits in the ~1,112 line file.
    - **How**: Map out hooks, pure UI sections, and business logic.
@@ -138,6 +140,7 @@ First 100 steps of the 400-step vision standard UI overhaul. This part covers ad
     - **Guidelines**: Code red limits.
 
 ### Phase 2: Core Infrastructure for Image/Camera State (Steps 26-50)
+
 26. **Define `ImageSourceMode` Enum**
     - **What**: State for static vs camera.
     - **How**: Create `ImageSourceModeType.ts` (`STATIC`, `LIVE`).
@@ -265,6 +268,7 @@ First 100 steps of the 400-step vision standard UI overhaul. This part covers ad
     - **Guidelines**: Complete coverage.
 
 ### Phase 3: "Clicking Camera" Overhaul & Flexibility (Steps 51-75)
+
 51. **Audit existing camera connection UX**
     - **What**: Review the "bad" UI.
     - **How**: Local run and trace component tree.
@@ -392,6 +396,7 @@ First 100 steps of the 400-step vision standard UI overhaul. This part covers ad
     - **Guidelines**: Code red constraints.
 
 ### Phase 4: Backend & Seed Synchronization (Steps 76-100)
+
 76. **Audit `bundle.v2.json` Seed Data**
     - **What**: Check for missing static references.
     - **How**: Read seed file.
@@ -512,10 +517,10 @@ First 100 steps of the 400-step vision standard UI overhaul. This part covers ad
     - **How**: `bun run lint` and `bunx tsgo`.
     - **Agents**: 1 (DevOps).
     - **Guidelines**: 0 errors/warnings.
-100. **Part 1 Signoff**
-     - **What**: Conclude first 100 steps.
-     - **How**: Update tracker and prepare for next 100.
-     - **Agents**: 1 (Manager).
-     - **Guidelines**: Execution lifecycle tracking.
+100.  **Part 1 Signoff**
+      - **What**: Conclude first 100 steps.
+      - **How**: Update tracker and prepare for next 100.
+      - **Agents**: 1 (Manager).
+      - **Guidelines**: Execution lifecycle tracking.
 
 ## End of Part 1

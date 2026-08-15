@@ -1,4 +1,3 @@
-
 export enum SidebarSizeType {
   Sm = "sm",
   Md = "md",
@@ -136,7 +135,9 @@ const SidebarProvider = React.forwardRef<
 
     // We add a state so that we can do data-state="expanded" or SidebarContextPropsStateType.Collapsed.
     // This makes it easier to style the sidebar with Tailwind classes.
-    const state = open ? SidebarContextPropsStateType.Expanded : SidebarContextPropsStateType.Collapsed;
+    const state = open
+      ? SidebarContextPropsStateType.Expanded
+      : SidebarContextPropsStateType.Collapsed;
 
     const contextValue = React.useMemo<SidebarContextProps>(
       () => ({

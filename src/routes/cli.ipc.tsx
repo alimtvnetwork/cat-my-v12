@@ -154,14 +154,12 @@ function ackedOf(item: IpcItem): boolean {
 function KindBadge({ kind }: { kind: string }) {
   switch (kind) {
     case "FrameReady":
-
       return (
         <Badge variant="outline" className="border-sky-500/40 text-sky-600 dark:text-sky-400">
           {kind}
         </Badge>
       );
     case "ResultReady":
-
       return (
         <Badge
           variant="outline"
@@ -171,14 +169,12 @@ function KindBadge({ kind }: { kind: string }) {
         </Badge>
       );
     case "Heartbeat":
-
       return (
         <Badge variant="outline" className="border-amber-500/40 text-amber-600 dark:text-amber-400">
           {kind}
         </Badge>
       );
     default:
-
       return <Badge variant="outline">{kind}</Badge>;
   }
 }
@@ -705,4 +701,4 @@ function CliIpcRoute() {
       )}
     </section>
   );
-}
+}

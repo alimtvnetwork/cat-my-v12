@@ -61,14 +61,11 @@ function safeJson(value: unknown): string {
 function cellValue(err: CapturedError, col: CsvColumn): unknown {
   switch (col) {
     case "invocationChain":
-
       return err.invocationChain ? err.invocationChain.join(" > ") : "";
     case "context":
     case "requestBody":
-
       return err[col];
     default:
-
       return err[col];
   }
 }
@@ -116,4 +113,4 @@ export function downloadErrorHistory(history: CapturedError[], format: ErrorExpo
   console.info(`[errors/export] downloaded format=${format} count=${history.length}`);
 }
 
-export const __TEST__ = { CSV_COLUMNS };
+export const __TEST__ = { CSV_COLUMNS };

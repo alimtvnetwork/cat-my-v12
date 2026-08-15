@@ -150,4 +150,4 @@ export function useSwatches(): readonly string[] {
     swatchesFacade.getSnapshot,
     swatchesFacade.getSnapshot,
   );
-}
+}

@@ -38,7 +38,8 @@ export interface CameraDeviceSummary {
 }
 
 export type CameraCapability =
-  { ok: true; isFail: false; devices: CameraDeviceSummary[] } | { ok: false; isFail: true; error: CameraCapabilityError };
+  | { ok: true; isFail: false; devices: CameraDeviceSummary[] }
+  | { ok: false; isFail: true; error: CameraCapabilityError };
 
 // DOMException.name -> our stable code. Names per MediaDevices spec + WebKit
 // legacy synonyms. Keep the switch exhaustive so unknown names fall through
@@ -48,25 +49,19 @@ function mapDomExceptionName(name: string): CameraCapabilityErrorCode {
     case "NotAllowedError":
     case "SecurityError":
     case "PermissionDeniedError": // legacy WebKit
-
       return CameraCapabilityErrorCodeType.E_CAMERA_PERMISSION_DENIED;
     case "NotFoundError":
     case "DevicesNotFoundError": // legacy Chrome
-
       return CameraCapabilityErrorCodeType.E_CAMERA_NOT_FOUND;
     case "NotReadableError":
     case "TrackStartError": // legacy
-
       return CameraCapabilityErrorCodeType.E_CAMERA_IN_USE;
     case "OverconstrainedError":
     case "ConstraintNotSatisfiedError":
-
       return CameraCapabilityErrorCodeType.E_CAMERA_CONSTRAINT;
     case "AbortError":
-
       return CameraCapabilityErrorCodeType.E_CAMERA_ABORTED;
     default:
-
       return CameraCapabilityErrorCodeType.E_CAMERA_UNKNOWN;
   }
 }

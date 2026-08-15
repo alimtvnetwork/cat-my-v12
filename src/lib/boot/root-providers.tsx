@@ -21,9 +21,7 @@ export function RootProviders({
           <AutoSeedFromFacade />
           <ApplySeedProfileMount />
           <SeedRecoveryToast />
-          <EnvelopeErrorBoundary>
-            {children}
-          </EnvelopeErrorBoundary>
+          <EnvelopeErrorBoundary>{children}</EnvelopeErrorBoundary>
         </SeedProvider>
       </BackendProvider>
     </QueryClientProvider>

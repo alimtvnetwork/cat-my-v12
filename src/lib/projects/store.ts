@@ -780,4 +780,4 @@ export const selectRulesetsForProject = (
   if (!cachedByProject) rulesetsForProjectCache.set(state, nextByProject);
 
   return rulesets;
-};
+};

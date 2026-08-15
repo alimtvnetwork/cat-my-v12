@@ -61,11 +61,7 @@ function RuleEditorRoute() {
       <SectionTopBar section={SectionIdType.Home} active="setup" />
       {rule && !rule.isCategory ? (
         <div className="flex flex-1 flex-col min-h-0">
-          {mode === UiModeType.Standard ? (
-            <StandardPatternSearch />
-          ) : (
-            <EditorSetupExperience />
-          )}
+          {mode === UiModeType.Standard ? <StandardPatternSearch /> : <EditorSetupExperience />}
         </div>
       ) : rule ? null : (
         <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">

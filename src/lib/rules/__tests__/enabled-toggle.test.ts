@@ -68,4 +68,4 @@ describe("rules: enabled flag", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].enabled).toBe(false);
   });
-});
+});

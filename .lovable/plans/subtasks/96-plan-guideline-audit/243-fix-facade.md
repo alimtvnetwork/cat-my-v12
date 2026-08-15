@@ -3,10 +3,12 @@
 **Target File:** `src/lib/rules/facade.ts`
 
 **Violating Lines & Rules:**
+
 - Line 116: **Missing blank line before return**
 - Line 120: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Ensure to commit changes when done with this file.

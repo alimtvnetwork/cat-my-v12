@@ -156,4 +156,4 @@ export function recordRuleToggle(input: {
   source: RuleAuditSource;
 }): RuleAuditEvent {
   return useRuleAuditStore.getState().record(input);
-}
+}

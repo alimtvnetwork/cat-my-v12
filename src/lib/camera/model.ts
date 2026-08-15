@@ -122,13 +122,16 @@ export interface CameraValidationError {
 
 export function validateCameraSetting(
   entry: unknown,
-): { ok: true; isFail: false; value: CameraSetting } | { ok: false; isFail: true; errors: CameraValidationError[] } {
+):
+  | { ok: true; isFail: false; value: CameraSetting }
+  | { ok: false; isFail: true; errors: CameraValidationError[] } {
   const r = CameraSettingSchema.safeParse(entry);
 
   if (r.success) return { ok: true, isFail: false, value: r.data };
 
   return {
-    ok: false, isFail: true,
+    ok: false,
+    isFail: true,
     errors: r.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })),
   };
 }
@@ -151,4 +154,4 @@ export function upsertCameraSetting(
 
 export function deleteCameraSetting(lib: CameraLibrary, id: string): CameraLibrary {
   return { entries: lib.entries.filter((e) => e.id !== id) };
-}
+}

@@ -37,4 +37,4 @@ export const SAMPLE_IMAGE_URLS: Readonly<Record<string, string>> = Object.freeze
 
 export function resolveSampleImageUrl(sampleId: string): string | null {
   return SAMPLE_IMAGE_URLS[sampleId] ?? null;
-}
+}

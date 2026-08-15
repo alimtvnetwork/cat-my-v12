@@ -1,14 +1,14 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 
 export function RoiSelector() {
   const { segments, activeSegmentId, setRoi } = useVisionStore();
 
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
   if (!activeSegment || !activeSegment.visionSettings) return null;
 
   const roi = activeSegment.visionSettings.roi || {
@@ -25,20 +25,22 @@ export function RoiSelector() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRoi(activeSegment.visionSettings!.id, {
-      [name]: Number(value)
+      [name]: Number(value),
     });
   };
 
   const handleSliderChange = (value: number[]) => {
     setRoi(activeSegment.visionSettings!.id, {
-      shiftTolerance: value[0]
+      shiftTolerance: value[0],
     });
   };
 
   return (
     <Card className="shadow-md border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold tracking-tight">Region of Interest (ROI)</CardTitle>
+        <CardTitle className="text-lg font-semibold tracking-tight">
+          Region of Interest (ROI)
+        </CardTitle>
         <CardDescription>
           Define the inspection area and acceptable shift tolerances.
         </CardDescription>
@@ -61,7 +63,7 @@ export function RoiSelector() {
               }}
             />
             {/* ROI Bounding Box */}
-            <div 
+            <div
               className="absolute border-2 border-primary bg-primary/20 overflow-hidden"
               style={{
                 left: `${Math.min(Math.max(roi.x, 0), 100)}%`,
@@ -76,26 +78,49 @@ export function RoiSelector() {
               <div className="absolute bottom-0 right-0 w-2 h-2 bg-primary -mr-1 -mb-1 cursor-nwse-resize" />
 
               {/* Render Masks */}
-              {masks.map(mask => {
-                if (mask.type === 'RECTANGLE') {
+              {masks.map((mask) => {
+                if (mask.type === "RECTANGLE") {
                   return (
-                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30" style={{
-                      left: '20%', top: '20%', width: '40%', height: '40%' // Mock placement relative to ROI
-                    }} />
+                    <div
+                      key={mask.id}
+                      className="absolute border border-red-500 bg-red-500/30"
+                      style={{
+                        left: "20%",
+                        top: "20%",
+                        width: "40%",
+                        height: "40%", // Mock placement relative to ROI
+                      }}
+                    />
                   );
                 }
-                if (mask.type === 'CIRCLE') {
+                if (mask.type === "CIRCLE") {
                   return (
-                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30 rounded-full" style={{
-                      left: '50%', top: '50%', width: '30%', height: '30%', transform: 'translate(-50%, -50%)' // Mock placement relative to ROI
-                    }} />
+                    <div
+                      key={mask.id}
+                      className="absolute border border-red-500 bg-red-500/30 rounded-full"
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        width: "30%",
+                        height: "30%",
+                        transform: "translate(-50%, -50%)", // Mock placement relative to ROI
+                      }}
+                    />
                   );
                 }
-                if (mask.type === 'POLYGON') {
-                   return (
-                    <div key={mask.id} className="absolute border border-red-500 bg-red-500/30" style={{
-                      left: '10%', top: '60%', width: '60%', height: '30%', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' // Mock polygon
-                    }} />
+                if (mask.type === "POLYGON") {
+                  return (
+                    <div
+                      key={mask.id}
+                      className="absolute border border-red-500 bg-red-500/30"
+                      style={{
+                        left: "10%",
+                        top: "60%",
+                        width: "60%",
+                        height: "30%",
+                        clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)", // Mock polygon
+                      }}
+                    />
                   );
                 }
                 return null;

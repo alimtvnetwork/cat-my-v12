@@ -18,7 +18,6 @@ export function evaluateCondition(
 ): ConditionResult {
   switch (condition.type) {
     case ConditionTypeType.SameImage:
-
       return {
         conditionId: condition.id,
         type: condition.type,
@@ -26,7 +25,6 @@ export function evaluateCondition(
         ReasonCodeType: ReasonCodeType.OK,
       };
     case ConditionTypeType.Presence:
-
       return {
         conditionId: condition.id,
         type: condition.type,

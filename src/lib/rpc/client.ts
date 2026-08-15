@@ -189,4 +189,4 @@ export namespace RpcErrorCodeType {
   export function isE_ID_INVALID(val: string | null | undefined): boolean {
     return val === RpcErrorCodeType.E_ID_INVALID;
   }
-}
+}

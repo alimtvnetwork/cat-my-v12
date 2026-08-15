@@ -67,7 +67,7 @@ export function useFacadeOrStore<T extends DomainRow, F>(
     if (import.meta.env?.DEV && FACADE_ONLY_SLICES.has(facade.slice)) {
       console.warn(
         `[useFacadeOrStore] dev warning: slice "${facade.slice}" is facade-only but profile is null. ` +
-        `Ensure this route does not require a v2 seed.`
+          `Ensure this route does not require a v2 seed.`,
       );
     }
     return fallback();

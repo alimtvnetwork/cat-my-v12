@@ -1,4 +1,3 @@
-
 export enum PanelChromeIntentType {
   Default = "default",
   Collapse = "collapse",
@@ -106,11 +105,9 @@ function ChromeControl({
 
 function getPanelHint(panelId: string): string | null {
   if (panelId === "tools")
-
     return "Tools stay on the left: draw, select, and edit inspection regions.";
 
   if (panelId === "rules")
-
     return "Rules stay on the right: review checks, order, visibility, and validation.";
 
   return null;

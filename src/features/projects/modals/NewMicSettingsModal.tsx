@@ -193,4 +193,4 @@ export function NewMicSettingsModal({ open, onOpenChange, onSubmit }: NewMicSett
       </DialogContent>
     </Dialog>
   );
-}
+}

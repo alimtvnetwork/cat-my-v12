@@ -104,4 +104,4 @@ export function LinesSkeleton({ lines = 6, testId, className }: LinesProps) {
       ))}
     </div>
   );
-}
+}

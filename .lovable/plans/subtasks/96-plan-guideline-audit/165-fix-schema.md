@@ -3,6 +3,7 @@
 **Target File:** `src/lib/editor/schema.ts`
 
 **Violating Lines & Rules:**
+
 - Line 243: **Missing blank line before return**
 - Line 245: **Missing blank line before return**
 - Line 247: **Missing blank line before return**
@@ -17,6 +18,7 @@
 - Line 321: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

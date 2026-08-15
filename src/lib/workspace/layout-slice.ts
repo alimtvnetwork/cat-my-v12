@@ -81,7 +81,6 @@ export function dockMaxSize(slot: keyof DockSizes): number {
 
 function clampDockSize(slot: keyof DockSizes, px: number): number {
   if (Number.isFinite(px))
-
     return Math.max(dockMinSize(slot), Math.min(dockMaxSize(slot), Math.round(px)));
 
   return dockMinSize(slot);
@@ -395,7 +394,8 @@ export const useWorkspaceLayoutStore = create<WorkspaceLayoutState>()(
       // initial state below.
       merge: (persistedState, currentState) => {
         const p = persistedState as
-          { panels?: Record<string, unknown>; dockSizes?: Partial<DockSizes> } | undefined;
+          | { panels?: Record<string, unknown>; dockSizes?: Partial<DockSizes> }
+          | undefined;
         const hasPersistedPanels = !!p?.panels && Object.keys(p.panels).length > 0;
         const mergedSizes: DockSizes = {
           top: clampDockSize("top", p?.dockSizes?.top ?? DEFAULT_DOCK_SIZES.top),
@@ -414,4 +414,4 @@ export const useWorkspaceLayoutStore = create<WorkspaceLayoutState>()(
       partialize: (state) => ({ panels: state.panels, dockSizes: state.dockSizes }),
     },
   ),
-);
+);

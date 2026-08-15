@@ -3,6 +3,7 @@
 **Target File:** `src/lib/enums/menu-shortcut-type.ts`
 
 **Violating Lines & Rules:**
+
 - Line 27: **Missing blank line before return**
 - Line 30: **Missing blank line before return**
 - Line 33: **Missing blank line before return**
@@ -26,6 +27,7 @@
 - Line 87: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

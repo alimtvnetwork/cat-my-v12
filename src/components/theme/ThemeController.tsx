@@ -1,4 +1,3 @@
-
 export enum ApplyThemeClassResolvedType {
   Light = "light",
   Dark = "dark",
@@ -28,7 +27,9 @@ function resolveTheme(theme: ThemeVariant): ApplyThemeClassResolvedType {
       return ApplyThemeClassResolvedType.Dark;
     }
 
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? ApplyThemeClassResolvedType.Dark : ApplyThemeClassResolvedType.Light;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? ApplyThemeClassResolvedType.Dark
+      : ApplyThemeClassResolvedType.Light;
   }
 
   return theme as unknown as ApplyThemeClassResolvedType;
@@ -59,7 +60,10 @@ export function ThemeController() {
 
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyThemeClass(mq.matches ? ApplyThemeClassResolvedType.Dark : ApplyThemeClassResolvedType.Light);
+    const onChange = () =>
+      applyThemeClass(
+        mq.matches ? ApplyThemeClassResolvedType.Dark : ApplyThemeClassResolvedType.Light,
+      );
     mq.addEventListener("change", onChange);
 
     return () => mq.removeEventListener("change", onChange);

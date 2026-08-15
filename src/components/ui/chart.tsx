@@ -1,4 +1,3 @@
-
 export enum ChartIndicatorType {
   Line = "line",
   Dot = "dot",

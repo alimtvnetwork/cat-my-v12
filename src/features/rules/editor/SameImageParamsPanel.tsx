@@ -15,4 +15,4 @@ export function SameImageParamsPanel(_props: SameImageParamsPanelProps) {
       Compares the run image to the ruleset&apos;s reference image. No parameters.
     </p>
   );
-}
+}

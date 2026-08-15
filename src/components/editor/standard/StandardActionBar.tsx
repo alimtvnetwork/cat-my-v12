@@ -11,7 +11,7 @@ export function StandardActionBar() {
           Display
         </button>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <button className="px-4 py-1.5 bg-ca-panel border border-ca-border rounded text-ca-ink hover:bg-ca-border">
           Register Image

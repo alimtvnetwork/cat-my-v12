@@ -195,4 +195,4 @@ export function applyMaskToRoi(roi: MaskRect, mask: MaskPrimitive): MaskRect | n
 /** True when the mask is well-formed. Convenience for call sites. */
 export function isMaskValid(mask: MaskPrimitive): boolean {
   return validateMaskPrimitive(mask).length === 0;
-}
+}

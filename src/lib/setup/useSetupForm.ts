@@ -21,4 +21,4 @@ export function useSetupForm<S extends ZodType<FieldValues>>(
     ...options,
     resolver: zodResolver(schema as any),
   });
-}
+}

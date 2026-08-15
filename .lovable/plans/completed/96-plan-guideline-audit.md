@@ -1,9 +1,11 @@
 # Plan: Coding Guideline Audit (96)
 
 ## Goal
+
 Fix all identified guideline violations across the codebase.
 
 ## Subtasks
+
 - [ ] 001-fix-AppBreadcrumb.md
 - [ ] 002-fix-HistoryNav.md
 - [ ] 003-fix-LightingReadout.md

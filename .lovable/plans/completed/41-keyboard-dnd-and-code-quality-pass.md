@@ -17,7 +17,7 @@ lands under the new code-quality rules from day one:
    overlay).
 2. A src/** quality sweep: no magic strings/numbers in comparisons,
    enums per concept in `src/types/**`, shared constants in
-   `src/lib/<domain>/constants.ts`, no single-line if/else or nested
+`src/lib/<domain>/constants.ts`, no single-line if/else or nested
    ternary used to shrink LOC. No logic changes.
 
 Related capture:

@@ -69,4 +69,5 @@
 | ---------- | ------- | -------------------------------------------------------------------------- |
 | 2026-04-05 | 1.0.0   | Initial root consistency report                                            |
 | 2026-04-09 | 2.0.0   | Added modules 09–11, 21–22; folder-structure-root.md converted to redirect |
+
 \n- Added `spec/24-app-ui-design-system/tools-images/` per Plan 40.\n

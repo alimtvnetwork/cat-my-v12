@@ -10,19 +10,33 @@ vi.mock("@/lib/errors/notify", () => ({
 
 const server = setupServer(
   http.post("http://localhost:8000/rules", async ({ request }) => {
-    const body = await request.json() as any;
+    const body = (await request.json()) as any;
     return HttpResponse.json({
-      Status: { IsSuccess: true, IsFailed: false, Code: 201, Message: "Created", Timestamp: new Date().toISOString() },
-      Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: false, IsSingle: true, IsMultiple: false, IsEmpty: false },
-      Results: [{
-        RuleId: 2,
-        RuleKind: body.RuleKind || "MockRule",
-        OrderIndex: 1,
-        ParamsJson: body.ParamsJson || "{}",
-        IsActive: true
-      }],
+      Status: {
+        IsSuccess: true,
+        IsFailed: false,
+        Code: 201,
+        Message: "Created",
+        Timestamp: new Date().toISOString(),
+      },
+      Attributes: {
+        RequestedAt: new Date().toISOString(),
+        HasAnyErrors: false,
+        IsSingle: true,
+        IsMultiple: false,
+        IsEmpty: false,
+      },
+      Results: [
+        {
+          RuleId: 2,
+          RuleKind: body.RuleKind || "MockRule",
+          OrderIndex: 1,
+          ParamsJson: body.ParamsJson || "{}",
+          IsActive: true,
+        },
+      ],
     });
-  })
+  }),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -36,12 +50,12 @@ describe("Rule Creation Integration", () => {
   it("creates a rule successfully and returns the mocked backend envelope", async () => {
     useBackendMode.setState({ baseUrl: "http://localhost:8000" });
     const client = new HttpBackendClient();
-    
+
     const payload = {
       RuleKind: "TestRule",
-      ParamsJson: '{"threshold": 10}'
+      ParamsJson: '{"threshold": 10}',
     };
-    
+
     const res = await client.rules.create(payload);
     expect(res.Status.IsSuccess).toBe(true);
     expect(res.Results).toHaveLength(1);

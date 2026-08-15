@@ -1,4 +1,3 @@
-
 export enum RightRailDirectionType {
   Up = "up",
   Down = "down",

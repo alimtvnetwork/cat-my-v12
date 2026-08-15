@@ -415,4 +415,4 @@ export async function autoSeedRulesIfEmpty(): Promise<number | null> {
   });
 
   return inFlight;
-}
+}

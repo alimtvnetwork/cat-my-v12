@@ -11,15 +11,15 @@ Source: `src/routes/setup.rules.tsx` (804 lines). All controls are **uncontrolle
 
 ## Controls in scope
 
-| # | Purpose | Element (approx line) | Current validation | Error surface | Issues |
+| #   | Purpose                     | Element (approx line)                                     | Current validation                  | Error surface | Issues                                                                                                              |
 | --- | --------------------------- | --------------------------------------------------------- | ----------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------- |
-| 1 | NEW PROJECT name | `projectNameRef` (input, ~L154) | `name.trim() !== ""` (silent no-op) | none | Silent early-return on empty; no uniqueness check; no maxLength; no visible label association. |
-| 2 | NEW PROJECT categories | `categoryTextRef` (input, "Categories, comma-separated") | `splitList()` trims/drops empty | none | Free text; no picker; no cap; duplicates only deduped inside store; no way to reuse categories from other projects. |
-| 3 | Rule Set name | `ruleNameRef` (input, "Rule Set 01") | `trim()                             |               | nextRuleSetName(...)` (falls back silently) | none | Uniqueness not checked before create; empty submit gets auto-named without user awareness. |
-| 4 | Rule type / mode | `ruleModeRef` (select, values `direct`/`category`/`task`) | cast to enum | none | No runtime enum guard; select styling not tokenised. |
-| 5 | Category (for the new rule) | `ruleCategoryRef` (input, ~L169) | `trim()                             |               | ""` | none | Free text. Should be a combobox listing `project.categoryNames` with a "Create new" affordance. |
-| 6 | CATEGORIES panel `Add` | text input, calls `addProjectCategory` | trim check inside store | none | Duplicate-name attempt swallowed silently; no feedback. |
-| 7 | EXISTING RULES filter | `filter` state | none | n/a | OK, but hover/focus tokens weak. |
+| 1   | NEW PROJECT name            | `projectNameRef` (input, ~L154)                           | `name.trim() !== ""` (silent no-op) | none          | Silent early-return on empty; no uniqueness check; no maxLength; no visible label association.                      |
+| 2   | NEW PROJECT categories      | `categoryTextRef` (input, "Categories, comma-separated")  | `splitList()` trims/drops empty     | none          | Free text; no picker; no cap; duplicates only deduped inside store; no way to reuse categories from other projects. |
+| 3   | Rule Set name               | `ruleNameRef` (input, "Rule Set 01")                      | `trim()                             |               | nextRuleSetName(...)` (falls back silently)                                                                         | none | Uniqueness not checked before create; empty submit gets auto-named without user awareness.      |
+| 4   | Rule type / mode            | `ruleModeRef` (select, values `direct`/`category`/`task`) | cast to enum                        | none          | No runtime enum guard; select styling not tokenised.                                                                |
+| 5   | Category (for the new rule) | `ruleCategoryRef` (input, ~L169)                          | `trim()                             |               | ""`                                                                                                                 | none | Free text. Should be a combobox listing `project.categoryNames` with a "Create new" affordance. |
+| 6   | CATEGORIES panel `Add`      | text input, calls `addProjectCategory`                    | trim check inside store             | none          | Duplicate-name attempt swallowed silently; no feedback.                                                             |
+| 7   | EXISTING RULES filter       | `filter` state                                            | none                                | n/a           | OK, but hover/focus tokens weak.                                                                                    |
 
 ## Root cause (one sentence)
 

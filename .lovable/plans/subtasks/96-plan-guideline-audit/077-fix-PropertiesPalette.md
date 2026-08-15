@@ -3,6 +3,7 @@
 **Target File:** `src/components/rules/PropertiesPalette.tsx`
 
 **Violating Lines & Rules:**
+
 - Line 274: **Missing blank line before return**
 - Line 324: **Missing blank line before return**
 - Line 559: **Missing blank line before return**
@@ -19,6 +20,7 @@
 - Line 593: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

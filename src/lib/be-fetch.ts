@@ -98,9 +98,7 @@ export class EnvelopeError extends Error {
 
   public get isMissingOrUnavailable(): boolean {
     return (
-      this.responseStatus === 404 ||
-      this.responseStatus === 403 ||
-      this.code === "E_BE_UNAVAILABLE"
+      this.responseStatus === 404 || this.responseStatus === 403 || this.code === "E_BE_UNAVAILABLE"
     );
   }
 
@@ -323,4 +321,4 @@ export async function safeBeFetch<T = unknown>(
       error,
     };
   }
-}
+}

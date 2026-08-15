@@ -271,4 +271,4 @@ export function findShortcutConflicts(
 export const SHORTCUT_DEFAULTS: Readonly<Record<ShortcutActionId, string>> = DEFAULTS;
 
 // Plan 80 step 41: cross-tab sync via BroadcastChannel.
-wireCrossTabRehydrate(useShortcutsStore, StorageKey.Shortcuts, "shortcuts-store");
+wireCrossTabRehydrate(useShortcutsStore, StorageKey.Shortcuts, "shortcuts-store");

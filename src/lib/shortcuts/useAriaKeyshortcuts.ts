@@ -30,4 +30,4 @@ export function useAriaKeyshortcuts(shortcutId: string): string | undefined {
 
     return toAriaCombo(def.combo);
   }, [defs, shortcutId]);
-}
+}

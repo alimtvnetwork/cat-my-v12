@@ -104,4 +104,4 @@ export namespace HomeTaskStatusType {
   export function isNeedsReview(val: string | null | undefined): boolean {
     return val === HomeTaskStatusType.NeedsReview;
   }
-}
+}

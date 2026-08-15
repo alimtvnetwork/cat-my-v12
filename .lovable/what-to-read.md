@@ -17,7 +17,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 2. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
 3. `.lovable/coding-guidelines.md` - coding rules and boundaries
 4. `.lovable/plans/index.md` - active roadmap and completed items
-4b. `.lovable/plans/architecture-and-code-observations.md` - architecture review snapshot (Aug 2026); improvement tracks in `pending/98-architecture-consolidation-improvements.md`
+   4b. `.lovable/plans/architecture-and-code-observations.md` - architecture review snapshot (Aug 2026); improvement tracks in `pending/98-architecture-consolidation-improvements.md`
 5. `.lovable/suggestions.md` and `.lovable/suggestions/index.md` - active and historical suggestions
 6. `.lovable/strictly-avoid.md` - forbidden patterns
 7. `.lovable/cicd-index.md` and every file under `.lovable/cicd-issues/`
@@ -109,22 +109,22 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## 3. Before You Do X, Read Y
 
-| Task                                | Must-read (in this order)                                                                                                             |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Before any task (always)            | The full "Read First" list above in section 1                                                                                         |
-| Before writing code                 | `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/` (language-specific)                   |
-| Before adding a feature             | `.lovable/memory/index.md`, latest `.lovable/plans/pending/*.md`, relevant `spec/21-app/*.md`, `spec/22-app-issues/`                  |
-| Before adding a unit test           | `pytest.ini`, mirror layout under `tests/unit/`, follow `spec/04-database-conventions/04-testing-strategy.md` when DB-touching        |
-| Before adding an integration test   | `tests/integration/` or `tests/e2e/` conventions; `tests/e2e/playwright_smoke.py` reference                                           |
-| Before writing a spec               | `spec/01-spec-authoring-guide/`, `spec/_template.md`, `.lovable/memory/06-spec-map.md`                                                |
-| DB schema / migration               | `spec/04-database-conventions/`, `spec/23-app-db/`, `app/core/io/migrations/`, GRANT + RLS rules in agent directives                  |
-| UI change                           | `.lovable/memory/04-design-system.md`, `src/styles.css`, `spec/24-app-ui-design-system/`, `spec/07-design-system/`                    |
-| Routing / server fn                 | `src/router.tsx`, `src/routes/readme.md`, TanStack Start rules in agent directives                                                    |
-| Error handling                      | `.lovable/memory/03-error-manage.md`, `spec/03-error-manage/`, `app/core/errors/`                                                     |
-| Naming (files, booleans, enums, DB) | `.lovable/memory/02-naming.md`, `.lovable/memory/09-enums-and-results-shape.md`                                                       |
-| Vendor capture SDK work             | `.lovable/memory/08-vision-inspection-app.md`, `app/capture/vendor_*.py`, `spec/21-app/52-sdk-facade-pattern.md`                      |
-| CI / linter change                  | `.lovable/memory/05b-linters.md`, `.lovable/memory/05c-linter-scripts.md`, `linter-scripts/`                                          |
-| Write/end memory                    | `.lovable/prompts/` (write-memory prompt); write to files under `.lovable/`, never `mem://`                                           |
+| Task                                | Must-read (in this order)                                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Before any task (always)            | The full "Read First" list above in section 1                                                                                  |
+| Before writing code                 | `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/` (language-specific)            |
+| Before adding a feature             | `.lovable/memory/index.md`, latest `.lovable/plans/pending/*.md`, relevant `spec/21-app/*.md`, `spec/22-app-issues/`           |
+| Before adding a unit test           | `pytest.ini`, mirror layout under `tests/unit/`, follow `spec/04-database-conventions/04-testing-strategy.md` when DB-touching |
+| Before adding an integration test   | `tests/integration/` or `tests/e2e/` conventions; `tests/e2e/playwright_smoke.py` reference                                    |
+| Before writing a spec               | `spec/01-spec-authoring-guide/`, `spec/_template.md`, `.lovable/memory/06-spec-map.md`                                         |
+| DB schema / migration               | `spec/04-database-conventions/`, `spec/23-app-db/`, `app/core/io/migrations/`, GRANT + RLS rules in agent directives           |
+| UI change                           | `.lovable/memory/04-design-system.md`, `src/styles.css`, `spec/24-app-ui-design-system/`, `spec/07-design-system/`             |
+| Routing / server fn                 | `src/router.tsx`, `src/routes/readme.md`, TanStack Start rules in agent directives                                             |
+| Error handling                      | `.lovable/memory/03-error-manage.md`, `spec/03-error-manage/`, `app/core/errors/`                                              |
+| Naming (files, booleans, enums, DB) | `.lovable/memory/02-naming.md`, `.lovable/memory/09-enums-and-results-shape.md`                                                |
+| Vendor capture SDK work             | `.lovable/memory/08-vision-inspection-app.md`, `app/capture/vendor_*.py`, `spec/21-app/52-sdk-facade-pattern.md`               |
+| CI / linter change                  | `.lovable/memory/05b-linters.md`, `.lovable/memory/05c-linter-scripts.md`, `linter-scripts/`                                   |
+| Write/end memory                    | `.lovable/prompts/` (write-memory prompt); write to files under `.lovable/`, never `mem://`                                    |
 
 ## 4. Hard Rules (excerpt, see memory 01-code-red)
 

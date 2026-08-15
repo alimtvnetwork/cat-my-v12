@@ -1,4 +1,3 @@
-
 export enum HintTooltipAlignType {
   Start = "start",
   Center = "center",
@@ -71,4 +70,4 @@ export function HintTooltip({
       </Tooltip>
     </TooltipProvider>
   );
-}
+}

@@ -20,7 +20,9 @@ The canonical wire format for a single Rule and for a whole RuleSet, used by JSO
   "generatedAt": "2026-07-16T12:34:56Z",
   "generatedBy": "control-automation@3.250.0",
   "checksumSha256": "<hex over the sorted canonical form of `payload`>",
-  "payload": {/* RuleSet | Rule */},
+  "payload": {
+    /* RuleSet | Rule */
+  },
 }
 ```
 
@@ -37,9 +39,15 @@ The canonical wire format for a single Rule and for a whole RuleSet, used by JSO
   "version": "1.2.0",
   "parentSnapshotId": null,
   "categories": ["uuid", "..."],
-  "rules": [/* Rule[] in `sequence` order */],
-  "shapes": [/* Shape[] referenced by rules */],
-  "jsFunctions": [/* JsFunction[] referenced by rules */],
+  "rules": [
+    /* Rule[] in `sequence` order */
+  ],
+  "shapes": [
+    /* Shape[] referenced by rules */
+  ],
+  "jsFunctions": [
+    /* JsFunction[] referenced by rules */
+  ],
 }
 ```
 
@@ -67,7 +75,9 @@ The canonical wire format for a single Rule and for a whole RuleSet, used by JSO
     "presenceThreshold": 0.75,
     /* kind-specific keys only, mirrors columns per SQLite Column Contract */
   },
-  "children": [/* Rule[] for Group kinds only */],
+  "children": [
+    /* Rule[] for Group kinds only */
+  ],
   "checksumSha256": "...",
 }
 ```
@@ -94,7 +104,9 @@ The canonical wire format for a single Rule and for a whole RuleSet, used by JSO
   "name": "GradeCap",
   "source": "export default async function grade(input, ctx) { ... }",
   "sandboxProfile": "strict",
-  "paramsSchema": {/* JSON Schema draft-2020-12 for the function's params */},
+  "paramsSchema": {
+    /* JSON Schema draft-2020-12 for the function's params */
+  },
   "checksumSha256": "...",
 }
 ```

@@ -239,7 +239,7 @@ export function usePersistRulesServerSide(): boolean {
       };
     },
     getPersistRulesServerSide,
-    () => false
+    () => false,
   );
 }
 
@@ -263,4 +263,4 @@ export function __resetDataSourceForTests(): void {
 
 export const DATA_SOURCE_STORAGE_KEY = STORAGE_KEY;
 export const BACKEND_BASE_URL_STORAGE_KEY = BASE_URL_STORAGE_KEY;
-export const PERSIST_RULES_STORAGE_KEY_EXPORT = PERSIST_RULES_STORAGE_KEY;
+export const PERSIST_RULES_STORAGE_KEY_EXPORT = PERSIST_RULES_STORAGE_KEY;

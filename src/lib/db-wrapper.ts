@@ -45,4 +45,4 @@ export async function executeApiQuery<T = unknown>(
       error: error instanceof Error ? error : new Error(String(error)),
     };
   }
-}
+}

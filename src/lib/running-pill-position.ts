@@ -58,4 +58,4 @@ export function clampPillPos(pos: PillPos, viewportW: number, viewportH: number)
   const y = Math.min(Math.max(pos.y, MIN_MARGIN), maxY);
 
   return { x, y };
-}
+}

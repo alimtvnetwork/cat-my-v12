@@ -3,6 +3,7 @@
 **Target File:** `src/hooks/useMenuShortcuts.ts`
 
 **Violating Lines & Rules:**
+
 - Line 49: **Missing blank line before return**
 - Line 53: **Missing blank line before return**
 - Line 57: **Missing blank line before return**
@@ -12,6 +13,7 @@
 - Line 79: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

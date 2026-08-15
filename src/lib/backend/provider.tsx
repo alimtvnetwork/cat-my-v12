@@ -16,11 +16,7 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return new SeedBackendClient();
   }, [mode]);
 
-  return (
-    <BackendContext.Provider value={client}>
-      {children}
-    </BackendContext.Provider>
-  );
+  return <BackendContext.Provider value={client}>{children}</BackendContext.Provider>;
 };
 
 export function useBackend(): BackendClient {

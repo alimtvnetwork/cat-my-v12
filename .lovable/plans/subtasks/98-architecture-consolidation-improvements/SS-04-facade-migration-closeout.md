@@ -4,11 +4,12 @@
 **Status:** ✅ Done (2026-08-16T01:37:00+08:00)
 **Summary:** Created migration policy, added dev warnings for facade-only slices without profiles, and triaged pending facades.
 **Changed Files:**
+
 - `src/lib/facades/useFacadeOrStore.ts`
 - `.lovable/memory/features/facade-migration-policy.md`
 - `.lovable/pending-facades/README.md`
-**Parallel:** Yes (Wave 1)  
-**Related:** Plan 86, `.lovable/pending-facades/`
+  **Parallel:** Yes (Wave 1)  
+  **Related:** Plan 86, `.lovable/pending-facades/`
 
 ---
 
@@ -30,12 +31,12 @@ New features don't know which path to use. Bugs appear when `getActiveProfile()`
 
 Create **`.lovable/memory/features/facade-migration-policy.md`**:
 
-| Slice | Status | Read path | Write path | Store deprecated? |
-|-------|--------|-----------|------------|-------------------|
-| projects | … | facade / store | facade / BE | … |
-| rules | … | … | … | … |
-| cameras | … | … | … | … |
-| … | | | | |
+| Slice    | Status | Read path      | Write path  | Store deprecated? |
+| -------- | ------ | -------------- | ----------- | ----------------- |
+| projects | …      | facade / store | facade / BE | …                 |
+| rules    | …      | …              | …           | …                 |
+| cameras  | …      | …              | …           | …                 |
+| …        |        |                |             |                   |
 
 Statuses: `facade-only` | `facade-preferred` | `store-only` | `backend-only`
 

@@ -1,19 +1,19 @@
-import React from 'react';
-import { SegmentSelector } from './SegmentSelector';
-import { CameraSettingsForm } from './CameraSettingsForm';
-import { HandlerSettingsForm } from './HandlerSettingsForm';
-import { RoiSelector } from './RoiSelector';
-import { MaskTools } from './MaskTools';
-import { ColorTools } from './ColorTools';
-import { ShapeTrax3Tool } from './ShapeTrax3Tool';
-import { PinConsistencyTool } from './PinConsistencyTool';
-import { useVisionStore } from '../../lib/vision/store';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import React from "react";
+import { SegmentSelector } from "./SegmentSelector";
+import { CameraSettingsForm } from "./CameraSettingsForm";
+import { HandlerSettingsForm } from "./HandlerSettingsForm";
+import { RoiSelector } from "./RoiSelector";
+import { MaskTools } from "./MaskTools";
+import { ColorTools } from "./ColorTools";
+import { ShapeTrax3Tool } from "./ShapeTrax3Tool";
+import { PinConsistencyTool } from "./PinConsistencyTool";
+import { useVisionStore } from "../../lib/vision/store";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 export function RecipeEditor() {
   const { segments, activeSegmentId } = useVisionStore();
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
 
   const handleSave = () => {
     // Serialize state to backend envelope payload
@@ -21,14 +21,14 @@ export function RecipeEditor() {
       version: "1.0",
       timestamp: new Date().toISOString(),
       activeSegmentId,
-      segments: segments.map(s => ({
+      segments: segments.map((s) => ({
         id: s.id,
         name: s.name,
-        visionSettings: s.visionSettings
-      }))
+        visionSettings: s.visionSettings,
+      })),
     };
-    console.log('Saving recipe envelope...', JSON.stringify(payload, null, 2));
-    alert('Recipe saved to console.');
+    console.log("Saving recipe envelope...", JSON.stringify(payload, null, 2));
+    alert("Recipe saved to console.");
   };
 
   return (

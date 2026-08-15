@@ -96,7 +96,6 @@ function parseRule(input: unknown, index: number): EditorRule {
   const r = input as Record<string, unknown>;
 
   if (typeof r.id !== "string" || r.id.length === 0)
-
     throw new RuleSetImportError(`rule[${index}].id missing`);
 
   if (typeof r.name !== "string") throw new RuleSetImportError(`rule[${index}].name missing`);
@@ -107,7 +106,6 @@ function parseRule(input: unknown, index: number): EditorRule {
 
   for (const k of ["x", "y", "width", "height"] as const) {
     if (isFiniteNumber(r[k]) === false)
-
       throw new RuleSetImportError(`rule[${index}].${k} must be a number`);
   }
 
@@ -139,18 +137,15 @@ function parseGroups(input: unknown, ruleIds: ReadonlySet<string>): RuleGroup[] 
 
   return input.map((raw, i) => {
     if (!raw || typeof raw !== "object")
-
       throw new RuleSetImportError(`group[${i}] is not an object`);
     const g = raw as Record<string, unknown>;
 
     if (typeof g.id !== "string" || g.id.length === 0)
-
       throw new RuleSetImportError(`group[${i}].id missing`);
 
     if (typeof g.name !== "string") throw new RuleSetImportError(`group[${i}].name missing`);
 
     if (Array.isArray(g.ruleIds) === false)
-
       throw new RuleSetImportError(`group[${i}].ruleIds must be an array`);
     const memberIds: string[] = [];
     for (const rid of g.ruleIds) {
@@ -245,4 +240,4 @@ export function parseRuleSet(text: string): ParsedRuleSet {
 
     throw err;
   }
-}
+}

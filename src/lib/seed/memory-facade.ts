@@ -55,4 +55,4 @@ export class MemoryUiSeedFacade implements UiSeedFacade {
       this.listeners.delete(listener);
     };
   }
-}
+}

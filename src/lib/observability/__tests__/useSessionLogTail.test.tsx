@@ -115,4 +115,4 @@ describe("useSessionLogTail", () => {
     await waitFor(() => expect(FakeEventSource.opened).toHaveLength(2));
     expect(FakeEventSource.opened[0].closed).toBe(true);
   });
-});
+});

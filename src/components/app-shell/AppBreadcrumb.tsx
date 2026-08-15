@@ -1,4 +1,3 @@
-
 export enum AppBreadcrumbPropsVariantType {
   Band = "band",
   Inline = "inline",
@@ -65,7 +64,7 @@ export function buildCrumbsFromMatches(
   const paramMap = new Map(
     Object.entries(params)
       .filter(([, val]) => typeof val === "string" && val.length > 0)
-      .map(([name, val]) => [val, name])
+      .map(([name, val]) => [val, name]),
   );
 
   return pathname
@@ -89,7 +88,9 @@ export interface AppBreadcrumbProps {
   variant?: AppBreadcrumbPropsVariantType;
 }
 
-export function AppBreadcrumb({ variant = AppBreadcrumbPropsVariantType.Band }: AppBreadcrumbProps = {}) {
+export function AppBreadcrumb({
+  variant = AppBreadcrumbPropsVariantType.Band,
+}: AppBreadcrumbProps = {}) {
   // lint-allow: function-length reason="UI component layout" max=40
   const matches = useMatches();
   const last = matches[matches.length - 1];
@@ -171,9 +172,7 @@ export function AppBreadcrumb({ variant = AppBreadcrumbPropsVariantType.Band }: 
             ))}
           </>
         ) : (
-          crumbs.map((c, i) => (
-            <CrumbLink key={c.to} crumb={c} isLast={i === crumbs.length - 1} />
-          ))
+          crumbs.map((c, i) => <CrumbLink key={c.to} crumb={c} isLast={i === crumbs.length - 1} />)
         )}
       </ol>
     </nav>

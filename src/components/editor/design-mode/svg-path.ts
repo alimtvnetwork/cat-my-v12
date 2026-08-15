@@ -123,4 +123,4 @@ function perpendicularDistance(p: Point, a: Point, b: Point): number {
   const den = Math.hypot(dx, dy);
 
   return num / den;
-}
+}

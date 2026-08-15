@@ -1,4 +1,3 @@
-
 export enum InfoPaneActionType {
   Lock = "Lock",
   Hide = "Hide",
@@ -143,8 +142,16 @@ export function InfoPane() {
             aria-label="Aggregate ROI actions"
             className="grid grid-cols-2 gap-hmi-1"
           >
-            <AggregateButton icon={Lock} label="Lock" onClick={() => runAggregate(InfoPaneActionType.Lock)} />
-            <AggregateButton icon={EyeOff} label="Hide" onClick={() => runAggregate(InfoPaneActionType.Hide)} />
+            <AggregateButton
+              icon={Lock}
+              label="Lock"
+              onClick={() => runAggregate(InfoPaneActionType.Lock)}
+            />
+            <AggregateButton
+              icon={EyeOff}
+              label="Hide"
+              onClick={() => runAggregate(InfoPaneActionType.Hide)}
+            />
             <AggregateButton
               icon={Trash2}
               label="Delete"
@@ -198,4 +205,4 @@ function AggregateButton({ icon: Icon, label, onClick, destructive }: AggregateB
       <span>{label}</span>
     </button>
   );
-}
+}

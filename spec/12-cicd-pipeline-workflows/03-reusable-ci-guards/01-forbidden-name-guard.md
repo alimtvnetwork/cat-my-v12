@@ -139,12 +139,12 @@ Anchor on `pub fn` — private `fn`s are file-scoped.
 
 ## Failure Modes
 
-| Pitfall | Fix |
+| Pitfall                                                          | Fix                                                                                                                       |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | --- | ----------------------------------------------------------- |
-| Pattern matches inside string literals or comments | Use a language-aware parser, OR keep patterns anchored to `^func` / `^def` so leading whitespace excludes string contents |
-| Router pattern (`executeRelease`) accidentally matches verb+noun | Whitelist the router prefix in your `FORBIDDEN_PATTERNS` exclusion or anchor the verb list to non-router verbs only |
-| `grep` exits non-zero when no matches found, killing `set -e` | Wrap with `                                                                                                               |     | true` and check the captured variable for non-empty content |
-| Pattern only checks one source dir | Loop over multiple dirs OR pass directories as positional args |
+| Pattern matches inside string literals or comments               | Use a language-aware parser, OR keep patterns anchored to `^func` / `^def` so leading whitespace excludes string contents |
+| Router pattern (`executeRelease`) accidentally matches verb+noun | Whitelist the router prefix in your `FORBIDDEN_PATTERNS` exclusion or anchor the verb list to non-router verbs only       |
+| `grep` exits non-zero when no matches found, killing `set -e`    | Wrap with `                                                                                                               |     | true` and check the captured variable for non-empty content |
+| Pattern only checks one source dir                               | Loop over multiple dirs OR pass directories as positional args                                                            |
 
 ---
 

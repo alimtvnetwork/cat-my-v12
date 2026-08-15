@@ -114,4 +114,4 @@ describe("LogTailViewer", () => {
 });
 
 // Silence unused-import lint - referenced for type completeness.
-void useSessionLogTailAutoReconnect;
+void useSessionLogTailAutoReconnect;

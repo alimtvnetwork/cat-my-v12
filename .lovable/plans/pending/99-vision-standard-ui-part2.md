@@ -6,11 +6,13 @@ Status: pending
 Created: 2026-08-14
 
 ## Context
+
 This document continues the 400-step vision standard UI overhaul, containing Steps 101 through 300. This phase focuses on tightly integrating the new static-first viewer with the rule validation engine, solidifying the data models and store normalizations (Facade patterns, Enum standards), bridging the backend processing for vision rules, and polishing the UI with the V4 palette design system.
 
 ## Steps
 
 ### Phase 5: Rule & Validation Integration (Steps 101-150)
+
 101. **Audit Rule Engine UI bindings**
      - **What**: Review how existing rules bind to the canvas.
      - **How**: Trace `ProjectEditorMainCanvas` to rule selectors.
@@ -263,6 +265,7 @@ This document continues the 400-step vision standard UI overhaul, containing Ste
      - **Guidelines**: All guidelines check.
 
 ### Phase 6: Data Models & Store Normalization (Steps 151-200)
+
 151. **Audit `src/lib/` for String Unions**
      - **What**: Enforce Memory Rule 12.
      - **How**: `grep` search for `type X = "a" | "b"`.
@@ -515,6 +518,7 @@ This document continues the 400-step vision standard UI overhaul, containing Ste
      - **Guidelines**: Execution lifecycle tracking.
 
 ### Phase 7: Vision Processing & Backend Offload (Steps 201-250)
+
 201. **Audit `app/rules/` vs `BE/app/rules/`**
      - **What**: Understand dual backend discrepancy.
      - **How**: Read and diff rule evaluation logic.
@@ -767,6 +771,7 @@ This document continues the 400-step vision standard UI overhaul, containing Ste
      - **Guidelines**: Execution lifecycle tracking.
 
 ### Phase 8: Advanced UI Components & Styling Polish (Steps 251-300)
+
 251. **Audit UI against V4 Photoshop Palettes rule**
      - **What**: Check panel spacing and typography.
      - **How**: Compare to `design/v4-photoshop-palettes.md`.

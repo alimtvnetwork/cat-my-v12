@@ -71,20 +71,20 @@ Once both are up, open the app and use the **Seed / Backend** toggle on the home
 
 ## Project structure
 
-| Path                                     | What lives here                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| `src/`                                   | Frontend: TanStack Start routes, editor, panels, hooks, stores      |
-| `BE/`                                    | Python backend: FastAPI app, SDK facade, response envelope, CLI     |
-| `worker/`, `services/validation-worker/` | Validation worker (Python HTTP scorer)                              |
-| `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)     |
-| `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor) |
-| `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                 |
+| Path                                     | What lives here                                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `src/`                                   | Frontend: TanStack Start routes, editor, panels, hooks, stores                              |
+| `BE/`                                    | Python backend: FastAPI app, SDK facade, response envelope, CLI                             |
+| `worker/`, `services/validation-worker/` | Validation worker (Python HTTP scorer)                                                      |
+| `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)                             |
+| `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor)                         |
+| `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                                         |
 | `docs/`                                  | Diagrams, runbooks, verification notes, and [runtime map](docs/architecture/runtime-map.md) |
-| `docs/architecture/`                     | Runtime map, integration tests, architecture decisions              |
-| `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                    |
-| `tests/`                                 | Contract, integration, unit, and visual tests                       |
-| `.lovable/`                              | Plans, memory, prompts, completed-work archive                      |
-| `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                   |
+| `docs/architecture/`                     | Runtime map, integration tests, architecture decisions                                      |
+| `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                                            |
+| `tests/`                                 | Contract, integration, unit, and visual tests                                               |
+| `.lovable/`                              | Plans, memory, prompts, completed-work archive                                              |
+| `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                                           |
 
 ## How planning and memory are organised
 

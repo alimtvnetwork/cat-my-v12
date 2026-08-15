@@ -65,4 +65,4 @@ export function subscribeRetryRegistry(fn: () => void): () => void {
 
 function notify(): void {
   for (const l of listeners) l();
-}
+}

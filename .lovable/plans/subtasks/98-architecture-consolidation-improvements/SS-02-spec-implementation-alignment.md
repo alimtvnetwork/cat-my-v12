@@ -5,6 +5,7 @@
 
 **Summary:** Aligned BE README and meta capabilities with current reality, documented shell state, and recorded envelope migration.
 **Changed Files:**
+
 - `BE/README.md`
 - `BE/routes/meta.py`
 - `BE/tests/test_meta.py`
@@ -41,11 +42,11 @@ This causes wrong assumptions during implementation and review.
 
 Add **`spec/21-app/shell/03-implementation-status.md`** (new):
 
-| Item | Spec target | Current implementation |
-|------|-------------|------------------------|
-| Host | Tauri (AI-01 TBD) | `chromium-shell/` MV3 extension |
-| Worker restart | Shell supervisor thread | Not wired |
-| `app://` scheme | Required | Vite dev / built assets |
+| Item            | Spec target             | Current implementation          |
+| --------------- | ----------------------- | ------------------------------- |
+| Host            | Tauri (AI-01 TBD)       | `chromium-shell/` MV3 extension |
+| Worker restart  | Shell supervisor thread | Not wired                       |
+| `app://` scheme | Required                | Vite dev / built assets         |
 
 Do not resolve AI-01 here — document gap only.
 

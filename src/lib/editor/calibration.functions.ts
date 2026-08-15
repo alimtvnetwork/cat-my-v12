@@ -109,4 +109,4 @@ export const getCalibrationReport = createServerFn({ method: HttpMethod.Get })
     if (res.ok === false) throw new Error(`worker /calibration-report returned ${res.status}`);
 
     return ReportSchema.parse(await res.json());
-  });
+  });

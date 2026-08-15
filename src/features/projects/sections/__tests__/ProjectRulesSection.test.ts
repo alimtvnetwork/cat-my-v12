@@ -66,4 +66,4 @@ describe("detectProjectRuleConflicts", () => {
       { ruleId: "y", rulesetIds: ["a", "c"] },
     ]);
   });
-});
+});

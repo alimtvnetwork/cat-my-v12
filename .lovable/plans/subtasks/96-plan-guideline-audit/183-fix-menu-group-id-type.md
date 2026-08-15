@@ -3,6 +3,7 @@
 **Target File:** `src/lib/enums/menu-group-id-type.ts`
 
 **Violating Lines & Rules:**
+
 - Line 14: **Missing blank line before return**
 - Line 17: **Missing blank line before return**
 - Line 20: **Missing blank line before return**
@@ -13,6 +14,7 @@
 - Line 35: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

@@ -189,4 +189,4 @@ export function useCanvasPrefs(): CanvasPrefs {
     canvasPrefsFacade.getSnapshot,
     canvasPrefsFacade.getSnapshot,
   );
-}
+}

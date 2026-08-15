@@ -1,6 +1,7 @@
 ---
 status: completed
 ---
+
 # Plan 91: Dual UI Flavors Integration (Modern vs Standard)
 
 ## Origin Prompt

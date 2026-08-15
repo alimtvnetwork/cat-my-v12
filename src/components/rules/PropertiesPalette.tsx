@@ -1,4 +1,3 @@
-
 export enum PropertiesPaletteModeType {
   Rail = "rail",
   Accordion = "accordion",
@@ -72,7 +71,6 @@ import { ParagraphPane } from "./properties/ParagraphPane";
 import { CssPane } from "./properties/CssPane";
 import { ImagePane } from "./properties/ImagePane";
 
-
 interface PaletteEntry {
   id: PropertyPaletteIdType;
   label: string;
@@ -99,7 +97,12 @@ const PALETTES: readonly PaletteEntry[] = [
     hint: "Threshold, contrast, gain, and other numeric knobs.",
     Icon: SlidersHorizontal,
   },
-  { id: PropertyPaletteIdType.Grid, label: "Grid & guides", hint: "Snap, grid density, guide lines.", Icon: Grid3x3 },
+  {
+    id: PropertyPaletteIdType.Grid,
+    label: "Grid & guides",
+    hint: "Snap, grid density, guide lines.",
+    Icon: Grid3x3,
+  },
   {
     id: PropertyPaletteIdType.Brush,
     label: "Brush & swatches",
@@ -112,7 +115,12 @@ const PALETTES: readonly PaletteEntry[] = [
     hint: "Jump to the Layers palette at the bottom.",
     Icon: Layers,
   },
-  { id: PropertyPaletteIdType.Type, label: "Type", hint: "Font, size, weight for OCR / text overlays.", Icon: Type },
+  {
+    id: PropertyPaletteIdType.Type,
+    label: "Type",
+    hint: "Font, size, weight for OCR / text overlays.",
+    Icon: Type,
+  },
   {
     id: PropertyPaletteIdType.Paragraph,
     label: "Paragraph",
@@ -141,7 +149,9 @@ interface Props {
 }
 
 export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
-  const mode = useUiPrefsStore((s) => s.propertiesPaletteMode as unknown as PropertiesPaletteModeType);
+  const mode = useUiPrefsStore(
+    (s) => s.propertiesPaletteMode as unknown as PropertiesPaletteModeType,
+  );
   const toggleMode = useUiPrefsStore((s) => s.togglePropertiesPaletteMode);
   const openByKind = useUiPrefsStore((s) => s.propertiesPaletteOpenPaneByKind);
   const setOpenPane = useUiPrefsStore((s) => s.setPropertiesPaletteOpenPane);
@@ -156,7 +166,9 @@ export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
     ruleKind ??
     PropertiesPaletteRuleKindType.Rule;
   const remembered = openByKind[kindKey];
-  const [internal, setInternal] = useState<PropertyPaletteIdType>((remembered as PropertyPaletteIdType | undefined) ?? PropertyPaletteIdType.Info);
+  const [internal, setInternal] = useState<PropertyPaletteIdType>(
+    (remembered as PropertyPaletteIdType | undefined) ?? PropertyPaletteIdType.Info,
+  );
   const activeId = (active ?? remembered ?? internal) as PropertyPaletteIdType;
   const activeEntry = PALETTES.find((p) => p.id === activeId) ?? PALETTES[0];
 
@@ -440,9 +452,26 @@ interface InspectorTab {
 }
 
 const INSPECTOR_TABS: readonly InspectorTab[] = [
-  { id: InspectorTabIdType.Transform, label: "Transform", panes: [PropertyPaletteIdType.Info, PropertyPaletteIdType.Grid, PropertyPaletteIdType.Image] },
-  { id: InspectorTabIdType.Style, label: "Style", panes: [PropertyPaletteIdType.Adjust, PropertyPaletteIdType.Brush, PropertyPaletteIdType.Type, PropertyPaletteIdType.Paragraph] },
-  { id: InspectorTabIdType.Rules, label: "Rules", panes: [PropertyPaletteIdType.History, PropertyPaletteIdType.Css, PropertyPaletteIdType.Layers] },
+  {
+    id: InspectorTabIdType.Transform,
+    label: "Transform",
+    panes: [PropertyPaletteIdType.Info, PropertyPaletteIdType.Grid, PropertyPaletteIdType.Image],
+  },
+  {
+    id: InspectorTabIdType.Style,
+    label: "Style",
+    panes: [
+      PropertyPaletteIdType.Adjust,
+      PropertyPaletteIdType.Brush,
+      PropertyPaletteIdType.Type,
+      PropertyPaletteIdType.Paragraph,
+    ],
+  },
+  {
+    id: InspectorTabIdType.Rules,
+    label: "Rules",
+    panes: [PropertyPaletteIdType.History, PropertyPaletteIdType.Css, PropertyPaletteIdType.Layers],
+  },
 ];
 
 function tabForPane(id: PropertyPaletteIdType): InspectorTabId {
@@ -556,37 +585,26 @@ function TabbedBody({ activeId, onSelect, onToggleMode, sharedKind }: TabbedBody
 function PaletteBody({ id }: { id: PropertyPaletteIdType }) {
   switch (id) {
     case "info":
-
       return <InfoPane />;
     case "history":
-
       return <HistoryPane />;
     case "adjust":
-
       return <AdjustPane />;
     case "grid":
-
       return <GridPane />;
     case "brush":
-
       return <SwatchesPane />;
     case "layers":
-
       return <LayersShortcutPane />;
     case "type":
-
       return <TypePane />;
     case "paragraph":
-
       return <ParagraphPane />;
     case "css":
-
       return <CssPane />;
     case "image":
-
       return <ImagePane />;
     default:
-
       return null;
   }
 }
@@ -671,4 +689,4 @@ function RailTile({ entry, active, disabled, onSelect }: RailTileProps) {
       </TooltipContent>
     </Tooltip>
   );
-}
+}

@@ -77,4 +77,4 @@ export function useEnvelopeQuery<T, K extends QueryKey = QueryKey>(
     pagination: envelope ? derivePagination(envelope.Attributes) : null,
     envelope,
   };
-}
+}

@@ -149,4 +149,4 @@ describe("RuleMetadataBar cycle rejection wiring", () => {
     const lastCall = saveSpy.mock.calls.at(-1);
     expect(lastCall?.[0].name).toBe("Renamed");
   });
-});
+});

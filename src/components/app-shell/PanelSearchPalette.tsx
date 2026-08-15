@@ -1,4 +1,3 @@
-
 export enum PanelSearchPaletteCmdType {
   ExpandSections = "expand-sections",
   CollapseSections = "collapse-sections",
@@ -52,9 +51,7 @@ export function PanelSearchPalette() {
     setOpen(false);
   };
 
-  const handleCommand = (
-    cmd: PanelSearchPaletteCmdType,
-  ) => {
+  const handleCommand = (cmd: PanelSearchPaletteCmdType) => {
     const state = useWorkspaceLayoutStore.getState();
 
     if (cmd === PanelSearchPaletteCmdType.ExpandSections) broadcastInspectorSections(true);

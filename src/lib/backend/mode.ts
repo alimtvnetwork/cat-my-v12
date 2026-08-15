@@ -30,6 +30,6 @@ export const useBackendMode = create<BackendModeState>()(
     {
       name: "app.backend.baseUrl",
       partialize: (state) => ({ baseUrl: state.baseUrl, mode: state.mode }),
-    }
-  )
+    },
+  ),
 );

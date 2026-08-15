@@ -129,4 +129,4 @@ describe("appendRunReducer", () => {
     for (let i = 0; i < 6; i++) state = appendRunReducer(state, mkRun("rs", String(i), i), 3);
     expect(state.rs.map((r) => r.id)).toEqual(["5", "4", "3"]);
   });
-});
+});

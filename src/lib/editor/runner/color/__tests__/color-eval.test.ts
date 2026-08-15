@@ -146,4 +146,4 @@ describe("evaluateColorCondition", () => {
     expect(hexToRgb("#0a141e")).toEqual({ r: 10, g: 20, b: 30 });
     expect(hexToRgb("bad")).toBeNull();
   });
-});
+});

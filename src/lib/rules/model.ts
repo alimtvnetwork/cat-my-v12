@@ -203,4 +203,4 @@ export class RuleValidationError extends Error {
     super(`Rule failed schema validation (${issues.length} issue(s))`);
     this.name = "RuleValidationError";
   }
-}
+}

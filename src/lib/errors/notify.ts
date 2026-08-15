@@ -289,4 +289,4 @@ export function showToastError(
           onClick: () => useErrorStore.getState().openErrorModal(captured),
         },
   });
-}
+}

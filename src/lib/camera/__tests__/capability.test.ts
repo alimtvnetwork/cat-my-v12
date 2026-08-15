@@ -139,4 +139,4 @@ describe("probeCameraCapability", () => {
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.devices).toEqual([]);
   });
-});
+});

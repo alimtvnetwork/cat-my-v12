@@ -237,4 +237,4 @@ export function logFatalReseed(input: {
   });
 
   return event;
-}
+}

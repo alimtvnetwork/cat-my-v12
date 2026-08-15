@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { ListChecks, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import type { ProjectRunSummary } from "@/lib/projects/run";
+import type { ProjectRunSummary } from "@/lib/projects/project-runner";
 
 export function verdictBadge(
   v: ProjectRunSummary["verdict"] | ProjectRunSummary["rules"][number]["verdict"],
@@ -22,7 +22,6 @@ export function ProjectResultSection({
 }) {
   const grouped = useMemo(() => {
     if (!summary)
-
       return [] as Array<{
         rulesetId: string;
         rulesetName: string;

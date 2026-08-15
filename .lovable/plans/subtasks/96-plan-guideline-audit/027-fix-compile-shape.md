@@ -3,6 +3,7 @@
 **Target File:** `src/components/editor/design-mode/compile-shape.ts`
 
 **Violating Lines & Rules:**
+
 - Line 47: **Missing blank line before return**
 - Line 50: **Missing blank line before return**
 - Line 52: **Missing blank line before return**
@@ -12,6 +13,7 @@
 - Line 60: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

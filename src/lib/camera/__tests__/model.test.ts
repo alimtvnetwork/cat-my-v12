@@ -117,4 +117,4 @@ describe("upsertCameraSetting / deleteCameraSetting", () => {
     expect(deleteCameraSetting(lib, "a").entries.map((e) => e.id)).toEqual(["b"]);
     expect(deleteCameraSetting(lib, "missing").entries).toHaveLength(2);
   });
-});
+});

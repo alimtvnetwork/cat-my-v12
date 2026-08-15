@@ -137,4 +137,4 @@ export function makeMicSettingsFacade(): MicSettingsFacade {
 
 export function __setMicSettingsFacadeForTests(f: MicSettingsFacade | null): void {
   cached = f;
-}
+}

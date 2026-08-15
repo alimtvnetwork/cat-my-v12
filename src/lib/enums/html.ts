@@ -22,4 +22,4 @@ export namespace HtmlTagType {
   export function isSelect(val: unknown): val is HtmlTagType.Select {
     return val === HtmlTagType.Select;
   }
-}
+}

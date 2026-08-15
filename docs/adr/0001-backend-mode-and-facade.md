@@ -18,10 +18,10 @@ Furthermore, integrating third-party hardware SDKs poses a risk of vendor lock-i
 
 ## Consequences
 
-- **Pros**: 
+- **Pros**:
   - Zero downtime for UI developers who do not have access to hardware.
   - Clean architecture with a hard boundary against vendor SDKs, simplifying future hardware migrations.
   - Consistent component logic regardless of the data source.
-- **Cons**: 
+- **Cons**:
   - Increased maintenance overhead to keep the Seed mode in sync with the real Backend implementation.
   - Requires writing wrapper classes (Facades) for every hardware SDK feature we wish to use.

@@ -36,7 +36,10 @@ export function ProjectEditorSections({ project, rulesets }: Props) {
         samples={samples}
         selection={selection}
       />
-      <ProjectResultSection summary={runSummary} selectedSampleName={selection.selected?.name ?? null} />
+      <ProjectResultSection
+        summary={runSummary}
+        selectedSampleName={selection.selected?.name ?? null}
+      />
     </div>
   );
 }

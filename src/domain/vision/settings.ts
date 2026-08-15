@@ -43,9 +43,7 @@ export interface PatternSearchSettings {
   view: { source: ImageSourceType; rendering: RenderModeType; zoom: number };
 }
 
-export const createDefaultPatternSearchSettings = (
-  id: string
-): PatternSearchSettings => ({
+export const createDefaultPatternSearchSettings = (id: string): PatternSearchSettings => ({
   id,
   name: "Pattern Search",
   referenceImage: { set: 1, index: 0 },

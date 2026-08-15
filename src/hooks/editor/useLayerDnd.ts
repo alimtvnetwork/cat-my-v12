@@ -148,7 +148,6 @@ export function useLayerDnd({
         KeyboardKeyType.isArrowUp(e.key) === false &&
         KeyboardKeyType.isArrowDown(e.key) === false
       )
-
         return false;
       const idx = orderedRuleIds.indexOf(ruleId);
 

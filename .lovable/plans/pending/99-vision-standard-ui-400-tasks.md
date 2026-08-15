@@ -5,10 +5,13 @@ Status: pending
 Created: 2026-08-14
 
 ## Context
+
 The user requested to break down the "vision task" regarding the standard UI into an extremely detailed 400-step plan by looping. The standard UI is currently described as inflexible and the clicking camera experience is poor. The primary mode should be the static/reference image, with the ability to switch to live camera mode. Additionally, the plan must address observations provided by another AI (`architecture-and-code-observations.md` mentioned in `98-architecture-consolidation-improvements.md` or similar memory files).
 
 ## Instructions for Execution
+
 When the user requests to execute this pending task, the executing AI must do the following:
+
 1. **Looping & Breakdown**: Produce a ~400-task detailed implementation plan.
 2. **Task Details**: Each step in the plan must specify:
    - What needs to be implemented.

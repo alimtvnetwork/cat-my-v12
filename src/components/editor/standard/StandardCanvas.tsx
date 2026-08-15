@@ -99,7 +99,7 @@ export function StandardCanvas({
               geometry={mask.geometry}
               onChange={(g) => updateMaskRegion(i, g)}
             />
-          ) : null
+          ) : null,
         )}
       </div>
     </div>

@@ -135,7 +135,6 @@ function VendorRadioGroup({ vendor, vendors, onChange, describedBy }: VendorRadi
 
         return;
       default:
-
         return;
     }
   };

@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from BE.app.rules import evaluators as _register  # noqa: F401
+from rule_kernel import evaluators as _register  # noqa: F401
 from rule_kernel import predicates
 from rule_kernel.engine import evaluate_bundle
 from rule_kernel.models import (

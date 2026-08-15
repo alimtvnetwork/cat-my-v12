@@ -3,6 +3,7 @@
 **Target File:** `src/components/editor/PropertiesPanel.tsx`
 
 **Violating Lines & Rules:**
+
 - Line 132: **Missing blank line before return**
 - Line 134: **Missing blank line before return**
 - Line 286: **Missing blank line before return**
@@ -15,6 +16,7 @@
 - Line 602: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

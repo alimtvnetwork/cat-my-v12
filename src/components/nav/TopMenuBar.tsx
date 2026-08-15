@@ -827,4 +827,4 @@ function MenubarActionRow({ item, isHydrated }: { item: ActionEntry; isHydrated:
       ) : null}
     </MenubarItem>
   );
-}
+}

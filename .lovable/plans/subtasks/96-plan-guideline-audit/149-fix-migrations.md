@@ -3,6 +3,7 @@
 **Target File:** `src/lib/editor/migrations.ts`
 
 **Violating Lines & Rules:**
+
 - Line 67: **Missing blank line before return**
 - Line 71: **Missing blank line before return**
 - Line 75: **Missing blank line before return**
@@ -18,6 +19,7 @@
 - Line 250: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

@@ -460,7 +460,8 @@ Every variant in a discriminated union **must** be a named interface — inline 
 ```typescript
 // ❌ PROHIBITED — inline types in union
 type ToastAction =
-  { type: "ADD_TOAST"; toast: ToasterToast } | { type: "REMOVE_TOAST"; toastId?: string };
+  | { type: "ADD_TOAST"; toast: ToasterToast }
+  | { type: "REMOVE_TOAST"; toastId?: string };
 
 // ✅ REQUIRED — named interfaces with PascalCase enum
 enum ActionType {

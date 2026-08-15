@@ -1,4 +1,3 @@
-
 export enum HomeBoundariesToneType {
   Muted = "muted",
   Error = "error",
@@ -43,7 +42,13 @@ function HomeFallback({
 }
 
 export function HomePending() {
-  return <HomeFallback tone={HomeBoundariesToneType.Muted} title="Loading home..." body="Fetching workflow status." />;
+  return (
+    <HomeFallback
+      tone={HomeBoundariesToneType.Muted}
+      title="Loading home..."
+      body="Fetching workflow status."
+    />
+  );
 }
 
 export function HomeError({ error, reset }: { error: Error; reset: () => void }) {
@@ -170,4 +175,4 @@ export class HomeErrorBoundary extends Component<{ children: ReactNode }, HomeBo
 
     return this.props.children;
   }
-}
+}

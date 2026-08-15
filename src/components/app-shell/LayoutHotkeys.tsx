@@ -35,12 +35,54 @@ function registerLayoutShortcuts(onReset: () => void, onSnap: () => void, onErro
   const scope = ShortcutScopeBaseType.Global;
 
   return [
-    registerShortcut({ id: "layout.reset.ctrl", scope, combo: "Ctrl+Alt+0", label: "Reset workspace layout", group: "Workspace", run: onReset }),
-    registerShortcut({ id: "layout.reset.meta", scope, combo: "Meta+Alt+0", label: "Reset workspace layout (⌘)", group: "Workspace", run: onReset }),
-    registerShortcut({ id: "editor.snap.toggle.ctrl", scope, combo: "Ctrl+;", label: "Toggle snap to grid", group: "Editor", run: onSnap }),
-    registerShortcut({ id: "editor.snap.toggle.meta", scope, combo: "Meta+;", label: "Toggle snap to grid (⌘)", group: "Editor", run: onSnap }),
-    registerShortcut({ id: "errors.history.ctrl", scope, combo: "Ctrl+Shift+E", label: "Open error history", group: "Errors", run: onError }),
-    registerShortcut({ id: "errors.history.meta", scope, combo: "Meta+Shift+E", label: "Open error history (⌘)", group: "Errors", run: onError }),
+    registerShortcut({
+      id: "layout.reset.ctrl",
+      scope,
+      combo: "Ctrl+Alt+0",
+      label: "Reset workspace layout",
+      group: "Workspace",
+      run: onReset,
+    }),
+    registerShortcut({
+      id: "layout.reset.meta",
+      scope,
+      combo: "Meta+Alt+0",
+      label: "Reset workspace layout (⌘)",
+      group: "Workspace",
+      run: onReset,
+    }),
+    registerShortcut({
+      id: "editor.snap.toggle.ctrl",
+      scope,
+      combo: "Ctrl+;",
+      label: "Toggle snap to grid",
+      group: "Editor",
+      run: onSnap,
+    }),
+    registerShortcut({
+      id: "editor.snap.toggle.meta",
+      scope,
+      combo: "Meta+;",
+      label: "Toggle snap to grid (⌘)",
+      group: "Editor",
+      run: onSnap,
+    }),
+    registerShortcut({
+      id: "errors.history.ctrl",
+      scope,
+      combo: "Ctrl+Shift+E",
+      label: "Open error history",
+      group: "Errors",
+      run: onError,
+    }),
+    registerShortcut({
+      id: "errors.history.meta",
+      scope,
+      combo: "Meta+Shift+E",
+      label: "Open error history (⌘)",
+      group: "Errors",
+      run: onError,
+    }),
   ];
 }
 

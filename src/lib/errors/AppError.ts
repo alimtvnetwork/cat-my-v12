@@ -26,4 +26,4 @@ export function toAppError(error: unknown, fallbackCode: ErrorCodeType): AppErro
   }
 
   return new AppError(fallbackCode, String(error), error);
-}
+}

@@ -159,4 +159,4 @@ function NumberField({ label, value, onChange }: NumberFieldProps) {
       />
     </label>
   );
-}
+}

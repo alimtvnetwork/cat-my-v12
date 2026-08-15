@@ -472,4 +472,4 @@ if (typeof window !== "undefined") {
     console.info("[ui-prefs] cross-tab facade write, rehydrating", msg);
     void useUiPrefsStore.persist.rehydrate();
   });
-}
+}

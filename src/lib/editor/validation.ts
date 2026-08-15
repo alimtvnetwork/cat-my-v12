@@ -67,4 +67,4 @@ export function validateRule(rule: EditorRule, image: EditorRect) {
     name: validateRuleName(rule.name),
     bounds: validateRuleBounds(rule, image),
   };
-}
+}

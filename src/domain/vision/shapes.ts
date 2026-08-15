@@ -72,10 +72,7 @@ export const ShapeCatalog: Record<ShapeType, PatternShape> = {
   },
 };
 
-export const PatternShapes = [
-  ShapeCatalog[ShapeType.Rectangle],
-  ShapeCatalog[ShapeType.Circle],
-];
+export const PatternShapes = [ShapeCatalog[ShapeType.Rectangle], ShapeCatalog[ShapeType.Circle]];
 
 export const MaskShapes = [
   ShapeCatalog[ShapeType.None],

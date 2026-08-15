@@ -9,13 +9,17 @@ import { autoSeedCamerasIfEmpty } from "@/lib/camera/seed";
 import { autoSeedMicSettingsIfEmpty } from "@/lib/mic-settings/seed";
 import { autoSeedImageSamplesIfEmpty } from "@/lib/image-samples/seed";
 import { runAllSeeders, resetSeedFlags, type SeedRunReport } from "@/lib/seed/orchestrator";
-import { logFatalReseed, FatalReseedCauseType, FatalReseedModeType } from "@/lib/seed/telemetry-store";
+import {
+  logFatalReseed,
+  FatalReseedCauseType,
+  FatalReseedModeType,
+} from "@/lib/seed/telemetry-store";
 import {
   buildResetSummaryJson,
   emitResetSummaryJson,
   copyResetSummaryJson,
   type ResetSummaryJson,
-  ResetSummaryPhaseType
+  ResetSummaryPhaseType,
 } from "@/lib/seed/reset-summary-json";
 import { toast } from "sonner";
 import { useErrorStore } from "@/lib/errors/errorStore";

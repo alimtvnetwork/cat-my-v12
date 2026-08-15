@@ -43,4 +43,4 @@ export function CliRouteNotFound({ icon = Compass, title, body }: CliRouteNotFou
       />
     </div>
   );
-}
+}

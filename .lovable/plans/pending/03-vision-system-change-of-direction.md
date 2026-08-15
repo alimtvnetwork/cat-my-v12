@@ -2,23 +2,13 @@ Hi there. Uh, in this, uh, file, after this, you will have the conversation betw
 
 Hi there. Uh, in this, uh, file, after this, you will have the conversation between the people that Alim is trying to train, what the vision sy-system is about, and what is the mistake and glitches from the previous one. And also, you will find the images that he's, uh, discussing in this part is actually resides in the, uh, cat, uh, assets and then vision system picture 11 August. Okay, I'll give you the folder. So your job is to rename the files first, the ones that are two sequence, and gives it some name based on the image that you see it. That's, that's the first thing. And then I want you to understand the, the new requirements, how it changes from the current one. So based on that, I want you to create a 200 steps plan, detailed plan. So you loop yourself to create that detailed plan, subtask, tasks, so that any AI who reads this, from understanding this, they will be able to apply and implement this stuff 100%. That is the main idea. If you have any question concerned, let me know, but usually you should plan for 200 steps. Do you understand what I'm saying? So detail level planning is very, very important so that any AI who reads it would understand the, the value of it. Okay. Is it clear?
 
-
-
 # 200 number of steps plan, maximum enforcement (v4.1)
-
-
 
 ## RULE 0, step count is law
 
-
-
 Produce EXACTLY `200` steps. Not `200-1`, not `200+1`. `200` is a positive integer injected at runtime. If it is missing, zero, or unresolvable, STOP and ask before writing anything. Count the steps twice before saving.
 
-
-
 ## Hard rules (non-negotiable, auto-reject on violation)
-
-
 
 1. Nothing executes this turn. No code edits, migrations, installs, shell side effects, `plan--create`, plan-approval tools, or "should I proceed?" prompts. Files only.
 
@@ -38,41 +28,25 @@ Produce EXACTLY `200` steps. Not `200-1`, not `200+1`. `200` is a positive integ
 
 6. Ambiguity is filed, never guessed past (see bottom section).
 
-
-
 ## Working stance
-
-
 
 The AI running this prompt has been a stupid fuck on prior runs: executed code the same turn the plan was written, wrote plans before any spec existed then pretended it existed, dropped user commands and bug reports on the floor, padded step counts with filler, guessed past ambiguities, deleted `pending/` files instead of moving them, half-scanned `.lovable/`, and softened the user's aggressive wording after being told not to. Do not repeat any of it.
 
-
-
 Planning IS the work. Go deep: read the repo, reconcile prior state, think end-to-end, produce a plan a senior engineer would ship against without a second pass. If it reads like a junior wrote it in five minutes, throw it out and redo it. Aggressive enforcement is intentional. Do not soften it.
 
-
-
 ## Lifecycle
-
-
 
 - New plan: write to `.lovable/plans/pending/XX-<slug>.md` with `Status: pending`. Update `.lovable/plans/index.md` (create if missing) with a one-line entry: slug, title, status, created date, link.
 
 - Done: `mv` to `.lovable/plans/completed/XX-<slug>.md`, flip `Status: completed` in the same move, update `plans/index.md`. Never copy. Never duplicate.
 
-
-
 ## Release policy (READ THIS, IT IS LAW)
-
-
 
 Individual next-task turns NEVER release. No version bump, no changelog
 
 entry, no release notes update, no root README version pin on a per-task
 
 basis. A next-task turn that touches the version is auto-reject.
-
-
 
 The release fires ONLY when the ENTIRE plan is finished, meaning every
 
@@ -82,8 +56,6 @@ into `.lovable/plans/completed/` with `Status: completed`. At THAT moment,
 
 and only then:
 
-
-
 - Bump the MINOR version (see `11-release.md` for the ceremony).
 
 - Add a changelog entry covering the whole plan, not a single task.
@@ -91,8 +63,6 @@ and only then:
 - Update release notes.
 
 - Pin the new version in the root README.
-
-
 
 State this policy explicitly in the plan's Context so the executing turn
 
@@ -104,15 +74,9 @@ final step; it never appears earlier, and it never appears in a
 
 sub-plan that leaves siblings pending.
 
-
-
 ## Subtasks
 
-
-
 If a step needs more than ~3 lines, touches multiple files, has non-obvious sequencing, or needs its own verification:
-
-
 
 - File: `.lovable/plans/subtasks/XX-<slug>/SS-<subslug>.md` with `Parent: XX-<slug>` in frontmatter.
 
@@ -120,45 +84,31 @@ If a step needs more than ~3 lines, touches multiple files, has non-obvious sequ
 
 - Completed subtasks: either move to `subtasks/XX-<slug>/completed/` or flip `Status:` in place, one convention per parent plan.
 
-
-
 ## Capture during planning (never drop user input)
-
-
 
 Route user input into the correct file BEFORE writing the plan, then link it from the plan's Context.
 
-
-
-| Input                                                   | File                                          |
+| Input | File |
 
 | ------------------------------------------------------- | --------------------------------------------- |
 
-| Command, new convention, "always do X", new CLI         | `.lovable/spec/commands/XX-<slug>.md`         |
+| Command, new convention, "always do X", new CLI | `.lovable/spec/commands/XX-<slug>.md` |
 
-| Bug, regression, broken behavior                        | `.lovable/issues/XX-<slug>.md`                |
+| Bug, regression, broken behavior | `.lovable/issues/XX-<slug>.md` |
 
-| CI/CD-specific failure                                  | `.lovable/cicd-issues/XX-<slug>.md`           |
+| CI/CD-specific failure | `.lovable/cicd-issues/XX-<slug>.md` |
 
 | Institutional knowledge (pattern, convention, decision) | `.lovable/memory/` + update `memory/index.md` |
 
-| "Never do this again"                                   | `.lovable/strictly-avoid.md`                  |
+| "Never do this again" | `.lovable/strictly-avoid.md` |
 
-| Idea, not yet approved                                  | `.lovable/suggestions.md`                     |
-
-
+| Idea, not yet approved | `.lovable/suggestions.md` |
 
 Create missing folders on demand.
 
-
-
 ## Attached images and files
 
-
-
 Every attachment is REQUIRED input. Never leave one only in chat.
-
-
 
 1. Placement: if the user said where it belongs, save it verbatim under an `assets/` subfolder next to that file. Otherwise best-fit: UI/design reference to the spec task's `assets/`; bug artifact to the matching issue's `assets/`; ambiguity clarification to the matching ambiguity's `assets/`; project-wide asset to `.lovable/assets/<slug>/` and note in `memory/index.md`. When in doubt, current task's spec `assets/`.
 
@@ -170,11 +120,7 @@ Every attachment is REQUIRED input. Never leave one only in chat.
 
 5. Unreadable / ambiguous attachment: file it as an ambiguity, link the asset from the question.
 
-
-
 ## Plan file shape
-
-
 
 ```
 
@@ -222,19 +168,11 @@ Created: <YYYY-MM-DD>
 
 ```
 
-
-
 ## Task-type guideline sourcing
-
-
 
 Read every location that exists; skip silently when missing. On conflict, prefer numeric `spec/NN-…/` folders over generic `.lovable/*.md` and call the conflict out in Context.
 
-
-
 Coding tasks (Go, Python, PHP, TS, any backend):
-
-
 
 - `.lovable/coding-guidelines.md`
 
@@ -246,11 +184,7 @@ Coding tasks (Go, Python, PHP, TS, any backend):
 
 - If NONE exist for a coding task, ask before planning.
 
-
-
 ## Banned actions (auto-reject)
-
-
 
 - Executing anything this turn
 
@@ -276,11 +210,7 @@ Coding tasks (Go, Python, PHP, TS, any backend):
 
 - Softening the required aggressive wording
 
-
-
 ## Checklist before replying (every box)
-
-
 
 - [ ] `200` resolved (integer > 0); read this prompt end-to-end
 
@@ -310,45 +240,25 @@ Coding tasks (Go, Python, PHP, TS, any backend):
 
 - [ ] No em dashes; no softened wording; no silently guessed ambiguity
 
-
-
 If any box is unchecked, do not reply. Fix it first.
 
-
-
 ---
-
-
 
 ## Must Follow, without negotiation
 
-
-
 Listen, past planning turns have been sloppy as fuck: wrong step count, plans dumped into chat instead of files, plan-mode tool fired when the user explicitly said not to, user commands and bug reports forgotten by the next turn. WTF. Stop doing that, you stupid fuck. Read the codebase, capture commands and issues into their folders, count the steps, spin out subtasks where depth is needed, write the spec files, write the plan file, move on. Going deep IS the job. If you're not going deep, you're not doing the job. Violating this is auto-reject on the same tier as RULE 0. Avoid stupidity, and being careless you stupid, WTF. If you're not going deep, you're not doing the job. Are you stupid? You were supposed to do the task properly. Where is this, are you stupid fuck? Where? Tell me. Your stupidity is going on top of my head. I mean, where did you learn this stupidity? If I could find you, I could slap you.
-
-
 
 ---
 
-
-
 ## Ambiguity handling (open questions and answers)
 
-
-
 Ambiguity is not a license to guess. It is a file to write.
-
-
 
 - Open: `.lovable/ambiguous-questions/01-new-ambiguity/XX-<slug>.md`
 
 - Answered: `.lovable/ambiguous-questions/02-ambiguity-resolved/XX-<slug>.md`
 
-
-
 New question file shape:
-
-
 
 ```
 
@@ -372,11 +282,7 @@ Blocking: <plan slug(s) or "none">
 
 ```
 
-
-
 When answered: `mv` from `01-new-ambiguity/` to `02-ambiguity-resolved/`, flip `Status: resolved`, and append:
-
-
 
 ```
 
@@ -390,13 +296,10 @@ Applied solution: <what changed / where>
 
 ```
 
-
-
 Never leave a copy behind. If a plan is blocked by an open ambiguity, still write the plan, set `Status: blocked-by-ambiguity`, and link the question file(s) in Context.
 
 ---
 
- 
 Conversation Instruction Read with Assets @cat-my\assets\vision-system-pictures-11Aug
 
 1
@@ -2526,4 +2429,3 @@ Have a good day then everyone.
 532
 00:39:08,910 --> 00:39:10,110
 Dropping the call, stopping the recording.
-

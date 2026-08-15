@@ -40,4 +40,4 @@ export async function QueryWrapper<T>(
 
     throw error;
   }
-}
+}

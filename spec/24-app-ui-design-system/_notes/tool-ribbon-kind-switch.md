@@ -55,7 +55,8 @@ state when `selection.length !== 1`.
 // src/lib/editor/store/actions/rules.ts
 export type KindSwitchInput = { id: RuleId; kind: RuleKind };
 export type KindSwitchResult =
-  { ok: true; entry: HistoryEntry<"rule.kind-switch"> } | { ok: false; error: EditorError };
+  | { ok: true; entry: HistoryEntry<"rule.kind-switch"> }
+  | { ok: false; error: EditorError };
 
 export function kindSwitch(input: KindSwitchInput): KindSwitchResult;
 ```

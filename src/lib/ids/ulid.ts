@@ -25,4 +25,4 @@ export function assertUlid(value: unknown, field = "id"): string {
   if (isUlid(value) === false) throw new UlidFormatError(value, field);
 
   return value;
-}
+}

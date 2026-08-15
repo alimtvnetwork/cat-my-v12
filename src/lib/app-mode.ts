@@ -32,4 +32,4 @@ export function getAppMode(): AppModeValue {
 // a generic toast fallback to avoid leaking stack traces to end users.
 export function isDialogVisibleMode(mode: AppModeValue): boolean {
   return mode === AppMode.Dev || mode === AppMode.Test;
-}
+}

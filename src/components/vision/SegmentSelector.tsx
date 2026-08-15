@@ -1,22 +1,23 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
 
 export function SegmentSelector() {
-  const { segments, activeSegmentId, setActiveSegment, addSegment, renameSegment, deleteSegment } = useVisionStore();
+  const { segments, activeSegmentId, setActiveSegment, addSegment, renameSegment, deleteSegment } =
+    useVisionStore();
 
   const handleRename = () => {
     if (!activeSegmentId) return;
-    const segment = segments.find(s => s.visionSettings.id === activeSegmentId);
-    const currentName = segment?.visionSettings.name || '';
-    const newName = window.prompt('Enter new segment name:', currentName);
-    if (newName !== null && newName.trim() !== '') {
+    const segment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
+    const currentName = segment?.visionSettings?.name || "";
+    const newName = window.prompt("Enter new segment name:", currentName);
+    if (newName !== null && newName.trim() !== "") {
       renameSegment(activeSegmentId, newName.trim());
     }
   };
 
   const handleDelete = () => {
     if (!activeSegmentId) return;
-    if (window.confirm('Are you sure you want to delete this segment?')) {
+    if (window.confirm("Are you sure you want to delete this segment?")) {
       deleteSegment(activeSegmentId);
     }
   };
@@ -29,14 +30,14 @@ export function SegmentSelector() {
       <div className="flex flex-wrap gap-2 items-center">
         <select
           id="segment-select"
-          value={activeSegmentId || ''}
+          value={activeSegmentId || ""}
           onChange={(e) => setActiveSegment(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
         >
           <option value="">-- Choose a segment --</option>
           {segments.map((segment) => (
-            <option key={segment.visionSettings.id} value={segment.visionSettings.id}>
-              {segment.visionSettings.name || segment.visionSettings.id}
+            <option key={segment.visionSettings?.id} value={segment.visionSettings?.id}>
+              {segment.visionSettings?.name || segment.visionSettings?.id}
             </option>
           ))}
         </select>

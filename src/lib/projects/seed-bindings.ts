@@ -173,4 +173,4 @@ export async function bindSeededProjects(
   });
 
   return result;
-}
+}

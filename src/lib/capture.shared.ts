@@ -53,7 +53,6 @@ export function parseDeviceSelection(input: unknown): { vendor: CaptureVendor; s
   const vendor = raw.vendor;
 
   if (typeof vendor !== "string" || isCaptureVendor(vendor) === false)
-
     throw new Error("E_CFG_BAD_INPUT: vendor");
   const serial = typeof raw.serial === "string" ? raw.serial.trim() : "";
   const hasValidSerial = serial.length >= 1 && serial.length <= 128 && SERIAL_RE.test(serial);
@@ -149,4 +148,4 @@ export function parseCorrelationId(message: string | undefined | null): string |
   const m = String(message ?? "").match(CID_RE);
 
   return m ? m[1] : null;
-}
+}

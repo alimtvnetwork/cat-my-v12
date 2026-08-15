@@ -3,6 +3,7 @@
 **Target File:** `src/lib/editor/math/parser.ts`
 
 **Violating Lines & Rules:**
+
 - Line 14: **Missing blank line before return**
 - Line 42: **Missing blank line before return**
 - Line 46: **Missing blank line before return**
@@ -12,6 +13,7 @@
 - Line 245: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

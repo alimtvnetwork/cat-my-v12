@@ -1,4 +1,3 @@
-
 export enum CanvasViewportPresetType {
   Subtle = "subtle",
   Standard = "standard",
@@ -1697,4 +1696,4 @@ function logRejected(kind: EditorRuleKind, times: number[]): void {
   if (times.length >= 5) return;
   times.push(now);
   logger.warn("W_UI_RULE_CREATE_REJECTED", { kind, reason: "below_min_size" });
-}
+}

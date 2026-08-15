@@ -118,4 +118,4 @@ export function RulesetsIllustration(props: SVGProps<SVGSVGElement>) {
       <path d="M72 32 h18 M72 36 h12" className="stroke-ca-select" strokeWidth={1.25} />
     </svg>
   );
-}
+}

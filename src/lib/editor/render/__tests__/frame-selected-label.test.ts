@@ -129,4 +129,4 @@ describe("renderFrame: in-shape ROI label", () => {
       rec.fillRects.some((f) => f.x === r.x && f.y === r.y && f.w === r.width && f.h === r.height),
     ).toBe(false);
   });
-});
+});

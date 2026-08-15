@@ -28,7 +28,8 @@ export function exportCameraLibraryJson(lib: CameraLibrary): string {
 }
 
 export type ImportResult =
-  { ok: true; isFail: false; entries: CameraSetting[] } | { ok: false; isFail: true; errors: CameraValidationError[] };
+  | { ok: true; isFail: false; entries: CameraSetting[] }
+  | { ok: false; isFail: true; errors: CameraValidationError[] };
 
 export function importCameraLibraryJson(text: string): ImportResult {
   let parsed: unknown;
@@ -36,7 +37,8 @@ export function importCameraLibraryJson(text: string): ImportResult {
     parsed = JSON.parse(text);
   } catch (err) {
     return {
-      ok: false, isFail: true,
+      ok: false,
+      isFail: true,
       errors: [{ path: "$", message: `Invalid JSON: ${(err as Error).message}` }],
     };
   }
@@ -48,11 +50,19 @@ export function importCameraLibraryJson(text: string): ImportResult {
   const obj = parsed as { kind?: unknown; version?: unknown; entries?: unknown };
 
   if (obj.kind !== "ca.camera.library") {
-    return { ok: false, isFail: true, errors: [{ path: "kind", message: 'Expected "ca.camera.library"' }] };
+    return {
+      ok: false,
+      isFail: true,
+      errors: [{ path: "kind", message: 'Expected "ca.camera.library"' }],
+    };
   }
 
   if (obj.version !== 1) {
-    return { ok: false, isFail: true, errors: [{ path: "version", message: "Unsupported version, expected 1" }] };
+    return {
+      ok: false,
+      isFail: true,
+      errors: [{ path: "version", message: "Unsupported version, expected 1" }],
+    };
   }
 
   if (Array.isArray(obj.entries) === false) {
@@ -73,4 +83,4 @@ export function importCameraLibraryJson(text: string): ImportResult {
   if (errors.length > 0) return { ok: false, isFail: true, errors };
 
   return { ok: true, isFail: false, entries };
-}
+}

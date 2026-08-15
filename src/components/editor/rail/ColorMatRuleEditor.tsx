@@ -201,4 +201,4 @@ function NumericSlider({ label, value, min, max, step, onChange, format }: Numer
       />
     </label>
   );
-}
+}

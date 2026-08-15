@@ -341,7 +341,6 @@ export function applySetBounds(
       r.width === clamped.width &&
       r.height === clamped.height
     )
-
       return r;
     hasChanged = true;
 
@@ -726,4 +725,4 @@ export const useRulesStore = create<RulesStore>((set, get) => ({
   __resetForTests: (state) => {
     set({ ...INITIAL_STATE, ...state });
   },
-}));
+}));

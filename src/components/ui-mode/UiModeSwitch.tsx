@@ -20,7 +20,9 @@ export function UiModeSwitch() {
           }`}
         />
       </button>
-      <span className={isStandard ? "text-ca-ink font-semibold" : "text-ca-ink-muted"}>Standard</span>
+      <span className={isStandard ? "text-ca-ink font-semibold" : "text-ca-ink-muted"}>
+        Standard
+      </span>
     </div>
   );
 }

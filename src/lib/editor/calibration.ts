@@ -84,4 +84,4 @@ export function getCalibrationSuggestion(kind: EditorRuleKind): CalibrationSugge
 
 export function getAllCalibrationSuggestions(): CalibrationSuggestion[] {
   return Object.values(SUGGESTIONS).filter((s): s is CalibrationSuggestion => s !== undefined);
-}
+}

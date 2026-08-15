@@ -9,24 +9,24 @@ The system comprises several isolated processes running on the host, communicati
 ```mermaid
 flowchart TD
   Operator(["Operator"])
-  
+
   subgraph Host["Host Machine"]
     Shell["Chromium-Embed Shell<br/>(Tauri/Electron)"]
     UI["React + Tailwind UI<br/>(Renderer)"]
-    
+
     subgraph BE["BE (FastAPI :8787)"]
       BERoutes["Routes / Meta / Rules"]
       BEObservability["Observability / CLI"]
       BEFacades["SDK Facades"]
     end
-    
+
     subgraph SupervisorApp["Supervisor App"]
       Supervisor["Supervisor Process"]
       Capture["Capture Process<br/>(Camera SDK)"]
       Dispatcher["Dispatcher"]
       Workers["Worker Pool"]
     end
-    
+
     subgraph Storage["Local Storage"]
       RootDb[("root.db")]
       TaskDb[("tasks/<id>/task.db")]
@@ -42,7 +42,7 @@ flowchart TD
   Supervisor --> Capture
   Supervisor --> Dispatcher
   Dispatcher --> Workers
-  
+
   BE --> RootDb
   BE --> RulesDb
   Workers --> TaskDb
@@ -53,38 +53,38 @@ flowchart TD
 
 This section maps UI concepts to their actual targets. Note: UI primarily uses `createServerFn` (TanStack) which internally delegates to `beFetch` targeting `BE/`, or accesses local seed data.
 
-| Route / Screen | Transport / Mechanism | Canonical Target | Notes |
-|----------------|-----------------------|------------------|-------|
-| Settings / Health | `apiFetch` | `BE/routes/health.py` (`/api/health`) | Direct HTTP |
-| Rules Editor | `createServerFn` → `beFetch` | `BE/routes/rules.py` | Full CRUD |
-| Observability | `createServerFn` → `beFetch` | `BE/routes/observability/**` | CLI sessions, logs |
-| Diagnostics | `createServerFn` → `beFetch` | `BE/routes/cli_doctor.py` | Health reports |
-| Project / Captures | `createServerFn` → `beFetch` | `BE/routes/samples.py` | Image sampling |
-| Seed/Demo | Local DB (IndexedDB / memory) | `src/lib/seed/` | No network |
+| Route / Screen     | Transport / Mechanism         | Canonical Target                      | Notes              |
+| ------------------ | ----------------------------- | ------------------------------------- | ------------------ |
+| Settings / Health  | `apiFetch`                    | `BE/routes/health.py` (`/api/health`) | Direct HTTP        |
+| Rules Editor       | `createServerFn` → `beFetch`  | `BE/routes/rules.py`                  | Full CRUD          |
+| Observability      | `createServerFn` → `beFetch`  | `BE/routes/observability/**`          | CLI sessions, logs |
+| Diagnostics        | `createServerFn` → `beFetch`  | `BE/routes/cli_doctor.py`             | Health reports     |
+| Project / Captures | `createServerFn` → `beFetch`  | `BE/routes/samples.py`                | Image sampling     |
+| Seed/Demo          | Local DB (IndexedDB / memory) | `src/lib/seed/`                       | No network         |
 
 ## 3. Write-Path Table
 
 Mutations (creates, updates, deletes) flow through distinct paths based on their domain:
 
-| Mutation Domain | UI Mechanism | Intermediary | Ultimate Writer |
-|-----------------|--------------|--------------|-----------------|
-| Rule Updates | `useServerFn` | `beFetch` | `BE/repos/` → `RulesDb` / `RootDb` |
-| Project Config | `useServerFn` | `beFetch` | `BE/repos/` → `RootDb` |
-| Camera Settings | `useServerFn` | `BE Facades` | `app/capture/` (via IPC) |
-| System Config | `useServerFn` | `beFetch` | `BE/routes/cli_config.py` |
-| Local UI Prefs | `useStore` (Zustand) | Browser Storage | IndexedDB / LocalStorage |
+| Mutation Domain | UI Mechanism         | Intermediary    | Ultimate Writer                    |
+| --------------- | -------------------- | --------------- | ---------------------------------- |
+| Rule Updates    | `useServerFn`        | `beFetch`       | `BE/repos/` → `RulesDb` / `RootDb` |
+| Project Config  | `useServerFn`        | `beFetch`       | `BE/repos/` → `RootDb`             |
+| Camera Settings | `useServerFn`        | `BE Facades`    | `app/capture/` (via IPC)           |
+| System Config   | `useServerFn`        | `beFetch`       | `BE/routes/cli_config.py`          |
+| Local UI Prefs  | `useStore` (Zustand) | Browser Storage | IndexedDB / LocalStorage           |
 
 ## 4. Ownership Matrix
 
 Identifies the canonical owner for specific system concerns to avoid duplicate rule-engine drift or parallel implementations.
 
-| Concern | Canonical owner | Notes |
-|---------|-----------------|-------|
-| Rule CRUD (setup) | `BE/routes/rules.py` → `BE/repos/` | FE Save button |
-| Rule evaluation (live run) | `rule_kernel/engine.py` | Shared by BE and worker |
-| Camera list/capture | `BE/sdk_facade/camera.py` + `app/capture/` | Split today |
-| Observability / CLI | `BE/routes/observability/**` | |
-| Seed/demo data | `src/lib/seed/` + facades | No network |
+| Concern                    | Canonical owner                            | Notes                   |
+| -------------------------- | ------------------------------------------ | ----------------------- |
+| Rule CRUD (setup)          | `BE/routes/rules.py` → `BE/repos/`         | FE Save button          |
+| Rule evaluation (live run) | `rule_kernel/engine.py`                    | Shared by BE and worker |
+| Camera list/capture        | `BE/sdk_facade/camera.py` + `app/capture/` | Split today             |
+| Observability / CLI        | `BE/routes/observability/**`               |                         |
+| Seed/demo data             | `src/lib/seed/` + facades                  | No network              |
 
 ## 5. Explicit "Do Not" List
 
@@ -110,4 +110,4 @@ To ensure cross-layer compatibility (UI → BE → envelope shape → error code
 - Missing explicit supervisor endpoints accessed directly by the UI. Most communication currently routes through `BE/`.
 - TBD: Worker to UI real-time progress (SSE) boundary mapping.
 
-*Last Verified: 2026-08-16*
+_Last Verified: 2026-08-16_

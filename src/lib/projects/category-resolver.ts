@@ -84,4 +84,4 @@ export function resolveAllCategories(
   }
 
   return out;
-}
+}

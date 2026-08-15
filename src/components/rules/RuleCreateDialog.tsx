@@ -1,4 +1,3 @@
-
 export enum RuleCreateDialogKindModeType {
   Both = "both",
   Rule = "rule",
@@ -80,17 +79,28 @@ export function RuleCreateDialog({
   const [pocketSize, setPocketSize] = useState<PocketSize | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const availableKinds = useMemo(() => {
-    if (kindMode === RuleCreateDialogKindModeType.Rule) return [RuleCreateDialogInitialKindType.Rule] as const;
+    if (kindMode === RuleCreateDialogKindModeType.Rule)
+      return [RuleCreateDialogInitialKindType.Rule] as const;
 
-    if (kindMode === RuleCreateDialogKindModeType.Category) return [RuleCreateDialogInitialKindType.Category] as const;
+    if (kindMode === RuleCreateDialogKindModeType.Category)
+      return [RuleCreateDialogInitialKindType.Category] as const;
 
-    return [RuleCreateDialogInitialKindType.Rule, RuleCreateDialogInitialKindType.Category] as const;
+    return [
+      RuleCreateDialogInitialKindType.Rule,
+      RuleCreateDialogInitialKindType.Category,
+    ] as const;
   }, [kindMode]);
   const isClosed = !open;
 
   useEffect(() => {
     if (isClosed) return;
-    setKind(kindMode === RuleCreateDialogKindModeType.Rule ? RuleCreateDialogInitialKindType.Rule : kindMode === RuleCreateDialogKindModeType.Category ? RuleCreateDialogInitialKindType.Category : initialKind);
+    setKind(
+      kindMode === RuleCreateDialogKindModeType.Rule
+        ? RuleCreateDialogInitialKindType.Rule
+        : kindMode === RuleCreateDialogKindModeType.Category
+          ? RuleCreateDialogInitialKindType.Category
+          : initialKind,
+    );
     setPocketSize(undefined);
     setName(sourceName ? `Copy of ${sourceName}` : "");
     setSubmitting(false);

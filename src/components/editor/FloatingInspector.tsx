@@ -1,4 +1,3 @@
-
 export enum FloatingInspectorPropsKindType {
   R = "R",
   C = "C",
@@ -203,7 +202,6 @@ export function FloatingInspector({ title, hasSelection, kind, children }: Float
 
           return;
         default:
-
           return;
       }
 

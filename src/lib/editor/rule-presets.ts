@@ -163,4 +163,4 @@ export function applyPresetParams(
   preset: RulePreset,
 ): EditorRuleParams {
   return { ...(current ?? {}), ...preset.params };
-}
+}

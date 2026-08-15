@@ -290,4 +290,4 @@ export function isInvalid(report: SeedGapReport): boolean {
 
 export function hasInaccurateSpace(report: SeedGapReport): boolean {
   return report.ok === false;
-}
+}

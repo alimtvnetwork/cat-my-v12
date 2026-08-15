@@ -1,6 +1,7 @@
 # UI Fixes
 
 ## Sub-tasks
+
 1. **Fix duplicate "Setup" in the header**
    - The global header shows "Setup" in the breadcrumbs and also in the TopMenuBar's active group. Investigate `HeaderCrumbs` and `TopMenuBar` to prevent visually redundant Setup pills in compact mode.
 

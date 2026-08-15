@@ -1,4 +1,3 @@
-
 export enum DeviceDiscoveryPanelCallerType {
   GetDiscoveredDevices = "getDiscoveredDevices",
   SelectCaptureDevice = "selectCaptureDevice",
@@ -84,11 +83,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
   // any subscribed dialog / prod-toast provider fires, (3) retain the last
   // failure so tests and screen readers still get a live alert region.
   const surfaceFailure = useCallback(
-    (
-      caller: DeviceDiscoveryPanelCallerType,
-      failure: CaptureFailure,
-      raw?: unknown,
-    ) => {
+    (caller: DeviceDiscoveryPanelCallerType, failure: CaptureFailure, raw?: unknown) => {
       setLastFailure(failure);
 
       if (lastToastRef.current != null) toast.dismiss(lastToastRef.current);
@@ -101,7 +96,9 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         { source: `hmi/DeviceDiscovery.${caller}` },
       );
       reportError(
-        caller === DeviceDiscoveryPanelCallerType.ClientGate ? ErrorSourceType.Manual : ErrorSourceType.ServerFn,
+        caller === DeviceDiscoveryPanelCallerType.ClientGate
+          ? ErrorSourceType.Manual
+          : ErrorSourceType.ServerFn,
         raw ?? new Error(failure.message),
         {
           caller,
@@ -120,7 +117,9 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         setDevices(res.devices);
         setScannedAt(new Date(res.scannedAt).toLocaleTimeString());
       })
-      .catch((err) => surfaceFailure(DeviceDiscoveryPanelCallerType.GetDiscoveredDevices, toFailure(err), err));
+      .catch((err) =>
+        surfaceFailure(DeviceDiscoveryPanelCallerType.GetDiscoveredDevices, toFailure(err), err),
+      );
   }, [discover, surfaceFailure]);
 
   useEffect(() => {
@@ -145,7 +144,9 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         setDevices(res.devices);
         onVendorSelected(res.vendor);
       })
-      .catch((err) => surfaceFailure(DeviceDiscoveryPanelCallerType.SelectCaptureDevice, toFailure(err), err));
+      .catch((err) =>
+        surfaceFailure(DeviceDiscoveryPanelCallerType.SelectCaptureDevice, toFailure(err), err),
+      );
   };
 
   return (

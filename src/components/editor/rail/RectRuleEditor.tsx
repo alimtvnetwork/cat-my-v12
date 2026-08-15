@@ -120,4 +120,4 @@ function NumericSlider({ label, value, min, max, step = 1, onChange }: FieldProp
       />
     </label>
   );
-}
+}

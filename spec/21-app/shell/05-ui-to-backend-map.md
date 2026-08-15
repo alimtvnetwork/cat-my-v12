@@ -58,20 +58,20 @@ Column semantics:
 
 ## HMI components (event-level)
 
-| Component | Event | IPC method | Codes | Auth |
+| Component                                     | Event          | IPC method                          | Codes                                               | Auth  |
 | --------------------------------------------- | -------------- | ----------------------------------- | --------------------------------------------------- | ----- | --- |
-| `src/components/hmi/ActionBar.tsx` | primary action | delegates to route method | — | user |
-| `src/components/hmi/Counter.tsx` | tick | (read-only from `run.state.stream`) | — | user |
-| `src/components/hmi/DeviceDiscoveryPanel.tsx` | discover | `capture.vendor.discover` | `I_VENDOR_DISCOVERED` / `E_VENDOR_DISCOVERY_FAILED` | user |
-| `src/components/hmi/DeviceDiscoveryPanel.tsx` | select | `capture.vendor.select` | `I_VENDOR_SELECTED` / `E_VENDOR_SELECT_FAILED` | admin |
-| `src/components/hmi/FeatureGate.tsx` | mount | `license.features.read` | `I_FEATURES_READ` / `E_FEATURES_FAILED` | user |
-| `src/components/hmi/GlobalNav.tsx` | nav | (client-only, no IPC) | — | — |
-| `src/components/hmi/HmiShell.tsx` | mount | `shell.ready.probe` | `I_SHELL_READY` / `E_SHELL_BOOT_FAILED` | anon |
-| `src/components/hmi/MachineFrame.tsx` | mount | (composition only) | — | — |
-| `src/components/hmi/ModeHeader.tsx` | mode switch | `run.mode.set` | `I_RUN_MODE_SET` / `E_RUN_MODE_FAILED` | user |
-| `src/components/hmi/StatusLog.tsx` | mount | `ops.events.subscribe` | `I_OPS_SUBSCRIBED` / `E_OPS_SUBSCRIBE_FAILED` | user | WS |
-| `src/components/hmi/Titlebar.tsx` | close | `shell.shutdown.request` | `I_SHELL_SHUTDOWN` / — | user |
-| `src/components/hmi/Viewport.tsx` | mount | `capture.frame.subscribe` | `I_FRAME_SUBSCRIBED` / `E_FRAME_SUBSCRIBE_FAILED` | user | WS |
+| `src/components/hmi/ActionBar.tsx`            | primary action | delegates to route method           | —                                                   | user  |
+| `src/components/hmi/Counter.tsx`              | tick           | (read-only from `run.state.stream`) | —                                                   | user  |
+| `src/components/hmi/DeviceDiscoveryPanel.tsx` | discover       | `capture.vendor.discover`           | `I_VENDOR_DISCOVERED` / `E_VENDOR_DISCOVERY_FAILED` | user  |
+| `src/components/hmi/DeviceDiscoveryPanel.tsx` | select         | `capture.vendor.select`             | `I_VENDOR_SELECTED` / `E_VENDOR_SELECT_FAILED`      | admin |
+| `src/components/hmi/FeatureGate.tsx`          | mount          | `license.features.read`             | `I_FEATURES_READ` / `E_FEATURES_FAILED`             | user  |
+| `src/components/hmi/GlobalNav.tsx`            | nav            | (client-only, no IPC)               | —                                                   | —     |
+| `src/components/hmi/HmiShell.tsx`             | mount          | `shell.ready.probe`                 | `I_SHELL_READY` / `E_SHELL_BOOT_FAILED`             | anon  |
+| `src/components/hmi/MachineFrame.tsx`         | mount          | (composition only)                  | —                                                   | —     |
+| `src/components/hmi/ModeHeader.tsx`           | mode switch    | `run.mode.set`                      | `I_RUN_MODE_SET` / `E_RUN_MODE_FAILED`              | user  |
+| `src/components/hmi/StatusLog.tsx`            | mount          | `ops.events.subscribe`              | `I_OPS_SUBSCRIBED` / `E_OPS_SUBSCRIBE_FAILED`       | user  | WS  |
+| `src/components/hmi/Titlebar.tsx`             | close          | `shell.shutdown.request`            | `I_SHELL_SHUTDOWN` / —                              | user  |
+| `src/components/hmi/Viewport.tsx`             | mount          | `capture.frame.subscribe`           | `I_FRAME_SUBSCRIBED` / `E_FRAME_SUBSCRIBE_FAILED`   | user  | WS  |
 
 ## Ops tiles
 

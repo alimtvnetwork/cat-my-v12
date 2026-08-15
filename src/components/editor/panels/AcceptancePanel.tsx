@@ -32,7 +32,6 @@ export function readConditions(rule: EditorRule): AcceptanceCondition[] {
       const parsed = JSON.parse(raw);
 
       if (Array.isArray(parsed))
-
         return parsed.map(normalize).filter(Boolean) as AcceptanceCondition[];
     } catch {
       // fall through to legacy migration
@@ -398,4 +397,4 @@ function clampPct(n: number): number {
   if (n > 100) return 100;
 
   return Math.round(n);
-}
+}

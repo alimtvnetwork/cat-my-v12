@@ -49,20 +49,20 @@ Feature names are PascalCase, no underscores, no dots. They describe capabilitie
 
 Initial catalog:
 
-| Feature | TierOne | TierTwo | TierThree |
+| Feature                    | TierOne | TierTwo | TierThree |
 | -------------------------- | :-----: | :-----: | :-------: | ------------------------------------------------------------------ |
-| RunInspection | Y | Y | Y |
-| ConfigureRules | Y | Y | Y |
-| ExportResultsJson | Y | Y | Y |
-| MultiVendorCameraSelection | - | Y | Y |
-| ExtendedOcrEngines | - | Y | Y |
-| CloudRuleCatalogDownload | - | - | Y |
-| RuleBundleImport | - | - | Y | Locked in `spec/21-app/70-rule-bundle-import-export.md` (Plan 16). |
-| RuleBundleExport | - | - | Y | Locked in `spec/21-app/70-rule-bundle-import-export.md` (Plan 16). |
-| AuditBundleExport | - | Y | Y | Locked in `spec/21-app/71-audit-retention.md` §71.5.7. |
-| AuditBundleExportSigned | - | - | Y | Signed download URL gate for private audit bundles. |
-| AuditBundleExportAdmin | - | - | Y | Allows admin-write rows in audit bundle exports. |
-| RemoteDiagnostics | - | - | Y |
+| RunInspection              |    Y    |    Y    |     Y     |
+| ConfigureRules             |    Y    |    Y    |     Y     |
+| ExportResultsJson          |    Y    |    Y    |     Y     |
+| MultiVendorCameraSelection |    -    |    Y    |     Y     |
+| ExtendedOcrEngines         |    -    |    Y    |     Y     |
+| CloudRuleCatalogDownload   |    -    |    -    |     Y     |
+| RuleBundleImport           |    -    |    -    |     Y     | Locked in `spec/21-app/70-rule-bundle-import-export.md` (Plan 16). |
+| RuleBundleExport           |    -    |    -    |     Y     | Locked in `spec/21-app/70-rule-bundle-import-export.md` (Plan 16). |
+| AuditBundleExport          |    -    |    Y    |     Y     | Locked in `spec/21-app/71-audit-retention.md` §71.5.7.             |
+| AuditBundleExportSigned    |    -    |    -    |     Y     | Signed download URL gate for private audit bundles.                |
+| AuditBundleExportAdmin     |    -    |    -    |     Y     | Allows admin-write rows in audit bundle exports.                   |
+| RemoteDiagnostics          |    -    |    -    |     Y     |
 
 New features are added by:
 

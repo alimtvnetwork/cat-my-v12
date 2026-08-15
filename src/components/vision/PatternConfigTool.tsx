@@ -1,22 +1,28 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { PatternConfig } from '../../lib/vision/types';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { PatternConfig } from "../../lib/vision/types";
 
 export function PatternConfigTool() {
   const { segments, activeSegmentId, setPatternConfig } = useVisionStore();
 
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
   if (!activeSegment || !activeSegment.visionSettings) return null;
 
   const patternConfig = activeSegment.visionSettings.roi?.patternConfig || {
     enabled: false,
     edgeStrength: 50,
-    polarity: 'ANY',
+    polarity: "ANY",
     inverseLogic: false,
   };
 
@@ -30,7 +36,7 @@ export function PatternConfigTool() {
     setPatternConfig(segmentId, { edgeStrength: value[0] });
   };
 
-  const handlePolarityChange = (value: PatternConfig['polarity']) => {
+  const handlePolarityChange = (value: PatternConfig["polarity"]) => {
     setPatternConfig(segmentId, { polarity: value });
   };
 
@@ -42,14 +48,14 @@ export function PatternConfigTool() {
     <Card className="shadow-md border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-lg font-semibold tracking-tight">Generic Pattern Config</CardTitle>
-          <CardDescription>
-            Basic pattern and edge detection configuration.
-          </CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">
+            Generic Pattern Config
+          </CardTitle>
+          <CardDescription>Basic pattern and edge detection configuration.</CardDescription>
         </div>
         <Switch checked={patternConfig.enabled} onCheckedChange={handleEnabledChange} />
       </CardHeader>
-      
+
       {patternConfig.enabled && (
         <CardContent>
           <div className="space-y-6">
@@ -66,7 +72,7 @@ export function PatternConfigTool() {
                 className="w-full"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Edge Polarity</Label>
               <Select value={patternConfig.polarity} onValueChange={handlePolarityChange}>

@@ -1,4 +1,3 @@
-
 export enum PropertiesPanelToneType {
   On = "on",
   Off = "off",
@@ -286,7 +285,15 @@ function freshVerdictId(): string {
   return `ac-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function CountBadge({ n, tone, label }: { n: number; tone: PropertiesPanelToneType; label?: string }) {
+function CountBadge({
+  n,
+  tone,
+  label,
+}: {
+  n: number;
+  tone: PropertiesPanelToneType;
+  label?: string;
+}) {
   return (
     <span
       className="editor-properties-badge"
@@ -589,22 +596,16 @@ function KindEditor({
 }) {
   switch (rule.kind) {
     case "R":
-
       return <RectRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "C":
-
       return <CircleRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "K":
-
       return <OcrRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "S":
-
       return <TextRuleEditor rule={rule} onChange={onUpdateParams} />;
     case "E":
-
       return <MathRuleEditor rule={rule} onChange={onUpdateParams} />;
     default:
-
       return null;
   }
 }
@@ -649,7 +650,12 @@ function MoreOptionsTabs({
     {
       id: MoreTabType.Mask,
       label: "Mask",
-      badge: <CountBadge n={maskCount} tone={maskCount > 0 ? PropertiesPanelToneType.On : PropertiesPanelToneType.Off} />,
+      badge: (
+        <CountBadge
+          n={maskCount}
+          tone={maskCount > 0 ? PropertiesPanelToneType.On : PropertiesPanelToneType.Off}
+        />
+      ),
     },
     {
       id: MoreTabType.Focus,
@@ -690,4 +696,4 @@ function MoreOptionsTabs({
       </div>
     </section>
   );
-}
+}

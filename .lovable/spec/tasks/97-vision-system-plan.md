@@ -1,9 +1,11 @@
 # Vision System Refactoring & Planning
 
 ## Intent
+
 Implement the structural and UI changes necessary for the Vision System based on the 11-Aug session transcript and reference pictures. This involves renaming legacy image assets to descriptive names, implementing dynamic camera settings per recipe segment, providing support for masking/ROI adjustments, and laying the groundwork for Internal vs. External trigger modes.
 
 ## Scope
+
 - Renaming all images in `assets/vision-system-pictures-11Aug` to descriptive names.
 - Extracting and storing core vision system terminology in `.lovable/memory/vision-system-concepts.md`.
 - Updating the UI to allow dynamic camera settings (lighting, exposure, focus) bound to specific recipe segments (not globally).
@@ -11,16 +13,19 @@ Implement the structural and UI changes necessary for the Vision System based on
 - Adding UI components for "Region of Interest" (ROI) expansion and "Masking".
 
 ## Inputs
+
 - 11-Aug transcript (vision system focus)
 - Reference pictures in `assets/vision-system-pictures-11Aug`
 
 ## Acceptance Criteria
+
 - All 21 images are accurately renamed.
 - The `vision-system-concepts.md` memory file exists and covers the device testing, trigger modes, grayscaling, and ROI.
 - UI elements for camera settings are correctly decoupled from the global scope and attached to recipe segments.
 - The 200-step implementation plan is fully defined and added to the pending backlog.
 
 ## Affected Files
+
 - `assets/vision-system-pictures-11Aug/*`
 - `.lovable/memory/vision-system-concepts.md`
 - `src/components/vision/*`
@@ -28,9 +33,11 @@ Implement the structural and UI changes necessary for the Vision System based on
 - `.lovable/plans/pending/97-vision-system-plan.md`
 
 ## Links
+
 - Memory: [.lovable/memory/vision-system-concepts.md](file:///d:/work/cat-my/.lovable/memory/vision-system-concepts.md)
 
 ## Attachments
+
 - `20260811_142436.jpg` -> `ic-chip-blurry.jpg`: Reference for a blurry IC chip that needs inspection.
 - `20260811_142452.jpg` -> `ic-chip-clear.jpg`: Reference for a clear IC chip baseline.
 - `20260811_142540.jpg` -> `smd-component-black.jpg`: Reference for an SMD component.

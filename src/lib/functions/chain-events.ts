@@ -188,4 +188,4 @@ export function checkChainEventIntegrity(
   }
 
   return issues;
-}
+}

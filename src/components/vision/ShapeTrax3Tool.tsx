@@ -1,14 +1,14 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 
 export function ShapeTrax3Tool() {
   const { segments, activeSegmentId, setShapeTrax3Settings } = useVisionStore();
 
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
   if (!activeSegment || !activeSegment.visionSettings) return null;
 
   const shapeTrax3 = activeSegment.visionSettings.roi?.shapeTrax3 || {
@@ -40,14 +40,14 @@ export function ShapeTrax3Tool() {
     <Card className="shadow-md border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-lg font-semibold tracking-tight">ShapeTrax3 Matching</CardTitle>
-          <CardDescription>
-            Configure advanced shape recognition and alignment.
-          </CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">
+            ShapeTrax3 Matching
+          </CardTitle>
+          <CardDescription>Configure advanced shape recognition and alignment.</CardDescription>
         </div>
         <Switch checked={shapeTrax3.enabled} onCheckedChange={handleEnabledChange} />
       </CardHeader>
-      
+
       {shapeTrax3.enabled && (
         <CardContent>
           <div className="space-y-6">
@@ -64,7 +64,7 @@ export function ShapeTrax3Tool() {
                 className="w-full"
               />
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label>Rotation Tolerance (±{shapeTrax3.rotationTolerance}°)</Label>

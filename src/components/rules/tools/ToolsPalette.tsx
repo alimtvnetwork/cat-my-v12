@@ -592,4 +592,4 @@ function VariantRow({ variant, selected, onPick }: VariantRowProps) {
       </button>
     </li>
   );
-}
+}

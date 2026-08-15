@@ -11,9 +11,9 @@
 
 Rule evaluation logic exists in two Python trees:
 
-| Location | Used by | Examples |
-|----------|---------|----------|
-| `app/rules/` | Capture/runtime worker pipeline | `engine.py` |
+| Location        | Used by                                   | Examples                       |
+| --------------- | ----------------------------------------- | ------------------------------ |
+| `app/rules/`    | Capture/runtime worker pipeline           | `engine.py`                    |
 | `BE/app/rules/` | HTTP validation, editor remote score path | `kernel/engine.py`, evaluators |
 
 Drift causes: editor preview matches runtime incorrectly; BE save validates differently than worker judges.

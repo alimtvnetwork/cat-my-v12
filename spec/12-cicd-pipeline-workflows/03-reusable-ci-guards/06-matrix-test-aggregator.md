@@ -179,12 +179,12 @@ jobs:
 
 ## Failure Modes
 
-| Pitfall | Fix |
+| Pitfall                                                                     | Fix                                                                      |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --- | ------------------------- |
-| `set -e` aborts on `grep -c` returning non-zero (no matches) | Use `set -uo pipefail` (omit `-e`) and append `                          |     | true` to count operations |
-| Reason extractor captures hundreds of stack-trace lines | Cap with `head -10` per test |
-| Non-ASCII test names break `sed` patterns | Use `awk` with explicit field separators OR ensure tests use ASCII names |
-| `download-artifact` with `pattern:` requires `actions/download-artifact@v4` | Pin to `@v4`; v3 had different API |
+| `set -e` aborts on `grep -c` returning non-zero (no matches)                | Use `set -uo pipefail` (omit `-e`) and append `                          |     | true` to count operations |
+| Reason extractor captures hundreds of stack-trace lines                     | Cap with `head -10` per test                                             |
+| Non-ASCII test names break `sed` patterns                                   | Use `awk` with explicit field separators OR ensure tests use ASCII names |
+| `download-artifact` with `pattern:` requires `actions/download-artifact@v4` | Pin to `@v4`; v3 had different API                                       |
 
 ---
 

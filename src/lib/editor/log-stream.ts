@@ -27,4 +27,4 @@ export function subscribe(fn: (entry: LogEntry) => void): () => void {
   return () => {
     subscribers.delete(fn);
   };
-}
+}

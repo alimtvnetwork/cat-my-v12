@@ -1,4 +1,3 @@
-
 import { RightRailDirectionType } from "../rail/RightRail";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { useCallback, useEffect, useRef, useState } from "react";

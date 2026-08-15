@@ -115,4 +115,4 @@ describe("typed errors", () => {
     expect(err.code).toBe("E_RULE_SCHEMA");
     expect(err.issues.length).toBeGreaterThan(0);
   });
-});
+});

@@ -98,4 +98,4 @@ describe("reconcileDrafts", () => {
     expect(out).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
-});
+});

@@ -107,7 +107,10 @@ export function SearchRegionTab({
               onChange={(e) =>
                 setSettings((s) => ({
                   ...s,
-                  imageRegion: { ...s.imageRegion, detectionColor: e.target.value as DetectionColorType },
+                  imageRegion: {
+                    ...s.imageRegion,
+                    detectionColor: e.target.value as DetectionColorType,
+                  },
                 }))
               }
               className="flex-1 bg-ca-panel-2 border border-ca-border rounded p-1"

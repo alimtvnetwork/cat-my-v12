@@ -32,12 +32,18 @@ function newCorrelationId(): string {
 export type CameraReferrerResolver = (id: string) => string[];
 
 export type CameraSaveOutcome =
-  | { ok: true, isFail: false; entry: CameraSetting }
-  | { ok: false; isFail: true; kind: "validation"; errors: CameraValidationError[]; correlationId: string }
+  | { ok: true; isFail: false; entry: CameraSetting }
+  | {
+      ok: false;
+      isFail: true;
+      kind: "validation";
+      errors: CameraValidationError[];
+      correlationId: string;
+    }
   | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
 export type CameraRemoveOutcome =
-  | { ok: true, isFail: false }
+  | { ok: true; isFail: false }
   | { ok: false; isFail: true; kind: "referenced"; projects: string[]; correlationId: string }
   | { ok: false; isFail: true; kind: "persist"; message: string; correlationId: string };
 
@@ -104,7 +110,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (validated.ok === false) {
       return {
-        ok: false, isFail: true,
+        ok: false,
+        isFail: true,
         kind: "validation",
         errors: validated.errors,
         correlationId: newCorrelationId(),
@@ -118,7 +125,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (isFail) {
         return {
-          ok: false, isFail: true,
+          ok: false,
+          isFail: true,
           kind: "persist",
           message: "camera store rejected upsert",
           correlationId: newCorrelationId(),
@@ -135,7 +143,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (f.kind === "validation") {
         return {
-          ok: false, isFail: true,
+          ok: false,
+          isFail: true,
           kind: "validation",
           errors: f.errors,
           correlationId: newCorrelationId(),
@@ -143,7 +152,8 @@ class LocalStorageCameraFacade implements CameraFacade {
       }
 
       return {
-        ok: false, isFail: true,
+        ok: false,
+        isFail: true,
         kind: "persist",
         message: f.message,
         correlationId: newCorrelationId(),
@@ -160,7 +170,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (referrers.length > 0) {
       return {
-        ok: false, isFail: true,
+        ok: false,
+        isFail: true,
         kind: "referenced",
         projects: referrers,
         correlationId: newCorrelationId(),
@@ -174,7 +185,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       if (!removed) {
         return {
-          ok: false, isFail: true,
+          ok: false,
+          isFail: true,
           kind: "persist",
           message: `camera id not found: ${id}`,
           correlationId: newCorrelationId(),
@@ -188,7 +200,8 @@ class LocalStorageCameraFacade implements CameraFacade {
 
     if (!s) {
       return {
-        ok: false, isFail: true,
+        ok: false,
+        isFail: true,
         kind: "persist",
         message: "no browser storage",
         correlationId: newCorrelationId(),
@@ -207,7 +220,8 @@ class LocalStorageCameraFacade implements CameraFacade {
       return { ok: true, isFail: false };
     } catch (err) {
       return {
-        ok: false, isFail: true,
+        ok: false,
+        isFail: true,
         kind: "persist",
         message: String(err),
         correlationId: newCorrelationId(),
@@ -241,4 +255,4 @@ export function makeCameraFacade(): CameraFacade {
 
 export function __setCameraFacadeForTests(f: CameraFacade | null): void {
   cached = f;
-}
+}

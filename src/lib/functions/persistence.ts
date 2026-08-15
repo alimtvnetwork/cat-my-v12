@@ -136,7 +136,6 @@ export function loadChainEventStore(storage: StorageLike): LoadResult<ChainEvent
   const get = safeGet(storage, CHAIN_EVENTS_STORAGE_KEY);
 
   if (get.ok === false)
-
     return { ok: false, fallback: { ...EMPTY_CHAIN_EVENT_STORE }, failure: get.failure };
 
   if (get.raw === null) {
@@ -195,4 +194,4 @@ export function createMemoryStorage(initial: Record<string, string> = {}): Stora
     },
     dump: () => Object.fromEntries(map),
   };
-}
+}

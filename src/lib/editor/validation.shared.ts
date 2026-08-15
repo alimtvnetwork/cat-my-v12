@@ -73,14 +73,16 @@ export function parseWorkerHealthzEndpoint(
     base = new URL(trimmed);
   } catch {
     return {
-      ok: false, isFail: true,
+      ok: false,
+      isFail: true,
       reason: `VALIDATION_WORKER_URL is not a valid URL: ${JSON.stringify(trimmed)}`,
     };
   }
 
   if (base.protocol !== "http:" && base.protocol !== "https:") {
     return {
-      ok: false, isFail: true,
+      ok: false,
+      isFail: true,
       reason: `VALIDATION_WORKER_URL protocol must be http or https, got ${base.protocol}`,
     };
   }
@@ -111,7 +113,13 @@ export interface ScoreError {
 }
 
 export type ScoreResult =
-  | { ok: true; isFail: false; data: z.infer<typeof ResponseSchema>; attempts: number; elapsedMs: number }
+  | {
+      ok: true;
+      isFail: false;
+      data: z.infer<typeof ResponseSchema>;
+      attempts: number;
+      elapsedMs: number;
+    }
   | { ok: false; isFail: true; error: ScoreError };
 
 export const MAX_ATTEMPTS = 3;
@@ -142,4 +150,4 @@ export function shouldRetry(code: ScoreErrorCode): boolean {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
+}

@@ -171,11 +171,9 @@ export async function verifyLicense(input: VerifyInput): Promise<VerifyResult> {
   if (!record) return BASELINE_RESULT(LicenseStatusType.Missing, "no license record");
 
   if (record.signatureAlg !== "Ed25519")
-
     return BASELINE_RESULT(LicenseStatusType.Invalid, "unsupported signatureAlg");
 
   if (pinnedPublicKeyRaw.length !== 32)
-
     return BASELINE_RESULT(LicenseStatusType.Invalid, "pinned key not 32 bytes");
 
   const sigOk = await verifySignature(
@@ -198,7 +196,6 @@ export async function verifyLicense(input: VerifyInput): Promise<VerifyResult> {
     const exp = Date.parse(record.expiresAt);
 
     if (Number.isFinite(exp) === false)
-
       return BASELINE_RESULT(LicenseStatusType.Invalid, "expiresAt not parseable");
 
     if (exp <= now.getTime()) {
@@ -305,4 +302,4 @@ export function createCachedVerifier(opts: CachedVerifierOptions): CachedVerifie
       cached = null;
     },
   };
-}
+}

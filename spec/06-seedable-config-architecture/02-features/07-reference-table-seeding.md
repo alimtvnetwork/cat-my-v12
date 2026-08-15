@@ -25,7 +25,9 @@ Before this feature, those specs assumed an unspecified mechanism. The audit (F-
 {
   "$schema": "./config.schema.json",
   "Version": "1.3.0",
-  "Categories": {/* unchanged, per 01-fundamentals */},
+  "Categories": {
+    /* unchanged, per 01-fundamentals */
+  },
   "Tables": {
     "<TableName>": {
       "AddedIn": "1.3.0", // SemVer when this table seed first appeared

@@ -193,4 +193,4 @@ describe("appendAiTestingHistoryReducer", () => {
     state = appendAiTestingHistoryReducer(state, summary("c"), 2);
     expect(state.rs.map((s) => s.id)).toEqual(["c", "b"]);
   });
-});
+});

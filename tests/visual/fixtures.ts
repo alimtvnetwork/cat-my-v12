@@ -94,7 +94,9 @@ export async function installProjectCameraFixtures(
 ): Promise<void> {
   const projectsEnvelope = { state: fixtureProjectsState(), version: 0 };
   const cameraLibrary =
-    libraryMode === FixtureLibraryModeType.WithCamera ? { entries: [fixtureCamera()] } : { entries: [] };
+    libraryMode === FixtureLibraryModeType.WithCamera
+      ? { entries: [fixtureCamera()] }
+      : { entries: [] };
   await page.evaluate(
     ({ projectsKey, projectsValue, cameraKey, cameraValue }) => {
       window.localStorage.setItem(projectsKey, projectsValue);

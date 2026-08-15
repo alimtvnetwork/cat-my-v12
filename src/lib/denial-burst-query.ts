@@ -64,4 +64,4 @@ function percentile(sorted: number[], q: number): number {
   const idx = Math.min(sorted.length - 1, Math.floor(q * sorted.length));
 
   return sorted[idx];
-}
+}

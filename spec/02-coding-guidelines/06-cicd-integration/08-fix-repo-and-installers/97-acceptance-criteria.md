@@ -54,13 +54,13 @@
 
 ## AC-VC — visibility-change
 
-| # | Criterion | Test |
+| #         | Criterion                                                       | Test                                                  |
 | --------- | --------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| AC-VC-001 | `--visible pub                                                  | pri` and toggle (no flag) all parse cleanly | `tests/installer/check-visibility-arg-parsing.sh` |
-| AC-VC-002 | Provider detection: GitHub vs GitLab vs unsupported (exit `4`) | `tests/installer/check-visibility-provider-detect.sh` |
-| AC-VC-003 | Runner integration `./run.sh visibility` forwards flags 1:1 | `tests/installer/check-visibility-runner-wiring.sh` |
-| AC-VC-004 | `private → public` without `--yes` and non-TTY stdin → exit `7` | `tests/installer/check-visibility-arg-parsing.sh` |
-| AC-VC-005 | `--dry-run` performs no API calls | `tests/installer/check-visibility-arg-parsing.sh` |
+| AC-VC-001 | `--visible pub                                                  | pri` and toggle (no flag) all parse cleanly           | `tests/installer/check-visibility-arg-parsing.sh` |
+| AC-VC-002 | Provider detection: GitHub vs GitLab vs unsupported (exit `4`)  | `tests/installer/check-visibility-provider-detect.sh` |
+| AC-VC-003 | Runner integration `./run.sh visibility` forwards flags 1:1     | `tests/installer/check-visibility-runner-wiring.sh`   |
+| AC-VC-004 | `private → public` without `--yes` and non-TTY stdin → exit `7` | `tests/installer/check-visibility-arg-parsing.sh`     |
+| AC-VC-005 | `--dry-run` performs no API calls                               | `tests/installer/check-visibility-arg-parsing.sh`     |
 
 ---
 

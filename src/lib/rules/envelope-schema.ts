@@ -66,7 +66,8 @@ export const RuleSetEnvelopeZ = z
   .strict();
 
 export type ValidationResult =
-  { ok: true; envelope: RuleSetEnvelope } | { ok: false; message: string };
+  | { ok: true; envelope: RuleSetEnvelope }
+  | { ok: false; message: string };
 
 export function validateEnvelopeJson(text: string): ValidationResult {
   let raw: unknown;
@@ -99,4 +100,4 @@ export async function sha256Hex(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
+}

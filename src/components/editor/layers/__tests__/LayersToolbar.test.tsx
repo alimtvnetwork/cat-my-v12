@@ -106,4 +106,4 @@ describe("LayersToolbar RE-09 SVG import", () => {
     });
     expect(onImportSvg).not.toHaveBeenCalled();
   });
-});
+});

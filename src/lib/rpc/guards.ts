@@ -56,4 +56,4 @@ export namespace RunLockStateType {
   export function isRunning(val: string | null | undefined): boolean {
     return val === RunLockStateType.Running;
   }
-}
+}

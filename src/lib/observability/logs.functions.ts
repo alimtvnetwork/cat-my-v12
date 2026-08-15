@@ -28,31 +28,35 @@ const InputSchema = z.object({
   afterOffset: z.number().int().nonnegative().optional(),
 });
 
-const LogLineSchema = z.object({
-  Offset: z.number().int(),
-  Line: z.string().optional(),
-  _ParseError: z.string().optional(),
-  _Raw: z.string().optional(),
-  timestamp: z.string().optional(),
-  Timestamp: z.string().optional(),
-  level: z.string().optional(),
-  Level: z.string().optional(),
-  message: z.string().optional(),
-  Message: z.string().optional(),
-}).passthrough();
+const LogLineSchema = z
+  .object({
+    Offset: z.number().int(),
+    Line: z.string().optional(),
+    _ParseError: z.string().optional(),
+    _Raw: z.string().optional(),
+    timestamp: z.string().optional(),
+    Timestamp: z.string().optional(),
+    level: z.string().optional(),
+    Level: z.string().optional(),
+    message: z.string().optional(),
+    Message: z.string().optional(),
+  })
+  .passthrough();
 
-const DataSchema = z.object({
-  CliInvocationId: z.number().int(),
-  LogPath: z.string().optional(),
-  LogPathExists: z.boolean().optional(),
-  SizeBytes: z.number().int().optional(),
-  LinesRead: z.number().int().optional(),
-  NextOffset: z.number().int().optional(),
-  IsTruncated: z.boolean().optional(),
-  Lines: z.array(LogLineSchema).optional(),
-  Items: z.array(LogLineSchema).optional(),
-  RunId: z.string().optional(),
-}).passthrough();
+const DataSchema = z
+  .object({
+    CliInvocationId: z.number().int(),
+    LogPath: z.string().optional(),
+    LogPathExists: z.boolean().optional(),
+    SizeBytes: z.number().int().optional(),
+    LinesRead: z.number().int().optional(),
+    NextOffset: z.number().int().optional(),
+    IsTruncated: z.boolean().optional(),
+    Lines: z.array(LogLineSchema).optional(),
+    Items: z.array(LogLineSchema).optional(),
+    RunId: z.string().optional(),
+  })
+  .passthrough();
 
 export type ObservabilityLogLine = z.infer<typeof LogLineSchema>;
 export type LogTailItem = ObservabilityLogLine;

@@ -80,4 +80,4 @@ describe("useViewportSafe", () => {
     });
     expect(result.current).toBe(false);
   });
-});
+});

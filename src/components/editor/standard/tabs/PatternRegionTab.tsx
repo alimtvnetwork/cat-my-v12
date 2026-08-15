@@ -39,16 +39,20 @@ export function PatternRegionTab({
           <span>Detection Conditions</span>
           <button className="text-ca-select">&gt;&gt;</button>
         </h3>
-        
+
         <div className="flex flex-col gap-3 mt-2 text-sm">
           <div className="flex items-center justify-between">
             <span>Angle Range</span>
-            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">+/- {settings.detection.angleRangeDeg}</span>
+            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">
+              +/- {settings.detection.angleRangeDeg}
+            </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span>Detection Count</span>
-            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">{settings.detection.detectionCount.toString().padStart(2, "0")}</span>
+            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">
+              {settings.detection.detectionCount.toString().padStart(2, "0")}
+            </span>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -56,7 +60,18 @@ export function PatternRegionTab({
               <span>Search Sensitivity</span>
               <span>{settings.detection.searchSensitivity}</span>
             </div>
-            <input type="range" min="0" max="100" value={settings.detection.searchSensitivity} onChange={(e) => setSettings(s => ({...s, detection: {...s.detection, searchSensitivity: Number(e.target.value)}}))} />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={settings.detection.searchSensitivity}
+              onChange={(e) =>
+                setSettings((s) => ({
+                  ...s,
+                  detection: { ...s.detection, searchSensitivity: Number(e.target.value) },
+                }))
+              }
+            />
             <div className="text-center text-xs text-ca-ink-muted">Normal</div>
           </div>
 
@@ -65,13 +80,26 @@ export function PatternRegionTab({
               <span>Accuracy</span>
               <span>{settings.detection.accuracy}</span>
             </div>
-            <input type="range" min="0" max="100" value={settings.detection.accuracy} onChange={(e) => setSettings(s => ({...s, detection: {...s.detection, accuracy: Number(e.target.value)}}))} />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={settings.detection.accuracy}
+              onChange={(e) =>
+                setSettings((s) => ({
+                  ...s,
+                  detection: { ...s.detection, accuracy: Number(e.target.value) },
+                }))
+              }
+            />
             <div className="text-center text-xs text-ca-ink-muted">Normal</div>
           </div>
 
           <div className="flex items-center justify-between">
             <span>Min. Match %</span>
-            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">{settings.detection.minMatchPercent}</span>
+            <span className="bg-ca-panel-2 border border-ca-border px-2 py-1 rounded">
+              {settings.detection.minMatchPercent}
+            </span>
           </div>
         </div>
       </div>

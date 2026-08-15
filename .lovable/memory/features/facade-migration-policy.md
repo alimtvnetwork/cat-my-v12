@@ -4,21 +4,21 @@ This document tracks the migration status of V4 seed data slices from legacy Zus
 
 ## Slices
 
-| Slice | Status | Read path | Write path | Store deprecated? |
-|-------|--------|-----------|------------|-------------------|
-| `projects` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `rulesets` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `rules` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `categories` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `cameras` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `micSettings` | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes |
-| `samples` | `facade-only` | facade | facade | Yes |
-| `swatches` | `facade-only` | facade | facade | Yes |
-| `propertyPresets` | `facade-only` | facade | facade | Yes |
-| `settings` | `facade-only` | facade | facade | Yes |
-| `commands` | `facade-only` | facade | facade | Yes |
-| `emptyStates` | `facade-only` | facade | facade | Yes |
-| `errorScenarios` | `facade-only` | facade | facade | Yes |
+| Slice             | Status             | Read path                  | Write path  | Store deprecated? |
+| ----------------- | ------------------ | -------------------------- | ----------- | ----------------- |
+| `projects`        | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `rulesets`        | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `rules`           | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `categories`      | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `cameras`         | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `micSettings`     | `facade-preferred` | `useFacadeOrStore` / store | facade / BE | Yes               |
+| `samples`         | `facade-only`      | facade                     | facade      | Yes               |
+| `swatches`        | `facade-only`      | facade                     | facade      | Yes               |
+| `propertyPresets` | `facade-only`      | facade                     | facade      | Yes               |
+| `settings`        | `facade-only`      | facade                     | facade      | Yes               |
+| `commands`        | `facade-only`      | facade                     | facade      | Yes               |
+| `emptyStates`     | `facade-only`      | facade                     | facade      | Yes               |
+| `errorScenarios`  | `facade-only`      | facade                     | facade      | Yes               |
 
 ## Status Definitions
 

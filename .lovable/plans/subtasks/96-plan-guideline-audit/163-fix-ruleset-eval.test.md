@@ -3,6 +3,7 @@
 **Target File:** `src/lib/editor/runner/__tests__/ruleset-eval.test.ts`
 
 **Violating Lines & Rules:**
+
 - Line 22: **Missing blank line before return**
 - Line 25: **Missing blank line before return**
 - Line 35: **Missing blank line before return**
@@ -11,6 +12,7 @@
 - Line 68: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

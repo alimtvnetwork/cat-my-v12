@@ -84,4 +84,4 @@ function nextName(kind: RectToolKind, existingRules: readonly EditorRule[]): str
   const count = existingRules.filter((rule) => rule.kind === kind).length + 1;
 
   return `${label} ${count}`;
-}
+}

@@ -33,38 +33,42 @@ const InputSchema = z.object({
   afterMsgId: z.string().optional(),
 });
 
-const IpcMessageSchema = z.object({
-  MsgId: z.string(),
-  CliInvocationId: z.number().int(),
-  RunId: z.string().nullable(),
-  Mailbox: z.string(),
-  Kind: z.string(),
-  Sender: z.string().nullable(),
-  Recipient: z.string().nullable(),
-  CreatedAt: z.number().nullable(),
-  AckedAt: z.number().nullable(),
-  RelPath: z.string(),
-  AckRelPath: z.string().nullable(),
-  PayloadJson: z.string(),
-  Bytes: z.number().int(),
-  _ParseError: z.string().optional(),
-  _Raw: z.string().optional(),
-  Seq: z.number().optional(),
-  IsAcked: z.boolean().optional(),
-  Payload: z.any().optional(),
-}).passthrough();
+const IpcMessageSchema = z
+  .object({
+    MsgId: z.string(),
+    CliInvocationId: z.number().int(),
+    RunId: z.string().nullable(),
+    Mailbox: z.string(),
+    Kind: z.string(),
+    Sender: z.string().nullable(),
+    Recipient: z.string().nullable(),
+    CreatedAt: z.number().nullable(),
+    AckedAt: z.number().nullable(),
+    RelPath: z.string(),
+    AckRelPath: z.string().nullable(),
+    PayloadJson: z.string(),
+    Bytes: z.number().int(),
+    _ParseError: z.string().optional(),
+    _Raw: z.string().optional(),
+    Seq: z.number().optional(),
+    IsAcked: z.boolean().optional(),
+    Payload: z.any().optional(),
+  })
+  .passthrough();
 
-const DataSchema = z.object({
-  items: z.array(IpcMessageSchema),
-  total: z.number().int(),
-  limit: z.number().int(),
-  mailbox: MailboxEnum.optional(),
-  NextAfterMsgId: z.string().nullable().optional(),
-  RunId: z.string().nullable().optional(),
-  MailboxPath: z.string().optional(),
-  IsTruncated: z.boolean().optional(),
-  Count: z.number().int().optional(),
-}).passthrough();
+const DataSchema = z
+  .object({
+    items: z.array(IpcMessageSchema),
+    total: z.number().int(),
+    limit: z.number().int(),
+    mailbox: MailboxEnum.optional(),
+    NextAfterMsgId: z.string().nullable().optional(),
+    RunId: z.string().nullable().optional(),
+    MailboxPath: z.string().optional(),
+    IsTruncated: z.boolean().optional(),
+    Count: z.number().int().optional(),
+  })
+  .passthrough();
 
 export type ObservabilityIpcMessage = z.infer<typeof IpcMessageSchema>;
 export type IpcItem = ObservabilityIpcMessage;
@@ -77,30 +81,29 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-  export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
-    .inputValidator((raw) => InputSchema.parse(raw))
-    .handler(async ({ data }): Promise<any> => {
-      const qs = new URLSearchParams();
-  
-      if (data.mailbox) qs.set("mailbox", data.mailbox);
-  
-      if (data.limit !== undefined) qs.set("limit", String(data.limit));
-  
-      if (data.includeAcked) qs.set("include_acked", "true");
-  
-      if (data.afterMsgId) qs.set("after_msg_id", data.afterMsgId);
-      const url =
-        `${beBaseUrl()}/observability/sessions/${data.cliInvocationId}/ipc` +
-        (qs.size ? `?${qs}` : "");
-      const env = await beFetch<IpcPage>(url, {}, { suppressCapture: true });
-      const payload = env.Results[0];
-  
-      if (payload === undefined) {
-        throw new Error(
-          `BE_ENVELOPE_EMPTY: /observability/sessions/${data.cliInvocationId}/ipc returned no Results`,
-        );
-      }
-  
-      return DataSchema.parse(payload) as any;
-    });
+export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
+  .inputValidator((raw) => InputSchema.parse(raw))
+  .handler(async ({ data }): Promise<any> => {
+    const qs = new URLSearchParams();
 
+    if (data.mailbox) qs.set("mailbox", data.mailbox);
+
+    if (data.limit !== undefined) qs.set("limit", String(data.limit));
+
+    if (data.includeAcked) qs.set("include_acked", "true");
+
+    if (data.afterMsgId) qs.set("after_msg_id", data.afterMsgId);
+    const url =
+      `${beBaseUrl()}/observability/sessions/${data.cliInvocationId}/ipc` +
+      (qs.size ? `?${qs}` : "");
+    const env = await beFetch<IpcPage>(url, {}, { suppressCapture: true });
+    const payload = env.Results[0];
+
+    if (payload === undefined) {
+      throw new Error(
+        `BE_ENVELOPE_EMPTY: /observability/sessions/${data.cliInvocationId}/ipc returned no Results`,
+      );
+    }
+
+    return DataSchema.parse(payload) as any;
+  });

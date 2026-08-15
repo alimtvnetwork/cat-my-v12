@@ -55,4 +55,4 @@ function JobRow({ job, selectedJobId, onSelect }: JobRowProps) {
       </span>
     </button>
   );
-}
+}

@@ -139,4 +139,4 @@ export function canonicalSeedSnapshotJson(
   state: Pick<ProjectStoreState, "projects" | "rulesets">,
 ): string {
   return JSON.stringify(canonicalSeedSnapshot(state));
-}
+}

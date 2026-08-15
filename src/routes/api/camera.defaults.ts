@@ -142,4 +142,4 @@ export const Route = createFileRoute("/api/camera/defaults")({
       },
     },
   },
-});
+});

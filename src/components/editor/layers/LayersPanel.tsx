@@ -1,4 +1,3 @@
-
 export enum FlatEntryKindType {
   GroupHeader = "group-header",
   Layer = "layer",
@@ -137,7 +136,12 @@ export function LayersPanel({
       const ruleIds = g.ruleIds.filter((id) => rules.some((r) => r.id === id && !r.isCategory));
 
       if (ruleIds.length === 0) continue;
-      out.push({ kind: FlatEntryKindType.GroupHeader, id: `g:${g.id}`, groupId: g.id, group: { ...g, ruleIds } });
+      out.push({
+        kind: FlatEntryKindType.GroupHeader,
+        id: `g:${g.id}`,
+        groupId: g.id,
+        group: { ...g, ruleIds },
+      });
 
       if (!collapsed[g.id]) {
         for (const rid of ruleIds) {
@@ -189,7 +193,8 @@ export function LayersPanel({
   const entries = useMemo(() => sections.flatMap((section) => section.entries), [sections]);
 
   const orderedRuleIds = useMemo(
-    () => entries.filter((e) => e.kind === FlatEntryKindType.Layer && e.rule).map((e) => e.rule!.id),
+    () =>
+      entries.filter((e) => e.kind === FlatEntryKindType.Layer && e.rule).map((e) => e.rule!.id),
     [entries],
   );
   const groupedIds = useMemo(() => {

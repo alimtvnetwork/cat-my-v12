@@ -83,42 +83,35 @@ function pickParams<K extends ControllerKind>(
   switch (controller) {
     case ControllerKindType.Presence:
     case ControllerKindType.Absence:
-
       return {
         threshold: num(raw.threshold, (d as ControllerParamsByKind["presence"]).threshold),
         minBlobPx: num(raw.minBlobPx, (d as ControllerParamsByKind["presence"]).minBlobPx),
       } as ControllerParamsByKind[K];
     case ControllerKindType.Ocr:
-
       return {
         expectedText: str(raw.expectedText, ""),
         caseInsensitive: bool(raw.caseInsensitive, true),
         stripWhitespace: bool(raw.stripWhitespace, true),
       } as ControllerParamsByKind[K];
     case ControllerKindType.TextMatch:
-
       return {
         pattern: str(raw.pattern, ""),
         flags: str(raw.flags, ""),
       } as ControllerParamsByKind[K];
     case ControllerKindType.Number:
-
       return {
         min: num(raw.min, 0),
         max: num(raw.max, 0),
         unit: str(raw.unit, ""),
       } as ControllerParamsByKind[K];
     case ControllerKindType.Math:
-
       return { expression: str(raw.expression, "") } as ControllerParamsByKind[K];
     case ControllerKindType.Color:
-
       return {
         expectedColor: str(raw.expectedColor, "#000000"),
         deltaE: num(raw.deltaE, 10),
       } as ControllerParamsByKind[K];
     case ControllerKindType.Pattern:
-
       return {
         referenceAsset: str(raw.referenceAsset, ""),
         matchThreshold: num(raw.matchThreshold, 0.8),
@@ -144,7 +137,6 @@ function pickParams<K extends ControllerKind>(
       } as ControllerParamsByKind[K];
     }
     case ControllerKindType.Blob:
-
       return {
         minArea: num(raw.minArea, 0),
         maxArea: num(raw.maxArea, 0),
@@ -256,4 +248,4 @@ export function migrateRuleSetV2ToV3(
   rules: readonly (EditorRuleV2 | EditorRuleV3)[],
 ): EditorRuleV3[] {
   return rules.map((r, i) => migrateRuleV2ToV3(r, i));
-}
+}

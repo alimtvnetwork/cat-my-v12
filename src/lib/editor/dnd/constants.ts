@@ -25,4 +25,4 @@ export namespace DndStepType {
   export function isCoarse(val: string | null | undefined): boolean {
     return val === DndStepType.Coarse;
   }
-}
+}

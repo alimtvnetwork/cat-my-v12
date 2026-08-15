@@ -120,4 +120,4 @@ export function renderStandaloneSvg(input: {
   viewBoxH: number;
 }): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${input.viewBoxW} ${input.viewBoxH}"><path d="${input.svgPath}" fill="currentColor"/></svg>`;
-}
+}

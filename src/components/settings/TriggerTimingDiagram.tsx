@@ -1,4 +1,3 @@
-
 export enum TriggerTimingDiagramPropsEdgeType {
   Rising = "rising",
   Falling = "falling",

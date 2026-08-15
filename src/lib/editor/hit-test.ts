@@ -59,4 +59,4 @@ function unrotateAroundCenter(point: EditorPoint, rule: EditorRule): EditorPoint
   const dy = point.y - cy;
 
   return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
-}
+}

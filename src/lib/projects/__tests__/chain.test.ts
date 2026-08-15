@@ -139,4 +139,4 @@ describe("computeEffectiveChain", () => {
     expect(r.chain.map((x) => x.id)).toEqual(["A"]);
     expect(r.disabled).toEqual([]);
   });
-});
+});

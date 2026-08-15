@@ -406,8 +406,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
                 const before = e.clientY - rect.top < rect.height / 2;
                 setDropIndex(before ? i : i + 1);
               }}
-              onDragLeave={() => {
-              }}
+              onDragLeave={() => {}}
               onDrop={(e) => {
                 if (dragId === null) return;
                 e.preventDefault();

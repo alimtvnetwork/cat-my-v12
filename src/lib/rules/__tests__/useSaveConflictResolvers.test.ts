@@ -115,4 +115,4 @@ describe("useSaveConflictResolvers", () => {
     ).rejects.toMatchObject({ code: "E_BE_NOT_FOUND" });
     expect(reset).not.toHaveBeenCalled();
   });
-});
+});

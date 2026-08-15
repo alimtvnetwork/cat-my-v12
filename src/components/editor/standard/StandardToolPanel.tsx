@@ -22,7 +22,8 @@ export function StandardToolPanel({
           {settings.id} {settings.name}
         </h2>
         <div className="text-xs text-ca-ink-muted bg-ca-panel px-2 py-1 rounded border border-ca-border">
-          Reference Image {settings.referenceImage.set} - {settings.referenceImage.index.toString().padStart(3, "0")}
+          Reference Image {settings.referenceImage.set} -{" "}
+          {settings.referenceImage.index.toString().padStart(3, "0")}
         </div>
       </div>
 

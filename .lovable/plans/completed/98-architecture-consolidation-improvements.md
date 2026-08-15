@@ -29,15 +29,15 @@
 
 ## Subtask Index
 
-| SS | Title | Parallel? | Est. effort |
-|----|-------|-----------|-------------|
-| [SS-01](../subtasks/98-architecture-consolidation/SS-01-dual-backend-map.md) | Dual-backend ownership map | ✅ Done | 1 session |
-| [SS-02](../subtasks/98-architecture-consolidation/SS-02-spec-implementation-alignment.md) | Spec & README alignment | Yes | 2 sessions |
-| [SS-03](../subtasks/98-architecture-consolidation/SS-03-god-file-decomposition.md) | God-file decomposition | Yes | 3 sessions |
-| [SS-04](../subtasks/98-architecture-consolidation/SS-04-facade-migration-closeout.md) | Facade migration closeout | Yes | 2 sessions |
-| [SS-05](../subtasks/98-architecture-consolidation/SS-05-rule-engine-deduplication.md) | Rule engine deduplication | After SS-01 | 4+ sessions |
-| [SS-06](../subtasks/98-architecture-consolidation-improvements/SS-06-integration-test-spine.md) | Integration test spine | ✅ Done | 2 sessions |
-| [SS-07](../subtasks/98-architecture-consolidation/SS-07-onboarding-refresh.md) | Onboarding & what-to-read refresh | ✅ Done | 1 session |
+| SS                                                                                              | Title                             | Parallel?   | Est. effort |
+| ----------------------------------------------------------------------------------------------- | --------------------------------- | ----------- | ----------- |
+| [SS-01](../subtasks/98-architecture-consolidation/SS-01-dual-backend-map.md)                    | Dual-backend ownership map        | ✅ Done     | 1 session   |
+| [SS-02](../subtasks/98-architecture-consolidation/SS-02-spec-implementation-alignment.md)       | Spec & README alignment           | Yes         | 2 sessions  |
+| [SS-03](../subtasks/98-architecture-consolidation/SS-03-god-file-decomposition.md)              | God-file decomposition            | Yes         | 3 sessions  |
+| [SS-04](../subtasks/98-architecture-consolidation/SS-04-facade-migration-closeout.md)           | Facade migration closeout         | Yes         | 2 sessions  |
+| [SS-05](../subtasks/98-architecture-consolidation/SS-05-rule-engine-deduplication.md)           | Rule engine deduplication         | After SS-01 | 4+ sessions |
+| [SS-06](../subtasks/98-architecture-consolidation-improvements/SS-06-integration-test-spine.md) | Integration test spine            | ✅ Done     | 2 sessions  |
+| [SS-07](../subtasks/98-architecture-consolidation/SS-07-onboarding-refresh.md)                  | Onboarding & what-to-read refresh | ✅ Done     | 1 session   |
 
 ---
 
@@ -102,11 +102,11 @@ pytest tests/contract/ -q
 
 ## Risks
 
-| Risk | Mitigation |
-|------|------------|
-| SS-05 touches hot paths | Feature-flag shared kernel; parity tests before cutover |
+| Risk                                  | Mitigation                                                       |
+| ------------------------------------- | ---------------------------------------------------------------- |
+| SS-05 touches hot paths               | Feature-flag shared kernel; parity tests before cutover          |
 | SS-03 root route refactor breaks boot | Extract incrementally; keep behavior tests on seed orchestration |
-| Doc updates drift again | SS-07 adds "last verified" date to runtime map; CI link check |
+| Doc updates drift again               | SS-07 adds "last verified" date to runtime map; CI link check    |
 
 ---
 

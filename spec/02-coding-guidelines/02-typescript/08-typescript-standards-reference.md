@@ -248,7 +248,11 @@ interface SnapshotMetadata {
 }
 
 type ActivityMetadata =
-  PublishMetadata | SnapshotMetadata | PluginMetadata | ConfigMetadata | ConnectionMetadata;
+  | PublishMetadata
+  | SnapshotMetadata
+  | PluginMetadata
+  | ConfigMetadata
+  | ConnectionMetadata;
 ```
 
 ---

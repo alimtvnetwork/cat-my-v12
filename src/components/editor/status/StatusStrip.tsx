@@ -1,4 +1,3 @@
-
 import { SaveStatePropsStateType } from "./SaveState";
 import { FpsBadge } from "./FpsBadge";
 import { LastLogChip } from "./LastLogChip";
@@ -24,4 +23,4 @@ export function StatusStrip({ undo, redo, state, onUndo, onRedo }: StatusStripPr
       </div>
     </div>
   );
-}
+}

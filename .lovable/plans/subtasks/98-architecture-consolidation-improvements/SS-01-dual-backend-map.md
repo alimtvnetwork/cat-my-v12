@@ -22,13 +22,13 @@ Create **`docs/architecture/runtime-map.md`** with:
 3. **Write-path table** — which mutations go through `runBackendWrite`, facades, or supervisor
 4. **Ownership matrix**
 
-| Concern | Canonical owner | Notes |
-|---------|-----------------|-------|
-| Rule CRUD (setup) | `BE/routes/rules.py` → `BE/repos/` | FE Save button |
-| Rule evaluation (live run) | `app/rules/engine.py` (TBD in SS-05) | Worker hot path |
-| Camera list/capture | `BE/sdk_facade/camera.py` + `app/capture/` | Split today |
-| Observability / CLI | `BE/routes/observability/**` | |
-| Seed/demo data | `src/lib/seed/` + facades | No network |
+| Concern                    | Canonical owner                            | Notes           |
+| -------------------------- | ------------------------------------------ | --------------- |
+| Rule CRUD (setup)          | `BE/routes/rules.py` → `BE/repos/`         | FE Save button  |
+| Rule evaluation (live run) | `app/rules/engine.py` (TBD in SS-05)       | Worker hot path |
+| Camera list/capture        | `BE/sdk_facade/camera.py` + `app/capture/` | Split today     |
+| Observability / CLI        | `BE/routes/observability/**`               |                 |
+| Seed/demo data             | `src/lib/seed/` + facades                  | No network      |
 
 5. **Explicit "do not" list** — e.g. never import `sdk/` from routes; never join RootDb + TaskDb in SQL
 

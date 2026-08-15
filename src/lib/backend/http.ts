@@ -14,7 +14,7 @@ export class BackendHttpError extends Error {
     public readonly code: string,
     public readonly backendMessage: string,
     public readonly status: number,
-    correlationId?: string
+    correlationId?: string,
   ) {
     super(`${code}: ${backendMessage}`);
     this.name = "BackendHttpError";
@@ -24,20 +24,22 @@ export class BackendHttpError extends Error {
 
 export async function fetchBackend<T = unknown>(
   path: string,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<Envelope<T>> {
   const { baseUrl } = useBackendMode.getState();
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;
-  
+
   const correlationId = newCorrelationId();
   const headers = new Headers(init?.headers);
   if (!headers.has("X-Correlation-Id")) {
     headers.set("X-Correlation-Id", correlationId);
   }
   if (!headers.has("X-Request-Id")) {
-    const requestId = globalThis.crypto?.randomUUID?.() || `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const requestId =
+      globalThis.crypto?.randomUUID?.() ||
+      `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     headers.set("X-Request-Id", requestId);
   }
   if (!headers.has("Accept")) {
@@ -77,7 +79,12 @@ export async function fetchBackend<T = unknown>(
       data = JSON.parse(text);
     } catch {
       const meta = lookupErrorCode("E9005");
-      const e = new BackendHttpError(meta.code, "HTML returned instead of JSON", response.status, correlationId);
+      const e = new BackendHttpError(
+        meta.code,
+        "HTML returned instead of JSON",
+        response.status,
+        correlationId,
+      );
       showToastError(meta.label, e, {
         endpoint: url,
         method: init?.method || "GET",
@@ -95,7 +102,12 @@ export async function fetchBackend<T = unknown>(
 
   if (!envelope) {
     const meta = lookupErrorCode("E_ENVELOPE_PARSE");
-    const e = new BackendHttpError(meta.code, "Invalid envelope format", response.status, correlationId);
+    const e = new BackendHttpError(
+      meta.code,
+      "Invalid envelope format",
+      response.status,
+      correlationId,
+    );
     showToastError(meta.label, e, {
       endpoint: url,
       method: init?.method || "GET",
@@ -108,8 +120,9 @@ export async function fetchBackend<T = unknown>(
   if (isFail) {
     const wireCode = envelope.Errors?.Code || "E_NET";
     const meta = lookupErrorCode(wireCode);
-    const msg = envelope.Errors?.BackendMessage || envelope.Status.Message || "Unknown backend error";
-    
+    const msg =
+      envelope.Errors?.BackendMessage || envelope.Status.Message || "Unknown backend error";
+
     const e = new BackendHttpError(meta.code, msg, response.status, correlationId);
     showToastError(meta.label, e, {
       endpoint: url,

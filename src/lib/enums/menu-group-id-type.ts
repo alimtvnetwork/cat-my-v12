@@ -34,4 +34,4 @@ export namespace MenuGroupIdType {
   export function isHelp(val: string | null | undefined): boolean {
     return val === MenuGroupIdType.Help;
   }
-}
+}

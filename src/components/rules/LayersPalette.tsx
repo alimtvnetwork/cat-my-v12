@@ -1,4 +1,3 @@
-
 export enum LayersPaletteCodeType {
   IUiLayerVisToggle = "I_UI_LAYER_VIS_TOGGLE",
   IUiLayerLockToggle = "I_UI_LAYER_LOCK_TOGGLE",
@@ -83,11 +82,7 @@ export function LayersPalette({ rule }: Props) {
     [palette.paths],
   );
 
-  const toggle = (
-    id: string,
-    key: keyof RowState,
-    code: LayersPaletteCodeType,
-  ) => {
+  const toggle = (id: string, key: keyof RowState, code: LayersPaletteCodeType) => {
     setState((prev) => {
       const cur = prev[id] ?? { visible: true, locked: false };
       const next = { ...cur, [key]: !cur[key] };
@@ -160,7 +155,9 @@ export function LayersPalette({ rule }: Props) {
                       type="button"
                       aria-pressed={rs.visible}
                       aria-label={rs.visible ? "Hide layer" : "Show layer"}
-                      onClick={() => toggle(layer.id, "visible", LayersPaletteCodeType.IUiLayerVisToggle)}
+                      onClick={() =>
+                        toggle(layer.id, "visible", LayersPaletteCodeType.IUiLayerVisToggle)
+                      }
                       className="flex h-4 w-4 items-center justify-center rounded-sm text-ca-ink-muted transition hover:text-ca-ink"
                     >
                       {rs.visible ? (
@@ -173,7 +170,9 @@ export function LayersPalette({ rule }: Props) {
                       type="button"
                       aria-pressed={rs.locked}
                       aria-label={rs.locked ? "Unlock layer" : "Lock layer"}
-                      onClick={() => toggle(layer.id, "locked", LayersPaletteCodeType.IUiLayerLockToggle)}
+                      onClick={() =>
+                        toggle(layer.id, "locked", LayersPaletteCodeType.IUiLayerLockToggle)
+                      }
                       className="flex h-4 w-4 items-center justify-center rounded-sm text-ca-ink-muted transition hover:text-ca-ink"
                     >
                       {rs.locked ? (
@@ -386,19 +385,14 @@ export function LayersPalette({ rule }: Props) {
 function channelSwatch(id: ChannelId): string {
   switch (id) {
     case "r":
-
       return "#ef4444";
     case "g":
-
       return "#22c55e";
     case "b":
-
       return "#3b82f6";
     case "a":
-
       return "repeating-conic-gradient(#94a3b8 0 25%, #cbd5e1 0 50%) 50% / 8px 8px";
     default:
-
       return "linear-gradient(90deg,#ef4444,#22c55e,#3b82f6)";
   }
 }

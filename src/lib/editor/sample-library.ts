@@ -200,4 +200,4 @@ export const SAMPLE_POV_MAP: Record<string, SamplePovBinding> = {
     saturation: 115,
     gain: 15,
   },
-};
+};

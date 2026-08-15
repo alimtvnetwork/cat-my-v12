@@ -131,7 +131,8 @@ export function LogTailViewer({
 
     if (status === "ended") return { label: "ended", variant: "outline" as const };
 
-    if (status === "connecting") return { label: "connecting", variant: EmptyStateActionVariantType.Secondary as const };
+    if (status === "connecting")
+      return { label: "connecting", variant: EmptyStateActionVariantType.Secondary as const };
 
     return { label: status, variant: "outline" as const };
   }, [status, gaveUp, consecutiveFailures, runId]);

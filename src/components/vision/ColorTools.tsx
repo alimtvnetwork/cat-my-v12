@@ -1,22 +1,28 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function ColorTools() {
   const { segments, activeSegmentId, setColorSettings } = useVisionStore();
 
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
   if (!activeSegment || !activeSegment.visionSettings) return null;
 
   const colorSettings = activeSegment.visionSettings.roi?.colorSettings || {
     threshold: 128,
     invert: false,
-    colorMap: 'grayscale',
-    keyColor: '#ffffff'
+    colorMap: "grayscale",
+    keyColor: "#ffffff",
   };
 
   const segmentId = activeSegment.visionSettings.id;
@@ -41,9 +47,7 @@ export function ColorTools() {
     <Card className="shadow-md border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold tracking-tight">Image Processing</CardTitle>
-        <CardDescription>
-          Adjust thresholding and color mapping for inspection.
-        </CardDescription>
+        <CardDescription>Adjust thresholding and color mapping for inspection.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -87,13 +91,13 @@ export function ColorTools() {
             </Select>
           </div>
 
-          {colorSettings.colorMap === 'key-color' && (
+          {colorSettings.colorMap === "key-color" && (
             <div className="flex items-center space-x-3">
               <Label htmlFor="key-color">Key Color</Label>
               <input
                 type="color"
                 id="key-color"
-                value={colorSettings.keyColor || '#ffffff'}
+                value={colorSettings.keyColor || "#ffffff"}
                 onChange={handleColorChange}
                 className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
               />

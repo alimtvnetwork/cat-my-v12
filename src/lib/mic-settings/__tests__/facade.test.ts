@@ -95,4 +95,4 @@ describe("MicSettingsFacade", () => {
     await f2.__hydrate();
     expect(f2.list().map((m) => m.id)).toEqual(["a"]);
   });
-});
+});

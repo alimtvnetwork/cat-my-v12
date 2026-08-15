@@ -22,19 +22,45 @@ The current `catSeedBundleSchema` in `src/lib/seed/schemas.ts` (lines 97-105) is
       "label": "Sample PCB (default)",
       "description": "...",
       "slices": {
-        "categories": [/* CategorySeed[] */],
-        "rules": [/* RuleSeed[] */],
-        "ruleSets": [/* RuleSetSeed[] */],
-        "projects": [/* ProjectSeed[] */],
-        "cameras": [/* CameraSeed[] */],
-        "micSettings": [/* MicSettingsSeed[] */],
-        "imageSamples": [/* ImageSampleSeed[] */],
-        "swatches": [/* SwatchSeed[] */],
-        "propertyPresets": [/* PropertyPresetSeed[] */],
-        "commands": [/* CommandSeed[] */],
-        "emptyStates": [/* EmptyStateSeed[] */],
-        "errorScenarios": [/* ErrorScenarioSeed[] */],
-        "settings": [/* SettingSeed[] */],
+        "categories": [
+          /* CategorySeed[] */
+        ],
+        "rules": [
+          /* RuleSeed[] */
+        ],
+        "ruleSets": [
+          /* RuleSetSeed[] */
+        ],
+        "projects": [
+          /* ProjectSeed[] */
+        ],
+        "cameras": [
+          /* CameraSeed[] */
+        ],
+        "micSettings": [
+          /* MicSettingsSeed[] */
+        ],
+        "imageSamples": [
+          /* ImageSampleSeed[] */
+        ],
+        "swatches": [
+          /* SwatchSeed[] */
+        ],
+        "propertyPresets": [
+          /* PropertyPresetSeed[] */
+        ],
+        "commands": [
+          /* CommandSeed[] */
+        ],
+        "emptyStates": [
+          /* EmptyStateSeed[] */
+        ],
+        "errorScenarios": [
+          /* ErrorScenarioSeed[] */
+        ],
+        "settings": [
+          /* SettingSeed[] */
+        ],
       },
     },
   },

@@ -20,7 +20,7 @@ export interface VisionSettings {
   roi?: RoiSettings;
 }
 
-export type TriggerMode = 'INTERNAL' | 'EXTERNAL';
+export type TriggerMode = "INTERNAL" | "EXTERNAL";
 
 export interface ShapeTrax3Settings {
   enabled: boolean;
@@ -32,7 +32,7 @@ export interface ShapeTrax3Settings {
 export interface PatternConfig {
   enabled: boolean;
   edgeStrength: number;
-  polarity: 'ANY' | 'DARK_TO_LIGHT' | 'LIGHT_TO_DARK';
+  polarity: "ANY" | "DARK_TO_LIGHT" | "LIGHT_TO_DARK";
   inverseLogic: boolean;
 }
 
@@ -45,7 +45,7 @@ export interface PinConsistencySettings {
 
 export interface Mask {
   id: string;
-  type: 'RECTANGLE' | 'CIRCLE' | 'POLYGON';
+  type: "RECTANGLE" | "CIRCLE" | "POLYGON";
   points: { x: number; y: number }[];
   radius?: number;
 }
@@ -74,8 +74,13 @@ export interface CameraSettings {
   lighting: number;
   exposure: number;
   focus: number;
+  triggerMode?: string;
+  triggerDelay?: number;
+  triggerSource?: string;
 }
 
 export interface RecipeSegment {
+  id?: string;
+  name?: string;
   visionSettings?: VisionSettings;
 }

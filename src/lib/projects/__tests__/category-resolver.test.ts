@@ -58,4 +58,4 @@ describe("resolveAllCategories", () => {
     expect(all["Front"].matched.map((r) => r.id)).toEqual(["a"]);
     expect(all["Orphan"].matched.map((r) => r.id)).toEqual(["b"]);
   });
-});
+});

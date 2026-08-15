@@ -11,7 +11,7 @@ import {
 
 export function StandardPatternSearch() {
   const [settings, setSettings] = useState<PatternSearchSettings>(() =>
-    createDefaultPatternSearchSettings("T106")
+    createDefaultPatternSearchSettings("T106"),
   );
 
   return (

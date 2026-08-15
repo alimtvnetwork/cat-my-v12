@@ -67,4 +67,4 @@ export async function autoSeedMicSettingsIfEmpty(): Promise<void> {
   }
 
   console.info("[mic-settings/seed] seeded %d preset(s)", rows.length);
-}
+}

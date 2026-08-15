@@ -9,10 +9,10 @@ Record decisions here as subtasks land. Do not implement SS-05 without a row in 
 
 ## Decision Log
 
-| ID | Date | Title | Decision | Rationale | Subtask |
-|----|------|-------|----------|-----------|---------|
-| D-001 | — | Rule engine ownership | *Pending SS-05* | — | SS-05 |
-| D-002 | 2026-08-16 | Shared kernel layout | Option A — Shared package | Extracts rule_kernel to root so BE and worker share identical predicate math | SS-05 |
+| ID    | Date       | Title                 | Decision                  | Rationale                                                                    | Subtask |
+| ----- | ---------- | --------------------- | ------------------------- | ---------------------------------------------------------------------------- | ------- |
+| D-001 | —          | Rule engine ownership | _Pending SS-05_           | —                                                                            | SS-05   |
+| D-002 | 2026-08-16 | Shared kernel layout  | Option A — Shared package | Extracts rule_kernel to root so BE and worker share identical predicate math | SS-05   |
 
 ---
 

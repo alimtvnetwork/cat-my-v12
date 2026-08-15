@@ -134,4 +134,4 @@ export function useSeedContext(): SeedContextValue {
 /** Convenience selector for the currently loaded bundle. Returns null until ready. */
 export function useSeedBundle(): CatSeedBundle | null {
   return useSeedContext().bundle;
-}
+}

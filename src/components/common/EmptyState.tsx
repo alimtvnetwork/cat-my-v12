@@ -1,4 +1,3 @@
-
 export enum EmptyStateActionVariantType {
   Primary = "primary",
   Secondary = "secondary",
@@ -133,4 +132,4 @@ export function EmptyState({
       ) : null}
     </div>
   );
-}
+}

@@ -3,6 +3,7 @@
 **Target File:** `src/lib/camera/capture-bridge.ts`
 
 **Violating Lines & Rules:**
+
 - Line 41: **Missing blank line before return**
 - Line 102: **Missing blank line before return**
 - Line 253: **Missing blank line before return**
@@ -14,6 +15,7 @@
 - Line 349: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

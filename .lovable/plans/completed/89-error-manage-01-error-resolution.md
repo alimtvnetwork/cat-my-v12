@@ -1,6 +1,7 @@
 ---
 status: completed
 ---
+
 # Plan 89: Implement `spec/03-error-manage/01-error-resolution/` end-to-end
 
 **Version:** 1.1

@@ -1,15 +1,15 @@
-import React from 'react';
-import { useVisionStore } from '../../lib/vision/store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+import React from "react";
+import { useVisionStore } from "../../lib/vision/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
 export function PinConsistencyTool() {
   const { segments, activeSegmentId, setPinConsistencySettings } = useVisionStore();
 
-  const activeSegment = segments.find(s => s.visionSettings?.id === activeSegmentId);
+  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
   if (!activeSegment || !activeSegment.visionSettings) return null;
 
   const pinConsistency = activeSegment.visionSettings.roi?.pinConsistency || {
@@ -41,14 +41,14 @@ export function PinConsistencyTool() {
     <Card className="shadow-md border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-sm">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-lg font-semibold tracking-tight">Pin Consistency Checks</CardTitle>
-          <CardDescription>
-            Verify connector pins count, pitch, and length.
-          </CardDescription>
+          <CardTitle className="text-lg font-semibold tracking-tight">
+            Pin Consistency Checks
+          </CardTitle>
+          <CardDescription>Verify connector pins count, pitch, and length.</CardDescription>
         </div>
         <Switch checked={pinConsistency.enabled} onCheckedChange={handleEnabledChange} />
       </CardHeader>
-      
+
       {pinConsistency.enabled && (
         <CardContent>
           <div className="space-y-6">
@@ -63,7 +63,7 @@ export function PinConsistencyTool() {
                 onChange={handlePinCountChange}
               />
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label>Pitch Tolerance (±{pinConsistency.pitchTolerance}mm)</Label>

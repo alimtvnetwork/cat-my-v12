@@ -12,37 +12,81 @@ vi.mock("@/lib/errors/notify", () => ({
 const server = setupServer(
   http.get("http://localhost:8000/ping", () => {
     return HttpResponse.json({
-      Status: { 
-        IsSuccess: true, 
-        IsFailed: false, 
-        Code: 200, 
-        Message: "OK", 
-        Timestamp: new Date().toISOString() 
+      Status: {
+        IsSuccess: true,
+        IsFailed: false,
+        Code: 200,
+        Message: "OK",
+        Timestamp: new Date().toISOString(),
       },
       Attributes: {
         RequestedAt: new Date().toISOString(),
         HasAnyErrors: false,
         IsSingle: true,
         IsMultiple: false,
-        IsEmpty: false
+        IsEmpty: false,
       },
       Results: [{ pong: true }],
     });
   }),
   http.get("http://localhost:8000/rules", () => {
     return HttpResponse.json({
-      Status: { IsSuccess: true, IsFailed: false, Code: 200, Message: "OK", Timestamp: new Date().toISOString() },
-      Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: false, IsSingle: false, IsMultiple: true, IsEmpty: false },
-      Results: [{ items: [{ RuleId: 1, RuleKind: "EdgeDetection", OrderIndex: 0, ParamsJson: "{}", IsActive: true }], total: 1, provider: "MockBackend" }],
+      Status: {
+        IsSuccess: true,
+        IsFailed: false,
+        Code: 200,
+        Message: "OK",
+        Timestamp: new Date().toISOString(),
+      },
+      Attributes: {
+        RequestedAt: new Date().toISOString(),
+        HasAnyErrors: false,
+        IsSingle: false,
+        IsMultiple: true,
+        IsEmpty: false,
+      },
+      Results: [
+        {
+          items: [
+            {
+              RuleId: 1,
+              RuleKind: "EdgeDetection",
+              OrderIndex: 0,
+              ParamsJson: "{}",
+              IsActive: true,
+            },
+          ],
+          total: 1,
+          provider: "MockBackend",
+        },
+      ],
     });
   }),
   http.get("http://localhost:8000/samples", () => {
     return HttpResponse.json({
-      Status: { IsSuccess: true, IsFailed: false, Code: 200, Message: "OK", Timestamp: new Date().toISOString() },
-      Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: false, IsSingle: false, IsMultiple: true, IsEmpty: false },
-      Results: [{ items: [{ SampleId: 1, Label: "Mock Sample", ImageFilePath: "/placeholder.jpg" }], total: 1, provider: "MockBackend" }],
+      Status: {
+        IsSuccess: true,
+        IsFailed: false,
+        Code: 200,
+        Message: "OK",
+        Timestamp: new Date().toISOString(),
+      },
+      Attributes: {
+        RequestedAt: new Date().toISOString(),
+        HasAnyErrors: false,
+        IsSingle: false,
+        IsMultiple: true,
+        IsEmpty: false,
+      },
+      Results: [
+        {
+          items: [{ SampleId: 1, Label: "Mock Sample", ImageFilePath: "/placeholder.jpg" }],
+          total: 1,
+          provider: "MockBackend",
+        },
+      ],
     });
-  })
+  }),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -83,7 +127,7 @@ describe("HttpBackendClient", () => {
     server.use(
       http.get("http://localhost:8000/ping", () => {
         return HttpResponse.error();
-      })
+      }),
     );
     useBackendMode.setState({ baseUrl: "http://localhost:8000" });
     const client = new HttpBackendClient();
@@ -95,7 +139,7 @@ describe("HttpBackendClient", () => {
     server.use(
       http.get("http://localhost:8000/ping", () => {
         return HttpResponse.json({ missingStatus: true });
-      })
+      }),
     );
     useBackendMode.setState({ baseUrl: "http://localhost:8000" });
     const client = new HttpBackendClient();
@@ -113,12 +157,27 @@ describe("HttpBackendClient", () => {
   it("throws BackendHttpError on failure envelope", async () => {
     server.use(
       http.get("http://localhost:8000/ping", () => {
-        return HttpResponse.json({
-          Status: { IsSuccess: false, IsFailed: true, Code: 400, Message: "Bad Request", Timestamp: new Date().toISOString() },
-          Attributes: { RequestedAt: new Date().toISOString(), HasAnyErrors: true, IsSingle: false, IsMultiple: false, IsEmpty: true },
-          Errors: { Code: "E_BE_BAD_REQUEST", BackendMessage: "Bad Input" }
-        }, { status: 400 });
-      })
+        return HttpResponse.json(
+          {
+            Status: {
+              IsSuccess: false,
+              IsFailed: true,
+              Code: 400,
+              Message: "Bad Request",
+              Timestamp: new Date().toISOString(),
+            },
+            Attributes: {
+              RequestedAt: new Date().toISOString(),
+              HasAnyErrors: true,
+              IsSingle: false,
+              IsMultiple: false,
+              IsEmpty: true,
+            },
+            Errors: { Code: "E_BE_BAD_REQUEST", BackendMessage: "Bad Input" },
+          },
+          { status: 400 },
+        );
+      }),
     );
     useBackendMode.setState({ baseUrl: "http://localhost:8000" });
     const client = new HttpBackendClient();
@@ -138,7 +197,7 @@ describe("HttpBackendClient", () => {
     server.use(
       http.get("http://localhost:8000/ping", () => {
         return HttpResponse.text("<html>Not Found</html>", { status: 404 });
-      })
+      }),
     );
     useBackendMode.setState({ baseUrl: "http://localhost:8000" });
     const client = new HttpBackendClient();

@@ -240,14 +240,23 @@ export interface Ruleset {
 export function makeDefaultCondition(type: RuleCondition["type"], id: string): RuleCondition {
   switch (type) {
     case ConditionTypeType.SameImage:
-
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.SameImage] } } as SameImageCondition;
+      return {
+        id,
+        type,
+        params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.SameImage] },
+      } as SameImageCondition;
     case ConditionTypeType.Presence:
-
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence] } } as PresenceCondition;
+      return {
+        id,
+        type,
+        params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Presence] },
+      } as PresenceCondition;
     case ConditionTypeType.Color:
-
-      return { id, type, params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Color] } } as ColorCondition;
+      return {
+        id,
+        type,
+        params: { ...DEFAULT_CONDITION_PARAMS[ConditionTypeType.Color] },
+      } as ColorCondition;
     default: {
       const _exhaustive: never = type;
 
@@ -268,10 +277,8 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
   const p = c.params as Record<string, unknown>;
   switch (c.type) {
     case ConditionTypeType.SameImage:
-
       return true;
     case ConditionTypeType.Presence:
-
       return (
         isPresenceMode(p.Mode) &&
         typeof p.Threshold === "number" &&
@@ -280,7 +287,6 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
         Number.isFinite(p.MinBlobPx)
       );
     case ConditionTypeType.Color:
-
       return (
         isColorMode(p.Mode) &&
         typeof p.ExpectedColor === "string" &&
@@ -290,7 +296,6 @@ export function isRuleCondition(v: unknown): v is RuleCondition {
         p.DeltaE >= 0
       );
     default:
-
       return false;
   }
 }
@@ -328,4 +333,4 @@ export function normalizeGrowthTolerance(v: unknown): BlobGrowthTolerance {
   return (BLOB_GROWTH_TOLERANCES as readonly number[]).includes(v as number)
     ? (v as BlobGrowthTolerance)
     : DEFAULT_BLOB_GROWTH_TOLERANCE;
-}
+}

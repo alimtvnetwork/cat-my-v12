@@ -35,7 +35,6 @@ export interface ControllerPanelProps {
 export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: ControllerPanelProps) {
   switch (rule.controller) {
     case ControllerKindType.Number:
-
       return (
         <div data-panel-controller="number">
           <NumberPanel
@@ -46,7 +45,6 @@ export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: Con
         </div>
       );
     case ControllerKindType.Color:
-
       return (
         <div data-panel-controller="color">
           <ColorPanel
@@ -57,7 +55,6 @@ export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: Con
         </div>
       );
     case ControllerKindType.Blob:
-
       return (
         <div data-panel-controller="blob">
           <BlobPanel
@@ -68,7 +65,6 @@ export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: Con
         </div>
       );
     case ControllerKindType.Pattern:
-
       return (
         <div data-panel-controller="pattern">
           <ReferenceAssetPanel
@@ -80,7 +76,6 @@ export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: Con
         </div>
       );
     case ControllerKindType.PatternEdge:
-
       return (
         <div data-panel-controller="patternEdge">
           <PatternEdgePanel
@@ -95,7 +90,6 @@ export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: Con
     case ControllerKindType.Ocr:
     case ControllerKindType.TextMatch:
     case ControllerKindType.Math:
-
       return (
         <section
           data-panel-controller={rule.controller}

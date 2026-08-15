@@ -3,6 +3,7 @@
 **Target File:** `src/lib/enums/editor.ts`
 
 **Violating Lines & Rules:**
+
 - Line 9: **Missing blank line before return**
 - Line 12: **Missing blank line before return**
 - Line 15: **Missing blank line before return**
@@ -21,6 +22,7 @@
 - Line 91: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

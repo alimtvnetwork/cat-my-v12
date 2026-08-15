@@ -73,7 +73,8 @@ export function isTypingTarget(el: EventTarget | null): boolean {
 
   const node = el as { tagName?: unknown; isContentEditable?: unknown };
   const tag = typeof node.tagName === "string" ? node.tagName : "";
-  const isTargetTag = HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag);
+  const isTargetTag =
+    HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag);
   const isContentEditable = node.isContentEditable === true;
   const isTyping = isTargetTag || isContentEditable;
 
@@ -112,8 +113,12 @@ export function HistoryNav() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const isAltOnly = e.altKey && e.ctrlKey === false && e.metaKey === false && e.shiftKey === false;
-      const shouldHandle = isAltOnly && isTypingTarget(e.target) === false && KeyboardKeyType.isArrowLeftOrRight(e.key);
+      const isAltOnly =
+        e.altKey && e.ctrlKey === false && e.metaKey === false && e.shiftKey === false;
+      const shouldHandle =
+        isAltOnly &&
+        isTypingTarget(e.target) === false &&
+        KeyboardKeyType.isArrowLeftOrRight(e.key);
 
       if (shouldHandle === false) {
         return;

@@ -3,6 +3,7 @@
 **Target File:** `src/lib/camera/live-capture.ts`
 
 **Violating Lines & Rules:**
+
 - Line 25: **Missing blank line before return**
 - Line 28: **Missing blank line before return**
 - Line 31: **Missing blank line before return**
@@ -11,6 +12,7 @@
 - Line 38: **Missing blank line before return**
 
 **Instructions:**
+
 - Add a blank line before return statement.
 - Add a blank line before return statement.
 - Add a blank line before return statement.

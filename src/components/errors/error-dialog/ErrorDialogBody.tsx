@@ -21,4 +21,4 @@ export function ErrorDialogBody({ record }: ErrorDialogBodyProps) {
       {formatMessage(record)}
     </pre>
   );
-}
+}

@@ -46,4 +46,4 @@ export function subscribeActiveProfile(listener: () => void): () => void {
 export function __resetActiveProfileForTests(): void {
   current = null;
   listeners.clear();
-}
+}

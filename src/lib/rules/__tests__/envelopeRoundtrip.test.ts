@@ -95,4 +95,4 @@ describe("envelope round-trip", () => {
     // can still mount a route. Assert on the pattern, not the input id.
     expect(back.id).toMatch(/^rs-\d+$/);
   });
-});
+});

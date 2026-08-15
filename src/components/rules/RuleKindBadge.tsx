@@ -1,4 +1,3 @@
-
 export enum RuleKindBadgePropsSizeType {
   Sm = "sm",
   Md = "md",
@@ -24,7 +23,10 @@ export interface RuleKindBadgeProps {
   size?: RuleKindBadgePropsSizeType;
 }
 
-export function RuleKindBadge({ rule, size = RuleKindBadgePropsSizeType.Md }: RuleKindBadgeProps): ReactElement {
+export function RuleKindBadge({
+  rule,
+  size = RuleKindBadgePropsSizeType.Md,
+}: RuleKindBadgeProps): ReactElement {
   const raw = (rule.conditions?.[0] as { kind?: unknown } | undefined)?.kind;
   const key = typeof raw === "string" ? raw : "";
   const label = KIND_LABEL[key] ?? "Rule";
