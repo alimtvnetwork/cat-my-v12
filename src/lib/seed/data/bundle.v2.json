@@ -392,7 +392,11 @@
       "key": "app.theme",
       "value": "dark",
       "type": "enum",
-      "options": ["dark", "light", "system"],
+      "options": [
+        "dark",
+        "light",
+        "system"
+      ],
       "label": "Theme",
       "group": "appearance",
       "order": 10
@@ -402,7 +406,11 @@
       "key": "app.density",
       "value": "cozy",
       "type": "enum",
-      "options": ["compact", "cozy", "comfortable"],
+      "options": [
+        "compact",
+        "cozy",
+        "comfortable"
+      ],
       "label": "UI density",
       "group": "appearance",
       "order": 20
@@ -455,7 +463,11 @@
       "description": "OCR reference designators + polarity dot on the shipped sample PCB.",
       "defaultCameraId": "cam-basler-aca2440-c",
       "defaultRulesetId": "rs-refdes-verify",
-      "paletteSwatchIds": ["sw-pcb-green", "sw-silkscreen-white", "sw-polarity-dot"],
+      "paletteSwatchIds": [
+        "sw-pcb-green",
+        "sw-silkscreen-white",
+        "sw-polarity-dot"
+      ],
       "order": 10,
       "isSample": true
     },
@@ -466,7 +478,12 @@
       "description": "Template-match placement check against the golden board.",
       "defaultCameraId": "cam-basler-aca2440-c",
       "defaultRulesetId": "rs-missing-components",
-      "paletteSwatchIds": ["sw-pcb-green", "sw-copper-pad", "sw-alert-red", "sw-ok-green"],
+      "paletteSwatchIds": [
+        "sw-pcb-green",
+        "sw-copper-pad",
+        "sw-alert-red",
+        "sw-ok-green"
+      ],
       "order": 20,
       "isSample": true
     },
@@ -477,7 +494,11 @@
       "description": "Anchored SOIC pin rows, solder bridge verdict.",
       "defaultCameraId": "cam-basler-aca1920",
       "defaultRulesetId": "rs-ic-solder-joint-inspection",
-      "paletteSwatchIds": ["sw-pcb-green", "sw-solder-silver", "sw-copper-pad"],
+      "paletteSwatchIds": [
+        "sw-pcb-green",
+        "sw-solder-silver",
+        "sw-copper-pad"
+      ],
       "order": 30,
       "isSample": false
     },
@@ -488,7 +509,10 @@
       "description": "General solder fillet blob check with scratch mask.",
       "defaultCameraId": "cam-basler-aca1920",
       "defaultRulesetId": "rs-solder-joints",
-      "paletteSwatchIds": ["sw-solder-silver", "sw-copper-pad"],
+      "paletteSwatchIds": [
+        "sw-solder-silver",
+        "sw-copper-pad"
+      ],
       "order": 40,
       "isSample": false
     },
@@ -499,7 +523,10 @@
       "description": "Read tray barcode label on connector bank.",
       "defaultCameraId": "cam-ids-ui3260",
       "defaultRulesetId": "rs-barcode-read",
-      "paletteSwatchIds": ["sw-blister-foil", "sw-silkscreen-white"],
+      "paletteSwatchIds": [
+        "sw-blister-foil",
+        "sw-silkscreen-white"
+      ],
       "order": 50,
       "isSample": false
     },
@@ -510,7 +537,11 @@
       "description": "Grid over blister, blob-detect each pocket.",
       "defaultCameraId": "cam-flir-bfs-u3-51s5",
       "defaultRulesetId": "rs-pill-presence-grid",
-      "paletteSwatchIds": ["sw-blister-foil", "sw-pill-white", "sw-pill-red"],
+      "paletteSwatchIds": [
+        "sw-blister-foil",
+        "sw-pill-white",
+        "sw-pill-red"
+      ],
       "order": 60,
       "isSample": true
     },
@@ -521,7 +552,11 @@
       "description": "Verdict: exactly 10 pockets present.",
       "defaultCameraId": "cam-flir-bfs-u3-51s5",
       "defaultRulesetId": "rs-blister-pocket-count",
-      "paletteSwatchIds": ["sw-blister-foil", "sw-alert-red", "sw-ok-green"],
+      "paletteSwatchIds": [
+        "sw-blister-foil",
+        "sw-alert-red",
+        "sw-ok-green"
+      ],
       "order": 70,
       "isSample": true
     },
@@ -532,7 +567,10 @@
       "description": "Blob presence at each reel pocket, 12px pitch.",
       "defaultCameraId": "cam-ids-ui3260",
       "defaultRulesetId": "rs-carrier-tape-pocket",
-      "paletteSwatchIds": ["sw-blister-foil", "sw-solder-silver"],
+      "paletteSwatchIds": [
+        "sw-blister-foil",
+        "sw-solder-silver"
+      ],
       "order": 80,
       "isSample": false
     },
@@ -554,7 +592,9 @@
       "description": "Reserved for error-state UI previews. Points at a valid ruleset for parity.",
       "defaultCameraId": "cam-webcam-fallback",
       "defaultRulesetId": "rs-barcode-read",
-      "paletteSwatchIds": ["sw-alert-red"],
+      "paletteSwatchIds": [
+        "sw-alert-red"
+      ],
       "order": 910,
       "isSample": false
     },
@@ -565,7 +605,12 @@
       "description": "Plan 87 Step 27 demo: every rule kind on a single project for UI polish walkthroughs.",
       "defaultCameraId": "cam-basler-aca2440-c",
       "defaultRulesetId": "rs-rule-kind-showcase",
-      "paletteSwatchIds": ["sw-pcb-green", "sw-silkscreen-white", "sw-ok-green", "sw-alert-red"],
+      "paletteSwatchIds": [
+        "sw-pcb-green",
+        "sw-silkscreen-white",
+        "sw-ok-green",
+        "sw-alert-red"
+      ],
       "order": 920,
       "isSample": true
     }
@@ -590,7 +635,10 @@
       "categoryId": "cat-solder",
       "description": "General solder fillet presence with scratch-mask ignore region.",
       "order": 20,
-      "ruleIds": ["rule-solder-fillet-k", "rule-scratch-mask-r"]
+      "ruleIds": [
+        "rule-solder-fillet-k",
+        "rule-scratch-mask-r"
+      ]
     },
     {
       "id": "rs-refdes-verify",
@@ -598,7 +646,11 @@
       "categoryId": "cat-marking",
       "description": "OCR the reference designator, check polarity dot and color swatch.",
       "order": 30,
-      "ruleIds": ["rule-refdes-ocr-r", "rule-polarity-dot-c", "rule-color-swatch-check-c"]
+      "ruleIds": [
+        "rule-refdes-ocr-r",
+        "rule-polarity-dot-c",
+        "rule-color-swatch-check-c"
+      ]
     },
     {
       "id": "rs-missing-components",
@@ -606,7 +658,9 @@
       "categoryId": "cat-placement",
       "description": "Template-match against a known-good component slot.",
       "order": 40,
-      "ruleIds": ["rule-missing-component-e"]
+      "ruleIds": [
+        "rule-missing-component-e"
+      ]
     },
     {
       "id": "rs-barcode-read",
@@ -614,7 +668,10 @@
       "categoryId": "cat-barcode",
       "description": "Read Data Matrix and Code 128 with grade thresholds.",
       "order": 50,
-      "ruleIds": ["rule-barcode-datamatrix-r", "rule-barcode-code128-r"]
+      "ruleIds": [
+        "rule-barcode-datamatrix-r",
+        "rule-barcode-code128-r"
+      ]
     },
     {
       "id": "rs-pill-presence-grid",
@@ -622,7 +679,10 @@
       "categoryId": "cat-pill-blister",
       "description": "Grid over blister, blob-detect each pocket.",
       "order": 60,
-      "ruleIds": ["rule-pill-pocket-grid-r", "rule-pill-presence-k"]
+      "ruleIds": [
+        "rule-pill-pocket-grid-r",
+        "rule-pill-presence-k"
+      ]
     },
     {
       "id": "rs-blister-pocket-count",
@@ -630,7 +690,9 @@
       "categoryId": "cat-pill-blister",
       "description": "Assert exactly 10 pockets present.",
       "order": 70,
-      "ruleIds": ["rule-blister-pocket-count-e"]
+      "ruleIds": [
+        "rule-blister-pocket-count-e"
+      ]
     },
     {
       "id": "rs-carrier-tape-pocket",
@@ -638,7 +700,9 @@
       "categoryId": "cat-carrier-tape",
       "description": "Blob presence at each reel pocket, pitched 12px.",
       "order": 80,
-      "ruleIds": ["rule-carrier-tape-pocket-k"]
+      "ruleIds": [
+        "rule-carrier-tape-pocket-k"
+      ]
     },
     {
       "id": "rs-rule-kind-showcase",
@@ -895,7 +959,11 @@
         "r": 14
       },
       "params": {
-        "targetLab": [55, 12, -8],
+        "targetLab": [
+          55,
+          12,
+          -8
+        ],
         "deltaE": 3.5
       }
     },
@@ -952,10 +1020,22 @@
       "categoryId": "cat-surface",
       "geometry": {
         "points": [
-          [80, 220],
-          [180, 200],
-          [220, 300],
-          [100, 320]
+          [
+            80,
+            220
+          ],
+          [
+            180,
+            200
+          ],
+          [
+            220,
+            300
+          ],
+          [
+            100,
+            320
+          ]
         ]
       }
     },
@@ -970,12 +1050,30 @@
         "strokes": [
           {
             "points": [
-              [10, 10],
-              [20, 15],
-              [30, 25],
-              [45, 40],
-              [60, 55],
-              [80, 60]
+              [
+                10,
+                10
+              ],
+              [
+                20,
+                15
+              ],
+              [
+                30,
+                25
+              ],
+              [
+                45,
+                40
+              ],
+              [
+                60,
+                55
+              ],
+              [
+                80,
+                60
+              ]
             ],
             "width": 6
           }
@@ -1049,7 +1147,11 @@
         "r": 18
       },
       "params": {
-        "targetLab": [62, 20, -4],
+        "targetLab": [
+          62,
+          20,
+          -4
+        ],
         "deltaE": 3.0
       }
     },
@@ -1113,7 +1215,10 @@
       "categoryId": "cat-uncategorised",
       "params": {
         "expression": "(presence('rule-showcase-presence-e') && !absence('rule-showcase-absence-a')) ? 'pass' : 'fail'",
-        "inputs": ["rule-showcase-presence-e", "rule-showcase-absence-a"]
+        "inputs": [
+          "rule-showcase-presence-e",
+          "rule-showcase-absence-a"
+        ]
       }
     }
   ],
@@ -1131,7 +1236,10 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["golden", "front"],
+      "tags": [
+        "golden",
+        "front"
+      ],
       "order": 10
     },
     {
@@ -1147,7 +1255,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["rotated"],
+      "tags": [
+        "rotated"
+      ],
       "order": 20
     },
     {
@@ -1163,7 +1273,10 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["defect", "missing"],
+      "tags": [
+        "defect",
+        "missing"
+      ],
       "order": 30
     },
     {
@@ -1179,7 +1292,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["golden"],
+      "tags": [
+        "golden"
+      ],
       "order": 40
     },
     {
@@ -1195,7 +1310,10 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["defect", "bridge"],
+      "tags": [
+        "defect",
+        "bridge"
+      ],
       "order": 50
     },
     {
@@ -1211,7 +1329,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["reference"],
+      "tags": [
+        "reference"
+      ],
       "order": 60
     },
     {
@@ -1227,7 +1347,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["barcode"],
+      "tags": [
+        "barcode"
+      ],
       "order": 70
     },
     {
@@ -1243,7 +1365,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["golden"],
+      "tags": [
+        "golden"
+      ],
       "order": 80
     },
     {
@@ -1259,7 +1383,10 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["defect", "missing"],
+      "tags": [
+        "defect",
+        "missing"
+      ],
       "order": 90
     },
     {
@@ -1275,7 +1402,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["golden"],
+      "tags": [
+        "golden"
+      ],
       "order": 100
     },
     {
@@ -1291,7 +1420,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["reference"],
+      "tags": [
+        "reference"
+      ],
       "order": 110
     },
     {
@@ -1307,7 +1438,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["empty-state"],
+      "tags": [
+        "empty-state"
+      ],
       "order": 900
     },
     {
@@ -1323,7 +1456,9 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["error-state"],
+      "tags": [
+        "error-state"
+      ],
       "order": 910
     },
     {
@@ -1339,7 +1474,10 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["golden", "ui-craft"],
+      "tags": [
+        "golden",
+        "ui-craft"
+      ],
       "order": 920
     },
     {
@@ -1355,14 +1493,17 @@
         "dataUrl": null,
         "checksum": null
       },
-      "tags": ["defect", "ui-craft"],
+      "tags": [
+        "defect",
+        "ui-craft"
+      ],
       "order": 930
     }
   ],
   "commands": [
     {
       "id": "cmd-open-project",
-      "title": "Open project\u2026",
+      "title": "Open project…",
       "hotkey": "Ctrl+O",
       "group": "navigation",
       "action": "project.open",
@@ -1613,6 +1754,14 @@
       "severity": "warning",
       "message": "Sample AI-Testing run flagged 2 of 26 rules under the demo threshold.",
       "hint": "Plan 87 Step 27 demo scenario: open AI Testing to review the seeded run."
+    }
+  ],
+  "referenceImages": [
+    {
+      "id": "ref-static-01",
+      "url": "/placeholder.svg",
+      "width": 1920,
+      "height": 1080
     }
   ]
 }

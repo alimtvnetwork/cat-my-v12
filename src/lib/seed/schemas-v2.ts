@@ -55,6 +55,7 @@ export const SLICE_ID_PREFIX = {
   commands: "cmd-",
   emptyStates: "es-",
   errorScenarios: "err-",
+  referenceImages: "ref-",
 } as const;
 
 export type SliceKey = keyof typeof SLICE_ID_PREFIX;
@@ -183,6 +184,7 @@ export const seedBundleV2Schema = z
     commands: z.array(commandRowSchema),
     emptyStates: z.array(emptyStateRowSchema),
     errorScenarios: z.array(rowSchemaFor(SLICE_ID_PREFIX.errorScenarios)),
+    referenceImages: z.array(rowSchemaFor(SLICE_ID_PREFIX.referenceImages)).optional(),
   })
   // Passthrough at the top level too, so a stray `$comment` field doesn't
   // fail-loud; it just carries through.
