@@ -4,6 +4,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-08-17T00:00:00Z, Added `.lovable/overview.md` (project overview + diagrams) and `.lovable/ai-improvement-guidelines.md` (codebase-derived AI quality guide). Both are now step 2–3 in Read First.
 - 2026-08-16T01:43:26Z, Plan 98: Added Architecture state section (1b) with links to runtime map, facade policy, and implementation status.
 - 2026-08-13T00:00:00Z, Plan 98: Architecture & code observations + consolidation plan added under `.lovable/plans/architecture-and-code-observations.md` and `pending/98-architecture-consolidation-improvements.md`. Read before backend/runtime integration work.
 - 2026-08-12T17:18:00Z, Session V5: Resolve UI breakages in Vision app, execute write-memory-v3, and register self-looping directive.
@@ -14,20 +15,22 @@ Read this file first when starting any task in this repo. It maps every folder a
 ## 1. Read First (always, in order)
 
 1. `.lovable/what-to-read.md` (this file) - authoritative read-list pointer
-2. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
-3. `.lovable/coding-guidelines.md` - coding rules and boundaries
-4. `.lovable/plans/index.md` - active roadmap and completed items
-   4b. `.lovable/plans/architecture-and-code-observations.md` - architecture review snapshot (Aug 2026); improvement tracks in `pending/98-architecture-consolidation-improvements.md`
-5. `.lovable/suggestions.md` and `.lovable/suggestions/index.md` - active and historical suggestions
-6. `.lovable/strictly-avoid.md` - forbidden patterns
-7. `.lovable/cicd-index.md` and every file under `.lovable/cicd-issues/`
-8. `.lovable/issues/`, `.lovable/pending-issues/`, `.lovable/solved-issues/`
-9. `.lovable/spec/commands/` - spec auditing and directives
-10. `.lovable/ambiguous-questions/01-new-ambiguity/` and `02-ambiguity-resolved/`
-11. `.lovable/prompts/index.md` - prompt registry
-12. `.lovable/memory/workflow/` - current workflow state
-13. `spec/` (relevant folders including error management)
-14. `README.md` (root) - project status, ship state
+2. [`.lovable/overview.md`](./overview.md) - **project overview**: architecture diagrams, repo map, what's good, recent work, gaps
+3. [`.lovable/ai-improvement-guidelines.md`](./ai-improvement-guidelines.md) - **AI quality guide**: preserve/improve patterns, mandatory workflow, anti-patterns
+4. `.lovable/memory/index.md` - master memory index; every memory file is listed here.
+5. `.lovable/coding-guidelines.md` - coding rules and boundaries (hard caps, blind-follow)
+6. `.lovable/plans/index.md` - active roadmap and completed items
+   6b. `.lovable/plans/architecture-and-code-observations.md` - architecture review snapshot (Aug 2026); Plan 98 completed — see `completed/98-architecture-consolidation-improvements.md`
+7. `.lovable/suggestions.md` and `.lovable/suggestions/index.md` - active and historical suggestions
+8. `.lovable/strictly-avoid.md` - forbidden patterns
+9. `.lovable/cicd-index.md` and every file under `.lovable/cicd-issues/`
+10. `.lovable/issues/`, `.lovable/pending-issues/`, `.lovable/solved-issues/`
+11. `.lovable/spec/commands/` - spec auditing and directives
+12. `.lovable/ambiguous-questions/01-new-ambiguity/` and `02-ambiguity-resolved/`
+13. `.lovable/prompts/index.md` - prompt registry
+14. `.lovable/memory/workflow/` - current workflow state
+15. `spec/` (relevant folders including error management)
+16. `README.md` (root) - project status, ship state
 
 ## 1b. Architecture state (read before backend work)
 
@@ -43,7 +46,9 @@ Read this file first when starting any task in this repo. It maps every folder a
 ├── readme.md                     Root status + entry pointer
 ├── agents.md                     Agent operating contract
 ├── .lovable/                     AI control tree (memory, plans, prompts, spec commands)
-│   ├── what-to-read.md           THIS FILE
+│   ├── what-to-read.md           THIS FILE — onboarding map
+│   ├── overview.md               Project overview + architecture diagrams
+│   ├── ai-improvement-guidelines.md  Codebase-derived AI quality guide
 │   ├── prompt.md                 -> prompts/index.md
 │   ├── prompts/                  Numbered reusable prompts (write-memory, next-task, ...)
 │   ├── memory/                   Persistent AI memory
@@ -112,7 +117,8 @@ Read this file first when starting any task in this repo. It maps every folder a
 | Task                                | Must-read (in this order)                                                                                                      |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Before any task (always)            | The full "Read First" list above in section 1                                                                                  |
-| Before writing code                 | `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/` (language-specific)            |
+| Before writing code                 | `.lovable/overview.md` (§ relevant), `.lovable/ai-improvement-guidelines.md`, `.lovable/memory/01-code-red.md`, `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/` |
+| Architecture / backend integration  | `.lovable/overview.md` §2–4, `docs/architecture/runtime-map.md`, section 1b below                                              |
 | Before adding a feature             | `.lovable/memory/index.md`, latest `.lovable/plans/pending/*.md`, relevant `spec/21-app/*.md`, `spec/22-app-issues/`           |
 | Before adding a unit test           | `pytest.ini`, mirror layout under `tests/unit/`, follow `spec/04-database-conventions/04-testing-strategy.md` when DB-touching |
 | Before adding an integration test   | `tests/integration/` or `tests/e2e/` conventions; `tests/e2e/playwright_smoke.py` reference                                    |
@@ -152,6 +158,8 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## 6. See Also
 
+- [`.lovable/overview.md`](./overview.md) - project overview with embedded Mermaid diagrams
+- [`.lovable/ai-improvement-guidelines.md`](./ai-improvement-guidelines.md) - what to preserve, what to improve, AI workflow
 - `.lovable/memory/07-lovable-folder-guide.md` - structural guide to `.lovable/`
 - `.lovable/memory/06-spec-map.md` - spec folder map
 - `src/routes/readme.md` - route conventions

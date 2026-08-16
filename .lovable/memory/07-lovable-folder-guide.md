@@ -6,6 +6,9 @@ Structural map of the `.lovable/` control tree. Read this before touching any fi
 
 | Path                                     | Purpose                                                                       | Edit rule                                                          |
 | ---------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `overview.md`                            | Project overview + architecture diagrams (human + AI orientation).            | Update when architecture or onboarding changes.                    |
+| `ai-improvement-guidelines.md`           | Codebase-derived AI quality guide.                                            | Append anti-patterns when recurring failures found.                |
+| `what-to-read.md`                        | Authoritative onboarding map.                                                 | Update Read First order when new top-level docs added.             |
 | `project.json`                           | Template + revision pin (`tanstack_start_ts_current`).                        | Never hand-edit.                                                   |
 | `prompt.md`                              | Prompt registry: aliases → prompt files.                                      | Update whenever a new `prompts/xx-*.md` is added.                  |
 | `coding-guidelines/coding-guidelines.md` | Coding rules referenced by the "coding tasks" branch of the next-task prompt. | Follow verbatim; treat as authoritative.                           |

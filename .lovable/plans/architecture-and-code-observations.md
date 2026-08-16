@@ -2,8 +2,10 @@
 
 **Created:** 2026-08-13  
 **Author:** Cursor agent (architecture review session)  
-**Status:** Reference — drives Plan 98 improvement tracks  
+**Status:** Reference — Plan 98 completed (see `completed/98-architecture-consolidation-improvements.md`)  
 **Scope:** Full repo — `src/`, `BE/`, `app/`, `spec/`, `.lovable/`, tests, shell
+
+**Also see:** [`.lovable/overview.md`](../overview.md) (living project overview with diagrams) · [`.lovable/ai-improvement-guidelines.md`](../ai-improvement-guidelines.md) (AI action items)
 
 ---
 
@@ -11,7 +13,7 @@
 
 Snapshot of architecture and coding quality as observed from a codebase read (Aug 2026). Use this file before starting Plan 98 subtasks or when onboarding a human contributor who needs the "honest state of the repo" beyond README marketing copy.
 
-Companion executable plan: [`pending/98-architecture-consolidation-improvements.md`](./pending/98-architecture-consolidation-improvements.md)
+Companion executable plan: [`completed/98-architecture-consolidation-improvements.md`](./completed/98-architecture-consolidation-improvements.md) (done)
 
 ---
 

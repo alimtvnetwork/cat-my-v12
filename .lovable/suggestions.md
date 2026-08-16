@@ -2,6 +2,11 @@
 
 ## Active Suggestions
 
+### S-99 — Documentation & AI onboarding (2026-08-17)
+
+**Delivered:** [overview.md](./overview.md) + [ai-improvement-guidelines.md](./ai-improvement-guidelines.md)  
+**Status:** Complete — linked from what-to-read.md and root README.md
+
 ### S-98 — Architecture consolidation (2026-08-13)
 
 **Source:** Cursor agent architecture review session  

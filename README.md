@@ -23,16 +23,19 @@ You switch modes from the homepage or from Settings. The chosen backend URL is r
 
 ## Quick links
 
-|                  |                                                        |
-| ---------------- | ------------------------------------------------------ |
-| Live app         | https://cat-my-ui-v11.lovable.app                      |
-| Spec root        | [`spec/00-overview.md`](spec/00-overview.md)           |
-| Onboarding trail | [`.lovable/what-to-read.md`](.lovable/what-to-read.md) |
-| Agent playbook   | [`AGENTS.md`](AGENTS.md)                               |
-| Changelog        | [`CHANGELOG.md`](CHANGELOG.md)                         |
-| Release notes    | [`RELEASE_NOTES.md`](RELEASE_NOTES.md)                 |
-| Plan index       | [`.lovable/plans/index.md`](.lovable/plans/index.md)   |
-| Project memory   | [`mem/index.md`](mem/index.md)                         |
+|                  |                                                                 |
+| ---------------- | --------------------------------------------------------------- |
+| Live app         | https://cat-my-ui-v11.lovable.app                              |
+| **Project overview** | [`.lovable/overview.md`](.lovable/overview.md) — architecture, diagrams, what's good |
+| **AI quality guide** | [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md) |
+| Spec root        | [`spec/00-overview.md`](spec/00-overview.md)                    |
+| Onboarding trail | [`.lovable/what-to-read.md`](.lovable/what-to-read.md)          |
+| Runtime map      | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md) |
+| Agent playbook   | [`AGENTS.md`](AGENTS.md)                                        |
+| Changelog        | [`CHANGELOG.md`](CHANGELOG.md)                                  |
+| Release notes    | [`RELEASE_NOTES.md`](RELEASE_NOTES.md)                          |
+| Plan index       | [`.lovable/plans/index.md`](.lovable/plans/index.md)           |
+| Project memory   | [`mem/index.md`](mem/index.md)                                  |
 
 ## Local dev (BE+FE+Shell)
 
@@ -83,13 +86,15 @@ Once both are up, open the app and use the **Seed / Backend** toggle on the home
 | `docs/architecture/`                     | Runtime map, integration tests, architecture decisions                                      |
 | `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                                            |
 | `tests/`                                 | Contract, integration, unit, and visual tests                                               |
-| `.lovable/`                              | Plans, memory, prompts, completed-work archive                                              |
+| `.lovable/`                              | Plans, memory, prompts, **[overview](.lovable/overview.md)**, **[AI guidelines](.lovable/ai-improvement-guidelines.md)** |
 | `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                                           |
 
 ## How planning and memory are organised
 
 This repo tracks work in the open. If you want to know why something looks the way it does, these are the places to look:
 
+- **[`.lovable/overview.md`](.lovable/overview.md)** - project overview with architecture diagrams, strengths, gaps, and recent shipped work.
+- **[`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md)** - codebase-derived guide for AI agents: what to preserve, what to improve, mandatory workflow.
 - **`mem/index.md`** - project-wide rules and design decisions the AI agent and humans both honour.
 - **`.lovable/plan.md`** - the active serial execution plan (what "next" means today).
 - **`.lovable/plans/`** - audits, planning docs, and per-plan working notes.
@@ -128,7 +133,8 @@ Work is grouped so it can be tackled in parallel where possible. The full list l
 
 ## Contributing
 
-- Read [`AGENTS.md`](AGENTS.md) and [`spec/02-coding-guidelines/`](spec/02-coding-guidelines/) before your first change.
+- Read [`.lovable/overview.md`](.lovable/overview.md) and [`.lovable/what-to-read.md`](.lovable/what-to-read.md) before your first change.
+- AI agents: follow [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md) alongside [`AGENTS.md`](AGENTS.md) and [`spec/02-coding-guidelines/`](spec/02-coding-guidelines/).
 - Every non-trivial task lands with a plan in `.lovable/plans/` and a closeout memo in `.lovable/memory/`.
 - Errors follow the Universal Response Envelope defined in [`spec/03-error-manage/`](spec/03-error-manage/). No swallowed catches.
 - Prefer facades over direct SDK calls. Raw vendor SDKs are wrapped before they reach app code.
