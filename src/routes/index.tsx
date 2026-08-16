@@ -29,7 +29,7 @@ import { useRouter } from "@tanstack/react-router";
 import { RecentProjectsChip } from "@/components/home/RecentProjectsChip";
 import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
 import { GettingStarted } from "@/components/home/GettingStarted";
-import { useRecentProjects } from "@/lib/recent-projects-store";
+import { useRecentProjects } from "@/lib/stores/recent-projects-store";
 import { ArrowRight, FolderPlus as FolderPlusIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({

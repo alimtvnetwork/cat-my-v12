@@ -16,7 +16,7 @@ vi.mock("sonner", () => {
 
 import { toast } from "sonner";
 import { showGlobalError } from "@/lib/errors/notify";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 describe("showGlobalError", () => {
   beforeEach(() => {

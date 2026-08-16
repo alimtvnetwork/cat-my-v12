@@ -4,7 +4,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export function ErrorQueueBadge() {
   const currentError = useErrorStore((s) => s.currentError);

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { RunError } from "@/lib/run-store";
+import type { RunError } from "@/lib/stores/run-store";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
 export function RunErrorDrawer({

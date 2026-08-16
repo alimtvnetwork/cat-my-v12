@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Clock } from "lucide-react";
-import { useRecentProjects } from "@/lib/recent-projects-store";
+import { useRecentProjects } from "@/lib/stores/recent-projects-store";
 import { toIntParam } from "@/lib/ids/int-alias";
 
 export function RecentProjectsChip() {

@@ -1,5 +1,5 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
-import { RunningOpKindType } from "@/lib/running-ops-store";
+import { RunningOpKindType } from "@/lib/stores/running-ops-store";
 /**
  * Plan 64 step 79: project-level Run button + confirm dialog.
  * Renders a primary CTA that opens a confirm dialog listing the flattened

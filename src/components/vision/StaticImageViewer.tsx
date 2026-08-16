@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getReferenceImage } from "@/lib/reference-image-store";
+import { getReferenceImage } from "@/lib/stores/reference-image-store";
 
 export function StaticImageViewer() {
   const [imgUrl, setImgUrl] = useState<string>("/assets/placeholder-pcb.jpg");

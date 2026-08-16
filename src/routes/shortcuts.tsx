@@ -24,7 +24,7 @@ import {
   useShortcutsStore,
   type ShortcutActionId,
   type ShortcutActionSpec,
-} from "@/lib/shortcuts-store";
+} from "@/lib/stores/shortcuts-store";
 import { formatComboForDisplay } from "@/lib/shortcut-format";
 
 export const Route = createFileRoute("/shortcuts")({

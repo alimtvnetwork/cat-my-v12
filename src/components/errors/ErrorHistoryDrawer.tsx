@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { downloadErrorHistory } from "@/lib/errors/export";
 import { useSeededEmptyState, useSeededErrorScenarios } from "@/lib/seed/useSeededSurfaces";
 

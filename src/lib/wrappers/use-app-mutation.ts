@@ -3,7 +3,7 @@ import {
   type UseMutationOptions,
   type UseMutationResult,
 } from "@tanstack/react-query";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export type AppMutationResult<
   TData = unknown,

@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Layers, RotateCcw, X } from "lucide-react";
-import { clearReferenceImage, setReferenceImage } from "@/lib/reference-image-store";
+import { clearReferenceImage, setReferenceImage } from "@/lib/stores/reference-image-store";
 import {
   CAMERA_CONTROLS_STORAGE_KEY,
   SAMPLE_SELECTION_STORAGE_KEY,

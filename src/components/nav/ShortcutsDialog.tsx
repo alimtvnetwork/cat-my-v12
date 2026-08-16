@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useHotkeys } from "@/hooks/useHotkeys";
-import { SHORTCUT_ACTIONS, useShortcutsStore } from "@/lib/shortcuts-store";
+import { SHORTCUT_ACTIONS, useShortcutsStore } from "@/lib/stores/shortcuts-store";
 import { formatComboForDisplay } from "@/lib/shortcut-format";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 

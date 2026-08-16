@@ -2,7 +2,6 @@ import type { VisionFacade, CameraStatusResponse } from "./domain-facade";
 import type { ReferenceImage } from "@/types/vision/ReferenceImage";
 import { getActiveProfile } from "@/lib/seed/active-profile";
 import { fetchBackend } from "@/lib/backend/http";
-import { EnvelopeError } from "@/lib/backend/envelope";
 
 class MockVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {

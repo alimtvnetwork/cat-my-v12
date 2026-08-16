@@ -15,7 +15,7 @@ import { ErrorSourceType } from "@/lib/errors/error-record";
 // `installGlobalErrorHandlers` in `error-bus`, which now delegates here).
 // This guarantees the listeners are attached exactly once per session so
 // errors are never silently swallowed nor double-reported.
-import { useErrorStore } from "./errorStore";
+import { useErrorStore } from "../stores/errorStore";
 import { reportError } from "./error-bus";
 
 let isInstalled = false;

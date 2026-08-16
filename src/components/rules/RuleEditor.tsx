@@ -19,7 +19,7 @@ import { useEditorShortcuts } from "@/lib/editor/keyboard/shortcuts";
 import { useToolShortcuts } from "@/lib/editor/keyboard/useToolShortcuts";
 import { useSelectedRuleShape } from "@/lib/editor/selection/useSelectedRuleShape";
 
-import { PropertiesPaletteRuleKindType } from "@/lib/ui-prefs-store";
+import { PropertiesPaletteRuleKindType } from "@/lib/stores/ui-prefs-store";
 
 interface Props {
   rule: Rule;

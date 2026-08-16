@@ -19,7 +19,7 @@ export enum ApplyThemeClassResolvedType {
  * SSR-safe: all DOM access is wrapped in `useEffect` / window checks.
  */
 import { useEffect } from "react";
-import { useUiPrefsStore, type ThemeVariant, type UiFlavor } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type ThemeVariant, type UiFlavor } from "@/lib/stores/ui-prefs-store";
 
 function resolveTheme(theme: ThemeVariant): ApplyThemeClassResolvedType {
   if (theme === "system") {

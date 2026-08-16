@@ -19,7 +19,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { Component, useEffect, type ErrorInfo, type ReactNode } from "react";
 
 import { ENVELOPE_ERROR_EVENT, EnvelopeError } from "@/lib/be-fetch";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import type { CapturedError } from "@/types/errors";
 
 interface EnvelopeErrorEventDetail {

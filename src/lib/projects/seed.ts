@@ -20,7 +20,7 @@ import { useProjectStore } from "./store";
 import type { EditorRule } from "@/lib/editor/types";
 import type { CatSeedProject, CatSeedRule } from "@/lib/seed";
 import { useTrialStore, runRuleset } from "./trials";
-import { useRunStore, type NgEvent, type RunHistoryEntry } from "@/lib/run-store";
+import { useRunStore, type NgEvent, type RunHistoryEntry } from "@/lib/stores/run-store";
 import { writeFacadeJson } from "@/lib/projects/facade-json";
 
 function mkEditorRule(seed: CatSeedRule): EditorRule {

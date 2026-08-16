@@ -1,4 +1,4 @@
-import { PaletteIdType } from "@/lib/palette-store";
+import { PaletteIdType } from "@/lib/stores/palette-store";
 /**
  * Plan 64 step 89: User Functions palette.
  *

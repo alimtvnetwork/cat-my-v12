@@ -9,7 +9,7 @@ import { EMPTY_LIBRARY, exportLibraryJson, importLibraryJson } from "./library";
 import type { FunctionLibrary } from "./library";
 import { EMPTY_CHAIN_EVENT_STORE, type ChainEventStore } from "./chain-events";
 import { exportChainEventsJson, importChainEventsJson } from "./chain-events-io";
-import type { PersistenceErrorCode } from "@/lib/errors/registry";
+import type { PersistenceErrorCode } from "@/lib/errors";
 
 export const FUNCTION_LIBRARY_STORAGE_KEY = "lovable.functions.library.v1";
 export const CHAIN_EVENTS_STORAGE_KEY = "lovable.functions.chain-events.v1";

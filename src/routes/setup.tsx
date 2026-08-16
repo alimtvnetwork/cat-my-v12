@@ -4,7 +4,7 @@ import {
   SetupErrorComponent,
   SetupNotFoundComponent,
 } from "@/components/editor/setup/SetupBoundaries";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { HmiShell } from "@/components/hmi";
 import { WorkerHealthBanner } from "@/components/editor/validation/WorkerHealthBanner";
 

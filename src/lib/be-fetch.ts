@@ -21,7 +21,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // (CLI sessions), and Plan 89 Phase 4 (rules save/load).
 
 import { newCorrelationId } from "@/types/errors";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 /** Wire-level envelope shape. Mirrors `BE/envelope.py` exactly. */
 export interface EnvelopeStatus {

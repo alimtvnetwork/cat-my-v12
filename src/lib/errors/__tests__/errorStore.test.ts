@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { __resetErrorStoreForTest, useErrorStore } from "../errorStore";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { __resetErrorBusForTest } from "../error-bus";
+import { useErrorStore, __resetErrorStoreForTest } from "../../stores/errorStore";
 
 beforeEach(() => {
   __resetErrorStoreForTest();
+  __resetErrorBusForTest();
   vi.spyOn(console, "info").mockImplementation(() => {});
 });
 

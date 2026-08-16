@@ -1,4 +1,4 @@
-import { ToolTooltipModeType } from "@/lib/ui-prefs-store";
+import { ToolTooltipModeType } from "@/lib/stores/ui-prefs-store";
 // @vitest-environment jsdom
 // Persistence + defaults for the Tools palette tooltip-mode preference.
 
@@ -24,7 +24,7 @@ describe("useUiPrefsStore tool tooltip mode", () => {
   });
 
   it("defaults to 'hover' and persists updates via the facade", async () => {
-    const mod = await import("../ui-prefs-store");
+    const mod = await import("../stores/ui-prefs-store");
     expect(["hover", "on-demand"]).toContain(mod.useUiPrefsStore.getState().toolTooltipMode);
 
     mod.useUiPrefsStore.getState().setToolTooltipMode(ToolTooltipModeType.OnDemand);

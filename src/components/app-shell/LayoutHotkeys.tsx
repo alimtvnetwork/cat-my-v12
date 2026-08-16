@@ -4,7 +4,7 @@ import { notifySuccess } from "@/lib/notify";
 import { registerShortcut } from "@/lib/shortcuts/registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { getSnapState, setSnapEnabled } from "@/lib/editor/snap-store";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { ShortcutScopeBaseType } from "@/lib/shortcuts/scopes";
 
 /**

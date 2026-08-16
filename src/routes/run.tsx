@@ -17,7 +17,7 @@ import {
   ViewportImageControls,
   type StatusLogEntry,
 } from "@/components/hmi";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { formatIdentifierLabel } from "@/lib/display-labels";
 import { RunHistorySidebar } from "@/components/hmi/RunHistorySidebar";
 import { RunErrorDrawer } from "@/components/hmi/RunErrorDrawer";

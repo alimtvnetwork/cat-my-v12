@@ -8,8 +8,8 @@
 // announce state changes, not the whole footer on every render (the old
 // footer-wide aria-live was chatty and drowned out real updates).
 import { RunStatusType } from "@/types/run/RunStatus";
-import { useProgramStore } from "@/lib/program-store";
-import { useRunStore } from "@/lib/run-store";
+import { useProgramStore } from "@/lib/stores/program-store";
+import { useRunStore } from "@/lib/stores/run-store";
 
 export function StatusBar() {
   const programName = useProgramStore((s) => s.name);

@@ -11,7 +11,7 @@ import { defaultSampleUrl } from "@/lib/editor/sample-library";
 import {
   getReferenceImage as getStoredReferenceUrl,
   subscribe as subscribeReference,
-} from "@/lib/reference-image-store";
+} from "@/lib/stores/reference-image-store";
 import { getPreparedMask, subscribe as subscribeMask, type PreparedMask } from "../mask-store";
 import { AppEvent } from "@/lib/constants";
 

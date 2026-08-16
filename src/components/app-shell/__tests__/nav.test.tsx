@@ -13,7 +13,7 @@ vi.mock("@tanstack/react-router", () => ({
   useRouterState: () => "/",
 }));
 
-vi.mock("@/lib/run-store", () => ({
+vi.mock("@/lib/stores/run-store", () => ({
   useRunStore: (sel: (s: { status: string }) => unknown) => sel({ status: RunStatusType.Idle }),
 }));
 

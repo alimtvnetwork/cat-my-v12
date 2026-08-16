@@ -6,7 +6,7 @@ import { Pencil, Star } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { FAVORITE_CANDIDATES, useFavoritesStore } from "@/lib/favorites-store";
+import { FAVORITE_CANDIDATES, useFavoritesStore } from "@/lib/stores/favorites-store";
 
 export function FavoritesBar() {
   const favorites = useFavoritesStore((s) => s.favorites);

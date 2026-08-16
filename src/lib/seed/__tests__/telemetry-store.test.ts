@@ -13,7 +13,7 @@ import {
   type SeedOrchestratorAdapters,
 } from "../orchestrator";
 import { logFatalReseed, useSeedTelemetryStore } from "../telemetry-store";
-import { useErrorStore, __resetErrorStoreForTest } from "@/lib/errors/errorStore";
+import { useErrorStore, __resetErrorStoreForTest } from "@/lib/stores/errorStore";
 
 function makeAdapters(overrides: Partial<SeedOrchestratorAdapters> = {}): SeedOrchestratorAdapters {
   return {

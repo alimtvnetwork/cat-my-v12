@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { defaultSampleUrl } from "@/lib/editor/sample-library";
-import { getReferenceImage, subscribe } from "@/lib/reference-image-store";
+import { getReferenceImage, subscribe } from "@/lib/stores/reference-image-store";
 
 export interface MachineFrameProps {
   live?: boolean;

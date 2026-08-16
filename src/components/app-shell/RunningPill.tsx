@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useHydrated } from "@tanstack/react-router";
 import { Loader2, Square, GripVertical } from "lucide-react";
-import { useRunningOpsStore } from "@/lib/running-ops-store";
+import { useRunningOpsStore } from "@/lib/stores/running-ops-store";
 import { clampPillPos, loadPillPos, savePillPos, type PillPos } from "@/lib/running-pill-position";
 import type { UseRunningApi } from "@/hooks/useRunning";
 

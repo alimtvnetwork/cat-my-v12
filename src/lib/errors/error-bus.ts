@@ -4,7 +4,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // and `window.onunhandledrejection` so nothing dies silently.
 
 import { makeErrorRecord, type ErrorRecord, type ErrorSource } from "./error-record";
-import type { UiErrorCode } from "./registry";
+import type { UiErrorCode } from "./ui-codes";
 
 type Listener = (rec: ErrorRecord) => void;
 

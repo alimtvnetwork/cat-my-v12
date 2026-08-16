@@ -40,34 +40,30 @@ from BE.routes import cli_doctor as cli_doctor_route
 logger = logging.getLogger("BE.main")
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build the FastAPI app with logging, CORS, and envelope handlers wired."""
-    cfg = settings or get_settings()
-    configure_logging(cfg.log_level)
-    
-    def sigterm_handler(signum, frame):
-        logger.info("sigterm_received", extra={"operation": "shutdown"})
-        logging.shutdown()
-        sys.exit(0)
+def _sigterm_handler(signum, frame):
+    logger.info("sigterm_received", extra={"operation": "shutdown"})
+    logging.shutdown()
+    sys.exit(0)
 
+
+def _setup_signals() -> None:
     try:
-        signal.signal(signal.SIGTERM, sigterm_handler)
+        signal.signal(signal.SIGTERM, _sigterm_handler)
     except Exception:
         pass
 
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        yield
-        logger.info("lifespan_shutdown", extra={"operation": "shutdown"})
-        logging.shutdown()
 
-    app = FastAPI(title="BE", version="1.0.0", lifespan=lifespan)
-    
+@asynccontextmanager
+async def _app_lifespan(app: FastAPI):
+    yield
+    logger.info("lifespan_shutdown", extra={"operation": "shutdown"})
+    logging.shutdown()
+
+
+def _register_middlewares(app: FastAPI, cfg: Settings) -> None:
     install_cors(app, cfg)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(RequestIdMiddleware)
-    
-    register_exception_handlers(app)
 
     @app.middleware("http")
     async def echo_correlation_id(request: Request, call_next):
@@ -77,6 +73,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             response.headers["X-Correlation-Id"] = correlation_id
         return response
 
+
+def _register_routers(app: FastAPI) -> None:
     app.include_router(api_router)
     app.include_router(health_route.router)
     app.include_router(meta_route.router)
@@ -90,6 +88,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+
+
+def _log_startup(app: FastAPI, cfg: Settings) -> None:
     logger.info(
         "be_app_created",
         extra={
@@ -103,6 +104,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "version": app.version,
         },
     )
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    """Build the FastAPI app with logging, CORS, and envelope handlers wired."""
+    cfg = settings or get_settings()
+    configure_logging(cfg.log_level)
+    _setup_signals()
+    
+    app = FastAPI(title="BE", version="1.0.0", lifespan=_app_lifespan)
+    _register_middlewares(app, cfg)
+    register_exception_handlers(app)
+    _register_routers(app)
+    _log_startup(app, cfg)
+    
     return app
 
 

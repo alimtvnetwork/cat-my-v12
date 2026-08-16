@@ -15,7 +15,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { DockSlotType } from "@/lib/enums/ui";
 import { cn } from "@/lib/utils";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { useWorkspaceLayoutStore, type FloatingRect } from "@/lib/workspace/layout-slice";
 
 export interface FloatingWindowProps {

@@ -15,7 +15,7 @@ import { defaultDomainRegistry } from "@/lib/facades/registry";
 import { onCommand } from "@/lib/command-bus";
 import { FROZEN_PROFILE_IDS, SeedBundleValidationError } from "./schemas-v2";
 import { validateBundleLoud } from "./validate-bundle-loud";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { setActiveProfile } from "./active-profile";
 
 // Boot-time loud validation. If `bundle.v2.json` is malformed (duplicate ids,

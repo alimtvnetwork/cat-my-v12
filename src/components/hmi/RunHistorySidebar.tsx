@@ -1,5 +1,5 @@
 import { RunStatusType } from "@/types/run/RunStatus";
-import { useRunStore, type RunHistoryEntry } from "@/lib/run-store";
+import { useRunStore, type RunHistoryEntry } from "@/lib/stores/run-store";
 
 function fmtDuration(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));

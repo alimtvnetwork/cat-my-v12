@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HmiShell } from "@/components/hmi";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { EmptyState } from "@/components/common/EmptyState";
 import { AlertTriangle } from "lucide-react";
 

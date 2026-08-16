@@ -55,7 +55,7 @@ import { applyPresetParams, getPresetsForKind } from "@/lib/editor/rule-presets"
 import { AlignmentGuides } from "./AlignmentGuides";
 import { SnapDebugHud } from "./SnapDebugHud";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { logger } from "@/lib/editor/errors";
 import type { EditorRule, EditorRuleKind, Viewport } from "@/lib/editor/types";
 import { registerShortcut } from "@/lib/shortcuts/registry";

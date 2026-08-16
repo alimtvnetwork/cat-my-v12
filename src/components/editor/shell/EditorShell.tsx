@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { PanelHost } from "@/components/app-shell/panels";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { DockedPropertiesPanel } from "./DockedPropertiesPanel";
 
 export interface EditorShellProps {

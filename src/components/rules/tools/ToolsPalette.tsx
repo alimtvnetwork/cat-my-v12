@@ -24,7 +24,7 @@ import { Check, Circle, MousePointer, Pentagon, Square, Type } from "lucide-reac
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { logger } from "@/lib/editor/errors";
-import { useUiPrefsStore, type ToolTooltipMode } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type ToolTooltipMode } from "@/lib/stores/ui-prefs-store";
 import { TOOL_ORDER, TOOL_TOOLTIPS, type ToolId, type ToolVariant } from "./toolTooltipMap";
 import { ToolGuideDialog } from "./ToolGuideDialog";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";

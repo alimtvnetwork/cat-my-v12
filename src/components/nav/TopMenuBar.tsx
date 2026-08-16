@@ -16,8 +16,8 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { useRunStore } from "@/lib/run-store";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useRunStore } from "@/lib/stores/run-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { MenuGroupIdType } from "@/lib/enums/menu-group-id-type";
 import { MenuShortcutType } from "@/lib/enums/menu-shortcut-type";
 import { useMenuShortcuts, type MenuShortcutBinding } from "@/hooks/useMenuShortcuts";

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 import { EnvelopeErrorBoundary } from "@/components/errors/EnvelopeErrorBoundary";
 import { ENVELOPE_ERROR_EVENT, EnvelopeError } from "@/lib/be-fetch";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import type { CapturedError } from "@/types/errors";
 
 function reset() {

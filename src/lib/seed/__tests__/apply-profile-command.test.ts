@@ -17,7 +17,7 @@ import {
 import { emitCommand } from "@/lib/command-bus";
 import { defaultDomainRegistry } from "@/lib/facades/registry";
 import { __resetSeedV2 } from "../orchestrator-v2";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 beforeEach(async () => {
   __resetSeedV2();

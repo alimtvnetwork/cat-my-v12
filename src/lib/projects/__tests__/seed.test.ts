@@ -9,7 +9,7 @@ import { CatSeedRuleKindType } from "@/lib/seed/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { seedSampleProjects, autoSeedIfEmpty } from "../seed";
 import { useProjectStore } from "../store";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { useTrialStore } from "../trials";
 import { MemoryUiSeedFacade } from "@/lib/seed";
 import type { CatSeedBundle } from "@/lib/seed";

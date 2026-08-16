@@ -5,7 +5,7 @@ import { EditorToolFamilyType } from "@/lib/editor/types";
 // the `?e2e=1` URL flag or `VITE_EDITOR_E2E=1`. Never active in production
 // builds without the flag, so real users never see the global.
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { IMAGE_BOUNDS } from "@/lib/editor/coords";
 import type { RuleGroup } from "@/lib/editor/store/rules-slice";
 

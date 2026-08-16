@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { installGlobalErrorCapture } from "@/lib/errors/globalCapture";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export function useGlobalErrors() {
   useEffect(() => {

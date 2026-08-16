@@ -8,7 +8,7 @@ import {
   findShortcutConflicts,
   useShortcutsStore,
   type ShortcutActionId,
-} from "@/lib/shortcuts-store";
+} from "@/lib/stores/shortcuts-store";
 import { formatComboForDisplay } from "@/lib/shortcut-format";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 

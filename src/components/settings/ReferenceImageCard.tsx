@@ -6,7 +6,7 @@ import {
   getReferenceImage,
   setReferenceImage,
   subscribe,
-} from "@/lib/reference-image-store";
+} from "@/lib/stores/reference-image-store";
 import { useSampleLibrary } from "@/lib/editor/useSampleLibrary";
 import {
   buildCaptureRequest,
@@ -22,7 +22,7 @@ import {
   getCaptureHistory,
   removeCaptureFromHistory,
   subscribeCaptureHistory,
-} from "@/lib/capture-history-store";
+} from "@/lib/stores/capture-history-store";
 
 const MAX_BYTES = 4 * 1024 * 1024; // 4 MB
 

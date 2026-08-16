@@ -4,8 +4,8 @@ import { AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
 import { useWorkerHealthStore } from "@/lib/editor/worker-health-store";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { useViewportSafe } from "@/hooks/useViewportSafe";
-import { useErrorStore } from "@/lib/errors/errorStore";
-import { lookupErrorCode } from "@/lib/errors/registry";
+import { useErrorStore } from "@/lib/stores/errorStore";
+import { lookupErrorCode } from "@/lib/errors";
 import { buildCapturedError } from "@/types/errors";
 import { HttpMethod } from "@/lib/constants";
 

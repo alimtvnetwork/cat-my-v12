@@ -8,7 +8,7 @@
 // `--header-crumb-h`, and the menubar height so the right menu stays
 // aligned with the reduced row.
 import { Rows2, Rows4 } from "lucide-react";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 export function HeaderDensityToggle() {
   const density = useUiPrefsStore((s) => s.headerDensity);

@@ -8,7 +8,7 @@
  * pattern for cycling toggles), and exposes `data-theme` for tests.
  */
 import { Moon, Sun, Monitor } from "lucide-react";
-import { useUiPrefsStore, type ThemeVariant } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type ThemeVariant } from "@/lib/stores/ui-prefs-store";
 
 const NEXT_LABEL: Record<ThemeVariant, string> = {
   dark: "Switch to light theme",

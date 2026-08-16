@@ -1,5 +1,5 @@
-import { useErrorStore } from "@/lib/errors/errorStore";
-import { lookupErrorCode } from "@/lib/errors/registry";
+import { useErrorStore } from "@/lib/stores/errorStore";
+import { lookupErrorCode } from "@/lib/errors";
 import { useBackendMode } from "./mode";
 import { EnvelopeSchema } from "./envelope";
 import { Envelope } from "./types";

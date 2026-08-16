@@ -21,7 +21,7 @@ export enum PropertyPaletteIdType {
   Css = "css",
   Image = "image",
 }
-import { PropertiesPaneIdType } from "@/lib/ui-prefs-store";
+import { PropertiesPaneIdType } from "@/lib/stores/ui-prefs-store";
 // Plan 79 step 30 / Plan 80 step 16. V4 Properties palette shell.
 //
 // Root cause the split fixes, in one sentence: all 10 palette panes were
@@ -59,7 +59,7 @@ import {
   useUiPrefsStore,
   PropertiesPaletteRuleKindType,
   type PropertiesPaletteRuleKind,
-} from "@/lib/ui-prefs-store";
+} from "@/lib/stores/ui-prefs-store";
 import { InfoPane } from "./properties/InfoPane";
 import { HistoryPane } from "./properties/HistoryPane";
 import { AdjustPane } from "./properties/AdjustPane";

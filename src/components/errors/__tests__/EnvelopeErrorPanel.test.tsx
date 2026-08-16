@@ -7,7 +7,7 @@ afterEach(() => cleanup());
 import { EnvelopeErrorPanel } from "../EnvelopeErrorPanel";
 import { buildCapturedError, type CapturedError, type EnvelopeErrors } from "@/types/errors";
 
-vi.mock("@/lib/errors/errorStore", () => ({ useErrorStore: () => undefined }));
+vi.mock("@/lib/stores/errorStore", () => ({ useErrorStore: () => undefined }));
 
 function make(env: Partial<EnvelopeErrors>, status?: number): CapturedError {
   const base = buildCapturedError(new Error("boom"), { responseStatus: status });

@@ -23,7 +23,7 @@ import {
   ResetSummaryPhaseType,
 } from "@/lib/seed/reset-summary-json";
 import { toast } from "sonner";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { showToastError } from "@/lib/errors/notify";
 import { useProjectStore } from "@/lib/projects/store";
 import { useRouter } from "@tanstack/react-router";

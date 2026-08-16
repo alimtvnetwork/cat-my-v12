@@ -6,7 +6,7 @@ import { registerShortcut, useShortcuts } from "@/lib/shortcuts/registry";
 import { formatCombo } from "@/lib/shortcuts/formatCombo";
 import { ShortcutScopeBaseType } from "@/lib/shortcuts/scopes";
 import { emitCommand } from "@/lib/command-bus";
-import { usePaletteStore } from "@/lib/palette-store";
+import { usePaletteStore } from "@/lib/stores/palette-store";
 import { fuzzyMatch, highlightRuns } from "@/lib/fuzzy-match";
 import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";

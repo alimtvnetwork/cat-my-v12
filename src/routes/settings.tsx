@@ -1,6 +1,6 @@
 import { RunStatusType } from "@/types/run/RunStatus";
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 
 export const Route = createFileRoute("/settings")({
   beforeLoad: () => {

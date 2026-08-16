@@ -23,10 +23,10 @@ const SCAN_DIRS = ["routes", "components"];
 const RATCHETED_MODULES = [
   "@/lib/projects/store",
   "@/lib/rules/audit-store",
-  "@/lib/palette-store",
-  "@/lib/favorites-store",
-  "@/lib/recent-projects-store",
-  "@/lib/program-store",
+  "@/lib/stores/palette-store",
+  "@/lib/stores/favorites-store",
+  "@/lib/stores/recent-projects-store",
+  "@/lib/stores/program-store",
   "@/lib/reference-image-store",
 ];
 

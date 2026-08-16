@@ -1,15 +1,15 @@
 import { CommandIdType } from "@/lib/command-bus";
-import { PaletteIdType, PaletteModeType } from "@/lib/palette-store";
+import { PaletteIdType, PaletteModeType } from "@/lib/stores/palette-store";
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Titlebar, ModeHeader, ActionBar, StatusBar, type TitlebarProps } from "@/components/hmi";
 import { FavoritesBar } from "@/components/nav/FavoritesBar";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import { emitCommand } from "@/lib/command-bus";
-import { usePaletteStore } from "@/lib/palette-store";
-import { useShortcutsStore } from "@/lib/shortcuts-store";
+import { usePaletteStore } from "@/lib/stores/palette-store";
+import { useShortcutsStore } from "@/lib/stores/shortcuts-store";
 
 export interface HmiShellProps {
   program?: TitlebarProps["program"];

@@ -27,7 +27,7 @@ vi.mock("@tanstack/react-router", async () => {
   return { ...actual, useHydrated: () => true };
 });
 
-vi.mock("@/lib/errors/errorStore", () => ({ useErrorStore: () => undefined }));
+vi.mock("@/lib/stores/errorStore", () => ({ useErrorStore: () => undefined }));
 
 import { EnvelopeErrorPanel } from "../EnvelopeErrorPanel";
 import { SHOW_DEV_FRAMES_KEY } from "@/hooks/use-show-dev-frames";

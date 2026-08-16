@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { usePaletteStore } from "@/lib/palette-store";
+import { usePaletteStore } from "@/lib/stores/palette-store";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { PanelSearchPalette } from "@/components/app-shell/PanelSearchPalette";
 import { useInspectorSectionShortcuts } from "@/components/editor/CollapsibleSection";

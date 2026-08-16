@@ -1,5 +1,5 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
-import { PaletteModeType } from "@/lib/palette-store";
+import { PaletteModeType } from "@/lib/stores/palette-store";
 /**
  * Plan 64 step 63: chrome for a detachable palette.
  * Wraps arbitrary children with title-bar + min/max/close-to-dock buttons.
@@ -7,7 +7,7 @@ import { PaletteModeType } from "@/lib/palette-store";
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { Minus, Square, X, Maximize2, RotateCcw } from "lucide-react";
-import { usePaletteStore, type PaletteId } from "@/lib/palette-store";
+import { usePaletteStore, type PaletteId } from "@/lib/stores/palette-store";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import {
   AlertDialog,

@@ -11,7 +11,7 @@ import {
   isPersistenceErrorCode,
   isFunctionsErrorCode,
   isUiErrorCode,
-} from "../registry";
+} from "../index";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../../..");

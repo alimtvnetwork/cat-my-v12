@@ -1,5 +1,5 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 /**
  * Wraps any promise-based query (fetch, axios, RPC) to automatically catch

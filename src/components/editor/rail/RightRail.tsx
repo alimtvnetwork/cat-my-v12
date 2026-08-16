@@ -12,7 +12,7 @@ import type { RuleGroup } from "@/lib/editor/store/rules-slice";
 import { IMAGE_BOUNDS } from "@/lib/editor/coords";
 import { InspectorSurface } from "../InspectorSurface";
 // RulesRailHeader import removed (v3.947.0): the "N layers" chrome band was killed.
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 export interface RightRailProps {
   rules: EditorRule[];

@@ -1,5 +1,5 @@
 import { Paintbrush } from "lucide-react";
-import { useUiPrefsStore, type UiFlavor } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type UiFlavor } from "@/lib/stores/ui-prefs-store";
 
 const NEXT_LABEL: Record<UiFlavor, string> = {
   standard: "Switch to Modern UI",

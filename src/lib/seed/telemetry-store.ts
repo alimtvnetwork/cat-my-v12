@@ -11,7 +11,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 
 import { create } from "zustand";
 
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import type { SeedRunReport, SeederResult } from "./orchestrator";
 
 const MAX_HISTORY = 10;

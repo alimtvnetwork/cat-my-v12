@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 import { CommandIdType } from "@/lib/command-bus";
 import { EditorRuleKindType } from "@/lib/editor/types";
-import { PaletteIdType } from "@/lib/palette-store";
+import { PaletteIdType } from "@/lib/stores/palette-store";
 /**
  * Plan 64 step 90: Tool palette listing rule-kind entries.
  *

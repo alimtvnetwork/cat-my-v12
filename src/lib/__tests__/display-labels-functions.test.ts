@@ -4,7 +4,7 @@ import {
   FUNCTION_LIBRARY_ERROR_CODES,
   CHAIN_EVENT_ERROR_CODES,
   PERSISTENCE_ERROR_CODES,
-} from "../errors/registry";
+} from "../errors/index";
 
 // Plan 66 step 22 (CX-02) slice 2: enforce that every registered fn.*/ce.*
 // code has a curated human-readable label. Without this test, the fallback

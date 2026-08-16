@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { useHeaderMetrics } from "@/hooks/useHeaderMetrics";
 import { SkipToContentLink } from "@/components/app-shell/SkipToContentLink";
 import { HeaderBrand, HeaderCrumbs, HeaderActions } from "@/components/hmi/titlebar-parts";

@@ -1,6 +1,6 @@
 import { RunStatusType } from "@/types/run/RunStatus";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { FlavorToggle } from "../theme/FlavorToggle";
 import { WindowMenu } from "../app-shell/WindowMenu";
 

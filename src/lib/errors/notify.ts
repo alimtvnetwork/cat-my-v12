@@ -11,7 +11,7 @@ import { AnnouncePriorityType } from "@/lib/a11y/announcer";
 import { toast } from "sonner";
 import { createElement } from "react";
 
-import { useErrorStore } from "./errorStore";
+import { useErrorStore } from "../stores/errorStore";
 import type { CapturedError } from "@/types/errors";
 import { registerRetry, type RetryFn } from "./retry-registry";
 import { announce } from "@/lib/a11y/announcer";

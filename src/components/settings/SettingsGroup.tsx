@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
-import { useUiPrefsStore, type SettingsGroupId } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type SettingsGroupId } from "@/lib/stores/ui-prefs-store";
 
 // Plan 81 step 5: collapsible group wrapper for the Settings hub. State
 // lives in `useUiPrefsStore.settingsGroupsCollapsed` so collapse persists

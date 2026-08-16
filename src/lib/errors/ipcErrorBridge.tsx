@@ -33,7 +33,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  */
 import { useEffect, useRef } from "react";
 
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { getObservabilitySessions } from "@/lib/observability/sessions.functions";
 import { getObservabilitySessionIpc } from "@/lib/observability/ipc.functions";
 

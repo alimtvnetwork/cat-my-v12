@@ -1,5 +1,5 @@
 import { AuditRetentionPolicyType } from "@/lib/audit-retention.functions";
-import { SettingsGroupIdType } from "@/lib/ui-prefs-store";
+import { SettingsGroupIdType } from "@/lib/stores/ui-prefs-store";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -48,7 +48,7 @@ import {
 import { writeRetentionPolicy, type AuditRetentionPolicy } from "@/lib/audit-retention.functions";
 import { formatIdentifierLabel, formatUiText } from "@/lib/display-labels";
 import { ReferenceImageCard } from "@/components/settings/ReferenceImageCard";
-import { useUiPrefsStore, type ToolTooltipMode, type HeaderDensity } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore, type ToolTooltipMode, type HeaderDensity } from "@/lib/stores/ui-prefs-store";
 import { FlavorToggle } from "@/components/theme/FlavorToggle";
 
 // Spec 39 §10 + 27.Operator.Id (Q-07): single operator identity persisted as config.

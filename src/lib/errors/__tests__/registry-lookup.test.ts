@@ -1,6 +1,6 @@
 // Plan 71 Step 11: registry lookup coverage.
 import { describe, it, expect, vi } from "vitest";
-import { lookupErrorCode, listRegisteredErrorCodes } from "../registry";
+import { lookupErrorCode, listRegisteredErrorCodes } from "../index";
 
 describe("lookupErrorCode", () => {
   it("returns typed meta for registered E9003", () => {

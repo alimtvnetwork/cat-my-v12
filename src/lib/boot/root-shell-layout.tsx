@@ -22,7 +22,7 @@ import { GlobalHomeAffordance } from "@/components/nav/GlobalHomeAffordance";
 import { AppShellNav } from "@/components/app-shell/nav";
 import { AppShellSidebar } from "@/components/app-shell/sidebar";
 import { StandardAppShellNav } from "@/components/app-shell/StandardAppShellNav";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 export function RootShellLayout({ children }: { children: ReactNode }) {
   const uiFlavor = useUiPrefsStore((s) => s.uiFlavor);

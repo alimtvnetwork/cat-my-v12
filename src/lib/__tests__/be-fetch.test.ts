@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CORRELATION_HEADER, EnvelopeError, beFetch, type Envelope } from "@/lib/be-fetch";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 function successEnvelope<T>(results: T[]): Envelope<T> {
   return {

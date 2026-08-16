@@ -23,10 +23,10 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUp, ArrowDown, Trash2, Plus, AlertTriangle, PowerOff } from "lucide-react";
 import type { Project, RuleSet } from "@/lib/projects/store";
 import { useProjectStore } from "@/lib/projects/store";
-import { useErrorStore } from "@/lib/errors/errorStore";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { showToastError } from "@/lib/errors/notify";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { StatusFilterType } from "@/routes/setup.rules";
 import { toIntParam } from "@/lib/ids/int-alias";
 
