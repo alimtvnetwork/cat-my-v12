@@ -156,7 +156,7 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
         <button
           type="button"
           onClick={refresh}
-          className="px-hmi-3 py-hmi-1 border border-ca-border text-hmi-body text-ca-ink"
+          className="min-h-[40px] px-hmi-3 py-hmi-1 border border-ca-border text-hmi-body text-ca-ink"
         >
           Rescan
         </button>
@@ -174,10 +174,10 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) 
               data-feature-gated={gated ? FeatureNameType.MultiVendorCameraSelection : undefined}
               className={
                 device.selected
-                  ? "border border-ca-primary bg-ca-panel-2 p-hmi-3 text-left"
+                  ? "border border-ca-primary bg-ca-panel-2 p-hmi-3 text-left min-h-[40px]"
                   : gated
-                    ? "border border-ca-border bg-ca-panel p-hmi-3 text-left opacity-50 cursor-not-allowed"
-                    : "border border-ca-border bg-ca-panel p-hmi-3 text-left"
+                    ? "border border-ca-border bg-ca-panel p-hmi-3 text-left opacity-50 cursor-not-allowed min-h-[40px]"
+                    : "border border-ca-border bg-ca-panel p-hmi-3 text-left min-h-[40px]"
               }
               title={gated ? "License required: Multi Vendor Camera Selection" : undefined}
             >
