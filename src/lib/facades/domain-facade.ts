@@ -24,6 +24,19 @@
 // meaningful if the shape is stable.
 
 import type { SliceKey } from "@/lib/seed/schemas-v2";
+import type { ReferenceImage } from "@/types/vision/ReferenceImage";
+
+export interface CameraStatusResponse {
+  status: "connected" | "disconnected" | "error";
+  message?: string;
+}
+
+export interface VisionFacade {
+  captureImage(cameraId: string): Promise<ReferenceImage>;
+  getCameraStatus(cameraId: string): Promise<CameraStatusResponse>;
+  getReference(projectId: string): Promise<ReferenceImage | undefined>;
+  setReference(projectId: string, imageId: string): Promise<void>;
+}
 
 /** Every domain row MUST carry a stable id (SS-08 prefixed). */
 export interface DomainRow {

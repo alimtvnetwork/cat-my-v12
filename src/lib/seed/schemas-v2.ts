@@ -86,6 +86,7 @@ const projectRowSchema = baseRow
     profileId: profileIdField, // required on projects
     defaultCameraId: fkField.optional(),
     defaultRulesetId: fkField.nullish(),
+    defaultReferenceImageId: fkField.optional(),
     paletteSwatchIds: z.array(fkField).optional(),
   })
   .passthrough()
@@ -160,6 +161,18 @@ const emptyStateRowSchema = baseRow
     path: ["id"],
   });
 
+const referenceImageRowSchema = baseRow
+  .extend({
+    url: z.string().min(1, "must be a non-empty string"),
+    width: z.number().optional(),
+    height: z.number().optional(),
+  })
+  .passthrough()
+  .refine((r) => r.id.startsWith(SLICE_ID_PREFIX.referenceImages), {
+    message: `id must start with "${SLICE_ID_PREFIX.referenceImages}"`,
+    path: ["id"],
+  });
+
 const profileSchema = z.object({
   id: z.enum(FROZEN_PROFILE_IDS),
   name: z.string().min(1, "must be a non-empty string"),
@@ -184,7 +197,7 @@ export const seedBundleV2Schema = z
     commands: z.array(commandRowSchema),
     emptyStates: z.array(emptyStateRowSchema),
     errorScenarios: z.array(rowSchemaFor(SLICE_ID_PREFIX.errorScenarios)),
-    referenceImages: z.array(rowSchemaFor(SLICE_ID_PREFIX.referenceImages)).optional(),
+    referenceImages: z.array(referenceImageRowSchema).optional(),
   })
   // Passthrough at the top level too, so a stray `$comment` field doesn't
   // fail-loud; it just carries through.
@@ -348,6 +361,7 @@ export function checkReferentialIntegrity(bundle: SeedBundleV2): SeedIssue[] {
   const projectIds = ids(bundle.projects);
   const rulesetIds = ids(bundle.rulesets);
   const ruleIds = ids(bundle.rules);
+  const referenceImageIds = ids(bundle.referenceImages ?? []);
 
   const fk = (
     kind: SeedIssueKindType,
@@ -401,6 +415,16 @@ export function checkReferentialIntegrity(bundle: SeedBundleV2): SeedIssue[] {
         "rulesets",
         rulesetIds,
       );
+
+    if (proj.defaultReferenceImageId)
+      fk(
+        SeedIssueKindType.Reference,
+        `projects[${i}].defaultReferenceImageId`,
+        proj.defaultReferenceImageId,
+        "referenceImages",
+        referenceImageIds,
+      );
+
     (proj.paletteSwatchIds ?? []).forEach((sid, j) =>
       fk(
         SeedIssueKindType.Reference,

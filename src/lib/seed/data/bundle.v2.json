@@ -168,7 +168,7 @@
         "w": 1280,
         "h": 720
       },
-      "pixelSizeUm": 3.0,
+      "pixelSizeUm": 3,
       "interface": "USB2",
       "colorMode": "color",
       "order": 900
@@ -362,7 +362,7 @@
       "kind": "color",
       "props": {
         "space": "LAB",
-        "deltaEMax": 6.0,
+        "deltaEMax": 6,
         "sampleRadiusPx": 8
       },
       "swatchId": "sw-polarity-dot"
@@ -469,7 +469,8 @@
         "sw-polarity-dot"
       ],
       "order": 10,
-      "isSample": true
+      "isSample": true,
+      "defaultReferenceImageId": "ref-default-pcb-1"
     },
     {
       "id": "proj-default-pcb-missing",
@@ -485,7 +486,8 @@
         "sw-ok-green"
       ],
       "order": 20,
-      "isSample": true
+      "isSample": true,
+      "defaultReferenceImageId": "ref-default-pcb-1"
     },
     {
       "id": "proj-soic-solder",
@@ -1152,7 +1154,7 @@
           20,
           -4
         ],
-        "deltaE": 3.0
+        "deltaE": 3
       }
     },
     {
