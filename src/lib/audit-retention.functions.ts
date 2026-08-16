@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { OpsEventCodeType } from "@/lib/ops.shared";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -71,7 +72,7 @@ export const getAuditRetentionStatus = createServerFn({ method: HttpMethod.Get }
           .maybeSingle();
 
         if (error) {
-          console.error(`[audit.retention] policy=${policy} query_failed`, error);
+          ClientLogger.error(`[audit.retention] policy=${policy} query_failed`, error);
         }
 
         return {
@@ -95,7 +96,7 @@ export const getAuditRetentionStatus = createServerFn({ method: HttpMethod.Get }
       .order("ts", { ascending: false });
 
     if (runsErr) {
-      console.error("[audit.retention] runs_query_failed", runsErr);
+      ClientLogger.error("[audit.retention] runs_query_failed", runsErr);
     } else if (runs && runs.length > 0) {
       lastRun = runs[0].ts as string;
       // Sum per-policy purge counts across the last 24h of runs.
@@ -124,7 +125,7 @@ export const getAuditRetentionStatus = createServerFn({ method: HttpMethod.Get }
       ? new Date(Date.parse(lastRun) + DEFAULT_CADENCE_HOURS * 3600 * 1000).toISOString()
       : null;
 
-    console.info(`[audit.retention] fetched actor=${context.userId} lastRun=${lastRun ?? "none"}`);
+    ClientLogger.info(`[audit.retention] fetched actor=${context.userId} lastRun=${lastRun ?? "none"}`);
 
     return {
       lastRun,
@@ -201,7 +202,7 @@ export const writeRetentionPolicy = createServerFn({ method: HttpMethod.Post })
   .validator(parseRetentionPayload)
   .handler(async ({ data, context }) => {
     const cid = newCorrelationId();
-    console.info(`[audit.retention.write] subject=settings.audit.retention cid=${cid} phase=start`);
+    ClientLogger.info(`[audit.retention.write] subject=settings.audit.retention cid=${cid} phase=start`);
     try {
       const actor = await requireCaptureAdmin(context.userId, "settings.audit.retention");
       const prior = lastPolicy;
@@ -215,7 +216,7 @@ export const writeRetentionPolicy = createServerFn({ method: HttpMethod.Post })
         correlationId: cid,
         detail: `actor=${actor} cid=${cid}`,
       });
-      console.info(
+      ClientLogger.info(
         `[audit.retention.write] cid=${cid} phase=ok actor=${actor} policy=${data.policy} cadence=${data.cadenceHours}`,
       );
 
@@ -241,10 +242,10 @@ export const writeRetentionPolicy = createServerFn({ method: HttpMethod.Post })
           detail: `code=${ce.code} message=${ce.message}`,
         });
       } catch (emitErr) {
-        console.error(`[audit.retention.write] cid=${cid} ops_emit_failed`, emitErr);
+        ClientLogger.error(`[audit.retention.write] cid=${cid} ops_emit_failed`, emitErr);
       }
 
-      console.warn(`[audit.retention.write] cid=${cid} code=${ce.code} message=${ce.message}`);
+      ClientLogger.warn(`[audit.retention.write] cid=${cid} code=${ce.code} message=${ce.message}`);
 
       throw ce;
     }

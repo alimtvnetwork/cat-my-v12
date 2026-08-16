@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 83: New Rule Set dialog with auto-name + clone modes.
  * Root cause: existing "new ruleset" path is per-project image upload; no
@@ -63,7 +64,7 @@ export function NewRuleSetDialog({
           typeof crypto !== "undefined" && "randomUUID" in crypto
             ? crypto.randomUUID()
             : `rs-${Date.now().toString(36)}`;
-        console.info("[NewRuleSetDialog] synthetic new", { rulesetId, name });
+        ClientLogger.info("[NewRuleSetDialog] synthetic new", { rulesetId, name });
         onCreated?.({ rulesetId, name, mode });
       } else {
         if (!sourceId) throw new Error("Pick a rule set to clone from");
@@ -74,7 +75,7 @@ export function NewRuleSetDialog({
 
       onOpenChange(false);
     } catch (e) {
-      console.error("[NewRuleSetDialog] submit failed", e);
+      ClientLogger.error("[NewRuleSetDialog] submit failed", e);
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);

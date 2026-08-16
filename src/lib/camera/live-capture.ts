@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { CameraCapabilityErrorCodeType } from "@/lib/camera/capability";
 // Plan 80 step 46: live camera capture lifecycle helpers.
 //
@@ -90,7 +91,7 @@ export function watchCameraDevices(
     opts.mediaDevices ?? (typeof navigator !== "undefined" ? navigator.mediaDevices : null);
 
   if (!md || typeof md.enumerateDevices !== "function") {
-    console.warn(
+    ClientLogger.warn(
       "[camera-live] watchCameraDevices: mediaDevices unavailable, listener will never fire",
     );
 
@@ -113,14 +114,14 @@ export function watchCameraDevices(
         }));
       listener(devices);
     } catch (err) {
-      console.warn("[camera-live] enumerateDevices threw", err);
+      ClientLogger.warn("[camera-live] enumerateDevices threw", err);
 
       if (!isDisposed) listener([]);
     }
   }
 
   const handler = () => {
-    console.info("[camera-live] devicechange event received");
+    ClientLogger.info("[camera-live] devicechange event received");
     void refresh();
   };
 
@@ -192,7 +193,7 @@ export async function openCameraStream(
       message:
         "navigator.mediaDevices.getUserMedia unavailable (requires a secure origin: https or localhost)",
     };
-    console.error("[camera-live] openCameraStream failed", error);
+    ClientLogger.error("[camera-live] openCameraStream failed", error);
 
     return { ok: false, isFail: true, error };
   }
@@ -202,7 +203,7 @@ export async function openCameraStream(
     raw = await md.getUserMedia(opts.constraints ?? { video: true, audio: false });
   } catch (err) {
     const error = toCapabilityError(err);
-    console.error("[camera-live] openCameraStream failed", error);
+    ClientLogger.error("[camera-live] openCameraStream failed", error);
 
     return { ok: false, isFail: true, error };
   }
@@ -213,12 +214,12 @@ export async function openCameraStream(
 
   const onTrackEnded = () => {
     if (isClosed) return;
-    console.info("[camera-live] track ended externally, notifying subscribers");
+    ClientLogger.info("[camera-live] track ended externally, notifying subscribers");
     for (const cb of endedSubs) {
       try {
         cb();
       } catch (err) {
-        console.warn("[camera-live] onExternalEnd subscriber threw", err);
+        ClientLogger.warn("[camera-live] onExternalEnd subscriber threw", err);
       }
     }
   };
@@ -237,12 +238,12 @@ export async function openCameraStream(
       try {
         t.stop();
       } catch (err) {
-        console.warn("[camera-live] track.stop threw", err);
+        ClientLogger.warn("[camera-live] track.stop threw", err);
       }
     }
 
     endedSubs.clear();
-    console.info(`[camera-live] stream closed (${tracks.length} track(s))`);
+    ClientLogger.info(`[camera-live] stream closed (${tracks.length} track(s))`);
   };
 
   const onExternalEnd = (cb: () => void): Unsubscribe => {
@@ -253,7 +254,7 @@ export async function openCameraStream(
     };
   };
 
-  console.info(`[camera-live] stream opened (${tracks.length} track(s))`);
+  ClientLogger.info(`[camera-live] stream opened (${tracks.length} track(s))`);
 
   return { ok: true, isFail: false, stream: { stream: raw, close, onExternalEnd } };
 }

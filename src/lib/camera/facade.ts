@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 79 step 15. CameraSetting facade wrap.
 //
 // Contract: .lovable/pending-facades/04-camera-setting-facade-wrap.md
@@ -84,7 +85,7 @@ class LocalStorageCameraFacade implements CameraFacade {
     this.store = createCameraLibraryStore({
       storage: s,
       onFailure: (f: CameraFailure) => {
-        console.warn("[camera/facade] persistence failure", f);
+        ClientLogger.warn("[camera/facade] persistence failure", f);
       },
     });
     // Fan out store updates to facade subscribers.
@@ -123,7 +124,7 @@ class LocalStorageCameraFacade implements CameraFacade {
     if (st) {
       const isFail = !st.upsert(entry);
 
-      if (isFail) {
+      if (isFail === true) {
         return {
           ok: false,
           isFail: true,

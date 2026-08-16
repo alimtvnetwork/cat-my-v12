@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 // Trial run types + in-memory engine stub + per-ruleset history store.
 // Plan 34, steps 17 + 18 (SS-04). No backend: the stub scores each rule
@@ -134,7 +135,7 @@ export const useTrialStore = create<TrialStoreState>()(
       runsByRuleset: {},
       appendRun: (run) => {
         set((state) => ({ runsByRuleset: appendRunReducer(state.runsByRuleset, run) }));
-        console.info("[trials/store] appended run", {
+        ClientLogger.info("[trials/store] appended run", {
           rulesetId: run.rulesetId,
           runId: run.id,
           verdict: run.verdict,

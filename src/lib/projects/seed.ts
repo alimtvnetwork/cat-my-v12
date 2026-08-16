@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { EditorToolFamilyType, EditorRuleKindType } from "@/lib/editor/types";
 import { CatSeedRuleFamilyType } from "@/lib/seed";
 // Sample-data seeding for local testing.
@@ -74,7 +75,7 @@ export function seedSampleProjects(projects: readonly CatSeedProject[]): SeedRes
   const trialStore = useTrialStore.getState();
 
   if (projects.length === 0) {
-    console.warn(
+    ClientLogger.warn(
       "[projects/seed] seedSampleProjects called with empty seed slice, nothing to insert",
     );
 
@@ -125,7 +126,7 @@ export function seedSampleProjects(projects: readonly CatSeedProject[]): SeedRes
     }
   }
 
-  console.info("[projects/seed] seedSampleProjects", {
+  ClientLogger.info("[projects/seed] seedSampleProjects", {
     seedProjectCount: projects.length,
     createdProjectCount: createdProjectIds.length,
     createdRulesetCount,
@@ -194,7 +195,7 @@ function seedRunState(): void {
     ngEvents,
     history,
   });
-  console.info("[projects/seed] seedRunState applied", {
+  ClientLogger.info("[projects/seed] seedRunState applied", {
     ngEvents: ngEvents.length,
     history: history.length,
   });
@@ -229,7 +230,7 @@ export function autoSeedIfEmpty(projects: readonly CatSeedProject[]): SeedResult
   if (projects.length === 0) {
     // Bundle not ready yet. Do NOT set the flag: the caller will re-run
     // this once the SeedProvider transitions to "ready".
-    console.info("[projects/seed] autoSeedIfEmpty deferred, seed slice empty");
+    ClientLogger.info("[projects/seed] autoSeedIfEmpty deferred, seed slice empty");
 
     return null;
   }
@@ -242,7 +243,7 @@ export function autoSeedIfEmpty(projects: readonly CatSeedProject[]): SeedResult
     /* ignore */
   }
 
-  console.info("[projects/seed] autoSeedIfEmpty applied", result);
+  ClientLogger.info("[projects/seed] autoSeedIfEmpty applied", result);
 
   return result;
 }

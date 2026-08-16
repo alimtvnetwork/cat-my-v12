@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 80 step 41: shared cross-tab rehydration wire.
 //
 // Every facade-backed zustand `persist` store (spec 21/52 seam) wants the
@@ -23,11 +24,11 @@ export function wireCrossTabRehydrate(
 
   return subscribeFacadeWrites((msg) => {
     if (msg.name !== storageName) return;
-    console.info(`[${logLabel}] cross-tab facade write, rehydrating`, msg);
+    ClientLogger.info(`[${logLabel}] cross-tab facade write, rehydrating`, msg);
     try {
       void store.persist.rehydrate();
     } catch (err) {
-      console.warn(`[${logLabel}] rehydrate threw`, err);
+      ClientLogger.warn(`[${logLabel}] rehydrate threw`, err);
     }
   });
 }

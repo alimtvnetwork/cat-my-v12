@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Layers, RotateCcw, X } from "lucide-react";
 import { clearReferenceImage, setReferenceImage } from "@/lib/reference-image-store";
@@ -34,7 +35,7 @@ export function ViewportImageControls() {
       setSelectedSampleId(sample.id);
       setReferenceImage(sample.url);
     } catch (err) {
-      console.warn("[viewport-camera] restore sample failed", err);
+      ClientLogger.warn("[viewport-camera] restore sample failed", err);
     }
   }, [library]);
 
@@ -85,7 +86,7 @@ export function ViewportImageControls() {
         await videoRef.current.play();
       }
     } catch (err) {
-      console.error("[viewport-camera] getUserMedia failed", err);
+      ClientLogger.error("[viewport-camera] getUserMedia failed", err);
       setError("Camera unavailable. Check permissions.");
     }
   }
@@ -110,7 +111,7 @@ export function ViewportImageControls() {
       setReferenceImage(canvas.toDataURL("image/jpeg", 0.9));
       closeCamera();
     } catch (err) {
-      console.error("[viewport-camera] capture store failed", err);
+      ClientLogger.error("[viewport-camera] capture store failed", err);
       setError("Could not save capture.");
     }
   }
@@ -128,7 +129,7 @@ export function ViewportImageControls() {
       try {
         window.localStorage.setItem(SAMPLE_SELECTION_STORAGE_KEY, s.id);
       } catch (err) {
-        console.warn("[viewport-camera] persist sample id failed", err);
+        ClientLogger.warn("[viewport-camera] persist sample id failed", err);
       }
       // Sync POV-dependent slider values (brightness, contrast, exposure,
       // enhance, saturation, gain) so CameraPreview + capture pipeline
@@ -147,11 +148,11 @@ export function ViewportImageControls() {
             }),
           );
         } catch (err) {
-          console.warn("[viewport-camera] sync camera controls failed", err);
+          ClientLogger.warn("[viewport-camera] sync camera controls failed", err);
         }
       }
     } catch (err) {
-      console.error("[viewport-camera] setSample failed", err);
+      ClientLogger.error("[viewport-camera] setSample failed", err);
       setError("Could not switch sample.");
     }
   }

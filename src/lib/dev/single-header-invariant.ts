@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 65 step 11: Dev-only invariant that fails loud when more than one
 // app-shell header renders at the same time. Issue 22 shipped a fix that
 // removed the duplicate `<TopMenuBar>` inside the Titlebar, but nothing
@@ -19,7 +20,7 @@ function check(): void {
 
   if (nodes.length <= 1) return;
   const tags = Array.from(nodes).map((n) => n.outerHTML.slice(0, 160));
-  console.warn(`[${CODE}] ${nodes.length} shell headers mounted at once`, tags);
+  ClientLogger.warn(`[${CODE}] ${nodes.length} shell headers mounted at once`, tags);
 }
 
 export function useSingleHeaderInvariant(): void {

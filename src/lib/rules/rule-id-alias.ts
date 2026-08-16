@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Rule-ID integer alias.
 //
 // Rule IDs across the app are opaque strings (seeded slugs, generated
@@ -24,7 +25,7 @@ function readStore(): Persisted {
 
     return { next, map };
   } catch (err) {
-    console.warn("[rule-id-alias] read failed, resetting", err);
+    ClientLogger.warn("[rule-id-alias] read failed, resetting", err);
 
     return { next: 1, map: {} };
   }
@@ -35,7 +36,7 @@ function writeStore(store: Persisted): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch (err) {
-    console.warn("[rule-id-alias] write failed", err);
+    ClientLogger.warn("[rule-id-alias] write failed", err);
   }
 }
 

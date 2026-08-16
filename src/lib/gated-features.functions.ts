@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { FeatureNameType } from "@/lib/license";
 /**
  * Casbin-style gated feature server fns.
@@ -22,7 +23,7 @@ async function guard<T>(feature: FeatureName, run: () => Promise<T>): Promise<T>
     return await run();
   } catch (err) {
     const ce = toCaptureError(err);
-    console.warn(`[feature.fn] feature=${feature} code=${ce.code} message=${ce.message}`);
+    ClientLogger.warn(`[feature.fn] feature=${feature} code=${ce.code} message=${ce.message}`);
 
     throw ce;
   }

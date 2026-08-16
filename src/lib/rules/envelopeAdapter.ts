@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { ToleranceKindType } from "@/lib/rules/draftStore";
 import { DraftOriginType } from "@/lib/rules/draftStore";
@@ -73,7 +74,7 @@ function getOrCreateClientId(): string {
 
     if (existing) return existing;
   } catch (err) {
-    console.warn("[envelopeAdapter] clientId read failed", err);
+    ClientLogger.warn("[envelopeAdapter] clientId read failed", err);
   }
 
   const g = globalThis as { crypto?: { randomUUID?: () => string } };
@@ -83,7 +84,7 @@ function getOrCreateClientId(): string {
   try {
     window.localStorage.setItem(CLIENT_ID_STORAGE_KEY, id);
   } catch (err) {
-    console.warn("[envelopeAdapter] clientId write failed", err);
+    ClientLogger.warn("[envelopeAdapter] clientId write failed", err);
   }
 
   return id;
@@ -147,7 +148,7 @@ export function projectRulesetToEnvelope(
     if (!kind) {
       // Unknown letter: log + skip. Do NOT default silently; a new
       // EditorRuleKind must be mapped explicitly here.
-      console.warn("[envelopeAdapter] unknown EditorRuleKind, skipping rule", {
+      ClientLogger.warn("[envelopeAdapter] unknown EditorRuleKind, skipping rule", {
         RuleId: r.id,
         Kind: r.kind,
       });
@@ -197,7 +198,7 @@ export function projectRulesetToEnvelope(
     },
   };
 
-  console.info("[envelopeAdapter] serialized", {
+  ClientLogger.info("[envelopeAdapter] serialized", {
     RuleSetId: envelope.RuleSetId,
     LegacyRuleSetId: ruleset.id,
     Rules: envelope.Rules.length,
@@ -336,7 +337,7 @@ export function envelopeToProjectRuleset(
     });
   }
 
-  console.info("[envelopeAdapter] deserialized", {
+  ClientLogger.info("[envelopeAdapter] deserialized", {
     RuleSetId: envelope.RuleSetId,
     LegacyRuleSetId: rulesetId,
     Rules: rules.length,

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 43 slice-1 step 1: publish-time AppMode flag.
 //
 // Reads `import.meta.env.VITE_APP_MODE` (build-time replaced by Vite). Any
@@ -21,7 +22,7 @@ export function getAppMode(): AppModeValue {
 
   if (ALL_MODES.has(raw)) return raw as AppModeValue;
   // Surface, do not swallow.
-  console.warn(
+  ClientLogger.warn(
     `[app-mode] unknown VITE_APP_MODE="${raw}", falling back to Dev. Allowed: ${Object.values(AppMode).join(", ")}`,
   );
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Palette state facade (Plan 79 follow-up).
 //
 // Persists the body content and ordering of the right-bottom
@@ -108,7 +109,7 @@ class IndexedDbPaletteFacade implements PaletteFacade {
             }
           }
         } catch (err) {
-          console.error("[palette/facade] hydrate parse failed", err);
+          ClientLogger.error("[palette/facade] hydrate parse failed", err);
         }
       }
 

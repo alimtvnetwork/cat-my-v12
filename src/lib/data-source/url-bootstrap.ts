@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { DataSourceType } from "@/lib/data-source/store";
 // Launcher handoff: `run.ps1` opens the app with `?ds=seed|backend` and an
 // optional `&backend=<base url>` so the shell boots in the mode the operator
@@ -37,7 +38,7 @@ export function applyDataSourceFromUrl(): void {
     url.searchParams.delete(PARAM_BACKEND);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   } catch (error) {
-    console.warn("[data-source] failed to apply launcher URL params", error);
+    ClientLogger.warn("[data-source] failed to apply launcher URL params", error);
   }
 }
 

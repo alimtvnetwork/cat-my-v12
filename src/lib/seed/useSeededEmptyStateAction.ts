@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { CommandIdType } from "@/lib/command-bus";
 // Plan 86 Step 35: seeded empty-state action helper.
 //
@@ -40,11 +41,11 @@ export function useSeededEmptyStateAction(surface: string): SeededEmptyStateActi
         label: row.ctaLabel,
         testId: `seed-cta-${row.id}`,
         onClick: () => {
-          console.info("[seeded-empty-cta] dispatch", { surface, commandId, args });
+          ClientLogger.info("[seeded-empty-cta] dispatch", { surface, commandId, args });
           try {
             emitCommand(commandId, args);
           } catch (err) {
-            console.error("[seeded-empty-cta] emit failed", { surface, commandId, err });
+            ClientLogger.error("[seeded-empty-cta] emit failed", { surface, commandId, err });
           }
         },
       };

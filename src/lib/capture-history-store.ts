@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Rolling history of recently captured reference images. Kept small
 // so localStorage stays under quota (each JPEG data URL can be ~1 MB).
 // The strip in ReferenceImageCard reads this store so operators can
@@ -41,7 +42,7 @@ function read(): CaptureHistoryEntry[] {
         typeof e.capturedAt === "number",
     );
   } catch (err) {
-    console.error("[capture-history] read failed", err);
+    ClientLogger.error("[capture-history] read failed", err);
 
     return [];
   }
@@ -60,7 +61,7 @@ function write(entries: CaptureHistoryEntry[]): CaptureHistoryEntry[] {
   try {
     window.localStorage.setItem(StorageKey.CaptureHistory, JSON.stringify(trimmed));
   } catch (err) {
-    console.error("[capture-history] write failed", err);
+    ClientLogger.error("[capture-history] write failed", err);
     // Fall back to an in-memory-only update so listeners still see it.
   }
 

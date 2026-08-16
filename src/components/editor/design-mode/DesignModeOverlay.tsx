@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { X, Undo2, Trash2, Save, Download, MousePointer2, Pencil, FileCode2 } from "lucide-react";
@@ -149,7 +150,7 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
     const compiled = compileDesignShape(source, {
       simplifyEpsilon: ToolType.isFreehand(tool) ? 0 : 0.5,
     });
-    console.info("[design-mode] preview compile", {
+    ClientLogger.info("[design-mode] preview compile", {
       pointCount: compiled.pointCount,
       bytes: compiled.svg.length,
       viewBox: [compiled.viewBoxW, compiled.viewBoxH],
@@ -191,7 +192,7 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
     };
     try {
       downloadBlob(`${sanitiseFilename(trimmedName)}.shape.svg`, compiled.svg, "image/svg+xml");
-      console.info("[design-mode] export svg ok", {
+      ClientLogger.info("[design-mode] export svg ok", {
         name: trimmedName,
         bytes: compiled.svg.length,
         pointCount: compiled.pointCount,
@@ -202,7 +203,7 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
       onCompiled?.(payload);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[design-mode] export svg failed", { error: message });
+      ClientLogger.error("[design-mode] export svg failed", { error: message });
       setStatus(`SVG export failed: ${message}`);
     }
   }, [name, points, tool, onCompiled]);
@@ -233,7 +234,7 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
       viewBoxW: compiled.viewBoxW,
       viewBoxH: compiled.viewBoxH,
     };
-    console.info("[design-mode] compile start", {
+    ClientLogger.info("[design-mode] compile start", {
       name: payload.name,
       points: compiled.pointCount,
       bytes: compiled.svgPath.length,
@@ -243,9 +244,9 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
     // when Lovable Cloud is not enabled (step 85 migration pending).
     try {
       downloadBlob(`${sanitiseFilename(payload.name)}.shape.svg`, compiled.svg, "image/svg+xml");
-      console.info("[design-mode] local svg saved", { bytes: compiled.svg.length });
+      ClientLogger.info("[design-mode] local svg saved", { bytes: compiled.svg.length });
     } catch (err) {
-      console.error("[design-mode] local save failed", err);
+      ClientLogger.error("[design-mode] local save failed", err);
       setStatus("Local shape file could not be saved. Check browser download permissions.");
       setBusy(false);
 
@@ -256,11 +257,11 @@ export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCo
     // the local save that already succeeded above.
     try {
       const shape = await compile({ data: payload });
-      console.info("[design-mode] compile ok", { id: shape.id, sha256: shape.sha256 });
+      ClientLogger.info("[design-mode] compile ok", { id: shape.id, sha256: shape.sha256 });
       setStatus(`Shape "${payload.name}" saved (id ${shape.id.slice(0, 8)}...).`);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn("[design-mode] cloud compile failed, local file kept", { message });
+      ClientLogger.warn("[design-mode] cloud compile failed, local file kept", { message });
       setStatus(
         `Local shape saved. Cloud compile failed: ${message}. Enable Cloud to store shape assets.`,
       );

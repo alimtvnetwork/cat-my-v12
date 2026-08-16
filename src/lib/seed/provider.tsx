@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CatSeedBundle } from "./types";
 import { UiSeedSourceType, type UiSeedFacade } from "./facade";
@@ -76,7 +77,7 @@ export function SeedProvider({ children, facade }: SeedProviderProps) {
         // line so ops can confirm which bundle actually loaded on this
         // build (source + version) and spot missing slices before UIs
         // render empty states silently (spec/03-error-manage §3).
-        console.info(
+        ClientLogger.info(
           `[seed] SeedProvider ready source=${activeFacade.source} version=${next.version}`,
           {
             source: activeFacade.source,
@@ -97,7 +98,7 @@ export function SeedProvider({ children, facade }: SeedProviderProps) {
         const asError = err instanceof Error ? err : new Error(String(err));
         setError(asError);
         setStatus(SeedStatusType.Error);
-        console.error(`[seed] SeedProvider load failed source=${activeFacade.source}`, asError);
+        ClientLogger.error(`[seed] SeedProvider load failed source=${activeFacade.source}`, asError);
       });
 
     return () => {

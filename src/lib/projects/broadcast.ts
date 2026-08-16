@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 80 step 38: BroadcastChannel cross-tab sync for facade-backed stores.
 //
 // IndexedDB does not emit `storage` events, so the pre-facade cross-tab
@@ -38,12 +39,12 @@ function ensureChannel(): BroadcastChannel | null {
         try {
           cb(msg);
         } catch (err) {
-          console.warn("[facade/broadcast] listener threw", err);
+          ClientLogger.warn("[facade/broadcast] listener threw", err);
         }
       }
     });
   } catch (err) {
-    console.warn("[facade/broadcast] init failed", err);
+    ClientLogger.warn("[facade/broadcast] init failed", err);
     channel = null;
   }
 
@@ -57,7 +58,7 @@ export function broadcastFacadeWrite(name: string, op: "set" | "remove"): void {
   try {
     ch.postMessage({ name, op, origin: ORIGIN } satisfies FacadeWriteMessage);
   } catch (err) {
-    console.warn("[facade/broadcast] postMessage failed", err);
+    ClientLogger.warn("[facade/broadcast] postMessage failed", err);
   }
 }
 

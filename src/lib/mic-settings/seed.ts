@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // MicSettings sample seed.
 //
 // Populates the MicSettingsFacade (IndexedDB-backed) with three realistic
@@ -62,9 +63,9 @@ export async function autoSeedMicSettingsIfEmpty(): Promise<void> {
     try {
       await facade.save(row);
     } catch (err) {
-      console.warn("[mic-settings/seed] save failed", { id: row.id, err });
+      ClientLogger.warn("[mic-settings/seed] save failed", { id: row.id, err });
     }
   }
 
-  console.info("[mic-settings/seed] seeded %d preset(s)", rows.length);
+  ClientLogger.info("[mic-settings/seed] seeded %d preset(s)", rows.length);
 }

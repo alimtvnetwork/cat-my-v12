@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Persistent, program-agnostic reference image used by the canvas overlay
 // and the live MachineFrame. Backed by localStorage so operators keep their
 // uploaded PCB image across reloads. Falls back to the shipped sample when
@@ -16,7 +17,7 @@ export function getReferenceImage(): string | null {
   try {
     return window.localStorage.getItem(StorageKey.ReferenceImage);
   } catch (err) {
-    console.error("[reference-image] read failed", err);
+    ClientLogger.error("[reference-image] read failed", err);
 
     return null;
   }
@@ -28,7 +29,7 @@ export function setReferenceImage(dataUrl: string): void {
     window.localStorage.setItem(StorageKey.ReferenceImage, dataUrl);
     listeners.forEach((cb) => cb(dataUrl));
   } catch (err) {
-    console.error("[reference-image] write failed", err);
+    ClientLogger.error("[reference-image] write failed", err);
 
     throw err;
   }
@@ -40,7 +41,7 @@ export function clearReferenceImage(): void {
     window.localStorage.removeItem(StorageKey.ReferenceImage);
     listeners.forEach((cb) => cb(null));
   } catch (err) {
-    console.error("[reference-image] clear failed", err);
+    ClientLogger.error("[reference-image] clear failed", err);
   }
 }
 

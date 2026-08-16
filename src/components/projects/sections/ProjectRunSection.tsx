@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState, useCallback } from "react";
 import { Play } from "lucide-react";
 import type { Project, RuleSet } from "@/lib/projects/store";
@@ -46,7 +47,7 @@ export function ProjectRunSection({
       onRan(s);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/run] failed", e);
+      ClientLogger.error("[project-editor/run] failed", e);
       setError(msg);
     } finally {
       setBusy(false);

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Per-ruleset validation runs, persisted to localStorage.
  *
@@ -83,12 +84,12 @@ export const useValidationStore = create<ValidationStore>()(
         // chip highlight from ruleset A never bleeds onto ruleset B.
         set({ activeRulesetId: rulesetId, focusedRuleId: null }),
       setFocusedRule: (ruleId) => {
-        console.info("[validation-store] setFocusedRule", { ruleId });
+        ClientLogger.info("[validation-store] setFocusedRule", { ruleId });
         set({ focusedRuleId: ruleId });
       },
       setResults: (rulesetId, map, imageName) =>
         set((state) => {
-          console.info("[validation-store] setResults", {
+          ClientLogger.info("[validation-store] setResults", {
             rulesetId,
             count: Object.keys(map).length,
             imageName,
@@ -109,12 +110,12 @@ export const useValidationStore = create<ValidationStore>()(
         set((state) => {
           if (!state.runs[rulesetId]) return state;
           const { [rulesetId]: _dropped, ...rest } = state.runs;
-          console.info("[validation-store] clear", { rulesetId });
+          ClientLogger.info("[validation-store] clear", { rulesetId });
 
           return { runs: rest };
         }),
       clearAll: () => {
-        console.info("[validation-store] clearAll");
+        ClientLogger.info("[validation-store] clearAll");
         set({ runs: {} });
       },
     }),
@@ -138,12 +139,12 @@ export const useValidationStore = create<ValidationStore>()(
       version: 1,
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn("[validation-store] rehydrate failed", error);
+          ClientLogger.warn("[validation-store] rehydrate failed", error);
 
           return;
         }
 
-        console.info("[validation-store] rehydrated", {
+        ClientLogger.info("[validation-store] rehydrated", {
           rulesets: state ? Object.keys(state.runs).length : 0,
         });
       },

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { PaletteModeType } from "@/lib/palette-store";
 /**
  * Plan 64 step 63: chrome for a detachable palette.
@@ -141,7 +142,7 @@ export function ResetLayoutButton() {
               onClick={() => {
                 reset();
                 resetWorkspaceLayout();
-                console.info("[reset-layout] palette + workspace layout reset");
+                ClientLogger.info("[reset-layout] palette + workspace layout reset");
                 setOpen(false);
               }}
               data-testid="confirm-reset-layout"

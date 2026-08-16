@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // UI preferences: user-toggleable chrome (status bar visibility, future
 // rail visibility, etc). Persisted via localStorage so preferences survive
 // reload. SSR-safe (guards window). Consumed by HmiShell and by View menu
@@ -290,12 +291,12 @@ export const useUiPrefsStore = create<UiPrefsState>()(
             ? HeaderDensityType.Compact
             : HeaderDensityType.Comfortable;
         set({ headerDensity: next });
-        console.info("[ui-prefs] header density toggled", { density: next });
+        ClientLogger.info("[ui-prefs] header density toggled", { density: next });
       },
       setHeaderDensity: (next) => set({ headerDensity: next }),
       setToolTooltipMode: (next) => {
         set({ toolTooltipMode: next });
-        console.info("[ui-prefs] tool tooltip mode set", { mode: next });
+        ClientLogger.info("[ui-prefs] tool tooltip mode set", { mode: next });
       },
       toggleToolTooltipMode: () => {
         const next: ToolTooltipMode =
@@ -303,22 +304,22 @@ export const useUiPrefsStore = create<UiPrefsState>()(
             ? ToolTooltipModeType.OnDemand
             : ToolTooltipModeType.Hover;
         set({ toolTooltipMode: next });
-        console.info("[ui-prefs] tool tooltip mode toggled", { mode: next });
+        ClientLogger.info("[ui-prefs] tool tooltip mode toggled", { mode: next });
       },
       toggleRoiPreviewSharpen: () => {
         const next = !get().roiPreviewSharpen;
         set({ roiPreviewSharpen: next });
-        console.info("[ui-prefs] roi preview sharpen toggled", { sharpen: next });
+        ClientLogger.info("[ui-prefs] roi preview sharpen toggled", { sharpen: next });
       },
       setRoiPreviewSharpen: (next) => set({ roiPreviewSharpen: next }),
       setRotationSnapDefault: (next) => {
         const safe = Number.isFinite(next) && next >= 0 ? next : 0;
         set({ rotationSnapDefault: safe });
-        console.info("[ui-prefs] rotation snap default set", { snap: safe });
+        ClientLogger.info("[ui-prefs] rotation snap default set", { snap: safe });
       },
       setTheme: (next) => {
         set({ theme: next });
-        console.info("[ui-prefs] theme set", { theme: next });
+        ClientLogger.info("[ui-prefs] theme set", { theme: next });
       },
       cycleTheme: () => {
         const order: ThemeVariant[] = [
@@ -329,23 +330,23 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         const idx = order.indexOf(get().theme);
         const next = order[(idx + 1) % order.length];
         set({ theme: next });
-        console.info("[ui-prefs] theme cycled", { theme: next });
+        ClientLogger.info("[ui-prefs] theme cycled", { theme: next });
       },
       setUiFlavor: (next) => {
         set({ uiFlavor: next });
-        console.info("[ui-prefs] ui flavor set", { flavor: next });
+        ClientLogger.info("[ui-prefs] ui flavor set", { flavor: next });
       },
       toggleUiFlavor: () => {
         const next: UiFlavor =
           get().uiFlavor === UiFlavorType.Standard ? UiFlavorType.Modern : UiFlavorType.Standard;
         set({ uiFlavor: next });
-        console.info("[ui-prefs] ui flavor toggled", { flavor: next });
+        ClientLogger.info("[ui-prefs] ui flavor toggled", { flavor: next });
       },
       toggleSettingsGroup: (id) => {
         const cur = get().settingsGroupsCollapsed;
         const next: SettingsGroupsCollapsed = { ...cur, [id]: !cur[id] };
         set({ settingsGroupsCollapsed: next });
-        console.info("[ui-prefs] settings group toggled", { id, collapsed: next[id] });
+        ClientLogger.info("[ui-prefs] settings group toggled", { id, collapsed: next[id] });
       },
       setSettingsGroup: (id, collapsed) => {
         const cur = get().settingsGroupsCollapsed;
@@ -355,7 +356,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         const cur = get().rulesGroupsCollapsed;
         const next: RulesGroupsCollapsed = { ...cur, [id]: !cur[id] };
         set({ rulesGroupsCollapsed: next });
-        console.info("[ui-prefs] rules group toggled", { id, collapsed: next[id] });
+        ClientLogger.info("[ui-prefs] rules group toggled", { id, collapsed: next[id] });
       },
       setRulesGroup: (id, collapsed) => {
         const cur = get().rulesGroupsCollapsed;
@@ -363,7 +364,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       },
       setPropertiesPaletteMode: (next) => {
         set({ propertiesPaletteMode: next });
-        console.info("[ui-prefs] properties palette mode set", { mode: next });
+        ClientLogger.info("[ui-prefs] properties palette mode set", { mode: next });
       },
       togglePropertiesPaletteMode: () => {
         // Plan 86: cycle rail -> accordion -> tabs -> rail so operators
@@ -376,7 +377,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
               ? PropertiesPaletteModeType.Tabs
               : PropertiesPaletteModeType.Rail;
         set({ propertiesPaletteMode: next });
-        console.info("[ui-prefs] properties palette mode toggled", { mode: next });
+        ClientLogger.info("[ui-prefs] properties palette mode toggled", { mode: next });
       },
       setPropertiesPaletteOpenPane: (kind, pane) => {
         const cur = get().propertiesPaletteOpenPaneByKind;
@@ -384,21 +385,21 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       },
       setHudFollowsShape: (next) => {
         set({ hudFollowsShape: next });
-        console.info("[ui-prefs] hud follows shape set", { follow: next });
+        ClientLogger.info("[ui-prefs] hud follows shape set", { follow: next });
       },
       toggleHudFollowsShape: () => {
         const next = !get().hudFollowsShape;
         set({ hudFollowsShape: next });
-        console.info("[ui-prefs] hud follows shape toggled", { follow: next });
+        ClientLogger.info("[ui-prefs] hud follows shape toggled", { follow: next });
       },
       setHudAnchorDebug: (next) => {
         set({ hudAnchorDebug: next });
-        console.info("[ui-prefs] hud anchor debug set", { on: next });
+        ClientLogger.info("[ui-prefs] hud anchor debug set", { on: next });
       },
       toggleHudAnchorDebug: () => {
         const next = !get().hudAnchorDebug;
         set({ hudAnchorDebug: next });
-        console.info("[ui-prefs] hud anchor debug toggled", { on: next });
+        ClientLogger.info("[ui-prefs] hud anchor debug toggled", { on: next });
       },
     }),
     {
@@ -469,7 +470,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
 if (typeof window !== "undefined") {
   subscribeFacadeWrites((msg) => {
     if (msg.name !== StorageKey.UiPrefs) return;
-    console.info("[ui-prefs] cross-tab facade write, rehydrating", msg);
+    ClientLogger.info("[ui-prefs] cross-tab facade write, rehydrating", msg);
     void useUiPrefsStore.persist.rehydrate();
   });
 }

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Durable license store + verification audit trail (server-only).
  *
@@ -30,7 +31,7 @@ async function loadFromDb(): Promise<LicenseRecord | null> {
     .maybeSingle();
 
   if (error) {
-    console.error("[license-store] load failed", error.message);
+    ClientLogger.error("[license-store] load failed", error.message);
 
     return null;
   }
@@ -109,7 +110,7 @@ export async function persistLicenseState(args: PersistArgs): Promise<void> {
     actor: actor ?? null,
   });
 
-  if (auditErr) console.error("[license-store] audit insert failed", auditErr.message);
+  if (auditErr) ClientLogger.error("[license-store] audit insert failed", auditErr.message);
 }
 
 export interface LicenseAuditRow {
@@ -135,7 +136,7 @@ export async function listLicenseAudit(limit = 50): Promise<LicenseAuditRow[]> {
     .limit(limit);
 
   if (error) {
-    console.error("[license-store] audit list failed", error.message);
+    ClientLogger.error("[license-store] audit list failed", error.message);
 
     return [];
   }

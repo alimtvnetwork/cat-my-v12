@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import type {
   CaptureDiscoverySnapshot,
   CaptureVendor,
@@ -73,7 +74,7 @@ function computeVendorStatus(
     const isDisabled = disabled.has(vendor);
 
     if (isDisabled) {
-      console.warn(
+      ClientLogger.warn(
         `[capture.discover] vendor=${vendor} available=false error_code=E_CAP_SDK_ABSENT`,
       );
       status[vendor] = { available: false, count: 0, errorCode: "E_CAP_SDK_ABSENT" };
@@ -126,12 +127,12 @@ export function writeSelectedDevice(
   if (device) {
     selectedDeviceId = device.id;
     currentVendor = device.vendor;
-    console.info(`[capture.select] vendor=${vendor} serial=${serial} actor=${actor} result=ok`);
+    ClientLogger.info(`[capture.select] vendor=${vendor} serial=${serial} actor=${actor} result=ok`);
 
     return { ...device, selected: true };
   }
 
-  console.warn(
+  ClientLogger.warn(
     `[capture.select] vendor=${vendor} serial=${serial} actor=${actor} result=E_CFG_UNKNOWN_DEVICE`,
   );
 
@@ -159,7 +160,7 @@ export async function selectDeviceWithAudit(
   } catch (error) {
     currentVendor = state.currentVendor;
     selectedDeviceId = state.selectedDeviceId;
-    console.error(`[capture.select] actor=${actor} result=E_SEC_AUDIT_FAILED`, error);
+    ClientLogger.error(`[capture.select] actor=${actor} result=E_SEC_AUDIT_FAILED`, error);
 
     throw new Error("E_SEC_AUDIT_FAILED: selection rolled back");
   }

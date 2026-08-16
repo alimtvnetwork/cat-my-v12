@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { OpsEventCodeType } from "@/lib/ops.shared";
 import { FeatureNameType } from "@/lib/license";
 /**
@@ -219,7 +220,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
       const { data: rows, error } = await q;
 
       if (error) {
-        console.error(`[audit.export] query_failed correlationId=${correlationId}`, error);
+        ClientLogger.error(`[audit.export] query_failed correlationId=${correlationId}`, error);
         appendOpsEvent({
           code: OpsEventCodeType.AuditBundleExportFailed,
           subject: "audit.export",
@@ -306,7 +307,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
       });
 
     if (uploadError) {
-      console.error(`[audit.export] upload_failed correlationId=${correlationId}`, uploadError);
+      ClientLogger.error(`[audit.export] upload_failed correlationId=${correlationId}`, uploadError);
       appendOpsEvent({
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export",
@@ -329,7 +330,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
       detail: `correlationId=${correlationId} bundleId=${bundleId} bytes=${byteLen} count=${eventCount} sha256=${sha256} storagePath=${storagePath}`,
     });
 
-    console.info(
+    ClientLogger.info(
       `[audit.export] ok correlationId=${correlationId} bundleId=${bundleId} bytes=${byteLen} count=${eventCount} sha256=${sha256.slice(0, 16)}`,
     );
 
@@ -414,7 +415,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
       .createSignedUrl(objectPath, data.expiresInSeconds, { download: objectPath });
 
     if (error || !signed?.signedUrl) {
-      console.error(
+      ClientLogger.error(
         `[audit.export] signed_url_failed correlationId=${correlationId} objectPath=${objectPath}`,
         error,
       );
@@ -435,7 +436,7 @@ export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.
       actor: context.userId,
       detail: `correlationId=${correlationId} storagePath=${data.storagePath} expiresInSeconds=${data.expiresInSeconds}`,
     });
-    console.info(
+    ClientLogger.info(
       `[audit.export] signed_url_ok correlationId=${correlationId} objectPath=${objectPath}`,
     );
 

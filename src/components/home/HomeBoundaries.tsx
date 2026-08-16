@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum HomeBoundariesToneType {
   Muted = "muted",
   Error = "error",
@@ -159,7 +160,7 @@ export class HomeErrorBoundary extends Component<{ children: ReactNode }, HomeBo
   }
 
   componentDidCatch(error: Error) {
-    console.error("[home] render error", error);
+    ClientLogger.error("[home] render error", error);
     try {
       recordHomeError(
         error instanceof AppError ? error : toAppError(error, ErrorCodeType.HomeLoad),

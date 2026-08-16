@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 86 Step 30: Global "active v2 seed profile" signal.
 //
 // Purpose: `useFacadeOrStore` and per-screen hooks need to know which profile
@@ -24,7 +25,7 @@ export function setActiveProfile(id: string | null): void {
   if (id === current) return;
   const prev = current;
   current = id;
-  console.info("[seed-v2] active profile changed", { prev, next: id });
+  ClientLogger.info("[seed-v2] active profile changed", { prev, next: id });
   emit();
 }
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 89 — persist named "saved views" for `/observability/sessions`.
  *
@@ -51,7 +52,7 @@ function safeRead(): SavedView[] {
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.warn("[savedViews] read failed; treating as empty", { error: msg });
+    ClientLogger.warn("[savedViews] read failed; treating as empty", { error: msg });
 
     return [];
   }
@@ -65,7 +66,7 @@ function safeWrite(views: SavedView[]): boolean {
     return true;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.warn("[savedViews] write failed (quota / access)", { error: msg });
+    ClientLogger.warn("[savedViews] write failed (quota / access)", { error: msg });
 
     return false;
   }

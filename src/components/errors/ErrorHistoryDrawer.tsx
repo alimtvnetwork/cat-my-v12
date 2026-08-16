@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { ErrorExportFormatType } from "@/lib/errors/export";
 // Plan 83 backlog #26 follow-up: dedicated Error History drawer surfaced via
 // Ctrl/Cmd+Shift+E. Distinct from the Global Error Modal so users can browse
@@ -98,7 +99,7 @@ export function ErrorHistoryDrawer() {
 
       if (next.has(code)) next.delete(code);
       else next.add(code);
-      console.info(
+      ClientLogger.info(
         `[error-history] group ${next.has(code) ? "collapsed" : "expanded"} code=${code}`,
       );
 

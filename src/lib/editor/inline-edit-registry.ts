@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 100 Phase C step 22: dirty-state registry for the shared InlineEdit
 // primitive. Each active editor that holds an unsaved draft registers a
 // token here; the module attaches a single `beforeunload` handler that
@@ -19,7 +20,7 @@ function emit() {
     try {
       l();
     } catch (err) {
-      console.error("[inline-edit-registry] listener threw", err);
+      ClientLogger.error("[inline-edit-registry] listener threw", err);
     }
   }
 }
@@ -35,7 +36,7 @@ function ensureBeforeUnload() {
     // "Leave site?" prompt. Message text is ignored by modern browsers.
     e.preventDefault();
     e.returnValue = "";
-    console.warn("[inline-edit-registry] blocked unload; dirty editors:", dirty.size);
+    ClientLogger.warn("[inline-edit-registry] blocked unload; dirty editors:", dirty.size);
   });
 }
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Server function: `getCliStatus`.
  *
@@ -69,7 +70,7 @@ export const getCliStatus = createServerFn({ method: "GET" })
 
       return DataSchema.parse(payload);
     } catch (cause) {
-      console.warn(
+      ClientLogger.warn(
         `[getCliStatus] BE unreachable at ${url}: ${cause instanceof Error ? cause.message : String(cause)}`,
       );
 

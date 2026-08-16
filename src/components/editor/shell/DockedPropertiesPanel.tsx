@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 84 Step 9 (Issue 30): docked Properties panel body.
 //
 // Root cause the file addresses, in one sentence: EditorShell only wired
@@ -36,7 +37,7 @@ export function DockedPropertiesPanel({ imageBounds }: DockedPropertiesPanelProp
   // NOT acceptable for a regression that previously showed placeholder
   // copy for every selection.
   if (selectedIds.length > 0) {
-    console.info("[docked-properties] selection", {
+    ClientLogger.info("[docked-properties] selection", {
       count: selectedIds.length,
       firstId: selectedIds[0],
     });

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState, useRef, useEffect } from "react";
 import { Images, Upload, Video, ArrowUp, ArrowDown, Pencil, Trash2 } from "lucide-react";
 import type { Project } from "@/lib/projects/store";
@@ -64,7 +65,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
 
     const unsub = watchCameraDevices((devices) => {
       setVideoDeviceCount(devices.length);
-      console.info("[project-editor/samples] devices changed", {
+      ClientLogger.info("[project-editor/samples] devices changed", {
         projectId: project.id,
         count: devices.length,
       });
@@ -109,7 +110,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
         };
         nextIndex += 1;
         await save(entry);
-        console.info("[project-editor/samples] uploaded", {
+        ClientLogger.info("[project-editor/samples] uploaded", {
           projectId: project.id,
           id: entry.id,
           bytes: byteSize,
@@ -118,7 +119,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/samples] upload failed", e);
+      ClientLogger.error("[project-editor/samples] upload failed", e);
       setError(msg);
     } finally {
       setBusy(false);
@@ -133,10 +134,10 @@ export function ImageSamplesSection({ project }: { project: Project }) {
     if (!next || next.trim() === "" || next.trim() === sample.name) return;
     try {
       await save({ ...sample, name: next.trim() });
-      console.info("[project-editor/samples] renamed", { id: sample.id, name: next.trim() });
+      ClientLogger.info("[project-editor/samples] renamed", { id: sample.id, name: next.trim() });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/samples] rename failed", e);
+      ClientLogger.error("[project-editor/samples] rename failed", e);
       setError(msg);
     }
   }
@@ -145,10 +146,10 @@ export function ImageSamplesSection({ project }: { project: Project }) {
     if (window.confirm(`Delete sample "${sample.name}"?`) === false) return;
     try {
       await remove(sample.id);
-      console.info("[project-editor/samples] removed", { id: sample.id });
+      ClientLogger.info("[project-editor/samples] removed", { id: sample.id });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/samples] remove failed", e);
+      ClientLogger.error("[project-editor/samples] remove failed", e);
       setError(msg);
     }
   }
@@ -162,7 +163,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
 
     if (openResult.ok === false) {
       const err: CameraCapabilityError = openResult.error;
-      console.error("[project-editor/samples] live capture: open failed", err);
+      ClientLogger.error("[project-editor/samples] live capture: open failed", err);
       setPermError({ message: messageForCameraError(err), code: err.code });
       setCapturing(false);
 
@@ -185,7 +186,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
         orderIndex: nextOrderIndex(),
       };
       await save(entry);
-      console.info("[project-editor/samples] captured from camera", {
+      ClientLogger.info("[project-editor/samples] captured from camera", {
         projectId: project.id,
         id: entry.id,
         dims: [frame.width, frame.height],
@@ -193,7 +194,7 @@ export function ImageSamplesSection({ project }: { project: Project }) {
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/samples] live capture: frame failed", e);
+      ClientLogger.error("[project-editor/samples] live capture: frame failed", e);
       setError(msg);
     } finally {
       live.close();
@@ -209,13 +210,13 @@ export function ImageSamplesSection({ project }: { project: Project }) {
     [ids[index], ids[next]] = [ids[next], ids[index]];
     try {
       await reorder(ids);
-      console.info("[project-editor/samples] reordered", {
+      ClientLogger.info("[project-editor/samples] reordered", {
         projectId: project.id,
         from: index,
         to: next,
       });
     } catch (e) {
-      console.error("[project-editor/samples] reorder failed", e);
+      ClientLogger.error("[project-editor/samples] reorder failed", e);
       setError(e instanceof Error ? e.message : String(e));
     }
   }
@@ -231,14 +232,14 @@ export function ImageSamplesSection({ project }: { project: Project }) {
     if (ids.every((id, i) => id === all[i]!.id)) return;
     try {
       await reorder(ids);
-      console.info("[project-editor/samples] reordered", {
+      ClientLogger.info("[project-editor/samples] reordered", {
         projectId: project.id,
         from: fromIndex,
         to: insertAt,
         via: "dnd-or-keyboard",
       });
     } catch (e) {
-      console.error("[project-editor/samples] reorder failed", e);
+      ClientLogger.error("[project-editor/samples] reorder failed", e);
       setError(e instanceof Error ? e.message : String(e));
     }
   }

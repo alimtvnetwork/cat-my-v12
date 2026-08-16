@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 // Project + RuleSet client-side store (Plan 34, step 4, SS-02).
 // Persists via the SDK facade (spec 21 §52) under key `ca:projects:v1`.
@@ -144,7 +145,7 @@ function newId(): string {
 
   if (g.crypto?.randomUUID) return g.crypto.randomUUID();
   const fallback = `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  console.warn("[projects/store] crypto.randomUUID unavailable, using fallback id", fallback);
+  ClientLogger.warn("[projects/store] crypto.randomUUID unavailable, using fallback id", fallback);
 
   return fallback;
 }
@@ -192,7 +193,7 @@ export const useProjectStore = create<ProjectStoreState>()(
             rulesets,
           };
         });
-        console.info("[projects/store] createProject", {
+        ClientLogger.info("[projects/store] createProject", {
           id,
           name,
           rulesetCount: rulesetNames.length,
@@ -208,7 +209,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const existing = state.projects[id];
 
           if (!existing) {
-            console.warn("[projects/store] renameProject: unknown id", id);
+            ClientLogger.warn("[projects/store] renameProject: unknown id", id);
 
             return state;
           }
@@ -241,7 +242,7 @@ export const useProjectStore = create<ProjectStoreState>()(
         const source = get().projects[id];
 
         if (!source) {
-          console.warn("[projects/store] duplicateProject: unknown id", id);
+          ClientLogger.warn("[projects/store] duplicateProject: unknown id", id);
 
           return null;
         }
@@ -282,7 +283,7 @@ export const useProjectStore = create<ProjectStoreState>()(
             rulesets: nextRulesets,
           };
         });
-        console.info("[projects/store] duplicateProject", {
+        ClientLogger.info("[projects/store] duplicateProject", {
           fromId: id,
           newId: newProjectId,
           rulesetCount: rulesetIdMap.size,
@@ -297,7 +298,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            console.error("[projects/store] createRuleset: unknown project", projectId);
+            ClientLogger.error("[projects/store] createRuleset: unknown project", projectId);
 
             return state;
           }
@@ -331,7 +332,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const source = state.rulesets[sourceRulesetId];
 
           if (!project || !source) {
-            console.error("[projects/store] cloneRuleset: unknown ids", {
+            ClientLogger.error("[projects/store] cloneRuleset: unknown ids", {
               projectId,
               sourceRulesetId,
             });
@@ -405,7 +406,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const existing = state.rulesets[id];
 
           if (!existing) {
-            console.warn("[projects/store] updateRulesetRules: unknown id", id);
+            ClientLogger.warn("[projects/store] updateRulesetRules: unknown id", id);
 
             return state;
           }
@@ -442,7 +443,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[ruleset.projectId];
 
           if (!project) {
-            console.warn("[projects/store] restoreRuleset: project gone", ruleset.projectId);
+            ClientLogger.warn("[projects/store] restoreRuleset: project gone", ruleset.projectId);
 
             return state;
           }
@@ -465,7 +466,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            console.warn("[projects/store] reorderProjectRulesets: unknown project", projectId);
+            ClientLogger.warn("[projects/store] reorderProjectRulesets: unknown project", projectId);
 
             return state;
           }
@@ -473,7 +474,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const current = project.rulesetIds;
 
           if (orderedIds.length !== current.length) {
-            console.warn("[projects/store] reorderProjectRulesets: length mismatch", {
+            ClientLogger.warn("[projects/store] reorderProjectRulesets: length mismatch", {
               projectId,
               currentLen: current.length,
               incomingLen: orderedIds.length,
@@ -485,7 +486,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const currentSet = new Set(current);
           for (const rid of orderedIds) {
             if (currentSet.has(rid) === false) {
-              console.warn("[projects/store] reorderProjectRulesets: foreign id rejected", {
+              ClientLogger.warn("[projects/store] reorderProjectRulesets: foreign id rejected", {
                 projectId,
                 rid,
               });
@@ -503,7 +504,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           }
 
           if (!hasChanged) return state;
-          console.info("[projects/store] reorderProjectRulesets", { projectId });
+          ClientLogger.info("[projects/store] reorderProjectRulesets", { projectId });
 
           return {
             projects: {
@@ -616,7 +617,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           },
           rulesets: { ...state.rulesets, ...rulesetsById },
         }));
-        console.info("[projects/store] importProjectBundle", {
+        ClientLogger.info("[projects/store] importProjectBundle", {
           newProjectId,
           sourceProjectId: project.id,
           rulesetCount: rulesetIds.length,
@@ -630,7 +631,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            console.warn("[projects/store] updateProjectAiSettings: unknown project", projectId);
+            ClientLogger.warn("[projects/store] updateProjectAiSettings: unknown project", projectId);
 
             return state;
           }
@@ -665,7 +666,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            console.warn("[projects/store] setProjectCamera: unknown project", projectId);
+            ClientLogger.warn("[projects/store] setProjectCamera: unknown project", projectId);
 
             return state;
           }
@@ -673,7 +674,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const nextId = cameraSettingId && cameraSettingId.trim() ? cameraSettingId : undefined;
 
           if (project.cameraSettingId === nextId) return state;
-          console.info("[projects/store] setProjectCamera", {
+          ClientLogger.info("[projects/store] setProjectCamera", {
             projectId,
             cameraSettingId: nextId ?? null,
           });
@@ -693,7 +694,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            console.warn("[projects/store] setProjectMicSettings: unknown project", projectId);
+            ClientLogger.warn("[projects/store] setProjectMicSettings: unknown project", projectId);
 
             return state;
           }
@@ -701,7 +702,7 @@ export const useProjectStore = create<ProjectStoreState>()(
           const nextId = micSettingsId && micSettingsId.trim() ? micSettingsId : undefined;
 
           if (project.micSettingsId === nextId) return state;
-          console.info("[projects/store] setProjectMicSettings", {
+          ClientLogger.info("[projects/store] setProjectMicSettings", {
             projectId,
             micSettingsId: nextId ?? null,
           });
@@ -730,7 +731,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       // aliases so bookmarks stay stable across upgrades.
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn("[projects/store] rehydrate error, skipping int-alias seed", error);
+          ClientLogger.warn("[projects/store] rehydrate error, skipping int-alias seed", error);
 
           return;
         }

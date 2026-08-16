@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 84 + step 85 wire-through: distinct clone-Rule-Set server fns.
  *
@@ -86,7 +87,7 @@ export const cloneRulesetReference = createServerFn({ method: HttpMethod.Post })
       name: data.name,
       mode: "reference",
     });
-    console.info("[cloneRulesetReference] ok", {
+    ClientLogger.info("[cloneRulesetReference] ok", {
       user: context.userId,
       rulesetId: result.rulesetId,
       sourceRulesetId: data.sourceRulesetId,
@@ -107,7 +108,7 @@ export const cloneRulesetSnapshot = createServerFn({ method: HttpMethod.Post })
       name: data.name,
       mode: "snapshot",
     });
-    console.info("[cloneRulesetSnapshot] ok", {
+    ClientLogger.info("[cloneRulesetSnapshot] ok", {
       user: context.userId,
       rulesetId: result.rulesetId,
       sourceRulesetId: data.sourceRulesetId,

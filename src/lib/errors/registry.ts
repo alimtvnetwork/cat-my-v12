@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 65 step 3: typed mirror of the structured UI error codes recorded in
 // spec/21-app/40-error-manage.md Appendix A.4 and
 // spec/03-error-manage/03-error-code-registry/error-codes-master.json (CAT
@@ -244,7 +245,7 @@ export function lookupErrorCode(code: string | undefined | null): ErrorCodeMeta 
   const hit = E_CODE_REGISTRY[code];
 
   if (hit) return hit;
-  console.info(`[errorRegistry] miss code=${code}`);
+  ClientLogger.info(`[errorRegistry] miss code=${code}`);
 
   return {
     code,

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Keyboard shortcut registry + user overrides.
 //
 // One source of truth for the V/R/C/M/T/O/B/F/J bindings surfaced in
@@ -213,7 +214,7 @@ export const useShortcutsStore = create<ShortcutsState>()(
           const norm = normalizeCombo(combo);
 
           if (!norm) {
-            console.warn("[shortcuts-store] rejected invalid combo", { id, combo });
+            ClientLogger.warn("[shortcuts-store] rejected invalid combo", { id, combo });
 
             return;
           }
@@ -222,15 +223,15 @@ export const useShortcutsStore = create<ShortcutsState>()(
         }
 
         set({ bindings });
-        console.info("[shortcuts-store] setBinding", { id, combo: bindings[id] });
+        ClientLogger.info("[shortcuts-store] setBinding", { id, combo: bindings[id] });
       },
       reset: (id) => {
         set({ bindings: { ...get().bindings, [id]: DEFAULTS[id] } });
-        console.info("[shortcuts-store] reset", { id, combo: DEFAULTS[id] });
+        ClientLogger.info("[shortcuts-store] reset", { id, combo: DEFAULTS[id] });
       },
       resetAll: () => {
         set({ bindings: { ...DEFAULTS } });
-        console.info("[shortcuts-store] resetAll");
+        ClientLogger.info("[shortcuts-store] resetAll");
       },
     }),
     {

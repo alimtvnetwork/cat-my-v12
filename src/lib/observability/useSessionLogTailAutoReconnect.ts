@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 75 - auto-reconnect wrapper for `useSessionLogTail`.
  *
@@ -91,7 +92,7 @@ export function useSessionLogTailAutoReconnect(
 
     if (attempt >= maxAttempts) {
       if (!gaveUp) {
-        console.warn("[useSessionLogTailAutoReconnect] gave up", {
+        ClientLogger.warn("[useSessionLogTailAutoReconnect] gave up", {
           runId,
           attempts: attempt,
           maxAttempts,
@@ -103,7 +104,7 @@ export function useSessionLogTailAutoReconnect(
     }
 
     const delay = Math.min(baseMs * 2 ** attempt, maxMs);
-    console.warn("[useSessionLogTailAutoReconnect] scheduling reconnect", {
+    ClientLogger.warn("[useSessionLogTailAutoReconnect] scheduling reconnect", {
       runId,
       attempt: attempt + 1,
       delayMs: delay,

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { RunningOpKindType } from "@/lib/running-ops-store";
 /**
  * Plan 64 step 79: project-level Run button + confirm dialog.
@@ -51,12 +52,12 @@ export function ProjectRunButton({
         id: res.runId,
         kind: RunningOpKindType.Run,
         label: `Run: ${projectName}`,
-        onStop: () => console.info("[project-run] stop requested", res.runId),
+        onStop: () => ClientLogger.info("[project-run] stop requested", res.runId),
       });
-      console.info("[project-run] started", { runId: res.runId, projectId });
+      ClientLogger.info("[project-run] started", { runId: res.runId, projectId });
       setOpen(false);
     } catch (err) {
-      console.error("[project-run] failed", err);
+      ClientLogger.error("[project-run] failed", err);
       setError(err instanceof Error ? err.message : "Run failed to start.");
     } finally {
       setBusy(false);

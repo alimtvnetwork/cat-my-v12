@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Preview-mode store shared between the canvas viewport and the right-hand
 // inspector settings block. Controls how the reference image is presented
 // during rule authoring / validation preview:
@@ -80,7 +81,7 @@ async function readLegacyThenFacade(key: string): Promise<string | null> {
       const legacy = window.localStorage.getItem(key);
 
       if (legacy !== null) {
-        console.info("[preview-mode-store] migrating legacy localStorage payload", key);
+        ClientLogger.info("[preview-mode-store] migrating legacy localStorage payload", key);
         await facade.writeItem(key, legacy);
         window.localStorage.removeItem(key);
         raw = legacy;
@@ -116,7 +117,7 @@ export function hydrateFromStorage(): void {
         emit();
       }
     } catch (err) {
-      console.warn("[preview-mode-store] hydrate failed", err);
+      ClientLogger.warn("[preview-mode-store] hydrate failed", err);
     } finally {
       isHydrated = true;
     }
@@ -127,7 +128,7 @@ function persistMode(mode: EditorPreviewMode): void {
   if (isBrowser() === false) return;
   makeProjectRepositoryFacade()
     .writeItem(STORAGE_KEY, mode)
-    .catch((err) => console.warn("[preview-mode-store] persist mode failed", err));
+    .catch((err) => ClientLogger.warn("[preview-mode-store] persist mode failed", err));
 }
 
 function emit(): void {
@@ -163,7 +164,7 @@ export function setDebugOverlay(enabled: boolean): void {
   if (isBrowser()) {
     makeProjectRepositoryFacade()
       .writeItem(DEBUG_STORAGE_KEY, enabled ? "1" : "0")
-      .catch((err) => console.warn("[preview-mode-store] persist debug failed", err));
+      .catch((err) => ClientLogger.warn("[preview-mode-store] persist debug failed", err));
   }
 
   emit();

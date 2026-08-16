@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 33 slice 2 (Plan 48 step 1): admin-only server-fn returning the last
 // N hours of denial-related audit rows.
 //
@@ -113,7 +114,7 @@ export const getDenialBurstWindow = createServerFn({ method: HttpMethod.Post })
 
     if (roleQuery.error) {
       // Surface, do not swallow.
-      console.error(
+      ClientLogger.error(
         `[security-telemetry] role-check failed correlation=${correlationId} user=${userId} error=${roleQuery.error.message}`,
       );
 
@@ -121,7 +122,7 @@ export const getDenialBurstWindow = createServerFn({ method: HttpMethod.Post })
     }
 
     if (!roleQuery.data || roleQuery.data.length === 0) {
-      console.warn(
+      ClientLogger.warn(
         `[security-telemetry] E_SEC_ROLE_DENIED correlation=${correlationId} user=${userId} required=admin`,
       );
 
@@ -140,7 +141,7 @@ export const getDenialBurstWindow = createServerFn({ method: HttpMethod.Post })
       .limit(10_000);
 
     if (error) {
-      console.error(
+      ClientLogger.error(
         `[security-telemetry] query failed correlation=${correlationId} error=${error.message}`,
       );
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 72 step 20: seed error boundary + Zod recovery UI.
 //
 // Root cause the toast addresses: today, when `JsonUiSeedFacade` throws
@@ -111,7 +112,7 @@ export function SeedRecoveryToast() {
                 // Structured log so the retry is observable and
                 // pairs with the original `[seed] SeedProvider load
                 // failed` line (spec/03-error-manage §3).
-                console.info("[seed] SeedRecoveryToast retry clicked", {
+                ClientLogger.info("[seed] SeedRecoveryToast retry clicked", {
                   source: ctx.facade.source,
                 });
                 ctx.reload();

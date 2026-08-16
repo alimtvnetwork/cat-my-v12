@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 103: top-level boundary that routes `EnvelopeError` into the
 // GlobalErrorModal.
 //
@@ -40,7 +41,7 @@ function EnvelopeErrorEventBridge(): null {
     const handler = (e: Event) => {
       if (isEnvelopeErrorEvent(e) === false) return;
       const { captured, error } = e.detail;
-      console.info(
+      ClientLogger.info(
         `[EnvelopeErrorBoundary] surfacing cid=${error.correlationId} code=${error.code}`,
       );
       useErrorStore.getState().openErrorModal(captured);
@@ -66,7 +67,7 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
 
   static getDerivedStateFromError(error: unknown): BoundaryState {
     const isEnvelope =
-      error instanceof EnvelopeError || (error instanceof Error && error.name === "EnvelopeError");
+      (error as any).name === "EnvelopeError" || (error instanceof Error && error.name === "EnvelopeError");
 
     if (isEnvelope) {
       // Capture the error to rethrow it, so TanStack Router's errorComponent can handle it!
@@ -80,7 +81,7 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
     const isEnvelope =
-      error instanceof EnvelopeError || (error instanceof Error && error.name === "EnvelopeError");
+      (error as any).name === "EnvelopeError" || (error instanceof Error && error.name === "EnvelopeError");
 
     if (!isEnvelope) return;
 

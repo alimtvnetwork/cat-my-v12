@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 43 slice-1 step 3: error-bus. In-memory pub/sub for ErrorRecord.
 // Also exposes `installGlobalErrorHandlers()` that binds `window.onerror`
 // and `window.onunhandledrejection` so nothing dies silently.
@@ -34,14 +35,14 @@ export function reportError(
   const rec = makeErrorRecord(source, err, detail);
   // Surface: log every emission so devs see it in the console even when no
   // dialog is mounted (e.g. Prod mode + suppressed toast).
-  console.error(
+  ClientLogger.error(
     `[error-bus] ${rec.source} id=${rec.id} name=${rec.name ?? "Error"} msg=${rec.message}`,
   );
   for (const fn of listeners) {
     try {
       fn(rec);
     } catch (listenerErr) {
-      console.error("[error-bus] listener threw", listenerErr);
+      ClientLogger.error("[error-bus] listener threw", listenerErr);
     }
   }
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 79 step 25. Metadata bar for the rule editor.
 //
 // Renders name, pocket size, notes, and applies-before picker. Saves
@@ -95,7 +96,7 @@ export function RuleMetadataBar({ rule }: Props) {
       setError(null);
       try {
         await save(next);
-        console.info(
+        ClientLogger.info(
           `[rules/editor] saved id=${String(next.id)} name="${next.name}" pocket=${next.pocketSize ?? "-"} applies=${next.appliesBefore.length}`,
         );
       } catch (err) {

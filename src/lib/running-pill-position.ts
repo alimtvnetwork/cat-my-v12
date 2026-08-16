@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 66 SH-05: persisted position for the floating RunningPill.
  *
@@ -36,7 +37,7 @@ export function loadPillPos(): PillPos | null {
 
     return null;
   } catch (err) {
-    console.warn("[running-pill] failed to load persisted position", err);
+    ClientLogger.warn("[running-pill] failed to load persisted position", err);
 
     return null;
   }
@@ -47,7 +48,7 @@ export function savePillPos(pos: PillPos): void {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(pos));
   } catch (err) {
-    console.warn("[running-pill] failed to persist position", err);
+    ClientLogger.warn("[running-pill] failed to persist position", err);
   }
 }
 

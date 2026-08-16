@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { ToolIdType } from "@/components/rules/tools/toolTooltipMap";
 // Plan 100 step 37. Consolidate the route-scoped tool hotkey registration
 // used by the RuleEditor so the editor component holds only composition
@@ -50,7 +51,7 @@ export function useToolShortcuts({
               // Surface, do not swallow: keyboard-triggered tool switches
               // are user-facing and a silent failure would look like a
               // dead hotkey.
-              console.error("[useToolShortcuts] tool select failed", {
+              ClientLogger.error("[useToolShortcuts] tool select failed", {
                 toolId,
                 err,
               });
@@ -70,7 +71,7 @@ export function useToolShortcuts({
             onVariantSelect?.(ToolIdType.Texttools, alias.variantId);
             onSelect(ToolIdType.Texttools);
           } catch (err) {
-            console.error("[useToolShortcuts] text tool select failed", {
+            ClientLogger.error("[useToolShortcuts] text tool select failed", {
               variantId: alias.variantId,
               err,
             });

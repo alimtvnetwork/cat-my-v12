@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import {
   Save,
   UploadCloud,
@@ -61,7 +62,7 @@ export function EditorTopBar({ isDirty, onSave, onPublish, savedAt = null }: Edi
   const quickReset = () => {
     resetPalette();
     resetWorkspace();
-    console.info("[reset-layout] one-click reset from editor top bar");
+    ClientLogger.info("[reset-layout] one-click reset from editor top bar");
     notifySuccess("Layout restored: Tools left, Rules right.");
   };
 

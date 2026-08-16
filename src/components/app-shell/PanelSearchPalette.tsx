@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum PanelSearchPaletteCmdType {
   ExpandSections = "expand-sections",
   CollapseSections = "collapse-sections",
@@ -35,7 +36,7 @@ export function PanelSearchPalette() {
 
   React.useEffect(() => {
     const onToggle = () => {
-      console.info("[panel-search] toggle");
+      ClientLogger.info("[panel-search] toggle");
       setOpen((v) => !v);
     };
     window.addEventListener("panel-search:toggle", onToggle as EventListener);

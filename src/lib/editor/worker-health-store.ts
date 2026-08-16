@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Shared Python validation worker health state.
 //
 // Prior state lived only inside `ValidateAgainstImageDialog`, so operators
@@ -70,7 +71,7 @@ export const useWorkerHealthStore = create<WorkerHealthState>((set, get) => ({
         return h;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.warn("[worker-health] refresh failed", err);
+        ClientLogger.warn("[worker-health] refresh failed", err);
         const fallback: WorkerHealth = { configured: false, ok: false, reason: message };
         const prev = get().health;
         const rearm = prev?.ok === true;

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Generic integer-alias table for URL-facing IDs.
 //
 // Rules use their own `src/lib/rules/rule-id-alias.ts` (kept for back-compat).
@@ -32,7 +33,7 @@ function readStore(): Persisted {
 
     return (parsed && typeof parsed === "object" ? parsed : {}) as Persisted;
   } catch (err) {
-    console.warn("[int-alias] read failed, resetting", err);
+    ClientLogger.warn("[int-alias] read failed, resetting", err);
 
     return {};
   }
@@ -43,7 +44,7 @@ function writeStore(store: Persisted): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch (err) {
-    console.warn("[int-alias] write failed", err);
+    ClientLogger.warn("[int-alias] write failed", err);
   }
 }
 

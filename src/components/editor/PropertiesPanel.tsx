@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum PropertiesPanelToneType {
   On = "on",
   Off = "off",
@@ -327,7 +328,7 @@ function RuleHeader({
   const nameError = validateRuleName(name);
   const commit = () => {
     if (nameError) {
-      console.warn("[PropertiesPanel] rename rejected", { ruleId: rule.id, nameError });
+      ClientLogger.warn("[PropertiesPanel] rename rejected", { ruleId: rule.id, nameError });
 
       return;
     }

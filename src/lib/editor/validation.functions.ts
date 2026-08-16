@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { ScoreErrorCodeType } from "@/lib/editor/validation.shared";
 /**
  * Real scoring server function.
@@ -58,7 +59,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
     const parsed = parseWorkerHealthzEndpoint(process.env.VALIDATION_WORKER_URL);
 
     if (parsed.ok === false) {
-      console.warn("[validation.functions] worker URL invalid", { reason: parsed.reason });
+      ClientLogger.warn("[validation.functions] worker URL invalid", { reason: parsed.reason });
 
       return { configured: false, ok: false, reason: parsed.reason };
     }
@@ -103,7 +104,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn("[validation.functions] healthz failed", { endpoint, message });
+      ClientLogger.warn("[validation.functions] healthz failed", { endpoint, message });
 
       return {
         configured: true,
@@ -161,7 +162,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
           ? ScoreErrorCodeType.WORKER_TIMEOUT
           : ScoreErrorCodeType.WORKER_UNREACHABLE;
         const message = err instanceof Error ? err.message : String(err);
-        console.error("[validation.functions] worker fetch failed", {
+        ClientLogger.error("[validation.functions] worker fetch failed", {
           endpoint,
           attempt,
           code,
@@ -178,7 +179,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
 
         if (shouldRetry(code) === false || attempt === MAX_ATTEMPTS) break;
         const backoff = BASE_BACKOFF_MS * 2 ** (attempt - 1);
-        console.info("[validation.functions] retrying", { attempt, backoff });
+        ClientLogger.info("[validation.functions] retrying", { attempt, backoff });
         await sleep(backoff);
         continue;
       }
@@ -188,7 +189,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
       if (res.ok === false) {
         const body = await res.text().catch(() => "");
         const code = classifyStatus(res.status);
-        console.error("[validation.functions] worker non-2xx", {
+        ClientLogger.error("[validation.functions] worker non-2xx", {
           endpoint,
           attempt,
           status: res.status,
@@ -206,7 +207,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
 
         if (shouldRetry(code) === false || attempt === MAX_ATTEMPTS) break;
         const backoff = BASE_BACKOFF_MS * 2 ** (attempt - 1);
-        console.info("[validation.functions] retrying", { attempt, backoff, status: res.status });
+        ClientLogger.info("[validation.functions] retrying", { attempt, backoff, status: res.status });
         await sleep(backoff);
         continue;
       }
@@ -215,7 +216,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
       try {
         json = await res.json();
       } catch (err) {
-        console.error("[validation.functions] worker returned non-JSON", err);
+        ClientLogger.error("[validation.functions] worker returned non-JSON", err);
         lastError = {
           code: ScoreErrorCodeType.WORKER_NON_JSON,
           message: "Worker response was not valid JSON.",
@@ -229,7 +230,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
       const parsed = ResponseSchema.safeParse(json);
 
       if (parsed.success === false) {
-        console.error("[validation.functions] worker payload schema mismatch", {
+        ClientLogger.error("[validation.functions] worker payload schema mismatch", {
           issues: parsed.error.issues.slice(0, 10),
         });
         lastError = {
@@ -242,7 +243,7 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
         break;
       }
 
-      console.info("[validation.functions] worker ok", {
+      ClientLogger.info("[validation.functions] worker ok", {
         rules: data.rules.length,
         results: Object.keys(parsed.data.results).length,
         ms: Date.now() - attemptStarted,

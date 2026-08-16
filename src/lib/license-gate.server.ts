@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Server-side license policy + Casbin-style feature gate.
  *
@@ -41,7 +42,7 @@ async function loadStoredLicense(): Promise<LicenseRecord | null> {
   try {
     return await getStoredLicense();
   } catch (err) {
-    console.error(
+    ClientLogger.error(
       "[license-gate] operation=loadStoredLicense fallback=env reason=store-load-failed",
       messageOf(err),
     );
@@ -55,7 +56,7 @@ function parseEnvLicense(recordJson: string | undefined): LicenseRecord | null {
     try {
       return JSON.parse(recordJson) as LicenseRecord;
     } catch (err) {
-      console.error(
+      ClientLogger.error(
         "[license-gate] operation=parseEnvLicense fallback=baseline reason=env-json-invalid",
         messageOf(err),
       );

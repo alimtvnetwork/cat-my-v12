@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Shortcut registry for Plan 100 §13. Single source of truth consumed by
  * ShortcutProvider (dispatch), ShortcutCheatSheet (listing), and
@@ -40,7 +41,7 @@ export function registerShortcut(def: ShortcutDefinition): () => void {
 
   if (existing && existing.scope !== def.scope) {
     // Dev observability: duplicate id across scopes is almost always a bug.
-    console.warn("[shortcuts] duplicate id", {
+    ClientLogger.warn("[shortcuts] duplicate id", {
       shortcutId: def.id,
       existingScope: existing.scope,
       incomingScope: def.scope,
@@ -111,7 +112,7 @@ export function listDuplicateCombos(options: { warn?: boolean } = {}): Duplicate
 
       if (options.warn !== false && warnedCollisions.has(signature) === false) {
         warnedCollisions.add(signature);
-        console.warn("[shortcuts] combo collision", {
+        ClientLogger.warn("[shortcuts] combo collision", {
           scope: group.scope,
           combo: group.combo,
           ids: group.defs.map((d) => d.id),

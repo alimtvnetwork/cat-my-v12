@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 102: single HTTP client for the Universal Response Envelope.
 //
 // Spec:
@@ -103,7 +104,7 @@ export class EnvelopeError extends Error {
   }
 
   public static is(err: unknown): err is EnvelopeError {
-    return err instanceof EnvelopeError || (err instanceof Error && err.name === "EnvelopeError");
+    return (err as any).name === "EnvelopeError" || (err instanceof Error && err.name === "EnvelopeError");
   }
 }
 
@@ -125,7 +126,7 @@ function isEnvelope(x: unknown): x is Envelope<unknown> {
   const result = EnvelopeSchema.safeParse(x);
 
   if (result.success === false) {
-    console.warn("[beFetch] envelope validation failed", result.error);
+    ClientLogger.warn("[beFetch] envelope validation failed", result.error);
 
     return false;
   }
@@ -190,7 +191,7 @@ function capture(err: EnvelopeError, requestBody: unknown, suppress: boolean): v
   } catch (storeErr) {
     // Store failure must not mask the original transport failure. Log and
     // continue so the caller still gets the typed EnvelopeError.
-    console.error("[beFetch] errorStore.captureError failed", storeErr);
+    ClientLogger.error("[beFetch] errorStore.captureError failed", storeErr);
   }
 }
 
@@ -253,7 +254,7 @@ export async function beFetch<T = unknown>(
   }
 
   const isFail = envelope.Status.IsFailed || resp.ok === false;
-  if (isFail) {
+  if (isFail === true) {
     const wire = envelope.Errors;
     const err = new EnvelopeError({
       code: wire?.Code ?? "E_BE_UNKNOWN",
@@ -297,8 +298,8 @@ export async function safeBeFetch<T = unknown>(
     };
   } catch (err) {
     let error: EnvelopeError;
-    if (err instanceof EnvelopeError) {
-      error = err;
+    if ((err as any).name === "EnvelopeError") {
+      error = err as EnvelopeError;
     } else {
       error = new EnvelopeError({
         code: "E_UNKNOWN_SAFE_FETCH",

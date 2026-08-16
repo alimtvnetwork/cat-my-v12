@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 100 Phase C step 22: SPA-navigation guard for the shared InlineEdit
 // dirty registry. Uses TanStack Router's `useBlocker` so that when any
 // inline editor holds an unsaved draft, changing routes prompts the user
@@ -22,7 +23,7 @@ export function InlineEditNavigationGuard() {
           : true;
 
       if (!proceed) {
-        console.warn("[InlineEditNavigationGuard] navigation blocked; dirty editors present");
+        ClientLogger.warn("[InlineEditNavigationGuard] navigation blocked; dirty editors present");
       }
 
       return !proceed;

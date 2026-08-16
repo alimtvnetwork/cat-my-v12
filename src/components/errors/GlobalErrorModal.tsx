@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { ErrorExportFormatType } from "@/lib/errors/export";
 // Plan 71 Step 9: Global Error Modal.
@@ -57,9 +58,9 @@ function copyJson(value: unknown, label: string): void {
   try {
     const text = JSON.stringify(value, null, 2);
     void navigator.clipboard?.writeText(text);
-    console.info(`[GlobalErrorModal] copied ${label} (${text.length} bytes)`);
+    ClientLogger.info(`[GlobalErrorModal] copied ${label} (${text.length} bytes)`);
   } catch (err) {
-    console.error("[GlobalErrorModal] copy failed", err);
+    ClientLogger.error("[GlobalErrorModal] copy failed", err);
   }
 }
 
@@ -126,14 +127,14 @@ async function copyDiagnostics(err: CapturedError): Promise<void> {
   const text = buildDiagnosticsText(err);
   try {
     await navigator.clipboard?.writeText(text);
-    console.info(
+    ClientLogger.info(
       `[GlobalErrorModal] copied diagnostics cid=${err.correlationId} bytes=${text.length}`,
     );
     toast.success("Diagnostics copied", {
       description: `Correlation ID ${err.correlationId}`,
     });
   } catch (e) {
-    console.error("[GlobalErrorModal] copy diagnostics failed", e);
+    ClientLogger.error("[GlobalErrorModal] copy diagnostics failed", e);
     toast.error("Failed to copy diagnostics", {
       description: e instanceof Error ? e.message : String(e),
     });
@@ -157,9 +158,9 @@ function OverviewTab({ err }: { err: CapturedError }) {
             onClick={() => {
               try {
                 void navigator.clipboard?.writeText(err.correlationId);
-                console.info(`[GlobalErrorModal] copied correlation id ${err.correlationId}`);
+                ClientLogger.info(`[GlobalErrorModal] copied correlation id ${err.correlationId}`);
               } catch (e) {
-                console.error("[GlobalErrorModal] copy correlation id failed", e);
+                ClientLogger.error("[GlobalErrorModal] copy correlation id failed", e);
               }
             }}
             title="Copy correlation id"
@@ -500,7 +501,7 @@ export function GlobalErrorModal() {
   const handleRetry = async () => {
     if (!currentError || !retry) return;
     setRetrying(true);
-    console.info(`[GlobalErrorModal] retry cid=${currentError.correlationId}`);
+    ClientLogger.info(`[GlobalErrorModal] retry cid=${currentError.correlationId}`);
     try {
       await retry.fn();
       clearRetry(currentError.correlationId);
@@ -509,7 +510,7 @@ export function GlobalErrorModal() {
       });
       closeErrorModal();
     } catch (e) {
-      console.error("[GlobalErrorModal] retry failed", e);
+      ClientLogger.error("[GlobalErrorModal] retry failed", e);
       toast.error("Retry failed", {
         description: e instanceof Error ? e.message : String(e),
       });

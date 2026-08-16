@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 71 Step 7: Zustand store for the Global Error Modal.
 // Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §3
 //       spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md
@@ -41,12 +42,12 @@ export interface ErrorStoreState {
 
 function log(op: string, e: CapturedError | null): void {
   if (!e) {
-    console.info(`[errorStore] ${op}`);
+    ClientLogger.info(`[errorStore] ${op}`);
 
     return;
   }
 
-  console.info(
+  ClientLogger.info(
     `[errorStore] ${op} cid=${e.correlationId} id=${e.id} code=${e.code} level=${e.level} msg=${e.message}`,
   );
 }
@@ -118,12 +119,12 @@ export const useErrorStore = create<ErrorStoreState>((set, get) => ({
   },
 
   openHistoryDrawer: () => {
-    console.info(`[errorStore] openHistoryDrawer count=${get().history.length}`);
+    ClientLogger.info(`[errorStore] openHistoryDrawer count=${get().history.length}`);
     set({ isHistoryDrawerOpen: true });
   },
 
   closeHistoryDrawer: () => {
-    console.info("[errorStore] closeHistoryDrawer");
+    ClientLogger.info("[errorStore] closeHistoryDrawer");
     set({ isHistoryDrawerOpen: false });
   },
 
@@ -174,7 +175,7 @@ export const useErrorStore = create<ErrorStoreState>((set, get) => ({
         0,
         MAX_HISTORY,
       );
-      console.info(`[errorStore] hydrateFromStorage merged=${merged.length}`);
+      ClientLogger.info(`[errorStore] hydrateFromStorage merged=${merged.length}`);
 
       return { history: merged };
     });

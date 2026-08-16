@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { TrialVerdictType } from "@/lib/projects/trials";
 // AI testing batch aggregation and persisted summary history.
 // Plan 34, step 20 (SS-05). Datasets stay in component state, while only
@@ -180,7 +181,7 @@ export const useAiTestingStore = create<AiTestingStoreState>()(
         set((state) => ({
           historyByRuleset: appendAiTestingHistoryReducer(state.historyByRuleset, summary),
         }));
-        console.info("[ai-testing/store] appended summary", {
+        ClientLogger.info("[ai-testing/store] appended summary", {
           rulesetId: summary.rulesetId,
           summaryId: summary.id,
           verdict: summary.verdict,

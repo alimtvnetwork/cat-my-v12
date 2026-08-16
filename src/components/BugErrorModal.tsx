@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * BugErrorModal - UI surface for `BugError` (spec/21-app/40-error-manage.md §6).
  *
@@ -53,7 +54,7 @@ export function BugErrorModal() {
       setCopied(true);
     } catch {
       // Explicit surface - no silent swallow (spec 40 §3).
-      console.error("ca:bug-error:copy-failed", { Code: err.Code });
+      ClientLogger.error("ca:bug-error:copy-failed", { Code: err.Code });
     }
   };
 

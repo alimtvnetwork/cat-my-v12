@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { CommandIdType } from "@/lib/command-bus";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { PaletteIdType } from "@/lib/palette-store";
@@ -82,7 +83,7 @@ export function ToolPalette() {
                   const preset = KIND_PRESET[k];
 
                   if (preset) emitCommand(CommandIdType.CmdAddRule, { preset });
-                  else console.info("[ToolPalette] no preset mapped for kind", k);
+                  else ClientLogger.info("[ToolPalette] no preset mapped for kind", k);
                 }}
                 aria-label={`Add ${editorKindLabel(k)} rule`}
                 className="hmi-focus-ring flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-hmi-body text-ca-ink hover:bg-ca-select/30"

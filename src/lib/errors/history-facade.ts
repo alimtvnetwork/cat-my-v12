@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 71 Step 15: error history persistence.
 //
 // The Zustand `useErrorStore` is in-memory only. To satisfy
@@ -27,7 +28,7 @@ export async function loadErrorHistory(): Promise<CapturedError[]> {
         !!e && typeof e === "object" && typeof (e as { id?: unknown }).id === "string",
     );
   } catch (err) {
-    console.warn("[errors/history] load failed", err);
+    ClientLogger.warn("[errors/history] load failed", err);
 
     return [];
   }
@@ -37,14 +38,14 @@ export async function saveErrorHistory(history: CapturedError[]): Promise<void> 
     const trimmed = history.slice(0, MAX_HISTORY);
     await facade().writeItem(HISTORY_KEY, JSON.stringify(trimmed));
   } catch (err) {
-    console.error("[errors/history] save failed", err);
+    ClientLogger.error("[errors/history] save failed", err);
   }
 }
 export async function clearPersistedErrorHistory(): Promise<void> {
   try {
     await facade().removeItem(HISTORY_KEY);
   } catch (err) {
-    console.warn("[errors/history] clear failed", err);
+    ClientLogger.warn("[errors/history] clear failed", err);
   }
 }
 export const __ERROR_HISTORY_STORAGE_KEY = HISTORY_KEY;

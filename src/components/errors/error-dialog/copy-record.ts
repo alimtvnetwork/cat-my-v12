@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Copy an ErrorRecord to the clipboard as pretty JSON. Never throws.
 
 import type { ErrorRecord } from "@/lib/errors";
@@ -10,6 +11,6 @@ export async function copyErrorRecord(record: ErrorRecord): Promise<void> {
   try {
     await navigator.clipboard?.writeText(payload);
   } catch (clipErr) {
-    console.warn(ERROR_DIALOG_TEXT.clipboardWarn, clipErr);
+    ClientLogger.warn(ERROR_DIALOG_TEXT.clipboardWarn, clipErr);
   }
 }

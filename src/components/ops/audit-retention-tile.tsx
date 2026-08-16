@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum AuditRetentionTileToneType {
   Info = "info",
   Fault = "fault",
@@ -94,7 +95,7 @@ export function AuditRetentionTile() {
           setError(null);
         })
         .catch((err) => {
-          console.error("[ops] getAuditRetentionStatus failed", err);
+          ClientLogger.error("[ops] getAuditRetentionStatus failed", err);
 
           if (aliveRef.current) setError(formatUiText(err?.message ?? "fetch failed"));
         });

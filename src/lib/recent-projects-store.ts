@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 81: Recent projects registry.
  *
@@ -36,7 +37,7 @@ export const useRecentProjectsStore = create<RecentProjectsStore>()(
           { projectId, name, openedAt: now },
           ...get().entries.filter((e) => e.projectId !== projectId),
         ].slice(0, MAX);
-        console.info("[recent-projects] touch", projectId, name);
+        ClientLogger.info("[recent-projects] touch", projectId, name);
         set({ entries: next });
       },
       clear: () => set({ entries: [] }),

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Custom image-based shape mask for a rule's ROI. Lets the user upload
 // or paste an image whose luminance defines which pixels inside the
 // rule's bounding rect are considered "inside" the ROI.
@@ -88,7 +89,7 @@ export function MaskPanel({ rule, onUpdateParams }: MaskPanelProps) {
     if (!file) return;
 
     if (file.size > 4 * 1024 * 1024) {
-      console.warn("[MaskPanel] mask image too large (>4 MB), rejected");
+      ClientLogger.warn("[MaskPanel] mask image too large (>4 MB), rejected");
 
       return;
     }
@@ -104,7 +105,7 @@ export function MaskPanel({ rule, onUpdateParams }: MaskPanelProps) {
         try {
           const parsed = parseSvgSource(text);
           const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(text)))}`;
-          console.info("[MaskPanel] SVG mask accepted", {
+          ClientLogger.info("[MaskPanel] SVG mask accepted", {
             fileName: file.name,
             source: parsed.source,
             viewBox: [parsed.viewBoxW, parsed.viewBoxH],
@@ -123,7 +124,7 @@ export function MaskPanel({ rule, onUpdateParams }: MaskPanelProps) {
           );
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error("[MaskPanel] SVG mask rejected", { fileName: file.name, error: msg });
+          ClientLogger.error("[MaskPanel] SVG mask rejected", { fileName: file.name, error: msg });
           setSvgError(msg);
         }
       });

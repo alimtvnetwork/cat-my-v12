@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 35 step 11 / Plan 88 follow-up: LayersToolbar. Primary actions
 // (Delete, Import SVG) stay inline. Secondary/batch actions (Group,
 // Ungroup, Merge, Mark present/absent) move into a "…" overflow menu so
@@ -92,7 +93,7 @@ export function LayersToolbar({
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("[layers] SVG import failed", { fileName: file.name, error: msg });
+      ClientLogger.error("[layers] SVG import failed", { fileName: file.name, error: msg });
       setImportError(msg);
     }
   }

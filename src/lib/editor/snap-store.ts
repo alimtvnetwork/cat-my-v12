@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 79 step 39: snap toggle + grid pitch, subscribable via
  * useSyncExternalStore so both the SelectionOverlay resize path and
@@ -44,7 +45,7 @@ function parsePersisted(raw: string | null): SnapConfig {
         typeof parsed.showGuides === "boolean" ? parsed.showGuides : DEFAULT_SNAP.showGuides,
     };
   } catch (err) {
-    console.warn("[snap-store] failed to parse persisted snap prefs", err);
+    ClientLogger.warn("[snap-store] failed to parse persisted snap prefs", err);
 
     return { ...DEFAULT_SNAP };
   }
@@ -71,7 +72,7 @@ async function hydrateOnce(): Promise<void> {
           const legacy = window.localStorage.getItem(STORAGE_KEY);
 
           if (legacy) {
-            console.info("[snap-store] migrating legacy localStorage payload");
+            ClientLogger.info("[snap-store] migrating legacy localStorage payload");
             await facade.writeItem(STORAGE_KEY, legacy);
             window.localStorage.removeItem(STORAGE_KEY);
             raw = legacy;
@@ -84,7 +85,7 @@ async function hydrateOnce(): Promise<void> {
       const next = parsePersisted(raw);
       state = next;
     } catch (err) {
-      console.warn("[snap-store] hydrate failed", err);
+      ClientLogger.warn("[snap-store] hydrate failed", err);
     } finally {
       isHydrated = true;
       emit();
@@ -99,7 +100,7 @@ function writePersisted(next: SnapConfig): void {
   const facade = makeProjectRepositoryFacade();
   facade
     .writeItem(STORAGE_KEY, JSON.stringify(next))
-    .catch((err) => console.warn("[snap-store] failed to persist snap prefs", err));
+    .catch((err) => ClientLogger.warn("[snap-store] failed to persist snap prefs", err));
 }
 
 function emit(): void {
@@ -115,26 +116,26 @@ export function getSnapState(): SnapConfig {
 export function setSnapEnabled(next: boolean): void {
   state = { ...state, enabled: next };
   writePersisted(state);
-  console.info("[snap-store] enabled", { enabled: next });
+  ClientLogger.info("[snap-store] enabled", { enabled: next });
   emit();
 }
 
 export function setSnapGrid(gridPx: number): void {
   if (Number.isFinite(gridPx) === false || gridPx <= 0) {
-    console.warn("[snap-store] invalid gridPx rejected", { gridPx });
+    ClientLogger.warn("[snap-store] invalid gridPx rejected", { gridPx });
 
     return;
   }
 
   state = { ...state, gridPx: Math.round(gridPx) };
   writePersisted(state);
-  console.info("[snap-store] grid", { gridPx: state.gridPx });
+  ClientLogger.info("[snap-store] grid", { gridPx: state.gridPx });
   emit();
 }
 
 export function setSnapAlignTolerance(px: number): void {
   if (Number.isFinite(px) === false || px <= 0) {
-    console.warn("[snap-store] invalid alignTolerancePx rejected", { px });
+    ClientLogger.warn("[snap-store] invalid alignTolerancePx rejected", { px });
 
     return;
   }
@@ -145,21 +146,21 @@ export function setSnapAlignTolerance(px: number): void {
   );
   state = { ...state, alignTolerancePx: clamped };
   writePersisted(state);
-  console.info("[snap-store] alignTolerance", { alignTolerancePx: clamped });
+  ClientLogger.info("[snap-store] alignTolerance", { alignTolerancePx: clamped });
   emit();
 }
 
 export function setSnapDebug(next: boolean): void {
   state = { ...state, debug: next };
   writePersisted(state);
-  console.info("[snap-store] debug", { debug: next });
+  ClientLogger.info("[snap-store] debug", { debug: next });
   emit();
 }
 
 export function setSnapShowGuides(next: boolean): void {
   state = { ...state, showGuides: next };
   writePersisted(state);
-  console.info("[snap-store] showGuides", { showGuides: next });
+  ClientLogger.info("[snap-store] showGuides", { showGuides: next });
   emit();
 }
 

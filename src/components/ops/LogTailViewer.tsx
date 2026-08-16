@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 /**
  * Plan 90 Step 76 - `LogTailViewer` UI component.
@@ -84,7 +85,7 @@ export function LogTailViewer({
 
     if (consecutiveFailures > 0 && consecutiveFailures !== lastFailureNotified.current) {
       lastFailureNotified.current = consecutiveFailures;
-      console.info("[LogTailViewer] retry", { runId, consecutiveFailures });
+      ClientLogger.info("[LogTailViewer] retry", { runId, consecutiveFailures });
       toast.warning(`Log stream retry ${consecutiveFailures} for run ${runId.slice(0, 8)}`);
     }
 
@@ -97,7 +98,7 @@ export function LogTailViewer({
   useEffect(() => {
     if (gaveUp && !gaveUpNotified.current && runId) {
       gaveUpNotified.current = true;
-      console.info("[LogTailViewer] gave up", { runId });
+      ClientLogger.info("[LogTailViewer] gave up", { runId });
       toast.error(`Log stream gave up for run ${runId.slice(0, 8)}. Use Reconnect to retry.`);
     }
 
@@ -108,7 +109,7 @@ export function LogTailViewer({
   useEffect(() => {
     if (status === "ended" && !endedNotified.current && runId) {
       endedNotified.current = true;
-      console.info("[LogTailViewer] ended", { runId, end });
+      ClientLogger.info("[LogTailViewer] ended", { runId, end });
       toast.success(`Run ${runId.slice(0, 8)} finished (${end?.LineCount ?? lines.length} lines)`);
     }
 
@@ -151,7 +152,7 @@ export function LogTailViewer({
           size="sm"
           variant="outline"
           onClick={() => {
-            console.info("[LogTailViewer] manual reconnect", { runId });
+            ClientLogger.info("[LogTailViewer] manual reconnect", { runId });
             reconnect();
           }}
           disabled={!runId}

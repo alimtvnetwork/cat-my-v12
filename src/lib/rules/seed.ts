@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Auto-seed the shared rules library so operators see a populated
 // /setup/rules view on first launch. Idempotent: honours a localStorage
 // flag AND checks whether the facade already has non-builtin entries.
@@ -352,7 +353,7 @@ function readSeedFlag(): string | null {
   try {
     return window.localStorage.getItem(FLAG);
   } catch (err) {
-    console.warn("[rules/seed] seed flag read failed", err);
+    ClientLogger.warn("[rules/seed] seed flag read failed", err);
 
     return null;
   }
@@ -362,7 +363,7 @@ function writeSeedFlag(): void {
   try {
     window.localStorage.setItem(FLAG, "1");
   } catch (err) {
-    console.warn("[rules/seed] seed flag write failed", err);
+    ClientLogger.warn("[rules/seed] seed flag write failed", err);
   }
 }
 
@@ -374,7 +375,7 @@ async function writeSeedRows(facade: RuleFacade, rows: readonly Rule[]): Promise
       await facade.save(r);
       written++;
     } catch (err) {
-      console.warn("[rules/seed] skip row", r.id, err);
+      ClientLogger.warn("[rules/seed] skip row", r.id, err);
     }
   }
 
@@ -393,10 +394,10 @@ async function runAutoSeedRulesIfEmpty(): Promise<number | null> {
     return null;
   }
 
-  if (hadFlag) console.warn("[rules/seed] stale seed flag repaired empty library");
+  if (hadFlag) ClientLogger.warn("[rules/seed] stale seed flag repaired empty library");
   const written = await writeSeedRows(facade, makeSeedRows());
   writeSeedFlag();
-  console.info("[rules/seed] autoSeedRulesIfEmpty applied", { written });
+  ClientLogger.info("[rules/seed] autoSeedRulesIfEmpty applied", { written });
 
   return written;
 }

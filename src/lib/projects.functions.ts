@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 73 + step 85 wire-through: `createProject` server fn.
  *
@@ -47,7 +48,7 @@ export const createProject = createServerFn({ method: HttpMethod.Post })
       .single();
 
     if (error || !project) {
-      console.error("[createProject] insert failed", error);
+      ClientLogger.error("[createProject] insert failed", error);
 
       throw new Error(error?.message ?? "createProject: insert failed");
     }
@@ -63,7 +64,7 @@ export const createProject = createServerFn({ method: HttpMethod.Post })
       const { error: joinErr } = await supabase.from("project_rulesets").insert(rows);
 
       if (joinErr) {
-        console.error("[createProject] project_rulesets insert failed", joinErr);
+        ClientLogger.error("[createProject] project_rulesets insert failed", joinErr);
 
         throw new Error(joinErr.message);
       }
@@ -74,13 +75,13 @@ export const createProject = createServerFn({ method: HttpMethod.Post })
       const { error: catErr } = await supabase.from("project_categories").insert(rows);
 
       if (catErr) {
-        console.error("[createProject] project_categories insert failed", catErr);
+        ClientLogger.error("[createProject] project_categories insert failed", catErr);
 
         throw new Error(catErr.message);
       }
     }
 
-    console.info("[createProject] ok", { user: userId, projectId, name: data.name });
+    ClientLogger.info("[createProject] ok", { user: userId, projectId, name: data.name });
 
     return { projectId, createdAt: (project as { created_at: string }).created_at };
   });

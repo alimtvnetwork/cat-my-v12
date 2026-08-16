@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 71 follow-up: Export persisted error history to JSON / CSV so it can
 // be shared with teammates or attached to audits. Pure functions; the
 // browser-side download helper lives at the bottom. Kept dependency-free so
@@ -110,7 +111,7 @@ export function downloadErrorHistory(history: CapturedError[], format: ErrorExpo
   a.remove();
   // Revoke on the next tick so Safari has time to start the download.
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  console.info(`[errors/export] downloaded format=${format} count=${history.length}`);
+  ClientLogger.info(`[errors/export] downloaded format=${format} count=${history.length}`);
 }
 
 export const __TEST__ = { CSV_COLUMNS };

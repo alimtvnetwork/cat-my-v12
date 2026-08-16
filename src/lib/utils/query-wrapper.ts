@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useErrorStore } from "@/lib/errors/errorStore";
 
 /**
@@ -33,10 +34,10 @@ export async function QueryWrapper<T>(
           context.errorCode || "E_QUERY_FAILED",
         );
       } catch (storeError) {
-        console.error("[QueryWrapper] Failed to push to errorStore", storeError);
+        ClientLogger.error("[QueryWrapper] Failed to push to errorStore", storeError);
       }
     }
-    console.error("[QueryWrapper] Query failed:", error, context);
+    ClientLogger.error("[QueryWrapper] Query failed:", error, context);
 
     throw error;
   }

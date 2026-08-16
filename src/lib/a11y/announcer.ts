@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 83 backlog item 21: shared live-region announcer.
 //
 // Root cause the file addresses: transient success signals like "Copied
@@ -39,7 +40,7 @@ export const useAnnouncerStore = create<AnnouncerState>((set, get) => ({
 
     if (priority === "assertive") set({ assertive: value, seq });
     else set({ polite: value, seq });
-    console.info(`[a11y announce ${priority}] ${trimmed}`);
+    ClientLogger.info(`[a11y announce ${priority}] ${trimmed}`);
   },
   clear: () => set({ polite: "", assertive: "" }),
 }));

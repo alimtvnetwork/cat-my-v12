@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 87 Step 13: standardized toast surface. All non-error notifications
 // go through these wrappers so tone, duration, and shape stay consistent
 // across the app. Error toasts stay in `src/lib/errors/notify.ts` because
@@ -47,7 +48,7 @@ function base(opts: NotifyOptions, fallback: number) {
             try {
               opts.action?.onClick();
             } catch (e) {
-              console.error("[notify] action handler threw", e);
+              ClientLogger.error("[notify] action handler threw", e);
             }
           },
         }

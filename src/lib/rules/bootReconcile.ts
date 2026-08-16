@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 138. Shell boot mount for `reconcileDrafts()`.
 //
 // Spec: spec/21-app/80-ruleset-draft-save.md
@@ -90,7 +91,7 @@ export async function runBootReconcile(
       }
 
       // Single structured summary line so operators can grep boot health.
-      console.info("[bootReconcile] complete", {
+      ClientLogger.info("[bootReconcile] complete", {
         total: entries.length,
         drift: drift.length,
         missing: missing.length,
@@ -100,7 +101,7 @@ export async function runBootReconcile(
       return entries;
     } catch (e) {
       // Never let a boot reconciliation failure break the shell.
-      console.error("[bootReconcile] fatal", e);
+      ClientLogger.error("[bootReconcile] fatal", e);
       hasBootRan = true; // do not retry-storm on every re-render
 
       return [];

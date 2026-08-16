@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState } from "react";
 import { Mic, Plus } from "lucide-react";
 import type { Project } from "@/lib/projects/store";
@@ -16,13 +17,13 @@ export function ProjectMicsSection({ project }: { project: Project }) {
   function onSelect(id: string): void {
     try {
       setProjectMicSettings(project.id, id || null);
-      console.info("[project-editor/mics] bound", {
+      ClientLogger.info("[project-editor/mics] bound", {
         projectId: project.id,
         micSettingsId: id || null,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/mics] bind failed", e);
+      ClientLogger.error("[project-editor/mics] bind failed", e);
       setError(msg);
     }
   }
@@ -44,9 +45,9 @@ export function ProjectMicsSection({ project }: { project: Project }) {
       updatedAt: now,
     });
     const saved = await save(entry);
-    console.info("[project-editor/mics] created", { id: saved.id, name: saved.name });
+    ClientLogger.info("[project-editor/mics] created", { id: saved.id, name: saved.name });
     setProjectMicSettings(project.id, saved.id as string);
-    console.info("[project-editor/mics] auto-bound", {
+    ClientLogger.info("[project-editor/mics] auto-bound", {
       projectId: project.id,
       micSettingsId: saved.id,
     });

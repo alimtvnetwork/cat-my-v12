@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Project repository facade (Plan 42 follow-up).
 //
 // Applies the SDK-facade pattern from spec/21-app/52-sdk-facade-pattern.md to
@@ -37,7 +38,7 @@ class IndexedDbProjectRepositoryFacade implements ProjectRepositoryFacade {
 
       return typeof raw === "string" ? raw : null;
     } catch (err) {
-      console.warn("[projects/facade] indexeddb read failed", key, err);
+      ClientLogger.warn("[projects/facade] indexeddb read failed", key, err);
 
       return null;
     }
@@ -47,7 +48,7 @@ class IndexedDbProjectRepositoryFacade implements ProjectRepositoryFacade {
     try {
       await idbSet(key, value);
     } catch (err) {
-      console.error("[projects/facade] indexeddb write failed", key, err);
+      ClientLogger.error("[projects/facade] indexeddb write failed", key, err);
 
       throw err;
     }
@@ -57,7 +58,7 @@ class IndexedDbProjectRepositoryFacade implements ProjectRepositoryFacade {
     try {
       await idbDel(key);
     } catch (err) {
-      console.warn("[projects/facade] indexeddb delete failed", key, err);
+      ClientLogger.warn("[projects/facade] indexeddb delete failed", key, err);
     }
   }
 }
@@ -120,7 +121,7 @@ export function createFacadeStateStorage(): StateStorage {
         const legacy = window.localStorage.getItem(name);
 
         if (legacy !== null) {
-          console.info("[projects/facade] migrating legacy localStorage payload", name);
+          ClientLogger.info("[projects/facade] migrating legacy localStorage payload", name);
           await facade.writeItem(name, legacy);
           try {
             window.localStorage.removeItem(name);

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Data-source runtime store. Chooses between "seed" (bundled JSON,
 // writes short-circuited) and "backend" (live remote reads + real
 // mutating HTTP calls). Persisted per-browser in localStorage.
@@ -123,7 +124,7 @@ export function setDataSource(next: DataSource, opts: SetDataSourceOptions = {})
     // ignore
   }
 
-  console.info("[data-source] changed", { prev, next, reason: opts.reason ?? "user" });
+  ClientLogger.info("[data-source] changed", { prev, next, reason: opts.reason ?? "user" });
   emit();
 }
 
@@ -163,7 +164,7 @@ export function setBackendBaseUrl(next: string, opts: { reason?: string } = {}):
     // ignore
   }
 
-  console.info("[data-source] baseUrl changed", {
+  ClientLogger.info("[data-source] baseUrl changed", {
     prev,
     next: normalized,
     reason: opts.reason ?? "user",
@@ -212,7 +213,7 @@ export function setPersistRulesServerSide(next: boolean, opts: { reason?: string
     // ignore
   }
 
-  console.info("[data-source] persistRules changed", {
+  ClientLogger.info("[data-source] persistRules changed", {
     prev,
     next,
     reason: opts.reason ?? "user",

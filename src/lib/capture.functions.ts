@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { OpsEventCodeType } from "@/lib/ops.shared";
 import { FeatureNameType } from "@/lib/license";
 import { createServerFn } from "@tanstack/react-start";
@@ -38,15 +39,15 @@ export { SUPPORTED_VENDORS, type CaptureVendor };
 
 async function guard<T>(subject: string, run: (cid: string) => Promise<T>): Promise<T> {
   const cid = newCorrelationId();
-  console.info(`[capture.fn] subject=${subject} cid=${cid} phase=start`);
+  ClientLogger.info(`[capture.fn] subject=${subject} cid=${cid} phase=start`);
   try {
     const out = await run(cid);
-    console.info(`[capture.fn] subject=${subject} cid=${cid} phase=ok`);
+    ClientLogger.info(`[capture.fn] subject=${subject} cid=${cid} phase=ok`);
 
     return out;
   } catch (err) {
     const ce = toCaptureError(err, cid);
-    console.warn(
+    ClientLogger.warn(
       `[capture.fn] subject=${subject} cid=${cid} code=${ce.code} message=${ce.message}`,
     );
 
@@ -62,7 +63,7 @@ async function guard<T>(subject: string, run: (cid: string) => Promise<T>): Prom
           correlationId: cid,
         });
       } catch (auditErr) {
-        console.error(`[capture.fn] subject=${subject} cid=${cid} ops-audit-emit-failed`, auditErr);
+        ClientLogger.error(`[capture.fn] subject=${subject} cid=${cid} ops-audit-emit-failed`, auditErr);
       }
     }
 

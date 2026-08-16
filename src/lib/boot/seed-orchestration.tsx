@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect, useRef } from "react";
 import { CommandIdType, onCommand } from "@/lib/command-bus";
 import { registerApplySeedProfileHandler } from "@/lib/seed/apply-profile-command";
@@ -39,14 +40,14 @@ export function useSeedBootReconcile() {
           const rulesetId = fromRulesetIntId(intId);
 
           if (!rulesetId) {
-            console.warn("[__root] boot toast: no alias for ruleset intId", { intId });
+            ClientLogger.warn("[__root] boot toast: no alias for ruleset intId", { intId });
             return;
           }
 
           const rs = useProjectStore.getState().rulesets[rulesetId];
 
           if (!rs) {
-            console.warn("[__root] boot toast: ruleset not in store", { rulesetId });
+            ClientLogger.warn("[__root] boot toast: ruleset not in store", { rulesetId });
             return;
           }
 
@@ -132,7 +133,7 @@ export function AutoSeedFromFacade() {
 
   useEffect(() => {
     if (status === "error") {
-      console.warn("[projects/seed] auto-seed skipped, seed bundle failed to load", error);
+      ClientLogger.warn("[projects/seed] auto-seed skipped, seed bundle failed to load", error);
       return;
     }
 
@@ -172,7 +173,7 @@ export function AutoSeedFromFacade() {
         source: "seed-bindings",
         method: "resolve",
       });
-      console.warn("[seed-bindings] unresolved surfaced", unresolved);
+      ClientLogger.warn("[seed-bindings] unresolved surfaced", unresolved);
     };
 
     const finalizeSeedRun = (report: SeedRunReport, mode: "auto" | "reset") => {
@@ -191,19 +192,19 @@ export function AutoSeedFromFacade() {
       };
 
       if (report.ok) {
-        console.info("[seed/orchestrator] summary", summary);
+        ClientLogger.info("[seed/orchestrator] summary", summary);
       } else {
-        console.error("[seed/orchestrator] summary", summary);
+        ClientLogger.error("[seed/orchestrator] summary", summary);
 
         if (report.fatalError) {
-          console.error("[seed/orchestrator] fatalError", {
+          ClientLogger.error("[seed/orchestrator] fatalError", {
             name: report.fatalError.name,
             message: report.fatalError.message,
           });
         }
 
         for (const r of report.results.filter((x) => x.status === "error")) {
-          console.error(`[seed/orchestrator] seeder "${r.name}" failed`, r.error);
+          ClientLogger.error(`[seed/orchestrator] seeder "${r.name}" failed`, r.error);
         }
       }
 
@@ -308,11 +309,11 @@ export function AutoSeedFromFacade() {
     };
 
     const handleResetAndReseed = async () => {
-      console.info("[seed/orchestrator] cmd:reset-and-reseed received");
+      ClientLogger.info("[seed/orchestrator] cmd:reset-and-reseed received");
       const reset = resetSeedFlags();
 
       if (!reset.hadStorage) {
-        console.error("[seed/orchestrator] reset summary", {
+        ClientLogger.error("[seed/orchestrator] reset summary", {
           mode: "reset",
           phase: "reset-flags",
           ok: false,
@@ -345,7 +346,7 @@ export function AutoSeedFromFacade() {
       }
 
       if (reset.failed.length > 0) {
-        console.error("[seed/orchestrator] reset summary", {
+        ClientLogger.error("[seed/orchestrator] reset summary", {
           mode: "reset",
           phase: "reset-flags",
           ok: false,

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { OpsEventCodeType } from "@/lib/ops.shared";
 import { appendOpsEvent } from "./ops.server";
 
@@ -20,7 +21,7 @@ export async function requireCaptureAdmin(userId: string, subject: string): Prom
     .maybeSingle();
 
   if (error) {
-    console.error(`[capture.auth] actor=${userId} subject=${subject} result=E_INTERNAL`, error);
+    ClientLogger.error(`[capture.auth] actor=${userId} subject=${subject} result=E_INTERNAL`, error);
 
     throw new Error("E_INTERNAL: admin role lookup failed");
   }
@@ -32,7 +33,7 @@ export async function requireCaptureAdmin(userId: string, subject: string): Prom
     actor: userId,
     detail: "write requires admin",
   });
-  console.warn(`[capture.auth] actor=${userId} subject=${subject} result=E_SEC_DENIED`);
+  ClientLogger.warn(`[capture.auth] actor=${userId} subject=${subject} result=E_SEC_DENIED`);
 
   throw new CaptureAuthorizationError(userId);
 }

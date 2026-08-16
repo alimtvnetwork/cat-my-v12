@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { DraftOriginType } from "@/lib/rules/draftStore";
 // Plan 90 Step 141. Editor-mutation -> IndexedDB draft bridge.
 //
@@ -38,7 +39,7 @@ async function writeNow(ruleset: RuleSet, version: number): Promise<void> {
       origin: DraftOriginType.Indexeddb,
     });
     await putDraft(envelope);
-    console.info("[draftPersistence] draft persisted", {
+    ClientLogger.info("[draftPersistence] draft persisted", {
       RuleSetId: envelope.RuleSetId,
       LegacyRuleSetId: ruleset.id,
       Version: envelope.Version,
@@ -46,7 +47,7 @@ async function writeNow(ruleset: RuleSet, version: number): Promise<void> {
       DroppedCategories: droppedCategories,
     });
   } catch (err) {
-    console.error("[draftPersistence] failed to persist draft", {
+    ClientLogger.error("[draftPersistence] failed to persist draft", {
       LegacyRuleSetId: ruleset.id,
       err,
     });

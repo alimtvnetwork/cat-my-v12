@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Command bus, Plan 64 step 93 + 94 support.
  *
@@ -55,7 +56,7 @@ export interface CommandPayloads {
 
 export function emitCommand<K extends CommandId>(id: K, payload?: CommandPayloads[K]): void {
   if (typeof window === "undefined") return;
-  console.info("[command-bus] emit", { id, payload });
+  ClientLogger.info("[command-bus] emit", { id, payload });
   window.dispatchEvent(new CustomEvent(id, { detail: payload }));
 }
 
@@ -69,7 +70,7 @@ export function onCommand<K extends CommandId>(
     try {
       handler(detail);
     } catch (err) {
-      console.error("[command-bus] handler threw", { id, err });
+      ClientLogger.error("[command-bus] handler threw", { id, err });
     }
   };
   window.addEventListener(id, listener);

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect } from "react";
 import { notifySuccess } from "@/lib/notify";
 import { registerShortcut } from "@/lib/shortcuts/registry";
@@ -28,7 +29,7 @@ function openErrorHistory() {
   const s = useErrorStore.getState();
 
   s.openHistoryDrawer();
-  console.info(`[hotkey] error-history drawer opened count=${s.history.length}`);
+  ClientLogger.info(`[hotkey] error-history drawer opened count=${s.history.length}`);
 }
 
 function registerLayoutShortcuts(onReset: () => void, onSnap: () => void, onError: () => void) {

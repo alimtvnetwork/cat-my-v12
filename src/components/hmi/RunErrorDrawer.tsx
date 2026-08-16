@@ -13,7 +13,7 @@ export function RunErrorDrawer({
   const isFail = error !== null;
 
   useEffect(() => {
-    if (isFail) {
+    if (isFail === true) {
       closeRef.current?.focus();
       const onKey = (e: KeyboardEvent) => {
         if (KeyboardKeyType.isEscape(e.key)) onClose();

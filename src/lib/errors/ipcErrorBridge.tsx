@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 78 — `IpcErrorBridge`.
  *
@@ -98,7 +99,7 @@ export function IpcErrorBridge(): null {
           });
         } catch (e) {
           // BE down / network. Log once per tick, do NOT captureError.
-          console.warn("[ipcErrorBridge] sessions poll failed", e);
+          ClientLogger.warn("[ipcErrorBridge] sessions poll failed", e);
 
           return;
         }
@@ -139,7 +140,7 @@ export function IpcErrorBridge(): null {
 
         for (const r of results) {
           if (r.status !== "fulfilled") {
-            console.warn("[ipcErrorBridge] ipc poll failed", r.reason);
+            ClientLogger.warn("[ipcErrorBridge] ipc poll failed", r.reason);
             continue;
           }
 

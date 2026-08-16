@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 74 - `useSessionLogTail` browser hook.
  *
@@ -17,7 +18,7 @@
  *  - SSR-safe: everything happens inside `useEffect`; the module has zero
  *    top-level browser globals.
  *  - Loud-failure: every close reason and every parse failure is
- *    surfaced via `console.warn("[useSessionLogTail]", ...)` with runId
+ *    surfaced via `ClientLogger.warn("[useSessionLogTail]", ...)` with runId
  *    context. Never swallows.
  *
  * Deliberately out of scope: auto-reconnect + backoff (Step 75), sonner
@@ -125,7 +126,7 @@ export function useSessionLogTail(
       es = factory(url);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn("[useSessionLogTail] factory threw", { runId, msg });
+      ClientLogger.warn("[useSessionLogTail] factory threw", { runId, msg });
       setErrorMessage(msg);
       setStatus(LogTailStatusType.Error);
 
@@ -150,7 +151,7 @@ export function useSessionLogTail(
         setEnd(parsed);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn("[useSessionLogTail] end frame parse failed", {
+        ClientLogger.warn("[useSessionLogTail] end frame parse failed", {
           runId,
           raw: raw.slice(0, 200),
           msg,
@@ -168,7 +169,7 @@ export function useSessionLogTail(
       // the stream cannot open / reconnects. Also fired by BE if it
       // emits a named `error` frame from the tail generator.
       const raw = (ev as MessageEvent<string>).data ?? "";
-      console.warn("[useSessionLogTail] stream error", {
+      ClientLogger.warn("[useSessionLogTail] stream error", {
         runId,
         readyState: es.readyState,
         payloadPreview: raw.slice(0, 200),

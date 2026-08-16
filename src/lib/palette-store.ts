@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { ErrorSourceType } from "@/lib/errors/error-record";
 /**
  * Plan 64 steps 62-64: PaletteState registry.
@@ -102,7 +103,7 @@ function makeInstrumentedStorage() {
           reason: err instanceof Error ? err.name : "UnknownError",
           storageKey: name,
         });
-        console.warn("[palette-store] persist failed", err);
+        ClientLogger.warn("[palette-store] persist failed", err);
 
         throw err;
       }
@@ -128,7 +129,7 @@ export const usePaletteStore = create<PaletteStore>()(
       },
       reset: () => {
         set({ states: { ...DEFAULTS } });
-        console.info("[palette-store] layout reset to defaults");
+        ClientLogger.info("[palette-store] layout reset to defaults");
       },
     }),
     {

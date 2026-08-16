@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // TopMenuBar: global dropdown menu bar shown in the app titlebar.
 // Purpose: Dexter-style grouped HMI command surface for core workflows.
 import { RunStatusType } from "@/types/run/RunStatus";
@@ -120,14 +121,14 @@ function useAltMnemonicOpen(): void {
             const target = document.querySelector<HTMLElement>(`[data-group="${groupId}"]`);
 
             if (!target) {
-              console.warn("[top-menu mnemonic] trigger not mounted", { groupId, key });
+              ClientLogger.warn("[top-menu mnemonic] trigger not mounted", { groupId, key });
 
               return;
             }
 
             target.click();
             target.focus();
-            console.info("[top-menu mnemonic] opened", { groupId, key });
+            ClientLogger.info("[top-menu mnemonic] opened", { groupId, key });
           },
         });
       },
@@ -196,7 +197,7 @@ function activateMenuEntry(
   }
 
   if (hasLockedState(entry, pathname, running)) {
-    console.info("[top-menu] shortcut blocked while running", { to: entry.to });
+    ClientLogger.info("[top-menu] shortcut blocked while running", { to: entry.to });
 
     return;
   }
@@ -775,7 +776,7 @@ function runMenuAction(action: string): void {
   const handler = ACTION_HANDLERS[action];
 
   if (handler === undefined) {
-    console.error("[top-menu] command handler missing", { action });
+    ClientLogger.error("[top-menu] command handler missing", { action });
 
     return;
   }
@@ -785,20 +786,20 @@ function runMenuAction(action: string): void {
 
 function dispatchMenuCommand(command: string): void {
   window.dispatchEvent(new CustomEvent(MENU_COMMAND_EVENT, { detail: { command } }));
-  console.info("[top-menu] command dispatched", { command });
+  ClientLogger.info("[top-menu] command dispatched", { command });
 }
 
 function requestAppFullscreen(): void {
   const root = document.documentElement;
   root
     .requestFullscreen()
-    .then(() => console.info("[top-menu] fullscreen requested"))
-    .catch((error: unknown) => console.error("[top-menu] fullscreen failed", error));
+    .then(() => ClientLogger.info("[top-menu] fullscreen requested"))
+    .catch((error: unknown) => ClientLogger.error("[top-menu] fullscreen failed", error));
 }
 
 function openHelpDocs(): void {
   window.open("https://docs.lovable.dev/", "_blank", "noopener,noreferrer");
-  console.info("[top-menu] help docs opened");
+  ClientLogger.info("[top-menu] help docs opened");
 }
 
 function MenubarActionRow({ item, isHydrated }: { item: ActionEntry; isHydrated: boolean }) {

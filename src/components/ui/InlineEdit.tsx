@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 100 step 18 (Phase C): unified inline-edit primitive per V4 §14.
 // Consumers (LayerRow, SelectionOverlay name chip, InspectorSurface title)
 // share one implementation so focus, blur, Enter/Escape, and F2 semantics
@@ -101,7 +102,7 @@ export const InlineEdit = forwardRef<InlineEditHandle, InlineEditProps>(function
     try {
       onCommit(trimmed);
     } catch (err) {
-      console.error("[InlineEdit] onCommit threw", {
+      ClientLogger.error("[InlineEdit] onCommit threw", {
         ariaLabel,
         value,
         next: trimmed,

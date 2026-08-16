@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 66: registry of running long-ops (validate, capture, run, import).
  * Any surface can register an op; the RunningPill (step 65) subscribes and
@@ -41,7 +42,7 @@ export const useRunningOpsStore = create<RunningOpsStore>((set, get) => ({
   ops: [],
   start: (op) => {
     const full: RunningOp = { startedAt: Date.now(), ...op };
-    console.info("[running-ops] start", full.id, full.kind, full.label);
+    ClientLogger.info("[running-ops] start", full.id, full.kind, full.label);
     set({ ops: [...get().ops, full] });
   },
   update: (id, patch) => set({ ops: get().ops.map((o) => (o.id === id ? { ...o, ...patch } : o)) }),
@@ -52,11 +53,11 @@ export const useRunningOpsStore = create<RunningOpsStore>((set, get) => ({
       try {
         op.onStop();
       } catch (err) {
-        console.error("[running-ops] onStop threw", id, err);
+        ClientLogger.error("[running-ops] onStop threw", id, err);
       }
     }
 
-    console.info("[running-ops] stop", id);
+    ClientLogger.info("[running-ops] stop", id);
     set({ ops: get().ops.filter((o) => o.id !== id) });
   },
   clear: () => set({ ops: [] }),

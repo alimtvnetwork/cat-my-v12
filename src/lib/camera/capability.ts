@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 80 step 43: getUserMedia capability probe with typed error surface.
 //
 // Callers (live capture UX in ImageSamples, viewport camera controls) need
@@ -104,7 +105,7 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
       message:
         "navigator.mediaDevices.getUserMedia unavailable (requires a secure origin: https or localhost)",
     };
-    console.error("[camera-capability] probe failed", error);
+    ClientLogger.error("[camera-capability] probe failed", error);
 
     return { ok: false, isFail: true, error };
   }
@@ -114,7 +115,7 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
     stream = await md.getUserMedia({ video: true, audio: false });
   } catch (err) {
     const error = toCapabilityError(err);
-    console.error("[camera-capability] probe failed", error);
+    ClientLogger.error("[camera-capability] probe failed", error);
 
     return { ok: false, isFail: true, error };
   }
@@ -136,7 +137,7 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
   } catch (err) {
     // Enumerate failure is non-fatal: we already have a working stream, so
     // report OK with an empty devices list and log the enumerate error.
-    console.warn("[camera-capability] enumerateDevices threw", err);
+    ClientLogger.warn("[camera-capability] enumerateDevices threw", err);
   } finally {
     // ALWAYS release the probe stream. Leaving tracks live keeps the
     // browser's recording indicator on and blocks other consumers.
@@ -144,12 +145,12 @@ export async function probeCameraCapability(opts: ProbeOptions = {}): Promise<Ca
       try {
         track.stop();
       } catch (err) {
-        console.warn("[camera-capability] track.stop threw", err);
+        ClientLogger.warn("[camera-capability] track.stop threw", err);
       }
     }
   }
 
-  console.info(`[camera-capability] probe ok deviceCount=${devices.length}`);
+  ClientLogger.info(`[camera-capability] probe ok deviceCount=${devices.length}`);
 
   return { ok: true, isFail: false, devices };
 }

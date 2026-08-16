@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { CaptureError, type CaptureErrorCode, newCorrelationId } from "./capture.shared";
 
 /**
@@ -91,7 +92,7 @@ export async function withSdkRetry<T>(
       lastErr = ce;
 
       if (isPermanent(ce) || attempt === maxAttempts) {
-        console.warn(
+        ClientLogger.warn(
           `[sdk.facade] subject=${subject} cid=${cid} attempt=${attempt}/${maxAttempts} code=${ce.code} phase=fail-permanent`,
         );
 
@@ -99,7 +100,7 @@ export async function withSdkRetry<T>(
       }
 
       const delayMs = computeDelay(attempt, baseMs, capMs, jitter);
-      console.info(
+      ClientLogger.info(
         `[sdk.facade] subject=${subject} cid=${cid} attempt=${attempt}/${maxAttempts} code=${ce.code} phase=retry delay=${delayMs}ms`,
       );
       opts.onRetry?.({ attempt, delayMs, code: ce.code, cid });

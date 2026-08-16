@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Structured JSON summary for reset-and-reseed runs.
 //
 // Root cause this addresses: the reset+reseed path already emits a
@@ -117,8 +118,8 @@ export function emitResetSummaryJson(payload: ResetSummaryJson): string {
   const text = JSON.stringify(payload);
   const line = `${RESET_SUMMARY_JSON_PREFIX} ${text}`;
 
-  if (payload.ok) console.info(line);
-  else console.warn(line);
+  if (payload.ok) ClientLogger.info(line);
+  else ClientLogger.warn(line);
 
   return text;
 }

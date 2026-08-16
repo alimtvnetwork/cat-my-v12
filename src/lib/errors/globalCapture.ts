@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { ErrorSourceType } from "@/lib/errors/error-record";
 // Single-mount global error handlers.
 //
@@ -23,7 +24,7 @@ let refCount = 0;
 function onWindowError(ev: ErrorEvent): void {
   const err = ev.error ?? ev.message ?? "Unknown window error";
   const context = { filename: ev.filename, lineno: ev.lineno, colno: ev.colno };
-  console.info("[globalCapture] window.error", context);
+  ClientLogger.info("[globalCapture] window.error", context);
   const captured = useErrorStore.getState().captureException(err, {
     triggerComponent: "window",
     triggerAction: "error",
@@ -39,7 +40,7 @@ function onWindowError(ev: ErrorEvent): void {
 
 function onUnhandledRejection(ev: PromiseRejectionEvent): void {
   const reason = ev.reason ?? "Unhandled rejection";
-  console.info("[globalCapture] unhandledrejection", {
+  ClientLogger.info("[globalCapture] unhandledrejection", {
     reason: reason instanceof Error ? reason.message : String(reason),
   });
   const captured = useErrorStore.getState().captureException(reason, {
@@ -62,7 +63,7 @@ export function installGlobalErrorCapture(): () => void {
   isInstalled = true;
   window.addEventListener("error", onWindowError);
   window.addEventListener("unhandledrejection", onUnhandledRejection);
-  console.info("[globalCapture] installed window.error + unhandledrejection listeners");
+  ClientLogger.info("[globalCapture] installed window.error + unhandledrejection listeners");
 
   return () => uninstall();
 }
@@ -75,7 +76,7 @@ function uninstall(): void {
   window.removeEventListener("error", onWindowError);
   window.removeEventListener("unhandledrejection", onUnhandledRejection);
   isInstalled = false;
-  console.info("[globalCapture] uninstalled listeners");
+  ClientLogger.info("[globalCapture] uninstalled listeners");
 }
 
 // Test hook: not exported from the barrel; unit tests only.

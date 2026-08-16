@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { DataSourceType } from "@/lib/data-source/store";
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -85,7 +86,7 @@ export function DataSourceToggle({ className, healthUrl = "/api/health", fetchIm
       toast.success("Live backend connected");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn("[data-source] backend probe failed", { url: healthUrl, msg });
+      ClientLogger.warn("[data-source] backend probe failed", { url: healthUrl, msg });
       toast.error(`Backend unreachable, staying on seed data: ${msg}`);
     } finally {
       setPending(false);

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { RightRailDirectionType } from "../rail/RightRail";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -116,7 +117,7 @@ export function EditorSetupExperience({
         const ruleset = mod.selectRuleset(state, rulesetId);
 
         if (!ruleset || ruleset.projectId !== projectId) {
-          console.warn("[setup/roi] bridge: ruleset not found", { projectId, rulesetId });
+          ClientLogger.warn("[setup/roi] bridge: ruleset not found", { projectId, rulesetId });
 
           if (useRulesStore.getState().rules.length === 0) {
             storeReplaceAll(initialRules, [initialRules[0].id]);
@@ -137,7 +138,7 @@ export function EditorSetupExperience({
           if (next.rules === prev.rules) return;
           mod.useProjectStore.getState().updateRulesetRules(rulesetId, next.rules);
         });
-        console.info("[setup/roi] bridged to project ruleset", {
+        ClientLogger.info("[setup/roi] bridged to project ruleset", {
           projectId,
           rulesetId,
           count: ruleset.rules.length,

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 137. Boot reconciliation for locally-cached RuleSet drafts.
 //
 // Spec: spec/21-app/80-ruleset-draft-save.md
@@ -99,9 +100,9 @@ export async function reconcileDrafts(
     // Structured log: every reconciled draft leaves a trace line so silent
     // divergence is architecturally impossible.
     if (kind === "in-sync") {
-      console.info("[reconcileDrafts]", { RuleSetId: id, Kind: kind });
+      ClientLogger.info("[reconcileDrafts]", { RuleSetId: id, Kind: kind });
     } else {
-      console.warn("[reconcileDrafts]", {
+      ClientLogger.warn("[reconcileDrafts]", {
         RuleSetId: id,
         Kind: kind,
         LocalVersion: local.Version,

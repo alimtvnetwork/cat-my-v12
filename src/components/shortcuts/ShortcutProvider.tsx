@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Global shortcut dispatcher for Plan 100 §13 (step 12).
  *
@@ -56,7 +57,7 @@ export function ShortcutProvider() {
         match.run(event);
       } catch (err) {
         // Do not swallow: log with context so a broken handler is visible.
-        console.error("[shortcuts] handler threw", {
+        ClientLogger.error("[shortcuts] handler threw", {
           shortcutId: match.id,
           combo,
           scope: match.scope,

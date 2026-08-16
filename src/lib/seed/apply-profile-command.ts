@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { CommandIdType } from "@/lib/command-bus";
 // Plan 86 Step 28: Command Palette handler for `cmd:apply-seed-profile`.
 //
@@ -73,14 +74,14 @@ export async function applySeedProfile(profileId: string): Promise<SeedRunV2Repo
     return null;
   }
 
-  console.info("[seed-v2] cmd:apply-seed-profile start", { profileId });
+  ClientLogger.info("[seed-v2] cmd:apply-seed-profile start", { profileId });
   try {
     const report = await runSeedV2({
       bundle: bundleV2,
       registry: defaultDomainRegistry,
       profileId,
     });
-    console.info("[seed-v2] cmd:apply-seed-profile done", {
+    ClientLogger.info("[seed-v2] cmd:apply-seed-profile done", {
       profileId,
       ok: report.ok,
       totalMs: report.totalMs,

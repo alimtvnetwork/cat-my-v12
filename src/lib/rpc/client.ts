@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * RPC client wrapper - thin typed layer over TanStack server functions.
  *
@@ -129,7 +130,7 @@ export async function invokeRpc<TArgs, TResult>(
   const operation = fnLabel(fn, options?.operation);
   const startedAt = Date.now();
 
-  console.info(`[rpc.start] operation=${operation} correlationId=${correlationId}`);
+  ClientLogger.info(`[rpc.start] operation=${operation} correlationId=${correlationId}`);
 
   if (options?.ulidFields && args && typeof args === "object") {
     assertUlidArgs(
@@ -142,14 +143,14 @@ export async function invokeRpc<TArgs, TResult>(
 
   try {
     const result = await fn(args);
-    console.info(
+    ClientLogger.info(
       `[rpc.ok] operation=${operation} correlationId=${correlationId} durationMs=${Date.now() - startedAt}`,
     );
 
     return result;
   } catch (err) {
     if (err instanceof RpcError) {
-      console.error(
+      ClientLogger.error(
         `[rpc.error] operation=${operation} correlationId=${err.correlationId} code=${err.code} durationMs=${Date.now() - startedAt} message=${err.message}`,
       );
 
@@ -159,7 +160,7 @@ export async function invokeRpc<TArgs, TResult>(
     const wire = extractWireCode(err);
     const code: RpcWireCode = wire ?? RpcErrorCodeType.E_RPC_TRANSPORT;
     const message = err instanceof Error ? err.message : "RPC transport failure";
-    console.error(
+    ClientLogger.error(
       `[rpc.error] operation=${operation} correlationId=${correlationId} code=${code} durationMs=${Date.now() - startedAt} message=${message}`,
       err,
     );

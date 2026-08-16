@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 80 + step 85 wire-through: `runProject` server fn.
  *
@@ -45,14 +46,14 @@ export const runProject = createServerFn({ method: HttpMethod.Post })
       .single();
 
     if (error || !row) {
-      console.error("[runProject] insert failed", error);
+      ClientLogger.error("[runProject] insert failed", error);
 
       throw new Error(error?.message ?? "runProject: insert failed");
     }
 
     const runId = (row as { id: string }).id;
     const startedAt = (row as { started_at: string }).started_at;
-    console.info("[runProject] queued", {
+    ClientLogger.info("[runProject] queued", {
       user: context.userId,
       runId,
       projectId: data.projectId,

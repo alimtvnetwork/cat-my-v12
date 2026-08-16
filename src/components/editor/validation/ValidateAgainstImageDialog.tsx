@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -156,7 +157,7 @@ export function ValidateAgainstImageDialog({
         });
       })
       .catch((err) => {
-        console.warn("[validate] default image decode failed", err);
+        ClientLogger.warn("[validate] default image decode failed", err);
       });
 
     return () => {
@@ -178,14 +179,14 @@ export function ValidateAgainstImageDialog({
     try {
       const next = await readFileAsCandidate(file);
       setCandidate(next);
-      console.info("[validate] image loaded", {
+      ClientLogger.info("[validate] image loaded", {
         name: next.name,
         w: next.width,
         h: next.height,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[validate] image load failed", err);
+      ClientLogger.error("[validate] image load failed", err);
       setError({ code: "CLIENT", message });
     }
   }, []);
@@ -221,7 +222,7 @@ export function ValidateAgainstImageDialog({
   const onCancel = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
-      console.info("[validate] canceled by user");
+      ClientLogger.info("[validate] canceled by user");
     }
   }, []);
 
@@ -248,7 +249,7 @@ export function ValidateAgainstImageDialog({
       const hit = getCachedRun(cacheKey);
 
       if (hit) {
-        console.info("[validate] cache hit", {
+        ClientLogger.info("[validate] cache hit", {
           cacheKey,
           age_ms: Date.now() - hit.cachedAt,
           attempts: hit.attempts,
@@ -313,7 +314,7 @@ export function ValidateAgainstImageDialog({
           remote = await Promise.race([rpc, cancelPromise]);
         } catch (abortErr) {
           if (abortErr instanceof DOMException && abortErr.name === "AbortError") {
-            console.info("[validate] scoring aborted");
+            ClientLogger.info("[validate] scoring aborted");
             setError({
               code: ScoreErrorCodeType.WORKER_ABORTED,
               message: "Scoring canceled before the worker returned.",
@@ -328,7 +329,7 @@ export function ValidateAgainstImageDialog({
         }
 
         if (remote.ok === false) {
-          console.warn("[validate] remote scoring failed", remote.error);
+          ClientLogger.warn("[validate] remote scoring failed", remote.error);
           setError(remote.error);
           // Refresh the shared banner so the UI reflects the fresh failure.
           void refreshHealth();
@@ -355,7 +356,7 @@ export function ValidateAgainstImageDialog({
       const pass = Object.values(map).filter((v) => v.status === ValidationStatusType.Pass).length;
       const fail = Object.values(map).filter((v) => v.status === ValidationStatusType.Fail).length;
       const warn = Object.values(map).filter((v) => v.status === ValidationStatusType.Warn).length;
-      console.info("[validate] run complete", {
+      ClientLogger.info("[validate] run complete", {
         image: candidate.name,
         count: eligibleRules.length,
         pass,
@@ -388,7 +389,7 @@ export function ValidateAgainstImageDialog({
       if (!isUsedStub) onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("[validate] run failed", err);
+      ClientLogger.error("[validate] run failed", err);
       setError({ code: "CLIENT", message });
     } finally {
       abortRef.current = null;
@@ -560,7 +561,7 @@ export function ValidateAgainstImageDialog({
             type="button"
             onClick={() => {
               clearResults(rulesetId);
-              console.info("[validate] results cleared", { rulesetId });
+              ClientLogger.info("[validate] results cleared", { rulesetId });
             }}
             className="inline-flex items-center gap-hmi-2 rounded-sm border border-ca-border bg-ca-panel px-hmi-3 py-hmi-1.5 text-hmi-caption text-ca-ink transition hover:border-ca-select"
           >

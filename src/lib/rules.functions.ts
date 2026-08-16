@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 85 code side: `saveRule` server fn.
  *
@@ -62,7 +63,7 @@ export const saveRule = createServerFn({ method: HttpMethod.Post })
       .maybeSingle();
 
     if (readErr) {
-      console.error("[saveRule] read failed", { correlationId, err: readErr });
+      ClientLogger.error("[saveRule] read failed", { correlationId, err: readErr });
 
       throw new Error(
         JSON.stringify({
@@ -102,7 +103,7 @@ export const saveRule = createServerFn({ method: HttpMethod.Post })
       .single();
 
     if (writeErr || !updated) {
-      console.error("[saveRule] write failed", { correlationId, err: writeErr });
+      ClientLogger.error("[saveRule] write failed", { correlationId, err: writeErr });
 
       throw new Error(
         JSON.stringify({
@@ -114,7 +115,7 @@ export const saveRule = createServerFn({ method: HttpMethod.Post })
       );
     }
 
-    console.info("[saveRule] persisted", {
+    ClientLogger.info("[saveRule] persisted", {
       correlationId,
       rulesetId: data.rulesetId,
       ruleId: data.rule.id,

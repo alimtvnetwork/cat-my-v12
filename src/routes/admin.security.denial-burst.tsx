@@ -56,7 +56,7 @@ function DenialBurstPage() {
     );
   }
 
-  if (q.isFail) {
+  if (q.isFail === true) {
     const msg = q.error instanceof Error ? q.error.message : String(q.error);
     const isRoleDenied =
       msg.toLowerCase().includes("role required") || msg.includes("E_SEC_ROLE_DENIED");

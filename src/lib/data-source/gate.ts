@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // runBackendWrite: gate mutating backend calls behind the data-source
 // runtime store. In "seed" mode we return a caller-supplied simulated
 // result so demos stay hermetic; in "backend" mode we invoke the real
@@ -21,7 +22,7 @@ export async function runBackendWrite<T>(
   const source = getDataSource();
 
   if (source === "seed") {
-    console.info("[data-source] skipping write in seed mode", { label: opts.label });
+    ClientLogger.info("[data-source] skipping write in seed mode", { label: opts.label });
     opts.onSeedSkip?.(opts.label);
 
     return opts.seedResult;

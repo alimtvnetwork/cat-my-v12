@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 66 SH-05: floating RunningPill.
  *
@@ -145,7 +146,7 @@ export function RunningPill() {
 
       if (d?.moved && pos) {
         savePillPos(pos);
-        console.info("[running-pill] drag-end", pos);
+        ClientLogger.info("[running-pill] drag-end", pos);
         justDraggedRef.current = true;
         // Clear on the next macrotask, after React fires the synthetic
         // click that follows pointerup on the same target.
@@ -165,10 +166,10 @@ export function RunningPill() {
     if (!targetRoute) {
       return;
     }
-    console.info("[running-pill] click-to-jump", targetRoute);
+    ClientLogger.info("[running-pill] click-to-jump", targetRoute);
     // targetRoute is a string; use `to` cast so TanStack navigate accepts it.
     navigate({ to: targetRoute }).catch((err) => {
-      console.error("[running-pill] navigate failed", targetRoute, err);
+      ClientLogger.error("[running-pill] navigate failed", targetRoute, err);
     });
   };
 
@@ -211,7 +212,7 @@ export function RunningPill() {
               // Ignore clicks that were part of a drag (moved past threshold).
               if (justDraggedRef.current) {
                 e.preventDefault();
-                console.info("[running-pill] click suppressed after drag");
+                ClientLogger.info("[running-pill] click suppressed after drag");
 
                 return;
               }

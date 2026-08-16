@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum CanvasViewportPresetType {
   Subtle = "subtle",
   Standard = "standard",
@@ -378,7 +379,7 @@ export function CanvasViewport({
 
   const onUploadFile = (file: File) => {
     if (file.type.startsWith("image/") === false) {
-      console.warn("[canvas-sample] upload rejected: not an image", file.type);
+      ClientLogger.warn("[canvas-sample] upload rejected: not an image", file.type);
 
       return;
     }
@@ -397,7 +398,7 @@ export function CanvasViewport({
     const result = await openCameraStream();
 
     if (result.ok === false) {
-      console.error("[canvas-sample] camera capture failed", result.error);
+      ClientLogger.error("[canvas-sample] camera capture failed", result.error);
 
       return;
     }
@@ -406,7 +407,7 @@ export function CanvasViewport({
       const frame = await captureFrameFromStream(result.stream.stream);
       applyCustomImage("Camera capture", frame.dataUrl);
     } catch (err) {
-      console.error("[canvas-sample] captureFrameFromStream threw", err);
+      ClientLogger.error("[canvas-sample] captureFrameFromStream threw", err);
     } finally {
       result.stream.close();
     }

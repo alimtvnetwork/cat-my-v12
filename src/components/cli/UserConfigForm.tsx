@@ -99,7 +99,7 @@ export function UserConfigForm() {
     return <p className="text-sm text-muted-foreground">Loading user config…</p>;
   }
 
-  if (query.isFail || !query.data) {
+  if (query.isFail === true || !query.data) {
     return (
       <Alert variant="destructive">
         <AlertTitle>Failed to load user config</AlertTitle>

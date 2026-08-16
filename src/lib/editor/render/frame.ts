@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import type {
   CanvasSize,
   EditorRule,
@@ -33,7 +34,7 @@ function loadReferenceImage(src: string, onReady: () => void): void {
     onReady();
   };
   img.onerror = () => {
-    console.error("[canvas] reference image failed to load", src.slice(0, 64));
+    ClientLogger.error("[canvas] reference image failed to load", src.slice(0, 64));
   };
   img.src = src;
   referenceImage = img;

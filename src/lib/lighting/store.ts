@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 67 step 16 (SU-04): lighting controls store.
 //
 // Client-only zustand store for lighting-setup values (exposure, gain,
@@ -7,7 +8,7 @@
 // of truth so multiple surfaces (`/settings/lighting`, later HUD panels)
 // stay in sync.
 //
-// Every mutator logs via `console.info("[lighting-store] set", ...)` so
+// Every mutator logs via `ClientLogger.info("[lighting-store] set", ...)` so
 // misfires are observable in the console instead of silently persisted.
 import { create } from "zustand";
 import { StorageKey } from "@/lib/constants/storage";
@@ -54,7 +55,7 @@ function readPersisted(): Partial<LightingControls> {
 
     return JSON.parse(raw) as Partial<LightingControls>;
   } catch (err) {
-    console.warn("[lighting-store] failed to read persisted controls", err);
+    ClientLogger.warn("[lighting-store] failed to read persisted controls", err);
 
     return {};
   }
@@ -65,7 +66,7 @@ function persist(controls: LightingControls): void {
   try {
     window.localStorage.setItem(StorageKey.LightingControls, JSON.stringify(controls));
   } catch (err) {
-    console.warn("[lighting-store] failed to persist controls", err);
+    ClientLogger.warn("[lighting-store] failed to persist controls", err);
   }
 }
 
@@ -73,30 +74,30 @@ export const useLightingStore = create<LightingStore>((set, get) => ({
   ...DEFAULT_LIGHTING_CONTROLS,
   setExposure: (value) => {
     const next = clamp(value, -100, 100);
-    console.info("[lighting-store] set exposure", next);
+    ClientLogger.info("[lighting-store] set exposure", next);
     set({ exposure: next });
     persist({ ...get(), exposure: next });
   },
   setGain: (value) => {
     const next = clamp(value, 0, 100);
-    console.info("[lighting-store] set gain", next);
+    ClientLogger.info("[lighting-store] set gain", next);
     set({ gain: next });
     persist({ ...get(), gain: next });
   },
   setEnhance: (value) => {
     const next = clamp(value, 0, 100);
-    console.info("[lighting-store] set enhance", next);
+    ClientLogger.info("[lighting-store] set enhance", next);
     set({ enhance: next });
     persist({ ...get(), enhance: next });
   },
   setDarken: (value) => {
     const next = clamp(value, 0, 100);
-    console.info("[lighting-store] set darken", next);
+    ClientLogger.info("[lighting-store] set darken", next);
     set({ darken: next });
     persist({ ...get(), darken: next });
   },
   reset: () => {
-    console.info("[lighting-store] reset");
+    ClientLogger.info("[lighting-store] reset");
     set({ ...DEFAULT_LIGHTING_CONTROLS });
     persist(DEFAULT_LIGHTING_CONTROLS);
   },
@@ -110,7 +111,7 @@ export const useLightingStore = create<LightingStore>((set, get) => ({
       enhance: clamp(persisted.enhance ?? 0, 0, 100),
       darken: clamp(persisted.darken ?? 0, 0, 100),
     };
-    console.info("[lighting-store] hydrate", merged);
+    ClientLogger.info("[lighting-store] hydrate", merged);
     set(merged);
   },
 }));

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Camera, Plus } from "lucide-react";
@@ -16,13 +17,13 @@ export function ProjectCameraSection({ project }: { project: Project }) {
   function onSelect(id: string): void {
     try {
       setProjectCamera(project.id, id || null);
-      console.info("[project-editor/camera] bound", {
+      ClientLogger.info("[project-editor/camera] bound", {
         projectId: project.id,
         cameraSettingId: id || null,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[project-editor/camera] bind failed", e);
+      ClientLogger.error("[project-editor/camera] bind failed", e);
       setError(msg);
     }
   }
@@ -100,13 +101,13 @@ export function ProjectCameraSection({ project }: { project: Project }) {
         onSaved={(newId) => {
           try {
             setProjectCamera(project.id, newId);
-            console.info("[project-editor/camera] auto-bound new copy", {
+            ClientLogger.info("[project-editor/camera] auto-bound new copy", {
               projectId: project.id,
               newId,
             });
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            console.error("[project-editor/camera] bind new copy failed", e);
+            ClientLogger.error("[project-editor/camera] bind new copy failed", e);
             setError(msg);
           }
         }}

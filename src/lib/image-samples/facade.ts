@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 79 step 45. Image samples facade (IndexedDB via ProjectRepositoryFacade).
 //
 // Root cause this module fixes, in one sentence: the V4 project editor's
@@ -126,7 +127,7 @@ class IndexedDbImageSamplesFacade implements ImageSamplesFacade {
 
     if (parsed.success === false) {
       const cid = newCorrelationId();
-      console.error("[image-samples/facade] save validation failed", {
+      ClientLogger.error("[image-samples/facade] save validation failed", {
         cid,
         issues: parsed.error.issues,
       });
@@ -174,12 +175,12 @@ class IndexedDbImageSamplesFacade implements ImageSamplesFacade {
       const row = this.map.get(id);
 
       if (!row) {
-        console.warn("[image-samples/facade] reorder: unknown id", { id, projectId });
+        ClientLogger.warn("[image-samples/facade] reorder: unknown id", { id, projectId });
         continue;
       }
 
       if (row.projectId !== projectId) {
-        console.warn("[image-samples/facade] reorder: id not in project", {
+        ClientLogger.warn("[image-samples/facade] reorder: id not in project", {
           id,
           projectId,
           rowProjectId: row.projectId,

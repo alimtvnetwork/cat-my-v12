@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 86 Step 30: `useFacadeOrStore` — the shared per-slice read hook that
 // prefers the seeded facade when a v2 profile is active, otherwise returns
 // the legacy store fallback untouched.
@@ -65,7 +66,7 @@ export function useFacadeOrStore<T extends DomainRow, F>(
     // DEV-only warning: if the slice is strictly facade-only, returning the
     // legacy fallback might mask a missing profile on routes that require v2 seeds.
     if (import.meta.env?.DEV && FACADE_ONLY_SLICES.has(facade.slice)) {
-      console.warn(
+      ClientLogger.warn(
         `[useFacadeOrStore] dev warning: slice "${facade.slice}" is facade-only but profile is null. ` +
           `Ensure this route does not require a v2 seed.`,
       );
@@ -75,7 +76,7 @@ export function useFacadeOrStore<T extends DomainRow, F>(
 
   if (typeof facade.snapshot !== "function") {
     if (warned.has(facade as DomainFacade<DomainRow>) === false) {
-      console.warn(
+      ClientLogger.warn(
         `[useFacadeOrStore] facade "${facade.slice}" has no snapshot(); falling back to legacy store`,
       );
       warned.add(facade as DomainFacade<DomainRow>);

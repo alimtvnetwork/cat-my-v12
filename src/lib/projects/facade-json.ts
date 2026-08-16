@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 80 step 39: shared JSON helpers on top of the SDK facade so callers
 // that used to reach for `loadJson/saveJson` from `@/lib/persist` (raw
 // `localStorage` with a `ca-hmi:` prefix) can talk to IndexedDB through
@@ -17,13 +18,13 @@ export async function readFacadeJson<T>(fullKey: string): Promise<T | null> {
       const legacy = window.localStorage.getItem(fullKey);
 
       if (legacy !== null) {
-        console.info("[facade-json] migrating legacy localStorage payload", fullKey);
+        ClientLogger.info("[facade-json] migrating legacy localStorage payload", fullKey);
         await facade.writeItem(fullKey, legacy);
         window.localStorage.removeItem(fullKey);
         raw = legacy;
       }
     } catch (err) {
-      console.warn("[facade-json] legacy read failed", fullKey, err);
+      ClientLogger.warn("[facade-json] legacy read failed", fullKey, err);
     }
   }
 
@@ -31,7 +32,7 @@ export async function readFacadeJson<T>(fullKey: string): Promise<T | null> {
   try {
     return JSON.parse(raw) as T;
   } catch (err) {
-    console.warn("[facade-json] parse failed", fullKey, err);
+    ClientLogger.warn("[facade-json] parse failed", fullKey, err);
 
     return null;
   }
@@ -40,5 +41,5 @@ export async function readFacadeJson<T>(fullKey: string): Promise<T | null> {
 export function writeFacadeJson<T>(fullKey: string, value: T): void {
   makeProjectRepositoryFacade()
     .writeItem(fullKey, JSON.stringify(value))
-    .catch((err) => console.warn("[facade-json] write failed", fullKey, err));
+    .catch((err) => ClientLogger.warn("[facade-json] write failed", fullKey, err));
 }

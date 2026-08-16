@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Camera library sample seed.
 //
 // Populates the CameraFacade with two realistic entries when empty so every
@@ -114,7 +115,7 @@ export function autoSeedCamerasIfEmpty(): void {
     return;
   }
 
-  if (isHadFlag) console.warn("[camera/seed] stale seed flag repaired empty library");
+  if (isHadFlag) ClientLogger.warn("[camera/seed] stale seed flag repaired empty library");
   const now = Date.now();
   const results = [
     facade.save(baslerCamera(now)),
@@ -124,7 +125,7 @@ export function autoSeedCamerasIfEmpty(): void {
   const failures = results.filter((r) => r.ok === false);
 
   if (failures.length > 0) {
-    console.warn("[camera/seed] some seeds failed", failures);
+    ClientLogger.warn("[camera/seed] some seeds failed", failures);
 
     return;
   }
@@ -135,5 +136,5 @@ export function autoSeedCamerasIfEmpty(): void {
     /* ignore */
   }
 
-  console.info("[camera/seed] seeded %d camera setting(s)", results.length);
+  ClientLogger.info("[camera/seed] seeded %d camera setting(s)", results.length);
 }

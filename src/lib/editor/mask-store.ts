@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Per-rule mask image store. Rules can carry a `maskImageUrl` param
 // (data URL or asset URL) plus `maskThreshold` (0..255) and
 // `maskInvert` (boolean). This module loads each URL lazily, converts
@@ -99,7 +100,7 @@ export function getPreparedMask(
       }
     };
     image.onerror = () => {
-      console.error("[mask-store] failed to load mask image", url.slice(0, 64));
+      ClientLogger.error("[mask-store] failed to load mask image", url.slice(0, 64));
     };
     image.src = url;
 
@@ -240,7 +241,7 @@ function prepare(image: HTMLImageElement, threshold: number, invert: boolean): P
   try {
     data = ctx.getImageData(0, 0, w, h);
   } catch (err) {
-    console.error("[mask-store] getImageData failed (likely CORS)", err);
+    ClientLogger.error("[mask-store] getImageData failed (likely CORS)", err);
 
     return { canvas, width: w, height: h };
   }

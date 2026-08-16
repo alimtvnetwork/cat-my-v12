@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 123 - Global CLI status widget in `__root` header.
  * Refactored in Step 124 to consume the shared `StatusPill` so tone
@@ -90,7 +91,7 @@ export function GlobalCliStatusWidget() {
 
   useEffect(() => {
     if (query.error) {
-      console.warn("[GlobalCliStatusWidget] status poll failed:", query.error.message);
+      ClientLogger.warn("[GlobalCliStatusWidget] status poll failed:", query.error.message);
     }
   }, [query.error]);
 

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum FlatEntryKindType {
   GroupHeader = "group-header",
   Layer = "layer",
@@ -110,7 +111,7 @@ export function LayersPanel({
     const node = rowRefs.current.get(focusedId);
 
     if (!node) {
-      console.info("[layers/scroll] focused row not mounted", { focusedId });
+      ClientLogger.info("[layers/scroll] focused row not mounted", { focusedId });
 
       return;
     }
@@ -119,7 +120,7 @@ export function LayersPanel({
     // focused row visible), so we log and skip instead of throwing and
     // taking down the whole panel render.
     if (typeof node.scrollIntoView !== "function") {
-      console.info("[layers/scroll] scrollIntoView unavailable in this environment", {
+      ClientLogger.info("[layers/scroll] scrollIntoView unavailable in this environment", {
         focusedId,
       });
 
@@ -308,7 +309,7 @@ export function LayersPanel({
       if ((KeyboardKeyType.isDelete(e.key) || KeyboardKeyType.isBackspace(e.key)) && !mod) {
         if (selectedIds.length === 0) return;
         e.preventDefault();
-        console.info("[layers/shortcut] delete", { count: selectedIds.length });
+        ClientLogger.info("[layers/shortcut] delete", { count: selectedIds.length });
         onDeleteSelected?.();
 
         return;
@@ -318,10 +319,10 @@ export function LayersPanel({
         e.preventDefault();
 
         if (e.shiftKey) {
-          console.info("[layers/shortcut] ungroup");
+          ClientLogger.info("[layers/shortcut] ungroup");
           onUngroupSelected?.();
         } else {
-          console.info("[layers/shortcut] group", { count: selectedIds.length });
+          ClientLogger.info("[layers/shortcut] group", { count: selectedIds.length });
           onGroupSelected?.();
         }
 
@@ -330,7 +331,7 @@ export function LayersPanel({
 
       if (mod && (KeyboardKeyType.isE(e.key) || KeyboardKeyType.isEUpper(e.key))) {
         e.preventDefault();
-        console.info("[layers/shortcut] merge", { count: selectedIds.length });
+        ClientLogger.info("[layers/shortcut] merge", { count: selectedIds.length });
         onMergeSelected?.();
 
         return;

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Shared facade contracts and runtime helpers.
 //
 // Purpose: prevent drift between seeders and facade consumers. Every
@@ -78,13 +79,13 @@ export function parseFacadeRows<T>(
   try {
     arr = JSON.parse(raw);
   } catch (err) {
-    console.error(`[${source}] hydrate parse failed`, err);
+    ClientLogger.error(`[${source}] hydrate parse failed`, err);
 
     return [];
   }
 
   if (Array.isArray(arr) === false) {
-    console.warn(`[${source}] hydrate payload was not an array`, typeof arr);
+    ClientLogger.warn(`[${source}] hydrate payload was not an array`, typeof arr);
 
     return [];
   }
@@ -94,7 +95,7 @@ export function parseFacadeRows<T>(
     const r = schema.safeParse(row);
 
     if (r.success) out.push(r.data);
-    else console.warn(`[${source}] dropped invalid row on hydrate`, r.error.issues);
+    else ClientLogger.warn(`[${source}] dropped invalid row on hydrate`, r.error.issues);
   }
 
   return out;

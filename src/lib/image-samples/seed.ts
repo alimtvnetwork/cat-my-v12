@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // ImageSamples sample seed.
 //
 // Adds deterministic uploaded-pocket samples per persisted project when the
@@ -75,10 +76,10 @@ export async function autoSeedImageSamplesIfEmpty(): Promise<void> {
         await facade.save(sample);
         seeded += 1;
       } catch (err) {
-        console.warn("[image-samples/seed] save failed", { id: sample.id, err });
+        ClientLogger.warn("[image-samples/seed] save failed", { id: sample.id, err });
       }
     }
   }
 
-  if (seeded > 0) console.info("[image-samples/seed] seeded %d sample(s)", seeded);
+  if (seeded > 0) ClientLogger.info("[image-samples/seed] seeded %d sample(s)", seeded);
 }

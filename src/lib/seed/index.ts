@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { UiSeedSourceType, type UiSeedFacade, type UiSeedFacadeOptions } from "./facade";
 import { JsonUiSeedFacade } from "./json-facade";
 import { MemoryUiSeedFacade, EMPTY_CAT_SEED_BUNDLE } from "./memory-facade";
@@ -71,7 +72,7 @@ export function makeUiSeedFacade(options: UiSeedFacadeOptions = {}): UiSeedFacad
   const source = resolveSource(options.source);
   switch (source) {
     case UiSeedSourceType.Memory:
-      console.info("[seed] using MemoryUiSeedFacade (empty bundle)");
+      ClientLogger.info("[seed] using MemoryUiSeedFacade (empty bundle)");
 
       return new MemoryUiSeedFacade(EMPTY_CAT_SEED_BUNDLE);
     case UiSeedSourceType.Remote: {
@@ -80,13 +81,13 @@ export function makeUiSeedFacade(options: UiSeedFacadeOptions = {}): UiSeedFacad
       // rely on this default so the app never hard-crashes on flip.
       const endpoint = (import.meta.env.VITE_UI_SEED_ENDPOINT as string | undefined) ?? "/api/seed";
       const resolved = resolveBackendUrl(endpoint);
-      console.info(`[seed] using RemoteUiSeedFacade endpoint=${resolved}`);
+      ClientLogger.info(`[seed] using RemoteUiSeedFacade endpoint=${resolved}`);
 
       return new RemoteUiSeedFacade({ endpoint: resolved });
     }
     case UiSeedSourceType.Json:
     default:
-      console.info("[seed] using JsonUiSeedFacade (bundled JSON)");
+      ClientLogger.info("[seed] using JsonUiSeedFacade (bundled JSON)");
 
       return new JsonUiSeedFacade();
   }

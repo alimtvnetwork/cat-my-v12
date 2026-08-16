@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 35 step 13: InspectorSurface. Store-connected composition of
 // LayersToolbar + LayersPanel + PropertiesPanel that RightRail (step 14)
 // will drop in place of the legacy RuleList + inline editor stack. Kept
@@ -133,7 +134,7 @@ export function InspectorSurface({ imageBounds }: InspectorSurfaceProps) {
         });
         applied += 1;
       });
-      console.info("[inspector] shapeSvg imported", {
+      ClientLogger.info("[inspector] shapeSvg imported", {
         fileName: payload.fileName,
         source: payload.source,
         rules: applied,

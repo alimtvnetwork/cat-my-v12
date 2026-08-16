@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -94,7 +95,7 @@ export function HistoryNav() {
   const back = useCallback(() => {
     if (router.history.canGoBack()) {
       // Spec 39 log assertion: back-via-history.
-      console.info("[nav.back] via=history");
+      ClientLogger.info("[nav.back] via=history");
       router.history.back();
 
       return;
@@ -102,7 +103,7 @@ export function HistoryNav() {
 
     if (parent !== null) {
       // Spec 39 log assertion: back-via-route-parent.
-      console.info("[nav.back] via=route-parent", parent);
+      ClientLogger.info("[nav.back] via=route-parent", parent);
       router.navigate({ to: parent });
     }
   }, [router, parent]);

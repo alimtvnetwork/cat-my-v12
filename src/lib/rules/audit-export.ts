@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Rule audit export. Mirrors the shape of `src/lib/errors/export.ts` so the
 // codebase keeps a single blob-download pattern. Pure serializers below;
 // browser-only `downloadRuleAudit` at the bottom. Kept dependency-free so
@@ -89,7 +90,7 @@ export function downloadRuleAudit(events: RuleAuditEvent[], format: RuleAuditExp
   a.remove();
   // Revoke on the next tick so Safari has time to start the download.
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  console.info(`[rule-audit/export] downloaded format=${format} count=${events.length}`);
+  ClientLogger.info(`[rule-audit/export] downloaded format=${format} count=${events.length}`);
 }
 
 export const __TEST__ = { CSV_COLUMNS };

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 139. Stable integer alias for ruleset string ids.
 //
 // Why: `RuleSetEnvelope.RuleSetId` is `number` (wire contract with the BE
@@ -28,7 +29,7 @@ function readStore(): Persisted {
 
     return { next, map };
   } catch (err) {
-    console.warn("[ruleset-id-alias] read failed, resetting", err);
+    ClientLogger.warn("[ruleset-id-alias] read failed, resetting", err);
 
     return { next: 1, map: {} };
   }
@@ -39,7 +40,7 @@ function writeStore(store: Persisted): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch (err) {
-    console.warn("[ruleset-id-alias] write failed", err);
+    ClientLogger.warn("[ruleset-id-alias] write failed", err);
   }
 }
 

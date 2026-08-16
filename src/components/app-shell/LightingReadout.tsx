@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 export enum LightingReadoutKeyType {
   Exposure = "exposure",
   Gain = "gain",
@@ -127,7 +128,7 @@ export function LightingReadout() {
         <button
           type="button"
           onClick={() => {
-            console.info("[lighting-readout] reset click");
+            ClientLogger.info("[lighting-readout] reset click");
             reset();
           }}
           disabled={isDefault}

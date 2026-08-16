@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { create } from "zustand";
 import { RunLockStateType, setRunLock } from "@/lib/rpc/guards";
 import { makeProjectRepositoryFacade } from "@/lib/projects/facade";
@@ -57,7 +58,7 @@ function facadeReadJson<T>(key: string): Promise<T | null> {
       try {
         return JSON.parse(raw) as T;
       } catch (err) {
-        console.warn("[run-store] parse failed", key, err);
+        ClientLogger.warn("[run-store] parse failed", key, err);
 
         return null;
       }
@@ -73,7 +74,7 @@ async function facadeReadJsonWithMigration<T>(key: string): Promise<T | null> {
       const legacy = window.localStorage.getItem(key);
 
       if (legacy !== null) {
-        console.info("[run-store] migrating legacy localStorage payload", key);
+        ClientLogger.info("[run-store] migrating legacy localStorage payload", key);
         await facade.writeItem(key, legacy);
         window.localStorage.removeItem(key);
         raw = legacy;
@@ -87,7 +88,7 @@ async function facadeReadJsonWithMigration<T>(key: string): Promise<T | null> {
   try {
     return JSON.parse(raw) as T;
   } catch (err) {
-    console.warn("[run-store] parse failed", key, err);
+    ClientLogger.warn("[run-store] parse failed", key, err);
 
     return null;
   }
@@ -96,7 +97,7 @@ async function facadeReadJsonWithMigration<T>(key: string): Promise<T | null> {
 function facadeWriteJson<T>(key: string, value: T): void {
   makeProjectRepositoryFacade()
     .writeItem(key, JSON.stringify(value))
-    .catch((err) => console.warn("[run-store] persist failed", key, err));
+    .catch((err) => ClientLogger.warn("[run-store] persist failed", key, err));
 }
 // Referenced only via the migration path; keep the strict-mode elimination happy.
 void facadeReadJson;
@@ -166,7 +167,7 @@ export const useRunStore = create<RunState>((set, get) => ({
           history: Array.isArray(history) ? history : [],
         });
       })
-      .catch((err) => console.warn("[run-store] hydrate failed", err));
+      .catch((err) => ClientLogger.warn("[run-store] hydrate failed", err));
   },
   setSettings: (patch) =>
     set((s) => {

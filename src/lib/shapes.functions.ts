@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 68: `compileShape` server fn.
  * Authenticated only. Delegates every side-effect to `shapes.server.ts` so
@@ -21,7 +22,7 @@ export const compileShape = createServerFn({ method: HttpMethod.Post })
   .handler(async ({ data, context }) => {
     const { normaliseSvgPath, insertShape } = await import("./shapes.server");
     const svgPath = normaliseSvgPath(data.svgPath);
-    console.info("[compileShape] start", {
+    ClientLogger.info("[compileShape] start", {
       user: context.userId,
       name: data.name,
       bytes: svgPath.length,
@@ -35,11 +36,11 @@ export const compileShape = createServerFn({ method: HttpMethod.Post })
         viewBoxW: data.viewBoxW,
         viewBoxH: data.viewBoxH,
       });
-      console.info("[compileShape] ok", { id: shape.id, sha256: shape.sha256 });
+      ClientLogger.info("[compileShape] ok", { id: shape.id, sha256: shape.sha256 });
 
       return shape;
     } catch (err) {
-      console.error("[compileShape] fail", err);
+      ClientLogger.error("[compileShape] fail", err);
 
       throw err;
     }

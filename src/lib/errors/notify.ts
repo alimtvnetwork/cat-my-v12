@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { AnnouncePriorityType } from "@/lib/a11y/announcer";
 // Plan 71 Step 13 + Step 16: shared "global error" surface for React Query
 // caches and any imperative call site. Every error routed here is captured in
@@ -103,7 +104,7 @@ function copyDetailsChip(captured: CapturedError, label: string, message: string
       if (nav?.writeText) {
         nav.writeText(payload).then(
           () => {
-            console.info(`[notify] copied details cid=${captured.correlationId}`);
+            ClientLogger.info(`[notify] copied details cid=${captured.correlationId}`);
             toast.success("Copied error details");
             announce(
               `Copied error details for correlation id ${captured.correlationId}`,
@@ -111,7 +112,7 @@ function copyDetailsChip(captured: CapturedError, label: string, message: string
             );
           },
           (e: unknown) => {
-            console.error("[notify] clipboard writeText failed", e);
+            ClientLogger.error("[notify] clipboard writeText failed", e);
             toast.error("Copy failed — see console for details");
             announce("Copy failed. See console for details.", AnnouncePriorityType.Assertive);
           },
@@ -120,7 +121,7 @@ function copyDetailsChip(captured: CapturedError, label: string, message: string
         return;
       }
 
-      console.info(
+      ClientLogger.info(
         `[notify] clipboard unavailable, payload cid=${captured.correlationId}:\n${payload}`,
       );
       toast.error("Clipboard unavailable — details logged to console");
@@ -168,7 +169,7 @@ export function showGlobalError(err: unknown, ctx: ShowGlobalErrorContext = {}):
         onAutoClose: () => activeToasts.delete(dedupeKey),
       },
     );
-    console.info(
+    ClientLogger.info(
       `[notify] deduped cid=${existing.correlationId} count=${existing.count} key=${dedupeKey}`,
     );
 
@@ -181,7 +182,7 @@ export function showGlobalError(err: unknown, ctx: ShowGlobalErrorContext = {}):
     triggerAction: ctx.method ?? "request",
     context: { endpoint: ctx.endpoint, method: ctx.method, scope: ctx.scope },
   });
-  console.info(
+  ClientLogger.info(
     `[notify] showGlobalError cid=${captured.correlationId} endpoint=${ctx.endpoint ?? "-"} id=${captured.id}`,
   );
 
@@ -205,7 +206,7 @@ export function showGlobalError(err: unknown, ctx: ShowGlobalErrorContext = {}):
               try {
                 void ctx.retry?.();
               } catch (e) {
-                console.error("[notify] retry threw", e);
+                ClientLogger.error("[notify] retry threw", e);
               }
             },
           }
@@ -263,7 +264,7 @@ export function showToastError(
       : typeof err === "string" && err.length > 0
         ? err
         : undefined;
-  console.info(
+  ClientLogger.info(
     `[notify] showToastError cid=${captured.correlationId} id=${captured.id} label=${label}`,
   );
 
@@ -280,7 +281,7 @@ export function showToastError(
             try {
               void ctx.retry?.();
             } catch (e) {
-              console.error("[notify] retry threw", e);
+              ClientLogger.error("[notify] retry threw", e);
             }
           },
         }

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Setup route boundaries (plan 30 step 90).
 // Shared error + notFound components for /setup, /setup/roi, /setup/reference
 // so a crash in the editor experience surfaces one clear message instead of
@@ -34,7 +35,7 @@ export function SetupErrorComponent({ error, reset }: { error: Error; reset: () 
   const router = useRouter();
   useEffect(() => {
     logger.error("E_UI_SETUP_ROUTE_CRASH", { message: error.message, name: error.name });
-    console.error("[setup boundary]", error);
+    ClientLogger.error("[setup boundary]", error);
   }, [error]);
 
   const retry = () => {

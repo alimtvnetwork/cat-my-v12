@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Seed telemetry store (Plan 100 Phase G step 64).
 //
 // Root cause this file addresses: the orchestrator produced a structured
@@ -226,7 +227,7 @@ export function logFatalReseed(input: {
   // ingest it without touching the per-seeder warnings. Intentionally a
   // warn (not error) so the Playwright console-error assertion in the
   // existing regression tests still passes.
-  console.warn("[seed/telemetry] fatal", {
+  ClientLogger.warn("[seed/telemetry] fatal", {
     id: event.id,
     correlationId: event.correlationId,
     mode: event.mode,

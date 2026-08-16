@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 80 step 47: grab a single frame from a live MediaStream and return
 // an ImageSample-compatible payload.
 //
@@ -113,7 +114,7 @@ export async function captureFrameFromStream(
     /* ignore */
   }
 
-  console.info(`[camera-capture] frame captured ${width}x${height} ~${byteSize}B (${mimeType})`);
+  ClientLogger.info(`[camera-capture] frame captured ${width}x${height} ~${byteSize}B (${mimeType})`);
 
   return { dataUrl, width, height, byteSize };
 }

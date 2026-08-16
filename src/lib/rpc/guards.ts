@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { RpcErrorCodeType } from "@/lib/rpc/client";
 /**
  * Mutation + run-lock guards for RPC calls.
@@ -36,7 +37,7 @@ export function assertMutationAllowed(operation: string, correlationId?: string)
       (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
         ? crypto.randomUUID()
         : `cid_${Math.random().toString(16).slice(2, 10)}${Date.now().toString(16)}`);
-    console.error(
+    ClientLogger.error(
       `[rpc.guard] operation=${operation} correlationId=${cid} code=${RpcErrorCodeType.E_RPC_GUARD_BLOCKED} reason=run_active`,
     );
 

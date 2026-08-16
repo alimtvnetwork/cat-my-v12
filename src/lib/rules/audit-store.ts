@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 83 backlog 13: rule audit trail store.
 //
 // Root cause addressed: enable/disable toggles at
@@ -75,7 +76,7 @@ function readPersisted(): RuleAuditEvent[] {
         typeof (r as RuleAuditEvent).source === "string",
     );
   } catch (err) {
-    console.warn("[rule-audit] read failed", err);
+    ClientLogger.warn("[rule-audit] read failed", err);
 
     return [];
   }
@@ -88,7 +89,7 @@ function writePersisted(events: RuleAuditEvent[]): void {
   } catch (err) {
     // Storage quota / private-mode. Log and move on; the in-memory
     // ring is still authoritative for the current session.
-    console.warn("[rule-audit] persist failed", err);
+    ClientLogger.warn("[rule-audit] persist failed", err);
   }
 }
 
@@ -123,7 +124,7 @@ export const useRuleAuditStore = create<RuleAuditState>((set, get) => ({
     set({ events: next });
     // Stable structured line so log scrapers can ingest without regex-
     // parsing the existing per-site `[setup.rules] *` lines.
-    console.info("[rule-audit] toggle", {
+    ClientLogger.info("[rule-audit] toggle", {
       id: event.id,
       ruleId: event.ruleId,
       prev: event.prev,

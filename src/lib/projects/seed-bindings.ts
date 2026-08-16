@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Seed-time project bindings (Plan 100 Phase G step 67/68).
 //
 // Root cause this file addresses: `bundle.json` used to reference cameras
@@ -163,10 +164,10 @@ export async function bindSeededProjects(
   }
 
   if (result.unresolved.length > 0) {
-    console.warn("[projects/seed-bindings] unresolved bindings", result.unresolved);
+    ClientLogger.warn("[projects/seed-bindings] unresolved bindings", result.unresolved);
   }
 
-  console.info("[projects/seed-bindings] applied", {
+  ClientLogger.info("[projects/seed-bindings] applied", {
     camerasBound: result.camerasBound,
     micSettingsBound: result.micSettingsBound,
     unresolved: result.unresolved.length,

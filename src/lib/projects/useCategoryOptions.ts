@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useMemo } from "react";
 import { useProjectStore } from "@/lib/projects/store";
 import { useSeedSlice } from "@/lib/seed";
@@ -90,7 +91,7 @@ export function useCategoryOptions(projectId?: string): CategoryOptionsResult {
       if (!projectId) {
         // Workspace-wide scope has no owning project to attach to; callers
         // (NEW PROJECT form) hold the pending list themselves until submit.
-        console.info("[useCategoryOptions] create ignored (workspace scope)", { name: trimmed });
+        ClientLogger.info("[useCategoryOptions] create ignored (workspace scope)", { name: trimmed });
 
         return;
       }

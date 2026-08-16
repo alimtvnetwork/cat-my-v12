@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 134. React hook that wraps `saveRuleSet` with an explicit
 // `SaveState` union so every editor and the future conflict-resolution modal
 // bind to the same state machine.
@@ -70,7 +71,7 @@ export function useSaveRuleSet(): UseSaveRuleSet {
         if (e.code === "E_BE_CONFLICT") {
           setState({ kind: "conflict", localEnvelope: envelope, error: e });
           // Log with context so silent conflict-swallowing is impossible.
-          console.warn("[useSaveRuleSet] conflict", {
+          ClientLogger.warn("[useSaveRuleSet] conflict", {
             code: e.code,
             httpStatus: e.httpStatus,
             RuleSetId: envelope.RuleSetId,
@@ -81,7 +82,7 @@ export function useSaveRuleSet(): UseSaveRuleSet {
         }
 
         setState({ kind: "error", error: e });
-        console.error("[useSaveRuleSet] save failed", {
+        ClientLogger.error("[useSaveRuleSet] save failed", {
           code: e.code,
           httpStatus: e.httpStatus,
           RuleSetId: envelope.RuleSetId,
@@ -98,7 +99,7 @@ export function useSaveRuleSet(): UseSaveRuleSet {
       wrapped.httpStatus = 0;
       wrapped.backendMessage = wrapped.message;
       setState({ kind: "error", error: wrapped });
-      console.error("[useSaveRuleSet] non-SaveRuleSetError thrown", e);
+      ClientLogger.error("[useSaveRuleSet] non-SaveRuleSetError thrown", e);
     }
   }, []);
 

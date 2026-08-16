@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
 import { useWorkerHealthStore } from "@/lib/editor/worker-health-store";
@@ -78,7 +79,7 @@ export function WorkerHealthBanner({
       },
       meta.code,
     );
-    console.info(`[WorkerHealthBanner] open modal code=${meta.code} reason=${captured.message}`);
+    ClientLogger.info(`[WorkerHealthBanner] open modal code=${meta.code} reason=${captured.message}`);
     openErrorModal(captured);
   }
 

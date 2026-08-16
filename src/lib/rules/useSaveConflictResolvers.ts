@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 136. Resolvers that turn a `SaveConflictModal` click into
 // the actual side-effects documented in spec/21-app/80-ruleset-draft-save.md.
 //
@@ -63,7 +64,7 @@ export function useSaveConflictResolvers(
         reset();
       } catch (e) {
         const code = isLoadRuleSetError(e) ? e.code : "E_BE_UNKNOWN";
-        console.error("[useSaveConflictResolvers] reload failed", {
+        ClientLogger.error("[useSaveConflictResolvers] reload failed", {
           code,
           RuleSetId: local.RuleSetId,
         });
@@ -87,7 +88,7 @@ export function useSaveConflictResolvers(
         serverVersion = server.Version;
       } catch (e) {
         const code = isLoadRuleSetError(e) ? e.code : "E_BE_UNKNOWN";
-        console.error("[useSaveConflictResolvers] overwrite: discover version failed", {
+        ClientLogger.error("[useSaveConflictResolvers] overwrite: discover version failed", {
           code,
           RuleSetId: local.RuleSetId,
         });

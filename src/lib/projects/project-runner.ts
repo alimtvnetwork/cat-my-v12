@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 79 step 46. Project-level runner over the V4 six-section shell.
 //
 // Root cause this module fixes, in one sentence: the "Run" button on the
@@ -158,7 +159,7 @@ export function runProject(
     durationMs,
     disabled,
   };
-  console.info("[project-runner] ran", {
+  ClientLogger.info("[project-runner] ran", {
     projectId: project.id,
     verdict,
     pass,

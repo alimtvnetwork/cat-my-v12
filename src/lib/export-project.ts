@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 64 step 86: Export Project JSON.
  *
@@ -70,7 +71,7 @@ export function downloadProjectExport(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  console.info("[export-project] downloaded", {
+  ClientLogger.info("[export-project] downloaded", {
     projectId: project.id,
     filename,
     size: text.length,
@@ -108,7 +109,7 @@ export function downloadProjectExportYaml(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  console.info("[export-project] yaml downloaded", {
+  ClientLogger.info("[export-project] yaml downloaded", {
     projectId: project.id,
     filename,
     size: text.length,
@@ -165,7 +166,7 @@ export async function downloadProjectExportZip(
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  console.info("[export-project] zip downloaded", {
+  ClientLogger.info("[export-project] zip downloaded", {
     projectId: project.id,
     filename,
     size: blob.size,
@@ -208,7 +209,7 @@ export function parseProjectExport(text: string, format: "json" | "yaml"): Impor
     throw new Error("import: missing project or rulesets");
   }
 
-  console.info("[export-project] import parsed", {
+  ClientLogger.info("[export-project] import parsed", {
     projectId: env.project.id,
     rulesetCount: env.rulesets.length,
     format,

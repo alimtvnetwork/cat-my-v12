@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -226,7 +227,7 @@ export function ReferenceImageCard() {
     // persisted preset in localStorage.
     const perShot = buildOverridesFromForm(overrides);
     const request = buildCaptureRequest(perShot);
-    console.info("[ReferenceImageCard] capture request", request, {
+    ClientLogger.info("[ReferenceImageCard] capture request", request, {
       overrides: Object.keys(perShot),
     });
     try {

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { PriorityType } from "@/components/cli/LiveRegion";
 // Plan 90 Step 143: one-click support-triage copier for the full raw
 // Universal Response Envelope.
@@ -103,7 +104,7 @@ export function CopyEnvelopeButton({
       // Defensive: if a caller mounts the button with neither prop, surface it
       // loudly rather than silently no-op-ing. This is the observability
       // requirement from the error-management spec.
-      console.error("[CopyEnvelopeButton] no err or envelope prop provided");
+      ClientLogger.error("[CopyEnvelopeButton] no err or envelope prop provided");
       toast.error("Nothing to copy: envelope missing");
 
       return;
@@ -113,7 +114,7 @@ export function CopyEnvelopeButton({
     try {
       text = JSON.stringify(payload, null, 2);
     } catch (serErr) {
-      console.error("[CopyEnvelopeButton] JSON.stringify failed", serErr);
+      ClientLogger.error("[CopyEnvelopeButton] JSON.stringify failed", serErr);
       toast.error("Copy failed: envelope not serializable");
 
       return;
@@ -122,13 +123,13 @@ export function CopyEnvelopeButton({
     try {
       await navigator.clipboard.writeText(text);
     } catch (clipErr) {
-      console.error("[CopyEnvelopeButton] clipboard write failed", clipErr);
+      ClientLogger.error("[CopyEnvelopeButton] clipboard write failed", clipErr);
       toast.error("Copy failed: clipboard denied");
 
       return;
     }
 
-    console.info(`[CopyEnvelopeButton] copied envelope (${text.length} bytes)`);
+    ClientLogger.info(`[CopyEnvelopeButton] copied envelope (${text.length} bytes)`);
     setCopied(true);
     toast.success("Envelope copied to clipboard");
     announce(`Envelope copied, ${text.length} bytes`, { priority: PriorityType.Polite });
