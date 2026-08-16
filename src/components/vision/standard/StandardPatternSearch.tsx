@@ -13,6 +13,8 @@ export function StandardPatternSearch({
   settings: PatternSearchSettings;
   onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
 }) {
+  const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
+
   return (
     <div className="flex flex-col h-full bg-std-chrome overflow-x-auto text-std-text font-sans">
       <div className="flex flex-col min-w-[1024px] min-h-[768px] h-full relative">
@@ -21,8 +23,8 @@ export function StandardPatternSearch({
             <div className="absolute top-2 left-2 z-10">
               <StandardHeaderReadouts />
             </div>
-            <StandardImageToolbar settings={settings} setSettings={onChange} />
-            <StandardCanvas settings={settings} setSettings={onChange} />
+            <StandardImageToolbar settings={settings} setSettings={onChange} viewModes={viewModes} setViewModes={setViewModes} />
+            <StandardCanvas settings={settings} setSettings={onChange} viewModes={viewModes} />
           </div>
           <div className="w-[38%] border-l border-std-accent-active flex flex-col bg-std-panel text-black relative z-20">
             <StandardToolPanel settings={settings} setSettings={onChange} />
