@@ -4,6 +4,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
+- 08 - vision-system-v2 - pending - see `pending/08-vision-system-v2.md`
 - 99 - vision-standard-ui-400-tasks - pending - see `pending/99-vision-standard-ui-400-tasks.md`
 - 29 - denial-burst-threshold-tuning - pending - see `completed/29-denial-burst-threshold-tuning.md`
 - 35 - ui-ux-photoshop-layers-overhaul - pending - see `completed/35-ui-ux-photoshop-layers-overhaul.md`
