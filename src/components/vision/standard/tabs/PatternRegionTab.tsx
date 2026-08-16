@@ -37,6 +37,99 @@ export function PatternRegionTab({
                 ))}
               </select>
             </div>
+            <div className="grid grid-cols-4 gap-2 text-xs mt-2">
+              <div className="flex flex-col">
+                <label>X</label>
+                <input
+                  type="number"
+                  value={Math.round(settings.patternRegion.geometry.x || 0)}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      patternRegion: {
+                        ...s.patternRegion,
+                        geometry: { ...s.patternRegion.geometry, x: Number(e.target.value) },
+                      },
+                    }))
+                  }
+                  className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label>Y</label>
+                <input
+                  type="number"
+                  value={Math.round(settings.patternRegion.geometry.y || 0)}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      patternRegion: {
+                        ...s.patternRegion,
+                        geometry: { ...s.patternRegion.geometry, y: Number(e.target.value) },
+                      },
+                    }))
+                  }
+                  className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                />
+              </div>
+              {settings.patternRegion.shape !== ShapeType.Circle && (
+                <>
+                  <div className="flex flex-col">
+                    <label>W</label>
+                    <input
+                      type="number"
+                      value={Math.round(settings.patternRegion.geometry.width || 0)}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          patternRegion: {
+                            ...s.patternRegion,
+                            geometry: { ...s.patternRegion.geometry, width: Number(e.target.value) },
+                          },
+                        }))
+                      }
+                      className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label>H</label>
+                    <input
+                      type="number"
+                      value={Math.round(settings.patternRegion.geometry.height || 0)}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          patternRegion: {
+                            ...s.patternRegion,
+                            geometry: { ...s.patternRegion.geometry, height: Number(e.target.value) },
+                          },
+                        }))
+                      }
+                      className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                    />
+                  </div>
+                </>
+              )}
+              {settings.patternRegion.shape === ShapeType.Circle && (
+                <div className="flex flex-col">
+                  <label>R</label>
+                  <input
+                    type="number"
+                    value={Math.round(settings.patternRegion.geometry.radius || 0)}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        patternRegion: {
+                          ...s.patternRegion,
+                          geometry: { ...s.patternRegion.geometry, radius: Number(e.target.value) },
+                        },
+                      }))
+                    }
+                    className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex items-center justify-between gap-2 text-sm">
               <label>Reference Image</label>
               <div className="w-32 bg-ca-bg border border-ca-border rounded px-2 py-1 font-mono text-xs flex items-center justify-between">

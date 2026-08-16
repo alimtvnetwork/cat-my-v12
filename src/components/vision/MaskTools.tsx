@@ -2,8 +2,10 @@ import React from "react";
 import { useVisionStore } from "../../lib/vision/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Square, Circle, Hexagon, Trash2 } from "lucide-react";
+import { Square, Circle as CircleIcon, Hexagon, Trash2 } from "lucide-react";
 import type { Mask } from "../../lib/vision/types";
+import { ShapeType } from "../../domain/vision/shapes";
+import { MaskShapes } from "../../domain/vision/pattern-search";
 
 export function MaskTools() {
   const { segments, activeSegmentId, addMask, removeMask } = useVisionStore();
@@ -18,11 +20,7 @@ export function MaskTools() {
     const newMask: Mask = {
       id: crypto.randomUUID(),
       type,
-      points: [
-        { x: 40, y: 40 },
-        { x: 60, y: 60 },
-      ],
-      ...(type === "CIRCLE" ? { radius: 10 } : {}),
+      geometry: { x: 40, y: 40, width: 20, height: 20, ...(type === ShapeType.Circle ? { radius: 10 } : {}) },
     };
     addMask(segmentId, newMask);
   };
@@ -36,18 +34,15 @@ export function MaskTools() {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => handleAddMask("RECTANGLE")}>
-              <Square className="w-4 h-4 mr-2" />
-              Rectangle
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleAddMask("CIRCLE")}>
-              <Circle className="w-4 h-4 mr-2" />
-              Circle
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleAddMask("POLYGON")}>
-              <Hexagon className="w-4 h-4 mr-2" />
-              Polygon
-            </Button>
+            {MaskShapes.filter(s => s.id !== ShapeType.None).map(shape => {
+              const Icon = shape.icon === 'Circle' ? CircleIcon : shape.icon === 'Square' ? Square : Hexagon;
+              return (
+                <Button key={shape.id} variant="outline" size="sm" onClick={() => handleAddMask(shape.id)}>
+                  <Icon className="w-4 h-4 mr-2" />
+                  {shape.label}
+                </Button>
+              );
+            })}
           </div>
 
           {masks.length > 0 && (
@@ -58,9 +53,10 @@ export function MaskTools() {
                   className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900/50"
                 >
                   <div className="flex items-center space-x-3">
-                    {mask.type === "RECTANGLE" && <Square className="w-4 h-4 text-zinc-500" />}
-                    {mask.type === "CIRCLE" && <Circle className="w-4 h-4 text-zinc-500" />}
-                    {mask.type === "POLYGON" && <Hexagon className="w-4 h-4 text-zinc-500" />}
+                    {mask.type === ShapeType.Rectangle && <Square className="w-4 h-4 text-zinc-500" />}
+                    {mask.type === ShapeType.Circle && <CircleIcon className="w-4 h-4 text-zinc-500" />}
+                    {mask.type === ShapeType.Ellipse && <CircleIcon className="w-4 h-4 text-zinc-500" />}
+                    {mask.type !== ShapeType.Rectangle && mask.type !== ShapeType.Circle && mask.type !== ShapeType.Ellipse && <Hexagon className="w-4 h-4 text-zinc-500" />}
                     <span className="text-sm font-medium capitalize">
                       {mask.type.toLowerCase()} Mask
                     </span>

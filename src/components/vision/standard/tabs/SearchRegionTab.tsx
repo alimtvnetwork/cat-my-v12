@@ -43,6 +43,84 @@ export function SearchRegionTab({
               ))}
             </select>
           </div>
+          <div className="grid grid-cols-4 gap-2 text-xs px-3 pb-3">
+            <div className="flex flex-col">
+              <label>X</label>
+              <input
+                type="number"
+                value={Math.round(settings.searchRegion.geometry.x || 0)}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, x: Number(e.target.value) } },
+                  }))
+                }
+                className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label>Y</label>
+              <input
+                type="number"
+                value={Math.round(settings.searchRegion.geometry.y || 0)}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, y: Number(e.target.value) } },
+                  }))
+                }
+                className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+              />
+            </div>
+            {settings.searchRegion.shape !== ShapeType.Circle && (
+              <>
+                <div className="flex flex-col">
+                  <label>W</label>
+                  <input
+                    type="number"
+                    value={Math.round(settings.searchRegion.geometry.width || 0)}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, width: Number(e.target.value) } },
+                      }))
+                    }
+                    className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label>H</label>
+                  <input
+                    type="number"
+                    value={Math.round(settings.searchRegion.geometry.height || 0)}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, height: Number(e.target.value) } },
+                      }))
+                    }
+                    className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                  />
+                </div>
+              </>
+            )}
+            {settings.searchRegion.shape === ShapeType.Circle && (
+              <div className="flex flex-col">
+                <label>R</label>
+                <input
+                  type="number"
+                  value={Math.round(settings.searchRegion.geometry.radius || 0)}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, radius: Number(e.target.value) } },
+                    }))
+                  }
+                  className="bg-ca-bg border border-ca-border rounded px-1 py-1"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col">

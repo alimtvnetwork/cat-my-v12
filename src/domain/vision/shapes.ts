@@ -1,6 +1,7 @@
 export enum ShapeType {
   Rectangle = "Rectangle",
   Circle = "Circle",
+  Ellipse = "Ellipse",
   None = "None",
 }
 

@@ -1,3 +1,5 @@
+import { ShapeType, Geometry } from "../../domain/vision/shapes";
+
 export interface HandlerSettings {
   inputs: {
     triggerIn: boolean;
@@ -45,9 +47,8 @@ export interface PinConsistencySettings {
 
 export interface Mask {
   id: string;
-  type: "RECTANGLE" | "CIRCLE" | "POLYGON";
-  points: { x: number; y: number }[];
-  radius?: number;
+  type: ShapeType;
+  geometry: Geometry;
 }
 
 export interface ColorSettings {

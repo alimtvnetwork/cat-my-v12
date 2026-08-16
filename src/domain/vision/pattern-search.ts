@@ -131,6 +131,15 @@ export const ShapeCatalog: Record<ShapeType, PatternShape> = {
     serialize: (geom) => JSON.stringify(geom),
     deserialize: (data) => JSON.parse(data),
   },
+  [ShapeType.Ellipse]: {
+    id: ShapeType.Ellipse,
+    label: "Ellipse",
+    icon: "Circle",
+    defaultGeometry: { x: 100, y: 100, radius: 50 },
+    handles: { top: true, right: true, bottom: true, left: true },
+    serialize: (geom) => JSON.stringify(geom),
+    deserialize: (data) => JSON.parse(data),
+  },
   [ShapeType.None]: {
     id: ShapeType.None,
     label: "None",
@@ -142,10 +151,11 @@ export const ShapeCatalog: Record<ShapeType, PatternShape> = {
   },
 };
 
-export const PatternShapes = [ShapeCatalog[ShapeType.Rectangle], ShapeCatalog[ShapeType.Circle]];
+export const PatternShapes = [ShapeCatalog[ShapeType.Rectangle], ShapeCatalog[ShapeType.Circle], ShapeCatalog[ShapeType.Ellipse]];
 
 export const MaskShapes: MaskShape[] = [
   ShapeCatalog[ShapeType.None],
   ShapeCatalog[ShapeType.Rectangle],
   ShapeCatalog[ShapeType.Circle],
+  ShapeCatalog[ShapeType.Ellipse],
 ];

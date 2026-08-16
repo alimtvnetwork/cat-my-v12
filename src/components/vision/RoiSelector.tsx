@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { ShapeType } from "../../domain/vision/shapes";
 
 export function RoiSelector() {
   const { segments, activeSegmentId, setRoi } = useVisionStore();
@@ -79,7 +80,7 @@ export function RoiSelector() {
 
               {/* Render Masks */}
               {masks.map((mask) => {
-                if (mask.type === "RECTANGLE") {
+                if (mask.type === ShapeType.Rectangle) {
                   return (
                     <div
                       key={mask.id}
@@ -93,7 +94,7 @@ export function RoiSelector() {
                     />
                   );
                 }
-                if (mask.type === "CIRCLE") {
+                if (mask.type === ShapeType.Circle || mask.type === ShapeType.Ellipse) {
                   return (
                     <div
                       key={mask.id}
@@ -107,8 +108,7 @@ export function RoiSelector() {
                       }}
                     />
                   );
-                }
-                if (mask.type === "POLYGON") {
+                } else {
                   return (
                     <div
                       key={mask.id}
