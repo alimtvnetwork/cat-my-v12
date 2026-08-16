@@ -108,7 +108,7 @@ export function GlobalCliStatusWidget() {
   const lastError = status?.LastErrorCode ?? null;
   const unavailable = !status && !query.isPending;
 
-  if (unavailable) {
+  if (unavailable || workerState === WorkerStateType.Unknown) {
     return null;
   }
 

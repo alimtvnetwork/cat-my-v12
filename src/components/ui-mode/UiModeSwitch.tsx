@@ -6,7 +6,7 @@ export function UiModeSwitch() {
 
   return (
     <div className="flex items-center gap-2 text-hmi-body">
-      <span className={isStandard ? "text-ca-ink-muted" : "text-ca-ink font-semibold"}>Modern</span>
+      <span className={`hidden sm:inline ${isStandard ? "text-ca-ink-muted" : "text-ca-ink font-semibold"}`}>Modern</span>
       <button
         type="button"
         onClick={toggleMode}
@@ -20,7 +20,7 @@ export function UiModeSwitch() {
           }`}
         />
       </button>
-      <span className={isStandard ? "text-ca-ink font-semibold" : "text-ca-ink-muted"}>
+      <span className={`hidden sm:inline ${isStandard ? "text-ca-ink font-semibold" : "text-ca-ink-muted"}`}>
         Standard
       </span>
     </div>

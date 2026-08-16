@@ -1671,9 +1671,10 @@ export function SelectionOverlay({
             if (left + STRIP_W > canvasSize.width) {
               left = tl.x - GAP - STRIP_W;
             }
+            const STRIP_H = 64; // rough height of two 24px buttons + padding
             // clamp left to stay on screen
             left = Math.max(8, Math.min(left, canvasSize.width - STRIP_W - 8));
-            const top = tl.y;
+            const top = Math.max(8, Math.min(tl.y, canvasSize.height - STRIP_H - 8));
 
             return (
               <div
@@ -1773,8 +1774,8 @@ export function SelectionOverlay({
 
             return (
               <div
-                className="motion-panel-in pointer-events-auto absolute z-40 flex flex-col overflow-hidden rounded-xl border border-ca-border bg-ca-panel-2/95 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
-                style={{ left, top, width: hudW }}
+                className="motion-panel-in pointer-events-auto absolute z-40 flex flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-ca-border bg-ca-panel-2/95 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
+                style={{ left, top, width: hudW, maxHeight: Math.max(200, canvasSize.height - 16) }}
                 role="group"
                 aria-label={`Quick properties for ${rule.name}`}
                 data-testid="rule-quick-props"

@@ -369,13 +369,6 @@ export function TopMenuBar() {
   return (
     <>
       <nav aria-label="Primary" className="contents">
-        <span
-          aria-hidden
-          data-testid="active-section-label"
-          className="hidden shrink-0 items-center rounded-md bg-ca-primary/12 px-2 py-0.5 text-[12px] font-semibold text-ca-primary sm:inline-flex lg:hidden"
-        >
-          {activeLabel}
-        </span>
         {running ? (
           <span
             role="status"
@@ -416,7 +409,7 @@ export function TopMenuBar() {
               </MenubarContent>
             </MenubarMenu>
           ))}
-          {showWindowMenu ? <WindowMenubarGroup /> : null}
+          {showWindowMenuGated ? <WindowMenubarGroup /> : null}
         </Menubar>
       </nav>
       <div className="lg:hidden">
@@ -424,7 +417,7 @@ export function TopMenuBar() {
           navigate={navigate}
           pathname={pathname}
           running={running}
-          showWindowMenu={showWindowMenu}
+          showWindowMenu={showWindowMenuGated}
         />
       </div>
     </>

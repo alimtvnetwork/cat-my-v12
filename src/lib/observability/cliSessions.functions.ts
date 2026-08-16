@@ -62,7 +62,7 @@ export const getCliSessions = createServerFn({ method: "GET" })
     const url = `${beBaseUrl()}/api/cli/sessions${qs.size ? `?${qs}` : ""}`;
     let env;
     try {
-      env = await beFetch<CliSessionsPage>(url);
+      env = await beFetch<CliSessionsPage>(url, {}, { suppressCapture: true });
     } catch (err) {
       const isEnvelope =
         err instanceof Error && (err.name === "EnvelopeError" || "responseStatus" in err);
@@ -72,7 +72,8 @@ export const getCliSessions = createServerFn({ method: "GET" })
         isEnvelope &&
         (envErr.responseStatus === 404 ||
           envErr.responseStatus === 403 ||
-          envErr.code === "E_BE_UNAVAILABLE")
+          envErr.code === "E_BE_UNAVAILABLE" ||
+          envErr.code === "E_BE_BAD_RESPONSE")
       ) {
         return {
           items: [],
