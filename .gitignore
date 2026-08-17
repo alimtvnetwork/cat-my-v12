@@ -49,3 +49,7 @@ tests/reports/
 .lovable/temp/
 .lovable/temp/
 temp-scripts/
+
+# Generated Files
+src/routeTree.gen.ts
+
