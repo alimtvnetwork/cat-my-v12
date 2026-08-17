@@ -48,6 +48,12 @@ interface VisionState {
   ) => void;
   duplicateSegment: (id: string) => void;
   reorderSegments: (ids: string[]) => void;
+  /** Auto-evaluate toggle: fire POST /score after each capture */
+  isAutoEvaluate: boolean;
+  setIsAutoEvaluate: (val: boolean) => void;
+  /** Confidence threshold 0-100 for PASS/FAIL determination */
+  confidenceThreshold: number;
+  setConfidenceThreshold: (val: number) => void;
 }
 
 const mockSegments: RecipeSegment[] = [
@@ -110,6 +116,10 @@ export const useVisionStore = create<VisionState>((set) => ({
   setDrawingTool: (tool) => set({ drawingTool: tool }),
   isCapturing: false,
   setIsCapturing: (val) => set({ isCapturing: val }),
+  isAutoEvaluate: false,
+  setIsAutoEvaluate: (val) => set({ isAutoEvaluate: val }),
+  confidenceThreshold: 80,
+  setConfidenceThreshold: (val) => set({ confidenceThreshold: val }),
   segments: mockSegments,
   activeSegmentId: null,
   setActiveSegmentId: (id) => set({ activeSegmentId: id }),
