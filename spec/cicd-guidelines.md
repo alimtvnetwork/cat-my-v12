@@ -2,18 +2,42 @@
 
 This document serves as a strict, universal checklist and specification for setting up and fixing CI/CD pipelines, as well as the standard run scripts (e.g., `run.ps1`/`run.sh`), for **any project**. Any AI agent operating on DevOps or CI/CD tasks MUST read and follow these guidelines to ensure consistency across different tech stacks and repositories.
 
-## 1. Specification Files to Create / Maintain
+## 1. Specification Files to Read & Maintain
 
-All CI/CD definitions and requirements must be documented in a dedicated `spec` folder before making changes to `.github/workflows` or other CI systems. This ensures the architectural intent is preserved.
+Before making any changes to `.github/workflows` or automation scripts, you **must read** the following architecture documents. These contain the foundational constraints and mechanisms for deployment, automation, and CI/CD pipelines.
 
-- [ ] `spec/devops/cicd-standards.md` (or similar project-specific path)
-  - Defines the core CI/CD principles for the specific project: mandatory formatters, test runners, target environments, and failure conditions.
-- [ ] `spec/devops/run-script-architecture.md`
-  - Defines how local orchestration scripts map identical commands to the CI environment so that local builds perfectly match CI builds.
-- [ ] `spec/tasks/<task-id>-cicd-pipeline-setup.md`
-  - A concrete task spec defining exactly what the CI pipeline must accomplish (e.g., parallel matrix jobs, caching strategies for the project's specific package managers).
+### PowerShell & Orchestration (`spec/11-powershell-integration`)
+- [ ] `spec/11-powershell-integration/00-overview.md`
+- [ ] `spec/11-powershell-integration/02-script-reference.md`
+- [ ] `spec/11-powershell-integration/03-integration-guide.md`
+
+### CI/CD Pipeline Workflows (`spec/12-cicd-pipeline-workflows`)
+- [ ] `spec/12-cicd-pipeline-workflows/00-overview.md`
+- [ ] `spec/12-cicd-pipeline-workflows/01-ci-pipeline.md`
+- [ ] `spec/12-cicd-pipeline-workflows/02-release-pipeline.md`
+- [ ] `spec/12-cicd-pipeline-workflows/04-install-script-generation.md`
+- [ ] `spec/12-cicd-pipeline-workflows/05-changelog-integration.md`
+
+### CLI & Build (`spec/13-generic-cli`)
+- [ ] `spec/13-generic-cli/00-overview.md`
+- [ ] `spec/13-generic-cli/11-build-deploy.md`
+- [ ] `spec/13-generic-cli/18-batch-execution.md`
+
+### Update Mechanisms (`spec/14-update`)
+- [ ] `spec/14-update/04-build-scripts.md`
+- [ ] `spec/14-update/17-release-pipeline.md`
+- [ ] `spec/14-update/18-install-scripts.md`
+
+### Release Engineering (`spec/16-generic-release`)
+- [ ] `spec/16-generic-release/00-overview.md`
+- [ ] `spec/16-generic-release/02-release-pipeline.md`
+- [ ] `spec/16-generic-release/03-install-scripts.md`
+
+### Context / Issue Logging
 - [ ] `cicd-issues/<issue-name>.md`
   - Any time a CI/CD pipeline fails, an AI must log the failure here (including error traces and environment context) before attempting a fix.
+
+---
 
 ## 2. CI/CD Implementation Checklist
 
