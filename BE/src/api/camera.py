@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
-from BE.src.models.envelope import Envelope
+from BE.envelope import Envelope, success
 
 router = APIRouter(prefix="/camera", tags=["camera"])
 
@@ -26,7 +27,7 @@ async def capture_image(req: CaptureRequest):
         width=1920,
         height=1080
     )
-    return Envelope(isSuccess=True, isFail=False, status="ok", data=[img.dict()])
+    return success(img.model_dump(), requested_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 @router.get("/status", response_model=Envelope)
 async def get_camera_status(cameraId: str):
@@ -34,4 +35,4 @@ async def get_camera_status(cameraId: str):
         status="connected",
         message="Hardware camera connected"
     )
-    return Envelope(isSuccess=True, isFail=False, status="ok", data=[status.dict()])
+    return success(status.model_dump(), requested_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
