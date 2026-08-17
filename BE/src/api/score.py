@@ -63,15 +63,22 @@ async def score_rule(req: ScoreRequest) -> Envelope:
     try:
         if req.ruleType == "pattern_match":
             result = ConfidenceResult(
-                score=85.0, is_pass=True, label="pattern_match_stub"
+                score=85.0,
+                is_pass=85.0 >= req.threshold * 100.0,
+                label="pattern_match_stub"
             )
         elif req.ruleType == "grayscale_tolerance":
             result = ConfidenceResult(
-                score=90.0, is_pass=True, label="grayscale_tolerance_stub"
+                score=90.0,
+                is_pass=90.0 >= req.threshold * 100.0,
+                label="grayscale_tolerance_stub"
             )
         else:
+            stub_score = 75.0
             result = ConfidenceResult(
-                score=75.0, is_pass=True, label=req.ruleType + "_stub"
+                score=stub_score,
+                is_pass=stub_score >= req.threshold * 100.0,
+                label=req.ruleType + "_stub"
             )
     except AppError:
         raise
