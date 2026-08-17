@@ -63,4 +63,11 @@ export const API_CODE_REGISTRY: Record<string, ErrorCodeMeta> = {
     notification: "modal",
     retryable: false,
   },
+  E_CAMERA_FAULT: {
+    code: "E_CAMERA_FAULT",
+    label: "Camera Hardware Fault",
+    category: ErrorCategoryType.Worker,
+    notification: "toast",
+    retryable: true,
+  },
 };

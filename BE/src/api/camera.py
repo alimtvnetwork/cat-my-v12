@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 from BE.envelope import Envelope, success
+from BE.errors.apperror import AppError
+from BE.errors.codes import ErrorCode
 
 router = APIRouter(prefix="/camera", tags=["camera"])
 
@@ -21,6 +23,9 @@ class ReferenceImage(BaseModel):
 
 @router.post("/capture", response_model=Envelope)
 async def capture_image(req: CaptureRequest):
+    if req.cameraId == "fault" or req.cameraId == "error":
+        raise AppError(ErrorCode.E_CAMERA_FAULT, "Camera hardware fault detected")
+        
     img = ReferenceImage(
         id=f"ref-capture-{req.cameraId}",
         url="/assets/seeds/default-pcb.jpg",

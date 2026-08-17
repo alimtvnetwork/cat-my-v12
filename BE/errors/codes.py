@@ -41,6 +41,7 @@ class ErrorCode(str, Enum):
     E_CAM_TIMEOUT = "E_CAM_TIMEOUT"
     E_CAM_STREAM_STUCK = "E_CAM_STREAM_STUCK"
     E_CAM_CAPTURE_FAILED = "E_CAM_CAPTURE_FAILED"
+    E_CAMERA_FAULT = "E_CAMERA_FAULT"
 
     # SDK boundary (E_SDK_*): raw-vendor SDK misuse detected at the facade.
     E_SDK_LEAK = "E_SDK_LEAK"
@@ -145,6 +146,7 @@ _STATUS: dict[ErrorCode, HTTPStatus] = {
     ErrorCode.E_CAM_TIMEOUT: HTTPStatus.GATEWAY_TIMEOUT,
     ErrorCode.E_CAM_STREAM_STUCK: HTTPStatus.GATEWAY_TIMEOUT,
     ErrorCode.E_CAM_CAPTURE_FAILED: HTTPStatus.BAD_GATEWAY,
+    ErrorCode.E_CAMERA_FAULT: HTTPStatus.BAD_GATEWAY,
     ErrorCode.E_SDK_LEAK: HTTPStatus.INTERNAL_SERVER_ERROR,
     ErrorCode.E_SDK_INIT_FAILED: HTTPStatus.SERVICE_UNAVAILABLE,
     ErrorCode.E_SEC_UNAPPROVED_EGRESS: HTTPStatus.FORBIDDEN,

@@ -3,7 +3,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showToastError } from "@/lib/errors/notify";
 import { useVisionStore } from "@/lib/vision/store";
-import { visionFacade } from "@/lib/facades/vision-facade";
+import { useCaptureImage } from "@/hooks/use-vision-api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
@@ -11,11 +11,13 @@ export function CaptureTriggerButton() {
   const isCapturing = useVisionStore((s) => s.isCapturing);
   const setIsCapturing = useVisionStore((s) => s.setIsCapturing);
 
+  const { mutateAsync: captureImage } = useCaptureImage();
+
   const handleCapture = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
     try {
-      await visionFacade.captureImage("default-camera");
+      await captureImage("default-camera");
       // Handle success (e.g. save to store)
     } catch (err: unknown) {
       showToastError("Capture Failed", err, { source: "CaptureTriggerButton" });

@@ -5,7 +5,6 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 ## Pending
 
 - 01 - pattern-search-spec - pending - see `pending/01-pattern-search-spec.md`
-- 03 - vision-standard-ui-part1 - pending - see `pending/03-vision-standard-ui-part1.md`
 - 04 - vision-standard-ui-part2 - pending - see `pending/04-vision-standard-ui-part2.md`
 - 05 - vision-standard-ui-part3 - pending - see `pending/05-vision-standard-ui-part3.md`
 - 06 - vision-system-v2 - pending - see `pending/06-vision-system-v2.md`
@@ -32,6 +31,8 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
 
 ## Completed
+
+- 03 - vision-standard-ui-part1 - completed - see `completed/03-vision-standard-ui-part1.md`
 
 - 02 - ui-fixes - completed - see `completed/02-ui-fixes.md`
 - 98 - architecture-consolidation-improvements - completed - see `completed/98-architecture-consolidation-improvements.md` (observations: `architecture-and-code-observations.md`)

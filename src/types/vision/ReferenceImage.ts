@@ -1,5 +1,5 @@
 export interface ReferenceImage {
-  id: string;
+  id: number;
   url: string;
   width?: number;
   height?: number;

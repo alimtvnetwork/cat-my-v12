@@ -1,34 +1,17 @@
-import { useState, useEffect } from "react";
+import { useCameraStatus } from "@/hooks/use-vision-api";
 import { cn } from "@/lib/utils";
-import { visionFacade } from "@/lib/facades/vision-facade";
-import type { CameraStatusResponse } from "@/lib/facades/domain-facade";
 
 export function CameraConnectionIndicator({ cameraId = "default" }: { cameraId?: string }) {
-  const [status, setStatus] = useState<CameraStatusResponse["status"] | "connecting">("connecting");
-
-  useEffect(() => {
-    let mounted = true;
-    
-    const checkStatus = async () => {
-      try {
-        const response = await visionFacade.getCameraStatus(cameraId);
-        if (mounted) {
-          setStatus(response.status);
-        }
-      } catch (err) {
-        if (mounted) {
-          setStatus("error");
-        }
-      }
-    };
-
-    checkStatus();
-    const interval = setInterval(checkStatus, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [cameraId]);
+  const { data, isFail, isLoading } = useCameraStatus(cameraId);
+  
+  let status: "connected" | "disconnected" | "error" | "connecting" = "connecting";
+  if (isFail) {
+    status = "error";
+  } else if (data) {
+    status = data.status;
+  } else if (isLoading) {
+    status = "connecting";
+  }
 
   return (
     <div className="flex items-center gap-2 px-2 py-1 bg-ca-panel border border-ca-border rounded-md">

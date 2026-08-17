@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { TriggerModeSelector } from "./TriggerModeSelector";
-import { visionFacade } from "@/lib/facades/vision-facade";
+import { useUpdateCameraSetting } from "@/hooks/use-vision-api";
 
 export function CameraSettingsForm() {
   const { segments, activeSegmentId, setCameraSettings } = useVisionStore();
@@ -47,7 +47,7 @@ export function CameraSettingsForm() {
     if (key === "exposure" || key === "gain") {
       try {
         const cameraId = activeSegment.visionSettings?.cameraId || "default-camera";
-        await visionFacade.updateCameraSetting(cameraId, key, value);
+        await updateCameraSetting({ cameraId, key, value });
       } catch (err) {
         console.warn(`Failed to commit camera setting ${key}:`, err);
       }

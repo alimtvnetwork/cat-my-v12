@@ -6,7 +6,7 @@ import { fetchBackend } from "@/lib/backend/http";
 class MockVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {
     return {
-      id: `ref-mock-capture-${Date.now()}`,
+      id: Date.now(),
       url: "/assets/seeds/default-pcb.jpg", // Seed mode parity
       width: 1920,
       height: 1080,
@@ -22,14 +22,14 @@ class MockVisionFacade implements VisionFacade {
 
   async getReference(projectId: string): Promise<ReferenceImage | undefined> {
     return {
-      id: "ref-default-pcb-1",
+      id: 1,
       url: "/assets/seeds/default-pcb.jpg",
       width: 1920,
       height: 1080,
     };
   }
 
-  async setReference(projectId: string, imageId: string): Promise<void> {
+  async setReference(projectId: string, imageId: number): Promise<void> {
     // Mock no-op for seed mode parity
   }
 
@@ -70,7 +70,7 @@ class ApiVisionFacade implements VisionFacade {
     return res.Results[0] as ReferenceImage;
   }
 
-  async setReference(projectId: string, imageId: string): Promise<void> {
+  async setReference(projectId: string, imageId: number): Promise<void> {
     await fetchBackend<void>(`images/reference`, {
       method: "PUT",
       body: JSON.stringify({ projectId, imageId })

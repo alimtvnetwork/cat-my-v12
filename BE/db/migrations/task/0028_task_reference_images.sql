@@ -8,7 +8,7 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS ReferenceImage (
   ReferenceImageId INTEGER PRIMARY KEY AUTOINCREMENT,
   ProjectId        TEXT    NOT NULL,
-  ImageId          TEXT    NOT NULL,
+  ImageId          INTEGER NOT NULL,
   Url              TEXT    NOT NULL,
   Width            INTEGER,
   Height           INTEGER,

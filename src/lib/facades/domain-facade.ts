@@ -35,7 +35,7 @@ export interface VisionFacade {
   captureImage(cameraId: string): Promise<ReferenceImage>;
   getCameraStatus(cameraId: string): Promise<CameraStatusResponse>;
   getReference(projectId: string): Promise<ReferenceImage | undefined>;
-  setReference(projectId: string, imageId: string): Promise<void>;
+  setReference(projectId: string, imageId: number): Promise<void>;
   updateTriggerMode(cameraId: string, mode: string): Promise<void>;
   updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void>;
 }

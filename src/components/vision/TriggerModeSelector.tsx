@@ -1,7 +1,7 @@
 import React from "react";
 import { useVisionStore } from "@/lib/vision/store";
 import { Label } from "@/components/ui/label";
-import { visionFacade } from "@/lib/facades/vision-facade";
+import { useUpdateTriggerMode } from "@/hooks/use-vision-api";
 
 export function TriggerModeSelector() {
   const { segments, activeSegmentId, setCameraSettings } = useVisionStore();
@@ -14,12 +14,14 @@ export function TriggerModeSelector() {
 
   const currentMode = cameraSettings.triggerMode || "Software";
 
-  const handleChange = async (mode: string) => {
+  const { mutateAsync: updateTriggerMode } = useUpdateTriggerMode();
+
+  const handleModeChange = async (mode: string) => {
     setCameraSettings(activeSegmentId, { triggerMode: mode });
     
     try {
       const cameraId = cameraSettings.id || "default-camera";
-      await visionFacade.updateTriggerMode(cameraId, mode);
+      await updateTriggerMode({ cameraId, mode });
     } catch (e) {
       console.error("Failed to update trigger mode on facade", e);
     }
@@ -39,7 +41,7 @@ export function TriggerModeSelector() {
             name="triggerMode"
             value="Software"
             checked={currentMode === "Software"}
-            onChange={() => handleChange("Software")}
+            onChange={() => handleModeChange("Software")}
             className="sr-only"
           />
           <span className={`text-sm font-medium ${currentMode === "Software" ? "text-indigo-600" : "text-gray-500"}`}>
@@ -56,7 +58,7 @@ export function TriggerModeSelector() {
             name="triggerMode"
             value="Hardware"
             checked={currentMode === "Hardware"}
-            onChange={() => handleChange("Hardware")}
+            onChange={() => handleModeChange("Hardware")}
             className="sr-only"
           />
           <span className={`text-sm font-medium ${currentMode === "Hardware" ? "text-indigo-600" : "text-gray-500"}`}>
