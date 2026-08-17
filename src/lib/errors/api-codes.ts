@@ -84,4 +84,11 @@ export const API_CODE_REGISTRY: Record<string, ErrorCodeMeta> = {
     notification: "toast",
     retryable: true,
   },
+  E_VISION_FAULT: {
+    code: "E_VISION_FAULT",
+    label: "Vision Processing Fault",
+    category: ErrorCategoryType.Worker,
+    notification: "toast",
+    retryable: false,
+  },
 };

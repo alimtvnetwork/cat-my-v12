@@ -128,6 +128,11 @@ class ErrorCode(str, Enum):
     # Plan 90 Step 130: rollback-on-critical-failure.
     E_INSTALL_ROLLBACK_FAILED = "E_INSTALL_ROLLBACK_FAILED"
 
+    # Vision processing (E_VISION_*): OpenCV / algorithm runtime failures.
+    E_VISION_FAULT = "E_VISION_FAULT"
+
+    # Hardware lighting (E_HW_*): physical lighting controller faults.
+    E_HW_LIGHTING = "E_HW_LIGHTING"
 
 
 # HTTP status mapping. Handlers (Step 13) read this to set the response status
@@ -193,6 +198,10 @@ _STATUS: dict[ErrorCode, HTTPStatus] = {
     ErrorCode.E_INSTALL_DOWNGRADE_BLOCKED: HTTPStatus.CONFLICT,
     ErrorCode.E_INSTALL_UPGRADE_INVALID: HTTPStatus.UNPROCESSABLE_ENTITY,
     ErrorCode.E_INSTALL_ROLLBACK_FAILED: HTTPStatus.SERVICE_UNAVAILABLE,
+    # Vision processing errors.
+    ErrorCode.E_VISION_FAULT: HTTPStatus.INTERNAL_SERVER_ERROR,
+    # Hardware lighting errors.
+    ErrorCode.E_HW_LIGHTING: HTTPStatus.BAD_GATEWAY,
 
 }
 
