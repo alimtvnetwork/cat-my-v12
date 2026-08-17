@@ -55,6 +55,7 @@ export function ImageHistoryRail() {
           <div
             key={img.id}
             className="group relative flex-shrink-0 w-24 h-20 rounded-md overflow-hidden border border-ca-border hover:border-ca-primary transition-colors cursor-pointer bg-black/10 flex items-center justify-center"
+            style={{ contentVisibility: "auto", containIntrinsicSize: "96px 80px" }}
           >
             {img.url ? (
                <img src={img.url} alt="History" className="absolute inset-0 w-full h-full object-cover" />

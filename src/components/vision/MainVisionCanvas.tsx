@@ -18,9 +18,9 @@ export function MainVisionCanvas() {
   const [isConnected, setIsConnected] = useState(false);
 
   return (
-    <div className="relative flex flex-col flex-1 w-full h-full min-h-[400px] bg-ca-panel rounded-md border border-ca-border overflow-hidden">
+    <div className="relative flex flex-col flex-1 w-full min-h-0 bg-ca-panel rounded-md border border-ca-border overflow-hidden">
       <ZoomableCanvas>
-        <div className="relative flex items-center justify-center w-full h-full min-h-[400px]">
+        <div className="relative flex items-center justify-center w-full h-full min-h-0">
           {mode === ImageSourceModeType.SPLIT ? (
             <div className="flex flex-row w-full h-full divide-x divide-ca-border">
               <div className="flex-1 relative">

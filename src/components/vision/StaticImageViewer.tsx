@@ -42,6 +42,7 @@ export function StaticImageViewer() {
         ref={imageRef}
         src={imgUrl}
         alt="Static Reference"
+        fetchPriority="high"
         className={`max-h-full max-w-full object-contain pointer-events-none transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         style={{ filter: `brightness(${brightness})` }}
         onLoad={() => setIsLoaded(true)}
