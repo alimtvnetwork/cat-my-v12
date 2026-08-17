@@ -734,6 +734,7 @@
       "name": "IC body ROI",
       "kind": "rect",
       "type": "roi",
+      "isCategory": true,
       "rulesetId": "rs-ic-solder-joint-inspection",
       "categoryId": "cat-placement",
       "roiId": "roi-ic-body",
@@ -780,6 +781,9 @@
       "name": "Solder bridge verdict",
       "kind": "verdict",
       "type": "presence-negative",
+      "appliesBefore": [
+        "rule-ic-body-r"
+      ],
       "rulesetId": "rs-ic-solder-joint-inspection",
       "categoryId": "cat-solder",
       "roiId": "roi-pin-row-top",
@@ -799,7 +803,9 @@
       "params": {
         "minArea": 40,
         "maxArea": 900,
-        "shape": "convex"
+        "shape": "convex",
+        "blackWhiteSearch": true,
+        "grayscaleTolerance": 10
       }
     },
     {
@@ -966,7 +972,8 @@
           12,
           -8
         ],
-        "deltaE": 3.5
+        "deltaE": 3.5,
+        "targetColor": "#F5F5F5"
       }
     },
     {
@@ -1172,7 +1179,8 @@
         "rot": 0
       },
       "params": {
-        "minCoverage": 0.85
+        "minCoverage": 0.85,
+        "confidenceThreshold": 80
       }
     },
     {

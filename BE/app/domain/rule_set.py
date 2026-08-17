@@ -31,6 +31,8 @@ class Shape:
     Y: float
     W: float
     H: float
+    CanvasWidth: float = 0.0
+    CanvasHeight: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -144,6 +146,8 @@ def parse_envelope(raw: dict[str, Any]) -> RuleSetEnvelope:
                 Y=float(shape_raw["Y"]),
                 W=float(shape_raw["W"]),
                 H=float(shape_raw["H"]),
+                CanvasWidth=float(shape_raw.get("CanvasWidth", 0.0)),
+                CanvasHeight=float(shape_raw.get("CanvasHeight", 0.0)),
             )
         except (KeyError, TypeError, ValueError) as exc:
             raise _bad("Rules[i].Shape invalid", {"index": i, "cause": str(exc)}) from exc

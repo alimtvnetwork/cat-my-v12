@@ -110,6 +110,14 @@ const ruleRowSchema = baseRow
   .extend({
     rulesetId: fkField.optional(),
     categoryId: fkField.optional(),
+    name: z.string().optional(),
+    kind: z.string().optional(),
+    type: z.string().optional(),
+    roiId: z.string().optional(),
+    geometry: z.record(z.unknown()).optional(),
+    params: z.record(z.unknown()).optional(),
+    isCategory: z.boolean().optional(),
+    appliesBefore: z.array(z.string()).optional(),
   })
   .passthrough()
   .refine((r) => r.id.startsWith(SLICE_ID_PREFIX.rules), {
