@@ -28,37 +28,50 @@ export class ClientLogger {
     };
   }
 
-  static info(message: string, context?: ClientLoggerContext): void {
-    const payload = ClientLogger.formatLog(LogLevelType.Info, message, context);
+  private static parseContext(contextOrError?: unknown, ...args: unknown[]): ClientLoggerContext | undefined {
+    let finalContext: ClientLoggerContext | undefined = undefined;
+
+    if (isAppError(contextOrError)) {
+      finalContext = {
+        Code: contextOrError.code,
+        Name: contextOrError.name,
+        Message: contextOrError.message,
+        Cause: contextOrError.cause,
+      };
+    } else if (contextOrError instanceof Error) {
+      finalContext = {
+        Name: contextOrError.name,
+        Message: contextOrError.message,
+        Stack: contextOrError.stack,
+      };
+    } else if (contextOrError !== undefined && contextOrError !== null) {
+      finalContext = typeof contextOrError === 'object' ? { ...(contextOrError as object) } : { data: contextOrError };
+    }
+
+    if (args.length > 0) {
+      finalContext = {
+        ...(finalContext || {}),
+        args: args,
+      };
+    }
+
+    return finalContext;
+  }
+
+  static info(message: string, context?: unknown, ...args: unknown[]): void {
+    const finalContext = ClientLogger.parseContext(context, ...args);
+    const payload = ClientLogger.formatLog(LogLevelType.Info, message, finalContext);
     console.info(JSON.stringify(payload));
   }
 
-  static warn(message: string, context?: ClientLoggerContext): void {
-    const payload = ClientLogger.formatLog(LogLevelType.Warn, message, context);
-    // Telemetry mapping could be placed here
+  static warn(message: string, context?: unknown, ...args: unknown[]): void {
+    const finalContext = ClientLogger.parseContext(context, ...args);
+    const payload = ClientLogger.formatLog(LogLevelType.Warn, message, finalContext);
     console.warn(JSON.stringify(payload));
   }
 
-  static error(message: string, errorOrContext?: unknown): void {
-    let finalContext: ClientLoggerContext | undefined = undefined;
-
-    if (isAppError(errorOrContext)) {
-      finalContext = {
-        Code: errorOrContext.code,
-        Name: errorOrContext.name,
-        Message: errorOrContext.message,
-        Cause: errorOrContext.cause,
-      };
-    } else if (errorOrContext instanceof Error) {
-      finalContext = {
-        Name: errorOrContext.name,
-        Message: errorOrContext.message,
-        Stack: errorOrContext.stack,
-      };
-    } else if (errorOrContext !== undefined && errorOrContext !== null) {
-      finalContext = typeof errorOrContext === 'object' ? errorOrContext as ClientLoggerContext : { data: errorOrContext };
-    }
-
+  static error(message: string, errorOrContext?: unknown, ...args: unknown[]): void {
+    const finalContext = ClientLogger.parseContext(errorOrContext, ...args);
     const payload = ClientLogger.formatLog(LogLevelType.Error, message, finalContext);
     
     if (errorOrContext instanceof Error) {

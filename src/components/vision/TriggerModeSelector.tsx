@@ -3,14 +3,14 @@ import { useVisionStore } from "@/lib/vision/store";
 import { Label } from "@/components/ui/label";
 import { useUpdateTriggerMode } from "@/hooks/use-vision-api";
 
-export function TriggerModeSelector() {
+export function TriggerModeSelector(): React.JSX.Element | null {
   const { segments, activeSegmentId, setCameraSettings } = useVisionStore();
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
 
   if (!activeSegment || !activeSegmentId) return null;
 
-  const cameraSettings = activeSegment.visionSettings?.cameraSettings ||
-    activeSegment.visionSettings?.camera || {};
+  const cameraSettings = (activeSegment.visionSettings?.cameraSettings ||
+    activeSegment.visionSettings?.camera || {}) as any;
 
   const currentMode = cameraSettings.triggerMode || "Software";
 

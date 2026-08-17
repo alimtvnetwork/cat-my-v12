@@ -15,12 +15,12 @@ export interface BackendModeState {
 export const useBackendMode = create<BackendModeState>()(
   persist(
     (set, get) => ({
-      mode: "seed",
+      mode: BackendModeType.Seed,
       baseUrl: "http://localhost:8000",
       setMode: (mode) => set({ mode }),
       setBaseUrl: (url) => {
         if (!isValidBackendPrefix(url)) {
-          set({ baseUrl: url, mode: "seed" });
+          set({ baseUrl: url, mode: BackendModeType.Seed });
           toast.error("Invalid base URL, falling back to seed mode");
         } else {
           set({ baseUrl: url });

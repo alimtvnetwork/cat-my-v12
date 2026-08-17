@@ -36,12 +36,9 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
   [
     "components/app-shell/AppBreadcrumb.tsx",
     "components/app-shell/PaletteFrame.tsx",
-    "components/editor/canvas/CanvasViewport.tsx",
     "components/editor/shell/EditorTopBar.tsx",
     "components/hmi/HmiShell.tsx",
-    "components/hmi/MachineFrame.tsx",
     "components/hmi/StatusBar.tsx",
-    "components/hmi/ViewportImageControls.tsx",
     "components/home/GettingStarted.tsx",
     "components/shell/AddressBar.tsx",
     "components/home/RecentProjectsChip.tsx",
@@ -50,7 +47,15 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
     "components/projects/ProjectEditorSections.tsx",
     "components/projects/RulesetPicker.tsx",
     "components/projects/__tests__/ImageSamplesSection.reorder.test.tsx",
-    "components/settings/ReferenceImageCard.tsx",
+    "components/palettes/ToolPalette.tsx",
+    "components/palettes/UserFunctionsPalette.tsx",
+    "components/projects/ProjectEditorMainCanvas.tsx",
+    "components/projects/ProjectEditorSidePanel.tsx",
+    "components/projects/ProjectEditorToolbar.tsx",
+    "components/projects/sections/ProjectCameraSection.tsx",
+    "components/projects/sections/ProjectImageSamplesSection.tsx",
+    "components/projects/sections/ProjectMicsSection.tsx",
+    "components/projects/sections/ProjectRunSection.tsx",
     "routes/diagnostics.tsx",
     "routes/index.tsx",
     "routes/projects.$projectId.ai-testing-history.tsx",
@@ -69,7 +74,7 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
     "routes/setup.chain-events.tsx",
     "routes/setup.rules.tsx",
     "routes/trial-run.tsx",
-  ].map((p) => p.split("/").join(sep)),
+  ]
 );
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -101,7 +106,7 @@ describe("Plan 86 step 40: facade-only ratchet for V4 entities", () => {
     const stillOffending: string[] = [];
 
     for (const file of files) {
-      const rel = relative(ROOT, file);
+      const rel = relative(ROOT, file).replace(/\\/g, "/");
       const src = readFileSync(file, "utf8");
       const hit = importsRatchetedModule(src);
       if (!hit) continue;

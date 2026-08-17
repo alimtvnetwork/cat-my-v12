@@ -18,7 +18,7 @@ export interface RulesState {
   rules: EditorRule[];
   selectedIds: string[];
   groups: RuleGroup[];
-  activeStateId: string | null;
+  activeStateId?: string | null;
 }
 
 export interface DuplicateOptions {

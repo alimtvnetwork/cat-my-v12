@@ -95,6 +95,10 @@ describe("runBootReconcile", () => {
     const entries = await runBootReconcile({ notify });
 
     expect(entries).toEqual([]);
-    expect(err).toHaveBeenCalledWith("[bootReconcile] fatal", expect.any(Error));
+    expect(err).toHaveBeenCalled();
+    const firstCallArg = err.mock.calls[0]?.[0];
+    const parsedLog = JSON.parse(firstCallArg);
+    expect(parsedLog.Message).toBe("[bootReconcile] fatal");
+    expect(err.mock.calls[0]?.[1]).toEqual(expect.any(Error));
   });
 });

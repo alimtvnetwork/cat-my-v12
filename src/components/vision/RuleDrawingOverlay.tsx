@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useVisionStore } from "@/lib/vision/store";
+import { DrawingToolType } from "@/lib/vision/DrawingToolType";
 
 interface Point {
   x: number;
@@ -13,7 +14,7 @@ interface BoundingBox {
   h: number;
 }
 
-export function RuleDrawingOverlay() {
+export function RuleDrawingOverlay(): React.JSX.Element | null {
   const { drawingTool, setDrawingTool } = useVisionStore();
   
   const [isDrawing, setIsDrawing] = useState(false);
@@ -24,13 +25,13 @@ export function RuleDrawingOverlay() {
   const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (drawingTool === "none") return;
+    if (drawingTool === DrawingToolType.None) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (drawingTool === "shape_track") {
+    if (drawingTool === DrawingToolType.ShapeTrack) {
       setPolygonPoints(prev => [...prev, { x, y }]);
       return;
     }
@@ -43,7 +44,7 @@ export function RuleDrawingOverlay() {
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDrawing || !startPoint) return;
-    if (drawingTool === "shape_track") return;
+    if (drawingTool === DrawingToolType.ShapeTrack) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -58,7 +59,7 @@ export function RuleDrawingOverlay() {
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (drawingTool === "shape_track") return;
+    if (drawingTool === DrawingToolType.ShapeTrack) return;
     
     setIsDrawing(false);
     e.currentTarget.releasePointerCapture(e.pointerId);
@@ -67,21 +68,21 @@ export function RuleDrawingOverlay() {
     if (currentBox && currentBox.w > 5 && currentBox.h > 5) {
       console.log("Rule drawing added:", drawingTool, currentBox);
       // Reset tool after draw
-      setDrawingTool("none");
+      setDrawingTool(DrawingToolType.None);
       setCurrentBox(null);
     }
   };
 
   // Allow double click to finish polygon
   const handleDoubleClick = () => {
-    if (drawingTool === "shape_track" && polygonPoints.length > 2) {
+    if (drawingTool === DrawingToolType.ShapeTrack && polygonPoints.length > 2) {
       console.log("Shape track polygon finished:", polygonPoints);
-      setDrawingTool("none");
+      setDrawingTool(DrawingToolType.None);
       setPolygonPoints([]);
     }
   };
 
-  if (drawingTool === "none" && !currentBox && polygonPoints.length === 0) return null;
+  if (drawingTool === DrawingToolType.None && !currentBox && polygonPoints.length === 0) return null;
 
   return (
     <div 
@@ -92,9 +93,9 @@ export function RuleDrawingOverlay() {
       onDoubleClick={handleDoubleClick}
     >
       {/* Pattern Edge / ROI Box */}
-      {(drawingTool === "pattern_edge" || drawingTool === "roi") && currentBox && (
+      {(drawingTool === DrawingToolType.PatternEdge || drawingTool === DrawingToolType.Roi) && currentBox && (
         <div 
-          className={`absolute border-2 ${drawingTool === "pattern_edge" ? 'border-yellow-400 bg-yellow-400/20' : 'border-blue-400 bg-blue-400/20'}`}
+          className={`absolute border-2 ${drawingTool === DrawingToolType.PatternEdge ? 'border-yellow-400 bg-yellow-400/20' : 'border-blue-400 bg-blue-400/20'}`}
           style={{
             left: currentBox.x,
             top: currentBox.y,
@@ -105,7 +106,7 @@ export function RuleDrawingOverlay() {
       )}
 
       {/* Shape Track Polygon */}
-      {drawingTool === "shape_track" && polygonPoints.length > 0 && (
+      {drawingTool === DrawingToolType.ShapeTrack && polygonPoints.length > 0 && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
           <polygon
             points={polygonPoints.map(p => `${p.x},${p.y}`).join(" ")}
@@ -120,7 +121,7 @@ export function RuleDrawingOverlay() {
       
       {/* Tooltip hint */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm">
-        {drawingTool === "shape_track" ? "Click to add points, double-click to finish" : "Click and drag to define region"}
+        {drawingTool === DrawingToolType.ShapeTrack ? "Click to add points, double-click to finish" : "Click and drag to define region"}
       </div>
     </div>
   );

@@ -7,9 +7,10 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { TriggerModeSelector } from "./TriggerModeSelector";
 import { useUpdateCameraSetting } from "@/hooks/use-vision-api";
 
-export function CameraSettingsForm() {
+export function CameraSettingsForm(): React.JSX.Element | null {
   const { segments, activeSegmentId, setCameraSettings } = useVisionStore();
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
+  const { mutateAsync: updateCameraSetting } = useUpdateCameraSetting();
 
   if (!activeSegment) {
     return (
@@ -21,7 +22,7 @@ export function CameraSettingsForm() {
     );
   }
 
-  const cameraSettings = activeSegment.visionSettings?.cameraSettings ||
+  const cameraSettings = (activeSegment.visionSettings?.cameraSettings ||
     activeSegment.visionSettings?.camera || {
       lighting: 0,
       exposure: 0,
@@ -29,7 +30,7 @@ export function CameraSettingsForm() {
       focus: 0,
       triggerMode: "Internal",
       triggerDelay: 0,
-    };
+    }) as any;
 
   const handleChange = (key: keyof typeof cameraSettings, value: number) => {
     if (activeSegmentId) {
@@ -46,7 +47,7 @@ export function CameraSettingsForm() {
   const handleSettingCommit = async (key: string, value: number) => {
     if (key === "exposure" || key === "gain") {
       try {
-        const cameraId = activeSegment.visionSettings?.cameraId || "default-camera";
+        const cameraId = activeSegment.visionSettings?.id || "default-camera";
         await updateCameraSetting({ cameraId, key, value });
       } catch (err) {
         console.warn(`Failed to commit camera setting ${key}:`, err);

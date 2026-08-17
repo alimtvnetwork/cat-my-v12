@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useBackendMode } from "../mode";
+import { BackendModeType } from "../BackendModeType";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -9,18 +10,18 @@ vi.mock("sonner", () => ({
 
 describe("useBackendMode", () => {
   beforeEach(() => {
-    useBackendMode.setState({ mode: "seed", baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ mode: BackendModeType.Seed, baseUrl: "http://localhost:8000" });
   });
 
   it("defaults to seed and localhost:8000", () => {
     const state = useBackendMode.getState();
-    expect(state.mode).toBe("seed");
+    expect(state.mode).toBe(BackendModeType.Seed);
     expect(state.baseUrl).toBe("http://localhost:8000");
   });
 
   it("updates mode", () => {
-    useBackendMode.getState().setMode("backend");
-    expect(useBackendMode.getState().mode).toBe("backend");
+    useBackendMode.getState().setMode(BackendModeType.Backend);
+    expect(useBackendMode.getState().mode).toBe(BackendModeType.Backend);
   });
 
   it("updates baseUrl if valid", () => {
@@ -29,9 +30,9 @@ describe("useBackendMode", () => {
   });
 
   it("falls back to seed mode if baseUrl is invalid", () => {
-    useBackendMode.getState().setMode("backend");
+    useBackendMode.getState().setMode(BackendModeType.Backend);
     useBackendMode.getState().setBaseUrl("not-a-url");
-    expect(useBackendMode.getState().mode).toBe("seed");
+    expect(useBackendMode.getState().mode).toBe(BackendModeType.Seed);
     expect(useBackendMode.getState().baseUrl).toBe("not-a-url");
   });
 });

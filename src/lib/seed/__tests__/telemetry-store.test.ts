@@ -105,10 +105,11 @@ describe("logFatalReseed", () => {
     expect(captured?.code).toBe("E_SEED_FATAL");
     expect(captured?.correlationId).toBe(event.correlationId);
 
-    expect(warn).toHaveBeenCalledWith(
-      "[seed/telemetry] fatal",
-      expect.objectContaining({ cause: "orchestrator-throw", mode: "reset" }),
-    );
+    expect(warn).toHaveBeenCalled();
+    const firstCallArg = warn.mock.calls[0]?.[0];
+    const parsedLog = JSON.parse(firstCallArg);
+    expect(parsedLog.Message).toBe("[seed/telemetry] fatal");
+    expect(parsedLog.Context).toEqual(expect.objectContaining({ cause: "orchestrator-throw", mode: "reset" }));
     warn.mockRestore();
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useVisionStore } from "@/lib/vision/store";
-import { fetchBackend } from "@/lib/be-fetch";
+import { fetchBackend } from "@/lib/backend/http";
 import { ScoreResponseSchema } from "@/lib/vision/score-schema";
 
 const AUTO_EVAL_DEBOUNCE_MS = 200; // prevent spam on rapid captures

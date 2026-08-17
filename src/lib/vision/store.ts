@@ -14,6 +14,7 @@ import type {
 
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 import { DrawingToolType } from "./DrawingToolType";
+import { PolarityType } from "./PolarityType";
 
 interface VisionState {
   imageSourceMode: ImageSourceModeType;
@@ -95,7 +96,7 @@ const mockSegments: RecipeSegment[] = [
         patternConfig: {
           enabled: false,
           edgeStrength: 50,
-          polarity: "ANY",
+          polarity: PolarityType.Any,
           inverseLogic: false,
         },
         pinConsistency: {
@@ -399,7 +400,7 @@ export const useVisionStore = create<VisionState>((set) => ({
                 patternConfig: {
                   enabled: false,
                   edgeStrength: 50,
-                  polarity: "ANY",
+                  polarity: PolarityType.Any,
                   inverseLogic: false,
                   ...roi.patternConfig,
                   ...patternConfig,

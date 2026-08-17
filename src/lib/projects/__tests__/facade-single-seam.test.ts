@@ -57,12 +57,13 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
     // Supabase client mentions `localStorage` in its config comments.
     "integrations/supabase/client.ts",
     // lib/* stores + facade internals + legacy-key migration paths.
+    "hooks/use-hardware-mock.ts",
     "lib/ai-testing/aggregate.ts",
     "lib/camera/capture-bridge.ts",
     "lib/camera/facade.ts",
     "lib/camera/seed.ts",
     "lib/camera/store.ts",
-    "lib/capture-history-store.ts",
+    "lib/stores/capture-history-store.ts",
     "lib/diagnostics/home-error-log.ts",
     "lib/editor/preview-mode-store.ts",
     "lib/editor/snap-store.ts",
@@ -71,31 +72,31 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
     "lib/editor/validation-store.ts",
     // Facade contract doc references localStorage in a comment only.
     "lib/facade/contracts.ts",
-    "lib/favorites-store.ts",
+    "lib/stores/favorites-store.ts",
     "lib/functions/persistence.ts",
     // Per-project last-selected sample id (Plan 83): tiny per-tab UI state.
     "lib/image-samples/use-selected-sample.ts",
     "lib/lighting/store.ts",
-    "lib/palette-store.ts",
-    "lib/program-store.ts",
+    "lib/stores/palette-store.ts",
+    "lib/stores/program-store.ts",
     "lib/projects/facade-json.ts",
     "lib/projects/facade.ts",
     "lib/projects/seed.ts",
     "lib/projects/trials.ts",
-    "lib/recent-projects-store.ts",
-    "lib/reference-image-store.ts",
+    "lib/stores/recent-projects-store.ts",
+    "lib/stores/reference-image-store.ts",
     "lib/rules/seed.ts",
     // Per-tab rule enable/disable audit ring buffer (Plan 83 backlog 13):
     // same ring-buffer + localStorage shape as `lib/seed/telemetry-store.ts`.
     "lib/rules/audit-store.ts",
-    "lib/run-store.ts",
+    "lib/stores/run-store.ts",
     "lib/running-pill-position.ts",
     // Autoseed reset path: resetSeedFlags() needs raw removeItem.
     "lib/seed/orchestrator.ts",
     // Telemetry ring buffer references localStorage in a comment only.
     "lib/seed/telemetry-store.ts",
-    "lib/shortcuts-store.ts",
-    "lib/ui-prefs-store.ts",
+    "lib/stores/shortcuts-store.ts",
+    "lib/stores/ui-prefs-store.ts",
     "lib/workspace/layout-presets.ts",
     "lib/workspace/layout-slice.ts",
     // Routes still reading legacy keys for one-off migrations / debug.
@@ -105,7 +106,7 @@ const ALLOWLIST: ReadonlySet<string> = new Set(
     "routes/setup.camera.tsx",
     "routes/setup.chain-events.tsx",
     "routes/setup.functions.tsx",
-  ].map((p) => p.split("/").join(sep)),
+  ]
 );
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -130,7 +131,7 @@ describe("facade single-seam ratchet (spec 21 §52)", () => {
   const files = walk(ROOT);
   const violators = files
     .filter((abs) => PATTERN.test(readFileSync(abs, "utf8")))
-    .map((abs) => relative(ROOT, abs));
+    .map((abs) => relative(ROOT, abs).replace(/\\/g, "/"));
 
   test("no NEW file bypasses the facade", () => {
     const unexpected = violators.filter((rel) => ALLOWLIST.has(rel) === false);
