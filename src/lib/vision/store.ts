@@ -15,9 +15,13 @@ import type {
 
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 
+export type DrawingTool = "none" | "roi" | "pattern_edge" | "shape_track";
+
 interface VisionState {
   imageSourceMode: ImageSourceModeType;
   setImageSourceMode: (mode: ImageSourceModeType) => void;
+  drawingTool: DrawingTool;
+  setDrawingTool: (tool: DrawingTool) => void;
   isCapturing: boolean;
   setIsCapturing: (val: boolean) => void;
   segments: RecipeSegment[];
@@ -104,6 +108,8 @@ const mockSegments: RecipeSegment[] = [
 export const useVisionStore = create<VisionState>((set) => ({
   imageSourceMode: ImageSourceModeType.STATIC,
   setImageSourceMode: (mode) => set({ imageSourceMode: mode }),
+  drawingTool: "none",
+  setDrawingTool: (tool) => set({ drawingTool: tool }),
   isCapturing: false,
   setIsCapturing: (val) => set({ isCapturing: val }),
   segments: mockSegments,

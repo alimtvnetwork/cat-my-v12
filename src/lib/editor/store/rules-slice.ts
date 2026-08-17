@@ -18,6 +18,7 @@ export interface RulesState {
   rules: EditorRule[];
   selectedIds: string[];
   groups: RuleGroup[];
+  activeStateId: string | null;
 }
 
 export interface DuplicateOptions {
@@ -380,6 +381,7 @@ export interface RulesActions {
   setRuleRotation: (ruleId: string, degrees: number) => void;
   applySnapshot: (snapshot: RulesState) => void;
   __resetForTests: (state?: Partial<RulesState>) => void;
+  setActiveStateId: (id: string | null) => void;
 }
 
 export type RulesStore = RulesState & RulesActions;
@@ -493,7 +495,7 @@ export function applyMergeSelected(state: RulesState): MergeResult {
   };
 }
 
-const INITIAL_STATE: RulesState = { rules: [], selectedIds: [], groups: [] };
+const INITIAL_STATE: RulesState = { rules: [], selectedIds: [], groups: [], activeStateId: null };
 
 export const useRulesStore = create<RulesStore>((set, get) => ({
   ...INITIAL_STATE,
@@ -724,5 +726,9 @@ export const useRulesStore = create<RulesStore>((set, get) => ({
 
   __resetForTests: (state) => {
     set({ ...INITIAL_STATE, ...state });
+  },
+
+  setActiveStateId: (id) => {
+    set({ activeStateId: id });
   },
 }));

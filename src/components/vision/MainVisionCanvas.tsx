@@ -5,6 +5,7 @@ import { LiveCameraViewer } from "./LiveCameraViewer";
 import { SafeZoneOverlay } from "./SafeZoneOverlay";
 import { ZoomableCanvas } from "./ZoomableCanvas";
 import { FocusPeakingVisualizer } from "./FocusPeakingVisualizer";
+import { RuleDrawingOverlay } from "./RuleDrawingOverlay";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 // Import connection facade when available, for now using mock state
@@ -26,6 +27,7 @@ export function MainVisionCanvas() {
             <LiveCameraViewer isConnected={isConnected} />
           )}
           <FocusPeakingVisualizer />
+          <RuleDrawingOverlay />
           <SafeZoneOverlay />
           {isCapturing && (
             <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">

@@ -715,7 +715,7 @@ export function CanvasViewport({
         onDragOver={handleCanvasDragOver}
         onDrop={handleCanvasDrop}
       />
-      <CanvasRoiLayer>
+      <CanvasRoiLayer rules={rules} viewport={viewport}>
         <SelectionOverlay
           rules={rules}
           selectedIds={selectedIds}

@@ -36,22 +36,6 @@ export function ZoomableCanvas({ children }: Props) {
         style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}
       >
         {children}
-        
-        {/* ROI Layer (Step 72) */}
-        <div className="absolute inset-0 pointer-events-none z-10" id="roi-layer">
-          {/* Example ROI Badge (Step 68) */}
-          <RoiBadge label="Pattern Search" x={20} y={20} width={30} height={30} />
-        </div>
-        
-        {/* Result Layer (Step 72 & 73) */}
-        {showResultLayer && (
-          <div className="absolute inset-0 pointer-events-none z-20 mix-blend-screen" id="result-layer">
-            {/* PASS/FAIL graphics here */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl font-bold text-green-500/50 drop-shadow-lg">
-              PASS
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Overlay Toolbar (Step 70 & 73) */}

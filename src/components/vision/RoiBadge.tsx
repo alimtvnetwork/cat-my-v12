@@ -7,19 +7,20 @@ interface RoiBadgeProps {
   width: number;
   height: number;
   color?: string;
+  isHovered?: boolean;
 }
 
-export function RoiBadge({ label, x, y, width, height, color = "var(--ca-primary)" }: RoiBadgeProps) {
+export function RoiBadge({ label, x, y, width, height, color = "var(--ca-primary)", isHovered }: RoiBadgeProps) {
   return (
     <div
-      className="absolute border-2 pointer-events-none transition-all drop-shadow-md"
+      className={`absolute border-2 pointer-events-none transition-all drop-shadow-md ${isHovered ? "ring-2 ring-ca-primary ring-offset-2 ring-offset-ca-panel z-50 shadow-lg" : ""}`}
       style={{
-        left: `${x}%`,
-        top: `${y}%`,
-        width: `${width}%`,
-        height: `${height}%`,
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${width}px`,
+        height: `${height}px`,
         borderColor: color,
-        backgroundColor: `${color}1A`, // 10% opacity
+        backgroundColor: `${color}${isHovered ? '33' : '1A'}`, // 20% opacity on hover
       }}
     >
       <div 
