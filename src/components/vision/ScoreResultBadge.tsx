@@ -7,7 +7,7 @@ interface Props {
   confidence?: number;
 }
 
-export function ScoreResultBadge({ result, confidence = 98.5 }: Props) {
+export function ScoreResultBadge({ result, confidence = 98.5 }: Props): React.JSX.Element {
   const isPassing = result ? result.is_pass === true : true;
   const displayConfidence = result ? result.confidence : confidence;
 

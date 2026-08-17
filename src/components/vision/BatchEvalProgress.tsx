@@ -14,7 +14,7 @@ export function BatchEvalProgress({
   total,
   completed,
   isRunning,
-}: BatchEvalProgressProps) {
+}: BatchEvalProgressProps): React.JSX.Element | null {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   if (!isRunning && completed === 0) return null;

@@ -10,7 +10,7 @@ interface GoldenBadgeProps {
  * GoldenBadge — star icon overlay for golden baseline images.
  * Displays on image thumbnails in the history rail.
  */
-export function GoldenBadge({ isGolden }: GoldenBadgeProps) {
+export function GoldenBadge({ isGolden }: GoldenBadgeProps): React.JSX.Element | null {
   if (!isGolden) return null;
 
   return (

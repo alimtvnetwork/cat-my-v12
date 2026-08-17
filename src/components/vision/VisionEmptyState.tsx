@@ -18,7 +18,7 @@ export function VisionEmptyState({
   variant,
   actionLabel,
   onAction,
-}: VisionEmptyStateProps) {
+}: VisionEmptyStateProps): React.JSX.Element {
   const isNoRules = variant === "no-rules";
 
   return (
