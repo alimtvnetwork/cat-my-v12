@@ -37,7 +37,9 @@ def cleanup_old_task_entries(
     conn = sqlite3.connect(str(task_db_path))
     try:
         cursor = conn.execute(
-            "DELETE FROM TaskEntry WHERE CreatedAt < ?", (cutoff,)
+            # Task 244: golden images (IsGolden=1) are protected from retention cleanup
+            "DELETE FROM TaskEntry WHERE CreatedAt < ? AND (IsGolden IS NULL OR IsGolden = 0)",
+            (cutoff,)
         )
         deleted = cursor.rowcount
         conn.commit()
