@@ -8,14 +8,14 @@ from BE.db.connections import get_task_conn
 router = APIRouter(prefix="/images", tags=["images"])
 
 class ReferenceImage(BaseModel):
-    id: str
+    id: int
     url: str
     width: Optional[int] = None
     height: Optional[int] = None
 
 class SetReferenceRequest(BaseModel):
-    projectId: str
-    imageId: str
+    projectId: int
+    imageId: int
 
 @router.get("/reference", response_model=Envelope)
 async def get_reference_image(projectId: str):
@@ -31,7 +31,7 @@ async def get_reference_image(projectId: str):
     row = cur.fetchone()
     if row is None:
         img = ReferenceImage(
-            id="ref-default-pcb-1",
+            id=0,
             url="/assets/seeds/default-pcb.jpg",
             width=1920,
             height=1080
