@@ -2,6 +2,8 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState } from "react";
 import { Lock, Unlock, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { beFetch } from "@/lib/be-fetch";
 
 interface HistoryImage {
   id: string;
@@ -9,27 +11,22 @@ interface HistoryImage {
   timestamp: string;
 }
 
-// Mock query until BE is ready
 function useImageHistory() {
-  const mockImages: HistoryImage[] = Array.from({ length: 10 }).map((_, i) => ({
-    id: `img-${i}`,
-    url: "/assets/placeholder-pcb.jpg",
-    timestamp: new Date(Date.now() - i * 10000).toLocaleTimeString()
-  }));
-
-  return {
-    data: mockImages,
-    isLoading: false,
-    isError: false,
-  };
+  return useQuery({
+    queryKey: ['imageHistory'],
+    queryFn: async () => {
+      const envelope = await beFetch<HistoryImage>("/images/processed");
+      return envelope.Results;
+    }
+  });
 }
 
 export function ImageHistoryRail() {
-  const { data: images } = useImageHistory();
-  const [locked, setLocked] = useState(false);
+  const { data: images, isLoading } = useImageHistory();
+  const [isLocked, setIsLocked] = useState(false);
   
   const handleSetReference = (img: HistoryImage) => {
-    if (locked) return;
+    if (isLocked) return;
     // Set as Reference in store or facade
     ClientLogger.info("Setting reference to", img.id);
   };
@@ -43,28 +40,33 @@ export function ImageHistoryRail() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setLocked(!locked)}
-          className={`h-8 px-2 min-h-[40px] text-xs ${locked ? "text-ca-destructive" : "text-ca-ink"}`}
+          onClick={() => setIsLocked(!isLocked)}
+          className={`h-8 px-2 min-h-[40px] text-xs ${isLocked ? "text-ca-destructive" : "text-ca-ink"}`}
         >
-          {locked ? <Lock className="w-4 h-4 mr-1" /> : <Unlock className="w-4 h-4 mr-1" />}
-          {locked ? "Reference Locked" : "Reference Unlocked"}
+          {isLocked ? <Lock className="w-4 h-4 mr-1" /> : <Unlock className="w-4 h-4 mr-1" />}
+          {isLocked ? "Reference Locked" : "Reference Unlocked"}
         </Button>
       </div>
       
       <div className="flex overflow-x-auto p-hmi-2 gap-hmi-2 min-h-[100px] items-center custom-scrollbar">
-        {images?.map((img) => (
+        {isLoading ? (
+          <div className="text-xs text-ca-muted px-4">Loading history...</div>
+        ) : images?.map((img) => (
           <div
             key={img.id}
             className="group relative flex-shrink-0 w-24 h-20 rounded-md overflow-hidden border border-ca-border hover:border-ca-primary transition-colors cursor-pointer bg-black/10 flex items-center justify-center"
           >
-            {/* Real image would go here */}
-            <ImageIcon className="w-6 h-6 text-ca-muted opacity-50 absolute" />
+            {img.url ? (
+               <img src={img.url} alt="History" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+               <ImageIcon className="w-6 h-6 text-ca-muted opacity-50 absolute" />
+            )}
             
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Button
                 variant="secondary"
                 size="sm"
-                disabled={locked}
+                disabled={isLocked}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSetReference(img);

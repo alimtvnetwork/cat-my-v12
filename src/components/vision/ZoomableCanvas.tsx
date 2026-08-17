@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent, ReactNode } from "react";
+import { useState, useRef, ReactNode } from "react";
 import { Maximize, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoiBadge } from "./RoiBadge";
+import { usePanZoom } from "@/hooks/usePanZoom";
 
 interface Props {
   children: ReactNode;
@@ -9,69 +10,16 @@ interface Props {
 
 export function ZoomableCanvas({ children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showResultLayer, setShowResultLayer] = useState(true);
 
-  // ResizeObserver for window resize (Step 71)
-  useEffect(() => {
-    if (!containerRef.current) return;
-    let timeout: NodeJS.Timeout;
-    const observer = new ResizeObserver(() => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        // Debounced resize handler, keeping transform bounded if needed
-      }, 100);
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const handleWheel = (e: WheelEvent) => {
-    e.preventDefault();
-    const zoomSensitivity = 0.001;
-    const delta = -e.deltaY * zoomSensitivity;
-    const newScale = Math.min(Math.max(transform.scale * (1 + delta), 0.1), 10);
-    
-    // Zoom towards mouse pointer
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      const scaleRatio = newScale / transform.scale;
-      
-      setTransform(prev => ({
-        scale: newScale,
-        x: mouseX - (mouseX - prev.x) * scaleRatio,
-        y: mouseY - (mouseY - prev.y) * scaleRatio
-      }));
-    }
-  };
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (e.button !== 1 && e.button !== 0) return; // Allow middle or left click drag
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    setTransform(prev => ({
-      ...prev,
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    }));
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const resetView = () => {
-    setTransform({ scale: 1, x: 0, y: 0 });
-  };
+  const {
+    transform,
+    handleWheel,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    resetView
+  } = usePanZoom(containerRef);
 
   return (
     <div 
@@ -130,3 +78,4 @@ export function ZoomableCanvas({ children }: Props) {
     </div>
   );
 }
+
