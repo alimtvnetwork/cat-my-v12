@@ -1,93 +1,78 @@
-# CI/CD & Automation Guidelines Checklist
+# Generic CI/CD & Automation Guidelines Checklist
 
-This document serves as a strict checklist and specification for setting up and fixing CI/CD pipelines, as well as the standard run scripts (`run.ps1`/`run.sh`), for this repository. Any AI agent operating on DevOps or CI/CD tasks MUST read and follow these guidelines.
+This document serves as a strict, universal checklist and specification for setting up and fixing CI/CD pipelines, as well as the standard run scripts (e.g., `run.ps1`/`run.sh`), for **any project**. Any AI agent operating on DevOps or CI/CD tasks MUST read and follow these guidelines to ensure consistency across different tech stacks and repositories.
 
 ## 1. Specification Files to Create / Maintain
 
-All CI/CD definitions and requirements must be documented in the `spec` folder before making changes to `.github/workflows` or other CI systems.
+All CI/CD definitions and requirements must be documented in a dedicated `spec` folder before making changes to `.github/workflows` or other CI systems. This ensures the architectural intent is preserved.
 
-- [ ] `spec/20-devops/01-cicd-standards.md`
-  - Defines the core CI/CD principles: mandatory formatters (`prettier`, `eslint`), test runners (`vitest`, `pytest`), and failure conditions.
-- [ ] `spec/20-devops/02-run-script-architecture.md`
-  - Defines how local orchestration scripts (like `run.ps1`) map identical commands to the CI environment so that local builds perfectly match CI builds.
-- [ ] `.lovable/spec/tasks/10-cicd-pipeline-setup.md`
-  - A concrete task spec defining exactly what the GitHub Actions workflows must accomplish (e.g., parallel matrix jobs for FE and BE, caching `bun` and `uv` dependencies).
-- [ ] `.lovable/cicd-issues/XX-<issue-name>.md`
-  - Any time a CI/CD pipeline fails, an AI must log the failure here before attempting a fix.
+- [ ] `spec/devops/cicd-standards.md` (or similar project-specific path)
+  - Defines the core CI/CD principles for the specific project: mandatory formatters, test runners, target environments, and failure conditions.
+- [ ] `spec/devops/run-script-architecture.md`
+  - Defines how local orchestration scripts map identical commands to the CI environment so that local builds perfectly match CI builds.
+- [ ] `spec/tasks/<task-id>-cicd-pipeline-setup.md`
+  - A concrete task spec defining exactly what the CI pipeline must accomplish (e.g., parallel matrix jobs, caching strategies for the project's specific package managers).
+- [ ] `cicd-issues/<issue-name>.md`
+  - Any time a CI/CD pipeline fails, an AI must log the failure here (including error traces and environment context) before attempting a fix.
 
 ## 2. CI/CD Implementation Checklist
 
-When building or fixing the CI/CD pipelines (e.g., `.github/workflows/ci.yml`), enforce the following steps:
+When building or fixing the CI/CD pipelines (e.g., `.github/workflows/ci.yml`), enforce the following steps universally:
 
-- [ ] **Dependency Caching:** The pipeline MUST cache `~/.bun/install/cache` for Frontend and `.venv` or `~/.cache/uv` for Backend to reduce build times.
-- [ ] **Toolchain Matching:** Ensure the CI runner uses the exact versions specified in `run.config.json` and `bun.lock`.
-- [ ] **Linting & Formatting:** Run `bunx eslint` and `bun run lint` before any tests. The pipeline must fail immediately if there are style violations.
-- [ ] **Type Checking:** Run `npx tsc --noEmit` and `uv run pyright` (or `mypy`) as separate parallel jobs.
-- [ ] **Test Execution:**
-  - Frontend: Execute `bunx vitest run`
-  - Backend: Execute `uv run pytest`
-- [ ] **Artifact Generation:** (Optional) If it is a release branch, the pipeline should zip the application (using rules from `run.ps1`) and attach it as a GitHub release artifact.
+- [ ] **Dependency Caching:** The pipeline MUST cache dependencies based on the project's lockfiles (e.g., `package-lock.json`, `bun.lockb`, `poetry.lock`, `go.sum`). This minimizes build times.
+- [ ] **Toolchain Matching:** Ensure the CI runner uses the exact tool versions specified in the project's configuration (e.g., `.nvmrc`, `.python-version`, or the generic `run.config.json`).
+- [ ] **Linting & Formatting:** Run the project's defined linting and formatting commands first. The pipeline must fail immediately if there are style violations, preventing bad code from proceeding to tests.
+- [ ] **Type Checking / Static Analysis:** If the language supports it (e.g., TypeScript, Python with mypy, Go), run static analysis as a parallel job before or alongside testing.
+- [ ] **Test Execution:** Execute the project's testing suites (unit, integration, e2e) as defined in the configuration file.
+- [ ] **Artifact Generation:** (Optional) If it is a release branch, the pipeline should compile/zip the application using rules defined in the run script and attach it as a release artifact.
 
 ---
 
-## 3. Dynamic Script Architecture (`run.ps1` & `run.config.json`)
+## 3. Dynamic Script Architecture (e.g., `run.ps1` & `run.config.json`)
 
-Currently, `run.ps1` contains hardcoded ports (`5173`, `8787`) and explicit command arrays (`uv run`, `bun run dev`). The architecture MUST be upgraded so that **the JSON configuration dictates the script behavior.**
+To prevent hardcoded commands and ports, the execution architecture MUST be dynamic. The local run script (e.g., `run.ps1` or `run.sh`) must act as a generic orchestrator, while a **JSON configuration file** serves as the single source of truth for both local development and CI execution.
 
-### Expected `run.config.json` Structure
-The JSON file should be the single source of truth for both local development and CI execution.
+### Expected Configuration Structure (Reference: `run.config.json`)
+The JSON file should define all services, ports, and lifecycle commands.
 
 ```json
 {
-  "projectName": "Control Automation",
-  "feDir": ".",
-  "beDir": "BE",
-  "fePort": 5173,
-  "bePort": 8787,
-  "host": "127.0.0.1",
-  "pythonVenv": ".venv",
-  "commands": {
-    "feInstall": "bun install",
-    "feDev": "bun run dev --port {fePort}",
-    "feBuild": "bun run build",
-    "feTest": "bunx vitest run",
-    "feTypecheck": "bunx tsc --noEmit",
-    "beInstall": "uv sync",
-    "beDev": "uv run uvicorn BE.main:app --host {host} --port {bePort}",
-    "beTest": "uv run pytest"
+  "projectName": "Generic Project Name",
+  "frontend": {
+    "dir": "path/to/frontend",
+    "port": 3000
   },
-  "shell": {
-    "enabled": true,
-    "paths": [
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
-    ]
+  "backend": {
+    "dir": "path/to/backend",
+    "port": 8080
+  },
+  "host": "127.0.0.1",
+  "commands": {
+    "install": "package-manager install",
+    "dev:frontend": "command to start frontend dev server --port {fePort}",
+    "dev:backend": "command to start backend server --port {bePort}",
+    "build:frontend": "command to build frontend",
+    "test:frontend": "command to run frontend tests",
+    "test:backend": "command to run backend tests",
+    "lint": "command to run linter"
   }
 }
 ```
 
-### Expected `run.ps1` Implementation Rules
+### Expected Run Script Implementation Rules (Reference: `run.ps1` / `run.sh`)
 
-When modifying `run.ps1`, any AI must adhere to the following logic:
+When writing or modifying the orchestration scripts, any AI must adhere to the following logic:
 
 1. **Parse Configuration First:**
-   ```powershell
-   $config = Get-Content -Raw -Path "run.config.json" | ConvertFrom-Json
-   $bePort = $config.bePort
-   $fePort = $config.fePort
-   ```
+   The script must read the configuration file (e.g., `run.config.json`) into memory and extract variables (ports, directories, commands).
 2. **Dynamic Command Injection:**
-   Never hardcode `"bun run dev"`. Instead, read `$config.commands.feDev` and substitute placeholders dynamically.
-   ```powershell
-   $feCmd = $config.commands.feDev.Replace("{fePort}", $fePort.ToString())
-   ```
+   Never hardcode commands (e.g., `npm run dev`). Instead, read the command string from the JSON and dynamically substitute any necessary placeholders (like `{fePort}`).
 3. **Graceful Error Handling & Waiting:**
-   Use the existing `Wait-For-Http` logic to ensure dependencies (like the backend) are fully online before the frontend starts, parsing the health endpoint `http://localhost:$bePort/healthz` from the config.
+   When orchestrating multiple services, the script must wait for dependencies to become healthy before proceeding. Use generic HTTP or TCP polling mechanisms to ensure a backend is fully online before a frontend attempts to connect to it.
 4. **CI Mode Toggle:**
-   The script must accept a `-CI` flag. If `-CI` is passed:
-   - Do NOT launch the Chromium shell.
-   - Run `$config.commands.feBuild` instead of `feDev`.
-   - Run `$config.commands.feTest` and `$config.commands.beTest`.
-   - Exit with code `1` if any step fails.
+   The script must accept a `-CI` (or `--ci`) flag. When running in CI mode:
+   - Skip launching local browsers or interactive shells.
+   - Run the build, lint, and test commands from the JSON instead of the dev server commands.
+   - Exit with code `1` immediately if any step fails.
 5. **Process Cleanup (Trap/Finally):**
-   Ensure all spawned processes (Node, UV/Python) are captured in a job array and aggressively killed in the `finally {}` block. There should be no zombie processes left blocking ports.
+   Ensure all spawned processes are captured in a job/PID array. The script must aggressively kill these processes in the `finally {}` or `trap` block on exit. There should be no zombie processes left blocking ports.
