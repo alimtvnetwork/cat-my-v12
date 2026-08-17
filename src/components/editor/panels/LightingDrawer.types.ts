@@ -5,6 +5,7 @@ export interface LightingState {
   programPreset: string; // LC-06: named preset id, "" = custom
   isFlashlight1On: boolean;
   isFlashlight2On: boolean;
+  lightCorrection: number;
 }
 
 export interface LightingCapabilities {
@@ -14,6 +15,7 @@ export interface LightingCapabilities {
   programPresets: readonly string[];
   hasFlashlight1: boolean;
   hasFlashlight2: boolean;
+  hasLightCorrection: boolean;
 }
 
 export interface LightingDrawerProps {
@@ -29,4 +31,5 @@ export const RANGES = {
   exposureMs: { min: 0.1, max: 100, step: 0.1 },
   gainDb: { min: 0, max: 24, step: 0.5 },
   whiteBalanceK: { min: 2500, max: 10000, step: 50 },
+  lightCorrection: { min: 0, max: 100, step: 1 },
 } as const;

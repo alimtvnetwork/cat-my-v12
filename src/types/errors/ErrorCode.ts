@@ -5,6 +5,7 @@ export enum ErrorCodeType {
   RuleValidate = "RuleValidate",
   DndOutOfBounds = "DndOutOfBounds",
   DiagnosticsRead = "DiagnosticsRead",
+  HardwareLighting = "E_HW_LIGHTING",
   Unknown = "Unknown",
 }
 
@@ -13,6 +14,7 @@ export const ERROR_CODE_LABEL: Readonly<Record<ErrorCodeType, string>> = Object.
   [ErrorCodeType.RuleValidate]: "Rule Validation Error",
   [ErrorCodeType.DndOutOfBounds]: "Drag Out Of Bounds",
   [ErrorCodeType.DiagnosticsRead]: "Diagnostics Read Error",
+  [ErrorCodeType.HardwareLighting]: "Hardware Lighting Error",
   [ErrorCodeType.Unknown]: "Unknown Error",
 });
 
@@ -28,6 +30,9 @@ export namespace ErrorCodeType {
   }
   export function isDiagnosticsRead(val: string | null | undefined): boolean {
     return val === ErrorCodeType.DiagnosticsRead;
+  }
+  export function isHardwareLighting(val: string | null | undefined): boolean {
+    return val === ErrorCodeType.HardwareLighting;
   }
   export function isUnknown(val: string | null | undefined): boolean {
     return val === ErrorCodeType.Unknown;

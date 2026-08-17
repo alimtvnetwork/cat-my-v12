@@ -41,3 +41,17 @@ async def get_camera_status(cameraId: str):
         message="Hardware camera connected"
     )
     return success(status.model_dump(), requested_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+class LightingRequest(BaseModel):
+    exposureMs: Optional[float] = None
+    gainDb: Optional[float] = None
+    whiteBalanceK: Optional[float] = None
+    programPreset: Optional[str] = None
+    isFlashlight1On: Optional[bool] = None
+    isFlashlight2On: Optional[bool] = None
+    lightCorrection: Optional[int] = None
+
+@router.put("/lighting", response_model=Envelope)
+async def update_lighting(req: LightingRequest):
+    return success(req.model_dump(), requested_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+

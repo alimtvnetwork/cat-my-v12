@@ -58,6 +58,15 @@ export function LightingDrawer(props: LightingDrawerProps) {
 
         <HardwareLighting value={value} capabilities={capabilities} onChange={onChange} />
 
+        {capabilities.hasLightCorrection && (
+          <LightingSlider
+            label="Light correction"
+            value={value.lightCorrection}
+            {...RANGES.lightCorrection}
+            onChange={(v) => onChange({ lightCorrection: v })}
+          />
+        )}
+
         <label className="flex flex-col gap-1 text-sm text-ca-ink mt-1">
           <span>Program preset</span>
           <select

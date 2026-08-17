@@ -12,3 +12,4 @@ export { PatternEdgePanel } from "./PatternEdgePanel";
 export type { PatternEdgePanelProps } from "./PatternEdgePanel";
 export { ControllerPanel } from "./resolver";
 export type { ControllerPanelProps } from "./resolver";
+export { ColorPalettePanel } from "./ColorPalettePanel";

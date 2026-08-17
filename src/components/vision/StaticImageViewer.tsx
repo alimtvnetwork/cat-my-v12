@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { getReferenceImage, subscribe } from "@/lib/stores/reference-image-store";
 import { useImageCoordinateMapping } from "@/hooks/useImageCoordinateMapping";
 import { RoiBadge } from "./RoiBadge";
+import { useLightingStore } from "@/lib/lighting/store";
 
 export function StaticImageViewer() {
   const [imgUrl, setImgUrl] = useState<string>("/assets/placeholder-pcb.jpg");
@@ -9,6 +10,8 @@ export function StaticImageViewer() {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const geometry = useImageCoordinateMapping(containerRef, imageRef);
+  const exposure = useLightingStore((s) => s.exposure);
+  const brightness = 1 + (exposure / 100);
 
   useEffect(() => {
     const stored = getReferenceImage();
@@ -34,6 +37,7 @@ export function StaticImageViewer() {
         src={imgUrl}
         alt="Static Reference"
         className="max-h-full max-w-full object-contain pointer-events-none"
+        style={{ filter: `brightness(${brightness})` }}
       />
       {geometry && (
         <div
