@@ -6,6 +6,7 @@ import { useLightingStore } from "@/lib/lighting/store";
 
 export function StaticImageViewer() {
   const [imgUrl, setImgUrl] = useState<string>("/assets/placeholder-pcb.jpg");
+  const [isLoaded, setIsLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -20,6 +21,7 @@ export function StaticImageViewer() {
     }
     
     const unsub = subscribe((val) => {
+      setIsLoaded(false);
       if (val) {
         setImgUrl(val);
       } else {
@@ -32,12 +34,17 @@ export function StaticImageViewer() {
 
   return (
     <div ref={containerRef} className="relative h-full w-full flex items-center justify-center bg-ca-panel/50 overflow-hidden">
+      {/* Shimmer skeleton while image loads (Task 255) */}
+      {!isLoaded && (
+        <div className="absolute inset-0 animate-pulse bg-ca-panel-2" aria-hidden="true" />
+      )}
       <img
         ref={imageRef}
         src={imgUrl}
         alt="Static Reference"
-        className="max-h-full max-w-full object-contain pointer-events-none"
+        className={`max-h-full max-w-full object-contain pointer-events-none transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         style={{ filter: `brightness(${brightness})` }}
+        onLoad={() => setIsLoaded(true)}
       />
       {geometry && (
         <div
