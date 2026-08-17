@@ -9,6 +9,7 @@ import { CaptureTriggerButton } from "@/components/vision/CaptureTriggerButton";
 import { ImageHistoryRail } from "@/components/vision/ImageHistoryRail";
 import { useVisionStore } from "@/lib/vision/store";
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
+import { ScoreResultBadge } from "@/components/vision/ScoreResultBadge";
 
 interface Props {
   project: Project;
@@ -37,6 +38,7 @@ export function ProjectEditorMainCanvas({ project, summary, selectedSampleName }
         <div className="flex-1 min-h-0 relative">
           <MainVisionCanvas />
         </div>
+        <ScoreResultBadge confidence={98.5} />
         {/* History Rail (Step 63) */}
         <div className="shrink-0 h-[120px] bg-ca-panel-2 border-t border-ca-border">
           <ImageHistoryRail />

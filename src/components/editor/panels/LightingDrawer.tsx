@@ -7,83 +7,32 @@
 // this panel is a pure presentational + prop-driven slider set.
 
 import { useId } from "react";
-
-export interface LightingState {
-  exposureMs: number; // LC-01: 0.1..100
-  gainDb: number; // LC-02: 0..24
-  whiteBalanceK: number; // LC-03: 2500..10000
-  programPreset: string; // LC-06: named preset id, "" = custom
-}
-
-export interface LightingCapabilities {
-  exposure: boolean;
-  gain: boolean;
-  whiteBalance: boolean;
-  programPresets: readonly string[];
-}
-
-export interface LightingDrawerProps {
-  open: boolean;
-  onToggle: () => void;
-  value: LightingState;
-  capabilities: LightingCapabilities;
-  onChange: (patch: Partial<LightingState>) => void;
-  onApply: (value: LightingState) => void; // LC-07 apply, emits I_CAM_LIGHTING_APPLIED
-  onSavePreset: (name: string) => void; // LC-12 preset persistence
-  disabled?: boolean; // LC-09 unavailable camera
-}
-
-const RANGES = {
-  exposureMs: { min: 0.1, max: 100, step: 0.1 },
-  gainDb: { min: 0, max: 24, step: 0.5 },
-  whiteBalanceK: { min: 2500, max: 10000, step: 50 },
-} as const;
+import { LightingSlider } from "./LightingSlider";
+import { HardwareLighting } from "./HardwareLighting";
+import {
+  type LightingState,
+  type LightingCapabilities,
+  type LightingDrawerProps,
+  RANGES,
+} from "./LightingDrawer.types";
 
 export function LightingDrawer(props: LightingDrawerProps) {
-  const { open, onToggle, value, capabilities, onChange, onApply, onSavePreset, disabled } = props;
+  const { value, capabilities, onChange, onApply, onSavePreset, disabled } = props;
   const rootId = useId();
 
-  if (!open) {
-    return (
-      <aside
-        aria-label="Lighting drawer, collapsed"
-        className="flex h-full w-8 flex-col items-center border-r border-ca-border bg-ca-panel-2"
-      >
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={false}
-          aria-controls={rootId}
-          className="mt-hmi-2 px-hmi-1 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-        >
-          &gt;
-        </button>
-      </aside>
-    );
-  }
-
   return (
-    <aside
+    <div
       id={rootId}
-      aria-label="Lighting drawer"
-      className="flex h-full w-80 flex-col gap-hmi-3 border-r border-ca-border bg-ca-panel-2 p-hmi-3"
+      aria-label="Lighting controls"
+      className="flex flex-col gap-2 border-b border-ca-border bg-ca-panel p-2"
     >
-      <header className="flex items-center justify-between">
-        <h2 className="text-hmi-heading text-ca-ink">Lighting</h2>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={true}
-          aria-controls={rootId}
-          className="px-hmi-1 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-        >
-          &lt;
-        </button>
+      <header className="flex items-center justify-between pb-1 border-b border-ca-border">
+        <h3 className="font-semibold text-sm text-ca-ink">Lighting</h3>
       </header>
 
-      <fieldset disabled={disabled} className="flex flex-col gap-hmi-3">
+      <fieldset disabled={disabled} className="flex flex-col gap-2 mt-1">
         {capabilities.exposure && (
-          <Slider
+          <LightingSlider
             label="Exposure (ms)"
             value={value.exposureMs}
             {...RANGES.exposureMs}
@@ -91,7 +40,7 @@ export function LightingDrawer(props: LightingDrawerProps) {
           />
         )}
         {capabilities.gain && (
-          <Slider
+          <LightingSlider
             label="Gain (dB)"
             value={value.gainDb}
             {...RANGES.gainDb}
@@ -99,7 +48,7 @@ export function LightingDrawer(props: LightingDrawerProps) {
           />
         )}
         {capabilities.whiteBalance && (
-          <Slider
+          <LightingSlider
             label="White balance (K)"
             value={value.whiteBalanceK}
             {...RANGES.whiteBalanceK}
@@ -107,12 +56,14 @@ export function LightingDrawer(props: LightingDrawerProps) {
           />
         )}
 
-        <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+        <HardwareLighting value={value} capabilities={capabilities} onChange={onChange} />
+
+        <label className="flex flex-col gap-1 text-sm text-ca-ink mt-1">
           <span>Program preset</span>
           <select
             value={value.programPreset}
             onChange={(e) => onChange({ programPreset: e.target.value })}
-            className="border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-ca-ink"
+            className="border border-ca-border bg-ca-bg px-2 py-1 text-ca-ink rounded"
           >
             <option value="">(custom)</option>
             {capabilities.programPresets.map((p) => (
@@ -123,52 +74,25 @@ export function LightingDrawer(props: LightingDrawerProps) {
           </select>
         </label>
 
-        <div className="flex gap-hmi-2">
+        <div className="flex gap-2 mt-1">
           <button
             type="button"
             onClick={() => onApply(value)}
-            className="flex-1 border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel-2"
+            className="flex-1 border border-ca-border bg-gray-200 px-2 py-1 text-sm text-ca-ink hover:bg-gray-300 rounded shadow-sm"
           >
             Apply
           </button>
           <button
             type="button"
             onClick={() => onSavePreset(value.programPreset || "custom")}
-            className="flex-1 border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel-2"
+            className="flex-1 border border-ca-border bg-gray-200 px-2 py-1 text-sm text-ca-ink hover:bg-gray-300 rounded shadow-sm"
           >
             Save preset
           </button>
         </div>
       </fieldset>
-    </aside>
+    </div>
   );
 }
 
-interface SliderProps {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-}
 
-function Slider({ label, value, min, max, step, onChange }: SliderProps) {
-  return (
-    <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-      <span className="flex items-center justify-between">
-        <span>{label}</span>
-        <span className="tabular-nums text-ca-ink-muted">{value}</span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-ca-accent"
-      />
-    </label>
-  );
-}

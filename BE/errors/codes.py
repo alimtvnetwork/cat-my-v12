@@ -90,6 +90,7 @@ class ErrorCode(str, Enum):
     # `LatencyMs` exceeds the budget, the engine converts the judgment into
     # an Error carrying `ReasonCode=RuleTimeout` + `ErrorCode=E_RULE_TIMEOUT`.
     E_RULE_TIMEOUT = "E_RULE_TIMEOUT"
+    E_SCORE_TIMEOUT = "E_SCORE_TIMEOUT"
     # Tolerance resolver (Plan 90 Step 89, spec 21-app/34 §7 + 40 §A.7).
     # UNRESOLVED: no profile in resolution chain, OR ReasonCode carries
     #   `ToleranceInvalid`/`ToleranceCrossTask` for §7 sub-cases that all
@@ -173,6 +174,7 @@ _STATUS: dict[ErrorCode, HTTPStatus] = {
     # Rule evaluation runtime failure (kernel-side).
     ErrorCode.E_RULE_EVAL_FAILED: HTTPStatus.UNPROCESSABLE_ENTITY,
     ErrorCode.E_RULE_TIMEOUT: HTTPStatus.UNPROCESSABLE_ENTITY,
+    ErrorCode.E_SCORE_TIMEOUT: HTTPStatus.GATEWAY_TIMEOUT,
     # Tolerance resolver (Plan 90 Step 89): both are load-time bundle
     # rejections per spec 34 §7, so map to 422 like bundle-invalid.
     ErrorCode.E_TOLERANCE_UNRESOLVED: HTTPStatus.UNPROCESSABLE_ENTITY,

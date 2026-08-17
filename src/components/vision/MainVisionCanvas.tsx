@@ -21,7 +21,16 @@ export function MainVisionCanvas() {
     <div className="relative flex flex-col flex-1 w-full h-full min-h-[400px] bg-ca-panel rounded-md border border-ca-border overflow-hidden">
       <ZoomableCanvas>
         <div className="relative flex items-center justify-center w-full h-full min-h-[400px]">
-          {mode === ImageSourceModeType.STATIC ? (
+          {mode === ImageSourceModeType.SPLIT ? (
+            <div className="flex flex-row w-full h-full divide-x divide-ca-border">
+              <div className="flex-1 relative">
+                <StaticImageViewer />
+              </div>
+              <div className="flex-1 relative">
+                <LiveCameraViewer isConnected={isConnected} />
+              </div>
+            </div>
+          ) : mode === ImageSourceModeType.STATIC ? (
             <StaticImageViewer />
           ) : (
             <LiveCameraViewer isConnected={isConnected} />

@@ -1,5 +1,5 @@
 export { LightingDrawer } from "./LightingDrawer";
-export type { LightingCapabilities, LightingDrawerProps, LightingState } from "./LightingDrawer";
+export type { LightingCapabilities, LightingDrawerProps, LightingState } from "./LightingDrawer.types";
 export { ReferenceAssetPanel } from "./ReferenceAssetPanel";
 export type { ReferenceAssetPanelProps } from "./ReferenceAssetPanel";
 export { NumberPanel } from "./NumberPanel";
