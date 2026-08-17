@@ -12,6 +12,10 @@ class ReferenceImage(BaseModel):
     url: str
     width: Optional[int] = None
     height: Optional[int] = None
+    # Judgment fields (Task 239)
+    is_pass: Optional[bool] = None
+    confidence: Optional[float] = None
+    is_golden: bool = False
 
 class SetReferenceRequest(BaseModel):
     projectId: int
@@ -67,3 +71,30 @@ async def set_reference_image(req: SetReferenceRequest):
         return failure(code="E_DB_ERROR", message="Failed to set reference image", requested_at=requested_at, http_status=500)
         
     return success([], requested_at=requested_at)
+
+
+@router.put("/{image_id}/golden", response_model=Envelope)
+async def mark_image_golden(image_id: int):
+    """Mark an image as the golden baseline (Task 242).
+
+    Golden images are protected from the cleanup job (Task 244) so they
+    are never deleted by retention policies.
+    """
+    requested_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    conn = get_task_conn()
+    cur = conn.safe_execute(
+        """
+        UPDATE ImageHistory
+        SET IsGolden = 1, GoldenSetAt = unixepoch()
+        WHERE ImageId = ?
+        """,
+        (image_id,)
+    )
+    if cur.isFail:
+        return failure(
+            code="E_DB_ERROR",
+            message="Failed to mark image as golden",
+            requested_at=requested_at,
+            http_status=500
+        )
+    return success({"imageId": image_id, "is_golden": True}, requested_at=requested_at)
