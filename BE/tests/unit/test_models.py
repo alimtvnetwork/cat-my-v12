@@ -1,7 +1,7 @@
 import pytest
-from BE.src.models.envelope import Envelope
-from BE.src.models.system import SystemStatus
-from BE.src.models.camera import CameraModel
+from BE.envelope import Envelope
+from BE.models.system import SystemStatus
+from BE.models.camera import CameraModel
 
 def test_envelope_ok():
     env = Envelope.ok(data={"foo": "bar"})

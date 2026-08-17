@@ -16,7 +16,7 @@ import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from BE.src.api.router import api_router
+from BE.routes import system as system_route
 
 from BE.config import Settings, get_settings
 from BE.errors.handlers import register_exception_handlers
@@ -75,7 +75,7 @@ def _register_middlewares(app: FastAPI, cfg: Settings) -> None:
 
 
 def _register_routers(app: FastAPI) -> None:
-    app.include_router(api_router)
+    app.include_router(system_route.router)
     app.include_router(health_route.router)
     app.include_router(meta_route.router)
     app.include_router(rules_route.router)

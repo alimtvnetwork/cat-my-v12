@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 class SystemStatus(BaseModel):
-    uptime: int
+    uptime: float
     version: str
     status: str
