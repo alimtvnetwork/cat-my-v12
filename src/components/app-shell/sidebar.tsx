@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
+import { AppRouteType } from "@/lib/routing/routes";
 import { Link } from "@tanstack/react-router";
 import {
   Sheet,
@@ -13,15 +14,15 @@ import {
 type NavLink = { to: string; label: string };
 
 const LINKS: readonly NavLink[] = [
-  { to: "/setup", label: "Setup" },
-  { to: "/setup/roi", label: "ROI" },
-  { to: "/setup/reference", label: "Reference" },
-  { to: "/settings/camera", label: "Camera" },
-  { to: "/settings/trigger", label: "Trigger" },
-  { to: "/settings/lighting", label: "Lighting" },
-  { to: "/run", label: "Run" },
-  { to: "/results", label: "Results" },
-  { to: "/errors", label: "NG" },
+  { to: AppRouteType.Setup, label: "Setup" },
+  { to: AppRouteType.SetupRoi, label: "ROI" },
+  { to: AppRouteType.SetupReference, label: "Reference" },
+  { to: AppRouteType.SettingsCamera, label: "Camera" },
+  { to: AppRouteType.SettingsTrigger, label: "Trigger" },
+  { to: AppRouteType.SettingsLighting, label: "Lighting" },
+  { to: AppRouteType.Run, label: "Run" },
+  { to: AppRouteType.Results, label: "Results" },
+  { to: AppRouteType.Errors, label: "NG" },
 ] as const;
 
 function renderLink(link: NavLink, onClose: () => void) {
