@@ -48,6 +48,7 @@ auto-reject on the same tier as RULE 0.
 6. Never use `flag`, `bool`, `check`, or bare adjectives as boolean names. `enabled` alone is not allowed, use `isEnabled`.
 7. No boolean flag parameters on functions. Split into two named functions instead. `render(true)` is wrong, `renderExpanded()` and `renderCollapsed()` are right.
 8. Booleans that come back from questions to the user or from external systems get normalized to the same prefix rules at the boundary, never leak the raw name into internal code.
+9. **Strict Non-Nullability:** Never use `boolean | null` or `boolean | undefined` in TypeScript. Avoid optional booleans (`?: boolean`) where possible. Always default to `false` instead of `null`. In the database, boolean columns must be `BOOLEAN NOT NULL DEFAULT FALSE`.
 
 ---
 

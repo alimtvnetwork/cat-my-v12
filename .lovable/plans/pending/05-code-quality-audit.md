@@ -27,5 +27,10 @@ Audit the entire codebase for specific coding guideline violations based on rece
   - Identify React components exceeding 150-200 lines.
   - Extract logical sub-sections into smaller, dedicated components in the same file or a sibling file.
 
+- [ ] **Task 5: Non-Nullable Booleans Audit**
+  - Search the codebase for `?: boolean` and `: boolean | null`.
+  - Replace them with `: boolean` and provide default `false` values instead of relying on `null` or `undefined`.
+  - Review database schemas/migrations to ensure `BOOLEAN` columns are `NOT NULL DEFAULT FALSE`.
+
 ## Execution Notes
 Future agents picking up this plan should use `grep_search` to find violations and `multi_replace_file_content` to batch fix them.
