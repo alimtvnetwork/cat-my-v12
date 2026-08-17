@@ -1,3 +1,5 @@
+import { isAppError } from "../errors/AppError";
+
 export enum LogLevelType {
   Info = 'Info',
   Warn = 'Warn',
@@ -37,8 +39,32 @@ export class ClientLogger {
     console.warn(JSON.stringify(payload));
   }
 
-  static error(message: string, context?: ClientLoggerContext): void {
-    const payload = ClientLogger.formatLog(LogLevelType.Error, message, context);
-    console.error(JSON.stringify(payload));
+  static error(message: string, errorOrContext?: unknown): void {
+    let finalContext: ClientLoggerContext | undefined = undefined;
+
+    if (isAppError(errorOrContext)) {
+      finalContext = {
+        Code: errorOrContext.code,
+        Name: errorOrContext.name,
+        Message: errorOrContext.message,
+        Cause: errorOrContext.cause,
+      };
+    } else if (errorOrContext instanceof Error) {
+      finalContext = {
+        Name: errorOrContext.name,
+        Message: errorOrContext.message,
+        Stack: errorOrContext.stack,
+      };
+    } else if (errorOrContext !== undefined && errorOrContext !== null) {
+      finalContext = typeof errorOrContext === 'object' ? errorOrContext as ClientLoggerContext : { data: errorOrContext };
+    }
+
+    const payload = ClientLogger.formatLog(LogLevelType.Error, message, finalContext);
+    
+    if (errorOrContext instanceof Error) {
+      console.error(JSON.stringify(payload), errorOrContext);
+    } else {
+      console.error(JSON.stringify(payload));
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import React from "react";
 import { SegmentSelector } from "./SegmentSelector";
 import { CameraSettingsForm } from "./CameraSettingsForm";
@@ -27,7 +28,7 @@ export function RecipeEditor() {
         visionSettings: s.visionSettings,
       })),
     };
-    console.log("Saving recipe envelope...", JSON.stringify(payload, null, 2));
+    ClientLogger.info("Saving recipe envelope...", JSON.stringify(payload, null, 2));
     alert("Recipe saved to console.");
   };
 

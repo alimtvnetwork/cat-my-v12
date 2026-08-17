@@ -1,3 +1,4 @@
+import { ClientLogger } from "@/lib/observability/client-logger";
 import { useState } from "react";
 import { Lock, Unlock, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export function ImageHistoryRail() {
   const handleSetReference = (img: HistoryImage) => {
     if (locked) return;
     // Set as Reference in store or facade
-    console.log("Setting reference to", img.id);
+    ClientLogger.info("Setting reference to", img.id);
   };
 
   return (
