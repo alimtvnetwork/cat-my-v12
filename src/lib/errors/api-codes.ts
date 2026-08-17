@@ -70,4 +70,18 @@ export const API_CODE_REGISTRY: Record<string, ErrorCodeMeta> = {
     notification: "toast",
     retryable: true,
   },
+  E_HW_LIGHTING: {
+    code: "E_HW_LIGHTING",
+    label: "Hardware Lighting Fault",
+    category: ErrorCategoryType.Worker,
+    notification: "toast",
+    retryable: true,
+  },
+  E_SCORE_TIMEOUT: {
+    code: "E_SCORE_TIMEOUT",
+    label: "Score Request Timed Out",
+    category: ErrorCategoryType.Worker,
+    notification: "toast",
+    retryable: true,
+  },
 };

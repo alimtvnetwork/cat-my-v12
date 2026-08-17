@@ -14,6 +14,18 @@ declare module "@tanstack/react-query" {
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: (failureCount, error) => {
+          const status = (error as { status?: number })?.status;
+          if (status !== undefined && status >= 400 && status < 500) {
+            return false;
+          }
+          return failureCount < 2;
+        },
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+      },
+    },
     queryCache: new QueryCache({
       onError: (error, query) => {
         if (query.meta?.hasVisibility === false) return;
