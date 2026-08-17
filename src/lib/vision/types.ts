@@ -13,6 +13,9 @@ export interface HandlerSettings {
   };
 }
 
+import { TriggerModeType } from "./TriggerModeType";
+import { PolarityType } from "./PolarityType";
+
 export interface VisionSettings {
   id: string;
   name: string;
@@ -22,7 +25,7 @@ export interface VisionSettings {
   roi?: RoiSettings;
 }
 
-export type TriggerMode = "INTERNAL" | "EXTERNAL";
+
 
 export interface ShapeTrax3Settings {
   enabled: boolean;
@@ -34,7 +37,7 @@ export interface ShapeTrax3Settings {
 export interface PatternConfig {
   enabled: boolean;
   edgeStrength: number;
-  polarity: "ANY" | "DARK_TO_LIGHT" | "LIGHT_TO_DARK";
+  polarity: PolarityType;
   inverseLogic: boolean;
 }
 

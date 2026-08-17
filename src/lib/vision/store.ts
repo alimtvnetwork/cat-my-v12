@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type {
   VisionSettings,
-  TriggerMode,
   RoiSettings,
   CameraSettings,
   RecipeSegment,
@@ -14,14 +13,13 @@ import type {
 } from "./types";
 
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
-
-export type DrawingTool = "none" | "roi" | "pattern_edge" | "shape_track";
+import { DrawingToolType } from "./DrawingToolType";
 
 interface VisionState {
   imageSourceMode: ImageSourceModeType;
   setImageSourceMode: (mode: ImageSourceModeType) => void;
-  drawingTool: DrawingTool;
-  setDrawingTool: (tool: DrawingTool) => void;
+  drawingTool: DrawingToolType;
+  setDrawingTool: (tool: DrawingToolType) => void;
   isCapturing: boolean;
   setIsCapturing: (val: boolean) => void;
   segments: RecipeSegment[];
@@ -108,7 +106,7 @@ const mockSegments: RecipeSegment[] = [
 export const useVisionStore = create<VisionState>((set) => ({
   imageSourceMode: ImageSourceModeType.STATIC,
   setImageSourceMode: (mode) => set({ imageSourceMode: mode }),
-  drawingTool: "none",
+  drawingTool: DrawingToolType.None,
   setDrawingTool: (tool) => set({ drawingTool: tool }),
   isCapturing: false,
   setIsCapturing: (val) => set({ isCapturing: val }),

@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import { isValidBackendPrefix } from "./validate";
 
-export type BackendModeType = "seed" | "backend";
+import { BackendModeType } from "./BackendModeType";
 
 export interface BackendModeState {
   mode: BackendModeType;
