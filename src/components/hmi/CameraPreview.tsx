@@ -351,6 +351,8 @@ export function CameraPreview({ storageKey, heading, onControlsChange }: Props) 
   );
 }
 
+import { Slider as TokenSlider } from "@/components/ui/slider";
+
 type SliderProps = {
   label: string;
   min: number;
@@ -363,20 +365,20 @@ type SliderProps = {
 
 function Slider({ label, min, max, step, value, format, onChange }: SliderProps) {
   return (
-    <label className="flex flex-col gap-hmi-1">
+    <label className="flex flex-col gap-hmi-2">
       <span className="flex justify-between text-hmi-body text-ca-ink">
         <span>{label}</span>
         <span className="font-hmi-mono text-ca-ink-muted">{format(value)}</span>
       </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-ca-primary"
-      />
+      <div className="h-6 flex items-center">
+        <TokenSlider
+          min={min}
+          max={max}
+          step={step}
+          value={[value]}
+          onValueChange={(vals) => onChange(vals[0])}
+        />
+      </div>
     </label>
   );
 }

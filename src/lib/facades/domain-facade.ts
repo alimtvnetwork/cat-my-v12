@@ -36,6 +36,8 @@ export interface VisionFacade {
   getCameraStatus(cameraId: string): Promise<CameraStatusResponse>;
   getReference(projectId: string): Promise<ReferenceImage | undefined>;
   setReference(projectId: string, imageId: string): Promise<void>;
+  updateTriggerMode(cameraId: string, mode: string): Promise<void>;
+  updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void>;
 }
 
 /** Every domain row MUST carry a stable id (SS-08 prefixed). */

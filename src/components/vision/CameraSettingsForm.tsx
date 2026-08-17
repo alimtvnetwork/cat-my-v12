@@ -3,6 +3,9 @@ import { useVisionStore } from "../../lib/vision/store";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { TriggerModeSelector } from "./TriggerModeSelector";
+import { visionFacade } from "@/lib/facades/vision-facade";
 
 export function CameraSettingsForm() {
   const { segments, activeSegmentId, setCameraSettings } = useVisionStore();
@@ -22,6 +25,7 @@ export function CameraSettingsForm() {
     activeSegment.visionSettings?.camera || {
       lighting: 0,
       exposure: 0,
+      gain: 0,
       focus: 0,
       triggerMode: "Internal",
       triggerDelay: 0,
@@ -39,134 +43,153 @@ export function CameraSettingsForm() {
     }
   };
 
+  const handleSettingCommit = async (key: string, value: number) => {
+    if (key === "exposure" || key === "gain") {
+      try {
+        const cameraId = activeSegment.visionSettings?.cameraId || "default-camera";
+        await visionFacade.updateCameraSetting(cameraId, key, value);
+      } catch (err) {
+        console.warn(`Failed to commit camera setting ${key}:`, err);
+      }
+    }
+  };
+
   return (
     <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Camera Settings</h3>
-      <div className="space-y-4 mb-6">
-        <div>
-          <Label className="block mb-2">Trigger Mode</Label>
-          <div className="flex p-1 space-x-1 bg-gray-100/80 rounded-lg w-fit border border-gray-200/50">
-            <button
-              type="button"
-              onClick={() => handleStringChange("triggerMode", "Internal")}
-              className={`min-h-[40px] px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                cameraSettings.triggerMode === "Internal" || !cameraSettings.triggerMode
-                  ? "bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              Internal
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStringChange("triggerMode", "External")}
-              className={`min-h-[40px] px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                cameraSettings.triggerMode === "External"
-                  ? "bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200/50"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              External
-            </button>
-          </div>
-        </div>
-        {cameraSettings.triggerMode === "External" && (
-          <div className="flex gap-4">
-            <div>
-              <Label className="block mb-1">Trigger Source</Label>
-              <select
-                className="w-32 min-h-[40px] px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value={cameraSettings.triggerSource || "Line 1"}
-                onChange={(e) => handleStringChange("triggerSource", e.target.value)}
-              >
-                <option value="Line 1">Line 1</option>
-                <option value="Line 2">Line 2</option>
-                <option value="Line 3">Line 3</option>
-              </select>
-            </div>
-            <div>
-              <Label className="block mb-1">Trigger Delay (ms)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={cameraSettings.triggerDelay || 0}
-                onChange={(e) => handleChange("triggerDelay", Number(e.target.value))}
-                className="w-32 min-h-[40px]"
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Camera Settings</h3>
+      
+      <Accordion type="single" collapsible defaultValue="basics" className="w-full">
+        
+        <AccordionItem value="trigger">
+          <AccordionTrigger>Trigger</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4 space-y-4">
+            <TriggerModeSelector />
+            
+            {cameraSettings.triggerMode === "Hardware" && (
+              <div className="flex gap-4">
+                <div>
+                  <Label className="block mb-1">Trigger Source</Label>
+                  <select
+                    className="w-32 min-h-[40px] px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    value={cameraSettings.triggerSource || "Line 1"}
+                    onChange={(e) => handleStringChange("triggerSource", e.target.value)}
+                  >
+                    <option value="Line 1">Line 1</option>
+                    <option value="Line 2">Line 2</option>
+                    <option value="Line 3">Line 3</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="block mb-1">Trigger Delay (ms)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={cameraSettings.triggerDelay || 0}
+                    onChange={(e) => handleChange("triggerDelay", Number(e.target.value))}
+                    className="w-32 min-h-[40px]"
+                  />
+                </div>
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-      <div className="bg-gray-50 p-5 rounded-lg border border-gray-100">
-        <h4 className="text-sm font-semibold text-gray-800 uppercase tracking-wider mb-5">
-          Camera Basics
-        </h4>
-        <div className="space-y-6">
-          <div>
-            <Label className="block mb-2">Lighting</Label>
-            <div className="flex items-center space-x-4">
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={[cameraSettings.lighting]}
-                onValueChange={(vals) => handleChange("lighting", vals[0])}
-                className="flex-1"
-              />
-              <Input
-                type="number"
-                value={cameraSettings.lighting}
-                onChange={(e) => handleChange("lighting", Number(e.target.value))}
-                className="w-20 min-h-[40px]"
-              />
+        <AccordionItem value="basics">
+          <AccordionTrigger>Camera Basics</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4 space-y-6">
+            <div>
+              <Label className="block mb-2">Lighting</Label>
+              <div className="flex items-center space-x-4">
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[cameraSettings.lighting || 0]}
+                  onValueChange={(vals) => handleChange("lighting", vals[0])}
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  value={cameraSettings.lighting || 0}
+                  onChange={(e) => handleChange("lighting", Number(e.target.value))}
+                  className="w-20 min-h-[40px]"
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <Label className="block mb-2">Exposure</Label>
-            <div className="flex items-center space-x-4">
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={[cameraSettings.exposure]}
-                onValueChange={(vals) => handleChange("exposure", vals[0])}
-                className="flex-1"
-              />
-              <Input
-                type="number"
-                value={cameraSettings.exposure}
-                onChange={(e) => handleChange("exposure", Number(e.target.value))}
-                className="w-20 min-h-[40px]"
-              />
+            <div>
+              <Label className="block mb-2">Exposure</Label>
+              <div className="flex items-center space-x-4">
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[cameraSettings.exposure || 0]}
+                  onValueChange={(vals) => handleChange("exposure", vals[0])}
+                  onValueCommit={(vals) => handleSettingCommit("exposure", vals[0])}
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  value={cameraSettings.exposure || 0}
+                  onChange={(e) => {
+                    handleChange("exposure", Number(e.target.value));
+                    handleSettingCommit("exposure", Number(e.target.value));
+                  }}
+                  className="w-20 min-h-[40px]"
+                />
+              </div>
             </div>
-          </div>
-          <div className="pt-6 mt-4 border-t border-gray-100">
-            <h4 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">
-              Optics
-            </h4>
-            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200/60 shadow-sm transition-all hover:shadow-md">
+            <div>
+              <Label className="block mb-2">Gain</Label>
+              <div className="flex items-center space-x-4">
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[cameraSettings.gain || 0]}
+                  onValueChange={(vals) => handleChange("gain", vals[0])}
+                  onValueCommit={(vals) => handleSettingCommit("gain", vals[0])}
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  value={cameraSettings.gain || 0}
+                  onChange={(e) => {
+                    handleChange("gain", Number(e.target.value));
+                    handleSettingCommit("gain", Number(e.target.value));
+                  }}
+                  className="w-20 min-h-[40px]"
+                />
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="optics">
+          <AccordionTrigger>Optics</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <div>
               <Label className="block mb-3">Manual Focus</Label>
               <div className="flex items-center gap-5">
                 <Slider
                   min={0}
                   max={100}
                   step={1}
-                  value={[cameraSettings.focus]}
+                  value={[cameraSettings.focus || 0]}
                   onValueChange={(vals) => handleChange("focus", vals[0])}
                   className="flex-1"
                 />
                 <Input
                   type="number"
-                  value={cameraSettings.focus}
+                  value={cameraSettings.focus || 0}
                   onChange={(e) => handleChange("focus", Number(e.target.value))}
                   className="w-24 min-h-[40px]"
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

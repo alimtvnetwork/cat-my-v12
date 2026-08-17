@@ -32,6 +32,14 @@ class MockVisionFacade implements VisionFacade {
   async setReference(projectId: string, imageId: string): Promise<void> {
     // Mock no-op for seed mode parity
   }
+
+  async updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void> {
+    // Mock no-op for seed mode parity
+  }
+
+  async updateTriggerMode(cameraId: string, mode: string): Promise<void> {
+    // Mock no-op for seed mode parity
+  }
 }
 
 class ApiVisionFacade implements VisionFacade {
@@ -66,6 +74,20 @@ class ApiVisionFacade implements VisionFacade {
     await fetchBackend<void>(`images/reference`, {
       method: "PUT",
       body: JSON.stringify({ projectId, imageId })
+    });
+  }
+
+  async updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void> {
+    await fetchBackend<void>(`camera/settings`, {
+      method: "PUT",
+      body: JSON.stringify({ cameraId, key, value })
+    });
+  }
+
+  async updateTriggerMode(cameraId: string, mode: string): Promise<void> {
+    await fetchBackend<void>(`camera/settings`, {
+      method: "PUT",
+      body: JSON.stringify({ cameraId, triggerMode: mode })
     });
   }
 }
