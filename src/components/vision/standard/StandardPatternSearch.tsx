@@ -9,9 +9,11 @@ import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 export function StandardPatternSearch({
   settings,
   onChange,
+  onEvaluate,
 }: {
   settings: PatternSearchSettings;
   onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onEvaluate?: () => void;
 }) {
   const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
 
@@ -30,7 +32,7 @@ export function StandardPatternSearch({
             <StandardToolPanel settings={settings} setSettings={onChange} />
           </div>
         </div>
-        <StandardActionBar />
+        <StandardActionBar onEvaluate={onEvaluate} />
       </div>
     </div>
   );

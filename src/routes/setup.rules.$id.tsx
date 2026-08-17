@@ -19,7 +19,9 @@ import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
 import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
-import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
+import { createDefaultPatternSearchSettings, PatternSearchSettings } from "@/domain/vision/pattern-search";
+import { AppError } from "@/lib/errors/AppError";
+import { scoreRulesRemote } from "@/lib/editor/validation.functions";
 
 export const Route = createFileRoute("/setup/rules/$id")({
   staticData: { crumb: "Rule editor" },
@@ -38,7 +40,7 @@ export const Route = createFileRoute("/setup/rules/$id")({
 
 function RuleEditorRoute() {
   const { id } = Route.useParams();
-  const { byId } = useRulesLibrary();
+  const { byId, save } = useRulesLibrary();
   const navigate = useNavigate();
   // Accept both integer aliases (canonical URL form) and legacy raw ids.
   const resolvedId = /^\d+$/.test(id) ? (fromIntId(Number(id)) ?? id) : id;
@@ -57,16 +59,87 @@ function RuleEditorRoute() {
 
   const { mode } = useUiMode();
   
-  // Provide dummy state for settings since the parent needs to own it
-  const [settings, setSettings] = React.useState(createDefaultPatternSearchSettings("T106"));
+  const [settings, setSettings] = React.useState<PatternSearchSettings>(() => {
+    return (rule?.conditions?.[0] as unknown as PatternSearchSettings) || createDefaultPatternSearchSettings(rule?.id || "T106");
+  });
+
+  const [validationError, setValidationError] = React.useState<string | null>(null);
+
+  const isFirstRender = React.useRef(true);
+  
+  React.useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!rule || rule.isCategory) return;
+    
+    setValidationError(null);
+    const timeout = setTimeout(() => {
+      save({
+        ...rule,
+        conditions: [settings as unknown as any],
+      }).catch((err: unknown) => {
+        if (err instanceof Error && err.name === "RuleValidationError") {
+           setValidationError(err.message);
+        } else if (err instanceof AppError || (err instanceof Error && (err as any).name === "AppError")) {
+           setValidationError(err.message);
+        } else {
+           setValidationError(String(err));
+        }
+      });
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [settings, rule, save]);
+
+  const onEvaluate = React.useCallback(async () => {
+    if (!rule) return;
+    setValidationError(null);
+    try {
+      const res = await scoreRulesRemote({
+        data: {
+          imageDataUrl: "data:image/jpeg;base64,", // Stub
+          imageName: "reference.jpg",
+          imageWidth: 1920,
+          imageHeight: 1080,
+          rules: [{
+            id: rule.id,
+            kind: "C",
+            name: rule.name,
+            x: settings.searchRegion?.geometry?.x ?? 0,
+            y: settings.searchRegion?.geometry?.y ?? 0,
+            width: settings.searchRegion?.geometry?.width ?? 100,
+            height: settings.searchRegion?.geometry?.height ?? 100,
+            params: {}
+          }]
+        }
+      });
+      console.log("Evaluate result:", res);
+      if (res.ok === false) {
+        setValidationError(res.error.message);
+      }
+    } catch (err: unknown) {
+      if (err instanceof AppError || (err instanceof Error && (err as any).name === "AppError")) {
+         setValidationError((err as Error).message);
+      } else {
+         setValidationError(String(err));
+      }
+    }
+  }, [rule, settings]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
       <SectionTopBar section={SectionIdType.Home} active="setup" />
+      {validationError && (
+        <div className="bg-red-100 text-red-900 px-4 py-2 text-sm border-b border-red-200">
+          Error: {validationError}
+        </div>
+      )}
       {rule && !rule.isCategory ? (
         <div className="flex flex-1 flex-col min-h-0">
           {mode === UiModeType.Standard ? (
-            <StandardPatternSearch settings={settings} onChange={setSettings} />
+            <StandardPatternSearch settings={settings} onChange={setSettings} onEvaluate={onEvaluate} />
           ) : (
             <ModernPatternSearch settings={settings} onChange={setSettings} />
           )}

@@ -13,6 +13,7 @@ import { ToolsPalette } from "./tools/ToolsPalette";
 import { type ToolId } from "./tools/toolTooltipMap";
 import { PropertiesPalette } from "./PropertiesPalette";
 import { LayersPalette } from "./LayersPalette";
+import { RuleChainSidebar } from "./RuleChainSidebar";
 import { RuleEditorToolbar } from "./RuleEditorToolbar";
 import { createRuleController } from "@/lib/editor/controller/RuleController";
 import { useEditorShortcuts } from "@/lib/editor/keyboard/shortcuts";
@@ -76,6 +77,7 @@ export function RuleEditor({ rule }: Props) {
         <div className="min-h-0 flex-1">
           <PropertiesPalette ruleKind={paletteKind} />
         </div>
+        <RuleChainSidebar rule={rule} />
         <LayersPalette rule={rule} />
       </div>
     </div>

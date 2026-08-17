@@ -110,13 +110,13 @@ export const Route = createFileRoute("/setup/rules")({
   component: SetupRulesPage,
 });
 
-function newRuleId(): RuleId {
+function newRuleId(isCategory?: boolean): RuleId {
   const raw =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2, 10);
 
-  return `rule-${raw}` as RuleId;
+  return (isCategory ? `cat-${raw}` : `rule-${raw}`) as RuleId;
 }
 
 function nowIso(): string {
@@ -408,9 +408,9 @@ function SetupRulesPage() {
     setCreating(true);
     const dupSource = dialog?.mode === "duplicate" ? dialog.source : null;
     const draft: Rule = {
-      id: newRuleId(),
+      id: newRuleId(payload.isCategory),
       name: payload.name,
-      isCategory: false,
+      isCategory: payload.isCategory,
       // Plan 83 backlog item 12: preserve the source rule's chain and
       // conditions on duplicate so the copy is a working starting point
       // instead of an empty shell. `appliesBefore` is deliberately kept
@@ -426,7 +426,11 @@ function SetupRulesPage() {
       const saved = await save(draft);
       toast.success(dupSource ? `Rule duplicated: ${saved.name}` : `Rule created: ${saved.name}`);
       const id = String(toIntId(String(saved.id)));
-      void navigate({ to: "/setup/rules/$id", params: { id } });
+      if (saved.isCategory) {
+        void navigate({ to: "/setup/categories/$id", params: { id } });
+      } else {
+        void navigate({ to: "/setup/rules/$id", params: { id } });
+      }
     } catch (err) {
       reportFacadeError(`${dupSource ? "duplicate" : "create"}-rule`, err);
 
@@ -703,7 +707,7 @@ function SetupRulesPage() {
         onSubmit={submitCreate}
         existingNames={all.map((r) => r.name)}
         initialKind={RuleCreateDialogInitialKindType.Rule}
-        kindMode={RuleCreateDialogKindModeType.Rule}
+        kindMode={RuleCreateDialogKindModeType.Both}
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
         sourceConditions={dialog?.mode === "duplicate" ? dialog.source.conditions : undefined}
       />

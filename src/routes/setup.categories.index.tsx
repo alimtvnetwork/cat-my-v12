@@ -29,6 +29,7 @@ import { RuleCreateDialog, type RuleCreateSubmit } from "@/components/rules/Rule
 import { RulePreviewThumbnail } from "@/components/rules/RulePreviewThumbnail";
 import { showToastError } from "@/lib/errors/notify";
 import { UNCATEGORIZED_RULE_ID, type Rule, type RuleId } from "@/lib/rules/model";
+import { toIntId } from "@/lib/rules/rule-id-alias";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 
 export enum SortKindType {
@@ -58,13 +59,13 @@ export const Route = createFileRoute("/setup/categories/")({
   component: SetupCategoriesPage,
 });
 
-function newCategoryId(): RuleId {
+function newCategoryId(isCategory?: boolean): RuleId {
   const raw =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : Math.random().toString(36).slice(2, 10);
 
-  return `cat-${raw}` as RuleId;
+  return (isCategory === false ? `rule-${raw}` : `cat-${raw}`) as RuleId;
 }
 
 function nowIso(): string {
@@ -106,9 +107,9 @@ function SetupCategoriesPage(): ReactElement {
     setCreating(true);
     const source = dialog?.mode === "duplicate" ? dialog.source : null;
     const draft: Rule = {
-      id: newCategoryId(),
+      id: newCategoryId(payload.isCategory),
       name: payload.name,
-      isCategory: true,
+      isCategory: payload.isCategory,
       notes: source?.notes,
       appliesBefore: source ? [...source.appliesBefore] : [],
       conditions: [],
@@ -120,7 +121,11 @@ function SetupCategoriesPage(): ReactElement {
       toast.success(
         source ? `Category duplicated: ${saved.name}` : `Category created: ${saved.name}`,
       );
-      void navigate({ to: "/setup/categories/$id", params: { id: String(saved.id) } });
+      if (saved.isCategory) {
+        void navigate({ to: "/setup/categories/$id", params: { id: String(saved.id) } });
+      } else {
+        void navigate({ to: "/setup/rules/$id", params: { id: String(toIntId(String(saved.id))) } });
+      }
     } catch (err) {
       reportCategoryError(source ? "duplicate-category" : "create-category", err);
 
@@ -276,7 +281,7 @@ function SetupCategoriesPage(): ReactElement {
         onSubmit={submitCreate}
         existingNames={all.map((r) => r.name)}
         initialKind={RuleCreateDialogInitialKindType.Category}
-        kindMode={RuleCreateDialogKindModeType.Category}
+        kindMode={RuleCreateDialogKindModeType.Both}
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
       />
     </div>

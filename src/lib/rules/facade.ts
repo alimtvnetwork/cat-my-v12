@@ -26,6 +26,7 @@ import {
   type RuleId,
 } from "./model";
 import { makeProjectRepositoryFacade, type ProjectRepositoryFacade } from "@/lib/projects/facade";
+import { computeEffectiveChain } from "@/lib/projects/chain";
 import { parseFacadeRows, serializeFacadeRows, type AsyncCrudFacade } from "@/lib/facade/contracts";
 import { seedIntIds } from "./rule-id-alias";
 
@@ -36,34 +37,7 @@ function newCorrelationId(): string {
   return Math.random().toString(36).slice(2, 10).padEnd(8, "0");
 }
 
-function detectCycle(
-  startId: RuleId,
-  appliesBefore: RuleId[],
-  resolve: (id: RuleId) => Rule | undefined,
-): RuleId[] | null {
-  // DFS from each dep. If we revisit startId, that's the cycle path.
-  const stack: Array<{ id: RuleId; path: RuleId[] }> = appliesBefore.map((d) => ({
-    id: d,
-    path: [startId, d],
-  }));
-  const visited = new Set<RuleId>();
-  while (stack.length > 0) {
-    const { id, path } = stack.pop()!;
 
-    if (id === startId) return path;
-
-    if (visited.has(id)) continue;
-    visited.add(id);
-    const node = resolve(id);
-
-    if (!node) continue;
-    for (const dep of node.appliesBefore) {
-      stack.push({ id: dep, path: [...path, dep] });
-    }
-  }
-
-  return null;
-}
 
 // Structurally identical to AsyncCrudFacade; declared explicitly so a
 // future change to the base contract is caught here at compile time.
@@ -130,11 +104,11 @@ class IndexedDbRuleFacade implements RuleFacade {
 
     const clean = parsed.data;
     // Cycle check: simulate the post-save graph.
-    const resolve = (id: RuleId): Rule | undefined => (id === clean.id ? clean : this.map.get(id));
-    const cyclePath = detectCycle(clean.id, clean.appliesBefore, resolve);
+    const resolve = (id: RuleId): Rule | null => (id === clean.id ? clean : this.map.get(id) ?? null);
+    const result = computeEffectiveChain([clean.id], resolve);
 
-    if (cyclePath) {
-      throw new RuleCycleError(cyclePath, newCorrelationId());
+    if (result.cycle) {
+      throw new RuleCycleError(result.cycle, newCorrelationId());
     }
 
     this.map.set(clean.id, clean);
