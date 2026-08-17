@@ -14,19 +14,19 @@ export function ImageSourceToggle() {
       onValueChange={(val) => {
         if (val) setMode(val as ImageSourceModeType);
       }}
-      className="bg-ca-panel border-ca-border h-10 w-fit rounded-md border p-1"
+      className="bg-ca-panel border-ca-border w-fit rounded-md border"
     >
       <ToggleGroupItem
         value={ImageSourceModeType.STATIC}
         aria-label="Static Image Mode"
-        className="h-8 w-10 px-0"
+        className="h-10 w-10 px-0 rounded-none first:rounded-l-md"
       >
         <ImageIcon className="h-4 w-4" />
       </ToggleGroupItem>
       <ToggleGroupItem
         value={ImageSourceModeType.LIVE}
         aria-label="Live Camera Mode"
-        className="h-8 w-10 px-0"
+        className="h-10 w-10 px-0 rounded-none last:rounded-r-md"
       >
         <VideoIcon className="h-4 w-4" />
       </ToggleGroupItem>
