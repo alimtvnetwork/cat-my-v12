@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 // Mock the active profile so we always get "seed" mode in tests
 vi.mock("@/lib/facades/vision-facade", async () => {
   const actual = await vi.importActual<typeof import("@/lib/facades/vision-facade")>(
-    "@/lib/facades/vision-facade"
+    "@/lib/facades/vision-facade",
   );
   return {
     ...actual,

@@ -20,8 +20,8 @@ test.describe("Lighting Controls", () => {
     }
 
     // Expect the PUT /lighting request to have been made
-    const request = await page.waitForRequest((req) =>
-      req.url().includes("/api/lighting") && req.method() === "PUT"
+    const request = await page.waitForRequest(
+      (req) => req.url().includes("/api/lighting") && req.method() === "PUT",
     );
     expect(request).toBeTruthy();
   });
@@ -29,9 +29,7 @@ test.describe("Lighting Controls", () => {
   test("flashlight toggles fire facade calls", async ({ page }) => {
     const fl1 = page.locator("[data-testid='flashlight-1-toggle']");
     await fl1.click();
-    const req = await page.waitForRequest((r) =>
-      r.url().includes("/api/lighting")
-    );
+    const req = await page.waitForRequest((r) => r.url().includes("/api/lighting"));
     expect(req).toBeTruthy();
   });
 });

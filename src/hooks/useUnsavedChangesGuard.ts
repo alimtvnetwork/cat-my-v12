@@ -11,9 +11,7 @@ export function useUnsavedChangesGuard() {
     if (!hasDraft) {
       return true;
     }
-    return window.confirm(
-      "You have unsaved changes. Are you sure you want to leave?"
-    );
+    return window.confirm("You have unsaved changes. Are you sure you want to leave?");
   }
 
   return { checkUnsavedChanges, hasDraft };
