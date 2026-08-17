@@ -18,6 +18,8 @@ import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 interface VisionState {
   imageSourceMode: ImageSourceModeType;
   setImageSourceMode: (mode: ImageSourceModeType) => void;
+  isCapturing: boolean;
+  setIsCapturing: (val: boolean) => void;
   segments: RecipeSegment[];
   activeSegmentId: string | null;
   setActiveSegmentId: (id: string | null) => void;
@@ -102,6 +104,8 @@ const mockSegments: RecipeSegment[] = [
 export const useVisionStore = create<VisionState>((set) => ({
   imageSourceMode: ImageSourceModeType.STATIC,
   setImageSourceMode: (mode) => set({ imageSourceMode: mode }),
+  isCapturing: false,
+  setIsCapturing: (val) => set({ isCapturing: val }),
   segments: mockSegments,
   activeSegmentId: null,
   setActiveSegmentId: (id) => set({ activeSegmentId: id }),

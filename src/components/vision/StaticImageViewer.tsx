@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getReferenceImage } from "@/lib/stores/reference-image-store";
+import { getReferenceImage, subscribe } from "@/lib/stores/reference-image-store";
 
 export function StaticImageViewer() {
   const [imgUrl, setImgUrl] = useState<string>("/assets/placeholder-pcb.jpg");
@@ -9,6 +9,16 @@ export function StaticImageViewer() {
     if (stored) {
       setImgUrl(stored);
     }
+    
+    const unsub = subscribe((val) => {
+      if (val) {
+        setImgUrl(val);
+      } else {
+        setImgUrl("/assets/placeholder-pcb.jpg");
+      }
+    });
+
+    return unsub;
   }, []);
 
   return (

@@ -1,30 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showToastError } from "@/lib/errors/notify";
+import { useVisionStore } from "@/lib/vision/store";
+import { visionFacade } from "@/lib/facades/vision-facade";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
 export function CaptureTriggerButton() {
-  const [isCapturing, setIsCapturing] = useState(false);
+  const isCapturing = useVisionStore((s) => s.isCapturing);
+  const setIsCapturing = useVisionStore((s) => s.setIsCapturing);
 
   const handleCapture = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
     try {
-      // Mock API call since facade methods are added in phase 4
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() > 0.8) {
-            reject(new Error("Mock camera failure"));
-          } else {
-            resolve(true);
-          }
-        }, 1000);
-      });
+      await visionFacade.captureImage("default-camera");
       // Handle success (e.g. save to store)
     } catch (err: unknown) {
-      showToastError(err instanceof Error ? err.message : "Capture failed", "Capture Failed");
+      showToastError("Capture Failed", err, { source: "CaptureTriggerButton" });
     } finally {
       setIsCapturing(false);
     }
