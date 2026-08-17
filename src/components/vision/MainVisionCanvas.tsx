@@ -12,13 +12,13 @@ import { Loader2 } from "lucide-react";
 export function MainVisionCanvas() {
   const mode = useVisionStore((s) => s.imageSourceMode);
   const isCapturing = useVisionStore((s) => s.isCapturing);
-  // Mock connection status
-  const [isConnected, setIsConnected] = useState(true);
+  // Mock connection status for now to show Empty State UI
+  const [isConnected, setIsConnected] = useState(false);
 
   return (
-    <div className="relative w-full h-full flex flex-col flex-1 min-h-[400px] bg-ca-panel rounded-md border border-ca-border overflow-hidden">
+    <div className="relative flex flex-col flex-1 w-full h-full min-h-[400px] bg-ca-panel rounded-md border border-ca-border overflow-hidden">
       <ZoomableCanvas>
-        <div className="relative w-full h-full min-h-[400px]">
+        <div className="relative flex items-center justify-center w-full h-full min-h-[400px]">
           {mode === ImageSourceModeType.STATIC ? (
             <StaticImageViewer />
           ) : (
