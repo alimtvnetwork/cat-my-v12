@@ -19,6 +19,9 @@ import {
 import { snapRect } from "@/lib/editor/snap";
 import { computeGroupMoveAlignment, mergeGuides, type AlignGuide } from "@/lib/editor/align";
 import { AlignmentGuides } from "./AlignmentGuides";
+import { CanvasBaseLayer } from "./CanvasBaseLayer";
+import { CanvasRoiLayer } from "./CanvasRoiLayer";
+import { CanvasResultLayer } from "./CanvasResultLayer";
 import {
   DEFAULT_ALIGN_TOLERANCE_PX,
   MAX_ALIGN_TOLERANCE_PX,
@@ -254,6 +257,7 @@ export function CanvasViewport({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [focusSettingsOpen, setFocusSettingsOpen] = useState<boolean>(false);
+  const [showResults, setShowResults] = useState<boolean>(true);
 
   // Persist spotlight prefs across sessions.
   useEffect(() => {
@@ -698,9 +702,8 @@ export function CanvasViewport({
         Inspection canvas. Arrow keys pan the view. Plus and minus keys zoom in and out. Escape
         cancels the current drawing gesture. Right click a shape for more actions.
       </span>
-      <canvas
+      <CanvasBaseLayer
         ref={ref}
-        className="h-full w-full touch-none bg-ca-viewport focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
         role="application"
         aria-label="Inspection canvas"
         aria-describedby="canvas-instructions"
@@ -712,40 +715,44 @@ export function CanvasViewport({
         onDragOver={handleCanvasDragOver}
         onDrop={handleCanvasDrop}
       />
-      <SelectionOverlay
-        rules={rules}
-        selectedIds={selectedIds}
-        viewport={viewport}
-        canvasSize={canvasSize}
-        contextMenu={contextMenu}
-        onCloseContextMenu={() => setContextMenu(null)}
-        onResize={(id, rect) => {
-          if (moveRef.current) moveRef.current(id, rect, IMAGE_BOUNDS);
-        }}
-        onAction={(id, action, payload) => {
-          if (onRuleAction) onRuleAction(id, action, payload);
-        }}
-        onChangeKind={(id, kind) => {
-          if (onChangeRuleKind) onChangeRuleKind(id, kind);
-        }}
-        onSetColor={onSetRuleColor ? (id, color) => onSetRuleColor(id, color) : undefined}
-        onRotate={onRotateRule ? (id, deg) => onRotateRule(id, deg) : undefined}
-      />
-      <AlignmentGuides guides={groupAlignGuides} viewport={viewport} canvasSize={canvasSize} />
-      <ValidationHighlightOverlay rules={rules} viewport={viewport} canvasSize={canvasSize} />
-      {marqueeRect !== null ? (
-        <div
-          data-testid="canvas-marquee"
-          aria-hidden="true"
-          className="pointer-events-none absolute rounded-[2px] border border-dashed border-ca-focus bg-ca-focus/10"
-          style={{
-            left: viewport.panX + marqueeRect.x * viewport.zoom,
-            top: viewport.panY + marqueeRect.y * viewport.zoom,
-            width: Math.max(1, marqueeRect.width * viewport.zoom),
-            height: Math.max(1, marqueeRect.height * viewport.zoom),
+      <CanvasRoiLayer>
+        <SelectionOverlay
+          rules={rules}
+          selectedIds={selectedIds}
+          viewport={viewport}
+          canvasSize={canvasSize}
+          contextMenu={contextMenu}
+          onCloseContextMenu={() => setContextMenu(null)}
+          onResize={(id, rect) => {
+            if (moveRef.current) moveRef.current(id, rect, IMAGE_BOUNDS);
           }}
+          onAction={(id, action, payload) => {
+            if (onRuleAction) onRuleAction(id, action, payload);
+          }}
+          onChangeKind={(id, kind) => {
+            if (onChangeRuleKind) onChangeRuleKind(id, kind);
+          }}
+          onSetColor={onSetRuleColor ? (id, color) => onSetRuleColor(id, color) : undefined}
+          onRotate={onRotateRule ? (id, deg) => onRotateRule(id, deg) : undefined}
         />
-      ) : null}
+        <AlignmentGuides guides={groupAlignGuides} viewport={viewport} canvasSize={canvasSize} />
+        {marqueeRect !== null ? (
+          <div
+            data-testid="canvas-marquee"
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-[2px] border border-dashed border-ca-focus bg-ca-focus/10"
+            style={{
+              left: viewport.panX + marqueeRect.x * viewport.zoom,
+              top: viewport.panY + marqueeRect.y * viewport.zoom,
+              width: Math.max(1, marqueeRect.width * viewport.zoom),
+              height: Math.max(1, marqueeRect.height * viewport.zoom),
+            }}
+          />
+        ) : null}
+      </CanvasRoiLayer>
+      <CanvasResultLayer visible={showResults}>
+        <ValidationHighlightOverlay rules={rules} viewport={viewport} canvasSize={canvasSize} />
+      </CanvasResultLayer>
       <div className="editor-canvas-hud" aria-live="polite">
         <span>{editorKindLabel(activeKind)}</span>
         <span className="editor-canvas-hud-secondary">Selected {selectedIds.length}</span>
@@ -1016,6 +1023,15 @@ export function CanvasViewport({
           title="Show rule thresholds (min/max radius, edge, similarity)"
         >
           {showThresholds ? "T on" : "T off"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowResults((v) => !v)}
+          className="editor-canvas-zoom-btn"
+          aria-pressed={showResults}
+          title={showResults ? "Hide Results (PASS/FAIL)" : "Show Results (PASS/FAIL)"}
+        >
+          {showResults ? "👁️ On" : "👁️ Off"}
         </button>
         {focusSettingsOpen ? (
           <div className="editor-canvas-focus-popover" role="dialog" aria-label="Focus settings">
