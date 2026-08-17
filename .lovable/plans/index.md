@@ -4,14 +4,13 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
-- 08 - vision-system-v2 - pending - see `pending/08-vision-system-v2.md`
-- 09 - vision-standard-ui-tasks - pending - see `pending/09-vision-standard-ui-tasks.md`
-- 99 - full-architecture-remediation - pending - 2026-08-17 - see `pending/99-full-architecture-remediation.md`
-- 29 - denial-burst-threshold-tuning - pending - see `completed/29-denial-burst-threshold-tuning.md`
-- 35 - ui-ux-photoshop-layers-overhaul - pending - see `completed/35-ui-ux-photoshop-layers-overhaul.md`
-- 36 - ui-app-shell-and-src-v3-port - pending - see `completed/36-ui-app-shell-and-src-v3-port.md`
-- 40 - tools-images-spec-docs - pending - see `completed/40-tools-images-spec-docs.md`
-- 41 - keyboard-dnd-and-code-quality-pass - completed - see `completed/41-keyboard-dnd-and-code-quality-pass.md`
+- 01 - pattern-search-spec - pending - see `pending/01-pattern-search-spec.md`
+- 03 - vision-standard-ui-part1 - pending - see `pending/03-vision-standard-ui-part1.md`
+- 04 - vision-standard-ui-part2 - pending - see `pending/04-vision-standard-ui-part2.md`
+- 05 - vision-standard-ui-part3 - pending - see `pending/05-vision-standard-ui-part3.md`
+- 06 - vision-system-v2 - pending - see `pending/06-vision-system-v2.md`
+- 07 - vision-standard-ui-tasks - pending - see `pending/07-vision-standard-ui-tasks.md`
+- 08 - full-architecture-remediation - pending - 2026-08-17 - see `pending/08-full-architecture-remediation.md`
 - 44 - plan43-execution-slice-1 - pending - see `completed/44-plan43-execution-slice-1.md`
 - 49 - plan29-threshold-derivation - pending - see `completed/49-plan29-threshold-derivation.md`
 - 50 - plan29-rollout-and-observability - pending - see `completed/50-plan29-rollout-and-observability.md`
@@ -34,6 +33,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Completed
 
+- 02 - ui-fixes - completed - see `completed/02-ui-fixes.md`
 - 98 - architecture-consolidation-improvements - completed - see `completed/98-architecture-consolidation-improvements.md` (observations: `architecture-and-code-observations.md`)
 - 46, 70-78, 84, 86, 87 - see `completed/` directory listing.
 - 97 - vision-system-plan - completed - see `completed/97-vision-system-plan.md`

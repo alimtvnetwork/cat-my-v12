@@ -58,7 +58,41 @@ export const getCliSession = createServerFn({ method: "GET" })
     const url = `${beBaseUrl()}/api/cli/sessions/${encodeURIComponent(data.runId)}${
       qs.size ? `?${qs}` : ""
     }`;
-    const env = await beFetch<CliSessionDetail>(url);
+    let env;
+    try {
+      env = await beFetch<CliSessionDetail>(url, {}, { suppressCapture: true });
+    } catch (err) {
+      const isEnvelope =
+        err instanceof Error && (err.name === "EnvelopeError" || "responseStatus" in err);
+      const envErr = err as any;
+
+      if (
+        isEnvelope &&
+        (envErr.responseStatus === 404 ||
+          envErr.responseStatus === 403 ||
+          envErr.code === "E_BE_UNAVAILABLE" ||
+          envErr.code === "E_BE_BAD_RESPONSE")
+      ) {
+        return {
+          Summary: {
+            Source: "unknown",
+            Date: new Date().toISOString(),
+            StartedAt: new Date().toISOString(),
+            Pid: 0,
+            Subcmd: "unknown",
+            LogPath: "",
+            RunId: data.runId,
+            SizeBytes: 0,
+          },
+          Records: [],
+          TailLines: 0,
+          Requested: data.tail ?? 0,
+          DroppedInvalid: 0,
+        };
+      }
+
+      throw err;
+    }
     const payload = env.Results[0];
 
     if (payload === undefined) {

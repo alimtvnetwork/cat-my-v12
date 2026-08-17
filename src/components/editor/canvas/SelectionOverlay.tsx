@@ -1724,10 +1724,15 @@ export function SelectionOverlay({
 
             if (rows.length === 0) return null;
             // Anchor to the right of the shape; clamp inside the canvas.
-            const hudW = 340;
+            const baseHudW = 340;
             const hasPresets = getPresetsForKind(rule.kind).length > 0;
             // Precision-matte HUD: header 44 + presets/snap section ~76 + rows ~30 each + footer 24
-            const hudH = 44 + 76 + rows.length * 30 + 24 + (hasPresets ? 8 : 0);
+            const baseHudH = 44 + 76 + rows.length * 30 + 24 + (hasPresets ? 8 : 0);
+            
+            // Constrain dimensions to the viewport so the HUD never overflows and drag clamping works
+            const hudW = Math.min(baseHudW, Math.max(200, canvasSize.width - 16));
+            const hudH = Math.min(baseHudH, Math.max(200, canvasSize.height - 16));
+            
             let left: number;
             let top: number;
 
@@ -1775,7 +1780,7 @@ export function SelectionOverlay({
             return (
               <div
                 className="motion-panel-in pointer-events-auto absolute z-40 flex flex-col overflow-y-auto overflow-x-hidden rounded-xl border border-ca-border bg-ca-panel-2/95 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
-                style={{ left, top, width: hudW, maxHeight: Math.max(200, canvasSize.height - 16) }}
+                style={{ left, top, width: hudW, maxHeight: hudH }}
                 role="group"
                 aria-label={`Quick properties for ${rule.name}`}
                 data-testid="rule-quick-props"

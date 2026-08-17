@@ -26,6 +26,7 @@ import { KeyboardModeIndicator } from "@/components/hmi/KeyboardModeIndicator";
 import { AddressBar } from "@/components/shell/AddressBar";
 import { Search as SearchIcon } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 export function HeaderBrand() {
   return (
@@ -60,10 +61,14 @@ export interface HeaderCrumbsProps {
 }
 
 export function HeaderCrumbs({ showBreadcrumb, program }: HeaderCrumbsProps) {
+  const density = useUiPrefsStore((s) => s.headerDensity);
+
   if (showBreadcrumb) {
     return (
       <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-        <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />
+        {density !== "compact" && (
+          <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />
+        )}
         <AddressBar />
       </div>
     );
@@ -71,7 +76,7 @@ export function HeaderCrumbs({ showBreadcrumb, program }: HeaderCrumbsProps) {
 
   return (
     <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-      {program ? (
+      {program && density !== "compact" ? (
         <span className="block truncate text-hmi-caption font-semibold text-ca-ink-muted">
           {program}
         </span>
