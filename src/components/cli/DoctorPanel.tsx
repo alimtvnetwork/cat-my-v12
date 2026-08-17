@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 
 const DOCTOR_QUERY_KEY = ["cli", "doctor"] as const;
 
-export function DoctorPanel() {
+export function DoctorPanel(): React.JSX.Element | null {
   const qc = useQueryClient();
   const [report, setReport] = useState<DoctorReport | null>(null);
   const [error, setError] = useState<string | null>(null);

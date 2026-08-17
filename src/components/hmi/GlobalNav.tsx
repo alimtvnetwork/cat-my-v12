@@ -16,7 +16,7 @@ const LINKS = [
   { to: "/errors", label: "NG", lockDuringRun: false },
 ] as const;
 
-export function GlobalNav() {
+export function GlobalNav(): React.JSX.Element | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const running = useRunStore((s) => RunStatusType.isRunning(s.status));
 

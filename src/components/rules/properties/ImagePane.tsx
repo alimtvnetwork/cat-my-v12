@@ -15,7 +15,7 @@ const CHANNELS: ReadonlyArray<{ id: ImageChannel; label: string; stroke: string 
   { id: ImageChannelType.A, label: "A", stroke: "var(--ca-ink-muted)" },
 ];
 
-export function ImagePane() {
+export function ImagePane(): React.JSX.Element | null {
   const [rotate, setRotate] = useState(0);
   const [mirrorX, setMirrorX] = useState(false);
   const [mirrorY, setMirrorY] = useState(false);

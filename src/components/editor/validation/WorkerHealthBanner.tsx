@@ -32,7 +32,7 @@ export function WorkerHealthBanner({
   pollMs = 30_000,
   compact = false,
   testId = "worker-health-banner",
-}: Props) {
+}: Props): React.JSX.Element | null {
   const health = useWorkerHealthStore((s) => s.health);
   const loading = useWorkerHealthStore((s) => s.loading);
   const refresh = useWorkerHealthStore((s) => s.refresh);

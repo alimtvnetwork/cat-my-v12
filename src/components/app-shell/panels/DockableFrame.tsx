@@ -110,7 +110,7 @@ export function DockableFrame({
   className,
   children,
   hideWhenHidden = true,
-}: DockableFrameProps) {
+}: DockableFrameProps): React.JSX.Element | null {
   const def = getPanel(panelId);
   const controls = usePanelControls(panelId);
   const { mode } = controls;

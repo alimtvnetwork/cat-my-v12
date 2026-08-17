@@ -8,7 +8,7 @@ export function RunErrorDrawer({
 }: {
   error: RunError | null;
   onClose: () => void;
-}) {
+}): React.JSX.Element | null {
   const closeRef = useRef<HTMLButtonElement>(null);
   const isFail = error !== null;
 

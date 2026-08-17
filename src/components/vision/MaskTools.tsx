@@ -7,7 +7,7 @@ import type { Mask } from "../../lib/vision/types";
 import { ShapeType } from "../../domain/vision/shapes";
 import { MaskShapes } from "../../domain/vision/pattern-search";
 
-export function MaskTools() {
+export function MaskTools(): React.JSX.Element | null {
   const { segments, activeSegmentId, addMask, removeMask } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

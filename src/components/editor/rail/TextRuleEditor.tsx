@@ -23,7 +23,7 @@ const FLAG_OPTIONS: TextFlagOption[] = [
   { value: "u", label: "u", hint: "Unicode mode" },
 ];
 
-export function TextRuleEditor({ rule, onChange }: TextRuleEditorProps) {
+export function TextRuleEditor({ rule, onChange }: TextRuleEditorProps): React.JSX.Element | null {
   if (RuleKindType.isSlot(rule.kind) === false) return null;
   const p = rule.params ?? {};
   const pattern = String(p.pattern ?? "");

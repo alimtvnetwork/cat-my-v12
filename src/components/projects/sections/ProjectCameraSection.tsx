@@ -7,7 +7,7 @@ import { useProjectStore } from "@/lib/projects/store";
 import { useCameraLibrary } from "@/lib/camera/useCameraLibrary";
 import { SaveCameraSetupModal } from "@/features/projects/modals/SaveCameraSetupModal";
 
-export function ProjectCameraSection({ project }: { project: Project }) {
+export function ProjectCameraSection({ project }: { project: Project }): React.JSX.Element | null {
   const { all } = useCameraLibrary();
   const setProjectCamera = useProjectStore((s) => s.setProjectCamera);
   const [error, setError] = useState<string | null>(null);

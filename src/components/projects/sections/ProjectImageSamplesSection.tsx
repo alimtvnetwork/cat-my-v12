@@ -40,7 +40,7 @@ function readImageFile(
   });
 }
 
-export function ImageSamplesSection({ project }: { project: Project }) {
+export function ImageSamplesSection({ project }: { project: Project }): React.JSX.Element | null {
   const { all, save, remove, reorder, nextOrderIndex } = useImageSamples(project.id);
   const [error, setError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);

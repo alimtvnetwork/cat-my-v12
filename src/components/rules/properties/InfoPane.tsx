@@ -21,7 +21,7 @@ function fmt(n: number | undefined | null): string {
   return Math.round(n).toString();
 }
 
-export function InfoPane() {
+export function InfoPane(): React.JSX.Element | null {
   const selection = useSelectedRules();
   const rule = selection.single;
 

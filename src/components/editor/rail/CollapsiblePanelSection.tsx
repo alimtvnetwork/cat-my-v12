@@ -75,7 +75,7 @@ export function CollapsiblePanelSection({
   hideActions = false,
   headerAccessory,
   children,
-}: CollapsiblePanelSectionProps) {
+}: CollapsiblePanelSectionProps): React.JSX.Element | null {
   // Deterministic SSR initial values; hydrated preferences applied post-mount.
   const [open, setOpen] = useState<boolean>(defaultOpen);
   const [hidden, setHidden] = useState<boolean>(false);

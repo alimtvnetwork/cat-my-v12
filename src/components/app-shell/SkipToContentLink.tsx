@@ -2,7 +2,7 @@
 // first focusable element in the app header so keyboard users can jump
 // past the titlebar / breadcrumb / menubar directly to the `<main>`
 // landmark (id="app-main" in HmiShell). Visually hidden until focused.
-export function SkipToContentLink() {
+export function SkipToContentLink(): React.JSX.Element | null {
   return (
     <a
       href="#app-main"

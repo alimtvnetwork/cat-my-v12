@@ -17,7 +17,7 @@ export interface InspectorPanelProps {
   imageBounds?: EditorRect;
 }
 
-export function InspectorPanel({ imageBounds }: InspectorPanelProps) {
+export function InspectorPanel({ imageBounds }: InspectorPanelProps): React.JSX.Element | null {
   const rules = useRulesStore((s) => s.rules);
   const selectedIds = useRulesStore((s) => s.selectedIds);
   const setRuleName = useRulesStore((s) => s.setRuleName);

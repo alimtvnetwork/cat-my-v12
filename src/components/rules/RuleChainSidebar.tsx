@@ -5,7 +5,7 @@ import type { Rule, RuleId } from "@/lib/rules/model";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import { toIntId } from "@/lib/rules/rule-id-alias";
 
-export function RuleChainSidebar({ rule }: { rule: Rule }) {
+export function RuleChainSidebar({ rule }: { rule: Rule }): React.JSX.Element | null {
   const { all } = useRulesLibrary();
   const byId = useMemo(() => new Map(all.map((r) => [r.id, r])), [all]);
 

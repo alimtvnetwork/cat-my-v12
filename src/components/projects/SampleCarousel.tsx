@@ -22,7 +22,7 @@ interface Props {
   selection: UseSelectedSample;
 }
 
-export function SampleCarousel({ samples, selection }: Props) {
+export function SampleCarousel({ samples, selection }: Props): React.JSX.Element | null {
   const { selected, selectedIndex, count, next, prev, select } = selection;
 
   if (count === 0 || !selected) {

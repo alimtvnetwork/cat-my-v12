@@ -57,7 +57,7 @@ export function EmptyState({
   testId,
   compact,
   illustration,
-}: Props) {
+}: Props): React.JSX.Element | null {
   return (
     <div
       role="status"

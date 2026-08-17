@@ -5,7 +5,7 @@ interface Props {
   rulesets: readonly RuleSet[];
 }
 
-export function ProjectEditorToolbar({ project, rulesets }: Props) {
+export function ProjectEditorToolbar({ project, rulesets }: Props): React.JSX.Element | null {
   return (
     <div className="flex items-center justify-between border-b border-ca-border p-hmi-4">
       <div>

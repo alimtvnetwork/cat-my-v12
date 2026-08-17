@@ -51,7 +51,7 @@ export function RetentionStepper({
   onChange,
   id,
   helpText,
-}: RetentionStepperProps) {
+}: RetentionStepperProps): React.JSX.Element | null {
   const inputId = id ?? `retention-stepper-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const commit = (next: number) => onChange(clampStep(next, min, max));
   const dec = () => commit(value - step);

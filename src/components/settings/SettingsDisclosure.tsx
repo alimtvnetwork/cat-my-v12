@@ -34,7 +34,7 @@ export function SettingsDisclosure({
   defaultOpen = false,
   openTrigger = null,
   children,
-}: SettingsDisclosureProps) {
+}: SettingsDisclosureProps): React.JSX.Element | null {
   const [open, setOpen] = useState(defaultOpen);
   const bodyId = useId();
   // Track the last openTrigger we honored so we only auto-open on actual

@@ -15,7 +15,7 @@ export interface ColorPanelProps {
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
-export function ColorPanel({ value, sampledColor, onChange, disabled }: ColorPanelProps) {
+export function ColorPanel({ value, sampledColor, onChange, disabled }: ColorPanelProps): React.JSX.Element | null {
   const pickerId = useId();
   const dEId = useId();
   const safeExpected = HEX.test(value.expectedColor) ? value.expectedColor : "#000000";

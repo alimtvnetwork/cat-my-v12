@@ -479,7 +479,7 @@ function HistoryTab() {
   );
 }
 
-export function GlobalErrorModal() {
+export function GlobalErrorModal(): React.JSX.Element | null {
   const isOpen = useErrorStore((s) => s.isOpen);
   const currentError = useErrorStore((s) => s.currentError);
   const closeErrorModal = useErrorStore((s) => s.closeErrorModal);

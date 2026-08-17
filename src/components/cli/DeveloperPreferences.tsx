@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { useShowDevFrames } from "@/hooks/use-show-dev-frames";
 import { useHardwareMockToggle } from "@/hooks/use-hardware-mock";
 
-export function DeveloperPreferences() {
+export function DeveloperPreferences(): React.JSX.Element | null {
   const { show, hydrated: framesHydrated, setShow } = useShowDevFrames();
   const { mock, hydrated: mockHydrated, setMock } = useHardwareMockToggle();
 

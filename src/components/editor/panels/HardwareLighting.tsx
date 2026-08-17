@@ -7,7 +7,7 @@ export interface HardwareLightingProps {
   onChange: (patch: Partial<LightingState>) => void;
 }
 
-export function HardwareLighting({ value, capabilities, onChange }: HardwareLightingProps) {
+export function HardwareLighting({ value, capabilities, onChange }: HardwareLightingProps): React.JSX.Element | null {
   if (!capabilities.hasFlashlight1 && !capabilities.hasFlashlight2) {
     return null;
   }

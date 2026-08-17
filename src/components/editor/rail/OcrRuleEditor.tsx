@@ -68,7 +68,7 @@ const BOUNDING_MODES: OcrBoundingOption[] = [
   },
 ];
 
-export function OcrRuleEditor({ rule, onChange }: OcrRuleEditorProps) {
+export function OcrRuleEditor({ rule, onChange }: OcrRuleEditorProps): React.JSX.Element | null {
   const lastRead = useSyncExternalStore(
     subscribeOcrResults,
     () => getOcrResult(rule.id),

@@ -52,7 +52,7 @@ export function EmptyState({
   action,
   className,
   testId = "empty-state",
-}: EmptyStateProps) {
+}: EmptyStateProps): React.JSX.Element | null {
   return (
     <div
       data-testid={testId}

@@ -21,7 +21,7 @@ const KIND_COLOR: Record<AlignGuide["kind"], string> = {
   bounds: "#f59e0b",
 };
 
-export function AlignmentGuides({ guides, viewport, canvasSize }: Props) {
+export function AlignmentGuides({ guides, viewport, canvasSize }: Props): React.JSX.Element | null {
   const snap = useSnap();
   // Users can hide guides via the snap-threshold HUD; snap behaviour
   // itself stays on, this just declutters the canvas.

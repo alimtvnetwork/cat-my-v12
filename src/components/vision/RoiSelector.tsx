@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { ShapeType } from "../../domain/vision/shapes";
 
-export function RoiSelector() {
+export function RoiSelector(): React.JSX.Element | null {
   const { segments, activeSegmentId, setRoi } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

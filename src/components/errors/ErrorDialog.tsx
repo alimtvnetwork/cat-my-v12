@@ -14,7 +14,7 @@ export interface ErrorDialogProps {
   onClose: () => void;
 }
 
-export function ErrorDialog({ record, onClose }: ErrorDialogProps) {
+export function ErrorDialog({ record, onClose }: ErrorDialogProps): React.JSX.Element | null {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   useDialogSync(dialogRef, record !== null);
 

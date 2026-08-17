@@ -41,7 +41,7 @@ export function ServerErrorFallback({
   onRetry,
   onGoHome,
   title = "Something went wrong",
-}: ServerErrorFallbackProps) {
+}: ServerErrorFallbackProps): React.JSX.Element | null {
   const err = useMemo(() => toCaptured(error), [error]);
 
   const primaryMessage =

@@ -27,7 +27,7 @@ export function Counter({
   value: number;
   onClick?: () => void;
   title?: string;
-}) {
+}): React.JSX.Element | null {
   const inner = (
     <>
       <div className="flex items-center gap-hmi-2">

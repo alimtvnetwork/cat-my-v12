@@ -10,7 +10,7 @@ export interface MathRuleEditorProps {
   onChange: (id: string, patch: EditorRuleParams) => void;
 }
 
-export function MathRuleEditor({ rule, onChange }: MathRuleEditorProps) {
+export function MathRuleEditor({ rule, onChange }: MathRuleEditorProps): React.JSX.Element | null {
   if (RuleKindType.isEdge(rule.kind) === false) return null;
   const p = rule.params ?? {};
   const expression = String(p.expression ?? "");

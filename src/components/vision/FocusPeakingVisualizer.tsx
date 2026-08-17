@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Focus } from "lucide-react";
 
-export function FocusPeakingVisualizer() {
+export function FocusPeakingVisualizer(): React.JSX.Element | null {
   const [enabled, setEnabled] = useState(false);
 
   return (

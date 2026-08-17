@@ -87,7 +87,7 @@ export function LayersPanel({
   onUngroupSelected,
   onMergeSelected,
   onDeleteSelected,
-}: LayersPanelProps) {
+}: LayersPanelProps): React.JSX.Element | null {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const focusedId = selectedIds[selectedIds.length - 1] ?? rules[0]?.id ?? null;

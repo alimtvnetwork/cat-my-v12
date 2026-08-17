@@ -59,7 +59,7 @@ function readCondName(cond: unknown, idx: number): string {
   return `Layer ${idx + 1}`;
 }
 
-export function LayersPalette({ rule }: Props) {
+export function LayersPalette({ rule }: Props): React.JSX.Element | null {
   const layers = useMemo(
     () =>
       rule.conditions.map((c, i) => ({

@@ -11,7 +11,7 @@ import { RunStatusType } from "@/types/run/RunStatus";
 import { useProgramStore } from "@/lib/stores/program-store";
 import { useRunStore } from "@/lib/stores/run-store";
 
-export function StatusBar() {
+export function StatusBar(): React.JSX.Element | null {
   const programName = useProgramStore((s) => s.name);
   const status = useRunStore((s) => s.status);
   const counters = useRunStore((s) => s.counters);

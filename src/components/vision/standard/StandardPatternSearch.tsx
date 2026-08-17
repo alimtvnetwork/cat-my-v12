@@ -14,7 +14,7 @@ export function StandardPatternSearch({
   settings: PatternSearchSettings;
   onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   onEvaluate?: () => void;
-}) {
+}): React.JSX.Element | null {
   const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
 
   return (

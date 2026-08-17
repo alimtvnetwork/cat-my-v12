@@ -103,7 +103,7 @@ function scalar(v: unknown): React.ReactNode {
  * Unknown scalar types fall through to JSON.stringify so an unexpected
  * shape is VISIBLE, not swallowed.
  */
-export function EnvelopeTree({ value, depth = 0 }: { value: unknown; depth?: number }) {
+export function EnvelopeTree({ value, depth = 0 }: { value: unknown; depth?: number }): React.JSX.Element | null {
   const s = scalar(value);
 
   if (s !== null) return <span className="text-ca-ink">{s}</span>;
@@ -202,7 +202,7 @@ export function EnvelopeViewer({
   cliInvocationId,
   forceShowMethodsStack = false,
   className,
-}: EnvelopeViewerProps) {
+}: EnvelopeViewerProps): React.JSX.Element | null {
   const env: EnvelopeLike = isEnvelopeLike(envelope) ? envelope : {};
   const status = env.Status ?? {};
   const attrs = env.Attributes ?? {};

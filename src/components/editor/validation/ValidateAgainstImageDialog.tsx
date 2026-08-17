@@ -109,7 +109,7 @@ export function ValidateAgainstImageDialog({
   rules,
   defaultImageRef,
   onClose,
-}: Props) {
+}: Props): React.JSX.Element | null {
   const [candidate, setCandidate] = useState<CandidateImage | null>(null);
   const [error, setError] = useState<ScoreError | { code: "CLIENT"; message: string } | null>(null);
   const [busy, setBusy] = useState(false);

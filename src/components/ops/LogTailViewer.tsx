@@ -45,7 +45,7 @@ export function LogTailViewer({
   sinceLine,
   maxLines,
   heightClass = "h-80",
-}: LogTailViewerProps) {
+}: LogTailViewerProps): React.JSX.Element | null {
   const {
     status,
     lines,

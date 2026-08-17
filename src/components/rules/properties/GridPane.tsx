@@ -2,7 +2,7 @@
 import { PaneShell, Row } from "./paneShell";
 import { canvasPrefsFacade, useCanvasPrefs, type GridSpacing } from "@/lib/canvas-prefs/facade";
 
-export function GridPane() {
+export function GridPane(): React.JSX.Element | null {
   const { grid } = useCanvasPrefs();
   const { show, snap, spacing } = grid;
 

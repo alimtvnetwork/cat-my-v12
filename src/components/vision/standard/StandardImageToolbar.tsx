@@ -12,7 +12,7 @@ export function StandardImageToolbar({
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   viewModes: { regions: boolean; results: boolean; grid: boolean };
   setViewModes: React.Dispatch<React.SetStateAction<{ regions: boolean; results: boolean; grid: boolean }>>;
-}) {
+}): React.JSX.Element | null {
   const handleZoom = (delta: number) => {
     setSettings((s) => ({
       ...s,

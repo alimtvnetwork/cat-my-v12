@@ -9,7 +9,7 @@ interface Props {
   rulesets: readonly RuleSet[];
 }
 
-export function ProjectEditorSections({ project, rulesets }: Props) {
+export function ProjectEditorSections({ project, rulesets }: Props): React.JSX.Element | null {
   const state = useProjectEditorState(project.id);
 
   return (

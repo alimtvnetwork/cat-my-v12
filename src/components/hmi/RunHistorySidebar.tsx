@@ -15,7 +15,7 @@ function fmtTs(ts: number) {
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
 }
 
-export function RunHistorySidebar({ onClose }: { onClose: () => void }) {
+export function RunHistorySidebar({ onClose }: { onClose: () => void }): React.JSX.Element | null {
   const history = useRunStore((s) => s.history);
   const rerun = useRunStore((s) => s.rerun);
   const clearHistory = useRunStore((s) => s.clearHistory);

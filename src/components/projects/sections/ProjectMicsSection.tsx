@@ -7,7 +7,7 @@ import { useMicSettingsLibrary } from "@/lib/mic-settings/useMicSettingsLibrary"
 import { MicSettingsSchema, type MicSettings } from "@/lib/mic-settings/model";
 import { NewMicSettingsModal } from "@/features/projects/modals/NewMicSettingsModal";
 
-export function ProjectMicsSection({ project }: { project: Project }) {
+export function ProjectMicsSection({ project }: { project: Project }): React.JSX.Element | null {
   const { all, save } = useMicSettingsLibrary();
   const setProjectMicSettings = useProjectStore((s) => s.setProjectMicSettings);
   const [error, setError] = useState<string | null>(null);

@@ -54,7 +54,7 @@ function reaches(startId: RuleId, target: RuleId, index: Map<RuleId, Rule>): boo
   return false;
 }
 
-export function RuleMetadataBar({ rule }: Props) {
+export function RuleMetadataBar({ rule }: Props): React.JSX.Element | null {
   const { all, save } = useRulesLibrary();
   const [name, setName] = useState(rule.name);
   const [notes, setNotes] = useState(rule.notes ?? "");

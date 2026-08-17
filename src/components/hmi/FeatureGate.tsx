@@ -21,7 +21,7 @@ export function FeatureGate({
       | Record<string, never>;
   }) => ReactNode;
   fallback?: ReactNode;
-}) {
+}): React.JSX.Element | null {
   const { snapshot, isFeatureEnabled } = useLicenseFeatures();
   const loaded = snapshot !== null;
   const enabled = loaded && isFeatureEnabled(feature);

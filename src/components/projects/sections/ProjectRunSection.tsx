@@ -23,7 +23,7 @@ export function ProjectRunSection({
   onRan: (s: ProjectRunSummary) => void;
   samples: readonly ImageSample[];
   selection: ReturnType<typeof useSelectedSample>;
-}) {
+}): React.JSX.Element | null {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const rulesetCount = project.rulesetIds.length;

@@ -1,7 +1,7 @@
 // Plan 80 step 16. History pane extracted from PropertiesPalette.tsx.
 import { historyStore, useHistory } from "@/lib/editor/historyStore";
 
-export function HistoryPane() {
+export function HistoryPane(): React.JSX.Element | null {
   const { entries, cursor } = useHistory();
   const canUndo = cursor >= 0;
   const canRedo = cursor < entries.length - 1;

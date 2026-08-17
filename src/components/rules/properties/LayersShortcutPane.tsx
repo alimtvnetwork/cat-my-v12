@@ -2,7 +2,7 @@
 import { PaneShell, Row } from "./paneShell";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 
-export function LayersShortcutPane() {
+export function LayersShortcutPane(): React.JSX.Element | null {
   const total = useRulesStore((s) => s.rules.length);
   const selectedCount = useRulesStore((s) => s.selectedIds.length);
   const hiddenCount = useRulesStore((s) => s.rules.filter((r) => r.isHidden).length);

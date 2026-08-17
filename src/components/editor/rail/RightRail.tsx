@@ -39,7 +39,7 @@ export function RightRail({
   onImportRules,
   onImportError,
   imageBounds,
-}: RightRailProps) {
+}: RightRailProps): React.JSX.Element | null {
   const bounds = imageBounds ?? IMAGE_BOUNDS;
   const density = useUiPrefsStore((s) => s.headerDensity);
 

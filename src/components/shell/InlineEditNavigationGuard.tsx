@@ -8,7 +8,7 @@ import { useBlocker } from "@tanstack/react-router";
 import { isAnyInlineEditDirty, subscribeInlineEditDirty } from "@/lib/editor/inline-edit-registry";
 import { useEffect, useState } from "react";
 
-export function InlineEditNavigationGuard() {
+export function InlineEditNavigationGuard(): React.JSX.Element | null {
   // Re-render whenever the dirty set toggles, so `useBlocker`'s condition
   // reflects the latest state on every navigation attempt.
   const [dirty, setDirty] = useState<boolean>(() => isAnyInlineEditDirty());

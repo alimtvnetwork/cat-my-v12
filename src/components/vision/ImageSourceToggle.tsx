@@ -3,7 +3,7 @@ import { useVisionStore } from "@/lib/vision/store";
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 import { ImageIcon, VideoIcon, Columns } from "lucide-react";
 
-export function ImageSourceToggle() {
+export function ImageSourceToggle(): React.JSX.Element | null {
   const mode = useVisionStore((s) => s.imageSourceMode);
   const setMode = useVisionStore((s) => s.setImageSourceMode);
 

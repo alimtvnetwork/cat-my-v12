@@ -74,7 +74,7 @@ export function PropertiesPanel({
   onSetBounds,
   onSetHidden,
   onSetLocked,
-}: PropertiesPanelProps) {
+}: PropertiesPanelProps): React.JSX.Element | null {
   const selected = rules.filter((r) => selectedIds.includes(r.id));
 
   if (selected.length === 0) {

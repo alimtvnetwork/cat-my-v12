@@ -2,7 +2,7 @@
 import { PaneShell, Row, Slider } from "./paneShell";
 import { canvasPrefsFacade, useCanvasPrefs } from "@/lib/canvas-prefs/facade";
 
-export function AdjustPane() {
+export function AdjustPane(): React.JSX.Element | null {
   const { adjust } = useCanvasPrefs();
   const { brightness, contrast, gamma } = adjust;
 

@@ -45,7 +45,7 @@ export function CategoryCombobox({
   placeholder = "Select or create categories",
   max = 32,
   disabled,
-}: CategoryComboboxProps) {
+}: CategoryComboboxProps): React.JSX.Element | null {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
 

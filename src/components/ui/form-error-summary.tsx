@@ -43,7 +43,7 @@ export function FormErrorSummary({
   className,
   title = "Please fix the following before continuing:",
   ...rest
-}: FormErrorSummaryProps) {
+}: FormErrorSummaryProps): React.JSX.Element | null {
   const items = collect(errors, labels);
   const hasErrors = items.length > 0;
 

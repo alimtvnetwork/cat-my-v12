@@ -6,7 +6,7 @@ const NEXT_LABEL: Record<UiFlavor, string> = {
   modern: "Switch to Standard UI",
 };
 
-export function FlavorToggle() {
+export function FlavorToggle(): React.JSX.Element | null {
   const flavor = useUiPrefsStore((s) => s.uiFlavor);
   const cycle = useUiPrefsStore((s) => s.toggleUiFlavor);
   const label = NEXT_LABEL[flavor];

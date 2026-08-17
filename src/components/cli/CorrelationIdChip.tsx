@@ -76,7 +76,7 @@ export function CorrelationIdChip({
   cliInvocationId,
   label = "run",
   className,
-}: CorrelationIdChipProps) {
+}: CorrelationIdChipProps): React.JSX.Element | null {
   const [copied, setCopied] = useState(false);
   const short = value.length > SHORT_LEN ? value.slice(0, SHORT_LEN) : value;
   const title = `${label} ${value} (click to open drilldown, copy button to copy full id)`;

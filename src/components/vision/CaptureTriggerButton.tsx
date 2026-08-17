@@ -7,7 +7,7 @@ import { useCaptureImage } from "@/hooks/use-vision-api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
-export function CaptureTriggerButton() {
+export function CaptureTriggerButton(): React.JSX.Element | null {
   const isCapturing = useVisionStore((s) => s.isCapturing);
   const setIsCapturing = useVisionStore((s) => s.setIsCapturing);
 

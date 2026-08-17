@@ -7,7 +7,7 @@ import { PalettePlaceholder } from "../PropertiesPalette";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { KIND_COLOR } from "@/lib/editor/kind-icons";
 
-export function CssPane() {
+export function CssPane(): React.JSX.Element | null {
   const rule = useRulesStore((s) => {
     const id = s.selectedIds[0];
 

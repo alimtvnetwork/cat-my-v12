@@ -64,7 +64,7 @@ export function LayersToolbar({
   onDelete,
   onSetAcceptance,
   onImportSvg,
-}: LayersToolbarProps) {
+}: LayersToolbarProps): React.JSX.Element | null {
   const selected = rules.filter((r) => selectedIds.includes(r.id));
   const anyLocked = selected.some((r) => r.isLocked);
   const canGroup = selected.length >= 2;

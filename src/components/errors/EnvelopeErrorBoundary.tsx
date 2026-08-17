@@ -142,7 +142,7 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-export function EnvelopeErrorBoundary({ children }: { children: ReactNode }) {
+export function EnvelopeErrorBoundary({ children }: { children: ReactNode }): React.JSX.Element | null {
   return (
     <ReactEnvelopeBoundary>
       <EnvelopeErrorEventBridge />

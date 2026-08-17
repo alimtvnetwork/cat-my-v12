@@ -21,7 +21,7 @@ function useImageHistory() {
   });
 }
 
-export function ImageHistoryRail() {
+export function ImageHistoryRail(): React.JSX.Element | null {
   const { data: images, isLoading } = useImageHistory();
   const [isLocked, setIsLocked] = useState(false);
   

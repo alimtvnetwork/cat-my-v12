@@ -1,7 +1,7 @@
 import React from "react";
 import { useVisionStore } from "../../lib/vision/store";
 
-export function SegmentSelector() {
+export function SegmentSelector(): React.JSX.Element | null {
   const { segments, activeSegmentId, setActiveSegment, addSegment, renameSegment, deleteSegment } =
     useVisionStore();
 

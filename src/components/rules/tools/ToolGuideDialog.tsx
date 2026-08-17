@@ -18,7 +18,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ToolGuideDialog({ toolId, open, onOpenChange }: Props) {
+export function ToolGuideDialog({ toolId, open, onOpenChange }: Props): React.JSX.Element | null {
   const tip = toolId ? TOOL_TOOLTIPS[toolId] : null;
   const guide = toolId ? TOOL_GUIDES[toolId] : null;
 

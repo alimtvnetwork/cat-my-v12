@@ -36,7 +36,7 @@ export function SavedBadge({
   fadeAfterMs = DEFAULT_FADE_MS,
   hideAfterMs = DEFAULT_HIDE_MS,
   label = "Saved",
-}: SavedBadgeProps) {
+}: SavedBadgeProps): React.JSX.Element | null {
   const [now, setNow] = useState<number>(() => Date.now());
   useEffect(() => {
     if (at == null) return;

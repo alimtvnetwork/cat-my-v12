@@ -2,7 +2,7 @@
 import { PaneShell, Row, Slider } from "./paneShell";
 import { typeToolFacade, useTypeToolPrefs, type TypeAlign } from "@/lib/type-tool/facade";
 
-export function ParagraphPane() {
+export function ParagraphPane(): React.JSX.Element | null {
   const { align, lineHeight } = useTypeToolPrefs();
 
   return (

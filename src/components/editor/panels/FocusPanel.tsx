@@ -43,7 +43,7 @@ export function readFocusOverride(rule: EditorRule): FocusOverrideValues {
   return { enabled, dim, blur, isolate };
 }
 
-export function FocusPanel({ rule, onUpdateParams }: FocusPanelProps) {
+export function FocusPanel({ rule, onUpdateParams }: FocusPanelProps): React.JSX.Element | null {
   const value = readFocusOverride(rule);
   const disabled = rule.isLocked;
   const enId = useId();

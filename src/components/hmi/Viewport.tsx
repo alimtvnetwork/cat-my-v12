@@ -5,7 +5,7 @@ export interface ViewportProps {
   overlay?: ReactNode;
 }
 
-export function Viewport({ children, overlay }: ViewportProps) {
+export function Viewport({ children, overlay }: ViewportProps): React.JSX.Element | null {
   return (
     <div className="relative flex-1 m-hmi-3 rounded-lg bg-ca-viewport overflow-hidden border border-ca-border hmi-viewport-grid">
       <div className="absolute inset-0 flex items-center justify-center text-ca-ink-muted font-hmi text-hmi-body">

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function ColorTools() {
+export function ColorTools(): React.JSX.Element | null {
   const { segments, activeSegmentId, setColorSettings } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

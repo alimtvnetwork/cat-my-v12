@@ -14,7 +14,7 @@ export function StandardCanvas({
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   viewModes?: { regions: boolean; results: boolean; grid: boolean };
-}) {
+}): React.JSX.Element | null {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);

@@ -38,7 +38,7 @@ const INT_ALIAS_SEG: Record<string, IntAliasNamespace> = {
   "trial-run": IntAliasNamespaceType.Run,
 };
 
-export function AddressBar() {
+export function AddressBar(): React.JSX.Element | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const rawSearch = useRouterState({ select: (s) => s.location.searchStr });
   // Subscribe so alias assignments on new entities trigger a re-render.

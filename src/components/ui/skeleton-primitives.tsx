@@ -26,7 +26,7 @@ export function SkeletonLine({
   className,
   style,
   ...rest
-}: BaseProps & { width?: string | number; height?: string | number }) {
+}: BaseProps & { width?: string | number; height?: string | number }): React.JSX.Element | null {
   const merged: CSSProperties = {
     width,
     height: height ?? "var(--text-hmi-body-size, 0.875rem)",
@@ -42,7 +42,7 @@ export function SkeletonLine({
  * SkeletonBlock: rectangular placeholder for cards, thumbnails, or viewport
  * regions. Consumers control size via className (`h-40 w-full` etc.).
  */
-export function SkeletonBlock({ className, ...rest }: BaseProps) {
+export function SkeletonBlock({ className, ...rest }: BaseProps): React.JSX.Element | null {
   return <div aria-hidden className={cn("ca-skeleton rounded-md", className)} {...rest} />;
 }
 
@@ -54,7 +54,7 @@ export function SkeletonCircle({
   className,
   style,
   ...rest
-}: BaseProps & { size?: number }) {
+}: BaseProps & { size?: number }): React.JSX.Element | null {
   return (
     <div
       aria-hidden
@@ -75,7 +75,7 @@ export function SkeletonList({
   children,
   className,
   ...rest
-}: BaseProps & { label: string }) {
+}: BaseProps & { label: string }): React.JSX.Element | null {
   return (
     <div
       role="status"

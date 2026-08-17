@@ -40,7 +40,7 @@ export function HintTooltip({
   align = HintTooltipAlignType.Center,
   delayMs = 350,
   children,
-}: Props) {
+}: Props): React.JSX.Element | null {
   return (
     <TooltipProvider delayDuration={delayMs} skipDelayDuration={100}>
       <Tooltip>

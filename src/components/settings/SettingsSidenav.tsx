@@ -13,7 +13,7 @@ const ITEMS = [
   { to: "/settings/license", label: "License", Icon: KeyRound, exact: false },
 ] as const;
 
-export function SettingsSidenav() {
+export function SettingsSidenav(): React.JSX.Element | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (

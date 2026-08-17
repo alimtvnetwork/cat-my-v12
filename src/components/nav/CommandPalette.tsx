@@ -182,7 +182,7 @@ function buildCommands(): Command[] {
   return [...STATIC_COMMANDS, ...DEV_COMMANDS, ...panelCmds, ...kindCmds];
 }
 
-export function CommandPalette() {
+export function CommandPalette(): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);

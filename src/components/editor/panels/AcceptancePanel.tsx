@@ -96,7 +96,7 @@ export interface AcceptancePanelProps {
   onUpdateParams: (id: string, params: EditorRuleParams) => void;
 }
 
-export function AcceptancePanel({ rule, onUpdateParams }: AcceptancePanelProps) {
+export function AcceptancePanel({ rule, onUpdateParams }: AcceptancePanelProps): React.JSX.Element | null {
   const list = readConditions(rule);
   const disabled = rule.isLocked;
 

@@ -344,7 +344,7 @@ const GROUPS: MenuGroup[] = [
   },
 ];
 
-export function TopMenuBar() {
+export function TopMenuBar(): React.JSX.Element | null {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const running = useRunStore((s) => RunStatusType.isRunning(s.status));

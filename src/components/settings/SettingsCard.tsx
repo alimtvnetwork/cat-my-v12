@@ -26,7 +26,7 @@ export function SettingsCard({
   statusLabel,
   children,
   className,
-}: SettingsCardProps) {
+}: SettingsCardProps): React.JSX.Element | null {
   return (
     <section
       className={

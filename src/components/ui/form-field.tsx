@@ -31,7 +31,7 @@ export function FormField({
   htmlFor,
   className,
   children,
-}: FormFieldProps) {
+}: FormFieldProps): React.JSX.Element | null {
   const autoId = React.useId();
   const id = htmlFor ?? autoId;
   const helperId = helper ? `${id}-helper` : undefined;

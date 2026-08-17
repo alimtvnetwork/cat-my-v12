@@ -72,7 +72,7 @@ function coerceForWire(
   return { value: raw, error: null };
 }
 
-export function UserConfigForm() {
+export function UserConfigForm(): React.JSX.Element | null {
   const qc = useQueryClient();
   const query = useAppQuery<UserLayer>({
     queryKey: ["cli", "config", "user"],

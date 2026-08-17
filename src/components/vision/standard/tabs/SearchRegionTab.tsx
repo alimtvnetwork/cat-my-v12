@@ -9,7 +9,7 @@ export function SearchRegionTab({
 }: {
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}) {
+}): React.JSX.Element | null {
   return (
     <div className="flex flex-col h-full text-ca-ink">
       <div className="flex flex-col flex-1 overflow-y-auto">

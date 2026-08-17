@@ -40,7 +40,7 @@ function extractMailbox(err: CapturedError): Mailbox | null {
   return (MAILBOX_ALLOWLIST as readonly string[]).includes(raw) ? (raw as Mailbox) : null;
 }
 
-export function SessionLinks({ err }: { err: CapturedError }) {
+export function SessionLinks({ err }: { err: CapturedError }): React.JSX.Element | null {
   const cliInvocationId = extractCliInvocationId(err);
 
   if (cliInvocationId === null) return null;

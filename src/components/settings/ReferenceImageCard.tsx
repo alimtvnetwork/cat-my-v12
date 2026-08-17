@@ -124,7 +124,7 @@ const CAMERA_ERROR_META: Record<
   },
 };
 
-export function ReferenceImageCard() {
+export function ReferenceImageCard(): React.JSX.Element | null {
   const [current, setCurrent] = useState<string | null>(() => getReferenceImage());
   const [error, setError] = useState<CaptureErrorState | null>(null);
   const [capturing, setCapturing] = useState(false);

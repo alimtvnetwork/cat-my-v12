@@ -75,7 +75,7 @@ export function EditorSetupExperience({
   projectId,
   rulesetId,
   preselectRuleId,
-}: EditorSetupExperienceProps = {}) {
+}: EditorSetupExperienceProps = {}): React.JSX.Element | null {
   // Rules and selection live in the store commit boundary (plan 30 step 71).
   const rules = useRulesStore((s) => s.rules);
   const selectedIds = useRulesStore((s) => s.selectedIds);

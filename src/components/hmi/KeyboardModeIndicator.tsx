@@ -7,7 +7,7 @@
  */
 import { useInputModality } from "@/hooks/useInputModality";
 
-export function KeyboardModeIndicator() {
+export function KeyboardModeIndicator(): React.JSX.Element | null {
   const modality = useInputModality();
 
   return (

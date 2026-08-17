@@ -33,7 +33,7 @@ const MODES: PreviewModeOption[] = [
   { value: EditorPreviewModeType.AllRules, label: "All rules", hint: "Reveal every rule ROI" },
 ];
 
-export function PreviewSettingsPanel() {
+export function PreviewSettingsPanel(): React.JSX.Element | null {
   const [state, setState] = useState(() => getPreviewState());
   useEffect(() => subscribePreview(setState), []);
   // Show which rule "Selection" mode will spotlight, so the label is

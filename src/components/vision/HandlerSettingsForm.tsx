@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-export function HandlerSettingsForm() {
+export function HandlerSettingsForm(): React.JSX.Element | null {
   const { segments, activeSegmentId, setHandlerOutputs, setHandlerInputs } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

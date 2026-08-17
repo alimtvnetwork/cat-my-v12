@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { FAVORITE_CANDIDATES, useFavoritesStore } from "@/lib/stores/favorites-store";
 
-export function FavoritesBar() {
+export function FavoritesBar(): React.JSX.Element | null {
   const favorites = useFavoritesStore((s) => s.favorites);
   const toggle = useFavoritesStore((s) => s.toggle);
   const reset = useFavoritesStore((s) => s.reset);

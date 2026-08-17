@@ -26,7 +26,7 @@ export function RulesetPicker({
   rulesets,
   initialSelected,
   onChange,
-}: RulesetPickerProps) {
+}: RulesetPickerProps): React.JSX.Element | null {
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialSelected ?? rulesets.map((r) => r.id)),
   );

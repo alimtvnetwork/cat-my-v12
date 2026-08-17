@@ -56,7 +56,7 @@ export function readMask(rule: EditorRule): MaskValues {
   return { url, threshold, invert, offsetX, offsetY, scale, rotationDeg };
 }
 
-export function MaskPanel({ rule, onUpdateParams }: MaskPanelProps) {
+export function MaskPanel({ rule, onUpdateParams }: MaskPanelProps): React.JSX.Element | null {
   const value = readMask(rule);
   const fileId = useId();
   const thId = useId();

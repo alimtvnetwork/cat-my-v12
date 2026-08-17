@@ -150,7 +150,7 @@ export function CanvasViewport({
   onSetRuleColor,
   onRotateRule,
   onSelectMany,
-}: CanvasViewportProps) {
+}: CanvasViewportProps): React.JSX.Element | null {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; ruleId: string } | null>(

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { swatchesFacade } from "@/lib/swatches/facade";
 import { useSeededSwatches } from "@/lib/swatches/useSeededSwatches";
 
-export function SwatchesPane() {
+export function SwatchesPane(): React.JSX.Element | null {
   const swatches = useSeededSwatches();
   const [draft, setDraft] = useState("#");
   const submit = () => {

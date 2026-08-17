@@ -58,7 +58,7 @@ function formatTime(ms: number): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-export function CaptureRequestDebugPanel() {
+export function CaptureRequestDebugPanel(): React.JSX.Element | null {
   const [entry, setEntry] = useState<LastCaptureRequestEntry | null>(() => getLastCaptureRequest());
   // SSR-safe: start with the server-side default (`false`) and hydrate the
   // persisted collapsed flag after mount so the first client render matches

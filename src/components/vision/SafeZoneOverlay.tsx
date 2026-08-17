@@ -1,4 +1,4 @@
-export function SafeZoneOverlay() {
+export function SafeZoneOverlay(): React.JSX.Element | null {
   return (
     <div className="absolute inset-0 pointer-events-none w-full h-full flex items-center justify-center">
       <svg

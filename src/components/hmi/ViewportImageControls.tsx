@@ -11,7 +11,7 @@ import { useSampleLibrary } from "@/lib/editor/useSampleLibrary";
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
-export function ViewportImageControls() {
+export function ViewportImageControls(): React.JSX.Element | null {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);

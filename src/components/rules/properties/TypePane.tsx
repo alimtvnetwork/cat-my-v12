@@ -7,7 +7,7 @@ import {
   type TypeWeight,
 } from "@/lib/type-tool/facade";
 
-export function TypePane() {
+export function TypePane(): React.JSX.Element | null {
   const { family, size, weight } = useTypeToolPrefs();
 
   return (

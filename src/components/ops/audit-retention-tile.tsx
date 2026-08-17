@@ -40,7 +40,7 @@ function ageMs(iso: string | null | undefined): number | null {
   return Date.now() - t;
 }
 
-export function AuditRetentionTile() {
+export function AuditRetentionTile(): React.JSX.Element | null {
   const fetchStatus = useServerFn(getAuditRetentionStatus);
   const [status, setStatus] = useState<AuditRetentionStatus | null>(null);
   const [error, setError] = useState<string | null>(null);

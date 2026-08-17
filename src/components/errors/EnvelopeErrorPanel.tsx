@@ -50,7 +50,7 @@ export interface EnvelopeErrorPanelProps {
   forceShowFrames?: boolean;
 }
 
-export function EnvelopeErrorPanel({ err, forceShowFrames = false }: EnvelopeErrorPanelProps) {
+export function EnvelopeErrorPanel({ err, forceShowFrames = false }: EnvelopeErrorPanelProps): React.JSX.Element | null {
   const env: EnvelopeErrors | undefined = err.envelopeErrors;
   const { show: userAllowsFrames } = useShowDevFrames();
 

@@ -42,7 +42,7 @@ function HomeFallback({
   );
 }
 
-export function HomePending() {
+export function HomePending(): React.JSX.Element | null {
   return (
     <HomeFallback
       tone={HomeBoundariesToneType.Muted}
@@ -52,7 +52,7 @@ export function HomePending() {
   );
 }
 
-export function HomeError({ error, reset }: { error: Error; reset: () => void }) {
+export function HomeError({ error, reset }: { error: Error; reset: () => void }): React.JSX.Element | null {
   const message = error?.message || "Unknown error";
   // Record for /diagnostics inspection. Safe to call during render: the log
   // is idempotent by latest-wins and does not trigger state updates here.

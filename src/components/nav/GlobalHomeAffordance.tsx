@@ -14,7 +14,7 @@ import { Home } from "lucide-react";
  * pages. The Titlebar sets `data-app-shell="true"`; when it is present the
  * CSS `body:has(...)` selector hides this fallback.
  */
-export function GlobalHomeAffordance() {
+export function GlobalHomeAffordance(): React.JSX.Element | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (pathname === "/") return null;

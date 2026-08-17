@@ -17,7 +17,7 @@ export interface BlobPanelProps {
   disabled?: boolean;
 }
 
-export function BlobPanel({ value, onChange, disabled }: BlobPanelProps) {
+export function BlobPanel({ value, onChange, disabled }: BlobPanelProps): React.JSX.Element | null {
   const minId = useId();
   const maxId = useId();
   const countId = useId();

@@ -1,6 +1,6 @@
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 
-export function UiModeSwitch() {
+export function UiModeSwitch(): React.JSX.Element | null {
   const { mode, toggleMode } = useUiMode();
   const isStandard = mode === UiModeType.Standard;
 

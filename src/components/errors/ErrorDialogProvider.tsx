@@ -7,7 +7,7 @@ import type { ErrorRecord } from "@/lib/errors";
 import { getAppMode, isDialogVisibleMode } from "@/lib/app-mode";
 import { ErrorDialog } from "./ErrorDialog";
 
-export function ErrorDialogProvider() {
+export function ErrorDialogProvider(): React.JSX.Element | null {
   const [record, setRecord] = useState<ErrorRecord | null>(null);
   const [prodToast, setProdToast] = useState<ErrorRecord | null>(null);
 

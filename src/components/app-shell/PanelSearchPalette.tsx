@@ -29,7 +29,7 @@ import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { broadcastInspectorSections } from "@/components/editor/CollapsibleSection";
 
-export function PanelSearchPalette() {
+export function PanelSearchPalette(): React.JSX.Element | null {
   const [open, setOpen] = React.useState(false);
   const openPanel = useWorkspaceLayoutStore((s) => s.openPanel);
   const restorePanel = useWorkspaceLayoutStore((s) => s.restorePanel);

@@ -8,7 +8,7 @@ export interface LineToolControlsProps {
   onChange: (next: Partial<LineToolParams>) => void;
 }
 
-export function LineToolControls({ params, onChange }: LineToolControlsProps) {
+export function LineToolControls({ params, onChange }: LineToolControlsProps): React.JSX.Element | null {
   return (
     <div className="flex flex-col gap-hmi-3">
       <label className="flex flex-col gap-hmi-1">

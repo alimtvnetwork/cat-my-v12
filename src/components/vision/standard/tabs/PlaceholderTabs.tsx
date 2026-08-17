@@ -1,6 +1,6 @@
 import React from "react";
 
-export function PlaceholderTabs({ name }: { name: string }) {
+export function PlaceholderTabs({ name }: { name: string }): React.JSX.Element | null {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center text-ca-ink-muted">
       <h3 className="font-semibold text-lg text-ca-ink mb-2">{name}</h3>

@@ -10,7 +10,7 @@ export function ModernPatternSearch({
 }: {
   settings: PatternSearchSettings;
   onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}) {
+}): React.JSX.Element | null {
   const store = useVisionStore();
   const hasInitialized = useRef(false);
 

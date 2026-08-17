@@ -26,7 +26,7 @@ const STATIC_SHORTCUTS: readonly Shortcut[] = [
   { keys: "Shift (while resizing)", label: "Lock aspect ratio (keeps circles round)" },
 ] as const;
 
-export function ShortcutsDialog() {
+export function ShortcutsDialog(): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const bindings = useShortcutsStore((s) => s.bindings);
 

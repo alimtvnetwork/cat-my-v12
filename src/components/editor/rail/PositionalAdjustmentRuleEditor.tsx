@@ -32,7 +32,7 @@ export function PositionalAdjustmentRuleEditor({
   params,
   onChange,
   availableRules = [],
-}: PositionalAdjustmentRuleEditorProps) {
+}: PositionalAdjustmentRuleEditorProps): React.JSX.Element | null {
   const p: PositionalAdjustmentParams = { ...POSITIONAL_ADJUSTMENT_DEFAULTS, ...params };
   const patch = (next: Partial<PositionalAdjustmentParams>) => onChange({ ...p, ...next });
   const errors = validatePositionalAdjustment(p);

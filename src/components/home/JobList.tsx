@@ -13,7 +13,7 @@ type JobRowProps = {
   onSelect: (jobId: string) => void;
 };
 
-export function JobList({ jobs, selectedJobId, onSelect }: JobListProps) {
+export function JobList({ jobs, selectedJobId, onSelect }: JobListProps): React.JSX.Element | null {
   return (
     <section
       aria-label="Jobs"

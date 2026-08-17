@@ -115,7 +115,7 @@ export function DockSlot({
   dragActive = false,
   minimizedRail,
   children,
-}: DockSlotProps) {
+}: DockSlotProps): React.JSX.Element | null {
   const { isOver, setNodeRef } = useDroppable({ id: `dock:${slot}`, data: { slot } });
   const storedSize = useWorkspaceLayoutStore((s) => s.dockSizes[slot]);
   const setDockSize = useWorkspaceLayoutStore((s) => s.setDockSize);

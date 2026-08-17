@@ -8,7 +8,7 @@ import { useEffect, useRef } from "react";
  */
 export const RUNNING_PILL_SLOT_ID = "app-shell-running-pill-slot";
 
-export function RunningPillSlot() {
+export function RunningPillSlot(): React.JSX.Element | null {
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     // Broadcast so the RunningPill can find this slot without prop drilling.

@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import { useSeedTelemetryStore, type FatalReseedEvent } from "@/lib/seed/telemetry-store";
 import type { SeedRunReport } from "@/lib/seed/orchestrator";
 
-export function SeedResetHistorySection() {
+export function SeedResetHistorySection(): React.JSX.Element | null {
   const history = useSeedTelemetryStore((s) => s.history);
   const fatalHistory = useSeedTelemetryStore((s) => s.fatalHistory);
   const counters = useSeedTelemetryStore((s) => s.fatalCounters);

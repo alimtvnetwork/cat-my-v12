@@ -1,6 +1,6 @@
 import { SkeletonBlock, SkeletonList } from "@/components/ui/skeleton-primitives";
 
-export function RunSkeleton() {
+export function RunSkeleton(): React.JSX.Element | null {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <SkeletonList label="Loading run screen">

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useVisionStore } from "@/lib/vision/store";
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 
-export function LiveModeEmptyState() {
+export function LiveModeEmptyState(): React.JSX.Element | null {
   const setMode = useVisionStore((s) => s.setImageSourceMode);
 
   return (

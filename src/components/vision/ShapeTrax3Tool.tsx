@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 
-export function ShapeTrax3Tool() {
+export function ShapeTrax3Tool(): React.JSX.Element | null {
   const { segments, activeSegmentId, setShapeTrax3Settings } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

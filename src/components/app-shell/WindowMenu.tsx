@@ -60,7 +60,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { notifySuccess } from "@/lib/notify";
 
-export function WindowMenu() {
+export function WindowMenu(): React.JSX.Element | null {
   const panels = useWorkspaceLayoutStore((s) => s.panels);
   const dockSizes = useWorkspaceLayoutStore((s) => s.dockSizes);
   const togglePanel = useWorkspaceLayoutStore((s) => s.togglePanel);

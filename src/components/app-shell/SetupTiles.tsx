@@ -42,7 +42,7 @@ const TILES: readonly Tile[] = [
   },
 ] as const;
 
-export function SetupTiles() {
+export function SetupTiles(): React.JSX.Element | null {
   return (
     <section
       aria-label="Setup"

@@ -87,7 +87,7 @@ function registerLayoutShortcuts(onReset: () => void, onSnap: () => void, onErro
   ];
 }
 
-export function LayoutHotkeys() {
+export function LayoutHotkeys(): React.JSX.Element | null {
   const resetLayout = useWorkspaceLayoutStore((s) => s.resetLayout);
 
   useEffect(() => {

@@ -26,7 +26,7 @@ function StatRow({ label, s }: { label: string; s: DistributionStats }) {
   );
 }
 
-export function CalibrationStats({ kind }: CalibrationStatsProps) {
+export function CalibrationStats({ kind }: CalibrationStatsProps): React.JSX.Element | null {
   const stats = getCalibrationStats(kind);
 
   if (!stats) return null;

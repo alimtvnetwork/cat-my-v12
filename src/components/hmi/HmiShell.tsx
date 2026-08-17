@@ -41,7 +41,7 @@ export function HmiShell({
   hideHeader = false,
   className,
   style,
-}: HmiShellProps) {
+}: HmiShellProps): React.JSX.Element | null {
   const showActionBar = Boolean(actionBarLeft || actionBarRight);
   const showStatusBar = useUiPrefsStore((s) => s.showStatusBar);
   const navigate = useNavigate();

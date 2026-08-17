@@ -71,7 +71,7 @@ export function RuleCreateDialog({
   sourceConditions,
   initialKind = RuleCreateDialogInitialKindType.Rule,
   kindMode = RuleCreateDialogKindModeType.Both,
-}: Props) {
+}: Props): React.JSX.Element | null {
   const titleId = useId();
   const descId = useId();
   const [name, setName] = useState("");

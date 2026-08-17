@@ -102,7 +102,7 @@ export function announce(message: string, options: AnnounceOptions = {}): void {
  * the region off-screen without hiding it from assistive tech (`display:
  * none` and `visibility: hidden` would silence announcements).
  */
-export function CliLiveRegionHost() {
+export function CliLiveRegionHost(): React.JSX.Element | null {
   const [politeText, setPoliteText] = useState("");
   const [assertiveText, setAssertiveText] = useState("");
   const lastPolite = useRef("");

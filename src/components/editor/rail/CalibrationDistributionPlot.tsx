@@ -21,7 +21,7 @@ export function CalibrationDistributionPlot({
   threshold,
   width = 220,
   height = 96,
-}: CalibrationDistributionPlotProps) {
+}: CalibrationDistributionPlotProps): React.JSX.Element | null {
   const stats = getCalibrationStats(kind);
 
   if (!stats) return null;

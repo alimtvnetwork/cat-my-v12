@@ -19,7 +19,7 @@ export type BugErrorDetail = {
   CorrelationId?: string;
 };
 
-export function BugErrorModal() {
+export function BugErrorModal(): React.JSX.Element | null {
   const [err, setErr] = useState<BugErrorDetail | null>(null);
   const [copied, setCopied] = useState(false);
 

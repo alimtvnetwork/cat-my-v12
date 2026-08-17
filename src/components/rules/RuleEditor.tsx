@@ -26,7 +26,7 @@ interface Props {
   rule: Rule;
 }
 
-export function RuleEditor({ rule }: Props) {
+export function RuleEditor({ rule }: Props): React.JSX.Element | null {
   const [activeTool, setActiveTool] = useState<ToolId>(ToolIdType.Select);
   const controller = useMemo(() => createRuleController(), []);
   useEditorShortcuts({

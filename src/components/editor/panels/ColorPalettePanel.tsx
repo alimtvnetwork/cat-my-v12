@@ -14,7 +14,7 @@ export function ColorPalettePanel({
   onSelectColor,
   onRemoveColor,
   selectedColor,
-}: ColorPalettePanelProps) {
+}: ColorPalettePanelProps): React.JSX.Element | null {
   return (
     <div className="flex flex-col gap-2 p-4">
       <div className="text-[13px] tabular-nums font-semibold text-neutral-800 dark:text-neutral-200">

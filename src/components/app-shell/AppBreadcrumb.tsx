@@ -90,7 +90,7 @@ export interface AppBreadcrumbProps {
 
 export function AppBreadcrumb({
   variant = AppBreadcrumbPropsVariantType.Band,
-}: AppBreadcrumbProps = {}) {
+}: AppBreadcrumbProps = {}): React.JSX.Element | null {
   // lint-allow: function-length reason="UI component layout" max=40
   const matches = useMatches();
   const last = matches[matches.length - 1];

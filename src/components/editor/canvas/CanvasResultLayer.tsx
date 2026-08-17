@@ -6,7 +6,7 @@ interface CanvasResultLayerProps {
   status?: "pass" | "fail" | null;
 }
 
-export function CanvasResultLayer({ children, visible, status }: CanvasResultLayerProps) {
+export function CanvasResultLayer({ children, visible, status }: CanvasResultLayerProps): React.JSX.Element | null {
   if (!visible) return null;
   
   const borderColor = status === "pass" ? "border-green-500" : status === "fail" ? "border-red-500" : "border-transparent";

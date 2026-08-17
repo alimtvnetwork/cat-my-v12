@@ -52,7 +52,7 @@ function clampGrid(px: number): number {
   return Math.max(1, Math.min(64, Math.round(px)));
 }
 
-export function RuleEditorToolbar() {
+export function RuleEditorToolbar(): React.JSX.Element | null {
   const snap = useSnap();
   const undoCount = useHistoryStore(selectUndoCount);
   const redoCount = useHistoryStore(selectRedoCount);

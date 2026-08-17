@@ -12,7 +12,7 @@ export function StandardToolPanel({
 }: {
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}) {
+}): React.JSX.Element | null {
   const [activeTab, setActiveTab] = useState("Pattern Region");
 
   return (

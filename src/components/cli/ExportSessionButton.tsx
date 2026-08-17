@@ -29,7 +29,7 @@ export interface ExportSessionButtonProps {
   compact?: boolean;
 }
 
-export function ExportSessionButton({ runId, compact }: ExportSessionButtonProps) {
+export function ExportSessionButton({ runId, compact }: ExportSessionButtonProps): React.JSX.Element | null {
   const [pending, setPending] = useState(false);
   const disabled = !runId || pending;
 

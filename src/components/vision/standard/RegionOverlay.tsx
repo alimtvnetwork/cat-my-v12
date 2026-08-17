@@ -15,7 +15,7 @@ export function RegionOverlay({
   onChange: (g: Geometry) => void;
   viewport: Viewport;
   active?: boolean;
-}) {
+}): React.JSX.Element | null {
   const x = geometry.x ?? 0;
   const y = geometry.y ?? 0;
   const width = geometry.width ?? 100;

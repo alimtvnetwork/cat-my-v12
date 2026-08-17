@@ -23,7 +23,7 @@ const STARTER_FUNCTIONS: UserFunction[] = [
   { id: "distance", name: "distance", signature: "(p1, p2) -> number" },
 ];
 
-export function UserFunctionsPalette() {
+export function UserFunctionsPalette(): React.JSX.Element | null {
   return (
     <PaletteFrame id={PaletteIdType.Userfunctions} title="User Functions">
       <div className="p-2">

@@ -8,7 +8,7 @@ export interface MachineFrameProps {
 
 const PANEL_X = [118, 334, 550, 766, 982];
 
-export function MachineFrame({ live = false }: MachineFrameProps) {
+export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Element | null {
   const [src, setSrc] = useState<string>(() => getReferenceImage() ?? defaultSampleUrl);
   useEffect(() => subscribe((next) => setSrc(next ?? defaultSampleUrl)), []);
 

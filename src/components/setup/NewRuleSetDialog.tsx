@@ -45,7 +45,7 @@ export function NewRuleSetDialog({
   existingNames,
   cloneCandidates = [],
   onCreated,
-}: NewRuleSetDialogProps) {
+}: NewRuleSetDialogProps): React.JSX.Element | null {
   const cloneRef = useServerFn(cloneRulesetReference);
   const cloneSnap = useServerFn(cloneRulesetSnapshot);
   const defaultName = useMemo(() => nextRuleSetName(existingNames), [existingNames]);

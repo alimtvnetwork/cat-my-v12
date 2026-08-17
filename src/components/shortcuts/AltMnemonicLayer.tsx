@@ -23,7 +23,7 @@ function setOff(): void {
   document.documentElement.removeAttribute(ATTR);
 }
 
-export function AltMnemonicLayer() {
+export function AltMnemonicLayer(): React.JSX.Element | null {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Alt") setOn();

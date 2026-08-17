@@ -86,7 +86,7 @@ export function isTypingTarget(el: EventTarget | null): boolean {
   return false;
 }
 
-export function HistoryNav() {
+export function HistoryNav(): React.JSX.Element | null {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { canBack, canForward } = useHistoryState();

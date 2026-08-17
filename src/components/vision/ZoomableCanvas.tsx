@@ -8,7 +8,7 @@ interface Props {
   children: ReactNode;
 }
 
-export function ZoomableCanvas({ children }: Props) {
+export function ZoomableCanvas({ children }: Props): React.JSX.Element | null {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showResultLayer, setShowResultLayer] = useState(true);
 

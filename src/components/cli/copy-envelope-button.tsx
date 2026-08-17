@@ -93,7 +93,7 @@ export function CopyEnvelopeButton({
   compactLabel = "Copy",
   compact = false,
   className,
-}: CopyEnvelopeButtonProps) {
+}: CopyEnvelopeButtonProps): React.JSX.Element | null {
   const [copied, setCopied] = useState(false);
 
   const onClick = useCallback(async () => {

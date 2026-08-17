@@ -68,7 +68,7 @@ function useTabVisibility(): boolean {
   return visible;
 }
 
-export function GlobalCliStatusWidget() {
+export function GlobalCliStatusWidget(): React.JSX.Element | null {
   const dataSource = useDataSource();
   const baseUrl = useBackendBaseUrl();
   const tabVisible = useTabVisibility();

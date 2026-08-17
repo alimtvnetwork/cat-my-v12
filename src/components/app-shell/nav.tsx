@@ -5,7 +5,7 @@ import { GlobalNav } from "../hmi/GlobalNav";
  * CSS-gated via `.app-shell-nav-global` so it only paints on routes that
  * do NOT mount an `HmiShell` titlebar.
  */
-export function AppShellNav() {
+export function AppShellNav(): React.JSX.Element | null {
   return (
     <div
       className="app-shell-nav-global hidden lg:block"

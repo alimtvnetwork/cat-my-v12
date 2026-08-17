@@ -21,7 +21,7 @@ export interface InspectorSurfaceProps {
   imageBounds: EditorRect;
 }
 
-export function InspectorSurface({ imageBounds }: InspectorSurfaceProps) {
+export function InspectorSurface({ imageBounds }: InspectorSurfaceProps): React.JSX.Element | null {
   const rules = useRulesStore((s) => s.rules);
   const selectedIds = useRulesStore((s) => s.selectedIds);
   const groups = useRulesStore((s) => s.groups);

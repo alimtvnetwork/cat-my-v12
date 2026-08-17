@@ -7,7 +7,7 @@ export function ToolTabs({
 }: {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-}) {
+}): React.JSX.Element | null {
   const tabs = [
     { id: "Search Region", icon: Maximize, disabled: false },
     { id: "Pattern Region", icon: Scan, disabled: false },

@@ -21,7 +21,7 @@ const TONE: Record<ValidationStatusType, { bg: string; text: string; label: stri
   [ValidationStatusType.Pending]: { bg: "bg-ca-panel-2", text: "text-ca-ink-muted", label: "..." },
 };
 
-export function ValidationChip({ ruleId }: { ruleId: string }) {
+export function ValidationChip({ ruleId }: { ruleId: string }): React.JSX.Element | null {
   const result = useValidationResult(ruleId);
   const setFocusedRule = useValidationStore((s) => s.setFocusedRule);
 

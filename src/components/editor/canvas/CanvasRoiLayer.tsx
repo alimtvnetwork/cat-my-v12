@@ -9,7 +9,7 @@ interface CanvasRoiLayerProps {
   viewport?: Viewport;
 }
 
-export function CanvasRoiLayer({ children, rules, viewport }: CanvasRoiLayerProps) {
+export function CanvasRoiLayer({ children, rules, viewport }: CanvasRoiLayerProps): React.JSX.Element | null {
   const activeStateId = useRulesStore((s) => s.activeStateId);
 
   return (

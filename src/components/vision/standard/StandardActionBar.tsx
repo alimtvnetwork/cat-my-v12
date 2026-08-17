@@ -1,7 +1,7 @@
 import React from "react";
 import { Settings } from "lucide-react";
 
-export function StandardActionBar({ onEvaluate }: { onEvaluate?: () => void }) {
+export function StandardActionBar({ onEvaluate }: { onEvaluate?: () => void }): React.JSX.Element | null {
   return (
     <div className="flex items-center justify-between px-2 bg-std-chrome h-14 shrink-0 font-sans tracking-wide text-sm border-t border-gray-700">
       <div className="flex items-center gap-2">

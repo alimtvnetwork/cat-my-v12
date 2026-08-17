@@ -19,7 +19,7 @@ export function ProjectResultSection({
 }: {
   summary: ProjectRunSummary | null;
   selectedSampleName: string | null;
-}) {
+}): React.JSX.Element | null {
   const grouped = useMemo(() => {
     if (!summary)
       return [] as Array<{
@@ -126,7 +126,7 @@ export function ProjectResultSection({
   );
 }
 
-export function VerdictPill({ verdict }: { verdict: ProjectRunSummary["verdict"] }) {
+export function VerdictPill({ verdict }: { verdict: ProjectRunSummary["verdict"] }): React.JSX.Element | null {
   const b = verdictBadge(verdict);
 
   return (

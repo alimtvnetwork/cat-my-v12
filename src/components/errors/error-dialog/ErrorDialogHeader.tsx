@@ -16,7 +16,7 @@ function formatSource(record: ErrorRecord): string {
   return `${base} , ${ERROR_DIALOG_TEXT.correlationPrefix} ${record.correlationId}`;
 }
 
-export function ErrorDialogHeader({ record }: ErrorDialogHeaderProps) {
+export function ErrorDialogHeader({ record }: ErrorDialogHeaderProps): React.JSX.Element | null {
   const title = record.name ?? ERROR_DIALOG_TEXT.defaultTitle;
 
   return (

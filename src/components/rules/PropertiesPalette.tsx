@@ -148,7 +148,7 @@ interface Props {
   ruleKind?: PropertiesPaletteRuleKind;
 }
 
-export function PropertiesPalette({ active, onChange, ruleKind }: Props) {
+export function PropertiesPalette({ active, onChange, ruleKind }: Props): React.JSX.Element | null {
   const mode = useUiPrefsStore(
     (s) => s.propertiesPaletteMode as unknown as PropertiesPaletteModeType,
   );
@@ -618,7 +618,7 @@ function PaletteBody({ id }: { id: PropertyPaletteIdType }) {
  * a pane that renders this without a selection is expected behaviour,
  * not an error, so no log fires here.
  */
-export function PalettePlaceholder({ hint }: { hint?: string }) {
+export function PalettePlaceholder({ hint }: { hint?: string }): React.JSX.Element | null {
   return (
     <div
       data-testid="properties-palette-empty"

@@ -44,7 +44,7 @@ function applyThemeClass(resolved: ApplyThemeClassResolvedType) {
   root.style.colorScheme = resolved;
 }
 
-export function ThemeController() {
+export function ThemeController(): React.JSX.Element | null {
   const theme = useUiPrefsStore((s) => s.theme);
   const uiFlavor = useUiPrefsStore((s) => s.uiFlavor);
 

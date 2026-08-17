@@ -84,7 +84,7 @@ interface Props {
   onVariantChange?: (tool: ToolId, variantId: string) => void;
 }
 
-export function ToolsPalette({ activeTool, onChange, onVariantChange }: Props) {
+export function ToolsPalette({ activeTool, onChange, onVariantChange }: Props): React.JSX.Element | null {
   const [variantMap, setVariantMap] = useState<VariantMap>(() => readStoredVariants());
   // Persisted user preference: "hover" (default Radix behavior) or
   // "on-demand" (suppress hover; still opens on keyboard focus so screen

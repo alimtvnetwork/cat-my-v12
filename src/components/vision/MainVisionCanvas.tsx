@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 // Import connection facade when available, for now using mock state
 // import { useCameraStatus } from "@/lib/facades/camera";
 
-export function MainVisionCanvas() {
+export function MainVisionCanvas(): React.JSX.Element | null {
   const mode = useVisionStore((s) => s.imageSourceMode);
   const isCapturing = useVisionStore((s) => s.isCapturing);
   // Mock connection status for now to show Empty State UI

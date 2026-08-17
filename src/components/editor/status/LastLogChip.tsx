@@ -9,7 +9,7 @@ const chipClass: Record<LogEntry["level"], string> = {
   error: "bg-ca-ng",
 };
 
-export function LastLogChip() {
+export function LastLogChip(): React.JSX.Element | null {
   const [entry, setEntry] = useState<LogEntry | null>(() => last());
   const [open, setOpen] = useState(false);
   useEffect(() => {

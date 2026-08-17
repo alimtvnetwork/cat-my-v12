@@ -17,7 +17,7 @@ export interface BlobRuleEditorProps {
 const AREA_MAX = 1_000_000;
 const COUNT_MAX = 9_999;
 
-export function BlobRuleEditor({ name, params, onChange }: BlobRuleEditorProps) {
+export function BlobRuleEditor({ name, params, onChange }: BlobRuleEditorProps): React.JSX.Element | null {
   const p: BlobParams = { ...BLOB_DEFAULTS, ...params };
   const patch = (next: Partial<BlobParams>) => onChange({ ...p, ...next });
   const errors = validateBlobParams(p);

@@ -16,7 +16,7 @@ const NEXT_LABEL: Record<ThemeVariant, string> = {
   system: "Switch to dark theme",
 };
 
-export function ThemeToggle() {
+export function ThemeToggle(): React.JSX.Element | null {
   const theme = useUiPrefsStore((s) => s.theme);
   const cycle = useUiPrefsStore((s) => s.cycleTheme);
   const label = NEXT_LABEL[theme];

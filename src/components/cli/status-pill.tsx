@@ -72,7 +72,7 @@ export function StatusPill({
   outline = false,
   className,
   ...rest
-}: StatusPillProps) {
+}: StatusPillProps): React.JSX.Element | null {
   return (
     <span
       title={title}

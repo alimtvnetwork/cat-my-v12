@@ -25,7 +25,7 @@ export function ProjectRunButton({
   projectName,
   rulesetIds,
   ruleChainPreview = [],
-}: ProjectRunButtonProps) {
+}: ProjectRunButtonProps): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [imageName, setImageName] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

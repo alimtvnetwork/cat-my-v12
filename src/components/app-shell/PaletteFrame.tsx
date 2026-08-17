@@ -26,7 +26,7 @@ interface PaletteFrameProps {
   children: ReactNode;
 }
 
-export function PaletteFrame({ id, title, children }: PaletteFrameProps) {
+export function PaletteFrame({ id, title, children }: PaletteFrameProps): React.JSX.Element | null {
   const state = usePaletteStore((s) => s.states[id]);
   const hydrated = usePaletteStore((s) => s.hydrated);
   const setState = usePaletteStore((s) => s.set);
@@ -101,7 +101,7 @@ export function PaletteFrame({ id, title, children }: PaletteFrameProps) {
   );
 }
 
-export function ResetLayoutButton() {
+export function ResetLayoutButton(): React.JSX.Element | null {
   const reset = usePaletteStore((s) => s.reset);
   const resetWorkspaceLayout = useWorkspaceLayoutStore((s) => s.resetLayout);
   const [open, setOpen] = useState(false);

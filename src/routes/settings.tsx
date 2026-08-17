@@ -15,7 +15,7 @@ function SettingsLayout() {
   return <Outlet />;
 }
 
-export function SettingsNav() {
+export function SettingsNav(): React.JSX.Element | null {
   return (
     <nav className="flex gap-hmi-2 text-hmi-body">
       <Link

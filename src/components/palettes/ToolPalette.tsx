@@ -62,7 +62,7 @@ const PENDING_KINDS: PendingEntry[] = [
   { key: "count", label: "Count" },
 ];
 
-export function ToolPalette() {
+export function ToolPalette(): React.JSX.Element | null {
   return (
     <PaletteFrame id={PaletteIdType.Tools} title="Tools">
       {/* Plan 65 step 25: chrome tightened + overflow moved behind "More". */}

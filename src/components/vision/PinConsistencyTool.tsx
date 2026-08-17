@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 
-export function PinConsistencyTool() {
+export function PinConsistencyTool(): React.JSX.Element | null {
   const { segments, activeSegmentId, setPinConsistencySettings } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

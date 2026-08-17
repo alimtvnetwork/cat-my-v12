@@ -77,7 +77,7 @@ export function FloatingWindow({
   className,
   onDragChange,
   children,
-}: FloatingWindowProps) {
+}: FloatingWindowProps): React.JSX.Element | null {
   const nodeRef = React.useRef<HTMLDivElement | null>(null);
   const startRef = React.useRef<{ x: number; y: number; rect: FloatingRect } | null>(null);
   const hasMovedRef = React.useRef(false);

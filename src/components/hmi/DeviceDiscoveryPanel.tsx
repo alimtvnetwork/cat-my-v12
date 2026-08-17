@@ -71,7 +71,7 @@ function toFailure(err: unknown): CaptureFailure {
   return { code, message: CAPTURE_ERROR_COPY[code], correlationId };
 }
 
-export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props) {
+export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props): React.JSX.Element | null {
   const [devices, setDevices] = useState<DiscoveredCaptureDevice[]>([]);
   const [scannedAt, setScannedAt] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<CaptureFailure | null>(null);

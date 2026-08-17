@@ -57,7 +57,7 @@ const KIND_META: Record<
   E: { label: "Math", Icon: Sigma },
 };
 
-export function FloatingInspector({ title, hasSelection, kind, children }: FloatingInspectorProps) {
+export function FloatingInspector({ title, hasSelection, kind, children }: FloatingInspectorProps): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);

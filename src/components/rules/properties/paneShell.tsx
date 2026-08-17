@@ -3,13 +3,13 @@
 // duplicating markup or focus styles.
 import { useId } from "react";
 
-export function PaneShell({ children }: { children: React.ReactNode }) {
+export function PaneShell({ children }: { children: React.ReactNode }): React.JSX.Element | null {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-hmi-2 text-[12px] text-ca-ink">{children}</div>
   );
 }
 
-export function Row({ label, children }: { label: string; children: React.ReactNode }) {
+export function Row({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element | null {
   const id = useId();
 
   return (
@@ -38,7 +38,7 @@ export function Slider({
   step: number;
   onChange: (n: number) => void;
   label: string;
-}) {
+}): React.JSX.Element | null {
   return (
     <input
       type="range"

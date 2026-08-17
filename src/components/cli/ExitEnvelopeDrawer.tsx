@@ -145,7 +145,7 @@ export interface ExitEnvelopeDrawerProps {
   items: LogTailItem[];
 }
 
-export function ExitEnvelopeDrawer({ session, items }: ExitEnvelopeDrawerProps) {
+export function ExitEnvelopeDrawer({ session, items }: ExitEnvelopeDrawerProps): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const ended = !!session && session.EndedAt != null;
   const success = ended && (session.IsSuccess === true || session.ExitCode === 0);

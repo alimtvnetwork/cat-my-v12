@@ -96,7 +96,7 @@ export function CollapsibleSection({
   title,
   defaultOpen = true,
   children,
-}: CollapsibleSectionProps) {
+}: CollapsibleSectionProps): React.JSX.Element | null {
   // Initialize with `defaultOpen` on both server and client so the initial
   // hydration output matches the SSR HTML byte-for-byte. Any stored
   // preference is applied in a post-hydration effect below, which React

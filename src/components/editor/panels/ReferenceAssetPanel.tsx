@@ -18,7 +18,7 @@ export function ReferenceAssetPanel({
   onChange,
   onUpload,
   disabled,
-}: ReferenceAssetPanelProps) {
+}: ReferenceAssetPanelProps): React.JSX.Element | null {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fieldId = useId();
 

@@ -3,7 +3,7 @@ import { Settings, Home, Camera, Sun, Info, Target, LayoutDashboard } from "luci
 import { FlavorToggle } from "../theme/FlavorToggle";
 import { WindowMenu } from "./WindowMenu";
 
-export function StandardAppShellNav() {
+export function StandardAppShellNav(): React.JSX.Element | null {
   return (
     <div
       className="standard-app-shell-nav fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b-2 border-ca-border bg-ca-panel px-4 shadow-sm"

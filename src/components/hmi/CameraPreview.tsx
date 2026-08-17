@@ -86,7 +86,7 @@ function buildFilter(c: CameraSetupControls): string {
   ].join(" ");
 }
 
-export function CameraPreview({ storageKey, heading, onControlsChange }: Props) {
+export function CameraPreview({ storageKey, heading, onControlsChange }: Props): React.JSX.Element | null {
   // SSR-safe: default first, hydrate persisted controls after mount so the
   // filter/CSS values render identically on the first client paint (same
   // hydration-mismatch class as preview-mode-store.ts).

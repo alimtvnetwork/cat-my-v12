@@ -1,7 +1,7 @@
 import { useCameraStatus } from "@/hooks/use-vision-api";
 import { cn } from "@/lib/utils";
 
-export function CameraConnectionIndicator({ cameraId = "default" }: { cameraId?: string }) {
+export function CameraConnectionIndicator({ cameraId = "default" }: { cameraId?: string }): React.JSX.Element | null {
   const { data, isFail, isLoading } = useCameraStatus(cameraId);
   
   let status: "connected" | "disconnected" | "error" | "connecting" = "connecting";

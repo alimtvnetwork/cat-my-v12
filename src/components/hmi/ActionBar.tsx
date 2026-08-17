@@ -5,7 +5,7 @@ export interface ActionBarProps {
   right?: ReactNode;
 }
 
-export function ActionBar({ left, right }: ActionBarProps) {
+export function ActionBar({ left, right }: ActionBarProps): React.JSX.Element | null {
   return (
     <footer
       className="flex items-center justify-between px-hmi-4 bg-ca-chrome border-t border-ca-border"

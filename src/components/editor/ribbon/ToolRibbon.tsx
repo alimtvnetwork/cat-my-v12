@@ -103,7 +103,7 @@ export function ToolRibbon({
    * When omitted, the button is hidden so the ribbon stays a pure picker.
    */
   onCreateRule?: (kind: EditorRuleKind) => void;
-}) {
+}): React.JSX.Element | null {
   const commit = (kind: EditorRuleKind) => {
     if (disabled) {
       logger.warn("W_UI_KIND_DISABLED", { kind });

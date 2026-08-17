@@ -43,7 +43,7 @@ function initialFor(title: string): string {
   return trimmed.charAt(0).toUpperCase();
 }
 
-export function MinimizedRail({ slot, ids, onRestore }: MinimizedRailProps) {
+export function MinimizedRail({ slot, ids, onRestore }: MinimizedRailProps): React.JSX.Element | null {
   if (ids.length === 0) return null;
   const orientation = orientationFor(slot);
 

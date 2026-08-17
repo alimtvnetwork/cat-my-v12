@@ -26,7 +26,7 @@ function computeLive(): SeedGapReport {
   });
 }
 
-export function SeedGapCheckSection() {
+export function SeedGapCheckSection(): React.JSX.Element | null {
   const history = useSeedTelemetryStore((s) => s.history);
   const latest = useMemo(() => history.find((r) => r.gaps) ?? null, [history]);
   const [manual, setManual] = useState<SeedGapReport | null>(null);

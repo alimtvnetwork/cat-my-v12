@@ -53,7 +53,7 @@ export function ProjectPicker({
   Icon: typeof PlayCircle;
   subroute: "trial-run" | "ai-testing";
   active: "trial-run" | "ai-testing";
-}) {
+}): React.JSX.Element | null {
   const projects = useProjectStore((s) => s.projects);
   const list = Object.values(projects).sort((a, b) => b.createdAt - a.createdAt);
   const navigate = useNavigate();

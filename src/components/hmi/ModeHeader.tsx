@@ -5,7 +5,7 @@ export interface ModeHeaderProps {
   actions?: ReactNode;
 }
 
-export function ModeHeader({ title, actions }: ModeHeaderProps) {
+export function ModeHeader({ title, actions }: ModeHeaderProps): React.JSX.Element | null {
   return (
     <section
       role="region"

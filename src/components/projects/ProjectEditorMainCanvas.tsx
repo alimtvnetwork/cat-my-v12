@@ -17,7 +17,7 @@ interface Props {
   selectedSampleName: string | null;
 }
 
-export function ProjectEditorMainCanvas({ project, summary, selectedSampleName }: Props) {
+export function ProjectEditorMainCanvas({ project, summary, selectedSampleName }: Props): React.JSX.Element | null {
   const mode = useVisionStore((s) => s.imageSourceMode);
 
   return (

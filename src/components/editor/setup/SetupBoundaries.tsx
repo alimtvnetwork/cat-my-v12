@@ -7,7 +7,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { logger } from "@/lib/editor/errors";
 
-export function SetupNotFoundComponent() {
+export function SetupNotFoundComponent(): React.JSX.Element | null {
   useEffect(() => {
     logger.warn("W_UI_SETUP_ROUTE_NOT_FOUND");
   }, []);
@@ -31,7 +31,7 @@ export function SetupNotFoundComponent() {
   );
 }
 
-export function SetupErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+export function SetupErrorComponent({ error, reset }: { error: Error; reset: () => void }): React.JSX.Element | null {
   const router = useRouter();
   useEffect(() => {
     logger.error("E_UI_SETUP_ROUTE_CRASH", { message: error.message, name: error.name });

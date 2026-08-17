@@ -37,7 +37,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return false;
 }
 
-export function ShortcutProvider() {
+export function ShortcutProvider(): React.JSX.Element | null {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {

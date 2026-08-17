@@ -22,7 +22,7 @@ const dotClass: Record<StatusSeverity, string> = {
   info: "bg-ca-primary",
 };
 
-export function StatusLog({ entries }: { entries: StatusLogEntry[] }) {
+export function StatusLog({ entries }: { entries: StatusLogEntry[] }): React.JSX.Element | null {
   return (
     <ul className="font-hmi text-hmi-body text-ca-ink divide-y divide-ca-border bg-ca-panel border border-ca-border rounded-lg max-h-72 overflow-y-auto">
       {entries.length === 0 ? (

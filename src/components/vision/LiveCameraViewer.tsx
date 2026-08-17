@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function LiveCameraViewer({ isConnected }: { isConnected: boolean }) {
+export function LiveCameraViewer({ isConnected }: { isConnected: boolean }): React.JSX.Element | null {
   const [focusPeaking, setFocusPeaking] = useState(false);
 
   if (!isConnected) {

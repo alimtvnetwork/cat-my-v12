@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { HomeJob, HomeTask } from "./data";
 import { formatIdentifierLabel } from "@/lib/display-labels";
 
-export function TaskPane({ job }: { job: HomeJob }) {
+export function TaskPane({ job }: { job: HomeJob }): React.JSX.Element | null {
   return (
     <section
       aria-label="Tasks"

@@ -52,7 +52,7 @@ const FIELDS: readonly {
 ];
 
 // lint-allow: function-length reason="JSX template" max=100
-export function LightingReadout() {
+export function LightingReadout(): React.JSX.Element | null {
   // Selecting a fresh object literal from zustand without a shallow
   // equality function returns a new reference on every store tick, which
   // re-renders this component in a loop and trips React's "Maximum update

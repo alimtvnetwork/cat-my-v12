@@ -41,7 +41,7 @@ export function AngleZoneOverlay({
   angleMax,
   theta,
   atBound,
-}: AngleZoneOverlayProps) {
+}: AngleZoneOverlayProps): React.JSX.Element | null {
   const lo = normalizeAngle(angleMin);
   const hi = normalizeAngle(angleMax);
   // Skip degenerate/inverted zones. The rotation seam already ignores

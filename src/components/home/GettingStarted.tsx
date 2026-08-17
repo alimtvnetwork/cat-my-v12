@@ -37,7 +37,7 @@ interface Step {
   readonly done: boolean;
 }
 
-export function GettingStarted() {
+export function GettingStarted(): React.JSX.Element | null {
   const projects = useProjectStore((s) => s.projects);
   const rulesets = useProjectStore((s) => s.rulesets);
 

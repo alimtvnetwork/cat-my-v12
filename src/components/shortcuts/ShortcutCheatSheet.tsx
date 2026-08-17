@@ -66,7 +66,7 @@ function groupAndSort(defs: ShortcutDefinition[]): Array<[string, ShortcutDefini
   });
 }
 
-export function ShortcutCheatSheet() {
+export function ShortcutCheatSheet(): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const defs = useShortcuts();
   const duplicates = useDuplicateCombos();

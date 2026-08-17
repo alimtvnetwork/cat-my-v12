@@ -29,7 +29,7 @@ export function PassThresholdField({
   value,
   onChange,
   label = "Pass threshold",
-}: PassThresholdFieldProps) {
+}: PassThresholdFieldProps): React.JSX.Element | null {
   const suggestion = getCalibrationSuggestion(kind);
   const clamped = Number.isFinite(value) ? Math.min(MAX, Math.max(MIN, value)) : 0;
   const isSuggested = suggestion !== null && Math.abs(clamped - suggestion.threshold) < STEP / 2;

@@ -24,7 +24,7 @@ export function RibbonChip({
   size?: 36 | 40 | 44 | 48 | 56 | 64 | 72;
   compact?: boolean;
   hotkey?: string;
-}) {
+}): React.JSX.Element | null {
   const Icon = KIND_ICON[kind];
   const style = { "--kind-color": KIND_COLOR[kind] } as CSSProperties;
   const iconPx = compact ? 18 : 26;

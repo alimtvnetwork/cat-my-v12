@@ -15,7 +15,7 @@ function formatMessage(record: ErrorRecord): string {
   return `${record.message}\n\n${record.stack}`;
 }
 
-export function ErrorDialogBody({ record }: ErrorDialogBodyProps) {
+export function ErrorDialogBody({ record }: ErrorDialogBodyProps): React.JSX.Element | null {
   return (
     <pre className={ERROR_DIALOG_CLASS.message} data-testid={ERROR_DIALOG_TESTID.message}>
       {formatMessage(record)}

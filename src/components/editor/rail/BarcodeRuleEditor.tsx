@@ -57,7 +57,7 @@ const MATCH_MODES: BarcodeMatchModeOption[] = [
   },
 ];
 
-export function BarcodeRuleEditor({ name, params, onChange }: BarcodeRuleEditorProps) {
+export function BarcodeRuleEditor({ name, params, onChange }: BarcodeRuleEditorProps): React.JSX.Element | null {
   const p: BarcodeParams = { ...BARCODE_DEFAULTS, ...params };
   const patch = (next: Partial<BarcodeParams>) => onChange({ ...p, ...next });
   const errors = validateBarcodeParams(p);

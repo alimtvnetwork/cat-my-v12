@@ -42,7 +42,7 @@ function renderLink(link: NavLink, onClose: () => void) {
  * Plan 63: app-shell sidebar slot. Trigger + Sheet drawer with same link
  * set. CSS-gated via `.app-shell-sidebar-fab` to shell-less routes.
  */
-export function AppShellSidebar() {
+export function AppShellSidebar(): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
 
   return (

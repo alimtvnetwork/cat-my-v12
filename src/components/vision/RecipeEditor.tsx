@@ -12,7 +12,7 @@ import { useVisionStore } from "../../lib/vision/store";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 
-export function RecipeEditor() {
+export function RecipeEditor(): React.JSX.Element | null {
   const { segments, activeSegmentId } = useVisionStore();
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);
 

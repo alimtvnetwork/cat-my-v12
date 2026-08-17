@@ -10,7 +10,7 @@ export function ToolTitleBar({
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   activeTab: string;
-}) {
+}): React.JSX.Element | null {
   return (
     <div className="flex flex-col bg-ca-bg">
       {/* Dark navy strip */}

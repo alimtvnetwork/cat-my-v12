@@ -17,7 +17,7 @@ const DEG_MIN = 0;
 const DEG_MAX = 45;
 const EDGE_MAX = 255;
 
-export function RectRuleEditor({ rule, onChange }: RectRuleEditorProps) {
+export function RectRuleEditor({ rule, onChange }: RectRuleEditorProps): React.JSX.Element | null {
   if (RuleKindType.isRectangle(rule.kind) === false) return null;
   const p = rule.params ?? {};
   const minArea = Number(p.minArea ?? 200);

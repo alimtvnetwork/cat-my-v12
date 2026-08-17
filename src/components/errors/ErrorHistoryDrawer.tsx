@@ -39,7 +39,7 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-export function ErrorHistoryDrawer() {
+export function ErrorHistoryDrawer(): React.JSX.Element | null {
   const isOpen = useErrorStore((s) => s.isHistoryDrawerOpen);
   const closeDrawer = useErrorStore((s) => s.closeHistoryDrawer);
   const openErrorModal = useErrorStore((s) => s.openErrorModal);

@@ -375,7 +375,7 @@ function finishDockedDrag(
   return true;
 }
 
-export function PanelHost({ content, canvasSlot }: PanelHostProps) {
+export function PanelHost({ content, canvasSlot }: PanelHostProps): React.JSX.Element | null {
   const panels = useWorkspaceLayoutStore((s) => s.panels);
   // Plan 73 step 18 (issue 21): register with panel-host-registry so
   // TopMenuBar's `usePanelHostMounted()` gate flips true and the Window

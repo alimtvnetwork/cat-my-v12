@@ -1,6 +1,6 @@
 import React from "react";
 
-export function StandardHeaderReadouts() {
+export function StandardHeaderReadouts(): React.JSX.Element | null {
   const readouts = [
     { label: "Unit Time", value: "8.8ms" },
     { label: "Counts", value: "01" },

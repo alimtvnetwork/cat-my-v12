@@ -26,7 +26,7 @@ export function AgentLogo({
   className,
   showWordmark = true,
   testId = "agent-logo",
-}: AgentLogoProps) {
+}: AgentLogoProps): React.JSX.Element | null {
   return (
     <Link
       to="/cli/sessions"

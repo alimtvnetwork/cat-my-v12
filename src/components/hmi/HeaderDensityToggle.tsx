@@ -10,7 +10,7 @@
 import { Rows2, Rows4 } from "lucide-react";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
-export function HeaderDensityToggle() {
+export function HeaderDensityToggle(): React.JSX.Element | null {
   const density = useUiPrefsStore((s) => s.headerDensity);
   const toggle = useUiPrefsStore((s) => s.toggleHeaderDensity);
   const compact = density === "compact";

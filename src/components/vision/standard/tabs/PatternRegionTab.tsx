@@ -9,7 +9,7 @@ export function PatternRegionTab({
 }: {
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}) {
+}): React.JSX.Element | null {
   const [isEditingRegion, setIsEditingRegion] = useState(true);
 
   return (

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import type { PatternConfig } from "../../lib/vision/types";
 
-export function PatternConfigTool() {
+export function PatternConfigTool(): React.JSX.Element | null {
   const { segments, activeSegmentId, setPatternConfig } = useVisionStore();
 
   const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId);

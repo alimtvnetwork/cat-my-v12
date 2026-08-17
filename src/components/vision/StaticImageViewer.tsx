@@ -4,7 +4,7 @@ import { useImageCoordinateMapping } from "@/hooks/useImageCoordinateMapping";
 import { RoiBadge } from "./RoiBadge";
 import { useLightingStore } from "@/lib/lighting/store";
 
-export function StaticImageViewer() {
+export function StaticImageViewer(): React.JSX.Element | null {
   const [imgUrl, setImgUrl] = useState<string>("/assets/placeholder-pcb.jpg");
   const [isLoaded, setIsLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

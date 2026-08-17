@@ -16,7 +16,7 @@ import {
   RANGES,
 } from "./LightingDrawer.types";
 
-export function LightingDrawer(props: LightingDrawerProps) {
+export function LightingDrawer(props: LightingDrawerProps): React.JSX.Element | null {
   const { value, capabilities, onChange, onApply, onSavePreset, disabled } = props;
   const rootId = useId();
 

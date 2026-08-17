@@ -14,7 +14,7 @@ export interface SettingsGroupProps {
   children: ReactNode;
 }
 
-export function SettingsGroup({ id, title, description, children }: SettingsGroupProps) {
+export function SettingsGroup({ id, title, description, children }: SettingsGroupProps): React.JSX.Element | null {
   const collapsed = useUiPrefsStore((s) => s.settingsGroupsCollapsed[id] ?? false);
   const toggle = useUiPrefsStore((s) => s.toggleSettingsGroup);
   const bodyId = `settings-group-${id}-body`;

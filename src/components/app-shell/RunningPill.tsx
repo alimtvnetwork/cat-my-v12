@@ -24,7 +24,7 @@ declare global {
 
 const DRAG_THRESHOLD_PX = 4;
 
-export function RunningPill() {
+export function RunningPill(): React.JSX.Element | null {
   const hydrated = useHydrated();
   const ops = useRunningOpsStore((s) => s.ops);
   const startOp = useRunningOpsStore((s) => s.start);

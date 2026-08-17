@@ -13,7 +13,7 @@ type TableProps = {
   className?: string;
 };
 
-export function TableSkeleton({ columns = 4, rows = 6, testId, className }: TableProps) {
+export function TableSkeleton({ columns = 4, rows = 6, testId, className }: TableProps): React.JSX.Element | null {
   return (
     <div
       data-testid={testId}
@@ -56,7 +56,7 @@ type GridProps = {
   className?: string;
 };
 
-export function CardGridSkeleton({ count = 8, minWidthPx = 180, testId, className }: GridProps) {
+export function CardGridSkeleton({ count = 8, minWidthPx = 180, testId, className }: GridProps): React.JSX.Element | null {
   return (
     <div
       data-testid={testId}
@@ -85,7 +85,7 @@ type LinesProps = {
   className?: string;
 };
 
-export function LinesSkeleton({ lines = 6, testId, className }: LinesProps) {
+export function LinesSkeleton({ lines = 6, testId, className }: LinesProps): React.JSX.Element | null {
   return (
     <div
       data-testid={testId}

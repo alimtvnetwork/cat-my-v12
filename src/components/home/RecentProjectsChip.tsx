@@ -20,7 +20,7 @@ import { Clock } from "lucide-react";
 import { useRecentProjects } from "@/lib/stores/recent-projects-store";
 import { toIntParam } from "@/lib/ids/int-alias";
 
-export function RecentProjectsChip() {
+export function RecentProjectsChip(): React.JSX.Element | null {
   const entries = useRecentProjects();
 
   return (
