@@ -58,5 +58,6 @@ export const ALL_STORAGE_KEYS: readonly StorageKey[] = Object.freeze([
 ]);
 
 export function isStorageKey(value: unknown): value is StorageKey {
+
   return typeof value === "string" && (ALL_STORAGE_KEYS as readonly string[]).includes(value);
 }
