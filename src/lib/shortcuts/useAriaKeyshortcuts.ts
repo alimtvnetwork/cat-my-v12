@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { useShortcuts } from "./registry";
 
 function toAriaCombo(combo: string): string {
+
   return combo
     .split("+")
     .map((part) => (part === "Ctrl" ? "Control" : part))

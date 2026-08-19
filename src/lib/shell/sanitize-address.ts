@@ -8,6 +8,7 @@
 
 /** True when the key is Lovable-internal preview plumbing. */
 export function isInternalQueryKey(key: string): boolean {
+
   return key.startsWith("__lovable") || key === "e2e";
 }
 
@@ -35,5 +36,6 @@ export function sanitizeSearchString(rawSearch: string | null | undefined): stri
 
 /** Compose a pathname with a sanitized search body, guaranteeing no `??`. */
 export function composeCleanUrl(pathname: string, sanitizedSearch: string): string {
+
   return sanitizedSearch ? `${pathname}?${sanitizedSearch}` : pathname;
 }

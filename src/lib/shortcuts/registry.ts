@@ -62,6 +62,7 @@ export function registerShortcut(def: ShortcutDefinition): () => void {
 }
 
 export function listShortcuts(): ShortcutDefinition[] {
+
   return snapshot;
 }
 
@@ -168,6 +169,7 @@ function subscribe(listener: Listener): () => void {
 }
 
 function getSnapshot(): ShortcutDefinition[] {
+
   return snapshot;
 }
 
