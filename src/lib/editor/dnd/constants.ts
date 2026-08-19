@@ -15,14 +15,17 @@ export const DND_STEP: Readonly<Record<DndStepType, number>> = Object.freeze({
 
 /** Convenience: axis-scoped step lookup for future 2D anisotropy. */
 export function stepFor(_axis: DndAxisType, kind: DndStepType): number {
+
   return DND_STEP[kind];
 }
 
 export namespace DndStepType {
   export function isFine(val: string | null | undefined): boolean {
+
     return val === DndStepType.Fine;
   }
   export function isCoarse(val: string | null | undefined): boolean {
+
     return val === DndStepType.Coarse;
   }
 }
