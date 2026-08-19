@@ -13,7 +13,10 @@ export function ProjectEditorSections({ project, rulesets }: Props): React.JSX.E
   const state = useProjectEditorState(project.id);
 
   return (
-    <div className="mb-hmi-6 flex h-[800px] flex-col rounded-lg border border-ca-border bg-ca-panel shadow-hmi-panel" data-testid="project-editor-sections">
+    <div
+      className="mb-hmi-6 flex h-[800px] flex-col rounded-lg border border-ca-border bg-ca-panel shadow-hmi-panel"
+      data-testid="project-editor-sections"
+    >
       <ProjectEditorToolbar project={project} rulesets={rulesets} />
       <div className="flex flex-1 overflow-hidden">
         <ProjectEditorMainCanvas
