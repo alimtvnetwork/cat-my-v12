@@ -12,7 +12,10 @@ set -euo pipefail
 
 log() { printf '\n\033[1;36m[ci-v3]\033[0m %s\n' "$*"; }
 
-log "1/5 typecheck (tsgo --noEmit)"
+log "1/5 generate routes"
+bunx @tanstack/router-cli generate
+
+log "2/5 typecheck (tsgo --noEmit)"
 bunx tsgo --noEmit
 
 log "2/5 eslint (--max-warnings=0)"

@@ -64,6 +64,8 @@ jobs:
           bun-version: latest
       - name: Install deps
         run: bun install --frozen-lockfile
+      - name: Generate route tree
+        run: bunx @tanstack/router-cli generate
       # Blocking typecheck gate. Runs FIRST so parser/syntax errors
       # (e.g. TS1005 "'}' expected") fail the job before any slower
       # check burns CI minutes. Two passes:
