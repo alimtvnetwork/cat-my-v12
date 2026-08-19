@@ -11,7 +11,13 @@ export interface StatusStripProps {
   onRedo?: () => void;
 }
 
-export function StatusStrip({ undo, redo, state, onUndo, onRedo }: StatusStripProps): React.JSX.Element | null {
+export function StatusStrip({
+  undo,
+  redo,
+  state,
+  onUndo,
+  onRedo,
+}: StatusStripProps): React.JSX.Element | null {
   return (
     <div role="status" className="editor-status-strip">
       <LastLogChip />

@@ -13,7 +13,13 @@ export interface SaveStateProps {
   onRedo?: () => void;
 }
 
-export function SaveState({ undo, redo, state, onUndo, onRedo }: SaveStateProps): React.JSX.Element | null {
+export function SaveState({
+  undo,
+  redo,
+  state,
+  onUndo,
+  onRedo,
+}: SaveStateProps): React.JSX.Element | null {
   return (
     <span className="editor-save-state hmi-tabular text-hmi-badge">
       <button
