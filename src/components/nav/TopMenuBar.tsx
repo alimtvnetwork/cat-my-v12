@@ -38,7 +38,12 @@ import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { usePanelHostMounted } from "@/lib/workspace/panel-host-registry";
 
-import { MenuRouteType, type MenuRoute, toggleWindowPanel, collapseFirstOpenPanel } from "./TopMenuBarConstants";
+import {
+  MenuRouteType,
+  type MenuRoute,
+  toggleWindowPanel,
+  collapseFirstOpenPanel,
+} from "./TopMenuBarConstants";
 import { MobileMenu } from "./TopMenuMobile";
 import { MenubarItemRow } from "./TopMenuRows";
 import { TopMenuGroup } from "./TopMenuGroup";
@@ -59,8 +64,6 @@ export type MenuGroup = {
 };
 import { useAltMnemonicOpen } from "./TopMenuMnemonics";
 export { MenuTriggerWithMnemonic, GROUP_MNEMONIC, MnemonicLabel } from "./TopMenuMnemonics";
-
-
 
 export const GROUPS: MenuGroup[] = [
   {
@@ -240,21 +243,8 @@ export function TopMenuBar(): React.JSX.Element | null {
         </Menubar>
       </nav>
       <div className="lg:hidden">
-        <MobileMenu
-          pathname={pathname}
-          running={running}
-          showWindowMenu={showWindowMenuGated}
-        />
+        <MobileMenu pathname={pathname} running={running} showWindowMenu={showWindowMenuGated} />
       </div>
     </>
   );
 }
-
-
-
-
-
-
-
-
-
