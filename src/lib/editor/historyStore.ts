@@ -52,6 +52,7 @@ function emit() {
 }
 
 function nextId(): string {
+  
   return `h-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
@@ -96,6 +97,7 @@ export const historyStore = {
     emit();
   },
   getSnapshot(): Snapshot {
+    
     return snapshot;
   },
   subscribe(cb: () => void): () => void {
@@ -108,6 +110,7 @@ export const historyStore = {
 };
 
 export function useHistory(): Snapshot {
+  
   return useSyncExternalStore(
     historyStore.subscribe,
     historyStore.getSnapshot,
