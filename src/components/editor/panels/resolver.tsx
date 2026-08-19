@@ -32,7 +32,12 @@ export interface ControllerPanelProps {
   disabled?: boolean;
 }
 
-export function ControllerPanel({ rule, onChange, onUploadAsset, disabled }: ControllerPanelProps): React.JSX.Element | null {
+export function ControllerPanel({
+  rule,
+  onChange,
+  onUploadAsset,
+  disabled,
+}: ControllerPanelProps): React.JSX.Element | null {
   switch (rule.controller) {
     case ControllerKindType.Number:
       return (

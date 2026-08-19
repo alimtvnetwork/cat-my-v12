@@ -103,5 +103,3 @@ export function LightingDrawer(props: LightingDrawerProps): React.JSX.Element | 
     </div>
   );
 }
-
-
