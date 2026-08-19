@@ -112,11 +112,6 @@ interface CanvasViewportProps {
   onSelectMany?: (ids: string[], source: "canvas-marquee") => void;
 }
 
-interface PanGesture {
-  screen: EditorPoint;
-  viewport: Viewport;
-}
-
 interface ShapeDrag {
   id: string;
   start: EditorPoint;
