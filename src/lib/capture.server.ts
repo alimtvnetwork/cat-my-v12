@@ -127,7 +127,9 @@ export function writeSelectedDevice(
   if (device) {
     selectedDeviceId = device.id;
     currentVendor = device.vendor;
-    ClientLogger.info(`[capture.select] vendor=${vendor} serial=${serial} actor=${actor} result=ok`);
+    ClientLogger.info(
+      `[capture.select] vendor=${vendor} serial=${serial} actor=${actor} result=ok`,
+    );
 
     return { ...device, selected: true };
   }
