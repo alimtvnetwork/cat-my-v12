@@ -29,26 +29,8 @@ import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { usePanelHostMounted } from "@/lib/workspace/panel-host-registry";
 
-export enum MenuRouteType {
-  Root = "/",
-  Projects = "/projects",
-  Results = "/results",
-  Errors = "/errors",
-  Settings = "/settings",
-  Setup = "/setup",
-  SetupRules = "/setup/rules",
-  SetupRoi = "/setup/roi",
-  SetupReference = "/setup/reference",
-  Run = "/run",
-  TrialRun = "/trial-run",
-  AiTesting = "/ai-testing",
-  SettingsCamera = "/settings/camera",
-  SettingsTrigger = "/settings/trigger",
-  SettingsLighting = "/settings/lighting",
-  SettingsLicense = "/settings/license",
-  Ops = "/ops",
-}
-export type MenuRoute = MenuRouteType;
+import { MenuRouteType, type MenuRoute } from "./TopMenuBarConstants";
+
 type NavEntry = {
   to: MenuRoute;
   label: string;
