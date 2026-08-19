@@ -31,14 +31,14 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [x] `src/components/editor/PropertiesPanel.tsx` (700 lines)
 - [x] `src/components/rules/PropertiesPalette.tsx` (690+ lines)
 - [x] `src/components/editor/panels/MaskPanel.tsx` (540+ lines)
-- [ ] `src/components/editor/layers/LayersPanel.tsx` (540+ lines)
+- [x] `src/components/editor/layers/LayersPanel.tsx` (540+ lines)
 - [ ] `src/components/editor/setup/EditorSetupExperience.tsx` (510 lines)
 - [x] `src/components/editor/panels/AcceptancePanel.tsx` (400 lines)
 - [ ] `src/components/rules/LayersPalette.tsx` (390+ lines)
 - [ ] `src/components/editor/InspectorSurface.tsx` (330+ lines)
 
 ### 4. Dialogs & Modals
-- [ ] `src/components/editor/validation/ValidateAgainstImageDialog.tsx` (650+ lines)
+- [x] `src/components/editor/validation/ValidateAgainstImageDialog.tsx` (650+ lines)
 - [x] `src/components/errors/GlobalErrorModal.tsx` (630+ lines)
 - [ ] `src/components/rules/RuleCreateDialog.tsx` (320+ lines)
 
@@ -54,6 +54,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
 
 
 
