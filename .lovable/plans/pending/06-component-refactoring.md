@@ -46,7 +46,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [x] `src/components/rules/tools/ToolsPalette.tsx` (590+ lines)
 - [ ] `src/components/settings/ReferenceImageCard.tsx` (580+ lines)
 - [ ] `src/components/projects/sections/ProjectImageSamplesSection.tsx` (510+ lines)
-- [ ] `src/components/editor/design-mode/DesignModeOverlay.tsx` (490+ lines)
+- [x] `src/components/editor/design-mode/DesignModeOverlay.tsx` (490+ lines)
 - [ ] `src/components/hmi/CameraPreview.tsx` (380+ lines)
 - [ ] `src/components/cli/envelope-viewer.tsx` (350+ lines)
 
@@ -54,6 +54,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
 
 
 
