@@ -25,7 +25,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [x] `src/components/nav/TopMenuBar.tsx` (800+ lines)
 - [ ] `src/components/ui/sidebar.tsx` (700+ lines)
 - [ ] `src/components/nav/CommandPalette.tsx` (400+ lines)
-- [ ] `src/components/app-shell/panels/PanelHost.tsx` (570+ lines)
+- [x] `src/components/app-shell/panels/PanelHost.tsx` (570+ lines)
 
 ### 3. Editor Panels & Properties
 - [x] `src/components/editor/PropertiesPanel.tsx` (700 lines)
@@ -54,6 +54,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
 
 
 
