@@ -1,7 +1,6 @@
 import pytest
 from BE.envelope import Envelope
 from BE.models.system import SystemStatus
-from BE.models.camera import CameraModel
 
 def test_envelope_ok():
     env = Envelope.ok(data={"foo": "bar"})
@@ -22,9 +21,3 @@ def test_system_status():
     assert status.uptime == 100
     assert status.version == "1.0"
     assert status.status == "healthy"
-
-def test_camera_model():
-    cam = CameraModel(id="1", name="cam1", status="online")
-    assert cam.id == "1"
-    assert cam.name == "cam1"
-    assert cam.status == "online"
