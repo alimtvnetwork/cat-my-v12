@@ -29,6 +29,7 @@ import {
 } from "../draftStore";
 
 function envelope(version = 1): RuleSetEnvelope {
+  
   return {
     SchemaVersion: RULESET_SCHEMA_VERSION,
     RuleSetId: 7,
@@ -54,6 +55,7 @@ function envelope(version = 1): RuleSetEnvelope {
 }
 
 function okResponse(env: RuleSetEnvelope): Response {
+  
   return new Response(
     JSON.stringify({ TraceId: "t", Success: true, Results: [env], Errors: null }),
     { status: 200, headers: { "content-type": "application/json" } },
@@ -61,6 +63,7 @@ function okResponse(env: RuleSetEnvelope): Response {
 }
 
 function errResponse(status: number, code: string): Response {
+  
   return new Response(
     JSON.stringify({
       TraceId: "t",
