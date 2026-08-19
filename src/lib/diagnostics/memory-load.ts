@@ -26,6 +26,7 @@ function toEntry(path: string, raw: unknown): MemoryFileEntry | string {
 }
 
 function idsFrom(record: Record<string, unknown>): string[] {
+
   return Object.keys(record)
     .map((p) => p.split("/").pop() ?? p)
     .map((n) => n.replace(/\.md$/, ""))

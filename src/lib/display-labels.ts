@@ -64,6 +64,7 @@ const KNOWN_LABELS: Record<string, string> = {
 const ACRONYMS = new Set(["ID", "OK", "NG", "SDK", "URL", "OCR", "JSON", "CLI", "CID", "DB", "MB"]);
 
 function splitIdentifier(value: string): string[] {
+
   return value
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
@@ -103,6 +104,7 @@ export function formatIdentifierLabel(value: unknown): string {
 }
 
 export function formatUiText(value: unknown): string {
+
   return String(value ?? "")
     .replace(/\s*->\s*/g, " to ")
     .replace(
