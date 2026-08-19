@@ -212,6 +212,7 @@ export function autoSeedIfEmpty(projects: readonly CatSeedProject[]): SeedResult
   try {
     if (window.localStorage.getItem(AUTOSEED_FLAG) === "1") return null;
   } catch {
+
     return null;
   }
 
