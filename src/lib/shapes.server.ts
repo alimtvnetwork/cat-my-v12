@@ -78,6 +78,7 @@ export async function insertShape(payload: {
   if (existing.error) throw existing.error;
 
   if (existing.data) {
+
     return {
       id: existing.data.id,
       name: existing.data.name,
@@ -119,5 +120,6 @@ export function renderStandaloneSvg(input: {
   viewBoxW: number;
   viewBoxH: number;
 }): string {
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${input.viewBoxW} ${input.viewBoxH}"><path d="${input.svgPath}" fill="currentColor"/></svg>`;
 }
