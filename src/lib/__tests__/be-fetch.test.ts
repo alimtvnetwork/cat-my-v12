@@ -6,6 +6,7 @@ import { CORRELATION_HEADER, EnvelopeError, beFetch, type Envelope } from "@/lib
 import { useErrorStore } from "@/lib/stores/errorStore";
 
 function successEnvelope<T>(results: T[]): Envelope<T> {
+
   return {
     Status: {
       IsSuccess: true,
@@ -27,6 +28,7 @@ function successEnvelope<T>(results: T[]): Envelope<T> {
 }
 
 function failureEnvelope(code: string, msg: string): Envelope<never> {
+
   return {
     Status: {
       IsSuccess: false,
@@ -57,6 +59,7 @@ function mockFetch(response: Response | Error): void {
 }
 
 function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
+
   return new Response(JSON.stringify(body), {
     status,
     headers: { "content-type": "application/json", ...headers },
