@@ -112,5 +112,6 @@ export const catSeedBundleSchema: z.ZodType<CatSeedBundle> = z.object({
  * `CapturedError` and fall back to a memory facade.
  */
 export function parseCatSeedBundle(raw: unknown): CatSeedBundle {
+
   return catSeedBundleSchema.parse(raw);
 }

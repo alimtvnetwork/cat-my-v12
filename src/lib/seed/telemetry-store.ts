@@ -63,6 +63,7 @@ export interface FatalReseedCounters {
 }
 
 function emptyCounters(): FatalReseedCounters {
+
   return {
     total: 0,
     byMode: { auto: 0, reset: 0 },
