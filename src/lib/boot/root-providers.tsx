@@ -12,7 +12,7 @@ export function RootProviders({
 }: {
   children: ReactNode;
   queryClient: QueryClient;
-}): React.JSX.Element | null {
+}) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeController />

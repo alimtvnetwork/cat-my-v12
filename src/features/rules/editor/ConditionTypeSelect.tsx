@@ -27,7 +27,7 @@ export function ConditionTypeSelect({
   onChange,
   disabled,
   ariaLabel = "Condition type",
-}: ConditionTypeSelectProps): React.JSX.Element | null {
+}: ConditionTypeSelectProps) {
   return (
     <Select
       value={value}

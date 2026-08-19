@@ -6,7 +6,7 @@ import { useBackendMode } from "./mode";
 
 const BackendContext = createContext<BackendClient | null>(null);
 
-export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ children }): React.JSX.Element | null => {
+export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const mode = useBackendMode((s) => s.mode);
 
   const client = useMemo<BackendClient>(() => {

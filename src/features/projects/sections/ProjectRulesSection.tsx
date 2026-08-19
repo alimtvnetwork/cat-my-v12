@@ -78,7 +78,7 @@ export function detectProjectRuleConflicts(
   return conflicts;
 }
 
-export function ProjectRulesSection({ project, rulesets }: ProjectRulesSectionProps): React.JSX.Element | null {
+export function ProjectRulesSection({ project, rulesets }: ProjectRulesSectionProps) {
   const reorder = useProjectStore((s) => s.reorderProjectRulesets);
   const deleteRuleset = useProjectStore((s) => s.deleteRuleset);
   const captureError = useErrorStore((s) => s.captureError);

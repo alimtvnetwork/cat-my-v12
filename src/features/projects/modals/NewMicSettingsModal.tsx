@@ -67,7 +67,7 @@ export function validateMicParamsJson(raw: string): ParseResult {
   return { ok: true, value: parsed as Record<string, unknown>, error: null };
 }
 
-export function NewMicSettingsModal({ open, onOpenChange, onSubmit }: NewMicSettingsModalProps): React.JSX.Element | null {
+export function NewMicSettingsModal({ open, onOpenChange, onSubmit }: NewMicSettingsModalProps) {
   const [name, setName] = useState("");
   const [json, setJson] = useState("{}");
   const [submitError, setSubmitError] = useState<string | null>(null);

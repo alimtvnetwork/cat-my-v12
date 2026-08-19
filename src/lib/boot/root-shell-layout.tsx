@@ -24,7 +24,7 @@ import { AppShellSidebar } from "@/components/app-shell/sidebar";
 import { StandardAppShellNav } from "@/components/app-shell/StandardAppShellNav";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
-export function RootShellLayout({ children }: { children: ReactNode }): React.JSX.Element | null {
+export function RootShellLayout({ children }: { children: ReactNode }) {
   const uiFlavor = useUiPrefsStore((s) => s.uiFlavor);
 
   return (

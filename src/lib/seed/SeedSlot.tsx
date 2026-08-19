@@ -62,7 +62,7 @@ export function SeedSlot<K extends CatSeedBundleSlice>({
   errorFallback,
   ariaLabel,
   slot,
-}: SeedSlotProps<K>): React.JSX.Element | null {
+}: SeedSlotProps<K>) {
   const { data, status, error } = useSeedSlice(slice);
 
   if (status === "error") {

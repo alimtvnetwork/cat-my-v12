@@ -15,7 +15,7 @@ export function CanvasViewportStatusHud({
   selectedIds,
   keyboardDnd,
   pointerCoords,
-}: CanvasViewportStatusHudProps): React.JSX.Element | null {
+}: CanvasViewportStatusHudProps) {
   return (
     <div className="editor-canvas-hud" aria-live="polite">
       <span>{editorKindLabel(activeKind)}</span>

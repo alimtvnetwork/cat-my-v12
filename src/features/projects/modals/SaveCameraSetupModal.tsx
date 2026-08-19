@@ -47,7 +47,7 @@ export function SaveCameraSetupModal({
   onOpenChange,
   currentSettingId,
   onSaved,
-}: SaveCameraSetupModalProps): React.JSX.Element | null {
+}: SaveCameraSetupModalProps) {
   const { all, byId, save } = useCameraLibrary();
   const nameId = useId();
   const notesId = useId();

@@ -8,7 +8,7 @@ export interface BlackWhiteToggleProps {
   disabled?: boolean;
 }
 
-export function BlackWhiteToggle({ value, onChange, disabled }: BlackWhiteToggleProps): React.JSX.Element | null {
+export function BlackWhiteToggle({ value, onChange, disabled }: BlackWhiteToggleProps) {
   return (
     <div className="flex flex-col gap-2">
       <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

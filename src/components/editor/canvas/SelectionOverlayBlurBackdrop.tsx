@@ -19,7 +19,7 @@ export function SelectionOverlayBlurBackdrop({
   theta,
   rotateTransform,
   canvasSize,
-}: Props): React.JSX.Element | null {
+}: Props) {
   const w = Math.max(0, br.x - tl.x);
   const h = Math.max(0, br.y - tl.y);
   const cw = canvasSize.width;

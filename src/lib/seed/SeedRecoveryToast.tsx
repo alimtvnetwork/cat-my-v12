@@ -53,7 +53,7 @@ function extractIssues(error: Error | null): ExtractedIssue[] {
   return [];
 }
 
-export function SeedRecoveryToast(): React.JSX.Element | null {
+export function SeedRecoveryToast() {
   const ctx = useSeedContextOptional();
   const [dismissed, setDismissed] = useState(false);
 

@@ -30,7 +30,7 @@ export function ConditionCard({
   onChange,
   onDelete,
   onPickColor,
-}: ConditionCardProps): React.JSX.Element | null {
+}: ConditionCardProps) {
   function handleTypeChange(next: ConditionTypeT) {
     if (next === condition.type) return;
     onChange(makeDefaultCondition(next, condition.id));

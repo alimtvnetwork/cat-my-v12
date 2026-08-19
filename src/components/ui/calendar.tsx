@@ -18,7 +18,7 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"];
-}): React.JSX.Element {
+}) {
   const defaultClassNames = getDefaultClassNames();
 
   return (
@@ -141,7 +141,7 @@ function CalendarDayButton({
   day,
   modifiers,
   ...props
-}: React.ComponentProps<typeof DayButton>): React.JSX.Element {
+}: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames();
 
   const ref = React.useRef<HTMLButtonElement>(null);
@@ -175,4 +175,3 @@ function CalendarDayButton({
 }
 
 export { Calendar, CalendarDayButton };
-

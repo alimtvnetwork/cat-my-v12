@@ -65,12 +65,12 @@ export function useSeedBootReconcile() {
   }, [router]);
 }
 
-export function ApplySeedProfileMount(): React.JSX.Element | null {
+export function ApplySeedProfileMount() {
   useEffect(() => registerApplySeedProfileHandler(), []);
   return null;
 }
 
-export function AutoSeedFromFacade(): React.JSX.Element | null {
+export function AutoSeedFromFacade() {
   const { data: seedProjects, status, error } = useSeedSlice("projects");
   const showResetSummaryToast = (input: {
     ok: boolean;

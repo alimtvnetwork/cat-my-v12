@@ -6,7 +6,7 @@ interface CanvasViewportMarqueeProps {
   viewport: Viewport;
 }
 
-export function CanvasViewportMarquee({ marqueeRect, viewport }: CanvasViewportMarqueeProps): React.JSX.Element | null {
+export function CanvasViewportMarquee({ marqueeRect, viewport }: CanvasViewportMarqueeProps) {
   if (!marqueeRect) return null;
   
   return (
