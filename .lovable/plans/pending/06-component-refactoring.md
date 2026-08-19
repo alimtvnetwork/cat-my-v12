@@ -19,7 +19,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 
 ### 1. Canvas Overlays & Viewports (Extreme Size)
 - [x] `src/components/editor/canvas/SelectionOverlay.tsx` (2600+ lines)
-- [ ] `src/components/editor/canvas/CanvasViewport.tsx` (1700+ lines)
+- [x] `src/components/editor/canvas/CanvasViewport.tsx` (1700+ lines)
 
 ### 2. Navigations & Sidebars
 - [x] `src/components/nav/TopMenuBar.tsx` (800+ lines)
@@ -54,6 +54,7 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
 
 
 
