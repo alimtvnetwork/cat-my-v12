@@ -46,32 +46,26 @@ function hasTypingFocus(target: EventTarget | null): boolean {
 }
 
 function isKey(event: KeyboardEvent, key: string): boolean {
-
   return event.key.toLowerCase() === key.toLowerCase();
 }
 
 function hasShortcutModifier(event: KeyboardEvent): boolean {
-
   return event.ctrlKey === true || event.metaKey === true;
 }
 
 function hasModifiedKey(event: KeyboardEvent, key: string): boolean {
-
   return hasShortcutModifier(event) && event.shiftKey === false && isKey(event, key);
 }
 
 function hasModifiedShiftKey(event: KeyboardEvent, key: string): boolean {
-
   return hasShortcutModifier(event) && event.shiftKey === true && isKey(event, key);
 }
 
 function hasModifiedPlusKey(event: KeyboardEvent): boolean {
-
   return hasShortcutModifier(event) && (isKey(event, "+") || isKey(event, "="));
 }
 
 function hasPlainKey(event: KeyboardEvent, key: string): boolean {
-
   return (
     event.ctrlKey === false &&
     event.metaKey === false &&
@@ -82,7 +76,6 @@ function hasPlainKey(event: KeyboardEvent, key: string): boolean {
 }
 
 function matchesMenuShortcut(event: KeyboardEvent, shortcut: MenuShortcutType): boolean {
-
   return SHORTCUT_MATCHERS[shortcut](event);
 }
 

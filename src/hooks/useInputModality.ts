@@ -37,12 +37,10 @@ function subscribe(l: () => void): () => void {
 }
 
 function getSnapshot(): Modality {
-
   return current;
 }
 
 function getServerSnapshot(): Modality {
-
   return ModalityType.Pointer;
 }
 
@@ -85,6 +83,5 @@ export function InputModalityTracker(): null {
 }
 
 export function useInputModality(): Modality {
-
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
