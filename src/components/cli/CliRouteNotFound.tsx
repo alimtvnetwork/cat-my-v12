@@ -28,6 +28,7 @@ export interface CliRouteNotFoundProps {
 }
 
 export function CliRouteNotFound({ icon = Compass, title, body }: CliRouteNotFoundProps): React.JSX.Element | null {
+  
   return (
     <div className="p-hmi-4">
       <EmptyState

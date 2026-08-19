@@ -8,7 +8,12 @@ import type {
   ToolModifierKeys,
 } from "../types";
 
-type AnchorToolKind = Extract<EditorRuleKind, "K" | "S" | "E">;
+export enum AnchorToolKindType {
+  K = "K",
+  S = "S",
+  E = "E",
+}
+export type AnchorToolKind = AnchorToolKindType;
 
 interface AnchorSize {
   width: number;
@@ -66,6 +71,7 @@ export function commitAnchorGesture(
   existingRules: readonly EditorRule[],
   id: string,
 ): EditorRule {
+  
   return {
     id,
     name: nextName(gesture.kind, existingRules),
@@ -82,6 +88,7 @@ export function commitAnchorGesture(
 }
 
 export function cancelAnchorGesture(): null {
+  
   return null;
 }
 

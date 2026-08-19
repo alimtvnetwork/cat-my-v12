@@ -24,8 +24,10 @@ interface DebugRow {
 function readCollapsed(): boolean {
   if (typeof window === "undefined") return false;
   try {
+    
     return window.localStorage.getItem(StorageKey.CaptureRequestPanelCollapsed) === "1";
   } catch {
+    
     return false;
   }
 }
