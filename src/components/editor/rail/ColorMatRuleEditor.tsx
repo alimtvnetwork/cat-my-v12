@@ -36,7 +36,11 @@ function fromHex(hex: string): RgbColor {
   return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
 }
 
-export function ColorMatRuleEditor({ name, params, onChange }: ColorMatRuleEditorProps): React.JSX.Element | null {
+export function ColorMatRuleEditor({
+  name,
+  params,
+  onChange,
+}: ColorMatRuleEditorProps): React.JSX.Element | null {
   const p: ColorMatParams = {
     ...COLOR_MAT_DEFAULTS,
     ...params,

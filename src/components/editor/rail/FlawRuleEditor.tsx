@@ -20,7 +20,11 @@ const WINDOW_MAX = 31;
 const VAR_MIN = 0;
 const VAR_MAX = 65025; // 255^2
 
-export function FlawRuleEditor({ name, params, onChange }: FlawRuleEditorProps): React.JSX.Element | null {
+export function FlawRuleEditor({
+  name,
+  params,
+  onChange,
+}: FlawRuleEditorProps): React.JSX.Element | null {
   const p: FlawDetectionParams = { ...FLAW_DETECTION_DEFAULTS, ...params };
   const patch = (next: Partial<FlawDetectionParams>) => onChange({ ...p, ...next });
   const errors = validateFlawDetectionParams(p);
