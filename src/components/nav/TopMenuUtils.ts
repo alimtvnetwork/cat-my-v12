@@ -4,7 +4,8 @@ import { AppEvent } from "@/lib/constants";
 import { MenuShortcutType } from "@/lib/enums/menu-shortcut-type";
 import { type MenuShortcutBinding } from "@/hooks/useMenuShortcuts";
 import type { NavEntry, ActionEntry, Entry, MenuGroup } from "./TopMenuBar";
-import { ACTION_HANDLERS, GROUPS } from "./TopMenuBar";
+import { GROUPS } from "./TopMenuBar";
+import { ACTION_HANDLERS } from "./TopMenuActionHandlers";
 
 const MENU_COMMAND_EVENT = AppEvent.MenuCommand;
 type AppNavigate = ReturnType<typeof useNavigate>;
