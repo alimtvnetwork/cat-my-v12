@@ -111,11 +111,17 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
   { slug: "results", path: "/results", description: "Results hub (Plan 85)" },
   { slug: "ops", path: "/ops", description: "Ops dashboard (Plan 85)" },
   { slug: "run-picker", path: "/run", description: "Run picker deep-link (Plan 85)" },
-  { slug: "settings-camera", path: "/settings/camera", description: "Settings > Camera (Plan 85)" },
+  {
+    slug: "settings-camera",
+    path: "/settings/camera",
+    description: "Settings > Camera (Plan 85)",
+    waitForSelector: '[data-testid="camera-preview-settled"]',
+  },
   {
     slug: "settings-lighting",
     path: "/settings/lighting",
     description: "Settings > Lighting (Plan 85)",
+    waitForSelector: '[data-testid="camera-preview-settled"]',
   },
   {
     slug: "settings-trigger",

@@ -31,7 +31,7 @@ SEED = {
     "projectsKey": "ca:projects:v1",
     "projectsValue": '{"state":{"projects":{"p-fixture-bound-0001":{"id":"p-fixture-bound-0001","name":"Fixture Project (bound)","createdAt":1700000000000,"rulesetIds":[],"cameraSettingId":"cam-fixture-0001"}},"rulesets":{}},"version":0}',
     "cameraKey": "ca.camera.library.v1",
-    "cameraValue": '{"entries":[{"id":"cam-fixture-0001","name":"Fixture Camera","vendor":"GenericV4L2","deviceSerial":"SN-FIX","fovMmW":100,"fovMmH":75,"resolutionW":1920,"resolutionH":1080,"exposureUs":5000,"gainDb":0,"gamma":1,"whiteBalanceKelvin":0,"focusMode":"Auto","triggerMode":"Software","frameRateHz":30,"pockets":1,"roi":null,"colorMode":"Mono8","notes":"","createdAt":1700000000000,"updatedAt":1700000000000}]}',
+    "cameraValue": '{"entries":[{"id":"cam-fixture-0001","name":"Fixture Camera","vendor":"GenericV4L2","deviceSerial":"SN-FIX","fovMmW":100,"fovMmH":75,"resolutionW":1920,"resolutionH":1080,"exposureUs":5000,"gainDb":0,"gamma":1,"whiteBalanceKelvin":0,"focusMode":"Auto","triggerMode":"Software","frameRateHz":30,"pockets":1,"roi":null,"ColorModeType":"Mono8","notes":"","createdAt":1700000000000,"updatedAt":1700000000000}]}',
 }
 
 async def run():

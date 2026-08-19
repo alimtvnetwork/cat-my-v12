@@ -44,7 +44,7 @@ function fixtureCamera() {
     frameRateHz: 30,
     pockets: 1,
     roi: null,
-    colorMode: "Mono8",
+    ColorModeType: "Mono8",
     notes: "",
     createdAt: FIXTURE_EPOCH,
     updatedAt: FIXTURE_EPOCH,
@@ -95,8 +95,8 @@ export async function installProjectCameraFixtures(
   const projectsEnvelope = { state: fixtureProjectsState(), version: 0 };
   const cameraLibrary =
     libraryMode === FixtureLibraryModeType.WithCamera
-      ? { entries: [fixtureCamera()] }
-      : { entries: [] };
+      ? { kind: "ca.camera.library", version: 1, entries: [fixtureCamera()] }
+      : { kind: "ca.camera.library", version: 1, entries: [] };
   await page.evaluate(
     ({ projectsKey, projectsValue, cameraKey, cameraValue }) => {
       window.localStorage.setItem(projectsKey, projectsValue);

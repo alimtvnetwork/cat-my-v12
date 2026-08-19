@@ -212,6 +212,7 @@ export function CameraPreview({ storageKey, heading, onControlsChange }: Props):
       <div className="relative bg-ca-viewport border border-ca-border overflow-hidden aspect-video">
         {status === "live" ? (
           <video
+            data-testid="camera-preview-settled"
             ref={videoRef}
             playsInline
             muted
@@ -220,6 +221,7 @@ export function CameraPreview({ storageKey, heading, onControlsChange }: Props):
           />
         ) : (
           <div
+            data-testid={status !== "live" ? "camera-preview-settled" : undefined}
             className="w-full h-full grid place-items-center text-hmi-caption text-ca-ink-muted"
             style={{
               filter,
