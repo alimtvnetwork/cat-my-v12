@@ -70,5 +70,6 @@ export function resolveCrumb(segment: string, paramName?: string): string {
 
 /** Read-only view for tests / debug surfaces. */
 export function listStaticTokens(): Readonly<Record<string, string>> {
+
   return STATIC_TOKENS;
 }
