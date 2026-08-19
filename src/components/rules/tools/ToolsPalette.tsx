@@ -70,6 +70,7 @@ function writeStoredVariants(map: VariantMap): void {
 }
 
 function defaultVariantId(id: ToolId): string | undefined {
+
   return TOOL_TOOLTIPS[id].variants?.[0]?.id;
 }
 
@@ -511,6 +512,7 @@ function ToolTile({
   );
 
   if (!tip.hasFlyout) {
+
     return (
       <Tooltip {...controlledTooltipProps}>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
@@ -569,6 +571,7 @@ interface VariantRowProps {
 }
 
 function VariantRow({ variant, selected, onPick }: VariantRowProps) {
+
   return (
     <li>
       <button

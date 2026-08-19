@@ -33,6 +33,7 @@ function memoryRepo(): ProjectRepositoryFacade {
   return {
     kind: "memory",
     async readItem(k) {
+
       return store.get(k) ?? null;
     },
     async writeItem(k, v) {
@@ -46,6 +47,7 @@ function memoryRepo(): ProjectRepositoryFacade {
 
 const iso = "2026-07-18T00:00:00.000Z";
 function makeRule(id: string, extra: Partial<Rule> = {}): Rule {
+
   return {
     id: id as RuleId,
     name: id.toUpperCase(),
