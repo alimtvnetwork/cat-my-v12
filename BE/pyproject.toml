@@ -2,10 +2,9 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = [".."]
-include = ["BE*"]
-
+[tool.setuptools]
+package-dir = {"BE" = "."}
+packages = ["BE", "BE.app", "BE.app.db.writers", "BE.app.domain", "BE.app.facades", "BE.app.rules", "BE.cli", "BE.cli.common", "BE.cli.processing", "BE.cli.processing.commands", "BE.cli.processing.helptext", "BE.cli.worker", "BE.cli.worker.helptext", "BE.cli.worker.subcommands", "BE.db", "BE.errors", "BE.middleware", "BE.migrations", "BE.models", "BE.repos", "BE.routes", "BE.routes.observability", "BE.sdk_facade", "BE.sdk_facade.vendors", "BE.sdk_facade.vendors.daheng", "BE.security", "BE.tests", "BE.tests.app", "BE.tests.app.rules", "BE.tests.cli", "BE.tests.cli.common", "BE.tests.cli.processing", "BE.tests.cli.retention", "BE.tests.cli.worker", "BE.tests.db", "BE.tests.errors"]
 [project]
 name = "be"
 version = "0.1.0"
