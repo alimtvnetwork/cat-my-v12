@@ -41,7 +41,6 @@ function readInitial(): DataSource {
     const raw = window.localStorage.getItem(STORAGE_KEY);
 
     if (raw && (KNOWN as readonly string[]).includes(raw)) {
-
       return raw as DataSource;
     }
   } catch {
@@ -58,7 +57,6 @@ function readInitialBaseUrl(): string {
 
     return normalizeBaseUrl(raw) || DEFAULT_BACKEND_BASE_URL;
   } catch {
-
     return DEFAULT_BACKEND_BASE_URL;
   }
 }
@@ -108,7 +106,6 @@ function emitPersistRules(): void {
 }
 
 export function getDataSource(): DataSource {
-
   return current;
 }
 
@@ -142,12 +139,10 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function useDataSource(): DataSource {
-
   return useSyncExternalStore(subscribe, getDataSource, () => DataSourceType.Seed);
 }
 
 export function getBackendBaseUrl(): string {
-
   return currentBaseUrl;
 }
 
@@ -189,7 +184,6 @@ function subscribeBaseUrl(listener: () => void): () => void {
 }
 
 export function useBackendBaseUrl(): string {
-
   return useSyncExternalStore(subscribeBaseUrl, getBackendBaseUrl, () => DEFAULT_BACKEND_BASE_URL);
 }
 
@@ -238,7 +232,6 @@ function subscribePersistRules(listener: () => void): () => void {
 }
 
 export function usePersistRulesServerSide(): boolean {
-
   return useSyncExternalStore(
     (listener) => {
       const u1 = subscribePersistRules(listener);
