@@ -109,7 +109,9 @@ describe("logFatalReseed", () => {
     const firstCallArg = warn.mock.calls[0]?.[0];
     const parsedLog = JSON.parse(firstCallArg);
     expect(parsedLog.Message).toBe("[seed/telemetry] fatal");
-    expect(parsedLog.Context).toEqual(expect.objectContaining({ cause: "orchestrator-throw", mode: "reset" }));
+    expect(parsedLog.Context).toEqual(
+      expect.objectContaining({ cause: "orchestrator-throw", mode: "reset" }),
+    );
     warn.mockRestore();
   });
 
