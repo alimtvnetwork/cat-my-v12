@@ -108,8 +108,6 @@ interface Props {
   onRotate?: (id: string, degrees: number) => void;
 }
 
-
-
 export function SelectionOverlay({
   rules,
   selectedIds,
@@ -285,7 +283,6 @@ export function SelectionOverlay({
 
     lastSelId.current = id;
   }, [rule?.id]);
-
 
   // NOTE: no early return here. React requires the hook count to be stable
   // across renders; the previous `if (!rule && !contextMenu) return null;`
@@ -571,5 +568,3 @@ export function SelectionOverlay({
     </div>
   );
 }
-
-
