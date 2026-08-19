@@ -20,6 +20,7 @@ export interface RectGesture {
 }
 
 export function startRectGesture(image: EditorPoint, kind: RectToolKind): RectGesture {
+
   return {
     family: EditorToolFamilyType.Rect,
     kind,
@@ -67,6 +68,7 @@ export function commitRectGesture(
 }
 
 export function cancelRectGesture(): null {
+
   return null;
 }
 

@@ -126,6 +126,7 @@ export const useValidationStore = create<ValidationStore>()(
         // the empty `runs: {}` initial state, then the persist
         // middleware rehydrates on the client after mount.
         if (typeof window === "undefined") {
+
           return {
             getItem: () => null,
             setItem: () => undefined,
@@ -158,6 +159,7 @@ export const useValidationStore = create<ValidationStore>()(
  * exists for that ruleset (chip renders nothing).
  */
 export function useValidationResult(ruleId: string): ValidationResult | undefined {
+
   return useValidationStore((s) => {
     const rulesetId = s.activeRulesetId;
 
@@ -169,6 +171,7 @@ export function useValidationResult(ruleId: string): ValidationResult | undefine
 
 /** Metadata about the last run for the given ruleset, for header labels. */
 export function useLastRunMeta(rulesetId: string | null): RulesetRun | null {
+
   return useValidationStore((s) => (rulesetId ? (s.runs[rulesetId] ?? null) : null));
 }
 
