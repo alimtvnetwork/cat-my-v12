@@ -16,6 +16,7 @@ let state: LastCaptureRequestEntry | null = null;
 const listeners = new Set<Listener>();
 
 export function getLastCaptureRequest(): LastCaptureRequestEntry | null {
+
   return state;
 }
 
