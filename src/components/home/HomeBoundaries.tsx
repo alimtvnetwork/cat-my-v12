@@ -52,7 +52,13 @@ export function HomePending(): React.JSX.Element | null {
   );
 }
 
-export function HomeError({ error, reset }: { error: Error; reset: () => void }): React.JSX.Element | null {
+export function HomeError({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}): React.JSX.Element | null {
   const message = error?.message || "Unknown error";
   // Record for /diagnostics inspection. Safe to call during render: the log
   // is idempotent by latest-wins and does not trigger state updates here.
