@@ -16,6 +16,7 @@ export interface SettingsDialogProps {
  */
 export const SettingsDialog = forwardRef<HTMLDivElement, SettingsDialogProps>(
   function SettingsDialog({ title, description, children, footer, onClose }, ref) {
+    
     return (
       <div
         ref={ref}
