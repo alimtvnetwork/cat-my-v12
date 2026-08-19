@@ -23,8 +23,8 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 
 ### 2. Navigations & Sidebars
 - [x] `src/components/nav/TopMenuBar.tsx` (800+ lines)
-- [ ] `src/components/ui/sidebar.tsx` (700+ lines)
-- [ ] `src/components/nav/CommandPalette.tsx` (400+ lines)
+- [x] `src/components/ui/sidebar.tsx` (700+ lines)
+- [x] `src/components/nav/CommandPalette.tsx` (400+ lines)
 - [x] `src/components/app-shell/panels/PanelHost.tsx` (570+ lines)
 
 ### 3. Editor Panels & Properties
@@ -32,28 +32,29 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [x] `src/components/rules/PropertiesPalette.tsx` (690+ lines)
 - [x] `src/components/editor/panels/MaskPanel.tsx` (540+ lines)
 - [x] `src/components/editor/layers/LayersPanel.tsx` (540+ lines)
-- [ ] `src/components/editor/setup/EditorSetupExperience.tsx` (510 lines)
+- [x] `src/components/editor/setup/EditorSetupExperience.tsx` (510 lines)
 - [x] `src/components/editor/panels/AcceptancePanel.tsx` (400 lines)
-- [ ] `src/components/rules/LayersPalette.tsx` (390+ lines)
-- [ ] `src/components/editor/InspectorSurface.tsx` (330+ lines)
+- [x] `src/components/rules/LayersPalette.tsx` (390+ lines)
+- [x] `src/components/editor/InspectorSurface.tsx` (330+ lines)
 
 ### 4. Dialogs & Modals
 - [x] `src/components/editor/validation/ValidateAgainstImageDialog.tsx` (650+ lines)
 - [x] `src/components/errors/GlobalErrorModal.tsx` (630+ lines)
-- [ ] `src/components/rules/RuleCreateDialog.tsx` (320+ lines)
+- [x] `src/components/rules/RuleCreateDialog.tsx` (320+ lines)
 
 ### 5. Other Complex Components
 - [x] `src/components/rules/tools/ToolsPalette.tsx` (590+ lines)
-- [ ] `src/components/settings/ReferenceImageCard.tsx` (580+ lines)
-- [ ] `src/components/projects/sections/ProjectImageSamplesSection.tsx` (510+ lines)
+- [x] `src/components/settings/ReferenceImageCard.tsx` (580+ lines)
+- [x] `src/components/projects/sections/ProjectImageSamplesSection.tsx` (510+ lines)
 - [x] `src/components/editor/design-mode/DesignModeOverlay.tsx` (490+ lines)
-- [ ] `src/components/hmi/CameraPreview.tsx` (380+ lines)
-- [ ] `src/components/cli/envelope-viewer.tsx` (350+ lines)
+- [x] `src/components/hmi/CameraPreview.tsx` (380+ lines)
+- [x] `src/components/cli/envelope-viewer.tsx` (350+ lines)
 
 ### 6. Remaining Components (> 200 lines)
-- [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
+- [x] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
 
 
 
