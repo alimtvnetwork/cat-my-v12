@@ -5,7 +5,6 @@ import { useRef, useLayoutEffect, type MutableRefObject } from "react";
 import { useViewportSafe } from "../useViewportSafe";
 
 function makeRect(r: { left: number; top: number; right: number; bottom: number }): DOMRect {
-
   return {
     left: r.left,
     top: r.top,
