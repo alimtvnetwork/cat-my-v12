@@ -49,6 +49,7 @@ export function markInlineEditDirty(token: DirtyToken): void {
 }
 
 export function clearInlineEditDirty(token: DirtyToken): void {
+  
   if (dirty.delete(token) === false) return;
   emit();
 }

@@ -13,6 +13,7 @@ export function push(entry: LogEntry): void {
 }
 
 export function last(): LogEntry | null {
+  
   return entries.at(-1) ?? null;
 }
 
