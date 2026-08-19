@@ -67,7 +67,6 @@ async function copyToClipboard(text: string): Promise<boolean> {
 
     return ok;
   } catch {
-
     return false;
   }
 }

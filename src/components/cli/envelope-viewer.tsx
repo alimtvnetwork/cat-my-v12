@@ -49,10 +49,8 @@ import { CorrelationIdChip } from "./CorrelationIdChip";
 
 function isDev(): boolean {
   try {
-
     return Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
   } catch {
-
     return false;
   }
 }
@@ -71,7 +69,6 @@ interface EnvelopeLike {
 }
 
 function isEnvelopeLike(x: unknown): x is EnvelopeLike {
-
   return !!x && typeof x === "object";
 }
 
@@ -83,7 +80,6 @@ const SECTION_LABEL = "text-[11px] font-semibold uppercase tracking-wide text-ca
 const KV_ROW = "grid grid-cols-[10rem_1fr] gap-x-hmi-2 gap-y-0.5 font-mono text-hmi-caption";
 
 function KV({ k, v }: { k: string; v: React.ReactNode }) {
-
   return (
     <>
       <dt className="text-ca-ink-muted">{k}</dt>
@@ -107,7 +103,13 @@ function scalar(v: unknown): React.ReactNode {
  * Unknown scalar types fall through to JSON.stringify so an unexpected
  * shape is VISIBLE, not swallowed.
  */
-export function EnvelopeTree({ value, depth = 0 }: { value: unknown; depth?: number }): React.JSX.Element | null {
+export function EnvelopeTree({
+  value,
+  depth = 0,
+}: {
+  value: unknown;
+  depth?: number;
+}): React.JSX.Element | null {
   const s = scalar(value);
 
   if (s !== null) return <span className="text-ca-ink">{s}</span>;
@@ -144,10 +146,8 @@ export function EnvelopeTree({ value, depth = 0 }: { value: unknown; depth?: num
     <span className="text-ca-ink">
       {(() => {
         try {
-
           return JSON.stringify(value);
         } catch {
-
           return String(value);
         }
       })()}
