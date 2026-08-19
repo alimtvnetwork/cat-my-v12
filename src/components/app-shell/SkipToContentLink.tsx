@@ -3,7 +3,6 @@
 // past the titlebar / breadcrumb / menubar directly to the `<main>`
 // landmark (id="app-main" in HmiShell). Visually hidden until focused.
 export function SkipToContentLink(): React.JSX.Element | null {
-
   return (
     <a
       href="#app-main"
