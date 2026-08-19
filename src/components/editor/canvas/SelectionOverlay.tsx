@@ -47,7 +47,7 @@ import {
   rotationSnapLabel,
   ROTATION_SNAP_PRESETS,
 } from "@/lib/editor/rotation";
-import { AngleZoneOverlay } from "./AngleZoneOverlay";
+import { SelectionOverlayAngleZone } from "./SelectionOverlayAngleZone";
 import { useSelectedRuleShape } from "@/lib/editor/selection/useSelectedRuleShape";
 import { deriveHudScope, useHudPosition } from "@/lib/editor/hud-position";
 import type { HudAnchor } from "@/lib/editor/hud-position";
