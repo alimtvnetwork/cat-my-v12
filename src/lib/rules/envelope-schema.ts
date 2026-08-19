@@ -74,6 +74,7 @@ export function validateEnvelopeJson(text: string): ValidationResult {
   try {
     raw = JSON.parse(text);
   } catch (err) {
+
     return {
       ok: false,
       message: `JSON parse: ${err instanceof Error ? err.message : String(err)}`,

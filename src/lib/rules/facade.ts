@@ -87,10 +87,12 @@ class IndexedDbRuleFacade implements RuleFacade {
   }
 
   list(): Rule[] {
+
     return Array.from(this.map.values());
   }
 
   get(id: RuleId): Rule | undefined {
+
     return this.map.get(id);
   }
 
