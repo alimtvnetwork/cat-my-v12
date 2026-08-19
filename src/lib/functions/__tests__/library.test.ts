@@ -14,6 +14,7 @@ import {
 const t = 1_700_000_000_000;
 
 function makeEntry(overrides: Partial<FunctionEntry> = {}): FunctionEntry {
+
   return {
     id: "fn-1",
     name: "double",
