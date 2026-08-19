@@ -221,7 +221,7 @@ export function CameraPreview({ storageKey, heading, onControlsChange }: Props):
           />
         ) : (
           <div
-            data-testid={status !== "live" ? "camera-preview-settled" : undefined}
+            data-testid="camera-preview-settled"
             className="w-full h-full grid place-items-center text-hmi-caption text-ca-ink-muted"
             style={{
               filter,

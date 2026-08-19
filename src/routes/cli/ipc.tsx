@@ -464,7 +464,7 @@ function CliIpcRoute() {
           onChange={(e) => {
             const id = e.target.value;
             navigate({
-              search: (prev) => ({ ...prev, session: id || undefined }),
+              search: (prev: any) => ({ ...prev, session: id || undefined }),
               replace: true,
             });
           }}
@@ -492,7 +492,7 @@ function CliIpcRoute() {
                 : "border-ca-border text-ca-ink hover:bg-ca-surface-alt",
             )}
             onClick={() =>
-              navigate({ search: (prev) => ({ ...prev, mailbox: undefined }), replace: true })
+              navigate({ search: (prev: any) => ({ ...prev, mailbox: undefined }), replace: true })
             }
           >
             auto
@@ -508,7 +508,7 @@ function CliIpcRoute() {
                   : "border-ca-border text-ca-ink hover:bg-ca-surface-alt",
               )}
               onClick={() =>
-                navigate({ search: (prev) => ({ ...prev, mailbox: m }), replace: true })
+                navigate({ search: (prev: any) => ({ ...prev, mailbox: m }), replace: true })
               }
             >
               {m}
@@ -521,7 +521,7 @@ function CliIpcRoute() {
               checked={search.acked}
               onChange={(e) =>
                 navigate({
-                  search: (prev) => ({ ...prev, acked: e.target.checked }),
+                  search: (prev: any) => ({ ...prev, acked: e.target.checked }),
                   replace: true,
                 })
               }
