@@ -1,19 +1,34 @@
-import time
 import logging
-from typing import Optional, Callable, Any
+import time
+from collections.abc import Callable
 from contextlib import ExitStack
+from typing import Any
 
-from BE.sdk_facade import (
-    CameraFacade, DeviceInfo, Frame, Roi, PixelFormat,
-    TriggerMode, TriggerSource, TriggerActivation
-)
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
+from BE.sdk_facade import (
+    CameraFacade,
+    DeviceInfo,
+    Frame,
+    PixelFormat,
+    Roi,
+    TriggerActivation,
+    TriggerMode,
+    TriggerSource,
+)
+
 from .primitives import (
-    enumerate_devices, open_by_serial, start_stream, stop_stream,
-    trigger_once, arm_trigger, configure_exposure, configure_gain,
-    configure_white_balance, read_line, write_line, configure_roi,
-    DahengHandle
+    DahengHandle,
+    arm_trigger,
+    configure_exposure,
+    configure_gain,
+    configure_roi,
+    enumerate_devices,
+    open_by_serial,
+    read_line,
+    stop_stream,
+    trigger_once,
+    write_line,
 )
 
 logger = logging.getLogger(__name__)
@@ -21,9 +36,9 @@ logger = logging.getLogger(__name__)
 class DahengCameraFacade(CameraFacade):
     def __init__(self, correlation_id: str = "none"):
         self._correlation_id = correlation_id
-        self._handle: Optional[DahengHandle] = None
+        self._handle: DahengHandle | None = None
         self._exit_stack = ExitStack()
-        self._serial: Optional[str] = None
+        self._serial: str | None = None
         self._streaming: bool = False
 
     def _with_reconnect(self, operation: Callable, *args: Any, **kwargs: Any) -> Any:
@@ -38,14 +53,14 @@ class DahengCameraFacade(CameraFacade):
                     raise
                 if attempts >= len(delays):
                     raise
-                
+
                 logger.warning(
                     f"Daheng operation failed. Reconnecting in {delays[attempts]}s "
                     f"[cid={self._correlation_id}]. Error: {e.message}"
                 )
                 time.sleep(delays[attempts])
                 attempts += 1
-                
+
                 if self._serial:
                     try:
                         self.close()
@@ -128,9 +143,8 @@ class DahengCameraFacade(CameraFacade):
         source: TriggerSource = TriggerSource.SOFTWARE,
         activation: TriggerActivation = TriggerActivation.RISING_EDGE,
     ) -> None:
-        if self._handle:
-            if mode == TriggerMode.ON:
-                self._with_reconnect(arm_trigger, self._handle, source.value, activation.value, 0.0)
+        if self._handle and mode == TriggerMode.ON:
+            self._with_reconnect(arm_trigger, self._handle, source.value, activation.value, 0.0)
 
     def execute_software_trigger(self) -> None:
         if self._handle:

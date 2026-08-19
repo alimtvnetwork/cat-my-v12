@@ -1,4 +1,3 @@
-from typing import Any
 import collections
 
 _counters: dict[str, int] = collections.defaultdict(int)

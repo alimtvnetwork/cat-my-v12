@@ -10,17 +10,13 @@ boundary so wrappers on Windows + POSIX cannot drift.
 
 from __future__ import annotations
 
-import io
 import json
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from BE.app.install_manifest import (
-    InstallManifest,
     MANIFEST_FILENAME,
     ManifestActionRecord,
     init_manifest,
@@ -45,7 +41,7 @@ RECORD_CLI = REPO_ROOT / "bin" / "install-record.py"
 
 
 def _now() -> str:
-    return datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(tz=UTC).isoformat(timespec="seconds")
 
 
 def _plan() -> list[InstallerAction]:

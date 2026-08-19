@@ -22,9 +22,10 @@ from __future__ import annotations
 
 import os
 import tomllib
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Literal, Mapping
+from typing import Any, Literal
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode

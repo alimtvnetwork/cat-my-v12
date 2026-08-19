@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 from BE.main import create_app
+from fastapi.testclient import TestClient
+
 
 def test_camera_status():
     app = create_app()

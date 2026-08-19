@@ -30,9 +30,9 @@ from __future__ import annotations
 import sys
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
 
 from BE.cli.common import ipc
 from BE.cli.common.ipc_models import HeartbeatPayload
@@ -72,9 +72,9 @@ class HeartbeatTicker:
     # deterministically without relying on real threads/sleep. `freezegun`
     # cannot patch `threading.Event.wait`, so injection is the correct
     # (and only) way to get a deterministic cadence proof here.
-    wait_fn: Optional[Callable[[float], bool]] = None
+    wait_fn: Callable[[float], bool] | None = None
     _stop: threading.Event = field(default_factory=threading.Event, init=False)
-    _thread: Optional[threading.Thread] = field(default=None, init=False)
+    _thread: threading.Thread | None = field(default=None, init=False)
     _started_at: float = field(default=0.0, init=False)
     _last_event: str = field(default="", init=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
@@ -116,7 +116,7 @@ class HeartbeatTicker:
             self._thread.join(timeout=timeout)
             self._thread = None
 
-    def __enter__(self) -> "HeartbeatTicker":
+    def __enter__(self) -> HeartbeatTicker:
         self.start()
         return self
 

@@ -41,10 +41,11 @@ Threading / crash safety:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -70,7 +71,7 @@ class Lease:
         )
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Lease":
+    def from_dict(cls, d: dict[str, Any]) -> Lease:
         return cls(Serial=str(d["Serial"]), Pid=int(d["Pid"]), RunId=str(d["RunId"]), AcquiredAt=str(d["AcquiredAt"]))
 
 
@@ -148,7 +149,7 @@ def acquire(data_root: Path, *, serial: str, pid: int, run_id: str) -> tuple[Lea
         Serial=serial,
         Pid=pid,
         RunId=run_id,
-        AcquiredAt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        AcquiredAt=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )
     try:
         fd = os.open(str(p), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
@@ -183,10 +184,8 @@ def release(data_root: Path, *, expected_serial: str | None = None) -> Lease | N
             f"refusing to release {current.Serial!r}; caller expected {expected_serial!r}",
             details={"HeldSerial": current.Serial, "ExpectedSerial": expected_serial},
         )
-    try:
+    with contextlib.suppress(FileNotFoundError):
         lease_path(data_root).unlink()
-    except FileNotFoundError:
-        pass
     return current
 
 

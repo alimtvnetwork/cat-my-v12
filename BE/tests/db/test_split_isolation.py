@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from BE.db.connections import get_root_conn, get_task_conn, get_rules_conn
+from BE.db.connections import get_root_conn, get_rules_conn, get_task_conn
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

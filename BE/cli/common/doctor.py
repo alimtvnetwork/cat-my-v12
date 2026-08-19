@@ -140,13 +140,13 @@ def _probe_sdk() -> dict[str, Any]:
 
         provider = get_settings().camera.provider.value
         facade = get_camera_facade(provider)
-        
+
         if provider == "daheng":
             try:
                 facade.list_devices()
             except Exception as e:
                 return {"Tier": "sdk", "IsHealthy": False, "Detail": f"Daheng enumeration failed: {e!r}"}
-                
+
         return {
             "Tier": "sdk",
             "IsHealthy": True,

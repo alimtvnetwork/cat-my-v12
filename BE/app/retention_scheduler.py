@@ -32,7 +32,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from BE.app.retention import RetentionOutcome
 from BE.errors.apperror import AppError

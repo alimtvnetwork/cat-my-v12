@@ -12,7 +12,7 @@ No SQLite or network I/O in this module. Pure validation and serialization.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 from BE.errors.apperror import AppError

@@ -1,11 +1,13 @@
 import functools
-import time
 import logging
-from typing import Callable, Any, TypeVar, cast
+import time
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 from BE.metrics import inc_counter
+
 from .loader import load_gxipy
 
 logger = logging.getLogger(__name__)
@@ -23,8 +25,7 @@ def map_gxipy_errors(func: T) -> T:
         start = time.perf_counter_ns()
         outcome = "success"
         try:
-            res = func(*args, **kwargs)
-            return res
+            return func(*args, **kwargs)
         except Exception as e:
             outcome = "error"
             gxipy = load_gxipy()
@@ -50,7 +51,7 @@ def map_gxipy_errors(func: T) -> T:
                 serial = kwargs["serial"]
             elif args and hasattr(args[0], "device"):
                 serial = getattr(args[0].device, "serial", "unknown")
-            
+
             logger.info(
                 "Daheng primitive executed",
                 extra={

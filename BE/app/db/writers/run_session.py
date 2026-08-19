@@ -41,15 +41,17 @@ factories, and the accompanying grep test pins that.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import sqlite3
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
-from rule_kernel.dashboard import aggregate_runs
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
+from rule_kernel.dashboard import aggregate_runs
 
 _log = logging.getLogger(__name__)
 
@@ -231,10 +233,8 @@ def write_run_session(
         ).fetchone()
         conn.execute("COMMIT")
     except sqlite3.Error as exc:
-        try:
+        with contextlib.suppress(sqlite3.Error):
             conn.execute("ROLLBACK")
-        except sqlite3.Error:
-            pass
         _log.error(
             "run_session.write.db_error run_id=%s verdict=%s error=%s",
             run_id, verdict, exc,

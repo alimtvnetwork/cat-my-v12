@@ -5,11 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from BE.app.retention import RetentionOutcome
 from BE.app.retention_audit import append_pass, audit_paths
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 
 def _outcome(days: int = 30, deleted: int = 0) -> RetentionOutcome:

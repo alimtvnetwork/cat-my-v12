@@ -30,8 +30,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO = Path(__file__).resolve().parents[4]  # BE/tests/cli/common/.. -> repo
 DIR = "worker-out"
 RUN = "01HZZZROUNDTRIPZZZZZZZZZZZ"

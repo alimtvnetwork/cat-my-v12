@@ -46,9 +46,6 @@ from BE.cli.processing.commands import status as _status
 from BE.cli.processing.commands import verify_bundle as _verify_bundle
 from BE.cli.processing.commands import watch as _watch
 
-
-
-
 _PYPROJECT = Path(__file__).resolve().parents[2] / "pyproject.toml"
 
 

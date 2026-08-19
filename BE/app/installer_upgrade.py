@@ -32,8 +32,8 @@ from __future__ import annotations
 import re
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Final
 
@@ -45,7 +45,7 @@ from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
 
-class UpgradeAction(str, Enum):
+class UpgradeAction(StrEnum):
     """Decision emitted by :func:`plan_upgrade`."""
 
     FRESH_INSTALL = "fresh-install"
@@ -187,7 +187,7 @@ def plan_upgrade(
 
 
 def _backup_name(now: datetime) -> str:
-    stamp = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = now.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"{MANIFEST_FILENAME}.bak.{stamp}"
 
 
@@ -207,7 +207,7 @@ def backup_manifest(
     src = install_root / MANIFEST_FILENAME
     if not src.exists():
         return None
-    ts = now if now is not None else datetime.now(tz=timezone.utc)
+    ts = now if now is not None else datetime.now(tz=UTC)
     if ts.tzinfo is None:
         raise AppError(
             code=ErrorCode.E_INSTALL_MANIFEST_INVALID,

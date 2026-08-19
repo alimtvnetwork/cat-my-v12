@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 
 from BE.app.install_manifest import (
-    InstallManifest,
     MANIFEST_FILENAME,
     MANIFEST_SCHEMA_VERSION,
+    InstallManifest,
     read_manifest_strict,
     write_manifest,
 )
@@ -26,7 +26,6 @@ from BE.app.installer_rollback import (
 from BE.app.installer_upgrade import backup_manifest
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-
 
 TS = "2026-07-21T00:00:00+00:00"
 

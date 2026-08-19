@@ -34,20 +34,20 @@ Anchors
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 import tempfile
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
-from typing import Final
 
 from BE.app.installer_binaries import BINARIES, BinaryEntry
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
 
-class LinkPlatform(str, Enum):
+class LinkPlatform(StrEnum):
     WINDOWS = "windows"
     POSIX = "posix"
 
@@ -141,10 +141,8 @@ def _atomic_write_text(target: Path, body: str) -> None:
             os.fsync(f.fileno())
         os.replace(tmp_path, target)
     except BaseException:
-        try:
+        with contextlib.suppress(OSError):
             tmp_path.unlink()
-        except OSError:
-            pass
         raise
 
 

@@ -21,10 +21,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from BE.app.domain.rule_set import parse_envelope
-from BE.repos.rules_repo import get_rules_repo
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
+from BE.repos.rules_repo import get_rules_repo
 
 logger = logging.getLogger("BE.routes.rules")
 

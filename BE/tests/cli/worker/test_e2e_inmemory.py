@@ -33,8 +33,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from BE.cli.common.exit_codes import ExitCode
 from BE.errors.codes import ErrorCode
 

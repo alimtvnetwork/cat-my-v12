@@ -21,10 +21,11 @@ Rules:
 
 from __future__ import annotations
 
+import contextlib
 import re
 import shutil
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from BE.errors.apperror import AppError
@@ -58,7 +59,7 @@ class PruneReport:
 
 
 def _today_utc() -> date:
-    return datetime.now(timezone.utc).date()
+    return datetime.now(UTC).date()
 
 
 def _parse_dated_name(name: str) -> date | None:
@@ -76,10 +77,8 @@ def _dir_size(path: Path) -> tuple[int, int]:
     for entry in path.rglob("*"):
         if entry.is_file():
             files += 1
-            try:
+            with contextlib.suppress(OSError):
                 total += entry.stat().st_size
-            except OSError:
-                pass
     return files, total
 
 
@@ -140,7 +139,7 @@ def prune_logs(
         if not source_dir.is_dir() or source_dir.name in _RESERVED_DIRS:
             continue
         result = _prune_source(source_dir, cutoff)
-        totals = [a + b for a, b in zip(totals, result)]
+        totals = [a + b for a, b in zip(totals, result, strict=False)]
     return PruneReport(
         ScannedDirs=totals[0],
         RemovedDirs=totals[1],

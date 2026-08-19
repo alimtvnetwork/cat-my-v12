@@ -7,8 +7,6 @@ no-op, and single-generation ring semantics.
 
 from __future__ import annotations
 
-import json
-import os
 from pathlib import Path
 
 import pytest
@@ -20,7 +18,6 @@ from BE.app.jsonl_rotator import (
     read_jsonl,
     read_pair,
 )
-
 
 # --- append_and_roll ------------------------------------------------------
 

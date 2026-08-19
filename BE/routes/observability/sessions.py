@@ -337,10 +337,7 @@ def _row_to_wire(row: sqlite3.Row) -> dict[str, Any]:
     started = int(row["StartedAt"])
     ended = row["EndedAt"]
     duration_ms: int | None
-    if ended is None:
-        duration_ms = None
-    else:
-        duration_ms = int((int(ended) - started) * 1000)
+    duration_ms = None if ended is None else int((int(ended) - started) * 1000)
     return {
         "CliInvocationId": int(row["CliInvocationId"]),
         "RunId": row["RunId"],

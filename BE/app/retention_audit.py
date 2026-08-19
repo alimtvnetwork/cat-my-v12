@@ -39,14 +39,13 @@ Design invariants (do not weaken without a spec bump):
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
 from BE.app.jsonl_rotator import RollOutcome, append_and_roll
 from BE.app.retention import RetentionOutcome
 from BE.errors.apperror import AppError
-
 
 __all__ = [
     "AUDIT_FILENAME",
@@ -108,7 +107,7 @@ def build_row(
 
     if not isinstance(pass_index, int) or pass_index < 1:
         raise ValueError(f"pass_index must be >= 1, got {pass_index!r}.")
-    ts = timestamp_utc or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = timestamp_utc or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     row: dict[str, object] = {
         "TimestampUtc": ts,
         "Mode": mode,
@@ -149,7 +148,7 @@ def append_pass(
 
 
 def build_halt_row(
-    err: "AppError",
+    err: AppError,
     *,
     pass_index: int,
     timestamp_utc: str | None = None,
@@ -174,7 +173,7 @@ def build_halt_row(
 
     if not isinstance(pass_index, int) or pass_index < 1:
         raise ValueError(f"pass_index must be >= 1, got {pass_index!r}.")
-    ts = timestamp_utc or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = timestamp_utc or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     details = err.details if isinstance(err.details, dict) else {}
     return {
         "TimestampUtc": ts,
@@ -188,7 +187,7 @@ def build_halt_row(
 
 def append_halt(
     logs_root: Path,
-    err: "AppError",
+    err: AppError,
     *,
     pass_index: int,
     timestamp_utc: str | None = None,

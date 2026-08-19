@@ -31,10 +31,10 @@ converts to stdout envelope + `sys.exit(code)` at the boundary.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 from BE.cli.common.exit_codes import ExitCode
 from BE.cli.common.logger import JsonlLogger, Source, open_logger

@@ -196,9 +196,9 @@ def test_ack_wrong_suffix_raises(tmp_path: Path) -> None:
 # --- Step 24: typed Pydantic payload model integration ---------------------
 
 from BE.cli.common.ipc_models import (
+    PAYLOAD_MODELS,
     FrameReadyPayload,
     HeartbeatPayload,
-    PAYLOAD_MODELS,
     ResultReadyPayload,
     Roi,
 )
@@ -299,13 +299,13 @@ def test_result_ready_dict_roundtrip(tmp_path: Path) -> None:
 # --- Step 25: prune_ipc retention ------------------------------------------
 
 import os as _os
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 
 
 def _mk(path: Path, age_hours: float) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("{}", encoding="utf-8")
-    ts = datetime.now(timezone.utc).timestamp() - age_hours * 3600
+    ts = datetime.now(UTC).timestamp() - age_hours * 3600
     _os.utime(path, (ts, ts))
     return path
 

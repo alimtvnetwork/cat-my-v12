@@ -1,15 +1,16 @@
+
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+
 
 class RegionModel(BaseModel):
     regionId: str
     name: str
     shapeKind: str
     geometryJson: str
-    parentRegionId: Optional[str] = None
+    parentRegionId: str | None = None
     isActive: bool = True
-    canvasWidth: Optional[float] = None
-    canvasHeight: Optional[float] = None
+    canvasWidth: float | None = None
+    canvasHeight: float | None = None
 
 class RuleModel(BaseModel):
     ruleId: str

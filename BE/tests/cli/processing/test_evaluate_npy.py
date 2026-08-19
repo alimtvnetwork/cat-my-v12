@@ -1,10 +1,10 @@
-import os
 import json
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+
 from BE.cli.processing.commands.evaluate import handle
-from BE.cli.common.session import SessionCtx
-from BE.errors.apperror import AppError
+
 
 class MockLogger:
     def log(self, *args, **kwargs): pass
@@ -28,14 +28,14 @@ def test_evaluate_npy_fixture(tmp_path: Path) -> None:
     frame_path = tmp_path / "frame.npy"
     arr = np.zeros((100, 100, 3), dtype=np.uint8)
     np.save(frame_path, arr)
-    
+
     # Create valid bundle
     bundle_path = tmp_path / "bundle.json"
     bundle_path.write_text(json.dumps({"rules": []}))
-    
+
     args = MockArgs(str(frame_path), str(bundle_path))
     ctx = MockSessionCtx()
-    
+
     results = handle(args, ctx) # type: ignore
     assert len(results) == 1
     assert results[0]["Verdict"] == "Pass"

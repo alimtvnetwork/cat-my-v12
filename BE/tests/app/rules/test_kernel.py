@@ -14,7 +14,6 @@ Pins:
 from __future__ import annotations
 
 import pytest
-
 from rule_kernel import (
     RuleBundle,
     RuleContext,
@@ -23,6 +22,7 @@ from rule_kernel import (
     evaluate_bundle,
 )
 from rule_kernel.models import RuleStatus
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode, default_http_status
 

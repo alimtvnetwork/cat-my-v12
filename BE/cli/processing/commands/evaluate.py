@@ -48,14 +48,13 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from BE.cli.common.session import SessionCtx
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-
 
 # ---- argparse -------------------------------------------------------------
 
@@ -118,7 +117,7 @@ def configure(parser: argparse.ArgumentParser) -> None:
 
 def _now_iso() -> str:
     return (
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
         .isoformat(timespec="milliseconds")
         .replace("+00:00", "Z")
     )

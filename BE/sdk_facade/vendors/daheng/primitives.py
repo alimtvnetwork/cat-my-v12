@@ -1,10 +1,11 @@
-from contextlib import contextmanager
-from typing import Any, Iterator, Optional, Callable
-import time
-import threading
-import weakref
 import atexit
 import logging
+import threading
+import time
+import weakref
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager, suppress
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -14,23 +15,23 @@ def _cleanup_handles() -> None:
     for handle in list(_open_handles):
         if handle.device is not None:
             logger.warning("Resource leak: closing dangling Daheng handle")
-            try:
+            with suppress(Exception):
                 handle.close()
-            except Exception:
-                pass
 
 atexit.register(_cleanup_handles)
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 from BE.sdk_facade.types import CameraDeviceInfo, FrameEnvelope
-from .loader import load_gxipy
+
 from .errors import map_gxipy_errors
+from .loader import load_gxipy
+
 
 class DahengHandle:
     def __init__(self, device: Any):
         self.device = device
-        
+
     def close(self) -> None:
         if self.device:
             self.device.close_device()
@@ -42,7 +43,7 @@ def enumerate_devices() -> list[CameraDeviceInfo]:
     gxipy = load_gxipy()
     device_manager = gxipy.DeviceManager()
     dev_num, dev_info_list = device_manager.update_device_list()
-    
+
     devices = []
     for info in dev_info_list:
         devices.append(
@@ -63,7 +64,7 @@ def enumerate_devices() -> list[CameraDeviceInfo]:
 def open_by_serial(serial: str) -> Iterator[DahengHandle]:
     gxipy = load_gxipy()
     device_manager = gxipy.DeviceManager()
-    
+
     try:
         # Open the device with strict timeout logic handled within SDK or wrapper
         device = device_manager.open_device_by_sn(serial)
@@ -75,7 +76,7 @@ def open_by_serial(serial: str) -> Iterator[DahengHandle]:
             reason="open_device_by_sn failed",
             details={"serial": serial, "error": str(e)}
         ) from e
-        
+
     handle = DahengHandle(device)
     _open_handles.add(handle)
     try:
@@ -88,7 +89,7 @@ def open_by_serial(serial: str) -> Iterator[DahengHandle]:
 def read_feature(handle: DahengHandle, node: str) -> Any:
     if not handle.device:
         raise ValueError("Device handle is closed")
-    
+
     # Generic attribute access. Could map to IntFeature, FloatFeature, etc.
     try:
         feature = getattr(handle.device, node)
@@ -107,7 +108,7 @@ def read_feature(handle: DahengHandle, node: str) -> Any:
 def write_feature(handle: DahengHandle, node: str, value: Any) -> None:
     if not handle.device:
         raise ValueError("Device handle is closed")
-        
+
     try:
         feature = getattr(handle.device, node)
         feature.set(value)
@@ -123,9 +124,9 @@ def write_feature(handle: DahengHandle, node: str, value: Any) -> None:
 
 @map_gxipy_errors
 def configure_roi(handle: DahengHandle, offset_x: int, offset_y: int, width: int, height: int) -> None:
-    # Need to disable stream / ensure stopped before changing ROI in many SDKs, 
+    # Need to disable stream / ensure stopped before changing ROI in many SDKs,
     # but primitive just sets values.
-    # Order matters: reduce width/height first before moving offset, 
+    # Order matters: reduce width/height first before moving offset,
     # or reset offset to 0 before increasing width/height.
     write_feature(handle, "OffsetX", 0)
     write_feature(handle, "OffsetY", 0)
@@ -160,7 +161,7 @@ def start_stream(handle: DahengHandle, on_frame: Callable[[FrameEnvelope], None]
     if not handle.device:
         raise ValueError("Device handle is closed")
     handle.device.stream_on()
-    
+
     def _capture_thread() -> None:
         while handle.device:
             try:
@@ -177,7 +178,7 @@ def start_stream(handle: DahengHandle, on_frame: Callable[[FrameEnvelope], None]
                 on_frame(env)
             except Exception:
                 break
-    
+
     t = threading.Thread(target=_capture_thread, daemon=True)
     t.start()
 
@@ -238,7 +239,7 @@ def read_line(handle: DahengHandle, line: str) -> bool:
     if not handle.device:
         raise ValueError("Device handle is closed")
     write_feature(handle, "LineSelector", line)
-    return bool(getattr(handle.device, "LineStatus").get())
+    return bool(handle.device.LineStatus.get())
 
 
 @map_gxipy_errors

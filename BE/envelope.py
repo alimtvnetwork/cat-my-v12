@@ -33,7 +33,7 @@ Consumers: `BE/errors/handlers.py`, every `BE/routes/*.py`, FE
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http import HTTPStatus
 from typing import Any
 
@@ -122,7 +122,7 @@ class Envelope(BaseModel):
 
 def _now_iso() -> str:
     """ISO-8601 UTC timestamp with `Z` suffix (spec §Status.Timestamp)."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _attributes(

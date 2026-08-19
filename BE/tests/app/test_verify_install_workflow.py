@@ -71,6 +71,7 @@ def test_install_ps1_removed_skip_fallback() -> None:
 def test_install_sh_verify_only_end_to_end(tmp_path: Path) -> None:
     """Smoke-test the three exit-code paths locally (mirror of CI job)."""
     import hashlib
+
     from BE.app.installer_binaries import BINARIES
 
     rel = tmp_path / "release"

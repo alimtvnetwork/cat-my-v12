@@ -8,15 +8,14 @@ Env var prefix: `BE_` (e.g. `BE_PORT=9000`). Defaults ship a dev-safe loopback b
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
-from typing import Literal
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Environment(str, Enum):
+class Environment(StrEnum):
     """Deployment environment; drives error-envelope verbosity in `BE.errors.handlers`."""
 
     DEV = "dev"
@@ -24,7 +23,7 @@ class Environment(str, Enum):
     PROD = "prod"
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     """Subset of stdlib logging levels exposed as config."""
 
     DEBUG = "DEBUG"
@@ -33,7 +32,7 @@ class LogLevel(str, Enum):
     ERROR = "ERROR"
 
 
-class CameraProvider(str, Enum):
+class CameraProvider(StrEnum):
     INMEMORY = "inmemory"
     DAHENG = "daheng"
     REPLAY = "replay"

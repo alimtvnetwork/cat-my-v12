@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -19,7 +19,6 @@ import pytest
 from BE.app.install_manifest import (
     MANIFEST_FILENAME,
     MANIFEST_SCHEMA_VERSION,
-    InstallManifest,
     ManifestBinaryRecord,
     init_manifest,
     latest_binary,
@@ -39,7 +38,7 @@ from BE.errors.codes import ErrorCode
 
 
 def _now() -> datetime:
-    return datetime(2026, 7, 21, 12, 0, tzinfo=timezone.utc)
+    return datetime(2026, 7, 21, 12, 0, tzinfo=UTC)
 
 
 def _make_exe(tmp: Path, body: bytes = b"MZ\x90\x00fake-exe-bytes") -> Path:

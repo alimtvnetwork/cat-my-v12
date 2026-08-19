@@ -10,7 +10,7 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -55,7 +55,7 @@ def _mk(i: int, *, phase: str = "install", ok: bool = True) -> ManifestActionRec
 
 def _seed(root: Path, n: int) -> None:
     init_manifest(root, app_version="9.9.9", platform="posix",
-                  now=datetime(2026, 7, 21, tzinfo=timezone.utc))
+                  now=datetime(2026, 7, 21, tzinfo=UTC))
     for i in range(n):
         record_action(root, _mk(i))
 
@@ -204,7 +204,7 @@ def test_cli_filter_by_name(tmp_path: Path) -> None:
 
 def test_cli_filter_by_status_failure(tmp_path: Path) -> None:
     init_manifest(tmp_path, app_version="1", platform="posix",
-                  now=datetime(2026, 1, 1, tzinfo=timezone.utc))
+                  now=datetime(2026, 1, 1, tzinfo=UTC))
     record_action(tmp_path, _mk(0, ok=True))
     record_action(tmp_path, _mk(1, ok=False))
     res = _run_cli("--install-root", str(tmp_path),

@@ -17,9 +17,6 @@ from __future__ import annotations
 import io
 import json
 import os
-from pathlib import Path
-
-import pytest
 
 from BE.cli.common.exit_codes import ExitCode
 from BE.cli.worker import camera_lease, stream_marker

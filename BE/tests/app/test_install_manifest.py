@@ -16,8 +16,7 @@ Every invariant listed in the module docstring is pinned here:
 from __future__ import annotations
 
 import json
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -66,7 +65,7 @@ def _rec(
 def test_init_manifest_creates_expected_shape(tmp_path: Path) -> None:
     m = init_manifest(
         tmp_path, app_version="v4.46.0", platform="posix",
-        now=datetime(2026, 7, 21, 10, 0, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 21, 10, 0, 0, tzinfo=UTC),
     )
     assert m.SchemaVersion == MANIFEST_SCHEMA_VERSION
     assert m.AppVersion == "v4.46.0"
@@ -151,7 +150,7 @@ def test_read_manifest_rejects_non_list_actions(tmp_path: Path) -> None:
 def test_record_action_creates_manifest_when_absent(tmp_path: Path) -> None:
     m = record_action(
         tmp_path, _rec(), app_version="v4.46.0", platform="posix",
-        now=datetime(2026, 7, 21, 11, 0, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 21, 11, 0, 0, tzinfo=UTC),
     )
     assert len(m.Actions) == 1
     assert m.Actions[0]["Name"] == "db-bootstrap"
@@ -170,16 +169,16 @@ def test_record_action_requires_bootstrap_args_on_first_call(tmp_path: Path) -> 
 def test_record_action_appends_and_updates_timestamp(tmp_path: Path) -> None:
     init_manifest(
         tmp_path, app_version="v1", platform="posix",
-        now=datetime(2026, 7, 21, 9, 0, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 21, 9, 0, 0, tzinfo=UTC),
     )
     record_action(
         tmp_path, _rec("db-bootstrap"),
-        now=datetime(2026, 7, 21, 10, 0, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 21, 10, 0, 0, tzinfo=UTC),
     )
     record_action(
         tmp_path, _rec("retention-timer", script="scripts/systemd/install-retention-timer.sh",
                         args=("--install",)),
-        now=datetime(2026, 7, 21, 10, 5, 0, tzinfo=timezone.utc),
+        now=datetime(2026, 7, 21, 10, 5, 0, tzinfo=UTC),
     )
     m = read_manifest_strict(tmp_path)
     assert [a["Name"] for a in m.Actions] == ["db-bootstrap", "retention-timer"]
@@ -261,7 +260,6 @@ def test_atomic_write_preserves_previous_on_failure(tmp_path: Path, monkeypatch:
     record_action(tmp_path, _rec("db-bootstrap"))
     original = (tmp_path / MANIFEST_FILENAME).read_bytes()
 
-    real_replace = os.replace
 
     def boom(src: str, dst: str) -> None:  # type: ignore[no-redef]
         raise OSError("simulated replace failure")
@@ -277,7 +275,7 @@ def test_atomic_write_preserves_previous_on_failure(tmp_path: Path, monkeypatch:
     leftovers = [p.name for p in tmp_path.iterdir() if p.name.startswith(".install.json.")]
     assert leftovers == []
     # Restore for hygiene (monkeypatch will undo, but keep symbol referenced).
-    assert real_replace is os.replace or True
+    assert True
 
 
 def test_write_manifest_rejects_bad_schema(tmp_path: Path) -> None:

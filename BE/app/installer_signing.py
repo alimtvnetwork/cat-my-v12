@@ -34,7 +34,7 @@ Anchors
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
@@ -46,13 +46,13 @@ _CHUNK: Final[int] = 1024 * 1024  # 1 MiB
 
 
 def _now_iso(now: datetime | None = None) -> str:
-    d = now if now is not None else datetime.now(tz=timezone.utc)
+    d = now if now is not None else datetime.now(tz=UTC)
     if d.tzinfo is None:
         raise AppError(
             code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
             message="timestamps must be timezone-aware (UTC)",
         )
-    return d.astimezone(timezone.utc).isoformat(timespec="seconds")
+    return d.astimezone(UTC).isoformat(timespec="seconds")
 
 
 def sha256_of_file(path: Path) -> tuple[str, int]:

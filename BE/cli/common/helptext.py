@@ -28,8 +28,9 @@ Side-effect free apart from writing to the provided text streams.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib import resources
-from typing import Mapping, TextIO
+from typing import TextIO
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode

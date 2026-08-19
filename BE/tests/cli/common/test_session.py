@@ -37,36 +37,32 @@ def test_clean_exit_records_ok(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) 
 
 def test_apperror_domain_maps_to_domain_error(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(AppError):
-        with run_session("worker-cli", "capture") as ctx:
-            raise AppError(ErrorCode.E_BE_BAD_REQUEST, "bad")
+    with pytest.raises(AppError), run_session("worker-cli", "capture"):
+        raise AppError(ErrorCode.E_BE_BAD_REQUEST, "bad")
     row = read_sessions(tmp_path)[0]
     assert row.ExitCode == ExitCode.DomainError.value
 
 
 def test_apperror_io_family_maps_to_io_error(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(AppError):
-        with run_session("worker-cli", "capture"):
-            raise AppError(ErrorCode.E_IPC_WRITE_FAILED, "disk gone")
+    with pytest.raises(AppError), run_session("worker-cli", "capture"):
+        raise AppError(ErrorCode.E_IPC_WRITE_FAILED, "disk gone")
     row = read_sessions(tmp_path)[0]
     assert row.ExitCode == ExitCode.IoError.value
 
 
 def test_apperror_vendor_family_maps_to_vendor_error(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(AppError):
-        with run_session("worker-cli", "capture"):
-            raise AppError(ErrorCode.E_CAM_NOT_CONNECTED, "no cam", details={"Serial": "X"})
+    with pytest.raises(AppError), run_session("worker-cli", "capture"):
+        raise AppError(ErrorCode.E_CAM_NOT_CONNECTED, "no cam", details={"Serial": "X"})
     row = read_sessions(tmp_path)[0]
     assert row.ExitCode == ExitCode.VendorError.value
 
 
 def test_unknown_exception_falls_back_to_domain_error(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(RuntimeError):
-        with run_session("worker-cli", "capture") as ctx:
-            raise RuntimeError("kaboom")
+    with pytest.raises(RuntimeError), run_session("worker-cli", "capture") as ctx:
+        raise RuntimeError("kaboom")
     row = read_sessions(tmp_path)[0]
     assert row.ExitCode == ExitCode.DomainError.value
     log_events = _read_log(ctx.log_path)
@@ -78,9 +74,8 @@ def test_unknown_exception_falls_back_to_domain_error(tmp_path: Path, monkeypatc
 
 def test_session_close_runs_even_on_exception(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(AppError):
-        with run_session("worker-cli", "capture"):
-            raise AppError(ErrorCode.E_BE_NOT_FOUND, "gone")
+    with pytest.raises(AppError), run_session("worker-cli", "capture"):
+        raise AppError(ErrorCode.E_BE_NOT_FOUND, "gone")
     row = read_sessions(tmp_path)[0]
     assert row.EndedAt is not None
 
@@ -94,15 +89,13 @@ def test_explicit_run_id_is_used(tmp_path: Path, monkeypatch) -> None:
 
 def test_systemexit_zero_maps_to_ok(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(SystemExit):
-        with run_session("worker-cli", "capture"):
-            raise SystemExit(0)
+    with pytest.raises(SystemExit), run_session("worker-cli", "capture"):
+        raise SystemExit(0)
     assert read_sessions(tmp_path)[0].ExitCode == ExitCode.Ok.value
 
 
 def test_systemexit_known_code_preserved(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("APP_LOG_ROOT", str(tmp_path))
-    with pytest.raises(SystemExit):
-        with run_session("worker-cli", "capture"):
-            raise SystemExit(int(ExitCode.Usage))
+    with pytest.raises(SystemExit), run_session("worker-cli", "capture"):
+        raise SystemExit(int(ExitCode.Usage))
     assert read_sessions(tmp_path)[0].ExitCode == ExitCode.Usage.value

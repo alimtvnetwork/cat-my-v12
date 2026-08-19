@@ -1,0 +1,4 @@
+[console_scripts]
+be-dev = BE.main:dev
+processing-cli = BE.cli.processing.main:main
+worker-cli = BE.cli.worker.main:main

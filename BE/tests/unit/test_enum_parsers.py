@@ -4,8 +4,8 @@ Verifies round-trip serialization: valid values pass, invalid values
 raise ValueError as expected.
 """
 import pytest
-from BE.sdk_facade import TriggerMode, TriggerSource, TriggerActivation, PixelFormat
 from BE.config import CameraProvider
+from BE.sdk_facade import PixelFormat, TriggerActivation, TriggerMode, TriggerSource
 
 
 def test_trigger_mode_valid_values():

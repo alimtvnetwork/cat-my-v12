@@ -30,21 +30,21 @@ Anchors:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
 
-class InstallerPhase(str, Enum):
+class InstallerPhase(StrEnum):
     """Which orchestrator direction this plan describes."""
 
     INSTALL = "install"
     UNINSTALL = "uninstall"
 
 
-class InstallerPlatform(str, Enum):
+class InstallerPlatform(StrEnum):
     """Target platform for the plan. `posix` covers Linux + macOS."""
 
     WINDOWS = "windows"

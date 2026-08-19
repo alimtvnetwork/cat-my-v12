@@ -5,9 +5,9 @@ Uses fixture images (numpy arrays) to verify:
 - Grayscale tolerance varies with slider value
 """
 import asyncio
-import io
-import pytest
+
 import numpy as np
+import pytest
 
 
 def _make_jpeg_bytes(arr: np.ndarray) -> bytes:

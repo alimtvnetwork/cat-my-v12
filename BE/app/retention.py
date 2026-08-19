@@ -46,12 +46,11 @@ Failure model
 from __future__ import annotations
 
 import logging
-import os
 import sqlite3
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Iterable
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -115,9 +114,7 @@ def _is_safe_rel(rel: str) -> bool:
     if len(rel) >= 2 and rel[1] == ":":
         return False
     parts = PurePosixPath(rel).parts
-    if any(p == ".." for p in parts):
-        return False
-    return True
+    return not any(p == ".." for p in parts)
 
 
 def _fetch_doomed(conn: sqlite3.Connection, cutoff_epoch: int) -> list[tuple[int, str | None]]:

@@ -23,9 +23,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
-from BE.cli.common import ipc
 from BE.cli.common.logger import JsonlLogger
 
 

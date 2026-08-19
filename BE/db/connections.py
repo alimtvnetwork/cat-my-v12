@@ -33,12 +33,13 @@ This module opens connections only. Applying migrations is Step 39
 
 from __future__ import annotations
 
+import logging
 import re
 import sqlite3
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping
+from typing import Any, Literal
 
-import logging
 from BE.cli.common.paths import resolve_root
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode

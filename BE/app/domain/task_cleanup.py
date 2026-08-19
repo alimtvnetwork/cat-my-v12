@@ -5,15 +5,15 @@ and prevent disk full issues (Task 177).
 """
 
 import logging
+from datetime import UTC
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
 def cleanup_old_task_entries(
     max_age_days: int = 30,
-    task_db_path: Optional[Path] = None,
+    task_db_path: Path | None = None,
 ) -> int:
     """
     Delete TaskDb entries older than `max_age_days`.
@@ -21,7 +21,7 @@ def cleanup_old_task_entries(
     Returns the number of rows deleted.
     """
     import sqlite3
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     if task_db_path is None:
         task_db_path = Path("data/task.db")
@@ -31,7 +31,7 @@ def cleanup_old_task_entries(
         return 0
 
     cutoff = int(
-        (datetime.now(timezone.utc) - timedelta(days=max_age_days)).timestamp()
+        (datetime.now(UTC) - timedelta(days=max_age_days)).timestamp()
     )
 
     conn = sqlite3.connect(str(task_db_path))

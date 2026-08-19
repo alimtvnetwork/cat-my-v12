@@ -13,7 +13,8 @@ import time rather than at first request.
 
 from __future__ import annotations
 
-from typing import Iterable, Protocol, runtime_checkable
+from collections.abc import Iterable
+from typing import Protocol, runtime_checkable
 
 from BE.app.domain.cat_sample import CatSample
 from BE.errors.apperror import AppError

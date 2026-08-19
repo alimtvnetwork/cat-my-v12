@@ -273,8 +273,7 @@ def _poison_safe_receive(root: Path, in_dir: str):
     while True:
         gen = _ipc.receive(root, in_dir, kind_filter=("FrameReady",))
         try:
-            for msg in gen:
-                yield msg
+            yield from gen
             return
         except AppError as exc:
             live = sorted(drop.glob("*.msg.json"), key=lambda p: p.name)
@@ -350,9 +349,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             return True
         if ns.duration > 0 and (time.monotonic() - start) >= float(ns.duration):
             return True
-        if ns.max_messages > 0 and len(processed) + len(failures) >= int(ns.max_messages):
-            return True
-        return False
+        return bool(ns.max_messages > 0 and len(processed) + len(failures) >= int(ns.max_messages))
 
     while not _should_stop():
         drained_any = False

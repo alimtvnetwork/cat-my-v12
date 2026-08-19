@@ -16,14 +16,19 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from rule_kernel import predicates as _predicates
 from rule_kernel import telemetry as _telemetry
 from rule_kernel.engine import evaluate_bundle
 from rule_kernel.loader import load_bundle
 from rule_kernel.models import (
-    RuleBundle, RuleContext, RuleJudgment, RuleSpec, RuleStatus, Verdict,
+    RuleBundle,
+    RuleContext,
+    RuleJudgment,
+    RuleSpec,
+    RuleStatus,
+    Verdict,
 )
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 from BE.main import create_app
+from fastapi.testclient import TestClient
+
 
 def test_images_reference_get():
     app = create_app()

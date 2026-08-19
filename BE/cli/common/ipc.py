@@ -23,10 +23,11 @@ import os
 import re
 import secrets
 import time
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
@@ -70,7 +71,7 @@ def _ulid() -> str:
 
 def _iso_utc() -> str:
     return (
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
         .isoformat(timespec="microseconds")
         .replace("+00:00", "Z")
     )
@@ -246,7 +247,7 @@ def receive(
     paths = sorted(drop.glob("*.msg.json"), key=lambda p: p.name)
     for p in paths:
         try:
-            with open(p, "r", encoding="utf-8") as f:
+            with open(p, encoding="utf-8") as f:
                 record = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             raise AppError(
@@ -341,7 +342,7 @@ def prune_ipc(
             details={"MaxAgeHours": max_age_hours},
         )
     root = Path(ipc_root)
-    ref = now or datetime.now(timezone.utc)
+    ref = now or datetime.now(UTC)
     cutoff_ts = ref.timestamp() - (max_age_hours * 3600.0)
     scanned = removed_ack = removed_tmp = removed_bytes = 0
     if not root.exists():
@@ -391,7 +392,7 @@ def prune_ipc(
         RemovedAckFiles=removed_ack,
         RemovedTmpFiles=removed_tmp,
         RemovedBytes=removed_bytes,
-        CutoffTs=datetime.fromtimestamp(cutoff_ts, tz=timezone.utc)
+        CutoffTs=datetime.fromtimestamp(cutoff_ts, tz=UTC)
         .isoformat()
         .replace("+00:00", "Z"),
     )

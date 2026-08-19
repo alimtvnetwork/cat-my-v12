@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from BE.app.domain.cat_sample import CatSample
 from BE.app.facades.sample_facade import InMemorySampleFacade, set_sample_facade
 from BE.main import create_app
 

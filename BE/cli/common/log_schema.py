@@ -26,9 +26,10 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode, is_registered
@@ -102,9 +103,8 @@ def _check_code_and_trace(record: dict[str, Any], line: int) -> None:
         raise _fail("Code", f"required when Level={level}", line)
     if level not in _CODE_REQUIRED and code is not None:
         raise _fail("Code", f"forbidden when Level={level}", line)
-    if code is not None:
-        if not isinstance(code, str) or not is_registered(code):
-            raise _fail("Code", f"'{code}' not in error registry", line)
+    if code is not None and (not isinstance(code, str) or not is_registered(code)):
+        raise _fail("Code", f"'{code}' not in error registry", line)
     trace = record.get("Trace")
     if trace is None:
         return

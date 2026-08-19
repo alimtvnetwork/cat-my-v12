@@ -37,9 +37,10 @@ from __future__ import annotations
 
 import os
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Mapping
+from typing import Literal
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode

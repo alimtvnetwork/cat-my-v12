@@ -16,7 +16,6 @@ import pytest
 
 from BE.app.installer_binaries import (
     BINARIES,
-    BinaryEntry,
     binary_presence,
 )
 from BE.app.installer_doctor import DoctorSeverity, run_doctor

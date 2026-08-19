@@ -35,11 +35,12 @@ Anchors
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
 
@@ -107,7 +108,7 @@ class InstallManifest:
 
 
 def _now_iso(now: datetime | None = None) -> str:
-    d = now if now is not None else datetime.now(tz=timezone.utc)
+    d = now if now is not None else datetime.now(tz=UTC)
     if d.tzinfo is None:
         raise AppError(
             code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
@@ -115,7 +116,7 @@ def _now_iso(now: datetime | None = None) -> str:
         )
     # `datetime.isoformat(timespec='seconds')` is deterministic and
     # human-legible; we intentionally do not include microseconds.
-    return d.astimezone(timezone.utc).isoformat(timespec="seconds")
+    return d.astimezone(UTC).isoformat(timespec="seconds")
 
 
 def _validate_platform(platform: str) -> str:
@@ -206,10 +207,8 @@ def _atomic_write_json(target: Path, payload: dict[str, Any]) -> None:
             os.replace(tmp_path, target)
         except BaseException:
             # Best-effort cleanup of the tmp file on any failure path.
-            try:
+            with contextlib.suppress(OSError):
                 tmp_path.unlink()
-            except OSError:
-                pass
             raise
     except OSError as exc:
         raise AppError(

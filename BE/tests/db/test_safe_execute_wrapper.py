@@ -1,5 +1,7 @@
 import pytest
-from BE.db.connections import get_task_conn, QueryResult
+
+from BE.db.connections import get_task_conn
+
 
 def test_safe_execute_success(tmp_path):
     conn = get_task_conn(db_root=tmp_path)

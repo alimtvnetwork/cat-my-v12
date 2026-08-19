@@ -30,14 +30,16 @@ import json
 import logging
 import time
 import zipfile
-from datetime import datetime, timezone
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from BE.cli.common.log_reader import SessionSummary, list_sessions as _list_sessions
+from BE.cli.common.log_reader import SessionSummary
+from BE.cli.common.log_reader import list_sessions as _list_sessions
 from BE.cli.common.paths import resolve_root
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
@@ -659,7 +661,7 @@ def _read_log_bytes(path: Path) -> tuple[bytes, bool]:
     marker = (
         f"\n{{\"_Truncated\": true, \"OriginalBytes\": {size}, "
         f"\"KeptBytes\": {_EXPORT_LOG_MAX_BYTES}}}\n"
-    ).encode("utf-8")
+    ).encode()
     return (head + marker, True)
 
 
@@ -790,7 +792,7 @@ async def export_cli_session(request: Request, run_id: str) -> Response:
 
     manifest: dict[str, Any] = {
         "RunId": run_id,
-        "GeneratedAt": datetime.now(timezone.utc).isoformat(),
+        "GeneratedAt": datetime.now(UTC).isoformat(),
         "CorrelationId": correlation_id,
         "Summary": session.to_wire(),
         "Contents": {

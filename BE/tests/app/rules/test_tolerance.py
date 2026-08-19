@@ -11,7 +11,6 @@ Plus engine deactivation of rules whose tolerance cannot resolve.
 from __future__ import annotations
 
 import pytest
-
 from rule_kernel.engine import evaluate_bundle
 from rule_kernel.models import (
     RuleBundle,
@@ -23,13 +22,12 @@ from rule_kernel.models import (
 from rule_kernel.tolerance import (
     ResolvedTolerance,
     ToleranceKind,
-    ToleranceProfile,
     build_profile_map,
     resolve_for_rule,
 )
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-
 
 TASK_ID = "01TASK000000000000000000AB"
 

@@ -21,7 +21,6 @@ from BE.app.installer_plan import (
 )
 from BE.app.installer_wrappers import (
     WRAPPERS,
-    WrapperEntry,
     wrapper_presence,
     wrappers_for_platform,
 )

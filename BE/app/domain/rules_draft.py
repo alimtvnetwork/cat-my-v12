@@ -7,8 +7,9 @@ Rules can exist in two states:
 This module provides helper functions for querying each state.
 """
 
-from typing import Optional
+
 from sqlalchemy.orm import Session
+
 from BE.models.rules import RuleModel
 
 
@@ -38,7 +39,7 @@ def get_draft_rules(db: Session, project_id: int) -> list[RuleModel]:
 
 def promote_draft_to_committed(
     db: Session, rule_id: int
-) -> Optional[RuleModel]:
+) -> RuleModel | None:
     """Promote a draft rule to committed state."""
     rule = db.query(RuleModel).filter(RuleModel.Id == rule_id).first()
     if rule is not None:

@@ -46,7 +46,8 @@ def _run(argv, tmp_path, monkeypatch, db_root: Path | None = None):
 def _apply_all_migrations(db_root: Path) -> None:
     """Fresh tmp DB with every migration applied via the guarded connections."""
     import sqlite3
-    from BE.db.connections import get_root_conn, get_task_conn, get_rules_conn
+
+    from BE.db.connections import get_root_conn, get_rules_conn, get_task_conn
 
     repo = Path(__file__).resolve().parents[4]
     for tier, factory in (

@@ -15,9 +15,10 @@ Route wiring:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import replace
-from datetime import datetime, timezone
-from typing import Iterable, Protocol, runtime_checkable
+from datetime import UTC, datetime
+from typing import Protocol, runtime_checkable
 
 from BE.app.domain.cat_rule import CatRule
 from BE.app.domain.rule_set import DraftMeta, RuleSetEnvelope
@@ -71,7 +72,7 @@ class InMemoryRulesRepo:
             Version=new_version,
             DraftMeta=DraftMeta(
                 ClientId=envelope.DraftMeta.ClientId,
-                UpdatedAt=datetime.now(timezone.utc).isoformat(),
+                UpdatedAt=datetime.now(UTC).isoformat(),
                 Origin="server",
             ),
         )

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Any
+
 
 @dataclass
 class CameraDeviceInfo:
@@ -7,8 +8,8 @@ class CameraDeviceInfo:
     model: str
     vendor: str
     interface: str
-    ip_or_bus: Optional[str]
-    firmware: Optional[str]
+    ip_or_bus: str | None
+    firmware: str | None
 
 @dataclass
 class FrameEnvelope:

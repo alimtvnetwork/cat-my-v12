@@ -25,7 +25,6 @@ from pathlib import Path
 from BE.cli.common.exit_codes import ExitCode
 from BE.cli.worker.main import build_dispatcher
 
-
 HELPTEXT_DIR = Path("BE/cli/worker/helptext")
 
 

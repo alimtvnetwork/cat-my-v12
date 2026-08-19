@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from BE.config import get_settings
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from BE.config import get_settings
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

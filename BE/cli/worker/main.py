@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from dataclasses import asdict
 from typing import Any
 
 from BE.cli.common.dispatcher import Dispatcher, Subcommand
@@ -37,7 +36,6 @@ from BE.cli.worker.subcommands import open_stream as _open_stream
 from BE.cli.worker.subcommands import status as _status
 from BE.cli.worker.subcommands import stream as _stream
 from BE.cli.worker.subcommands import version as _version
-from BE.sdk_facade.camera import InMemoryCameraFacade
 
 
 def _configure_probe(parser: argparse.ArgumentParser) -> None:

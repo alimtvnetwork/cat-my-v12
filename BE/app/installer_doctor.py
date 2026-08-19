@@ -31,27 +31,26 @@ Anchors
 
 from __future__ import annotations
 
-import sys
-from dataclasses import asdict, dataclass, field
-from enum import Enum
+from collections.abc import Iterable
+from dataclasses import dataclass, field
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from BE.app.install_manifest import (
     InstallManifest,
     latest_action,
     read_manifest,
 )
+from BE.app.installer_binaries import BINARIES, binary_presence
 from BE.app.installer_plan import InstallerAction, InstallerPlatform
 from BE.app.installer_wrappers import (
-    WrapperEntry,
     wrapper_presence,
     wrappers_for_platform,
 )
-from BE.app.installer_binaries import BINARIES, binary_presence
 
 
-class DoctorSeverity(str, Enum):
+class DoctorSeverity(StrEnum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"

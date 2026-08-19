@@ -130,10 +130,7 @@ def _enumerate_frames(ns: argparse.Namespace) -> list[Path]:
             f"manifest is not valid JSON: {exc.msg}",
             {"Path": str(mpath), "Line": exc.lineno, "Col": exc.colno},
         ) from exc
-    if isinstance(raw, dict):
-        items = raw.get("frames")
-    else:
-        items = raw
+    items = raw.get("frames") if isinstance(raw, dict) else raw
     if not isinstance(items, list) or not all(isinstance(x, str) for x in items):
         raise AppError(
             ErrorCode.E_CLI_USAGE,

@@ -73,7 +73,7 @@ def test_roundtrip_wire_keys_are_pascal_case() -> None:
     }
     assert "Status" in wire and "Attributes" in wire and "Results" in wire
     # No snake_case leak from Python field names.
-    assert not any(k.islower() for k in wire.keys())
+    assert not any(k.islower() for k in wire)
 
 
 def test_roundtrip_is_idempotent() -> None:

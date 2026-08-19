@@ -42,12 +42,14 @@ Contract
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import sqlite3
 import time
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -319,10 +321,8 @@ def write_frame_artifacts(
     except AppError:
         raise
     except sqlite3.Error as exc:
-        try:
+        with contextlib.suppress(sqlite3.Error):
             conn.execute("ROLLBACK")
-        except sqlite3.Error:
-            pass
         _log.error(
             "frame_artifact.write.db_error RunSessionId=%s Count=%d: %s",
             run_session_id, len(prepared), exc,

@@ -10,10 +10,10 @@ Implements:
 Each algorithm returns a ConfidenceResult with a 0-100 score.
 """
 from __future__ import annotations
+
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class ConfidenceResult:
     label: str
 
 
-def _clip_to_roi(image: "np.ndarray", roi: Optional[BoundingBox]) -> "np.ndarray":
+def _clip_to_roi(image: np.ndarray, roi: BoundingBox | None) -> np.ndarray:
     """Clip image to ROI bounding box. Returns full image if no ROI."""
     if roi is None:
         return image
@@ -44,7 +44,7 @@ def _clip_to_roi(image: "np.ndarray", roi: Optional[BoundingBox]) -> "np.ndarray
     return image[y1:y2, x1:x2]
 
 
-def _to_grayscale(image: "np.ndarray") -> "np.ndarray":
+def _to_grayscale(image: np.ndarray) -> np.ndarray:
     """Convert BGR/RGB image to grayscale."""
     import cv2  # type: ignore
     if len(image.shape) == 2:
@@ -53,13 +53,12 @@ def _to_grayscale(image: "np.ndarray") -> "np.ndarray":
 
 
 def _match_pattern(
-    reference: "np.ndarray",
-    template: "np.ndarray",
+    reference: np.ndarray,
+    template: np.ndarray,
     threshold: float = 0.5,
 ) -> ConfidenceResult:
     """Run normalized cross-correlation template matching."""
     import cv2
-    import numpy as np
 
     ref_gray = _to_grayscale(reference)
     tmpl_gray = _to_grayscale(template)
@@ -78,7 +77,7 @@ def _match_pattern(
 
 
 def _track_shapes(
-    image: "np.ndarray",
+    image: np.ndarray,
     threshold: float = 0.5,
 ) -> ConfidenceResult:
     """Detect contours and return a confidence based on contour presence."""
@@ -97,7 +96,7 @@ def _track_shapes(
 
 
 def _check_color_area(
-    image: "np.ndarray",
+    image: np.ndarray,
     lower_hsv: tuple,
     upper_hsv: tuple,
     threshold: float = 0.1,
@@ -120,12 +119,12 @@ def _check_color_area(
 async def evaluate_pattern_match(
     reference_bytes: bytes,
     template_bytes: bytes,
-    roi: Optional[BoundingBox],
+    roi: BoundingBox | None,
     threshold: float,
 ) -> ConfidenceResult:
     """Async wrapper: runs CV in thread pool to avoid blocking event loop."""
-    import numpy as np
     import cv2
+    import numpy as np
 
     def _run() -> ConfidenceResult:
         ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
@@ -145,13 +144,13 @@ async def evaluate_pattern_match(
 async def evaluate_grayscale_tolerance(
     reference_bytes: bytes,
     sample_bytes: bytes,
-    roi: Optional[BoundingBox],
+    roi: BoundingBox | None,
     tolerance: int,
     threshold: float,
 ) -> ConfidenceResult:
     """Compare grayscale histograms with tolerance."""
-    import numpy as np
     import cv2
+    import numpy as np
 
     def _run() -> ConfidenceResult:
         ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)

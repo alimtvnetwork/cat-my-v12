@@ -30,11 +30,12 @@ UI Sessions route (Step 131).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -80,7 +81,7 @@ def _paths(log_root: Path | str) -> IndexPaths:
 
 
 def _utc_now_iso() -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return now.strftime("%Y-%m-%dT%H:%M:%S.") + f"{now.microsecond // 1000:03d}Z"
 
 
@@ -136,10 +137,8 @@ def _acquire_lock(paths: IndexPaths, timeout: float, stale_seconds: float) -> No
         if _try_create_lock(paths.lock, owner_pid):
             return
         if _is_lock_stale(paths.lock, stale_seconds):
-            try:
+            with contextlib.suppress(FileNotFoundError):
                 paths.lock.unlink()
-            except FileNotFoundError:
-                pass
             continue
         if time.monotonic() >= deadline:
             raise AppError(

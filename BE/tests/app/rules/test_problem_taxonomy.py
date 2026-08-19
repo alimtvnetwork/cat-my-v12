@@ -71,12 +71,12 @@ def test_every_registered_code_is_reachable() -> None:
 
 
 def test_runtime_guard_rejects_string_code() -> None:
-    from rule_kernel.loader import _problem
     import pytest
+    from rule_kernel.loader import _problem
     with pytest.raises(TypeError, match="BundleProblemCode"):
         _problem("<x>", "RuleKindUnknown", "should fail")  # type: ignore[arg-type]
 
 
 def test_all_codes_matches_enum() -> None:
-    assert ALL_CODES == frozenset(m.value for m in BundleProblemCode)
+    assert frozenset(m.value for m in BundleProblemCode) == ALL_CODES
     assert len(ALL_CODES) == len(BundleProblemCode)

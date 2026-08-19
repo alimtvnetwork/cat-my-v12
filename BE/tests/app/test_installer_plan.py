@@ -17,7 +17,6 @@ from BE.app.installer_plan import (
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
-
 # ---------------------------------------------------------------------------
 # Ordering invariants (the whole point of the module)
 # ---------------------------------------------------------------------------

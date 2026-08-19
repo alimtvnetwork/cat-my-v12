@@ -8,10 +8,10 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-
 from rule_kernel import evaluators as _register  # noqa: F401
 from rule_kernel import predicates
 from rule_kernel.engine import evaluate_bundle
+from rule_kernel.evaluators.math_expression import evaluate_math_expression
 from rule_kernel.models import (
     RuleBundle,
     RuleContext,
@@ -20,9 +20,9 @@ from rule_kernel.models import (
     RuleStatus,
     Verdict,
 )
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-from rule_kernel.evaluators.math_expression import evaluate_math_expression
 
 
 def _ctx(prior: dict[str, RuleJudgment] | None = None) -> RuleContext:
@@ -243,7 +243,6 @@ def test_missing_prior_context_bad_input() -> None:
 
 def test_engine_injects_prior_and_reference_works_end_to_end() -> None:
     # Real evaluate_bundle: r1 (Count-stubbed via override) then r2 (MathExpression).
-    from rule_kernel.models import RuleBundle
 
     def fake_count(c, r):
         return RuleJudgment(r.id, Verdict.PASS, "", {"MatchCount": 4})
@@ -267,7 +266,6 @@ def test_engine_injects_prior_and_reference_works_end_to_end() -> None:
 
 def test_engine_forward_ref_bad_input() -> None:
     # r1 references r2 which hasn't run yet -> RuleBadInput at r1.
-    from rule_kernel.models import RuleBundle
 
     def fake_count(c, r):
         return RuleJudgment(r.id, Verdict.PASS, "", {"MatchCount": 4})

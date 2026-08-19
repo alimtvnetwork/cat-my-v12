@@ -33,9 +33,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Mapping, TextIO
+from datetime import UTC, datetime
+from typing import Any, TextIO
 
 from BE.cli.common.exit_codes import ExitCode
 from BE.cli.common.logger import Source
@@ -49,7 +50,7 @@ Configurator = Callable[[argparse.ArgumentParser], None]
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 class _EnvelopeArgumentParser(argparse.ArgumentParser):

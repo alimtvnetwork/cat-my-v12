@@ -15,8 +15,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from BE.app.install_manifest import MANIFEST_FILENAME, read_manifest_strict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

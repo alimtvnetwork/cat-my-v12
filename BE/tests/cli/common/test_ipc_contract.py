@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -107,7 +107,7 @@ def test_c4_ack_plus_prune_composes(tmp_path: Path) -> None:
     acked = ipc.ack(_send(tmp_path, i=1))
     live = _send(tmp_path, i=2)  # never acked
     # Backdate both files to 48h ago.
-    old = datetime.now(timezone.utc).timestamp() - 48 * 3600
+    old = datetime.now(UTC).timestamp() - 48 * 3600
     os.utime(acked, (old, old))
     os.utime(live, (old, old))
     report = ipc.prune_ipc(tmp_path, max_age_hours=24)

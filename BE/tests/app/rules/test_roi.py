@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from rule_kernel.models import RuleContext, RuleSpec
 from rule_kernel.roi import slice_search_region
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

@@ -6,15 +6,15 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
 from BE.app.install_manifest import (
-    InstallManifest,
     MANIFEST_FILENAME,
     MANIFEST_SCHEMA_VERSION,
+    InstallManifest,
     write_manifest,
 )
 from BE.app.installer_upgrade import (
@@ -125,7 +125,7 @@ def test_backup_manifest_returns_none_when_missing(tmp_path: Path):
 
 def test_backup_manifest_writes_stamped_copy(tmp_path: Path):
     write_manifest(tmp_path, _manifest("4.67.0"))
-    now = datetime(2026, 7, 21, 12, 34, 56, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 21, 12, 34, 56, tzinfo=UTC)
     dst = backup_manifest(tmp_path, now=now)
     assert dst is not None
     assert dst.name == f"{MANIFEST_FILENAME}.bak.20260721T123456Z"

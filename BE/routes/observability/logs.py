@@ -59,12 +59,12 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import sqlite3
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Path as PathParam, Query, Request
+from fastapi import APIRouter, Query, Request
+from fastapi import Path as PathParam
 from fastapi.responses import JSONResponse
 
 from BE.cli.common.paths import resolve_root

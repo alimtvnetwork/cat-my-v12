@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from rule_kernel.loader import load_bundle
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

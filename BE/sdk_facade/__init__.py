@@ -30,14 +30,14 @@ on any Protocol signature change so old clients fail fast.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Protocol, runtime_checkable, Literal
+from enum import Enum, StrEnum
+from typing import Any, Literal, Protocol, runtime_checkable
 
 # Bumped from 0.2.0-protocol: CameraFacade signature expanded to full manual §2 surface.
 SDK_FACADE_VERSION = "0.3.0-protocol"
 
 
-class PixelFormat(str, Enum):
+class PixelFormat(StrEnum):
     """Normalized pixel formats. Adapter translates to vendor `PixelFormat` node."""
 
     MONO8 = "MONO8"
@@ -47,12 +47,12 @@ class PixelFormat(str, Enum):
     RGB8 = "RGB8"
 
 
-class TriggerMode(str, Enum):
+class TriggerMode(StrEnum):
     OFF = "OFF"  # continuous free-run
     ON = "ON"
 
 
-class TriggerSource(str, Enum):
+class TriggerSource(StrEnum):
     SOFTWARE = "SOFTWARE"
     LINE0 = "LINE0"
     LINE2 = "LINE2"
@@ -60,7 +60,7 @@ class TriggerSource(str, Enum):
     COUNTER = "COUNTER"
 
 
-class TriggerActivation(str, Enum):
+class TriggerActivation(StrEnum):
     RISING_EDGE = "RISING_EDGE"
     FALLING_EDGE = "FALLING_EDGE"
     ANY_EDGE = "ANY_EDGE"
@@ -174,12 +174,11 @@ def get_camera_facade(provider: Literal["inmemory", "daheng", "replay"] = "inmem
     if provider == "daheng":
         from BE.sdk_facade.vendors.daheng.facade import DahengCameraFacade
         return DahengCameraFacade()
-    elif provider == "replay":
+    if provider == "replay":
         from BE.sdk_facade.vendors.replay.facade import ReplayCameraFacade
         return ReplayCameraFacade()
-    else:
-        from BE.sdk_facade.camera import InMemoryCameraFacade
-        return InMemoryCameraFacade()
+    from BE.sdk_facade.camera import InMemoryCameraFacade
+    return InMemoryCameraFacade()
 
 
 # Back-compat: prior consumers imported dict-shaped devices. Adapters should

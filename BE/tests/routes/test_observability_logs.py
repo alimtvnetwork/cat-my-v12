@@ -9,14 +9,12 @@ bad query params.
 from __future__ import annotations
 
 import json
-import sqlite3
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from BE.db.connections import get_root_conn
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 _MIGRATION = (
     Path(__file__).resolve().parents[2]

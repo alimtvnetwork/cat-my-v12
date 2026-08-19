@@ -5,7 +5,6 @@ Provides:
 - Structured JSON logging for OpenCV failures (Task 225)
 """
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,6 @@ def maybe_downsample(
     Returns the original image unchanged if within limits.
     Preserves aspect ratio.
     """
-    import numpy as np
     import cv2  # type: ignore
 
     h, w = image.shape[:2]
@@ -48,8 +46,8 @@ def maybe_downsample(
 def log_opencv_error(
     exc: Exception,
     operation: str,
-    image_shape: Optional[tuple] = None,
-    rule_type: Optional[str] = None,
+    image_shape: tuple | None = None,
+    rule_type: str | None = None,
 ) -> None:
     """Structured JSON logging for OpenCV / algorithm errors (Task 225)."""
     logger.error(

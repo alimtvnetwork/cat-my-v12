@@ -1,12 +1,20 @@
 import os
-import pytest
 import time
-from BE.sdk_facade.vendors.daheng.primitives import (
-    enumerate_devices, open_by_serial, read_feature, configure_roi,
-    trigger_once, start_stream, stop_stream, write_feature, read_line, write_line,
-    arm_trigger
-)
+
+import pytest
 from BE.sdk_facade.vendors.daheng.facade import DahengCameraFacade
+from BE.sdk_facade.vendors.daheng.primitives import (
+    arm_trigger,
+    configure_roi,
+    enumerate_devices,
+    open_by_serial,
+    read_feature,
+    read_line,
+    start_stream,
+    stop_stream,
+    trigger_once,
+    write_line,
+)
 
 # Skip all tests if LOVABLE_HW_DAHENG is not set
 pytestmark = pytest.mark.skipif(
@@ -24,7 +32,7 @@ def test_hardware_enumerate_devices() -> None:
 def test_hardware_open_and_read() -> None:
     devices = enumerate_devices()
     assert len(devices) > 0, "No device to test"
-    
+
     serial = devices[0].serial
     with open_by_serial(serial) as handle:
         model = read_feature(handle, "DeviceModelName")
@@ -37,7 +45,7 @@ def test_hardware_roi_and_trigger() -> None:
     if not devices:
         pytest.skip("No device")
     serial = devices[0].serial
-    
+
     with open_by_serial(serial) as handle:
         configure_roi(handle, 0, 0, 100, 100)
         env = trigger_once(handle, 1000)
@@ -50,16 +58,16 @@ def test_hardware_free_run() -> None:
     if not devices:
         pytest.skip("No device")
     serial = devices[0].serial
-    
+
     with open_by_serial(serial) as handle:
         frames = []
         def on_frame(env):
             frames.append(env)
-            
+
         start_stream(handle, on_frame)
         time.sleep(1.0)
         stop_stream(handle)
-        
+
         assert len(frames) > 0
         # Check monotonicity
         for i in range(1, len(frames)):
@@ -70,7 +78,7 @@ def test_hardware_trigger_arm() -> None:
     if not devices:
         pytest.skip("No device")
     serial = devices[0].serial
-    
+
     with open_by_serial(serial) as handle:
         try:
             arm_trigger(handle, "Line0", "RisingEdge", 0.0)
@@ -82,13 +90,13 @@ def test_hardware_digital_io() -> None:
     if not devices:
         pytest.skip("No device")
     serial = devices[0].serial
-    
+
     with open_by_serial(serial) as handle:
         try:
             write_line(handle, "Line0", True)
-            assert read_line(handle, "Line0") == True
+            assert read_line(handle, "Line0")
             write_line(handle, "Line0", False)
-            assert read_line(handle, "Line0") == False
+            assert not read_line(handle, "Line0")
         except Exception as e:
             pytest.skip(f"Digital IO unsupported or failed: {e}")
 
@@ -97,15 +105,15 @@ def test_hardware_reconnect() -> None:
     if not devices:
         pytest.skip("No device")
     serial = devices[0].serial
-    
+
     facade = DahengCameraFacade()
     facade.open(serial)
     facade.start_stream()
-    
+
     # Simulate force close
     if facade._handle and facade._handle.device:
         facade._handle.device.close_device()
-        
+
     try:
         # Should auto-reconnect
         facade.grab(1000)

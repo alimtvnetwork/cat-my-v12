@@ -7,17 +7,15 @@ raises E_BE_INTERNAL, not a silent empty list).
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-
 from BE.app.db.writers import frame_artifact as fa
 from BE.app.db.writers import rule_result as rr
 from BE.app.db.writers import run_session as rs
 from BE.db.connections import get_task_conn
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 MIGRATIONS = Path(__file__).resolve().parents[2] / "db" / "migrations" / "task"
 ROOT_MIGRATIONS = Path(__file__).resolve().parents[2] / "db" / "migrations" / "root"

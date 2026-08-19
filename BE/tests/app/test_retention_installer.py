@@ -18,7 +18,6 @@ from BE.app.retention_installer import (
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
-
 # ---------------------------------------------------------------------------
 # systemd .service
 # ---------------------------------------------------------------------------

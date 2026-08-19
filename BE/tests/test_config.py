@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from BE.config import Environment, LogLevel, Settings, get_settings

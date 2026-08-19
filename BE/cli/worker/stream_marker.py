@@ -29,6 +29,7 @@ Contract:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from dataclasses import dataclass
@@ -56,7 +57,7 @@ class StreamState:
         )
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "StreamState":
+    def from_dict(cls, d: dict[str, Any]) -> StreamState:
         return cls(
             Serial=str(d["Serial"]), Pid=int(d["Pid"]),
             RunId=str(d["RunId"]), StartedAt=str(d["StartedAt"]),
@@ -124,10 +125,8 @@ def stop(data_root: Path, *, expected_serial: str | None = None) -> StreamState 
             f"stream marker holds {existing.Serial!r}, refuse to stop as {expected_serial!r}",
             details={"HeldSerial": existing.Serial, "ExpectedSerial": expected_serial},
         )
-    try:
+    with contextlib.suppress(FileNotFoundError):
         marker_path(data_root).unlink()
-    except FileNotFoundError:
-        pass
     return existing
 
 

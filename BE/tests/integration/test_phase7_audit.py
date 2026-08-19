@@ -8,22 +8,19 @@ Validates that all Phase 7 vision processing components are in place:
 5. PUT /images/:id/golden → golden baseline protection
 6. Golden cleanup exclusion in task_cleanup.py
 """
-import pytest
 
 
 def test_vision_eval_module_importable() -> None:
     from BE.app.domain.vision_eval import (
-        ConfidenceResult,
         BoundingBox,
-        evaluate_grayscale_tolerance,
-        evaluate_pattern_match,
+        ConfidenceResult,
     )
     assert ConfidenceResult is not None
     assert BoundingBox is not None
 
 
 def test_vision_preprocess_module_importable() -> None:
-    from BE.app.domain.vision_preprocess import maybe_downsample, log_opencv_error
+    from BE.app.domain.vision_preprocess import log_opencv_error, maybe_downsample
     assert maybe_downsample is not None
     assert log_opencv_error is not None
 

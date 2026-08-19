@@ -32,7 +32,6 @@ from BE.app.retention_audit import (
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
-
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 

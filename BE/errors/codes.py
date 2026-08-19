@@ -18,11 +18,11 @@ matching `/E_[A-Z]+_[A-Z_]+/` as `E_BUG_UNKNOWN_CODE`.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from http import HTTPStatus
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Wire codes emitted through `BE.envelope.ErrorBody.code`."""
 
     # Backend boundary (E_BE_*): request-shape and lifecycle problems.

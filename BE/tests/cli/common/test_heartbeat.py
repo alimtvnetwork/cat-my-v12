@@ -146,9 +146,8 @@ def test_context_manager_stops_on_exception(tmp_path: Path) -> None:
         ipc_root=tmp_path, ipc_dir="worker-out",
         run_id="R7", from_="worker", interval_s=0.05,
     )
-    with pytest.raises(RuntimeError):
-        with ticker:
-            raise RuntimeError("worker died")
+    with pytest.raises(RuntimeError), ticker:
+        raise RuntimeError("worker died")
     # Thread cleared, subsequent start() must succeed.
     ticker.start()
     ticker.stop()

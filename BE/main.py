@@ -13,29 +13,29 @@ from __future__ import annotations
 import logging
 import signal
 import sys
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
-from BE.routes import system as system_route
 
 from BE.config import Settings, get_settings
 from BE.errors.handlers import register_exception_handlers
-from BE.middleware.request_id import RequestIdMiddleware
-from BE.middleware.rate_limit import RateLimitMiddleware
-from BE.security.cors import install_cors
 from BE.logging_config import configure_logging
+from BE.middleware.rate_limit import RateLimitMiddleware
+from BE.middleware.request_id import RequestIdMiddleware
+from BE.routes import cli_config as cli_config_route
+from BE.routes import cli_doctor as cli_doctor_route
+from BE.routes import cli_observability as cli_observability_route
 from BE.routes import health as health_route
 from BE.routes import meta as meta_route
 from BE.routes import rules as rules_route
 from BE.routes import samples as samples_route
+from BE.routes import system as system_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
 from BE.routes.observability import runs as observability_runs_route
 from BE.routes.observability import sessions as observability_sessions_route
-from BE.routes import cli_observability as cli_observability_route
-from BE.routes import cli_config as cli_config_route
-from BE.routes import cli_doctor as cli_doctor_route
+from BE.security.cors import install_cors
 
 logger = logging.getLogger("BE.main")
 
@@ -47,10 +47,8 @@ def _sigterm_handler(signum, frame):
 
 
 def _setup_signals() -> None:
-    try:
+    with suppress(Exception):
         signal.signal(signal.SIGTERM, _sigterm_handler)
-    except Exception:
-        pass
 
 
 @asynccontextmanager
@@ -111,13 +109,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     cfg = settings or get_settings()
     configure_logging(cfg.log_level)
     _setup_signals()
-    
+
     app = FastAPI(title="BE", version="1.0.0", lifespan=_app_lifespan)
     _register_middlewares(app, cfg)
     register_exception_handlers(app)
     _register_routers(app)
     _log_startup(app, cfg)
-    
+
     return app
 
 

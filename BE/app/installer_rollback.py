@@ -44,6 +44,7 @@ Anchors:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import tempfile
@@ -156,10 +157,8 @@ def _atomic_replace(target: Path, payload_bytes: bytes) -> None:
             os.fsync(f.fileno())
         os.replace(tmp_path, target)
     except BaseException:
-        try:
+        with contextlib.suppress(OSError):
             tmp_path.unlink()
-        except OSError:
-            pass
         raise
 
 

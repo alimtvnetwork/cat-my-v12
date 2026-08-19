@@ -1,6 +1,7 @@
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 
+
 def test_apperror_file_path_schema():
     # Calling for_file correctly populates details
     err = AppError.for_file(

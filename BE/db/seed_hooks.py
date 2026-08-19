@@ -68,7 +68,7 @@ def seed_root(conn: sqlite3.Connection) -> None:
     """
     _assert_conn(conn, "root")
     # Intentional no-op. See module docstring §Contract.
-    return None
+    return
 
 
 def seed_task(conn: sqlite3.Connection) -> None:
@@ -79,7 +79,7 @@ def seed_task(conn: sqlite3.Connection) -> None:
     be seeded at bootstrap time; this hook exists for QA fixtures only.
     """
     _assert_conn(conn, "task")
-    return None
+    return
 
 
 def seed_rules(conn: sqlite3.Connection) -> None:
@@ -89,4 +89,4 @@ def seed_rules(conn: sqlite3.Connection) -> None:
     rows will be added there in lock-step with the rule-bundle loader.
     """
     _assert_conn(conn, "rules")
-    return None
+    return

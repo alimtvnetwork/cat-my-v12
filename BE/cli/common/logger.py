@@ -20,10 +20,11 @@ from __future__ import annotations
 import json
 import os
 import traceback
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, Mapping
+from typing import Any, Literal
 from uuid import uuid4
 
 from BE.cli.common.paths import resolve_root
@@ -39,7 +40,7 @@ _TRACE_ALLOWED: frozenset[Level] = frozenset({"ERROR", "FATAL"})
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + f"{datetime.now(timezone.utc).microsecond // 1000:03d}Z"
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.") + f"{datetime.now(UTC).microsecond // 1000:03d}Z"
 
 
 def _new_run_id() -> str:
@@ -80,7 +81,7 @@ class JsonlLogger:
     _mirroring: bool = field(init=False, default=False)
 
     def __post_init__(self) -> None:
-        started = datetime.now(timezone.utc)
+        started = datetime.now(UTC)
         self._path = _build_log_path(self.log_root, self.source, self.subcmd, self.pid, started)
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -229,7 +230,7 @@ class JsonlLogger:
             self._fp.close()
             self._fp = None
 
-    def __enter__(self) -> "JsonlLogger":
+    def __enter__(self) -> JsonlLogger:
         return self
 
     def __exit__(self, *_exc: Any) -> None:

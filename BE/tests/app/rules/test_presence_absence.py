@@ -20,11 +20,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 import rule_kernel.evaluators  # noqa: F401  side-effect: registers predicate
-from rule_kernel.evaluators.presence_absence import evaluate_presence_absence
 from rule_kernel import predicates
 from rule_kernel.engine import evaluate_bundle
+from rule_kernel.evaluators.presence_absence import evaluate_presence_absence
 from rule_kernel.models import (
     RuleBundle,
     RuleContext,
@@ -32,6 +31,7 @@ from rule_kernel.models import (
     RuleStatus,
     Verdict,
 )
+
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
 

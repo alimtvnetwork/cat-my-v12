@@ -1,6 +1,6 @@
-import pytest
 from BE.envelope import Envelope
 from BE.models.system import SystemStatus
+
 
 def test_envelope_ok():
     env = Envelope.ok(data={"foo": "bar"})

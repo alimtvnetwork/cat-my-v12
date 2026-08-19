@@ -22,8 +22,8 @@ from pathlib import Path
 
 import pytest
 
-from BE.db.connections import get_root_conn, get_task_conn, get_rules_conn
-from BE.db.seed_hooks import seed_root, seed_task, seed_rules
+from BE.db.connections import get_root_conn, get_rules_conn, get_task_conn
+from BE.db.seed_hooks import seed_root, seed_rules, seed_task
 
 MIGRATIONS_ROOT = Path(__file__).resolve().parents[2] / "db" / "migrations"
 

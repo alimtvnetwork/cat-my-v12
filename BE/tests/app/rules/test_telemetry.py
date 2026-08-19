@@ -12,13 +12,17 @@ Pins:
 from __future__ import annotations
 
 import numpy as np
-
-from rule_kernel import (
-    RuleBundle, RuleContext, RuleSpec, Verdict, evaluate_bundle, predicates,
-)
-from rule_kernel import telemetry
-from rule_kernel.models import RuleStatus, RuleJudgment
 import rule_kernel.evaluators  # noqa: F401  register real evaluators
+from rule_kernel import (
+    RuleBundle,
+    RuleContext,
+    RuleSpec,
+    Verdict,
+    evaluate_bundle,
+    predicates,
+    telemetry,
+)
+from rule_kernel.models import RuleJudgment, RuleStatus
 
 
 def _frame(fill: int = 200, size: int = 40) -> np.ndarray:

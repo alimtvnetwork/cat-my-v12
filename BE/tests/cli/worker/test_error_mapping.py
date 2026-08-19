@@ -28,17 +28,16 @@ from typing import Any
 import pytest
 
 from BE.cli.common.dispatcher import (
-    Dispatcher,
-    Subcommand,
     _IO_CODES,
     _USAGE_CODES,
     _VENDOR_CODES,
+    Dispatcher,
+    Subcommand,
     _exit_for_apperror,
 )
 from BE.cli.common.exit_codes import ExitCode
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-
 
 # ---------- 1. Per-code classification ----------
 

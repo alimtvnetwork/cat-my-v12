@@ -1,10 +1,19 @@
-from typing import Optional, List
 from pathlib import Path
-import numpy as np
 
-from BE.sdk_facade import CameraFacade, DeviceInfo, Frame, Roi, PixelFormat, TriggerMode, TriggerSource, TriggerActivation
+import numpy as np
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
+from BE.sdk_facade import (
+    CameraFacade,
+    DeviceInfo,
+    Frame,
+    PixelFormat,
+    Roi,
+    TriggerActivation,
+    TriggerMode,
+    TriggerSource,
+)
+
 
 class ReplayCameraFacade(CameraFacade):
     def __init__(self, fixture_dir: str = "BE/tests/fixtures/daheng"):
@@ -37,12 +46,12 @@ class ReplayCameraFacade(CameraFacade):
             raise AppError(ErrorCode.E_CAM_NOT_CONNECTED, "Not opened")
         if not self.files:
             raise AppError(ErrorCode.E_CAM_CAPTURE_FAILED, "No more frames")
-            
+
         file = self.files[self._idx % len(self.files)]
         self._idx += 1
         arr = np.load(file)
         h, w = arr.shape[:2]
-        
+
         return Frame(
             data=arr.tobytes(),
             width=w,
