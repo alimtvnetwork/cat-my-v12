@@ -71,7 +71,6 @@ export function commitAnchorGesture(
   existingRules: readonly EditorRule[],
   id: string,
 ): EditorRule {
-  
   return {
     id,
     name: nextName(gesture.kind, existingRules),
@@ -88,7 +87,6 @@ export function commitAnchorGesture(
 }
 
 export function cancelAnchorGesture(): null {
-  
   return null;
 }
 
