@@ -96,6 +96,7 @@ let inFlight: Promise<SeedRunV2Report> | null = null;
 
 function defaultNow(): number {
   if (typeof performance !== "undefined" && typeof performance.now === "function") {
+
     return performance.now();
   }
 
@@ -118,6 +119,7 @@ function rowsForProfile<T extends DomainRow & { profileId?: string }>(
   rows: readonly T[],
   profileId: string,
 ): T[] {
+
   return rows.filter((r) => r.profileId === undefined || r.profileId === profileId);
 }
 
@@ -135,6 +137,7 @@ async function runSlice(
   const rows = rowsForProfile(rawRows, profileId);
 
   if (!facade) {
+
     return {
       slice,
       status: SliceStatusType.SkippedNoFacade,
@@ -144,6 +147,7 @@ async function runSlice(
   }
 
   if (rows.length === 0) {
+
     return {
       slice,
       status: SliceStatusType.SkippedEmpty,

@@ -36,6 +36,7 @@ const SeedContext = createContext<SeedContextValue | null>(null);
  *  outside a `<SeedProvider>`. Prefer `useSeedContext` in production
  *  code paths where the provider is guaranteed by the root route. */
 export function useSeedContextOptional(): SeedContextValue | null {
+
   return useContext(SeedContext);
 }
 
@@ -134,5 +135,6 @@ export function useSeedContext(): SeedContextValue {
 
 /** Convenience selector for the currently loaded bundle. Returns null until ready. */
 export function useSeedBundle(): CatSeedBundle | null {
+
   return useSeedContext().bundle;
 }
