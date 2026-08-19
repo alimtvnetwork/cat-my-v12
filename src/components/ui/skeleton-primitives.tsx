@@ -43,7 +43,6 @@ export function SkeletonLine({
  * regions. Consumers control size via className (`h-40 w-full` etc.).
  */
 export function SkeletonBlock({ className, ...rest }: BaseProps): React.JSX.Element | null {
-
   return <div aria-hidden className={cn("ca-skeleton rounded-md", className)} {...rest} />;
 }
 
@@ -56,7 +55,6 @@ export function SkeletonCircle({
   style,
   ...rest
 }: BaseProps & { size?: number }): React.JSX.Element | null {
-
   return (
     <div
       aria-hidden
@@ -78,7 +76,6 @@ export function SkeletonList({
   className,
   ...rest
 }: BaseProps & { label: string }): React.JSX.Element | null {
-
   return (
     <div
       role="status"
