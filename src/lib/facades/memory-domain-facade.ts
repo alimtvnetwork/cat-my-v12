@@ -27,6 +27,7 @@ import type {
 import type { SliceKey } from "@/lib/seed/schemas-v2";
 
 function clone<T>(value: T): T {
+
   return structuredClone(value);
 }
 
