@@ -59,6 +59,7 @@ export type RpcOptions = {
 /** RFC-4122 v4 when available; falls back to a random-hex id. */
 function newCorrelationId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+
     return crypto.randomUUID();
   }
 
@@ -82,6 +83,7 @@ function extractWireCode(err: unknown): string | null {
 }
 
 function fnLabel<TArgs, TResult>(fn: RpcCall<TArgs, TResult>, fallback?: string): string {
+
   return fallback ?? (fn as { name?: string }).name ?? "rpc.anonymous";
 }
 
@@ -182,12 +184,15 @@ export function useRpc<TArgs, TResult>(
 
 export namespace RpcErrorCodeType {
   export function isE_RPC_TRANSPORT(val: string | null | undefined): boolean {
+
     return val === RpcErrorCodeType.E_RPC_TRANSPORT;
   }
   export function isE_RPC_GUARD_BLOCKED(val: string | null | undefined): boolean {
+
     return val === RpcErrorCodeType.E_RPC_GUARD_BLOCKED;
   }
   export function isE_ID_INVALID(val: string | null | undefined): boolean {
+
     return val === RpcErrorCodeType.E_ID_INVALID;
   }
 }
