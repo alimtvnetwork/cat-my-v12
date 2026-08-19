@@ -28,6 +28,7 @@ function shortCircuitSkip(rule: {
   id: string;
   conditions: readonly { id: string; type: ConditionResult["type"] }[];
 }): RuleResult {
+
   return {
     ruleId: rule.id,
     verdict: VerdictType.Skip,
@@ -73,6 +74,7 @@ export async function evaluateRuleset(
 
     return { verdict: rulesetVerdict, ReasonCodeType: rulesetReason, rules: results };
   } catch (err) {
+
     return {
       verdict: VerdictType.Error,
       ReasonCodeType: ReasonCodeType.RulesetEval,

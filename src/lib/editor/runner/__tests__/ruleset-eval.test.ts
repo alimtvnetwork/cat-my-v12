@@ -19,9 +19,11 @@ import { RULESET_SCHEMA_VERSION, DEFAULT_CONDITION_PARAMS } from "@/lib/editor/s
 import { evaluateRuleset } from "../ruleset-eval";
 import { type ConditionEvaluator, type ConditionResult } from "../types";
 function sameImageCond(id: string): SameImageCondition {
+
   return { id, type: ConditionTypeType.SameImage, params: {} };
 }
 function presenceCond(id: string): PresenceCondition {
+
   return {
     id,
     type: ConditionTypeType.Presence,
@@ -32,6 +34,7 @@ function presenceCond(id: string): PresenceCondition {
   };
 }
 function rule(id: string, conditions: RuleCondition[]): EditorRuleV3 {
+
   return {
     id,
     name: id,
@@ -51,13 +54,16 @@ function ruleset(
   mode: (typeof ValidationModeType)[keyof typeof ValidationModeType],
   rules: EditorRuleV3[],
 ): Ruleset {
+
   return { version: RULESET_SCHEMA_VERSION, validationMode: mode, rules };
 }
 // evaluator that fails for a given (ruleId, condId) tuple set.
 function makeEval(fails: Set<string>): ConditionEvaluator {
+
   return (cond, rule): ConditionResult => {
     const key = `${rule.id}:${cond.id}`;
     if (fails.has(key)) {
+
       return {
         conditionId: cond.id,
         type: cond.type,
