@@ -76,12 +76,14 @@ import {
 } from "./SelectionOverlayConstants";
 export { RuleActionKindType, type RuleActionKind };
 import { svgMaskDataUrl, type HudParamSpec } from "./SelectionOverlayUtils";
+import { useSelectionOverlayGestures } from "./useSelectionOverlayGestures";
 import { SelectionOverlayContextMenu } from "./SelectionOverlayContextMenu";
 import { SelectionOverlayHandles } from "./SelectionOverlayHandles";
 import { SelectionOverlayBlurBackdrop } from "./SelectionOverlayBlurBackdrop";
 import { SelectionOverlayRotationHandles } from "./SelectionOverlayRotationHandles";
 import { SelectionOverlayQuickProps } from "./SelectionOverlayQuickProps";
 import { SelectionOverlayQuickActions } from "./SelectionOverlayQuickActions";
+import { SelectionOverlayDimensionHud } from "./SelectionOverlayDimensionHud";
 
 interface Props {
   rules: EditorRule[];
@@ -365,363 +367,36 @@ export function SelectionOverlay({
     return null;
   }
 
-  const onHandleDown = (
-    event: ReactPointerEvent<HTMLDivElement>,
-    handle: string,
-    expected?: { x: number; y: number },
-  ) => {
-    if (!rule) return;
-    // Correctness guard: the grip's 24x24 hit-box can extend past the
-    // ideal rotated edge/corner point (especially at extreme rotations
-    // where two grips visually converge). Reject the activation when
-    // the pointer lands more than 16 CSS pixels from the true handle
-    // anchor in overlay-local space, so the user only starts a resize
-    // when they're actually on the intended edge/corner.
-    if (expected) {
-      const overlayEl = (event.currentTarget as HTMLDivElement).parentElement;
-      const rect = overlayEl?.getBoundingClientRect();
-
-      if (rect) {
-        const px = event.clientX - rect.left;
-        const py = event.clientY - rect.top;
-        const dx = px - expected.x;
-        const dy = py - expected.y;
-
-        if (Math.hypot(dx, dy) > 16) {
-          event.preventDefault();
-          event.stopPropagation();
-
-          return;
-        }
-      }
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId);
-    dragRef.current = {
-      handle,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      origin: rule,
-    };
-    setIsResizing(true);
-  };
-
-  const onHandleMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const d = dragRef.current;
-
-    if (!d) return;
-    const scale = viewport.zoom;
-    const dxImg = (event.clientX - d.startClientX) / scale;
-    const dyImg = (event.clientY - d.startClientY) / scale;
-    let { x, y, width, height } = d.origin;
-
-    if (d.handle.includes("w")) {
-      x = d.origin.x + dxImg;
-      width = d.origin.width - dxImg;
-    }
-
-    if (d.handle.includes("e")) {
-      width = d.origin.width + dxImg;
-    }
-
-    if (d.handle.includes("n")) {
-      y = d.origin.y + dyImg;
-      height = d.origin.height - dyImg;
-    }
-
-    if (d.handle.includes("s")) {
-      height = d.origin.height + dyImg;
-    }
-    // Shift = lock aspect ratio. For circles the user explicitly asked for
-    // this to preserve a perfect circle; we honor it for every shape so
-    // rectangles and text ROIs behave consistently. The larger axis wins
-    // so the pointer stays close to the handle.
-    if (event.shiftKey) {
-      const size = Math.max(Math.abs(width), Math.abs(height));
-      const signW = width < 0 ? -1 : 1;
-      const signH = height < 0 ? -1 : 1;
-
-      if (d.handle.includes("w")) x = d.origin.x + d.origin.width - size * signW;
-
-      if (d.handle.includes("n")) y = d.origin.y + d.origin.height - size * signH;
-      width = size * signW;
-      height = size * signH;
-    }
-    // Plan 79 step 37: Alt = resize from centre. We double the delta on
-    // the active axis and re-anchor the origin so the ROI centre stays
-    // fixed. Handles that only touch one axis (n/s/e/w) leave the other
-    // axis untouched. Combines cleanly with Shift (aspect-locked resize
-    // still pivots on the centre).
-    if (event.altKey) {
-      const cx = d.origin.x + d.origin.width / 2;
-      const cy = d.origin.y + d.origin.height / 2;
-
-      if (d.handle.includes("w") || d.handle.includes("e")) {
-        // Signed width relative to the fixed centre.
-        const halfW = d.handle.includes("w") ? cx - x : x + width - cx;
-        width = halfW * 2;
-        x = cx - halfW;
-      }
-
-      if (d.handle.includes("n") || d.handle.includes("s")) {
-        const halfH = d.handle.includes("n") ? cy - y : y + height - cy;
-        height = halfH * 2;
-        y = cy - halfH;
-      }
-    }
-
-    if (width < 8) {
-      width = 8;
-
-      if (d.handle.includes("w")) x = d.origin.x + d.origin.width - 8;
-    }
-
-    if (height < 8) {
-      height = 8;
-
-      if (d.handle.includes("n")) y = d.origin.y + d.origin.height - 8;
-    }
-    // Plan 79 step 39: snap runs BEFORE the image-bounds clamp so the
-    // user sees discrete grid stops even when the pointer overshoots
-    // the edge; the clamp then keeps the ROI inside the image.
-    const snapped = snapRect({ x, y, width, height }, snap);
-    // Smart-align: after grid snap and before image clamp, nudge the
-    // active edges to sibling / image lines so the user sees clear
-    // alignment feedback during placement. Tolerance is in image px and
-    // scales inversely with zoom so it feels like a fixed screen band.
-    // User-tunable smart-align band. `snap.alignTolerancePx` is in SCREEN
-    // pixels (see snap.ts); divide by zoom to convert to image space so
-    // the perceived pull-in stays constant across zoom levels. Floor of
-    // 1 px keeps behaviour predictable when the user zooms far in.
-    const screenTolerance = snap.alignTolerancePx ?? 6;
-    const tolerance = Math.max(1, screenTolerance / Math.max(viewport.zoom, 0.0001));
-    const siblings = rules
-      .filter((r) => r.id !== d.origin.id && !r.isHidden)
-      .map((r) => ({ x: r.x, y: r.y, width: r.width, height: r.height }));
-    const aligned = computeAlignment(snapped, siblings, {
-      tolerance,
-      imageBounds: IMAGE_BOUNDS,
-      handle: d.handle,
-    });
-    setAlignGuides(mergeGuides(aligned.guides));
-
-    if (snap.debug) {
-      setAlignDebug(aligned.debug ?? null);
-      setLastTolerancePx(screenTolerance);
-    }
-
-    const clamped = clampRectToBounds(aligned.rect, IMAGE_BOUNDS);
-    onResize(d.origin.id, clamped);
-    forceRender((n) => n + 1);
-  };
-
-  const onHandleUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dragRef.current) {
-      (event.currentTarget as HTMLDivElement).releasePointerCapture(event.pointerId);
-      dragRef.current = null;
-    }
-
-    if (alignGuides.length > 0) setAlignGuides([]);
-
-    if (alignDebug) setAlignDebug(null);
-    setIsResizing(false);
-  };
-
-  const setRotation = (id: string, deg: number) => {
-    // Normalise to (-180, 180] so the readout stays compact. Shared with
-    // the drag path via `normalizeAngle` (Plan 80 step 27).
-    const d = normalizeAngle(deg);
-    setRotations((prev) => ({ ...prev, [id]: d }));
-    onRotate?.(id, d);
-  };
-
-  const onRotateDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!rule || !boxCenter) return;
-    event.preventDefault();
-    event.stopPropagation();
-    (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId);
-    // Convert overlay-local centre to client coords using the target rect.
-    const overlayRect = (
-      event.currentTarget as HTMLDivElement
-    ).parentElement!.getBoundingClientRect();
-    rotateRef.current = {
-      id: rule.id,
-      cx: overlayRect.left + boxCenter.x,
-      cy: overlayRect.top + boxCenter.y,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      startAngle: theta,
-    };
-    setIsRotating(true);
-
-    if (import.meta.env.DEV) {
-      console.debug("[SelectionOverlay] rotate:start", { id: rule.id, theta });
-    }
-  };
-
-  const onRotateMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const r = rotateRef.current;
-
-    if (!r) return;
-    const a0 = Math.atan2(r.startClientY - r.cy, r.startClientX - r.cx);
-    const a1 = Math.atan2(event.clientY - r.cy, event.clientX - r.cx);
-    // Plan 80 step 25/27: snap-to-15° default; Alt rotates freely.
-    // Post-Phase I: enforce the rule's angleMin / angleMax acceptance
-    // zone at the interaction seam so the ROI physically cannot rotate
-    // past the bounds (no silent clamp on persist / render). Bounds
-    // come from the same params the HUD writes, keeping one source of
-    // truth.
-    const params = (rule?.params ?? {}) as Record<string, unknown>;
-    const angleMin = typeof params.angleMin === "number" ? params.angleMin : undefined;
-    const angleMax = typeof params.angleMax === "number" ? params.angleMax : undefined;
-    // Rotation snap: per-rule override wins, then the global UI-prefs
-    // default. Alt held during the drag forces continuous rotation so
-    // operators can nudge past a coarse preset without visiting menus.
-    const perRuleSnap =
-      typeof params.rotationSnap === "number" && Number.isFinite(params.rotationSnap)
-        ? (params.rotationSnap as number)
-        : undefined;
-    const snapStep = event.altKey
-      ? 0
-      : perRuleSnap !== undefined
-        ? perRuleSnap
-        : rotationSnapDefault;
-    const deg = computeRotation({
-      startAngle: r.startAngle,
-      a0,
-      a1,
-      snapStep,
-      angleMin,
-      angleMax,
-    });
-    setRotation(r.id, deg);
-    setAtAngleBound(isAtAngleBound(deg, angleMin, angleMax));
-  };
-
-  const onRotateUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (rotateRef.current) {
-      (event.currentTarget as HTMLDivElement).releasePointerCapture(event.pointerId);
-
-      if (import.meta.env.DEV) {
-        console.debug("[SelectionOverlay] rotate:end", {
-          id: rotateRef.current.id,
-          theta: rotations[rotateRef.current.id] ?? 0,
-        });
-      }
-
-      rotateRef.current = null;
-    }
-
-    setIsRotating(false);
-    setAtAngleBound(false);
-  };
-
-  // Keyboard-driven rotation. Focus a rotate handle and press
-  // ArrowLeft / ArrowRight to nudge by 1°; Shift = 15°, Alt = 0.1°.
-  // Home = 0°. Bounds from angleMin/angleMax are enforced.
-  const onRotateKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!rule) return;
-    let delta = 0;
-    let absolute: number | null = null;
-
-    if (KeyboardKeyType.isArrowRight(event.key) || KeyboardKeyType.isArrowUp(event.key)) delta = 1;
-    else if (KeyboardKeyType.isArrowLeft(event.key) || KeyboardKeyType.isArrowDown(event.key))
-      delta = -1;
-    else if (KeyboardKeyType.isHome(event.key)) absolute = 0;
-    else if (KeyboardKeyType.isPageUp(event.key)) delta = 15;
-    else if (KeyboardKeyType.isPageDown(event.key)) delta = -15;
-    else return;
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (event.shiftKey) delta *= 15;
-    else if (event.altKey) delta *= 0.1;
-    const params = (rule.params ?? {}) as Record<string, unknown>;
-    const angleMin = typeof params.angleMin === "number" ? params.angleMin : undefined;
-    const angleMax = typeof params.angleMax === "number" ? params.angleMax : undefined;
-    let next = absolute != null ? absolute : theta + delta;
-    next = normalizeAngle(next);
-
-    if (angleMin != null && next < angleMin) next = angleMin;
-
-    if (angleMax != null && next > angleMax) next = angleMax;
-    setRotation(rule.id, next);
-    setAtAngleBound(isAtAngleBound(next, angleMin, angleMax));
-  };
-
-  // Keyboard-driven resize. Focus a resize grip and press arrow keys to
-  // nudge the corresponding edge(s) by 1 px (Shift = 10 px). Alt mirrors
-  // the delta on the opposite edge, matching the pointer "resize from
-  // centre" affordance. Clamped to the image bounds and a min of 8 px.
-  const onResizeKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>, handle: string) => {
-    if (!rule) return;
-    let dx = 0;
-    let dy = 0;
-
-    if (KeyboardKeyType.isArrowLeft(event.key)) dx = -1;
-    else if (KeyboardKeyType.isArrowRight(event.key)) dx = 1;
-    else if (KeyboardKeyType.isArrowUp(event.key)) dy = -1;
-    else if (KeyboardKeyType.isArrowDown(event.key)) dy = 1;
-    else return;
-    event.preventDefault();
-    event.stopPropagation();
-    const step = event.shiftKey ? 10 : 1;
-    dx *= step;
-    dy *= step;
-    let { x, y, width, height } = rule;
-
-    if (handle.includes("w")) {
-      x = rule.x + dx;
-      width = rule.width - dx;
-    }
-
-    if (handle.includes("e")) {
-      width = rule.width + dx;
-    }
-
-    if (handle.includes("n")) {
-      y = rule.y + dy;
-      height = rule.height - dy;
-    }
-
-    if (handle.includes("s")) {
-      height = rule.height + dy;
-    }
-
-    if (event.altKey) {
-      const cx = rule.x + rule.width / 2;
-      const cy = rule.y + rule.height / 2;
-
-      if (handle.includes("w") || handle.includes("e")) {
-        const halfW = handle.includes("w") ? cx - x : x + width - cx;
-        width = halfW * 2;
-        x = cx - halfW;
-      }
-
-      if (handle.includes("n") || handle.includes("s")) {
-        const halfH = handle.includes("n") ? cy - y : y + height - cy;
-        height = halfH * 2;
-        y = cy - halfH;
-      }
-    }
-
-    if (width < 8) {
-      width = 8;
-
-      if (handle.includes("w")) x = rule.x + rule.width - 8;
-    }
-
-    if (height < 8) {
-      height = 8;
-
-      if (handle.includes("n")) y = rule.y + rule.height - 8;
-    }
-
-    const clamped = clampRectToBounds({ x, y, width, height }, IMAGE_BOUNDS);
-    onResize(rule.id, clamped);
-  };
+  const {
+    onHandleDown,
+    onHandleMove,
+    onHandleUp,
+    onRotateDown,
+    onRotateMove,
+    onRotateUp,
+    onRotateKeyDown,
+    onResizeKeyDown,
+  } = useSelectionOverlayGestures({
+    rule,
+    rules,
+    viewport,
+    snap,
+    dragRef,
+    rotateRef,
+    boxCenter,
+    theta,
+    rotationSnapDefault,
+    setIsResizing,
+    setIsRotating,
+    setAtAngleBound,
+    setAlignGuides,
+    setAlignDebug,
+    setLastTolerancePx,
+    forceRender,
+    onResize,
+    setRotations,
+    onRotate,
+  });
 
   const menuRule = contextMenu ? (rules.find((r) => r.id === contextMenu.ruleId) ?? null) : null;
 
@@ -741,37 +416,16 @@ export function SelectionOverlay({
       ) : null}
       {rule && tl && br ? (
         <>
-          {(() => {
-            // Angle-zone overlay: show while actively rotating or
-            // resizing a rectangular ROI when the rule has finite
-            // angleMin / angleMax params. Renders under the selection
-            // frame so shape edges stay on top.
-            if (RuleKindType.isRectangle(rule.kind) === false) return null;
-
-            if (!isRotating && !isResizing) return null;
-            const p = (rule.params ?? {}) as Record<string, unknown>;
-            const aMin = typeof p.angleMin === "number" ? p.angleMin : undefined;
-            const aMax = typeof p.angleMax === "number" ? p.angleMax : undefined;
-
-            if (aMin === undefined || aMax === undefined) return null;
-
-            if (!boxCenter) return null;
-            const halfW = (br.x - tl.x) / 2;
-            const halfH = (br.y - tl.y) / 2;
-            const radius = Math.max(halfW, halfH) + 28;
-
-            return (
-              <AngleZoneOverlay
-                cx={boxCenter.x}
-                cy={boxCenter.y}
-                radius={radius}
-                angleMin={aMin}
-                angleMax={aMax}
-                theta={theta}
-                atBound={atAngleBound}
-              />
-            );
-          })()}
+          <SelectionOverlayAngleZone
+            rule={rule}
+            tl={tl}
+            br={br}
+            boxCenter={boxCenter}
+            theta={theta}
+            isRotating={isRotating}
+            isResizing={isResizing}
+            atAngleBound={atAngleBound}
+          />
           <div
             aria-hidden
             className={`pointer-events-none absolute border-2 ${RuleKindType.isCircle(rule.kind) ? "rounded-full" : "rounded-sm"} ${keyboardDnd.grabbedId === rule.id ? "ring-2 ring-offset-2 ring-[var(--ca-focus)]" : ""}`}
@@ -809,173 +463,17 @@ export function SelectionOverlay({
               hugs the top edge so nothing renders off-canvas. The name
               chip is folded into the same stack so it never overlaps the
               ROI's own on-canvas label. */}
-          {(() => {
-            // Plan 100 Phase I: two rows above the ROI. Row 1 shows the
-            // numeric readouts (X·Y and W×H, plus θ when non-zero) side
-            // by side. Row 2 is the name chip, rendered larger and
-            // directly above the shape so it reads as the primary label.
-            const rows = 2;
-            const needed = 20 /* numeric row */ + 24 /* name row */ + 6;
-            const stackAbove = tl.y - needed >= 0;
-            const stackTop = stackAbove ? tl.y - needed : br.y + 6;
-
-            return (
-              <div
-                data-testid="rule-position-badge"
-                className="pointer-events-none absolute z-40 flex flex-col items-start gap-1"
-                style={{ left: tl.x, top: stackTop }}
-              >
-                {/* Row 1: compact numeric badges, side by side. */}
-                <div className="pointer-events-none flex items-center gap-1">
-                  <span
-                    className="pointer-events-auto flex items-center gap-1 whitespace-nowrap rounded-sm border bg-popover/95 px-1.5 py-0.5 font-mono text-[13px] font-medium leading-none text-foreground shadow-sm tabular-nums backdrop-blur-sm"
-                    style={{ borderColor: ringColor }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <span className="opacity-60">X</span>
-                    <BadgeNumberField
-                      value={rule.x}
-                      ariaLabel="X position (px)"
-                      min={0}
-                      max={Math.max(0, IMAGE_BOUNDS.width - rule.width)}
-                      disabled={rule.isLocked}
-                      onCommit={(nx) =>
-                        onResize(rule.id, {
-                          x: nx,
-                          y: rule.y,
-                          width: rule.width,
-                          height: rule.height,
-                        })
-                      }
-                    />
-                    <span className="opacity-60">· Y</span>
-                    <BadgeNumberField
-                      value={rule.y}
-                      ariaLabel="Y position (px)"
-                      min={0}
-                      max={Math.max(0, IMAGE_BOUNDS.height - rule.height)}
-                      disabled={rule.isLocked}
-                      onCommit={(ny) =>
-                        onResize(rule.id, {
-                          x: rule.x,
-                          y: ny,
-                          width: rule.width,
-                          height: rule.height,
-                        })
-                      }
-                    />
-                    <span
-                      className="ml-0.5 rounded-sm bg-muted/70 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-                      aria-hidden="true"
-                    >
-                      px
-                    </span>
-                  </span>
-                  <span
-                    data-testid="rule-size-badge"
-                    className="pointer-events-auto flex items-center gap-1 whitespace-nowrap rounded-sm border bg-popover/95 px-1.5 py-0.5 font-mono text-[13px] font-medium leading-none text-foreground shadow-sm tabular-nums backdrop-blur-sm"
-                    style={{ borderColor: ringColor }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <BadgeNumberField
-                      value={rule.width}
-                      ariaLabel="Width (px)"
-                      min={8}
-                      max={Math.max(8, IMAGE_BOUNDS.width - rule.x)}
-                      disabled={rule.isLocked}
-                      onCommit={(nw) =>
-                        onResize(rule.id, {
-                          x: rule.x,
-                          y: rule.y,
-                          width: nw,
-                          height: rule.height,
-                        })
-                      }
-                    />
-                    <span className="opacity-60">×</span>
-                    <BadgeNumberField
-                      value={rule.height}
-                      ariaLabel="Height (px)"
-                      min={8}
-                      max={Math.max(8, IMAGE_BOUNDS.height - rule.y)}
-                      disabled={rule.isLocked}
-                      onCommit={(nh) =>
-                        onResize(rule.id, {
-                          x: rule.x,
-                          y: rule.y,
-                          width: rule.width,
-                          height: nh,
-                        })
-                      }
-                    />
-                    <span
-                      className="ml-0.5 rounded-sm bg-muted/70 px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-                      aria-hidden="true"
-                    >
-                      px
-                    </span>
-                  </span>
-                  {/* Sharpen preview toggle: flips the kind-specific
-                      backdrop filter on/off so the operator can compare
-                      the crisp underlying image against the styled
-                      preview. Persisted in ui-prefs. */}
-                  <button
-                    type="button"
-                    data-testid="rule-sharpen-toggle"
-                    aria-pressed={roiPreviewSharpen}
-                    aria-label={
-                      roiPreviewSharpen
-                        ? "Sharpen preview on. Click to compare with styled preview."
-                        : "Styled preview on. Click to sharpen."
-                    }
-                    title={
-                      roiPreviewSharpen
-                        ? "Sharpen: on (crisp). Click to compare."
-                        : "Sharpen: off (styled). Click to sharpen."
-                    }
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleRoiPreviewSharpen();
-                    }}
-                    className={`pointer-events-auto whitespace-nowrap rounded-sm border px-1.5 py-0.5 font-mono text-[13px] font-medium leading-none shadow-sm backdrop-blur-sm hover:brightness-110 ${
-                      roiPreviewSharpen
-                        ? "bg-popover/95 text-foreground"
-                        : "bg-muted/80 text-muted-foreground"
-                    }`}
-                    style={{ borderColor: ringColor }}
-                  >
-                    {roiPreviewSharpen ? "◈ Sharp" : "◇ Styled"}
-                  </button>
-                </div>
-                {/* Row 2: primary name chip, larger + closer to the ROI. */}
-                <div className="pointer-events-auto" onPointerDown={(e) => e.stopPropagation()}>
-                  <InlineEdit
-                    ref={renameRef}
-                    value={rule.name}
-                    ariaLabel={`Rename ${rule.name}`}
-                    onCommit={(next) => setRuleName(rule.id, next)}
-                    disabled={rule.isLocked}
-                    inputClassName="h-6 rounded-sm border bg-popover px-2 text-[13px] font-semibold leading-none text-foreground shadow-md outline-none focus:ring-2"
-                    inputStyle={{ borderColor: ringColor, minWidth: 160 }}
-                  >
-                    <button
-                      type="button"
-                      data-testid="rule-name-chip"
-                      title="Double-click or F2 to rename"
-                      aria-label={`Rename ${rule.name}`}
-                      onDoubleClick={() => renameRef.current?.beginEdit()}
-                      className="flex h-6 max-w-[280px] items-center gap-1.5 rounded-sm border bg-popover/95 px-2 text-[13px] font-semibold leading-none text-foreground shadow-md backdrop-blur-sm hover:bg-popover"
-                      style={{ borderColor: ringColor }}
-                    >
-                      <span className="font-mono text-[11px] opacity-70">{rule.kind}</span>
-                      <span className="truncate">{rule.name}</span>
-                    </button>
-                  </InlineEdit>
-                </div>
-              </div>
-            );
-          })()}
+          <SelectionOverlayDimensionHud
+            rule={rule}
+            tl={tl}
+            br={br}
+            ringColor={ringColor}
+            onResize={onResize}
+            roiPreviewSharpen={roiPreviewSharpen}
+            toggleRoiPreviewSharpen={toggleRoiPreviewSharpen}
+            renameRef={renameRef}
+            setRuleName={setRuleName}
+          />
           <div
             key={rippleKey}
             aria-hidden
