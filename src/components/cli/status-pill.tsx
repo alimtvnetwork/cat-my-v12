@@ -73,6 +73,7 @@ export function StatusPill({
   className,
   ...rest
 }: StatusPillProps): React.JSX.Element | null {
+
   return (
     <span
       title={title}
@@ -129,14 +130,19 @@ export function toneForExitCode(
 export function toneForIpcKind(kind: string): StatusToneType {
   switch (kind) {
     case "ResultReady":
+
       return StatusToneType.Success;
     case "FrameReady":
+
       return StatusToneType.Info;
     case "Heartbeat":
+
       return StatusToneType.Warning;
     case "Error":
+
       return StatusToneType.Destructive;
     default:
+
       return StatusToneType.Muted;
   }
 }

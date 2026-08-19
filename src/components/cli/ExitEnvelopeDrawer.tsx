@@ -49,14 +49,17 @@ import type { LogTailItem } from "@/lib/observability/logs.functions";
 const ERROR_BUCKET = new Set(["error", "critical", "fatal"]);
 
 function isErrorLevel(raw: unknown): boolean {
+
   return typeof raw === "string" && ERROR_BUCKET.has(raw.toLowerCase());
 }
 
 function formatIso(sec: number | null): string {
   if (sec == null) return "-";
   try {
+
     return new Date(sec * 1000).toISOString().replace("T", " ").slice(0, 19);
   } catch {
+
     return String(sec);
   }
 }
