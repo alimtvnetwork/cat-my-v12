@@ -207,6 +207,7 @@ jobs:
           $rc = $LASTEXITCODE
           Write-Host "exit=$rc"
           if ($rc -ne 9533) { throw "FAIL: expected 9533 got $rc" }
+          exit 0
 
       - name: MISSING BINARIES DIR - install.ps1 -Install exits 2
         shell: pwsh
@@ -216,6 +217,7 @@ jobs:
           $rc = $LASTEXITCODE
           Write-Host "exit=$rc"
           if ($rc -ne 2) { throw "FAIL: expected 2 got $rc" }
+          exit 0
 
   # ---------------------------------------------------------------------
   # Plan 90 Step 95 - post-publish smoke on a real Windows runner.
