@@ -8,18 +8,27 @@ export enum LightingReadoutKeyType {
 
 export namespace LightingReadoutKeyType {
   export function isExposure(val: unknown): val is LightingReadoutKeyType.Exposure {
+
     return val === LightingReadoutKeyType.Exposure;
   }
+
   export function isGain(val: unknown): val is LightingReadoutKeyType.Gain {
+
     return val === LightingReadoutKeyType.Gain;
   }
+
   export function isEnhance(val: unknown): val is LightingReadoutKeyType.Enhance {
+
     return val === LightingReadoutKeyType.Enhance;
   }
+
   export function isDarken(val: unknown): val is LightingReadoutKeyType.Darken {
+
     return val === LightingReadoutKeyType.Darken;
   }
+
   export function isVariant(val: unknown): val is LightingReadoutKeyType {
+
     return Object.values(LightingReadoutKeyType).includes(val as LightingReadoutKeyType);
   }
 }
