@@ -67,7 +67,8 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
 
   static getDerivedStateFromError(error: unknown): BoundaryState {
     const isEnvelope =
-      (error as any).name === "EnvelopeError" || (error instanceof Error && error.name === "EnvelopeError");
+      (error as any).name === "EnvelopeError" ||
+      (error instanceof Error && error.name === "EnvelopeError");
 
     if (isEnvelope) {
       // Capture the error to rethrow it, so TanStack Router's errorComponent can handle it!
@@ -81,7 +82,8 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
     const isEnvelope =
-      (error as any).name === "EnvelopeError" || (error instanceof Error && error.name === "EnvelopeError");
+      (error as any).name === "EnvelopeError" ||
+      (error instanceof Error && error.name === "EnvelopeError");
 
     if (!isEnvelope) return;
 
@@ -142,7 +144,11 @@ class ReactEnvelopeBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-export function EnvelopeErrorBoundary({ children }: { children: ReactNode }): React.JSX.Element | null {
+export function EnvelopeErrorBoundary({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element | null {
   return (
     <ReactEnvelopeBoundary>
       <EnvelopeErrorEventBridge />
