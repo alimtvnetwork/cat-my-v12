@@ -9,7 +9,13 @@ export function PaneShell({ children }: { children: React.ReactNode }): React.JS
   );
 }
 
-export function Row({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element | null {
+export function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}): React.JSX.Element | null {
   const id = useId();
 
   return (

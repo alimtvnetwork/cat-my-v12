@@ -56,7 +56,12 @@ function extractRois(rule: Rule): RectRoi[] {
   return out;
 }
 
-export function RulePreviewThumbnail({ rule, width = 40, height = 26, className }: Props): React.JSX.Element | null {
+export function RulePreviewThumbnail({
+  rule,
+  width = 40,
+  height = 26,
+  className,
+}: Props): React.JSX.Element | null {
   const rois = extractRois(rule);
   const containerClass = [
     "inline-flex shrink-0 items-center justify-center rounded-sm border border-ca-border bg-ca-panel-2 text-ca-ink-muted",
