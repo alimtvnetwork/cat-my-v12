@@ -7,6 +7,7 @@ function makeMedia(opts: {
   getUserMedia: MediaDevices["getUserMedia"];
   enumerateDevices?: MediaDevices["enumerateDevices"];
 }): MediaDevices {
+  
   return {
     getUserMedia: opts.getUserMedia,
     enumerateDevices: opts.enumerateDevices ?? (async () => [] as MediaDeviceInfo[]),
