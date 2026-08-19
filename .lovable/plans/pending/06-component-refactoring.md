@@ -18,17 +18,17 @@ Agents executing this plan should focus on architectural integrity, ensuring tha
 The following files were identified as exceeding 200 lines. Refactor them from largest to smallest:
 
 ### 1. Canvas Overlays & Viewports (Extreme Size)
-- [ ] `src/components/editor/canvas/SelectionOverlay.tsx` (2600+ lines)
+- [x] `src/components/editor/canvas/SelectionOverlay.tsx` (2600+ lines)
 - [ ] `src/components/editor/canvas/CanvasViewport.tsx` (1700+ lines)
 
 ### 2. Navigations & Sidebars
-- [ ] `src/components/nav/TopMenuBar.tsx` (800+ lines)
+- [x] `src/components/nav/TopMenuBar.tsx` (800+ lines)
 - [ ] `src/components/ui/sidebar.tsx` (700+ lines)
 - [ ] `src/components/nav/CommandPalette.tsx` (400+ lines)
 - [ ] `src/components/app-shell/panels/PanelHost.tsx` (570+ lines)
 
 ### 3. Editor Panels & Properties
-- [ ] `src/components/editor/PropertiesPanel.tsx` (700 lines)
+- [x] `src/components/editor/PropertiesPanel.tsx` (700 lines)
 - [ ] `src/components/rules/PropertiesPalette.tsx` (690+ lines)
 - [ ] `src/components/editor/panels/MaskPanel.tsx` (540+ lines)
 - [ ] `src/components/editor/layers/LayersPanel.tsx` (540+ lines)
@@ -54,3 +54,4 @@ The following files were identified as exceeding 200 lines. Refactor them from l
 - [ ] Refactor remaining files listed in the initial audit (lines 200 - 350).
 
 > **Note to Agent**: Work incrementally and commit regularly. Ensure no functionality is broken after splitting. Use `ts-morph` or AST tools if necessary, but manual refactoring is usually required for logic splitting.
+
