@@ -18,7 +18,10 @@ const EDGE_MAX = 255;
 const ROTATION_MIN = -180;
 const ROTATION_MAX = 180;
 
-export function CircleRuleEditor({ rule, onChange }: CircleRuleEditorProps): React.JSX.Element | null {
+export function CircleRuleEditor({
+  rule,
+  onChange,
+}: CircleRuleEditorProps): React.JSX.Element | null {
   if (RuleKindType.isCircle(rule.kind) === false) return null;
   const p = rule.params ?? {};
   const minRadius = Number(p.minRadius ?? 10);
