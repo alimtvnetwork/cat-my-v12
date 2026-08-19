@@ -406,6 +406,7 @@ export function SelectionOverlay({
       '[role="menuitem"]:not([disabled]),[role="menuitemradio"]:not([disabled])',
     );
     first?.focus();
+  }, [contextMenu, menuPos]);
 
   // NOTE: no early return here. React requires the hook count to be stable
   // across renders; the previous `if (!rule && !contextMenu) return null;`
