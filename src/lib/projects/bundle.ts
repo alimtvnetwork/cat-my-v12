@@ -64,6 +64,7 @@ export function parseProjectBundle(text: string): ParseResult {
   try {
     raw = JSON.parse(text);
   } catch (err) {
+
     return { ok: false, error: `Not valid JSON: ${(err as Error).message}` };
   }
 
@@ -73,6 +74,7 @@ export function parseProjectBundle(text: string): ParseResult {
   if (b.kind !== BUNDLE_KIND) return { ok: false, error: `Unexpected kind: ${String(b.kind)}` };
 
   if (b.version !== 1 && b.version !== 2) {
+
     return { ok: false, error: `Unsupported bundle version: ${String(b.version)}` };
   }
 
@@ -82,11 +84,13 @@ export function parseProjectBundle(text: string): ParseResult {
   const project = b.project as Project;
 
   if (typeof project.name !== "string" || project.name.trim() === "") {
+
     return { ok: false, error: "Project name required" };
   }
 
   for (const rs of b.rulesets as RuleSet[]) {
     if (!rs || typeof rs.name !== "string" || Array.isArray(rs.rules) === false) {
+
       return { ok: false, error: "Ruleset entry malformed" };
     }
   }
@@ -146,6 +150,7 @@ export function parseProjectBundleAuto(text: string): ParseResult {
   if (!trimmed) return { ok: false, error: "Empty bundle" };
   // Route JSON directly for the fast path and to keep JSON error messages.
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+
     return parseProjectBundle(text);
   }
 
@@ -153,6 +158,7 @@ export function parseProjectBundleAuto(text: string): ParseResult {
   try {
     raw = parseYaml(text);
   } catch (err) {
+
     return { ok: false, error: `Not valid YAML: ${(err as Error).message}` };
   }
 
@@ -167,6 +173,7 @@ export function detectBundleFormat(fileName: string, mimeType?: string): BundleF
   if (lower.endsWith(".yaml") || lower.endsWith(".yml")) return BundleFormatType.Yaml;
 
   if (mimeType && (mimeType.includes(BundleFormatType.Yaml) || mimeType.includes("yml")))
+
     return BundleFormatType.Yaml;
 
   return BundleFormatType.Json;
@@ -204,5 +211,6 @@ export async function buildSqliteZipPlaceholder(bundle: ProjectBundle): Promise<
 }
 
 export function sqliteZipFilename(projectName: string): string {
+
   return bundleFilenameFor(projectName, BundleFormatType.Json).replace(/\.json$/, ".sqlite.zip");
 }
