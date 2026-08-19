@@ -41,7 +41,6 @@ export function HintTooltip({
   delayMs = 350,
   children,
 }: Props): React.JSX.Element | null {
-
   return (
     <TooltipProvider delayDuration={delayMs} skipDelayDuration={100}>
       <Tooltip>

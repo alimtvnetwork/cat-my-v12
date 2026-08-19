@@ -26,7 +26,6 @@ const BASE: SVGProps<SVGSVGElement> = {
 
 // Stacked folders. Used on the Projects list when no projects exist.
 export function ProjectsIllustration(props: SVGProps<SVGSVGElement>): React.JSX.Element | null {
-
   return (
     <svg {...BASE} {...props}>
       <rect
@@ -72,7 +71,6 @@ export function ProjectsIllustration(props: SVGProps<SVGSVGElement>): React.JSX.
 
 // Grid of tiles with one highlighted "rule". Used for empty Rule-set lists.
 export function RulesetsIllustration(props: SVGProps<SVGSVGElement>): React.JSX.Element | null {
-
   return (
     <svg {...BASE} {...props}>
       <rect
