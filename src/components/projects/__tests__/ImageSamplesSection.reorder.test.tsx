@@ -26,7 +26,6 @@ function memoryRepo(): ProjectRepositoryFacade {
   return {
     kind: "memory",
     async readItem(k) {
-
       return s.get(k) ?? null;
     },
     async writeItem(k, v) {
@@ -42,7 +41,6 @@ const DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 function sample(id: string, orderIndex: number): ImageSample {
-
   return {
     id,
     projectId: "p1",

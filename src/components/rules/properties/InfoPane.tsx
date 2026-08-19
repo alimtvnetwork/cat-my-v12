@@ -189,7 +189,6 @@ interface AggregateButtonProps {
 }
 
 function AggregateButton({ icon: Icon, label, onClick, destructive }: AggregateButtonProps) {
-
   return (
     <button
       type="button"
