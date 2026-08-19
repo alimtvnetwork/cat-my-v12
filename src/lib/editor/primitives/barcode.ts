@@ -142,13 +142,17 @@ export interface BarcodeEvaluation {
 }
 
 function textMatches(decoded: string, expected: string, mode: BarcodeParams["matchMode"]): boolean {
+  
   if (expected.length === 0) return true;
   switch (mode) {
     case BarcodeMatchModeType.Exact:
+      
       return decoded === expected;
     case BarcodeMatchModeType.Prefix:
+      
       return decoded.startsWith(expected);
     case BarcodeMatchModeType.Contains:
+      
       return decoded.includes(expected);
     case BarcodeMatchModeType.Regex:
       try {
@@ -177,6 +181,7 @@ export async function evaluateBarcode(
   try {
     decoded = await decoder.decode({ ...input, symbology: params.symbology });
   } catch (err) {
+    
     return {
       pass: false,
       reason: "decoder-error",

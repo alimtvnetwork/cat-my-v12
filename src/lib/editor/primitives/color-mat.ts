@@ -60,6 +60,7 @@ export interface ColorMatValidationError {
 }
 
 function inRange(v: number, lo: number, hi: number): boolean {
+  
   return Number.isFinite(v) && v >= lo && v <= hi;
 }
 

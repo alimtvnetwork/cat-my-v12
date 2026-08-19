@@ -54,6 +54,7 @@ type Listener = (value: PreviewModeState) => void;
 const listeners = new Set<Listener>();
 
 function isBrowser(): boolean {
+  
   return typeof window !== "undefined";
 }
 
@@ -137,6 +138,7 @@ function emit(): void {
 }
 
 export function getPreviewState(): PreviewModeState {
+  
   return state;
 }
 
