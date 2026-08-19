@@ -56,10 +56,12 @@ export const DEFAULT_CHANNELS: ChannelEntry[] = [
 ];
 
 export function defaultPaletteState(): PaletteState {
+
   return { channels: DEFAULT_CHANNELS.map((c) => ({ ...c })), paths: [] };
 }
 
 function reindex<T extends { order: number }>(rows: T[]): T[] {
+
   return rows
     .slice()
     .sort((a, b) => a.order - b.order)
@@ -145,6 +147,7 @@ class IndexedDbPaletteFacade implements PaletteFacade {
   }
 
   get(ruleId: string): PaletteState {
+
     return this.ensureEntry(ruleId);
   }
 
