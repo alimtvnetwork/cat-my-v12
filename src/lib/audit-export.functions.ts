@@ -307,7 +307,10 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
       });
 
     if (uploadError) {
-      ClientLogger.error(`[audit.export] upload_failed correlationId=${correlationId}`, uploadError);
+      ClientLogger.error(
+        `[audit.export] upload_failed correlationId=${correlationId}`,
+        uploadError,
+      );
       appendOpsEvent({
         code: OpsEventCodeType.AuditBundleExportFailed,
         subject: "audit.export",

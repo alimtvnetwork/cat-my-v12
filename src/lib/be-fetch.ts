@@ -104,7 +104,10 @@ export class EnvelopeError extends Error {
   }
 
   public static is(err: unknown): err is EnvelopeError {
-    return (err as any).name === "EnvelopeError" || (err instanceof Error && err.name === "EnvelopeError");
+    return (
+      (err as any).name === "EnvelopeError" ||
+      (err instanceof Error && err.name === "EnvelopeError")
+    );
   }
 }
 
