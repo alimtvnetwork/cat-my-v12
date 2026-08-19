@@ -2,14 +2,14 @@
 
 Parent: 99-full-architecture-remediation
 Slug: SS-04-backend-bootstrap-docs
-Status: pending
+Status: completed
 Created: 2026-08-17
 
 ## Goal
 
 Create a `Makefile` at the repo root so that any developer or AI can run
 `make setup-backend` and `make test-backend` without reading any README.
-Also update all spec/README files that reference the now-deleted `BE/src/`
+Also update all spec/README files that reference the now-deleted `BE/routes/`
 or old flat route filenames.
 
 ## Steps
@@ -45,19 +45,19 @@ Run `make test-backend`. Confirm pytest collects tests with zero
 failing for pre-existing reasons unrelated to this plan.
 
 ### SS-04-05: Update BE/README.md
-Replace any references to `BE/src/` with the correct `BE/routes/` path.
+Replace any references to `BE/routes/` with the correct `BE/routes/` path.
 Add a "Getting Started" section pointing to `make setup-backend` and
 `make test-backend`.
 
 ### SS-04-06: Update spec files
-Run `grep -r "BE/src" spec/` and `.lovable/`. For each hit, update the
+Run `grep -r "BE/routes" spec/` and `.lovable/`. For each hit, update the
 reference to `BE/routes/` or remove it if the sentence is now obsolete.
 
 ### SS-04-07: Update memory/index.md
-If `memory/index.md` references `BE/src/`, correct it to `BE/routes/`.
+If `memory/index.md` references `BE/routes/`, correct it to `BE/routes/`.
 
 ### SS-04-08: Update overview.md
-If `.lovable/overview.md` has an architecture diagram referencing `BE/src/`,
+If `.lovable/overview.md` has an architecture diagram referencing `BE/routes/`,
 update the diagram to reflect `BE/routes/` only.
 
 ### SS-04-09: Final typecheck + pytest
@@ -68,5 +68,5 @@ or document known pre-existing failures). Confirm no regressions.
 
 - `make setup-backend` exits 0 from a clean checkout.
 - `make test-backend` exits 0 or documents pre-existing failures only.
-- `grep -r "BE/src" spec/ .lovable/` returns zero results.
-- `BE/README.md` does not mention `BE/src/`.
+- `grep -r "BE/routes" spec/ .lovable/` returns zero results.
+- `BE/README.md` does not mention `BE/routes/`.

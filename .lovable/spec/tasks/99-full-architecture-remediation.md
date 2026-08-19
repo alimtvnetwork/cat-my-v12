@@ -10,7 +10,7 @@ Raised-by: User (architecture review session, 2026-08-17)
 Remediate every structural and code-quality issue surfaced in the architecture
 review session conducted on 2026-08-17. The review identified four primary
 problem areas: (1) backend "split brain" — two competing architectures in `BE/`
-(the established `BE/routes/` + `BE/envelope.py` versus the nascent `BE/src/`
+(the established `BE/routes/` + `BE/envelope.py` versus the nascent `BE/routes/`
 with its own competing `envelope.py`); (2) frontend route sprawl — 69 flat files
 in `src/routes/` with long dot-delimited filenames that make navigation painful;
 (3) global Zustand store sprawl — 11 global stores when several should be
@@ -22,7 +22,7 @@ feature development. It is purely structural hygiene.
 
 ## Scope
 
-- `BE/` — resolve the split-brain, delete or integrate `BE/src/`, unify `envelope.py`
+- `BE/` — resolve the split-brain, delete or integrate `BE/routes/`, unify `envelope.py`
 - `src/routes/` — migrate from flat-file naming to directory-based routing
 - `src/lib/stores/` — audit and localize stores that are not truly global
 - `BE/` bootstrapping — `Makefile` with `setup-backend`, `test-backend` targets
@@ -36,14 +36,14 @@ feature development. It is purely structural hygiene.
 - Coding guidelines: `.lovable/coding-guidelines.md`, `spec/02-coding-guidelines/`, `spec/03-error-manage/`
 - Strictly avoid: `.lovable/strictly-avoid.md`
 - Memory: `.lovable/memory/01-code-red.md`, `.lovable/memory/03-error-manage.md`, `.lovable/memory/13-avoid-blind-mass-refactors.md`
-- Backend structure: `BE/main.py`, `BE/envelope.py`, `BE/src/api/`, `BE/src/models/`, `BE/routes/`
+- Backend structure: `BE/main.py`, `BE/envelope.py`, `BE/routes/api/`, `BE/routes/models/`, `BE/routes/`
 - Frontend routes: `src/routes/` (69 flat files)
 - Frontend stores: `src/lib/stores/` (11 Zustand store files)
 
 ## Acceptance Criteria
 
-1. `BE/src/` is either deleted (if orphaned) or fully integrated and the competing
-   `BE/src/models/envelope.py` is removed — exactly ONE `envelope.py` exists in `BE/`.
+1. `BE/routes/` is either deleted (if orphaned) or fully integrated and the competing
+   `BE/routes/models/envelope.py` is removed — exactly ONE `envelope.py` exists in `BE/`.
 2. `BE/routes/` continues to function; all router imports in `BE/main.py` remain valid.
 3. `src/routes/` uses TanStack Router directory-based routing for all nested route
    groups; flat filenames are eliminated for routes with two or more dot segments.
@@ -52,17 +52,17 @@ feature development. It is purely structural hygiene.
    are converted to React Contexts scoped to the closest layout component.
 6. `make setup-backend` installs Python dependencies via `uv sync`; `make test-backend`
    runs `pytest BE/tests/` with zero collection errors.
-7. All spec files and READMEs that reference `BE/src/` or the old flat route
+7. All spec files and READMEs that reference `BE/routes/` or the old flat route
    filenames are updated to reflect the new paths.
 8. No force-push, no rebase of published commits (Lovable constraint).
 
 ## Affected Files
 
 ### Backend (Phase A)
-- `BE/src/` (entire tree — delete or integrate)
-- `BE/src/models/envelope.py` (delete after integration)
-- `BE/src/api/router.py`, `BE/src/api/system.py` (migrate or delete)
-- `BE/main.py` (update imports after BE/src cleanup)
+- `BE/routes/` (entire tree — delete or integrate)
+- `BE/routes/models/envelope.py` (delete after integration)
+- `BE/routes/api/router.py`, `BE/routes/api/system.py` (migrate or delete)
+- `BE/main.py` (update imports after BE/routes cleanup)
 - `Makefile` (new file at repo root)
 - `BE/pyproject.toml` (verify `uv` toolchain config)
 - `BE/README.md` (update to reflect unified structure)
@@ -82,7 +82,7 @@ feature development. It is purely structural hygiene.
 ### Spec / Docs (Phase D)
 - `.lovable/memory/index.md` — update cross-references
 - `.lovable/memory/07-lovable-folder-guide.md` — update plans lifecycle section
-- `spec/21-app/` — any file referencing `BE/src/` or old route filenames
+- `spec/21-app/` — any file referencing `BE/routes/` or old route filenames
 - Root `README.md` — update "run backend" instructions
 
 ## Links

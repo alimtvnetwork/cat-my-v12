@@ -31,7 +31,7 @@ error handling infrastructure across the Vision Standard UI.
   `promote_draft_to_committed()`
 
 ### Integer ID Enforcement
-- `BE/src/api/images.py`: `ReferenceImage.id` and `SetReferenceRequest.imageId`
+- `BE/routes/api/images.py`: `ReferenceImage.id` and `SetReferenceRequest.imageId`
   changed from `str` to `int`
 - Frontend routes use `parseInt()` and `/^\d+$/` validation
 

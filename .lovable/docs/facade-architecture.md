@@ -31,8 +31,8 @@ fetchBackend()      Returns fixtures
 | [`vision-facade.ts`](../../../src/lib/facades/vision-facade.ts) | Main facade factory + both implementations |
 | [`use-vision-api.ts`](../../../src/hooks/use-vision-api.ts) | TanStack Query wrappers for vision calls |
 | [`useRuleDrafts.ts`](../../../src/hooks/useRuleDrafts.ts) | IndexedDB draft persistence |
-| [`BE/src/api/camera.py`](../../../BE/src/api/camera.py) | `/camera/*` FastAPI routes |
-| [`BE/src/api/images.py`](../../../BE/src/api/images.py) | `/images/reference` FastAPI route |
+| [`BE/routes/api/camera.py`](../../../BE/routes/api/camera.py) | `/camera/*` FastAPI routes |
+| [`BE/routes/api/images.py`](../../../BE/routes/api/images.py) | `/images/reference` FastAPI route |
 
 ## Rules
 

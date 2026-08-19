@@ -60,7 +60,7 @@ vi.mock("@/lib/denial-burst-query", () => ({
 }));
 
 async function renderRoute(): Promise<string> {
-  const mod = await import("../admin.security.denial-burst");
+  const mod = await import("../admin/security/denial-burst");
   const route = mod.Route as unknown as { component: () => ReactElement };
 
   return renderToStaticMarkup(<route.component />);

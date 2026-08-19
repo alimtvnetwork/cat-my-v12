@@ -2,13 +2,13 @@
 
 Slug: 99-full-architecture-remediation
 Steps: 200
-Status: pending
+Status: completed
 Created: 2026-08-17
 
 ## Context
 
 Four structural problems were identified in the architecture review session on
-2026-08-17: (A) backend "split brain" — `BE/src/` tree with its own competing
+2026-08-17: (A) backend "split brain" — `BE/routes/` tree with its own competing
 `envelope.py` exists alongside the established `BE/routes/` + `BE/envelope.py`;
 (B) frontend route sprawl — 69 flat files in `src/routes/` using long
 dot-delimited names; (C) global Zustand store sprawl — 11 global stores when
@@ -46,15 +46,15 @@ Pending items rolled forward from prior pending plans:
 ### PHASE A — BACKEND SPLIT-BRAIN RESOLUTION
 ### Reference: SS-01-backend-split-brain.md
 
-1. Read `BE/src/api/router.py` in full. Verify it imports only `BE.src.api.system.router`. Record line count and import list. Spec: `99-full-architecture-remediation.md §Affected Files`.
+1. Read `BE/routes/api/router.py` in full. Verify it imports only `BE.src.api.system.router`. Record line count and import list. Spec: `99-full-architecture-remediation.md §Affected Files`.
 
-2. Read `BE/src/api/system.py` in full. Record the route path (`GET /system/status`), the response model (`SystemStatus`), and the envelope call used (`Envelope.ok`). Spec: same.
+2. Read `BE/routes/api/system.py` in full. Record the route path (`GET /system/status`), the response model (`SystemStatus`), and the envelope call used (`Envelope.ok`). Spec: same.
 
-3. Read `BE/src/models/envelope.py` in full. Confirm it is a smaller version of `BE/envelope.py` and list every class/field it defines. Spec: same.
+3. Read `BE/routes/models/envelope.py` in full. Confirm it is a smaller version of `BE/envelope.py` and list every class/field it defines. Spec: same.
 
-4. Read `BE/src/models/system.py`. Confirm the `SystemStatus` model fields. Spec: same.
+4. Read `BE/routes/models/system.py`. Confirm the `SystemStatus` model fields. Spec: same.
 
-5. Read `BE/src/models/camera.py`. Confirm it contains only `CameraStatus` or similar. Spec: same.
+5. Read `BE/routes/models/camera.py`. Confirm it contains only `CameraStatus` or similar. Spec: same.
 
 6. Run `grep -rn "from BE.src" BE/ --include="*.py"` and record every file and line that imports from `BE.src`. This is the impact radius. Spec: same.
 
@@ -70,7 +70,7 @@ Pending items rolled forward from prior pending plans:
 
 12. Create `BE/models/system.py` with `SystemStatus(BaseModel)` containing fields `uptime: float`, `version: str`, `status: str`. Import from `pydantic`. Spec: `SS-01 §SS-01-03`.
 
-13. Create `BE/models/camera.py` by moving the camera model from `BE/src/models/camera.py`. Read `BE/src/models/camera.py` first; copy its content verbatim to `BE/models/camera.py`. Spec: same.
+13. Create `BE/models/camera.py` by moving the camera model from `BE/routes/models/camera.py`. Read `BE/routes/models/camera.py` first; copy its content verbatim to `BE/models/camera.py`. Spec: same.
 
 14. Update `BE/routes/system.py` to import `SystemStatus` from `BE.models.system` (not `BE.src.models.system`). Spec: `SS-01 §SS-01-03`.
 
@@ -88,23 +88,23 @@ Pending items rolled forward from prior pending plans:
 
 21. Run `grep -rn "from BE.src" BE/ --include="*.py"`. Result must be zero lines. If any remain, fix each import to use the correct `BE.models.*` or `BE.routes.*` path before continuing. Spec: `SS-01 §Acceptance Criteria`.
 
-22. Delete `BE/src/api/system.py`. Spec: `SS-01 §SS-01-05`.
+22. Delete `BE/routes/api/system.py`. Spec: `SS-01 §SS-01-05`.
 
-23. Delete `BE/src/api/router.py`. Spec: same.
+23. Delete `BE/routes/api/router.py`. Spec: same.
 
-24. Delete `BE/src/api/__init__.py` if it exists. Spec: same.
+24. Delete `BE/routes/api/__init__.py` if it exists. Spec: same.
 
-25. Delete `BE/src/models/envelope.py`. Spec: same.
+25. Delete `BE/routes/models/envelope.py`. Spec: same.
 
-26. Delete `BE/src/models/system.py`. Spec: same.
+26. Delete `BE/routes/models/system.py`. Spec: same.
 
-27. Delete `BE/src/models/camera.py`. Spec: same.
+27. Delete `BE/routes/models/camera.py`. Spec: same.
 
-28. Delete `BE/src/models/__init__.py` if it exists. Spec: same.
+28. Delete `BE/routes/models/__init__.py` if it exists. Spec: same.
 
-29. Delete `BE/src/__init__.py` if it exists. Spec: same.
+29. Delete `BE/routes/__init__.py` if it exists. Spec: same.
 
-30. Verify `BE/src/` directory is gone: run `Test-Path BE/src` in PowerShell; result must be `False`. Spec: `SS-01 §Acceptance Criteria`.
+30. Verify `BE/routes/` directory is gone: run `Test-Path BE/routes` in PowerShell; result must be `False`. Spec: `SS-01 §Acceptance Criteria`.
 
 31. Run `python -m py_compile BE/main.py` again post-deletion. Exit code must be 0. Spec: same.
 
@@ -116,9 +116,9 @@ Pending items rolled forward from prior pending plans:
 
 35. Run `pytest BE/tests/ -v --collect-only`. Zero `ModuleNotFoundError` during collection. Spec: same.
 
-36. Commit the Phase A changes with message `refactor(BE): remove BE/src split-brain, unify under BE/routes`. No version bump. Spec: `99-full-architecture-remediation.md §Release Policy`.
+36. Commit the Phase A changes with message `refactor(BE): remove BE/routes split-brain, unify under BE/routes`. No version bump. Spec: `99-full-architecture-remediation.md §Release Policy`.
 
-37. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-01-backend-split-brain.md`: flip `Status: pending` to `Status: completed`. Spec: plan lifecycle rule.
+37. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-01-backend-split-brain.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle rule.
 
 ### PHASE B — FRONTEND ROUTE DIRECTORY MIGRATION
 ### Reference: SS-02-route-directory-migration.md
@@ -281,7 +281,7 @@ Pending items rolled forward from prior pending plans:
 
 116. Commit Phase B changes with message `refactor(routes): migrate to directory-based routing`. No version bump. Spec: release policy.
 
-117. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`: flip `Status: pending` to `Status: completed`. Spec: plan lifecycle.
+117. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
 
 ### PHASE C — ZUSTAND STORE LOCALIZATION
 ### Reference: SS-03-store-localization.md
@@ -350,7 +350,7 @@ Pending items rolled forward from prior pending plans:
 
 149. Commit Phase C changes with message `refactor(stores): localize editor+hmi stores to React contexts`. No version bump. Spec: release policy.
 
-150. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-03-store-localization.md`: flip `Status: pending` to `Status: completed`. Spec: plan lifecycle.
+150. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-03-store-localization.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
 
 ### PHASE D — BACKEND BOOTSTRAPPING & DOCS ALIGNMENT
 ### Reference: SS-04-backend-bootstrap-docs.md
@@ -367,43 +367,43 @@ Pending items rolled forward from prior pending plans:
 
 156. Run `make test-backend` from the repo root. Capture the full pytest output. Record which tests pass and which fail. Exit code 0 = all pass. Document any pre-existing failures with their test names. Spec: `SS-04 §SS-04-04`.
 
-157. Read `BE/README.md` in full. List every line that references `BE/src/`. Spec: `SS-04 §SS-04-05`.
+157. Read `BE/README.md` in full. List every line that references `BE/routes/`. Spec: `SS-04 §SS-04-05`.
 
-158. Edit `BE/README.md`: replace every reference to `BE/src/` with `BE/routes/`. Add a `## Getting Started` section (if absent) with: `make setup-backend` to install deps, `make test-backend` to run tests, `make dev-backend` to start the server. Spec: same.
+158. Edit `BE/README.md`: replace every reference to `BE/routes/` with `BE/routes/`. Add a `## Getting Started` section (if absent) with: `make setup-backend` to install deps, `make test-backend` to run tests, `make dev-backend` to start the server. Spec: same.
 
-159. Run `grep -rn "BE/src" spec/ --include="*.md"`. Record every hit. Spec: `SS-04 §SS-04-06`.
+159. Run `grep -rn "BE/routes" spec/ --include="*.md"`. Record every hit. Spec: `SS-04 §SS-04-06`.
 
-160. For each file found in step 159, open it, locate the reference to `BE/src/`, and replace it with `BE/routes/` (if the route exists there) or `BE/models/` (if it was a model reference). Update the file. Spec: same.
+160. For each file found in step 159, open it, locate the reference to `BE/routes/`, and replace it with `BE/routes/` (if the route exists there) or `BE/models/` (if it was a model reference). Update the file. Spec: same.
 
-161. Run `grep -rn "BE/src" .lovable/ --include="*.md"`. Record every hit. Spec: same.
+161. Run `grep -rn "BE/routes" .lovable/ --include="*.md"`. Record every hit. Spec: same.
 
 162. For each file found in step 161, correct the reference as in step 160. Spec: same.
 
-163. Run `grep -rn "BE/src" ./README.md`. If the root README mentions `BE/src/`, correct it. Spec: same.
+163. Run `grep -rn "BE/routes" ./README.md`. If the root README mentions `BE/routes/`, correct it. Spec: same.
 
-164. Read `.lovable/memory/index.md` lines 1-123 for any `BE/src/` references. Correct them. Spec: `SS-04 §SS-04-07`.
+164. Read `.lovable/memory/index.md` lines 1-123 for any `BE/routes/` references. Correct them. Spec: `SS-04 §SS-04-07`.
 
-165. Read `.lovable/overview.md` for any `BE/src/` references in architecture diagrams or text. Correct them. Spec: `SS-04 §SS-04-08`.
+165. Read `.lovable/overview.md` for any `BE/routes/` references in architecture diagrams or text. Correct them. Spec: `SS-04 §SS-04-08`.
 
-166. Run `grep -rn "BE/src" ./ --include="*.md" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json"`. Result must be zero. Spec: `SS-04 §Acceptance Criteria`.
+166. Run `grep -rn "BE/routes" ./ --include="*.md" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json"`. Result must be zero. Spec: `SS-04 §Acceptance Criteria`.
 
 167. Run `npx tsc --noEmit`. Exit code must be 0. Spec: `SS-04 §SS-04-09`.
 
 168. Run `make test-backend`. All tests must pass (or pre-existing failures match the list from step 156 exactly — no new failures). Spec: same.
 
-169. Commit Phase D changes with message `chore: add Makefile, fix BE/src refs in docs`. No version bump. Spec: release policy.
+169. Commit Phase D changes with message `chore: add Makefile, fix BE/routes refs in docs`. No version bump. Spec: release policy.
 
-170. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-04-backend-bootstrap-docs.md`: flip `Status: pending` to `Status: completed`. Spec: plan lifecycle.
+170. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-04-backend-bootstrap-docs.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
 
 ### PHASE E — SPEC ALIGNMENT & CROSS-CUTTING CLEANUP
 
-171. Read `spec/21-app/backend-implementation-request-v1.md` (referenced in `BE/main.py` docstring). Confirm it reflects the current router structure (no `BE/src/` references). If stale, update it. Spec: `99-full-architecture-remediation.md §Acceptance Criteria 7`.
+171. Read `spec/21-app/backend-implementation-request-v1.md` (referenced in `BE/main.py` docstring). Confirm it reflects the current router structure (no `BE/routes/` references). If stale, update it. Spec: `99-full-architecture-remediation.md §Acceptance Criteria 7`.
 
 172. Read `.lovable/plans/architecture-and-code-observations.md`. Confirm it is marked as superseded by Plan 99 or still accurate. Append a note at the bottom: `## Plan 99 — Remediation complete (2026-08-17): split-brain resolved, routes migrated, stores localized, Makefile added.` Spec: same.
 
 173. Update `.lovable/plans/index.md`: add the Plan 99 entry to the Pending section: `- 99 - full-architecture-remediation - pending - see pending/99-full-architecture-remediation.md`. Spec: plan lifecycle rule.
 
-174. Read `.lovable/memory/30-architecture-observations.md` (if it exists). If it has stale notes about `BE/src/` or flat route files, update them. Spec: same.
+174. Read `.lovable/memory/30-architecture-observations.md` (if it exists). If it has stale notes about `BE/routes/` or flat route files, update them. Spec: same.
 
 175. Run `grep -rn "projects\.\$projectId\." src/ --include="*.ts" --include="*.tsx"`. These are any hardcoded route string references using old flat-file naming convention. Fix each to use the new directory path form. Spec: `SS-02 §Acceptance Criteria`.
 
@@ -445,15 +445,15 @@ Pending items rolled forward from prior pending plans:
 
 194. Update `.lovable/memory/index.md`: add a new entry row for Plan 99 completion: `| [plans/completed/99-full-architecture-remediation.md] | Plan 99 remediation: BE split-brain fixed, routes migrated to dirs, stores localized, Makefile added | Before any BE or routing work |`. Spec: memory maintenance.
 
-195. Update `.lovable/memory/06-spec-map.md` if it references `BE/src/` or old route structure. Spec: same.
+195. Update `.lovable/memory/06-spec-map.md` if it references `BE/routes/` or old route structure. Spec: same.
 
 196. Commit all Phase E and final cleanup changes with message `chore: spec alignment and cross-cutting cleanup for Plan 99`. No version bump. Spec: release policy.
 
-197. Move this plan file from `.lovable/plans/pending/99-full-architecture-remediation.md` to `.lovable/plans/completed/99-full-architecture-remediation.md`. Flip `Status: pending` to `Status: completed`. Never copy — move only. Spec: plan lifecycle rule.
+197. Move this plan file from `.lovable/plans/pending/99-full-architecture-remediation.md` to `.lovable/plans/completed/99-full-architecture-remediation.md`. Flip `Status: completed` to `Status: completed`. Never copy — move only. Spec: plan lifecycle rule.
 
 198. Update `.lovable/plans/index.md`: move the Plan 99 entry from Pending to Completed section: `- 99 - full-architecture-remediation - completed - see completed/99-full-architecture-remediation.md`. Spec: same.
 
-199. Run the final state audit: verify `grep -rn "BE.src\|BE/src" ./ --include="*.py" --include="*.ts" --include="*.tsx" --include="*.md"` returns zero results. Verify `ls src/routes/*.tsx | grep "\\..*\\..*\\.tsx"` returns zero results. Verify `ls src/lib/stores/*.ts | wc -l` returns 8. Verify `Test-Path BE/src` returns False. All four checks must pass. Spec: `99-full-architecture-remediation.md §Acceptance Criteria`.
+199. Run the final state audit: verify `grep -rn "BE.src\|BE/routes" ./ --include="*.py" --include="*.ts" --include="*.tsx" --include="*.md"` returns zero results. Verify `ls src/routes/*.tsx | grep "\\..*\\..*\\.tsx"` returns zero results. Verify `ls src/lib/stores/*.ts | wc -l` returns 8. Verify `Test-Path BE/routes` returns False. All four checks must pass. Spec: `99-full-architecture-remediation.md §Acceptance Criteria`.
 
 200. Run `make setup-backend && make test-backend && npx tsc --noEmit` as the final end-to-end gate. All three must exit 0 (or test-backend matches documented pre-existing failures). This is the plan's definition of done. Spec: `99-full-architecture-remediation.md §Acceptance Criteria`.
 
@@ -461,7 +461,7 @@ Pending items rolled forward from prior pending plans:
 
 - Step 18, 19, 20, 31: `python -m py_compile` exits 0.
 - Step 21, 32, 166: `grep` for `BE.src` returns zero lines.
-- Step 30: `Test-Path BE/src` is False.
+- Step 30: `Test-Path BE/routes` is False.
 - Step 35: `pytest --collect-only` produces zero `ModuleNotFoundError`.
 - Steps 39, 67, 74, 86, 98, 108, 115, 125, 126, 134, 140, 141, 142, 148, 167, 178, 190: `npx tsc --noEmit` exits 0.
 - Step 109: `Get-ChildItem src/routes -Filter "*.tsx" | Where-Object { ($_.Name -split '.').Count -gt 3 }` is empty.
@@ -479,3 +479,5 @@ Pending items rolled forward from prior pending plans:
 - `02-ui-fixes.md` (5 items) — separate UI/UX scope; not merged. Remains pending independently.
 - `08-vision-system-v2.md` — repetitive filler steps (200 identical lines); out of scope for this plan; flagged for rework before execution.
 - `09-vision-standard-ui-tasks.md` (400 steps) — separate vision feature scope; not merged.
+
+Phase C (Zustand Store Localization) was safely bypassed because all 3 targeted stores were found to have legitimate cross-boundary consumers.

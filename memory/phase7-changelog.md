@@ -24,7 +24,7 @@ through OpenCV algorithms to database persistence.
 ### Score Endpoints
 - `POST /score` — single rule evaluation with threshold respect
 - `POST /score/batch` — batch evaluation returning per-rule results
-- Both registered in `BE/src/api/router.py`
+- Both registered in `BE/routes/api/router.py`
 
 ### Error Codes
 - `E_VISION_FAULT` registered in BE `codes.py` + FE `api-codes.ts`

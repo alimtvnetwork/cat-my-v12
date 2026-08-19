@@ -14,7 +14,7 @@ import { getCalibrationStats } from "@/lib/editor/calibration-stats";
 import { getCalibrationSuggestion } from "@/lib/editor/calibration";
 import { CalibrationDistributionPlot } from "@/components/editor/rail/CalibrationDistributionPlot";
 import { CalibrationStats } from "@/components/editor/rail/CalibrationStats";
-import report from "../../worker/calibration-report.json";
+import report from "../../../../worker/calibration-report.json";
 
 const KINDS: readonly EditorRuleKind[] = [
   EditorRuleKindType.C,

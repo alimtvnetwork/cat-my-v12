@@ -27,7 +27,7 @@ import { useErrorStore } from "@/lib/stores/errorStore";
 import { showToastError } from "@/lib/errors/notify";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
-import { StatusFilterType } from "@/routes/setup.rules";
+import { StatusFilterType } from "@/routes/setup/rules";
 import { toIntParam } from "@/lib/ids/int-alias";
 
 export interface ProjectRulesSectionProps {

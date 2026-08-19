@@ -27,10 +27,10 @@ There are two competing backend architectures living side-by-side in `BE/`:
 | Path | Role | Status |
 |---|---|---|
 | `BE/routes/` + `BE/envelope.py` | Established, production-used architecture | KEEP |
-| `BE/src/api/` + `BE/src/models/envelope.py` | Nascent duplicate with its own smaller envelope | DELETE |
+| `BE/routes/api/` + `BE/routes/models/envelope.py` | Nascent duplicate with its own smaller envelope | DELETE |
 
 Having two `envelope.py` files is a footgun. Any AI or developer reading `BE/`
-cannot know which envelope is authoritative. The `BE/src/models/envelope.py`
+cannot know which envelope is authoritative. The `BE/routes/models/envelope.py`
 (570 bytes) is a strict subset of `BE/envelope.py` (7640 bytes) and must be deleted.
 
 ### Problem B — Frontend Route Sprawl (69 flat files)
@@ -72,17 +72,17 @@ fixes this.
 
 | Step Range | What Happens |
 |---|---|
-| 1-9 | Read and audit `BE/src/` tree; record all imports; compare the two envelope files |
+| 1-9 | Read and audit `BE/routes/` tree; record all imports; compare the two envelope files |
 | 10-14 | Create `BE/routes/system.py` + `BE/models/system.py` replicating the `GET /system/status` endpoint using the established envelope |
 | 15-17 | Wire new system route into `BE/main.py`; remove `BE.src.api.router` import |
 | 18-20 | `py_compile` all new files — must exit 0 |
 | 21 | `grep "from BE.src"` must return zero |
-| 22-29 | Delete `BE/src/` entire tree file-by-file |
+| 22-29 | Delete `BE/routes/` entire tree file-by-file |
 | 30-31 | Verify directory gone; `py_compile BE/main.py` again |
 | 32-35 | Final grep sweep; run `pytest` collection — zero `ModuleNotFoundError` |
 | 36-37 | Commit; flip SS-01 subtask to `completed` |
 
-**Exit criteria:** `BE/src/` does not exist. One `envelope.py`. All pytest tests collect.
+**Exit criteria:** `BE/routes/` does not exist. One `envelope.py`. All pytest tests collect.
 
 ---
 
@@ -153,10 +153,10 @@ admin.debug.calibration.tsx                →      admin/debug/calibration.tsx
 | 153 | Write `Makefile` at repo root with 4 targets |
 | 154-155 | `make setup-backend` — confirm venv populated; `pydantic_settings` importable |
 | 156 | `make test-backend` — document pass/fail state |
-| 157-158 | Update `BE/README.md` — remove `BE/src/` refs; add Getting Started section |
-| 159-163 | Sweep `spec/`, `.lovable/`, root `README.md` for `BE/src/` references; fix each |
+| 157-158 | Update `BE/README.md` — remove `BE/routes/` refs; add Getting Started section |
+| 159-163 | Sweep `spec/`, `.lovable/`, root `README.md` for `BE/routes/` references; fix each |
 | 164-165 | Update `memory/index.md` and `overview.md` |
-| 166 | `grep "BE/src"` across all files returns zero |
+| 166 | `grep "BE/routes"` across all files returns zero |
 | 167-168 | Final `npx tsc --noEmit` + `make test-backend` |
 | 169-170 | Commit; flip SS-04 to `completed` |
 
@@ -168,7 +168,7 @@ make lint-backend     # cd BE && uv run ruff check .
 make dev-backend      # cd BE && uv run python -m BE.main
 ```
 
-**Exit criteria:** `make setup-backend` exits 0. `make test-backend` exits 0. Zero `BE/src` refs in any file.
+**Exit criteria:** `make setup-backend` exits 0. `make test-backend` exits 0. Zero `BE/routes` refs in any file.
 
 ---
 
@@ -193,7 +193,7 @@ No subtask file — pure cross-cutting verification and housekeeping.
 | 193-195 | Update `suggestions.md`, `memory/index.md`, `memory/06-spec-map.md` |
 | 196 | Final commit for Phase E |
 | 197-198 | Move plan to `completed/`; update `plans/index.md` |
-| 199 | 4-check state audit (BE/src gone, flat routes gone, 8 stores, `npx tsc` clean) |
+| 199 | 4-check state audit (BE/routes gone, flat routes gone, 8 stores, `npx tsc` clean) |
 | 200 | End-to-end gate: `make setup-backend && make test-backend && npx tsc --noEmit` — all exit 0 |
 
 ---
@@ -201,14 +201,14 @@ No subtask file — pure cross-cutting verification and housekeeping.
 ## Files Created/Modified at a Glance
 
 ### New files
-- `BE/routes/system.py` — migrated `GET /system/status` from `BE/src/`
+- `BE/routes/system.py` — migrated `GET /system/status` from `BE/routes/`
 - `BE/models/__init__.py`, `BE/models/system.py`, `BE/models/camera.py` — BE model layer
 - `src/contexts/HmiContext.tsx` — localized HMI state
 - `src/contexts/EditorContext.tsx` — localized editor palette + shortcuts state
 - `Makefile` — backend bootstrapping targets
 
 ### Deleted files
-- `BE/src/` entire directory (6 files)
+- `BE/routes/` entire directory (6 files)
 - `src/lib/stores/capture-history-store.ts`
 - `src/lib/stores/palette-store.ts`
 - `src/lib/stores/shortcuts-store.ts`
@@ -221,7 +221,7 @@ No subtask file — pure cross-cutting verification and housekeeping.
 - `BE/README.md` — Getting Started section
 - `.lovable/plans/index.md` — Plan 99 registered
 - `.lovable/memory/index.md`, `overview.md`, `06-spec-map.md`
-- Any spec file referencing `BE/src/`
+- Any spec file referencing `BE/routes/`
 
 ---
 
@@ -232,10 +232,10 @@ make setup-backend   # exits 0
 make test-backend    # exits 0 (or matches documented pre-existing failures)
 npx tsc --noEmit     # exits 0
 
-grep -rn "BE.src\|BE/src" ./   # returns zero
+grep -rn "BE.src\|BE/routes" ./   # returns zero
 ls src/routes/*.tsx (2+ dots)   # returns zero
 ls src/lib/stores/*.ts | wc -l  # returns 8
-Test-Path BE/src                # returns False
+Test-Path BE/routes                # returns False
 ```
 
 All checks pass simultaneously = Plan 99 complete = version bump eligible.

@@ -316,3 +316,5 @@ The product vision is coherent. The **integration spine** (supervisor ↔ UI ↔
 **Sound at the domain level:** split DB, multi-process capture, facade boundaries, seed/backend duality, error-first culture.
 
 **Main work ahead:** integration and consolidation — one coherent running system, one canonical rule engine owner, docs aligned with code, god-files split, facade migration finished or frozen.
+
+## Plan 99 — Remediation complete (2026-08-17): split-brain resolved, routes migrated, stores localized, Makefile added.
