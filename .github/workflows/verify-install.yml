@@ -61,7 +61,7 @@ on:
 
 concurrency:
   group: verify-install-${{ github.ref }}-${{ inputs.release_tag || 'pr' }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   posix:

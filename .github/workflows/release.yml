@@ -59,7 +59,7 @@ on:
 # race two builds writing the same artefact name.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:
   contents: write # required by softprops/action-gh-release when publish_draft=true
