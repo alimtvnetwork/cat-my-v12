@@ -66,7 +66,7 @@ concurrency:
 jobs:
   posix:
     name: install.sh --verify-only (ubuntu-latest)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -104,8 +104,8 @@ jobs:
           # (we short-circuit via --verify-only before it is invoked for
           # anything beyond the checksum block, but the guard runs early).
           ln -s "$(command -v python)" .ci-release/py
-          echo "PYTHON_EXE=$PWD/.ci-release/py" >>"$GITHUB_ENV"
-          echo "APP_BINARIES_DIR=$PWD/.ci-release" >>"$GITHUB_ENV"
+          echo "PYTHON_EXE=${{ github.workspace }}/.ci-release/py" >>"$GITHUB_ENV"
+          echo "APP_BINARIES_DIR=${{ github.workspace }}/.ci-release" >>"$GITHUB_ENV"
 
       - name: HAPPY - install.sh --install --verify-only exits 0
         shell: bash
@@ -188,7 +188,7 @@ jobs:
           (out / 'SHA256SUMS.txt').write_text("\n".join(lines) + "\n")
           print((out / 'SHA256SUMS.txt').read_text())
           PY
-          echo "APP_BINARIES_DIR=$PWD/.ci-release" >>"$GITHUB_ENV"
+          echo "APP_BINARIES_DIR=${{ github.workspace }}/.ci-release" >>"$GITHUB_ENV"
 
       - name: HAPPY - install.ps1 -Install -VerifyOnly exits 0
         shell: pwsh

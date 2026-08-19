@@ -76,7 +76,7 @@ jobs:
 
   lint:
     name: Lint (spec + PS + forbidden strings)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -97,7 +97,7 @@ jobs:
   test:
     name: Test (pytest + vitest + bats + pester)
     needs: lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -238,7 +238,7 @@ jobs:
   checksum:
     name: Checksum (combined SHA256SUMS.txt)
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       sums_ok: ${{ steps.sums.outputs.ok }}
     steps:
@@ -345,7 +345,7 @@ jobs:
     name: Publish draft release
     needs: [checksum, verify-install]
     if: ${{ github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 

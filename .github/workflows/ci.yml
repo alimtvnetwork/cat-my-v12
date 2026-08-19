@@ -8,7 +8,7 @@ on:
 jobs:
   spec-linters:
     name: Spec + IPC linters
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -56,7 +56,7 @@ jobs:
 
   frontend-checks:
     name: Frontend lint + typecheck + tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -107,7 +107,7 @@ jobs:
 
   python-tests:
     name: pytest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -132,7 +132,7 @@ jobs:
 
   psscriptanalyzer:
     name: PSScriptAnalyzer (scripts/ps)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       # pwsh is preinstalled on ubuntu-latest runners; install the analyzer once.
@@ -157,7 +157,7 @@ jobs:
 
   pester-wrappers:
     name: Pester (scripts/ps exit-code contract)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       # pwsh is preinstalled on ubuntu-latest runners. Install Pester 5+
@@ -179,7 +179,7 @@ jobs:
 
   mermaid-render:
     name: Render .mmd diagrams
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -196,7 +196,7 @@ jobs:
 
   denial-evidence:
     name: Denial replay + evidence CLI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -228,7 +228,7 @@ jobs:
 
   visual-regression:
     name: Visual regression gate (I-CX-04)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -290,7 +290,7 @@ jobs:
 
   alignment-suite:
     name: Alignment (${{ matrix.engine }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -367,7 +367,7 @@ jobs:
 
   be-lint:
     name: Backend lint + typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
