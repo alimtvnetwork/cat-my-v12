@@ -10,6 +10,7 @@ import { EnvelopeError, type Envelope } from "@/lib/be-fetch";
 import { derivePagination, useEnvelopeQuery } from "@/hooks/use-envelope-query";
 
 function makeEnvelope<T>(results: T[], total = results.length): Envelope<T> {
+
   return {
     Status: {
       IsSuccess: true,
@@ -41,6 +42,7 @@ function wrapper() {
   });
 
   return function Wrapper({ children }: { children: ReactNode }) {
+
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
