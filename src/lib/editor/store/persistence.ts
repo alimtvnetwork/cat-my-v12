@@ -59,6 +59,7 @@ const facade = makeProjectRepositoryFacade();
 const DEBOUNCE_MS = 250;
 
 function storageKey(scope: string): string {
+  
   return `ca:editor-layers:${scope}:v1`;
 }
 

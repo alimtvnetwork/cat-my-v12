@@ -9,6 +9,7 @@ import {
 export const INITIAL_HISTORY_STATE: HistoryState = { past: [], future: [] };
 
 export function selectUndoCount(state: HistoryState): number {
+  
   return state.past.length;
 }
 
