@@ -74,10 +74,13 @@ interface ParamsSlotProps {
 function ParamsSlot({ condition, onChange, onPickColor }: ParamsSlotProps) {
   switch (condition.type) {
     case ConditionTypeType.SameImage:
+
       return <SameImageParamsPanel condition={condition} />;
     case ConditionTypeType.Presence:
+
       return <PresenceParamsPanel condition={condition} onChange={onChange} />;
     case ConditionTypeType.Color:
+
       return (
         <ColorParamsPanel condition={condition} onChange={onChange} onPickColor={onPickColor} />
       );

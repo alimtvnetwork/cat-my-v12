@@ -53,6 +53,7 @@ export function validateMicParamsJson(raw: string): ParseResult {
   try {
     parsed = JSON.parse(trimmed);
   } catch (e) {
+
     return {
       ok: false,
       value: {},
@@ -61,6 +62,7 @@ export function validateMicParamsJson(raw: string): ParseResult {
   }
 
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+
     return { ok: false, value: {}, error: "Params must be a JSON object." };
   }
 
