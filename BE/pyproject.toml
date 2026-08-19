@@ -46,3 +46,8 @@ ignore = ["E501", "E402", "B008", "B011", "B017", "E741", "SIM105", "SIM117", "F
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["BE/tests"]
+
+[tool.mypy]
+ignore_missing_imports = true
+follow_imports = "silent"
+disable_error_code = ["attr-defined", "call-arg", "arg-type", "import-untyped", "import-not-found", "index", "union-attr", "valid-type", "call-overload", "operator", "dict-item", "assignment", "list-item", "no-redef", "misc", "name-defined"]

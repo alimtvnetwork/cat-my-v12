@@ -168,15 +168,15 @@ def success(
     else:
         items = [results]
     return Envelope(
-        status=Status(
+        Status=Status(
             IsSuccess=True,
             IsFailed=False,
             Code=http_status,
             Message=message,
             Timestamp=_now_iso(),
         ),
-        attributes=_attributes(requested_at, items, has_errors=False, total_records=total_records),
-        results=items,
+        Attributes=_attributes(requested_at, items, has_Errors=False, total_records=total_records),
+        Results=items,
     )
 
 
@@ -197,16 +197,16 @@ def failure(
     problem payloads (e.g. `verify-bundle` Problems[]) reach the client.
     """
     return Envelope(
-        status=Status(
+        Status=Status(
             IsSuccess=False,
             IsFailed=True,
             Code=http_status,
             Message=message,
             Timestamp=_now_iso(),
         ),
-        attributes=_attributes(requested_at, [], has_errors=True),
-        results=[],
-        errors=Errors(
+        Attributes=_attributes(requested_at, [], has_Errors=True),
+        Results=[],
+        Errors=Errors(
             Code=code,
             BackendMessage=message,
             Backend=backend_frames or [],

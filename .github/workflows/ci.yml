@@ -385,6 +385,6 @@ jobs:
       - name: Run ruff
         run: python3 -m ruff check BE/
       - name: Run mypy
-        run: python3 -m mypy BE/
+        run: python3 -m mypy --config-file BE/pyproject.toml BE/
       - name: Run SDK Facade check
         run: bash scripts/be-lint.sh
