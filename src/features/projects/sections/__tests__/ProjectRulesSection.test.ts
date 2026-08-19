@@ -9,7 +9,6 @@ import type { EditorRule } from "@/lib/editor/types";
 import { detectProjectRuleConflicts } from "../ProjectRulesSection";
 
 function er(id: string, kind: EditorRule["kind"] = EditorRuleKindType.R): EditorRule {
-
   return {
     id,
     name: id,
