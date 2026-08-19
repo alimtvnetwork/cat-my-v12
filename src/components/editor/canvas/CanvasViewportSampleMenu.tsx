@@ -16,7 +16,7 @@ interface CanvasViewportSampleMenuProps {
   currentSample: { id: string; label: string; url: string };
   sampleId: string;
   applySample: (id: string) => void;
-  sampleLibrary: { id: string; label: string; url: string }[];
+  sampleLibrary: readonly { id: string; label: string; url: string }[];
   customSample: { id: string; label: string; url: string } | null;
   onUploadFile: (file: File) => void;
   captureFromCamera: () => Promise<void>;

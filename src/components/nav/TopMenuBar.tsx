@@ -41,6 +41,7 @@ import { usePanelHostMounted } from "@/lib/workspace/panel-host-registry";
 import { MenuRouteType, type MenuRoute, toggleWindowPanel, collapseFirstOpenPanel } from "./TopMenuBarConstants";
 import { MobileMenu } from "./TopMenuMobile";
 import { MenubarItemRow } from "./TopMenuRows";
+import { TopMenuGroup } from "./TopMenuGroup";
 
 export type NavEntry = {
   to: MenuRoute;
@@ -301,31 +302,13 @@ export function TopMenuBar(): React.JSX.Element | null {
 
         <Menubar className="hidden border-none bg-transparent p-0 lg:flex">
           {GROUPS.map((group) => (
-            <MenubarMenu key={group.id}>
-              <MenuTriggerWithMnemonic group={group} groupActive={isGroupActive(group, pathname)} />
-              <MenubarContent
-                align="start"
-                sideOffset={6}
-                className="min-w-[14rem] border-ca-border bg-ca-panel p-1.5 text-ca-ink shadow-hmi-panel"
-              >
-                {group.items.map((item, idx) => {
-                  const active = isActionEntry(item) === false && item.to === pathname;
-                  const locked =
-                    isActionEntry(item) === false &&
-                    Boolean(running && item.lockDuringRun && !active);
-
-                  return (
-                    <MenubarItemRow
-                      key={`item-${idx}`}
-                      item={item}
-                      active={active}
-                      locked={locked}
-                      isHydrated={isHydrated}
-                    />
-                  );
-                })}
-              </MenubarContent>
-            </MenubarMenu>
+            <TopMenuGroup
+              key={group.id}
+              group={group}
+              pathname={pathname}
+              running={running}
+              isHydrated={isHydrated}
+            />
           ))}
           {showWindowMenuGated ? <WindowMenubarGroup /> : null}
         </Menubar>
@@ -346,7 +329,7 @@ export function TopMenuBar(): React.JSX.Element | null {
  * pulled from the shortcut registry so screen readers announce the
  * Alt+<letter> mnemonic alongside the visible underline.
  */
-function MenuTriggerWithMnemonic({
+export function MenuTriggerWithMnemonic({
   group,
   groupActive,
 }: {
