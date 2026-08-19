@@ -30,7 +30,6 @@ export interface MinimizedRailProps {
 }
 
 function orientationFor(slot: MinimizedRailProps["slot"]): MinimizedRailOrientation {
-
   return DockSlotType.isTop(slot) || DockSlotType.isBottom(slot)
     ? MinimizedRailOrientationType.Horizontal
     : MinimizedRailOrientationType.Vertical;
@@ -44,7 +43,11 @@ function initialFor(title: string): string {
   return trimmed.charAt(0).toUpperCase();
 }
 
-export function MinimizedRail({ slot, ids, onRestore }: MinimizedRailProps): React.JSX.Element | null {
+export function MinimizedRail({
+  slot,
+  ids,
+  onRestore,
+}: MinimizedRailProps): React.JSX.Element | null {
   if (ids.length === 0) return null;
   const orientation = orientationFor(slot);
 

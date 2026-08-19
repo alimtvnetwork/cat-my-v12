@@ -64,7 +64,6 @@ function ChromeControl({
   intent?: PanelChromeIntentType;
   "data-testid"?: string;
 }) {
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -115,7 +114,6 @@ function getPanelHint(panelId: string): string | null {
 }
 
 function PanelHint({ hint, title }: { hint: string; title: string }) {
-
   return (
     <TooltipProvider delayDuration={180}>
       <Tooltip>
