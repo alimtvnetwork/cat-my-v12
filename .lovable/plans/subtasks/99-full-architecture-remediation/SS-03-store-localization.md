@@ -89,3 +89,13 @@ stores correctly. No console errors.
 - `src/lib/stores/` contains exactly 8 files (down from 11).
 - `npx tsc --noEmit` exits 0.
 - Editor palette and shortcuts work in dev. HMI capture history works.
+
+### PHASE C AUDIT RESULT (AUTOMATED)
+Audit executed on 2026-08-19.
+Result: All three stores selected for localization actually have cross-boundary consumers.
+1. capture-history-store.ts: Consumed by src/components/settings/ReferenceImageCard.tsx.
+2. palette-store.ts: Consumed by HmiShell.tsx, CommandPalette.tsx, PaletteFrame.tsx.
+3. shortcuts-store.ts: Consumed by HmiShell.tsx, ShortcutsDialog.tsx, shortcuts.tsx.
+
+DECISION: Per remediation guidelines ("If any consumer is outside... keep the store global"), ALL THREE STORES ARE KEPT GLOBAL. 
+No files were deleted or contexts created. Phase C is successfully bypassed.
