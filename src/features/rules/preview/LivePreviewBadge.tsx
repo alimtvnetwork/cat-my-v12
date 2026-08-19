@@ -15,7 +15,7 @@ export interface LivePreviewBadgeProps {
   className?: string;
 }
 
-export function LivePreviewBadge({ state, className }: LivePreviewBadgeProps) {
+export function LivePreviewBadge({ state, className }: LivePreviewBadgeProps): React.JSX.Element | null {
   if (RunStatusType.isIdle(state.status)) return null;
 
   if (RunStatusType.isRunning(state.status)) {

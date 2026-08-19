@@ -7,7 +7,7 @@ export interface VariantRowProps {
   onPick: () => void;
 }
 
-export function VariantRow({ variant, selected, onPick }: VariantRowProps) {
+export function VariantRow({ variant, selected, onPick }: VariantRowProps): React.JSX.Element | null {
   return (
     <li>
       <button

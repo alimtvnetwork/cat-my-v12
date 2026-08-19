@@ -12,7 +12,7 @@ export function GrayscaleToleranceSlider({
   value,
   onChange,
   disabled,
-}: GrayscaleToleranceSliderProps) {
+}: GrayscaleToleranceSliderProps): React.JSX.Element | null {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">

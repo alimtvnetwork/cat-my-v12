@@ -16,7 +16,7 @@ export function SelectionOverlayQuickActions({
   br,
   canvasSize,
   onAction,
-}: Props) {
+}: Props): React.JSX.Element | null {
   // Dock the quick-actions strip to the OUTSIDE-RIGHT edge of the ROI as
   // a vertical stack so it never collides with the X·Y / W×H / name-chip
   // stack sitting above the shape, or with the rotation handle sitting

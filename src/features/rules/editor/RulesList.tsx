@@ -12,7 +12,7 @@ export interface RulesListProps {
   results?: ReadonlyMap<string, RuleResult> | Record<string, RuleResult>;
 }
 
-export function RulesList({ emptyLabel = "No rules yet", results }: RulesListProps) {
+export function RulesList({ emptyLabel = "No rules yet", results }: RulesListProps): React.JSX.Element | null {
   const getResult = (id: string): RuleResult | undefined => {
     if (!results) return undefined;
 

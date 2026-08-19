@@ -14,7 +14,7 @@ export function InlineNumber({
   disabled?: boolean;
   error?: string | null;
   onChange: (v: number) => void;
-}) {
+}): React.JSX.Element | null {
   const errId = `num-${label}-error`;
   const dragRef = useRef<{ startX: number; startValue: number } | null>(null);
   const onLabelPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {

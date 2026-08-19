@@ -36,7 +36,7 @@ export function SelectionOverlayQuickProps({
   rotationSnapDefault,
   setRotationSnapDefault,
   updateParams,
-}: SelectionOverlayQuickPropsProps) {
+}: SelectionOverlayQuickPropsProps): React.JSX.Element | null {
   const hudDragRef = useRef<{
     pointerId: number;
     startClientX: number;

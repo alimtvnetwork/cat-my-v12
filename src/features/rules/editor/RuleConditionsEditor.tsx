@@ -34,7 +34,7 @@ export function RuleConditionsEditor({
   conditions,
   onChange,
   onPickColor,
-}: RuleConditionsEditorProps) {
+}: RuleConditionsEditorProps): React.JSX.Element | null {
   const isMinimum = conditions.length <= 1;
 
   function handleAdd(type: ConditionTypeType) {

@@ -27,7 +27,7 @@ export interface RuleTemplateHintsProps {
   onApply?: (template: CatSeedRuleTemplate) => void;
 }
 
-export function RuleTemplateHints({ ruleKind, onApply }: RuleTemplateHintsProps) {
+export function RuleTemplateHints({ ruleKind, onApply }: RuleTemplateHintsProps): React.JSX.Element | null {
   // Plan 72 step 19: render via `SeedSlot` so loading gets a real
   // skeleton (non-blocking) and error/empty branches match every other
   // seed consumer. Filtering by `ruleKind` still happens locally because

@@ -19,7 +19,7 @@ export interface PresenceParamsPanelProps {
   onChange: (next: PresenceCondition) => void;
 }
 
-export function PresenceParamsPanel({ condition, onChange }: PresenceParamsPanelProps) {
+export function PresenceParamsPanel({ condition, onChange }: PresenceParamsPanelProps): React.JSX.Element | null {
   const { params } = condition;
 
   function patch(next: Partial<PresenceCondition["params"]>) {

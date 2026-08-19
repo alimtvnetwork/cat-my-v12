@@ -60,7 +60,7 @@ export function RuleEditorDrawer({
   evaluator,
   livePreviewDebounceMs,
   validationModeType = ValidationModeType.Parallel,
-}: RuleEditorDrawerProps) {
+}: RuleEditorDrawerProps): React.JSX.Element | null {
   const rule = useRulesStore((s) =>
     ruleId
       ? (s.rules.find((r) => r.id === ruleId) as EditorRuleWithConditions | undefined)

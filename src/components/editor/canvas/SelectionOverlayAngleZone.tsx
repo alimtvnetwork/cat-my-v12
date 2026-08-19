@@ -22,7 +22,7 @@ export function SelectionOverlayAngleZone({
   isRotating,
   isResizing,
   atAngleBound,
-}: Props) {
+}: Props): React.JSX.Element | null {
   // Angle-zone overlay: show while actively rotating or
   // resizing a rectangular ROI when the rule has finite
   // angleMin / angleMax params. Renders under the selection

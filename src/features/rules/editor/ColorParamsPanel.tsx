@@ -31,7 +31,7 @@ export interface ColorParamsPanelProps {
   onPickColor?: () => Promise<string | null>;
 }
 
-export function ColorParamsPanel({ condition, onChange, onPickColor }: ColorParamsPanelProps) {
+export function ColorParamsPanel({ condition, onChange, onPickColor }: ColorParamsPanelProps): React.JSX.Element | null {
   const { params } = condition;
   const isPicked = params.Mode === ColorModeType.Picked;
   const hexValid = HEX_RE.test(params.ExpectedColor);

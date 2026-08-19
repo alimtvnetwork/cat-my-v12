@@ -27,7 +27,7 @@ export function SelectionOverlayRotationHandles({
   onRotateMove,
   onRotateUp,
   onRotateKeyDown,
-}: Props) {
+}: Props): React.JSX.Element | null {
   const rad = (theta * Math.PI) / 180;
   const halfW = (br.x - tl.x) / 2;
   const halfH = (br.y - tl.y) / 2;

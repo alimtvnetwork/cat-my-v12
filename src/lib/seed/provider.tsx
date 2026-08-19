@@ -45,7 +45,7 @@ export interface SeedProviderProps {
   facade?: UiSeedFacade;
 }
 
-export function SeedProvider({ children, facade }: SeedProviderProps) {
+export function SeedProvider({ children, facade }: SeedProviderProps): React.JSX.Element | null {
   // Subscribe to the runtime data-source store so switching Seed <-> Backend
   // rebuilds the facade (and therefore reloads the bundle) live. When a
   // facade is injected (tests), we honor it verbatim and ignore the store.

@@ -13,7 +13,7 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-export function OverviewTab({ err }: { err: CapturedError }) {
+export function OverviewTab({ err }: { err: CapturedError }): React.JSX.Element | null {
   return (
     <>
       <dl className="grid grid-cols-[120px_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">

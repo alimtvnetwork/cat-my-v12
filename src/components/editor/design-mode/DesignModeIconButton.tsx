@@ -12,7 +12,7 @@ export function IconButton({
   onClick,
   disabled,
   label,
-}: IconButtonProps) {
+}: IconButtonProps): React.JSX.Element | null {
   return (
     <button
       type="button"

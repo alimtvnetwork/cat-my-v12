@@ -16,7 +16,7 @@ export function RuleEditorPanel({
   onSearchTargetChange,
   tolerance = 128,
   onToleranceChange,
-}: RuleEditorPanelProps) {
+}: RuleEditorPanelProps): React.JSX.Element | null {
   return (
     <div 
       className="flex w-full max-w-sm flex-col gap-6 border-l bg-background p-4 shadow-sm"

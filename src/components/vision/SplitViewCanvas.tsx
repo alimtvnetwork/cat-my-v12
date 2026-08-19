@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 export const CoordinateContext = createContext<any>(null);
 
-export const CoordinateProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const CoordinateProvider: React.FC<{children: React.ReactNode}> = ({ children }): React.JSX.Element | null => {
   const [coordinates, setCoordinates] = useState({ x: 0, y: 0, zoom: 1 });
   return (
     <CoordinateContext.Provider value={{ coordinates, setCoordinates }}>
@@ -13,7 +13,7 @@ export const CoordinateProvider: React.FC<{children: React.ReactNode}> = ({ chil
   );
 };
 
-export const SplitViewCanvas: React.FC = () => {
+export const SplitViewCanvas: React.FC = (): React.JSX.Element | null => {
   return (
     <CoordinateProvider>
       <div className="flex flex-row split-layout">

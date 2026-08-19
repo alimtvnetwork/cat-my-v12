@@ -9,7 +9,7 @@ export interface SameImageParamsPanelProps {
   condition: SameImageCondition;
 }
 
-export function SameImageParamsPanel(_props: SameImageParamsPanelProps) {
+export function SameImageParamsPanel(_props: SameImageParamsPanelProps): React.JSX.Element | null {
   return (
     <p className="text-xs text-muted-foreground">
       Compares the run image to the ruleset&apos;s reference image. No parameters.
