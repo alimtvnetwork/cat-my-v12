@@ -45,6 +45,7 @@ const RATIONALES: Record<EditorRuleKind, string> = {
 };
 
 function round2(n: number): number {
+
   return Math.round(n * 100) / 100;
 }
 
@@ -79,9 +80,11 @@ const SUGGESTIONS: Partial<Record<EditorRuleKind, CalibrationSuggestion>> = Obje
 ) as Partial<Record<EditorRuleKind, CalibrationSuggestion>>;
 
 export function getCalibrationSuggestion(kind: EditorRuleKind): CalibrationSuggestion | null {
+
   return SUGGESTIONS[kind] ?? null;
 }
 
 export function getAllCalibrationSuggestions(): CalibrationSuggestion[] {
+
   return Object.values(SUGGESTIONS).filter((s): s is CalibrationSuggestion => s !== undefined);
 }
