@@ -1,9 +1,6 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
-export enum CanvasViewportPresetType {
-  Subtle = "subtle",
-  Standard = "standard",
-  Strong = "strong",
-}
+import { CanvasViewportPresetType, fallbackSize } from "./CanvasViewportConstants";
+import type { PanGesture } from "./CanvasViewportUtils";
 import { EditorPreviewModeType } from "@/lib/editor/preview-mode-store";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IMAGE_BOUNDS, applyWheel, clampPan, coverView, screenToImage } from "@/lib/editor/coords";
@@ -84,8 +81,6 @@ import {
 import { readConditions } from "@/components/editor/panels/AcceptancePanel";
 import { AppEvent } from "@/lib/constants";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-
-const fallbackSize: CanvasSize = { width: 1280, height: 720 };
 
 interface CanvasViewportProps {
   rules: EditorRule[];
