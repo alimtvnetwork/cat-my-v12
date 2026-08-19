@@ -48,7 +48,13 @@ interface Props {
   }) => void;
 }
 
-export function DesignModeOverlay({ open, imageRef, suggestedName, onClose, onCompiled }: Props): React.JSX.Element | null {
+export function DesignModeOverlay({
+  open,
+  imageRef,
+  suggestedName,
+  onClose,
+  onCompiled,
+}: Props): React.JSX.Element | null {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tool, setTool] = useState<ToolType>(ToolType.Point);
   const [points, setPoints] = useState<Point[]>([]);
