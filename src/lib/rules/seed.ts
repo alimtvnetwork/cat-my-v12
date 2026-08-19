@@ -11,10 +11,12 @@ const FLAG = "ca:rules-autoseeded:v1";
 let inFlight: Promise<number | null> | null = null;
 
 function nowIso(): string {
+
   return new Date().toISOString();
 }
 
 function id(prefix: "cat" | "rule", slug: string): RuleId {
+
   return `${prefix}-${slug}` as RuleId;
 }
 
@@ -351,6 +353,7 @@ function makeSeedRows(): Rule[] {
 
 function readSeedFlag(): string | null {
   try {
+
     return window.localStorage.getItem(FLAG);
   } catch (err) {
     ClientLogger.warn("[rules/seed] seed flag read failed", err);

@@ -43,6 +43,7 @@ export interface SaveConflictResolvers {
 }
 
 function isLoadRuleSetError(e: unknown): e is LoadRuleSetError {
+
   return (
     typeof e === "object" &&
     e !== null &&
