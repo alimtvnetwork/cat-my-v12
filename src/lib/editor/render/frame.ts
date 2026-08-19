@@ -23,6 +23,7 @@ let isMaskSubscribed = false;
 let maskRepaintTarget: HTMLCanvasElement | null = null;
 
 function resolveReferenceSrc(): string {
+  
   return getStoredReferenceUrl() ?? defaultSampleUrl;
 }
 
@@ -1009,6 +1010,7 @@ function line(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number,
 }
 
 function isAnchorKind(kind: EditorRuleKind): boolean {
+  
   return kind === "K" || kind === "S" || kind === "E";
 }
 
@@ -1035,6 +1037,7 @@ function colorForRule(rule: EditorRule, tokens: StyleTokens): string {
   // kinds where the shape colour also carries semantic meaning (OCR,
   // string match, expression). For plain shape ROIs (C/R) we prefer
   // the green default so users see a uniform, calm palette.
+  
   if (rule.kind === "C" || rule.kind === "R") return tokens.ok;
 
   return colorForKind(rule.kind, tokens);

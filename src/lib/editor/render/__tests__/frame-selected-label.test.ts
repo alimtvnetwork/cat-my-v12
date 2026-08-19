@@ -81,6 +81,7 @@ function rule(over: Partial<EditorRule> & { id: string; name: string }): EditorR
 }
 
 function baseState(rules: EditorRule[], selectedIds: string[]): RenderState {
+  
   return {
     size: { width: 400, height: 300 },
     dpr: 1,

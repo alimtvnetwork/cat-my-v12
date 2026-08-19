@@ -11,6 +11,7 @@ import {
 function stubDecoder(
   result: { text: string; symbology: BarcodeParams["symbology"] } | null,
 ): BarcodeDecoder {
+  
   return {
     async decode() {
       return result;
@@ -19,6 +20,7 @@ function stubDecoder(
 }
 
 function throwingDecoder(msg: string): BarcodeDecoder {
+  
   return {
     async decode() {
       throw new Error(msg);
