@@ -65,7 +65,7 @@ export enum LayerSectionKindType {
 }
 export type LayerSectionKind = LayerSectionKindType;
 
-interface LayerSection {
+export interface LayerSection {
   kind: LayerSectionKind;
   label: string;
   count: number;
