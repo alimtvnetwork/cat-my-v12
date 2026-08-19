@@ -23,6 +23,7 @@ import { CanvasResultLayer } from "./CanvasResultLayer";
 import { getSnapState } from "@/lib/editor/snap-store";
 import { CanvasViewportZoom } from "./CanvasViewportZoom";
 import { CanvasViewportSampleMenu } from "./CanvasViewportSampleMenu";
+import { CanvasViewportMarquee } from "./CanvasViewportMarquee";
 import { renderFrame } from "@/lib/editor/render/frame";
 import {
   commitRuleGesture,
@@ -43,6 +44,7 @@ import type {
 } from "@/lib/editor/types";
 import { SelectionOverlay, type RuleActionKind } from "./SelectionOverlay";
 import { ValidationHighlightOverlay } from "./ValidationHighlightOverlay";
+import { CanvasViewportStatusHud } from "./CanvasViewportStatusHud";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -712,42 +714,17 @@ export function CanvasViewport({
           onRotate={onRotateRule ? (id, deg) => onRotateRule(id, deg) : undefined}
         />
         <AlignmentGuides guides={groupAlignGuides} viewport={viewport} canvasSize={canvasSize} />
-        {marqueeRect !== null ? (
-          <div
-            data-testid="canvas-marquee"
-            aria-hidden="true"
-            className="pointer-events-none absolute rounded-[2px] border border-dashed border-ca-focus bg-ca-focus/10"
-            style={{
-              left: viewport.panX + marqueeRect.x * viewport.zoom,
-              top: viewport.panY + marqueeRect.y * viewport.zoom,
-              width: Math.max(1, marqueeRect.width * viewport.zoom),
-              height: Math.max(1, marqueeRect.height * viewport.zoom),
-            }}
-          />
-        ) : null}
+        <CanvasViewportMarquee marqueeRect={marqueeRect} viewport={viewport} />
       </CanvasRoiLayer>
       <CanvasResultLayer visible={showResults}>
         <ValidationHighlightOverlay rules={rules} viewport={viewport} canvasSize={canvasSize} />
       </CanvasResultLayer>
-      <div className="editor-canvas-hud" aria-live="polite">
-        <span>{editorKindLabel(activeKind)}</span>
-        <span className="editor-canvas-hud-secondary">Selected {selectedIds.length}</span>
-        {keyboardDnd.activeRect ? (
-          <span
-            className="editor-canvas-hud-secondary tabular-nums"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {Math.round(keyboardDnd.activeRect.x)}, {Math.round(keyboardDnd.activeRect.y)}
-          </span>
-        ) : pointerCoords ? (
-          <span
-            className="editor-canvas-hud-secondary tabular-nums"
-            style={{ fontVariantNumeric: "tabular-nums" }}
-          >
-            {Math.round(pointerCoords.x)}, {Math.round(pointerCoords.y)}
-          </span>
-        ) : null}
-      </div>
+      <CanvasViewportStatusHud
+        activeKind={activeKind}
+        selectedIds={selectedIds}
+        keyboardDnd={keyboardDnd}
+        pointerCoords={pointerCoords}
+      />
       <CanvasViewportZoom zoom={viewport.zoom} onStepZoom={stepZoom} onResetZoom={resetZoom} />
       <CanvasViewportSampleMenu
         currentSample={currentSample}
