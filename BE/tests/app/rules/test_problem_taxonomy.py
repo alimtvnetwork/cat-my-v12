@@ -14,7 +14,7 @@ from pathlib import Path
 
 from rule_kernel.problems import ALL_CODES, BundleProblemCode
 
-_LOADER = Path("BE/app/rules/kernel/loader.py")
+_LOADER = Path("rule_kernel/loader.py")
 
 
 def _collect_problem_calls() -> list[ast.Call]:

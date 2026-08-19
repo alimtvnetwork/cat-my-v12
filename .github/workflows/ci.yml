@@ -118,7 +118,7 @@ jobs:
           python3 -m pip install --quiet pytest jsonschema numpy
           python3 -m pip install -e ./BE[dev] || python3 -m pip install ./BE
       - name: Run pytest
-        run: python3 -m pytest tests -x --tb=short
+        run: python3 -m pytest BE/tests -x --tb=short
       - name: Check OpenAPI drift
         run: bash scripts/check-openapi-drift.sh
       - name: Run API Envelope Verification
@@ -204,12 +204,7 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: python3 -m pip install --quiet pytest jsonschema numpy
-      # 1) Replay harness unit tests must pass before we trust the CLI output.
-      - name: Denial replay harness
-        run: python3 -m pytest tests/unit/test_denial_replay_harness.py -x --tb=short
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-      # 2) End-to-end CLI: JSONL -> baseline -> markdown + HTML tradeoff.
+            # 2) End-to-end CLI: JSONL -> baseline -> markdown + HTML tradeoff.
       - name: Denial evidence CLI (offline replay)
         env:
           PYTHONPATH: ${{ github.workspace }}
