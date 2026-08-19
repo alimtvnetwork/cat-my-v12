@@ -42,7 +42,11 @@ const TONE: Record<
   },
 };
 
-export function ValidationHighlightOverlay({ rules, viewport, canvasSize }: Props): React.JSX.Element | null {
+export function ValidationHighlightOverlay({
+  rules,
+  viewport,
+  canvasSize,
+}: Props): React.JSX.Element | null {
   const focusedRuleId = useValidationStore((s) => s.focusedRuleId);
   const activeRulesetId = useValidationStore((s) => s.activeRulesetId);
   const status = useValidationStore((s) => {

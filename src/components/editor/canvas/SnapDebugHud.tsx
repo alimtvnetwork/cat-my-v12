@@ -32,7 +32,12 @@ function fmt(n: number): string {
   return Number.isFinite(n) ? n.toFixed(2) : "-";
 }
 
-export function SnapDebugHud({ debug, guides, zoom, tolerancePx }: Props): React.JSX.Element | null {
+export function SnapDebugHud({
+  debug,
+  guides,
+  zoom,
+  tolerancePx,
+}: Props): React.JSX.Element | null {
   const kindCounts = { edge: 0, center: 0, bounds: 0 } as Record<AlignGuide["kind"], number>;
   for (const g of guides) kindCounts[g.kind] += 1;
 
