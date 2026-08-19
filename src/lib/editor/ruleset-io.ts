@@ -154,7 +154,10 @@ function parseGroups(input: unknown, ruleIds: ReadonlySet<string>): RuleGroup[] 
         // Drop references to unknown rules rather than fail the whole import;
         // log via caller-side W_UI_RULESET_IMPORT_FAILED is misleading here
         // because the file is still structurally valid. Warn inline instead.
-        ClientLogger.warn("[ruleset-io] dropping unknown group member", { groupIndex: i, ruleId: rid });
+        ClientLogger.warn("[ruleset-io] dropping unknown group member", {
+          groupIndex: i,
+          ruleId: rid,
+        });
         continue;
       }
 
