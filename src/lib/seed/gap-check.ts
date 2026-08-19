@@ -73,10 +73,12 @@ export class SeedGapReport {
   }
 
   isInvalid(): boolean {
+
     return this.ok === false;
   }
 
   hasInaccurateSpace(): boolean {
+
     return this.ok === false;
   }
 }
@@ -95,6 +97,7 @@ export interface SeedGapInputs {
 const HEX = /^#[0-9a-f]{3}([0-9a-f]{3})?$/i;
 
 function emptyCounts(): Record<SeedGapKind, number> {
+
   return {
     "project.cameraName": 0,
     "project.micSettingsName": 0,
@@ -285,9 +288,11 @@ export const SEEDED_MIC_SETTINGS_NAMES: readonly string[] = [
 ];
 
 export function isInvalid(report: SeedGapReport): boolean {
+
   return report.ok === false;
 }
 
 export function hasInaccurateSpace(report: SeedGapReport): boolean {
+
   return report.ok === false;
 }

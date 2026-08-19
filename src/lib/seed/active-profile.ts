@@ -30,6 +30,7 @@ export function setActiveProfile(id: string | null): void {
 }
 
 export function getActiveProfile(): string | null {
+
   return current;
 }
 
