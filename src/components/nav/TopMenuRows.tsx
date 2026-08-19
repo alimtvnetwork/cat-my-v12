@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
 import { MenubarItem, MenubarShortcut } from "@/components/ui/menubar";
-import { type Entry, type ActionEntry, isActionEntry, ACTION_HANDLERS } from "./TopMenuBar";
+import { type Entry, type ActionEntry, ACTION_HANDLERS } from "./TopMenuBar";
+import { isActionEntry } from "./TopMenuUtils";
 
 export function MenubarActionRow({ item, isHydrated }: { item: ActionEntry; isHydrated: boolean }): React.JSX.Element | null {
   const rowClass =

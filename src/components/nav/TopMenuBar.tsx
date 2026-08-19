@@ -24,8 +24,16 @@ import { useMenuShortcuts, type MenuShortcutBinding } from "@/hooks/useMenuShort
 import { registerShortcut } from "@/lib/shortcuts/registry";
 import { useAriaKeyshortcuts } from "@/lib/shortcuts/useAriaKeyshortcuts";
 import { ShortcutScopeBaseType } from "@/lib/shortcuts/scopes";
-import { AppEvent } from "@/lib/constants";
 import { WindowMenubarGroup } from "./WindowMenubarGroup";
+import {
+  isActionEntry,
+  isGroupActive,
+  isEditorPath,
+  buildShortcutBindings,
+  dispatchMenuCommand,
+  requestAppFullscreen,
+  openHelpDocs,
+} from "./TopMenuUtils";
 import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { usePanelHostMounted } from "@/lib/workspace/panel-host-registry";
@@ -125,83 +133,7 @@ function useAltMnemonicOpen(): void {
   }, []);
 }
 
-type AppNavigate = ReturnType<typeof useNavigate>;
 
-const MENU_COMMAND_EVENT = AppEvent.MenuCommand;
-
-export function isActionEntry(entry: Entry): entry is ActionEntry {
-  return "action" in entry;
-}
-
-function hasShortcut(entry: Entry): entry is Entry & { shortcut: MenuShortcutType } {
-  return entry.shortcut !== undefined;
-}
-
-function hasLockedState(entry: NavEntry, pathname: string, running: boolean): boolean {
-  return running && entry.lockDuringRun === true && entry.to !== pathname;
-}
-
-function isGroupActive(group: MenuGroup, pathname: string): boolean {
-  const hasHomePath = group.activePaths.includes("/");
-
-  if (hasHomePath) return pathname === "/";
-
-  return group.activePaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-}
-
-function isSetupEditorPath(pathname: string): boolean {
-  return (
-    pathname === "/setup" ||
-    pathname === "/setup/roi" ||
-    pathname === "/setup/reference" ||
-    pathname === "/setup/rules" ||
-    pathname.startsWith("/setup/rules/")
-  );
-}
-
-function isRulesetEditorPath(pathname: string): boolean {
-  const parts = pathname.split("/").filter(Boolean);
-
-  return parts.length === 4 && parts[0] === "projects" && parts[2] === "rulesets";
-}
-
-function isEditorPath(pathname: string): boolean {
-  return isSetupEditorPath(pathname) || isRulesetEditorPath(pathname);
-}
-
-function activateMenuEntry(
-  entry: Entry,
-  navigate: AppNavigate,
-  pathname: string,
-  running: boolean,
-): void {
-  if (isActionEntry(entry)) {
-    runMenuAction(entry.action);
-
-    return;
-  }
-
-  if (hasLockedState(entry, pathname, running)) {
-    ClientLogger.info("[top-menu] shortcut blocked while running", { to: entry.to });
-
-    return;
-  }
-
-  void navigate({ to: entry.to, search: {} as any, params: {} as any });
-}
-
-function buildShortcutBindings(
-  navigate: AppNavigate,
-  pathname: string,
-  running: boolean,
-): MenuShortcutBinding[] {
-  return GROUPS.flatMap((group) => group.items)
-    .filter(hasShortcut)
-    .map((entry) => ({
-      shortcut: entry.shortcut,
-      handler: () => activateMenuEntry(entry, navigate, pathname, running),
-    }));
-}
 
 export const GROUPS: MenuGroup[] = [
   {
@@ -468,35 +400,3 @@ export const ACTION_HANDLERS: Record<string, () => void> = {
   "help.docs": () => openHelpDocs(),
   "help.about": () => dispatchMenuCommand("help.about"),
 };
-
-function runMenuAction(action: string): void {
-  const handler = ACTION_HANDLERS[action];
-
-  if (handler === undefined) {
-    ClientLogger.error("[top-menu] command handler missing", { action });
-
-    return;
-  }
-
-  handler();
-}
-
-function dispatchMenuCommand(command: string): void {
-  window.dispatchEvent(new CustomEvent(MENU_COMMAND_EVENT, { detail: { command } }));
-  ClientLogger.info("[top-menu] command dispatched", { command });
-}
-
-function requestAppFullscreen(): void {
-  const root = document.documentElement;
-  root
-    .requestFullscreen()
-    .then(() => ClientLogger.info("[top-menu] fullscreen requested"))
-    .catch((error: unknown) => ClientLogger.error("[top-menu] fullscreen failed", error));
-}
-
-function openHelpDocs(): void {
-  window.open("https://docs.lovable.dev/", "_blank", "noopener,noreferrer");
-  ClientLogger.info("[top-menu] help docs opened");
-}
-
-

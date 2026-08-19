@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { PANELS } from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { toggleWindowPanel, collapseFirstOpenPanel } from "./TopMenuBarConstants";
-import { GROUPS, isActionEntry, ACTION_HANDLERS } from "./TopMenuBar";
+import { GROUPS, ACTION_HANDLERS } from "./TopMenuBar";
+import { isActionEntry } from "./TopMenuUtils";
 
 export function WindowMobileSection({ onClose }: { onClose: () => void }): React.JSX.Element | null {
   const panels = useWorkspaceLayoutStore((s) => s.panels);
