@@ -30,7 +30,9 @@ for (const sourceFile of project.getSourceFiles()) {
     }
   }
 
-  const arrowFunctions = sourceFile.getVariableDeclarations().filter(v => v.getInitializerIfKind(SyntaxKind.ArrowFunction));
+  const arrowFunctions = sourceFile
+    .getVariableDeclarations()
+    .filter((v) => v.getInitializerIfKind(SyntaxKind.ArrowFunction));
   for (const v of arrowFunctions) {
     const arrowFunc = v.getInitializerIfKind(SyntaxKind.ArrowFunction);
     if (!arrowFunc) continue;
@@ -52,8 +54,10 @@ for (const sourceFile of project.getSourceFiles()) {
 
   if (fileUpdated) {
     // Add import React if missing and if we are returning React.JSX.Element
-    const hasReactImport = sourceFile.getImportDeclarations().some(i => i.getModuleSpecifierValue() === "react");
-    // Usually React 17+ doesn't need 'import React', but for types we might need it if not using global JSX namespace, 
+    const hasReactImport = sourceFile
+      .getImportDeclarations()
+      .some((i) => i.getModuleSpecifierValue() === "react");
+    // Usually React 17+ doesn't need 'import React', but for types we might need it if not using global JSX namespace,
     // actually `React.JSX.Element` requires `React` namespace imported if it's not global.
     // In this codebase they use `React.JSX.Element` everywhere, so it's probably okay or they have `import * as React from "react"`.
     sourceFile.saveSync();

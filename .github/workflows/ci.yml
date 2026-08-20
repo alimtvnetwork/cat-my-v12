@@ -207,8 +207,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install deps
-        run: python3 -m pip install --quiet pytest jsonschema numpy
-            # 2) End-to-end CLI: JSONL -> baseline -> markdown + HTML tradeoff.
+        run:
+          python3 -m pip install --quiet pytest jsonschema numpy
+          # 2) End-to-end CLI: JSONL -> baseline -> markdown + HTML tradeoff.
       - name: Denial evidence CLI (offline replay)
         env:
           PYTHONPATH: ${{ github.workspace }}

@@ -23,19 +23,19 @@ You switch modes from the homepage or from Settings. The chosen backend URL is r
 
 ## Quick links
 
-|                  |                                                                 |
-| ---------------- | --------------------------------------------------------------- |
-| Live app         | https://cat-my-ui-v11.lovable.app                              |
+|                      |                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| Live app             | https://cat-my-ui-v11.lovable.app                                                    |
 | **Project overview** | [`.lovable/overview.md`](.lovable/overview.md) — architecture, diagrams, what's good |
-| **AI quality guide** | [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md) |
-| Spec root        | [`spec/00-overview.md`](spec/00-overview.md)                    |
-| Onboarding trail | [`.lovable/what-to-read.md`](.lovable/what-to-read.md)          |
-| Runtime map      | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md) |
-| Agent playbook   | [`AGENTS.md`](AGENTS.md)                                        |
-| Changelog        | [`CHANGELOG.md`](CHANGELOG.md)                                  |
-| Release notes    | [`RELEASE_NOTES.md`](RELEASE_NOTES.md)                          |
-| Plan index       | [`.lovable/plans/index.md`](.lovable/plans/index.md)           |
-| Project memory   | [`mem/index.md`](mem/index.md)                                  |
+| **AI quality guide** | [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md)     |
+| Spec root            | [`spec/00-overview.md`](spec/00-overview.md)                                         |
+| Onboarding trail     | [`.lovable/what-to-read.md`](.lovable/what-to-read.md)                               |
+| Runtime map          | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md)               |
+| Agent playbook       | [`AGENTS.md`](AGENTS.md)                                                             |
+| Changelog            | [`CHANGELOG.md`](CHANGELOG.md)                                                       |
+| Release notes        | [`RELEASE_NOTES.md`](RELEASE_NOTES.md)                                               |
+| Plan index           | [`.lovable/plans/index.md`](.lovable/plans/index.md)                                 |
+| Project memory       | [`mem/index.md`](mem/index.md)                                                       |
 
 ## Local dev (BE+FE+Shell)
 
@@ -74,20 +74,20 @@ Once both are up, open the app and use the **Seed / Backend** toggle on the home
 
 ## Project structure
 
-| Path                                     | What lives here                                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `src/`                                   | Frontend: TanStack Start routes, editor, panels, hooks, stores                              |
-| `BE/`                                    | Python backend: FastAPI app, SDK facade, response envelope, CLI                             |
-| `worker/`, `services/validation-worker/` | Validation worker (Python HTTP scorer)                                                      |
-| `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)                             |
-| `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor)                         |
-| `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                                         |
-| `docs/`                                  | Diagrams, runbooks, verification notes, and [runtime map](docs/architecture/runtime-map.md) |
-| `docs/architecture/`                     | Runtime map, integration tests, architecture decisions                                      |
-| `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                                            |
-| `tests/`                                 | Contract, integration, unit, and visual tests                                               |
+| Path                                     | What lives here                                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `src/`                                   | Frontend: TanStack Start routes, editor, panels, hooks, stores                                                           |
+| `BE/`                                    | Python backend: FastAPI app, SDK facade, response envelope, CLI                                                          |
+| `worker/`, `services/validation-worker/` | Validation worker (Python HTTP scorer)                                                                                   |
+| `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)                                                          |
+| `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor)                                                      |
+| `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                                                                      |
+| `docs/`                                  | Diagrams, runbooks, verification notes, and [runtime map](docs/architecture/runtime-map.md)                              |
+| `docs/architecture/`                     | Runtime map, integration tests, architecture decisions                                                                   |
+| `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                                                                         |
+| `tests/`                                 | Contract, integration, unit, and visual tests                                                                            |
 | `.lovable/`                              | Plans, memory, prompts, **[overview](.lovable/overview.md)**, **[AI guidelines](.lovable/ai-improvement-guidelines.md)** |
-| `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                                           |
+| `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                                                                        |
 
 ## How planning and memory are organised
 

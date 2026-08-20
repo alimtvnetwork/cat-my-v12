@@ -7,11 +7,13 @@ This document serves as a strict, universal checklist and specification for sett
 Before making any changes to `.github/workflows` or automation scripts, you **must read** the following architecture documents. These contain the foundational constraints and mechanisms for deployment, automation, and CI/CD pipelines.
 
 ### PowerShell & Orchestration (`spec/11-powershell-integration`)
+
 - [ ] `spec/11-powershell-integration/00-overview.md`
 - [ ] `spec/11-powershell-integration/02-script-reference.md`
 - [ ] `spec/11-powershell-integration/03-integration-guide.md`
 
 ### CI/CD Pipeline Workflows (`spec/12-cicd-pipeline-workflows`)
+
 - [ ] `spec/12-cicd-pipeline-workflows/00-overview.md`
 - [ ] `spec/12-cicd-pipeline-workflows/01-ci-pipeline.md`
 - [ ] `spec/12-cicd-pipeline-workflows/02-release-pipeline.md`
@@ -19,21 +21,25 @@ Before making any changes to `.github/workflows` or automation scripts, you **mu
 - [ ] `spec/12-cicd-pipeline-workflows/05-changelog-integration.md`
 
 ### CLI & Build (`spec/13-generic-cli`)
+
 - [ ] `spec/13-generic-cli/00-overview.md`
 - [ ] `spec/13-generic-cli/11-build-deploy.md`
 - [ ] `spec/13-generic-cli/18-batch-execution.md`
 
 ### Update Mechanisms (`spec/14-update`)
+
 - [ ] `spec/14-update/04-build-scripts.md`
 - [ ] `spec/14-update/17-release-pipeline.md`
 - [ ] `spec/14-update/18-install-scripts.md`
 
 ### Release Engineering (`spec/16-generic-release`)
+
 - [ ] `spec/16-generic-release/00-overview.md`
 - [ ] `spec/16-generic-release/02-release-pipeline.md`
 - [ ] `spec/16-generic-release/03-install-scripts.md`
 
 ### Context / Issue Logging
+
 - [ ] `cicd-issues/<issue-name>.md`
   - Any time a CI/CD pipeline fails, an AI must log the failure here (including error traces and environment context) before attempting a fix.
 
@@ -57,6 +63,7 @@ When building or fixing the CI/CD pipelines (e.g., `.github/workflows/ci.yml`), 
 To prevent hardcoded commands and ports, the execution architecture MUST be dynamic. The local run script (e.g., `run.ps1` or `run.sh`) must act as a generic orchestrator, while a **JSON configuration file** serves as the single source of truth for both local development and CI execution.
 
 ### Expected Configuration Structure (Reference: `run.config.json`)
+
 The JSON file should define all services, ports, and lifecycle commands.
 
 ```json

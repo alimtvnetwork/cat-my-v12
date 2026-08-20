@@ -93,6 +93,7 @@ upgrade, covering 200 tasks from the part2 plan.
 **Latest commit**: see `git log --oneline -20`
 
 All task categories delivered:
+
 - ✅ Canvas & rule drawing
 - ✅ Data model normalization
 - ✅ Vision processing algorithms

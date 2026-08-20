@@ -16,7 +16,9 @@ for (const sourceFile of project.getSourceFiles()) {
       const val = member.getValue();
       if (typeof val === "string") {
         if (val !== val.charAt(0).toUpperCase() + val.slice(1) || val.includes("_")) {
-           console.log(`Found invalid enum value: ${enumName}.${member.getName()} = "${val}" in ${sourceFile.getBaseName()}`);
+          console.log(
+            `Found invalid enum value: ${enumName}.${member.getName()} = "${val}" in ${sourceFile.getBaseName()}`,
+          );
         }
       }
     }
