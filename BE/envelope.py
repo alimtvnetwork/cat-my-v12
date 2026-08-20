@@ -175,7 +175,7 @@ def success(
             Message=message,
             Timestamp=_now_iso(),
         ),
-        Attributes=_attributes(requested_at, items, has_Errors=False, total_records=total_records),
+        Attributes=_attributes(requested_at, items, has_errors=False, total_records=total_records),
         Results=items,
     )
 
@@ -204,7 +204,7 @@ def failure(
             Message=message,
             Timestamp=_now_iso(),
         ),
-        Attributes=_attributes(requested_at, [], has_Errors=True),
+        Attributes=_attributes(requested_at, [], has_errors=True),
         Results=[],
         Errors=Errors(
             Code=code,
