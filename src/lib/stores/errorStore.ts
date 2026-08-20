@@ -16,7 +16,11 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { create } from "zustand";
 
 import { buildCapturedError, type CapturedError, type CaptureMeta } from "@/types/errors";
-import { loadErrorHistory, saveErrorHistory, clearPersistedErrorHistory } from "../errors/history-facade";
+import {
+  loadErrorHistory,
+  saveErrorHistory,
+  clearPersistedErrorHistory,
+} from "../errors/history-facade";
 
 const MAX_HISTORY = 50;
 

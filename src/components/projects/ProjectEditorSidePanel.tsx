@@ -14,7 +14,14 @@ interface Props {
   selection: any;
 }
 
-export function ProjectEditorSidePanel({ project, rulesets, summary, onRan, samples, selection }: Props): React.JSX.Element | null {
+export function ProjectEditorSidePanel({
+  project,
+  rulesets,
+  summary,
+  onRan,
+  samples,
+  selection,
+}: Props): React.JSX.Element | null {
   return (
     <div className="w-96 flex-shrink-0 overflow-auto border-l border-ca-border bg-ca-panel p-hmi-4 space-y-hmi-3">
       <ProjectRulesSection project={project} rulesets={rulesets} />

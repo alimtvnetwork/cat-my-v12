@@ -1,4 +1,4 @@
 export enum ImageSourceModeType {
-  STATIC = 'STATIC',
-  LIVE = 'LIVE'
+  STATIC = "STATIC",
+  LIVE = "LIVE",
 }

@@ -79,7 +79,6 @@ export async function withSdkRetry<T>(
   let lastErr: CaptureError | null = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-
       return await op({ attempt, cid });
     } catch (err) {
       const ce =

@@ -39,7 +39,6 @@ export interface SeedSlotProps<K extends CatSeedBundleSlice> {
 }
 
 function DefaultSkeleton({ slot }: { slot?: string }) {
-
   return (
     <section
       aria-busy="true"
@@ -85,14 +84,12 @@ export function SeedSlot<K extends CatSeedBundleSlice>({
   }
 
   if (status !== "ready" || !data) {
-
     return <>{skeleton ?? <DefaultSkeleton slot={slot} />}</>;
   }
 
   const list = data as unknown as ReadonlyArray<unknown>;
 
   if (Array.isArray(list) && list.length === 0) {
-
     return (
       <>
         {empty ?? (

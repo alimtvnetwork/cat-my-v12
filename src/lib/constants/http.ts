@@ -28,6 +28,5 @@ export const ALL_HTTP_METHODS: readonly HttpMethod[] = Object.freeze([
 ]);
 
 export function isHttpMethod(value: unknown): value is HttpMethod {
-
   return typeof value === "string" && (ALL_HTTP_METHODS as readonly string[]).includes(value);
 }

@@ -10,7 +10,6 @@ export interface SameImageParamsPanelProps {
 }
 
 export function SameImageParamsPanel(_props: SameImageParamsPanelProps) {
-
   return (
     <p className="text-xs text-muted-foreground">
       Compares the run image to the ruleset&apos;s reference image. No parameters.

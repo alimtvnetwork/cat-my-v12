@@ -16,11 +16,11 @@ export function ToolTitleBar({
       {/* Dark navy strip */}
       <div className="flex items-center gap-2 p-1.5 bg-[#001f3f] text-white">
         <span className="font-mono font-bold text-sm ml-1">{settings.id}</span>
-        <input 
-          type="text" 
+        <input
+          type="text"
           className="bg-transparent border border-white/30 text-white px-2 py-0.5 rounded text-sm w-48 focus:outline-none focus:border-white"
           value={settings.name}
-          onChange={(e) => setSettings(s => ({ ...s, name: e.target.value }))}
+          onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
         />
       </div>
       {/* Breadcrumb row */}
@@ -35,7 +35,10 @@ export function ToolTitleBar({
         <div className="flex items-center gap-2">
           <span className="text-ca-ink font-semibold">Reference Image</span>
           <div className="bg-ca-bg border border-ca-border px-2 py-1 rounded text-ca-ink font-mono flex items-center gap-2 cursor-pointer hover:border-ca-ink">
-            <span>{settings.referenceImage.set} - {settings.referenceImage.index.toString().padStart(3, "0")}</span>
+            <span>
+              {settings.referenceImage.set} -{" "}
+              {settings.referenceImage.index.toString().padStart(3, "0")}
+            </span>
             <span className="text-[10px]">▼</span>
           </div>
         </div>

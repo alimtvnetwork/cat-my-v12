@@ -30,7 +30,12 @@ export interface RulesRailHeaderProps {
   onError?: (message: string) => void;
 }
 
-export function RulesRailHeader({ rules, groups = [], onImport, onError }: RulesRailHeaderProps): React.JSX.Element | null {
+export function RulesRailHeader({
+  rules,
+  groups = [],
+  onImport,
+  onError,
+}: RulesRailHeaderProps): React.JSX.Element | null {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const exportRules = () => {

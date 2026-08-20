@@ -28,7 +28,6 @@ export function clearOcrResult(ruleId: string): void {
 }
 
 export function getOcrResult(ruleId: string): OcrResult | undefined {
-  
   return results.get(ruleId);
 }
 

@@ -19,7 +19,11 @@ export interface EdgePitchRuleEditorProps {
 const PITCH_MAX = 4096;
 const COUNT_MAX = 9_999;
 
-export function EdgePitchRuleEditor({ name, params, onChange }: EdgePitchRuleEditorProps): React.JSX.Element | null {
+export function EdgePitchRuleEditor({
+  name,
+  params,
+  onChange,
+}: EdgePitchRuleEditorProps): React.JSX.Element | null {
   const p: EdgePitchParams = { ...EDGE_PITCH_DEFAULTS, ...params };
   const patch = (next: Partial<EdgePitchParams>) => onChange({ ...p, ...next });
   const patchLineTool = (next: Partial<LineToolParams>) => patch(next as Partial<EdgePitchParams>);

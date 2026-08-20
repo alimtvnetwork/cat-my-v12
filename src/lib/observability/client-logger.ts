@@ -1,9 +1,9 @@
 import { isAppError } from "../errors/AppError";
 
 export enum LogLevelType {
-  Info = 'Info',
-  Warn = 'Warn',
-  Error = 'Error',
+  Info = "Info",
+  Warn = "Warn",
+  Error = "Error",
 }
 
 export interface ClientLoggerContext {
@@ -19,7 +19,11 @@ export interface ClientLoggerPayload {
 }
 
 export class ClientLogger {
-  private static formatLog(level: LogLevelType, message: string, context?: ClientLoggerContext): ClientLoggerPayload {
+  private static formatLog(
+    level: LogLevelType,
+    message: string,
+    context?: ClientLoggerContext,
+  ): ClientLoggerPayload {
     return {
       Level: level,
       Message: message,
@@ -28,7 +32,10 @@ export class ClientLogger {
     };
   }
 
-  private static parseContext(contextOrError?: unknown, ...args: unknown[]): ClientLoggerContext | undefined {
+  private static parseContext(
+    contextOrError?: unknown,
+    ...args: unknown[]
+  ): ClientLoggerContext | undefined {
     let finalContext: ClientLoggerContext | undefined = undefined;
 
     if (isAppError(contextOrError)) {
@@ -45,7 +52,10 @@ export class ClientLogger {
         Stack: contextOrError.stack,
       };
     } else if (contextOrError !== undefined && contextOrError !== null) {
-      finalContext = typeof contextOrError === 'object' ? { ...(contextOrError as object) } : { data: contextOrError };
+      finalContext =
+        typeof contextOrError === "object"
+          ? { ...(contextOrError as object) }
+          : { data: contextOrError };
     }
 
     if (args.length > 0) {
@@ -73,7 +83,7 @@ export class ClientLogger {
   static error(message: string, errorOrContext?: unknown, ...args: unknown[]): void {
     const finalContext = ClientLogger.parseContext(errorOrContext, ...args);
     const payload = ClientLogger.formatLog(LogLevelType.Error, message, finalContext);
-    
+
     if (errorOrContext instanceof Error) {
       console.error(JSON.stringify(payload), errorOrContext);
     } else {

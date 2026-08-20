@@ -28,8 +28,7 @@ export function TopMenuGroup({
         {group.items.map((item, idx) => {
           const active = isActionEntry(item) === false && item.to === pathname;
           const locked =
-            isActionEntry(item) === false &&
-            Boolean(running && item.lockDuringRun && !active);
+            isActionEntry(item) === false && Boolean(running && item.lockDuringRun && !active);
 
           return (
             <MenubarItemRow

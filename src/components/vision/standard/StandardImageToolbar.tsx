@@ -1,6 +1,20 @@
 import React from "react";
-import { PatternSearchSettings, ImageSourceType, RenderModeType } from "@/domain/vision/pattern-search";
-import { RefreshCw, ZoomIn, ZoomOut, Maximize, MousePointer2, Scan, Grid, Layers, MapPin } from "lucide-react";
+import {
+  PatternSearchSettings,
+  ImageSourceType,
+  RenderModeType,
+} from "@/domain/vision/pattern-search";
+import {
+  RefreshCw,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  MousePointer2,
+  Scan,
+  Grid,
+  Layers,
+  MapPin,
+} from "lucide-react";
 
 export function StandardImageToolbar({
   settings,
@@ -11,7 +25,9 @@ export function StandardImageToolbar({
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   viewModes: { regions: boolean; results: boolean; grid: boolean };
-  setViewModes: React.Dispatch<React.SetStateAction<{ regions: boolean; results: boolean; grid: boolean }>>;
+  setViewModes: React.Dispatch<
+    React.SetStateAction<{ regions: boolean; results: boolean; grid: boolean }>
+  >;
 }): React.JSX.Element | null {
   const handleZoom = (delta: number) => {
     setSettings((s) => ({
@@ -68,7 +84,7 @@ export function StandardImageToolbar({
       </button>
 
       <div className="flex items-center gap-2 ml-auto">
-        <select 
+        <select
           value={settings.view.zoom}
           onChange={(e) => {
             const val = e.target.value === "fit" ? 100 : Number(e.target.value);
@@ -83,10 +99,18 @@ export function StandardImageToolbar({
           <option value={200}>200%</option>
           <option value="fit">Fit</option>
         </select>
-        <button onClick={() => handleZoom(-10)} className="p-1 hover:bg-ca-border rounded" title="Zoom Out">
+        <button
+          onClick={() => handleZoom(-10)}
+          className="p-1 hover:bg-ca-border rounded"
+          title="Zoom Out"
+        >
           <ZoomOut className="w-4 h-4 text-ca-ink" />
         </button>
-        <button onClick={() => handleZoom(10)} className="p-1 hover:bg-ca-border rounded" title="Zoom In">
+        <button
+          onClick={() => handleZoom(10)}
+          className="p-1 hover:bg-ca-border rounded"
+          title="Zoom In"
+        >
           <ZoomIn className="w-4 h-4 text-ca-ink" />
         </button>
         <button onClick={handleFit} className="p-1 hover:bg-ca-border rounded" title="Fit to View">
@@ -95,23 +119,23 @@ export function StandardImageToolbar({
       </div>
 
       <div className="flex items-center gap-1 border-l border-ca-border pl-4">
-        <button 
-          onClick={() => setViewModes(s => ({ ...s, regions: !s.regions }))}
-          className={`p-1 rounded ${viewModes.regions ? 'bg-ca-select/20 text-ca-select' : 'hover:bg-ca-border text-ca-ink'}`} 
+        <button
+          onClick={() => setViewModes((s) => ({ ...s, regions: !s.regions }))}
+          className={`p-1 rounded ${viewModes.regions ? "bg-ca-select/20 text-ca-select" : "hover:bg-ca-border text-ca-ink"}`}
           title="Show/Hide Region Overlays"
         >
           <Layers className="w-4 h-4" />
         </button>
-        <button 
-          onClick={() => setViewModes(s => ({ ...s, results: !s.results }))}
-          className={`p-1 rounded ${viewModes.results ? 'bg-ca-select/20 text-ca-select' : 'hover:bg-ca-border text-ca-ink'}`} 
+        <button
+          onClick={() => setViewModes((s) => ({ ...s, results: !s.results }))}
+          className={`p-1 rounded ${viewModes.results ? "bg-ca-select/20 text-ca-select" : "hover:bg-ca-border text-ca-ink"}`}
           title="Show/Hide Result Graphics"
         >
           <MapPin className="w-4 h-4" />
         </button>
-        <button 
-          onClick={() => setViewModes(s => ({ ...s, grid: !s.grid }))}
-          className={`p-1 rounded ${viewModes.grid ? 'bg-ca-select/20 text-ca-select' : 'hover:bg-ca-border text-ca-ink'}`} 
+        <button
+          onClick={() => setViewModes((s) => ({ ...s, grid: !s.grid }))}
+          className={`p-1 rounded ${viewModes.grid ? "bg-ca-select/20 text-ca-select" : "hover:bg-ca-border text-ca-ink"}`}
           title="Show/Hide Grid"
         >
           <Grid className="w-4 h-4" />

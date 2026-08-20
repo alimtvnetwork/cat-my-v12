@@ -1,4 +1,3 @@
-
 # 01 — Pattern Search (Standard UI) — Full Implementation Spec
 
 Status: authoritative build spec. Hand this single file to an AI agent; it is
@@ -125,7 +124,6 @@ StandardPatternSearch
 
 Full reference (Screen 1):
 
-
 The screen is a fixed-aspect controller panel with two columns:
 
 - **Left column (~62% width):** black chrome. Top = numeric readout header. Below
@@ -160,7 +158,6 @@ operators expect fixed positions.
 
 ## 3. Header readouts (top-left, black area)
 
-
 Left-hand label/value pairs:
 
 | Element        | Shown as | Meaning                                                                                                                 | Behaviour                                                     |
@@ -190,7 +187,6 @@ numbers from the same source.
 ---
 
 ## 4. Image toolbar (strip above the canvas)
-
 
 Left→right:
 
@@ -226,7 +222,6 @@ the project.
 
 ## 5. Canvas and region overlays
 
-
 The canvas shows the image with these overlays, colour-coded:
 
 - **Yellow rectangle (outermost)** — the image region / full field of view frame.
@@ -260,7 +255,6 @@ Interaction requirements (all of these are required, not optional):
 ---
 
 ## 6. Tool panel header and tabs
-
 
 ### 6.1 Title bar
 
@@ -298,7 +292,6 @@ the shared settings so switching UI mode preserves the active tab.
 
 ### 7.1 Edit Pattern Region (Screen 1)
 
-
 Panel body contents, top to bottom:
 
 1. Section heading **`Edit Pattern Region`**.
@@ -322,7 +315,6 @@ Panel body contents, top to bottom:
 
 After the pattern region is confirmed, the panel shows the Detection Conditions
 block.
-
 
 | Control                                         | Displayed         | Type                                             | Notes                                                                                                                                                                     |
 | ----------------------------------------------- | ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -348,7 +340,6 @@ to the same state.
 ---
 
 ## 8. Search Region tab — regions and mask layers (Screen 3)
-
 
 Breadcrumb reads `Pattern Search > Search Region`.
 
@@ -385,7 +376,6 @@ Breadcrumb reads `Pattern Search > Search Region`.
 
 ### 8.3 Image Region block
 
-
 Rendered disabled until the checkbox is ticked:
 
 - Checkbox **`Use Image Region`** (unchecked by default).
@@ -406,8 +396,6 @@ enabling/disabling the controls.
 ---
 
 ## 9. Bottom action bar
-
-
 
 Two rows sit at the bottom. The upper row belongs to the panel; the lower black strip
 spans the window.
@@ -518,11 +506,8 @@ Embedded inline in section 2 above (`assets/01-pattern-search/01-pattern-search-
 
 ### Screen 2 — Detection Conditions
 
-
 ### Screen 3 — Search Region and Mask Region 0-3
-
 
 Original files also live in the repo at `assets/01-pattern-search/`.
 The verbatim briefing that produced this spec is in
 `02-conversation/01-pattern-search-briefing.md`.
-

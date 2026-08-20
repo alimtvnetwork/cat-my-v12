@@ -20,7 +20,7 @@ export function ModernPatternSearch({
       if (store.segments.length > 0) {
         const segId = store.segments[0].visionSettings!.id;
         store.setActiveSegment(segId);
-        
+
         // Map settings.masks to store masks
         store.setRoi(segId, {
           x: settings.searchRegion.geometry.x || 0,
@@ -41,31 +41,37 @@ export function ModernPatternSearch({
   // Sync store -> settings when store changes (e.g. from Modern UI editing)
   useEffect(() => {
     if (!hasInitialized.current) return;
-    
-    const activeSeg = store.segments.find(s => s.visionSettings?.id === store.activeSegmentId);
+
+    const activeSeg = store.segments.find((s) => s.visionSettings?.id === store.activeSegmentId);
     if (!activeSeg || !activeSeg.visionSettings?.roi) return;
-    
+
     const roi = activeSeg.visionSettings.roi;
-    
-    onChange(prev => {
+
+    onChange((prev) => {
       // Create new masks array based on what's in the store
-      const newMasks = (roi.masks || []).map(m => ({
+      const newMasks = (roi.masks || []).map((m) => ({
         shape: m.type,
         geometry: m.geometry,
       }));
-      
+
       // Ensure at least 4 slots for Standard UI, exactly as required
       while (newMasks.length < 4) {
         newMasks.push({ shape: ShapeType.None, geometry: {} });
       }
-      
+
       return {
         ...prev,
         searchRegion: {
           ...prev.searchRegion,
-          geometry: { ...prev.searchRegion.geometry, x: roi.x, y: roi.y, width: roi.width, height: roi.height }
+          geometry: {
+            ...prev.searchRegion.geometry,
+            x: roi.x,
+            y: roi.y,
+            width: roi.width,
+            height: roi.height,
+          },
         },
-        masks: newMasks
+        masks: newMasks,
       };
     });
   }, [store.segments, store.activeSegmentId, onChange]);

@@ -49,17 +49,14 @@ import type { LogTailItem } from "@/lib/observability/logs.functions";
 const ERROR_BUCKET = new Set(["error", "critical", "fatal"]);
 
 function isErrorLevel(raw: unknown): boolean {
-
   return typeof raw === "string" && ERROR_BUCKET.has(raw.toLowerCase());
 }
 
 function formatIso(sec: number | null): string {
   if (sec == null) return "-";
   try {
-
     return new Date(sec * 1000).toISOString().replace("T", " ").slice(0, 19);
   } catch {
-
     return String(sec);
   }
 }
@@ -148,7 +145,10 @@ export interface ExitEnvelopeDrawerProps {
   items: LogTailItem[];
 }
 
-export function ExitEnvelopeDrawer({ session, items }: ExitEnvelopeDrawerProps): React.JSX.Element | null {
+export function ExitEnvelopeDrawer({
+  session,
+  items,
+}: ExitEnvelopeDrawerProps): React.JSX.Element | null {
   const [open, setOpen] = useState(false);
   const ended = !!session && session.EndedAt != null;
   const success = ended && (session.IsSuccess === true || session.ExitCode === 0);

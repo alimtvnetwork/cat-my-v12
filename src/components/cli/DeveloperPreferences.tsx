@@ -40,7 +40,7 @@ export function DeveloperPreferences(): React.JSX.Element | null {
           </p>
         </div>
       </div>
-      
+
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-4 rounded-md border bg-background/50 px-3 py-3">
           <div className="flex flex-col">
@@ -48,13 +48,15 @@ export function DeveloperPreferences(): React.JSX.Element | null {
               Show developer stack frames
             </Label>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              When off, <code className="font-mono">EnvelopeErrorPanel</code> hides Backend / Frontend
-              / DelegatedServiceErrorStack frames and the DelegatedRequestServer tree even in DEV or
-              on 5xx responses. The backend message stays visible so operators can still triage the
-              failure.
+              When off, <code className="font-mono">EnvelopeErrorPanel</code> hides Backend /
+              Frontend / DelegatedServiceErrorStack frames and the DelegatedRequestServer tree even
+              in DEV or on 5xx responses. The backend message stays visible so operators can still
+              triage the failure.
             </p>
             {!framesHydrated && (
-              <p className="mt-1 text-[11px] text-muted-foreground">Loading persisted preference…</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Loading persisted preference…
+              </p>
             )}
           </div>
           <Switch
@@ -73,11 +75,13 @@ export function DeveloperPreferences(): React.JSX.Element | null {
               Hardware Mock (Seed Mode)
             </Label>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              When enabled, camera capture and discovery are simulated client-side.
-              This mocks the presence of <code className="font-mono">LOVABLE_HW_DAHENG=1</code>.
+              When enabled, camera capture and discovery are simulated client-side. This mocks the
+              presence of <code className="font-mono">LOVABLE_HW_DAHENG=1</code>.
             </p>
             {!mockHydrated && (
-              <p className="mt-1 text-[11px] text-muted-foreground">Loading persisted preference…</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Loading persisted preference…
+              </p>
             )}
           </div>
           <Switch

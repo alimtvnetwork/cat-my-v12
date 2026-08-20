@@ -25,7 +25,6 @@ import { makeMicSettingsFacade } from "@/lib/mic-settings/facade";
 import type { CatSeedProject } from "@/lib/seed/types";
 
 function norm(s: string): string {
-
   return s.trim().toLowerCase();
 }
 
@@ -70,7 +69,6 @@ interface NamedItem {
 }
 
 function sampleNames(map: Map<string, NamedItem>): string[] {
-
   return Array.from(map.values())
     .slice(0, 12)
     .map((r) => r.name);
@@ -82,7 +80,6 @@ function buildHint(
   wanted: string,
 ): string {
   if (reason === SeedBindingUnresolvedReasonType.EmptyFacade) {
-
     return kind === SeedBindingKindType.Camera
       ? `No cameras exist yet. Create a camera named "${wanted}" under /setup/camera or fix bundle.json.`
       : `No mic settings exist yet. Create a MicSettings preset named "${wanted}" or fix bundle.json.`;

@@ -93,7 +93,11 @@ for (const route of VISUAL_ROUTES) {
 
     if (ratio > VISUAL_DIFF.maxDiffPixelRatio) {
       writeFileSync(diffPath, PNG.sync.write(diff));
-      console.log('ACTUAL MAX DIFF:', VISUAL_DIFF.maxDiffPixelRatio, typeof VISUAL_DIFF.maxDiffPixelRatio);
+      console.log(
+        "ACTUAL MAX DIFF:",
+        VISUAL_DIFF.maxDiffPixelRatio,
+        typeof VISUAL_DIFF.maxDiffPixelRatio,
+      );
       // Actionable CI log line; picked up by scripts/ci-v3.sh output.
       console.error(
         `[visual] FAIL ${route.slug} ratio=${ratio.toFixed(5)} ` +

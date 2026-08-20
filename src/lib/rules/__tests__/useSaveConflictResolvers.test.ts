@@ -25,7 +25,6 @@ import {
   type RuleSetEnvelope,
 } from "../draftStore";
 function envelope(version = 1): RuleSetEnvelope {
-
   return {
     SchemaVersion: RULESET_SCHEMA_VERSION,
     RuleSetId: 7,
@@ -50,7 +49,6 @@ function envelope(version = 1): RuleSetEnvelope {
   };
 }
 function okResponse(env: RuleSetEnvelope): Response {
-
   return envelopeOk([env]);
 }
 describe("useSaveConflictResolvers", () => {

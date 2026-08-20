@@ -118,12 +118,10 @@ export interface ProjectStoreState {
 }
 
 function cleanName(name: string): string {
-
   return name.trim();
 }
 
 function sameName(a: string, b: string): boolean {
-
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
@@ -468,7 +466,10 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            ClientLogger.warn("[projects/store] reorderProjectRulesets: unknown project", projectId);
+            ClientLogger.warn(
+              "[projects/store] reorderProjectRulesets: unknown project",
+              projectId,
+            );
 
             return state;
           }
@@ -633,7 +634,10 @@ export const useProjectStore = create<ProjectStoreState>()(
           const project = state.projects[projectId];
 
           if (!project) {
-            ClientLogger.warn("[projects/store] updateProjectAiSettings: unknown project", projectId);
+            ClientLogger.warn(
+              "[projects/store] updateProjectAiSettings: unknown project",
+              projectId,
+            );
 
             return state;
           }

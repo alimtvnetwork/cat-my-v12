@@ -151,7 +151,11 @@ export const ShapeCatalog: Record<ShapeType, PatternShape> = {
   },
 };
 
-export const PatternShapes = [ShapeCatalog[ShapeType.Rectangle], ShapeCatalog[ShapeType.Circle], ShapeCatalog[ShapeType.Ellipse]];
+export const PatternShapes = [
+  ShapeCatalog[ShapeType.Rectangle],
+  ShapeCatalog[ShapeType.Circle],
+  ShapeCatalog[ShapeType.Ellipse],
+];
 
 export const MaskShapes: MaskShape[] = [
   ShapeCatalog[ShapeType.None],

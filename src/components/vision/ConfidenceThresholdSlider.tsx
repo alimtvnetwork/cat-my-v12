@@ -18,16 +18,10 @@ export function ConfidenceThresholdSlider({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <label
-          htmlFor="confidence-threshold"
-          className="text-[13px] font-medium text-ca-text"
-        >
+        <label htmlFor="confidence-threshold" className="text-[13px] font-medium text-ca-text">
           Min. Confidence Threshold
         </label>
-        <span
-          className="text-[13px] tabular-nums font-mono text-ca-ink-muted"
-          aria-live="polite"
-        >
+        <span className="text-[13px] tabular-nums font-mono text-ca-ink-muted" aria-live="polite">
           {value}%
         </span>
       </div>

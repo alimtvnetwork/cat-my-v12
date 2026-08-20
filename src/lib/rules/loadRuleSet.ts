@@ -17,7 +17,6 @@ import { putDraft, DraftOriginType, type RuleSetEnvelope } from "./draftStore";
 
 export class LoadRuleSetError extends EnvelopeError {
   get httpStatus(): number {
-
     return this.responseStatus;
   }
 }
@@ -25,7 +24,6 @@ export class LoadRuleSetError extends EnvelopeError {
 function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
   if (err instanceof LoadRuleSetError) return err;
   if (EnvelopeError.is(err)) {
-
     return new LoadRuleSetError({
       code: err.code,
       backendMessage: err.backendMessage,

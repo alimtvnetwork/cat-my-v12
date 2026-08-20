@@ -8,11 +8,7 @@ import { snapRect } from "@/lib/editor/snap";
 import { computeAlignment, mergeGuides, type AlignGuide } from "@/lib/editor/align";
 import type { AlignResult } from "@/lib/editor/align";
 import { IMAGE_BOUNDS, clampRectToBounds } from "@/lib/editor/coords";
-import {
-  computeRotation,
-  isAtAngleBound,
-  normalizeAngle,
-} from "@/lib/editor/rotation";
+import { computeRotation, isAtAngleBound, normalizeAngle } from "@/lib/editor/rotation";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
 export interface SelectionOverlayGesturesDeps {

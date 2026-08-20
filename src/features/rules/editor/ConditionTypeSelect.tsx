@@ -28,7 +28,6 @@ export function ConditionTypeSelect({
   disabled,
   ariaLabel = "Condition type",
 }: ConditionTypeSelectProps) {
-
   return (
     <Select
       value={value}

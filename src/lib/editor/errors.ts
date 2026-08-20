@@ -7,7 +7,6 @@ type LogFields = LogEntry["fields"];
 export const EDITOR_SHELL_CRASH_CODE = "E_UI_EDITOR_SHELL_CRASH";
 
 function newCorrelationId(): string {
-  
   return `cid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
@@ -16,7 +15,6 @@ function newCorrelationId(): string {
 // returned id through every log the gesture emits so downstream analysis can
 // group the resulting state transitions.
 export function nextGestureId(source: string): string {
-  
   return `gid-${source}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
@@ -49,7 +47,6 @@ export interface GestureLogger {
 // multi-log gesture (e.g. undo -> applySnapshot -> selection change) is a
 // single traceable frame in the log stream.
 export function withGesture(correlationId: string): GestureLogger {
-  
   return {
     correlationId,
     info: (code, fields) => write(LogLevelType.Info, code, fields, correlationId),

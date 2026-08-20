@@ -31,10 +31,7 @@ export function StandardCanvas({
       const rect = el.getBoundingClientRect();
       const anchorScreen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
-      const newZoom = Math.max(
-        0.1,
-        Math.min(5, zoomFactor * Math.exp(-e.deltaY * 0.0015))
-      );
+      const newZoom = Math.max(0.1, Math.min(5, zoomFactor * Math.exp(-e.deltaY * 0.0015)));
 
       const anchorImage = screenToImage(anchorScreen, viewport);
 
@@ -158,7 +155,7 @@ export function StandardCanvas({
                   viewport={viewport}
                   active={true}
                 />
-              )
+              ),
           )}
         </>
       )}

@@ -37,7 +37,7 @@ export function CaptureTriggerButton(): React.JSX.Element | null {
         handleCapture();
       }
     };
-    
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isCapturing]);
@@ -55,7 +55,11 @@ export function CaptureTriggerButton(): React.JSX.Element | null {
               className="w-10 h-10 rounded-full shadow-md hover:scale-105 transition-transform"
               aria-label="Trigger Capture"
             >
-              {isCapturing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+              {isCapturing ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Camera className="h-5 w-5" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">
@@ -66,4 +70,3 @@ export function CaptureTriggerButton(): React.JSX.Element | null {
     </div>
   );
 }
-

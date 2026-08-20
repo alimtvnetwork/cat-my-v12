@@ -25,7 +25,6 @@ export function screenToImage(point: EditorPoint, viewport: Viewport, dpr = 1): 
 }
 
 export function clampZoom(zoom: number): number {
-
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 }
 
@@ -104,7 +103,6 @@ export function rectFromCenter(center: EditorPoint, corner: EditorPoint): Editor
 }
 
 export function clampPointToRect(point: EditorPoint, rect: EditorRect): EditorPoint {
-
   return {
     x: clamp(point.x, rect.x, rect.x + rect.width),
     y: clamp(point.y, rect.y, rect.y + rect.height),
@@ -121,6 +119,5 @@ export function clampRectToBounds(rect: EditorRect, bounds: EditorRect): EditorR
 }
 
 export function clamp(value: number, min: number, max: number): number {
-
   return Math.min(max, Math.max(min, value));
 }

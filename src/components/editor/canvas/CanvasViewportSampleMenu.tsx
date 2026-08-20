@@ -70,11 +70,7 @@ export function CanvasViewportSampleMenu({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <div
-      className="editor-canvas-hud editor-canvas-sample"
-      role="group"
-      aria-label="Sample image"
-    >
+    <div className="editor-canvas-hud editor-canvas-sample" role="group" aria-label="Sample image">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -240,11 +236,7 @@ export function CanvasViewportSampleMenu({
             />
             <span>Peek full image (temporarily unblur)</span>
           </label>
-          <div
-            className="editor-canvas-focus-presets"
-            role="group"
-            aria-label="Spotlight presets"
-          >
+          <div className="editor-canvas-focus-presets" role="group" aria-label="Spotlight presets">
             <button
               type="button"
               className="editor-canvas-focus-preset-btn"

@@ -17,7 +17,12 @@ export interface RuleSetIOBarProps {
   onError?: (message: string) => void;
 }
 
-export function RuleSetIOBar({ rules, groups = [], onImport, onError }: RuleSetIOBarProps): React.JSX.Element | null {
+export function RuleSetIOBar({
+  rules,
+  groups = [],
+  onImport,
+  onError,
+}: RuleSetIOBarProps): React.JSX.Element | null {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const exportRules = () => {

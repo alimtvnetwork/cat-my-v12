@@ -4,7 +4,6 @@ import { SeedBundleValidationError } from "../schemas-v2";
 import bundleV2 from "../data/bundle.v2.json";
 
 function makeLogger() {
-
   return {
     error: vi.fn(),
     group: vi.fn(),

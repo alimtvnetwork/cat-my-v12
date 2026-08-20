@@ -173,7 +173,6 @@ export function intersectRects(a: MaskRect, b: MaskRect): MaskRect | null {
  */
 export function applyMaskToRoi(roi: MaskRect, mask: MaskPrimitive): MaskRect | null {
   if (!mask.invert) {
-
     return intersectRects(roi, mask.rect);
   }
 
@@ -187,7 +186,6 @@ export function applyMaskToRoi(roi: MaskRect, mask: MaskPrimitive): MaskRect | n
     inter.width === roi.width &&
     inter.height === roi.height
   ) {
-
     return null;
   }
 
@@ -196,6 +194,5 @@ export function applyMaskToRoi(roi: MaskRect, mask: MaskPrimitive): MaskRect | n
 
 /** True when the mask is well-formed. Convenience for call sites. */
 export function isMaskValid(mask: MaskPrimitive): boolean {
-
   return validateMaskPrimitive(mask).length === 0;
 }

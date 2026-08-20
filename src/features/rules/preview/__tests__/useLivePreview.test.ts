@@ -11,7 +11,6 @@ import type { Ruleset } from "@/lib/editor/schema";
 import { ValidationModeType } from "@/types/rules/ValidationModeType";
 
 function emptyRuleset(): Ruleset {
-
   return {
     schemaVersion: 3,
     rules: [],

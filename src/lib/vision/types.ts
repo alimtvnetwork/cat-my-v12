@@ -25,8 +25,6 @@ export interface VisionSettings {
   roi?: RoiSettings;
 }
 
-
-
 export interface ShapeTrax3Settings {
   enabled: boolean;
   matchScore: number;

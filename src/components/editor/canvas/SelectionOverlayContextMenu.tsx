@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Copy,
@@ -29,11 +24,7 @@ import { editorKindLabel } from "@/lib/editor/tools";
 import { MenuSection, MenuItem } from "./ContextMenuItems";
 import { RunOrderQuickBar } from "./RunOrderQuickBar";
 
-import {
-  RuleActionKindType,
-  type RuleActionKind,
-  KIND_ORDER,
-} from "./SelectionOverlayConstants";
+import { RuleActionKindType, type RuleActionKind, KIND_ORDER } from "./SelectionOverlayConstants";
 import { KIND_COLOR, KIND_ICON } from "@/lib/editor/kind-icons";
 import { COLOR_SWATCHES } from "@/types/rules/RuleColor";
 import { RunOrderQuickBarEdgeType } from "./types";
@@ -154,10 +145,10 @@ export function SelectionOverlayContextMenu({
 
     if (left + w + pad > vw) left = Math.max(pad, contextMenu.x - w);
     if (top + h + pad > vh) top = Math.max(pad, contextMenu.y - h);
-    
+
     left = Math.max(pad, Math.min(left, vw - w - pad));
     top = Math.max(pad, Math.min(top, vh - h - pad));
-    
+
     setMenuPos({ left, top });
   }, [contextMenu]);
 
@@ -198,11 +189,7 @@ export function SelectionOverlayContextMenu({
       </div>
       <div className="px-3 py-1.5">
         <div className="mb-1 text-hmi-caption text-ca-ink-muted">Change to</div>
-        <div
-          className="flex items-center gap-1"
-          role="group"
-          aria-label="Change control type"
-        >
+        <div className="flex items-center gap-1" role="group" aria-label="Change control type">
           {KIND_ORDER.map((k) => {
             const Icon = KIND_ICON[k];
             const isCurrent = k === menuRule.kind;
@@ -235,11 +222,7 @@ export function SelectionOverlayContextMenu({
           <div className="mb-1 flex items-center gap-1 text-hmi-caption text-ca-ink-muted">
             <Palette size={12} /> Color
           </div>
-          <div
-            role="group"
-            aria-label="Rule color"
-            className="flex flex-wrap items-center gap-1"
-          >
+          <div role="group" aria-label="Rule color" className="flex flex-wrap items-center gap-1">
             {COLOR_SWATCHES.map((c) => {
               const current = (menuRule.params?.color as string | undefined) ?? null;
               const isCurrent = current === c.value;
@@ -293,11 +276,7 @@ export function SelectionOverlayContextMenu({
             <div className="mb-1 flex items-center gap-1 text-hmi-caption text-ca-ink-muted">
               <RotateCw size={12} /> Rotate
             </div>
-            <div
-              className="flex flex-wrap items-center gap-1"
-              role="group"
-              aria-label="Rotate"
-            >
+            <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Rotate">
               {[0, 90, 180, 270].map((deg) => (
                 <button
                   key={deg}

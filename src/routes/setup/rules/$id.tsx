@@ -19,7 +19,10 @@ import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
 import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
-import { createDefaultPatternSearchSettings, PatternSearchSettings } from "@/domain/vision/pattern-search";
+import {
+  createDefaultPatternSearchSettings,
+  PatternSearchSettings,
+} from "@/domain/vision/pattern-search";
 import { AppError } from "@/lib/errors/AppError";
 import { scoreRulesRemote } from "@/lib/editor/validation.functions";
 
@@ -58,22 +61,25 @@ function RuleEditorRoute() {
   }, [rule, navigate]);
 
   const { mode } = useUiMode();
-  
+
   const [settings, setSettings] = React.useState<PatternSearchSettings>(() => {
-    return (rule?.conditions?.[0] as unknown as PatternSearchSettings) || createDefaultPatternSearchSettings(rule?.id || "T106");
+    return (
+      (rule?.conditions?.[0] as unknown as PatternSearchSettings) ||
+      createDefaultPatternSearchSettings(rule?.id || "T106")
+    );
   });
 
   const [validationError, setValidationError] = React.useState<string | null>(null);
 
   const isFirstRender = React.useRef(true);
-  
+
   React.useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
     if (!rule || rule.isCategory) return;
-    
+
     setValidationError(null);
     const timeout = setTimeout(() => {
       save({
@@ -81,11 +87,14 @@ function RuleEditorRoute() {
         conditions: [settings as unknown as any],
       }).catch((err: unknown) => {
         if (err instanceof Error && err.name === "RuleValidationError") {
-           setValidationError(err.message);
-        } else if (err instanceof AppError || (err instanceof Error && (err as any).name === "AppError")) {
-           setValidationError(err.message);
+          setValidationError(err.message);
+        } else if (
+          err instanceof AppError ||
+          (err instanceof Error && (err as any).name === "AppError")
+        ) {
+          setValidationError(err.message);
         } else {
-           setValidationError(String(err));
+          setValidationError(String(err));
         }
       });
     }, 500);
@@ -103,17 +112,19 @@ function RuleEditorRoute() {
           imageName: "reference.jpg",
           imageWidth: 1920,
           imageHeight: 1080,
-          rules: [{
-            id: rule.id,
-            kind: "C",
-            name: rule.name,
-            x: settings.searchRegion?.geometry?.x ?? 0,
-            y: settings.searchRegion?.geometry?.y ?? 0,
-            width: settings.searchRegion?.geometry?.width ?? 100,
-            height: settings.searchRegion?.geometry?.height ?? 100,
-            params: {}
-          }]
-        }
+          rules: [
+            {
+              id: rule.id,
+              kind: "C",
+              name: rule.name,
+              x: settings.searchRegion?.geometry?.x ?? 0,
+              y: settings.searchRegion?.geometry?.y ?? 0,
+              width: settings.searchRegion?.geometry?.width ?? 100,
+              height: settings.searchRegion?.geometry?.height ?? 100,
+              params: {},
+            },
+          ],
+        },
       });
       console.log("Evaluate result:", res);
       if (res.ok === false) {
@@ -121,9 +132,9 @@ function RuleEditorRoute() {
       }
     } catch (err: unknown) {
       if (err instanceof AppError || (err instanceof Error && (err as any).name === "AppError")) {
-         setValidationError((err as Error).message);
+        setValidationError((err as Error).message);
       } else {
-         setValidationError(String(err));
+        setValidationError(String(err));
       }
     }
   }, [rule, settings]);
@@ -139,7 +150,11 @@ function RuleEditorRoute() {
       {rule && !rule.isCategory ? (
         <div className="flex flex-1 flex-col min-h-0">
           {mode === UiModeType.Standard ? (
-            <StandardPatternSearch settings={settings} onChange={setSettings} onEvaluate={onEvaluate} />
+            <StandardPatternSearch
+              settings={settings}
+              onChange={setSettings}
+              onEvaluate={onEvaluate}
+            />
           ) : (
             <ModernPatternSearch settings={settings} onChange={setSettings} />
           )}

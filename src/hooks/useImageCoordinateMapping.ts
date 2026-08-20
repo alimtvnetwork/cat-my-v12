@@ -12,7 +12,7 @@ export interface ImageGeometry {
 
 export function useImageCoordinateMapping(
   containerRef: RefObject<HTMLElement | null>,
-  imageRef: RefObject<HTMLImageElement | null>
+  imageRef: RefObject<HTMLImageElement | null>,
 ): ImageGeometry | null {
   const [geometry, setGeometry] = useState<ImageGeometry | null>(null);
 

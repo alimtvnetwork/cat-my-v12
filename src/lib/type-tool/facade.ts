@@ -140,7 +140,6 @@ export const typeToolFacade = {
     void persist();
   },
   getSnapshot(): TypeToolPrefs {
-
     return cache;
   },
   subscribe(cb: () => void): () => void {
@@ -154,7 +153,6 @@ export const typeToolFacade = {
 };
 
 export function useTypeToolPrefs(): TypeToolPrefs {
-
   return useSyncExternalStore(
     typeToolFacade.subscribe,
     typeToolFacade.getSnapshot,

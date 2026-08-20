@@ -27,7 +27,6 @@ import {
 } from "./model";
 
 function newCorrelationId(): string {
-
   return Math.random().toString(36).slice(2, 10).padEnd(8, "0");
 }
 
@@ -67,10 +66,8 @@ interface WindowStorageLike {
 function browserStorage(): WindowStorageLike | null {
   if (typeof window === "undefined") return null;
   try {
-
     return window.localStorage;
   } catch {
-
     return null;
   }
 }
@@ -106,7 +103,6 @@ class LocalStorageCameraFacade implements CameraFacade {
   }
 
   get(id: string): CameraSetting | null {
-
     return findCameraSettingById(id);
   }
 
@@ -114,7 +110,6 @@ class LocalStorageCameraFacade implements CameraFacade {
     const validated = validateCameraSetting(entry);
 
     if (validated.ok === false) {
-
       return {
         ok: false,
         isFail: true,
@@ -130,7 +125,6 @@ class LocalStorageCameraFacade implements CameraFacade {
       const isFail = !st.upsert(entry);
 
       if (isFail === true) {
-
         return {
           ok: false,
           isFail: true,
@@ -149,7 +143,6 @@ class LocalStorageCameraFacade implements CameraFacade {
       const f = r.failure;
 
       if (f.kind === "validation") {
-
         return {
           ok: false,
           isFail: true,
@@ -177,7 +170,6 @@ class LocalStorageCameraFacade implements CameraFacade {
     const referrers = this.resolveReferrers(id);
 
     if (referrers.length > 0) {
-
       return {
         ok: false,
         isFail: true,
@@ -193,7 +185,6 @@ class LocalStorageCameraFacade implements CameraFacade {
       const removed = st.remove(id);
 
       if (!removed) {
-
         return {
           ok: false,
           isFail: true,
@@ -209,7 +200,6 @@ class LocalStorageCameraFacade implements CameraFacade {
     const s = browserStorage();
 
     if (!s) {
-
       return {
         ok: false,
         isFail: true,
@@ -230,7 +220,6 @@ class LocalStorageCameraFacade implements CameraFacade {
 
       return { ok: true, isFail: false };
     } catch (err) {
-
       return {
         ok: false,
         isFail: true,

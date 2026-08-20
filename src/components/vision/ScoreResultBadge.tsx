@@ -23,9 +23,7 @@ export function ScoreResultBadge({ result, confidence = 98.5 }: Props): React.JS
       <Badge
         variant="outline"
         className={`text-[13px] tabular-nums font-mono ${
-          isPassing
-            ? "text-green-500 border-green-500/30"
-            : "text-red-500 border-red-500/30"
+          isPassing ? "text-green-500 border-green-500/30" : "text-red-500 border-red-500/30"
         }`}
       >
         {displayConfidence.toFixed(1)}%

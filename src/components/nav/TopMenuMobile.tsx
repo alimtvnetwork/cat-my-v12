@@ -9,7 +9,11 @@ import { GROUPS } from "./TopMenuBar";
 import { ACTION_HANDLERS } from "./TopMenuActionHandlers";
 import { isActionEntry } from "./TopMenuUtils";
 
-export function WindowMobileSection({ onClose }: { onClose: () => void }): React.JSX.Element | null {
+export function WindowMobileSection({
+  onClose,
+}: {
+  onClose: () => void;
+}): React.JSX.Element | null {
   const panels = useWorkspaceLayoutStore((s) => s.panels);
   const togglePanel = useWorkspaceLayoutStore((s) => s.togglePanel);
   const openPanel = useWorkspaceLayoutStore((s) => s.openPanel);

@@ -16,7 +16,6 @@ function memoryRepo(): ProjectRepositoryFacade {
   return {
     kind: "memory",
     async readItem(k) {
-
       return store.get(k) ?? null;
     },
     async writeItem(k, v) {

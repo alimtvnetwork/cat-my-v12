@@ -11,14 +11,14 @@
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0 && bash scripts/check-magic-strings.sh --strict",
     "lint:magic": "bash scripts/check-magic-strings.sh --strict",
-    "typecheck": "bunx @tanstack/router-cli generate && bunx tsc --noEmit",
-    "typecheck:strict": "bunx @tanstack/router-cli generate && bunx tsc --noEmit && bunx tsc --noEmit --pretty false",
-    "verify:magic": "bunx @tanstack/router-cli generate && bunx tsc --noEmit && bash scripts/check-magic-strings.sh --strict",
+    "typecheck": "bun x @tanstack/router-cli generate && bun x tsc --noEmit",
+    "typecheck:strict": "bun x @tanstack/router-cli generate && bun x tsc --noEmit && bun x tsc --noEmit --pretty false",
+    "verify:magic": "bun x @tanstack/router-cli generate && bun x tsc --noEmit && bash scripts/check-magic-strings.sh --strict",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "guidelines:check": "bun run format:check && bun run typecheck:strict && bun run lint",
     "ci:v3": "bash scripts/ci-v3.sh",
-    "visual:test": "bunx playwright test --config playwright.config.ts",
+    "visual:test": "bun x playwright test --config playwright.config.ts",
     "visual:update": "bun run tests/visual/capture-baselines.ts"
   },
   "dependencies": {

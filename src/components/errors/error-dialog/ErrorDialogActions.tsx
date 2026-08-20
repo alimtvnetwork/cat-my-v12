@@ -9,7 +9,10 @@ export interface ErrorDialogActionsProps {
   onClose: () => void;
 }
 
-export function ErrorDialogActions({ record, onClose }: ErrorDialogActionsProps): React.JSX.Element | null {
+export function ErrorDialogActions({
+  record,
+  onClose,
+}: ErrorDialogActionsProps): React.JSX.Element | null {
   const handleCopy = () => {
     void copyErrorRecord(record);
   };

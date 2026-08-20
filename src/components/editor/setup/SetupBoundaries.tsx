@@ -31,7 +31,13 @@ export function SetupNotFoundComponent(): React.JSX.Element | null {
   );
 }
 
-export function SetupErrorComponent({ error, reset }: { error: Error; reset: () => void }): React.JSX.Element | null {
+export function SetupErrorComponent({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}): React.JSX.Element | null {
   const router = useRouter();
   useEffect(() => {
     logger.error("E_UI_SETUP_ROUTE_CRASH", { message: error.message, name: error.name });

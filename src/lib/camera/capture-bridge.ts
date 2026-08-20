@@ -38,7 +38,6 @@ function captureRequestFields(
   request: CaptureRequest,
   extra: Record<string, string | number | boolean | null> = {},
 ): Record<string, string | number | boolean | null> {
-
   return {
     povId: request.povId ?? null,
     brightness: request.brightness ?? null,
@@ -100,7 +99,6 @@ export function readPersistedCameraControls(
 
     return out;
   } catch {
-
     return {};
   }
 }
@@ -252,30 +250,24 @@ function mapEnvelopeErrorToCamera(err: EnvelopeError): {
 } {
   switch (err.code) {
     case "E_CAM_UNAVAILABLE":
-
       return {
         kind: CameraErrorKindType.Unavailable,
         level: "warn",
         logCode: "W_CAM_CAPTURE_UNAVAILABLE",
       };
     case "E_CAM_TIMEOUT":
-
       return { kind: CameraErrorKindType.Timeout, level: "warn", logCode: "W_CAM_CAPTURE_TIMEOUT" };
     case "E_CAM_INVALID":
-
       return { kind: CameraErrorKindType.Invalid, level: "warn", logCode: "W_CAM_CAPTURE_INVALID" };
     case "E_CAM_SDK":
-
       return { kind: CameraErrorKindType.Sdk, level: "error", logCode: "E_CAM_CAPTURE_SDK" };
     case "E_BE_UNAVAILABLE":
-
       return {
         kind: CameraErrorKindType.Network,
         level: "error",
         logCode: "E_CAM_CAPTURE_NETWORK",
       };
     default:
-
       return { kind: CameraErrorKindType.Sdk, level: "error", logCode: "E_CAM_CAPTURE_HTTP" };
   }
 }
@@ -354,7 +346,6 @@ export async function fetchCameraDefaults(): Promise<CameraDefaultsResult> {
 
     return { source, reason: payload?.reason, defaults };
   } catch {
-
     return { source: "fallback", reason: "client-error", defaults: {} };
   } finally {
     clearTimeout(timeoutId);

@@ -14,14 +14,7 @@ export interface CanvasViewportDragDropDeps {
 }
 
 export function useCanvasViewportDragDrop(deps: CanvasViewportDragDropDeps) {
-  const {
-    manualViewportRef,
-    rulesRef,
-    canvasSizeRef,
-    viewportRef,
-    setViewport,
-    selectRef,
-  } = deps;
+  const { manualViewportRef, rulesRef, canvasSizeRef, viewportRef, setViewport, selectRef } = deps;
 
   function handleCanvasDragOver(event: React.DragEvent<HTMLCanvasElement>): void {
     const types = event.dataTransfer.types;

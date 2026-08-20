@@ -1,7 +1,7 @@
 export function readPixelColor(
   imageSource: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
   x: number,
-  y: number
+  y: number,
 ): string | null {
   try {
     const canvas = document.createElement("canvas");
@@ -12,7 +12,7 @@ export function readPixelColor(
 
     ctx.drawImage(imageSource, Math.floor(x), Math.floor(y), 1, 1, 0, 0, 1, 1);
     const pixel = ctx.getImageData(0, 0, 1, 1).data;
-    
+
     // Memory leak prevention: release canvas
     canvas.width = 0;
     canvas.height = 0;

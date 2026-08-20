@@ -91,7 +91,9 @@ export function useCategoryOptions(projectId?: string): CategoryOptionsResult {
       if (!projectId) {
         // Workspace-wide scope has no owning project to attach to; callers
         // (NEW PROJECT form) hold the pending list themselves until submit.
-        ClientLogger.info("[useCategoryOptions] create ignored (workspace scope)", { name: trimmed });
+        ClientLogger.info("[useCategoryOptions] create ignored (workspace scope)", {
+          name: trimmed,
+        });
 
         return;
       }

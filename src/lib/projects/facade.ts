@@ -68,7 +68,6 @@ class MemoryProjectRepositoryFacade implements ProjectRepositoryFacade {
   readonly kind = "memory" as const;
   private readonly mem = new Map<string, string>();
   async readItem(key: string): Promise<string | null> {
-
     return this.mem.get(key) ?? null;
   }
 

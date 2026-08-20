@@ -8,7 +8,7 @@ interface CanvasViewportMarqueeProps {
 
 export function CanvasViewportMarquee({ marqueeRect, viewport }: CanvasViewportMarqueeProps) {
   if (!marqueeRect) return null;
-  
+
   return (
     <div
       data-testid="canvas-marquee"

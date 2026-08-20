@@ -36,7 +36,6 @@ const SeedContext = createContext<SeedContextValue | null>(null);
  *  outside a `<SeedProvider>`. Prefer `useSeedContext` in production
  *  code paths where the provider is guaranteed by the root route. */
 export function useSeedContextOptional(): SeedContextValue | null {
-
   return useContext(SeedContext);
 }
 
@@ -99,7 +98,10 @@ export function SeedProvider({ children, facade }: SeedProviderProps) {
         const asError = err instanceof Error ? err : new Error(String(err));
         setError(asError);
         setStatus(SeedStatusType.Error);
-        ClientLogger.error(`[seed] SeedProvider load failed source=${activeFacade.source}`, asError);
+        ClientLogger.error(
+          `[seed] SeedProvider load failed source=${activeFacade.source}`,
+          asError,
+        );
       });
 
     return () => {
@@ -135,6 +137,5 @@ export function useSeedContext(): SeedContextValue {
 
 /** Convenience selector for the currently loaded bundle. Returns null until ready. */
 export function useSeedBundle(): CatSeedBundle | null {
-
   return useSeedContext().bundle;
 }

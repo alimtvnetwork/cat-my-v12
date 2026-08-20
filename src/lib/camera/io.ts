@@ -36,7 +36,6 @@ export function importCameraLibraryJson(text: string): ImportResult {
   try {
     parsed = JSON.parse(text);
   } catch (err) {
-
     return {
       ok: false,
       isFail: true,
@@ -45,14 +44,12 @@ export function importCameraLibraryJson(text: string): ImportResult {
   }
 
   if (!parsed || typeof parsed !== "object") {
-
     return { ok: false, isFail: true, errors: [{ path: "$", message: "Root must be an object" }] };
   }
 
   const obj = parsed as { kind?: unknown; version?: unknown; entries?: unknown };
 
   if (obj.kind !== "ca.camera.library") {
-
     return {
       ok: false,
       isFail: true,
@@ -61,7 +58,6 @@ export function importCameraLibraryJson(text: string): ImportResult {
   }
 
   if (obj.version !== 1) {
-
     return {
       ok: false,
       isFail: true,
@@ -70,7 +66,6 @@ export function importCameraLibraryJson(text: string): ImportResult {
   }
 
   if (Array.isArray(obj.entries) === false) {
-
     return { ok: false, isFail: true, errors: [{ path: "entries", message: "Must be an array" }] };
   }
 

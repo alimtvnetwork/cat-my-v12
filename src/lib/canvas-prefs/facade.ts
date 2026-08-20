@@ -59,7 +59,6 @@ export const DEFAULT_CANVAS_PREFS: CanvasPrefs = {
 };
 
 function clampSpacing(n: unknown): GridSpacing {
-
   return n === 8 || n === 16 || n === 32 || n === 64 ? n : 16;
 }
 
@@ -172,7 +171,6 @@ export const canvasPrefsFacade = {
     void persist();
   },
   getSnapshot(): CanvasPrefs {
-
     return cache;
   },
   subscribe(cb: () => void): () => void {
@@ -186,7 +184,6 @@ export const canvasPrefsFacade = {
 };
 
 export function useCanvasPrefs(): CanvasPrefs {
-
   return useSyncExternalStore(
     canvasPrefsFacade.subscribe,
     canvasPrefsFacade.getSnapshot,

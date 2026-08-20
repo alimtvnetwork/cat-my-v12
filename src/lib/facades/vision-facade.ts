@@ -46,7 +46,7 @@ class ApiVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {
     const res = await fetchBackend<ReferenceImage>("camera/capture", {
       method: "POST",
-      body: JSON.stringify({ cameraId })
+      body: JSON.stringify({ cameraId }),
     });
     if (!res.Results || res.Results.length === 0) {
       throw new Error("No image returned from capture");
@@ -63,7 +63,9 @@ class ApiVisionFacade implements VisionFacade {
   }
 
   async getReference(projectId: string): Promise<ReferenceImage | undefined> {
-    const res = await fetchBackend<ReferenceImage | undefined>(`images/reference?projectId=${projectId}`);
+    const res = await fetchBackend<ReferenceImage | undefined>(
+      `images/reference?projectId=${projectId}`,
+    );
     if (!res.Results || res.Results.length === 0 || !res.Results[0]) {
       return undefined;
     }
@@ -73,21 +75,21 @@ class ApiVisionFacade implements VisionFacade {
   async setReference(projectId: string, imageId: number): Promise<void> {
     await fetchBackend<void>(`images/reference`, {
       method: "PUT",
-      body: JSON.stringify({ projectId, imageId })
+      body: JSON.stringify({ projectId, imageId }),
     });
   }
 
   async updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void> {
     await fetchBackend<void>(`camera/settings`, {
       method: "PUT",
-      body: JSON.stringify({ cameraId, key, value })
+      body: JSON.stringify({ cameraId, key, value }),
     });
   }
 
   async updateTriggerMode(cameraId: string, mode: string): Promise<void> {
     await fetchBackend<void>(`camera/settings`, {
       method: "PUT",
-      body: JSON.stringify({ cameraId, triggerMode: mode })
+      body: JSON.stringify({ cameraId, triggerMode: mode }),
     });
   }
 }
@@ -97,5 +99,5 @@ export const visionFacade: VisionFacade = new Proxy({} as VisionFacade, {
     const profile = getActiveProfile();
     const instance = profile ? new MockVisionFacade() : new ApiVisionFacade();
     return instance[prop];
-  }
+  },
 });

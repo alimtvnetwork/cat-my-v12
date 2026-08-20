@@ -95,7 +95,6 @@ function buildCopyPayload(captured: CapturedError, label: string, message: strin
 }
 
 function copyDetailsChip(captured: CapturedError, label: string, message: string) {
-
   return {
     label: "Copy details",
     onClick: () => {
@@ -135,7 +134,6 @@ function copyDetailsChip(captured: CapturedError, label: string, message: string
 }
 
 function clickableTitle(text: string, onClick: () => void) {
-
   return createElement(
     "button",
     {

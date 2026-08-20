@@ -67,7 +67,6 @@ export async function buildCacheKey(
 }
 
 export function getCachedRun(key: string): CachedRun | null {
-
   return CACHE.get(key) ?? null;
 }
 

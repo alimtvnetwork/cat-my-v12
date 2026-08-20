@@ -12,17 +12,11 @@ export function ZoomableCanvas({ children }: Props): React.JSX.Element | null {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showResultLayer, setShowResultLayer] = useState(true);
 
-  const {
-    transform,
-    handleWheel,
-    handleMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    resetView
-  } = usePanZoom(containerRef);
+  const { transform, handleWheel, handleMouseDown, handleMouseMove, handleMouseUp, resetView } =
+    usePanZoom(containerRef);
 
   return (
-    <div 
+    <div
       className="relative w-full h-full overflow-hidden bg-ca-panel touch-none"
       ref={containerRef}
       onWheel={handleWheel}
@@ -31,13 +25,15 @@ export function ZoomableCanvas({ children }: Props): React.JSX.Element | null {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <div 
+      <div
         className="absolute inset-0 origin-top-left transition-transform duration-75"
-        style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}
+        style={{
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+        }}
       >
         {children}
       </div>
-      
+
       {/* Overlay Toolbar (Step 70 & 73) */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-30">
         <Button
@@ -62,4 +58,3 @@ export function ZoomableCanvas({ children }: Props): React.JSX.Element | null {
     </div>
   );
 }
-

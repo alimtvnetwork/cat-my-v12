@@ -66,7 +66,6 @@ function firstEnvelopeError(env: IpcErrorEnvelope | undefined): EnvelopeError | 
 }
 
 function asString(v: unknown): string | undefined {
-
   return typeof v === "string" && v.length > 0 ? v : undefined;
 }
 

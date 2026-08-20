@@ -207,7 +207,11 @@ export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
 
         if (shouldRetry(code) === false || attempt === MAX_ATTEMPTS) break;
         const backoff = BASE_BACKOFF_MS * 2 ** (attempt - 1);
-        ClientLogger.info("[validation.functions] retrying", { attempt, backoff, status: res.status });
+        ClientLogger.info("[validation.functions] retrying", {
+          attempt,
+          backoff,
+          status: res.status,
+        });
         await sleep(backoff);
         continue;
       }

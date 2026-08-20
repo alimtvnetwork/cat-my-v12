@@ -58,9 +58,7 @@ export function SelectionOverlayRotationHandles({
           role="button"
           aria-label={`Rotate (${p.id})`}
           tabIndex={atAngleBound ? -1 : 0}
-          data-testid={
-            p.id === "ne" ? "rule-rotate-handle" : `rule-rotate-handle-${p.id}`
-          }
+          data-testid={p.id === "ne" ? "rule-rotate-handle" : `rule-rotate-handle-${p.id}`}
           data-at-bound={atAngleBound ? "true" : undefined}
           aria-disabled={atAngleBound || undefined}
           className="pointer-events-auto absolute z-40 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"

@@ -10,13 +10,7 @@ interface Props {
   onAction: (id: string, action: RuleActionKind, payload?: number) => void;
 }
 
-export function SelectionOverlayQuickActions({
-  rule,
-  tl,
-  br,
-  canvasSize,
-  onAction,
-}: Props) {
+export function SelectionOverlayQuickActions({ rule, tl, br, canvasSize, onAction }: Props) {
   // Dock the quick-actions strip to the OUTSIDE-RIGHT edge of the ROI as
   // a vertical stack so it never collides with the X·Y / W×H / name-chip
   // stack sitting above the shape, or with the rotation handle sitting
@@ -54,9 +48,7 @@ export function SelectionOverlayQuickActions({
       </button>
       <button
         type="button"
-        aria-label={
-          rule.isLocked ? `Cannot delete locked ${rule.name}` : `Delete ${rule.name}`
-        }
+        aria-label={rule.isLocked ? `Cannot delete locked ${rule.name}` : `Delete ${rule.name}`}
         title={rule.isLocked ? "Unlock first (right-click, Unlock)" : "Delete"}
         disabled={rule.isLocked}
         className="flex h-6 w-6 items-center justify-center rounded-sm text-ca-ng hover:bg-ca-panel hover:brightness-125 disabled:cursor-not-allowed disabled:opacity-40"

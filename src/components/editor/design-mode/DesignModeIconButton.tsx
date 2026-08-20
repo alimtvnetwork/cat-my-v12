@@ -7,12 +7,7 @@ export interface IconButtonProps {
   label: string;
 }
 
-export function IconButton({
-  children,
-  onClick,
-  disabled,
-  label,
-}: IconButtonProps) {
+export function IconButton({ children, onClick, disabled, label }: IconButtonProps) {
   return (
     <button
       type="button"

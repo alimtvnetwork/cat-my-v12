@@ -36,8 +36,6 @@ function NotFoundComponent() {
   );
 }
 
-
-
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [

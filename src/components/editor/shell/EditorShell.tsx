@@ -12,7 +12,13 @@ export interface EditorShellProps {
   children?: ReactNode;
 }
 
-export function EditorShell({ topBar, ribbon, rail, status, children }: EditorShellProps): React.JSX.Element | null {
+export function EditorShell({
+  topBar,
+  ribbon,
+  rail,
+  status,
+  children,
+}: EditorShellProps): React.JSX.Element | null {
   // Plan 65: the editor shell delegates to PanelHost so every registered
   // workspace panel (Tools, Rules, plus anything opened from the Window
   // menu) renders with correct open / minimized / floating state driven

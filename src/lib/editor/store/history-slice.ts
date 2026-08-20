@@ -79,7 +79,6 @@ function makeEntry(
 }
 
 function cloneSnapshot(snapshot: HistorySnapshot): HistorySnapshot {
-  
   return {
     rules: snapshot.rules.slice(),
     selectedIds: snapshot.selectedIds.slice(),

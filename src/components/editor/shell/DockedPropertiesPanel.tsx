@@ -20,7 +20,9 @@ export interface DockedPropertiesPanelProps {
   imageBounds?: typeof IMAGE_BOUNDS;
 }
 
-export function DockedPropertiesPanel({ imageBounds }: DockedPropertiesPanelProps = {}): React.JSX.Element | null {
+export function DockedPropertiesPanel({
+  imageBounds,
+}: DockedPropertiesPanelProps = {}): React.JSX.Element | null {
   const rules = useRulesStore((s) => s.rules);
   const selectedIds = useRulesStore((s) => s.selectedIds);
   const setRuleName = useRulesStore((s) => s.setRuleName);

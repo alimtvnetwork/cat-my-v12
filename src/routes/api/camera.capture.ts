@@ -62,7 +62,6 @@ export const Route = createFileRoute("/api/camera/capture")({
         try {
           payload = await request.json();
         } catch {
-          
           return envelopeFail({
             code: "E_CAM_INVALID",
             backendMessage: "Capture request body was not valid JSON.",
@@ -137,7 +136,6 @@ export const Route = createFileRoute("/api/camera/capture")({
         try {
           body = await workerResp.json();
         } catch {
-          
           return envelopeFail({
             code: "E_CAM_SDK",
             backendMessage: "Camera worker returned a non-JSON body.",

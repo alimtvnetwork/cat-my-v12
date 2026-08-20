@@ -33,7 +33,7 @@ export function ColorPalettePanel({
                 "group relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border",
                 selectedColor === color
                   ? "border-blue-500 ring-2 ring-blue-500/20"
-                  : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
+                  : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600",
               )}
               style={{ backgroundColor: color }}
               onClick={() => onSelectColor(color)}

@@ -18,7 +18,11 @@ export interface EdgeWidthRuleEditorProps {
 
 const WIDTH_MAX = 4096;
 
-export function EdgeWidthRuleEditor({ name, params, onChange }: EdgeWidthRuleEditorProps): React.JSX.Element | null {
+export function EdgeWidthRuleEditor({
+  name,
+  params,
+  onChange,
+}: EdgeWidthRuleEditorProps): React.JSX.Element | null {
   const p: EdgeWidthParams = { ...EDGE_WIDTH_DEFAULTS, ...params };
   const patch = (next: Partial<EdgeWidthParams>) => onChange({ ...p, ...next });
   const patchLineTool = (next: Partial<LineToolParams>) => patch(next as Partial<EdgeWidthParams>);

@@ -1,9 +1,13 @@
 import { useCameraStatus } from "@/hooks/use-vision-api";
 import { cn } from "@/lib/utils";
 
-export function CameraConnectionIndicator({ cameraId = "default" }: { cameraId?: string }): React.JSX.Element | null {
+export function CameraConnectionIndicator({
+  cameraId = "default",
+}: {
+  cameraId?: string;
+}): React.JSX.Element | null {
   const { data, isFail, isLoading } = useCameraStatus(cameraId);
-  
+
   let status: "connected" | "disconnected" | "error" | "connecting" = "connecting";
   if (isFail) {
     status = "error";
@@ -23,9 +27,7 @@ export function CameraConnectionIndicator({ cameraId = "default" }: { cameraId?:
           "bg-red-500": status === "error",
         })}
       />
-      <span className="text-[13px] tabular-nums text-ca-foreground capitalize">
-        {status}
-      </span>
+      <span className="text-[13px] tabular-nums text-ca-foreground capitalize">{status}</span>
     </div>
   );
 }

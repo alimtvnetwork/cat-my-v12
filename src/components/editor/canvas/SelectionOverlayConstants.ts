@@ -32,8 +32,6 @@ export const KIND_ORDER: readonly EditorRuleKind[] = [
 export const OUTER_BLUR_PX = 6;
 export const INNER_BAND_BLUR_PX = 2;
 
-
-
 export const HUD_PARAMS: HudParamSpec[] = [
   { key: "threshold", label: "Threshold", min: 0, max: 100, step: 1, suffix: "%" },
   { key: "similarity", label: "Similarity", min: 0, max: 100, step: 1, suffix: "%" },

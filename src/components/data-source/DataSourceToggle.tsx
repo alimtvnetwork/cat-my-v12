@@ -53,7 +53,11 @@ async function probeBackend(url: string, fetchImpl: typeof fetch): Promise<void>
   }
 }
 
-export function DataSourceToggle({ className, healthUrl = "/api/health", fetchImpl }: Props): React.JSX.Element | null {
+export function DataSourceToggle({
+  className,
+  healthUrl = "/api/health",
+  fetchImpl,
+}: Props): React.JSX.Element | null {
   const source = useDataSource();
   const [pending, setPending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);

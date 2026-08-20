@@ -30,7 +30,6 @@ export async function readFacadeJson<T>(fullKey: string): Promise<T | null> {
 
   if (raw === null) return null;
   try {
-
     return JSON.parse(raw) as T;
   } catch (err) {
     ClientLogger.warn("[facade-json] parse failed", fullKey, err);

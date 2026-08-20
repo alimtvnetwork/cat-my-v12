@@ -106,6 +106,5 @@ export function parseFacadeRows<T>(
  * envelope change (versioning, compression) lands in exactly one place.
  */
 export function serializeFacadeRows<T>(rows: readonly T[]): string {
-
   return JSON.stringify(rows);
 }

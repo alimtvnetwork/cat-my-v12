@@ -57,7 +57,6 @@ function bucket(store: Persisted, ns: IntAliasNamespace): NsBucket {
     existing.map &&
     typeof existing.map === "object"
   ) {
-
     return existing;
   }
 

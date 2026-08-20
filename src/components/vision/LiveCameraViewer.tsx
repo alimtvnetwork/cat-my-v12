@@ -3,7 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function LiveCameraViewer({ isConnected }: { isConnected: boolean }): React.JSX.Element | null {
+export function LiveCameraViewer({
+  isConnected,
+}: {
+  isConnected: boolean;
+}): React.JSX.Element | null {
   const [focusPeaking, setFocusPeaking] = useState(false);
 
   if (!isConnected) {
@@ -16,16 +20,17 @@ export function LiveCameraViewer({ isConnected }: { isConnected: boolean }): Rea
           </div>
           <h3 className="text-[15px] font-medium text-ca-foreground mb-2">No Signal Detected</h3>
           <p className="text-[13px] text-ca-muted mb-6 leading-relaxed">
-            The camera feed is currently unavailable. Please verify the hardware connection or ensure the camera is not being used by another application.
+            The camera feed is currently unavailable. Please verify the hardware connection or
+            ensure the camera is not being used by another application.
           </p>
           <div className="flex flex-col w-full gap-3 text-left">
             <div className="flex items-center gap-3 text-[13px] p-3 rounded bg-ca-panel/50 border border-ca-border/50">
-               <Usb className="h-4 w-4 text-ca-muted" />
-               <span className="text-ca-foreground">Check USB or GigE connection</span>
+              <Usb className="h-4 w-4 text-ca-muted" />
+              <span className="text-ca-foreground">Check USB or GigE connection</span>
             </div>
             <div className="flex items-center gap-3 text-[13px] p-3 rounded bg-ca-panel/50 border border-ca-border/50">
-               <AlertCircle className="h-4 w-4 text-ca-muted" />
-               <span className="text-ca-foreground">Verify driver installation</span>
+              <AlertCircle className="h-4 w-4 text-ca-muted" />
+              <span className="text-ca-foreground">Verify driver installation</span>
             </div>
           </div>
         </div>
@@ -45,7 +50,7 @@ export function LiveCameraViewer({ isConnected }: { isConnected: boolean }): Rea
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <span className="text-white/50 font-medium">Live Feed Active</span>
       </div>
-      
+
       {/* Focus Peaking Overlay Stub */}
       {focusPeaking && (
         <div className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-500/20 to-transparent" />

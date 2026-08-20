@@ -35,7 +35,11 @@ export interface TitlebarProps {
  * invariant; the mobile fallback strip below is still gated on
  * `program && !showBreadcrumb` exactly as before.
  */
-export function Titlebar({ program, right, showBreadcrumb = true }: TitlebarProps): React.JSX.Element | null {
+export function Titlebar({
+  program,
+  right,
+  showBreadcrumb = true,
+}: TitlebarProps): React.JSX.Element | null {
   const density = useUiPrefsStore((s) => s.headerDensity);
   const headerRef = useHeaderMetrics<HTMLElement>();
 

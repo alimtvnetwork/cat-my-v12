@@ -79,7 +79,9 @@ export function WorkerHealthBanner({
       },
       meta.code,
     );
-    ClientLogger.info(`[WorkerHealthBanner] open modal code=${meta.code} reason=${captured.message}`);
+    ClientLogger.info(
+      `[WorkerHealthBanner] open modal code=${meta.code} reason=${captured.message}`,
+    );
     openErrorModal(captured);
   }
 

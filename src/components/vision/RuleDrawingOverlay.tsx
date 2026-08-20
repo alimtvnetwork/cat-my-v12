@@ -16,23 +16,23 @@ interface BoundingBox {
 
 export function RuleDrawingOverlay(): React.JSX.Element | null {
   const { drawingTool, setDrawingTool } = useVisionStore();
-  
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [currentBox, setCurrentBox] = useState<BoundingBox | null>(null);
-  
+
   // Polygon state for shape track
   const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (drawingTool === DrawingToolType.None) return;
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     if (drawingTool === DrawingToolType.ShapeTrack) {
-      setPolygonPoints(prev => [...prev, { x, y }]);
+      setPolygonPoints((prev) => [...prev, { x, y }]);
       return;
     }
 
@@ -60,10 +60,10 @@ export function RuleDrawingOverlay(): React.JSX.Element | null {
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (drawingTool === DrawingToolType.ShapeTrack) return;
-    
+
     setIsDrawing(false);
     e.currentTarget.releasePointerCapture(e.pointerId);
-    
+
     // In a real app we'd save this to the active rule
     if (currentBox && currentBox.w > 5 && currentBox.h > 5) {
       console.log("Rule drawing added:", drawingTool, currentBox);
@@ -82,10 +82,11 @@ export function RuleDrawingOverlay(): React.JSX.Element | null {
     }
   };
 
-  if (drawingTool === DrawingToolType.None && !currentBox && polygonPoints.length === 0) return null;
+  if (drawingTool === DrawingToolType.None && !currentBox && polygonPoints.length === 0)
+    return null;
 
   return (
-    <div 
+    <div
       className="absolute inset-0 z-40 cursor-crosshair touch-none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -93,23 +94,24 @@ export function RuleDrawingOverlay(): React.JSX.Element | null {
       onDoubleClick={handleDoubleClick}
     >
       {/* Pattern Edge / ROI Box */}
-      {(drawingTool === DrawingToolType.PatternEdge || drawingTool === DrawingToolType.Roi) && currentBox && (
-        <div 
-          className={`absolute border-2 ${drawingTool === DrawingToolType.PatternEdge ? 'border-yellow-400 bg-yellow-400/20' : 'border-blue-400 bg-blue-400/20'}`}
-          style={{
-            left: currentBox.x,
-            top: currentBox.y,
-            width: currentBox.w,
-            height: currentBox.h
-          }}
-        />
-      )}
+      {(drawingTool === DrawingToolType.PatternEdge || drawingTool === DrawingToolType.Roi) &&
+        currentBox && (
+          <div
+            className={`absolute border-2 ${drawingTool === DrawingToolType.PatternEdge ? "border-yellow-400 bg-yellow-400/20" : "border-blue-400 bg-blue-400/20"}`}
+            style={{
+              left: currentBox.x,
+              top: currentBox.y,
+              width: currentBox.w,
+              height: currentBox.h,
+            }}
+          />
+        )}
 
       {/* Shape Track Polygon */}
       {drawingTool === DrawingToolType.ShapeTrack && polygonPoints.length > 0 && (
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
           <polygon
-            points={polygonPoints.map(p => `${p.x},${p.y}`).join(" ")}
+            points={polygonPoints.map((p) => `${p.x},${p.y}`).join(" ")}
             className="fill-green-400/20 stroke-green-400 stroke-2"
           />
           {polygonPoints.map((p, i) => (
@@ -118,10 +120,12 @@ export function RuleDrawingOverlay(): React.JSX.Element | null {
           {/* Line to current pointer position could be added here in real impl */}
         </svg>
       )}
-      
+
       {/* Tooltip hint */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm">
-        {drawingTool === DrawingToolType.ShapeTrack ? "Click to add points, double-click to finish" : "Click and drag to define region"}
+        {drawingTool === DrawingToolType.ShapeTrack
+          ? "Click to add points, double-click to finish"
+          : "Click and drag to define region"}
       </div>
     </div>
   );

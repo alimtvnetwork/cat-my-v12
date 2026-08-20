@@ -71,7 +71,10 @@ function toFailure(err: unknown): CaptureFailure {
   return { code, message: CAPTURE_ERROR_COPY[code], correlationId };
 }
 
-export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props): React.JSX.Element | null {
+export function DeviceDiscoveryPanel({
+  activeVendor,
+  onVendorSelected,
+}: Props): React.JSX.Element | null {
   const [devices, setDevices] = useState<DiscoveredCaptureDevice[]>([]);
   const [scannedAt, setScannedAt] = useState<string | null>(null);
   const [lastFailure, setLastFailure] = useState<CaptureFailure | null>(null);
@@ -160,12 +163,11 @@ export function DeviceDiscoveryPanel({ activeVendor, onVendorSelected }: Props):
         <div className="flex items-center gap-hmi-4">
           {hydrated && (
             <div className="flex items-center gap-hmi-2 min-h-[40px]">
-              <Switch
-                id="mock-camera-toggle"
-                checked={mock}
-                onCheckedChange={setMock}
-              />
-              <Label htmlFor="mock-camera-toggle" className="text-hmi-body text-ca-ink cursor-pointer">
+              <Switch id="mock-camera-toggle" checked={mock} onCheckedChange={setMock} />
+              <Label
+                htmlFor="mock-camera-toggle"
+                className="text-hmi-body text-ca-ink cursor-pointer"
+              >
                 Mock Device (Seed Mode)
               </Label>
             </div>

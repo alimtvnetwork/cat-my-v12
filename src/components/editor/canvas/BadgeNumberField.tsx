@@ -15,7 +15,7 @@ function getClampedValue(
   draft: string,
   lo: number,
   effMax: number,
-  onClamp: () => void
+  onClamp: () => void,
 ): number | null {
   const trimmed = draft.trim();
   const n = trimmed === "" ? NaN : Number(trimmed);

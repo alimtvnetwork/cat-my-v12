@@ -20,7 +20,13 @@ export function MaskTools(): React.JSX.Element | null {
     const newMask: Mask = {
       id: crypto.randomUUID(),
       type,
-      geometry: { x: 40, y: 40, width: 20, height: 20, ...(type === ShapeType.Circle ? { radius: 10 } : {}) },
+      geometry: {
+        x: 40,
+        y: 40,
+        width: 20,
+        height: 20,
+        ...(type === ShapeType.Circle ? { radius: 10 } : {}),
+      },
     };
     addMask(segmentId, newMask);
   };
@@ -34,10 +40,16 @@ export function MaskTools(): React.JSX.Element | null {
       <CardContent>
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            {MaskShapes.filter(s => s.id !== ShapeType.None).map(shape => {
-              const Icon = shape.icon === 'Circle' ? CircleIcon : shape.icon === 'Square' ? Square : Hexagon;
+            {MaskShapes.filter((s) => s.id !== ShapeType.None).map((shape) => {
+              const Icon =
+                shape.icon === "Circle" ? CircleIcon : shape.icon === "Square" ? Square : Hexagon;
               return (
-                <Button key={shape.id} variant="outline" size="sm" onClick={() => handleAddMask(shape.id)}>
+                <Button
+                  key={shape.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddMask(shape.id)}
+                >
                   <Icon className="w-4 h-4 mr-2" />
                   {shape.label}
                 </Button>
@@ -53,10 +65,20 @@ export function MaskTools(): React.JSX.Element | null {
                   className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900/50"
                 >
                   <div className="flex items-center space-x-3">
-                    {mask.type === ShapeType.Rectangle && <Square className="w-4 h-4 text-zinc-500" />}
-                    {mask.type === ShapeType.Circle && <CircleIcon className="w-4 h-4 text-zinc-500" />}
-                    {mask.type === ShapeType.Ellipse && <CircleIcon className="w-4 h-4 text-zinc-500" />}
-                    {mask.type !== ShapeType.Rectangle && mask.type !== ShapeType.Circle && mask.type !== ShapeType.Ellipse && <Hexagon className="w-4 h-4 text-zinc-500" />}
+                    {mask.type === ShapeType.Rectangle && (
+                      <Square className="w-4 h-4 text-zinc-500" />
+                    )}
+                    {mask.type === ShapeType.Circle && (
+                      <CircleIcon className="w-4 h-4 text-zinc-500" />
+                    )}
+                    {mask.type === ShapeType.Ellipse && (
+                      <CircleIcon className="w-4 h-4 text-zinc-500" />
+                    )}
+                    {mask.type !== ShapeType.Rectangle &&
+                      mask.type !== ShapeType.Circle &&
+                      mask.type !== ShapeType.Ellipse && (
+                        <Hexagon className="w-4 h-4 text-zinc-500" />
+                      )}
                     <span className="text-sm font-medium capitalize">
                       {mask.type.toLowerCase()} Mask
                     </span>

@@ -1,4 +1,3 @@
-{"ts": "2026-08-11T17:01:17.419383+00:00", "level": "INFO", "logger": "BE.main", "message": "be_app_created", "CorrelationId": null, "operation": "startup", "code": null, "subject_id": null, "env": "dev", "port": 8787}
 {
   "openapi": "3.1.0",
   "info": {
@@ -8,9 +7,7 @@
   "paths": {
     "/system/status": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Get System Status",
         "operationId": "get_system_status_system_status_get",
         "responses": {
@@ -1251,11 +1248,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "isSuccess",
-          "isFail",
-          "status"
-        ],
+        "required": ["isSuccess", "isFail", "status"],
         "title": "Envelope[SystemStatus]"
       },
       "HTTPValidationError": {
@@ -1287,11 +1280,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "uptime",
-          "version",
-          "status"
-        ],
+        "required": ["uptime", "version", "status"],
         "title": "SystemStatus"
       },
       "ValidationError": {
@@ -1327,11 +1316,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     }

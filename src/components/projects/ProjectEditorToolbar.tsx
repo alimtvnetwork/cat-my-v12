@@ -10,9 +10,7 @@ export function ProjectEditorToolbar({ project, rulesets }: Props): React.JSX.El
     <div className="flex items-center justify-between border-b border-ca-border p-hmi-4">
       <div>
         <h2 className="text-hmi-title font-bold text-ca-ink">{project.name}</h2>
-        <p className="text-hmi-caption text-ca-ink-muted">
-          {rulesets.length} Rule Sets
-        </p>
+        <p className="text-hmi-caption text-ca-ink-muted">{rulesets.length} Rule Sets</p>
       </div>
       {/* Additional toolbar actions can be placed here */}
     </div>

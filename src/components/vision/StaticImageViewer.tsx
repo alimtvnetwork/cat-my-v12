@@ -12,14 +12,14 @@ export function StaticImageViewer(): React.JSX.Element | null {
 
   const geometry = useImageCoordinateMapping(containerRef, imageRef);
   const exposure = useLightingStore((s) => s.exposure);
-  const brightness = 1 + (exposure / 100);
+  const brightness = 1 + exposure / 100;
 
   useEffect(() => {
     const stored = getReferenceImage();
     if (stored) {
       setImgUrl(stored);
     }
-    
+
     const unsub = subscribe((val) => {
       setIsLoaded(false);
       if (val) {
@@ -33,7 +33,10 @@ export function StaticImageViewer(): React.JSX.Element | null {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center bg-ca-panel/50 overflow-hidden">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full flex items-center justify-center bg-ca-panel/50 overflow-hidden"
+    >
       {/* Shimmer skeleton while image loads (Task 255) */}
       {!isLoaded && (
         <div className="absolute inset-0 animate-pulse bg-ca-panel-2" aria-hidden="true" />

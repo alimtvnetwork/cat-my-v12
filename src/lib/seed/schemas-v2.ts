@@ -472,7 +472,8 @@ export function checkReferentialIntegrity(bundle: SeedBundleV2): SeedIssue[] {
         rulesetIds,
       );
       const parent = bundle.rulesets.find((x) => x.id === rule.rulesetId) as
-        ((typeof bundle.rulesets)[number] & { ruleIds?: string[] }) | undefined;
+        | ((typeof bundle.rulesets)[number] & { ruleIds?: string[] })
+        | undefined;
 
       if (parent && (parent.ruleIds ?? []).includes(rule.id) === false) {
         issues.push({

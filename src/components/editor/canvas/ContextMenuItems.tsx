@@ -6,11 +6,7 @@ interface MenuSectionProps {
   children: React.ReactNode;
 }
 
-export function MenuSection({
-  label,
-  tone,
-  children,
-}: MenuSectionProps): React.JSX.Element | null {
+export function MenuSection({ label, tone, children }: MenuSectionProps): React.JSX.Element | null {
   return (
     <div
       role="group"

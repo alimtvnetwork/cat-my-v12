@@ -124,7 +124,10 @@ function SetupCategoriesPage(): ReactElement {
       if (saved.isCategory) {
         void navigate({ to: "/setup/categories/$id", params: { id: String(saved.id) } });
       } else {
-        void navigate({ to: "/setup/rules/$id", params: { id: String(toIntId(String(saved.id))) } });
+        void navigate({
+          to: "/setup/rules/$id",
+          params: { id: String(toIntId(String(saved.id))) },
+        });
       }
     } catch (err) {
       reportCategoryError(source ? "duplicate-category" : "create-category", err);

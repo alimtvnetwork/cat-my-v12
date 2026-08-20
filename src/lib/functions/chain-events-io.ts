@@ -13,7 +13,6 @@ import {
 } from "./chain-events";
 
 export function exportChainEventsJson(store: ChainEventStore): string {
-
   return JSON.stringify(store, null, 2);
 }
 
@@ -35,7 +34,6 @@ export function importChainEventsJson(text: string): ChainEventImportResult {
   try {
     raw = JSON.parse(text);
   } catch (err) {
-
     return {
       store: { ...EMPTY_CHAIN_EVENT_STORE },
       errors: [],
@@ -44,7 +42,6 @@ export function importChainEventsJson(text: string): ChainEventImportResult {
   }
 
   if (!raw || typeof raw !== "object") {
-
     return {
       store: { ...EMPTY_CHAIN_EVENT_STORE },
       errors: [],
@@ -55,7 +52,6 @@ export function importChainEventsJson(text: string): ChainEventImportResult {
   const obj = raw as { version?: unknown; events?: unknown };
 
   if (obj.version !== 1) {
-
     return {
       store: { ...EMPTY_CHAIN_EVENT_STORE },
       errors: [],
@@ -64,7 +60,6 @@ export function importChainEventsJson(text: string): ChainEventImportResult {
   }
 
   if (Array.isArray(obj.events) === false) {
-
     return {
       store: { ...EMPTY_CHAIN_EVENT_STORE },
       errors: [],

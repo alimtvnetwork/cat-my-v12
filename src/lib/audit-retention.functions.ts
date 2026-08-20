@@ -125,7 +125,9 @@ export const getAuditRetentionStatus = createServerFn({ method: HttpMethod.Get }
       ? new Date(Date.parse(lastRun) + DEFAULT_CADENCE_HOURS * 3600 * 1000).toISOString()
       : null;
 
-    ClientLogger.info(`[audit.retention] fetched actor=${context.userId} lastRun=${lastRun ?? "none"}`);
+    ClientLogger.info(
+      `[audit.retention] fetched actor=${context.userId} lastRun=${lastRun ?? "none"}`,
+    );
 
     return {
       lastRun,
@@ -202,7 +204,9 @@ export const writeRetentionPolicy = createServerFn({ method: HttpMethod.Post })
   .validator(parseRetentionPayload)
   .handler(async ({ data, context }) => {
     const cid = newCorrelationId();
-    ClientLogger.info(`[audit.retention.write] subject=settings.audit.retention cid=${cid} phase=start`);
+    ClientLogger.info(
+      `[audit.retention.write] subject=settings.audit.retention cid=${cid} phase=start`,
+    );
     try {
       const actor = await requireCaptureAdmin(context.userId, "settings.audit.retention");
       const prior = lastPolicy;

@@ -32,11 +32,11 @@ export async function executeApiQuery<T = unknown>(
   input: RequestInfo | URL,
   init?: RequestInit,
   opts?: BeFetchOptions,
-): Promise<QueryResult<T>> {
+): Promise<QueryResult<T[]>> {
   try {
     const envelope = await beFetch<T>(input, init, opts);
 
-    return { isSuccess: true, isFail: false, data: envelope.Results as T, error: null };
+    return { isSuccess: true, isFail: false, data: envelope.Results, error: null };
   } catch (error) {
     return {
       isSuccess: false,

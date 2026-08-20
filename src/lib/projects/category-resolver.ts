@@ -14,7 +14,6 @@
 import type { Project, RuleSet } from "./store";
 
 function norm(name: string | undefined): string {
-
   return (name ?? "").trim().toLowerCase();
 }
 

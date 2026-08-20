@@ -16,7 +16,12 @@ test.describe("Batch Rule Evaluation", () => {
           Data: {
             results: [
               { ruleId: "rule-1", is_pass: true, confidence: 92.5, label: "pattern_match_stub" },
-              { ruleId: "rule-2", is_pass: false, confidence: 45.0, label: "grayscale_tolerance_stub" },
+              {
+                ruleId: "rule-2",
+                is_pass: false,
+                confidence: 45.0,
+                label: "grayscale_tolerance_stub",
+              },
             ],
             total: 2,
           },

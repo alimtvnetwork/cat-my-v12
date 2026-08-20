@@ -64,6 +64,5 @@ export function appendOpsEvent(evt: Omit<OpsEvent, "id" | "ts"> & { ts?: string 
 }
 
 export function readOpsEvents(): { events: OpsEvent[]; total: number } {
-
   return { events: buffer.slice().reverse(), total: buffer.length };
 }

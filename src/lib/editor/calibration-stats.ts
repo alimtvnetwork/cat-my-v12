@@ -71,6 +71,5 @@ const STATS: Partial<Record<EditorRuleKind, CalibrationStats>> = Object.fromEntr
 );
 
 export function getCalibrationStats(kind: EditorRuleKind): CalibrationStats | null {
-
   return STATS[kind] ?? null;
 }

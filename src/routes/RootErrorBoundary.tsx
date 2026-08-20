@@ -3,7 +3,13 @@ import { useRouter } from "@tanstack/react-router";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { ClientLogger } from "@/lib/observability/client-logger";
 
-export function RootErrorBoundary({ error, reset }: { error: Error; reset: () => void }): React.JSX.Element | null {
+export function RootErrorBoundary({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}): React.JSX.Element | null {
   const router = useRouter();
   useEffect(() => {
     ClientLogger.error("[root-error-boundary] caught", error);

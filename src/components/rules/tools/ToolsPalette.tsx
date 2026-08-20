@@ -70,7 +70,6 @@ function writeStoredVariants(map: VariantMap): void {
 }
 
 function defaultVariantId(id: ToolId): string | undefined {
-
   return TOOL_TOOLTIPS[id].variants?.[0]?.id;
 }
 
@@ -85,7 +84,11 @@ interface Props {
   onVariantChange?: (tool: ToolId, variantId: string) => void;
 }
 
-export function ToolsPalette({ activeTool, onChange, onVariantChange }: Props): React.JSX.Element | null {
+export function ToolsPalette({
+  activeTool,
+  onChange,
+  onVariantChange,
+}: Props): React.JSX.Element | null {
   const [variantMap, setVariantMap] = useState<VariantMap>(() => readStoredVariants());
   // Persisted user preference: "hover" (default Radix behavior) or
   // "on-demand" (suppress hover; still opens on keyboard focus so screen
@@ -512,7 +515,6 @@ function ToolTile({
   );
 
   if (!tip.hasFlyout) {
-
     return (
       <Tooltip {...controlledTooltipProps}>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
@@ -571,7 +573,6 @@ interface VariantRowProps {
 }
 
 function VariantRow({ variant, selected, onPick }: VariantRowProps) {
-
   return (
     <li>
       <button

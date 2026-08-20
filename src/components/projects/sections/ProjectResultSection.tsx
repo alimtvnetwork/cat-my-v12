@@ -126,7 +126,11 @@ export function ProjectResultSection({
   );
 }
 
-export function VerdictPill({ verdict }: { verdict: ProjectRunSummary["verdict"] }): React.JSX.Element | null {
+export function VerdictPill({
+  verdict,
+}: {
+  verdict: ProjectRunSummary["verdict"];
+}): React.JSX.Element | null {
   const b = verdictBadge(verdict);
 
   return (

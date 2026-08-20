@@ -48,4 +48,3 @@ export function MainVisionCanvas(): React.JSX.Element | null {
     </div>
   );
 }
-

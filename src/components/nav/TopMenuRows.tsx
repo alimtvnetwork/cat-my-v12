@@ -5,7 +5,13 @@ import { type Entry, type ActionEntry } from "./TopMenuBar";
 import { ACTION_HANDLERS } from "./TopMenuActionHandlers";
 import { isActionEntry } from "./TopMenuUtils";
 
-export function MenubarActionRow({ item, isHydrated }: { item: ActionEntry; isHydrated: boolean }): React.JSX.Element | null {
+export function MenubarActionRow({
+  item,
+  isHydrated,
+}: {
+  item: ActionEntry;
+  isHydrated: boolean;
+}): React.JSX.Element | null {
   const rowClass =
     "flex cursor-pointer items-center justify-between gap-4 rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2";
   const isFullscreen = item.action === "view.fullscreen";

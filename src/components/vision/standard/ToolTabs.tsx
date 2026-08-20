@@ -20,8 +20,9 @@ export function ToolTabs({
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isSelected = activeTab === tab.id;
-        let buttonClass = "flex-1 flex flex-col items-center justify-center p-1 rounded border h-16 transition-colors ";
-        
+        let buttonClass =
+          "flex-1 flex flex-col items-center justify-center p-1 rounded border h-16 transition-colors ";
+
         if (tab.disabled) {
           buttonClass += "bg-gray-100 border-gray-200 text-gray-400 opacity-50 cursor-not-allowed";
         } else if (isSelected) {
@@ -30,8 +31,16 @@ export function ToolTabs({
           buttonClass += "bg-gray-200 border-gray-300 text-gray-700 hover:bg-gray-300";
         }
 
-        const iconClass = isSelected ? "text-green-700" : (tab.disabled ? "text-gray-400" : "text-gray-600");
-        const textClass = isSelected ? "text-black" : (tab.disabled ? "text-gray-400" : "text-gray-700");
+        const iconClass = isSelected
+          ? "text-green-700"
+          : tab.disabled
+            ? "text-gray-400"
+            : "text-gray-600";
+        const textClass = isSelected
+          ? "text-black"
+          : tab.disabled
+            ? "text-gray-400"
+            : "text-gray-700";
 
         return (
           <button

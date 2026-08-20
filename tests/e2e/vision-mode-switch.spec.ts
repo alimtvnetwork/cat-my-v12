@@ -15,7 +15,7 @@ test.describe("Vision Standard UI - Image Source Mode Switch", () => {
     // Verify default is static mode (or at least can be selected)
     await staticToggle.click();
     await expect(staticToggle).toHaveAttribute("aria-checked", "true");
-    
+
     // Verify static image viewer is present
     await expect(page.getByAltText("Static Reference")).toBeVisible();
 

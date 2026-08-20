@@ -13,13 +13,11 @@ export function LiveModeEmptyState(): React.JSX.Element | null {
       </div>
       <h3 className="text-lg font-medium text-ca-foreground">Camera Disconnected</h3>
       <p className="text-sm text-center max-w-sm mt-2 text-ca-muted-foreground">
-        Please check the hardware connection or switch to static image mode to continue editing the rules.
+        Please check the hardware connection or switch to static image mode to continue editing the
+        rules.
       </p>
       <div className="mt-6">
-        <Button 
-          variant="outline" 
-          onClick={() => setMode(ImageSourceModeType.STATIC)}
-        >
+        <Button variant="outline" onClick={() => setMode(ImageSourceModeType.STATIC)}>
           Switch to Static Mode
         </Button>
       </div>

@@ -46,7 +46,14 @@ interface ToolButtonProps {
   onClick: () => void;
 }
 
-function ToolButton({ tool, Icon, label, shortcut, isActive, onClick }: ToolButtonProps): React.JSX.Element {
+function ToolButton({
+  tool,
+  Icon,
+  label,
+  shortcut,
+  isActive,
+  onClick,
+}: ToolButtonProps): React.JSX.Element {
   return (
     <button
       type="button"
@@ -57,9 +64,10 @@ function ToolButton({ tool, Icon, label, shortcut, isActive, onClick }: ToolButt
       onClick={onClick}
       className={`min-h-[40px] min-w-[40px] flex items-center justify-center rounded-md transition-colors
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-accent
-        ${isActive
-          ? "bg-ca-accent text-white"
-          : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-text"
+        ${
+          isActive
+            ? "bg-ca-accent text-white"
+            : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-text"
         }`}
     >
       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -75,11 +83,7 @@ export function VisionDrawingToolbar(): React.JSX.Element {
   const { drawingTool, setDrawingTool } = useVisionStore();
 
   return (
-    <div
-      role="toolbar"
-      aria-label="Canvas drawing tools"
-      className="flex flex-col gap-1 p-1"
-    >
+    <div role="toolbar" aria-label="Canvas drawing tools" className="flex flex-col gap-1 p-1">
       {TOOLS.map(({ tool, Icon, label, shortcut }) => (
         <ToolButton
           key={tool}

@@ -33,12 +33,10 @@ export class MemoryUiSeedFacade implements UiSeedFacade {
   }
 
   load(): Promise<CatSeedBundle> {
-
     return Promise.resolve(this.bundle);
   }
 
   getSlice<K extends CatSeedBundleSlice>(slice: K): Promise<CatSeedBundle[K]> {
-
     return Promise.resolve(this.bundle[slice]);
   }
 

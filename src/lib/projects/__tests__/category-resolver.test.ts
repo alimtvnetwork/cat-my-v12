@@ -3,7 +3,6 @@ import type { Project, RuleSet } from "../store";
 import { resolveRulesetsForCategory, resolveAllCategories } from "../category-resolver";
 
 function mkProject(overrides: Partial<Project> = {}): Project {
-
   return {
     id: "p1",
     name: "Proj",
@@ -13,7 +12,6 @@ function mkProject(overrides: Partial<Project> = {}): Project {
   };
 }
 function mkRs(id: string, categoryName?: string, projectId = "p1"): RuleSet {
-
   return { id, projectId, name: id, rules: [], overrideMode: "direct", categoryName };
 }
 

@@ -37,8 +37,6 @@ function newCorrelationId(): string {
   return Math.random().toString(36).slice(2, 10).padEnd(8, "0");
 }
 
-
-
 // Structurally identical to AsyncCrudFacade; declared explicitly so a
 // future change to the base contract is caught here at compile time.
 export interface RuleFacade extends AsyncCrudFacade<RuleId, Rule> {}
@@ -87,12 +85,10 @@ class IndexedDbRuleFacade implements RuleFacade {
   }
 
   list(): Rule[] {
-
     return Array.from(this.map.values());
   }
 
   get(id: RuleId): Rule | undefined {
-
     return this.map.get(id);
   }
 
@@ -106,7 +102,8 @@ class IndexedDbRuleFacade implements RuleFacade {
 
     const clean = parsed.data;
     // Cycle check: simulate the post-save graph.
-    const resolve = (id: RuleId): Rule | null => (id === clean.id ? clean : this.map.get(id) ?? null);
+    const resolve = (id: RuleId): Rule | null =>
+      id === clean.id ? clean : (this.map.get(id) ?? null);
     const result = computeEffectiveChain([clean.id], resolve);
 
     if (result.cycle) {

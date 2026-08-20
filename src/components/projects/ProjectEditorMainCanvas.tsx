@@ -17,7 +17,11 @@ interface Props {
   selectedSampleName: string | null;
 }
 
-export function ProjectEditorMainCanvas({ project, summary, selectedSampleName }: Props): React.JSX.Element | null {
+export function ProjectEditorMainCanvas({
+  project,
+  summary,
+  selectedSampleName,
+}: Props): React.JSX.Element | null {
   const mode = useVisionStore((s) => s.imageSourceMode);
 
   return (
@@ -28,11 +32,9 @@ export function ProjectEditorMainCanvas({ project, summary, selectedSampleName }
           <ImageSourceToggle />
           {mode === ImageSourceModeType.LIVE && <CameraConnectionIndicator />}
         </div>
-        <div>
-          {mode === ImageSourceModeType.LIVE && <CaptureTriggerButton />}
-        </div>
+        <div>{mode === ImageSourceModeType.LIVE && <CaptureTriggerButton />}</div>
       </div>
-      
+
       {/* Main Vision Area */}
       <div className="flex-1 min-h-0 flex flex-col border border-ca-border rounded-md overflow-hidden shadow-sm">
         <div className="flex-1 min-h-0 relative">

@@ -16,9 +16,7 @@ function reset() {
 }
 
 function withSeed(facade: MemoryUiSeedFacade): (props: { children: ReactNode }) => ReactElement {
-
   return function Wrapper({ children }) {
-
     return <SeedProvider facade={facade}>{children}</SeedProvider>;
   };
 }

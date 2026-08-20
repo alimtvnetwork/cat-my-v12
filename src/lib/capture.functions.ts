@@ -63,7 +63,10 @@ async function guard<T>(subject: string, run: (cid: string) => Promise<T>): Prom
           correlationId: cid,
         });
       } catch (auditErr) {
-        ClientLogger.error(`[capture.fn] subject=${subject} cid=${cid} ops-audit-emit-failed`, auditErr);
+        ClientLogger.error(
+          `[capture.fn] subject=${subject} cid=${cid} ops-audit-emit-failed`,
+          auditErr,
+        );
       }
     }
 

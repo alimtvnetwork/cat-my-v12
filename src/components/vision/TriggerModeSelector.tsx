@@ -10,7 +10,8 @@ export function TriggerModeSelector(): React.JSX.Element | null {
   if (!activeSegment || !activeSegmentId) return null;
 
   const cameraSettings = (activeSegment.visionSettings?.cameraSettings ||
-    activeSegment.visionSettings?.camera || {}) as any;
+    activeSegment.visionSettings?.camera ||
+    {}) as any;
 
   const currentMode = cameraSettings.triggerMode || "Software";
 
@@ -18,7 +19,7 @@ export function TriggerModeSelector(): React.JSX.Element | null {
 
   const handleModeChange = async (mode: string) => {
     setCameraSettings(activeSegmentId, { triggerMode: mode });
-    
+
     try {
       const cameraId = cameraSettings.id || "default-camera";
       await updateTriggerMode({ cameraId, mode });
@@ -33,7 +34,9 @@ export function TriggerModeSelector(): React.JSX.Element | null {
       <div className="flex p-1 space-x-1 bg-gray-100/80 rounded-lg w-fit border border-gray-200/50">
         <label
           className={`flex items-center min-h-[40px] px-4 py-2 cursor-pointer transition-all duration-200 rounded-md ${
-            currentMode === "Software" ? "bg-white shadow-sm ring-1 ring-gray-200/50" : "hover:bg-gray-50"
+            currentMode === "Software"
+              ? "bg-white shadow-sm ring-1 ring-gray-200/50"
+              : "hover:bg-gray-50"
           }`}
         >
           <input
@@ -44,13 +47,17 @@ export function TriggerModeSelector(): React.JSX.Element | null {
             onChange={() => handleModeChange("Software")}
             className="sr-only"
           />
-          <span className={`text-sm font-medium ${currentMode === "Software" ? "text-indigo-600" : "text-gray-500"}`}>
+          <span
+            className={`text-sm font-medium ${currentMode === "Software" ? "text-indigo-600" : "text-gray-500"}`}
+          >
             Software
           </span>
         </label>
         <label
           className={`flex items-center min-h-[40px] px-4 py-2 cursor-pointer transition-all duration-200 rounded-md ${
-            currentMode === "Hardware" ? "bg-white shadow-sm ring-1 ring-gray-200/50" : "hover:bg-gray-50"
+            currentMode === "Hardware"
+              ? "bg-white shadow-sm ring-1 ring-gray-200/50"
+              : "hover:bg-gray-50"
           }`}
         >
           <input
@@ -61,7 +68,9 @@ export function TriggerModeSelector(): React.JSX.Element | null {
             onChange={() => handleModeChange("Hardware")}
             className="sr-only"
           />
-          <span className={`text-sm font-medium ${currentMode === "Hardware" ? "text-indigo-600" : "text-gray-500"}`}>
+          <span
+            className={`text-sm font-medium ${currentMode === "Hardware" ? "text-indigo-600" : "text-gray-500"}`}
+          >
             Hardware
           </span>
         </label>

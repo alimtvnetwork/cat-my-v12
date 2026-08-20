@@ -46,7 +46,12 @@ interface EditorTopBarProps {
 // header (see issue: user reported "you don't need to have these header
 // items inside the control section"). We now render only the right-side
 // save/publish/reset controls plus a dirty pill.
-export function EditorTopBar({ isDirty, onSave, onPublish, savedAt = null }: EditorTopBarProps): React.JSX.Element | null {
+export function EditorTopBar({
+  isDirty,
+  onSave,
+  onPublish,
+  savedAt = null,
+}: EditorTopBarProps): React.JSX.Element | null {
   const [hasDialog, setHasDialog] = useState(false);
   useInspectorSectionShortcuts();
   const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);

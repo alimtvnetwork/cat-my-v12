@@ -27,7 +27,8 @@ export function useCaptureImage() {
 
 export function useUpdateCameraSetting() {
   return useAppMutation<void, Error, { cameraId: string; key: string; value: number | string }>({
-    mutationFn: ({ cameraId, key, value }) => visionFacade.updateCameraSetting(cameraId, key, value),
+    mutationFn: ({ cameraId, key, value }) =>
+      visionFacade.updateCameraSetting(cameraId, key, value),
   });
 }
 

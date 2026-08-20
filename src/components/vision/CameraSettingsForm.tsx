@@ -3,7 +3,12 @@ import { useVisionStore } from "../../lib/vision/store";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { TriggerModeSelector } from "./TriggerModeSelector";
 import { useUpdateCameraSetting } from "@/hooks/use-vision-api";
 
@@ -58,14 +63,13 @@ export function CameraSettingsForm(): React.JSX.Element | null {
   return (
     <div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Camera Settings</h3>
-      
+
       <Accordion type="single" collapsible defaultValue="basics" className="w-full">
-        
         <AccordionItem value="trigger">
           <AccordionTrigger>Trigger</AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-4">
             <TriggerModeSelector />
-            
+
             {cameraSettings.triggerMode === "Hardware" && (
               <div className="flex gap-4">
                 <div>

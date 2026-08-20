@@ -25,7 +25,12 @@ export function StandardPatternSearch({
             <div className="absolute top-2 left-2 z-10">
               <StandardHeaderReadouts />
             </div>
-            <StandardImageToolbar settings={settings} setSettings={onChange} viewModes={viewModes} setViewModes={setViewModes} />
+            <StandardImageToolbar
+              settings={settings}
+              setSettings={onChange}
+              viewModes={viewModes}
+              setViewModes={setViewModes}
+            />
             <StandardCanvas settings={settings} setSettings={onChange} viewModes={viewModes} />
           </div>
           <div className="w-[38%] border-l border-std-accent-active flex flex-col bg-std-panel text-black relative z-20">

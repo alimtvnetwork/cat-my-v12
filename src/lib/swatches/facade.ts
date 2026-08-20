@@ -131,7 +131,6 @@ export const swatchesFacade = {
     void persist();
   },
   getSnapshot(): readonly string[] {
-
     return cache;
   },
   subscribe(cb: () => void): () => void {
@@ -146,7 +145,6 @@ export const swatchesFacade = {
 };
 
 export function useSwatches(): readonly string[] {
-
   return useSyncExternalStore(
     swatchesFacade.subscribe,
     swatchesFacade.getSnapshot,

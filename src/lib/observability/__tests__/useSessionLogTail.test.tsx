@@ -42,7 +42,6 @@ class FakeEventSource {
 }
 
 function factory(url: string): EventSource {
-
   return new FakeEventSource(url) as unknown as EventSource;
 }
 

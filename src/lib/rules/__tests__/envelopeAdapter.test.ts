@@ -10,7 +10,6 @@ import { __resetRulesetIdAliasForTests } from "../ruleset-id-alias";
 import type { EditorRule } from "../../editor/types";
 import type { RuleSet } from "../../projects/store";
 function rule(overrides: Partial<EditorRule>): EditorRule {
-
   return {
     id: "r-1",
     name: "Rule 1",
@@ -25,7 +24,6 @@ function rule(overrides: Partial<EditorRule>): EditorRule {
   };
 }
 function ruleset(overrides: Partial<RuleSet> = {}): RuleSet {
-
   return {
     id: "rs-alpha",
     projectId: "p-1",

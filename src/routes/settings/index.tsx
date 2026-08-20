@@ -48,7 +48,11 @@ import {
 import { writeRetentionPolicy, type AuditRetentionPolicy } from "@/lib/audit-retention.functions";
 import { formatIdentifierLabel, formatUiText } from "@/lib/display-labels";
 import { ReferenceImageCard } from "@/components/settings/ReferenceImageCard";
-import { useUiPrefsStore, type ToolTooltipMode, type HeaderDensity } from "@/lib/stores/ui-prefs-store";
+import {
+  useUiPrefsStore,
+  type ToolTooltipMode,
+  type HeaderDensity,
+} from "@/lib/stores/ui-prefs-store";
 import { FlavorToggle } from "@/components/theme/FlavorToggle";
 
 // Spec 39 §10 + 27.Operator.Id (Q-07): single operator identity persisted as config.

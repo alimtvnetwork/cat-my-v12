@@ -15,15 +15,15 @@ export class AppError extends Error {
 }
 
 export function isAppError(error: unknown): error is AppError {
-
-  return (error as any)?.name === "AppError" || (error instanceof Error && error.name === "AppError");
+  return (
+    (error as any)?.name === "AppError" || (error instanceof Error && error.name === "AppError")
+  );
 }
 
 export function toAppError(error: unknown, fallbackCode: ErrorCodeType): AppError {
   if (isAppError(error)) return error;
 
   if (error instanceof Error) {
-
     return new AppError(fallbackCode, error.message, error);
   }
 

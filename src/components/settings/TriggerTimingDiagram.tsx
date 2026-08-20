@@ -13,7 +13,11 @@ export interface TriggerTimingDiagramProps {
   source: string;
 }
 
-export function TriggerTimingDiagram({ edge, debounceMs, source }: TriggerTimingDiagramProps): React.JSX.Element | null {
+export function TriggerTimingDiagram({
+  edge,
+  debounceMs,
+  source,
+}: TriggerTimingDiagramProps): React.JSX.Element | null {
   const width = 640;
   const height = 180;
   const midY = height / 2;

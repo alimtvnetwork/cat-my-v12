@@ -476,7 +476,9 @@ export const useVisionStore = create<VisionState>((set) => ({
         .map((id) => idToSegment.get(id))
         .filter((s): s is RecipeSegment => s !== undefined);
 
-      const remainingSegments = state.segments.filter((s) => !s.visionSettings?.id || !ids.includes(s.visionSettings.id));
+      const remainingSegments = state.segments.filter(
+        (s) => !s.visionSettings?.id || !ids.includes(s.visionSettings.id),
+      );
 
       return { segments: [...newSegments, ...remainingSegments] };
     }),

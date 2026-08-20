@@ -114,7 +114,9 @@ export async function captureFrameFromStream(
     /* ignore */
   }
 
-  ClientLogger.info(`[camera-capture] frame captured ${width}x${height} ~${byteSize}B (${mimeType})`);
+  ClientLogger.info(
+    `[camera-capture] frame captured ${width}x${height} ~${byteSize}B (${mimeType})`,
+  );
 
   return { dataUrl, width, height, byteSize };
 }

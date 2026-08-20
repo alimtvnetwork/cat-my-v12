@@ -21,7 +21,10 @@ export async function requireCaptureAdmin(userId: string, subject: string): Prom
     .maybeSingle();
 
   if (error) {
-    ClientLogger.error(`[capture.auth] actor=${userId} subject=${subject} result=E_INTERNAL`, error);
+    ClientLogger.error(
+      `[capture.auth] actor=${userId} subject=${subject} result=E_INTERNAL`,
+      error,
+    );
 
     throw new Error("E_INTERNAL: admin role lookup failed");
   }

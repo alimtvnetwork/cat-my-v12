@@ -21,7 +21,11 @@ export interface PatternEdgePanelProps {
   disabled?: boolean;
 }
 
-export function PatternEdgePanel({ value, onChange, disabled }: PatternEdgePanelProps): React.JSX.Element | null {
+export function PatternEdgePanel({
+  value,
+  onChange,
+  disabled,
+}: PatternEdgePanelProps): React.JSX.Element | null {
   const kernelId = useId();
   const thresholdId = useId();
   const polarityId = useId();

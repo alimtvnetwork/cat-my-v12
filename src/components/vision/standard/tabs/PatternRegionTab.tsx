@@ -17,7 +17,9 @@ export function PatternRegionTab({
       {isEditingRegion ? (
         <div className="flex flex-col p-2 gap-4">
           <div className="flex flex-col gap-2 bg-ca-panel p-2 border border-ca-border">
-            <h3 className="font-semibold text-sm border-b border-ca-border pb-1">Edit Pattern Region</h3>
+            <h3 className="font-semibold text-sm border-b border-ca-border pb-1">
+              Edit Pattern Region
+            </h3>
             <div className="flex items-center justify-between gap-2 text-sm mt-1">
               <label>Shape</label>
               <select
@@ -84,7 +86,10 @@ export function PatternRegionTab({
                           ...s,
                           patternRegion: {
                             ...s.patternRegion,
-                            geometry: { ...s.patternRegion.geometry, width: Number(e.target.value) },
+                            geometry: {
+                              ...s.patternRegion.geometry,
+                              width: Number(e.target.value),
+                            },
                           },
                         }))
                       }
@@ -101,7 +106,10 @@ export function PatternRegionTab({
                           ...s,
                           patternRegion: {
                             ...s.patternRegion,
-                            geometry: { ...s.patternRegion.geometry, height: Number(e.target.value) },
+                            geometry: {
+                              ...s.patternRegion.geometry,
+                              height: Number(e.target.value),
+                            },
                           },
                         }))
                       }
@@ -133,16 +141,23 @@ export function PatternRegionTab({
             <div className="flex items-center justify-between gap-2 text-sm">
               <label>Reference Image</label>
               <div className="w-32 bg-ca-bg border border-ca-border rounded px-2 py-1 font-mono text-xs flex items-center justify-between">
-                {settings.referenceImage.set} - {settings.referenceImage.index.toString().padStart(3, "0")}
+                {settings.referenceImage.set} -{" "}
+                {settings.referenceImage.index.toString().padStart(3, "0")}
                 <span className="text-ca-ink-muted">▼</span>
               </div>
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-2">
-            <button className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm" onClick={() => setIsEditingRegion(false)}>
+            <button
+              className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
+              onClick={() => setIsEditingRegion(false)}
+            >
               Cancel
             </button>
-            <button className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm" onClick={() => setIsEditingRegion(false)}>
+            <button
+              className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
+              onClick={() => setIsEditingRegion(false)}
+            >
               OK
             </button>
           </div>
@@ -151,7 +166,9 @@ export function PatternRegionTab({
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-ca-panel-2 px-2 py-1 border-b border-ca-border">
             <h3 className="font-semibold text-sm">Detection Conditions</h3>
-            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">&gt;&gt;</button>
+            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">
+              &gt;&gt;
+            </button>
           </div>
 
           <div className="flex flex-col gap-4 p-3 text-sm">
@@ -159,10 +176,15 @@ export function PatternRegionTab({
               <span>Angle Range</span>
               <div className="flex items-center gap-1">
                 <span className="text-ca-ink-muted">+/-</span>
-                <input 
-                  type="number" 
-                  value={settings.detection.angleRangeDeg} 
-                  onChange={(e) => setSettings(s => ({ ...s, detection: { ...s.detection, angleRangeDeg: Number(e.target.value) } }))}
+                <input
+                  type="number"
+                  value={settings.detection.angleRangeDeg}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      detection: { ...s.detection, angleRangeDeg: Number(e.target.value) },
+                    }))
+                  }
                   className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono"
                   min={0}
                   max={180}
@@ -172,10 +194,15 @@ export function PatternRegionTab({
 
             <div className="flex items-center justify-between">
               <span>Detection Count</span>
-              <input 
-                type="number" 
-                value={settings.detection.detectionCount} 
-                onChange={(e) => setSettings(s => ({ ...s, detection: { ...s.detection, detectionCount: Number(e.target.value) } }))}
+              <input
+                type="number"
+                value={settings.detection.detectionCount}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    detection: { ...s.detection, detectionCount: Number(e.target.value) },
+                  }))
+                }
                 className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono"
                 min={1}
               />
@@ -185,7 +212,11 @@ export function PatternRegionTab({
             <div className="flex flex-col gap-1 mt-2">
               <div className="flex justify-between items-center">
                 <span>Search Sensitivity</span>
-                <span className="text-xs">{settings.detection.searchSensitivity === 50 ? "Normal" : settings.detection.searchSensitivity}</span>
+                <span className="text-xs">
+                  {settings.detection.searchSensitivity === 50
+                    ? "Normal"
+                    : settings.detection.searchSensitivity}
+                </span>
               </div>
               <div className="relative pt-2 pb-4">
                 <input
@@ -201,7 +232,7 @@ export function PatternRegionTab({
                   }
                   className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    accentColor: "#3b82f6"
+                    accentColor: "#3b82f6",
                   }}
                 />
                 <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
@@ -216,7 +247,9 @@ export function PatternRegionTab({
             <div className="flex flex-col gap-1 mt-2">
               <div className="flex justify-between items-center">
                 <span>Accuracy</span>
-                <span className="text-xs">{settings.detection.accuracy === 50 ? "Normal" : settings.detection.accuracy}</span>
+                <span className="text-xs">
+                  {settings.detection.accuracy === 50 ? "Normal" : settings.detection.accuracy}
+                </span>
               </div>
               <div className="relative pt-2 pb-4">
                 <input
@@ -232,7 +265,7 @@ export function PatternRegionTab({
                   }
                   className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    accentColor: "#3b82f6"
+                    accentColor: "#3b82f6",
                   }}
                 />
                 <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
@@ -247,10 +280,15 @@ export function PatternRegionTab({
             <div className="flex flex-col gap-1 mt-2">
               <div className="flex items-center justify-between">
                 <span>Min. Match %</span>
-                <input 
-                  type="number" 
-                  value={settings.detection.minMatchPercent} 
-                  onChange={(e) => setSettings(s => ({ ...s, detection: { ...s.detection, minMatchPercent: Number(e.target.value) } }))}
+                <input
+                  type="number"
+                  value={settings.detection.minMatchPercent}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      detection: { ...s.detection, minMatchPercent: Number(e.target.value) },
+                    }))
+                  }
                   className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono text-sm"
                   min={0}
                   max={100}
@@ -270,7 +308,7 @@ export function PatternRegionTab({
                   }
                   className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    accentColor: "#3b82f6"
+                    accentColor: "#3b82f6",
                   }}
                 />
                 <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
@@ -280,11 +318,13 @@ export function PatternRegionTab({
                 </div>
               </div>
             </div>
-            
           </div>
-          
+
           <div className="flex justify-end p-2 border-t border-ca-border">
-            <button className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm" onClick={() => setIsEditingRegion(true)}>
+            <button
+              className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
+              onClick={() => setIsEditingRegion(true)}
+            >
               Edit Pattern Region
             </button>
           </div>

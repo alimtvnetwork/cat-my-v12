@@ -33,7 +33,6 @@ export function pointInRect(point: EditorPoint, rect: EditorRect): boolean {
 // so users can still select them from the canvas (Photoshop semantics); the
 // move/resize guard in CanvasViewport + SelectionOverlay blocks transforms.
 function canHit(rule: EditorRule): boolean {
-  
   return !rule.isHidden && rule.width > 0 && rule.height > 0;
 }
 

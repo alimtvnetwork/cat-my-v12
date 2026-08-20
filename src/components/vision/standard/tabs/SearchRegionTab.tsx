@@ -16,7 +16,9 @@ export function SearchRegionTab({
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-ca-panel-2 px-2 py-1 border-b border-ca-border">
             <h3 className="font-semibold text-sm">Search Region</h3>
-            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">&gt;&gt;</button>
+            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">
+              &gt;&gt;
+            </button>
           </div>
           <div className="flex items-center justify-between p-3 text-sm">
             <span>Search Region</span>
@@ -24,13 +26,17 @@ export function SearchRegionTab({
               value={settings.searchRegion.shape}
               onChange={(e) => {
                 const newShapeType = e.target.value as ShapeType;
-                const newShape = PatternShapes.find((m) => m.id === newShapeType) || PatternShapes[0];
+                const newShape =
+                  PatternShapes.find((m) => m.id === newShapeType) || PatternShapes[0];
                 setSettings((s) => ({
                   ...s,
-                  searchRegion: { 
-                    ...s.searchRegion, 
+                  searchRegion: {
+                    ...s.searchRegion,
                     shape: newShapeType,
-                    geometry: newShapeType !== s.searchRegion.shape ? newShape.defaultGeometry : s.searchRegion.geometry
+                    geometry:
+                      newShapeType !== s.searchRegion.shape
+                        ? newShape.defaultGeometry
+                        : s.searchRegion.geometry,
                   },
                 }));
               }}
@@ -52,7 +58,10 @@ export function SearchRegionTab({
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, x: Number(e.target.value) } },
+                    searchRegion: {
+                      ...s.searchRegion,
+                      geometry: { ...s.searchRegion.geometry, x: Number(e.target.value) },
+                    },
                   }))
                 }
                 className="bg-ca-bg border border-ca-border rounded px-1 py-1"
@@ -66,7 +75,10 @@ export function SearchRegionTab({
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, y: Number(e.target.value) } },
+                    searchRegion: {
+                      ...s.searchRegion,
+                      geometry: { ...s.searchRegion.geometry, y: Number(e.target.value) },
+                    },
                   }))
                 }
                 className="bg-ca-bg border border-ca-border rounded px-1 py-1"
@@ -82,7 +94,10 @@ export function SearchRegionTab({
                     onChange={(e) =>
                       setSettings((s) => ({
                         ...s,
-                        searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, width: Number(e.target.value) } },
+                        searchRegion: {
+                          ...s.searchRegion,
+                          geometry: { ...s.searchRegion.geometry, width: Number(e.target.value) },
+                        },
                       }))
                     }
                     className="bg-ca-bg border border-ca-border rounded px-1 py-1"
@@ -96,7 +111,10 @@ export function SearchRegionTab({
                     onChange={(e) =>
                       setSettings((s) => ({
                         ...s,
-                        searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, height: Number(e.target.value) } },
+                        searchRegion: {
+                          ...s.searchRegion,
+                          geometry: { ...s.searchRegion.geometry, height: Number(e.target.value) },
+                        },
                       }))
                     }
                     className="bg-ca-bg border border-ca-border rounded px-1 py-1"
@@ -113,7 +131,10 @@ export function SearchRegionTab({
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      searchRegion: { ...s.searchRegion, geometry: { ...s.searchRegion.geometry, radius: Number(e.target.value) } },
+                      searchRegion: {
+                        ...s.searchRegion,
+                        geometry: { ...s.searchRegion.geometry, radius: Number(e.target.value) },
+                      },
                     }))
                   }
                   className="bg-ca-bg border border-ca-border rounded px-1 py-1"
@@ -147,11 +168,15 @@ export function SearchRegionTab({
                           masks.push({ shape: ShapeType.None, geometry: {} as any });
                         }
                         const newShapeType = e.target.value as ShapeType;
-                        const newShape = MaskShapes.find((m) => m.id === newShapeType) || MaskShapes[0];
-                        masks[i] = { 
-                          ...masks[i], 
+                        const newShape =
+                          MaskShapes.find((m) => m.id === newShapeType) || MaskShapes[0];
+                        masks[i] = {
+                          ...masks[i],
                           shape: newShapeType,
-                          geometry: newShapeType !== masks[i].shape ? newShape.defaultGeometry : masks[i].geometry
+                          geometry:
+                            newShapeType !== masks[i].shape
+                              ? newShape.defaultGeometry
+                              : masks[i].geometry,
                         };
                         return { ...s, masks };
                       })
@@ -190,7 +215,9 @@ export function SearchRegionTab({
               Use Image Region
             </label>
             <div className="flex items-center justify-between">
-              <span className={!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}>Reference Tool</span>
+              <span className={!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}>
+                Reference Tool
+              </span>
               <select
                 value={settings.imageRegion.referenceTool ?? ""}
                 onChange={(e) =>
@@ -208,9 +235,13 @@ export function SearchRegionTab({
               </select>
             </div>
             <div className="flex items-center justify-between">
-              <span className={!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}>Detection Color</span>
+              <span className={!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}>
+                Detection Color
+              </span>
               <div className="flex items-center gap-3">
-                <label className={`flex items-center gap-1 ${!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}`}>
+                <label
+                  className={`flex items-center gap-1 ${!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}`}
+                >
                   <input
                     type="radio"
                     name="detectionColor"
@@ -229,7 +260,9 @@ export function SearchRegionTab({
                   />
                   White
                 </label>
-                <label className={`flex items-center gap-1 ${!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}`}>
+                <label
+                  className={`flex items-center gap-1 ${!settings.imageRegion.enabled ? "text-ca-ink-muted" : ""}`}
+                >
                   <input
                     type="radio"
                     name="detectionColor"
@@ -251,7 +284,7 @@ export function SearchRegionTab({
               </div>
             </div>
             <div className="flex justify-end mt-1">
-              <button 
+              <button
                 className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm disabled:opacity-50"
                 disabled={!settings.imageRegion.enabled}
               >

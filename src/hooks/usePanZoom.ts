@@ -15,9 +15,9 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    
+
     let timeoutId: ReturnType<typeof setTimeout>;
-    
+
     const observer = new ResizeObserver(() => {
       clearTimeout(timeoutId);
       // Debounced callbacks
@@ -28,7 +28,7 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
         setTransform((prev) => ({ ...prev }));
       }, 100);
     });
-    
+
     observer.observe(el);
     return () => {
       observer.disconnect();
@@ -37,41 +37,50 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
   }, [containerRef]);
 
   // Transform scale via wheel/drag, optimize performance (Step 69)
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    // Wheel event to zoom
-    const zoomSensitivity = 0.001;
-    const delta = -e.deltaY * zoomSensitivity;
-    const newScale = Math.min(Math.max(transform.scale * (1 + delta), 0.1), 10);
-    
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      
-      const scaleRatio = newScale / transform.scale;
-      
-      setTransform(prev => ({
-        scale: newScale,
-        x: mouseX - (mouseX - prev.x) * scaleRatio,
-        y: mouseY - (mouseY - prev.y) * scaleRatio
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      // Wheel event to zoom
+      const zoomSensitivity = 0.001;
+      const delta = -e.deltaY * zoomSensitivity;
+      const newScale = Math.min(Math.max(transform.scale * (1 + delta), 0.1), 10);
+
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const scaleRatio = newScale / transform.scale;
+
+        setTransform((prev) => ({
+          scale: newScale,
+          x: mouseX - (mouseX - prev.x) * scaleRatio,
+          y: mouseY - (mouseY - prev.y) * scaleRatio,
+        }));
+      }
+    },
+    [transform.scale, transform.x, transform.y, containerRef],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 1 && e.button !== 0) return; // Allow middle or left click drag
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+    },
+    [transform.x, transform.y],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDragging) return;
+      setTransform((prev) => ({
+        ...prev,
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
       }));
-    }
-  }, [transform.scale, transform.x, transform.y, containerRef]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 1 && e.button !== 0) return; // Allow middle or left click drag
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-  }, [transform.x, transform.y]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setTransform(prev => ({
-      ...prev,
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    }));
-  }, [isDragging, dragStart]);
+    },
+    [isDragging, dragStart],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -105,6 +114,6 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
-    resetView
+    resetView,
   };
 }

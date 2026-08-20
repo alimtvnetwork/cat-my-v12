@@ -23,16 +23,10 @@ export function BlackWhiteToggle({ value, onChange, disabled }: BlackWhiteToggle
         disabled={disabled}
         className="w-full gap-1"
       >
-        <ToggleGroupItem
-          value="black"
-          className="h-10 flex-1 px-3 py-2 text-sm font-medium"
-        >
+        <ToggleGroupItem value="black" className="h-10 flex-1 px-3 py-2 text-sm font-medium">
           Black
         </ToggleGroupItem>
-        <ToggleGroupItem
-          value="white"
-          className="h-10 flex-1 px-3 py-2 text-sm font-medium"
-        >
+        <ToggleGroupItem value="white" className="h-10 flex-1 px-3 py-2 text-sm font-medium">
           White
         </ToggleGroupItem>
       </ToggleGroup>

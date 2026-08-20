@@ -11,7 +11,11 @@ export interface NumberPanelProps {
   disabled?: boolean;
 }
 
-export function NumberPanel({ value, onChange, disabled }: NumberPanelProps): React.JSX.Element | null {
+export function NumberPanel({
+  value,
+  onChange,
+  disabled,
+}: NumberPanelProps): React.JSX.Element | null {
   const minId = useId();
   const maxId = useId();
   const unitId = useId();

@@ -10,7 +10,11 @@ export interface CliRouteErrorProps extends ErrorComponentProps {
   title?: string;
 }
 
-export function CliRouteError({ error, reset, title }: CliRouteErrorProps): React.JSX.Element | null {
+export function CliRouteError({
+  error,
+  reset,
+  title,
+}: CliRouteErrorProps): React.JSX.Element | null {
   const router = useRouter();
 
   return (

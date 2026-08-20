@@ -9,7 +9,14 @@ export interface LightingSliderProps {
   onChange: (v: number) => void;
 }
 
-export function LightingSlider({ label, value, min, max, step, onChange }: LightingSliderProps): React.JSX.Element | null {
+export function LightingSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: LightingSliderProps): React.JSX.Element | null {
   return (
     <label className="flex flex-col gap-1 text-sm text-ca-ink">
       <span className="flex items-center justify-between text-xs">

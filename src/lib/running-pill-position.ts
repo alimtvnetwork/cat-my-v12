@@ -32,7 +32,6 @@ export function loadPillPos(): PillPos | null {
       typeof (parsed as PillPos).x === "number" &&
       typeof (parsed as PillPos).y === "number"
     ) {
-      
       return parsed as PillPos;
     }
 

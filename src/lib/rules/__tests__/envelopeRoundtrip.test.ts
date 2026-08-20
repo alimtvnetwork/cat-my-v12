@@ -15,7 +15,6 @@ import { __resetRulesetIdAliasForTests } from "../ruleset-id-alias";
 import { __resetRuleIdAliasForTests } from "../rule-id-alias";
 
 function seedRule(overrides: Partial<EditorRule> = {}): EditorRule {
-
   return {
     id: "r-abc",
     name: "rule-a",
@@ -35,7 +34,6 @@ function seedRule(overrides: Partial<EditorRule> = {}): EditorRule {
 }
 
 function seedSet(rules: EditorRule[]): RuleSet {
-
   return { id: "rs-42", projectId: "p-1", name: "sheet-a", rules };
 }
 

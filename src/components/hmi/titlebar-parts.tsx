@@ -29,7 +29,6 @@ import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 export function HeaderBrand(): React.JSX.Element | null {
-
   return (
     <div className="flex min-w-0 shrink-0 items-center gap-hmi-1 sm:gap-hmi-2">
       <Link
@@ -61,16 +60,16 @@ export interface HeaderCrumbsProps {
   program?: string;
 }
 
-export function HeaderCrumbs({ showBreadcrumb, program }: HeaderCrumbsProps): React.JSX.Element | null {
+export function HeaderCrumbs({
+  showBreadcrumb,
+  program,
+}: HeaderCrumbsProps): React.JSX.Element | null {
   const density = useUiPrefsStore((s) => s.headerDensity);
 
   if (showBreadcrumb) {
-
     return (
       <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-        {density !== "compact" && (
-          <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />
-        )}
+        {density !== "compact" && <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />}
         <AddressBar />
       </div>
     );
@@ -93,7 +92,6 @@ export interface HeaderActionsProps {
 }
 
 export function HeaderActions({ right }: HeaderActionsProps): React.JSX.Element | null {
-
   return (
     <div
       role="group"

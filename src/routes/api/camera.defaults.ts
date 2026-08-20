@@ -115,7 +115,6 @@ export const Route = createFileRoute("/api/camera/defaults")({
         try {
           body = await workerResp.json();
         } catch {
-          
           return emit({
             source: "fallback",
             reason: "worker-bad-json",

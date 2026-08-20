@@ -82,7 +82,6 @@ function buildOverridesFromForm(form: OverrideForm): CaptureRequest {
 }
 
 function countActiveOverrides(form: OverrideForm): number {
-
   return Object.values(buildOverridesFromForm(form)).filter((v) => v !== undefined).length;
 }
 
@@ -137,7 +136,6 @@ export function ReferenceImageCard(): React.JSX.Element | null {
   const { library: sampleLibrary } = useSampleLibrary();
 
   useEffect(() => {
-
     return () => {
       if (pendingDeleteTimer.current) clearTimeout(pendingDeleteTimer.current);
     };

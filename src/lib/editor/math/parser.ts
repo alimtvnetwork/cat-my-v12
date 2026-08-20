@@ -11,7 +11,6 @@ import type {
 const COMPARISON_OPERATORS = new Set(["<", "<=", ">", ">=", "==", "!="]);
 
 export function parseMathTokens(tokens: MathToken[], values: MathValueMap): MathEvaluation {
-
   return new MathParser(tokens, values).parse();
 }
 
@@ -45,12 +44,10 @@ class MathParser {
   }
 
   private parseAdd(): MathNumericResult {
-
     return this.parseBinary(() => this.parseMul(), new Set(["+", "-"]));
   }
 
   private parseMul(): MathNumericResult {
-
     return this.parseBinary(() => this.parseUnary(), new Set(["*", "/", "%"]));
   }
 
@@ -97,7 +94,6 @@ class MathParser {
     const property = this.advance();
 
     if (property.kind !== "identifier" || property.text !== "value")
-
       return fail(MathIssueReasonType.MathParse);
     const value = this.values[name];
 
@@ -130,7 +126,6 @@ class MathParser {
     if (first.ok === false) return first;
 
     if (this.takeKind(MathTokenKindType.Comma) === false)
-
       return fail(MathIssueReasonType.MathParse);
     const second = this.parseAdd();
 
@@ -199,14 +194,12 @@ class MathParser {
   }
 
   private current(): MathToken {
-
     return this.tokens[this.index] ?? { kind: "eof", text: "" };
   }
 }
 
 function combine(operator: string, left: number, right: number): MathNumericResult {
   if ((operator === "/" || operator === "%") && right === 0)
-
     return fail(MathIssueReasonType.MathDivZero);
 
   if (operator === "+") return ok(left + right);
@@ -243,18 +236,15 @@ function mapValue(result: MathNumericResult, fn: (value: number) => number): Mat
 }
 
 function ok(value: number): MathNumericResult {
-
   return Number.isFinite(value)
     ? { ok: true, isFail: false, value }
     : fail(MathIssueReasonType.MathParse);
 }
 
 function fail(reason: MathIssueReason): MathNumericResult {
-
   return { ok: false, isFail: true, reason };
 }
 
 function failEvaluation(reason: MathIssueReason): MathEvaluation {
-
   return { ok: false, isFail: true, reason };
 }

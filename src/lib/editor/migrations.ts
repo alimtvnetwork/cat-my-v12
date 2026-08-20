@@ -64,12 +64,10 @@ function inferController(rule: EditorRuleV1): ControllerKind | null {
 }
 
 function num(v: unknown, fallback: number): number {
-  
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
 function str(v: unknown, fallback: string): string {
-  
   return typeof v === "string" ? v : fallback;
 }
 
@@ -85,7 +83,6 @@ function pickParams<K extends ControllerKind>(
   switch (controller) {
     case ControllerKindType.Presence:
     case ControllerKindType.Absence:
-      
       return {
         threshold: num(raw.threshold, (d as ControllerParamsByKind["presence"]).threshold),
         minBlobPx: num(raw.minBlobPx, (d as ControllerParamsByKind["presence"]).minBlobPx),
@@ -97,7 +94,6 @@ function pickParams<K extends ControllerKind>(
         stripWhitespace: bool(raw.stripWhitespace, true),
       } as ControllerParamsByKind[K];
     case ControllerKindType.TextMatch:
-      
       return {
         pattern: str(raw.pattern, ""),
         flags: str(raw.flags, ""),
@@ -109,10 +105,8 @@ function pickParams<K extends ControllerKind>(
         unit: str(raw.unit, ""),
       } as ControllerParamsByKind[K];
     case ControllerKindType.Math:
-      
       return { expression: str(raw.expression, "") } as ControllerParamsByKind[K];
     case ControllerKindType.Color:
-      
       return {
         expectedColor: str(raw.expectedColor, "#000000"),
         deltaE: num(raw.deltaE, 10),
@@ -143,7 +137,6 @@ function pickParams<K extends ControllerKind>(
       } as ControllerParamsByKind[K];
     }
     case ControllerKindType.Blob:
-      
       return {
         minArea: num(raw.minArea, 0),
         maxArea: num(raw.maxArea, 0),
@@ -209,7 +202,6 @@ export function migrateRuleV1ToV2(rule: EditorRuleV1 | EditorRuleV2, index = 0):
 export function migrateRuleSetV1ToV2(
   rules: readonly (EditorRuleV1 | EditorRuleV2)[],
 ): EditorRuleV2[] {
-  
   return rules.map((r, i) => migrateRuleV1ToV2(r, i));
 }
 
@@ -255,6 +247,5 @@ export function migrateRuleV2ToV3(rule: EditorRuleV2 | EditorRuleV3, index = 0):
 export function migrateRuleSetV2ToV3(
   rules: readonly (EditorRuleV2 | EditorRuleV3)[],
 ): EditorRuleV3[] {
-  
   return rules.map((r, i) => migrateRuleV2ToV3(r, i));
 }

@@ -14,7 +14,6 @@ export function useSetupForm<S extends ZodType<FieldValues>>(
   schema: S,
   options: Omit<UseFormProps<z.output<S>>, "resolver"> = {},
 ): UseFormReturn<z.output<S>> {
-
   return useForm<z.output<S>>({
     mode: "onBlur",
     reValidateMode: "onChange",

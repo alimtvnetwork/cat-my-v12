@@ -19,9 +19,7 @@ export function GrayscaleToleranceSlider({
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Grayscale Tolerance
         </Label>
-        <span className="text-[13px] tabular-nums text-muted-foreground">
-          {value}
-        </span>
+        <span className="text-[13px] tabular-nums text-muted-foreground">{value}</span>
       </div>
       <Slider
         min={0}

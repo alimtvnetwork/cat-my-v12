@@ -8,7 +8,11 @@
  * importing the store module.
  */
 import { useEffect, useMemo } from "react";
-import { useRunningOpsStore, type RunningOp, type RunningOpKind } from "@/lib/stores/running-ops-store";
+import {
+  useRunningOpsStore,
+  type RunningOp,
+  type RunningOpKind,
+} from "@/lib/stores/running-ops-store";
 
 export interface UseRunningApi {
   ops: RunningOp[];

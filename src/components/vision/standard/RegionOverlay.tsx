@@ -51,8 +51,8 @@ export function RegionOverlay({
       onChange(
         clampRectToBounds(
           { ...startGeom, x: startGeom.x + dxImg, y: startGeom.y + dyImg },
-          IMAGE_BOUNDS
-        )
+          IMAGE_BOUNDS,
+        ),
       );
     };
 
@@ -109,9 +109,7 @@ export function RegionOverlay({
         newH = -newH;
       }
 
-      onChange(
-        clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, IMAGE_BOUNDS)
-      );
+      onChange(clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, IMAGE_BOUNDS));
     };
 
     const onUp = () => {
