@@ -29,6 +29,11 @@ $ErrorActionPreference = "Stop"
 $jobs = @()
 
 try {
+    Write-Host "Cleaning up cached builds..."
+    if (Test-Path "BE\be.egg-info") {
+        Remove-Item -Recurse -Force "BE\be.egg-info" -ErrorAction SilentlyContinue
+    }
+    
     Write-Host "Starting backend on port $BePort..."
     $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort"
     $jobs += $backendProcess

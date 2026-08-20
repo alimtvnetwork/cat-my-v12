@@ -51,6 +51,9 @@ cleanup() {
 # Trap INT and TERM signals for cleanup
 trap cleanup EXIT INT TERM
 
+echo "Cleaning up cached builds..."
+rm -rf BE/be.egg-info
+
 # Start backend
 echo "Starting backend on port $BE_PORT..."
 # Using explicit bind as required by security guidelines for dev
