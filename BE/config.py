@@ -18,24 +18,24 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Environment(StrEnum):
     """Deployment environment; drives error-envelope verbosity in `BE.errors.handlers`."""
 
-    DEV = "dev"
-    STAGING = "staging"
-    PROD = "prod"
+    Dev = "dev"
+    Staging = "staging"
+    Prod = "prod"
 
 
 class LogLevel(StrEnum):
     """Subset of stdlib logging levels exposed as config."""
 
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
+    Debug = "DEBUG"
+    Info = "INFO"
+    Warning = "WARNING"
+    Error = "ERROR"
 
 
 class CameraProvider(StrEnum):
-    INMEMORY = "inmemory"
-    DAHENG = "daheng"
-    REPLAY = "replay"
+    InMemory = "InMemory"
+    Daheng = "Daheng"
+    Replay = "Replay"
 
 
 class CameraDahengConfig(BaseModel):
@@ -44,7 +44,7 @@ class CameraDahengConfig(BaseModel):
 
 
 class CameraConfig(BaseModel):
-    provider: CameraProvider = CameraProvider.INMEMORY
+    provider: CameraProvider = CameraProvider.InMemory
     daheng: CameraDahengConfig = Field(default_factory=CameraDahengConfig)
 
 
@@ -55,8 +55,8 @@ class Settings(BaseSettings):
 
     host: str = "127.0.0.1"
     port: int = 8787
-    env: Environment = Environment.DEV
-    log_level: LogLevel = LogLevel.INFO
+    env: Environment = Environment.Dev
+    log_level: LogLevel = LogLevel.Info
     cors_origins: tuple[str, ...] = (
         "http://localhost:8080",
         "http://127.0.0.1:8080",
@@ -65,11 +65,11 @@ class Settings(BaseSettings):
 
     @property
     def is_prod(self) -> bool:
-        return self.env is Environment.PROD
+        return self.env is Environment.Prod
 
     @property
     def is_dev(self) -> bool:
-        return self.env is Environment.DEV
+        return self.env is Environment.Dev
 
 
 @lru_cache(maxsize=1)

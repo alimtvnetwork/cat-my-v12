@@ -86,9 +86,9 @@ def test_logger_exception_folds_traceback() -> None:
 
 
 def test_configure_logging_is_idempotent(capsys: pytest.CaptureFixture[str]) -> None:
-    configure_logging(LogLevel.INFO)
-    configure_logging(LogLevel.INFO)
-    configure_logging(LogLevel.DEBUG)
+    configure_logging(LogLevel.Info)
+    configure_logging(LogLevel.Info)
+    configure_logging(LogLevel.Debug)
     root = logging.getLogger()
     json_handlers = [h for h in root.handlers if getattr(h, "_be_json", False)]
     assert len(json_handlers) == 1
@@ -98,7 +98,7 @@ def test_configure_logging_is_idempotent(capsys: pytest.CaptureFixture[str]) -> 
 def test_configure_logging_emits_json_to_stdout(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    configure_logging(LogLevel.INFO)
+    configure_logging(LogLevel.Info)
     logging.getLogger("BE.smoke").info(
         "startup", extra={"CorrelationId": "boot", "operation": "boot"}
     )

@@ -56,7 +56,7 @@ class ReplayCameraFacade(CameraFacade):
             data=arr.tobytes(),
             width=w,
             height=h,
-            pixel_format=PixelFormat.RGB8,
+            pixel_format=PixelFormat.Rgb8,
             timestamp_ns=0,
             frame_id=self._idx
         )
@@ -65,7 +65,7 @@ class ReplayCameraFacade(CameraFacade):
     def set_gain(self, decibels: float) -> None: pass
     def set_roi(self, roi: Roi) -> None: pass
     def set_pixel_format(self, fmt: PixelFormat) -> None: pass
-    def set_trigger(self, mode: TriggerMode, source: TriggerSource = TriggerSource.SOFTWARE, activation: TriggerActivation = TriggerActivation.RISING_EDGE) -> None: pass
+    def set_trigger(self, mode: TriggerMode, source: TriggerSource = TriggerSource.Software, activation: TriggerActivation = TriggerActivation.RisingEdge) -> None: pass
     def execute_software_trigger(self) -> None: pass
     def read_line_status(self, line: str) -> bool: return False
     def set_line_output(self, line: str, on: bool) -> None: pass

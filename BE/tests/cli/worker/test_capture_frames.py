@@ -129,7 +129,7 @@ def test_capture_frames_stores_when_camera_yields_frames(monkeypatch, tmp_path: 
             return Frame(
                 data=b"\x00\x01\x02" * self._n,
                 width=4, height=1,
-                pixel_format=PixelFormat.MONO8,
+                pixel_format=PixelFormat.Mono8,
                 timestamp_ns=1_000 * self._n,
                 frame_id=self._n,
             )

@@ -83,7 +83,7 @@ def self_format_exception(record: logging.LogRecord) -> str:
     return logging.Formatter().formatException(record.exc_info) if record.exc_info else ""
 
 
-def configure_logging(level: LogLevel = LogLevel.INFO) -> None:
+def configure_logging(level: LogLevel = LogLevel.Info) -> None:
     """Install `JsonFormatter` on the root logger. Idempotent."""
     root = logging.getLogger()
     root.setLevel(level.value)

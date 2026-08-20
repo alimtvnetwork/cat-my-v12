@@ -15,8 +15,8 @@ def _settings() -> Settings:
     return Settings(
         host="127.0.0.1",
         port=8787,
-        env=Environment.DEV,
-        log_level=LogLevel.WARNING,
+        env=Environment.Dev,
+        log_level=LogLevel.Warning,
         cors_origins=("http://localhost:8080",),
     )
 

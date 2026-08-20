@@ -40,30 +40,30 @@ SDK_FACADE_VERSION = "0.3.0-protocol"
 class PixelFormat(StrEnum):
     """Normalized pixel formats. Adapter translates to vendor `PixelFormat` node."""
 
-    MONO8 = "MONO8"
-    MONO10 = "MONO10"
-    MONO12 = "MONO12"
-    BAYER_RG8 = "BAYER_RG8"
-    RGB8 = "RGB8"
+    Mono8 = "Mono8"
+    Mono10 = "Mono10"
+    Mono12 = "Mono12"
+    BayerRg8 = "BayerRg8"
+    Rgb8 = "Rgb8"
 
 
 class TriggerMode(StrEnum):
-    OFF = "OFF"  # continuous free-run
-    ON = "ON"
+    Off = "Off"  # continuous free-run
+    On = "On"
 
 
 class TriggerSource(StrEnum):
-    SOFTWARE = "SOFTWARE"
-    LINE0 = "LINE0"
-    LINE2 = "LINE2"
-    LINE3 = "LINE3"
-    COUNTER = "COUNTER"
+    Software = "Software"
+    Line0 = "Line0"
+    Line2 = "Line2"
+    Line3 = "Line3"
+    Counter = "Counter"
 
 
 class TriggerActivation(StrEnum):
-    RISING_EDGE = "RISING_EDGE"
-    FALLING_EDGE = "FALLING_EDGE"
-    ANY_EDGE = "ANY_EDGE"
+    RisingEdge = "RisingEdge"
+    FallingEdge = "FallingEdge"
+    AnyEdge = "AnyEdge"
 
 
 @dataclass(frozen=True)
@@ -125,8 +125,8 @@ class CameraFacade(Protocol):
     def set_trigger(
         self,
         mode: TriggerMode,
-        source: TriggerSource = TriggerSource.SOFTWARE,
-        activation: TriggerActivation = TriggerActivation.RISING_EDGE,
+        source: TriggerSource = TriggerSource.Software,
+        activation: TriggerActivation = TriggerActivation.RisingEdge,
     ) -> None: ...
     def execute_software_trigger(self) -> None: ...
 

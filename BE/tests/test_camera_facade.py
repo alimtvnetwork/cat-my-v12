@@ -76,7 +76,7 @@ def test_operations_before_open_raise_not_connected() -> None:
         lambda: cam.grab(100),
         lambda: cam.set_exposure(1000),
         lambda: cam.set_gain(1.0),
-        lambda: cam.set_pixel_format(PixelFormat.MONO8),
+        lambda: cam.set_pixel_format(PixelFormat.Mono8),
     ):
         with pytest.raises(AppError) as ei:
             op()
@@ -151,7 +151,7 @@ def test_set_roi_exceeds_sensor() -> None:
 
 def test_set_pixel_format_accepts_enum() -> None:
     cam = _opened()
-    cam.set_pixel_format(PixelFormat.BAYER_RG8)  # must not raise
+    cam.set_pixel_format(PixelFormat.BayerRg8)  # must not raise
 
 
 def test_set_pixel_format_rejects_non_enum() -> None:
@@ -170,7 +170,7 @@ def test_software_trigger_requires_on_and_software_source() -> None:
         cam.execute_software_trigger()
     assert ei.value.code == ErrorCode.E_BE_BAD_REQUEST
 
-    cam.set_trigger(TriggerMode.ON, TriggerSource.SOFTWARE, TriggerActivation.RISING_EDGE)
+    cam.set_trigger(TriggerMode.On, TriggerSource.Software, TriggerActivation.RisingEdge)
     cam.execute_software_trigger()  # must not raise
 
 

@@ -116,7 +116,7 @@ class DahengCameraFacade(CameraFacade):
             data=env.data.tobytes() if hasattr(env.data, 'tobytes') else b'',
             width=w,
             height=h,
-            pixel_format=PixelFormat.RGB8,
+            pixel_format=PixelFormat.Rgb8,
             timestamp_ns=env.ts_ns,
             frame_id=env.frame_id
         )
@@ -140,10 +140,10 @@ class DahengCameraFacade(CameraFacade):
     def set_trigger(
         self,
         mode: TriggerMode,
-        source: TriggerSource = TriggerSource.SOFTWARE,
-        activation: TriggerActivation = TriggerActivation.RISING_EDGE,
+        source: TriggerSource = TriggerSource.Software,
+        activation: TriggerActivation = TriggerActivation.RisingEdge,
     ) -> None:
-        if self._handle and mode == TriggerMode.ON:
+        if self._handle and mode == TriggerMode.On:
             self._with_reconnect(arm_trigger, self._handle, source.value, activation.value, 0.0)
 
     def execute_software_trigger(self) -> None:

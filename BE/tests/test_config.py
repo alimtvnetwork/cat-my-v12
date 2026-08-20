@@ -11,15 +11,15 @@ def test_defaults_match_spec() -> None:
     s = Settings()
     assert s.host == "127.0.0.1"
     assert s.port == 8787
-    assert s.env is Environment.DEV
-    assert s.log_level is LogLevel.INFO
+    assert s.env is Environment.Dev
+    assert s.log_level is LogLevel.Info
 
 
 def test_is_dev_and_is_prod_are_mutually_exclusive() -> None:
-    assert Settings(env=Environment.DEV).is_dev is True
-    assert Settings(env=Environment.DEV).is_prod is False
-    assert Settings(env=Environment.PROD).is_prod is True
-    assert Settings(env=Environment.PROD).is_dev is False
+    assert Settings(env=Environment.Dev).is_dev is True
+    assert Settings(env=Environment.Dev).is_prod is False
+    assert Settings(env=Environment.Prod).is_prod is True
+    assert Settings(env=Environment.Prod).is_dev is False
 
 
 def test_env_prefix_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -28,8 +28,8 @@ def test_env_prefix_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("BE_LOG_LEVEL", "ERROR")
     s = Settings()
     assert s.port == 9001
-    assert s.env is Environment.PROD
-    assert s.log_level is LogLevel.ERROR
+    assert s.env is Environment.Prod
+    assert s.log_level is LogLevel.Error
 
 
 def test_get_settings_is_cached() -> None:

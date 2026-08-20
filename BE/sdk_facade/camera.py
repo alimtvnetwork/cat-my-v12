@@ -66,10 +66,10 @@ class _State:
     exposure_us: int = 10_000
     gain_db: float = 0.0
     roi: Roi = field(default_factory=lambda: Roi(0, 0, _SENSOR_W, _SENSOR_H))
-    pixel_format: PixelFormat = PixelFormat.MONO8
-    trigger_mode: TriggerMode = TriggerMode.OFF
-    trigger_source: TriggerSource = TriggerSource.SOFTWARE
-    trigger_activation: TriggerActivation = TriggerActivation.RISING_EDGE
+    pixel_format: PixelFormat = PixelFormat.Mono8
+    trigger_mode: TriggerMode = TriggerMode.Off
+    trigger_source: TriggerSource = TriggerSource.Software
+    trigger_activation: TriggerActivation = TriggerActivation.RisingEdge
     line_outputs: dict[str, bool] = field(default_factory=dict)
 
 
@@ -188,8 +188,8 @@ class InMemoryCameraFacade:
     def set_trigger(
         self,
         mode: TriggerMode,
-        source: TriggerSource = TriggerSource.SOFTWARE,
-        activation: TriggerActivation = TriggerActivation.RISING_EDGE,
+        source: TriggerSource = TriggerSource.Software,
+        activation: TriggerActivation = TriggerActivation.RisingEdge,
     ) -> None:
         self._require_open("set_trigger")
         self._s.trigger_mode = mode
@@ -198,7 +198,7 @@ class InMemoryCameraFacade:
 
     def execute_software_trigger(self) -> None:
         self._require_open("execute_software_trigger")
-        if self._s.trigger_mode != TriggerMode.ON or self._s.trigger_source != TriggerSource.SOFTWARE:
+        if self._s.trigger_mode != TriggerMode.On or self._s.trigger_source != TriggerSource.Software:
             raise AppError(
                 ErrorCode.E_BE_BAD_REQUEST,
                 f"node 'TriggerSoftware' requires TriggerMode=ON and TriggerSource=SOFTWARE on serial={self._s.open_serial!r} (mode={self._s.trigger_mode.value}, source={self._s.trigger_source.value})",
