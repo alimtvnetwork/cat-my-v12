@@ -402,7 +402,7 @@ async def list_sessions(
     try:
         conn.row_factory = sqlite3.Row
         try:
-            rows = conn.execute(sql, params).fetchall()
+            rows = conn.safe_execute(sql, params).fetchall()
         except sqlite3.OperationalError as exc:
             # Most common cause: `bin/db-bootstrap.py` never ran on this
             # host. Surface loudly (never a silent empty list).

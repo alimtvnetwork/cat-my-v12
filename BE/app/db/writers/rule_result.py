@@ -256,7 +256,7 @@ def write_rule_results(
         conn.execute("BEGIN IMMEDIATE")
         # Reject unknown parent up-front so we return E_BE_NOT_FOUND
         # instead of relying on a raw FK constraint failure.
-        parent = conn.execute(
+        parent = conn.safe_execute(
             "SELECT RunSessionId FROM RunSession WHERE RunSessionId = ?",
             (run_session_id,),
         ).fetchone()
@@ -272,7 +272,7 @@ def write_rule_results(
         inserted = 0
         skipped = 0
         for row in prepared:
-            cur = conn.execute(
+            cur = conn.safe_execute(
                 """
                 INSERT OR IGNORE INTO RuleResult (
                   RunSessionId, RuleId, RegionId, RuleKind, OrderIndex,
@@ -288,7 +288,7 @@ def write_rule_results(
                 ),
             )
             was_inserted = cur.rowcount == 1
-            id_row = conn.execute(
+            id_row = conn.safe_execute(
                 "SELECT RuleResultId FROM RuleResult "
                 "WHERE RunSessionId = ? AND RuleId = ?",
                 (run_session_id, row["RuleId"]),

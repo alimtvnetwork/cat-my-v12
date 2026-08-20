@@ -206,7 +206,7 @@ def write_run_session(
 
     try:
         conn.execute("BEGIN IMMEDIATE")
-        cur = conn.execute(
+        cur = conn.safe_execute(
             """
             INSERT OR IGNORE INTO RunSession (
               RunId, TaskId, InstructionId, Verdict, Mode,
@@ -228,7 +228,7 @@ def write_run_session(
             ),
         )
         was_inserted = cur.rowcount == 1
-        row = conn.execute(
+        row = conn.safe_execute(
             "SELECT RunSessionId FROM RunSession WHERE RunId = ?", (run_id,),
         ).fetchone()
         conn.execute("COMMIT")

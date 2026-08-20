@@ -94,7 +94,7 @@ def _fetchall(sql: str, params: list[Any], *, correlation_id: str, op: str) -> l
     try:
         conn.row_factory = sqlite3.Row
         try:
-            return conn.execute(sql, params).fetchall()
+            return conn.safe_execute(sql, params).fetchall()
         except sqlite3.OperationalError as exc:
             logger.error(
                 "runs_query_failed",

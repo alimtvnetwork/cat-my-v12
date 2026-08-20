@@ -123,7 +123,7 @@ def _fetch_doomed(conn: sqlite3.Connection, cutoff_epoch: int) -> list[tuple[int
     Ordered by ``RunSessionId`` so retries observe a deterministic
     prefix already-deleted.
     """
-    rows = conn.execute(
+    rows = conn.safe_execute(
         "SELECT RunSessionId, ResultsJsonlPath "
         "FROM RunSession WHERE PersistedAt < ? "
         "ORDER BY RunSessionId ASC",
@@ -146,7 +146,7 @@ def _fetch_artifacts(
     for start in range(0, len(ids), _DELETE_BATCH):
         chunk = ids[start : start + _DELETE_BATCH]
         placeholders = ",".join("?" * len(chunk))
-        rows = conn.execute(
+        rows = conn.safe_execute(
             f"SELECT RunSessionId, RelPath, Bytes FROM FrameArtifact "
             f"WHERE RunSessionId IN ({placeholders})",
             tuple(chunk),
@@ -167,7 +167,7 @@ def _delete_run_sessions(conn: sqlite3.Connection, ids: list[int]) -> int:
         placeholders = ",".join("?" * len(chunk))
         conn.execute("BEGIN IMMEDIATE")
         try:
-            cur = conn.execute(
+            cur = conn.safe_execute(
                 f"DELETE FROM RunSession WHERE RunSessionId IN ({placeholders})",
                 tuple(chunk),
             )
@@ -244,10 +244,7 @@ def run_retention(
         doomed = _fetch_doomed(conn, cutoff)
     except sqlite3.OperationalError as exc:
         # Missing table is loud, not a silent zero-count success.
-        _log.error(
-            "retention.query_failed op=%s cutoff=%d err=%s",
-            "fetch_doomed", cutoff, exc,
-        )
+        
         raise AppError(
             ErrorCode.E_BE_INTERNAL,
             f"Task-DB RunSession query failed: {exc}",
@@ -329,10 +326,7 @@ def run_retention(
         try:
             rows_deleted = _delete_run_sessions(conn, doomed_ids)
         except sqlite3.Error as exc:
-            _log.error(
-                "retention.db.delete_failed op=%s ids=%d err=%s",
-                "delete_run_sessions", len(doomed_ids), exc,
-            )
+            
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
                 f"Task-DB RunSession delete failed: {exc}",

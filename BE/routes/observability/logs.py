@@ -109,7 +109,7 @@ def _fetch_row(cli_invocation_id: int, correlation_id: str) -> sqlite3.Row:
     try:
         conn.row_factory = sqlite3.Row
         try:
-            row = conn.execute(
+            row = conn.safe_execute(
                 "SELECT CliInvocationId, RunId, LogPath, ExitCode "
                 "FROM CliInvocation WHERE CliInvocationId = ?",
                 (cli_invocation_id,),

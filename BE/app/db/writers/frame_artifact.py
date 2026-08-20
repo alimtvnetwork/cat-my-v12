@@ -233,7 +233,7 @@ def write_frame_artifacts(
 
     try:
         conn.execute("BEGIN IMMEDIATE")
-        parent = conn.execute(
+        parent = conn.safe_execute(
             "SELECT RunSessionId FROM RunSession WHERE RunSessionId = ?",
             (run_session_id,),
         ).fetchone()
@@ -251,7 +251,7 @@ def write_frame_artifacts(
             rr_id = row["RuleResultId"]
             if rr_id is None:
                 continue
-            found = conn.execute(
+            found = conn.safe_execute(
                 "SELECT RunSessionId FROM RuleResult WHERE RuleResultId = ?",
                 (rr_id,),
             ).fetchone()
@@ -278,7 +278,7 @@ def write_frame_artifacts(
         inserted = 0
         skipped = 0
         for row in prepared:
-            cur = conn.execute(
+            cur = conn.safe_execute(
                 """
                 INSERT OR IGNORE INTO FrameArtifact (
                   RunSessionId, RuleResultId, ArtifactKind, RelPath,
@@ -292,7 +292,7 @@ def write_frame_artifacts(
                 ),
             )
             was_inserted = cur.rowcount == 1
-            id_row = conn.execute(
+            id_row = conn.safe_execute(
                 "SELECT FrameArtifactId FROM FrameArtifact "
                 "WHERE RunSessionId = ? AND RelPath = ?",
                 (run_session_id, row["RelPath"]),
@@ -323,10 +323,7 @@ def write_frame_artifacts(
     except sqlite3.Error as exc:
         with contextlib.suppress(sqlite3.Error):
             conn.execute("ROLLBACK")
-        _log.error(
-            "frame_artifact.write.db_error RunSessionId=%s Count=%d: %s",
-            run_session_id, len(prepared), exc,
-        )
+        
         raise AppError(
             ErrorCode.E_BE_INTERNAL,
             "FrameArtifact write failed",
