@@ -8,12 +8,7 @@ import type {
   ToolModifierKeys,
 } from "../types";
 
-export enum AnchorToolKindType {
-  K = "K",
-  S = "S",
-  E = "E",
-}
-export type AnchorToolKind = AnchorToolKindType;
+type AnchorToolKind = Extract<EditorRuleKind, "K" | "S" | "E">;
 
 interface AnchorSize {
   width: number;
