@@ -26,13 +26,13 @@ fetchBackend()      Returns fixtures
 
 ## Key Files
 
-| File | Role |
-|---|---|
+| File                                                            | Role                                       |
+| --------------------------------------------------------------- | ------------------------------------------ |
 | [`vision-facade.ts`](../../../src/lib/facades/vision-facade.ts) | Main facade factory + both implementations |
-| [`use-vision-api.ts`](../../../src/hooks/use-vision-api.ts) | TanStack Query wrappers for vision calls |
-| [`useRuleDrafts.ts`](../../../src/hooks/useRuleDrafts.ts) | IndexedDB draft persistence |
-| [`BE/routes/api/camera.py`](../../../BE/routes/api/camera.py) | `/camera/*` FastAPI routes |
-| [`BE/routes/api/images.py`](../../../BE/routes/api/images.py) | `/images/reference` FastAPI route |
+| [`use-vision-api.ts`](../../../src/hooks/use-vision-api.ts)     | TanStack Query wrappers for vision calls   |
+| [`useRuleDrafts.ts`](../../../src/hooks/useRuleDrafts.ts)       | IndexedDB draft persistence                |
+| [`BE/routes/api/camera.py`](../../../BE/routes/api/camera.py)   | `/camera/*` FastAPI routes                 |
+| [`BE/routes/api/images.py`](../../../BE/routes/api/images.py)   | `/images/reference` FastAPI route          |
 
 ## Rules
 

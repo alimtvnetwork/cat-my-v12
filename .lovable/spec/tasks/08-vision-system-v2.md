@@ -1,9 +1,11 @@
 # Vision System V2 Implementation Spec
 
 ## Intent
+
 To implement the updated vision system requirements based on the architectural pivot discussed on August 11, 2026. The new system supports dynamic camera settings per rule segment, pattern searching (including Color specific and Black & White), Trigger modes (External vs Internal), grayscaling/masking, and scratch/defect management.
 
 ## Scope
+
 - Implement camera settings (lighting, exposure, brightness control, focus) dynamically changing per rule segment.
 - Implement Pattern Search algorithm components (Color specific, B&W, 10-bit to 2-bit reduction).
 - Implement External vs Internal Trigger modes (PLC handler signaling vs Vision self-signaling) for log management.
@@ -12,10 +14,12 @@ To implement the updated vision system requirements based on the architectural p
 - Implement Pin 1 Configuration (finding the starting point via pattern match with loose tolerance).
 
 ## Inputs
+
 - `03-vision-system-change-of-direction.md`
 - Images in `assets/vision-system-pictures-11Aug/`
 
 ## Acceptance Criteria
+
 - Dynamic camera settings apply properly when rules evaluate.
 - Trigger mode correctly logs to external or internal sources.
 - Pattern matching allows 10-bit to 2-bit grayscale reduction.
@@ -24,6 +28,7 @@ To implement the updated vision system requirements based on the architectural p
 - Pin 1 search works as an initial anchor point for orientation.
 
 ## Affected Files
+
 - `src/vision/CameraSettings.ts`
 - `src/vision/RuleEvaluator.ts`
 - `src/vision/TriggerManager.ts`
@@ -33,6 +38,7 @@ To implement the updated vision system requirements based on the architectural p
 - `src/vision/Logger.ts`
 
 ## Attachments
+
 - `fingers-holding-ic-chip.jpg`: Reference for IC chip inspection.
 - `ui-feature-extraction-conditions.jpg`: UI reference for feature extraction settings.
 - `ui-inspection-region-rectangle-2.jpg`: UI reference for region of interest setup.

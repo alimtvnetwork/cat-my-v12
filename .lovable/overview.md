@@ -9,13 +9,13 @@
 
 ## Start here
 
-| If you are… | Read this first |
-|-------------|-----------------|
-| **Any contributor (human or AI)** | [`.lovable/what-to-read.md`](./what-to-read.md) — authoritative onboarding map |
-| **New to the product** | This file (overview) → root [`README.md`](../README.md) |
-| **About to write code** | [`.lovable/ai-improvement-guidelines.md`](./ai-improvement-guidelines.md) + [`.lovable/coding-guidelines.md`](./coding-guidelines.md) |
+| If you are…                        | Read this first                                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Any contributor (human or AI)**  | [`.lovable/what-to-read.md`](./what-to-read.md) — authoritative onboarding map                                                                         |
+| **New to the product**             | This file (overview) → root [`README.md`](../README.md)                                                                                                |
+| **About to write code**            | [`.lovable/ai-improvement-guidelines.md`](./ai-improvement-guidelines.md) + [`.lovable/coding-guidelines.md`](./coding-guidelines.md)                  |
 | **About to touch backend/runtime** | [`docs/architecture/runtime-map.md`](../docs/architecture/runtime-map.md) + [Architecture observations](./plans/architecture-and-code-observations.md) |
-| **Looking for active work** | [`.lovable/plans/index.md`](./plans/index.md) |
+| **Looking for active work**        | [`.lovable/plans/index.md`](./plans/index.md)                                                                                                          |
 
 ---
 
@@ -23,11 +23,11 @@
 
 **Control Automation** is a **local-first factory-floor HMI** for camera-based vision inspection.
 
-| Role | What they do |
-|------|--------------|
-| **Engineer** | Defines cameras, triggers, lighting, regions, rules, tolerances |
-| **Operator** | Runs tasks, watches live counters and PASS/FAIL judgments |
-| **Reviewer** (future) | Validates ambiguous failures via optional AI review |
+| Role                  | What they do                                                    |
+| --------------------- | --------------------------------------------------------------- |
+| **Engineer**          | Defines cameras, triggers, lighting, regions, rules, tolerances |
+| **Operator**          | Runs tasks, watches live counters and PASS/FAIL judgments       |
+| **Reviewer** (future) | Validates ambiguous failures via optional AI review             |
 
 **Domain vocabulary** (frozen):
 
@@ -103,10 +103,10 @@ flowchart TB
 
 ### Two data modes (central product decision)
 
-| Mode | Mechanism | When to use |
-|------|-----------|-------------|
-| **Seed** | Local JSON fixtures, facades, Zustand stores, IndexedDB | Design, demos, offline UI work — **no Python required** |
-| **Backend** | HTTP to `http://localhost:8787` (configurable) | Integration, real rules CRUD, observability, CLI |
+| Mode        | Mechanism                                               | When to use                                             |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| **Seed**    | Local JSON fixtures, facades, Zustand stores, IndexedDB | Design, demos, offline UI work — **no Python required** |
+| **Backend** | HTTP to `http://localhost:8787` (configurable)          | Integration, real rules CRUD, observability, CLI        |
 
 Toggle: homepage or Settings → `DataSourceToggle`. Health probe before switch. URL persisted in `localStorage`.
 
@@ -155,36 +155,36 @@ sequenceDiagram
 
 ## 4. Repository map
 
-| Path | Stack | Responsibility |
-|------|-------|----------------|
-| [`src/`](../src/) | React 19, TanStack Router/Query, Zustand, Tailwind v4, Zod | HMI UI (~900 TS/TSX files, ~70 routes) |
-| [`BE/`](../BE/) | Python 3.11, FastAPI, pydantic | HTTP API: rules, samples, meta, observability, CLI, installer |
-| [`app/`](../app/) | Python | Live pipeline: supervisor, capture, dispatcher, worker, audit |
-| [`BE/app/`](../BE/app/) | Python | BE domain: rule kernel, installers, retention, facades |
-| [`worker/`](../worker/) | Python uvicorn | Remote validation scorer (`POST /score`) for editor |
-| [`sdk/`](../sdk/) | Vendor binaries | **Never edit in place** — wrap via `BE/sdk_facade/` |
-| [`chromium-shell/`](../chromium-shell/) | MV3 extension | Desktop shell (spec target: Tauri — not built) |
-| [`spec/`](../spec/) | Markdown | Source-of-truth specifications (~1900 files) |
-| [`.lovable/`](./) | Markdown | Plans, memory, AI guidelines, prompts |
-| [`tests/`](../tests/) | Vitest, Playwright, pytest | Unit, contract, E2E, visual (~224+ test files) |
+| Path                                    | Stack                                                      | Responsibility                                                |
+| --------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
+| [`src/`](../src/)                       | React 19, TanStack Router/Query, Zustand, Tailwind v4, Zod | HMI UI (~900 TS/TSX files, ~70 routes)                        |
+| [`BE/`](../BE/)                         | Python 3.11, FastAPI, pydantic                             | HTTP API: rules, samples, meta, observability, CLI, installer |
+| [`app/`](../app/)                       | Python                                                     | Live pipeline: supervisor, capture, dispatcher, worker, audit |
+| [`BE/app/`](../BE/app/)                 | Python                                                     | BE domain: rule kernel, installers, retention, facades        |
+| [`worker/`](../worker/)                 | Python uvicorn                                             | Remote validation scorer (`POST /score`) for editor           |
+| [`sdk/`](../sdk/)                       | Vendor binaries                                            | **Never edit in place** — wrap via `BE/sdk_facade/`           |
+| [`chromium-shell/`](../chromium-shell/) | MV3 extension                                              | Desktop shell (spec target: Tauri — not built)                |
+| [`spec/`](../spec/)                     | Markdown                                                   | Source-of-truth specifications (~1900 files)                  |
+| [`.lovable/`](./)                       | Markdown                                                   | Plans, memory, AI guidelines, prompts                         |
+| [`tests/`](../tests/)                   | Vitest, Playwright, pytest                                 | Unit, contract, E2E, visual (~224+ test files)                |
 
 ### Frontend route groups
 
-| Prefix | Purpose |
-|--------|---------|
-| `/` | Home, workflow cards, data-source toggle |
-| `/projects/...` | Project → ruleset → rule editor |
-| `/setup/...` | ROI editor, camera, categories, functions |
-| `/settings/...` | Camera, lighting, trigger, license, shortcuts |
-| `/cli/...` | Developer CLI observability |
-| `/observability/...` | Sessions, runs, live tail, IPC traces |
-| `/run`, `/results`, `/trial-run` | Operator run flows |
+| Prefix                           | Purpose                                       |
+| -------------------------------- | --------------------------------------------- |
+| `/`                              | Home, workflow cards, data-source toggle      |
+| `/projects/...`                  | Project → ruleset → rule editor               |
+| `/setup/...`                     | ROI editor, camera, categories, functions     |
+| `/settings/...`                  | Camera, lighting, trigger, license, shortcuts |
+| `/cli/...`                       | Developer CLI observability                   |
+| `/observability/...`             | Sessions, runs, live tail, IPC traces         |
+| `/run`, `/results`, `/trial-run` | Operator run flows                            |
 
 ### Dual-backend mental model
 
-| Layer | Path | Port | UI uses it for |
-|-------|------|------|----------------|
-| **HTTP API** | `BE/` | 8787 | Setup, rules CRUD, observability, CLI, health |
+| Layer                  | Path   | Port                | UI uses it for                                              |
+| ---------------------- | ------ | ------------------- | ----------------------------------------------------------- |
+| **HTTP API**           | `BE/`  | 8787                | Setup, rules CRUD, observability, CLI, health               |
 | **Inspection runtime** | `app/` | loopback supervisor | Live capture, dispatch, worker eval (partially wired to UI) |
 
 Canonical map: [`docs/architecture/runtime-map.md`](../docs/architecture/runtime-map.md)
@@ -195,11 +195,11 @@ Canonical map: [`docs/architecture/runtime-map.md`](../docs/architecture/runtime
 
 ### Split SQLite (on disk)
 
-| Database | Holds | Writer |
-|----------|-------|--------|
-| **RootDb** (`root.db`) | Jobs, tasks, run sessions, error events, settings | Supervisor |
-| **TaskDb** (per task) | Images, regions, judgments (hot path) | Workers (serialized) |
-| **RulesDb** (per task) | Rules, overrides, versioned snapshots | UI setup / BE |
+| Database               | Holds                                             | Writer               |
+| ---------------------- | ------------------------------------------------- | -------------------- |
+| **RootDb** (`root.db`) | Jobs, tasks, run sessions, error events, settings | Supervisor           |
+| **TaskDb** (per task)  | Images, regions, judgments (hot path)             | Workers (serialized) |
+| **RulesDb** (per task) | Rules, overrides, versioned snapshots             | UI setup / BE        |
 
 Rules: one writer per DB; immutable rule snapshot per run session; PascalCase columns; no cross-DB joins on hot path.
 
@@ -207,12 +207,12 @@ Migrations: `app/core/io/migrations/{root,task,rules}/`
 
 ### Frontend persistence
 
-| Store | Technology | Purpose |
-|-------|------------|---------|
-| Seed bundles | JSON + facades | Demo/fixture data (`src/lib/seed/`) |
-| Draft rulesets | IndexedDB | Offline draft + boot reconcile |
-| Backend URL / mode | localStorage | Data-source toggle |
-| UI prefs | Zustand + localStorage | Theme, density, panel layout |
+| Store              | Technology             | Purpose                             |
+| ------------------ | ---------------------- | ----------------------------------- |
+| Seed bundles       | JSON + facades         | Demo/fixture data (`src/lib/seed/`) |
+| Draft rulesets     | IndexedDB              | Offline draft + boot reconcile      |
+| Backend URL / mode | localStorage           | Data-source toggle                  |
+| UI prefs           | Zustand + localStorage | Theme, density, panel layout        |
 
 ### Facade migration (v2 seed)
 
@@ -301,14 +301,14 @@ These patterns are **worth preserving and extending** — they represent mature 
 
 Honest state as of Aug 2026 (post Plan 98 closeout):
 
-| Area | Status | Reference |
-|------|--------|-----------|
-| Shell: Tauri vs Chromium | Spec says Tauri; code uses MV3 extension | `spec/21-app/shell/03-implementation-status.md` |
-| UI ↔ supervisor direct wiring | Mostly routes through BE | `docs/architecture/runtime-map.md` § Gaps |
-| Facade migration | Core slices `facade-preferred`; 6 slices `facade-only` | `facade-migration-policy.md` |
-| God-files | `__root.tsx` fixed; some components still large | Plan 98 SS-03 |
-| Rule engine | Shared `rule_kernel/` owner documented; verify parity tests | Plan 98 SS-05 |
-| Spec tree size | ~1900 markdown files — high navigation cost | Use `what-to-read.md` trail |
+| Area                          | Status                                                      | Reference                                       |
+| ----------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| Shell: Tauri vs Chromium      | Spec says Tauri; code uses MV3 extension                    | `spec/21-app/shell/03-implementation-status.md` |
+| UI ↔ supervisor direct wiring | Mostly routes through BE                                    | `docs/architecture/runtime-map.md` § Gaps       |
+| Facade migration              | Core slices `facade-preferred`; 6 slices `facade-only`      | `facade-migration-policy.md`                    |
+| God-files                     | `__root.tsx` fixed; some components still large             | Plan 98 SS-03                                   |
+| Rule engine                   | Shared `rule_kernel/` owner documented; verify parity tests | Plan 98 SS-05                                   |
+| Spec tree size                | ~1900 markdown files — high navigation cost                 | Use `what-to-read.md` trail                     |
 
 Full audit: [`.lovable/plans/architecture-and-code-observations.md`](./plans/architecture-and-code-observations.md)  
 Improvement plan (completed): [`.lovable/plans/completed/98-architecture-consolidation-improvements.md`](./plans/completed/98-architecture-consolidation-improvements.md)  
@@ -320,13 +320,13 @@ AI action items: [`.lovable/ai-improvement-guidelines.md`](./ai-improvement-guid
 
 Plans marked **completed** in `.lovable/plans/completed/` that shaped today's architecture:
 
-| Plan | Theme | Lasting impact |
-|------|-------|----------------|
-| **86** | UI v4 JSON seed facade | `DomainFacade<T>`, `bundle.v2.json`, `useFacadeOrStore`, 13 seed slices |
-| **88** | BE v1 (150 steps) | FastAPI app, envelope, error codes, routes, SDK facade protocols |
-| **90** | Worker & processing CLI | Observability stack, ruleset envelope save/reconcile, SSE log tail, installer |
-| **96** | Guideline audit | Hundreds of file-level fixes across FE/BE |
-| **98** | Architecture consolidation | Runtime map, doc alignment, god-file split, facade policy, integration spine |
+| Plan   | Theme                      | Lasting impact                                                                |
+| ------ | -------------------------- | ----------------------------------------------------------------------------- |
+| **86** | UI v4 JSON seed facade     | `DomainFacade<T>`, `bundle.v2.json`, `useFacadeOrStore`, 13 seed slices       |
+| **88** | BE v1 (150 steps)          | FastAPI app, envelope, error codes, routes, SDK facade protocols              |
+| **90** | Worker & processing CLI    | Observability stack, ruleset envelope save/reconcile, SSE log tail, installer |
+| **96** | Guideline audit            | Hundreds of file-level fixes across FE/BE                                     |
+| **98** | Architecture consolidation | Runtime map, doc alignment, god-file split, facade policy, integration spine  |
 
 Recent product features (from CHANGELOG v4.85–v4.98):
 
@@ -408,29 +408,29 @@ flowchart LR
 
 ## 12. Cross-reference index
 
-| Topic | Document |
-|-------|----------|
-| Onboarding map | [what-to-read.md](./what-to-read.md) |
-| AI coding improvements | [ai-improvement-guidelines.md](./ai-improvement-guidelines.md) |
-| Hard rules (CODE RED) | [memory/01-code-red.md](./memory/01-code-red.md) |
-| Runtime ownership | [docs/architecture/runtime-map.md](../docs/architecture/runtime-map.md) |
-| Facade policy | [memory/features/facade-migration-policy.md](./memory/features/facade-migration-policy.md) |
-| Shell status | [spec/21-app/shell/03-implementation-status.md](../spec/21-app/shell/03-implementation-status.md) |
-| Product spec | [spec/21-app/10-app-overview.md](../spec/21-app/10-app-overview.md) |
-| Error manage | [spec/03-error-manage/00-overview.md](../spec/03-error-manage/00-overview.md) |
-| Active/completed plans | [plans/index.md](./plans/index.md) |
-| Root README | [README.md](../README.md) |
-| Agent contract | [AGENTS.md](../AGENTS.md) |
+| Topic                  | Document                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| Onboarding map         | [what-to-read.md](./what-to-read.md)                                                              |
+| AI coding improvements | [ai-improvement-guidelines.md](./ai-improvement-guidelines.md)                                    |
+| Hard rules (CODE RED)  | [memory/01-code-red.md](./memory/01-code-red.md)                                                  |
+| Runtime ownership      | [docs/architecture/runtime-map.md](../docs/architecture/runtime-map.md)                           |
+| Facade policy          | [memory/features/facade-migration-policy.md](./memory/features/facade-migration-policy.md)        |
+| Shell status           | [spec/21-app/shell/03-implementation-status.md](../spec/21-app/shell/03-implementation-status.md) |
+| Product spec           | [spec/21-app/10-app-overview.md](../spec/21-app/10-app-overview.md)                               |
+| Error manage           | [spec/03-error-manage/00-overview.md](../spec/03-error-manage/00-overview.md)                     |
+| Active/completed plans | [plans/index.md](./plans/index.md)                                                                |
+| Root README            | [README.md](../README.md)                                                                         |
+| Agent contract         | [AGENTS.md](../AGENTS.md)                                                                         |
 
 ---
 
 ## 13. Document maintenance
 
-| When | Action |
-|------|--------|
-| New major plan completes | Add row to §9; update plans/index.md |
-| Architecture changes | Update §2–§4; bump runtime-map `_Last Verified_` |
-| New AI rule discovered | Add to ai-improvement-guidelines.md |
-| Onboarding path changes | Update what-to-read.md + this §12 index |
+| When                     | Action                                           |
+| ------------------------ | ------------------------------------------------ |
+| New major plan completes | Add row to §9; update plans/index.md             |
+| Architecture changes     | Update §2–§4; bump runtime-map `_Last Verified_` |
+| New AI rule discovered   | Add to ai-improvement-guidelines.md              |
+| Onboarding path changes  | Update what-to-read.md + this §12 index          |
 
 _Last updated: 2026-08-17_

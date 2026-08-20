@@ -1,9 +1,11 @@
 # Plan 05: Code Quality & Guideline Audit
 
 ## Goal
+
 Audit the entire codebase for specific coding guideline violations based on recent user feedback. Ensure all agents adhere to strict TypeScript best practices going forward.
 
 ## Guidelines to Enforce
+
 1. **Explicit Types for Variables:** Arrays and objects must be explicitly typed (e.g., `const TOOLS: ToolItem[] = [...]`). Do not rely solely on inference for complex objects.
 2. **Explicit Return Types for Functions/Components:** All React components and utility functions must have explicit return types (e.g., `export function MyComponent(): React.JSX.Element | null`).
 3. **Small Component Size:** Refactor large components into smaller, more manageable pieces. Extract inner mapping functions into separate components (e.g., extracting a `ToolButton` component instead of mapping inline).
@@ -33,6 +35,5 @@ Audit the entire codebase for specific coding guideline violations based on rece
   - Review database schemas/migrations to ensure `BOOLEAN` columns are `NOT NULL DEFAULT FALSE`.
 
 ## Execution Notes
+
 Future agents picking up this plan should use `grep_search` to find violations and `multi_replace_file_content` to batch fix them.
-
-

@@ -6,10 +6,12 @@ Status: pending
 Created: 2026-08-17
 
 ## Context
-Implementation of the new vision system pivot, introducing dynamic per-rule camera settings, pattern searching (ShapeTrax3 style), masking, and defect management. 
+
+Implementation of the new vision system pivot, introducing dynamic per-rule camera settings, pattern searching (ShapeTrax3 style), masking, and defect management.
 Links: [Spec](file:///d:/work/cat-my/.lovable/spec/tasks/08-vision-system-v2.md)
 
 ## Steps
+
 1. Implement dynamic camera setting schema in `src/vision/CameraSettings.ts` (references spec task 08).
 2. Implement dynamic camera setting schema in `src/vision/CameraSettings.ts` (references spec task 08).
 3. Implement dynamic camera setting schema in `src/vision/CameraSettings.ts` (references spec task 08).
@@ -212,7 +214,9 @@ Links: [Spec](file:///d:/work/cat-my/.lovable/spec/tasks/08-vision-system-v2.md)
 200. Finalize QA review and verification of all vision system v2 components (references spec task 08).
 
 ## Verification
+
 Steps 1-200 are verified by running `npm run test` and verifying visual layout with `npm run preview`.
 
 ## Appended from prior pending tasks
+
 none

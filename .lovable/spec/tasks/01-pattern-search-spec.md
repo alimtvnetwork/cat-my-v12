@@ -10,8 +10,8 @@ This plan outlines the architecture and step-by-step execution for implementing 
 ## Open Questions
 
 > [!WARNING]
-> **Unknown Fields:** Section 12 of the spec lists several fields (e.g. `Unit Time`, `Reference Image 1 - 000`, `Image Region` purpose, `Counts`). As per the instructions, I will render them exactly as specified and wire them to state, but leave their actual formulas/behavior as TODOs rather than guessing. 
-> 
+> **Unknown Fields:** Section 12 of the spec lists several fields (e.g. `Unit Time`, `Reference Image 1 - 000`, `Image Region` purpose, `Counts`). As per the instructions, I will render them exactly as specified and wire them to state, but leave their actual formulas/behavior as TODOs rather than guessing.
+>
 > **Are there any clarifications for Section 12 that I should include now, or should I proceed with the UI as-is?**
 
 ## Proposed Architecture
@@ -19,11 +19,9 @@ This plan outlines the architecture and step-by-step execution for implementing 
 1. **Shared Domain Layer (`src/domain/vision/`)**
    - We will extract shared models (`PatternShape`, `MaskShape`, `PatternSearchSettings`) to a new `src/domain/vision` directory to serve as the single source of truth for both Modern and Standard UIs.
    - We will implement validation, defaults, and the persistence adapter here.
-   
 2. **UI Mode Switch (`src/contexts/UiModeContext.tsx`)**
    - Introduce a `UiMode` ("modern" | "standard") context to toggle between the two views.
    - We will wrap the rule editor route with a presentation branch (`<ModernPatternSearch />` vs `<StandardPatternSearch />`).
-   
 3. **Standard UI Components (`src/components/vision/standard/`)**
    - **`StandardHeaderReadouts`**: The top-left black chrome numeric displays.
    - **`StandardImageToolbar`**: The image controls, view modes, and zoom.
@@ -68,9 +66,11 @@ I will create the following subtasks in `.lovable/plans/subtasks/01-pattern-sear
 ## Verification Plan
 
 ### Automated Tests
+
 - Run `tsc --noEmit` and the frontend linter to ensure strict typing of the new domain models and component props.
 
 ### Manual Verification
+
 - Render the Standard UI in the browser and verify it matches the provided screenshots perfectly.
 - Test switching between Modern and Standard UI mid-edit to confirm state survives the transition.
 - Test the 4-layer mask limit in Standard vs unlimited in Modern.

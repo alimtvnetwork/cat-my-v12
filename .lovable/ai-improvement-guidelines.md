@@ -51,10 +51,10 @@ The FE moved from reading `env.Data` (always undefined) to `Results[0]` (Plan 90
 
 ### A.4 Facade boundaries at two layers
 
-| Layer | Contract | Location |
-|-------|----------|----------|
-| Vendor SDK | `CameraFacade`, `StorageFacade`, `SdkFacade` | `BE/sdk_facade/` |
-| Domain seed | `DomainFacade<T>` | `src/lib/facades/domain-facade.ts` |
+| Layer       | Contract                                     | Location                           |
+| ----------- | -------------------------------------------- | ---------------------------------- |
+| Vendor SDK  | `CameraFacade`, `StorageFacade`, `SdkFacade` | `BE/sdk_facade/`                   |
+| Domain seed | `DomainFacade<T>`                            | `src/lib/facades/domain-facade.ts` |
 
 **AI rule:** New persistence slice → implement facade first, register in `facade-migration-policy.md`, add ratchet test. Never import `sdk/` from routes or components.
 
@@ -115,11 +115,11 @@ Plan 90 built a complete stack: BE disk tail → SSE endpoint → same-origin pr
 
 **Improvement for AI:**
 
-| Slice status | Allowed in new code |
-|--------------|---------------------|
-| `facade-only` | Facade imports only — no `useXStore` |
+| Slice status       | Allowed in new code                     |
+| ------------------ | --------------------------------------- |
+| `facade-only`      | Facade imports only — no `useXStore`    |
 | `facade-preferred` | `useFacadeOrStore(facade, () => store)` |
-| `store-only` | Store only until plan migrates |
+| `store-only`       | Store only until plan migrates          |
 
 Check policy before every feature touching: projects, rulesets, rules, categories, cameras, micSettings.
 
@@ -215,33 +215,33 @@ Use when designing a new feature or refactoring.
 
 ### D.1 Frontend
 
-| Check | Requirement |
-|-------|-------------|
-| Route thin? | Business logic in `src/lib/`, not route file |
-| Data path clear? | Facade / store / backend — one primary path documented |
-| Seed safe? | Reads work offline; writes gated via `runBackendWrite` |
-| Errors surfaced? | Query meta `hasVisibility: false` only when intentionally local |
-| A11y? | `aria-label`, keyboard path, 40px hit targets on interactive controls |
-| Types? | Zod at boundary; no `any`; enums with `Type` suffix |
+| Check            | Requirement                                                           |
+| ---------------- | --------------------------------------------------------------------- |
+| Route thin?      | Business logic in `src/lib/`, not route file                          |
+| Data path clear? | Facade / store / backend — one primary path documented                |
+| Seed safe?       | Reads work offline; writes gated via `runBackendWrite`                |
+| Errors surfaced? | Query meta `hasVisibility: false` only when intentionally local       |
+| A11y?            | `aria-label`, keyboard path, 40px hit targets on interactive controls |
+| Types?           | Zod at boundary; no `any`; enums with `Type` suffix                   |
 
 ### D.2 Backend (BE/)
 
-| Check | Requirement |
-|-------|-------------|
-| Thin handler? | Route → repo/facade → envelope |
-| SDK isolated? | Only `BE/sdk_facade/` touches vendor |
+| Check         | Requirement                                              |
+| ------------- | -------------------------------------------------------- |
+| Thin handler? | Route → repo/facade → envelope                           |
+| SDK isolated? | Only `BE/sdk_facade/` touches vendor                     |
 | Errors typed? | `AppError(ErrorCode.E_*, ...)` — never raw HTTPException |
-| Logged? | JSON log with CorrelationId, operation, code |
-| Tested? | pytest for success + 400 + 404 paths |
+| Logged?       | JSON log with CorrelationId, operation, code             |
+| Tested?       | pytest for success + 400 + 404 paths                     |
 
 ### D.3 Runtime (app/)
 
-| Check | Requirement |
-|-------|-------------|
-| Hot path non-blocking? | Capture never waits on worker |
-| One writer? | Respect split-DB ownership |
-| Crash recovery? | Reclaim inflight on boot; supervisor restart policy |
-| Rule eval canonical? | Use shared kernel — no duplicate predicates |
+| Check                  | Requirement                                         |
+| ---------------------- | --------------------------------------------------- |
+| Hot path non-blocking? | Capture never waits on worker                       |
+| One writer?            | Respect split-DB ownership                          |
+| Crash recovery?        | Reclaim inflight on boot; supervisor restart policy |
+| Rule eval canonical?   | Use shared kernel — no duplicate predicates         |
 
 ---
 
@@ -251,12 +251,12 @@ These are the **most frequently violated** guidelines relative to the actual cod
 
 ### E.1 Size caps
 
-| Artifact | Cap | Waiver |
-|----------|-----|--------|
-| Function body | 15 lines | `// lint-allow: function-length` |
-| React component file | 100 lines | Split into sections/ |
-| Any source file | 300 lines | Extract modules |
-| Route file | Compose only | Boot logic → `src/lib/boot/` |
+| Artifact             | Cap          | Waiver                           |
+| -------------------- | ------------ | -------------------------------- |
+| Function body        | 15 lines     | `// lint-allow: function-length` |
+| React component file | 100 lines    | Split into sections/             |
+| Any source file      | 300 lines    | Extract modules                  |
+| Route file           | Compose only | Boot logic → `src/lib/boot/`     |
 
 ### E.2 Boolean and condition style
 
@@ -304,15 +304,15 @@ Always check `Status.IsFailed` explicitly — never invert `IsSuccess`.
 
 Ordered by impact. Tie to Plan 98 subtasks where applicable.
 
-| Priority | Item | Owner action | Status |
-|----------|------|--------------|--------|
-| P0 | Rule engine parity tests between BE kernel and worker | SS-05 | Verify tests exist |
-| P1 | Complete facade-only migration for `facade-preferred` slices | SS-04 | In progress |
-| P1 | Split remaining god-components (>300 lines) | SS-03 | Partial |
-| P2 | Wire supervisor health to UI degraded banner | runtime-map gap | Open |
-| P2 | Resolve AI-01 shell choice (Tauri vs Chromium) | spec issue | Blocked on product |
-| P3 | Reduce plan-step comment noise in source | This doc § B.4 | Ongoing |
-| P3 | Unified client log pipeline (optional) | Future plan | Open |
+| Priority | Item                                                         | Owner action    | Status             |
+| -------- | ------------------------------------------------------------ | --------------- | ------------------ |
+| P0       | Rule engine parity tests between BE kernel and worker        | SS-05           | Verify tests exist |
+| P1       | Complete facade-only migration for `facade-preferred` slices | SS-04           | In progress        |
+| P1       | Split remaining god-components (>300 lines)                  | SS-03           | Partial            |
+| P2       | Wire supervisor health to UI degraded banner                 | runtime-map gap | Open               |
+| P2       | Resolve AI-01 shell choice (Tauri vs Chromium)               | spec issue      | Blocked on product |
+| P3       | Reduce plan-step comment noise in source                     | This doc § B.4  | Ongoing            |
+| P3       | Unified client log pipeline (optional)                       | Future plan     | Open               |
 
 When picking up backlog items, create or extend a plan in `.lovable/plans/pending/` — do not drive-by refactor without plan coverage.
 
@@ -322,18 +322,18 @@ When picking up backlog items, create or extend a plan in `.lovable/plans/pendin
 
 From `.lovable/memory/workflow/`, strictly-avoid.md, and CHANGELOG "not fixed (deliberate)" notes:
 
-| Anti-pattern | Why it fails | Correct approach |
-|--------------|--------------|------------------|
-| Symptom patch without root cause | Regresses next session | One-sentence root cause first |
-| `env.Data` or `{ok,data,error}` envelope | Wire shape changed | Use PascalCase `Results[0]` |
-| `instanceof EnvelopeError` in server fn | Vite bundles break instanceof | `err.name === "EnvelopeError"` |
-| Inventing vendor names in constants | Conflicts with real `CaptureVendor` | Read `capture.shared.ts` first |
-| Mass AST refactor | Breaks unrelated files | Read `memory/13-avoid-blind-mass-refactors.md` |
-| Skipping version bump + CHANGELOG | Lovable sync breaks | Every ship: version + CHANGELOG entry |
-| Direct `sdk/` import in BE route | Facade leak | `BE/sdk_facade/` only |
-| New Zustand store for seeded slice | Facade ratchet violation | Implement `DomainFacade<T>` |
-| Nested quick-action links in cards | Ambiguous click targets | Max 2 quick actions; stopPropagation |
-| URL state without `fallback()` | Route crash on bad query | Plan 90 Step 87 pattern |
+| Anti-pattern                             | Why it fails                        | Correct approach                               |
+| ---------------------------------------- | ----------------------------------- | ---------------------------------------------- |
+| Symptom patch without root cause         | Regresses next session              | One-sentence root cause first                  |
+| `env.Data` or `{ok,data,error}` envelope | Wire shape changed                  | Use PascalCase `Results[0]`                    |
+| `instanceof EnvelopeError` in server fn  | Vite bundles break instanceof       | `err.name === "EnvelopeError"`                 |
+| Inventing vendor names in constants      | Conflicts with real `CaptureVendor` | Read `capture.shared.ts` first                 |
+| Mass AST refactor                        | Breaks unrelated files              | Read `memory/13-avoid-blind-mass-refactors.md` |
+| Skipping version bump + CHANGELOG        | Lovable sync breaks                 | Every ship: version + CHANGELOG entry          |
+| Direct `sdk/` import in BE route         | Facade leak                         | `BE/sdk_facade/` only                          |
+| New Zustand store for seeded slice       | Facade ratchet violation            | Implement `DomainFacade<T>`                    |
+| Nested quick-action links in cards       | Ambiguous click targets             | Max 2 quick actions; stopPropagation           |
+| URL state without `fallback()`           | Route crash on bad query            | Plan 90 Step 87 pattern                        |
 
 ---
 
@@ -375,31 +375,31 @@ flowchart TB
 
 ## Part I — Verification matrix
 
-| Change type | Minimum verification |
-|-------------|---------------------|
-| FE component | `bun run guidelines:check` + colocated test if logic moved |
-| FE route | Above + manual route load; Playwright if critical path |
-| BE route | `pytest BE/tests/routes/test_<area>.py -q` |
-| Envelope change | FE + BE contract tests + update both envelope modules |
-| Facade slice | Ratchet test + update facade-migration-policy.md |
-| Migration SQL | `app/core/io/migrations/` + pytest migrate tests |
-| Spec only | Link check; no runtime verification required |
+| Change type     | Minimum verification                                       |
+| --------------- | ---------------------------------------------------------- |
+| FE component    | `bun run guidelines:check` + colocated test if logic moved |
+| FE route        | Above + manual route load; Playwright if critical path     |
+| BE route        | `pytest BE/tests/routes/test_<area>.py -q`                 |
+| Envelope change | FE + BE contract tests + update both envelope modules      |
+| Facade slice    | Ratchet test + update facade-migration-policy.md           |
+| Migration SQL   | `app/core/io/migrations/` + pytest migrate tests           |
+| Spec only       | Link check; no runtime verification required               |
 
 ---
 
 ## Part J — Related documents
 
-| Document | When to read |
-|----------|--------------|
-| [overview.md](./overview.md) | Product + architecture orientation |
-| [what-to-read.md](./what-to-read.md) | Full onboarding map + playbooks |
-| [coding-guidelines.md](./coding-guidelines.md) | Blind-follow hard rules |
-| [strictly-avoid.md](./strictly-avoid.md) | Forbidden patterns |
-| [memory/01-code-red.md](./memory/01-code-red.md) | Size caps + prohibitions |
-| [memory/24-coding-and-error-rulebook.md](./memory/24-coding-and-error-rulebook.md) | Distilled spec/02 + spec/03 |
-| [plans/architecture-and-code-observations.md](./plans/architecture-and-code-observations.md) | Aug 2026 audit snapshot |
-| [memory/features/facade-migration-policy.md](./memory/features/facade-migration-policy.md) | Per-slice data path |
-| [docs/architecture/runtime-map.md](../docs/architecture/runtime-map.md) | BE vs app ownership |
+| Document                                                                                     | When to read                       |
+| -------------------------------------------------------------------------------------------- | ---------------------------------- |
+| [overview.md](./overview.md)                                                                 | Product + architecture orientation |
+| [what-to-read.md](./what-to-read.md)                                                         | Full onboarding map + playbooks    |
+| [coding-guidelines.md](./coding-guidelines.md)                                               | Blind-follow hard rules            |
+| [strictly-avoid.md](./strictly-avoid.md)                                                     | Forbidden patterns                 |
+| [memory/01-code-red.md](./memory/01-code-red.md)                                             | Size caps + prohibitions           |
+| [memory/24-coding-and-error-rulebook.md](./memory/24-coding-and-error-rulebook.md)           | Distilled spec/02 + spec/03        |
+| [plans/architecture-and-code-observations.md](./plans/architecture-and-code-observations.md) | Aug 2026 audit snapshot            |
+| [memory/features/facade-migration-policy.md](./memory/features/facade-migration-policy.md)   | Per-slice data path                |
+| [docs/architecture/runtime-map.md](../docs/architecture/runtime-map.md)                      | BE vs app ownership                |
 
 ---
 

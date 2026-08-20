@@ -59,6 +59,7 @@ feature development. It is purely structural hygiene.
 ## Affected Files
 
 ### Backend (Phase A)
+
 - `BE/routes/` (entire tree — delete or integrate)
 - `BE/routes/models/envelope.py` (delete after integration)
 - `BE/routes/api/router.py`, `BE/routes/api/system.py` (migrate or delete)
@@ -68,11 +69,13 @@ feature development. It is purely structural hygiene.
 - `BE/README.md` (update to reflect unified structure)
 
 ### Frontend Routes (Phase B)
+
 - `src/routes/` — every file with two or more dot segments in its name
 - `app.config.ts` or `vite.config.ts` — TanStack Router plugin config for directory routing
 - Any import that references `src/routes/` by filename (server-function imports, lazy route loaders)
 
 ### Frontend Stores (Phase C)
+
 - `src/lib/stores/palette-store.ts` — candidate for EditorShell context
 - `src/lib/stores/shortcuts-store.ts` — candidate for EditorShell context
 - `src/lib/stores/capture-history-store.ts` — candidate for HMI context
@@ -80,6 +83,7 @@ feature development. It is purely structural hygiene.
 - New context files: `src/contexts/EditorContext.tsx`, `src/contexts/HmiContext.tsx`
 
 ### Spec / Docs (Phase D)
+
 - `.lovable/memory/index.md` — update cross-references
 - `.lovable/memory/07-lovable-folder-guide.md` — update plans lifecycle section
 - `spec/21-app/` — any file referencing `BE/routes/` or old route filenames

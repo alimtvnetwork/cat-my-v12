@@ -23,3 +23,9 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 
 - **NEVER** leave a file with `TS2322` or `TS2339` errors unaddressed before moving on, unless specifically instructed to park it.
 - **ALWAYS** run `npx tsc --noEmit` to verify type safety.
+
+## 5. Query Wrappers and Error Logging
+
+- **NEVER** use raw conn.execute(...) or eFetch(...) for queries without proper wrappers that natively log errors and return standardized success/failure envelopes.
+- **Root Cause**: Raw xecute calls resulted in scattered 	ry/except and _log.error(...) boilerplate across many python files, which caused inconsistency and bloated code. Type assertion data: envelope.Results as T in TS xecuteApiQuery incorrectly hid the T[] structure of the envelope results.
+- **ALWAYS** use safe_execute, safe_executemany, and safe_executescript in Python (from BE.db.connections) and xecuteApiQuery in TypeScript (from src/lib/db-wrapper.ts) which return objects with isSuccess and isFail properties.

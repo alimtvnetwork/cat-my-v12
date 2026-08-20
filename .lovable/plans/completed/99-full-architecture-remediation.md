@@ -20,10 +20,11 @@ This plan is PURE STRUCTURAL HYGIENE. It does NOT touch feature code, Standard U
 
 Spec task: `.lovable/spec/tasks/99-full-architecture-remediation.md`
 Subtasks:
-  - Phase A: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-01-backend-split-brain.md`
-  - Phase B: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`
-  - Phase C: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-03-store-localization.md`
-  - Phase D: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-04-backend-bootstrap-docs.md`
+
+- Phase A: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-01-backend-split-brain.md`
+- Phase B: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`
+- Phase C: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-03-store-localization.md`
+- Phase D: `.lovable/plans/subtasks/99-full-architecture-remediation/SS-04-backend-bootstrap-docs.md`
 
 Coding guidelines: `.lovable/coding-guidelines.md` (15-line function cap, 100-line .tsx cap,
 no magic strings, enum-only bounded sets, positive boolean names, no nested if).
@@ -37,13 +38,15 @@ entry. Version bump + changelog fires ONLY when ALL 200 steps are complete and t
 file moves to `completed/`. The release ceremony follows `11-release.md`.
 
 Pending items rolled forward from prior pending plans:
-  - `02-ui-fixes.md` (5 UI issues, separate scope — not merged here, tracked separately)
-  - `08-vision-system-v2.md` (repetitive filler steps, separate vision scope — not merged here)
-  - `09-vision-standard-ui-tasks.md` (400-step vision plan — separate scope)
+
+- `02-ui-fixes.md` (5 UI issues, separate scope — not merged here, tracked separately)
+- `08-vision-system-v2.md` (repetitive filler steps, separate vision scope — not merged here)
+- `09-vision-standard-ui-tasks.md` (400-step vision plan — separate scope)
 
 ## Steps
 
 ### PHASE A — BACKEND SPLIT-BRAIN RESOLUTION
+
 ### Reference: SS-01-backend-split-brain.md
 
 1. Read `BE/routes/api/router.py` in full. Verify it imports only `BE.src.api.system.router`. Record line count and import list. Spec: `99-full-architecture-remediation.md §Affected Files`.
@@ -121,6 +124,7 @@ Pending items rolled forward from prior pending plans:
 37. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-01-backend-split-brain.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle rule.
 
 ### PHASE B — FRONTEND ROUTE DIRECTORY MIGRATION
+
 ### Reference: SS-02-route-directory-migration.md
 
 38. Read `app.config.ts` (or `vite.config.ts`) in full. Record the TanStack Router plugin config: `routesDirectory`, `generatedRouteTree`, `routeFileIgnorePrefix`. Spec: `SS-02 §SS-02-01`.
@@ -247,43 +251,44 @@ Pending items rolled forward from prior pending plans:
 
 99. Move `src/routes/cli-sessions.index.tsx` to `src/routes/cli-sessions/index.tsx`. Spec: `SS-02 §SS-02-08`.
 
-100. Move `src/routes/cli-sessions.$runId.tsx` to `src/routes/cli-sessions/$runId.tsx`. Spec: same.
+100.  Move `src/routes/cli-sessions.$runId.tsx` to `src/routes/cli-sessions/$runId.tsx`. Spec: same.
 
-101. Move `src/routes/observability.sessions.tsx` to `src/routes/observability/sessions.tsx`. Spec: `SS-02 §SS-02-09`.
+101.  Move `src/routes/observability.sessions.tsx` to `src/routes/observability/sessions.tsx`. Spec: `SS-02 §SS-02-09`.
 
-102. Move `src/routes/observability.sessions.$cliInvocationId.ipc.tsx` to `src/routes/observability/sessions/$cliInvocationId.ipc.tsx`. Spec: same.
+102.  Move `src/routes/observability.sessions.$cliInvocationId.ipc.tsx` to `src/routes/observability/sessions/$cliInvocationId.ipc.tsx`. Spec: same.
 
-103. Move `src/routes/observability.sessions.$cliInvocationId.logs.tsx` to `src/routes/observability/sessions/$cliInvocationId.logs.tsx`. Spec: same.
+103.  Move `src/routes/observability.sessions.$cliInvocationId.logs.tsx` to `src/routes/observability/sessions/$cliInvocationId.logs.tsx`. Spec: same.
 
-104. Move `src/routes/observability.runs.$runId.tsx` to `src/routes/observability/runs.$runId.tsx`. Spec: same.
+104.  Move `src/routes/observability.runs.$runId.tsx` to `src/routes/observability/runs.$runId.tsx`. Spec: same.
 
-105. Move `src/routes/admin.debug.calibration.tsx` to `src/routes/admin/debug/calibration.tsx`. Spec: `SS-02 §SS-02-10`.
+105.  Move `src/routes/admin.debug.calibration.tsx` to `src/routes/admin/debug/calibration.tsx`. Spec: `SS-02 §SS-02-10`.
 
-106. Move `src/routes/admin.debug.calibration-distributions.tsx` to `src/routes/admin/debug/calibration-distributions.tsx`. Spec: same.
+106.  Move `src/routes/admin.debug.calibration-distributions.tsx` to `src/routes/admin/debug/calibration-distributions.tsx`. Spec: same.
 
-107. Move `src/routes/admin.security.denial-burst.tsx` to `src/routes/admin/security/denial-burst.tsx`. Create `src/routes/admin/security/` directory first. Spec: same.
+107.  Move `src/routes/admin.security.denial-burst.tsx` to `src/routes/admin/security/denial-burst.tsx`. Create `src/routes/admin/security/` directory first. Spec: same.
 
-108. Run `npx tsc --noEmit` after admin migration. Fix any errors. Spec: same.
+108.  Run `npx tsc --noEmit` after admin migration. Fix any errors. Spec: same.
 
-109. Run `Get-ChildItem src/routes -Filter "*.tsx" | Where-Object { ($_.Name -split '\.').Count -gt 3 }`. Result must be empty (zero files). Spec: `SS-02 §Acceptance Criteria`.
+109.  Run `Get-ChildItem src/routes -Filter "*.tsx" | Where-Object { ($_.Name -split '\.').Count -gt 3 }`. Result must be empty (zero files). Spec: `SS-02 §Acceptance Criteria`.
 
-110. Run `npm run dev` (or `vite dev`) in the background. Open browser to the home route `/`. Confirm it loads. Spec: `SS-02 §SS-02-13`.
+110.  Run `npm run dev` (or `vite dev`) in the background. Open browser to the home route `/`. Confirm it loads. Spec: `SS-02 §SS-02-13`.
 
-111. Navigate to a project route (e.g. `/projects/1`). Confirm it loads. Spec: same.
+111.  Navigate to a project route (e.g. `/projects/1`). Confirm it loads. Spec: same.
 
-112. Navigate to a settings route (e.g. `/settings`). Confirm it loads. Spec: same.
+112.  Navigate to a settings route (e.g. `/settings`). Confirm it loads. Spec: same.
 
-113. Navigate to a setup route (e.g. `/setup`). Confirm it loads. Spec: same.
+113.  Navigate to a setup route (e.g. `/setup`). Confirm it loads. Spec: same.
 
-114. Navigate to a CLI route (e.g. `/cli`). Confirm it loads. Spec: same.
+114.  Navigate to a CLI route (e.g. `/cli`). Confirm it loads. Spec: same.
 
-115. Stop the dev server. Run `npx tsc --noEmit` one final time. Exit code must be 0. Spec: `SS-02 §Acceptance Criteria`.
+115.  Stop the dev server. Run `npx tsc --noEmit` one final time. Exit code must be 0. Spec: `SS-02 §Acceptance Criteria`.
 
-116. Commit Phase B changes with message `refactor(routes): migrate to directory-based routing`. No version bump. Spec: release policy.
+116.  Commit Phase B changes with message `refactor(routes): migrate to directory-based routing`. No version bump. Spec: release policy.
 
-117. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
+117.  Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-02-route-directory-migration.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
 
 ### PHASE C — ZUSTAND STORE LOCALIZATION
+
 ### Reference: SS-03-store-localization.md
 
 118. Run `grep -rn "capture-history-store" src/ --include="*.ts" --include="*.tsx"`. Record every import location. Spec: `SS-03 §SS-03-01`.
@@ -353,6 +358,7 @@ Pending items rolled forward from prior pending plans:
 150. Update `.lovable/plans/subtasks/99-full-architecture-remediation/SS-03-store-localization.md`: flip `Status: completed` to `Status: completed`. Spec: plan lifecycle.
 
 ### PHASE D — BACKEND BOOTSTRAPPING & DOCS ALIGNMENT
+
 ### Reference: SS-04-backend-bootstrap-docs.md
 
 151. Read `BE/pyproject.toml` in full. Confirm the package manager (`uv`), the Python version constraint, and the dev-dependency list. Spec: `SS-04 §SS-04-01`.
