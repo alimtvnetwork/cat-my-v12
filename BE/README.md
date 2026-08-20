@@ -8,6 +8,7 @@ Public HTTP surface for Control Automation. FastAPI + uvicorn, Python 3.11.
 - Subtask layout: `.lovable/plans/subtasks/88-backend-implementation-v1-150-steps/SS-02-be-scaffold.md`
 
 Status: progressively implementing Plan 88.
+
 ## Getting Started
 
 Run the following commands to set up, test, and run the backend:

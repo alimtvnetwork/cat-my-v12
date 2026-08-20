@@ -27,5 +27,5 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 ## 5. Query Wrappers and Error Logging
 
 - **NEVER** use raw conn.execute(...) or eFetch(...) for queries without proper wrappers that natively log errors and return standardized success/failure envelopes.
-- **Root Cause**: Raw xecute calls resulted in scattered 	ry/except and _log.error(...) boilerplate across many python files, which caused inconsistency and bloated code. Type assertion data: envelope.Results as T in TS xecuteApiQuery incorrectly hid the T[] structure of the envelope results.
+- **Root Cause**: Raw xecute calls resulted in scattered ry/except and \_log.error(...) boilerplate across many python files, which caused inconsistency and bloated code. Type assertion data: envelope.Results as T in TS xecuteApiQuery incorrectly hid the T[] structure of the envelope results.
 - **ALWAYS** use safe_execute, safe_executemany, and safe_executescript in Python (from BE.db.connections) and xecuteApiQuery in TypeScript (from src/lib/db-wrapper.ts) which return objects with isSuccess and isFail properties.
