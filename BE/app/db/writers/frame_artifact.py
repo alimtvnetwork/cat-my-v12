@@ -323,7 +323,7 @@ def write_frame_artifacts(
     except sqlite3.Error as exc:
         with contextlib.suppress(sqlite3.Error):
             conn.execute("ROLLBACK")
-        
+
         raise AppError(
             ErrorCode.E_BE_INTERNAL,
             "FrameArtifact write failed",

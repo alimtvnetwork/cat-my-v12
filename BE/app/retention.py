@@ -244,7 +244,7 @@ def run_retention(
         doomed = _fetch_doomed(conn, cutoff)
     except sqlite3.OperationalError as exc:
         # Missing table is loud, not a silent zero-count success.
-        
+
         raise AppError(
             ErrorCode.E_BE_INTERNAL,
             f"Task-DB RunSession query failed: {exc}",
@@ -326,7 +326,7 @@ def run_retention(
         try:
             rows_deleted = _delete_run_sessions(conn, doomed_ids)
         except sqlite3.Error as exc:
-            
+
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
                 f"Task-DB RunSession delete failed: {exc}",
