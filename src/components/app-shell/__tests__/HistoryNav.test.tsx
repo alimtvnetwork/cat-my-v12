@@ -27,18 +27,18 @@ describe("isTypingTarget", () => {
   });
   it("returns true for INPUT, TEXTAREA, SELECT", () => {
     for (const tag of ["input", "textarea", "select"]) {
-      const el = document.createElement(tag);
-      expect(isTypingTarget(el)).toBe(true);
+      const targetElement = document.createElement(tag);
+      expect(isTypingTarget(targetElement)).toBe(true);
     }
   });
   it("returns true for contenteditable elements", () => {
     // jsdom does not compute isContentEditable from the attribute; test
     // the duck-typed shape isTypingTarget actually reads.
-    const el = { tagName: "DIV", isContentEditable: true };
-    expect(isTypingTarget(el as unknown as EventTarget)).toBe(true);
+    const targetElement = { tagName: "DIV", isContentEditable: true };
+    expect(isTypingTarget(targetElement as unknown as EventTarget)).toBe(true);
   });
   it("returns false for a plain BUTTON", () => {
-    const el = document.createElement("button");
-    expect(isTypingTarget(el)).toBe(false);
+    const targetElement = document.createElement("button");
+    expect(isTypingTarget(targetElement)).toBe(false);
   });
 });

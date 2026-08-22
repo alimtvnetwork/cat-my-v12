@@ -40,7 +40,7 @@ export function AngleZoneOverlay({
   angleMin,
   angleMax,
   theta,
-  atBound,
+  atBound = false,
 }: AngleZoneOverlayProps): React.JSX.Element | null {
   const lo = normalizeAngle(angleMin);
   const hi = normalizeAngle(angleMax);

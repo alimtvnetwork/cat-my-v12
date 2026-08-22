@@ -24,17 +24,17 @@ describe("AppShellNav (Plan 63)", () => {
 
   it("mounts under app-shell testid with a global-nav wrapper class", () => {
     render(<AppShellNav />);
-    const el = screen.getByTestId("app-shell-nav");
-    expect(el.className).toContain("app-shell-nav-global");
-    expect(el.getAttribute("aria-label")).toBe("Global navigation");
+    const navElement = screen.getByTestId("app-shell-nav");
+    expect(navElement.className).toContain("app-shell-nav-global");
+    expect(navElement.getAttribute("aria-label")).toBe("Global navigation");
   });
 
   it("renders every internal link via TanStack Link (zero raw <a href>)", () => {
     render(<AppShellNav />);
     const links = screen.getAllByTestId("tanstack-link");
     expect(links.length).toBeGreaterThanOrEqual(9);
-    for (const l of links) {
-      expect(l.getAttribute("data-to")).toMatch(/^\//);
+    for (const link of links) {
+      expect(link.getAttribute("data-to")).toMatch(/^\//);
     }
   });
 });

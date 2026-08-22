@@ -510,7 +510,7 @@ function InlineNumber({
   label,
   value,
   min,
-  disabled,
+  disabled = false,
   error,
   onChange,
 }: {
@@ -519,21 +519,27 @@ function InlineNumber({
   min?: number;
   disabled?: boolean;
   error?: string | null;
-  onChange: (v: number) => void;
+  onChange: (value: number) => void;
 }) {
   const errId = `num-${label}-error`;
   const dragRef = useRef<{ startX: number; startValue: number } | null>(null);
   const onLabelPointerDown = (e: React.PointerEvent<HTMLSpanElement>) => {
-    if (disabled) return;
+    if (disabled) {
+      return;
+    }
     (e.currentTarget as HTMLSpanElement).setPointerCapture(e.pointerId);
     dragRef.current = { startX: e.clientX, startValue: Math.round(value) };
   };
   const onLabelPointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
-    if (!dragRef.current) return;
+    if (dragRef.current === null) {
+      return;
+    }
     const dx = e.clientX - dragRef.current.startX;
     let next = dragRef.current.startValue + Math.round(dx);
 
-    if (min !== undefined && next < min) next = min;
+    if (min !== undefined && next < min) {
+      next = min;
+    }
     onChange(next);
   };
   const onLabelPointerUp = (e: React.PointerEvent<HTMLSpanElement>) => {

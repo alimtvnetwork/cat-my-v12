@@ -1,6 +1,7 @@
 # Subtask 03: TypeScript Enums & Nullable Booleans
 
 **Slug:** `03-ts-enums-and-nullable-booleans`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `src/lib/enums/`, `src/types/`
 **Rules Violated:** `.lovable/strictly-avoid.md` § 2 (Enum Naming), `.lovable/memory/boolean-guidelines.md` (Strict Non-Nullability)

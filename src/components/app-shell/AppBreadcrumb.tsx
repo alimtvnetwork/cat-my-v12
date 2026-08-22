@@ -4,12 +4,12 @@ export enum AppBreadcrumbPropsVariantType {
 }
 
 export namespace AppBreadcrumbPropsVariantType {
-  export function isBand(val: unknown): val is AppBreadcrumbPropsVariantType.Band {
-    return val === AppBreadcrumbPropsVariantType.Band;
+  export function isBand(variantValue: unknown): variantValue is AppBreadcrumbPropsVariantType.Band {
+    return variantValue === AppBreadcrumbPropsVariantType.Band;
   }
 
-  export function isInline(val: unknown): val is AppBreadcrumbPropsVariantType.Inline {
-    return val === AppBreadcrumbPropsVariantType.Inline;
+  export function isInline(variantValue: unknown): variantValue is AppBreadcrumbPropsVariantType.Inline {
+    return variantValue === AppBreadcrumbPropsVariantType.Inline;
   }
 }
 
@@ -167,12 +167,22 @@ export function AppBreadcrumb({
             <li className="shrink-0">
               <CollapsedCrumbs crumbs={crumbs.slice(1, -2)} />
             </li>
-            {crumbs.slice(-2).map((c, i, arr) => (
-              <CrumbLink key={c.to} crumb={c} isLast={i === arr.length - 1} />
+            {crumbs.slice(-2).map((crumbItem, crumbIndex, crumbsArray) => (
+              <CrumbLink
+                key={crumbItem.to}
+                crumb={crumbItem}
+                isLast={crumbIndex === crumbsArray.length - 1}
+              />
             ))}
           </>
         ) : (
-          crumbs.map((c, i) => <CrumbLink key={c.to} crumb={c} isLast={i === crumbs.length - 1} />)
+          crumbs.map((crumbItem, crumbIndex) => (
+            <CrumbLink
+              key={crumbItem.to}
+              crumb={crumbItem}
+              isLast={crumbIndex === crumbs.length - 1}
+            />
+          ))
         )}
       </ol>
     </nav>

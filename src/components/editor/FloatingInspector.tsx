@@ -72,12 +72,12 @@ export function FloatingInspector({
   const pendingRef = useRef<{ x: number; y: number } | null>(null);
 
   const applyPos = useCallback((x: number, y: number) => {
-    const el = panelRef.current;
+    const panelElement = panelRef.current;
     const margin = 8;
-    const w = el?.offsetWidth || DEFAULT_SIZE.w;
-    const h = el?.offsetHeight || DEFAULT_SIZE.h;
-    const maxX = Math.max(margin, window.innerWidth - w - margin);
-    const maxY = Math.max(margin, window.innerHeight - h - margin);
+    const width = panelElement?.offsetWidth || DEFAULT_SIZE.w;
+    const height = panelElement?.offsetHeight || DEFAULT_SIZE.h;
+    const maxX = Math.max(margin, window.innerWidth - width - margin);
+    const maxY = Math.max(margin, window.innerHeight - height - margin);
     let cx = Math.min(Math.max(margin, x), maxX);
     let cy = Math.min(Math.max(margin, y), maxY);
     // Subtle snap-to-edges when near viewport boundaries.
@@ -88,9 +88,9 @@ export function FloatingInspector({
     else if (maxY - cy <= SNAP_THRESHOLD) cy = maxY;
     posRef.current = { x: cx, y: cy };
 
-    if (el) {
-      el.style.left = `${cx}px`;
-      el.style.top = `${cy}px`;
+    if (panelElement !== null) {
+      panelElement.style.left = `${cx}px`;
+      panelElement.style.top = `${cy}px`;
     }
   }, []);
 

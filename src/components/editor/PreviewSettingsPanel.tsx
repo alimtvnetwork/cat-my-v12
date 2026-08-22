@@ -46,14 +46,16 @@ export function PreviewSettingsPanel(): React.JSX.Element | null {
   // Hotkey `P` cycles Off -> Selection -> All rules -> Off. Guarded against
   // typing targets so it never fires while the operator is renaming a rule.
   useEffect(() => {
-    const isTyping = (t: EventTarget | null): boolean => {
-      const el = t as HTMLElement | null;
+    const isTyping = (target: EventTarget | null): boolean => {
+      const targetElement = target as HTMLElement | null;
 
-      if (!el || !el.tagName) return false;
-      const tag = el.tagName.toLowerCase();
+      if (targetElement === null || typeof targetElement.tagName !== "string") {
+        return false;
+      }
+      const tag = targetElement.tagName.toLowerCase();
 
       return (
-        tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable === true
+        tag === "input" || tag === "textarea" || tag === "select" || targetElement.isContentEditable === true
       );
     };
     const order: EditorPreviewMode[] = [

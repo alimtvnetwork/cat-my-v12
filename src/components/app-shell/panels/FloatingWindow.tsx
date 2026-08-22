@@ -164,11 +164,11 @@ export function FloatingWindow({
       return;
     }
     // If the user released over a dock slot, dock immediately (no momentum).
-    const dockEl = document
+    const dockElement = document
       .elementsFromPoint(e.clientX, e.clientY)
-      .map((el) => el.closest("[data-dock-slot]"))
-      .find((n): n is Element => !!n && n.classList.contains("hidden") === false);
-    const dock = dockEl?.getAttribute("data-dock-slot") as DockSlotType | null;
+      .map((domElement) => domElement.closest("[data-dock-slot]"))
+      .find((node): node is Element => node !== null && node !== undefined && node.classList.contains("hidden") === false);
+    const dock = dockElement?.getAttribute("data-dock-slot") as DockSlotType | null;
 
     if (dock) {
       samplesRef.current = [];

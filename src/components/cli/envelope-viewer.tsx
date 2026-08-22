@@ -49,7 +49,9 @@ import { CorrelationIdChip } from "./CorrelationIdChip";
 
 function isDev(): boolean {
   try {
-    return Boolean((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV);
+    const isDevEnv = Boolean((import.meta as unknown as { env?: { DEV: boolean } }).env?.DEV);
+
+    return isDevEnv === true;
   } catch {
     return false;
   }
@@ -172,7 +174,7 @@ function Collapsible({
     <section data-testid={testId}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((currentOpen) => currentOpen === false)}
         className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-ca-ink-muted hover:text-ca-ink"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}

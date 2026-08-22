@@ -77,7 +77,7 @@ function formatDuration(ms: number | null): string {
 interface FailureExtract {
   code: string;
   message: string;
-  ctx: Record<string, unknown> | undefined;
+  context: Record<string, unknown> | undefined;
   timestamp: string | undefined;
 }
 
@@ -94,13 +94,13 @@ function extractLastFailure(items: LogTailItem[]): FailureExtract | null {
     if (row._ParseError) continue;
 
     if (isErrorLevel(row.Level ?? row.level) === false) continue;
-    const ctx =
+    const errorContext =
       row.Ctx && typeof row.Ctx === "object" && Array.isArray(row.Ctx) === false
         ? (row.Ctx as Record<string, unknown>)
         : undefined;
     const code =
       (typeof row.Code === "string" && row.Code) ||
-      (ctx && typeof ctx.Code === "string" && ctx.Code) ||
+      (errorContext && typeof errorContext.Code === "string" && errorContext.Code) ||
       "E_CLI_UNKNOWN";
     const message =
       (typeof row.Message === "string" && row.Message) ||
@@ -108,7 +108,7 @@ function extractLastFailure(items: LogTailItem[]): FailureExtract | null {
       "(no message)";
     const timestamp = typeof row.Timestamp === "string" ? row.Timestamp : undefined;
 
-    return { code: String(code), message: String(message), ctx, timestamp };
+    return { code: String(code), message: String(message), context: errorContext, timestamp };
   }
 
   return null;
@@ -131,7 +131,7 @@ function buildSyntheticCapturedError(
     level: ErrorLevelType.Error,
     message: failure.message,
     createdAt: failure.timestamp ?? new Date().toISOString(),
-    context: failure.ctx,
+    context: failure.context,
     endpoint: session.LogPath ?? undefined,
     // Force EnvelopeErrorPanel's frames branch off (we have no wire frames),
     // but still keep the panel honest: BackendMessage is always shown.

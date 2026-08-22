@@ -55,16 +55,18 @@ export function EmptyState({
   actions,
   className,
   testId,
-  compact,
+  compact = false,
   illustration,
 }: Props): React.JSX.Element | null {
+  const isCompact = compact === true;
+
   return (
     <div
       role="status"
       aria-live="polite"
       data-testid={testId ?? "empty-state"}
       className={[
-        compact
+        isCompact
           ? "flex flex-col items-center justify-center gap-hmi-1 px-hmi-4 py-hmi-4 text-center"
           : "flex flex-1 flex-col items-center justify-center gap-hmi-2 px-hmi-4 py-hmi-6 text-center",
         className ?? "",

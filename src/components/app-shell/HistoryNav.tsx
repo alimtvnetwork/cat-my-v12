@@ -65,14 +65,14 @@ function useHistoryState(): { canBack: boolean; canForward: boolean } {
   return state;
 }
 
-export function isTypingTarget(el: EventTarget | null): boolean {
-  const isObject = el !== null && typeof el === "object";
+export function isTypingTarget(targetElement: EventTarget | null): boolean {
+  const isObject = targetElement !== null && typeof targetElement === "object";
 
   if (isObject === false) {
     return false;
   }
 
-  const node = el as { tagName?: unknown; isContentEditable?: unknown };
+  const node = targetElement as { tagName?: unknown; isContentEditable?: unknown };
   const tag = typeof node.tagName === "string" ? node.tagName : "";
   const isTargetTag =
     HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag);

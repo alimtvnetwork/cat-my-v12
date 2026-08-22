@@ -31,13 +31,16 @@ export interface ExportSessionButtonProps {
 
 export function ExportSessionButton({
   runId,
-  compact,
+  compact = false,
 }: ExportSessionButtonProps): React.JSX.Element | null {
   const [pending, setPending] = useState(false);
-  const disabled = !runId || pending;
+  const hasRunId = runId !== null && runId !== undefined && runId.length > 0;
+  const isClickDisabled = hasRunId === false || pending;
 
   const onClick = useCallback(() => {
-    if (!runId) return;
+    if (runId === null || runId === undefined) {
+      return;
+    }
     setPending(true);
     // Use an anchor rather than fetch+Blob so the browser streams the zip
     // straight to disk. The proxy sets Content-Disposition so no download
@@ -61,7 +64,7 @@ export function ExportSessionButton({
       variant="outline"
       size={compact ? "sm" : "default"}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isClickDisabled}
       aria-label="Export session bundle"
       data-testid="cli-session-export-button"
       className="gap-hmi-1"
@@ -71,7 +74,9 @@ export function ExportSessionButton({
     </Button>
   );
 
-  if (runId) return btn;
+  if (runId) {
+    return btn;
+  }
 
   return (
     <TooltipProvider delayDuration={200}>

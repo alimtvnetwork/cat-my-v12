@@ -89,9 +89,12 @@ export function DataSourceToggle({
       setDataSource(DataSourceType.Backend, { reason: "toggle+probe-ok" });
       toast.success("Live backend connected");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      ClientLogger.warn("[data-source] backend probe failed", { url: healthUrl, msg });
-      toast.error(`Backend unreachable, staying on seed data: ${msg}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      ClientLogger.warn("[data-source] backend probe failed", {
+        url: healthUrl,
+        message: errorMessage,
+      });
+      toast.error(`Backend unreachable, staying on seed data: ${errorMessage}`);
     } finally {
       setPending(false);
     }
