@@ -69,20 +69,6 @@ export const COLOR_SWATCHES: readonly { id: RuleColorType; label: string; value:
     },
   ];
 
-export namespace RuleColorType {
-  export function isDefault(val: string | null | undefined): boolean {
-    return val === RuleColorType.Default;
-  }
-  export function isGreen(val: string | null | undefined): boolean {
-    return val === RuleColorType.Green;
-  }
-  export function isBlue(val: string | null | undefined): boolean {
-    return val === RuleColorType.Blue;
-  }
-  export function isCyan(val: string | null | undefined): boolean {
-    return val === RuleColorType.Cyan;
-  }
-  export function isAmber(val: string | null | undefined): boolean {
     return val === RuleColorType.Amber;
   }
   export function isMagenta(val: string | null | undefined): boolean {

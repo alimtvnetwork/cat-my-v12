@@ -165,12 +165,9 @@ function dockSlotAtPoint(
 
 function handleDragEnd(event: DragEndEvent) {
   const overSlot = event.over?.data.current?.slot as
-    | Exclude<DockSlotType, DockSlotType.Hidden>
-    | undefined;
+    Exclude<DockSlotType, DockSlotType.Hidden> | undefined;
   const kind = event.active.data.current?.kind as
-    | PanelModeType.Dock
-    | PanelModeType.Float
-    | undefined;
+    PanelModeType.Dock | PanelModeType.Float | undefined;
   const panelId = (event.active.data.current?.panelId as string | undefined) ?? null;
   if (!panelId) {
     return;

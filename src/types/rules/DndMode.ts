@@ -23,14 +23,12 @@ export function isDndModeType(value: unknown): value is DndModeType {
   return typeof value === "string" && (ALL_DND_MODES as readonly string[]).includes(value);
 }
 
-export namespace DndModeType {
-  export function isIdle(val: string | null | undefined): boolean {
-    return val === DndModeType.Idle;
-  }
-  export function isKeyboardGrabbed(val: string | null | undefined): boolean {
-    return val === DndModeType.KeyboardGrabbed;
-  }
-  export function isPointerDragging(val: string | null | undefined): boolean {
-    return val === DndModeType.PointerDragging;
-  }
+export function isIdle(val: string | null | undefined): boolean {
+  return val === DndModeType.Idle;
+}
+export function isKeyboardGrabbed(val: string | null | undefined): boolean {
+  return val === DndModeType.KeyboardGrabbed;
+}
+export function isPointerDragging(val: string | null | undefined): boolean {
+  return val === DndModeType.PointerDragging;
 }

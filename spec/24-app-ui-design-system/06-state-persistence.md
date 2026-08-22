@@ -96,9 +96,7 @@ Serialization shape (v2, current):
   "schemaVersion": 2,
   "programId": "prg_01H…",
   "name": "Program 01",
-  "rules": [
-    /* Rule[] per SS-01 */
-  ],
+  "rules": [/* Rule[] per SS-01 */],
   "updatedAt": 1720000000000
 }
 ```

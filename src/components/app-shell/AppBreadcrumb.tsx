@@ -3,14 +3,12 @@ export enum AppBreadcrumbPropsVariantType {
   Inline = "inline",
 }
 
-export namespace AppBreadcrumbPropsVariantType {
-  export function isBand(val: unknown): val is AppBreadcrumbPropsVariantType.Band {
-    return val === AppBreadcrumbPropsVariantType.Band;
-  }
+export function isBand(val: unknown): val is AppBreadcrumbPropsVariantType.Band {
+  return val === AppBreadcrumbPropsVariantType.Band;
+}
 
-  export function isInline(val: unknown): val is AppBreadcrumbPropsVariantType.Inline {
-    return val === AppBreadcrumbPropsVariantType.Inline;
-  }
+export function isInline(val: unknown): val is AppBreadcrumbPropsVariantType.Inline {
+  return val === AppBreadcrumbPropsVariantType.Inline;
 }
 
 import { useState } from "react";

@@ -34,20 +34,18 @@ export function isRuleKindType(value: unknown): value is RuleKindType {
   return typeof value === "string" && (ALL_RULE_KINDS as readonly string[]).includes(value);
 }
 
-export namespace RuleKindType {
-  export function isCircle(val: string | null | undefined): boolean {
-    return val === RuleKindType.Circle;
-  }
-  export function isRectangle(val: string | null | undefined): boolean {
-    return val === RuleKindType.Rectangle;
-  }
-  export function isKeypoint(val: string | null | undefined): boolean {
-    return val === RuleKindType.Keypoint;
-  }
-  export function isSlot(val: string | null | undefined): boolean {
-    return val === RuleKindType.Slot;
-  }
-  export function isEdge(val: string | null | undefined): boolean {
-    return val === RuleKindType.Edge;
-  }
+export function isCircle(val: string | null | undefined): boolean {
+  return val === RuleKindType.Circle;
+}
+export function isRectangle(val: string | null | undefined): boolean {
+  return val === RuleKindType.Rectangle;
+}
+export function isKeypoint(val: string | null | undefined): boolean {
+  return val === RuleKindType.Keypoint;
+}
+export function isSlot(val: string | null | undefined): boolean {
+  return val === RuleKindType.Slot;
+}
+export function isEdge(val: string | null | undefined): boolean {
+  return val === RuleKindType.Edge;
 }

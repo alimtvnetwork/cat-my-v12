@@ -23,8 +23,7 @@ export interface ChainEventInvocationContext {
 }
 
 export type ChainEventInvokeResult =
-  | { ok: true; value: unknown }
-  | { ok: false; code: string; message: string };
+  { ok: true; value: unknown } | { ok: false; code: string; message: string };
 
 export type ChainEventInvoker = (
   ctx: ChainEventInvocationContext,

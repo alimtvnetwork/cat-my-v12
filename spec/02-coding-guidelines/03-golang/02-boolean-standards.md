@@ -677,18 +677,18 @@ if isNonApiRoute {
 
 ## 6. Rule Summary
 
-| Rule                           | ID  | Summary                                                                                                 |
+| Rule | ID | Summary |
 | ------------------------------ | --- | ------------------------------------------------------------------------------------------------------- | --- | --- |
-| Positive Naming                | P1  | All booleans use `is`/`has` positive prefixes                                                           |
-| Negation Elimination           | P2  | Replace `!` with named positive variables                                                               |
-| Positive Counterpart Variables | P3  | Negated booleans must be assigned to a positive-named variable before use in compounds                  |
-| Dual Boolean Fields            | P3b | Both positive and negative named forms declared together upfront; structs provide dual accessor methods |
-| Named Numeric Comparisons      | P5  | Raw numeric comparisons → named booleans                                                                |
-| No Mixed Polarity              | P6  | `!isX` only alone; never combined with `&&`/`                                                           |     | `   |
-| No Inline Statements           | P7  | No semicolon assignments in `if`; exemptions for comma-ok, type assertions, error propagation           |
-| No Raw Filesystem              | P8  | Use `pathutil` wrappers, not raw `os` calls                                                             |
-| No Compound Errors             | P9  | `err != nil` never combined with other conditions; use `appError.HasError()`                            |
-| Semantic Comma-ok              | —   | Rename `ok` to meaningful name (`isExists`, `isFound`, etc.)                                            |
+| Positive Naming | P1 | All booleans use `is`/`has` positive prefixes |
+| Negation Elimination | P2 | Replace `!` with named positive variables |
+| Positive Counterpart Variables | P3 | Negated booleans must be assigned to a positive-named variable before use in compounds |
+| Dual Boolean Fields | P3b | Both positive and negative named forms declared together upfront; structs provide dual accessor methods |
+| Named Numeric Comparisons | P5 | Raw numeric comparisons → named booleans |
+| No Mixed Polarity | P6 | `!isX` only alone; never combined with `&&`/`                                                          |     |` |
+| No Inline Statements | P7 | No semicolon assignments in `if`; exemptions for comma-ok, type assertions, error propagation |
+| No Raw Filesystem | P8 | Use `pathutil` wrappers, not raw `os` calls |
+| No Compound Errors | P9 | `err != nil` never combined with other conditions; use `appError.HasError()` |
+| Semantic Comma-ok | — | Rename `ok` to meaningful name (`isExists`, `isFound`, etc.) |
 
 ## 7. Cross-Language Alignment
 

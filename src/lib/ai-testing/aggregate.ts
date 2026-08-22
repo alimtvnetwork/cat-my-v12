@@ -122,12 +122,10 @@ export function aggregateAiTestingResults(
   });
 
   const totalChecks = okChecks + ngChecks;
-  const perRule = Array.from(byRule.values()).map(
-    (metric): AiTestingRuleMetric => ({
-      ...metric,
-      passRate: metric.totalChecks === 0 ? 1 : metric.okCount / metric.totalChecks,
-    }),
-  );
+  const perRule = Array.from(byRule.values()).map((metric): AiTestingRuleMetric => ({
+    ...metric,
+    passRate: metric.totalChecks === 0 ? 1 : metric.okCount / metric.totalChecks,
+  }));
 
   return {
     id: input.id ?? newId(),

@@ -18,23 +18,21 @@ export const ERROR_CODE_LABEL: Readonly<Record<ErrorCodeType, string>> = Object.
   [ErrorCodeType.Unknown]: "Unknown Error",
 });
 
-export namespace ErrorCodeType {
-  export function isHomeLoad(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.HomeLoad;
-  }
-  export function isRuleValidate(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.RuleValidate;
-  }
-  export function isDndOutOfBounds(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.DndOutOfBounds;
-  }
-  export function isDiagnosticsRead(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.DiagnosticsRead;
-  }
-  export function isHardwareLighting(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.HardwareLighting;
-  }
-  export function isUnknown(val: string | null | undefined): boolean {
-    return val === ErrorCodeType.Unknown;
-  }
+export function isHomeLoad(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.HomeLoad;
+}
+export function isRuleValidate(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.RuleValidate;
+}
+export function isDndOutOfBounds(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.DndOutOfBounds;
+}
+export function isDiagnosticsRead(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.DiagnosticsRead;
+}
+export function isHardwareLighting(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.HardwareLighting;
+}
+export function isUnknown(val: string | null | undefined): boolean {
+  return val === ErrorCodeType.Unknown;
 }
