@@ -59,7 +59,7 @@ import { ExitEnvelopeDrawer } from "@/components/cli/ExitEnvelopeDrawer";
 import { ExportSessionButton } from "@/components/cli/ExportSessionButton";
 import { StatusPill, toneForExitCode } from "@/components/cli/status-pill";
 import { CorrelationIdChip } from "@/components/cli/CorrelationIdChip";
-import { ValidationStatus } from "@/lib/enums/validation";
+import { ValidationStatusType } from "@/lib/enums/validation";
 
 /**
  * Plan 90 Step 109 - live-tail state. `LiveRow` extends the JSONL row with
@@ -85,7 +85,7 @@ function canonLevel(raw: unknown): LevelChip | null {
 
   if (l === "error" || l === "critical" || l === "fatal") return "error";
 
-  if (l === "warning" || l === ValidationStatus.Warn) return "warning";
+  if (l === "warning" || l === ValidationStatusType.Warn) return "warning";
 
   if (l === "info") return "info";
 
@@ -228,7 +228,7 @@ function levelClass(level: unknown): string {
 
   if (l === "error" || l === "critical" || l === "fatal") return "text-red-500";
 
-  if (l === "warning" || l === ValidationStatus.Warn) return "text-amber-500";
+  if (l === "warning" || l === ValidationStatusType.Warn) return "text-amber-500";
 
   if (l === "info") return "text-sky-500";
 

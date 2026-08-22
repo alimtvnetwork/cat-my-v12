@@ -17,7 +17,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { comboFromEvent } from "@/lib/shortcuts/formatCombo";
 import { resolveShortcut } from "@/lib/shortcuts/registry";
 import type { ShortcutScopeType } from "@/lib/shortcuts/scopes";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 function pathToRouteScope(pathname: string): ShortcutScopeType {
   // First non-empty segment is the route key. `/projects/abc` -> `route:projects`.
@@ -30,7 +30,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
 
-  if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return true;
+  if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return true;
 
   if (target.isContentEditable) return true;
 

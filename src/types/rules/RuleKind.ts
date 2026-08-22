@@ -14,6 +14,28 @@ export enum RuleKindType {
   Edge = "E",
 }
 
+export namespace RuleKindType {
+  export function isCircle(val: unknown): val is RuleKindType.Circle {
+    return val === RuleKindType.Circle;
+  }
+
+  export function isRectangle(val: unknown): val is RuleKindType.Rectangle {
+    return val === RuleKindType.Rectangle;
+  }
+
+  export function isKeypoint(val: unknown): val is RuleKindType.Keypoint {
+    return val === RuleKindType.Keypoint;
+  }
+
+  export function isSlot(val: unknown): val is RuleKindType.Slot {
+    return val === RuleKindType.Slot;
+  }
+
+  export function isEdge(val: unknown): val is RuleKindType.Edge {
+    return val === RuleKindType.Edge;
+  }
+}
+
 export const RULE_KIND_LABEL: Readonly<Record<RuleKindType, string>> = Object.freeze({
   [RuleKindType.Circle]: "Circle",
   [RuleKindType.Rectangle]: "Rectangle",
@@ -32,20 +54,4 @@ export const ALL_RULE_KINDS: readonly RuleKindType[] = Object.freeze([
 
 export function isRuleKindType(value: unknown): value is RuleKindType {
   return typeof value === "string" && (ALL_RULE_KINDS as readonly string[]).includes(value);
-}
-
-export function isCircle(val: string | null | undefined): boolean {
-  return val === RuleKindType.Circle;
-}
-export function isRectangle(val: string | null | undefined): boolean {
-  return val === RuleKindType.Rectangle;
-}
-export function isKeypoint(val: string | null | undefined): boolean {
-  return val === RuleKindType.Keypoint;
-}
-export function isSlot(val: string | null | undefined): boolean {
-  return val === RuleKindType.Slot;
-}
-export function isEdge(val: string | null | undefined): boolean {
-  return val === RuleKindType.Edge;
 }

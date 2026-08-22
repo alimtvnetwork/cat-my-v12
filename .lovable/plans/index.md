@@ -4,6 +4,7 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
+- 01 - coding-guideline-fixes - pending - see `pending/01-coding-guideline-fixes.md`
 - 01 - pattern-search-spec - pending - see `pending/01-pattern-search-spec.md`
 - 04 - vision-standard-ui-part2 - pending - see `pending/04-vision-standard-ui-part2.md`
 - 05 - vision-standard-ui-part3 - pending - see `pending/05-vision-standard-ui-part3.md`

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { MenuShortcutType } from "@/lib/enums/menu-shortcut-type";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 export interface MenuShortcutBinding {
   shortcut: MenuShortcutType;
@@ -38,9 +38,9 @@ function hasTypingFocus(target: EventTarget | null): boolean {
   const tagName = typeof element?.tagName === "string" ? element.tagName.toUpperCase() : "";
 
   return (
-    tagName === HtmlTag.Input ||
-    tagName === HtmlTag.Textarea ||
-    tagName === HtmlTag.Select ||
+    HtmlTagType.isInput(tagName) ||
+    HtmlTagType.isTextarea(tagName) ||
+    HtmlTagType.isSelect(tagName) ||
     element?.isContentEditable === true
   );
 }

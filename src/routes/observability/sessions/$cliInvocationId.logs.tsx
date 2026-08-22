@@ -29,7 +29,7 @@ import {
   type LogTailItem,
   type LogTailPage,
 } from "@/lib/observability/logs.functions";
-import { ValidationStatus } from "@/lib/enums/validation";
+import { ValidationStatusType } from "@/lib/enums/validation";
 
 export const Route = createFileRoute("/observability/sessions/$cliInvocationId/logs")({
   head: () => ({
@@ -55,7 +55,7 @@ function levelClass(level: unknown): string {
     return "text-red-300";
   }
 
-  if (l === "warning" || l === ValidationStatus.Warn) return "text-yellow-300";
+  if (l === "warning" || l === ValidationStatusType.Warn) return "text-yellow-300";
 
   if (l === "info") return "text-sky-300";
 

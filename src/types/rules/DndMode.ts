@@ -13,6 +13,20 @@ export enum DndModeType {
   PointerDragging = "pointer-dragging",
 }
 
+export namespace DndModeType {
+  export function isIdle(val: unknown): val is DndModeType.Idle {
+    return val === DndModeType.Idle;
+  }
+
+  export function isKeyboardGrabbed(val: unknown): val is DndModeType.KeyboardGrabbed {
+    return val === DndModeType.KeyboardGrabbed;
+  }
+
+  export function isPointerDragging(val: unknown): val is DndModeType.PointerDragging {
+    return val === DndModeType.PointerDragging;
+  }
+}
+
 export const ALL_DND_MODES: readonly DndModeType[] = Object.freeze([
   DndModeType.Idle,
   DndModeType.KeyboardGrabbed,
@@ -21,14 +35,4 @@ export const ALL_DND_MODES: readonly DndModeType[] = Object.freeze([
 
 export function isDndModeType(value: unknown): value is DndModeType {
   return typeof value === "string" && (ALL_DND_MODES as readonly string[]).includes(value);
-}
-
-export function isIdle(val: string | null | undefined): boolean {
-  return val === DndModeType.Idle;
-}
-export function isKeyboardGrabbed(val: string | null | undefined): boolean {
-  return val === DndModeType.KeyboardGrabbed;
-}
-export function isPointerDragging(val: string | null | undefined): boolean {
-  return val === DndModeType.PointerDragging;
 }

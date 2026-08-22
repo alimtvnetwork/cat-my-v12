@@ -25,7 +25,7 @@ import { RunSkeleton } from "@/components/hmi/RunSkeleton";
 import { AppEvent } from "@/lib/constants";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { toIntParam } from "@/lib/ids/int-alias";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 export const Route = createFileRoute("/run")({
   head: () => ({
@@ -170,7 +170,7 @@ function RunPage() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const typing =
-        t && (t.tagName === HtmlTag.Input || t.tagName === HtmlTag.Textarea || t.isContentEditable);
+        t && (HtmlTagType.isInput(t.tagName) || HtmlTagType.isTextarea(t.tagName) || t.isContentEditable);
 
       if (typing) return;
 

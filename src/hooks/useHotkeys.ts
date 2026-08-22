@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 /**
  * Minimal hotkey hook, Plan 64 step 93 support.
@@ -26,7 +26,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
 
-  if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return true;
+  if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return true;
 
   if (target.isContentEditable) return true;
 

@@ -22,7 +22,7 @@ import { composeCleanUrl, sanitizeSearchString } from "@/lib/shell/sanitize-addr
 import { toIntParam, resolveIdParam, type IntAliasNamespace } from "@/lib/ids/int-alias";
 import { toIntId, fromIntId } from "@/lib/rules/rule-id-alias";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 function isNavigablePath(value: string): boolean {
   return value.startsWith("/") && /\s/.test(value) === false;
@@ -92,8 +92,8 @@ export function AddressBar(): React.JSX.Element | null {
       const active = document.activeElement as HTMLElement | null;
       const isEditable =
         active &&
-        (active.tagName === HtmlTag.Textarea ||
-          (active.tagName === HtmlTag.Input && active !== inputRef.current) ||
+        (HtmlTagType.isTextarea(active.tagName) ||
+          (HtmlTagType.isInput(active.tagName) && active !== inputRef.current) ||
           active.isContentEditable);
 
       if (isEditable) return;

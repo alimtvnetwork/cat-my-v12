@@ -3,6 +3,7 @@ import { RuleCreateDialogInitialKindType } from "@/components/rules/RuleCreateDi
 import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { RuleAuditSourceType } from "@/lib/rules/audit-store";
 import { SectionIdType } from "@/components/nav/SectionTopBar";
+import { HtmlTagType } from "@/lib/enums/html";
 // Plan 79 step 22. V4 rule library list.
 //
 // This surface renders Rules only. Categories are edited on the separate
@@ -202,7 +203,7 @@ function SetupRulesPage() {
       if (target) {
         const tag = target.tagName;
 
-        if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return;
+        if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return;
 
         if (target.isContentEditable) return;
       }
@@ -717,7 +718,6 @@ function SetupRulesPage() {
 
 import { RuleKindBadge } from "@/components/rules/RuleKindBadge";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-import { HtmlTag } from "@/lib/enums/html";
 
 interface RuleRowProps {
   row: Rule;

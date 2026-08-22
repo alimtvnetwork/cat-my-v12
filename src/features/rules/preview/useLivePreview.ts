@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Ruleset } from "@/lib/editor/schema";
 import type { ConditionEvaluator, RulesetResult } from "@/lib/editor/runner/types";
 import { evaluateRuleset } from "@/lib/editor/runner/ruleset-eval";
-import { ValidationStatus } from "@/lib/enums/validation";
+import { ValidationStatusType } from "@/lib/enums/validation";
 
 export enum LivePreviewStatusType {
   Idle = "idle",
@@ -47,7 +47,7 @@ export interface UseLivePreviewOptions {
 const DEFAULT_DEBOUNCE_MS = 250;
 
 function logEvent(level: "info" | "warn", code: string, detail: Record<string, unknown>): void {
-  (level === ValidationStatus.Warn ? console.warn : console.info)(`[${code}]`, detail);
+  (ValidationStatusType.isWarn(level) ? console.warn : console.info)(`[${code}]`, detail);
 }
 
 export function useLivePreview(

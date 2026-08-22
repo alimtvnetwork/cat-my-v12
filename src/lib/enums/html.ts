@@ -1,8 +1,3 @@
-export enum HtmlTag {
-  Input = "INPUT",
-  Textarea = "TEXTAREA",
-  Select = "SELECT",
-}
 
 export enum HtmlTagType {
   Input = "INPUT",

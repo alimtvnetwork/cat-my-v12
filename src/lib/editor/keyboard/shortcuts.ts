@@ -1,7 +1,7 @@
 // Top-level keyboard shortcuts for the editor experience (plan 30 step 82).
 // Skips when focus is inside a text input so form typing is unaffected.
 import { useEffect } from "react";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 export interface ShortcutHandlers {
   onUndo: () => void;
@@ -26,7 +26,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
   if (!t || typeof t.tagName !== "string") return false;
   const tag = t.tagName;
 
-  if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return true;
+  if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return true;
 
   return t.isContentEditable === true;
 }

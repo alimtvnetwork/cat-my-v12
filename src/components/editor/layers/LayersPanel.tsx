@@ -29,7 +29,7 @@ import { DndModeType } from "@/types/rules/DndMode";
 import { DndAxisType } from "@/types/rules/DndAxis";
 import { DndStepType } from "@/lib/editor/dnd/constants";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 export interface LayersPanelProps {
   rules: readonly EditorRule[];
@@ -238,8 +238,8 @@ export function LayersPanel({
       // Never hijack keys while renaming a layer or typing anywhere.
       if (
         target &&
-        (target.tagName === HtmlTag.Input ||
-          target.tagName === HtmlTag.Textarea ||
+        (HtmlTagType.isInput(target.tagName) ||
+          HtmlTagType.isTextarea(target.tagName) ||
           target.isContentEditable)
       ) {
         return;

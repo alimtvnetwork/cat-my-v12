@@ -8,7 +8,7 @@
 // state into a store.
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
-import { HtmlTag } from "@/lib/enums/html";
+import { HtmlTagType } from "@/lib/enums/html";
 
 /* eslint-disable react-refresh/only-export-components -- co-located helpers (event constant + shortcuts hook) intentionally ship next to the component; extracting adds a two-line module for no runtime benefit. */
 
@@ -42,7 +42,7 @@ export function useInspectorSectionShortcuts(): void {
       if (target) {
         const tag = target.tagName;
 
-        if (tag === HtmlTag.Input || tag === HtmlTag.Textarea || tag === HtmlTag.Select) return;
+        if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return;
 
         if (target.isContentEditable) return;
       }

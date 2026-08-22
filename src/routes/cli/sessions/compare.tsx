@@ -54,7 +54,7 @@ import { EmptyState } from "@/components/cli/EmptyState";
 import { CliRouteError } from "@/components/cli/CliRouteError";
 import { CliRouteNotFound } from "@/components/cli/CliRouteNotFound";
 import { cn } from "@/lib/utils";
-import { ValidationStatus } from "@/lib/enums/validation";
+import { ValidationStatusType } from "@/lib/enums/validation";
 
 /** Positive-integer ID string, or `undefined` for anything else. */
 function parseId(raw: unknown): string | undefined {
@@ -160,7 +160,7 @@ function bucketFor(level: unknown): LevelBucket {
   if (l === LevelBucketType.Error || l === "critical" || l === "fatal")
     return LevelBucketType.Error;
 
-  if (l === ValidationStatus.Warn || l === "warning") return LevelBucketType.Warn;
+  if (l === ValidationStatusType.Warn || l === "warning") return LevelBucketType.Warn;
 
   if (l === LevelBucketType.Info) return LevelBucketType.Info;
 

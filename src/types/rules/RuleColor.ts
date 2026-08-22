@@ -10,6 +10,36 @@ export enum RuleColorType {
   Black = "Black",
 }
 
+export namespace RuleColorType {
+  export function isDefault(val: unknown): val is RuleColorType.Default {
+    return val === RuleColorType.Default;
+  }
+
+  export function isGreen(val: unknown): val is RuleColorType.Green {
+    return val === RuleColorType.Green;
+  }
+
+  export function isBlue(val: unknown): val is RuleColorType.Blue {
+    return val === RuleColorType.Blue;
+  }
+
+  export function isCyan(val: unknown): val is RuleColorType.Cyan {
+    return val === RuleColorType.Cyan;
+  }
+
+  export function isAmber(val: unknown): val is RuleColorType.Amber {
+    return val === RuleColorType.Amber;
+  }
+
+  export function isMagenta(val: unknown): val is RuleColorType.Magenta {
+    return val === RuleColorType.Magenta;
+  }
+
+  export function isBlack(val: unknown): val is RuleColorType.Black {
+    return val === RuleColorType.Black;
+  }
+}
+
 export const RULE_COLOR_LABEL: Readonly<Record<RuleColorType, string>> = Object.freeze({
   [RuleColorType.Default]: "Default (green)",
   [RuleColorType.Green]: "Green",
@@ -68,13 +98,3 @@ export const COLOR_SWATCHES: readonly { id: RuleColorType; label: string; value:
       value: RULE_COLOR_HEX[RuleColorType.Black],
     },
   ];
-
-    return val === RuleColorType.Amber;
-  }
-  export function isMagenta(val: string | null | undefined): boolean {
-    return val === RuleColorType.Magenta;
-  }
-  export function isBlack(val: string | null | undefined): boolean {
-    return val === RuleColorType.Black;
-  }
-}
