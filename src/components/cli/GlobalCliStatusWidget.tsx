@@ -108,9 +108,11 @@ export function GlobalCliStatusWidget(): React.JSX.Element | null {
   const ipcPending = status?.Ipc.Pending ?? 0;
   const ipcTruncated = status?.Ipc.Truncated ?? false;
   const lastError = status?.LastErrorCode ?? null;
-  const unavailable = !status && !query.isPending;
+  const isStatusMissing = status === null || status === undefined;
+  const isQueryIdle = query.isPending === false;
+  const isUnavailable = isStatusMissing && isQueryIdle;
 
-  if (unavailable || workerState === WorkerStateType.Unknown) {
+  if (isUnavailable || workerState === WorkerStateType.Unknown) {
     return null;
   }
 

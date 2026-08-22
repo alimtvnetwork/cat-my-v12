@@ -103,7 +103,7 @@ def _check_code_and_trace(record: dict[str, Any], line: int) -> None:
         raise _fail("Code", f"required when Level={level}", line)
     if level not in _CODE_REQUIRED and code is not None:
         raise _fail("Code", f"forbidden when Level={level}", line)
-    if code is not None and (not isinstance(code, str) or not is_registered(code)):
+    if code is not None and (isinstance(code, str) is False or is_registered(code) is False):
         raise _fail("Code", f"'{code}' not in error registry", line)
     trace = record.get("Trace")
     if trace is None:

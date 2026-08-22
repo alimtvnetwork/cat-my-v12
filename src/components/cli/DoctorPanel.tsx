@@ -55,7 +55,12 @@ export function DoctorPanel(): React.JSX.Element | null {
   // (not `useQuery`) so the operator sees a "Run diagnostics" button that
   // matches the destructive-nature of the POST verb per spec/03-error-manage.
   useEffect(() => {
-    if (!report && !mutation.isPending && !error) {
+    const isReportLoaded = report !== null && report !== undefined;
+    const isErrorPresent = error !== null;
+    const isPending = mutation.isPending === true;
+    const shouldRunInitial = isReportLoaded === false && isPending === false && isErrorPresent === false;
+
+    if (shouldRunInitial) {
       mutation.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

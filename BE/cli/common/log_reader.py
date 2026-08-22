@@ -91,7 +91,7 @@ def list_sessions(
     """
     if limit <= 0:
         return []
-    if not log_root.exists() or not log_root.is_dir():
+    if log_root.exists() is False or log_root.is_dir() is False:
         return []
 
     if source is not None:
@@ -105,12 +105,12 @@ def list_sessions(
     found: list[SessionSummary] = []
     for src_dir in source_dirs:
         for date_dir in src_dir.iterdir():
-            if not date_dir.is_dir() or date_dir.name in _RESERVED_DIRS:
+            if date_dir.is_dir() is False or date_dir.name in _RESERVED_DIRS:
                 continue
             if not _DATE_RE.match(date_dir.name):
                 continue
             for file in date_dir.iterdir():
-                if not file.is_file():
+                if file.is_file() is False:
                     continue
                 m = _FILE_RE.match(file.name)
                 if m is None:

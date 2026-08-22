@@ -109,7 +109,7 @@ class JsonlLogger:
                     details={"Level": level, "Source": self.source},
                 )
             return
-        if not is_registered(code):
+        if is_registered(code) is False:
             raise AppError(
                 ErrorCode.E_CLI_PREFLIGHT_FAILED,
                 f"Log Code '{code}' is not in the error registry",

@@ -112,8 +112,11 @@ export function FloatingWindow({
     const isControl = (e.target as Element).closest("button");
     const isHandle = (e.target as Element).closest("[data-panel-drag-handle]");
 
-    if (isControl) return;
-    if (!isHandle) {
+    if (isControl) {
+      return;
+    }
+
+    if (isHandle === null) {
       return;
     }
 
@@ -144,7 +147,7 @@ export function FloatingWindow({
     setDelta(next);
   };
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!hasMovedRef.current) {
+    if (hasMovedRef.current === false) {
       startRef.current = null;
       samplesRef.current = [];
       onDragChange?.(false);

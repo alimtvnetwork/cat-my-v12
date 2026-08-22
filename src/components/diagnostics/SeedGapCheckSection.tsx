@@ -8,6 +8,7 @@ import bundle from "@/lib/seed/data/bundle.json";
 import type { CatSeedBundle } from "@/lib/seed/types";
 import {
   runSeedGapCheck,
+  isValid,
   isInvalid,
   SEEDED_CAMERA_NAMES,
   SEEDED_MIC_SETTINGS_NAMES,
@@ -46,10 +47,10 @@ export function SeedGapCheckSection(): React.JSX.Element | null {
             <span
               className={
                 "ml-hmi-2 rounded-sm border px-hmi-1 py-[1px] text-hmi-caption " +
-                (!isInvalid(report) ? "border-ca-ok text-ca-ok" : "border-ca-ng text-ca-ng")
+                (isValid(report) ? "border-ca-ok text-ca-ok" : "border-ca-ng text-ca-ng")
               }
             >
-              {!isInvalid(report) ? "all links resolved" : `${report.findings.length} missing`}
+              {isValid(report) ? "all links resolved" : `${report.findings.length} missing`}
             </span>
           ) : null}
         </h2>
@@ -68,7 +69,7 @@ export function SeedGapCheckSection(): React.JSX.Element | null {
           No gap report yet. Reseed or click "Run now" to scan every by-name link in the seed bundle
           against the current facade contents.
         </p>
-      ) : report && !isInvalid(report) ? (
+      ) : report && isValid(report) ? (
         <p className="text-hmi-caption text-ca-ink-muted">
           Scanned {report.scanned.projects} projects, {report.scanned.categories} categories,{" "}
           {report.scanned.ruleTemplates} rule templates, {report.scanned.sampleImages} sample

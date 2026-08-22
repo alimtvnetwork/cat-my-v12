@@ -52,9 +52,11 @@ export function RunningPill(): React.JSX.Element | null {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const isE2E = new URLSearchParams(window.location.search).get("e2e") === "1";
-    const isProduction = !isE2E;
+    const isProduction = isE2E === false;
 
-    if (isProduction) return;
+    if (isProduction) {
+      return;
+    }
     const api: UseRunningApi = {
       ops,
       isRunning: ops.length > 0,

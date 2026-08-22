@@ -97,7 +97,8 @@ def _interruptible_sleep(
         slice_s = _SLICE_SECONDS if remaining > _SLICE_SECONDS else remaining
         sleeper(slice_s)
         remaining -= slice_s
-    return not stop_event.is_set()
+
+    return stop_event.is_set() is False
 
 
 def run_scheduled(

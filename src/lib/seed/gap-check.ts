@@ -284,6 +284,10 @@ export const SEEDED_MIC_SETTINGS_NAMES: readonly string[] = [
   "Diagnostic capture",
 ];
 
+export function isValid(report: SeedGapReport): boolean {
+  return report.ok === true;
+}
+
 export function isInvalid(report: SeedGapReport): boolean {
   return report.ok === false;
 }

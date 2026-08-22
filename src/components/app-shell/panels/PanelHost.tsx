@@ -270,8 +270,11 @@ function DockedDraggable({ panelId, onDragChange, children }: DockedDraggablePro
     const isControl = (e.target as Element).closest("button");
     const isHandle = (e.target as Element).closest("[data-panel-drag-handle]");
 
-    if (isControl) return;
-    if (!isHandle) {
+    if (isControl) {
+      return;
+    }
+
+    if (isHandle === null) {
       return;
     }
     const rect = nodeRef.current?.getBoundingClientRect();
@@ -454,7 +457,8 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps): React.JSX.El
           const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
           const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
           const hasAny = allIds.length > 0;
-          if (!hasAny && !isDragActive) {
+          const isSlotHidden = hasAny === false && isDragActive === false;
+          if (isSlotHidden) {
             return <DockSlot key={slot} slot={slot} className="hidden" dragActive={false} />;
           }
 
@@ -479,7 +483,8 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps): React.JSX.El
               const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
               const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
               const hasAny = allIds.length > 0;
-              if (!hasAny && !isDragActive) {
+              const isSlotHidden = hasAny === false && isDragActive === false;
+              if (isSlotHidden) {
                 return (
                   <DockSlot key={position} slot={position} className="hidden" dragActive={false} />
                 );
@@ -524,7 +529,8 @@ export function PanelHost({ content, canvasSlot }: PanelHostProps): React.JSX.El
           const expandedIds = allIds.filter((id) => panels[id]?.minimized === false);
           const minimizedIds = allIds.filter((id) => panels[id]?.minimized === true);
           const hasAny = allIds.length > 0;
-          if (!hasAny && !isDragActive) {
+          const isSlotHidden = hasAny === false && isDragActive === false;
+          if (isSlotHidden) {
             return <DockSlot key={slot} slot={slot} className="hidden" dragActive={false} />;
           }
 

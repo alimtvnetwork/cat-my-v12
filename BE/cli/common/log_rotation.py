@@ -96,7 +96,7 @@ def _remove_dir(path: Path) -> None:
 def _prune_source(source_dir: Path, cutoff: date) -> tuple[int, int, int, int, int]:
     scanned = removed_dirs = removed_files = removed_bytes = kept = 0
     for child in sorted(source_dir.iterdir()):
-        if not child.is_dir():
+        if child.is_dir() is False:
             continue
         parsed = _parse_dated_name(child.name)
         if parsed is None:
@@ -136,7 +136,7 @@ def prune_logs(
     if not root.exists():
         return PruneReport(0, 0, 0, 0, 0, cutoff.strftime("%Y-%m-%d"))
     for source_dir in sorted(root.iterdir()):
-        if not source_dir.is_dir() or source_dir.name in _RESERVED_DIRS:
+        if source_dir.is_dir() is False or source_dir.name in _RESERVED_DIRS:
             continue
         result = _prune_source(source_dir, cutoff)
         totals = [a + b for a, b in zip(totals, result, strict=False)]

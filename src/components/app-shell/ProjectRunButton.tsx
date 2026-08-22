@@ -41,7 +41,10 @@ export function ProjectRunButton({
   };
 
   const doRun = async () => {
-    if (!canRun || busy) return;
+    if (canRun === false || busy) {
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
@@ -69,7 +72,7 @@ export function ProjectRunButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        disabled={!canRun}
+        disabled={canRun === false}
         aria-label="Run project"
         className="hmi-focus-ring inline-flex items-center gap-2 rounded-md bg-ca-primary px-3 py-1.5 text-hmi-body font-semibold text-ca-bg disabled:opacity-50"
       >
@@ -139,7 +142,7 @@ export function ProjectRunButton({
               <button
                 type="button"
                 onClick={doRun}
-                disabled={busy || !canRun}
+                disabled={busy || canRun === false}
                 className="hmi-focus-ring inline-flex items-center gap-2 rounded-md bg-ca-primary px-3 py-1.5 text-hmi-body font-semibold text-ca-bg disabled:opacity-50"
               >
                 <PlayCircle className="h-4 w-4" aria-hidden />

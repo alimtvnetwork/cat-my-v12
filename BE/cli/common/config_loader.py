@@ -70,7 +70,7 @@ def _defaults(cli_name: CliName) -> dict[str, Any]:
 
 
 def _load_toml(path: Path) -> dict[str, Any]:
-    if not path.is_file():
+    if path.is_file() is False:
         return {}
     try:
         with path.open("rb") as f:

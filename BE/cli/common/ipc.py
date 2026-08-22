@@ -348,7 +348,7 @@ def prune_ipc(
     if not root.exists():
         return IpcPruneReport(0, 0, 0, 0, ref.isoformat().replace("+00:00", "Z"))
     for drop in sorted(root.iterdir()):
-        if not drop.is_dir():
+        if drop.is_dir() is False:
             continue
         if not _DIR_NAME.match(drop.name):
             # Unknown top-level dir under IPC root: leave it alone. Never
@@ -356,7 +356,7 @@ def prune_ipc(
             continue
         scanned += 1
         for entry in drop.iterdir():
-            if not entry.is_file():
+            if entry.is_file() is False:
                 continue
             name = entry.name
             is_ack = name.endswith(".msg.ack.json")

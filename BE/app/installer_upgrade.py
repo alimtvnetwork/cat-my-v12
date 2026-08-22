@@ -170,7 +170,7 @@ def plan_upgrade(
             Reason=reason,
         )
     # cmp < 0: downgrade attempt
-    if not policy.is_downgrade_allowed:
+    if policy.is_downgrade_allowed is False:
         raise AppError(
             code=ErrorCode.E_INSTALL_DOWNGRADE_BLOCKED,
             message=(

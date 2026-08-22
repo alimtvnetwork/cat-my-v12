@@ -114,16 +114,21 @@ export function FloatingInspector({
     return () => window.removeEventListener(AppEvent.EditorOpenInspector, onOpen as EventListener);
   }, [applyPos]);
 
-  const lacksSelection = !hasSelection;
+  const lacksSelection = hasSelection === false;
 
   useEffect(() => {
-    if (lacksSelection) setOpen(false);
-  }, [hasSelection]);
+    if (lacksSelection) {
+      setOpen(false);
+    }
+  }, [hasSelection, lacksSelection]);
 
-  const isClosed = !open;
+  const isClosed = open === false;
 
   useEffect(() => {
-    if (isClosed) return;
+    if (isClosed) {
+      return;
+    }
+
     const onResize = () => applyPos(posRef.current.x, posRef.current.y);
     window.addEventListener("resize", onResize);
     const ro =

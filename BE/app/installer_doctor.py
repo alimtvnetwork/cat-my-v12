@@ -246,7 +246,7 @@ def run_doctor(
         if not isinstance(recorded_path, str) or not isinstance(recorded_sha, str):
             continue
         exe = Path(recorded_path)
-        if not exe.is_file():
+        if exe.is_file() is False:
             report.Findings.append(DoctorFinding(
                 Code="BinaryFileMissing",
                 Severity=DoctorSeverity.ERROR,

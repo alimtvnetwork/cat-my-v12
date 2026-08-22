@@ -1,6 +1,7 @@
 # Subtask 01: TypeScript Inverted Booleans Remediation
 
 **Slug:** `01-ts-inverted-booleans`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `src/` (Components, Routes, Lib, Hooks)
 **Rules Violated:** `spec/02-coding-guidelines/01-cross-language/02-boolean-principles/01-naming-prefixes.md`, `.lovable/coding-guidelines.md` § Boolean Naming

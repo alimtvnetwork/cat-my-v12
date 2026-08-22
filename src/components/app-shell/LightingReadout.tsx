@@ -81,7 +81,7 @@ export function LightingReadout(): React.JSX.Element | null {
   }, [hydrate]);
 
   const hasTunedValues = FIELDS.some(({ key }) => controls[key] !== 0);
-  const isDefault = !hasTunedValues;
+  const isDefault = hasTunedValues === false;
 
   return (
     <section

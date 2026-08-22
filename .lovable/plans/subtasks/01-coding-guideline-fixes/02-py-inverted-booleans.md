@@ -1,6 +1,7 @@
 # Subtask 02: Python Inverted Booleans Remediation
 
 **Slug:** `02-py-inverted-booleans`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `BE/` and `app/`
 **Rules Violated:** `.lovable/coding-guidelines.md` § Boolean Naming, `spec/02-coding-guidelines/01-cross-language/02-boolean-principles/`

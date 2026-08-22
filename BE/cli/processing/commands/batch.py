@@ -97,7 +97,7 @@ def _enumerate_frames(ns: argparse.Namespace) -> list[Path]:
         )
     if ns.input_dir:
         d = Path(ns.input_dir).expanduser()
-        if not d.exists() or not d.is_dir():
+        if d.exists() is False or d.is_dir() is False:
             raise AppError(
                 ErrorCode.E_BE_NOT_FOUND,
                 f"input dir not found: {d}",
@@ -116,7 +116,7 @@ def _enumerate_frames(ns: argparse.Namespace) -> list[Path]:
         return frames
 
     mpath = Path(ns.manifest).expanduser()
-    if not mpath.exists() or not mpath.is_file():
+    if mpath.exists() is False or mpath.is_file() is False:
         raise AppError(
             ErrorCode.E_BE_NOT_FOUND,
             f"manifest not found: {mpath}",
