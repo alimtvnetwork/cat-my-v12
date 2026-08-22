@@ -47,27 +47,39 @@ function projectCapturedErrorToEnvelope(err: CapturedError): Record<string, unkn
     CreatedAt: err.createdAt,
   };
 
-  if (err.details) out.Details = err.details;
-
-  if (err.endpoint) out.Endpoint = err.endpoint;
-
-  if (err.method) out.Method = err.method;
-
-  if (typeof err.responseStatus === "number") out.ResponseStatus = err.responseStatus;
-
-  if (err.requestedAt) out.RequestedAt = err.requestedAt;
-
-  if (err.requestDelegatedAt) out.RequestDelegatedAt = err.requestDelegatedAt;
-
-  if (err.envelopeErrors) out.Errors = err.envelopeErrors;
-
-  if (err.envelopeMethodsStack) out.MethodsStack = err.envelopeMethodsStack;
-
-  if (err.requestBody !== undefined) out.RequestBody = err.requestBody;
-
-  if (err.context) out.Context = err.context;
-
-  if (err.invocationChain?.length) out.InvocationChain = err.invocationChain;
+  if (err.details) {
+    out.Details = err.details;
+  }
+  if (err.endpoint) {
+    out.Endpoint = err.endpoint;
+  }
+  if (err.method) {
+    out.Method = err.method;
+  }
+  if (typeof err.responseStatus === "number") {
+    out.ResponseStatus = err.responseStatus;
+  }
+  if (err.requestedAt) {
+    out.RequestedAt = err.requestedAt;
+  }
+  if (err.requestDelegatedAt) {
+    out.RequestDelegatedAt = err.requestDelegatedAt;
+  }
+  if (err.envelopeErrors) {
+    out.Errors = err.envelopeErrors;
+  }
+  if (err.envelopeMethodsStack) {
+    out.MethodsStack = err.envelopeMethodsStack;
+  }
+  if (err.requestBody !== undefined) {
+    out.RequestBody = err.requestBody;
+  }
+  if (err.context) {
+    out.Context = err.context;
+  }
+  if (err.invocationChain?.length) {
+    out.InvocationChain = err.invocationChain;
+  }
 
   return out;
 }

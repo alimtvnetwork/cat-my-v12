@@ -123,14 +123,14 @@ def _coerce(kwargs: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key, value in kwargs.items():
         if key in {"log_root", "ipc_root", "config_root", "data_root"}:
-            if value is None or value == "":
-                continue
-            out[key] = Path(value) if not isinstance(value, Path) else value
+            if value is not None and value != "":
+                out[key] = Path(value) if not isinstance(value, Path) else value
         elif key in {"verbose", "quiet"}:
-            if isinstance(value, str):
-                out[key] = value.strip().lower() in {"1", "true", "yes", "on"}
-            else:
-                out[key] = bool(value)
+            out[key] = (
+                value.strip().lower() in {"1", "true", "yes", "on"}
+                if isinstance(value, str)
+                else bool(value)
+            )
         else:
             out[key] = value
     return out

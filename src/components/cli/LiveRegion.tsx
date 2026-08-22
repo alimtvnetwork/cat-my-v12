@@ -77,21 +77,40 @@ export interface AnnounceOptions {
 /** Rate-limited screen-reader announcement. Safe from any runtime. */
 export function announce(message: string, options: AnnounceOptions = {}): void {
   const trimmed = message.trim();
+  if (!trimmed) {
+    return;
+  }
+  const priority = options.priority ?? PriorityType.Polite;
 
-  if (!trimmed) return;
-  const priority = options.priority ?? "polite";
-
-  if (priority === "polite") {
+  if (priority === PriorityType.Polite) {
     pendingPolite = trimmed;
+    if (politeTimer === null) {
+      politeTimer = setTimeout(() => flush(PriorityType.Polite), COALESCE_MS);
+    }
 
-    if (politeTimer !== null) return;
-    politeTimer = setTimeout(() => flush(PriorityType.Polite), COALESCE_MS);
-  } else {
-    pendingAssertive = trimmed;
+    return;
+  }
 
-    if (assertiveTimer !== null) return;
+  pendingAssertive = trimmed;
+  if (assertiveTimer === null) {
     assertiveTimer = setTimeout(() => flush(PriorityType.Assertive), COALESCE_MS);
   }
+}
+
+function updateLiveMessage(
+  message: string,
+  lastRef: React.MutableRefObject<string>,
+  setText: React.Dispatch<React.SetStateAction<string>>,
+): void {
+  if (lastRef.current === message) {
+    // Same text twice in a row: SR clients will re-announce only if
+    // the node's text mutates. Toggle to empty then set to force it.
+    setText("");
+    setTimeout(() => setText(message), 16);
+  } else {
+    setText(message);
+  }
+  lastRef.current = message;
 }
 
 /**
@@ -110,27 +129,12 @@ export function CliLiveRegionHost(): React.JSX.Element | null {
 
   useEffect(() => {
     const sub: Subscriber = (message, priority) => {
-      if (priority === "polite") {
-        if (lastPolite.current === message) {
-          // Same text twice in a row: SR clients will re-announce only if
-          // the node's text mutates. Toggle to empty then set to force it.
-          setPoliteText("");
-          setTimeout(() => setPoliteText(message), 16);
-        } else {
-          setPoliteText(message);
-        }
+      if (priority === PriorityType.Polite) {
+        updateLiveMessage(message, lastPolite, setPoliteText);
 
-        lastPolite.current = message;
-      } else {
-        if (lastAssertive.current === message) {
-          setAssertiveText("");
-          setTimeout(() => setAssertiveText(message), 16);
-        } else {
-          setAssertiveText(message);
-        }
-
-        lastAssertive.current = message;
+        return;
       }
+      updateLiveMessage(message, lastAssertive, setAssertiveText);
     };
     subscribers.add(sub);
 

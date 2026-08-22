@@ -111,6 +111,34 @@ class Dispatcher:
                 entry.configure(sp)
         return parser
 
+    def _try_intercept_help(
+        self,
+        argv: list[str] | None,
+        out: TextIO,
+        err: TextIO,
+        requested_at: str,
+    ) -> int | None:
+        if self.helptext_package is None:
+            return None
+        from BE.cli.common.helptext import intercept as _intercept_help
+        argv_list = list(argv) if argv is not None else sys.argv[1:]
+        try:
+            help_code = _intercept_help(
+                argv_list,
+                tool=self.prog,
+                description=self.description,
+                subcommands={n: s.help for n, s in self.subcommands.items()},
+                helptext_package=self.helptext_package,
+                stdout=out,
+            )
+        except AppError as ae:
+            env = ae.to_envelope(requested_at=requested_at)
+            _emit(out, err, env, f"{ae.code.value}: {ae}")
+            return int(_exit_for_apperror(ae))
+        if help_code is not None:
+            out.flush()
+        return help_code
+
     def run(
         self,
         argv: list[str] | None = None,
@@ -124,28 +152,9 @@ class Dispatcher:
         requested_at = _now_iso()
 
         # 0) Help interceptor (spec/13-generic-cli/09-help-system.md).
-        # Runs before argparse so `--help` never routes through the envelope
-        # emission path and so `<tool> help <sub>` works without registering
-        # a fake subcommand. Fires only when a helptext package is wired.
-        if self.helptext_package is not None:
-            from BE.cli.common.helptext import intercept as _intercept_help
-            argv_list = list(argv) if argv is not None else sys.argv[1:]
-            try:
-                help_code = _intercept_help(
-                    argv_list,
-                    tool=self.prog,
-                    description=self.description,
-                    subcommands={n: s.help for n, s in self.subcommands.items()},
-                    helptext_package=self.helptext_package,
-                    stdout=out,
-                )
-            except AppError as ae:
-                env = ae.to_envelope(requested_at=requested_at)
-                _emit(out, err, env, f"{ae.code.value}: {ae}")
-                return int(_exit_for_apperror(ae))
-            if help_code is not None:
-                out.flush()
-                return help_code
+        help_result = self._try_intercept_help(argv, out, err, requested_at)
+        if help_result is not None:
+            return help_result
 
         parser = self._build_parser()
 

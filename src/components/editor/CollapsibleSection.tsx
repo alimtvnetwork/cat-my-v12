@@ -36,15 +36,16 @@ export function broadcastInspectorSections(open: boolean): void {
 export function useInspectorSectionShortcuts(): void {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+        return;
+      }
       const target = e.target as HTMLElement | null;
-
       if (target) {
         const tag = target.tagName;
-
-        if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return;
-
-        if (target.isContentEditable) return;
+        const isInputField = HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag);
+        if (isInputField || target.isContentEditable) {
+          return;
+        }
       }
 
       switch (e.key) {

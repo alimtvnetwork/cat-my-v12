@@ -46,27 +46,45 @@ export function PanelSearchPalette(): React.JSX.Element | null {
 
   const handleSelect = (panelId: string) => {
     const s = useWorkspaceLayoutStore.getState().panels[panelId];
-
-    if (!s?.open) openPanel(panelId);
-    else if (s.minimized) restorePanel(panelId);
     setOpen(false);
+
+    if (s?.open !== true) {
+      openPanel(panelId);
+
+      return;
+    }
+    if (s.minimized === true) {
+      restorePanel(panelId);
+    }
   };
 
   const handleCommand = (cmd: PanelSearchPaletteCmdType) => {
     const state = useWorkspaceLayoutStore.getState();
-
-    if (cmd === PanelSearchPaletteCmdType.ExpandSections) broadcastInspectorSections(true);
-    else if (cmd === PanelSearchPaletteCmdType.CollapseSections) broadcastInspectorSections(false);
-    else if (cmd === PanelSearchPaletteCmdType.ResetLayout) state.resetLayout();
-    else if (cmd === PanelSearchPaletteCmdType.CollapseOtherPanels) {
-      const firstOpen = PANELS.find(
-        (p) => state.panels[p.id]?.open && !state.panels[p.id].minimized,
-      );
-
-      if (firstOpen) state.collapseOthers(firstOpen.id);
-    }
-
     setOpen(false);
+
+    if (cmd === PanelSearchPaletteCmdType.ExpandSections) {
+      broadcastInspectorSections(true);
+
+      return;
+    }
+    if (cmd === PanelSearchPaletteCmdType.CollapseSections) {
+      broadcastInspectorSections(false);
+
+      return;
+    }
+    if (cmd === PanelSearchPaletteCmdType.ResetLayout) {
+      state.resetLayout();
+
+      return;
+    }
+    if (cmd === PanelSearchPaletteCmdType.CollapseOtherPanels) {
+      const firstOpen = PANELS.find(
+        (panelItem) => state.panels[panelItem.id]?.open === true && state.panels[panelItem.id].minimized === false,
+      );
+      if (firstOpen) {
+        state.collapseOthers(firstOpen.id);
+      }
+    }
   };
 
   return (

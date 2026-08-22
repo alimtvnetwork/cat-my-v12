@@ -64,19 +64,19 @@ export function PreviewSettingsPanel(): React.JSX.Element | null {
       EditorPreviewModeType.AllRules,
     ];
     const onKey = (e: KeyboardEvent) => {
-      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      switch (e.key) {
-        case KeyboardKeyType.P:
-        case KeyboardKeyType.PUpper: {
-          if (isTyping(e.target)) return;
-          const current = getPreviewState().mode;
-          const idx = order.indexOf(current);
-          const next = order[(idx + 1) % order.length];
-          e.preventDefault();
-          logger.info("I_UI_PREVIEW_HOTKEY", { from: current, to: next });
-          setPreviewMode(next);
-          break;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+        return;
+      }
+      if (e.key === KeyboardKeyType.P || e.key === KeyboardKeyType.PUpper) {
+        if (isTyping(e.target)) {
+          return;
         }
+        const current = getPreviewState().mode;
+        const idx = order.indexOf(current);
+        const next = order[(idx + 1) % order.length];
+        e.preventDefault();
+        logger.info("I_UI_PREVIEW_HOTKEY", { from: current, to: next });
+        setPreviewMode(next);
       }
     };
     window.addEventListener("keydown", onKey);

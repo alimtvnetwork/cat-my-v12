@@ -395,19 +395,19 @@ def record_action(
     ts = _now_iso(now)
 
     existing = read_manifest(install_root)
+    if existing is None and (app_version is None or platform is None):
+        raise AppError(
+            code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
+            message=(
+                "manifest does not exist; app_version and platform "
+                "are required on first record_action call"
+            ),
+        )
     if existing is None:
-        if app_version is None or platform is None:
-            raise AppError(
-                code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
-                message=(
-                    "manifest does not exist; app_version and platform "
-                    "are required on first record_action call"
-                ),
-            )
         existing = InstallManifest(
             SchemaVersion=MANIFEST_SCHEMA_VERSION,
             AppVersion=str(app_version),
-            Platform=_validate_platform(platform),
+            Platform=_validate_platform(platform),  # type: ignore[arg-type]
             InstalledAt=ts,
             LastUpdatedAt=ts,
             Actions=[],
@@ -494,19 +494,19 @@ def record_binary(
     ts = _now_iso(now)
 
     existing = read_manifest(install_root)
+    if existing is None and (app_version is None or platform is None):
+        raise AppError(
+            code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
+            message=(
+                "manifest does not exist; app_version and platform "
+                "are required on first record_binary call"
+            ),
+        )
     if existing is None:
-        if app_version is None or platform is None:
-            raise AppError(
-                code=ErrorCode.E_INSTALL_MANIFEST_INVALID,
-                message=(
-                    "manifest does not exist; app_version and platform "
-                    "are required on first record_binary call"
-                ),
-            )
         existing = InstallManifest(
             SchemaVersion=MANIFEST_SCHEMA_VERSION,
             AppVersion=str(app_version),
-            Platform=_validate_platform(platform),
+            Platform=_validate_platform(platform),  # type: ignore[arg-type]
             InstalledAt=ts,
             LastUpdatedAt=ts,
             Actions=[],

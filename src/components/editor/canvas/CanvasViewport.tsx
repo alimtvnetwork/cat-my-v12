@@ -196,11 +196,14 @@ export function CanvasViewport({
   const SPOTLIGHT_STORAGE_KEY = "editor.spotlight.v1";
   const SPOTLIGHT_DEFAULTS = { dim: 0.55, blurPx: 6, isolate: false } as const;
   const readSpotlightPrefs = () => {
-    if (typeof window === "undefined") return SPOTLIGHT_DEFAULTS;
+    if (typeof window === "undefined") {
+      return SPOTLIGHT_DEFAULTS;
+    }
     try {
       const raw = window.localStorage.getItem(SPOTLIGHT_STORAGE_KEY);
-
-      if (!raw) return SPOTLIGHT_DEFAULTS;
+      if (!raw) {
+        return SPOTLIGHT_DEFAULTS;
+      }
       const parsed = JSON.parse(raw) as Partial<typeof SPOTLIGHT_DEFAULTS>;
 
       return {
@@ -310,16 +313,18 @@ export function CanvasViewport({
   const SPOTLIGHT_HISTORY_KEY = "editor.spotlight.crispHistory.v1";
   const focusCrispHistoryRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     try {
       const raw = window.sessionStorage.getItem(SPOTLIGHT_HISTORY_KEY);
-
-      if (!raw) return;
+      if (!raw) {
+        return;
+      }
       const parsed = JSON.parse(raw);
-
       if (Array.isArray(parsed)) {
         focusCrispHistoryRef.current = new Set(
-          parsed.filter((x): x is string => typeof x === "string"),
+          parsed.filter((item): item is string => typeof item === "string"),
         );
       }
     } catch (error) {
@@ -327,7 +332,9 @@ export function CanvasViewport({
     }
   }, []);
   const persistCrispHistory = () => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     try {
       window.sessionStorage.setItem(
         SPOTLIGHT_HISTORY_KEY,

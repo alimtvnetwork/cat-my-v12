@@ -38,8 +38,8 @@ type Draft = Record<string, string>;
 function toDraft(values: Record<string, unknown>, schema: UserFieldSchemaMap): Draft {
   const draft: Draft = {};
   for (const field of Object.keys(schema)) {
-    const v = values[field];
-    draft[field] = v === undefined || v === null ? "" : String(v);
+    const fieldValue = values[field];
+    draft[field] = fieldValue === undefined || fieldValue === null ? "" : String(fieldValue);
   }
 
   return draft;
@@ -50,23 +50,29 @@ function coerceForWire(
   raw: string,
   schema: UserFieldSchemaMap,
 ): { value: unknown; error: string | null } {
-  if (raw === "") return { value: null, error: null };
+  if (raw === "") {
+    return { value: null, error: null };
+  }
   const spec = schema[field];
-
-  if (!spec) return { value: null, error: `Unknown field '${field}'` };
+  if (!spec) {
+    return { value: null, error: `Unknown field '${field}'` };
+  }
 
   if (spec.type === "integer") {
-    if (/^-?\d+$/.test(raw) === false) return { value: null, error: "must be an integer" };
+    if (/^-?\d+$/.test(raw) === false) {
+      return { value: null, error: "must be an integer" };
+    }
 
     return { value: Number.parseInt(raw, 10), error: null };
   }
 
   if (spec.type === "number") {
-    const n = Number(raw);
+    const numericValue = Number(raw);
+    if (Number.isFinite(numericValue) === false) {
+      return { value: null, error: "must be a number" };
+    }
 
-    if (Number.isFinite(n) === false) return { value: null, error: "must be a number" };
-
-    return { value: n, error: null };
+    return { value: numericValue, error: null };
   }
 
   return { value: raw, error: null };

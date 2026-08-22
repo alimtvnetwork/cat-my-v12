@@ -114,18 +114,21 @@ export function EnvelopeTree({
   value: unknown;
   depth?: number;
 }): React.JSX.Element | null {
-  const s = scalar(value);
-
-  if (s !== null) return <span className="text-ca-ink">{s}</span>;
+  const scalarResult = scalar(value);
+  if (scalarResult !== null) {
+    return <span className="text-ca-ink">{scalarResult}</span>;
+  }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-ca-ink-muted">[]</span>;
+    if (value.length === 0) {
+      return <span className="text-ca-ink-muted">[]</span>;
+    }
 
     return (
       <ol className={cn("list-decimal ml-5 space-y-0.5", depth > 3 && "opacity-90")}>
-        {value.map((it, i) => (
-          <li key={i}>
-            <EnvelopeTree value={it} depth={depth + 1} />
+        {value.map((item, itemIndex) => (
+          <li key={itemIndex}>
+            <EnvelopeTree value={item} depth={depth + 1} />
           </li>
         ))}
       </ol>
@@ -134,13 +137,14 @@ export function EnvelopeTree({
 
   if (value && typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
-
-    if (entries.length === 0) return <span className="text-ca-ink-muted">{"{}"}</span>;
+    if (entries.length === 0) {
+      return <span className="text-ca-ink-muted">{"{}"}</span>;
+    }
 
     return (
       <dl className={cn(KV_ROW, depth > 0 && "ml-3")}>
-        {entries.map(([k, v]) => (
-          <KV key={k} k={k} v={<EnvelopeTree value={v} depth={depth + 1} />} />
+        {entries.map(([entryKey, entryValue]) => (
+          <KV key={entryKey} k={entryKey} v={<EnvelopeTree value={entryValue} depth={depth + 1} />} />
         ))}
       </dl>
     );

@@ -134,31 +134,31 @@ def send(
         )
 
     # Error messages carry the envelope only; payload MUST be null.
+    if kind == "Error" and payload not in (None, {}):
+        raise AppError(
+            ErrorCode.E_IPC_PAYLOAD_INVALID,
+            "Kind=Error requires Payload=null",
+            details={"Kind": kind},
+        )
     if kind == "Error":
-        if payload not in (None, {}):
-            raise AppError(
-                ErrorCode.E_IPC_PAYLOAD_INVALID,
-                "Kind=Error requires Payload=null",
-                details={"Kind": kind},
-            )
         payload_out: dict[str, Any] | None = None
     else:
         model_cls = PAYLOAD_MODELS[kind]
         # Accept a typed model instance OR a raw mapping. Both go through the
         # Pydantic model so field types, PascalCase spelling, and extra-field
         # rejection are enforced identically.
+        if isinstance(payload, BaseModel) and not isinstance(payload, model_cls):
+            raise AppError(
+                ErrorCode.E_IPC_PAYLOAD_INVALID,
+                f"Payload model mismatch: got "
+                f"{type(payload).__name__}, expected {model_cls.__name__}",
+                details={
+                    "Kind": kind,
+                    "Got": type(payload).__name__,
+                    "Expected": model_cls.__name__,
+                },
+            )
         if isinstance(payload, BaseModel):
-            if not isinstance(payload, model_cls):
-                raise AppError(
-                    ErrorCode.E_IPC_PAYLOAD_INVALID,
-                    f"Payload model mismatch: got "
-                    f"{type(payload).__name__}, expected {model_cls.__name__}",
-                    details={
-                        "Kind": kind,
-                        "Got": type(payload).__name__,
-                        "Expected": model_cls.__name__,
-                    },
-                )
             model = payload
         elif isinstance(payload, Mapping):
             _validate_payload_keys(payload)
@@ -236,14 +236,13 @@ def receive(
     if not drop.exists():
         return
     kf = frozenset(kind_filter) if kind_filter is not None else None
-    if kf is not None:
+    if kf is not None and (kf - KINDS):
         unknown = kf - KINDS
-        if unknown:
-            raise AppError(
-                ErrorCode.E_IPC_UNKNOWN_KIND,
-                f"kind_filter references unknown Kinds: {sorted(unknown)}",
-                details={"Unknown": sorted(unknown)},
-            )
+        raise AppError(
+            ErrorCode.E_IPC_UNKNOWN_KIND,
+            f"kind_filter references unknown Kinds: {sorted(unknown)}",
+            details={"Unknown": sorted(unknown)},
+        )
     paths = sorted(drop.glob("*.msg.json"), key=lambda p: p.name)
     for p in paths:
         try:

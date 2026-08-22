@@ -96,10 +96,11 @@ def intercept(
         return 0
 
     # Case B: `<tool> help [<subcmd>]`
+    if first == "help" and len(argv) == 1:
+        stdout.write(_render_root(tool, description, subcommands))
+        return 0
+
     if first == "help":
-        if len(argv) == 1:
-            stdout.write(_render_root(tool, description, subcommands))
-            return 0
         subcmd = argv[1]
         if subcmd not in subcommands:
             raise AppError(

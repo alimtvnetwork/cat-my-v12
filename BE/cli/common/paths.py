@@ -77,31 +77,33 @@ def _detect_platform(platform: str | None) -> Platform:
     return "linux"
 
 
-def _app_root(platform: Platform, env: Mapping[str, str]) -> Path:
-    if platform == "windows":
-        base = env.get("LOCALAPPDATA") or env.get("APPDATA")
-        if not base:
-            home = env.get("USERPROFILE") or env.get("HOME")
-            if not home:
-                raise AppError(
-                    ErrorCode.E_CLI_UNSUPPORTED_HOST,
-                    "Windows host exposes neither %LOCALAPPDATA% nor %APPDATA% nor %USERPROFILE%",
-                    details={"Platform": platform},
-                )
-            base = str(Path(home) / "AppData" / "Local")
+def _windows_app_root(env: Mapping[str, str], platform: Platform) -> Path:
+    base = env.get("LOCALAPPDATA") or env.get("APPDATA")
+    if base:
         return Path(base) / APP_DIR_NAME
 
-    if platform == "darwin":
-        home = env.get("HOME")
-        if not home:
-            raise AppError(
-                ErrorCode.E_CLI_UNSUPPORTED_HOST,
-                "macOS host exposes no $HOME",
-                details={"Platform": platform},
-            )
-        return Path(home) / "Library" / "Application Support" / APP_DIR_NAME
+    home = env.get("USERPROFILE") or env.get("HOME")
+    if not home:
+        raise AppError(
+            ErrorCode.E_CLI_UNSUPPORTED_HOST,
+            "Windows host exposes neither %LOCALAPPDATA% nor %APPDATA% nor %USERPROFILE%",
+            details={"Platform": platform},
+        )
+    return Path(home) / "AppData" / "Local" / APP_DIR_NAME
 
-    # linux
+
+def _darwin_app_root(env: Mapping[str, str], platform: Platform) -> Path:
+    home = env.get("HOME")
+    if not home:
+        raise AppError(
+            ErrorCode.E_CLI_UNSUPPORTED_HOST,
+            "macOS host exposes no $HOME",
+            details={"Platform": platform},
+        )
+    return Path(home) / "Library" / "Application Support" / APP_DIR_NAME
+
+
+def _linux_app_root(env: Mapping[str, str], platform: Platform) -> Path:
     state = env.get("XDG_STATE_HOME")
     if state:
         return Path(state) / APP_DIR_NAME
@@ -113,6 +115,14 @@ def _app_root(platform: Platform, env: Mapping[str, str]) -> Path:
             details={"Platform": platform},
         )
     return Path(home) / ".local" / "state" / APP_DIR_NAME
+
+
+def _app_root(platform: Platform, env: Mapping[str, str]) -> Path:
+    if platform == "windows":
+        return _windows_app_root(env, platform)
+    if platform == "darwin":
+        return _darwin_app_root(env, platform)
+    return _linux_app_root(env, platform)
 
 
 def _ensure_writable(path: Path) -> None:

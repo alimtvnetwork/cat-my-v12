@@ -154,17 +154,22 @@ export function FloatingInspector({
   const onHeaderMove = useCallback(
     (e: ReactPointerEvent<HTMLDivElement>) => {
       const d = dragRef.current;
-
-      if (!d) return;
+      if (!d) {
+        return;
+      }
       pendingRef.current = { x: e.clientX - d.dx, y: e.clientY - d.dy };
 
-      if (rafRef.current !== null) return;
+      if (rafRef.current !== null) {
+        return;
+      }
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
-        const p = pendingRef.current;
+        const pendingPos = pendingRef.current;
         pendingRef.current = null;
 
-        if (p) applyPos(p.x, p.y);
+        if (pendingPos) {
+          applyPos(pendingPos.x, pendingPos.y);
+        }
       });
     },
     [applyPos],

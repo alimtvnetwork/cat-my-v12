@@ -94,10 +94,13 @@ function commitDockDrag(
   const distance = Math.hypot(event.delta.x, event.delta.y);
   const sourceDock = state.panels[panelId]?.dock;
 
-  if (overSlot && overSlot !== sourceDock) {
-    if (getPanel(panelId) === undefined) return;
+  const isDifferentSlot = overSlot !== undefined && overSlot !== sourceDock;
+  if (isDifferentSlot && getPanel(panelId) !== undefined) {
     state.dockPanel(panelId, overSlot);
 
+    return;
+  }
+  if (isDifferentSlot) {
     return;
   }
 
@@ -178,10 +181,12 @@ function handleDragEnd(event: DragEndEvent) {
     // Floating -> if dropped over a dock slot, dock the panel there so
     // users can pull a floating window back into a column. Otherwise
     // commit the translated rect as the new floating position.
-    if (overSlot) {
-      if (getPanel(panelId) === undefined) return;
+    if (overSlot !== undefined && getPanel(panelId) !== undefined) {
       state.dockPanel(panelId, overSlot);
 
+      return;
+    }
+    if (overSlot !== undefined) {
       return;
     }
 
@@ -259,11 +264,8 @@ function DockedDraggable({ panelId, onDragChange, children }: DockedDraggablePro
 
     if (match !== hoveredSlotRef.current) {
       clearHover();
-
-      if (match) {
-        match.setAttribute("data-drop-hover", "true");
-        hoveredSlotRef.current = match;
-      }
+      match?.setAttribute("data-drop-hover", "true");
+      hoveredSlotRef.current = match;
     }
   };
   const beginDrag = (e: React.PointerEvent<HTMLDivElement>) => {

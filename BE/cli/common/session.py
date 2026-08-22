@@ -84,24 +84,32 @@ class SessionCtx:
         return Path(self.ref.LogPath)
 
 
+def _system_exit_code(exc: SystemExit) -> ExitCode:
+    raw = exc.code
+    if raw is None:
+        return ExitCode.Ok
+    if isinstance(raw, int):
+        for member in ExitCode:
+            if member.value == raw:
+                return member
+    return ExitCode.DomainError
+
+
+def _app_error_exit_code(exc: AppError) -> ExitCode:
+    if exc.code in _IO_CODES:
+        return ExitCode.IoError
+    if exc.code in _VENDOR_CODES:
+        return ExitCode.VendorError
+    if exc.code in _USAGE_CODES:
+        return ExitCode.Usage
+    return ExitCode.DomainError
+
+
 def _exit_code_for_exception(exc: BaseException) -> ExitCode:
     if isinstance(exc, SystemExit):
-        raw = exc.code
-        if raw is None:
-            return ExitCode.Ok
-        if isinstance(raw, int):
-            for member in ExitCode:
-                if member.value == raw:
-                    return member
-        return ExitCode.DomainError
+        return _system_exit_code(exc)
     if isinstance(exc, AppError):
-        if exc.code in _IO_CODES:
-            return ExitCode.IoError
-        if exc.code in _VENDOR_CODES:
-            return ExitCode.VendorError
-        if exc.code in _USAGE_CODES:
-            return ExitCode.Usage
-        return ExitCode.DomainError
+        return _app_error_exit_code(exc)
     return ExitCode.DomainError
 
 

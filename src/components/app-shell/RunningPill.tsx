@@ -50,7 +50,9 @@ export function RunningPill(): React.JSX.Element | null {
   // it. Distinct name from `__runningTestHooks` (which is per-hook) to
   // avoid overwrites between the two.
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     const isE2E = new URLSearchParams(window.location.search).get("e2e") === "1";
     const isProduction = isE2E === false;
 
@@ -67,7 +69,9 @@ export function RunningPill(): React.JSX.Element | null {
     window.__runningPillTestHooks = api;
 
     return () => {
-      if (window.__runningPillTestHooks === api) delete window.__runningPillTestHooks;
+      if (window.__runningPillTestHooks === api) {
+        delete window.__runningPillTestHooks;
+      }
     };
   }, [ops, startOp, updateOp, stop]);
 

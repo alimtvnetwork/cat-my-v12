@@ -431,15 +431,21 @@ function BoundsRow({
 }) {
   const [aspectLocked, setAspectLocked] = useState(false);
   const patch = (next: Partial<EditorRect>) => {
-    if (rule.isLocked) return;
+    if (rule.isLocked) {
+      return;
+    }
     let width = next.width ?? rule.width;
     let height = next.height ?? rule.height;
 
-    if (aspectLocked && (next.width !== undefined || next.height !== undefined)) {
+    const shouldComputeAspect = aspectLocked && (next.width !== undefined || next.height !== undefined);
+    if (shouldComputeAspect) {
       const ratio = rule.width > 0 && rule.height > 0 ? rule.width / rule.height : 1;
 
-      if (next.width !== undefined) height = Math.max(1, Math.round(next.width / ratio));
-      else if (next.height !== undefined) width = Math.max(1, Math.round(next.height * ratio));
+      if (next.width !== undefined) {
+        height = Math.max(1, Math.round(next.width / ratio));
+      } else if (next.height !== undefined) {
+        width = Math.max(1, Math.round(next.height * ratio));
+      }
     }
 
     const rect: EditorRect = {

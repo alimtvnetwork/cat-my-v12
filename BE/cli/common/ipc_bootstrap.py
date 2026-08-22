@@ -111,13 +111,12 @@ def _install_link(
     Returns `(kind, failure_message)`. `kind` is one of "symlink",
     "junction", "standalone". `failure_message` is None on success.
     """
-    # If link already exists and points at target, we're idempotent.
     if link.exists() or link.is_symlink():
         with contextlib.suppress(OSError):
             resolved = link.resolve(strict=False)
+            if resolved == target.resolve(strict=False) and link.is_symlink():
+                return "symlink", None
             if resolved == target.resolve(strict=False):
-                if link.is_symlink():
-                    return "symlink", None
                 # Junction resolves like a real dir on Windows; treat as
                 # junction when platform is Windows, otherwise standalone.
                 return ("junction" if _is_windows(platform) else "standalone"), None
@@ -208,19 +207,21 @@ def bootstrap_ipc_dirs(
     for name in consumer_names:
         path = root / name
         target = root / LINK_MAP[name]
+        if not link_consumers and path.exists():
+            existing.append(name)
+            link_kind[name] = "standalone"
+            continue
+
         if not link_consumers:
-            if path.exists():
-                existing.append(name)
-            else:
-                try:
-                    path.mkdir(parents=True, exist_ok=True)
-                except OSError as exc:
-                    raise AppError(
-                        ErrorCode.E_IPC_WRITE_FAILED,
-                        f"Cannot create IPC drop dir {path}: {exc}",
-                        details={"Path": str(path)},
-                    ) from exc
-                created.append(name)
+            try:
+                path.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                raise AppError(
+                    ErrorCode.E_IPC_WRITE_FAILED,
+                    f"Cannot create IPC drop dir {path}: {exc}",
+                    details={"Path": str(path)},
+                ) from exc
+            created.append(name)
             link_kind[name] = "standalone"
             continue
 

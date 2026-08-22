@@ -47,19 +47,22 @@ const STATE_LABEL: Record<WorkerStateType, string> = {
  */
 function toneForWorker(worker: CliStatus["Worker"]): StatusToneType {
   const isUnknown = !worker;
-
-  if (isUnknown) return StatusToneType.Muted;
+  if (isUnknown) {
+    return StatusToneType.Muted;
+  }
 
   return toneForExitCode(worker.ExitCode, worker.ExitCode === null ? null : 1);
 }
 
 function useTabVisibility(): boolean {
   const [visible, setVisible] = useState<boolean>(() =>
-    typeof document === "undefined" ? true : !document.hidden,
+    typeof document === "undefined" ? true : document.hidden === false,
   );
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    const handler = () => setVisible(!document.hidden);
+    if (typeof document === "undefined") {
+      return;
+    }
+    const handler = () => setVisible(document.hidden === false);
     document.addEventListener("visibilitychange", handler);
 
     return () => document.removeEventListener("visibilitychange", handler);

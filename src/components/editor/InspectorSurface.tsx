@@ -55,13 +55,15 @@ export function InspectorSurface({ imageBounds }: InspectorSurfaceProps): React.
         const order = rules.map((r) => r.id);
         const anchorIdx = order.indexOf(selectedIds[selectedIds.length - 1]);
         const targetIdx = order.indexOf(id);
-
-        if (anchorIdx >= 0 && targetIdx >= 0) {
-          const [lo, hi] = anchorIdx < targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
-          setSelection(order.slice(lo, hi + 1), "inspector.range");
+        if (anchorIdx < 0 || targetIdx < 0) {
+          setSelection([id], "inspector.replace");
 
           return;
         }
+        const [lo, hi] = anchorIdx < targetIdx ? [anchorIdx, targetIdx] : [targetIdx, anchorIdx];
+        setSelection(order.slice(lo, hi + 1), "inspector.range");
+
+        return;
       }
 
       setSelection([id], "inspector.replace");

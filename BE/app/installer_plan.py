@@ -117,13 +117,15 @@ def _retention_action(
 ) -> InstallerAction:
     if platform is InstallerPlatform.WINDOWS:
         script = _WINDOWS_RETENTION_SCRIPT
-        flag = "-Install" if phase is InstallerPhase.INSTALL else "-Uninstall"
-        args: tuple[str, ...] = (flag,)
-        if phase is InstallerPhase.INSTALL:
-            args = args + (
+        args = (
+            (
+                "-Install",
                 "-IntervalHours", str(interval_hours),
                 "-RetentionDays", str(retention_days),
             )
+            if phase is InstallerPhase.INSTALL
+            else ("-Uninstall",)
+        )
     else:
         script = _POSIX_RETENTION_SCRIPT
         args = ("--install",) if phase is InstallerPhase.INSTALL else ("--uninstall",)
@@ -172,18 +174,19 @@ def _path_link_action(
     platform_flag = (
         "windows" if platform is InstallerPlatform.WINDOWS else "posix"
     )
+    if phase is InstallerPhase.INSTALL and (not binaries_dir or not isinstance(binaries_dir, str)):
+        raise AppError(
+            code=ErrorCode.E_CLI_USAGE,
+            message=(
+                "binaries_dir is required for INSTALL phase so the "
+                "path-link action can resolve source exes"
+            ),
+        )
+
     if phase is InstallerPhase.INSTALL:
-        if not binaries_dir or not isinstance(binaries_dir, str):
-            raise AppError(
-                code=ErrorCode.E_CLI_USAGE,
-                message=(
-                    "binaries_dir is required for INSTALL phase so the "
-                    "path-link action can resolve source exes"
-                ),
-            )
         args: tuple[str, ...] = (
             "install",
-            "--binaries-dir", binaries_dir,
+            "--binaries-dir", binaries_dir,  # type: ignore[arg-type]
             "--platform", platform_flag,
         )
         critical = True

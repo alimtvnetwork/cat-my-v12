@@ -25,9 +25,12 @@ export function AlignmentGuides({ guides, viewport, canvasSize }: Props): React.
   const snap = useSnap();
   // Users can hide guides via the snap-threshold HUD; snap behaviour
   // itself stays on, this just declutters the canvas.
-  if (snap.showGuides === false) return null;
-
-  if (guides.length === 0) return null;
+  if (snap.showGuides === false) {
+    return null;
+  }
+  if (guides.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -36,48 +39,48 @@ export function AlignmentGuides({ guides, viewport, canvasSize }: Props): React.
       className="pointer-events-none absolute inset-0"
       style={{ width: canvasSize.width, height: canvasSize.height }}
     >
-      {guides.map((g, i) => {
-        if (g.orientation === "v") {
-          const p = imageToScreen({ x: g.pos, y: g.from }, viewport);
-          const q = imageToScreen({ x: g.pos, y: g.to }, viewport);
-          const top = Math.min(p.y, q.y);
-          const height = Math.abs(q.y - p.y);
+      {guides.map((guide, guideIndex) => {
+        if (guide.orientation === "v") {
+          const fromPoint = imageToScreen({ x: guide.pos, y: guide.from }, viewport);
+          const toPoint = imageToScreen({ x: guide.pos, y: guide.to }, viewport);
+          const top = Math.min(fromPoint.y, toPoint.y);
+          const height = Math.abs(toPoint.y - fromPoint.y);
 
           return (
             <div
-              key={`v-${g.pos}-${g.kind}-${i}`}
-              data-testid={`align-guide-v-${g.kind}`}
+              key={`v-${guide.pos}-${guide.kind}-${guideIndex}`}
+              data-testid={`align-guide-v-${guide.kind}`}
               className="absolute"
               style={{
-                left: p.x - 0.5,
+                left: fromPoint.x - 0.5,
                 top,
                 width: 1,
                 height: Math.max(1, height),
-                background: KIND_COLOR[g.kind],
-                boxShadow: `0 0 0 0.5px ${KIND_COLOR[g.kind]}`,
+                background: KIND_COLOR[guide.kind],
+                boxShadow: `0 0 0 0.5px ${KIND_COLOR[guide.kind]}`,
                 opacity: 0.9,
               }}
             />
           );
         }
 
-        const p = imageToScreen({ x: g.from, y: g.pos }, viewport);
-        const q = imageToScreen({ x: g.to, y: g.pos }, viewport);
-        const left = Math.min(p.x, q.x);
-        const width = Math.abs(q.x - p.x);
+        const fromPoint = imageToScreen({ x: guide.from, y: guide.pos }, viewport);
+        const toPoint = imageToScreen({ x: guide.to, y: guide.pos }, viewport);
+        const left = Math.min(fromPoint.x, toPoint.x);
+        const width = Math.abs(toPoint.x - fromPoint.x);
 
         return (
           <div
-            key={`h-${g.pos}-${g.kind}-${i}`}
-            data-testid={`align-guide-h-${g.kind}`}
+            key={`h-${guide.pos}-${guide.kind}-${guideIndex}`}
+            data-testid={`align-guide-h-${guide.kind}`}
             className="absolute"
             style={{
               left,
-              top: p.y - 0.5,
+              top: fromPoint.y - 0.5,
               width: Math.max(1, width),
               height: 1,
-              background: KIND_COLOR[g.kind],
-              boxShadow: `0 0 0 0.5px ${KIND_COLOR[g.kind]}`,
+              background: KIND_COLOR[guide.kind],
+              boxShadow: `0 0 0 0.5px ${KIND_COLOR[guide.kind]}`,
               opacity: 0.9,
             }}
           />

@@ -102,14 +102,15 @@ class JsonlLogger:
         return _LEVEL_ORDER[level] >= _LEVEL_ORDER[self.min_level]
 
     def _validate_code(self, level: Level, code: str | None) -> None:
+        if code is None and level in _CODE_REQUIRED:
+            raise AppError(
+                ErrorCode.E_BUG_UNKNOWN_CODE if hasattr(ErrorCode, "E_BUG_UNKNOWN_CODE") else ErrorCode.E_CLI_PREFLIGHT_FAILED,
+                f"Log level {level} requires a Code from the error registry",
+                details={"Level": level, "Source": self.source},
+            )
         if code is None:
-            if level in _CODE_REQUIRED:
-                raise AppError(
-                    ErrorCode.E_BUG_UNKNOWN_CODE if hasattr(ErrorCode, "E_BUG_UNKNOWN_CODE") else ErrorCode.E_CLI_PREFLIGHT_FAILED,
-                    f"Log level {level} requires a Code from the error registry",
-                    details={"Level": level, "Source": self.source},
-                )
             return
+
         if is_registered(code) is False:
             raise AppError(
                 ErrorCode.E_CLI_PREFLIGHT_FAILED,
