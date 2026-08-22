@@ -419,10 +419,7 @@ def _maybe_persist_task_db(
 
 
 
-def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
-    frame_path = Path(ns.frame).expanduser()
-    bundle_path = Path(ns.bundle).expanduser()
-
+def _validate_frame_file(frame_path: Path) -> None:
     if not frame_path.exists() or not frame_path.is_file():
         raise AppError(
             ErrorCode.E_BE_NOT_FOUND,
@@ -443,6 +440,61 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
                 {"Path": str(frame_path)},
             ) from e
 
+
+def _emit_result_ready_ipc(
+    ns: argparse.Namespace,
+    context: SessionCtx,
+    run_id: str,
+    record: dict[str, Any],
+    persisted_path: Path | None,
+) -> None:
+    if not getattr(ns, "emit_ipc", False):
+        return
+    if persisted_path is None:
+        raise AppError(
+            ErrorCode.E_CLI_USAGE,
+            "--emit-ipc requires --results-dir (ResultsPath must be a real file)",
+            {"RunSessionId": run_id},
+        )
+    from BE.cli.common import ipc as _ipc
+    from BE.cli.common.paths import resolve_root
+
+    ipc_root = resolve_root("ipc", override=ns.ipc_root, ensure=True)
+    (ipc_root / str(ns.ipc_out_dir)).mkdir(parents=True, exist_ok=True)
+    rs = record.get("RuleSet", {}) or {}
+    error_count = int(rs.get("ErrorCount", 0))
+    promoted = _promote_error_code(record.get("Judgments") or [])
+    rr_payload = {
+        "ResultsPath": str(persisted_path),
+        "RunId": run_id,
+        "FrameSeq": int(getattr(ns, "frame_seq", 0) or 0),
+        "Decision": str(record.get("Verdict", "Pass")).lower(),
+        "RuleCount": int(rs.get("RuleCount", 0)),
+        "PassCount": int(rs.get("PassCount", 0)),
+        "FailCount": int(rs.get("FailCount", 0)),
+        "ErrorCount": error_count,
+    }
+    if promoted is not None:
+        rr_payload["ErrorCode"] = promoted
+
+    msg_path = _ipc.send(
+        ipc_root, str(ns.ipc_out_dir), "ResultReady", rr_payload,
+        run_id=run_id, from_="processing-cli", to="main",
+        seq=rr_payload["FrameSeq"],
+    )
+    context.logger.log(
+        "INFO", "evaluate.ipc.emitted",
+        f"ResultReady -> {msg_path.name}",
+        ctx={"RunSessionId": run_id, "IpcMessagePath": str(msg_path),
+             "OutDir": str(ns.ipc_out_dir)},
+    )
+
+
+def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
+    frame_path = Path(ns.frame).expanduser()
+    bundle_path = Path(ns.bundle).expanduser()
+    _validate_frame_file(frame_path)
+
     bundle = _read_bundle(bundle_path)
     counts = _count_rules(bundle)
     run_id = ns.run_id or _generate_run_id()
@@ -462,7 +514,6 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     )
 
     if counts.active > 0 or counts.silent > 0:
-        # Honesty rule: refuse to fabricate verdicts for rules we cannot run.
         raise AppError(
             ErrorCode.E_BE_UNAVAILABLE,
             "rule evaluator not wired yet (Plan 90 Steps 79-87)",
@@ -477,7 +528,6 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
             },
         )
 
-
     record = _empty_result_record(
         run_id=run_id,
         frame_path=frame_path,
@@ -487,66 +537,13 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     persisted_path: Path | None = None
     if ns.results_dir:
         persisted_path = _write_jsonl(Path(ns.results_dir).expanduser(), run_id, record)
-        ctx.logger.log(
+        context.logger.log(
             "INFO", "evaluate.persisted",
             f"wrote {persisted_path}",
             ctx={"RunSessionId": run_id, "ResultsPath": str(persisted_path)},
         )
 
-    # Plan 90 Step 99 - Task-DB wiring. RunSession + RuleResult + FrameArtifact
-    # writers land as one sequential batch. Each writer opens its own
-    # BEGIN IMMEDIATE and each is idempotent by its natural key (RunId /
-    # (RunSessionId,RuleId) / (RunSessionId,RelPath)), so a crash between
-    # writers heals on replay of the same JSONL (spec 24 §1 write policy).
-    # Root cause guarded (pre-Step-99): JSONL was the only persisted signal;
-    # DB tables from Steps 96-98 stayed empty at runtime, breaking the
-    # Step 100 observability route and Step 141+ FE history drawer.
     _maybe_persist_task_db(ns, context, run_id, record, mode_effective, persisted_path)
-
-    # Spec 75 §Acceptance #2 — evaluate MUST be able to emit ResultReady so
-    # a downstream watcher (main app, packaging pipeline, etc.) sees a
-    # single-shot evaluation the same way it sees a `watch`-driven one.
-    # Guarded behind --emit-ipc so batch/CI callers stay side-effect-free.
-    if getattr(ns, "emit_ipc", False):
-        if persisted_path is None:
-            raise AppError(
-                ErrorCode.E_CLI_USAGE,
-                "--emit-ipc requires --results-dir (ResultsPath must be a real file)",
-                {"RunSessionId": run_id},
-            )
-        # Imported lazily to keep `evaluate` importable in environments
-        # (unit tests, dry-run) that never touch IPC.
-        from BE.cli.common import ipc as _ipc
-        from BE.cli.common.paths import resolve_root
-
-        ipc_root = resolve_root("ipc", override=ns.ipc_root, ensure=True)
-        (ipc_root / str(ns.ipc_out_dir)).mkdir(parents=True, exist_ok=True)
-        rs = record.get("RuleSet", {}) or {}
-        error_count = int(rs.get("ErrorCount", 0))
-        promoted = _promote_error_code(record.get("Judgments") or [])
-        rr_payload = {
-            "ResultsPath": str(persisted_path),
-            "RunId": run_id,
-            "FrameSeq": int(getattr(ns, "frame_seq", 0) or 0),
-            "Decision": str(record.get("Verdict", "Pass")).lower(),
-            "RuleCount": int(rs.get("RuleCount", 0)),
-            "PassCount": int(rs.get("PassCount", 0)),
-            "FailCount": int(rs.get("FailCount", 0)),
-            "ErrorCount": error_count,
-        }
-        if promoted is not None:
-            rr_payload["ErrorCode"] = promoted
-
-        msg_path = _ipc.send(
-            ipc_root, str(ns.ipc_out_dir), "ResultReady", rr_payload,
-            run_id=run_id, from_="processing-cli", to="main",
-            seq=rr_payload["FrameSeq"],
-        )
-        context.logger.log(
-            "INFO", "evaluate.ipc.emitted",
-            f"ResultReady -> {msg_path.name}",
-            ctx={"RunSessionId": run_id, "IpcMessagePath": str(msg_path),
-                 "OutDir": str(ns.ipc_out_dir)},
-        )
+    _emit_result_ready_ipc(ns, context, run_id, record, persisted_path)
 
     return [record]

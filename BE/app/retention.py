@@ -193,6 +193,50 @@ def _unlink_file(target: Path) -> tuple[bool, str | None]:
         return False, f"{type(exc).__name__}: {exc}"
 
 
+def _unlink_artifacts_batch(
+    artifact_rows: list[tuple[int, str, int]],
+    root_abs: Path,
+    traversal_refusals: list[str],
+    unlink_failures: list[str],
+) -> tuple[int, int]:
+    artifacts_unlinked = 0
+    bytes_reclaimed = 0
+    for _rid, rel, nbytes in artifact_rows:
+        if not _is_safe_rel(rel):
+            traversal_refusals.append(rel)
+            _log.error("retention.file.traversal_refused rel=%r", rel)
+            continue
+        target = (root_abs / rel).resolve()
+        try:
+            target.relative_to(root_abs)
+        except ValueError:
+            traversal_refusals.append(rel)
+            _log.error("retention.file.escape_refused rel=%r resolved=%s", rel, target)
+            continue
+        ok, err = _unlink_file(target)
+        if ok:
+            artifacts_unlinked += 1
+            bytes_reclaimed += max(0, nbytes)
+        else:
+            unlink_failures.append(rel)
+            _log.error("retention.file.unlink_failed rel=%r err=%s", rel, err)
+    return artifacts_unlinked, bytes_reclaimed
+
+
+def _unlink_jsonl_batch(jsonl_paths: list[str], unlink_failures: list[str]) -> int:
+    jsonl_unlinked = 0
+    for jp in jsonl_paths:
+        if not jp:
+            continue
+        ok, err = _unlink_file(Path(jp).expanduser())
+        if ok:
+            jsonl_unlinked += 1
+        else:
+            unlink_failures.append(jp)
+            _log.error("retention.file.unlink_failed kind=jsonl path=%r err=%s", jp, err)
+    return jsonl_unlinked
+
+
 def run_retention(
     conn: sqlite3.Connection,
     *,
@@ -203,31 +247,6 @@ def run_retention(
 ) -> RetentionOutcome:
     """Purge ``RunSession`` rows older than ``retention_days`` and unlink
     their on-disk ``FrameArtifact`` files.
-
-    Parameters
-    ----------
-    conn:
-        Guarded Task-tier connection (``BE.db.connections.get_task_conn``).
-    results_root:
-        Absolute filesystem root under which ``FrameArtifact.RelPath``
-        resolves. Every unlink path is anchored here; any RelPath that
-        would escape via ``..`` or absolute path is refused and logged.
-    retention_days:
-        Rows with ``PersistedAt < now - retention_days*86400`` are
-        eligible. Must be >= 1; ``0`` is rejected because it would
-        purge in-flight runs.
-    now_epoch:
-        Injectable clock (tests). Defaults to ``int(time.time())``.
-    dry_run:
-        When ``True`` no DELETE and no unlink is issued; counters
-        describe what WOULD have happened.
-
-    Raises
-    ------
-    AppError(E_BE_BAD_REQUEST):
-        ``retention_days`` < 1.
-    AppError(E_BE_INTERNAL):
-        Task-DB not bootstrapped (missing table) or SQL failure.
     """
     if retention_days < 1:
         raise AppError(
@@ -243,8 +262,6 @@ def run_retention(
     try:
         doomed = _fetch_doomed(conn, cutoff)
     except sqlite3.OperationalError as exc:
-        # Missing table is loud, not a silent zero-count success.
-
         raise AppError(
             ErrorCode.E_BE_INTERNAL,
             f"Task-DB RunSession query failed: {exc}",
@@ -253,87 +270,29 @@ def run_retention(
 
     doomed_ids = [rid for rid, _ in doomed]
     jsonl_paths = [p for _, p in doomed if p]
-
-    # CRITICAL: fetch artifact RelPaths BEFORE cascade delete erases them.
     artifact_rows = _fetch_artifacts(conn, doomed_ids)
 
     if not doomed_ids:
-        outcome = RetentionOutcome(
-            RetentionDays=retention_days,
-            CutoffEpoch=cutoff,
-            DryRun=dry_run,
-        )
-        _log.info(
-            "retention.pass.completed dry_run=%s cutoff=%d scanned=0 deleted=0",
-            dry_run, cutoff,
-        )
-        return outcome
+        _log.info("retention.pass.completed dry_run=%s cutoff=%d scanned=0 deleted=0", dry_run, cutoff)
+        return RetentionOutcome(RetentionDays=retention_days, CutoffEpoch=cutoff, DryRun=dry_run)
 
     unlink_failures: list[str] = []
     traversal_refusals: list[str] = []
-    artifacts_unlinked = 0
-    bytes_reclaimed = 0
-    jsonl_unlinked = 0
 
     if not dry_run:
-        # Files first, DB second: even if the DB delete raises later,
-        # we've already documented every unlink attempt in the log.
-        for _rid, rel, nbytes in artifact_rows:
-            if not _is_safe_rel(rel):
-                traversal_refusals.append(rel)
-                _log.error(
-                    "retention.file.traversal_refused rel=%r",
-                    rel,
-                )
-                continue
-            target = (root_abs / rel).resolve()
-            # Second-line defense: after resolve(), ensure we're still
-            # under root_abs (symlink games).
-            try:
-                target.relative_to(root_abs)
-            except ValueError:
-                traversal_refusals.append(rel)
-                _log.error(
-                    "retention.file.escape_refused rel=%r resolved=%s",
-                    rel, target,
-                )
-                continue
-            ok, err = _unlink_file(target)
-            if ok:
-                artifacts_unlinked += 1
-                bytes_reclaimed += max(0, nbytes)
-            else:
-                unlink_failures.append(rel)
-                _log.error(
-                    "retention.file.unlink_failed rel=%r err=%s",
-                    rel, err,
-                )
-
-        for jp in jsonl_paths:
-            if not jp:
-                continue
-            target = Path(jp).expanduser()
-            ok, err = _unlink_file(target)
-            if ok:
-                jsonl_unlinked += 1
-            else:
-                unlink_failures.append(jp)
-                _log.error(
-                    "retention.file.unlink_failed kind=jsonl path=%r err=%s",
-                    jp, err,
-                )
-
+        artifacts_unlinked, bytes_reclaimed = _unlink_artifacts_batch(artifact_rows, root_abs, traversal_refusals, unlink_failures)
+        jsonl_unlinked = _unlink_jsonl_batch(jsonl_paths, unlink_failures)
         try:
             rows_deleted = _delete_run_sessions(conn, doomed_ids)
         except sqlite3.Error as exc:
-
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
                 f"Task-DB RunSession delete failed: {exc}",
                 details={"AttemptedIds": len(doomed_ids)},
             ) from exc
     else:
-        # dry_run: report the theoretical numbers without touching disk.
+        artifacts_unlinked = 0
+        bytes_reclaimed = 0
         for _rid, rel, nbytes in artifact_rows:
             if not _is_safe_rel(rel):
                 traversal_refusals.append(rel)

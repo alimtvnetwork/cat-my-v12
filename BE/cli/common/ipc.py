@@ -107,19 +107,7 @@ def _ensure_json_safe(payload_object: Any) -> None:
 # --- Public API --------------------------------------------------------------
 
 
-def send(
-    root: Path,
-    dir: str,
-    kind: str,
-    payload: Mapping[str, Any] | None,
-    *,
-    run_id: str,
-    from_: str,
-    to: str,
-    seq: int = 0,
-    envelope: Mapping[str, Any] | None = None,
-) -> Path:
-    """Write one IPC message atomically. Returns the final `.msg.json` path."""
+def _validate_send_params(kind: str, dir: str) -> None:
     if kind not in KINDS:
         raise AppError(
             ErrorCode.E_IPC_UNKNOWN_KIND,
@@ -133,7 +121,8 @@ def send(
             details={"Dir": str(dir)},
         )
 
-    # Error messages carry the envelope only; payload MUST be null.
+
+def _prepare_payload(kind: str, payload: Any) -> dict[str, Any] | None:
     if kind == "Error" and payload not in (None, {}):
         raise AppError(
             ErrorCode.E_IPC_PAYLOAD_INVALID,
@@ -141,63 +130,39 @@ def send(
             details={"Kind": kind},
         )
     if kind == "Error":
-        payload_out: dict[str, Any] | None = None
+        return None
+
+    model_cls = PAYLOAD_MODELS[kind]
+    if isinstance(payload, BaseModel) and not isinstance(payload, model_cls):
+        raise AppError(
+            ErrorCode.E_IPC_PAYLOAD_INVALID,
+            f"Payload model mismatch: got {type(payload).__name__}, expected {model_cls.__name__}",
+            details={"Kind": kind, "Got": type(payload).__name__, "Expected": model_cls.__name__},
+        )
+    if isinstance(payload, BaseModel):
+        model = payload
+    elif isinstance(payload, Mapping):
+        _validate_payload_keys(payload)
+        try:
+            model = model_cls.model_validate(dict(payload))
+        except ValidationError as e:
+            raise AppError(
+                ErrorCode.E_IPC_PAYLOAD_INVALID,
+                f"Payload does not match {model_cls.__name__}: {e}",
+                details={"Kind": kind, "Errors": e.errors()},
+            ) from e
     else:
-        model_cls = PAYLOAD_MODELS[kind]
-        # Accept a typed model instance OR a raw mapping. Both go through the
-        # Pydantic model so field types, PascalCase spelling, and extra-field
-        # rejection are enforced identically.
-        if isinstance(payload, BaseModel) and not isinstance(payload, model_cls):
-            raise AppError(
-                ErrorCode.E_IPC_PAYLOAD_INVALID,
-                f"Payload model mismatch: got "
-                f"{type(payload).__name__}, expected {model_cls.__name__}",
-                details={
-                    "Kind": kind,
-                    "Got": type(payload).__name__,
-                    "Expected": model_cls.__name__,
-                },
-            )
-        if isinstance(payload, BaseModel):
-            model = payload
-        elif isinstance(payload, Mapping):
-            _validate_payload_keys(payload)
-            try:
-                model = model_cls.model_validate(dict(payload))
-            except ValidationError as e:
-                raise AppError(
-                    ErrorCode.E_IPC_PAYLOAD_INVALID,
-                    f"Payload does not match {model_cls.__name__}: {e}",
-                    details={"Kind": kind, "Errors": e.errors()},
-                ) from e
-        else:
-            raise AppError(
-                ErrorCode.E_IPC_PAYLOAD_INVALID,
-                f"Payload must be a mapping or {model_cls.__name__} for "
-                f"Kind={kind}",
-                details={"Kind": kind, "PayloadType": type(payload).__name__},
-            )
-        payload_out = model.model_dump(mode="json")
-        _ensure_json_safe(payload_out)
+        raise AppError(
+            ErrorCode.E_IPC_PAYLOAD_INVALID,
+            f"Payload must be a mapping or {model_cls.__name__} for Kind={kind}",
+            details={"Kind": kind, "PayloadType": type(payload).__name__},
+        )
+    payload_out = model.model_dump(mode="json")
+    _ensure_json_safe(payload_out)
+    return payload_out
 
-    if envelope is not None:
-        _ensure_json_safe(envelope)
 
-    msg_id = _ulid()
-    record = {
-        "MsgId": msg_id,
-        "Kind": kind,
-        "From": from_,
-        "To": to,
-        "RunId": run_id,
-        "Seq": int(seq),
-        "Ts": _iso_utc(),
-        "Payload": payload_out,
-        "Envelope": dict(envelope) if envelope is not None else None,
-    }
-    body = json.dumps(record, ensure_ascii=False, allow_nan=False)
-
-    drop = root / dir
+def _write_message_file(drop: Path, msg_id: str, body: str) -> Path:
     try:
         drop.mkdir(parents=True, exist_ok=True)
         tmp = drop / f"{msg_id}.tmp"
@@ -214,6 +179,40 @@ def send(
             f"IPC write failed under {drop}: {e}",
             details={"Dir": str(drop), "Errno": getattr(e, "errno", None)},
         ) from e
+
+
+def send(
+    root: Path,
+    dir: str,
+    kind: str,
+    payload: Mapping[str, Any] | None,
+    *,
+    run_id: str,
+    from_: str,
+    to: str,
+    seq: int = 0,
+    envelope: Mapping[str, Any] | None = None,
+) -> Path:
+    """Write one IPC message atomically. Returns the final `.msg.json` path."""
+    _validate_send_params(kind, dir)
+    payload_out = _prepare_payload(kind, payload)
+    if envelope is not None:
+        _ensure_json_safe(envelope)
+
+    msg_id = _ulid()
+    record = {
+        "MsgId": msg_id,
+        "Kind": kind,
+        "From": from_,
+        "To": to,
+        "RunId": run_id,
+        "Seq": int(seq),
+        "Ts": _iso_utc(),
+        "Payload": payload_out,
+        "Envelope": dict(envelope) if envelope is not None else None,
+    }
+    body = json.dumps(record, ensure_ascii=False, allow_nan=False)
+    return _write_message_file(root / dir, msg_id, body)
 
 
 def receive(

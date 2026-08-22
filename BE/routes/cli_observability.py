@@ -733,17 +733,7 @@ def _collect_ipc_for_run(run_id: str, correlation_id: str) -> tuple[list[tuple[s
     return (entries, scanned, truncated)
 
 
-@router.get("/sessions/{run_id}/export")
-async def export_cli_session(request: Request, run_id: str) -> Response:
-    """Return a `.zip` bundle of the session's log + entry envelope + IPC.
-
-    404 `E_BE_NOT_FOUND` when no session on disk carries this RunId.
-    413 `E_BE_TOO_LARGE` when the combined artefacts exceed 64 MiB, so a
-    runaway session cannot hand a huge blob to the browser.
-    """
-    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-
-    log_root = resolve_root("log", ensure=False)
+def _lookup_export_session(log_root: Path, run_id: str, correlation_id: str) -> SessionSummary:
     session = _find_session_by_run_id(log_root, run_id)
     if session is None:
         logger.info(
@@ -761,12 +751,10 @@ async def export_cli_session(request: Request, run_id: str) -> Response:
             f"No CLI session found for RunId={run_id!r}",
             details={"RunId": run_id},
         )
+    return session
 
-    log_bytes, log_truncated = _read_log_bytes(Path(session.LogPath))
-    ipc_entries, ipc_scanned, ipc_truncated = _collect_ipc_for_run(run_id, correlation_id)
-    entry_envelope = _synthesize_entry_envelope(session)
 
-    total_estimate = len(log_bytes) + sum(len(b) for _, b in ipc_entries)
+def _validate_export_size(total_estimate: int, run_id: str, correlation_id: str) -> None:
     if total_estimate > _EXPORT_TOTAL_MAX_BYTES:
         logger.warning(
             "cli_export.too_large",
@@ -779,9 +767,6 @@ async def export_cli_session(request: Request, run_id: str) -> Response:
                 "Max": _EXPORT_TOTAL_MAX_BYTES,
             },
         )
-        # Reuse E_BE_BAD_REQUEST rather than invent a code; details carry the
-        # size so the modal explains why. If a dedicated E_BE_TOO_LARGE
-        # lands in ErrorCode later, swap here.
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
             "session export exceeds 64 MiB cap",
@@ -791,6 +776,48 @@ async def export_cli_session(request: Request, run_id: str) -> Response:
                 "Max": _EXPORT_TOTAL_MAX_BYTES,
             },
         )
+
+
+def _build_export_zip(
+    manifest: dict[str, Any],
+    session: SessionSummary,
+    entry_envelope: Any,
+    log_bytes: bytes,
+    ipc_entries: list[tuple[str, bytes]],
+) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
+        zf.writestr(
+            "session.json",
+            json.dumps(
+                {"Summary": session.to_wire(), "EntryEnvelope": entry_envelope},
+                indent=2,
+            ),
+        )
+        zf.writestr("log.jsonl", log_bytes)
+        for arcname, data in ipc_entries:
+            zf.writestr(arcname, data)
+    return buf.getvalue()
+
+
+@router.get("/sessions/{run_id}/export")
+async def export_cli_session(request: Request, run_id: str) -> Response:
+    """Return a `.zip` bundle of the session's log + entry envelope + IPC.
+
+    404 `E_BE_NOT_FOUND` when no session on disk carries this RunId.
+    413 `E_BE_TOO_LARGE` when the combined artefacts exceed 64 MiB.
+    """
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    log_root = resolve_root("log", ensure=False)
+    session = _lookup_export_session(log_root, run_id, correlation_id)
+
+    log_bytes, log_truncated = _read_log_bytes(Path(session.LogPath))
+    ipc_entries, ipc_scanned, ipc_truncated = _collect_ipc_for_run(run_id, correlation_id)
+    entry_envelope = _synthesize_entry_envelope(session)
+
+    total_estimate = len(log_bytes) + sum(len(b) for _, b in ipc_entries)
+    _validate_export_size(total_estimate, run_id, correlation_id)
 
     manifest: dict[str, Any] = {
         "RunId": run_id,
@@ -809,21 +836,7 @@ async def export_cli_session(request: Request, run_id: str) -> Response:
         "Scanned": {"IpcFiles": ipc_scanned},
     }
 
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
-        zf.writestr(
-            "session.json",
-            json.dumps(
-                {"Summary": session.to_wire(), "EntryEnvelope": entry_envelope},
-                indent=2,
-            ),
-        )
-        zf.writestr("log.jsonl", log_bytes)
-        for arcname, data in ipc_entries:
-            zf.writestr(arcname, data)
-    payload = buf.getvalue()
-
+    payload = _build_export_zip(manifest, session, entry_envelope, log_bytes, ipc_entries)
     logger.info(
         "cli_export.ok",
         extra={

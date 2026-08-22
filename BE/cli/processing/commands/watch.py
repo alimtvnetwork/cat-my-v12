@@ -289,8 +289,7 @@ def _poison_safe_receive(root: Path, in_dir: str):
 
 
 
-def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
-    # Validate flags first: cheap failures beat "started polling then crashed".
+def _validate_watch_flags(ns: argparse.Namespace) -> None:
     if not (_MIN_POLL <= float(ns.poll_interval) <= _MAX_POLL):
         raise AppError(
             ErrorCode.E_CLI_USAGE,
@@ -308,17 +307,46 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
             },
         )
 
+
+def _handle_poison_item(
+    item: _PoisonMessage,
+    context: SessionCtx,
+    failures: list[dict[str, Any]],
+) -> None:
+    try:
+        _ipc.ack(item.path)
+    except AppError as ack_exc:
+        context.logger.log(
+            "ERROR", "watch.poison.ack_failed",
+            f"failed to ack poison message {item.path.name}: {ack_exc}",
+            code=ack_exc.code.value,
+            ctx={"Path": str(item.path)},
+        )
+    context.logger.log(
+        "WARN", "watch.poison",
+        f"poison IPC file acked: {item.path.name}: "
+        f"{item.error.code.value}: {item.error}",
+        code=item.error.code.value,
+        ctx={"Path": str(item.path), "Reason": str(item.error)},
+    )
+    failures.append({
+        "MsgId": "",
+        "RunId": "",
+        "Seq": 0,
+        "Ok": False,
+        "Code": item.error.code.value,
+        "Message": str(item.error),
+        "Path": str(item.path),
+    })
+
+
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
+    _validate_watch_flags(ns)
+
     ipc_root = resolve_root("ipc", override=ns.ipc_root, ensure=True)
     in_dir = str(ns.in_dir)
     out_dir = str(ns.out_dir)
-    # Make sure the OUT drop-dir exists before we start; a failed mkdir
-    # halfway through the loop would be a much worse failure mode.
     (ipc_root / out_dir).mkdir(parents=True, exist_ok=True)
-    # ResultsPath is a required, non-empty field on ResultReadyPayload
-    # (spec 76 §"Payload shapes" -> BE/cli/common/ipc_models.py). If the
-    # operator did not pass --results-dir we still need somewhere to
-    # persist ResultRecords so the sibling ResultReady message can point
-    # at a real file rather than "". Default to `<ipc_root>/results/`.
     results_dir = (
         Path(ns.results_dir).expanduser()
         if ns.results_dir else (ipc_root / "results")
@@ -342,7 +370,6 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
              "Mode": getattr(ns, "mode", "auto")},
     )
 
-
     def _should_stop() -> bool:
         if stop_state["stop"]:
             return True
@@ -357,43 +384,12 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
                 break
             drained_any = True
             if isinstance(item, _PoisonMessage):
-                # Parse / kind / JSON failure on a single file. Ack it so
-                # the tail loop can never spin on the same corrupt payload,
-                # and record it as a Failure with its own AppError code so
-                # the caller can see EXACTLY which invariant broke.
-                # (spec 76 §"Message lifecycle": ack semantics; spec 75
-                # §Acceptance #2: the loop must keep draining on error.)
-                try:
-                    _ipc.ack(item.path)
-                except AppError as ack_exc:
-                    context.logger.log(
-                        "ERROR", "watch.poison.ack_failed",
-                        f"failed to ack poison message {item.path.name}: {ack_exc}",
-                        code=ack_exc.code.value,
-                        ctx={"Path": str(item.path)},
-                    )
-                context.logger.log(
-                    "WARN", "watch.poison",
-                    f"poison IPC file acked: {item.path.name}: "
-                    f"{item.error.code.value}: {item.error}",
-                    code=item.error.code.value,
-                    ctx={"Path": str(item.path), "Reason": str(item.error)},
-                )
-                failures.append({
-                    "MsgId": "",
-                    "RunId": "",
-                    "Seq": 0,
-                    "Ok": False,
-                    "Code": item.error.code.value,
-                    "Message": str(item.error),
-                    "Path": str(item.path),
-                })
+                _handle_poison_item(item, context, failures)
                 continue
 
             message_item = item
             key = (message_item.run_id, int(message_item.seq))
             if key in seen:
-                # Duplicate under a different ULID: ack and skip.
                 skipped_duplicates += 1
                 _ipc.ack(message_item.path)
                 continue

@@ -179,6 +179,40 @@ def _optional_str(rec: Mapping[str, Any], *keys: str) -> str | None:
     return v if isinstance(v, str) and v else None
 
 
+def _prepare_artifact_row(a: Mapping[str, Any], i: int, seen_paths: set[str]) -> dict[str, Any]:
+    if not isinstance(a, Mapping):
+        raise AppError(
+            ErrorCode.E_BE_BAD_REQUEST,
+            f"artifacts[{i}] must be a mapping",
+            {"Index": i, "Type": type(a).__name__},
+        )
+    rel_path = _coerce_rel_path(a)
+    if rel_path in seen_paths:
+        raise AppError(
+            ErrorCode.E_BE_BAD_REQUEST,
+            f"artifacts[{i}] duplicate RelPath {rel_path!r} in batch",
+            {"Index": i, "RelPath": rel_path},
+        )
+    seen_paths.add(rel_path)
+    return {
+        "RelPath": rel_path,
+        "ArtifactKind": _coerce_kind(a),
+        "RuleResultId": _coerce_optional_int(a, "RuleResultId", "ruleResultId"),
+        "Sha256": _coerce_sha256(a),
+        "Bytes": _coerce_bytes(a),
+        "MimeType": _optional_str(a, "MimeType", "mimeType"),
+        "CapturedAt": _coerce_optional_int(a, "CapturedAt", "capturedAt"),
+    }
+
+
+def _validate_and_prepare_artifacts(
+    artifacts: Sequence[Mapping[str, Any]] | Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    art_list = list(artifacts) if artifacts is not None else []
+    seen_paths: set[str] = set()
+    return [_prepare_artifact_row(a, i, seen_paths) for i, a in enumerate(art_list)]
+
+
 def write_frame_artifacts(
     conn: sqlite3.Connection,
     *,
@@ -199,36 +233,7 @@ def write_frame_artifacts(
             {"Field": "RunSessionId", "Value": run_session_id},
         )
 
-    art_list = list(artifacts) if artifacts is not None else []
-    for i, a in enumerate(art_list):
-        if not isinstance(a, Mapping):
-            raise AppError(
-                ErrorCode.E_BE_BAD_REQUEST,
-                f"artifacts[{i}] must be a mapping",
-                {"Index": i, "Type": type(a).__name__},
-            )
-
-    prepared: list[dict[str, Any]] = []
-    seen_paths: set[str] = set()
-    for i, a in enumerate(art_list):
-        rel_path = _coerce_rel_path(a)
-        if rel_path in seen_paths:
-            raise AppError(
-                ErrorCode.E_BE_BAD_REQUEST,
-                f"artifacts[{i}] duplicate RelPath {rel_path!r} in batch",
-                {"Index": i, "RelPath": rel_path},
-            )
-        seen_paths.add(rel_path)
-        prepared.append({
-            "RelPath": rel_path,
-            "ArtifactKind": _coerce_kind(a),
-            "RuleResultId": _coerce_optional_int(a, "RuleResultId", "ruleResultId"),
-            "Sha256": _coerce_sha256(a),
-            "Bytes": _coerce_bytes(a),
-            "MimeType": _optional_str(a, "MimeType", "mimeType"),
-            "CapturedAt": _coerce_optional_int(a, "CapturedAt", "capturedAt"),
-        })
-
+    prepared = _validate_and_prepare_artifacts(artifacts)
     persisted_at = int(now_epoch if now_epoch is not None else time.time())
 
     try:

@@ -74,7 +74,7 @@ def _key_for(prefix: str, frame: Frame) -> str:
     return f"{prefix}{frame.frame_id:08d}-{frame.timestamp_ns}.{frame.pixel_format.value}"
 
 
-def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
+def _validate_capture_args(ns: argparse.Namespace) -> None:
     if ns.provider == "vendor":
         raise AppError(
             ErrorCode.E_CLI_UNSUPPORTED_HOST,
@@ -94,16 +94,25 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
             details={"node": "count", "value": ns.count},
         )
     if ns.max_duration_ms <= 0 and ns.count == 0:
-        # Either a frame budget or a time budget MUST be finite; else the loop
-        # is a silent forever-run in a batch command. Refuse loudly.
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
             "capture-frames requires --count>0 or --max-duration-ms>0",
             details={"count": ns.count, "max_duration_ms": ns.max_duration_ms},
         )
 
-    prefix = ns.key_prefix if ns.key_prefix is not None else f"captures/{ns.serial}/"
 
+def _setup_camera(camera: InMemoryCameraFacade, ns: argparse.Namespace) -> None:
+    camera.open(ns.serial)
+    if ns.exposure_us is not None:
+        camera.set_exposure(ns.exposure_us)
+    if ns.gain_db is not None:
+        camera.set_gain(ns.gain_db)
+    camera.start_stream()
+
+
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
+    _validate_capture_args(ns)
+    prefix = ns.key_prefix if ns.key_prefix is not None else f"captures/{ns.serial}/"
     camera = InMemoryCameraFacade()
     storage = InMemoryStorageFacade()
     shutdown = threading.Event()
@@ -115,13 +124,8 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     last_empty_log_ns = 0
 
     try:
-        camera.open(ns.serial)
-        if ns.exposure_us is not None:
-            camera.set_exposure(ns.exposure_us)
-        if ns.gain_db is not None:
-            camera.set_gain(ns.gain_db)
-        camera.start_stream()
-        ctx.logger.log(
+        _setup_camera(camera, ns)
+        context.logger.log(
             "INFO", "capture.started",
             f"Capture opened on serial={ns.serial!r}, target_count={ns.count}",
             ctx={"Serial": ns.serial, "TargetCount": ns.count, "KeyPrefix": prefix},
@@ -142,7 +146,7 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
                     empty_ticks += 1
                     now_ns = time.monotonic_ns()
                     if (now_ns - last_empty_log_ns) >= _TICK_LOG_EVERY_MS * 1_000_000:
-                        ctx.logger.log(
+                        context.logger.log(
                             "INFO", "capture.tick_empty",
                             f"No frame available on stub (empty_ticks={empty_ticks})",
                             ctx={"Serial": ns.serial, "EmptyTicks": empty_ticks},
@@ -153,9 +157,6 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
                     continue
                 raise
 
-            # Real adapter path: hand the frame to storage. Any storage AppError
-            # (bad key, oversize, etc.) surfaces to the dispatcher unchanged;
-            # we do NOT swallow it and continue silently.
             key = _key_for(prefix, frame)
             storage.put(key, frame.data)
             stored_keys.append(key)

@@ -129,14 +129,7 @@ def _coerce_captured_at(rec: Mapping[str, Any]) -> int | None:
     return None
 
 
-def write_run_session(
-    conn: sqlite3.Connection,
-    record: Mapping[str, Any],
-    *,
-    mode: str,
-    results_jsonl_path: str | None = None,
-    now_epoch: int | None = None,
-) -> WriteOutcome:
+def _validate_run_session_record(record: Mapping[str, Any], mode: str) -> dict[str, int]:
     if not isinstance(record, Mapping):
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
@@ -149,8 +142,6 @@ def write_run_session(
             "RunSession `mode` must be a non-empty string",
             {"Field": "mode"},
         )
-
-    run_id = _require_str(record, "RunSessionId")
     verdict = _require_str(record, "Verdict")
     if verdict not in _ALLOWED_VERDICTS:
         raise AppError(
@@ -158,7 +149,6 @@ def write_run_session(
             f"RunSession Verdict must be one of {sorted(_ALLOWED_VERDICTS)}; got {verdict!r}",
             {"Field": "Verdict", "Value": verdict},
         )
-
     rule_set = record.get("RuleSet")
     if not isinstance(rule_set, Mapping):
         raise AppError(
@@ -167,27 +157,23 @@ def write_run_session(
             {"Field": "RuleSet"},
         )
     counts = {k: _require_int(rule_set, k) for k in _REQUIRED_COUNTS}
-    # Match the DB CHECK constraints at the Python boundary so callers get
-    # E_BE_BAD_REQUEST (client contract) rather than the generic sqlite
-    # CHECK failure (which would surface as E_BE_INTERNAL).
     if counts["ActiveCount"] + counts["InactiveCount"] + counts["SilentCount"] != counts["RuleCount"]:
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
-            "RunSession counter invariant violated: "
-            "ActiveCount + InactiveCount + SilentCount != RuleCount",
+            "RunSession counter invariant violated: ActiveCount + InactiveCount + SilentCount != RuleCount",
             {"Counts": counts},
         )
     if counts["PassCount"] + counts["FailCount"] + counts["ErrorCount"] != counts["ActiveCount"]:
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
-            "RunSession counter invariant violated: "
-            "PassCount + FailCount + ErrorCount != ActiveCount",
+            "RunSession counter invariant violated: PassCount + FailCount + ErrorCount != ActiveCount",
             {"Counts": counts},
         )
+    return counts
 
+
+def _resolve_promoted_error(record: Mapping[str, Any]) -> tuple[int, str | None]:
     agg = aggregate_runs([record])
-    timeout_count = agg.TimeoutCount
-    # Priority mirrors evaluate._ERROR_CODE_PRIORITY; timeouts alert first.
     promoted: str | None = None
     for pref in ("E_RULE_TIMEOUT", "E_TOLERANCE_INCOMPATIBLE",
                  "E_TOLERANCE_UNRESOLVED", "E_RULE_EVAL_FAILED",
@@ -197,6 +183,21 @@ def write_run_session(
             break
     if promoted is None and agg.ErrorCodeCounts:
         promoted = sorted(agg.ErrorCodeCounts.keys())[0]
+    return agg.TimeoutCount, promoted
+
+
+def write_run_session(
+    conn: sqlite3.Connection,
+    record: Mapping[str, Any],
+    *,
+    mode: str,
+    results_jsonl_path: str | None = None,
+    now_epoch: int | None = None,
+) -> WriteOutcome:
+    counts = _validate_run_session_record(record, mode)
+    run_id = _require_str(record, "RunSessionId")
+    verdict = _require_str(record, "Verdict")
+    timeout_count, promoted = _resolve_promoted_error(record)
 
     captured_at = _coerce_captured_at(record)
     persisted_at = int(now_epoch if now_epoch is not None else time.time())

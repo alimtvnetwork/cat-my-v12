@@ -111,6 +111,96 @@ def _plan_names(actions: Iterable[InstallerAction]) -> list[str]:
     return [a.name for a in actions]
 
 
+def _check_repo_inventory(report: DoctorReport, repo_root: Path, plat: str) -> None:
+    report.Wrappers = wrapper_presence(repo_root)
+    for w in wrappers_for_platform(plat):
+        if not (repo_root / w.Path).is_file():
+            report.Findings.append(DoctorFinding(
+                Code="WrapperMissing",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"Required wrapper {w.Name!r} missing at {w.Path!r}; wrapper-log discipline cannot be enforced.",
+                Context={"Name": w.Name, "Path": w.Path, "Platform": w.Platform},
+            ))
+
+    report.Binaries = binary_presence(repo_root)
+    for b in BINARIES:
+        if not (repo_root / b.SpecPath).is_file():
+            report.Findings.append(DoctorFinding(
+                Code="BinarySpecMissing",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"PyInstaller spec for {b.Name!r} missing at {b.SpecPath!r}; release build cannot produce {b.ExeName!r}.",
+                Context={"Name": b.Name, "SpecPath": b.SpecPath},
+            ))
+        if not (repo_root / b.EntryScript).is_file():
+            report.Findings.append(DoctorFinding(
+                Code="BinaryEntryMissing",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"Entry script for {b.Name!r} missing at {b.EntryScript!r}; spec would fail Analysis().",
+                Context={"Name": b.Name, "EntryScript": b.EntryScript},
+            ))
+
+
+def _check_manifest_history(
+    report: DoctorReport,
+    manifest: InstallManifest,
+    plan_list: list[InstallerAction],
+    plan_names: list[str],
+) -> None:
+    from BE.app.install_manifest import installed_action_names
+    installed_names = installed_action_names(manifest)
+    for name in installed_names:
+        if name not in plan_names:
+            report.Findings.append(DoctorFinding(
+                Code="OrphanInstalledAction",
+                Severity=DoctorSeverity.WARNING,
+                Message=f"Action {name!r} is recorded as installed but is not in the current installer plan.",
+                Context={"Action": name},
+            ))
+
+    for action in plan_list:
+        entry = latest_action(manifest, action.name)
+        if entry is None:
+            continue
+        if entry.get("Phase") == "install" and entry.get("IsSuccess") is False and entry.get("IsCritical") is True:
+            report.Findings.append(DoctorFinding(
+                Code="PreviousCriticalFailure",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"Previous install of {action.name!r} exited with code {entry.get('ExitCode')} and was marked critical.",
+                Context={"Action": action.name, "ExitCode": entry.get("ExitCode"), "CompletedAt": entry.get("CompletedAt")},
+            ))
+
+
+def _check_binary_integrity(report: DoctorReport, manifest: InstallManifest) -> None:
+    for row in manifest.Binaries:
+        recorded_path = row.get("Path")
+        recorded_sha = row.get("Sha256")
+        recorded_size = row.get("SizeBytes")
+        if not isinstance(recorded_path, str) or not isinstance(recorded_sha, str):
+            continue
+        exe = Path(recorded_path)
+        if exe.is_file() is False:
+            report.Findings.append(DoctorFinding(
+                Code="BinaryFileMissing",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"Binary {row.get('Name')!r} recorded at {recorded_path!r} is missing on disk.",
+                Context={"Name": row.get("Name"), "Path": recorded_path},
+            ))
+            continue
+        try:
+            from BE.app.installer_signing import sha256_of_file
+            actual_sha, actual_size = sha256_of_file(exe)
+        except Exception as error:  # noqa: BLE001
+            logger.warning("Failed to compute sha256 for %s: %s", exe, error)
+            continue
+        if actual_sha != recorded_sha or (isinstance(recorded_size, int) and actual_size != recorded_size):
+            report.Findings.append(DoctorFinding(
+                Code="BinaryChecksumMismatch",
+                Severity=DoctorSeverity.ERROR,
+                Message=f"Binary {row.get('Name')!r} on disk does not match install.json.",
+                Context={"Name": row.get("Name"), "Path": recorded_path, "RecordedSha256": recorded_sha, "ActualSha256": actual_sha},
+            ))
+
+
 def run_doctor(
     install_root: Path,
     *,
@@ -118,13 +208,7 @@ def run_doctor(
     planned_actions: Iterable[InstallerAction],
     repo_root: Path | None = None,
 ) -> DoctorReport:
-    """Inspect ``install.json`` and cross-reference the planned actions.
-
-    When ``repo_root`` is provided, additionally enforce the canonical
-    wrapper inventory (``BE/app/installer_wrappers.WRAPPERS``) and add
-    every wrapper's presence to ``DoctorReport.Wrappers``. A missing
-    wrapper for the current platform is an ERROR.
-    """
+    """Inspect ``install.json`` and cross-reference the planned actions."""
     plat = _current_platform_value(platform)
     plan_list = list(planned_actions)
     plan_names = _plan_names(plan_list)
@@ -132,48 +216,8 @@ def run_doctor(
     manifest: InstallManifest | None = read_manifest(install_root)
     report = DoctorReport(Platform=plat, ManifestPresent=manifest is not None)
 
-    # --- Wrapper inventory (Step 115) --------------------------------
     if repo_root is not None:
-        report.Wrappers = wrapper_presence(repo_root)
-        for w in wrappers_for_platform(plat):
-            if not (repo_root / w.Path).is_file():
-                report.Findings.append(DoctorFinding(
-                    Code="WrapperMissing",
-                    Severity=DoctorSeverity.ERROR,
-                    Message=(
-                        f"Required wrapper {w.Name!r} missing at "
-                        f"{w.Path!r}; wrapper-log discipline cannot be enforced."
-                    ),
-                    Context={"Name": w.Name, "Path": w.Path, "Platform": w.Platform},
-                ))
-
-        # --- PyInstaller binary inventory (Step 117) -----------------
-        report.Binaries = binary_presence(repo_root)
-        for b in BINARIES:
-            spec_missing = not (repo_root / b.SpecPath).is_file()
-            entry_missing = not (repo_root / b.EntryScript).is_file()
-            if spec_missing:
-                report.Findings.append(DoctorFinding(
-                    Code="BinarySpecMissing",
-                    Severity=DoctorSeverity.ERROR,
-                    Message=(
-                        f"PyInstaller spec for {b.Name!r} missing at "
-                        f"{b.SpecPath!r}; release build cannot produce "
-                        f"{b.ExeName!r}."
-                    ),
-                    Context={"Name": b.Name, "SpecPath": b.SpecPath},
-                ))
-            if entry_missing:
-                report.Findings.append(DoctorFinding(
-                    Code="BinaryEntryMissing",
-                    Severity=DoctorSeverity.ERROR,
-                    Message=(
-                        f"Entry script for {b.Name!r} missing at "
-                        f"{b.EntryScript!r}; spec would fail Analysis()."
-                    ),
-                    Context={"Name": b.Name, "EntryScript": b.EntryScript},
-                ))
-
+        _check_repo_inventory(report, repo_root, plat)
 
     if manifest is None:
         report.Findings.append(DoctorFinding(
@@ -188,105 +232,12 @@ def run_doctor(
         report.Findings.append(DoctorFinding(
             Code="PlatformMismatch",
             Severity=DoctorSeverity.ERROR,
-            Message=(
-                f"install.json was written for platform {manifest.Platform!r} "
-                f"but this orchestrator is running on {plat!r}."
-            ),
+            Message=f"install.json was written for platform {manifest.Platform!r} but this orchestrator is running on {plat!r}.",
             Context={"ManifestPlatform": manifest.Platform, "CurrentPlatform": plat},
         ))
 
-    # Names last recorded as installed (successful install-phase, no
-    # subsequent uninstall). Anything here but not in the current plan
-    # means the release removed an action - flag as warning so operators
-    # know to uninstall manually.
-    from BE.app.install_manifest import installed_action_names
-    installed_names = installed_action_names(manifest)
-    for name in installed_names:
-        if name not in plan_names:
-            report.Findings.append(DoctorFinding(
-                Code="OrphanInstalledAction",
-                Severity=DoctorSeverity.WARNING,
-                Message=(
-                    f"Action {name!r} is recorded as installed but is not "
-                    f"in the current installer plan; uninstall may leave it "
-                    f"orphaned."
-                ),
-                Context={"Action": name},
-            ))
-
-    # Prior critical install failures for any action still in the plan.
-    for action in plan_list:
-        entry = latest_action(manifest, action.name)
-        if entry is None:
-            continue
-        if (
-            entry.get("Phase") == "install"
-            and entry.get("IsSuccess") is False
-            and entry.get("IsCritical") is True
-        ):
-            report.Findings.append(DoctorFinding(
-                Code="PreviousCriticalFailure",
-                Severity=DoctorSeverity.ERROR,
-                Message=(
-                    f"Previous install of {action.name!r} exited with "
-                    f"code {entry.get('ExitCode')} and was marked critical; "
-                    f"resolve the underlying failure before re-running."
-                ),
-                Context={
-                    "Action": action.name,
-                    "ExitCode": entry.get("ExitCode"),
-                    "CompletedAt": entry.get("CompletedAt"),
-                },
-            ))
-
-    # --- Binary tamper cross-check (Step 118) ------------------------
-    # For each Binary row persisted at install time, re-hash the file
-    # at the recorded Path. Mismatched digest => on-disk tamper.
-    for row in manifest.Binaries:
-        recorded_path = row.get("Path")
-        recorded_sha = row.get("Sha256")
-        recorded_size = row.get("SizeBytes")
-        if not isinstance(recorded_path, str) or not isinstance(recorded_sha, str):
-            continue
-        exe = Path(recorded_path)
-        if exe.is_file() is False:
-            report.Findings.append(DoctorFinding(
-                Code="BinaryFileMissing",
-                Severity=DoctorSeverity.ERROR,
-                Message=(
-                    f"Binary {row.get('Name')!r} recorded at "
-                    f"{recorded_path!r} is missing on disk; uninstall "
-                    f"cannot verify what to remove."
-                ),
-                Context={"Name": row.get("Name"), "Path": recorded_path},
-            ))
-            continue
-        try:
-            from BE.app.installer_signing import sha256_of_file
-            actual_sha, actual_size = sha256_of_file(exe)
-        except Exception as error:  # noqa: BLE001 - doctor never crashes on I/O
-            logger.warning("Failed to compute sha256 for %s: %s", exe, error)
-            continue
-        if actual_sha != recorded_sha or (
-            isinstance(recorded_size, int) and actual_size != recorded_size
-        ):
-            report.Findings.append(DoctorFinding(
-                Code="BinaryChecksumMismatch",
-                Severity=DoctorSeverity.ERROR,
-                Message=(
-                    f"Binary {row.get('Name')!r} on disk does not match "
-                    f"install.json (recorded sha256={recorded_sha[:12]}..., "
-                    f"actual={actual_sha[:12]}...)."
-                ),
-                Context={
-                    "Name": row.get("Name"),
-                    "Path": recorded_path,
-                    "RecordedSha256": recorded_sha,
-                    "ActualSha256": actual_sha,
-                    "RecordedSize": recorded_size,
-                    "ActualSize": actual_size,
-                },
-            ))
+    _check_manifest_history(report, manifest, plan_list, plan_names)
+    _check_binary_integrity(report, manifest)
 
     return report
 

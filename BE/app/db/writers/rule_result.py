@@ -191,6 +191,51 @@ def _order_index_for(
     return idx
 
 
+def _prepare_judgment_row(
+    j: Mapping[str, Any],
+    i: int,
+    seen_ids: set[str],
+    rule_ordering: Mapping[str, int] | None,
+) -> dict[str, Any]:
+    if not isinstance(j, Mapping):
+        raise AppError(
+            ErrorCode.E_BE_BAD_REQUEST,
+            f"judgments[{i}] must be a mapping",
+            {"Index": i, "Type": type(j).__name__},
+        )
+    rule_id = _require_str(j, "RuleId", "ruleId")
+    if rule_id in seen_ids:
+        raise AppError(
+            ErrorCode.E_BE_BAD_REQUEST,
+            f"judgments[{i}] duplicate RuleId {rule_id!r} in batch",
+            {"Index": i, "RuleId": rule_id},
+        )
+    seen_ids.add(rule_id)
+    metrics_json, details = _extract_metrics(j)
+    return {
+        "RuleId": rule_id,
+        "RegionId": _optional_str(j, "RegionId", "regionId"),
+        "RuleKind": _optional_str(j, "RuleKind", "ruleKind") or _optional_str(details, "RuleKind"),
+        "OrderIndex": _order_index_for(rule_id, rule_ordering),
+        "IsSilent": 1 if _coerce_bool(j, "IsSilent", "isSilent") else 0,
+        "Verdict": _coerce_verdict(j),
+        "ReasonCode": _optional_str(j, "ReasonCode", "reasonCode"),
+        "ReasonMessage": _optional_str(j, "ReasonMessage", "reasonMessage"),
+        "ErrorCode": _optional_str(j, "ErrorCode") or _optional_str(details, "ErrorCode"),
+        "ElapsedMs": _coerce_elapsed(j),
+        "MetricsJson": metrics_json,
+    }
+
+
+def _validate_and_prepare_judgments(
+    judgments: Sequence[Mapping[str, Any]] | Iterable[Mapping[str, Any]],
+    rule_ordering: Mapping[str, int] | None,
+) -> list[dict[str, Any]]:
+    judgment_list = list(judgments) if judgments is not None else []
+    seen_ids: set[str] = set()
+    return [_prepare_judgment_row(j, i, seen_ids, rule_ordering) for i, j in enumerate(judgment_list)]
+
+
 def write_rule_results(
     conn: sqlite3.Connection,
     *,
@@ -211,45 +256,8 @@ def write_rule_results(
             "run_session_id must be positive",
             {"Field": "RunSessionId", "Value": run_session_id},
         )
-    judgment_list = list(judgments) if judgments is not None else []
-    for i, j in enumerate(judgment_list):
-        if not isinstance(j, Mapping):
-            raise AppError(
-                ErrorCode.E_BE_BAD_REQUEST,
-                f"judgments[{i}] must be a mapping",
-                {"Index": i, "Type": type(j).__name__},
-            )
 
-    # Pre-validate all rows before opening the transaction so a bad row
-    # never leaves half a batch in the DB.
-    prepared: list[dict[str, Any]] = []
-    seen_ids: set[str] = set()
-    for i, j in enumerate(judgment_list):
-        rule_id = _require_str(j, "RuleId", "ruleId")
-        if rule_id in seen_ids:
-            raise AppError(
-                ErrorCode.E_BE_BAD_REQUEST,
-                f"judgments[{i}] duplicate RuleId {rule_id!r} in batch",
-                {"Index": i, "RuleId": rule_id},
-            )
-        seen_ids.add(rule_id)
-        metrics_json, details = _extract_metrics(j)
-        prepared.append({
-            "RuleId": rule_id,
-            "RegionId": _optional_str(j, "RegionId", "regionId"),
-            "RuleKind": _optional_str(j, "RuleKind", "ruleKind")
-                        or _optional_str(details, "RuleKind"),
-            "OrderIndex": _order_index_for(rule_id, rule_ordering),
-            "IsSilent": 1 if _coerce_bool(j, "IsSilent", "isSilent") else 0,
-            "Verdict": _coerce_verdict(j),
-            "ReasonCode": _optional_str(j, "ReasonCode", "reasonCode"),
-            "ReasonMessage": _optional_str(j, "ReasonMessage", "reasonMessage"),
-            "ErrorCode": _optional_str(j, "ErrorCode")
-                         or _optional_str(details, "ErrorCode"),
-            "ElapsedMs": _coerce_elapsed(j),
-            "MetricsJson": metrics_json,
-        })
-
+    prepared = _validate_and_prepare_judgments(judgments, rule_ordering)
     persisted_at = int(now_epoch if now_epoch is not None else time.time())
 
     try:
