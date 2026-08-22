@@ -44,7 +44,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
     const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
 
     return payload.unhandled === true && payload.message === "HTTPError";
-  } catch {
+  } catch (error) {
+    console.warn("[server.isH3SwallowedErrorBody] JSON parse fallback", { error });
+
     return false;
   }
 }

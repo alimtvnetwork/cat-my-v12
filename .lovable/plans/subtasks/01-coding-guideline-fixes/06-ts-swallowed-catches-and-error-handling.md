@@ -1,6 +1,7 @@
 # Subtask 06: TypeScript Swallowed Errors & Catch Handlers Remediation
 
 **Slug:** `06-ts-swallowed-catches-and-error-handling`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `src/`
 **Rules Violated:** `spec/03-error-manage/00-overview.md`, `.lovable/coding-guidelines.md` § Error Management (Hard Rule 4: No Swallowed Errors)

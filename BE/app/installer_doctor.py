@@ -31,11 +31,14 @@ Anchors
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from BE.app.install_manifest import (
     InstallManifest,
@@ -261,7 +264,8 @@ def run_doctor(
         try:
             from BE.app.installer_signing import sha256_of_file
             actual_sha, actual_size = sha256_of_file(exe)
-        except Exception:  # noqa: BLE001 - doctor never crashes on I/O
+        except Exception as error:  # noqa: BLE001 - doctor never crashes on I/O
+            logger.warning("Failed to compute sha256 for %s: %s", exe, error)
             continue
         if actual_sha != recorded_sha or (
             isinstance(recorded_size, int) and actual_size != recorded_size

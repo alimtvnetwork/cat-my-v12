@@ -67,7 +67,7 @@ def _configure_version(parser: argparse.ArgumentParser) -> None:
     _ = parser
 
 
-def _handle_version(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def _handle_version(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     _ = ns
     # env-first, pyproject fallback. Rationale: CI/PyInstaller stamps
     # PROCESSING_CLI_VERSION / _COMMIT / _BUILD_DATE at release build
@@ -82,7 +82,7 @@ def _handle_version(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
         "Commit": commit,
         "BuildDate": build_date,
     }
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "version.reported",
         f"processing-cli {version} (commit={commit}, built={build_date})",
         ctx=payload,
@@ -98,9 +98,9 @@ def _configure_doctor(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _handle_doctor(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
+def _handle_doctor(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     db_root = Path(ns.db_root) if ns.db_root else None
-    summaries = run_preflight(ctx, db_root=db_root)
+    summaries = run_preflight(context, db_root=db_root)
     # Compute summaries first so the failure envelope surfaces per-tier
     # detail via `AppError.details` even when a tier is drifted.
     assert_healthy(summaries)

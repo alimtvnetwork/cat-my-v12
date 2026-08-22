@@ -142,8 +142,8 @@ export function RunningPill(): React.JSX.Element | null {
       dragRef.current = null;
       try {
         (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
+      } catch (error) {
+        ClientLogger.warn("[running-pill] releasePointerCapture ignored", { error });
       }
 
       if (d?.moved && pos) {

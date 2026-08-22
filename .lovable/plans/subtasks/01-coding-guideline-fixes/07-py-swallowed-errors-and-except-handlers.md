@@ -1,6 +1,7 @@
 # Subtask 07: Python Swallowed Errors & Except Handlers Remediation
 
 **Slug:** `07-py-swallowed-errors-and-except-handlers`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `BE/` and `app/`
 **Rules Violated:** `spec/03-error-manage/00-overview.md`, `.lovable/coding-guidelines.md` § Hard Rules (Rule 4)

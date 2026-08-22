@@ -22,38 +22,46 @@ interface DebugRow {
 }
 
 function readCollapsed(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   try {
     return window.localStorage.getItem(StorageKey.CaptureRequestPanelCollapsed) === "1";
-  } catch {
+  } catch (error) {
+    console.warn("[CaptureRequestDebugPanel.readCollapsed] localStorage fallback", { error });
+
     return false;
   }
 }
 
 function writeCollapsed(collapsed: boolean): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
   try {
     window.localStorage.setItem(StorageKey.CaptureRequestPanelCollapsed, collapsed ? "1" : "0");
-  } catch {
-    /* ignore */
+  } catch (error) {
+    console.warn("[CaptureRequestDebugPanel.writeCollapsed] localStorage fallback", { error });
   }
 }
 
-function formatValue(v: unknown): string {
-  if (v === undefined || v === null) return "-";
-
-  if (typeof v === "number") {
-    return Number.isInteger(v) ? String(v) : v.toFixed(3).replace(/\.?0+$/, "");
+function formatValue(valueItem: unknown): string {
+  if (valueItem === undefined || valueItem === null) {
+    return "-";
   }
 
-  return String(v);
+  if (typeof valueItem === "number") {
+    return Number.isInteger(valueItem) ? String(valueItem) : valueItem.toFixed(3).replace(/\.?0+$/, "");
+  }
+
+  return String(valueItem);
 }
 
-function formatTime(ms: number): string {
-  const d = new Date(ms);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
+function formatTime(timestampMs: number): string {
+  const dateObject = new Date(timestampMs);
+  const hh = String(dateObject.getHours()).padStart(2, "0");
+  const mm = String(dateObject.getMinutes()).padStart(2, "0");
+  const ss = String(dateObject.getSeconds()).padStart(2, "0");
 
   return `${hh}:${mm}:${ss}`;
 }

@@ -22,6 +22,7 @@ by the dispatcher; nested inits raise (double-wire bug).
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 from dataclasses import dataclass, field
@@ -65,19 +66,15 @@ class VerboseLogger:
             return
         line = fmt % args if args else fmt
         entry = f"[{_ts_now()}] {line}\n"
-        try:
+        with contextlib.suppress(OSError):
             self._fp.write(entry)
             self._fp.flush()
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             if _use_color(self.stderr):
                 self.stderr.write(_DIM + entry + _RESET)
             else:
                 self.stderr.write(entry)
             self.stderr.flush()
-        except OSError:
-            pass
 
     def close(self) -> None:
         if self._closed:

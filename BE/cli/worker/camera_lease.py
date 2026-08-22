@@ -139,11 +139,8 @@ def acquire(data_root: Path, *, serial: str, pid: int, run_id: str) -> tuple[Lea
                 },
             )
         # Stale lease: dead PID. Unlink and fall through to exclusive create.
-        try:
-            p.unlink()
-            reclaimed = True
-        except FileNotFoundError:
-            pass
+        p.unlink(missing_ok=True)
+        reclaimed = True
 
     new_lease = Lease(
         Serial=serial,

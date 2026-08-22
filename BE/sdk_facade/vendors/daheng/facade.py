@@ -67,8 +67,12 @@ class DahengCameraFacade(CameraFacade):
                         self.open(self._serial)
                         if self._streaming:
                             self.start_stream()
-                    except Exception:
-                        pass
+                    except Exception as reconnect_error:
+                        logger.warning(
+                            "Reconnection attempt failed [cid=%s]: %s",
+                            self._correlation_id,
+                            reconnect_error,
+                        )
             except Exception:
                 raise
 

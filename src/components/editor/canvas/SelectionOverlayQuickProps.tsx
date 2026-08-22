@@ -160,8 +160,8 @@ export function SelectionOverlayQuickProps({
             hudDragRef.current = null;
             try {
               (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-            } catch {
-              /* ignore */
+            } catch (error) {
+              console.warn("[SelectionOverlayQuickProps] releasePointerCapture fallback", { error });
             }
           }
         }}

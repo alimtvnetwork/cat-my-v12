@@ -187,11 +187,9 @@ def _install_posix_symlink(action: LinkAction) -> None:
         os.symlink(action.Source, tmp_link)
         os.replace(tmp_link, action.LinkPath)
     except OSError as exc:
-        try:
+        with contextlib.suppress(OSError):
             if tmp_link.is_symlink() or tmp_link.exists():
                 tmp_link.unlink()
-        except OSError:
-            pass
         raise AppError(
             code=ErrorCode.E_INSTALL_PATH_LINK_FAILED,
             message=f"cannot symlink {action.LinkPath} -> {action.Source}: {exc}",

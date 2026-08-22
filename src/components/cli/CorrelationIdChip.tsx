@@ -48,25 +48,29 @@ async function copyToClipboard(text: string): Promise<boolean> {
       await navigator.clipboard.writeText(text);
 
       return true;
-    } catch {
-      // fall through
+    } catch (error) {
+      console.warn("[CorrelationIdChip.copyToClipboard] navigator.clipboard fallback", { error });
     }
   }
 
-  if (typeof document === "undefined") return false;
+  if (typeof document === "undefined") {
+    return false;
+  }
   try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
+    const textAreaElement = document.createElement("textarea");
+    textAreaElement.value = text;
+    textAreaElement.setAttribute("readonly", "");
+    textAreaElement.style.position = "fixed";
+    textAreaElement.style.opacity = "0";
+    document.body.appendChild(textAreaElement);
+    textAreaElement.select();
+    const isSuccess = document.execCommand("copy");
+    document.body.removeChild(textAreaElement);
 
-    return ok;
-  } catch {
+    return isSuccess;
+  } catch (error) {
+    console.warn("[CorrelationIdChip.copyToClipboard] execCommand copy fallback", { error });
+
     return false;
   }
 }

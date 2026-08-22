@@ -83,8 +83,8 @@ function DockResizeHandle({
     if (!startRef.current) return;
     try {
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore, pointer already released
+    } catch (error) {
+      console.warn("[DockSlot] releasePointerCapture fallback", { error });
     }
 
     startRef.current = null;

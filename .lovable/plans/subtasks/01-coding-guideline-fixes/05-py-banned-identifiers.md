@@ -1,6 +1,7 @@
 # Subtask 05: Python Banned Short Identifiers Remediation
 
 **Slug:** `05-py-banned-identifiers`
+**Status:** completed
 **Parent Plan:** `.lovable/plans/pending/01-coding-guideline-fixes.md`
 **Target Area:** `BE/` and `app/`
 **Rules Violated:** `.lovable/coding-guidelines.md` § Restricted Short Identifiers (Rule 13)

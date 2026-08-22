@@ -52,12 +52,16 @@ function isErrorLevel(raw: unknown): boolean {
   return typeof raw === "string" && ERROR_BUCKET.has(raw.toLowerCase());
 }
 
-function formatIso(sec: number | null): string {
-  if (sec == null) return "-";
+function formatIso(seconds: number | null): string {
+  if (seconds == null) {
+    return "-";
+  }
   try {
-    return new Date(sec * 1000).toISOString().replace("T", " ").slice(0, 19);
-  } catch {
-    return String(sec);
+    return new Date(seconds * 1000).toISOString().replace("T", " ").slice(0, 19);
+  } catch (error) {
+    console.warn("[ExitEnvelopeDrawer.formatIso] date formatting fallback", { error });
+
+    return String(seconds);
   }
 }
 

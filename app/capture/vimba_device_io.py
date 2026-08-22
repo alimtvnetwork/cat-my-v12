@@ -15,6 +15,7 @@ no untyped exception ever crosses the seam.
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
@@ -91,14 +92,10 @@ def _close(h: VimbaHandle) -> None:
     # handle stays locked and a second `open()` deadlocks.
     try:
         if h._camera_entered:
-            try:
+            with contextlib.suppress(BaseException):
                 h.camera.stop_streaming()
-            except BaseException:  # streaming may already be stopped
-                pass
-            try:
+            with contextlib.suppress(BaseException):
                 h.camera.TriggerMode.set("Off")
-            except BaseException:
-                pass
             h.camera.__exit__(None, None, None)
             h._camera_entered = False
     finally:

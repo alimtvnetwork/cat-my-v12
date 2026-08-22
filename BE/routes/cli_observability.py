@@ -446,22 +446,24 @@ def _peek_tail_exit_code(path: Path) -> tuple[int | None, str | None]:
         with path.open("rb") as fh:
             fh.seek(read_from)
             chunk = fh.read().decode("utf-8", errors="replace")
-    except OSError:
+    except OSError as error:
+        logger.debug("Failed to read log chunk from %s: %s", path, error)
         return (None, None)
     lines = [ln for ln in chunk.splitlines() if ln.strip()]
     exit_code: int | None = None
     last_error: str | None = None
     for ln in reversed(lines):
         try:
-            obj = json.loads(ln)
-        except json.JSONDecodeError:
+            line_object = json.loads(ln)
+        except json.JSONDecodeError as error:
+            logger.debug("Skipping invalid JSON log line in %s: %s", path, error)
             continue
-        if not isinstance(obj, dict):
+        if not isinstance(line_object, dict):
             continue
-        if exit_code is None and isinstance(obj.get("ExitCode"), int):
-            exit_code = int(obj["ExitCode"])
+        if exit_code is None and isinstance(line_object.get("ExitCode"), int):
+            exit_code = int(line_object["ExitCode"])
         if last_error is None:
-            errs = obj.get("Errors")
+            errs = line_object.get("Errors")
             if isinstance(errs, list) and errs and isinstance(errs[0], dict):
                 code = errs[0].get("Code")
                 if isinstance(code, str) and code:

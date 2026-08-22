@@ -68,7 +68,7 @@ def _load_bootstrap_module():
     return mod
 
 
-def run_doctor(ctx: SessionCtx, db_root: Path | None = None) -> list[dict[str, Any]]:
+def run_doctor(context: SessionCtx, db_root: Path | None = None) -> list[dict[str, Any]]:
     """Run the read-only per-tier probe and return summaries.
 
     Logs a single INFO line summarising overall health so operators can
@@ -76,7 +76,7 @@ def run_doctor(ctx: SessionCtx, db_root: Path | None = None) -> list[dict[str, A
     """
     bootstrap = _load_bootstrap_module()
     summaries, healthy = bootstrap.run_check(db_root=db_root)
-    ctx.logger.log(
+    context.logger.log(
         "INFO",
         "doctor.checked",
         f"DB doctor checked {len(summaries)} tier(s); healthy={healthy}",

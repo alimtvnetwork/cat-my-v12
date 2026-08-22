@@ -17,6 +17,7 @@ The logger is process-local. It does NOT touch the index file (Step 17).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import traceback
@@ -217,11 +218,9 @@ class JsonlLogger:
                 code="E_CLI_PREFLIGHT_FAILED",
                 trace=None,
             )
-            try:
+            with contextlib.suppress(OSError):
                 self._fp.write(_serialise_line(fallback))
                 self._fp.flush()
-            except OSError:
-                pass
         finally:
             self._mirroring = False
 

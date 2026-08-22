@@ -130,7 +130,9 @@ export function PropertiesPanel({
   const intId = useMemo(() => {
     try {
       return toIntId(rule.id);
-    } catch {
+    } catch (error) {
+      console.warn("[PropertiesPanel.toIntId] fallback to null", { error, ruleId: rule.id });
+
       return null;
     }
   }, [rule.id]);
@@ -546,8 +548,8 @@ function InlineNumber({
     dragRef.current = null;
     try {
       (e.currentTarget as HTMLSpanElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.warn("[PropertiesPanel.InlineNumber] releasePointerCapture fallback", { error });
     }
   };
 

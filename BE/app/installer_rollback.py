@@ -250,13 +250,11 @@ def load_backup(backup_path: Path) -> InstallManifest:
             )
         return m
     finally:
-        try:
+        with contextlib.suppress(OSError):
             staged = tmp_dir / MANIFEST_FILENAME
             if staged.exists():
                 staged.unlink()
             tmp_dir.rmdir()
-        except OSError:
-            pass
 
 
 __all__ = [

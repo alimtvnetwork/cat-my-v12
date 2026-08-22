@@ -147,13 +147,13 @@ def _enumerate_frames(ns: argparse.Namespace) -> list[Path]:
     return [Path(p).expanduser() for p in items]
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     frames = _enumerate_frames(ns)
     workers = max(1, min(int(ns.max_workers or 1), _MAX_WORKERS_HARD_CAP))
     run_id = ns.run_id or _evaluate._generate_run_id()
     results_dir = Path(ns.results_dir).expanduser() if ns.results_dir else None
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "batch.begin",
         f"batch frames={len(frames)} workers={workers} run_id={run_id}",
         ctx={"RunSessionId": run_id, "FrameCount": len(frames), "MaxWorkers": workers},
@@ -174,7 +174,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             results_dir=None,
         )
         try:
-            recs = _evaluate.handle(sub_ns, ctx)
+            recs = _evaluate.handle(sub_ns, context)
         except AppError as exc:
             with fail_lock:
                 failures.append({
@@ -198,7 +198,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             list(pool.map(lambda p: _one(*p), enumerate(frames)))
 
     ok_results = [r for r in results if r is not None]
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "batch.done",
         f"batch complete success={len(ok_results)} failure={len(failures)}",
         ctx={

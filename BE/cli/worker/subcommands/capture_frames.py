@@ -74,7 +74,7 @@ def _key_for(prefix: str, frame: Frame) -> str:
     return f"{prefix}{frame.frame_id:08d}-{frame.timestamp_ns}.{frame.pixel_format.value}"
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     if ns.provider == "vendor":
         raise AppError(
             ErrorCode.E_CLI_UNSUPPORTED_HOST,
@@ -160,7 +160,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             storage.put(key, frame.data)
             stored_keys.append(key)
             frames += 1
-            ctx.logger.log(
+            context.logger.log(
                 "INFO", "capture.stored",
                 f"Frame {frames} stored at {key!r} ({len(frame.data)} bytes)",
                 ctx={
@@ -180,7 +180,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             camera.close()
 
     duration_ms = (time.monotonic_ns() - started_ns) // 1_000_000
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "capture.stopped",
         f"Capture stopped on serial={ns.serial!r} after {duration_ms}ms, frames={frames}",
         ctx={

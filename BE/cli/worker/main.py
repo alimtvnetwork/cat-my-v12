@@ -47,11 +47,11 @@ def _configure_probe(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _handle_probe(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
+def _handle_probe(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     from BE.sdk_facade import get_camera_facade
     facade = get_camera_facade(ns.provider)
     devices = facade.list_devices()
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "probe.enumerated",
         f"Enumerated {len(devices)} device(s) via memory facade",
         ctx={"Count": len(devices), "Provider": ns.provider},
@@ -60,13 +60,13 @@ def _handle_probe(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any
     # except attribute names are snake_case. Map to spec-PascalCase.
     return [
         {
-            "Serial": d.serial,
-            "Model": d.model,
-            "Vendor": d.vendor,
-            "Interface": d.interface,
-            "Status": d.status,
+            "Serial": device.serial,
+            "Model": device.model,
+            "Vendor": device.vendor,
+            "Interface": device.interface,
+            "Status": device.status,
         }
-        for d in devices
+        for device in devices
     ]
 
 
@@ -78,10 +78,10 @@ def _configure_doctor(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _handle_doctor(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
+def _handle_doctor(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     from pathlib import Path
     db_root = Path(ns.db_root) if ns.db_root else None
-    summaries = run_preflight(ctx, db_root=db_root)
+    summaries = run_preflight(context, db_root=db_root)
     # Raise AFTER computing summaries so the dispatcher's failure envelope
     # still surfaces per-probe detail via envelope Results + AppError.details.
     assert_healthy(summaries)

@@ -123,11 +123,11 @@ def _enumerate(ns: argparse.Namespace) -> list[Path]:
     return [Path(p).expanduser() for p in items]
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     frames = _enumerate(ns)
     run_id = ns.run_id or _evaluate._generate_run_id()
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "dry_run.begin",
         f"dry-run frames={len(frames)} run_id={run_id}",
         ctx={"RunSessionId": run_id, "FrameCount": len(frames), "DryRun": True},
@@ -143,7 +143,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             results_dir=None,  # invariant: dry-run NEVER persists.
         )
         try:
-            recs = _evaluate.handle(sub_ns, ctx)
+            recs = _evaluate.handle(sub_ns, context)
         except AppError as exc:
             failures.append({
                 "FramePath": str(frame),
@@ -154,7 +154,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             continue
         results.append(recs[0])
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "dry_run.done",
         f"dry-run complete success={len(results)} failure={len(failures)}",
         ctx={

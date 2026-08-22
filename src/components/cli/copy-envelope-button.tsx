@@ -113,8 +113,8 @@ export function CopyEnvelopeButton({
     let text: string;
     try {
       text = JSON.stringify(payload, null, 2);
-    } catch (serErr) {
-      ClientLogger.error("[CopyEnvelopeButton] JSON.stringify failed", serErr);
+    } catch (serializationError) {
+      ClientLogger.error("[CopyEnvelopeButton] JSON.stringify failed", serializationError);
       toast.error("Copy failed: envelope not serializable");
 
       return;
@@ -122,8 +122,8 @@ export function CopyEnvelopeButton({
 
     try {
       await navigator.clipboard.writeText(text);
-    } catch (clipErr) {
-      ClientLogger.error("[CopyEnvelopeButton] clipboard write failed", clipErr);
+    } catch (clipboardError) {
+      ClientLogger.error("[CopyEnvelopeButton] clipboard write failed", clipboardError);
       toast.error("Copy failed: clipboard denied");
 
       return;

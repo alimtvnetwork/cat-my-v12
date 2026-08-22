@@ -70,15 +70,21 @@ export function useInspectorSectionShortcuts(): void {
 const STORAGE_PREFIX = "hmi.inspector.section:";
 
 function readStored(key: string): boolean | undefined {
-  if (typeof window === "undefined") return undefined;
+  if (typeof window === "undefined") {
+    return undefined;
+  }
   try {
     const raw = window.localStorage.getItem(STORAGE_PREFIX + key);
 
-    if (raw === "1") return true;
+    if (raw === "1") {
+      return true;
+    }
 
-    if (raw === "0") return false;
-  } catch {
-    // ignore storage errors
+    if (raw === "0") {
+      return false;
+    }
+  } catch (error) {
+    console.warn("[CollapsibleSection.readStored] localStorage fallback", { error });
   }
 
   return undefined;
@@ -117,11 +123,13 @@ export function CollapsibleSection({
   const isUnhydrated = !hydrated;
 
   useEffect(() => {
-    if (isUnhydrated) return;
+    if (isUnhydrated) {
+      return;
+    }
     try {
       window.localStorage.setItem(STORAGE_PREFIX + storageKey, open ? "1" : "0");
-    } catch {
-      // storage may be unavailable (private mode); ignore
+    } catch (error) {
+      console.warn("[CollapsibleSection] localStorage fallback", { error });
     }
   }, [storageKey, open, hydrated]);
 
@@ -137,7 +145,7 @@ export function CollapsibleSection({
     return () => window.removeEventListener(INSPECTOR_SECTIONS_SET_ALL_EVENT, onSetAll);
   }, []);
 
-  const toggle = useCallback(() => setOpen((v) => !v), []);
+  const toggle = useCallback(() => setOpen((isOpen) => isOpen === false), []);
 
   return (
     // suppressHydrationWarning: `open` is initialized deterministically to

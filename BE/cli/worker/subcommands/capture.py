@@ -69,7 +69,7 @@ def _key_for(prefix: str, frame: Frame) -> str:
     return f"{prefix}{frame.frame_id:08d}-{frame.timestamp_ns}.{frame.pixel_format.value}"
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     if ns.provider == "vendor":
         raise AppError(
             ErrorCode.E_CLI_UNSUPPORTED_HOST,
@@ -135,7 +135,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
         frame = camera.grab(ns.grab_timeout_ms)
         key = _key_for(prefix, frame)
         storage.put(key, frame.data)
-        ctx.logger.log(
+        context.logger.log(
             "INFO", "capture.stored",
             f"Frame stored at {key!r} ({len(frame.data)} bytes)",
             ctx={

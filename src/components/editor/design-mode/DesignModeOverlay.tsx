@@ -114,8 +114,8 @@ export function DesignModeOverlay({
       setDrawing(false);
       try {
         svgRef.current?.releasePointerCapture(evt.pointerId);
-      } catch {
-        // releasePointerCapture throws if the pointer was never captured; safe to ignore.
+      } catch (error) {
+        console.warn("[DesignModeOverlay] releasePointerCapture fallback", { error });
       }
     },
     [tool],
@@ -207,8 +207,8 @@ export function DesignModeOverlay({
         `SVG "${trimmedName}" downloaded (${compiled.pointCount} pts, ${compiled.svg.length} B).`,
       );
       onCompiled?.(payload);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       ClientLogger.error("[design-mode] export svg failed", { error: message });
       setStatus(`SVG export failed: ${message}`);
     }
@@ -251,8 +251,8 @@ export function DesignModeOverlay({
     try {
       downloadBlob(`${sanitiseFilename(payload.name)}.shape.svg`, compiled.svg, "image/svg+xml");
       ClientLogger.info("[design-mode] local svg saved", { bytes: compiled.svg.length });
-    } catch (err) {
-      ClientLogger.error("[design-mode] local save failed", err);
+    } catch (error) {
+      ClientLogger.error("[design-mode] local save failed", error);
       setStatus("Local shape file could not be saved. Check browser download permissions.");
       setBusy(false);
 
@@ -265,8 +265,8 @@ export function DesignModeOverlay({
       const shape = await compile({ data: payload });
       ClientLogger.info("[design-mode] compile ok", { id: shape.id, sha256: shape.sha256 });
       setStatus(`Shape "${payload.name}" saved (id ${shape.id.slice(0, 8)}...).`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       ClientLogger.warn("[design-mode] cloud compile failed, local file kept", { message });
       setStatus(
         `Local shape saved. Cloud compile failed: ${message}. Enable Cloud to store shape assets.`,

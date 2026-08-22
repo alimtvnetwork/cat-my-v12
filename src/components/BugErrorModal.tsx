@@ -52,9 +52,9 @@ export function BugErrorModal(): React.JSX.Element | null {
     try {
       await navigator.clipboard.writeText(diag);
       setCopied(true);
-    } catch {
+    } catch (error) {
       // Explicit surface - no silent swallow (spec 40 §3).
-      ClientLogger.error("ca:bug-error:copy-failed", { Code: err.Code });
+      ClientLogger.error("ca:bug-error:copy-failed", { Code: err.Code, error });
     }
   };
 

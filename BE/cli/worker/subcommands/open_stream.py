@@ -38,6 +38,7 @@ Contract:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import signal
 import threading
 import time
@@ -75,23 +76,18 @@ def _install_signal_handlers(shutdown: threading.Event) -> list[tuple[int, Any]]
     for sig in (signal.SIGINT, getattr(signal, "SIGTERM", None)):
         if sig is None:
             continue
-        try:
+        with contextlib.suppress(ValueError, OSError):
             prior.append((sig, signal.signal(sig, _handler)))
-        except (ValueError, OSError):
-            # Windows or restricted env: skip silently, --max-duration-ms bounds tests.
-            continue
     return prior
 
 
 def _restore_signal_handlers(prior: list[tuple[int, Any]]) -> None:
     for sig, handler in prior:
-        try:
+        with contextlib.suppress(ValueError, OSError):
             signal.signal(sig, handler)
-        except (ValueError, OSError):
-            continue
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     if ns.provider == "vendor":
         raise AppError(
             ErrorCode.E_CLI_UNSUPPORTED_HOST,
@@ -139,7 +135,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
                 facade.grab(ns.grab_timeout_ms)
                 # Real adapter path: a frame was produced.
                 frames += 1
-                ctx.logger.log(
+                context.logger.log(
                     "INFO", "stream.frame",
                     f"Frame emitted (n={frames})",
                     ctx={"Serial": ns.serial, "FrameIndex": frames},
@@ -150,7 +146,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
                     empty_ticks += 1
                     now_ns = time.monotonic_ns()
                     if (now_ns - last_empty_log_ns) >= _TICK_LOG_EVERY_MS * 1_000_000:
-                        ctx.logger.log(
+                        context.logger.log(
                             "INFO", "stream.tick_empty",
                             f"No frame available on stub (empty_ticks={empty_ticks})",
                             ctx={"Serial": ns.serial, "EmptyTicks": empty_ticks},
@@ -169,7 +165,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
         _restore_signal_handlers(prior)
 
     duration_ms = (time.monotonic_ns() - started_ns) // 1_000_000
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "stream.stopped",
         f"Streaming stopped on serial={ns.serial!r} after {duration_ms}ms",
         ctx={

@@ -151,9 +151,7 @@ def _acquire_lock(paths: IndexPaths, timeout: float, stale_seconds: float) -> No
 
 def _release_lock(paths: IndexPaths) -> None:
     try:
-        paths.lock.unlink()
-    except FileNotFoundError:
-        pass
+        paths.lock.unlink(missing_ok=True)
     except OSError as exc:
         raise AppError(
             ErrorCode.E_LOG_ROOT_UNWRITABLE,

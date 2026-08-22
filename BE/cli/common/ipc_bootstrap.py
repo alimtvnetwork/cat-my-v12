@@ -29,6 +29,7 @@ ensure=True)`; this module does not re-implement writability checks.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 import sys
@@ -112,7 +113,7 @@ def _install_link(
     """
     # If link already exists and points at target, we're idempotent.
     if link.exists() or link.is_symlink():
-        try:
+        with contextlib.suppress(OSError):
             resolved = link.resolve(strict=False)
             if resolved == target.resolve(strict=False):
                 if link.is_symlink():
@@ -120,8 +121,6 @@ def _install_link(
                 # Junction resolves like a real dir on Windows; treat as
                 # junction when platform is Windows, otherwise standalone.
                 return ("junction" if _is_windows(platform) else "standalone"), None
-        except OSError:
-            pass
         # Something is there that is not our link. Do not clobber user data.
         return "standalone", f"path already exists: {link}"
 

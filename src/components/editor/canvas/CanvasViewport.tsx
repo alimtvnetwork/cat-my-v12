@@ -214,7 +214,9 @@ export function CanvasViewport({
             : SPOTLIGHT_DEFAULTS.blurPx,
         isolate: typeof parsed.isolate === "boolean" ? parsed.isolate : SPOTLIGHT_DEFAULTS.isolate,
       };
-    } catch {
+    } catch (error) {
+      console.warn("[CanvasViewport.readSpotlightPrefs] localStorage fallback", { error });
+
       return SPOTLIGHT_DEFAULTS;
     }
   };
@@ -245,8 +247,8 @@ export function CanvasViewport({
         SPOTLIGHT_STORAGE_KEY,
         JSON.stringify({ dim: focusDim, blurPx: focusBlur, isolate: focusIsolate }),
       );
-    } catch {
-      /* ignore quota / private mode */
+    } catch (error) {
+      console.warn("[CanvasViewport] localStorage setItem fallback", { error });
     }
   }, [focusDim, focusBlur, focusIsolate, spotlightHydrated]);
 
@@ -320,8 +322,8 @@ export function CanvasViewport({
           parsed.filter((x): x is string => typeof x === "string"),
         );
       }
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.warn("[CanvasViewport] sessionStorage getItem fallback", { error });
     }
   }, []);
   const persistCrispHistory = () => {
@@ -331,8 +333,8 @@ export function CanvasViewport({
         SPOTLIGHT_HISTORY_KEY,
         JSON.stringify(Array.from(focusCrispHistoryRef.current)),
       );
-    } catch {
-      /* ignore */
+    } catch (error) {
+      console.warn("[CanvasViewport] sessionStorage setItem fallback", { error });
     }
   };
 
@@ -388,8 +390,8 @@ export function CanvasViewport({
     try {
       const frame = await captureFrameFromStream(result.stream.stream);
       applyCustomImage("Camera capture", frame.dataUrl);
-    } catch (err) {
-      ClientLogger.error("[canvas-sample] captureFrameFromStream threw", err);
+    } catch (error) {
+      ClientLogger.error("[canvas-sample] captureFrameFromStream threw", error);
     } finally {
       result.stream.close();
     }

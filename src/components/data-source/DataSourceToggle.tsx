@@ -88,8 +88,8 @@ export function DataSourceToggle({
       await probeBackend(healthUrl, doFetch);
       setDataSource(DataSourceType.Backend, { reason: "toggle+probe-ok" });
       toast.success("Live backend connected");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       ClientLogger.warn("[data-source] backend probe failed", {
         url: healthUrl,
         message: errorMessage,

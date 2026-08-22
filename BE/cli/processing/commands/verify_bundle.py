@@ -180,7 +180,7 @@ def _classify_status(rule: dict[str, Any]) -> str:
 
 # ---- handler --------------------------------------------------------------
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     bundle_path = Path(ns.bundle).expanduser()
     problems: list[dict[str, Any]] = []
 
@@ -259,7 +259,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             kinds[k] = kinds.get(k, 0) + 1
 
     if problems:
-        ctx.logger.log(
+        context.logger.log(
             "ERROR", "verify_bundle.invalid",
             f"{len(problems)} problem(s) in {bundle_path.name}",
             code=ErrorCode.E_RULE_BUNDLE_INVALID.value,
@@ -281,7 +281,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
         "SilentCount": counts["Silent"],
         "Kinds": kinds,
     }
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "verify_bundle.ok",
         f"bundle valid: {len(rules)} rule(s) in {bundle_path.name}",
         ctx=summary,

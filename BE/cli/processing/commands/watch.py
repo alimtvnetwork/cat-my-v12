@@ -53,6 +53,7 @@ Not in scope for this step (tracked elsewhere in Plan 90):
 from __future__ import annotations
 
 import argparse
+import contextlib
 import signal
 import time
 from pathlib import Path
@@ -124,19 +125,17 @@ def _install_signal_shutdown() -> dict[str, bool]:
         sig = getattr(signal, sig_name, None)
         if sig is None:
             continue
-        try:
-            signal.signal(sig, _handler)
-        except (ValueError, OSError):
+        with contextlib.suppress(ValueError, OSError):
             # ValueError: not in main thread (tests). Fine to skip; the
             # duration/max-messages guards still bound the loop.
-            pass
+            signal.signal(sig, _handler)
     return state
 
 
 def _process_one(
-    msg: _ipc.Message,
+    message: _ipc.Message,
     ns: argparse.Namespace,
-    ctx: SessionCtx,
+    context: SessionCtx,
     ipc_root: Path,
     out_dir: str,
     results_dir: Path | None,
@@ -147,17 +146,17 @@ def _process_one(
     Never raises: per-message failures are captured so the tail loop
     can keep draining the drop-dir.
     """
-    payload = msg.payload or {}
+    payload = message.payload or {}
     frame_path = payload.get("FramePath")
     if not isinstance(frame_path, str) or not frame_path:
         # Malformed payload should have been rejected by `ipc.receive`,
         # but defence-in-depth: surface as a Failure and ack so the
         # poison message does not spin forever.
-        _ipc.ack(msg.path)
+        _ipc.ack(message.path)
         return {
-            "MsgId": msg.msg_id,
-            "RunId": msg.run_id,
-            "Seq": msg.seq,
+            "MsgId": message.msg_id,
+            "RunId": message.run_id,
+            "Seq": message.seq,
             "Ok": False,
             "Code": ErrorCode.E_IPC_PAYLOAD_INVALID.value,
             "Message": "FrameReady missing FramePath",
@@ -166,30 +165,30 @@ def _process_one(
     sub_ns = argparse.Namespace(
         frame=frame_path,
         bundle=ns.bundle,
-        run_id=msg.run_id,
+        run_id=message.run_id,
         results_dir=str(results_dir),
         mode=getattr(ns, "mode", "auto"),
     )
 
     try:
-        recs = _evaluate.handle(sub_ns, ctx)
+        recs = _evaluate.handle(sub_ns, context)
     except AppError as exc:
         # Per-message failure. Ack the source to satisfy the idempotency
         # invariant (same message must not be redelivered), then log.
-        _ipc.ack(msg.path)
-        ctx.logger.log(
+        _ipc.ack(message.path)
+        context.logger.log(
             "WARN", "watch.frame.failed",
             f"frame failed: {exc.code.value}: {exc}",
             code=exc.code.value,
             ctx={
-                "MsgId": msg.msg_id, "RunId": msg.run_id, "Seq": msg.seq,
+                "MsgId": message.msg_id, "RunId": message.run_id, "Seq": message.seq,
                 "FramePath": frame_path,
             },
         )
         return {
-            "MsgId": msg.msg_id,
-            "RunId": msg.run_id,
-            "Seq": msg.seq,
+            "MsgId": message.msg_id,
+            "RunId": message.run_id,
+            "Seq": message.seq,
             "Ok": False,
             "Code": exc.code.value,
             "Message": str(exc),
@@ -202,9 +201,9 @@ def _process_one(
     from BE.cli.processing.commands.evaluate import _promote_error_code
     promoted = _promote_error_code(rec.get("Judgments") or [])
     rr_payload: dict[str, Any] = {
-        "ResultsPath": str(results_dir / f"{msg.run_id}.jsonl"),
-        "RunId": msg.run_id,
-        "FrameSeq": int(msg.seq),
+        "ResultsPath": str(results_dir / f"{message.run_id}.jsonl"),
+        "RunId": message.run_id,
+        "FrameSeq": int(message.seq),
         "Decision": str(rec.get("Verdict", "Pass")).lower(),
         "RuleCount": int(summary.get("RuleCount", 0)),
         "PassCount": int(summary.get("PassCount", 0)),
@@ -216,19 +215,19 @@ def _process_one(
 
     _ipc.send(
         ipc_root, out_dir, "ResultReady", rr_payload,
-        run_id=msg.run_id, from_="processing-cli", to="worker-cli",
-        seq=int(msg.seq),
+        run_id=message.run_id, from_="processing-cli", to="worker-cli",
+        seq=int(message.seq),
     )
-    _ipc.ack(msg.path)
-    ctx.logger.log(
+    _ipc.ack(message.path)
+    context.logger.log(
         "INFO", "watch.frame.done",
-        f"processed msg={msg.msg_id} run={msg.run_id} seq={msg.seq}",
-        ctx={"MsgId": msg.msg_id, "RunId": msg.run_id, "Seq": msg.seq},
+        f"processed msg={message.msg_id} run={message.run_id} seq={message.seq}",
+        ctx={"MsgId": message.msg_id, "RunId": message.run_id, "Seq": message.seq},
     )
     return {
-        "MsgId": msg.msg_id,
-        "RunId": msg.run_id,
-        "Seq": msg.seq,
+        "MsgId": message.msg_id,
+        "RunId": message.run_id,
+        "Seq": message.seq,
         "Ok": True,
         "Decision": rr_payload["Decision"],
     }
@@ -290,7 +289,7 @@ def _poison_safe_receive(root: Path, in_dir: str):
 
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     # Validate flags first: cheap failures beat "started polling then crashed".
     if not (_MIN_POLL <= float(ns.poll_interval) <= _MAX_POLL):
         raise AppError(
@@ -336,7 +335,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
     idle_since: float | None = None
     poll = float(ns.poll_interval)
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "watch.begin",
         f"watch in={in_dir} out={out_dir} bundle={ns.bundle} mode={ns.mode}",
         ctx={"IpcRoot": str(ipc_root), "InDir": in_dir, "OutDir": out_dir,
@@ -367,13 +366,13 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
                 try:
                     _ipc.ack(item.path)
                 except AppError as ack_exc:
-                    ctx.logger.log(
+                    context.logger.log(
                         "ERROR", "watch.poison.ack_failed",
                         f"failed to ack poison message {item.path.name}: {ack_exc}",
                         code=ack_exc.code.value,
                         ctx={"Path": str(item.path)},
                     )
-                ctx.logger.log(
+                context.logger.log(
                     "WARN", "watch.poison",
                     f"poison IPC file acked: {item.path.name}: "
                     f"{item.error.code.value}: {item.error}",
@@ -391,15 +390,15 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
                 })
                 continue
 
-            msg = item
-            key = (msg.run_id, int(msg.seq))
+            message_item = item
+            key = (message_item.run_id, int(message_item.seq))
             if key in seen:
                 # Duplicate under a different ULID: ack and skip.
                 skipped_duplicates += 1
-                _ipc.ack(msg.path)
+                _ipc.ack(message_item.path)
                 continue
             seen.add(key)
-            outcome = _process_one(msg, ns, ctx, ipc_root, out_dir, results_dir)
+            outcome = _process_one(message_item, ns, context, ipc_root, out_dir, results_dir)
             (processed if outcome["Ok"] else failures).append(outcome)
 
         now = time.monotonic()
@@ -414,7 +413,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
             time.sleep(min(poll, 0.5))
 
     duration = round(time.monotonic() - start, 3)
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "watch.done",
         f"watch complete processed={len(processed)} failed={len(failures)} "
         f"duplicates={skipped_duplicates} duration={duration}s",

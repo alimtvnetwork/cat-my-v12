@@ -85,8 +85,8 @@ _VALID_TOL_KINDS = {"pct", "abs"}
 _VALID_ORIGINS = {"indexeddb", "server"}
 
 
-def _bad(msg: str, ctx: dict[str, Any]) -> AppError:
-    return AppError(ErrorCode.E_BE_BAD_REQUEST, msg, ctx)
+def _bad(message: str, context: dict[str, Any]) -> AppError:
+    return AppError(ErrorCode.E_BE_BAD_REQUEST, message, context)
 
 
 def parse_envelope(raw: dict[str, Any]) -> RuleSetEnvelope:

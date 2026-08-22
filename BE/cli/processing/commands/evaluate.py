@@ -419,7 +419,7 @@ def _maybe_persist_task_db(
 
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
     frame_path = Path(ns.frame).expanduser()
     bundle_path = Path(ns.bundle).expanduser()
 
@@ -433,9 +433,9 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
     if frame_path.suffix == ".npy":
         try:
             import numpy as np
-            arr = np.load(frame_path)
-            if len(arr.shape) != 3 or arr.shape[2] != 3 or arr.dtype != np.uint8:
-                raise ValueError(f"Expected HxWx3 uint8, got {arr.shape} {arr.dtype}")
+            frame_array = np.load(frame_path)
+            if len(frame_array.shape) != 3 or frame_array.shape[2] != 3 or frame_array.dtype != np.uint8:
+                raise ValueError(f"Expected HxWx3 uint8, got {frame_array.shape} {frame_array.dtype}")
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_BAD_REQUEST,
@@ -448,7 +448,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
     run_id = ns.run_id or _generate_run_id()
     mode_effective, mode_source = _resolve_mode(bundle, getattr(ns, "mode", "auto"))
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "evaluate.begin",
         f"evaluate frame={frame_path.name} bundle={bundle_path.name} "
         f"rules={counts.total} mode={mode_effective}({mode_source})",
@@ -501,7 +501,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
     # Root cause guarded (pre-Step-99): JSONL was the only persisted signal;
     # DB tables from Steps 96-98 stayed empty at runtime, breaking the
     # Step 100 observability route and Step 141+ FE history drawer.
-    _maybe_persist_task_db(ns, ctx, run_id, record, mode_effective, persisted_path)
+    _maybe_persist_task_db(ns, context, run_id, record, mode_effective, persisted_path)
 
     # Spec 75 §Acceptance #2 — evaluate MUST be able to emit ResultReady so
     # a downstream watcher (main app, packaging pipeline, etc.) sees a
@@ -542,7 +542,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
             run_id=run_id, from_="processing-cli", to="main",
             seq=rr_payload["FrameSeq"],
         )
-        ctx.logger.log(
+        context.logger.log(
             "INFO", "evaluate.ipc.emitted",
             f"ResultReady -> {msg_path.name}",
             ctx={"RunSessionId": run_id, "IpcMessagePath": str(msg_path),

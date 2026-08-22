@@ -52,7 +52,9 @@ function isDev(): boolean {
     const isDevEnv = Boolean((import.meta as unknown as { env?: { DEV: boolean } }).env?.DEV);
 
     return isDevEnv === true;
-  } catch {
+  } catch (error) {
+    console.warn("[envelope-viewer.isDev] env probe fallback", { error });
+
     return false;
   }
 }
@@ -149,7 +151,9 @@ export function EnvelopeTree({
       {(() => {
         try {
           return JSON.stringify(value);
-        } catch {
+        } catch (error) {
+          console.warn("[envelope-viewer.EnvelopeTree] JSON.stringify fallback", { error });
+
           return String(value);
         }
       })()}

@@ -93,9 +93,9 @@ def _validate_payload_keys(payload: Mapping[str, Any], path: str = "") -> None:
                     _validate_payload_keys(item, path=f"{path}{k}[{i}].")
 
 
-def _ensure_json_safe(obj: Any) -> None:
+def _ensure_json_safe(payload_object: Any) -> None:
     try:
-        json.dumps(obj, allow_nan=False)
+        json.dumps(payload_object, allow_nan=False)
     except (TypeError, ValueError) as e:
         raise AppError(
             ErrorCode.E_IPC_PAYLOAD_INVALID,

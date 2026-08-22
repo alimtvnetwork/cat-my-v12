@@ -84,7 +84,7 @@ def _peek_results(data_root: Path) -> dict[str, Any]:
     return {"Path": str(p), "Exists": exists, "SessionCount": sessions}
 
 
-def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
+def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     log = _peek_root("log", ns.log_root)
     db = _peek_root("db", ns.db_root)
     ipc = _peek_root("ipc", ns.ipc_root)
@@ -104,7 +104,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> dict[str, Any]:
         "ResultsDir": results,
     }
 
-    ctx.logger.log(
+    context.logger.log(
         "INFO", "status.reported",
         (
             f"status: ipc_root_exists={ipc['Exists']}, "
