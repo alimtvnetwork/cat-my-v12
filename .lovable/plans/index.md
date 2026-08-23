@@ -30,9 +30,10 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 85 - plan83-residual-shepherd - completed - see `completed/85-plan83-residual-shepherd.md`
 - 88 - backend-implementation-v1-150-steps - completed - see `completed/88-backend-implementation-v1-150-steps.md`
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
-- 90 - standard-ui-fixes - pending - see `pending/90-standard-ui-fixes.md`
 
 ## Completed
+
+- 90 - standard-ui-fixes - completed - see `completed/90-standard-ui-fixes.md`
 
 - 03 - vision-standard-ui-part1 - completed - see `completed/03-vision-standard-ui-part1.md`
 
