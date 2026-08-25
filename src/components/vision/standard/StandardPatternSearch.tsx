@@ -43,7 +43,7 @@ export function StandardPatternSearch({
             defaultSize="38%"
             minSize="25%"
             maxSize="55%"
-            className="border-l border-std-accent-active flex flex-col bg-std-panel text-black relative z-20"
+            className="border-l border-std-accent-active flex flex-col bg-std-panel text-std-text relative z-20"
           >
             <StandardToolPanel settings={settings} setSettings={onChange} />
           </ResizablePanel>
