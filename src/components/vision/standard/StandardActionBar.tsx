@@ -1,5 +1,6 @@
 import React from "react";
 import { Settings } from "lucide-react";
+import { StandardActionLabel } from "./constants";
 
 export function StandardActionBar({
   onEvaluate,
@@ -13,13 +14,13 @@ export function StandardActionBar({
           type="button"
           className="h-[28px] px-4 bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
         >
-          Origin / Point
+          {StandardActionLabel.OriginPoint}
         </button>
         <button
           type="button"
           className="h-[28px] px-4 bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
         >
-          Display
+          {StandardActionLabel.Display}
         </button>
       </div>
 
@@ -29,18 +30,18 @@ export function StandardActionBar({
             type="button"
             className="h-[28px] px-4 bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
           >
-            Register Image
+            {StandardActionLabel.RegisterImage}
           </button>
           <button
             type="button"
             onClick={onEvaluate}
             className="h-[28px] px-8 bg-std-primary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-primary-action-text font-medium hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
           >
-            Evaluate Rule
+            {StandardActionLabel.EvaluateRule}
           </button>
           <button
             type="button"
-            aria-label="Settings"
+            aria-label={StandardActionLabel.Settings}
             className="h-[28px] w-[36px] flex items-center justify-center bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r"
           >
             <Settings size={16} />
@@ -52,13 +53,13 @@ export function StandardActionBar({
             type="button"
             className="h-[28px] px-6 bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
           >
-            Cancel
+            {StandardActionLabel.Cancel}
           </button>
           <button
             type="button"
             className="h-[28px] px-8 bg-std-secondary-action border-t border-l border-std-border-light border-b-2 border-r-2 border-std-border-dark text-std-text hover:brightness-110 active:border-t-2 active:border-l-2 active:border-b active:border-r flex items-center justify-center"
           >
-            OK
+            {StandardActionLabel.Ok}
           </button>
         </div>
       </div>
