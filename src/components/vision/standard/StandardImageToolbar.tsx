@@ -38,7 +38,7 @@ export function StandardImageToolbar({
   const handleFit = () => setSettings((s) => ({ ...s, view: { ...s.view, zoom: 100 } })); // TBD fit logic
 
   return (
-    <div className="flex items-center gap-4 bg-std-chrome p-2 border-b border-std-border text-sm">
+    <div className="flex items-center gap-4 bg-std-chrome p-2 border-b border-std-border text-sm shrink-0 min-w-0 overflow-x-auto select-none">
       <div className="flex items-center gap-2">
         <label className="font-semibold text-std-text">Source:</label>
         <select

@@ -25,18 +25,20 @@ export function StandardPatternSearch({
           <ResizablePanel
             defaultSize="62%"
             minSize="45%"
-            className="flex flex-col relative bg-std-chrome"
+            className="flex flex-col relative bg-std-chrome min-w-0"
           >
-            <div className="absolute top-2 left-2 z-10">
-              <StandardHeaderReadouts />
-            </div>
             <StandardImageToolbar
               settings={settings}
               setSettings={onChange}
               viewModes={viewModes}
               setViewModes={setViewModes}
             />
-            <StandardCanvas settings={settings} setSettings={onChange} viewModes={viewModes} />
+            <div className="relative flex-1 min-h-0 overflow-hidden">
+              <div className="absolute top-3 left-3 z-10 pointer-events-auto">
+                <StandardHeaderReadouts />
+              </div>
+              <StandardCanvas settings={settings} setSettings={onChange} viewModes={viewModes} />
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle aria-label="Resize panels" />
           <ResizablePanel
