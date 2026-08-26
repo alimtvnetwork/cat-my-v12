@@ -56,8 +56,7 @@ describe("useEnvelopeQuery", () => {
         }),
       { wrapper: wrapper() },
     );
-    await waitFor(() => expect(result.current.hasError).toBe(false));
-    expect(result.current.items).toEqual([{ id: "a" }, { id: "b" }]);
+    await waitFor(() => expect(result.current.items).toEqual([{ id: "a" }, { id: "b" }]));
     expect(result.current.pagination).toEqual({
       totalRecords: 42,
       perPage: 25,

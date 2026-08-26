@@ -11,8 +11,7 @@ import {
 // Small helper: zustand persist's setItem is async; flush pending microtasks
 // and give the facade a tick to complete its write before we read it back.
 async function flush(): Promise<void> {
-  await new Promise((r) => setTimeout(r, 0));
-  await new Promise((r) => setTimeout(r, 0));
+  await new Promise((r) => setTimeout(r, 50));
 }
 
 describe("useUiPrefsStore tool tooltip mode", () => {

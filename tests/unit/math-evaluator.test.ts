@@ -12,7 +12,12 @@ describe("math evaluator vectors", () => {
     ["MATH-V-04", "abs(ROI_1.value - ROI_2.value) < 50", true, 40],
     ["MATH-V-05", "COUNT.value % 2 != 0", true, 1],
   ])("%s evaluates a valid comparison", (_id, expression, pass, value) => {
-    expect(evaluateMathExpression(expression, VALUES)).toEqual({ ok: true, pass, value });
+    expect(evaluateMathExpression(expression, VALUES)).toEqual({
+      ok: true,
+      isFail: false,
+      pass,
+      value,
+    });
   });
 
   it.each([
@@ -24,6 +29,7 @@ describe("math evaluator vectors", () => {
   ])("%s rejects invalid expressions", (_id, expression, reason) => {
     expect(evaluateMathExpression(expression, VALUES)).toEqual({
       ok: false,
+      isFail: true,
       reason: reason as MathIssueReason,
     });
   });

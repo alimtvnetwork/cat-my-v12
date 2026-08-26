@@ -37,10 +37,10 @@ describe("data-source store", () => {
   it("logs an observability line on change", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
     setDataSource(DataSourceType.Backend, { reason: "unit" });
-    expect(info).toHaveBeenCalledWith(
-      "[data-source] changed",
-      expect.objectContaining({ prev: "seed", next: "backend", reason: "unit" }),
-    );
+    expect(info).toHaveBeenCalled();
+    const parsed = JSON.parse(info.mock.calls[0][0]);
+    expect(parsed.Message).toBe("[data-source] changed");
+    expect(parsed.Context).toEqual({ prev: "seed", next: "backend", reason: "unit" });
     info.mockRestore();
   });
 });
