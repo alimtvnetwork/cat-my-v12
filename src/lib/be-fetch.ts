@@ -22,6 +22,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 
 import { newCorrelationId } from "@/types/errors";
 import { useErrorStore } from "@/lib/stores/errorStore";
+import { HttpMethod } from "@/lib/constants";
 
 /** Wire-level envelope shape. Mirrors `BE/envelope.py` exactly. */
 export interface EnvelopeStatus {
@@ -160,7 +161,7 @@ function urlOf(input: RequestInfo | URL): string {
 }
 
 function methodOf(input: RequestInfo | URL, init?: RequestInit): string {
-  const m = init?.method ?? (input instanceof Request ? input.method : "GET");
+  const m = init?.method ?? (input instanceof Request ? input.method : HttpMethod.Get);
 
   return m.toUpperCase();
 }

@@ -23,6 +23,7 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const RunIdSchema = z
   .string()
@@ -114,7 +115,7 @@ export const Route = createFileRoute("/api/cli/sessions/$runId/log")({
         let upstreamResp: Response;
         try {
           upstreamResp = await fetch(upstream.toString(), {
-            method: "GET",
+            method: HttpMethod.Get,
             headers: { accept: "text/event-stream" },
             signal: request.signal,
           });

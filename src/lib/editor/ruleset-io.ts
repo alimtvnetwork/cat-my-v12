@@ -26,13 +26,13 @@ export interface RuleSetFile {
   groups?: RuleGroup[];
   // Plan 42 step 9 (spec 49 s3). Optional in v1/v2 files (defaulted on parse);
   // written on every v3 export by `buildRuleSetFile`.
-  ValidationModeType?: ValidationModeType;
+  validationMode?: ValidationModeType;
 }
 
 export interface ParsedRuleSet {
   rules: EditorRule[];
   groups: RuleGroup[];
-  ValidationModeType: ValidationModeType;
+  validationMode: ValidationModeType;
 }
 
 const VALID_KINDS: readonly EditorRuleKind[] = [
@@ -46,7 +46,7 @@ const VALID_KINDS: readonly EditorRuleKind[] = [
 export function buildRuleSetFile(
   rules: readonly EditorRule[],
   groups: readonly RuleGroup[] = [],
-  ValidationModeType: ValidationModeType = DEFAULT_VALIDATION_MODE,
+  validationMode: ValidationModeType = DEFAULT_VALIDATION_MODE,
 ): RuleSetFile {
   return {
     schema: "control-automation.ruleset",
@@ -54,16 +54,16 @@ export function buildRuleSetFile(
     exportedAt: new Date().toISOString(),
     rules: rules.map((r) => ({ ...r, params: r.params ? { ...r.params } : undefined })),
     groups: groups.map((g) => ({ ...g, ruleIds: g.ruleIds.slice() })),
-    ValidationModeType,
+    validationMode,
   };
 }
 
 export function serializeRuleSet(
   rules: readonly EditorRule[],
   groups: readonly RuleGroup[] = [],
-  ValidationModeType: ValidationModeType = DEFAULT_VALIDATION_MODE,
+  validationMode: ValidationModeType = DEFAULT_VALIDATION_MODE,
 ): string {
-  return JSON.stringify(buildRuleSetFile(rules, groups, ValidationModeType), null, 2);
+  return JSON.stringify(buildRuleSetFile(rules, groups, validationMode), null, 2);
 }
 
 export class RuleSetImportError extends Error {
@@ -213,11 +213,11 @@ export function parseRuleSet(text: string): ParsedRuleSet {
     try {
       const migrated = withConds.map((r, i) => migrateRuleV2ToV3(r, i) as unknown as EditorRule);
       const groups = parseGroups(obj.groups, new Set(migrated.map((r) => r.id)));
-      const vm = isValidationMode(obj.ValidationModeType)
-        ? (obj.ValidationModeType as ValidationModeType)
+      const vm = isValidationMode(obj.validationMode)
+        ? (obj.validationMode as ValidationModeType)
         : DEFAULT_VALIDATION_MODE;
 
-      return { rules: migrated, groups, ValidationModeType: vm };
+      return { rules: migrated, groups, validationMode: vm };
     } catch (err) {
       if (err instanceof MigrationError) {
         throw new RuleSetMigrationError(err.message, err.ruleIndex);
@@ -236,7 +236,7 @@ export function parseRuleSet(text: string): ParsedRuleSet {
     });
 
     // v1 files pre-date grouping.
-    return { rules: migrated, groups: [], ValidationModeType: DEFAULT_VALIDATION_MODE };
+    return { rules: migrated, groups: [], validationMode: DEFAULT_VALIDATION_MODE };
   } catch (err) {
     if (err instanceof MigrationError) {
       throw new RuleSetMigrationError(err.message, err.ruleIndex);

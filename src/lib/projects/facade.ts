@@ -109,10 +109,9 @@ export function __setProjectRepositoryFacadeForTests(f: ProjectRepositoryFacade 
  * key so existing users don't lose their projects when we swap backends.
  */
 export function createFacadeStateStorage(): StateStorage {
-  const facade = makeProjectRepositoryFacade();
-
   return {
     getItem: async (name) => {
+      const facade = makeProjectRepositoryFacade();
       const fromFacade = await facade.readItem(name);
 
       if (fromFacade !== null) return fromFacade;
@@ -136,10 +135,12 @@ export function createFacadeStateStorage(): StateStorage {
       return null;
     },
     setItem: async (name, value) => {
+      const facade = makeProjectRepositoryFacade();
       await facade.writeItem(name, value);
       broadcastFacadeWrite(name, "set");
     },
     removeItem: async (name) => {
+      const facade = makeProjectRepositoryFacade();
       await facade.removeItem(name);
       broadcastFacadeWrite(name, "remove");
     },

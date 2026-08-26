@@ -305,6 +305,7 @@ function SchemaHintPanel({ item }: { item: IpcItem }) {
 }
 
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
+import { HttpMethod } from "@/lib/constants";
 
 type RequeueOutcome =
   | { isSuccess: true; isFail: false; message: string }
@@ -313,7 +314,7 @@ type RequeueOutcome =
 async function requeueMsg(msgId: string): Promise<RequeueOutcome> {
   try {
     await beFetch(`/api/cli/ipc/${encodeURIComponent(msgId)}/requeue`, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({}),
     });

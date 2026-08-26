@@ -33,6 +33,7 @@ import {
   usePersistRulesServerSide,
 } from "@/lib/data-source";
 import { apiFetch } from "@/lib/http/client";
+import { HttpMethod } from "@/lib/constants";
 import {
   RetentionStepper,
   RETENTION_DAY_PRESETS,
@@ -916,7 +917,7 @@ function DataSourceCard() {
     setProbing(true);
     setProbeResult(null);
     try {
-      const res = await apiFetch("/api/health", { method: "GET" });
+      const res = await apiFetch("/api/health", { method: HttpMethod.Get });
       setProbeResult({
         ok: res.ok,
         message: res.ok

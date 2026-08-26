@@ -16,6 +16,7 @@ import { Database, Cloud, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { setDataSource, useDataSource, type DataSource } from "@/lib/data-source";
 import { apiFetch } from "@/lib/http/client";
+import { HttpMethod } from "@/lib/constants";
 
 /**
  * Segmented Seed / Backend selector.
@@ -42,7 +43,7 @@ async function probeBackend(url: string, fetchImpl: typeof fetch): Promise<void>
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), HEALTH_TIMEOUT_MS);
   try {
-    const res = await fetchImpl(url, { method: "GET", signal: ctrl.signal });
+    const res = await fetchImpl(url, { method: HttpMethod.Get, signal: ctrl.signal });
     const isFailed = res.ok === false;
 
     if (isFailed) {

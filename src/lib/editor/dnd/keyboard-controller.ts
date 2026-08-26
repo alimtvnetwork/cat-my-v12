@@ -70,7 +70,7 @@ export const useKeyboardDnd = create<KeyboardDndState>((set, get) => ({
 
     if (DndModeType.isKeyboardGrabbed(mode) === false || !activeRect || !grabbedId) return;
 
-    let nextRect = { ...activeRect };
+    const nextRect = { ...activeRect };
 
     if (DndAxisType.isX(axis)) {
       nextRect.x = toMax ? IMAGE_BOUNDS.width - nextRect.width : 0;

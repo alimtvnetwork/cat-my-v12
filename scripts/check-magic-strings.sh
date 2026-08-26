@@ -29,8 +29,8 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# Search scope: src/ minus the constants module itself and generated files.
-SCOPE=(src --glob '!src/lib/constants/**' --glob '!src/routeTree.gen.ts')
+# Search scope: src/ minus the constants module itself, tests, and generated files.
+SCOPE=(src --glob '!src/lib/constants/**' --glob '!src/routeTree.gen.ts' --glob '!src/**/__tests__/**')
 
 # Patterns to ban. Each entry: "label|regex".
 PATTERNS=(

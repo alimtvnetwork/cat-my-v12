@@ -15,6 +15,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const InputSchema = z.object({
   runId: z.string().min(1),
@@ -49,7 +50,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getCliSession = createServerFn({ method: "GET" })
+export const getCliSession = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => InputSchema.parse(raw))
   .handler(async ({ data }): Promise<CliSessionDetail> => {
     const qs = new URLSearchParams();

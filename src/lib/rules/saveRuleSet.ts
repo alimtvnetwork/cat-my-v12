@@ -11,6 +11,7 @@
 // upstream UI can route on `E_BE_BAD_REQUEST` / `E_BE_CONFLICT` etc.
 
 import { putDraft, type RuleSetEnvelope } from "./draftStore";
+import { HttpMethod } from "@/lib/constants";
 
 export interface SaveRuleSetError extends Error {
   code: string;
@@ -36,7 +37,7 @@ function toSaveError(status: number, body: unknown): SaveRuleSetError {
  */
 export async function saveRuleSet(envelope: RuleSetEnvelope): Promise<RuleSetEnvelope> {
   const resp = await fetch(`/rules/${envelope.RuleSetId}`, {
-    method: "PUT",
+    method: HttpMethod.Put,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(envelope),
   });

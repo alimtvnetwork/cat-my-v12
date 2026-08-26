@@ -23,6 +23,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const CatRuleSchema = z.object({
   RuleId: z.number().int(),
@@ -50,7 +51,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const listRules = createServerFn({ method: "GET" })
+export const listRules = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) =>
     z
       .object({})

@@ -13,6 +13,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const ProbeSchema = z.object({
   Tier: z.string(),
@@ -37,7 +38,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getDoctorReport = createServerFn({ method: "POST" })
+export const getDoctorReport = createServerFn({ method: HttpMethod.Post })
   .inputValidator((raw) =>
     z
       .object({})
@@ -47,7 +48,7 @@ export const getDoctorReport = createServerFn({ method: "POST" })
   .handler(async (): Promise<DoctorReport> => {
     const url = `${beBaseUrl()}/api/cli/doctor`;
     const env = await beFetch<DoctorReport>(url, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "content-type": "application/json" },
       body: "{}",
     });

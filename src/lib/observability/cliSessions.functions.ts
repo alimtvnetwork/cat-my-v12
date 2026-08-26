@@ -15,6 +15,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const SourceEnum = z.enum(["worker-cli", "processing-cli", "be"]);
 
@@ -51,7 +52,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getCliSessions = createServerFn({ method: "GET" })
+export const getCliSessions = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => InputSchema.parse(raw ?? {}))
   .handler(async ({ data }): Promise<CliSessionsPage> => {
     const qs = new URLSearchParams();

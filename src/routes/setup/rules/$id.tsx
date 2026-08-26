@@ -143,7 +143,7 @@ function RuleEditorRoute() {
     <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
       <SectionTopBar section={SectionIdType.Home} active="setup" />
       {validationError && (
-        <div className="bg-red-100 text-red-900 px-4 py-2 text-sm border-b border-red-200">
+        <div className="bg-ca-panel text-ca-danger px-4 py-2 text-sm border-b border-ca-border">
           Error: {validationError}
         </div>
       )}

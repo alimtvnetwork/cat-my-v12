@@ -1,5 +1,6 @@
 import { BackendClient, Envelope, CatRuleWire, CatSampleWire } from "./types";
 import { fetchBackend } from "./http";
+import { HttpMethod } from "@/lib/constants";
 
 export class HttpBackendClient implements BackendClient {
   async ping(): Promise<Envelope<{ pong: boolean }>> {
@@ -14,7 +15,7 @@ export class HttpBackendClient implements BackendClient {
     },
     create: async (payload: Partial<CatRuleWire>): Promise<Envelope<CatRuleWire>> => {
       return fetchBackend<CatRuleWire>("rules", {
-        method: "POST",
+        method: HttpMethod.Post,
         body: JSON.stringify(payload),
       });
     },

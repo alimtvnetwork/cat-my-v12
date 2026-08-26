@@ -10,6 +10,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const ProcStatusSchema = z.object({
   Pid: z.number().int(),
@@ -44,7 +45,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getCliStatus = createServerFn({ method: "GET" })
+export const getCliStatus = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) =>
     z
       .object({})
