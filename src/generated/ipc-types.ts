@@ -189,15 +189,9 @@ export type OpsEventsRes = OpsLocalEventsRes;
 
 export type OpsEventsStream = OpsLocalEventsRes;
 
-export enum VerdictType {
-  Pass = "pass",
-  Fail = "fail",
-  Review = "review",
-}
-
 export type ResultsLocalResultItem = {
   id: string;
-  verdict: VerdictType;
+  verdict: "pass" | "fail" | "review";
   score: number;
 };
 
