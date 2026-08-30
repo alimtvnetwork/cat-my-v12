@@ -18,6 +18,8 @@ import { SeedResetHistorySection } from "@/components/diagnostics/SeedResetHisto
 import { SeedGapCheckSection } from "@/components/diagnostics/SeedGapCheckSection";
 import { toIntId } from "@/lib/rules/rule-id-alias";
 import { ERROR_CODE_LABEL } from "@/types/errors/ErrorCode";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/diagnostics")({
   head: () => ({
@@ -40,8 +42,10 @@ function DiagnosticsPage() {
     setHomeError(getHomeError());
   }, []);
 
-  return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-hmi-4 p-hmi-4 text-ca-ink">
+  const { mode } = useUiMode();
+
+  const body = (
+    <div className="mx-auto flex max-w-5xl flex-col gap-hmi-4 p-hmi-4 text-ca-ink">
       <header className="flex items-center justify-between gap-hmi-3">
         <h1 className="text-hmi-header font-black uppercase tracking-wider">Memory Diagnostics</h1>
         <StatusPill ok={r.ok} />
@@ -90,9 +94,24 @@ function DiagnosticsPage() {
           empty="No spec/**/00-overview.md files matched. Verify the spec/ tree."
         />
       </Section>
-    </main>
+    </div>
   );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="diagnostics"
+        title="Memory Diagnostics"
+        subtitle={`Loaded at ${r.loadedAt}`}
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{body}</div>
+      </StandardAppShell>
+    );
+  }
+
+  return <main className="mx-auto flex max-w-5xl flex-col gap-hmi-4 p-hmi-4 text-ca-ink">{body}</main>;
 }
+
 
 function StatusPill({ ok }: { ok: boolean }) {
   const cls = ok ? "bg-ca-ok/20 border-ca-ok text-ca-ok" : "bg-ca-ng/20 border-ca-ng text-ca-ng";

@@ -34,6 +34,8 @@ import { SkeletonLine } from "@/components/ui/skeleton-primitives";
 import { useSeededEmptyState } from "@/lib/seed/useSeededSurfaces";
 import { useSeededEmptyStateAction } from "@/lib/seed/useSeededEmptyStateAction";
 import { toIntParam } from "@/lib/ids/int-alias";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 function useProjectStoreHydrated(): boolean {
   const [hydrated, setHydrated] = useState<boolean>(
@@ -350,9 +352,10 @@ function ProjectsIndex() {
     setDeleteFor(null);
   }
 
-  return (
-    <HmiShell title="Projects">
-      <SectionTopBar section={SectionIdType.Home} active="projects" />
+  const { mode } = useUiMode();
+
+  const mainContent = (
+    <>
       <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
         <div className="mx-auto w-full max-w-5xl">
           <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
@@ -369,6 +372,7 @@ function ProjectsIndex() {
                 className="inline-flex shrink-0 cursor-pointer items-center gap-hmi-2 rounded-md border border-ca-border bg-ca-panel-2/80 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink transition hover:-translate-y-px hover:border-ca-select hover:bg-ca-panel-2 focus-within:outline focus-within:outline-2 focus-within:outline-ca-focus"
                 aria-label="Import project from JSON or YAML"
               >
+
                 <Upload aria-hidden size={16} />
                 Import project
                 <input
@@ -871,9 +875,29 @@ function ProjectsIndex() {
           </div>
         </div>
       ) : null}
+    </>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="projects"
+        title="Projects Database"
+        subtitle={hydrated ? `${list.length} / ${totalCount} projects` : "Loading..."}
+      >
+        {mainContent}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <HmiShell title="Projects">
+      <SectionTopBar section={SectionIdType.Home} active="projects" />
+      {mainContent}
     </HmiShell>
   );
 }
+
 
 function RowIconButton({
   Icon,

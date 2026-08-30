@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SetupTiles } from "@/components/app-shell/SetupTiles";
 import { LightingReadout } from "@/components/app-shell/LightingReadout";
 import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/setup/")({
   head: () => ({
     meta: [
-      // Titlebar/head titles across /setup use Home's "Control Automation, X"
-      // format so tab titles read consistently between the hub and its subroutes.
       { title: "Control Automation, Setup" },
       {
         name: "description",
@@ -19,14 +19,11 @@ export const Route = createFileRoute("/setup/")({
   component: SetupIndex,
 });
 
+
 function SetupIndex() {
-  // Plan 75 step 12 (Issue 09): full-bleed canvas landing hub. Uses only
-  // design tokens (--ca-*) for surfaces, groups content in a single
-  // scroll region, and gives the header a subtle bordered chrome so the
-  // hierarchy reads "hub header, tiles, lighting readout" instead of a
-  // stack of ungrouped sections. `/setup/rules`, `/setup/roi`, and
-  // `/setup/reference` remain the full editor surfaces.
-  return (
+  const { mode } = useUiMode();
+
+  const content = (
     <main className="min-h-[calc(100vh-3.5rem)] bg-ca-canvas">
       <div
         role="region"
@@ -56,4 +53,19 @@ function SetupIndex() {
       </section>
     </main>
   );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Setup Hub"
+        subtitle="Configure camera, inspection rules, ROI, and lighting"
+      >
+        {content}
+      </StandardAppShell>
+    );
+  }
+
+  return content;
 }
+

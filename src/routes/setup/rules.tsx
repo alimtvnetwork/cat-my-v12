@@ -50,6 +50,8 @@ import {
 import { toast } from "sonner";
 import { SectionTopBar } from "@/components/nav/SectionTopBar";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 import {
   RuleCycleError,
   RuleReferencedError,
@@ -178,7 +180,9 @@ function SetupRulesPage() {
   const { all, save, remove } = library;
   const rules = useMemo(() => library.all.filter((row) => row.isCategory !== true), [library.all]);
   const navigate = useNavigate();
+  const { mode } = useUiMode();
   const [query, setQuery] = useState("");
+
   const [sort, setSort] = useState<SortKind>(SortKindType.Name);
   const [status, setStatus] = useState<StatusFilter>(initialStatus ?? StatusFilterType.Any);
   const [creating, setCreating] = useState(false);
@@ -494,12 +498,9 @@ function SetupRulesPage() {
     return <Outlet />;
   }
 
-  return (
-    <div
-      className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink"
-      data-hydrated={hydrated ? "true" : "false"}
-    >
-      <SectionTopBar section={SectionIdType.Home} active="setup" />
+  const rulesBody = (
+
+    <>
       <div className="border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-3">
         <div className="flex flex-wrap items-center justify-between gap-hmi-3">
           <div className="min-w-0">
@@ -531,6 +532,7 @@ function SetupRulesPage() {
           </div>
         </div>
       </div>
+
 
       <div className="flex flex-wrap items-center gap-hmi-3 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
         <div
@@ -712,9 +714,32 @@ function SetupRulesPage() {
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
         sourceConditions={dialog?.mode === "duplicate" ? dialog.source.conditions : undefined}
       />
+    </>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Rules Library"
+        subtitle={`${rules.length} inspection rules configured`}
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{rulesBody}</div>
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <div
+      className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink"
+      data-hydrated={hydrated ? "true" : "false"}
+    >
+      <SectionTopBar section={SectionIdType.Home} active="setup" />
+      {rulesBody}
     </div>
   );
 }
+
 
 import { RuleKindBadge } from "@/components/rules/RuleKindBadge";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";

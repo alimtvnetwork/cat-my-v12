@@ -18,7 +18,9 @@ import type { RuleId } from "@/lib/rules/model";
 import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
+import { StandardInspectionToolDispatcher } from "@/components/vision/standard/tools/StandardInspectionToolDispatcher";
 import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
+
 import {
   createDefaultPatternSearchSettings,
   PatternSearchSettings,
@@ -189,7 +191,9 @@ function RuleEditorRoute() {
       {rule && !rule.isCategory ? (
         <div className="flex flex-1 flex-col min-h-0">
           {mode === UiModeType.Standard ? (
-            <StandardPatternSearch
+            <StandardInspectionToolDispatcher
+              ruleName={rule.name}
+              toolType={(rule.conditions?.[0] as any)?.toolType}
               settings={settings}
               onChange={setSettings}
               onEvaluate={onEvaluate}
@@ -203,6 +207,7 @@ function RuleEditorRoute() {
             <ModernPatternSearch settings={settings} onChange={setSettings} />
           )}
         </div>
+
       ) : rule ? null : (
         <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">
           Rule was deleted or the link is stale.

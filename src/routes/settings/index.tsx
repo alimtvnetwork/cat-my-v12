@@ -55,6 +55,8 @@ import {
   type HeaderDensity,
 } from "@/lib/stores/ui-prefs-store";
 import { FlavorToggle } from "@/components/theme/FlavorToggle";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 // Spec 39 §10 + 27.Operator.Id (Q-07): single operator identity persisted as config.
 // Keys include the historical `ca-hmi:` namespace (previously injected by
@@ -460,22 +462,14 @@ function SettingsIndex() {
       });
   };
 
-  return (
-    <HmiShell
-      program="Program 01"
-      title="Settings"
-      actionBarLeft={
-        <Link
-          to="/"
-          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink"
-        >
-          Home
-        </Link>
-      }
-    >
-      <div className="flex-1 overflow-auto">
-        <div className="mx-auto w-full max-w-6xl p-hmi-6">
-          <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
+  const { mode } = useUiMode();
+
+  const content = (
+    <div className="flex-1 overflow-auto">
+      <div className="mx-auto w-full max-w-6xl p-hmi-6">
+
+        <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
+
             <div className="min-w-0">
               <h1 className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
                 Settings
@@ -880,9 +874,39 @@ function SettingsIndex() {
           </div>
         </div>
       </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+
+    return (
+      <StandardAppShell
+        activeNav="settings"
+        title="System Settings"
+        subtitle="Device, capture, operator and retention configuration"
+      >
+        {content}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <HmiShell
+      program="Program 01"
+      title="Settings"
+      actionBarLeft={
+        <Link
+          to="/"
+          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink"
+        >
+          Home
+        </Link>
+      }
+    >
+      {content}
     </HmiShell>
   );
 }
+
 
 function DataSourceCard() {
   const source = useDataSource();

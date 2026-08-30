@@ -10,6 +10,8 @@ import { showToastError } from "@/lib/errors/notify";
 import { createFunctionLibraryStore, type LibraryFailure } from "@/lib/functions/library-store";
 import { exportLibraryJson, importLibraryJson, type FunctionEntry } from "@/lib/functions/library";
 import { formatCodedError, formatCodedErrors } from "@/lib/errors/format";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/setup/functions")({
   component: SetupFunctionsPage,
@@ -133,22 +135,20 @@ function SetupFunctionsPage() {
     }
   }
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex flex-col gap-hmi-1 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
-        <h1 className="text-hmi-header text-ca-ink">Functions</h1>
-        <p className="text-hmi-caption text-ca-ink-muted">User-authored JS used by chain-events</p>
-      </header>
-      <div className="flex flex-1 min-h-0">
-        <aside className="flex w-72 flex-col border-r border-ca-border bg-ca-panel-2">
-          <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
-            <button
-              type="button"
-              onClick={createNew}
-              className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-            >
-              <Plus size={14} /> New
-            </button>
+  const { mode } = useUiMode();
+
+  const body = (
+    <div className="flex flex-1 min-h-0">
+      <aside className="flex w-72 flex-col border-r border-ca-border bg-ca-panel-2">
+        <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
+          <button
+            type="button"
+            onClick={createNew}
+            className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
+          >
+            <Plus size={14} /> New
+          </button>
+
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -258,7 +258,30 @@ function SetupFunctionsPage() {
             </div>
           )}
         </main>
-      </div>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Functions Library"
+        subtitle="User-authored JS used by chain-events"
+      >
+        {body}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <header className="flex flex-col gap-hmi-1 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
+        <h1 className="text-hmi-header text-ca-ink">Functions</h1>
+        <p className="text-hmi-caption text-ca-ink-muted">User-authored JS used by chain-events</p>
+      </header>
+      {body}
     </div>
   );
 }
+

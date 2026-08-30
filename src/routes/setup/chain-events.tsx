@@ -24,6 +24,8 @@ import {
 } from "@/lib/functions/chain-events";
 import { useProjectStore } from "@/lib/projects/store";
 import { formatCodedError, formatCodedErrors } from "@/lib/errors/format";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/setup/chain-events")({
   component: SetupChainEventsPage,
@@ -178,24 +180,13 @@ function SetupChainEventsPage() {
     return { byTrigger, perRule };
   }, [events]);
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex flex-col gap-hmi-1 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
-        <h1 className="text-hmi-header text-ca-ink">Chain events</h1>
-        <p className="text-hmi-caption text-ca-ink-muted">
-          Bind functions to ruleset / per-rule triggers. {events.events.length} event
-          {events.events.length === 1 ? "" : "s"} bound.
-          {integrity.length > 0 ? (
-            <span className="ml-hmi-2 inline-flex items-center gap-hmi-1 text-ca-ng">
-              <AlertTriangle size={12} aria-hidden />
-              {integrity.length} dangling
-            </span>
-          ) : null}
-        </p>
-      </header>
-      <div className="flex flex-1 min-h-0">
-        <aside className="flex w-80 flex-col border-r border-ca-border bg-ca-panel-2">
-          <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
+  const { mode } = useUiMode();
+
+  const body = (
+    <div className="flex flex-1 min-h-0">
+      <aside className="flex w-80 flex-col border-r border-ca-border bg-ca-panel-2">
+        <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
+
             <button
               type="button"
               onClick={createNew}
@@ -388,7 +379,39 @@ function SetupChainEventsPage() {
             </div>
           )}
         </main>
-      </div>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Chain Events"
+        subtitle={`Bind functions to ruleset / per-rule triggers (${events.events.length} bound)`}
+      >
+        {body}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <header className="flex flex-col gap-hmi-1 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
+        <h1 className="text-hmi-header text-ca-ink">Chain events</h1>
+        <p className="text-hmi-caption text-ca-ink-muted">
+          Bind functions to ruleset / per-rule triggers. {events.events.length} event
+          {events.events.length === 1 ? "" : "s"} bound.
+          {integrity.length > 0 ? (
+            <span className="ml-hmi-2 inline-flex items-center gap-hmi-1 text-ca-ng">
+              <AlertTriangle size={12} aria-hidden />
+              {integrity.length} dangling
+            </span>
+          ) : null}
+        </p>
+      </header>
+      {body}
     </div>
   );
 }
+
