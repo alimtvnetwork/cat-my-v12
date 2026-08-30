@@ -40,7 +40,7 @@ MIGRATIONS_ROOT = Path(__file__).resolve().parents[2] / "db" / "migrations"
 # the assertions - if the ownership matrix changes, update the spec first
 # and then this list; the test is the enforcement point.
 ROOT_TABLES = {"CliInvocation", "Device", "CaptureSession"}
-TASK_TABLES = {"Capture", "Frame", "Result", "ResultDetail", "IpcMessage", "RunSession", "RuleResult", "FrameArtifact"}
+TASK_TABLES = {"Capture", "Frame", "Result", "ResultDetail", "IpcMessage", "RunSession", "RuleResult", "FrameArtifact", "ReferenceImage"}
 RULES_TABLES: set[str] = set()  # no rules migrations yet as of Step 37
 
 

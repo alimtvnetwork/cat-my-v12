@@ -41,15 +41,24 @@ from BE.cli.worker.subcommands import version as _version
 def _configure_probe(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--provider",
-        choices=["inmemory", "daheng", "replay"],
-        default="inmemory",
+        choices=["memory", "vendor", "inmemory", "daheng", "replay"],
+        default="memory",
         help="Which CameraFacade to enumerate.",
     )
 
 
 def _handle_probe(ns: argparse.Namespace, context: SessionCtx) -> list[dict[str, Any]]:
+    if ns.provider == "vendor":
+        from BE.errors.apperror import AppError
+        from BE.errors.codes import ErrorCode
+        raise AppError(
+            ErrorCode.E_CLI_UNSUPPORTED_HOST,
+            "vendor CameraFacade not wired yet (Plan 90 Phase 12)",
+            details={"Provider": "vendor"},
+        )
     from BE.sdk_facade import get_camera_facade
-    facade = get_camera_facade(ns.provider)
+    provider_name = "inmemory" if ns.provider in {"memory", "inmemory"} else ns.provider
+    facade = get_camera_facade(provider_name)
     devices = facade.list_devices()
     context.logger.log(
         "INFO", "probe.enumerated",

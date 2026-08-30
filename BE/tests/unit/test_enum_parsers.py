@@ -20,7 +20,7 @@ def test_trigger_mode_invalid_value():
 
 def test_trigger_source_valid_values():
     assert TriggerSource("Software") == TriggerSource.Software
-    assert TriggerSource("Line1") == TriggerSource.Line1
+    assert TriggerSource("Line0") == TriggerSource.Line0
 
 
 def test_pixel_format_valid_values():

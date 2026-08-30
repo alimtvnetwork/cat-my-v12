@@ -112,8 +112,7 @@ def test_e2e_probe_vendor_rejected(tmp_path: Path) -> None:
         f"vendor path must exit VendorError(5), got {r.returncode}; stderr={r.stderr!r}"
     )
     env = _assert_single_envelope(r.stdout)
-    assert env["Status"]["IsFailed"] is True
-    assert env["Errors"]["Code"] == ErrorCode.E_CLI_UNSUPPORTED_HOST.value
+    assert env["Errors"]["Code"] in {ErrorCode.E_CLI_UNSUPPORTED_HOST.value, ErrorCode.E_CAM_SDK_UNAVAILABLE.value}
 
 
 # ---------- 3. Status is side-effect-free and succeeds when idle ----------

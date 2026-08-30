@@ -71,19 +71,23 @@ class AppError(Exception):
         module: str,
         message: str | None = None,
         code: ErrorCode = ErrorCode.E_BE_NOT_FOUND,
+        details: dict[str, Any] | None = None,
         cause: BaseException | None = None,
     ) -> AppError:
         """Create a file-path error satisfying the Code Red schema constraint."""
         msg = message or f"{operation} failed on {path}: {reason}"
+        merged_details = {
+            "path": path,
+            "operation": operation,
+            "reason": reason,
+            "module": module,
+        }
+        if details:
+            merged_details.update(details)
         return cls(
             code=code,
             message=msg,
-            details={
-                "path": path,
-                "operation": operation,
-                "reason": reason,
-                "module": module,
-            },
+            details=merged_details,
             cause=cause,
         )
 

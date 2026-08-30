@@ -46,10 +46,16 @@ def _clip_to_roi(image: np.ndarray, roi: BoundingBox | None) -> np.ndarray:
 
 def _to_grayscale(image: np.ndarray) -> np.ndarray:
     """Convert BGR/RGB image to grayscale."""
-    import cv2  # type: ignore
     if len(image.shape) == 2:
         return image
-    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+        import cv2  # type: ignore
+        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    except ImportError:
+        import numpy as np
+        if image.shape[2] >= 3:
+            return (0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]).astype(np.uint8)
+        return image[:, :, 0]
 
 
 def _match_pattern(
@@ -149,20 +155,30 @@ async def evaluate_grayscale_tolerance(
     threshold: float,
 ) -> ConfidenceResult:
     """Compare grayscale histograms with tolerance."""
-    import cv2
     import numpy as np
 
     def _run() -> ConfidenceResult:
-        ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
-        ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_GRAYSCALE)
-        smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_GRAYSCALE)
+        try:
+            import cv2
+            ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
+            ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_GRAYSCALE)
+            smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
+            smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_GRAYSCALE)
+        except ImportError:
+            ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
+            smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
+            ref_img = ref_arr
+            smp_img = smp_arr
 
         if ref_img is None or smp_img is None:
             return ConfidenceResult(score=0.0, is_pass=False, label="decode_error")
 
-        ref_clipped = _clip_to_roi(ref_img, roi)
-        smp_clipped = _clip_to_roi(smp_img, roi)
+        if roi is not None and hasattr(ref_img, "ndim") and ref_img.ndim >= 2:
+            ref_clipped = _clip_to_roi(ref_img, roi)
+            smp_clipped = _clip_to_roi(smp_img, roi)
+        else:
+            ref_clipped = ref_img
+            smp_clipped = smp_img
 
         diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
         mean_diff = float(np.mean(diff))

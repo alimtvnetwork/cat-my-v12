@@ -98,8 +98,12 @@ class DahengCameraFacade(CameraFacade):
     def start_stream(self) -> None:
         if not self._handle:
             raise AppError.for_file(
-                file_path=__file__, code=ErrorCode.E_CAM_NOT_CONNECTED,
-                message="Camera not opened", reason="start_stream"
+                reason="CameraNotOpened",
+                path=__file__,
+                operation="StartStream",
+                module="daheng_facade",
+                code=ErrorCode.E_CAM_NOT_CONNECTED,
+                message="Camera not opened",
             )
         self._streaming = True
 
@@ -111,8 +115,12 @@ class DahengCameraFacade(CameraFacade):
     def grab(self, timeout_ms: int) -> Frame:
         if not self._handle:
             raise AppError.for_file(
-                file_path=__file__, code=ErrorCode.E_CAM_NOT_CONNECTED,
-                message="Camera not opened", reason="grab"
+                reason="CameraNotOpened",
+                path=__file__,
+                operation="Grab",
+                module="daheng_facade",
+                code=ErrorCode.E_CAM_NOT_CONNECTED,
+                message="Camera not opened",
             )
         env = self._with_reconnect(trigger_once, self._handle, timeout_ms)
         h, w = env.data.shape[:2] if hasattr(env.data, 'shape') else (0, 0)
@@ -158,8 +166,12 @@ class DahengCameraFacade(CameraFacade):
     def read_line_status(self, line: str) -> bool:
         if not self._handle:
             raise AppError.for_file(
-                file_path=__file__, code=ErrorCode.E_CAM_NOT_CONNECTED,
-                message="Camera not opened", reason="read_line_status"
+                reason="CameraNotOpened",
+                path=__file__,
+                operation="ReadLineStatus",
+                module="daheng_facade",
+                code=ErrorCode.E_CAM_NOT_CONNECTED,
+                message="Camera not opened",
             )
         return self._with_reconnect(read_line, self._handle, line)
 

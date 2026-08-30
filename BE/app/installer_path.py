@@ -83,7 +83,9 @@ def default_link_dir(platform: LinkPlatform) -> Path:
         base_env = os.environ.get("LOCALAPPDATA")
         base = Path(base_env) if base_env else Path.home() / "AppData" / "Local"
         return base / "vision-app" / "bin"
-    return Path.home() / ".local" / "share" / "vision-app" / "bin"
+    home_env = os.environ.get("HOME")
+    home = Path(home_env) if home_env else Path.home()
+    return home / ".local" / "share" / "vision-app" / "bin"
 
 
 def _shim_filename(platform: LinkPlatform, exe_name: str) -> str:
