@@ -72,7 +72,7 @@ Present at `app/supervisor/boot.py:71-91`.
 
 Source: `.lovable/memory/02-naming.md`.
 
-1. `spec/22-db/` reflects current naming (snake_case tables, singular vs plural rule, timestamp columns, RLS grant order).
+1. `spec/23-app-db/` reflects current naming (snake_case tables, singular vs plural rule, timestamp columns, RLS grant order).
 2. No `app/**` or `src/**` code changed.
 3. Cross-links from `.lovable/memory/02-naming.md` to the refreshed spec sections.
 

@@ -152,7 +152,7 @@ All codes MUST be registered in `spec/03-error-manage/03-error-code-registry/` u
 
 ## 7. Worker-side persistence
 
-> **Tier correction (FU-5, applied 2026-05-04):** `WorkerUpdateInstruction` is **worker-wide**, not company-scoped, so it lives in the **Settings tier** — NOT the App tier. Authority: [`spec/19-main-worker-service/11-split-db-tier-reconciliation.md`](../19-main-worker-service/11-split-db-tier-reconciliation.md) §5. Earlier drafts of this file placed it in the App tier; that placement is now retracted.
+> **Tier correction (FU-5, applied 2026-05-04):** `WorkerUpdateInstruction` is **worker-wide**, not company-scoped, so it lives in the **Settings tier** — NOT the App tier. Authority: `spec/19-main-worker-service/11-split-db-tier-reconciliation.md` §5. Earlier drafts of this file placed it in the App tier; that placement is now retracted.
 
 Worker stores each JID in the **Settings tier** DB (per `spec/05-split-db-architecture/`; concrete tier mapping in `spec/19/11-split-db-tier-reconciliation.md` §5):
 

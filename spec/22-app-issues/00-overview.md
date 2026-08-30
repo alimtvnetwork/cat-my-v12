@@ -14,7 +14,7 @@ This folder is for **bugs, ambiguities, and defects** discovered during developm
 ## Not in scope
 
 - **Audit / consistency reports** live in [`spec/25-app-audit/`](../25-app-audit/00-overview.md). Do not add `consistency-*.md` files here.
-- **Forward-looking feature specs** live in [`spec/21-app/`](../21-app/00-overview.md). v2 vendor and discovery specs were merged into `21-app/6x-*`.
+- **Forward-looking feature specs** live in [`spec/21-app/`](../21-app/04-overview.md). v2 vendor and discovery specs were merged into `21-app/6x-*`.
 - **Cross-cutting error taxonomy** lives in `spec/21-app/40-error-manage.md`.
 
 ## Contents

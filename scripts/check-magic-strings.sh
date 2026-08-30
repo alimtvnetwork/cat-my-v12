@@ -21,9 +21,14 @@ if [ "${1:-}" = "--strict" ] || [ "${CHECK_MAGIC_STRINGS_STRICT:-0}" = "1" ]; th
   STRICT=1
 fi
 
+USE_RG=1
 if ! command -v rg >/dev/null 2>&1; then
-  echo "check-magic-strings: ripgrep (rg) is required" >&2
-  exit 2
+  if command -v git >/dev/null 2>&1; then
+    USE_RG=0
+  else
+    echo "check-magic-strings: ripgrep (rg) or git is required" >&2
+    exit 2
+  fi
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -43,8 +48,11 @@ violations=0
 for entry in "${PATTERNS[@]}"; do
   label="${entry%%|*}"
   regex="${entry#*|}"
-  # rg exits 1 when no matches: swallow that but keep other errors.
-  matches=$(rg -n --no-heading -e "$regex" "${SCOPE[@]}" || true)
+  if [ "$USE_RG" = "1" ]; then
+    matches=$(rg -n --no-heading -e "$regex" "${SCOPE[@]}" || true)
+  else
+    matches=$(git grep -n -E -e "$regex" -- 'src/**' ':(exclude)src/lib/constants/**' ':(exclude)src/routeTree.gen.ts' ':(exclude)src/**/__tests__/**' || true)
+  fi
   if [ -n "$matches" ]; then
     echo "== $label violations =="
     echo "$matches"

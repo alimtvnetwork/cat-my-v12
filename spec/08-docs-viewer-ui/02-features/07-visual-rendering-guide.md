@@ -13,6 +13,7 @@ This document is a **complete implementation reference** for how the docs viewer
 
 ---
 
+<spec-placeholder reason="Visual example screenshots to be captured when docs viewer is deployed">
 ## Visual Examples Gallery
 
 ### Full Page — Dark Mode
@@ -108,6 +109,7 @@ Same lift + ring glow, but the muted background contrasts differently against th
 The underline sweep animation and table row hover (inset 3px left bar in primary color) are visible together in a table context.
 
 ![Link hover light](../../../public/images/guide/15-link-hover-light.png)
+</spec-placeholder>
 
 ---
 
