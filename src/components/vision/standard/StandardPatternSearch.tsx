@@ -7,16 +7,91 @@ import { StandardToolPanel } from "./StandardToolPanel";
 import { StandardActionBar } from "./StandardActionBar";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 
+export interface StandardPatternSearchProps {
+  settings: PatternSearchSettings;
+  onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onEvaluate?: () => void;
+  onCancel?: () => void;
+  onOk?: () => void;
+  onSettings?: () => void;
+  onRegisterImage?: () => void;
+  onOriginPoint?: () => void;
+  onDisplay?: () => void;
+  onRefresh?: () => void;
+  onPreview?: () => void;
+}
+
 export function StandardPatternSearch({
   settings,
   onChange,
   onEvaluate,
-}: {
-  settings: PatternSearchSettings;
-  onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-  onEvaluate?: () => void;
-}): React.JSX.Element | null {
+  onCancel,
+  onOk,
+  onSettings,
+  onRegisterImage,
+  onOriginPoint,
+  onDisplay,
+  onRefresh,
+  onPreview,
+}: StandardPatternSearchProps): React.JSX.Element | null {
   const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
+
+  const handleCancel = onCancel ?? (() => {
+    if (typeof window !== "undefined" && window.location) {
+      window.location.href = "/setup/rules";
+    }
+  });
+
+  const handleOk = onOk ?? (() => {
+    if (typeof window !== "undefined" && window.location) {
+      window.location.href = "/setup/rules";
+    }
+  });
+
+  const handleSettings = onSettings ?? (() => {
+    if (typeof window !== "undefined" && window.location) {
+      window.location.href = "/settings";
+    }
+  });
+
+  const handleRegisterImage = onRegisterImage ?? (() => {
+    onChange((s) => ({
+      ...s,
+      referenceImage: {
+        ...s.referenceImage,
+        index: s.referenceImage.index + 1,
+      },
+    }));
+  });
+
+  const handleOriginPoint = onOriginPoint ?? (() => {
+    onChange((s) => ({
+      ...s,
+      view: { ...s.view, zoom: 100 },
+      searchRegion: {
+        ...s.searchRegion,
+        geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
+      },
+    }));
+  });
+
+  const handleDisplay = onDisplay ?? (() => {
+    setViewModes((prev) => ({
+      regions: !prev.regions,
+      results: !prev.results,
+      grid: !prev.grid,
+    }));
+  });
+
+  const handleRefresh = onRefresh ?? (() => {
+    onChange((s) => ({
+      ...s,
+      view: { ...s.view, zoom: 100 },
+    }));
+    onEvaluate?.();
+  });
+
+  const handlePreview = onPreview ?? onEvaluate;
 
   return (
     <div className="flex flex-col h-full bg-std-chrome overflow-x-auto text-std-text font-sans">
@@ -32,6 +107,7 @@ export function StandardPatternSearch({
               setSettings={onChange}
               viewModes={viewModes}
               setViewModes={setViewModes}
+              onRefresh={handleRefresh}
             />
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <div className="absolute top-3 left-3 z-10 pointer-events-auto">
@@ -47,10 +123,22 @@ export function StandardPatternSearch({
             maxSize="55%"
             className="border-l border-std-accent-active flex flex-col bg-std-panel text-std-text relative z-20"
           >
-            <StandardToolPanel settings={settings} setSettings={onChange} />
+            <StandardToolPanel
+              settings={settings}
+              setSettings={onChange}
+              onPreview={handlePreview}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
-        <StandardActionBar onEvaluate={onEvaluate} />
+        <StandardActionBar
+          onEvaluate={onEvaluate}
+          onCancel={handleCancel}
+          onOk={handleOk}
+          onSettings={handleSettings}
+          onRegisterImage={handleRegisterImage}
+          onOriginPoint={handleOriginPoint}
+          onDisplay={handleDisplay}
+        />
       </div>
     </div>
   );

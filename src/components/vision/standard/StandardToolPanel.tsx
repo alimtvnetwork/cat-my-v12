@@ -6,13 +6,21 @@ import { PlaceholderTabs } from "./tabs/PlaceholderTabs";
 import { ToolTitleBar } from "./ToolTitleBar";
 import { ToolTabs } from "./ToolTabs";
 
+export interface StandardToolPanelProps {
+  settings: PatternSearchSettings;
+  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onCancel?: () => void;
+  onOk?: () => void;
+  onPreview?: () => void;
+}
+
 export function StandardToolPanel({
   settings,
   setSettings,
-}: {
-  settings: PatternSearchSettings;
-  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}): React.JSX.Element | null {
+  onCancel,
+  onOk,
+  onPreview,
+}: StandardToolPanelProps): React.JSX.Element | null {
   const [activeTab, setActiveTab] = useState("Pattern Region");
 
   return (
@@ -22,10 +30,21 @@ export function StandardToolPanel({
 
       <div className="flex-1 overflow-y-auto">
         {activeTab === "Pattern Region" && (
-          <PatternRegionTab settings={settings} setSettings={setSettings} />
+          <PatternRegionTab
+            settings={settings}
+            setSettings={setSettings}
+            onCancel={onCancel}
+            onOk={onOk}
+          />
         )}
         {activeTab === "Search Region" && (
-          <SearchRegionTab settings={settings} setSettings={setSettings} />
+          <SearchRegionTab
+            settings={settings}
+            setSettings={setSettings}
+            onCancel={onCancel}
+            onOk={onOk}
+            onPreview={onPreview}
+          />
         )}
         {(activeTab === "Extract Colors" || activeTab === "Image Enhance") && (
           <PlaceholderTabs name={activeTab} />

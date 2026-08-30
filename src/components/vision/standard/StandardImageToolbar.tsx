@@ -16,19 +16,23 @@ import {
   MapPin,
 } from "lucide-react";
 
-export function StandardImageToolbar({
-  settings,
-  setSettings,
-  viewModes,
-  setViewModes,
-}: {
+export interface StandardImageToolbarProps {
   settings: PatternSearchSettings;
   setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   viewModes: { regions: boolean; results: boolean; grid: boolean };
   setViewModes: React.Dispatch<
     React.SetStateAction<{ regions: boolean; results: boolean; grid: boolean }>
   >;
-}): React.JSX.Element | null {
+  onRefresh?: () => void;
+}
+
+export function StandardImageToolbar({
+  settings,
+  setSettings,
+  viewModes,
+  setViewModes,
+  onRefresh,
+}: StandardImageToolbarProps): React.JSX.Element | null {
   const handleZoom = (delta: number) => {
     setSettings((s) => ({
       ...s,
@@ -36,6 +40,13 @@ export function StandardImageToolbar({
     }));
   };
   const handleFit = () => setSettings((s) => ({ ...s, view: { ...s.view, zoom: 100 } })); // TBD fit logic
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+      return;
+    }
+    setSettings((s) => ({ ...s, view: { ...s.view, zoom: 100 } }));
+  };
 
   return (
     <div className="flex items-center gap-4 bg-std-chrome p-2 border-b border-std-border text-sm shrink-0 min-w-0 overflow-x-auto select-none">
@@ -79,7 +90,12 @@ export function StandardImageToolbar({
         </select>
       </div>
 
-      <button type="button" className="p-1 hover:bg-std-secondary-action rounded" title="Refresh">
+      <button
+        type="button"
+        onClick={handleRefresh}
+        className="p-1 hover:bg-std-secondary-action rounded"
+        title="Refresh"
+      >
         <RefreshCw className="w-4 h-4 text-std-text" />
       </button>
 

@@ -34,13 +34,26 @@ export function ToolTitleBar({
       <div className="flex justify-end items-center px-2 py-1.5 bg-std-panel text-xs border-b border-std-border">
         <div className="flex items-center gap-2">
           <span className="text-std-text font-semibold">Reference Image</span>
-          <div className="bg-std-chrome border border-std-border px-2 py-1 rounded text-std-text font-mono flex items-center gap-2 cursor-pointer hover:border-std-text">
+          <button
+            type="button"
+            aria-label="Cycle reference image"
+            onClick={() =>
+              setSettings((s) => ({
+                ...s,
+                referenceImage: {
+                  ...s.referenceImage,
+                  index: (s.referenceImage.index % 10) + 1,
+                },
+              }))
+            }
+            className="bg-std-chrome border border-std-border px-2 py-1 rounded text-std-text font-mono flex items-center gap-2 cursor-pointer hover:border-std-text active:scale-95 transition-transform"
+          >
             <span>
               {settings.referenceImage.set} -{" "}
               {settings.referenceImage.index.toString().padStart(3, "0")}
             </span>
             <span className="text-[10px]">▼</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>

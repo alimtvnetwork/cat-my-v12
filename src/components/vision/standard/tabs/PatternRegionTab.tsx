@@ -3,14 +3,21 @@ import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { PatternShapes } from "@/domain/vision/pattern-search";
 import { ShapeType } from "@/domain/vision/shapes";
 
+export interface PatternRegionTabProps {
+  settings: PatternSearchSettings;
+  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onCancel?: () => void;
+  onOk?: () => void;
+}
+
 export function PatternRegionTab({
   settings,
   setSettings,
-}: {
-  settings: PatternSearchSettings;
-  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}): React.JSX.Element | null {
+  onCancel,
+  onOk,
+}: PatternRegionTabProps): React.JSX.Element | null {
   const [isEditingRegion, setIsEditingRegion] = useState(true);
+  const [isConditionsExpanded, setIsConditionsExpanded] = useState(true);
 
   return (
     <div className="flex flex-col text-ca-ink">
@@ -149,14 +156,22 @@ export function PatternRegionTab({
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <button
+              type="button"
               className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
-              onClick={() => setIsEditingRegion(false)}
+              onClick={() => {
+                setIsEditingRegion(false);
+                onCancel?.();
+              }}
             >
               Cancel
             </button>
             <button
+              type="button"
               className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
-              onClick={() => setIsEditingRegion(false)}
+              onClick={() => {
+                setIsEditingRegion(false);
+                onOk?.();
+              }}
             >
               OK
             </button>
@@ -166,12 +181,18 @@ export function PatternRegionTab({
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-ca-panel-2 px-2 py-1 border-b border-ca-border">
             <h3 className="font-semibold text-sm">Detection Conditions</h3>
-            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">
-              &gt;&gt;
+            <button
+              type="button"
+              aria-label="Toggle detection conditions panel"
+              onClick={() => setIsConditionsExpanded((prev) => !prev)}
+              className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm"
+            >
+              {isConditionsExpanded ? "<<" : ">>"}
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 p-3 text-sm">
+          {isConditionsExpanded && (
+            <div className="flex flex-col gap-4 p-3 text-sm">
             <div className="flex items-center justify-between">
               <span>Angle Range</span>
               <div className="flex items-center gap-1">
@@ -319,6 +340,7 @@ export function PatternRegionTab({
               </div>
             </div>
           </div>
+        )}
 
           <div className="flex justify-end p-2 border-t border-ca-border">
             <button

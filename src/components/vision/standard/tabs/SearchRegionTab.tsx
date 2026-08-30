@@ -3,24 +3,41 @@ import { PatternSearchSettings, DetectionColorType } from "@/domain/vision/patte
 import { PatternShapes, MaskShapes } from "@/domain/vision/pattern-search";
 import { ShapeType } from "@/domain/vision/shapes";
 
+export interface SearchRegionTabProps {
+  settings: PatternSearchSettings;
+  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onCancel?: () => void;
+  onOk?: () => void;
+  onPreview?: () => void;
+}
+
 export function SearchRegionTab({
   settings,
   setSettings,
-}: {
-  settings: PatternSearchSettings;
-  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}): React.JSX.Element | null {
+  onCancel,
+  onOk,
+  onPreview,
+}: SearchRegionTabProps): React.JSX.Element | null {
+  const [isSearchRegionExpanded, setIsSearchRegionExpanded] = React.useState(true);
+
   return (
     <div className="flex flex-col h-full text-ca-ink">
       <div className="flex flex-col flex-1 overflow-y-auto">
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-ca-panel-2 px-2 py-1 border-b border-ca-border">
             <h3 className="font-semibold text-sm">Search Region</h3>
-            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">
-              &gt;&gt;
+            <button
+              type="button"
+              aria-label="Toggle search region panel"
+              onClick={() => setIsSearchRegionExpanded((prev) => !prev)}
+              className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm"
+            >
+              {isSearchRegionExpanded ? "<<" : ">>"}
             </button>
           </div>
-          <div className="flex items-center justify-between p-3 text-sm">
+          {isSearchRegionExpanded && (
+            <>
+              <div className="flex items-center justify-between p-3 text-sm">
             <span>Search Region</span>
             <select
               value={settings.searchRegion.shape}
@@ -142,7 +159,9 @@ export function SearchRegionTab({
               </div>
             )}
           </div>
-        </div>
+        </>
+      )}
+    </div>
 
         <div className="flex flex-col">
           <div className="flex items-center bg-ca-panel-2 px-2 py-1 border-y border-ca-border">
@@ -285,8 +304,10 @@ export function SearchRegionTab({
             </div>
             <div className="flex justify-end mt-1">
               <button
+                type="button"
                 className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm disabled:opacity-50"
                 disabled={!settings.imageRegion.enabled}
+                onClick={onPreview}
               >
                 Preview
               </button>
@@ -296,10 +317,18 @@ export function SearchRegionTab({
       </div>
 
       <div className="flex justify-end gap-2 p-2 border-t border-ca-border bg-ca-panel shrink-0">
-        <button className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm">
+        <button
+          type="button"
+          className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
+          onClick={onCancel}
+        >
           Cancel
         </button>
-        <button className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm">
+        <button
+          type="button"
+          className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
+          onClick={onOk}
+        >
           OK
         </button>
       </div>

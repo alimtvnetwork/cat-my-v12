@@ -45,4 +45,42 @@ describe("StandardActionBar", () => {
     fireEvent.click(evaluateButton);
     expect(onEvaluateMock).toHaveBeenCalledTimes(1);
   });
+
+  it("invokes action bar callbacks when clicked", () => {
+    const onOriginPoint = vi.fn();
+    const onDisplay = vi.fn();
+    const onRegisterImage = vi.fn();
+    const onSettings = vi.fn();
+    const onCancel = vi.fn();
+    const onOk = vi.fn();
+
+    render(
+      <StandardActionBar
+        onOriginPoint={onOriginPoint}
+        onDisplay={onDisplay}
+        onRegisterImage={onRegisterImage}
+        onSettings={onSettings}
+        onCancel={onCancel}
+        onOk={onOk}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.OriginPoint }));
+    expect(onOriginPoint).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.Display }));
+    expect(onDisplay).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.RegisterImage }));
+    expect(onRegisterImage).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.Settings }));
+    expect(onSettings).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.Cancel }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.Ok }));
+    expect(onOk).toHaveBeenCalledTimes(1);
+  });
 });

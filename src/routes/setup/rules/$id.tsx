@@ -139,6 +139,45 @@ function RuleEditorRoute() {
     }
   }, [rule, settings]);
 
+  const onCancel = React.useCallback(() => {
+    void navigate({ to: "/setup/rules" });
+  }, [navigate]);
+
+  const onOk = React.useCallback(async () => {
+    if (rule && !rule.isCategory) {
+      await save({
+        ...rule,
+        conditions: [settings as unknown as any],
+      });
+    }
+    void navigate({ to: "/setup/rules" });
+  }, [rule, settings, save, navigate]);
+
+  const onSettings = React.useCallback(() => {
+    void navigate({ to: "/settings" });
+  }, [navigate]);
+
+  const onRegisterImage = React.useCallback(() => {
+    setSettings((s) => ({
+      ...s,
+      referenceImage: {
+        ...s.referenceImage,
+        index: s.referenceImage.index + 1,
+      },
+    }));
+  }, []);
+
+  const onOriginPoint = React.useCallback(() => {
+    setSettings((s) => ({
+      ...s,
+      view: { ...s.view, zoom: 100 },
+      searchRegion: {
+        ...s.searchRegion,
+        geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
+      },
+    }));
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
       <SectionTopBar section={SectionIdType.Home} active="setup" />
@@ -154,6 +193,11 @@ function RuleEditorRoute() {
               settings={settings}
               onChange={setSettings}
               onEvaluate={onEvaluate}
+              onCancel={onCancel}
+              onOk={onOk}
+              onSettings={onSettings}
+              onRegisterImage={onRegisterImage}
+              onOriginPoint={onOriginPoint}
             />
           ) : (
             <ModernPatternSearch settings={settings} onChange={setSettings} />
