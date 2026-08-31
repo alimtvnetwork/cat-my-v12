@@ -37,49 +37,64 @@ export function StandardInspectionToolDispatcher(
 ): React.JSX.Element {
   const normalized = (props.toolType || props.ruleName || "").toLowerCase();
 
+  // 1. Area Tool
   if (normalized.includes("area")) {
     return <StandardAreaTool {...props} />;
   }
-  if (normalized.includes("shape") || normalized.includes("contour")) {
+  // 2. ShapeTrax3
+  if (normalized.includes("shape") || normalized.includes("trax") || normalized.includes("contour")) {
     return <StandardShapeTrax3Tool {...props} />;
   }
-  if (normalized.includes("width") && normalized.includes("profile")) {
+  // 3. Profile Width
+  if (normalized.includes("profile") && (normalized.includes("width") || normalized.includes("caliper") || normalized.includes("thickness"))) {
     return <StandardProfileWidthTool {...props} />;
   }
-  if (normalized.includes("pitch")) {
-    return <StandardEdgePitchTool {...props} />;
-  }
-  if (normalized.includes("pair")) {
-    return <StandardEdgePairsTool {...props} />;
-  }
-  if (normalized.includes("width") || normalized.includes("gap")) {
-    return <StandardEdgeWidthTool {...props} />;
-  }
-  if (normalized.includes("edge") || normalized.includes("position") || normalized.includes("pin")) {
-    return <StandardEdgePositionTool {...props} />;
-  }
-  if (normalized.includes("defect") || normalized.includes("scratch") || normalized.includes("flaw")) {
-    return <StandardDefectTool {...props} />;
-  }
-  if (normalized.includes("gray") && normalized.includes("blob")) {
-    return <StandardGrayscaleBlobTool {...props} />;
-  }
-  if (normalized.includes("blob") || normalized.includes("particle") || normalized.includes("count")) {
-    return <StandardBlobTool {...props} />;
-  }
+  // 4. Profile Position
   if (normalized.includes("profile")) {
     return <StandardProfilePositionTool {...props} />;
   }
-  if (normalized.includes("intensity") || normalized.includes("brightness") || normalized.includes("luminance")) {
+  // 5. Edge Pitch
+  if (normalized.includes("pitch") || normalized.includes("comb") || normalized.includes("connector")) {
+    return <StandardEdgePitchTool {...props} />;
+  }
+  // 6. Edge Pairs
+  if (normalized.includes("pair")) {
+    return <StandardEdgePairsTool {...props} />;
+  }
+  // 7. Edge Width
+  if (normalized.includes("width") || normalized.includes("gap") || normalized.includes("caliper")) {
+    return <StandardEdgeWidthTool {...props} />;
+  }
+  // 8. Edge Position
+  if (normalized.includes("edge") || normalized.includes("position") || normalized.includes("pin") || normalized.includes("line")) {
+    return <StandardEdgePositionTool {...props} />;
+  }
+  // 9. Defect
+  if (normalized.includes("defect") || normalized.includes("scratch") || normalized.includes("flaw") || normalized.includes("stain")) {
+    return <StandardDefectTool {...props} />;
+  }
+  // 10. Grayscale Blob
+  if ((normalized.includes("gray") || normalized.includes("grey")) && (normalized.includes("blob") || normalized.includes("particle"))) {
+    return <StandardGrayscaleBlobTool {...props} />;
+  }
+  // 11. Binary Blob
+  if (normalized.includes("blob") || normalized.includes("particle") || normalized.includes("count")) {
+    return <StandardBlobTool {...props} />;
+  }
+  // 12. Intensity / Brightness
+  if (normalized.includes("intensity") || normalized.includes("brightness") || normalized.includes("luminance") || normalized.includes("mean")) {
     return <StandardIntensityTool {...props} />;
   }
-  if (normalized.includes("ocr") || normalized.includes("text") || normalized.includes("font") || normalized.includes("char")) {
+  // 13. OCR2
+  if (normalized.includes("ocr") || normalized.includes("text") || normalized.includes("font") || normalized.includes("char") || normalized.includes("string")) {
     return <StandardOcr2Tool {...props} />;
   }
-  if (normalized.includes("code") || normalized.includes("barcode") || normalized.includes("qr") || normalized.includes("matrix")) {
+  // 14. 1D / 2D Code Reader
+  if (normalized.includes("code") || normalized.includes("barcode") || normalized.includes("qr") || normalized.includes("matrix") || normalized.includes("datamatrix") || normalized.includes("1d")) {
     return <StandardCodeReaderTool {...props} />;
   }
 
-  // Default to Standard Pattern Search
+  // 15. Default: Standard Pattern Search
   return <StandardPatternSearch {...props} />;
 }
+

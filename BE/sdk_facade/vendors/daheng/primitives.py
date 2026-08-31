@@ -78,7 +78,7 @@ def open_by_serial(serial: str) -> Iterator[DahengHandle]:
             message=f"Failed to open Daheng camera by serial {serial}",
             details={"serial": serial, "error": str(e)},
             cause=e,
-        )
+        ) from e
 
     handle = DahengHandle(device)
     _open_handles.add(handle)
@@ -107,7 +107,7 @@ def read_feature(handle: DahengHandle, node: str) -> Any:
             message=f"Failed to read feature {node}",
             details={"node": node, "error": str(e)},
             cause=e,
-        )
+        ) from e
 
 
 @map_gxipy_errors
@@ -128,7 +128,7 @@ def write_feature(handle: DahengHandle, node: str, value: Any) -> None:
             message=f"Failed to write feature {node}",
             details={"node": node, "value": value, "error": str(e)},
             cause=e,
-        )
+        ) from e
 
 
 @map_gxipy_errors
@@ -209,7 +209,7 @@ def stop_stream(handle: DahengHandle) -> None:
             message="Failed to stop Daheng stream gracefully",
             details={"error": str(e)},
             cause=e,
-        )
+        ) from e
 
 
 @map_gxipy_errors
@@ -238,7 +238,7 @@ def trigger_once(handle: DahengHandle, timeout_ms: int = 1000) -> FrameEnvelope:
             message="Software trigger failed",
             details={"error": str(e)},
             cause=e,
-        )
+        ) from e
 
 
 @map_gxipy_errors

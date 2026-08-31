@@ -27,4 +27,4 @@ def load_gxipy() -> Any:
                 "remediation": "Verify that Daheng Galaxy drivers are installed and GENICAM_ROOT_V* env var is set. See README.md in this package."
             },
             cause=e,
-        )
+        ) from e

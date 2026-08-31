@@ -16,6 +16,9 @@ import { SectionTopBar } from "@/components/nav/SectionTopBar";
 import { useProjectStore, selectProject } from "@/lib/projects/store";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
+
 export const Route = createFileRoute("/projects/$projectId")({
   component: ProjectLayout,
   errorComponent: ProjectError,
@@ -27,6 +30,7 @@ function ProjectLayout() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const isHydrated = useProjectStoreHydrated();
   const project = useProjectStore((s) => selectProject(s, projectId));
+  const { mode } = useUiMode();
 
   if (!isHydrated) {
     return <ProjectLoading />;
@@ -37,6 +41,20 @@ function ProjectLayout() {
     console.warn("[projects/$projectId] project not found in store", { projectId });
 
     throw notFound();
+  }
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="projects"
+        title={project.name}
+        subtitle={`Project ID: ${projectId} · Active Segment: ${getProjectActive(pathname)}`}
+      >
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-ca-panel">
+          <Outlet />
+        </div>
+      </StandardAppShell>
+    );
   }
 
   return (
@@ -50,6 +68,7 @@ function ProjectLayout() {
     </HmiShell>
   );
 }
+
 
 function getProjectActive(pathname: string): string {
   if (pathname.endsWith("/camera")) return "camera";

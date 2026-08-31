@@ -56,7 +56,7 @@ def map_gxipy_errors(func: T) -> T:
                         "gxipy_message": getattr(e, "message", str(e)),
                     },
                     cause=e,
-                )
+                ) from e
             inc_counter("camera_error_total{code=unknown}")
             raise # Reraise if it's not a GxError
         finally:

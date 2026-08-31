@@ -11,6 +11,8 @@ import {
 } from "@/lib/stores/shortcuts-store";
 import { formatComboForDisplay } from "@/lib/shortcut-format";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/settings/shortcuts")({
   head: () => ({
@@ -36,10 +38,8 @@ function ShortcutsSettings() {
   const [error, setError] = useState<string | null>(null);
   const conflicts = useMemo(() => findShortcutConflicts(bindings), [bindings]);
   const conflictIds = useMemo(() => new Set(conflicts.flat()), [conflicts]);
+  const { mode } = useUiMode();
 
-  // Plan 81 step 11: searchable table. Query matches label, description,
-  // and formatted combo (so "shift+r" finds Reset even before the user
-  // types the action name).
   const [query, setQuery] = useState("");
   const visibleActions = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -61,7 +61,6 @@ function ShortcutsSettings() {
     setRecording(null);
   }, []);
 
-  // Escape cancels; Tab exits recording without capturing.
   const isIdle = !recording;
 
   useEffect(() => {
@@ -77,7 +76,7 @@ function ShortcutsSettings() {
 
       const combo = comboFromEvent(event);
 
-      if (!combo) return; // waiting for a non-modifier
+      if (!combo) return;
       event.preventDefault();
       setBinding(recording, combo);
       setError(null);
@@ -86,7 +85,135 @@ function ShortcutsSettings() {
     window.addEventListener("keydown", onKey, true);
 
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [recording, setBinding, stopRecording]);
+  }, [recording, setBinding, stopRecording, isIdle]);
+
+  const body = (
+    <div className="flex-1 overflow-auto p-hmi-4 space-y-hmi-4">
+      <section className="max-w-3xl space-y-hmi-2">
+        <h2 className="text-hmi-title uppercase tracking-wide text-ca-ink">Editor shortcuts</h2>
+        <p className="text-hmi-body text-ca-ink-muted">
+          Click a binding to record a new key. Escape cancels. Bindings are ignored while focus is
+          inside a text field so typing is never intercepted.
+        </p>
+        {conflicts.length > 0 && (
+          <div
+            role="alert"
+            className="rounded border border-ca-ng bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption text-ca-ng"
+          >
+            {conflicts.length === 1 ? "1 conflict" : `${conflicts.length} conflicts`}: multiple
+            actions share the same key. Only the first match will fire.
+          </div>
+        )}
+        {error && (
+          <div
+            role="alert"
+            className="rounded border border-ca-ng bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption text-ca-ng"
+          >
+            {error}
+          </div>
+        )}
+      </section>
+
+      <section className="max-w-3xl space-y-hmi-2">
+        <label className="flex items-center gap-hmi-2 rounded border border-ca-border bg-ca-panel px-hmi-3 py-hmi-2 focus-within:border-ca-select">
+          <Search size={14} aria-hidden className="text-ca-ink-muted" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search actions, descriptions, or keys"
+            aria-label="Search keyboard shortcuts"
+            className="w-full bg-transparent text-hmi-body text-ca-ink outline-none placeholder:text-ca-ink-muted"
+            data-testid="shortcuts-search"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="text-ca-ink-muted hover:text-ca-ink"
+            >
+              <X size={14} aria-hidden />
+            </button>
+          ) : null}
+        </label>
+        <div className="text-hmi-caption text-ca-ink-muted" aria-live="polite">
+          Showing {visibleActions.length} of {SHORTCUT_ACTIONS.length}
+        </div>
+        <div
+          role="table"
+          aria-label="Keyboard shortcuts"
+          className="overflow-hidden rounded border border-ca-border bg-ca-panel"
+        >
+          <div
+            role="row"
+            className="grid grid-cols-[minmax(0,1fr)_150px_120px] items-center gap-hmi-3 border-b border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted"
+          >
+            <span role="columnheader">Action</span>
+            <span role="columnheader">Shortcut</span>
+            <span role="columnheader" className="text-right">
+              Manage
+            </span>
+          </div>
+          {visibleActions.length === 0 ? (
+            <div className="px-hmi-3 py-hmi-4 text-hmi-body text-ca-ink-muted" role="row">
+              No shortcuts match "{query}".
+            </div>
+          ) : (
+            <ul className="divide-y divide-ca-border">
+              {visibleActions.map((spec) => {
+                const combo = bindings[spec.id];
+                const isRecording = recording === spec.id;
+                const inConflict = conflictIds.has(spec.id);
+
+                return (
+                  <Row
+                    key={spec.id}
+                    label={spec.label}
+                    description={spec.description}
+                    combo={combo}
+                    defaultCombo={spec.defaultCombo}
+                    isRecording={isRecording}
+                    inConflict={inConflict}
+                    onRecord={() => {
+                      setError(null);
+                      setRecording(spec.id);
+                    }}
+                    onCancel={stopRecording}
+                    onReset={() => reset(spec.id)}
+                  />
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Keyboard Shortcuts"
+        subtitle="Editor Keybindings & Custom Configurations"
+        actions={
+          <button
+            type="button"
+            onClick={() => {
+              resetAll();
+              setError(null);
+            }}
+            className="inline-flex items-center px-3 py-1.5 border border-ca-border bg-ca-panel text-ca-ink text-xs font-semibold rounded hover:bg-ca-panel-2"
+          >
+            Reset all to defaults
+          </button>
+        }
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{body}</div>
+      </StandardAppShell>
+    );
+  }
 
   return (
     <HmiShell
@@ -113,107 +240,7 @@ function ShortcutsSettings() {
         </button>
       }
     >
-      <div className="flex-1 overflow-auto p-hmi-4 space-y-hmi-4">
-        <section className="max-w-3xl space-y-hmi-2">
-          <h2 className="text-hmi-title uppercase tracking-wide text-ca-ink">Editor shortcuts</h2>
-          <p className="text-hmi-body text-ca-ink-muted">
-            Click a binding to record a new key. Escape cancels. Bindings are ignored while focus is
-            inside a text field so typing is never intercepted.
-          </p>
-          {conflicts.length > 0 && (
-            <div
-              role="alert"
-              className="rounded border border-ca-ng bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption text-ca-ng"
-            >
-              {conflicts.length === 1 ? "1 conflict" : `${conflicts.length} conflicts`}: multiple
-              actions share the same key. Only the first match will fire.
-            </div>
-          )}
-          {error && (
-            <div
-              role="alert"
-              className="rounded border border-ca-ng bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption text-ca-ng"
-            >
-              {error}
-            </div>
-          )}
-        </section>
-
-        <section className="max-w-3xl space-y-hmi-2">
-          <label className="flex items-center gap-hmi-2 rounded border border-ca-border bg-ca-panel px-hmi-3 py-hmi-2 focus-within:border-ca-select">
-            <Search size={14} aria-hidden className="text-ca-ink-muted" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search actions, descriptions, or keys"
-              aria-label="Search keyboard shortcuts"
-              className="w-full bg-transparent text-hmi-body text-ca-ink outline-none placeholder:text-ca-ink-muted"
-              data-testid="shortcuts-search"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Clear search"
-                className="text-ca-ink-muted hover:text-ca-ink"
-              >
-                <X size={14} aria-hidden />
-              </button>
-            ) : null}
-          </label>
-          <div className="text-hmi-caption text-ca-ink-muted" aria-live="polite">
-            Showing {visibleActions.length} of {SHORTCUT_ACTIONS.length}
-          </div>
-          <div
-            role="table"
-            aria-label="Keyboard shortcuts"
-            className="overflow-hidden rounded border border-ca-border bg-ca-panel"
-          >
-            <div
-              role="row"
-              className="grid grid-cols-[minmax(0,1fr)_150px_120px] items-center gap-hmi-3 border-b border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted"
-            >
-              <span role="columnheader">Action</span>
-              <span role="columnheader">Shortcut</span>
-              <span role="columnheader" className="text-right">
-                Manage
-              </span>
-            </div>
-            {visibleActions.length === 0 ? (
-              <div className="px-hmi-3 py-hmi-4 text-hmi-body text-ca-ink-muted" role="row">
-                No shortcuts match "{query}".
-              </div>
-            ) : (
-              <ul className="divide-y divide-ca-border">
-                {visibleActions.map((spec) => {
-                  const combo = bindings[spec.id];
-                  const isRecording = recording === spec.id;
-                  const inConflict = conflictIds.has(spec.id);
-
-                  return (
-                    <Row
-                      key={spec.id}
-                      label={spec.label}
-                      description={spec.description}
-                      combo={combo}
-                      defaultCombo={spec.defaultCombo}
-                      isRecording={isRecording}
-                      inConflict={inConflict}
-                      onRecord={() => {
-                        setError(null);
-                        setRecording(spec.id);
-                      }}
-                      onCancel={stopRecording}
-                      onReset={() => reset(spec.id)}
-                    />
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </section>
-      </div>
+      {body}
     </HmiShell>
   );
 }
@@ -302,3 +329,4 @@ function Row({
     </li>
   );
 }
+

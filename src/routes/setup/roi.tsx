@@ -4,6 +4,8 @@ import {
   SetupErrorComponent,
   SetupNotFoundComponent,
 } from "@/components/editor/setup/SetupBoundaries";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardRoiSetup } from "@/components/setup/StandardRoiSetup";
 
 export const Route = createFileRoute("/setup/roi")({
   head: () => ({
@@ -34,6 +36,11 @@ export const Route = createFileRoute("/setup/roi")({
 
 function RoiEditor() {
   const search = Route.useSearch();
+  const { mode } = useUiMode();
+
+  if (mode === UiModeType.Standard) {
+    return <StandardRoiSetup />;
+  }
 
   return (
     <EditorSetupExperience
@@ -43,3 +50,4 @@ function RoiEditor() {
     />
   );
 }
+

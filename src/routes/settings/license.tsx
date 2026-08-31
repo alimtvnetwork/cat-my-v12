@@ -11,6 +11,8 @@ import {
 import { FeatureNameType, type FeatureName } from "@/lib/license";
 import { formatIdentifierLabel, formatUiText } from "@/lib/display-labels";
 import { SettingsCard } from "@/components/settings/SettingsCard";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/settings/license")({
   head: () => ({
@@ -51,6 +53,7 @@ function LicenseActivationPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { mode } = useUiMode();
 
   const refresh = useCallback(async () => {
     try {
@@ -113,7 +116,7 @@ function LicenseActivationPage() {
 
   const active = snapshot?.status === "Valid";
 
-  return (
+  const body = (
     <main className="p-hmi-3 flex flex-col gap-hmi-3 text-ca-ink">
       <header className="flex items-baseline justify-between border-b border-ca-border pb-hmi-2">
         <h1 className="text-hmi-title">License Activation</h1>
@@ -221,4 +224,19 @@ function LicenseActivationPage() {
       </section>
     </main>
   );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="License Activation"
+        subtitle={`System Status: ${snapshot?.status ?? "Checking"} · Tier: ${snapshot?.tier ?? "Standard"}`}
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{body}</div>
+      </StandardAppShell>
+    );
+  }
+
+  return body;
 }
+

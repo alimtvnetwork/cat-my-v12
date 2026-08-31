@@ -17,6 +17,7 @@ import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import type { RuleId } from "@/lib/rules/model";
 import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
 import { StandardInspectionToolDispatcher } from "@/components/vision/standard/tools/StandardInspectionToolDispatcher";
 import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
@@ -180,17 +181,20 @@ function RuleEditorRoute() {
     }));
   }, []);
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
-      <SectionTopBar section={SectionIdType.Home} active="setup" />
-      {validationError && (
-        <div className="bg-ca-panel text-ca-danger px-4 py-2 text-sm border-b border-ca-border">
-          Error: {validationError}
-        </div>
-      )}
-      {rule && !rule.isCategory ? (
-        <div className="flex flex-1 flex-col min-h-0">
-          {mode === UiModeType.Standard ? (
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title={rule ? `Rule: ${rule.name}` : "Inspection Rule"}
+        subtitle="Standard Inspection Tool Parameters"
+      >
+        {validationError && (
+          <div className="bg-ca-panel text-ca-danger px-4 py-2 text-sm border-b border-ca-border">
+            Error: {validationError}
+          </div>
+        )}
+        {rule && !rule.isCategory ? (
+          <div className="flex flex-1 flex-col min-h-0">
             <StandardInspectionToolDispatcher
               ruleName={rule.name}
               toolType={(rule.conditions?.[0] as any)?.toolType}
@@ -203,11 +207,31 @@ function RuleEditorRoute() {
               onRegisterImage={onRegisterImage}
               onOriginPoint={onOriginPoint}
             />
-          ) : (
-            <ModernPatternSearch settings={settings} onChange={setSettings} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">
+            Rule was deleted or the link is stale.
+            <Link to="/setup/rules" preload="intent" className="ml-hmi-2 text-ca-select underline">
+              Back to Rules
+            </Link>
+          </div>
+        )}
+      </StandardAppShell>
+    );
+  }
 
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
+      <SectionTopBar section={SectionIdType.Home} active="setup" />
+      {validationError && (
+        <div className="bg-ca-panel text-ca-danger px-4 py-2 text-sm border-b border-ca-border">
+          Error: {validationError}
+        </div>
+      )}
+      {rule && !rule.isCategory ? (
+        <div className="flex flex-1 flex-col min-h-0">
+          <ModernPatternSearch settings={settings} onChange={setSettings} />
+        </div>
       ) : rule ? null : (
         <div className="flex flex-1 items-center justify-center px-hmi-4 py-hmi-6 text-hmi-body text-ca-ink-muted">
           Rule was deleted or the link is stale.
