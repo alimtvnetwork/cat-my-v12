@@ -275,7 +275,7 @@ export const useUiPrefsStore = create<UiPrefsState>()(
       roiPreviewSharpen: true,
       rotationSnapDefault: 15 as RotationSnapStep,
       theme: "dark" as ThemeVariant,
-      uiFlavor: "standard" as UiFlavor,
+      uiFlavor: "modern" as UiFlavor,
       settingsGroupsCollapsed: {} as SettingsGroupsCollapsed,
       rulesGroupsCollapsed: {} as RulesGroupsCollapsed,
       propertiesPaletteMode: PropertiesPaletteModeType.Rail as PropertiesPaletteMode,

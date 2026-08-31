@@ -1,20 +1,20 @@
 import { Paintbrush } from "lucide-react";
-import { useUiPrefsStore, type UiFlavor } from "@/lib/stores/ui-prefs-store";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 
-const NEXT_LABEL: Record<UiFlavor, string> = {
+const NEXT_LABEL: Record<string, string> = {
   standard: "Switch to Modern UI",
   modern: "Switch to Standard UI",
 };
 
 export function FlavorToggle(): React.JSX.Element | null {
-  const flavor = useUiPrefsStore((s) => s.uiFlavor);
-  const cycle = useUiPrefsStore((s) => s.toggleUiFlavor);
+  const { mode, toggleMode } = useUiMode();
+  const flavor = mode === UiModeType.Standard ? "standard" : "modern";
   const label = NEXT_LABEL[flavor];
 
   return (
     <button
       type="button"
-      onClick={cycle}
+      onClick={toggleMode}
       aria-label={label}
       title={label}
       data-testid="flavor-toggle"

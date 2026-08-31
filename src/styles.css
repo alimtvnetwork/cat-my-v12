@@ -4750,8 +4750,9 @@ body:has([data-app-shell="true"]) .agent-logo-fixed {
   pointer-events: auto;
 }
 body:has([data-app-shell="true"]) .app-shell-nav-global,
-body:has([data-app-shell="true"]) .standard-app-shell-nav {
-  display: none;
+body:has([data-app-shell="true"]) .standard-app-shell-nav,
+body:has([data-app-shell="true"]) .global-home-affordance {
+  display: none !important;
 }
 
 /* Plan 63: sidebar drawer trigger. Fixed top-right FAB, hidden when the

@@ -54,7 +54,12 @@ export function StandardAppShell({
     }`;
 
   return (
-    <div className="flex flex-col flex-1 min-h-screen bg-ca-bg text-ca-ink font-sans">
+    <div
+      data-app-shell="true"
+      data-standard-shell="true"
+      data-testid="standard-app-shell"
+      className="flex flex-col flex-1 min-h-screen bg-ca-bg text-ca-ink font-sans"
+    >
       {/* Industrial Top HMI Header */}
       <header className="flex h-11 items-center justify-between border-b border-ca-border bg-ca-panel px-3 shrink-0 select-none z-30">
         <div className="flex items-center gap-4">
