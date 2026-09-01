@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS RunSession (
   TimeoutCount       INTEGER NOT NULL DEFAULT 0 CHECK (TimeoutCount  >= 0),
   PromotedErrorCode  TEXT    NULL,                      -- Step 92 promoted per-run ErrorCode
   CapturedAt         INTEGER NULL,                      -- from record.CapturedAt (epoch ms/s)
-  PersistedAt        INTEGER NOT NULL DEFAULT (unixepoch()),
+  PersistedAt        INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   -- Counter invariants (spec 24 §3): active+inactive+silent == total;
   -- pass+fail+error == active. Enforced at the DB tier so a buggy writer
   -- cannot land a self-inconsistent row.

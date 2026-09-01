@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS FrameArtifact (
   Bytes            INTEGER NOT NULL CHECK (Bytes >= 0),
   MimeType         TEXT    NULL,
   CapturedAt       INTEGER NULL,                          -- epoch seconds, optional
-  PersistedAt      INTEGER NOT NULL DEFAULT (unixepoch()),
+  PersistedAt      INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   -- One row per (RunSessionId, RelPath): replaying the same JSONL is
   -- idempotent via INSERT OR IGNORE against this composite key. RelPath
   -- (not Sha256) is the identity so two artifacts with identical bytes
