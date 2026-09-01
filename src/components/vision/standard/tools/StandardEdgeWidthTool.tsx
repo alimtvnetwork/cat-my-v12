@@ -20,8 +20,12 @@ export interface StandardEdgeWidthToolProps {
 }
 
 export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.JSX.Element {
-  const [edge1Polarity, setEdge1Polarity] = useState<"light-to-dark" | "dark-to-light">("light-to-dark");
-  const [edge2Polarity, setEdge2Polarity] = useState<"light-to-dark" | "dark-to-light">("dark-to-light");
+  const [edge1Polarity, setEdge1Polarity] = useState<"light-to-dark" | "dark-to-light">(
+    "light-to-dark",
+  );
+  const [edge2Polarity, setEdge2Polarity] = useState<"light-to-dark" | "dark-to-light">(
+    "dark-to-light",
+  );
   const [minWidth, setMinWidth] = useState<number>(25.0);
   const [maxWidth, setMaxWidth] = useState<number>(35.0);
   const [nominalWidth, setNominalWidth] = useState<number>(30.0);

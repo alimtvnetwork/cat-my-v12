@@ -109,9 +109,10 @@ function DiagnosticsPage() {
     );
   }
 
-  return <main className="mx-auto flex max-w-5xl flex-col gap-hmi-4 p-hmi-4 text-ca-ink">{body}</main>;
+  return (
+    <main className="mx-auto flex max-w-5xl flex-col gap-hmi-4 p-hmi-4 text-ca-ink">{body}</main>
+  );
 }
-
 
 function StatusPill({ ok }: { ok: boolean }) {
   const cls = ok ? "bg-ca-ok/20 border-ca-ok text-ca-ok" : "bg-ca-ng/20 border-ca-ng text-ca-ng";

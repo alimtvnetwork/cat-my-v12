@@ -239,4 +239,3 @@ function LicenseActivationPage() {
 
   return body;
 }
-

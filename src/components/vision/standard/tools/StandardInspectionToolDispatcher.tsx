@@ -33,7 +33,7 @@ export interface StandardInspectionToolDispatcherProps {
 }
 
 export function StandardInspectionToolDispatcher(
-  props: StandardInspectionToolDispatcherProps
+  props: StandardInspectionToolDispatcherProps,
 ): React.JSX.Element {
   const normalized = (props.toolType || props.ruleName || "").toLowerCase();
 
@@ -42,11 +42,20 @@ export function StandardInspectionToolDispatcher(
     return <StandardAreaTool {...props} />;
   }
   // 2. ShapeTrax3
-  if (normalized.includes("shape") || normalized.includes("trax") || normalized.includes("contour")) {
+  if (
+    normalized.includes("shape") ||
+    normalized.includes("trax") ||
+    normalized.includes("contour")
+  ) {
     return <StandardShapeTrax3Tool {...props} />;
   }
   // 3. Profile Width
-  if (normalized.includes("profile") && (normalized.includes("width") || normalized.includes("caliper") || normalized.includes("thickness"))) {
+  if (
+    normalized.includes("profile") &&
+    (normalized.includes("width") ||
+      normalized.includes("caliper") ||
+      normalized.includes("thickness"))
+  ) {
     return <StandardProfileWidthTool {...props} />;
   }
   // 4. Profile Position
@@ -54,7 +63,11 @@ export function StandardInspectionToolDispatcher(
     return <StandardProfilePositionTool {...props} />;
   }
   // 5. Edge Pitch
-  if (normalized.includes("pitch") || normalized.includes("comb") || normalized.includes("connector")) {
+  if (
+    normalized.includes("pitch") ||
+    normalized.includes("comb") ||
+    normalized.includes("connector")
+  ) {
     return <StandardEdgePitchTool {...props} />;
   }
   // 6. Edge Pairs
@@ -62,39 +75,77 @@ export function StandardInspectionToolDispatcher(
     return <StandardEdgePairsTool {...props} />;
   }
   // 7. Edge Width
-  if (normalized.includes("width") || normalized.includes("gap") || normalized.includes("caliper")) {
+  if (
+    normalized.includes("width") ||
+    normalized.includes("gap") ||
+    normalized.includes("caliper")
+  ) {
     return <StandardEdgeWidthTool {...props} />;
   }
   // 8. Edge Position
-  if (normalized.includes("edge") || normalized.includes("position") || normalized.includes("pin") || normalized.includes("line")) {
+  if (
+    normalized.includes("edge") ||
+    normalized.includes("position") ||
+    normalized.includes("pin") ||
+    normalized.includes("line")
+  ) {
     return <StandardEdgePositionTool {...props} />;
   }
   // 9. Defect
-  if (normalized.includes("defect") || normalized.includes("scratch") || normalized.includes("flaw") || normalized.includes("stain")) {
+  if (
+    normalized.includes("defect") ||
+    normalized.includes("scratch") ||
+    normalized.includes("flaw") ||
+    normalized.includes("stain")
+  ) {
     return <StandardDefectTool {...props} />;
   }
   // 10. Grayscale Blob
-  if ((normalized.includes("gray") || normalized.includes("grey")) && (normalized.includes("blob") || normalized.includes("particle"))) {
+  if (
+    (normalized.includes("gray") || normalized.includes("grey")) &&
+    (normalized.includes("blob") || normalized.includes("particle"))
+  ) {
     return <StandardGrayscaleBlobTool {...props} />;
   }
   // 11. Binary Blob
-  if (normalized.includes("blob") || normalized.includes("particle") || normalized.includes("count")) {
+  if (
+    normalized.includes("blob") ||
+    normalized.includes("particle") ||
+    normalized.includes("count")
+  ) {
     return <StandardBlobTool {...props} />;
   }
   // 12. Intensity / Brightness
-  if (normalized.includes("intensity") || normalized.includes("brightness") || normalized.includes("luminance") || normalized.includes("mean")) {
+  if (
+    normalized.includes("intensity") ||
+    normalized.includes("brightness") ||
+    normalized.includes("luminance") ||
+    normalized.includes("mean")
+  ) {
     return <StandardIntensityTool {...props} />;
   }
   // 13. OCR2
-  if (normalized.includes("ocr") || normalized.includes("text") || normalized.includes("font") || normalized.includes("char") || normalized.includes("string")) {
+  if (
+    normalized.includes("ocr") ||
+    normalized.includes("text") ||
+    normalized.includes("font") ||
+    normalized.includes("char") ||
+    normalized.includes("string")
+  ) {
     return <StandardOcr2Tool {...props} />;
   }
   // 14. 1D / 2D Code Reader
-  if (normalized.includes("code") || normalized.includes("barcode") || normalized.includes("qr") || normalized.includes("matrix") || normalized.includes("datamatrix") || normalized.includes("1d")) {
+  if (
+    normalized.includes("code") ||
+    normalized.includes("barcode") ||
+    normalized.includes("qr") ||
+    normalized.includes("matrix") ||
+    normalized.includes("datamatrix") ||
+    normalized.includes("1d")
+  ) {
     return <StandardCodeReaderTool {...props} />;
   }
 
   // 15. Default: Standard Pattern Search
   return <StandardPatternSearch {...props} />;
 }
-

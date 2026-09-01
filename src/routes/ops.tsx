@@ -182,8 +182,8 @@ function OpsPage() {
       </table>
 
       <p className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
-        Live bridge active: rows served by getAuditEvents() over TSS RPC, worker-side buffer
-        mirrors AuditSink schema.
+        Live bridge active: rows served by getAuditEvents() over TSS RPC, worker-side buffer mirrors
+        AuditSink schema.
       </p>
     </div>
   );
@@ -222,7 +222,6 @@ function OpsPage() {
     </HmiShell>
   );
 }
-
 
 function Tile({ label, value, tone }: { label: string; value: number; tone: "info" | "alert" }) {
   const valueClass = tone === "alert" ? "text-ca-status-ng" : "text-ca-ink";

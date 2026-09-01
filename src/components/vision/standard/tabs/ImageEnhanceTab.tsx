@@ -39,9 +39,7 @@ export function ImageEnhanceTab({
 
   const updateActiveFilter = (partial: Partial<ImageEnhanceFilter>) => {
     if (!onChangeFilters) return;
-    const updated = filters.map((f, i) =>
-      i === activeFilterIndex ? { ...f, ...partial } : f
-    );
+    const updated = filters.map((f, i) => (i === activeFilterIndex ? { ...f, ...partial } : f));
     onChangeFilters(updated);
   };
 
@@ -113,7 +111,7 @@ export function ImageEnhanceTab({
                         : "bg-ca-border"
                     }`}
                   />
-                )
+                ),
               )}
             </div>
             <div className="flex justify-end">
@@ -132,7 +130,9 @@ export function ImageEnhanceTab({
             <div className="flex flex-col gap-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-ca-ink-muted">Lower Limit (Threshold)</span>
-                <span className="font-mono font-semibold text-ca-ink">{activeFilter.lowerLimit}</span>
+                <span className="font-mono font-semibold text-ca-ink">
+                  {activeFilter.lowerLimit}
+                </span>
               </div>
               <input
                 type="range"
@@ -147,7 +147,9 @@ export function ImageEnhanceTab({
             <div className="flex flex-col gap-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-ca-ink-muted">Upper Limit</span>
-                <span className="font-mono font-semibold text-ca-ink">{activeFilter.upperLimit}</span>
+                <span className="font-mono font-semibold text-ca-ink">
+                  {activeFilter.upperLimit}
+                </span>
               </div>
               <input
                 type="range"

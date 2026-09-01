@@ -15,48 +15,47 @@ This document is a **complete implementation reference** for how the docs viewer
 
 ## Visual Examples Gallery
 
-
 ### Full Page — Dark Mode
 
 Shows gradient headings (H1/H2 purple→pink), sidebar navigation, TOC with scroll-spy, inline code badges, blockquote, ordered list, and table with hover states.
 
-*Screenshot for Overview in dark mode will be placed here.*
+_Screenshot for Overview in dark mode will be placed here._
 
 ### Full Page — Light Mode
 
 Same layout with light theme tokens — note how heading gradients, inline code, and table headers adapt.
 
-*Screenshot for Overview in light mode will be placed here.*
+_Screenshot for Overview in light mode will be placed here._
 
 ### Tree Structure — Dark Mode
 
 Tree block with 📁 folder icons, 📄 file icons, muted guide lines, italic comments, and the STRUCTURE language badge.
 
-*Screenshot for Tree structure dark will be placed here.*
+_Screenshot for Tree structure dark will be placed here._
 
 ### Tree Structure — Light Mode
 
 Same tree content — code block background stays dark regardless of app theme.
 
-*Screenshot for Tree structure light will be placed here.*
+_Screenshot for Tree structure light will be placed here._
 
 ### Code Blocks with Syntax Highlighting — Dark Mode
 
 BASH and MARKDOWN language badges with per-language accent colors, line numbers, font controls, copy/download buttons.
 
-*Screenshot for Code blocks dark will be placed here.*
+_Screenshot for Code blocks dark will be placed here._
 
 ### Code Blocks — Light Mode
 
 Same blocks in light theme — note the dark code background is preserved while the surrounding UI adapts.
 
-*Screenshot for Code blocks light will be placed here.*
+_Screenshot for Code blocks light will be placed here._
 
 ### Split View — Editor + Live Preview
 
 Monaco editor on the left with markdown source, live rendered preview on the right, draggable divider in between.
 
-*Screenshot for Split view will be placed here.*
+_Screenshot for Split view will be placed here._
 
 ### Hover States — Dark Mode
 
@@ -64,31 +63,31 @@ Monaco editor on the left with markdown source, live rendered preview on the rig
 
 On hover, `filter: brightness(1.2) saturate(1.1)` boosts the purple→pink gradient. The entire heading glows brighter without changing the gradient direction.
 
-*Screenshot for Heading hover dark will be placed here.*
+_Screenshot for Heading hover dark will be placed here._
 
 #### H3 Border Slide
 
 H3 headings transition from `muted-foreground` to `primary` color. A 3px left border appears and `padding-left` increases by `0.2rem`, creating a slide-in effect.
 
-*Screenshot for H3 hover dark will be placed here.*
+_Screenshot for H3 hover dark will be placed here._
 
 #### Link Underline Sweep
 
 Links use a `::after` pseudo-element underline that sweeps from right-to-left on hover (`transform-origin: left` → `scaleX(1)`). The text color shifts from `primary` to `accent` (pink).
 
-*Screenshot for Link hover dark will be placed here.*
+_Screenshot for Link hover dark will be placed here._
 
 #### Inline Code Glow & Lift
 
 Inline `code` elements lift 1px (`translateY(-1px)`) and gain a subtle ring glow (`box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15)`) on hover.
 
-*Screenshot for Inline code hover dark will be placed here.*
+_Screenshot for Inline code hover dark will be placed here._
 
 #### Code Block Hover Glow
 
 The entire `.code-block-wrapper` gains a box-shadow tinted with the language's accent HSL color on hover, creating a colored glow border effect.
 
-*Screenshot for Code block hover dark will be placed here.*
+_Screenshot for Code block hover dark will be placed here._
 
 ### Hover States — Light Mode
 
@@ -96,22 +95,21 @@ The entire `.code-block-wrapper` gains a box-shadow tinted with the language's a
 
 The gradient brightness boost works identically in light mode — the purple→pink gradient becomes more vivid.
 
-*Screenshot for Heading hover light will be placed here.*
+_Screenshot for Heading hover light will be placed here._
 
 #### Inline Code Glow (Light Theme)
 
 Same lift + ring glow, but the muted background contrasts differently against the light page background.
 
-*Screenshot for Inline code hover light will be placed here.*
+_Screenshot for Inline code hover light will be placed here._
 
 #### Link Sweep + Table Row Highlight (Light Theme)
 
 The underline sweep animation and table row hover (inset 3px left bar in primary color) are visible together in a table context.
 
-*Screenshot for Link hover light will be placed here.*
+_Screenshot for Link hover light will be placed here._
 
 ---
-
 
 ## 1. Folder / Tree Structure Rendering
 

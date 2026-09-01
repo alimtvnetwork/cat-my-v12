@@ -60,7 +60,8 @@ export function InspectionRegionTab({
   onOk,
   onPreview,
 }: InspectionRegionTabProps): React.JSX.Element {
-  const [internalRegion, setInternalRegion] = React.useState<InspectionRegionData>(inspectionRegion);
+  const [internalRegion, setInternalRegion] =
+    React.useState<InspectionRegionData>(inspectionRegion);
   const [internalMasks, setInternalMasks] = React.useState<MaskRegionData[]>(masks);
   const activeRegion = inspectionRegion || internalRegion;
   const activeMasks = masks || internalMasks;

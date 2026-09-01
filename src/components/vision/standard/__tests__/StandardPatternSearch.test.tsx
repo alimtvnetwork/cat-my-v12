@@ -36,8 +36,12 @@ describe("StandardPatternSearch Component Verification (Plan 91 Steps 81-85)", (
     expect(screen.getByRole("button", { name: StandardActionLabel.RegisterImage })).toBeTruthy();
     expect(screen.getByRole("button", { name: StandardActionLabel.EvaluateRule })).toBeTruthy();
     expect(screen.getByRole("button", { name: StandardActionLabel.Settings })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: StandardActionLabel.Cancel }).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByRole("button", { name: StandardActionLabel.Ok }).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByRole("button", { name: StandardActionLabel.Cancel }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByRole("button", { name: StandardActionLabel.Ok }).length,
+    ).toBeGreaterThanOrEqual(1);
 
     // 3. Toolbar Refresh button
     expect(screen.getByTitle("Refresh")).toBeTruthy();
@@ -107,9 +111,7 @@ describe("StandardPatternSearch Component Verification (Plan 91 Steps 81-85)", (
     const onChange = vi.fn();
     const onRefresh = vi.fn();
 
-    render(
-      <StandardPatternSearch settings={settings} onChange={onChange} onRefresh={onRefresh} />,
-    );
+    render(<StandardPatternSearch settings={settings} onChange={onChange} onRefresh={onRefresh} />);
 
     const refreshBtn = screen.getByTitle("Refresh");
     fireEvent.click(refreshBtn);

@@ -30,7 +30,15 @@ export interface StandardRoiData {
   angleDeg: number;
   innerRadius: number;
   outerRadius: number;
-  activeMasks: { id: number; name: string; enabled: boolean; x: number; y: number; w: number; h: number }[];
+  activeMasks: {
+    id: number;
+    name: string;
+    enabled: boolean;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }[];
 }
 
 export function StandardRoiSetup(): React.JSX.Element {
@@ -128,7 +136,9 @@ export function StandardRoiSetup(): React.JSX.Element {
           {/* Shape Selector Ribbon */}
           <div className="h-11 px-3 border-b border-ca-border bg-ca-panel flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-ca-ink mr-1 text-[11px] uppercase tracking-wide">Shape:</span>
+              <span className="font-bold text-ca-ink mr-1 text-[11px] uppercase tracking-wide">
+                Shape:
+              </span>
               {(
                 [
                   { id: "rectangle", label: "Rect", icon: Square },
@@ -158,7 +168,10 @@ export function StandardRoiSetup(): React.JSX.Element {
             </div>
 
             <div className="flex items-center gap-2 text-ca-ink-muted text-[11px]">
-              <span>Bounding Area: <strong className="font-mono text-ca-ink">{width * height} px²</strong></span>
+              <span>
+                Bounding Area:{" "}
+                <strong className="font-mono text-ca-ink">{width * height} px²</strong>
+              </span>
             </div>
           </div>
 
@@ -317,11 +330,31 @@ export function StandardRoiSetup(): React.JSX.Element {
                   <div className="space-y-2 text-[11px]">
                     <div>
                       <div className="flex justify-between text-ca-ink-muted mb-1">
-                        <span>Origin X: <strong className="font-mono text-ca-ink">{x} px</strong></span>
+                        <span>
+                          Origin X: <strong className="font-mono text-ca-ink">{x} px</strong>
+                        </span>
                         <div className="flex gap-1">
-                          <button type="button" onClick={() => stepCoord(setX, -1)} className="px-1 bg-ca-bg border border-ca-border rounded">-1</button>
-                          <button type="button" onClick={() => stepCoord(setX, 1)} className="px-1 bg-ca-bg border border-ca-border rounded">+1</button>
-                          <button type="button" onClick={() => stepCoord(setX, 10)} className="px-1 bg-ca-bg border border-ca-border rounded">+10</button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setX, -1)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            -1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setX, 1)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setX, 10)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +10
+                          </button>
                         </div>
                       </div>
                       <input
@@ -336,11 +369,31 @@ export function StandardRoiSetup(): React.JSX.Element {
 
                     <div>
                       <div className="flex justify-between text-ca-ink-muted mb-1">
-                        <span>Origin Y: <strong className="font-mono text-ca-ink">{y} px</strong></span>
+                        <span>
+                          Origin Y: <strong className="font-mono text-ca-ink">{y} px</strong>
+                        </span>
                         <div className="flex gap-1">
-                          <button type="button" onClick={() => stepCoord(setY, -1)} className="px-1 bg-ca-bg border border-ca-border rounded">-1</button>
-                          <button type="button" onClick={() => stepCoord(setY, 1)} className="px-1 bg-ca-bg border border-ca-border rounded">+1</button>
-                          <button type="button" onClick={() => stepCoord(setY, 10)} className="px-1 bg-ca-bg border border-ca-border rounded">+10</button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setY, -1)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            -1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setY, 1)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +1
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setY, 10)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +10
+                          </button>
                         </div>
                       </div>
                       <input
@@ -355,10 +408,24 @@ export function StandardRoiSetup(): React.JSX.Element {
 
                     <div>
                       <div className="flex justify-between text-ca-ink-muted mb-1">
-                        <span>Width (W): <strong className="font-mono text-ca-ink">{width} px</strong></span>
+                        <span>
+                          Width (W): <strong className="font-mono text-ca-ink">{width} px</strong>
+                        </span>
                         <div className="flex gap-1">
-                          <button type="button" onClick={() => stepCoord(setWidth, -5)} className="px-1 bg-ca-bg border border-ca-border rounded">-5</button>
-                          <button type="button" onClick={() => stepCoord(setWidth, 5)} className="px-1 bg-ca-bg border border-ca-border rounded">+5</button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setWidth, -5)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            -5
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setWidth, 5)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +5
+                          </button>
                         </div>
                       </div>
                       <input
@@ -373,10 +440,24 @@ export function StandardRoiSetup(): React.JSX.Element {
 
                     <div>
                       <div className="flex justify-between text-ca-ink-muted mb-1">
-                        <span>Height (H): <strong className="font-mono text-ca-ink">{height} px</strong></span>
+                        <span>
+                          Height (H): <strong className="font-mono text-ca-ink">{height} px</strong>
+                        </span>
                         <div className="flex gap-1">
-                          <button type="button" onClick={() => stepCoord(setHeight, -5)} className="px-1 bg-ca-bg border border-ca-border rounded">-5</button>
-                          <button type="button" onClick={() => stepCoord(setHeight, 5)} className="px-1 bg-ca-bg border border-ca-border rounded">+5</button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setHeight, -5)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            -5
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => stepCoord(setHeight, 5)}
+                            className="px-1 bg-ca-bg border border-ca-border rounded"
+                          >
+                            +5
+                          </button>
                         </div>
                       </div>
                       <input
@@ -392,7 +473,10 @@ export function StandardRoiSetup(): React.JSX.Element {
                     {shape === "rotated_rect" && (
                       <div>
                         <div className="flex justify-between text-ca-ink-muted mb-1">
-                          <span>Rotation Angle: <strong className="font-mono text-ca-ink">{angleDeg}°</strong></span>
+                          <span>
+                            Rotation Angle:{" "}
+                            <strong className="font-mono text-ca-ink">{angleDeg}°</strong>
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -408,7 +492,10 @@ export function StandardRoiSetup(): React.JSX.Element {
                     {(shape === "circle" || shape === "ring") && (
                       <div>
                         <div className="flex justify-between text-ca-ink-muted mb-1">
-                          <span>Outer Radius: <strong className="font-mono text-ca-ink">{outerRadius} px</strong></span>
+                          <span>
+                            Outer Radius:{" "}
+                            <strong className="font-mono text-ca-ink">{outerRadius} px</strong>
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -424,7 +511,10 @@ export function StandardRoiSetup(): React.JSX.Element {
                     {shape === "ring" && (
                       <div>
                         <div className="flex justify-between text-ca-ink-muted mb-1">
-                          <span>Inner Radius: <strong className="font-mono text-ca-ink">{innerRadius} px</strong></span>
+                          <span>
+                            Inner Radius:{" "}
+                            <strong className="font-mono text-ca-ink">{innerRadius} px</strong>
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -461,7 +551,9 @@ export function StandardRoiSetup(): React.JSX.Element {
                             onChange={(e) => {
                               const checked = e.target.checked;
                               setMasks((prev) =>
-                                prev.map((m) => (m.id === mask.id ? { ...m, enabled: checked } : m))
+                                prev.map((m) =>
+                                  m.id === mask.id ? { ...m, enabled: checked } : m,
+                                ),
                               );
                             }}
                             className="rounded border-ca-border accent-ca-select"
@@ -492,23 +584,34 @@ export function StandardRoiSetup(): React.JSX.Element {
                       onChange={(e) => setAnchorTracking(e.target.checked)}
                       className="rounded border-ca-border accent-ca-select"
                     />
-                    <span className="font-medium text-ca-ink">Track Coordinate Origin with Anchor Tool</span>
+                    <span className="font-medium text-ca-ink">
+                      Track Coordinate Origin with Anchor Tool
+                    </span>
                   </label>
 
                   {anchorTracking && (
                     <div className="pt-2 border-t border-ca-border space-y-2">
-                      <label className="text-ca-ink-muted block text-[11px]">Reference Anchor Master Rule</label>
+                      <label className="text-ca-ink-muted block text-[11px]">
+                        Reference Anchor Master Rule
+                      </label>
                       <select
                         value={anchorRuleName}
                         onChange={(e) => setAnchorRuleName(e.target.value)}
                         className="w-full bg-ca-bg border border-ca-border px-2 py-1 rounded text-ca-ink"
                       >
-                        <option value="Pattern Search 01 (Origin)">Pattern Search 01 (Origin)</option>
-                        <option value="ShapeTrax3 01 (Feature Alignment)">ShapeTrax3 01 (Feature Alignment)</option>
-                        <option value="Edge Position 01 (Corner Datum)">Edge Position 01 (Corner Datum)</option>
+                        <option value="Pattern Search 01 (Origin)">
+                          Pattern Search 01 (Origin)
+                        </option>
+                        <option value="ShapeTrax3 01 (Feature Alignment)">
+                          ShapeTrax3 01 (Feature Alignment)
+                        </option>
+                        <option value="Edge Position 01 (Corner Datum)">
+                          Edge Position 01 (Corner Datum)
+                        </option>
                       </select>
                       <p className="text-[10px] text-ca-ink-muted mt-1">
-                        When the part rotates or shifts on the conveyor, this ROI automatically follows the detected offset.
+                        When the part rotates or shifts on the conveyor, this ROI automatically
+                        follows the detected offset.
                       </p>
                     </div>
                   )}

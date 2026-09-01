@@ -113,7 +113,9 @@ export function DisplaySettingsTab({
               onChange={(e) => updateField("showOutOfJudgment", e.target.checked)}
               className="rounded bg-ca-bg border-ca-border accent-ca-select"
             />
-            <span className="font-medium text-ca-ink">Show Uninspected/Out of Judgment Features</span>
+            <span className="font-medium text-ca-ink">
+              Show Uninspected/Out of Judgment Features
+            </span>
           </label>
         </div>
       </div>

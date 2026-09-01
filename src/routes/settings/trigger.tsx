@@ -219,4 +219,3 @@ function TriggerSettings() {
     </HmiShell>
   );
 }
-

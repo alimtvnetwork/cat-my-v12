@@ -23,7 +23,9 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
   const [expectedEdgeCount, setExpectedEdgeCount] = useState<number>(10);
   const [minPitch, setMinPitch] = useState<number>(2.4);
   const [maxPitch, setMaxPitch] = useState<number>(2.6);
-  const [pitchPolarity, setPitchPolarity] = useState<"peak-to-peak" | "valley-to-valley">("peak-to-peak");
+  const [pitchPolarity, setPitchPolarity] = useState<"peak-to-peak" | "valley-to-valley">(
+    "peak-to-peak",
+  );
 
   const tabs: ToolTabItem[] = [
     {

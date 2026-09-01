@@ -372,7 +372,6 @@ function ProjectsIndex() {
                 className="inline-flex shrink-0 cursor-pointer items-center gap-hmi-2 rounded-md border border-ca-border bg-ca-panel-2/80 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink transition hover:-translate-y-px hover:border-ca-select hover:bg-ca-panel-2 focus-within:outline focus-within:outline-2 focus-within:outline-ca-focus"
                 aria-label="Import project from JSON or YAML"
               >
-
                 <Upload aria-hidden size={16} />
                 Import project
                 <input
@@ -897,7 +896,6 @@ function ProjectsIndex() {
     </HmiShell>
   );
 }
-
 
 function RowIconButton({
   Icon,

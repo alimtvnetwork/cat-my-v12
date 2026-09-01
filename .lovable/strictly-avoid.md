@@ -37,4 +37,4 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 - **ALWAYS** defensively delete BE/be.egg-info in launcher scripts (e.g. run.ps1 and run.sh) before invoking uv run to guarantee fresh code execution, and ensure *.egg-info is in .gitignore.
 
 - Never skip cross-verifying the pending plans index with the actual file system in \.lovable/plans/pending/\. Do not assume all index entries exist on disk.
-- Never commit temporary scratchfiles (\	emp.txt\, \	emp2.txt\) from agent loops.
+- Never commit temporary scratchfiles (\ emp.txt\, \ emp2.txt\) from agent loops.

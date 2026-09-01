@@ -24,14 +24,19 @@ export interface StandardHomeViewProps {
   recentProjects?: Array<{ projectId: string; name: string; openedAt: number }>;
 }
 
-export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps): React.JSX.Element {
+export function StandardHomeView({
+  recentProjects = [],
+}: StandardHomeViewProps): React.JSX.Element {
   const recent = recentProjects;
   const navigate = useNavigate();
   const topProject = recent[0];
 
-
   return (
-    <StandardAppShell activeNav="home" title="System Dashboard" subtitle="Industrial Vision Controller">
+    <StandardAppShell
+      activeNav="home"
+      title="System Dashboard"
+      subtitle="Industrial Vision Controller"
+    >
       <div className="flex-1 flex flex-col p-4 gap-4 max-w-7xl mx-auto w-full">
         {/* System Line & Telemetry Status Bar */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -48,7 +53,9 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
 
           <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">Inspection Mode</span>
+              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">
+                Inspection Mode
+              </span>
               <span className="font-bold text-sm text-ca-ink mt-0.5">Standard HMI</span>
             </div>
             <Cpu className="w-5 h-5 text-ca-ink-muted" />
@@ -56,7 +63,9 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
 
           <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">Active Project</span>
+              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">
+                Active Project
+              </span>
               <span className="font-bold text-sm text-ca-ink truncate max-w-[140px] mt-0.5">
                 {topProject ? topProject.name : "None (Default)"}
               </span>
@@ -94,7 +103,8 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
             </div>
             <div className="p-3 flex flex-col gap-2 flex-1">
               <p className="text-xs text-ca-ink-muted">
-                Configure camera sensors, reference images, lighting, and inspection rule parameters.
+                Configure camera sensors, reference images, lighting, and inspection rule
+                parameters.
               </p>
               <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
                 <Link
@@ -126,8 +136,6 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
                   <Sliders className="w-3.5 h-3.5 text-ca-ink-muted" />
                   <span>ROI Setup</span>
                 </Link>
-
-
               </div>
             </div>
           </div>
@@ -150,7 +158,8 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
             </div>
             <div className="p-3 flex flex-col gap-2 flex-1">
               <p className="text-xs text-ca-ink-muted">
-                Execute live inspections, monitor high-speed camera streams, and review real-time verdicts.
+                Execute live inspections, monitor high-speed camera streams, and review real-time
+                verdicts.
               </p>
               <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
                 <Link
@@ -267,7 +276,8 @@ export function StandardHomeView({ recentProjects = [] }: StandardHomeViewProps)
                     <div className="flex flex-col min-w-0">
                       <span className="font-semibold text-ca-ink truncate">{proj.name}</span>
                       <span className="text-[10px] text-ca-ink-muted">
-                        ID: {proj.projectId} • Last opened {new Date(proj.openedAt).toLocaleDateString()}
+                        ID: {proj.projectId} • Last opened{" "}
+                        {new Date(proj.openedAt).toLocaleDateString()}
                       </span>
                     </div>
                     <Link

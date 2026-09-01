@@ -20,7 +20,9 @@ export interface StandardEdgePairsToolProps {
 }
 
 export function StandardEdgePairsTool(props: StandardEdgePairsToolProps): React.JSX.Element {
-  const [pairType, setPairType] = useState<"outer-to-outer" | "inner-to-inner" | "center-to-center">("outer-to-outer");
+  const [pairType, setPairType] = useState<
+    "outer-to-outer" | "inner-to-inner" | "center-to-center"
+  >("outer-to-outer");
   const [minDistance, setMinDistance] = useState<number>(45.0);
   const [maxDistance, setMaxDistance] = useState<number>(55.0);
 

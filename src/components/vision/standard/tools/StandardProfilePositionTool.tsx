@@ -19,8 +19,12 @@ export interface StandardProfilePositionToolProps {
   onRefresh?: () => void;
 }
 
-export function StandardProfilePositionTool(props: StandardProfilePositionToolProps): React.JSX.Element {
-  const [profileAxis, setProfileAxis] = useState<"horizontal" | "vertical" | "custom">("horizontal");
+export function StandardProfilePositionTool(
+  props: StandardProfilePositionToolProps,
+): React.JSX.Element {
+  const [profileAxis, setProfileAxis] = useState<"horizontal" | "vertical" | "custom">(
+    "horizontal",
+  );
   const [peakType, setPeakType] = useState<"crest" | "trough" | "inflection">("crest");
   const [minCoordinate, setMinCoordinate] = useState<number>(120);
   const [maxCoordinate, setMaxCoordinate] = useState<number>(380);

@@ -20,8 +20,12 @@ export interface StandardEdgePositionToolProps {
 }
 
 export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): React.JSX.Element {
-  const [scanDirection, setScanDirection] = useState<"left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top">("left-to-right");
-  const [edgePolarity, setEdgePolarity] = useState<"light-to-dark" | "dark-to-light" | "both">("light-to-dark");
+  const [scanDirection, setScanDirection] = useState<
+    "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top"
+  >("left-to-right");
+  const [edgePolarity, setEdgePolarity] = useState<"light-to-dark" | "dark-to-light" | "both">(
+    "light-to-dark",
+  );
   const [edgeThreshold, setEdgeThreshold] = useState<number>(30);
   const [filterWidth, setFilterWidth] = useState<number>(5);
   const [minPosition, setMinPosition] = useState<number>(100);
@@ -43,20 +47,22 @@ export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): 
               Scan Direction & Polarity
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {(["left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"] as const).map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setScanDirection(d)}
-                  className={`p-1.5 border text-center font-medium rounded ${
-                    scanDirection === d
-                      ? "bg-ca-select text-ca-bg border-ca-select font-bold"
-                      : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
-                  }`}
-                >
-                  {d}
-                </button>
-              ))}
+              {(["left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"] as const).map(
+                (d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setScanDirection(d)}
+                    className={`p-1.5 border text-center font-medium rounded ${
+                      scanDirection === d
+                        ? "bg-ca-select text-ca-bg border-ca-select font-bold"
+                        : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ),
+              )}
             </div>
 
             <div className="flex items-center gap-4 pt-2">

@@ -18,7 +18,16 @@ import { WindowMenu } from "@/components/app-shell/WindowMenu";
 export interface StandardAppShellProps {
   title?: string;
   subtitle?: string;
-  activeNav?: "home" | "run" | "ops" | "setup" | "diagnostics" | "errors" | "results" | "projects" | "settings";
+  activeNav?:
+    | "home"
+    | "run"
+    | "ops"
+    | "setup"
+    | "diagnostics"
+    | "errors"
+    | "results"
+    | "projects"
+    | "settings";
   actions?: ReactNode;
   children: ReactNode;
 }
@@ -122,7 +131,9 @@ export function StandardAppShell({
       {(title || subtitle || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ca-border bg-ca-panel-2 px-4 py-2 shrink-0">
           <div className="min-w-0">
-            {title && <h1 className="text-sm font-bold tracking-wide text-ca-ink uppercase">{title}</h1>}
+            {title && (
+              <h1 className="text-sm font-bold tracking-wide text-ca-ink uppercase">{title}</h1>
+            )}
             {subtitle && <p className="text-xs text-ca-ink-muted">{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -130,9 +141,7 @@ export function StandardAppShell({
       )}
 
       {/* Main Content Area */}
-      <main className="flex flex-1 flex-col min-h-0 overflow-auto">
-        {children}
-      </main>
+      <main className="flex flex-1 flex-col min-h-0 overflow-auto">{children}</main>
     </div>
   );
 }

@@ -91,8 +91,8 @@ function LightingSettings() {
           {flashing ? "Flashing..." : "Fire flash"}
         </button>
         <p className="mt-hmi-3 text-hmi-caption text-ca-ink-muted">
-          Preview-only. Real deployments trigger the LED controller over the vendor SDK; this
-          button is a hardware smoke test surrogate.
+          Preview-only. Real deployments trigger the LED controller over the vendor SDK; this button
+          is a hardware smoke test surrogate.
         </p>
       </SettingsCard>
     </div>
@@ -127,4 +127,3 @@ function LightingSettings() {
     </HmiShell>
   );
 }
-

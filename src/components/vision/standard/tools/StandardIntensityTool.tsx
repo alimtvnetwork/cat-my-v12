@@ -51,7 +51,13 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
                       : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
                   }`}
                 >
-                  {m === "mean" ? "Average Brightness" : m === "std-dev" ? "Standard Deviation" : m === "min-max" ? "Min / Max Contrast" : "Median Gray"}
+                  {m === "mean"
+                    ? "Average Brightness"
+                    : m === "std-dev"
+                      ? "Standard Deviation"
+                      : m === "min-max"
+                        ? "Min / Max Contrast"
+                        : "Median Gray"}
                 </button>
               ))}
             </div>

@@ -80,7 +80,9 @@ export function StandardReferenceSetup(): React.JSX.Element {
 
   const [slots, setSlots] = useState<ReferenceSlot[]>(DEFAULT_SLOTS);
   const [activeSlotId, setActiveSlotId] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<"calibration" | "enhancement" | "registration">("calibration");
+  const [activeTab, setActiveTab] = useState<"calibration" | "enhancement" | "registration">(
+    "calibration",
+  );
 
   // Adjustment Controls
   const [zoom, setZoom] = useState<number>(100);
@@ -112,8 +114,8 @@ export function StandardReferenceSetup(): React.JSX.Element {
                 isRegistered: true,
                 imageSrc: s.imageSrc || "/images/placeholders/sample_grid.png",
               }
-            : s
-        )
+            : s,
+        ),
       );
       toast.success(`Reference Image captured into Slot ${activeSlotId}`);
     }, 600);
@@ -139,8 +141,8 @@ export function StandardReferenceSetup(): React.JSX.Element {
                 height: 1536,
                 isRegistered: true,
               }
-            : s
-        )
+            : s,
+        ),
       );
       toast.success(`Loaded ${file.name} into Slot ${activeSlotId}`);
     };
@@ -149,9 +151,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
   };
 
   const handleRegisterSlot = () => {
-    setSlots((prev) =>
-      prev.map((s) => (s.id === activeSlotId ? { ...s, isRegistered: true } : s))
-    );
+    setSlots((prev) => prev.map((s) => (s.id === activeSlotId ? { ...s, isRegistered: true } : s)));
     toast.success(`Registered Slot ${activeSlotId} as active master reference.`);
   };
 
@@ -168,8 +168,8 @@ export function StandardReferenceSetup(): React.JSX.Element {
               height: 0,
               isRegistered: false,
             }
-          : s
-      )
+          : s,
+      ),
     );
     toast.info(`Cleared Reference Slot ${activeSlotId}`);
   };
@@ -344,7 +344,8 @@ export function StandardReferenceSetup(): React.JSX.Element {
                 <ImageIcon size={48} className="mb-3 opacity-40" />
                 <p className="text-sm font-semibold text-ca-ink">Slot #{activeSlotId} is Empty</p>
                 <p className="text-xs text-ca-ink-muted mt-1 max-w-sm text-center">
-                  Grab a frame from the live camera or import a high-resolution reference image to configure this slot.
+                  Grab a frame from the live camera or import a high-resolution reference image to
+                  configure this slot.
                 </p>
                 <div className="flex items-center gap-2 mt-4">
                   <button
@@ -543,7 +544,9 @@ export function StandardReferenceSetup(): React.JSX.Element {
                   <div>
                     <div className="flex justify-between text-ca-ink-muted mb-1">
                       <span>Contrast Adjustment</span>
-                      <span className="font-mono text-ca-ink">{contrast > 0 ? `+${contrast}` : contrast}</span>
+                      <span className="font-mono text-ca-ink">
+                        {contrast > 0 ? `+${contrast}` : contrast}
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -558,7 +561,9 @@ export function StandardReferenceSetup(): React.JSX.Element {
                   <div>
                     <div className="flex justify-between text-ca-ink-muted mb-1">
                       <span>Brightness Offset</span>
-                      <span className="font-mono text-ca-ink">{brightness > 0 ? `+${brightness}` : brightness}</span>
+                      <span className="font-mono text-ca-ink">
+                        {brightness > 0 ? `+${brightness}` : brightness}
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -626,7 +631,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
                         onChange={(e) => {
                           const val = e.target.value;
                           setSlots((prev) =>
-                            prev.map((s) => (s.id === activeSlotId ? { ...s, name: val } : s))
+                            prev.map((s) => (s.id === activeSlotId ? { ...s, name: val } : s)),
                           );
                         }}
                         className="w-full bg-ca-bg border border-ca-border px-2 py-1 rounded text-ca-ink font-sans"

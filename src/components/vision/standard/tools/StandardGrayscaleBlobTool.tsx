@@ -19,7 +19,9 @@ export interface StandardGrayscaleBlobToolProps {
   onRefresh?: () => void;
 }
 
-export function StandardGrayscaleBlobTool(props: StandardGrayscaleBlobToolProps): React.JSX.Element {
+export function StandardGrayscaleBlobTool(
+  props: StandardGrayscaleBlobToolProps,
+): React.JSX.Element {
   const [lowerThreshold, setLowerThreshold] = useState<number>(60);
   const [upperThreshold, setUpperThreshold] = useState<number>(200);
   const [minParticleArea, setMinParticleArea] = useState<number>(30);

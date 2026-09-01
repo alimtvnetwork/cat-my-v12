@@ -19,7 +19,6 @@ export const Route = createFileRoute("/setup/")({
   component: SetupIndex,
 });
 
-
 function SetupIndex() {
   const { mode } = useUiMode();
 
@@ -68,4 +67,3 @@ function SetupIndex() {
 
   return content;
 }
-

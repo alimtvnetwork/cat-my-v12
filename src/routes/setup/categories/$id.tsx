@@ -21,7 +21,6 @@ import { toIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
-
 export const Route = createFileRoute("/setup/categories/$id")({
   staticData: { crumb: "Category editor" },
   head: ({ params }) => ({
@@ -254,4 +253,3 @@ function CategoryEditorRoute() {
     </div>
   );
 }
-

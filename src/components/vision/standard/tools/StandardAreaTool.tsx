@@ -54,7 +54,11 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                       : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
                   }`}
                 >
-                  {m === "pixels" ? "Pixel Count (px)" : m === "percentage" ? "Area Ratio (%)" : "Physical (mm²)"}
+                  {m === "pixels"
+                    ? "Pixel Count (px)"
+                    : m === "percentage"
+                      ? "Area Ratio (%)"
+                      : "Physical (mm²)"}
                 </button>
               ))}
             </div>

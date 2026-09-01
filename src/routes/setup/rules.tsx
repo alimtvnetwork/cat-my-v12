@@ -207,7 +207,8 @@ function SetupRulesPage() {
       if (target) {
         const tag = target.tagName;
 
-        if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag)) return;
+        if (HtmlTagType.isInput(tag) || HtmlTagType.isTextarea(tag) || HtmlTagType.isSelect(tag))
+          return;
 
         if (target.isContentEditable) return;
       }
@@ -499,7 +500,6 @@ function SetupRulesPage() {
   }
 
   const rulesBody = (
-
     <>
       <div className="border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-3">
         <div className="flex flex-wrap items-center justify-between gap-hmi-3">
@@ -532,7 +532,6 @@ function SetupRulesPage() {
           </div>
         </div>
       </div>
-
 
       <div className="flex flex-wrap items-center gap-hmi-3 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
         <div
@@ -739,7 +738,6 @@ function SetupRulesPage() {
     </div>
   );
 }
-
 
 import { RuleKindBadge } from "@/components/rules/RuleKindBadge";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";

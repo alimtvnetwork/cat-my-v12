@@ -266,7 +266,6 @@ function SetupCategoriesPage(): ReactElement {
             }
             testId="setup-categories-empty"
           />
-
         ) : (
           <ul
             className="divide-y divide-ca-border"

@@ -20,7 +20,9 @@ export interface StandardCodeReaderToolProps {
 }
 
 export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): React.JSX.Element {
-  const [symbology, setSymbology] = useState<"code128" | "code39" | "qr" | "datamatrix" | "ean13">("code128");
+  const [symbology, setSymbology] = useState<"code128" | "code39" | "qr" | "datamatrix" | "ean13">(
+    "code128",
+  );
   const [verifyChecksum, setVerifyChecksum] = useState<boolean>(true);
   const [minQualityGrade, setMinQualityGrade] = useState<"A" | "B" | "C" | "D">("B");
 

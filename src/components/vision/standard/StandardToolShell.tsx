@@ -50,60 +50,74 @@ export function StandardToolShell({
 
   const activeTabContent = tabs.find((t) => t.id === activeTabId)?.content || tabs[0]?.content;
 
-  const handleCancel = onCancel ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/setup/rules";
-    }
-  });
+  const handleCancel =
+    onCancel ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/setup/rules";
+      }
+    });
 
-  const handleOk = onOk ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/setup/rules";
-    }
-  });
+  const handleOk =
+    onOk ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/setup/rules";
+      }
+    });
 
-  const handleSettings = onSettings ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/settings";
-    }
-  });
+  const handleSettings =
+    onSettings ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/settings";
+      }
+    });
 
-  const handleRegisterImage = onRegisterImage ?? (() => {
-    onChangeSettings((s) => ({
-      ...s,
-      referenceImage: {
-        ...s.referenceImage,
-        index: (s.referenceImage?.index || 0) + 1,
-      },
-    }));
-  });
+  const handleRegisterImage =
+    onRegisterImage ??
+    (() => {
+      onChangeSettings((s) => ({
+        ...s,
+        referenceImage: {
+          ...s.referenceImage,
+          index: (s.referenceImage?.index || 0) + 1,
+        },
+      }));
+    });
 
-  const handleOriginPoint = onOriginPoint ?? (() => {
-    onChangeSettings((s) => ({
-      ...s,
-      view: { ...s.view, zoom: 100 },
-      searchRegion: {
-        ...s.searchRegion,
-        geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
-      },
-    }));
-  });
+  const handleOriginPoint =
+    onOriginPoint ??
+    (() => {
+      onChangeSettings((s) => ({
+        ...s,
+        view: { ...s.view, zoom: 100 },
+        searchRegion: {
+          ...s.searchRegion,
+          geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
+        },
+      }));
+    });
 
-  const handleDisplay = onDisplay ?? (() => {
-    setViewModes((prev) => ({
-      regions: !prev.regions,
-      results: !prev.results,
-      grid: !prev.grid,
-    }));
-  });
+  const handleDisplay =
+    onDisplay ??
+    (() => {
+      setViewModes((prev) => ({
+        regions: !prev.regions,
+        results: !prev.results,
+        grid: !prev.grid,
+      }));
+    });
 
-  const handleRefresh = onRefresh ?? (() => {
-    onChangeSettings((s) => ({
-      ...s,
-      view: { ...s.view, zoom: 100 },
-    }));
-    onEvaluate?.();
-  });
+  const handleRefresh =
+    onRefresh ??
+    (() => {
+      onChangeSettings((s) => ({
+        ...s,
+        view: { ...s.view, zoom: 100 },
+      }));
+      onEvaluate?.();
+    });
 
   return (
     <div className="flex flex-col h-full bg-std-chrome overflow-x-auto text-std-text font-sans select-none">
@@ -180,9 +194,7 @@ export function StandardToolShell({
             </div>
 
             {/* Active Tab Panel Body */}
-            <div className="flex-1 overflow-y-auto min-h-0 bg-ca-panel">
-              {activeTabContent}
-            </div>
+            <div className="flex-1 overflow-y-auto min-h-0 bg-ca-panel">{activeTabContent}</div>
           </ResizablePanel>
         </ResizablePanelGroup>
 

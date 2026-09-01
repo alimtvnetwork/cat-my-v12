@@ -172,7 +172,10 @@ function RunPage() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const typing =
-        t && (HtmlTagType.isInput(t.tagName) || HtmlTagType.isTextarea(t.tagName) || t.isContentEditable);
+        t &&
+        (HtmlTagType.isInput(t.tagName) ||
+          HtmlTagType.isTextarea(t.tagName) ||
+          t.isContentEditable);
 
       if (typing) return;
 
@@ -258,7 +261,6 @@ function RunPage() {
       : "bg-ca-warn/15 text-ca-warn border-ca-warn/40";
 
   const { mode } = useUiMode();
-
 
   const runBody = (
     <div className="flex flex-1 overflow-hidden">
@@ -643,5 +645,3 @@ function RunPage() {
     </HmiShell>
   );
 }
-
-

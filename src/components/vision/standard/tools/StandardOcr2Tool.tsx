@@ -20,7 +20,9 @@ export interface StandardOcr2ToolProps {
 }
 
 export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Element {
-  const [fontFamily, setFontFamily] = useState<"standard-sans" | "dot-matrix" | "ocr-a" | "custom">("standard-sans");
+  const [fontFamily, setFontFamily] = useState<"standard-sans" | "dot-matrix" | "ocr-a" | "custom">(
+    "standard-sans",
+  );
   const [characterCount, setCharacterCount] = useState<number>(8);
   const [expectedFormat, setExpectedFormat] = useState<string>("^[A-Z0-9]{8}$");
   const [minConfidence, setMinConfidence] = useState<number>(80);

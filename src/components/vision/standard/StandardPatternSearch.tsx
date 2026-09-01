@@ -36,60 +36,74 @@ export function StandardPatternSearch({
 }: StandardPatternSearchProps): React.JSX.Element | null {
   const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
 
-  const handleCancel = onCancel ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/setup/rules";
-    }
-  });
+  const handleCancel =
+    onCancel ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/setup/rules";
+      }
+    });
 
-  const handleOk = onOk ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/setup/rules";
-    }
-  });
+  const handleOk =
+    onOk ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/setup/rules";
+      }
+    });
 
-  const handleSettings = onSettings ?? (() => {
-    if (typeof window !== "undefined" && window.location) {
-      window.location.href = "/settings";
-    }
-  });
+  const handleSettings =
+    onSettings ??
+    (() => {
+      if (typeof window !== "undefined" && window.location) {
+        window.location.href = "/settings";
+      }
+    });
 
-  const handleRegisterImage = onRegisterImage ?? (() => {
-    onChange((s) => ({
-      ...s,
-      referenceImage: {
-        ...s.referenceImage,
-        index: s.referenceImage.index + 1,
-      },
-    }));
-  });
+  const handleRegisterImage =
+    onRegisterImage ??
+    (() => {
+      onChange((s) => ({
+        ...s,
+        referenceImage: {
+          ...s.referenceImage,
+          index: s.referenceImage.index + 1,
+        },
+      }));
+    });
 
-  const handleOriginPoint = onOriginPoint ?? (() => {
-    onChange((s) => ({
-      ...s,
-      view: { ...s.view, zoom: 100 },
-      searchRegion: {
-        ...s.searchRegion,
-        geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
-      },
-    }));
-  });
+  const handleOriginPoint =
+    onOriginPoint ??
+    (() => {
+      onChange((s) => ({
+        ...s,
+        view: { ...s.view, zoom: 100 },
+        searchRegion: {
+          ...s.searchRegion,
+          geometry: { ...s.searchRegion.geometry, x: 0, y: 0 },
+        },
+      }));
+    });
 
-  const handleDisplay = onDisplay ?? (() => {
-    setViewModes((prev) => ({
-      regions: !prev.regions,
-      results: !prev.results,
-      grid: !prev.grid,
-    }));
-  });
+  const handleDisplay =
+    onDisplay ??
+    (() => {
+      setViewModes((prev) => ({
+        regions: !prev.regions,
+        results: !prev.results,
+        grid: !prev.grid,
+      }));
+    });
 
-  const handleRefresh = onRefresh ?? (() => {
-    onChange((s) => ({
-      ...s,
-      view: { ...s.view, zoom: 100 },
-    }));
-    onEvaluate?.();
-  });
+  const handleRefresh =
+    onRefresh ??
+    (() => {
+      onChange((s) => ({
+        ...s,
+        view: { ...s.view, zoom: 100 },
+      }));
+      onEvaluate?.();
+    });
 
   const handlePreview = onPreview ?? onEvaluate;
 

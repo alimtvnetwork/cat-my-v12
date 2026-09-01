@@ -149,120 +149,119 @@ function SetupFunctionsPage() {
             <Plus size={14} /> New
           </button>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-              title="Import JSON"
-              aria-label="Import functions from JSON"
-            >
-              <Upload size={14} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={downloadJson}
-              className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-              title="Export JSON"
-              aria-label="Export functions to JSON"
-            >
-              <Download size={14} aria-hidden />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              aria-label="Import functions JSON file"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
+            title="Import JSON"
+            aria-label="Import functions from JSON"
+          >
+            <Upload size={14} aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={downloadJson}
+            className="flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
+            title="Export JSON"
+            aria-label="Export functions to JSON"
+          >
+            <Download size={14} aria-hidden />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            aria-label="Import functions JSON file"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
 
-                if (f) void onImportFile(f);
-                e.target.value = "";
-              }}
-            />
-          </div>
-          <ul className="flex-1 overflow-auto">
-            {library.entries.length === 0 ? (
-              <li className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
-                No functions yet. Click New to author one.
-              </li>
-            ) : (
-              library.entries.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(e.id)}
-                    className={`flex w-full items-center justify-between gap-hmi-2 border-b border-ca-border px-hmi-2 py-hmi-2 text-left text-hmi-body ${
-                      selectedId === e.id
-                        ? "bg-ca-panel text-ca-ink"
-                        : "text-ca-ink hover:bg-ca-panel"
-                    }`}
-                  >
-                    <span className="truncate">{e.name}</span>
-                    <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">{e.id}</span>
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </aside>
-
-        <main className="flex flex-1 flex-col p-hmi-3">
-          {selected ? (
-            <div className="flex flex-1 flex-col gap-hmi-3">
-              <div className="grid grid-cols-2 gap-hmi-2">
-                <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                  <span>Name</span>
-                  <input
-                    type="text"
-                    value={selected.name}
-                    onChange={(e) => patchSelected({ name: e.target.value })}
-                    className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
-                  />
-                </label>
-                <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                  <span>Description</span>
-                  <input
-                    type="text"
-                    value={selected.description}
-                    onChange={(e) => patchSelected({ description: e.target.value })}
-                    className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
-                  />
-                </label>
-              </div>
-              <label className="flex flex-1 flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                <span>Source (JS)</span>
-                <textarea
-                  value={selected.source}
-                  onChange={(e) => patchSelected({ source: e.target.value })}
-                  spellCheck={false}
-                  className="min-h-[320px] flex-1 bg-ca-bg border border-ca-border p-hmi-2 font-hmi-mono text-hmi-body text-ca-ink"
-                />
-              </label>
-              <div className="flex items-center justify-between text-hmi-caption text-ca-ink-muted">
-                <span className="font-hmi-mono">
-                  id: {selected.id} / bytes: {selected.source.length}
-                </span>
+              if (f) void onImportFile(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        <ul className="flex-1 overflow-auto">
+          {library.entries.length === 0 ? (
+            <li className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
+              No functions yet. Click New to author one.
+            </li>
+          ) : (
+            library.entries.map((e) => (
+              <li key={e.id}>
                 <button
                   type="button"
-                  onClick={() => remove(selected.id)}
-                  className="flex items-center gap-hmi-1 border border-ca-ng bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ng hover:bg-ca-panel"
+                  onClick={() => setSelectedId(e.id)}
+                  className={`flex w-full items-center justify-between gap-hmi-2 border-b border-ca-border px-hmi-2 py-hmi-2 text-left text-hmi-body ${
+                    selectedId === e.id
+                      ? "bg-ca-panel text-ca-ink"
+                      : "text-ca-ink hover:bg-ca-panel"
+                  }`}
                 >
-                  <Trash2 size={14} /> Delete
+                  <span className="truncate">{e.name}</span>
+                  <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">{e.id}</span>
                 </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">
-              Select a function on the left, or create a new one.
-            </div>
+              </li>
+            ))
           )}
-        </main>
+        </ul>
+      </aside>
+
+      <main className="flex flex-1 flex-col p-hmi-3">
+        {selected ? (
+          <div className="flex flex-1 flex-col gap-hmi-3">
+            <div className="grid grid-cols-2 gap-hmi-2">
+              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <span>Name</span>
+                <input
+                  type="text"
+                  value={selected.name}
+                  onChange={(e) => patchSelected({ name: e.target.value })}
+                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                />
+              </label>
+              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <span>Description</span>
+                <input
+                  type="text"
+                  value={selected.description}
+                  onChange={(e) => patchSelected({ description: e.target.value })}
+                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                />
+              </label>
+            </div>
+            <label className="flex flex-1 flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+              <span>Source (JS)</span>
+              <textarea
+                value={selected.source}
+                onChange={(e) => patchSelected({ source: e.target.value })}
+                spellCheck={false}
+                className="min-h-[320px] flex-1 bg-ca-bg border border-ca-border p-hmi-2 font-hmi-mono text-hmi-body text-ca-ink"
+              />
+            </label>
+            <div className="flex items-center justify-between text-hmi-caption text-ca-ink-muted">
+              <span className="font-hmi-mono">
+                id: {selected.id} / bytes: {selected.source.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => remove(selected.id)}
+                className="flex items-center gap-hmi-1 border border-ca-ng bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ng hover:bg-ca-panel"
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">
+            Select a function on the left, or create a new one.
+          </div>
+        )}
+      </main>
     </div>
   );
 
   if (mode === UiModeType.Standard) {
-
     return (
       <StandardAppShell
         activeNav="setup"
@@ -284,4 +283,3 @@ function SetupFunctionsPage() {
     </div>
   );
 }
-

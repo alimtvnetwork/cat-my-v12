@@ -30,9 +30,7 @@ const TOTAL_PAGES = 2;
 function ReadoutRow({ item }: { item: ReadoutItem }): React.JSX.Element {
   return (
     <div className="flex justify-between items-center h-[24px] gap-2">
-      <span className="text-std-text whitespace-nowrap font-medium min-w-[76px]">
-        {item.label}
-      </span>
+      <span className="text-std-text whitespace-nowrap font-medium min-w-[76px]">{item.label}</span>
       <div className="flex-1 bg-std-readout-bg border border-std-border rounded-xs px-2 flex items-center justify-end h-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]">
         <span className="text-std-readout-text font-mono text-xs font-medium">{item.value}</span>
       </div>

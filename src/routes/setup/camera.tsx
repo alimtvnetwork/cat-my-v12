@@ -261,7 +261,6 @@ function SetupCameraPage() {
           </div>
         </div>
 
-
         <ul className="flex flex-1 flex-col overflow-y-auto" role="listbox" aria-label="Cameras">
           {filtered.length === 0 ? (
             <li className="p-3 text-hmi-caption text-ca-ink-muted">
@@ -278,7 +277,9 @@ function SetupCameraPage() {
                   aria-selected={active}
                   onClick={() => setSelectedId(c.id)}
                   className={`flex cursor-pointer flex-col gap-0.5 border-b border-ca-border px-3 py-2 text-hmi-body transition-colors ${
-                    active ? "bg-ca-panel text-ca-ink font-semibold" : "text-ca-ink hover:bg-ca-panel/60"
+                    active
+                      ? "bg-ca-panel text-ca-ink font-semibold"
+                      : "text-ca-ink hover:bg-ca-panel/60"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -300,9 +301,7 @@ function SetupCameraPage() {
           <CameraEditor
             entry={selected}
             onPatch={patchSelected}
-            onDelete={() =>
-              reportRemoveOutcome(library.remove(selected.id), "setup/camera.remove")
-            }
+            onDelete={() => reportRemoveOutcome(library.remove(selected.id), "setup/camera.remove")}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">

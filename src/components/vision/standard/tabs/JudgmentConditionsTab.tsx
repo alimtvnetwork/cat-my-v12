@@ -94,7 +94,10 @@ export function JudgmentConditionsTab({
               const isPass = item.status === "PASS" || item.status === "OK";
 
               return (
-                <div key={item.id} className="grid grid-cols-12 gap-1 items-center px-2.5 py-1.5 text-xs">
+                <div
+                  key={item.id}
+                  className="grid grid-cols-12 gap-1 items-center px-2.5 py-1.5 text-xs"
+                >
                   <span className="col-span-4 font-medium truncate text-ca-ink" title={item.name}>
                     {item.name}
                   </span>
@@ -103,25 +106,23 @@ export function JudgmentConditionsTab({
                     <input
                       type="number"
                       value={item.lowerLimit}
-                      onChange={(e) =>
-                        handleChange(idx, { lowerLimit: Number(e.target.value) })
-                      }
+                      onChange={(e) => handleChange(idx, { lowerLimit: Number(e.target.value) })}
                       className="w-16 bg-ca-bg border border-ca-border rounded px-1.5 py-0.5 text-right font-mono text-xs text-ca-ink"
                     />
                   </div>
 
                   <div className="col-span-3 flex items-center justify-center font-mono font-bold text-xs text-ca-ink">
                     {item.measured}
-                    {item.unit && <span className="text-[10px] text-ca-ink-muted ml-0.5">{item.unit}</span>}
+                    {item.unit && (
+                      <span className="text-[10px] text-ca-ink-muted ml-0.5">{item.unit}</span>
+                    )}
                   </div>
 
                   <div className="col-span-2 flex justify-end">
                     <input
                       type="number"
                       value={item.upperLimit}
-                      onChange={(e) =>
-                        handleChange(idx, { upperLimit: Number(e.target.value) })
-                      }
+                      onChange={(e) => handleChange(idx, { upperLimit: Number(e.target.value) })}
                       className="w-16 bg-ca-bg border border-ca-border rounded px-1.5 py-0.5 text-right font-mono text-xs text-ca-ink"
                     />
                   </div>

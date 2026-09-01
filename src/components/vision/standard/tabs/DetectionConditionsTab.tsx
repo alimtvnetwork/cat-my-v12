@@ -38,7 +38,8 @@ export function DetectionConditionsTab({
   onCancel,
   onOk,
 }: DetectionConditionsTabProps): React.JSX.Element {
-  const [internalConditions, setInternalConditions] = React.useState<DetectionConditionsData>(conditions);
+  const [internalConditions, setInternalConditions] =
+    React.useState<DetectionConditionsData>(conditions);
   const activeConditions = conditions || internalConditions;
 
   const updateField = (field: string, value: any) => {
@@ -46,7 +47,6 @@ export function DetectionConditionsTab({
     setInternalConditions(next);
     onChange?.(next);
   };
-
 
   return (
     <div className="flex flex-col h-full text-ca-ink font-sans">
@@ -233,7 +233,9 @@ export function DetectionConditionsTab({
           <div className="flex flex-col gap-1 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-ca-ink-muted font-medium">Min. Match %</span>
-              <span className="font-mono text-ca-ink font-semibold">{conditions.minMatchPercent}%</span>
+              <span className="font-mono text-ca-ink font-semibold">
+                {conditions.minMatchPercent}%
+              </span>
             </div>
             <input
               type="range"

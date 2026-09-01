@@ -186,204 +186,202 @@ function SetupChainEventsPage() {
     <div className="flex flex-1 min-h-0">
       <aside className="flex w-80 flex-col border-r border-ca-border bg-ca-panel-2">
         <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
+          <button
+            type="button"
+            onClick={createNew}
+            className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:border-ca-select"
+          >
+            <Plus size={14} aria-hidden /> New
+          </button>
+          <span className="ml-auto text-hmi-caption text-ca-ink-muted">
+            {library.entries.length} fn
+          </span>
+        </div>
+        <ul className="flex-1 overflow-auto">
+          {events.events.length === 0 ? (
+            <li className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
+              No chain events yet. Click New to bind one.
+            </li>
+          ) : (
+            events.events.map((ev) => {
+              const fn = library.entries.find((e) => e.id === ev.functionId);
+              const dangling = danglingIds.has(ev.id);
 
-            <button
-              type="button"
-              onClick={createNew}
-              className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:border-ca-select"
-            >
-              <Plus size={14} aria-hidden /> New
-            </button>
-            <span className="ml-auto text-hmi-caption text-ca-ink-muted">
-              {library.entries.length} fn
-            </span>
-          </div>
-          <ul className="flex-1 overflow-auto">
-            {events.events.length === 0 ? (
-              <li className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
-                No chain events yet. Click New to bind one.
-              </li>
-            ) : (
-              events.events.map((ev) => {
-                const fn = library.entries.find((e) => e.id === ev.functionId);
-                const dangling = danglingIds.has(ev.id);
-
-                return (
-                  <li key={ev.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(ev.id)}
-                      className={`flex w-full flex-col items-start gap-0.5 border-b border-ca-border p-hmi-2 text-left hover:bg-ca-bg ${
-                        selectedId === ev.id ? "bg-ca-bg" : ""
+              return (
+                <li key={ev.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(ev.id)}
+                    className={`flex w-full flex-col items-start gap-0.5 border-b border-ca-border p-hmi-2 text-left hover:bg-ca-bg ${
+                      selectedId === ev.id ? "bg-ca-bg" : ""
+                    }`}
+                  >
+                    <span className="flex w-full items-center justify-between gap-hmi-1">
+                      <span className="truncate text-hmi-body text-ca-ink">
+                        {ev.trigger}
+                        {ev.ruleId ? ` @ ${ev.ruleId}` : ""}
+                      </span>
+                      {!ev.enabled ? (
+                        <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">
+                          off
+                        </span>
+                      ) : null}
+                    </span>
+                    <span
+                      className={`truncate font-hmi-mono text-hmi-caption ${
+                        dangling ? "text-ca-ng" : "text-ca-ink-muted"
                       }`}
                     >
-                      <span className="flex w-full items-center justify-between gap-hmi-1">
-                        <span className="truncate text-hmi-body text-ca-ink">
-                          {ev.trigger}
-                          {ev.ruleId ? ` @ ${ev.ruleId}` : ""}
-                        </span>
-                        {!ev.enabled ? (
-                          <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">
-                            off
-                          </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={`truncate font-hmi-mono text-hmi-caption ${
-                          dangling ? "text-ca-ng" : "text-ca-ink-muted"
-                        }`}
-                      >
-                        {fn?.name ?? `missing:${ev.functionId}`} · order {ev.order}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })
-            )}
-          </ul>
-        </aside>
-        <main className="flex flex-1 flex-col overflow-auto p-hmi-3">
-          {selected ? (
-            <div className="flex flex-1 flex-col gap-hmi-3">
-              <div className="grid grid-cols-2 gap-hmi-2">
+                      {fn?.name ?? `missing:${ev.functionId}`} · order {ev.order}
+                    </span>
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </aside>
+      <main className="flex flex-1 flex-col overflow-auto p-hmi-3">
+        {selected ? (
+          <div className="flex flex-1 flex-col gap-hmi-3">
+            <div className="grid grid-cols-2 gap-hmi-2">
+              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <span>Trigger</span>
+                <select
+                  value={selected.trigger}
+                  onChange={(e) => patch({ trigger: e.target.value as ChainEventTrigger })}
+                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                >
+                  <option value="beforeRuleset">beforeRuleset</option>
+                  <option value="afterRuleset">afterRuleset</option>
+                  <option value="beforeRule">beforeRule</option>
+                  <option value="afterRule">afterRule</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <span>Function</span>
+                <select
+                  value={selected.functionId}
+                  onChange={(e) => patch({ functionId: e.target.value })}
+                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                >
+                  {library.entries.length === 0 ? (
+                    <option value="">(no functions)</option>
+                  ) : (
+                    library.entries.map((fn) => (
+                      <option key={fn.id} value={fn.id}>
+                        {fn.name} ({fn.id})
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+              {(selected.trigger === "beforeRule" || selected.trigger === "afterRule") && (
                 <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                  <span>Trigger</span>
+                  <span>Rule</span>
                   <select
-                    value={selected.trigger}
-                    onChange={(e) => patch({ trigger: e.target.value as ChainEventTrigger })}
+                    value={selected.ruleId ?? ""}
+                    onChange={(e) => patch({ ruleId: e.target.value || undefined })}
                     className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
                   >
-                    <option value="beforeRuleset">beforeRuleset</option>
-                    <option value="afterRuleset">afterRuleset</option>
-                    <option value="beforeRule">beforeRule</option>
-                    <option value="afterRule">afterRule</option>
+                    <option value="">(pick a rule)</option>
+                    {rulePool.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label} ({r.id})
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                  <span>Function</span>
-                  <select
-                    value={selected.functionId}
-                    onChange={(e) => patch({ functionId: e.target.value })}
-                    className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
-                  >
-                    {library.entries.length === 0 ? (
-                      <option value="">(no functions)</option>
-                    ) : (
-                      library.entries.map((fn) => (
-                        <option key={fn.id} value={fn.id}>
-                          {fn.name} ({fn.id})
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </label>
-                {(selected.trigger === "beforeRule" || selected.trigger === "afterRule") && (
-                  <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                    <span>Rule</span>
-                    <select
-                      value={selected.ruleId ?? ""}
-                      onChange={(e) => patch({ ruleId: e.target.value || undefined })}
-                      className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
-                    >
-                      <option value="">(pick a rule)</option>
-                      {rulePool.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.label} ({r.id})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                  <span>Order</span>
-                  <input
-                    type="number"
-                    value={selected.order}
-                    onChange={(e) => patch({ order: Number(e.target.value) })}
-                    className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
-                  />
-                </label>
-                <label className="flex items-center gap-hmi-2 text-hmi-body text-ca-ink">
-                  <input
-                    type="checkbox"
-                    checked={selected.enabled}
-                    onChange={(e) => patch({ enabled: e.target.checked })}
-                  />
-                  <span>Enabled</span>
-                </label>
-              </div>
+              )}
+              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <span>Order</span>
+                <input
+                  type="number"
+                  value={selected.order}
+                  onChange={(e) => patch({ order: Number(e.target.value) })}
+                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                />
+              </label>
+              <label className="flex items-center gap-hmi-2 text-hmi-body text-ca-ink">
+                <input
+                  type="checkbox"
+                  checked={selected.enabled}
+                  onChange={(e) => patch({ enabled: e.target.checked })}
+                />
+                <span>Enabled</span>
+              </label>
+            </div>
 
-              {danglingIds.has(selected.id) ? (
-                <div
-                  role="alert"
-                  className="border border-ca-ng bg-ca-bg p-hmi-2 text-hmi-caption text-ca-ng"
-                >
-                  Function id `{selected.functionId}` is not in the library. Add it in
-                  /setup/functions or pick a different function.
-                </div>
-              ) : null}
-
-              <div className="flex items-center justify-between border-t border-ca-border pt-hmi-2 text-hmi-caption text-ca-ink-muted">
-                <span className="font-hmi-mono">id: {selected.id}</span>
-                <button
-                  type="button"
-                  onClick={() => remove(selected.id)}
-                  className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ink hover:border-ca-ng hover:text-ca-ng"
-                >
-                  <Trash2 size={14} aria-hidden /> Delete
-                </button>
-              </div>
-
-              <section
-                aria-label="Execution preview"
-                className="flex flex-col gap-hmi-2 border-t border-ca-border pt-hmi-2"
+            {danglingIds.has(selected.id) ? (
+              <div
+                role="alert"
+                className="border border-ca-ng bg-ca-bg p-hmi-2 text-hmi-caption text-ca-ng"
               >
-                <h2 className="text-hmi-header text-ca-ink">Execution preview</h2>
-                {(["beforeRuleset", "afterRuleset"] as const).map((t) => {
-                  const list = sorted.byTrigger.get(t) ?? [];
+                Function id `{selected.functionId}` is not in the library. Add it in
+                /setup/functions or pick a different function.
+              </div>
+            ) : null}
 
-                  return (
-                    <div key={t}>
-                      <p className="text-hmi-caption text-ca-ink-muted">{t}</p>
-                      <ol className="ml-hmi-3 list-decimal font-hmi-mono text-hmi-caption text-ca-ink">
-                        {list.length === 0 ? (
-                          <li className="list-none text-ca-ink-muted">(none)</li>
-                        ) : (
-                          list.map((ev) => {
-                            const fn = library.entries.find((e) => e.id === ev.functionId);
+            <div className="flex items-center justify-between border-t border-ca-border pt-hmi-2 text-hmi-caption text-ca-ink-muted">
+              <span className="font-hmi-mono">id: {selected.id}</span>
+              <button
+                type="button"
+                onClick={() => remove(selected.id)}
+                className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ink hover:border-ca-ng hover:text-ca-ng"
+              >
+                <Trash2 size={14} aria-hidden /> Delete
+              </button>
+            </div>
 
-                            return <li key={ev.id}>{fn?.name ?? `missing:${ev.functionId}`}</li>;
-                          })
-                        )}
-                      </ol>
-                    </div>
-                  );
-                })}
-                {[...sorted.perRule.entries()].map(([key, list]) => (
-                  <div key={key}>
-                    <p className="text-hmi-caption text-ca-ink-muted">{key}</p>
+            <section
+              aria-label="Execution preview"
+              className="flex flex-col gap-hmi-2 border-t border-ca-border pt-hmi-2"
+            >
+              <h2 className="text-hmi-header text-ca-ink">Execution preview</h2>
+              {(["beforeRuleset", "afterRuleset"] as const).map((t) => {
+                const list = sorted.byTrigger.get(t) ?? [];
+
+                return (
+                  <div key={t}>
+                    <p className="text-hmi-caption text-ca-ink-muted">{t}</p>
                     <ol className="ml-hmi-3 list-decimal font-hmi-mono text-hmi-caption text-ca-ink">
-                      {list.map((ev) => {
-                        const fn = library.entries.find((e) => e.id === ev.functionId);
+                      {list.length === 0 ? (
+                        <li className="list-none text-ca-ink-muted">(none)</li>
+                      ) : (
+                        list.map((ev) => {
+                          const fn = library.entries.find((e) => e.id === ev.functionId);
 
-                        return <li key={ev.id}>{fn?.name ?? `missing:${ev.functionId}`}</li>;
-                      })}
+                          return <li key={ev.id}>{fn?.name ?? `missing:${ev.functionId}`}</li>;
+                        })
+                      )}
                     </ol>
                   </div>
-                ))}
-              </section>
-            </div>
-          ) : (
-            <div className="m-auto text-hmi-caption text-ca-ink-muted">
-              Select an event on the left, or click New.
-            </div>
-          )}
-        </main>
+                );
+              })}
+              {[...sorted.perRule.entries()].map(([key, list]) => (
+                <div key={key}>
+                  <p className="text-hmi-caption text-ca-ink-muted">{key}</p>
+                  <ol className="ml-hmi-3 list-decimal font-hmi-mono text-hmi-caption text-ca-ink">
+                    {list.map((ev) => {
+                      const fn = library.entries.find((e) => e.id === ev.functionId);
+
+                      return <li key={ev.id}>{fn?.name ?? `missing:${ev.functionId}`}</li>;
+                    })}
+                  </ol>
+                </div>
+              ))}
+            </section>
+          </div>
+        ) : (
+          <div className="m-auto text-hmi-caption text-ca-ink-muted">
+            Select an event on the left, or click New.
+          </div>
+        )}
+      </main>
     </div>
   );
 
   if (mode === UiModeType.Standard) {
-
     return (
       <StandardAppShell
         activeNav="setup"
@@ -414,4 +412,3 @@ function SetupChainEventsPage() {
     </div>
   );
 }
-

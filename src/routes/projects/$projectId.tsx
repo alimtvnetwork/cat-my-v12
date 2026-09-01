@@ -69,7 +69,6 @@ function ProjectLayout() {
   );
 }
 
-
 function getProjectActive(pathname: string): string {
   if (pathname.endsWith("/camera")) return "camera";
 

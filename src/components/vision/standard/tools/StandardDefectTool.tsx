@@ -21,7 +21,9 @@ export interface StandardDefectToolProps {
 
 export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.Element {
   const [defectSensitivity, setDefectSensitivity] = useState<number>(35);
-  const [defectTarget, setDefectTarget] = useState<"dark-defects" | "bright-defects" | "both">("both");
+  const [defectTarget, setDefectTarget] = useState<"dark-defects" | "bright-defects" | "both">(
+    "both",
+  );
   const [minDefectArea, setMinDefectArea] = useState<number>(15);
   const [maxAllowedDefects, setMaxAllowedDefects] = useState<number>(0);
 
@@ -94,7 +96,9 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
                 />
               </div>
               <div>
-                <label className="text-ca-ink-muted block mb-1">Max Allowed Flaw Count (0 = Zero Defect)</label>
+                <label className="text-ca-ink-muted block mb-1">
+                  Max Allowed Flaw Count (0 = Zero Defect)
+                </label>
                 <input
                   type="number"
                   min={0}
