@@ -4750,8 +4750,13 @@ body:has([data-app-shell="true"]) .agent-logo-fixed {
   pointer-events: auto;
 }
 body:has([data-app-shell="true"]) .app-shell-nav-global,
-body:has([data-app-shell="true"]) .standard-app-shell-nav,
-body:has([data-app-shell="true"]) .global-home-affordance {
+body:has([data-app-shell="true"]) .standard-app-shell-nav {
+  display: none;
+}
+body:has([data-standard-shell="true"]) .app-shell-nav-global,
+body:has([data-standard-shell="true"]) .standard-app-shell-nav,
+body:has([data-standard-shell="true"]) .global-home-affordance,
+body:has([data-standard-shell="true"]) .app-shell-sidebar-fab {
   display: none !important;
 }
 
