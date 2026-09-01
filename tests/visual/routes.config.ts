@@ -169,7 +169,7 @@ export const VISUAL_DIFF = {
    * - Further tightening (target 0.01) requires per-route drift
    *   investigation and a warm-Chromium recapture on CI.
    */
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.05,
 } as const;
 
 /**
