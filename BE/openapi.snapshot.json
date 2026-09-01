@@ -7,7 +7,9 @@
   "paths": {
     "/system/status": {
       "get": {
-        "tags": ["system"],
+        "tags": [
+          "system"
+        ],
         "summary": "Get Status",
         "operationId": "get_status_system_status_get",
         "responses": {
@@ -1274,7 +1276,11 @@
           }
         },
         "type": "object",
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError"
       }
     }
