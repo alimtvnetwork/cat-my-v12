@@ -1,24 +1,51 @@
-import React from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  Sliders,
-  PlayCircle,
-  Activity,
-  FolderOpen,
-  Sparkles,
-  AlertTriangle,
-  FileSpreadsheet,
-  Settings,
-  Camera,
-  Sun,
-  Tags,
-  Plus,
-  ArrowRight,
-  HardDrive,
-  Cpu,
-} from "lucide-react";
+import React, { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
-import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
+import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
+import {
+  CatalogCategoryIdType,
+  type CatalogTool,
+  getCategoryById,
+  getToolsForCategory,
+  getToolById,
+  getDefaultToolForCategory,
+  StandardCatalogHeader,
+  StandardCategoryGrid,
+  StandardToolGrid,
+  StandardToolDetailPanel,
+} from "./standard";
+
+/** Deterministic mapping table for legacy/seed rules without a stored conditions[0].toolType */
+const LEGACY_RULE_TOOL_MAP: Record<string, readonly string[]> = {
+  "rule-label-presence": ["tool-pattern-presence", "tool-area"],
+  "rule-logo-match": ["tool-pattern-presence"],
+  "rule-pill-presence": ["tool-area", "tool-pattern-presence"],
+  "rule-empty-pocket": ["tool-area"],
+  "rule-solder-bridge": ["tool-defect", "tool-blob-presence"],
+  "rule-silkscreen-ocr": ["tool-ocr2"],
+  "rule-lot-code-ocr": ["tool-ocr2"],
+  "rule-pocket-count": ["tool-blob-presence", "tool-edge-pitch"],
+  "rule-cap-color": ["tool-intensity"],
+  "rule-cap-color-delta": ["tool-intensity"],
+  "rule-fill-height": ["tool-edge-position", "tool-profile-position"],
+  "rule-ic-placement": ["tool-shapetrax3", "tool-edge-position"],
+  "rule-pin1-marker": ["tool-pattern-presence", "tool-shapetrax3"],
+  "rule-torque-mark": ["tool-edge-position", "tool-shapetrax3"],
+  "rule-yield-ratio": ["tool-functions"],
+};
+
+const LEGACY_CATEGORY_TOOL_MAP: Record<string, readonly string[]> = {
+  "cat-ocr": ["tool-ocr2"],
+  "cat-text": ["tool-ocr2"],
+  "cat-presence": ["tool-pattern-presence", "tool-area"],
+  "cat-absence": ["tool-area", "tool-blob-presence"],
+  "cat-color": ["tool-intensity"],
+  "cat-geometry": ["tool-edge-position", "tool-edge-width", "tool-edge-pitch"],
+  "cat-math": ["tool-functions", "tool-chain-events"],
+  "cat-label": ["tool-pattern-presence", "tool-area"],
+  "cat-solder": ["tool-defect", "tool-blob-presence"],
+};
 
 export interface StandardHomeViewProps {
   recentProjects?: Array<{ projectId: string; name: string; openedAt: number }>;
@@ -27,271 +54,219 @@ export interface StandardHomeViewProps {
 export function StandardHomeView({
   recentProjects = [],
 }: StandardHomeViewProps): React.JSX.Element {
-  const recent = recentProjects;
   const navigate = useNavigate();
-  const topProject = recent[0];
+  const { rules, save } = useRulesLibrary();
+
+  const [activeCategory, setActiveCategory] = useState<CatalogCategoryIdType>(
+    CatalogCategoryIdType.PresenceAbsence,
+  );
+
+  const activeCategoryObj = useMemo(() => {
+    return (
+      getCategoryById(activeCategory) ?? getCategoryById(CatalogCategoryIdType.PresenceAbsence)!
+    );
+  }, [activeCategory]);
+
+  const categoryTools = useMemo(() => {
+    return getToolsForCategory(activeCategory);
+  }, [activeCategory]);
+
+  const [selectedToolId, setSelectedToolId] = useState<string>(() => {
+    return getDefaultToolForCategory(CatalogCategoryIdType.PresenceAbsence)?.id ?? "tool-area";
+  });
+
+  const selectedTool = useMemo(() => {
+    return (
+      getToolById(selectedToolId) ?? categoryTools[0] ?? getDefaultToolForCategory(activeCategory)!
+    );
+  }, [selectedToolId, categoryTools, activeCategory]);
+
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const handleSelectCategory = useCallback((catId: CatalogCategoryIdType) => {
+    setActiveCategory(catId);
+    setSearchQuery("");
+    const defaultTool = getDefaultToolForCategory(catId);
+    if (defaultTool) {
+      setSelectedToolId(defaultTool.id);
+    }
+  }, []);
+
+  const handleSelectTool = useCallback((toolId: string) => {
+    setSelectedToolId(toolId);
+  }, []);
+
+  // Match rules from shared library to currently selected tool
+  const connectedRules = useMemo(() => {
+    if (!selectedTool || !rules) return [];
+    return rules.filter((r) => {
+      if (r.isCategory) return false;
+
+      // 1. Strict canonical match for rules with stored toolType
+      const cond = r.conditions?.[0] as { toolType?: string } | undefined;
+      if (cond && typeof cond.toolType === "string") {
+        return cond.toolType === selectedTool.name || cond.toolType === selectedTool.id;
+      }
+
+      // 2. Deterministic lookup for legacy/seed rules without conditions[0].toolType
+      const legacyToolIds = LEGACY_RULE_TOOL_MAP[r.id];
+      if (legacyToolIds && legacyToolIds.includes(selectedTool.id)) {
+        return true;
+      }
+
+      if (r.categoryId) {
+        const catToolIds = LEGACY_CATEGORY_TOOL_MAP[r.categoryId];
+        if (catToolIds && catToolIds.includes(selectedTool.id)) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [selectedTool, rules]);
+
+  const handleLaunchTool = useCallback(
+    async (tool: CatalogTool, specificRuleId?: string) => {
+      // 1. If explicit rule ID provided, open rule editor
+      if (specificRuleId) {
+        void navigate({
+          to: "/setup/rules/$id",
+          params: { id: specificRuleId },
+        });
+        return;
+      }
+
+      // 2. If target route is dedicated setup surface (ROI, Reference, Camera, Lighting, Functions)
+      if (tool.targetRoute !== "/setup/rules") {
+        void navigate({ to: tool.targetRoute as any });
+        return;
+      }
+
+      // 3. If connected rules exist for this inspection tool, open the first rule
+      if (connectedRules.length > 0) {
+        const firstRule = connectedRules[0];
+        void navigate({
+          to: "/setup/rules/$id",
+          params: { id: String(firstRule.id) },
+        });
+        return;
+      }
+
+      // 4. Otherwise create a new rule with this tool pre-configured
+      try {
+        const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
+        const newRuleName = `${tool.name} 01`;
+        await save({
+          id: newId as any,
+          name: newRuleName,
+          isCategory: false,
+          appliesBefore: [],
+          conditions: [
+            {
+              toolType: tool.name,
+            } as any, // Standard mode demo pass-through
+          ],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          notes: tool.shortDesc,
+        });
+
+        toast.success(`Created inspection rule: ${newRuleName}`);
+        void navigate({
+          to: "/setup/rules/$id",
+          params: { id: newId },
+        });
+      } catch (err) {
+        console.error("Failed to auto-create rule:", err);
+        void navigate({ to: "/setup/rules" });
+      }
+    },
+    [connectedRules, navigate, save],
+  );
+
+  const handleCreateRuleWithTool = useCallback(
+    async (tool: CatalogTool) => {
+      try {
+        const count = connectedRules.length + 1;
+        const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
+        const newRuleName = `${tool.name} ${count < 10 ? `0${count}` : count}`;
+
+        await save({
+          id: newId as any,
+          name: newRuleName,
+          isCategory: false,
+          appliesBefore: [],
+          conditions: [
+            {
+              toolType: tool.name,
+            } as any, // Standard mode demo pass-through
+          ],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          notes: tool.shortDesc,
+        });
+
+        toast.success(`Created rule: ${newRuleName}`);
+        void navigate({
+          to: "/setup/rules/$id",
+          params: { id: newId },
+        });
+      } catch (err) {
+        toast.error("Failed to create rule");
+        console.error(err);
+      }
+    },
+    [connectedRules.length, navigate, save],
+  );
+
+  const handleAutoTeach = useCallback(() => {
+    toast.info("Auto-Teach: Initializing golden reference and auto-threshold detection...");
+    void navigate({
+      to: "/setup/roi" as any,
+      search: { project: undefined, ruleset: undefined, rule: undefined } as any,
+    });
+  }, [navigate]);
+
+  const topProject = recentProjects[0];
 
   return (
     <StandardAppShell
       activeNav="home"
-      title="System Dashboard"
-      subtitle="Industrial Vision Controller"
+      title="Tool Catalog"
+      subtitle="Industrial Machine-Vision Inspection Launcher"
     >
-      <div className="flex-1 flex flex-col p-4 gap-4 max-w-7xl mx-auto w-full">
-        {/* System Line & Telemetry Status Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">Line Status</span>
-              <span className="font-bold text-sm text-emerald-500 flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                ONLINE / ACTIVE
-              </span>
-            </div>
-            <Activity className="w-5 h-5 text-ca-ink-muted" />
-          </div>
+      <div className="flex-1 flex flex-col min-h-0 bg-ca-bg">
+        {/* Compact Industrial Status Header */}
+        <StandardCatalogHeader
+          activeProjectName={topProject?.name}
+          activeProjectId={topProject?.projectId}
+        />
 
-          <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">
-                Inspection Mode
-              </span>
-              <span className="font-bold text-sm text-ca-ink mt-0.5">Standard HMI</span>
-            </div>
-            <Cpu className="w-5 h-5 text-ca-ink-muted" />
-          </div>
+        {/* Top Category Strip */}
+        <StandardCategoryGrid
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+        />
 
-          <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">
-                Active Project
-              </span>
-              <span className="font-bold text-sm text-ca-ink truncate max-w-[140px] mt-0.5">
-                {topProject ? topProject.name : "None (Default)"}
-              </span>
-            </div>
-            <HardDrive className="w-5 h-5 text-ca-ink-muted" />
-          </div>
+        {/* Main Workspace: Central Tool Grid + Right Detail Panel */}
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+          <StandardToolGrid
+            category={activeCategoryObj}
+            tools={categoryTools}
+            selectedToolId={selectedTool.id}
+            onSelectTool={handleSelectTool}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onAutoTeach={handleAutoTeach}
+          />
 
-          <div className="bg-ca-panel border border-ca-border rounded p-3 flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-mono text-ca-ink-muted uppercase">Data Source</span>
-              <div className="mt-1">
-                <DataSourceToggle />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Primary Operational Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Setup Group */}
-          <div className="bg-ca-panel border border-ca-border rounded flex flex-col">
-            <div className="bg-ca-panel-2 border-b border-ca-border px-3 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-ca-select" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-ca-ink">
-                  Configuration & Setup
-                </h2>
-              </div>
-              <Link
-                to="/setup"
-                className="text-[11px] font-semibold text-ca-select hover:underline flex items-center gap-0.5"
-              >
-                Open Hub <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="p-3 flex flex-col gap-2 flex-1">
-              <p className="text-xs text-ca-ink-muted">
-                Configure camera sensors, reference images, lighting, and inspection rule
-                parameters.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
-                <Link
-                  to="/setup/rules"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Tags className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>Rules Library</span>
-                </Link>
-                <Link
-                  to="/setup/camera"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Camera className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>Camera Setup</span>
-                </Link>
-                <Link
-                  to="/settings/lighting"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Sun className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>Lighting</span>
-                </Link>
-                <Link
-                  to="/setup/roi"
-                  search={{ project: undefined, ruleset: undefined, rule: undefined }}
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>ROI Setup</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Execution & Ops Group */}
-          <div className="bg-ca-panel border border-ca-border rounded flex flex-col">
-            <div className="bg-ca-panel-2 border-b border-ca-border px-3 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <PlayCircle className="w-4 h-4 text-emerald-500" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-ca-ink">
-                  Execution & Ops
-                </h2>
-              </div>
-              <Link
-                to="/run"
-                className="text-[11px] font-semibold text-ca-select hover:underline flex items-center gap-0.5"
-              >
-                Launch Run <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="p-3 flex flex-col gap-2 flex-1">
-              <p className="text-xs text-ca-ink-muted">
-                Execute live inspections, monitor high-speed camera streams, and review real-time
-                verdicts.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
-                <Link
-                  to="/run"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <PlayCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Run Trial</span>
-                </Link>
-                <Link
-                  to="/ops"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Activity className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Live Ops</span>
-                </Link>
-                <Link
-                  to="/results"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink col-span-2"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>Inspection Results & Export</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* System & Maintenance Group */}
-          <div className="bg-ca-panel border border-ca-border rounded flex flex-col">
-            <div className="bg-ca-panel-2 border-b border-ca-border px-3 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-purple-500" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-ca-ink">
-                  Diagnostics & System
-                </h2>
-              </div>
-              <Link
-                to="/diagnostics"
-                className="text-[11px] font-semibold text-ca-select hover:underline flex items-center gap-0.5"
-              >
-                Diagnostics <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="p-3 flex flex-col gap-2 flex-1">
-              <p className="text-xs text-ca-ink-muted">
-                Review hardware diagnostics, alarm/error history, license keys, and trigger timing.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
-                <Link
-                  to="/diagnostics"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>Diagnostics</span>
-                </Link>
-                <Link
-                  to="/errors"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Error Alarms</span>
-                </Link>
-                <Link
-                  to="/settings"
-                  className="flex items-center gap-2 p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select transition-colors text-xs font-medium text-ca-ink col-span-2"
-                >
-                  <Settings className="w-3.5 h-3.5 text-ca-ink-muted" />
-                  <span>System Settings & Preferences</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Projects Table & Actions */}
-        <div className="bg-ca-panel border border-ca-border rounded flex flex-col">
-          <div className="bg-ca-panel-2 border-b border-ca-border px-3 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="w-4 h-4 text-ca-ink" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-ca-ink">
-                Recent Projects
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/projects", search: { new: "1" } as any })}
-                className="flex items-center gap-1 px-2.5 py-1 bg-ca-select text-ca-bg rounded text-xs font-semibold hover:opacity-90 shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New Project</span>
-              </button>
-              <Link
-                to="/projects"
-                className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded text-xs font-medium hover:bg-ca-panel-2 text-ca-ink shadow-sm"
-              >
-                View All
-              </Link>
-            </div>
-          </div>
-
-          <div className="p-3">
-            {recent.length === 0 ? (
-              <div className="py-6 text-center text-xs text-ca-ink-muted">
-                No recent projects found. Create a new project to get started.
-              </div>
-            ) : (
-              <div className="divide-y divide-ca-border border border-ca-border rounded overflow-hidden">
-                {recent.map((proj) => (
-                  <div
-                    key={proj.projectId}
-                    className="flex items-center justify-between px-3 py-2 text-xs hover:bg-ca-panel-2 transition-colors"
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-ca-ink truncate">{proj.name}</span>
-                      <span className="text-[10px] text-ca-ink-muted">
-                        ID: {proj.projectId} • Last opened{" "}
-                        {new Date(proj.openedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <Link
-                      to="/projects/$projectId"
-                      params={{ projectId: proj.projectId }}
-                      className="px-3 py-1 bg-ca-panel border border-ca-border rounded text-xs font-semibold text-ca-select hover:bg-ca-panel-2 shadow-sm"
-                    >
-                      Open
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <StandardToolDetailPanel
+            tool={selectedTool}
+            category={activeCategoryObj}
+            connectedRules={connectedRules}
+            onLaunchTool={handleLaunchTool}
+            onCreateRuleWithTool={handleCreateRuleWithTool}
+          />
         </div>
       </div>
     </StandardAppShell>
