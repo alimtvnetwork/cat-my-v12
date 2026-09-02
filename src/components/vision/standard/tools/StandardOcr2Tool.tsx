@@ -6,6 +6,18 @@ import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 
+import {
+  OcrFontFamilyType,
+  OCR_FONT_FAMILY_OPTIONS,
+  OCR_DEFAULT_CHARACTER_COUNT,
+  OCR_MIN_CHARACTER_COUNT,
+  OCR_MAX_CHARACTER_COUNT,
+  OCR_DEFAULT_EXPECTED_FORMAT,
+  OCR_DEFAULT_MIN_CONFIDENCE,
+  OCR_MIN_CONFIDENCE_PERCENT,
+  OCR_MAX_CONFIDENCE_PERCENT,
+} from "../constants";
+
 export interface StandardOcr2ToolProps {
   settings: PatternSearchSettings;
   onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
@@ -20,12 +32,10 @@ export interface StandardOcr2ToolProps {
 }
 
 export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Element {
-  const [fontFamily, setFontFamily] = useState<"standard-sans" | "dot-matrix" | "ocr-a" | "custom">(
-    "standard-sans",
-  );
-  const [characterCount, setCharacterCount] = useState<number>(8);
-  const [expectedFormat, setExpectedFormat] = useState<string>("^[A-Z0-9]{8}$");
-  const [minConfidence, setMinConfidence] = useState<number>(80);
+  const [fontFamily, setFontFamily] = useState<OcrFontFamilyType>(OcrFontFamilyType.StandardSans);
+  const [characterCount, setCharacterCount] = useState<number>(OCR_DEFAULT_CHARACTER_COUNT);
+  const [expectedFormat, setExpectedFormat] = useState<string>(OCR_DEFAULT_EXPECTED_FORMAT);
+  const [minConfidence, setMinConfidence] = useState<number>(OCR_DEFAULT_MIN_CONFIDENCE);
 
   const tabs: ToolTabItem[] = [
     {
@@ -44,24 +54,31 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-ca-ink-muted block mb-1">Font Model Library</label>
+                <label htmlFor="ocr-font-family" className="text-ca-ink-muted block mb-1">
+                  Font Model Library
+                </label>
                 <select
+                  id="ocr-font-family"
                   value={fontFamily}
-                  onChange={(e) => setFontFamily(e.target.value as any)}
+                  onChange={(e) => setFontFamily(e.target.value as OcrFontFamilyType)}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 rounded text-ca-ink"
                 >
-                  <option value="standard-sans">Standard Alphanumeric Sans</option>
-                  <option value="dot-matrix">Dot Matrix Print</option>
-                  <option value="ocr-a">OCR-A Standard</option>
-                  <option value="custom">Custom Trained Font Dictionary</option>
+                  {OCR_FONT_FAMILY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className="text-ca-ink-muted block mb-1">Expected Character Count</label>
+                <label htmlFor="ocr-char-count" className="text-ca-ink-muted block mb-1">
+                  Expected Character Count
+                </label>
                 <input
+                  id="ocr-char-count"
                   type="number"
-                  min={1}
-                  max={64}
+                  min={OCR_MIN_CHARACTER_COUNT}
+                  max={OCR_MAX_CHARACTER_COUNT}
                   value={characterCount}
                   onChange={(e) => setCharacterCount(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
@@ -70,8 +87,11 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
             </div>
 
             <div>
-              <label className="text-ca-ink-muted block mb-1">Lexicon / Regex Format Filter</label>
+              <label htmlFor="ocr-expected-format" className="text-ca-ink-muted block mb-1">
+                Lexicon / Regex Format Filter
+              </label>
               <input
+                id="ocr-expected-format"
                 type="text"
                 value={expectedFormat}
                 onChange={(e) => setExpectedFormat(e.target.value)}
@@ -92,11 +112,14 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
               Character Confidence Threshold
             </div>
             <div className="text-xs">
-              <label className="text-ca-ink-muted block mb-1">Min Recognition Confidence (%)</label>
+              <label htmlFor="ocr-min-confidence" className="text-ca-ink-muted block mb-1">
+                Min Recognition Confidence (%)
+              </label>
               <input
+                id="ocr-min-confidence"
                 type="number"
-                min={0}
-                max={100}
+                min={OCR_MIN_CONFIDENCE_PERCENT}
+                max={OCR_MAX_CONFIDENCE_PERCENT}
                 value={minConfidence}
                 onChange={(e) => setMinConfidence(Number(e.target.value))}
                 className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
