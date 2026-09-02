@@ -117,7 +117,7 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
         if ns.gain_db is not None:
             facade.set_gain(ns.gain_db)
         facade.start_stream()
-        ctx.logger.log(
+        context.logger.log(
             "INFO", "stream.started",
             f"Streaming opened on serial={ns.serial!r}",
             ctx={"Serial": ns.serial, "Provider": ns.provider},

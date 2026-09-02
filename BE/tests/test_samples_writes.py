@@ -14,13 +14,13 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from BE.app.facades.sample_facade import InMemorySampleFacade, set_sample_facade
 from BE.main import create_app
+from BE.repos.samples_repo import InMemorySamplesRepo, set_samples_repo
 
 
 def _fresh_client() -> TestClient:
-    # Reset the module-level facade so tests don't leak state between runs.
-    set_sample_facade(InMemorySampleFacade())
+    # Reset the module-level repo so tests don't leak state between runs.
+    set_samples_repo(InMemorySamplesRepo())
     return TestClient(create_app())
 
 

@@ -397,9 +397,9 @@ Before executing, check the task type and follow EVERY guideline source that exi
    - If this is a coding task and none of the three exist, ask the user to provide one.
 
    - Error-management folder (MANDATORY for coding tasks). It lives inside a `spec`/guidelines folder and is a folder of multiple files — it can be named anything but will live under one of these. Check ALL these locations and read every file inside any folder you find:
-     - `spec/XX-error-manage/` (e.g. `spec/01-error-manage/`) — folder; read every file inside.
+     - `spec/XX-error-manage/` (e.g. `spec/03-error-manage/`) — folder; read every file inside.
 
-     - `coding-guidelines/XX-error-manage/` (e.g. `coding-guidelines/01-error-manage/`) — folder; read every file inside.
+     - `coding-guidelines/XX-error-manage/` (e.g. `coding-guidelines/03-error-manage/`) — folder; read every file inside.
 
      - Any similarly named error-management folder inside `spec/` or `coding-guidelines/` (`XX` = a zero-padded sequence: `01`, `02`, …).
 

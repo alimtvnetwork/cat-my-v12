@@ -31,6 +31,8 @@ import { showToastError } from "@/lib/errors/notify";
 import { UNCATEGORIZED_RULE_ID, type Rule, type RuleId } from "@/lib/rules/model";
 import { toIntId } from "@/lib/rules/rule-id-alias";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export enum SortKindType {
   Name = "name",
@@ -150,9 +152,10 @@ function SetupCategoriesPage(): ReactElement {
     }
   }
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
-      <SectionTopBar section={SectionIdType.Home} active="setup" />
+  const { mode } = useUiMode();
+
+  const categoriesBody = (
+    <>
       <div className="border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-3">
         <div className="flex flex-wrap items-center justify-between gap-hmi-3">
           <div className="min-w-0">
@@ -240,8 +243,8 @@ function SetupCategoriesPage(): ReactElement {
             title={query ? `No categories match "${query}"` : "No categories yet"}
             description={
               query
-                ? "Clear the search to see all categories."
-                : "Create a category, then attach rules to it from the rule editor."
+                ? "Try a different search query, or clear the search to see all categories."
+                : "Categories group rules and manage shared dependencies. Create your first category to get started."
             }
             actions={
               query
@@ -264,7 +267,12 @@ function SetupCategoriesPage(): ReactElement {
             testId="setup-categories-empty"
           />
         ) : (
-          <ul className="divide-y divide-ca-border" data-testid="setup-categories-list">
+          <ul
+            className="divide-y divide-ca-border"
+            role="list"
+            aria-label="Category list"
+            data-testid="setup-categories-list"
+          >
             {visible.map((row) => (
               <CategoryRow
                 key={row.id}
@@ -287,6 +295,25 @@ function SetupCategoriesPage(): ReactElement {
         kindMode={RuleCreateDialogKindModeType.Both}
         sourceName={dialog?.mode === "duplicate" ? dialog.source.name : undefined}
       />
+    </>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Rule Categories"
+        subtitle={`${categories.length} categories configured`}
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{categoriesBody}</div>
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
+      <SectionTopBar section={SectionIdType.Home} active="setup" />
+      {categoriesBody}
     </div>
   );
 }

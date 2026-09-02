@@ -204,4 +204,4 @@ MUST emit only §4.
 - [Key Naming PascalCase](../02-coding-guidelines/01-cross-language/11-key-naming-pascalcase.md)
 - [Enum Standards](../17-consolidated-guidelines/04-enum-standards.md)
 - [Author Attribution](mem://project/author-attribution)
-- [CI/CD Issue 06 — Version Drift](../../.lovable/cicd-issues/06-version-drift-after-package-bump.md)
+- CI/CD Issue 06 — Version Drift (`.lovable/cicd-issues/06-version-drift-after-package-bump.md`)

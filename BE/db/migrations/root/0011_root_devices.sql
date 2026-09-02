@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS Device (
   Vendor          TEXT    NOT NULL,
   Model           TEXT    NOT NULL,
   Description     TEXT    NULL,
-  FirstSeenAt     INTEGER NOT NULL DEFAULT (unixepoch()),
-  LastSeenAt      INTEGER NOT NULL DEFAULT (unixepoch()),
+  FirstSeenAt     INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
+  LastSeenAt      INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   IsActive        INTEGER NOT NULL DEFAULT 1 CHECK (IsActive IN (0, 1))
 );
 

@@ -6,6 +6,7 @@ import { Envelope } from "./types";
 import { newCorrelationId } from "@/types/errors";
 import { showToastError } from "@/lib/errors/notify";
 import { isValidBackendPrefix } from "./validate";
+import { HttpMethod } from "@/lib/constants";
 
 export class BackendHttpError extends Error {
   public readonly correlationId?: string;
@@ -51,7 +52,7 @@ export async function fetchBackend<T = unknown>(
     const e = new BackendHttpError(meta.code, "Invalid backend URL", 0, correlationId);
     showToastError(meta.label, e, {
       endpoint: url,
-      method: init?.method || "GET",
+      method: init?.method || HttpMethod.Get,
       source: "http",
     });
     throw e;
@@ -66,7 +67,7 @@ export async function fetchBackend<T = unknown>(
     const e = new BackendHttpError(meta.code, errorMsg, 0, correlationId);
     showToastError(meta.label, e, {
       endpoint: url,
-      method: init?.method || "GET",
+      method: init?.method || HttpMethod.Get,
       source: "http",
     });
     throw e;
@@ -87,7 +88,7 @@ export async function fetchBackend<T = unknown>(
       );
       showToastError(meta.label, e, {
         endpoint: url,
-        method: init?.method || "GET",
+        method: init?.method || HttpMethod.Get,
         source: "http",
       });
       throw e;
@@ -110,7 +111,7 @@ export async function fetchBackend<T = unknown>(
     );
     showToastError(meta.label, e, {
       endpoint: url,
-      method: init?.method || "GET",
+      method: init?.method || HttpMethod.Get,
       source: "http",
     });
     throw e;
@@ -126,7 +127,7 @@ export async function fetchBackend<T = unknown>(
     const e = new BackendHttpError(meta.code, msg, response.status, correlationId);
     showToastError(meta.label, e, {
       endpoint: url,
-      method: init?.method || "GET",
+      method: init?.method || HttpMethod.Get,
       source: "http",
     });
     throw e;

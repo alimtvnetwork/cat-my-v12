@@ -17,6 +17,9 @@ import os
 import re
 import sys
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:
@@ -25,7 +28,7 @@ except ModuleNotFoundError:
     except ModuleNotFoundError:
         sys.exit("Error: Python 3.11+ required (tomllib), or install 'tomli'.")
 
-ALWAYS_EXCLUDE_DIRS = {".git", "node_modules", "dist", "build"}
+ALWAYS_EXCLUDE_DIRS = {".git", "node_modules", "dist", "build", ".gemini", "test-results", ".pytest_cache", ".vinxi", ".output", "tests/reports"}
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "forbidden-strings.toml")
 
 

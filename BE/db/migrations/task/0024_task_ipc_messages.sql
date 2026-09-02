@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS IpcMessage (
   MessageId     TEXT    NOT NULL, -- ULID from the on-disk envelope
   DropDir       TEXT    NOT NULL,
   PayloadJson   TEXT    NOT NULL,
-  ProducedAt    INTEGER NOT NULL DEFAULT (unixepoch()),
+  ProducedAt    INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   AckedAt       INTEGER NULL
 );
 

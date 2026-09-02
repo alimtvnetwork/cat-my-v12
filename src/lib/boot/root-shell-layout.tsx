@@ -21,11 +21,13 @@ import { LiveAnnouncer } from "@/components/a11y/LiveAnnouncer";
 import { GlobalHomeAffordance } from "@/components/nav/GlobalHomeAffordance";
 import { AppShellNav } from "@/components/app-shell/nav";
 import { AppShellSidebar } from "@/components/app-shell/sidebar";
-import { StandardAppShellNav } from "@/components/app-shell/StandardAppShellNav";
-import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
+import { useUiPrefsStore, UiFlavorType } from "@/lib/stores/ui-prefs-store";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 
 export function RootShellLayout({ children }: { children: ReactNode }) {
   const uiFlavor = useUiPrefsStore((s) => s.uiFlavor);
+  const { mode } = useUiMode();
+  const isModern = mode === UiModeType.Modern && uiFlavor === UiFlavorType.Modern;
 
   return (
     <>
@@ -49,15 +51,13 @@ export function RootShellLayout({ children }: { children: ReactNode }) {
       <InputModalityTracker />
       <InlineEditNavigationGuard />
       <LiveAnnouncer />
-      {uiFlavor === "modern" ? (
+      {isModern ? (
         <>
           <GlobalHomeAffordance />
           <AppShellNav />
           <AppShellSidebar />
         </>
-      ) : (
-        <StandardAppShellNav />
-      )}
+      ) : null}
     </>
   );
 }

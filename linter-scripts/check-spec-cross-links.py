@@ -21,6 +21,9 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+?)(?:\s+\"[^\"]*\")?\)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "tel:", "ftp://", "#")
@@ -198,7 +201,7 @@ def scan(root: Path, repo_root: Path) -> list[dict]:
             if issue is None:
                 continue
             kind, detail = issue
-            rel_file = str(md.relative_to(repo_root))
+            rel_file = md.relative_to(repo_root).as_posix()
             waiver_key = f"{rel_file}:{line_num}:{target}"
             if waiver_key in allowlist:
                 continue

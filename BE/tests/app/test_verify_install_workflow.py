@@ -35,7 +35,7 @@ def test_workflow_exists_and_parses() -> None:
     triggers = doc.get(True) or doc.get("on")
     assert "pull_request" in triggers and "push" in triggers
     assert set(doc["jobs"]).issuperset({"posix", "windows"})
-    assert doc["jobs"]["posix"]["runs-on"] == "ubuntu-latest"
+    assert doc["jobs"]["posix"]["runs-on"] == "ubuntu-22.04"
     assert doc["jobs"]["windows"]["runs-on"] == "windows-latest"
 
 

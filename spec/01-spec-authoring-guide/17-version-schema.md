@@ -233,4 +233,4 @@ legacy keys entirely.
 - [Enum Standards](../17-consolidated-guidelines/04-enum-standards.md)
 - [Root README Conventions](./11-root-readme-conventions.md)
 - [Author Attribution](mem://project/author-attribution)
-- [CI/CD Issue 06 — Version Drift](../../.lovable/cicd-issues/06-version-drift-after-package-bump.md)
+- CI/CD Issue 06 — Version Drift (`.lovable/cicd-issues/06-version-drift-after-package-bump.md`)

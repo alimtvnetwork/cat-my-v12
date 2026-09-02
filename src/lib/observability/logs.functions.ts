@@ -21,6 +21,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const InputSchema = z.object({
   cliInvocationId: z.number().int().positive(),
@@ -68,7 +69,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getObservabilitySessionLogs = createServerFn({ method: "GET" })
+export const getObservabilitySessionLogs = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => InputSchema.parse(raw))
   .handler(async ({ data }): Promise<any> => {
     const qs = new URLSearchParams();

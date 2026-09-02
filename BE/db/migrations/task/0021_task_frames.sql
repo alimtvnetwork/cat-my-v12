@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS Frame (
   PixelFormat   TEXT    NOT NULL,
   ByteSize      INTEGER NOT NULL CHECK (ByteSize >= 0),
   Sha256        TEXT    NOT NULL,
-  DerivedAt     INTEGER NOT NULL DEFAULT (unixepoch())
+  DerivedAt     INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS IdxFrame_CaptureId_FrameIndex

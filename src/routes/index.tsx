@@ -31,6 +31,8 @@ import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
 import { GettingStarted } from "@/components/home/GettingStarted";
 import { useRecentProjects } from "@/lib/stores/recent-projects-store";
 import { ArrowRight, FolderPlus as FolderPlusIcon } from "lucide-react";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardHomeView } from "@/components/home/StandardHomeView";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -317,6 +319,13 @@ function Index() {
       if (hideProgressTimerRef.current !== null) window.clearTimeout(hideProgressTimerRef.current);
     };
   }, []);
+
+  const { mode } = useUiMode();
+  const recentProjects = useRecentProjects(5);
+
+  if (mode === UiModeType.Standard) {
+    return <StandardHomeView recentProjects={recentProjects} />;
+  }
 
   return (
     <HomeErrorBoundary>

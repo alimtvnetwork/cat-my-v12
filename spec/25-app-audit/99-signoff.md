@@ -19,7 +19,7 @@ Scope: `spec/21-app/` (61 files)
 
 - Findings summary: [`90-findings-summary.md`](./90-findings-summary.md).
 - Remediation evidence: [`93-remediation-evidence.md`](./93-remediation-evidence.md).
-- Verification transcript: [`.lovable/memory/v2/plan23/40-evidence.md`](../../.lovable/memory/v2/plan23/40-evidence.md).
+- Verification transcript: `.lovable/memory/v2/plan23/40-evidence.md` (archived plan evidence).
 - Consolidated diagnostics: [`latest/99-consolidated.md`](./latest/99-consolidated.md).
 - Path drift guard: `scripts/audit_paths_check.py` -> OK (exit 0).
 

@@ -18,6 +18,8 @@ import {
   type CameraSetting,
 } from "@/lib/camera/model";
 import { importCameraLibraryJson, exportCameraLibraryJson } from "@/lib/camera/io";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/setup/camera")({
   head: () => ({
@@ -185,6 +187,143 @@ function SetupCameraPage() {
     reportSaveOutcome(out, "setup/camera.patch");
   }
 
+  const { mode } = useUiMode();
+
+  const body = (
+    <div className="flex flex-1 min-h-0">
+      <aside className="flex w-72 flex-col border-r border-ca-border bg-ca-panel-2">
+        <div className="flex flex-col gap-2 border-b border-ca-border p-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={createNew}
+              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
+            >
+              <Plus size={14} aria-hidden /> New
+            </button>
+            <button
+              type="button"
+              onClick={duplicateSelected}
+              disabled={!selected}
+              title={selected ? "Duplicate selected camera" : "Select a camera to duplicate"}
+              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
+            >
+              <Copy size={14} aria-hidden /> Duplicate
+            </button>
+            <button
+              type="button"
+              disabled
+              title="Enumerate Devices requires the worker build (I-BE-04)"
+              className="ml-auto flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink-muted opacity-60"
+            >
+              Enumerate
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={entries.length === 0}
+              title="Export camera library as JSON"
+              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
+            >
+              <Download size={12} aria-hidden /> Export
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Import camera library from JSON"
+              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel"
+            >
+              <Upload size={12} aria-hidden /> Import
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleImportFile(f);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          <div className="relative">
+            <Search size={14} className="absolute left-2 top-2 text-ca-ink-muted" aria-hidden />
+            <input
+              type="search"
+              placeholder="Filter cameras..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full bg-ca-bg border border-ca-border pl-7 pr-2 py-1 text-hmi-body text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary"
+            />
+          </div>
+        </div>
+
+        <ul className="flex flex-1 flex-col overflow-y-auto" role="listbox" aria-label="Cameras">
+          {filtered.length === 0 ? (
+            <li className="p-3 text-hmi-caption text-ca-ink-muted">
+              {entries.length === 0 ? "No cameras configured" : "No matches"}
+            </li>
+          ) : (
+            filtered.map((c) => {
+              const active = c.id === selectedId;
+
+              return (
+                <li
+                  key={c.id}
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => setSelectedId(c.id)}
+                  className={`flex cursor-pointer flex-col gap-0.5 border-b border-ca-border px-3 py-2 text-hmi-body transition-colors ${
+                    active
+                      ? "bg-ca-panel text-ca-ink font-semibold"
+                      : "text-ca-ink hover:bg-ca-panel/60"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="truncate">{c.name}</span>
+                    <span className="text-hmi-caption text-ca-ink-muted">{c.ColorModeType}</span>
+                  </div>
+                  <span className="text-hmi-caption text-ca-ink-muted">
+                    {c.resolutionW}x{c.resolutionH} · {c.exposureUs} µs · {c.fovMmW}x{c.fovMmH} mm
+                  </span>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      </aside>
+
+      <main className="flex flex-1 flex-col overflow-y-auto p-6">
+        {selected ? (
+          <CameraEditor
+            entry={selected}
+            onPatch={patchSelected}
+            onDelete={() => reportRemoveOutcome(library.remove(selected.id), "setup/camera.remove")}
+          />
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">
+            Select a camera on the left, or create a new one.
+          </div>
+        )}
+      </main>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Camera Setup"
+        subtitle="Identity, optics, exposure, and acquisition parameters"
+      >
+        {body}
+      </StandardAppShell>
+    );
+  }
+
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex flex-col gap-1 border-b border-ca-border bg-ca-panel-2 px-4 py-3">
@@ -195,124 +334,7 @@ function SetupCameraPage() {
           CameraSetting records shared across projects. Identity, optics, exposure, and acquisition.
         </p>
       </header>
-      <div className="flex flex-1 min-h-0">
-        <aside className="flex w-72 flex-col border-r border-ca-border bg-ca-panel-2">
-          <div className="flex flex-col gap-2 border-b border-ca-border p-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={createNew}
-                className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
-              >
-                <Plus size={14} aria-hidden /> New
-              </button>
-              <button
-                type="button"
-                onClick={duplicateSelected}
-                disabled={!selected}
-                title={selected ? "Duplicate selected camera" : "Select a camera to duplicate"}
-                className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
-              >
-                <Copy size={14} aria-hidden /> Duplicate
-              </button>
-              <button
-                type="button"
-                disabled
-                title="Enumerate Devices requires the worker build (I-BE-04)"
-                className="ml-auto flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink-muted opacity-60"
-              >
-                Enumerate
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={entries.length === 0}
-                title="Export camera library as JSON"
-                className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
-              >
-                <Download size={12} aria-hidden /> Export
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title="Import camera library from JSON"
-                className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel"
-              >
-                <Upload size={12} aria-hidden /> Import
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-
-                  if (f) void handleImportFile(f);
-                  e.target.value = "";
-                }}
-              />
-            </div>
-            <label className="flex items-center gap-2 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink-muted">
-              <Search size={12} aria-hidden />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Filter by name, vendor, serial"
-                className="w-full bg-transparent text-ca-ink placeholder:text-ca-ink-muted focus:outline-none"
-                aria-label="Filter cameras"
-              />
-            </label>
-          </div>
-          <ul className="flex-1 overflow-auto">
-            {filtered.length === 0 ? (
-              <li className="p-3 text-hmi-caption text-ca-ink-muted">
-                {entries.length === 0
-                  ? "No cameras yet. Click New to add one."
-                  : "No cameras match the current filter."}
-              </li>
-            ) : (
-              filtered.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(e.id)}
-                    className={`flex w-full flex-col items-start gap-0.5 border-b border-ca-border px-3 py-2 text-left text-hmi-body ${
-                      selectedId === e.id
-                        ? "bg-ca-panel text-ca-ink"
-                        : "text-ca-ink hover:bg-ca-panel"
-                    }`}
-                  >
-                    <span className="truncate">{e.name}</span>
-                    <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">
-                      {e.vendor} / {e.resolutionW}x{e.resolutionH} / pockets {e.pockets}
-                    </span>
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </aside>
-
-        <main className="flex flex-1 flex-col overflow-auto p-4">
-          {selected ? (
-            <CameraEditor
-              entry={selected}
-              onPatch={patchSelected}
-              onDelete={() =>
-                reportRemoveOutcome(library.remove(selected.id), "setup/camera.remove")
-              }
-            />
-          ) : (
-            <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">
-              Select a camera on the left, or create a new one.
-            </div>
-          )}
-        </main>
-      </div>
+      {body}
     </div>
   );
 }

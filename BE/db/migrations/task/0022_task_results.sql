@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Result (
   RuleBundleVersion   INTEGER NOT NULL CHECK (RuleBundleVersion > 0),
   Decision            TEXT    NOT NULL CHECK (Decision IN ('PASS', 'FAIL', 'SKIP')),
   ScorePercent        REAL    NULL CHECK (ScorePercent IS NULL OR (ScorePercent >= 0 AND ScorePercent <= 100)),
-  EvaluatedAt         INTEGER NOT NULL DEFAULT (unixepoch()),
+  EvaluatedAt         INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   DurationMs          INTEGER NOT NULL DEFAULT 0 CHECK (DurationMs >= 0),
   ResultsJsonPath     TEXT    NULL
 );

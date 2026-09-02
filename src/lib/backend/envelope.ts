@@ -34,7 +34,7 @@ export const EnvelopeErrorsWireSchema = z.object({
 export const EnvelopeSchema = z.object({
   Status: EnvelopeStatusSchema,
   Attributes: EnvelopeAttributesSchema,
-  Results: z.array(z.unknown()),
+  Results: z.array(z.unknown()).optional().default([]),
   Navigation: z.unknown().optional(),
   Errors: EnvelopeErrorsWireSchema.nullable().optional(),
   MethodsStack: z.unknown().optional(),

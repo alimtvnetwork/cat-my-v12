@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS ReferenceImage (
   Url              TEXT    NOT NULL,
   Width            INTEGER,
   Height           INTEGER,
-  UpdatedAt        INTEGER NOT NULL DEFAULT (unixepoch())
+  UpdatedAt        INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS IdxReferenceImage_ProjectId

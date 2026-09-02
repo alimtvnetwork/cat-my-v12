@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS RuleResult (
   ErrorCode       TEXT    NULL,                       -- e.g. E_RULE_TIMEOUT
   ElapsedMs       REAL    NULL CHECK (ElapsedMs IS NULL OR ElapsedMs >= 0.0),
   MetricsJson     TEXT    NULL,                       -- opaque inline metrics blob
-  PersistedAt     INTEGER NOT NULL DEFAULT (unixepoch()),
+  PersistedAt     INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   -- One row per (RunSessionId, RuleId): a rule appears at most once in a
   -- given run's Judgments[] (spec 24 §4). Idempotent replay lands on
   -- INSERT OR IGNORE against this composite key.

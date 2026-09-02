@@ -43,9 +43,13 @@ Exit codes
 from __future__ import annotations
 
 import difflib
+import os
 import re
 import sys
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SPEC_ROOT = REPO_ROOT / "spec"

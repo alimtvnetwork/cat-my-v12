@@ -15,13 +15,16 @@ def load_gxipy() -> Any:
         return gxipy
     except ImportError as e:
         raise AppError.for_file(
-            file_path=__file__,
+            reason="ImportError on gxipy",
+            path=__file__,
+            operation="Load",
+            module="daheng_loader",
             code=ErrorCode.E_CAM_SDK_UNAVAILABLE,
             message="Daheng Galaxy SDK (gxipy) is not installed or the native driver DLL could not be found.",
-            reason="ImportError on gxipy",
             details={
                 "exception": str(e),
                 "sys_path": sys.path,
                 "remediation": "Verify that Daheng Galaxy drivers are installed and GENICAM_ROOT_V* env var is set. See README.md in this package."
-            }
+            },
+            cause=e,
         ) from e

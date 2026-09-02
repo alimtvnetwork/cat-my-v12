@@ -126,7 +126,7 @@ def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
         if ns.gain_db is not None:
             camera.set_gain(ns.gain_db)
         camera.start_stream()
-        ctx.logger.log(
+        context.logger.log(
             "INFO", "capture.opened",
             f"Single-shot capture opened on serial={ns.serial!r}",
             ctx={"Serial": ns.serial, "KeyPrefix": prefix, "GrabTimeoutMs": ns.grab_timeout_ms},

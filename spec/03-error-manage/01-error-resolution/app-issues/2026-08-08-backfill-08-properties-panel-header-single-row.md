@@ -6,7 +6,7 @@ User asked: "share visual suggestions" for improving the Properties floating pan
 
 ## Evidence
 
-- [assets/ui/59-properties-panel-header-two-band.png](../ui/59-properties-panel-header-two-band.png): current two-band header (title row + segmented pill tabs row) before the fix.
+- ![assets/ui/59-properties-panel-header-two-band.png](../../../../assets/ui/59-properties-panel-header-two-band.png) - current two-band header inside Properties: band 1 has window title ("Properties"), pin button, close button; band 2 has rule selector dropdown, category chip, and "+ New Rule" button. (v3.965.0)
 
 ## Resolution (v3.965.0)
 

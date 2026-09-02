@@ -14,6 +14,7 @@
 
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 import { putDraft, DraftOriginType, type RuleSetEnvelope } from "./draftStore";
+import { HttpMethod } from "@/lib/constants";
 
 export class LoadRuleSetError extends EnvelopeError {
   get httpStatus(): number {
@@ -41,7 +42,7 @@ function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
     code: "E_BE_UNKNOWN",
     backendMessage: message,
     endpoint: url,
-    method: "GET",
+    method: HttpMethod.Get,
     responseStatus: 0,
     correlationId: "",
     envelope: null,
@@ -57,7 +58,7 @@ export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
   const url = `/rules/${ruleSetId}/set`;
   try {
     const resEnvelope = await beFetch<RuleSetEnvelope>(url, {
-      method: "GET",
+      method: HttpMethod.Get,
       headers: { Accept: "application/json" },
     });
     const committed = resEnvelope.Results[0];
@@ -66,7 +67,7 @@ export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
         code: "E_BE_UNKNOWN",
         backendMessage: "empty Results on load",
         endpoint: url,
-        method: "GET",
+        method: HttpMethod.Get,
         responseStatus: 200,
         correlationId: "",
         envelope: resEnvelope,

@@ -18,6 +18,7 @@
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const CliName = z.enum(["worker-cli", "processing-cli"]);
 const SessionStatus = z.enum(["active", "success", "failure"]);
@@ -68,7 +69,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getObservabilitySessions = createServerFn({ method: "GET" })
+export const getObservabilitySessions = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => InputSchema.parse(raw ?? {}))
   .handler(async ({ data }): Promise<SessionsPage> => {
     const qs = new URLSearchParams();

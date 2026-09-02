@@ -52,7 +52,7 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "lib/rules/rule-id-alias.ts",
   "lib/rules/ruleset-id-alias.ts",
   "routes/index.tsx",
-  "routes/observability.sessions.tsx",
+  "routes/observability/sessions.tsx",
   // Supabase client mentions `localStorage` in its config comments.
   "integrations/supabase/client.ts",
   // lib/* stores + facade internals + legacy-key migration paths.
@@ -96,15 +96,16 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "lib/seed/telemetry-store.ts",
   "lib/stores/shortcuts-store.ts",
   "lib/stores/ui-prefs-store.ts",
+  "components/rules/tools/ToolsPaletteUtils.ts",
   "lib/workspace/layout-presets.ts",
   "lib/workspace/layout-slice.ts",
   // Routes still reading legacy keys for one-off migrations / debug.
-  "routes/projects.$projectId.rulesets.new.tsx",
-  "routes/settings.index.tsx",
+  "routes/projects/$projectId/rulesets/new.tsx",
+  "routes/settings/index.tsx",
   // Comment-only mention of localStorage in an SSR-hydration note.
-  "routes/setup.camera.tsx",
-  "routes/setup.chain-events.tsx",
-  "routes/setup.functions.tsx",
+  "routes/setup/camera.tsx",
+  "routes/setup/chain-events.tsx",
+  "routes/setup/functions.tsx",
 ]);
 
 function walk(dir: string, out: string[] = []): string[] {

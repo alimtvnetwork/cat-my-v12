@@ -17,6 +17,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -101,7 +102,7 @@ function beBaseUrl(): string {
 }
 import { beFetch } from "@/lib/be-fetch";
 
-export const getEffectiveConfig = createServerFn({ method: "GET" })
+export const getEffectiveConfig = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) =>
     z
       .object({})
@@ -134,7 +135,7 @@ const UserWriteInput = z.object({
   values: z.record(z.string(), JsonValueSchema.nullable()),
 });
 
-export const getUserConfig = createServerFn({ method: "GET" })
+export const getUserConfig = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) =>
     z
       .object({})
@@ -153,12 +154,12 @@ export const getUserConfig = createServerFn({ method: "GET" })
     return UserLayerSchema.parse(payload);
   });
 
-export const setUserConfig = createServerFn({ method: "POST" })
+export const setUserConfig = createServerFn({ method: HttpMethod.Post })
   .inputValidator((raw) => UserWriteInput.parse(raw))
   .handler(async ({ data }): Promise<UserLayer> => {
     const url = `${beBaseUrl()}/api/cli/config/user`;
     const env = await beFetch<UserLayer>(url, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ values: data.values }),
     });

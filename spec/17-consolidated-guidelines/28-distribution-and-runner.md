@@ -3,7 +3,7 @@
 > **Version:** 1.0.0
 > **Updated:** 2026-04-22
 > **Type:** Consolidated Guideline — Phase 6B promotion
-> **Source module:** [`spec/15-distribution-and-runner/`](../15-distribution-and-runner/)
+> **Source module:** `spec/15-distribution-and-runner/`
 > **Status:** Authoritative digest — a blind AI can implement the install + runner surface from this file alone.
 
 This file consolidates everything a distributing/consuming agent needs in
@@ -230,8 +230,8 @@ the following:
 
 ## §10 — Cross-References
 
-- Source folder: [`spec/15-distribution-and-runner/`](../15-distribution-and-runner/)
-- Slides app spec: [`spec-slides/00-overview.md`](../../spec-slides/00-overview.md)
+- Source folder: `spec/15-distribution-and-runner/`
+- Slides app spec: `spec-slides/00-overview.md`
 - CI/CD pipeline conventions: [`spec/12-cicd-pipeline-workflows/`](../12-cicd-pipeline-workflows/)
 - Generic CLI conventions: [`spec/13-generic-cli/`](../13-generic-cli/)
 - Generic release standard: [`spec/16-generic-release/`](../16-generic-release/)

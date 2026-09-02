@@ -38,10 +38,10 @@ Remediation applied this turn:
 
 ## Evidence
 
-- ![nested Rules/Properties headers](./01-properties-panel-nested-headers.png) - stacked window title, tab strip, section header, sub-header, and window title again inside the Rules panel.
-- ![Properties panel not compact](./02-properties-panel-not-compact.png) - oversized inputs, redundant eye/close icons, chip row above Bounds, and low information density.
-- ![Tools palette review](./03-tools-palette-review.png) - narrow icon-only Tools rail with truncated header and inconsistent tile captions.
-- ![Properties decimal noise](./04-properties-panel-decimal-noise.png) - 5-decimal coordinates, duplicated chrome, oversized search/input fields, unclear add buttons.
+- ![nested Rules/Properties headers](../../../../assets/issues/01-properties-panel-nested-headers.png) - stacked window title, tab strip, section header, sub-header, and window title again inside the Rules panel.
+- ![Properties panel not compact](../../../../assets/issues/02-properties-panel-not-compact.png) - oversized inputs, redundant eye/close icons, chip row above Bounds, and low information density.
+- ![Tools palette review](../../../../assets/issues/03-tools-palette-review.png) - narrow icon-only Tools rail with truncated header and inconsistent tile captions.
+- ![Properties decimal noise](../../../../assets/issues/04-properties-panel-decimal-noise.png) - 5-decimal coordinates, duplicated chrome, oversized search/input fields, unclear add buttons.
 
 Detailed defects visible in the four screenshots
 

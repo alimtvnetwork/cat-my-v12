@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useVisionStore } from "@/lib/vision/store";
 import { fetchBackend } from "@/lib/backend/http";
 import { ScoreResponseSchema } from "@/lib/vision/score-schema";
+import { HttpMethod } from "@/lib/constants";
 
 const AUTO_EVAL_DEBOUNCE_MS = 200; // prevent spam on rapid captures
 const AUTO_EVAL_MIN_INTERVAL_MS = 200; // max 5fps = 1 frame per 200ms
@@ -36,7 +37,7 @@ export function useAutoEvaluate(imageId: string | null, ruleType: string = "patt
 
       try {
         const result = await fetchBackend("/score", {
-          method: "POST",
+          method: HttpMethod.Post,
           body: JSON.stringify({
             ruleType,
             threshold: confidenceThreshold / 100,

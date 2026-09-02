@@ -236,7 +236,7 @@ _IO_CODES = frozenset({
 })
 _VENDOR_CODES = frozenset({
     ErrorCode.E_CLI_UNSUPPORTED_HOST, ErrorCode.E_CAM_NOT_CONNECTED,
-    ErrorCode.E_CAM_CAPTURE_FAILED,
+    ErrorCode.E_CAM_CAPTURE_FAILED, ErrorCode.E_CAM_SDK_UNAVAILABLE,
 })
 _USAGE_CODES = frozenset({ErrorCode.E_CLI_PREFLIGHT_FAILED, ErrorCode.E_CLI_USAGE})
 

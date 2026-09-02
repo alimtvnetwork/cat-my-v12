@@ -4,7 +4,6 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 
 ## Pending
 
-- 01 - coding-guideline-fixes - pending - see `pending/01-coding-guideline-fixes.md`
 - 01 - pattern-search-spec - pending - see `pending/01-pattern-search-spec.md`
 - 04 - vision-standard-ui-part2 - pending - see `pending/04-vision-standard-ui-part2.md`
 - 05 - vision-standard-ui-part3 - pending - see `pending/05-vision-standard-ui-part3.md`
@@ -32,6 +31,10 @@ Registry of every plan in `.lovable/plans/pending/` and `.lovable/plans/complete
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
 
 ## Completed
+
+- 91 - standard-ui-deep-fixes - completed - see `completed/91-standard-ui-deep-fixes.md`
+- 01 - coding-guideline-fixes - completed - see `completed/01-coding-guideline-fixes.md`
+- 90 - standard-ui-fixes - completed - see `completed/90-standard-ui-fixes.md`
 
 - 03 - vision-standard-ui-part1 - completed - see `completed/03-vision-standard-ui-part1.md`
 

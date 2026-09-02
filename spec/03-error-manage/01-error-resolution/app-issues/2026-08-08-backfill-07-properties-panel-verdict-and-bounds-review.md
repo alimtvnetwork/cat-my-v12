@@ -10,7 +10,7 @@ User attached a fresh screenshot of the docked Properties panel for a rule named
 
 ## Evidence
 
-- ![properties panel current state](./07-properties-panel-verdict-and-bounds-review.png) - docked Properties for rule #29 "Right pin bank" showing verdict bar, Bounds row, Acceptance empty state, and Mask/Focus/Kind options sections.
+- ![properties panel current state](../../../../assets/issues/07-properties-panel-verdict-and-bounds-review.png) - docked Properties for rule #29 "Right pin bank" showing verdict bar, Bounds row, Acceptance empty state, and Mask/Focus/Kind options sections.
 
 ## Defects observed in the screenshot
 

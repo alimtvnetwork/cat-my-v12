@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS CliInvocation (
   Argv             TEXT    NOT NULL,
   HostName         TEXT    NOT NULL,
   Pid              INTEGER NOT NULL,
-  StartedAt        INTEGER NOT NULL DEFAULT (unixepoch()),
+  StartedAt        INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   EndedAt          INTEGER NULL,
   ExitCode         INTEGER NULL,
   LogPath          TEXT    NULL,

@@ -51,6 +51,11 @@
 28-wp-plugin-development
 31-generic-enforce
 33-ai-bridge-non-vector-rag
+19-main-worker-service
+18-wp-plugin-how-to
+15-wp-plugin-how-to
+13-cicd-pipeline-workflows
+15-distribution-and-runner
 
 [doc-only]
 
@@ -60,6 +65,8 @@
 # --- Removed/historical folders (referenced only in changelog docs) ---
 15-domain-migration
 19-ai-reliability
+22-security
+24-vision-inspection-ui
 
 # --- Sibling-repo umbrella folder referenced only in CI/CD issue write-ups
 # (see .lovable/cicd-issues/07-cross-spec-missing-file-link-checker.md).

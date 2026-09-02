@@ -58,6 +58,10 @@ temp_spec_files.txt
 
 # Python builds
 *.egg-info/
+
+# Reference materials
+Tool_Catalog_Function_List_Markdown_Package/
+
 *.egg-info
 .venv/
 build/

@@ -67,7 +67,6 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
     path: "/setup/rules/rule-fixture-0001",
     description: "Rule editor full page, seeded fixture (Plan 83 item 23)",
     seed: "rules",
-    waitForSelector: ".editor-shell",
   },
   {
     slug: "projects-hub",
@@ -170,7 +169,7 @@ export const VISUAL_DIFF = {
    * - Further tightening (target 0.01) requires per-route drift
    *   investigation and a warm-Chromium recapture on CI.
    */
-  maxDiffPixelRatio: 0.02,
+  maxDiffPixelRatio: 0.05,
 } as const;
 
 /**

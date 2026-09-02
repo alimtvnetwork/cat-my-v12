@@ -12,8 +12,8 @@ import {
   RULESET_SCHEMA_VERSION,
 } from "@/lib/editor/ruleset-io";
 import { migrateRuleSetV2ToV3, migrateRuleV2ToV3 } from "@/lib/editor/migrations";
-import { ConditionType } from "@/types/rules/ConditionType";
-import { ValidationMode } from "@/types/rules/ValidationMode";
+import { ConditionTypeType as ConditionType } from "@/types/rules/ConditionTypeType";
+import { ValidationModeType as ValidationMode } from "@/types/rules/ValidationModeType";
 import type { EditorRule } from "@/lib/editor/types";
 
 const geom = { x: 0, y: 0, width: 10, height: 10 };

@@ -4,6 +4,8 @@ import {
   SetupErrorComponent,
   SetupNotFoundComponent,
 } from "@/components/editor/setup/SetupBoundaries";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardReferenceSetup } from "@/components/setup/StandardReferenceSetup";
 
 export const Route = createFileRoute("/setup/reference")({
   head: () => ({
@@ -21,5 +23,11 @@ export const Route = createFileRoute("/setup/reference")({
 });
 
 function ReferenceScreen() {
+  const { mode } = useUiMode();
+
+  if (mode === UiModeType.Standard) {
+    return <StandardReferenceSetup />;
+  }
+
   return <EditorSetupExperience />;
 }

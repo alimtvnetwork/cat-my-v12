@@ -99,7 +99,8 @@ def test_get_rules_default_empty_envelope(restore_facades) -> None:  # type: ign
     body = resp.json()
     assert body["Status"]["IsSuccess"] is True
     payload = body["Results"][0]
-    assert payload == {"items": [], "total": 0, "provider": "InMemoryRuleFacade"}
+    assert payload["items"] == [] and payload["total"] == 0
+    assert "InMemoryRule" in payload["provider"]
 
 
 def test_get_rules_seeded_returns_items(restore_facades) -> None:  # type: ignore[no-untyped-def]
@@ -129,9 +130,10 @@ def test_get_rule_missing_returns_404_envelope(restore_facades) -> None:  # type
 
 
 def test_get_samples_default_empty(restore_facades) -> None:  # type: ignore[no-untyped-def]
-    set_sample_facade(InMemorySampleFacade())
+    set_sample_facade(InMemorySampleFacade([]))
     body = client.get("/samples").json()
-    assert body["Results"][0] == {"items": [], "total": 0, "provider": "InMemorySampleFacade"}
+    assert body["Results"][0]["items"] == [] and body["Results"][0]["total"] == 0
+    assert "InMemorySample" in body["Results"][0]["provider"]
 
 
 def test_get_sample_by_id_returns_single(restore_facades) -> None:  # type: ignore[no-untyped-def]

@@ -15,6 +15,7 @@ import { useErrorStore } from "../stores/errorStore";
 import type { CapturedError } from "@/types/errors";
 import { registerRetry, type RetryFn } from "./retry-registry";
 import { announce } from "@/lib/a11y/announcer";
+import { HttpMethod } from "@/lib/constants";
 
 // Dedupe repeated error toasts keyed by endpoint (or label). Prevents
 // polling endpoints (e.g. GET /api/cli/status) from spawning a new toast
@@ -34,7 +35,7 @@ function normalizeDedupeKey(
     const withoutQuery = endpoint.split("?")[0];
     const withoutOrigin = withoutQuery.replace(/^https?:\/\/[^/]+/, "");
 
-    return `${(method ?? "GET").toUpperCase()} ${withoutOrigin}`;
+    return `${(method ?? HttpMethod.Get).toUpperCase()} ${withoutOrigin}`;
   }
 
   const code = (err as { code?: unknown } | null)?.code;

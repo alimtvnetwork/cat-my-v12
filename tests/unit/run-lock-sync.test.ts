@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useRunStore } from "@/lib/run-store";
+import { useRunStore } from "@/lib/stores/run-store";
 import { getRunLock, RunLockStateType, assertMutationAllowed } from "@/lib/rpc/guards";
 
 describe("run-store <-> RPC guard sync (F-27)", () => {

@@ -6,7 +6,7 @@
  * keys on rehydrate.
  */
 import { describe, expect, it, beforeEach } from "vitest";
-import { useUiPrefsStore } from "@/lib/ui-prefs-store";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 beforeEach(() => {
   useUiPrefsStore.setState({ propertiesPaletteOpenPaneByKind: {} });

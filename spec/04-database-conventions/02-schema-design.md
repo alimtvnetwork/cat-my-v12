@@ -353,7 +353,7 @@ CREATE TABLE WorkerNodeStatus (
 SELECT WorkerNodeStatusId FROM WorkerNodeStatus WHERE Code = 'Active';
 ```
 
-**Seeding pattern** — see [`14-rbac-and-status-seed.md`](../19-main-worker-service/14-rbac-and-status-seed.md) for the canonical seed format used by `19-main-worker-service`.
+**Seeding pattern** — see `14-rbac-and-status-seed.md` (`spec/19-main-worker-service/14-rbac-and-status-seed.md`) for the canonical seed format used by `19-main-worker-service`.
 
 ```sql
 -- ❌ WRONG — entity table without Description (violates Rule 10)

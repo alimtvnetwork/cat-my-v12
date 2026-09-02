@@ -18,6 +18,8 @@ import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
 import { UNCATEGORIZED_RULE_ID, type RuleId } from "@/lib/rules/model";
 import { showToastError } from "@/lib/errors/notify";
 import { toIntId } from "@/lib/rules/rule-id-alias";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/setup/categories/$id")({
   staticData: { crumb: "Category editor" },
@@ -110,9 +112,10 @@ function CategoryEditorRoute() {
     }
   }
 
-  return (
-    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
-      <SectionTopBar section={SectionIdType.Home} active="setup" />
+  const { mode } = useUiMode();
+
+  const editorBody = (
+    <>
       <div className="border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-3">
         <div className="flex items-center gap-hmi-3">
           <Link
@@ -228,6 +231,25 @@ function CategoryEditorRoute() {
           </Link>
         </div>
       )}
+    </>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title={cat ? cat.name : "Category Editor"}
+        subtitle={cat ? `Category ID: ${String(cat.id)}` : "Category configuration"}
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{editorBody}</div>
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-ca-bg text-ca-ink">
+      <SectionTopBar section={SectionIdType.Home} active="setup" />
+      {editorBody}
     </div>
   );
 }

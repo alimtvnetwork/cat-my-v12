@@ -32,7 +32,7 @@ def _envelope() -> dict:
                 "Id": 3,
                 "Kind": "match",
                 "Enabled": True,
-                "Shape": {"Type": "rect", "X": 1.5, "Y": 2.5, "W": 30.0, "H": 40.0},
+                "Shape": {"Type": "rect", "X": 1.5, "Y": 2.5, "W": 30.0, "H": 40.0, "CanvasWidth": 0.0, "CanvasHeight": 0.0},
                 "Tolerance": {"Kind": "pct", "Value": 5.0},
                 "Params": {"_LegacyId": "r-abc", "_LegacyKind": "C", "_IsHidden": False, "_IsLocked": False},
             }

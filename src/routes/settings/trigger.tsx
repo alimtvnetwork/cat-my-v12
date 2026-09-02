@@ -5,6 +5,8 @@ import { HmiShell } from "@/components/hmi";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import { readFacadeJson, writeFacadeJson } from "@/lib/projects/facade-json";
 import { TriggerTimingDiagram } from "@/components/settings/TriggerTimingDiagram";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/settings/trigger")({
   head: () => ({
@@ -18,9 +20,7 @@ export const Route = createFileRoute("/settings/trigger")({
   }),
   component: TriggerSettings,
 });
-// Plan 81 step 9: diagram-first trigger settings. Persisted through the
-// facade JSON helper (same seam used by every other Settings surface) so
-// the ratchet test in `facade-single-seam.test.ts` stays green.
+
 const FACADE_KEY = "ca.settings.trigger.config";
 
 export enum TriggerSourceType {
@@ -59,6 +59,7 @@ function TriggerSettings() {
   const [config, setConfig] = useState<TriggerConfig>(DEFAULT_TRIGGER);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const { mode } = useUiMode();
 
   useEffect(() => {
     let isCancelled = false;
@@ -70,8 +71,6 @@ function TriggerSettings() {
         setHydrated(true);
       })
       .catch((err) => {
-        // Surface, do not swallow: readFacadeJson returns null on miss,
-        // so any thrown error is a real facade fault worth logging.
         console.error("[settings.trigger] hydrate failed", err);
         setHydrated(true);
       });
@@ -91,7 +90,117 @@ function TriggerSettings() {
     } catch (err) {
       console.error("[settings.trigger] persist failed", err);
     }
-  }, [config, hydrated]);
+  }, [config, hydrated, isUnhydrated]);
+
+  const body = (
+    <div className="grid gap-hmi-4 p-hmi-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <SettingsCard
+        Icon={Activity}
+        title="Timing diagram"
+        description="Live preview of edge polarity and debounce window against the selected source."
+        savedAt={savedAt}
+      >
+        <TriggerTimingDiagram
+          edge={config.edge}
+          debounceMs={config.debounceMs}
+          source={config.source}
+        />
+      </SettingsCard>
+      <div className="flex flex-col gap-hmi-4">
+        <SettingsCard
+          Icon={Zap}
+          title="Source"
+          description="Where trigger pulses come from. Diagram redraws on change."
+        >
+          <div role="radiogroup" aria-label="Trigger source" className="flex flex-wrap gap-hmi-2">
+            {SOURCES.map((s) => {
+              const active = config.source === s.id;
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setConfig((c) => ({ ...c, source: s.id }))}
+                  className={
+                    active
+                      ? "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 bg-ca-select text-ca-bg text-hmi-body font-semibold"
+                      : "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 border border-ca-border bg-ca-panel-2 text-hmi-body text-ca-ink hover:border-ca-select"
+                  }
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </SettingsCard>
+        <SettingsCard
+          Icon={Gauge}
+          title="Edge and debounce"
+          description="Rising or falling detection with a debounce window (0-100 ms) that suppresses noise."
+        >
+          <div role="radiogroup" aria-label="Trigger edge" className="flex gap-hmi-2">
+            {(
+              [
+                TriggerTimingDiagramPropsEdgeType.Rising,
+                TriggerTimingDiagramPropsEdgeType.Falling,
+              ] as const
+            ).map((e) => {
+              const active = config.edge === e;
+
+              return (
+                <button
+                  key={e}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setConfig((c) => ({ ...c, edge: e }))}
+                  className={
+                    active
+                      ? "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 bg-ca-select text-ca-bg text-hmi-body font-semibold capitalize"
+                      : "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 border border-ca-border bg-ca-panel-2 text-hmi-body text-ca-ink hover:border-ca-select"
+                  }
+                >
+                  {e}
+                </button>
+              );
+            })}
+          </div>
+          <label className="mt-hmi-3 block text-hmi-caption text-ca-ink-muted">
+            Debounce
+            <div className="mt-hmi-1 flex items-center gap-hmi-3">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={config.debounceMs}
+                onChange={(e) => setConfig((c) => ({ ...c, debounceMs: Number(e.target.value) }))}
+                className="flex-1"
+                aria-label="Debounce milliseconds"
+              />
+              <span className="hmi-tabular w-14 text-right text-ca-ink">
+                {config.debounceMs} ms
+              </span>
+            </div>
+          </label>
+        </SettingsCard>
+      </div>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="setup"
+        title="Trigger Settings"
+        subtitle="Trigger Source, Edge Polarity & Hardware Debounce"
+      >
+        <div className="flex-1 overflow-auto bg-ca-panel">{body}</div>
+      </StandardAppShell>
+    );
+  }
 
   return (
     <HmiShell
@@ -106,101 +215,7 @@ function TriggerSettings() {
         </Link>
       }
     >
-      <div className="grid gap-hmi-4 p-hmi-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <SettingsCard
-          Icon={Activity}
-          title="Timing diagram"
-          description="Live preview of edge polarity and debounce window against the selected source."
-          savedAt={savedAt}
-        >
-          <TriggerTimingDiagram
-            edge={config.edge}
-            debounceMs={config.debounceMs}
-            source={config.source}
-          />
-        </SettingsCard>
-        <div className="flex flex-col gap-hmi-4">
-          <SettingsCard
-            Icon={Zap}
-            title="Source"
-            description="Where trigger pulses come from. Diagram redraws on change."
-          >
-            <div role="radiogroup" aria-label="Trigger source" className="flex flex-wrap gap-hmi-2">
-              {SOURCES.map((s) => {
-                const active = config.source === s.id;
-
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setConfig((c) => ({ ...c, source: s.id }))}
-                    className={
-                      active
-                        ? "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 bg-ca-select text-ca-bg text-hmi-body font-semibold"
-                        : "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 border border-ca-border bg-ca-panel-2 text-hmi-body text-ca-ink hover:border-ca-select"
-                    }
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          </SettingsCard>
-          <SettingsCard
-            Icon={Gauge}
-            title="Edge and debounce"
-            description="Rising or falling detection with a debounce window (0-100 ms) that suppresses noise."
-          >
-            <div role="radiogroup" aria-label="Trigger edge" className="flex gap-hmi-2">
-              {(
-                [
-                  TriggerTimingDiagramPropsEdgeType.Rising,
-                  TriggerTimingDiagramPropsEdgeType.Falling,
-                ] as const
-              ).map((e) => {
-                const active = config.edge === e;
-
-                return (
-                  <button
-                    key={e}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setConfig((c) => ({ ...c, edge: e }))}
-                    className={
-                      active
-                        ? "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 bg-ca-select text-ca-bg text-hmi-body font-semibold capitalize"
-                        : "inline-flex items-center rounded-md min-h-9 px-hmi-3 py-hmi-2 border border-ca-border bg-ca-panel-2 text-hmi-body text-ca-ink hover:border-ca-select capitalize"
-                    }
-                  >
-                    {e}
-                  </button>
-                );
-              })}
-            </div>
-            <label className="mt-hmi-3 block text-hmi-caption text-ca-ink-muted">
-              Debounce
-              <div className="mt-hmi-1 flex items-center gap-hmi-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={config.debounceMs}
-                  onChange={(e) => setConfig((c) => ({ ...c, debounceMs: Number(e.target.value) }))}
-                  className="flex-1"
-                  aria-label="Debounce milliseconds"
-                />
-                <span className="hmi-tabular w-14 text-right text-ca-ink">
-                  {config.debounceMs} ms
-                </span>
-              </div>
-            </label>
-          </SettingsCard>
-        </div>
-      </div>
+      {body}
     </HmiShell>
   );
 }

@@ -3,14 +3,21 @@ import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { PatternShapes } from "@/domain/vision/pattern-search";
 import { ShapeType } from "@/domain/vision/shapes";
 
+export interface PatternRegionTabProps {
+  settings: PatternSearchSettings;
+  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onCancel?: () => void;
+  onOk?: () => void;
+}
+
 export function PatternRegionTab({
   settings,
   setSettings,
-}: {
-  settings: PatternSearchSettings;
-  setSettings: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
-}): React.JSX.Element | null {
+  onCancel,
+  onOk,
+}: PatternRegionTabProps): React.JSX.Element | null {
   const [isEditingRegion, setIsEditingRegion] = useState(true);
+  const [isConditionsExpanded, setIsConditionsExpanded] = useState(true);
 
   return (
     <div className="flex flex-col text-ca-ink">
@@ -149,14 +156,22 @@ export function PatternRegionTab({
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <button
+              type="button"
               className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
-              onClick={() => setIsEditingRegion(false)}
+              onClick={() => {
+                setIsEditingRegion(false);
+                onCancel?.();
+              }}
             >
               Cancel
             </button>
             <button
+              type="button"
               className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
-              onClick={() => setIsEditingRegion(false)}
+              onClick={() => {
+                setIsEditingRegion(false);
+                onOk?.();
+              }}
             >
               OK
             </button>
@@ -166,159 +181,166 @@ export function PatternRegionTab({
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-ca-panel-2 px-2 py-1 border-b border-ca-border">
             <h3 className="font-semibold text-sm">Detection Conditions</h3>
-            <button className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm">
-              &gt;&gt;
+            <button
+              type="button"
+              aria-label="Toggle detection conditions panel"
+              onClick={() => setIsConditionsExpanded((prev) => !prev)}
+              className="text-ca-ink-muted hover:text-ca-ink px-1 border border-ca-border bg-ca-panel rounded text-xs leading-none h-5 shadow-sm"
+            >
+              {isConditionsExpanded ? "<<" : ">>"}
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 p-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span>Angle Range</span>
-              <div className="flex items-center gap-1">
-                <span className="text-ca-ink-muted">+/-</span>
+          {isConditionsExpanded && (
+            <div className="flex flex-col gap-4 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Angle Range</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-ca-ink-muted">+/-</span>
+                  <input
+                    type="number"
+                    value={settings.detection.angleRangeDeg}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        detection: { ...s.detection, angleRangeDeg: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono"
+                    min={0}
+                    max={180}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span>Detection Count</span>
                 <input
                   type="number"
-                  value={settings.detection.angleRangeDeg}
+                  value={settings.detection.detectionCount}
                   onChange={(e) =>
                     setSettings((s) => ({
                       ...s,
-                      detection: { ...s.detection, angleRangeDeg: Number(e.target.value) },
+                      detection: { ...s.detection, detectionCount: Number(e.target.value) },
                     }))
                   }
                   className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono"
-                  min={0}
-                  max={180}
+                  min={1}
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <span>Detection Count</span>
-              <input
-                type="number"
-                value={settings.detection.detectionCount}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    detection: { ...s.detection, detectionCount: Number(e.target.value) },
-                  }))
-                }
-                className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono"
-                min={1}
-              />
-            </div>
-
-            {/* Search Sensitivity */}
-            <div className="flex flex-col gap-1 mt-2">
-              <div className="flex justify-between items-center">
-                <span>Search Sensitivity</span>
-                <span className="text-xs">
-                  {settings.detection.searchSensitivity === 50
-                    ? "Normal"
-                    : settings.detection.searchSensitivity}
-                </span>
+              {/* Search Sensitivity */}
+              <div className="flex flex-col gap-1 mt-2">
+                <div className="flex justify-between items-center">
+                  <span>Search Sensitivity</span>
+                  <span className="text-xs">
+                    {settings.detection.searchSensitivity === 50
+                      ? "Normal"
+                      : settings.detection.searchSensitivity}
+                  </span>
+                </div>
+                <div className="relative pt-2 pb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={settings.detection.searchSensitivity}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        detection: { ...s.detection, searchSensitivity: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      accentColor: "#3b82f6",
+                    }}
+                  />
+                  <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className="w-px h-1.5 bg-gray-400"></div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="relative pt-2 pb-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={settings.detection.searchSensitivity}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      detection: { ...s.detection, searchSensitivity: Number(e.target.value) },
-                    }))
-                  }
-                  className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    accentColor: "#3b82f6",
-                  }}
-                />
-                <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-px h-1.5 bg-gray-400"></div>
-                  ))}
+
+              {/* Accuracy */}
+              <div className="flex flex-col gap-1 mt-2">
+                <div className="flex justify-between items-center">
+                  <span>Accuracy</span>
+                  <span className="text-xs">
+                    {settings.detection.accuracy === 50 ? "Normal" : settings.detection.accuracy}
+                  </span>
+                </div>
+                <div className="relative pt-2 pb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={settings.detection.accuracy}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        detection: { ...s.detection, accuracy: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      accentColor: "#3b82f6",
+                    }}
+                  />
+                  <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className="w-px h-1.5 bg-gray-400"></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Min. Match % */}
+              <div className="flex flex-col gap-1 mt-2">
+                <div className="flex items-center justify-between">
+                  <span>Min. Match %</span>
+                  <input
+                    type="number"
+                    value={settings.detection.minMatchPercent}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        detection: { ...s.detection, minMatchPercent: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono text-sm"
+                    min={0}
+                    max={100}
+                  />
+                </div>
+                <div className="relative pt-2 pb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={settings.detection.minMatchPercent}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        detection: { ...s.detection, minMatchPercent: Number(e.target.value) },
+                      }))
+                    }
+                    className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      accentColor: "#3b82f6",
+                    }}
+                  />
+                  <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className="w-px h-1.5 bg-gray-400"></div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Accuracy */}
-            <div className="flex flex-col gap-1 mt-2">
-              <div className="flex justify-between items-center">
-                <span>Accuracy</span>
-                <span className="text-xs">
-                  {settings.detection.accuracy === 50 ? "Normal" : settings.detection.accuracy}
-                </span>
-              </div>
-              <div className="relative pt-2 pb-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={settings.detection.accuracy}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      detection: { ...s.detection, accuracy: Number(e.target.value) },
-                    }))
-                  }
-                  className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    accentColor: "#3b82f6",
-                  }}
-                />
-                <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-px h-1.5 bg-gray-400"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Min. Match % */}
-            <div className="flex flex-col gap-1 mt-2">
-              <div className="flex items-center justify-between">
-                <span>Min. Match %</span>
-                <input
-                  type="number"
-                  value={settings.detection.minMatchPercent}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      detection: { ...s.detection, minMatchPercent: Number(e.target.value) },
-                    }))
-                  }
-                  className="w-16 bg-ca-bg border border-ca-border px-2 py-1 rounded text-right font-mono text-sm"
-                  min={0}
-                  max={100}
-                />
-              </div>
-              <div className="relative pt-2 pb-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={settings.detection.minMatchPercent}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      detection: { ...s.detection, minMatchPercent: Number(e.target.value) },
-                    }))
-                  }
-                  className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    accentColor: "#3b82f6",
-                  }}
-                />
-                <div className="absolute w-full flex justify-between px-2 -bottom-1 pointer-events-none">
-                  {[...Array(9)].map((_, i) => (
-                    <div key={i} className="w-px h-1.5 bg-gray-400"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           <div className="flex justify-end p-2 border-t border-ca-border">
             <button

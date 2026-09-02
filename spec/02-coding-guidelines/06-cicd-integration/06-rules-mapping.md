@@ -42,7 +42,7 @@ if CODE-RED-005 is ever disabled by a per-file override.
 > including what counts as an "effective body line", per-language
 > detector scope, deliberate counter divergences, and the verification
 > procedure for any future change — lives in
-> [`linters-cicd/checks/function-length-prefer8/readme.md`](../../../linters-cicd/checks/function-length-prefer8/readme.md).
+> `linters-cicd/checks/function-length-prefer8/readme.md`.
 > If this table and that README ever disagree, **the README wins** and
 > this table is the bug.
 

@@ -24,6 +24,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const CatSampleSchema = z.object({
   SampleId: z.number().int(),
@@ -53,7 +54,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const listSamples = createServerFn({ method: "GET" })
+export const listSamples = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) =>
     z
       .object({})
@@ -81,7 +82,7 @@ export const listSamples = createServerFn({ method: "GET" })
  * `{items,total,provider}` like the list endpoint), per
  * `BE/routes/samples.py` L143.
  */
-export const getSample = createServerFn({ method: "GET" })
+export const getSample = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => z.object({ sampleId: z.number().int().min(1) }).parse(raw))
   .handler(async ({ data }): Promise<CatSampleWire> => {
     const url = `${beBaseUrl()}/samples/${data.sampleId}`;

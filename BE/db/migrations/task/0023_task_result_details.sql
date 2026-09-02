@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS ResultDetail (
   ExpectedMin     REAL    NULL,
   ExpectedMax     REAL    NULL,
   Message         TEXT    NULL,
-  EvaluatedAt     INTEGER NOT NULL DEFAULT (unixepoch())
+  EvaluatedAt     INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
 );
 
 CREATE INDEX IF NOT EXISTS IdxResultDetail_ResultId

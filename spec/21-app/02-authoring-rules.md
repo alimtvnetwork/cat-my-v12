@@ -1,7 +1,7 @@
 # Authoring Rules — Vision Inspection App Specs
 
 > **Parent:** [21-app/04-overview.md](./04-overview.md)
-> **Source of truth:** [`.lovable/coding-guidelines/coding-guidelines.md`](../../.lovable/coding-guidelines/coding-guidelines.md)
+> **Source of truth:** [`.lovable/coding-guidelines.md`](../../.lovable/coding-guidelines.md)
 > **Scope:** Rules every file under `spec/21-app/**` must follow. These are the guardrails future code will be measured against, so specs must match them exactly.
 
 ## Hard Rules (mirrored from coding-guidelines.md)

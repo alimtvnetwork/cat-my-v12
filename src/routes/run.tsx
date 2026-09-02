@@ -26,6 +26,8 @@ import { AppEvent } from "@/lib/constants";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { toIntParam } from "@/lib/ids/int-alias";
 import { HtmlTagType } from "@/lib/enums/html";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export const Route = createFileRoute("/run")({
   head: () => ({
@@ -170,7 +172,10 @@ function RunPage() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const typing =
-        t && (HtmlTagType.isInput(t.tagName) || HtmlTagType.isTextarea(t.tagName) || t.isContentEditable);
+        t &&
+        (HtmlTagType.isInput(t.tagName) ||
+          HtmlTagType.isTextarea(t.tagName) ||
+          t.isContentEditable);
 
       if (typing) return;
 
@@ -255,217 +260,122 @@ function RunPage() {
       ? "bg-ca-ink-muted/15 text-ca-ink-muted border-ca-border"
       : "bg-ca-warn/15 text-ca-warn border-ca-warn/40";
 
-  return (
-    <HmiShell
-      program="Program 01"
-      title="Run"
-      headerActions={
-        <div className="flex items-center gap-hmi-3 text-hmi-body">
-          {RunStatusType.isRunning(status) ? (
-            <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
-              {elapsed}
-            </span>
-          ) : null}
-          <span
-            role="status"
-            aria-live="polite"
-            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-hmi-caption font-semibold uppercase tracking-wide ${statusTone}`}
-          >
-            <span
-              aria-hidden
-              className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse" : "bg-ca-ink-muted"}`}
+  const { mode } = useUiMode();
+
+  const runBody = (
+    <div className="flex flex-1 overflow-hidden">
+      {!ready ? (
+        <RunSkeleton />
+      ) : (
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex flex-wrap items-center gap-hmi-3 p-hmi-3 bg-ca-panel">
+            <Counter variant={CounterVariantType.Total} value={counters.total} />
+            <Counter variant={CounterVariantType.Ok} value={counters.ok} />
+            <Counter
+              variant={CounterVariantType.Ng}
+              value={counters.ng}
+              data-testid="counter-ng"
+              aria-live="polite"
             />
-            {formatIdentifierLabel(status)}
-          </span>
-        </div>
-      }
-      actionBarLeft={
-        <div className="flex items-center gap-hmi-2">
-          <button
-            type="button"
-            onClick={() => setShowHistory((v) => !v)}
-            aria-pressed={showHistory}
-            aria-label={showHistory ? "Hide run history" : "Show run history"}
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-          >
-            History
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSettings((v) => !v)}
-            aria-expanded={showSettings}
-            aria-controls="run-settings-popover"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-          >
-            Options
-          </button>
-          <Link
-            to="/setup"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-          >
-            Back to Setup
-          </Link>
-          <button
-            type="button"
-            onClick={doReset}
-            disabled={RunStatusType.isRunning(status) || counters.total === 0}
-            aria-label="Reset counters and event log"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-            title="Clear counters and event log"
-          >
-            Reset
-          </button>
-        </div>
-      }
-      actionBarRight={
-        <div className="flex items-center gap-hmi-3">
-          <button
-            type="button"
-            onClick={() => setShortcutsOpen((v) => !v)}
-            aria-expanded={shortcutsOpen}
-            aria-label="Show keyboard shortcuts"
-            title="Press ? to toggle shortcut help"
-            className="hidden sm:inline-flex items-center gap-hmi-1 text-hmi-caption text-ca-ink-muted hover:text-ca-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus rounded"
-          >
-            Press{" "}
-            <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
-              Space
-            </kbd>
-            <span aria-hidden>·</span>
-            <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
-              ?
-            </kbd>
-          </button>
-          {RunStatusType.isRunning(status) ? (
-            <button
-              type="button"
-              onClick={requestStop}
-              aria-label="Stop run (Space)"
-              aria-describedby="run-space-hint"
-              className="inline-flex items-center min-h-10 px-hmi-5 py-hmi-2 bg-ca-ng text-ca-bg text-hmi-body font-semibold rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-            >
-              Stop
-            </button>
-          ) : (
-            <RunButton onClick={start} aria-label="Start run (Space)">
-              Start
-            </RunButton>
-          )}
-          <span id="run-space-hint" className="sr-only">
-            Press Space to toggle run.
-          </span>
-        </div>
-      }
-    >
-      <div className="flex flex-1 overflow-hidden">
-        {!ready ? (
-          <RunSkeleton />
-        ) : (
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex flex-wrap items-center gap-hmi-3 p-hmi-3 bg-ca-panel">
-              <Counter variant={CounterVariantType.Total} value={counters.total} />
-              <Counter variant={CounterVariantType.Ok} value={counters.ok} />
-              <Counter
-                variant={CounterVariantType.Ng}
-                value={counters.ng}
-                title="Open NG events log"
-                onClick={() => navigate({ to: "/errors" })}
-              />
-              <div className="ml-auto flex items-center gap-hmi-4 text-hmi-body text-ca-ink-muted">
-                <div className="flex flex-col items-end">
-                  <span className="text-hmi-caption uppercase tracking-wide">Pass rate</span>
-                  <span className="font-mono tabular-nums text-ca-ink">{passRate.toFixed(1)}%</span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-hmi-caption uppercase tracking-wide">Frames / s</span>
-                  <span className="font-mono tabular-nums text-ca-ink">{fps}</span>
-                </div>
+            <div className="ml-auto flex items-center gap-hmi-4 text-hmi-body text-ca-ink-muted">
+              <div className="flex flex-col items-end">
+                <span className="text-hmi-caption uppercase tracking-wide">Pass rate</span>
+                <span className="font-mono tabular-nums text-ca-ink">{passRate.toFixed(1)}%</span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-hmi-caption uppercase tracking-wide">Frames / s</span>
+                <span className="font-mono tabular-nums text-ca-ink">{fps}</span>
               </div>
             </div>
-            <Viewport>
-              <MachineFrame live={RunStatusType.isRunning(status)} />
-              <ViewportImageControls />
-              {pickedRulesets.length > 0 ? (
-                <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-md border border-ca-border bg-ca-panel/90 p-hmi-3 shadow-hmi-panel backdrop-blur">
-                  <div className="flex items-center justify-between gap-hmi-2">
-                    <p className="font-display text-hmi-caption font-semibold uppercase tracking-wide text-ca-ink">
-                      {project?.name ?? "Selected rule sets"}
-                    </p>
-                    <span className="text-hmi-caption text-ca-ink-muted">
-                      {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
-                    </span>
-                  </div>
-                  <ul className="mt-hmi-2 space-y-hmi-1">
-                    {pickedRulesets.map((r) => {
-                      const summary = summarizeOverrideChain(resolveOverrideChain(r, rulesetsById));
+          </div>
+          <Viewport>
+            <MachineFrame live={RunStatusType.isRunning(status)} />
+            <ViewportImageControls />
+            {pickedRulesets.length > 0 ? (
+              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-md border border-ca-border bg-ca-panel/90 p-hmi-3 shadow-hmi-panel backdrop-blur">
+                <div className="flex items-center justify-between gap-hmi-2">
+                  <p className="font-display text-hmi-caption font-semibold uppercase tracking-wide text-ca-ink">
+                    {project?.name ?? "Selected rule sets"}
+                  </p>
+                  <span className="text-hmi-caption text-ca-ink-muted">
+                    {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
+                  </span>
+                </div>
+                <ul className="mt-hmi-2 space-y-hmi-1">
+                  {pickedRulesets.map((r) => {
+                    const summary = summarizeOverrideChain(resolveOverrideChain(r, rulesetsById));
 
-                      return (
-                        <li
-                          key={r.id}
-                          className="flex items-center gap-hmi-2 rounded-sm bg-ca-panel-2 px-hmi-2 py-hmi-1"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-hmi-body text-ca-ink">{r.name}</p>
-                            <p className="truncate text-hmi-caption text-ca-ink-muted">
-                              {r.rules.length} rules, {summary}
-                            </p>
-                          </div>
-                          {projectId ? (
-                            <Link
-                              to="/projects/$projectId/rulesets/$rulesetId"
-                              params={{
-                                projectId,
-                                rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
-                              }}
-                              className="inline-flex items-center gap-hmi-1 rounded-sm border border-ca-border px-hmi-1 text-hmi-caption text-ca-ink hover:border-ca-select"
-                              aria-label={`Edit ${r.name}`}
-                            >
-                              <Pencil aria-hidden size={12} /> Edit
-                            </Link>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                    return (
+                      <li
+                        key={r.id}
+                        className="flex items-center gap-hmi-2 rounded-sm bg-ca-panel-2 px-hmi-2 py-hmi-1"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-hmi-body text-ca-ink">{r.name}</p>
+                          <p className="truncate text-hmi-caption text-ca-ink-muted">
+                            {r.rules.length} rules, {summary}
+                          </p>
+                        </div>
+                        {projectId ? (
+                          <Link
+                            to="/projects/$projectId/rulesets/$rulesetId"
+                            params={{
+                              projectId,
+                              rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
+                            }}
+                            className="inline-flex items-center gap-hmi-1 rounded-sm border border-ca-border px-hmi-1 text-hmi-caption text-ca-ink hover:border-ca-select"
+                            aria-label={`Edit ${r.name}`}
+                          >
+                            <Pencil aria-hidden size={12} /> Edit
+                          </Link>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+            {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div className="rounded-md border border-ca-border bg-ca-panel/85 px-hmi-5 py-hmi-4 text-center shadow-hmi-panel backdrop-blur">
+                  <p className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
+                    Ready to run
+                  </p>
+                  <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
+                    Press{" "}
+                    <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
+                      Space
+                    </kbd>{" "}
+                    or the Start button to begin.
+                  </p>
                 </div>
-              ) : null}
-              {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="rounded-md border border-ca-border bg-ca-panel/85 px-hmi-5 py-hmi-4 text-center shadow-hmi-panel backdrop-blur">
-                    <p className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
-                      Ready to run
-                    </p>
-                    <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
-                      Press{" "}
-                      <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
-                        Space
-                      </kbd>{" "}
-                      or the Start button to begin.
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-            </Viewport>
-            <StatusLog entries={log} />
-          </div>
-        )}
-        {showHistory && hydrated ? (
+              </div>
+            ) : null}
+          </Viewport>
+          <StatusLog entries={log} />
+        </div>
+      )}
+      {showHistory && hydrated ? (
+        <div
+          className="fixed inset-y-0 right-0 z-40 flex"
+          role="dialog"
+          aria-label="Run history drawer"
+        >
           <div
-            className="fixed inset-y-0 right-0 z-40 flex"
-            role="dialog"
-            aria-label="Run history drawer"
-          >
-            <div
-              className="fixed inset-0 bg-ca-viewport/50"
-              onClick={() => setShowHistory(false)}
-              aria-hidden="true"
-            />
-            <div className="relative z-10 h-full shadow-hmi-panel">
-              <RunHistorySidebar onClose={() => setShowHistory(false)} />
-            </div>
+            className="fixed inset-0 bg-ca-viewport/50"
+            onClick={() => setShowHistory(false)}
+            aria-hidden="true"
+          />
+          <div className="relative z-10 h-full shadow-hmi-panel">
+            <RunHistorySidebar onClose={() => setShowHistory(false)} />
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const runOverlays = (
+    <>
       {showSettings ? (
         <div
           id="run-settings-popover"
@@ -610,6 +520,128 @@ function RunPage() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  const actionControls = (
+    <div className="flex items-center gap-hmi-3">
+      {RunStatusType.isRunning(status) ? (
+        <button
+          type="button"
+          onClick={requestStop}
+          aria-label="Stop run (Space)"
+          className="inline-flex items-center px-4 py-1 bg-rose-600 text-white text-xs font-semibold rounded shadow-sm hover:bg-rose-700"
+        >
+          Stop
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={start}
+          aria-label="Start run (Space)"
+          className="inline-flex items-center px-4 py-1 bg-emerald-600 text-white text-xs font-semibold rounded shadow-sm hover:bg-emerald-700"
+        >
+          Start
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={doReset}
+        disabled={RunStatusType.isRunning(status) || counters.total === 0}
+        className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded text-xs text-ca-ink hover:bg-ca-panel-2 shadow-sm font-medium disabled:opacity-50"
+      >
+        Reset
+      </button>
+      <button
+        type="button"
+        onClick={() => setShowHistory((v) => !v)}
+        className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded text-xs text-ca-ink hover:bg-ca-panel-2 shadow-sm font-medium"
+      >
+        History
+      </button>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="run"
+        title="Live Inspection Execution"
+        subtitle="Program 01"
+        actions={actionControls}
+      >
+        {runBody}
+        {runOverlays}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <HmiShell
+      program="Program 01"
+      title="Run"
+      headerActions={
+        <div className="flex items-center gap-hmi-3 text-hmi-body">
+          {RunStatusType.isRunning(status) ? (
+            <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
+              {elapsed}
+            </span>
+          ) : null}
+          <span
+            role="status"
+            aria-live="polite"
+            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-hmi-caption font-semibold uppercase tracking-wide ${statusTone}`}
+          >
+            <span
+              aria-hidden
+              className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse" : "bg-ca-ink-muted"}`}
+            />
+            {formatIdentifierLabel(status)}
+          </span>
+        </div>
+      }
+      actionBarLeft={
+        <div className="flex items-center gap-hmi-2">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            aria-pressed={showHistory}
+            aria-label={showHistory ? "Hide run history" : "Show run history"}
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+          >
+            History
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSettings((v) => !v)}
+            aria-expanded={showSettings}
+            aria-controls="run-settings-popover"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+          >
+            Options
+          </button>
+          <Link
+            to="/setup"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+          >
+            Back to Setup
+          </Link>
+          <button
+            type="button"
+            onClick={doReset}
+            disabled={RunStatusType.isRunning(status) || counters.total === 0}
+            aria-label="Reset counters and event log"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            title="Clear counters and event log"
+          >
+            Reset
+          </button>
+        </div>
+      }
+      actionBarRight={actionControls}
+    >
+      {runBody}
+      {runOverlays}
     </HmiShell>
   );
 }

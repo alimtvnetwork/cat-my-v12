@@ -7,6 +7,8 @@ import { getAuditEvents, type OpsEvent } from "@/lib/ops.functions";
 import { getDenialTuning, type DenialTuning } from "@/lib/denial-tuning.functions";
 import { AuditRetentionTile } from "@/components/ops/audit-retention-tile";
 import { formatIdentifierLabel, formatUiText } from "@/lib/display-labels";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 /**
  * Ops telemetry surface (M1 remediation from audit v1.34.0, live-bridged in v1.39).
@@ -108,6 +110,96 @@ function OpsPage() {
     return c;
   }, [events]);
 
+  const { mode } = useUiMode();
+
+  const content = (
+    <div className="flex-1 overflow-auto bg-ca-panel">
+      <div className="grid grid-cols-4 gap-hmi-2 p-hmi-3 border-b border-ca-border">
+        <Tile label="Audit pruned" value={counts.I_SEC_AUDIT_PRUNED} tone="info" />
+        <Tile label="Admin writes" value={counts.I_SEC_ADMIN_WRITE} tone="info" />
+        <Tile label="Denial bursts" value={counts.E_SEC_DENIAL_BURST} tone="alert" />
+        <Tile label="Role denied" value={counts.E_SEC_ROLE_DENIED} tone="alert" />
+      </div>
+
+      <div className="px-hmi-3 pt-hmi-3 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+        Denial bursts: read-only tuning
+      </div>
+      <div
+        className="grid grid-cols-3 gap-hmi-2 p-hmi-3 border-b border-ca-border"
+        data-testid="denial-tuning-panel"
+        aria-label="Denial bursts tuning (read-only)"
+      >
+        <Tile label="Denial threshold" value={tuning?.threshold ?? 0} tone="info" />
+        <Tile label="Window (s)" value={tuning?.windowSeconds ?? 0} tone="info" />
+        <div className="border border-ca-border bg-ca-panel-2 p-hmi-3">
+          <div className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+            Last derivation
+          </div>
+          <div className="text-hmi-body hmi-tabular text-ca-ink">
+            {tuning?.derivedAt ?? "unknown"}
+          </div>
+          <div className="text-hmi-caption text-ca-ink-muted mt-hmi-1">
+            {formatUiText(tuning?.derivation ?? "read-only, admin via CLI (v2.0.3)")}
+          </div>
+        </div>
+      </div>
+
+      <AuditRetentionTile />
+
+      <RetentionAuditPanel events={events} />
+
+      <CaptureDeviceAuditPanel events={events} />
+
+      <table className="w-full text-hmi-body text-ca-ink">
+        <thead className="bg-ca-chrome text-ca-chrome-ink text-hmi-caption uppercase tracking-wide">
+          <tr>
+            <th className="text-left px-hmi-3 py-hmi-2">Time</th>
+            <th className="text-left px-hmi-3 py-hmi-2">Code</th>
+            <th className="text-left px-hmi-3 py-hmi-2">Subject</th>
+            <th className="text-left px-hmi-3 py-hmi-2">CID</th>
+            <th className="text-left px-hmi-3 py-hmi-2">Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.map((e) => (
+            <tr
+              key={e.id}
+              className="border-b border-ca-border"
+              data-cid={e.correlationId ?? undefined}
+            >
+              <td className="px-hmi-3 py-hmi-2 hmi-tabular">{e.ts}</td>
+              <td className={`px-hmi-3 py-hmi-2 hmi-tabular ${codeClass(e.code)}`}>
+                {formatIdentifierLabel(e.code)}
+              </td>
+              <td className="px-hmi-3 py-hmi-2">{formatUiText(e.subject)}</td>
+              <td className="px-hmi-3 py-hmi-2 hmi-tabular text-ca-ink-muted">
+                {e.correlationId ?? "-"}
+              </td>
+              <td className="px-hmi-3 py-hmi-2 text-ca-ink-muted">{formatUiText(e.detail)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <p className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
+        Live bridge active: rows served by getAuditEvents() over TSS RPC, worker-side buffer mirrors
+        AuditSink schema.
+      </p>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="ops"
+        title="Ops Telemetry"
+        subtitle={loaded ? `${events.length} events in buffer` : "loading..."}
+      >
+        {content}
+      </StandardAppShell>
+    );
+  }
+
   return (
     <HmiShell
       program="Program 01"
@@ -126,79 +218,7 @@ function OpsPage() {
         </Link>
       }
     >
-      <div className="flex-1 overflow-auto bg-ca-panel">
-        <div className="grid grid-cols-4 gap-hmi-2 p-hmi-3 border-b border-ca-border">
-          <Tile label="Audit pruned" value={counts.I_SEC_AUDIT_PRUNED} tone="info" />
-          <Tile label="Admin writes" value={counts.I_SEC_ADMIN_WRITE} tone="info" />
-          <Tile label="Denial bursts" value={counts.E_SEC_DENIAL_BURST} tone="alert" />
-          <Tile label="Role denied" value={counts.E_SEC_ROLE_DENIED} tone="alert" />
-        </div>
-
-        <div className="px-hmi-3 pt-hmi-3 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-          Denial bursts: read-only tuning
-        </div>
-        <div
-          className="grid grid-cols-3 gap-hmi-2 p-hmi-3 border-b border-ca-border"
-          data-testid="denial-tuning-panel"
-          aria-label="Denial bursts tuning (read-only)"
-        >
-          <Tile label="Denial threshold" value={tuning?.threshold ?? 0} tone="info" />
-          <Tile label="Window (s)" value={tuning?.windowSeconds ?? 0} tone="info" />
-          <div className="border border-ca-border bg-ca-panel-2 p-hmi-3">
-            <div className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-              Last derivation
-            </div>
-            <div className="text-hmi-body hmi-tabular text-ca-ink">
-              {tuning?.derivedAt ?? "unknown"}
-            </div>
-            <div className="text-hmi-caption text-ca-ink-muted mt-hmi-1">
-              {formatUiText(tuning?.derivation ?? "read-only, admin via CLI (v2.0.3)")}
-            </div>
-          </div>
-        </div>
-
-        <AuditRetentionTile />
-
-        <RetentionAuditPanel events={events} />
-
-        <CaptureDeviceAuditPanel events={events} />
-
-        <table className="w-full text-hmi-body text-ca-ink">
-          <thead className="bg-ca-chrome text-ca-chrome-ink text-hmi-caption uppercase tracking-wide">
-            <tr>
-              <th className="text-left px-hmi-3 py-hmi-2">Time</th>
-              <th className="text-left px-hmi-3 py-hmi-2">Code</th>
-              <th className="text-left px-hmi-3 py-hmi-2">Subject</th>
-              <th className="text-left px-hmi-3 py-hmi-2">CID</th>
-              <th className="text-left px-hmi-3 py-hmi-2">Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((e) => (
-              <tr
-                key={e.id}
-                className="border-b border-ca-border"
-                data-cid={e.correlationId ?? undefined}
-              >
-                <td className="px-hmi-3 py-hmi-2 hmi-tabular">{e.ts}</td>
-                <td className={`px-hmi-3 py-hmi-2 hmi-tabular ${codeClass(e.code)}`}>
-                  {formatIdentifierLabel(e.code)}
-                </td>
-                <td className="px-hmi-3 py-hmi-2">{formatUiText(e.subject)}</td>
-                <td className="px-hmi-3 py-hmi-2 hmi-tabular text-ca-ink-muted">
-                  {e.correlationId ?? "-"}
-                </td>
-                <td className="px-hmi-3 py-hmi-2 text-ca-ink-muted">{formatUiText(e.detail)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <p className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
-          Live bridge active: rows served by getAuditEvents() over TSS RPC, worker-side buffer
-          mirrors AuditSink schema.
-        </p>
-      </div>
+      {content}
     </HmiShell>
   );
 }

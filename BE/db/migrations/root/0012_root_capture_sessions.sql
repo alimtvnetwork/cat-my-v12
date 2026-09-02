@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS CaptureSession (
   PixelFormat       TEXT    NULL,
   TriggerMode       TEXT    NULL,
   FrameCount        INTEGER NOT NULL DEFAULT 0,
-  StartedAt         INTEGER NOT NULL DEFAULT (unixepoch()),
+  StartedAt         INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   EndedAt           INTEGER NULL,
   ExitCode          INTEGER NULL,
   Notes             TEXT    NULL,

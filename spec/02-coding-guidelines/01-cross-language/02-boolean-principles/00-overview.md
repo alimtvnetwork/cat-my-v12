@@ -55,7 +55,7 @@ in-memory semantic-inverse pairs documented in
 
 > **Authoritative spec:** [Database Naming Conventions — Rule 9: Auto-Generated Inverted (Computed) Fields](../../../04-database-conventions/01-naming-conventions.md#rule-9-auto-generated-inverted-computed-fields-in-code)
 >
-> **Codegen tool:** [`linters-cicd/codegen/`](../../../../linters-cicd/codegen/readme.md) — emits Go methods, PHP traits, and TypeScript getters from `Is*`/`Has*` db-tagged fields.
+> **Codegen tool:** `linters-cicd/codegen/` — emits Go methods, PHP traits, and TypeScript getters from `Is*`/`Has*` db-tagged fields.
 >
 > **Linter:** `BOOL-NEG-001` rejects `Not`/`No`-prefixed column names (`IsNotActive`, `HasNoLicense`) at CI time.
 

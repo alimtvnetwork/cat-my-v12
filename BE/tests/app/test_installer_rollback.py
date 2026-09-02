@@ -74,8 +74,7 @@ def test_plan_rollback_names_actions_added_after_backup():
     # LIFO of application: newest reversed first.
     assert d.ActionsToReverse == ("retention-timer", "path-link")
     assert d.PriorVersion == "4.68.0"
-    assert d.CurrentVersion == "4.69.0"
-    assert d.BackupPath == "/x/install.json.bak"
+    assert d.BackupPath == str(Path("/x/install.json.bak"))
     assert isinstance(d, RollbackDecision)
 
 

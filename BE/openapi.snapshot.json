@@ -7,17 +7,17 @@
   "paths": {
     "/system/status": {
       "get": {
-        "tags": ["system"],
-        "summary": "Get System Status",
-        "operationId": "get_system_status_system_status_get",
+        "tags": [
+          "system"
+        ],
+        "summary": "Get Status",
+        "operationId": "get_status_system_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope_SystemStatus_"
-                }
+                "schema": {}
               }
             }
           }
@@ -29,6 +29,23 @@
         "summary": "Get Healthz",
         "description": "Liveness probe. Always 200 unless the process is dead.",
         "operationId": "get_healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/deep": {
+      "get": {
+        "summary": "Get Health Deep",
+        "description": "Deep health check covering sub-dependencies (repo, sdkFacade). Always ok for v1.",
+        "operationId": "get_health_deep_health_deep_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -61,7 +78,7 @@
     "/rules": {
       "get": {
         "summary": "List Rules",
-        "description": "List rules via the active `RuleFacade` (default: empty in-memory).",
+        "description": "List rules via the active `RulesRepo` (default: empty in-memory).",
         "operationId": "list_rules_rules_get",
         "responses": {
           "200": {
@@ -78,7 +95,7 @@
     "/rules/{rule_id}": {
       "get": {
         "summary": "Get Rule",
-        "description": "Fetch one rule via the active `RuleFacade`.\n\nThe facade owns the `E_BE_NOT_FOUND` decision; this handler only validates\nthe path param and lets `AppError` propagate to the Step-13 handlers.",
+        "description": "Fetch one rule via the active `RulesRepo`.\n\nThe repo owns the `E_BE_NOT_FOUND` decision; this handler only validates\nthe path param and lets `AppError` propagate to the Step-13 handlers.",
         "operationId": "get_rule_rules__rule_id__get",
         "parameters": [
           {
@@ -190,7 +207,7 @@
     "/samples": {
       "get": {
         "summary": "List Samples",
-        "description": "List samples via the active `SampleFacade` (default: empty in-memory).",
+        "description": "List samples via the active `SamplesRepo` (default: empty in-memory).",
         "operationId": "list_samples_samples_get",
         "responses": {
           "200": {
@@ -205,7 +222,7 @@
       },
       "post": {
         "summary": "Create Sample",
-        "description": "Insert a sample via `SampleFacade.upsert_sample` (Plan 90 Step 145).\n\nPOST allows the client to mint a specific `id` (the samples slice uses\nmonotonic client-side integer aliases per `src/lib/ids/int-alias.ts`, so\nthe id is authoritative, not server-assigned). Idempotent by id: a second\nPOST with the same id updates the row rather than 409-ing, matching the\nfacade's upsert semantics. Bad payload \u2192 400 `E_BE_BAD_REQUEST`.",
+        "description": "Insert a sample via `SamplesRepo.upsert_sample` (Plan 90 Step 145).\n\nPOST allows the client to mint a specific `id` (the samples slice uses\nmonotonic client-side integer aliases per `src/lib/ids/int-alias.ts`, so\nthe id is authoritative, not server-assigned). Idempotent by id: a second\nPOST with the same id updates the row rather than 409-ing, matching the\nrepo's upsert semantics. Bad payload \u2192 400 `E_BE_BAD_REQUEST`.",
         "operationId": "create_sample_samples_post",
         "responses": {
           "200": {
@@ -222,7 +239,7 @@
     "/samples/{sample_id}": {
       "get": {
         "summary": "Get Sample",
-        "description": "Fetch one sample via the active `SampleFacade`.",
+        "description": "Fetch one sample via the active `SamplesRepo`.",
         "operationId": "get_sample_samples__sample_id__get",
         "parameters": [
           {
@@ -258,7 +275,7 @@
       },
       "put": {
         "summary": "Update Sample",
-        "description": "Update a sample via `SampleFacade.upsert_sample` with path/body id check.",
+        "description": "Update a sample via `SamplesRepo.upsert_sample` with path/body id check.",
         "operationId": "update_sample_samples__sample_id__put",
         "parameters": [
           {
@@ -294,7 +311,7 @@
       },
       "delete": {
         "summary": "Delete Sample",
-        "description": "Remove a sample via `SampleFacade.delete_sample`.\n\nMissing id \u2192 facade raises `E_BE_NOT_FOUND` (404) per the Step-144\ncontract; propagated by the Step-13 envelope handler. Success returns\nan envelope with an empty `Results` object so clients can uniformly\nread `Status.IsSuccess` without a shape switch.",
+        "description": "Remove a sample via `SamplesRepo.delete_sample`.\n\nMissing id \u2192 repo raises `E_BE_NOT_FOUND` (404) per the Step-144\ncontract; propagated by the Step-13 envelope handler. Success returns\nan envelope with an empty `Results` object so clients can uniformly\nread `Status.IsSuccess` without a shape switch.",
         "operationId": "delete_sample_samples__sample_id__delete",
         "parameters": [
           {
@@ -668,7 +685,7 @@
     "/api/cli/sessions/{run_id}/export": {
       "get": {
         "summary": "Export Cli Session",
-        "description": "Return a `.zip` bundle of the session's log + entry envelope + IPC.\n\n404 `E_BE_NOT_FOUND` when no session on disk carries this RunId.\n413 `E_BE_TOO_LARGE` when the combined artefacts exceed 64 MiB, so a\nrunaway session cannot hand a huge blob to the browser.",
+        "description": "Return a `.zip` bundle of the session's log + entry envelope + IPC.\n\n404 `E_BE_NOT_FOUND` when no session on disk carries this RunId.\n413 `E_BE_TOO_LARGE` when the combined artefacts exceed 64 MiB.",
         "operationId": "export_cli_session_api_cli_sessions__run_id__export_get",
         "parameters": [
           {
@@ -1213,44 +1230,6 @@
   },
   "components": {
     "schemas": {
-      "Envelope_SystemStatus_": {
-        "properties": {
-          "isSuccess": {
-            "type": "boolean",
-            "title": "Issuccess"
-          },
-          "isFail": {
-            "type": "boolean",
-            "title": "Isfail"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SystemStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "error": {
-            "anyOf": [
-              {},
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          }
-        },
-        "type": "object",
-        "required": ["isSuccess", "isFail", "status"],
-        "title": "Envelope[SystemStatus]"
-      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1263,25 +1242,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "SystemStatus": {
-        "properties": {
-          "uptime": {
-            "type": "integer",
-            "title": "Uptime"
-          },
-          "version": {
-            "type": "string",
-            "title": "Version"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": ["uptime", "version", "status"],
-        "title": "SystemStatus"
       },
       "ValidationError": {
         "properties": {
@@ -1316,7 +1276,11 @@
           }
         },
         "type": "object",
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError"
       }
     }

@@ -34,6 +34,8 @@ import { SkeletonLine } from "@/components/ui/skeleton-primitives";
 import { useSeededEmptyState } from "@/lib/seed/useSeededSurfaces";
 import { useSeededEmptyStateAction } from "@/lib/seed/useSeededEmptyStateAction";
 import { toIntParam } from "@/lib/ids/int-alias";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 function useProjectStoreHydrated(): boolean {
   const [hydrated, setHydrated] = useState<boolean>(
@@ -350,9 +352,10 @@ function ProjectsIndex() {
     setDeleteFor(null);
   }
 
-  return (
-    <HmiShell title="Projects">
-      <SectionTopBar section={SectionIdType.Home} active="projects" />
+  const { mode } = useUiMode();
+
+  const mainContent = (
+    <>
       <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
         <div className="mx-auto w-full max-w-5xl">
           <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
@@ -871,6 +874,25 @@ function ProjectsIndex() {
           </div>
         </div>
       ) : null}
+    </>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="projects"
+        title="Projects Database"
+        subtitle={hydrated ? `${list.length} / ${totalCount} projects` : "Loading..."}
+      >
+        {mainContent}
+      </StandardAppShell>
+    );
+  }
+
+  return (
+    <HmiShell title="Projects">
+      <SectionTopBar section={SectionIdType.Home} active="projects" />
+      {mainContent}
     </HmiShell>
   );
 }

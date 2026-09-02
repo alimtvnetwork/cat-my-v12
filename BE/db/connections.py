@@ -36,6 +36,7 @@ from __future__ import annotations
 import logging
 import re
 import sqlite3
+import time
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, Literal
@@ -180,6 +181,10 @@ def _open(tier: Tier, db_root: Path) -> sqlite3.Connection:
             details={"Tier": tier, "Path": str(db_path)},
         ) from exc
     conn._tier = tier  # type: ignore[attr-defined]
+    try:
+        conn.create_function("unixepoch", 0, lambda: int(time.time()))
+    except Exception:
+        pass
     # Bypass the guard for our own pragmas (they never contain ATTACH).
     sqlite3.Connection.execute(conn, "PRAGMA foreign_keys=ON")
     sqlite3.Connection.execute(conn, "PRAGMA journal_mode=WAL")

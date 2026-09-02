@@ -22,6 +22,7 @@
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { HttpMethod } from "@/lib/constants";
 
 const MailboxEnum = z.enum(["worker-out", "processing-in", "processing-out", "main-in"]);
 
@@ -81,7 +82,7 @@ function beBaseUrl(): string {
   return url.replace(/\/$/, "");
 }
 
-export const getObservabilitySessionIpc = createServerFn({ method: "GET" })
+export const getObservabilitySessionIpc = createServerFn({ method: HttpMethod.Get })
   .inputValidator((raw) => InputSchema.parse(raw))
   .handler(async ({ data }): Promise<any> => {
     const qs = new URLSearchParams();

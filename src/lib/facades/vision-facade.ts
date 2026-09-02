@@ -2,6 +2,7 @@ import type { VisionFacade, CameraStatusResponse } from "./domain-facade";
 import type { ReferenceImage } from "@/types/vision/ReferenceImage";
 import { getActiveProfile } from "@/lib/seed/active-profile";
 import { fetchBackend } from "@/lib/backend/http";
+import { HttpMethod } from "@/lib/constants";
 
 class MockVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {
@@ -45,7 +46,7 @@ class MockVisionFacade implements VisionFacade {
 class ApiVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {
     const res = await fetchBackend<ReferenceImage>("camera/capture", {
-      method: "POST",
+      method: HttpMethod.Post,
       body: JSON.stringify({ cameraId }),
     });
     if (!res.Results || res.Results.length === 0) {
@@ -74,21 +75,21 @@ class ApiVisionFacade implements VisionFacade {
 
   async setReference(projectId: string, imageId: number): Promise<void> {
     await fetchBackend<void>(`images/reference`, {
-      method: "PUT",
+      method: HttpMethod.Put,
       body: JSON.stringify({ projectId, imageId }),
     });
   }
 
   async updateCameraSetting(cameraId: string, key: string, value: number | string): Promise<void> {
     await fetchBackend<void>(`camera/settings`, {
-      method: "PUT",
+      method: HttpMethod.Put,
       body: JSON.stringify({ cameraId, key, value }),
     });
   }
 
   async updateTriggerMode(cameraId: string, mode: string): Promise<void> {
     await fetchBackend<void>(`camera/settings`, {
-      method: "PUT",
+      method: HttpMethod.Put,
       body: JSON.stringify({ cameraId, triggerMode: mode }),
     });
   }

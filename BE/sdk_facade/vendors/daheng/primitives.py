@@ -70,11 +70,14 @@ def open_by_serial(serial: str) -> Iterator[DahengHandle]:
         device = device_manager.open_device_by_sn(serial)
     except Exception as e:
         raise AppError.for_file(
-            file_path=__file__,
+            reason="open_device_by_sn failed",
+            path=__file__,
+            operation="Open",
+            module="daheng_primitives",
             code=ErrorCode.E_CAM_NOT_CONNECTED,
             message=f"Failed to open Daheng camera by serial {serial}",
-            reason="open_device_by_sn failed",
-            details={"serial": serial, "error": str(e)}
+            details={"serial": serial, "error": str(e)},
+            cause=e,
         ) from e
 
     handle = DahengHandle(device)
@@ -96,11 +99,14 @@ def read_feature(handle: DahengHandle, node: str) -> Any:
         return feature.get()
     except Exception as e:
         raise AppError.for_file(
-            file_path=__file__,
+            reason="read_feature failed",
+            path=__file__,
+            operation="ReadFeature",
+            module="daheng_primitives",
             code=ErrorCode.E_BE_BAD_REQUEST,
             message=f"Failed to read feature {node}",
-            reason="read_feature failed",
-            details={"node": node, "error": str(e)}
+            details={"node": node, "error": str(e)},
+            cause=e,
         ) from e
 
 
@@ -114,11 +120,14 @@ def write_feature(handle: DahengHandle, node: str, value: Any) -> None:
         feature.set(value)
     except Exception as e:
         raise AppError.for_file(
-            file_path=__file__,
+            reason="write_feature failed",
+            path=__file__,
+            operation="WriteFeature",
+            module="daheng_primitives",
             code=ErrorCode.E_BE_BAD_REQUEST,
             message=f"Failed to write feature {node}",
-            reason="write_feature failed",
-            details={"node": node, "value": value, "error": str(e)}
+            details={"node": node, "value": value, "error": str(e)},
+            cause=e,
         ) from e
 
 
@@ -192,11 +201,14 @@ def stop_stream(handle: DahengHandle) -> None:
     except Exception as e:
         handle.close()
         raise AppError.for_file(
-            file_path=__file__,
+            reason="stream_off failed",
+            path=__file__,
+            operation="StopStream",
+            module="daheng_primitives",
             code=ErrorCode.E_CAM_STREAM_STUCK,
             message="Failed to stop Daheng stream gracefully",
-            reason="stream_off failed",
-            details={"error": str(e)}
+            details={"error": str(e)},
+            cause=e,
         ) from e
 
 
@@ -218,11 +230,14 @@ def trigger_once(handle: DahengHandle, timeout_ms: int = 1000) -> FrameEnvelope:
         )
     except Exception as e:
         raise AppError.for_file(
-            file_path=__file__,
+            reason="trigger_once timeout or error",
+            path=__file__,
+            operation="Trigger",
+            module="daheng_primitives",
             code=ErrorCode.E_CAM_CAPTURE_FAILED,
             message="Software trigger failed",
-            reason="trigger_once timeout or error",
-            details={"error": str(e)}
+            details={"error": str(e)},
+            cause=e,
         ) from e
 
 

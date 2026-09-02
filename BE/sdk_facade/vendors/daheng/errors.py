@@ -26,21 +26,36 @@ def map_gxipy_errors(func: T) -> T:
         outcome = "success"
         try:
             return func(*args, **kwargs)
+        except AppError:
+            outcome = "error"
+            raise
         except Exception as e:
             outcome = "error"
-            gxipy = load_gxipy()
-            if hasattr(gxipy, "GxError") and isinstance(e, gxipy.GxError):
+            is_gx = False
+            try:
+                gxipy = load_gxipy()
+                if hasattr(gxipy, "GxError") and isinstance(e, gxipy.GxError):
+                    is_gx = True
+            except Exception:
+                pass
+            if not is_gx and e.__class__.__name__ in {"GxError", "MockGxError"}:
+                is_gx = True
+
+            if is_gx:
                 code = ErrorCode.E_CAM_CAPTURE_FAILED
                 inc_counter(f"camera_error_total{{code={code.name}}}")
                 raise AppError.for_file(
-                    file_path=__file__,
+                    reason="GxError",
+                    path=__file__,
+                    operation="Execute",
+                    module="daheng_errors",
                     code=code,
                     message=f"Daheng SDK Error: {str(e)}",
-                    reason="GxError",
                     details={
                         "gxipy_status": getattr(e, "status", None),
                         "gxipy_message": getattr(e, "message", str(e)),
-                    }
+                    },
+                    cause=e,
                 ) from e
             inc_counter("camera_error_total{code=unknown}")
             raise # Reraise if it's not a GxError

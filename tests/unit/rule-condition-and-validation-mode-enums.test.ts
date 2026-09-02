@@ -1,19 +1,25 @@
-// Plan 42 steps 7-10 verification. Enum-only smoke tests locking literal
-// values and guard behavior. No logic under test yet.
 import { describe, it, expect } from "vitest";
-import { ConditionType, ALL_CONDITION_TYPES, isConditionType } from "@/types/rules/ConditionType";
+import {
+  ConditionTypeType as ConditionType,
+  ALL_CONDITION_TYPES,
+  isConditionTypeType as isConditionType,
+} from "@/types/rules/ConditionTypeType";
 import {
   PresenceModeType as PresenceMode,
   ALL_PRESENCE_MODES,
   isPresenceMode,
 } from "@/types/rules/PresenceModeType";
-import { ColorMode, ALL_COLOR_MODES, isColorMode } from "@/types/rules/ColorMode";
 import {
-  ValidationMode,
+  ColorModeType as ColorMode,
+  ALL_COLOR_MODES,
+  isColorMode,
+} from "@/types/rules/ColorModeType";
+import {
+  ValidationModeType as ValidationMode,
   ALL_VALIDATION_MODES,
   DEFAULT_VALIDATION_MODE,
   isValidationMode,
-} from "@/types/ruleset/ValidationMode";
+} from "@/types/rules/ValidationModeType";
 
 describe("ConditionType", () => {
   it("has three families with stable values", () => {

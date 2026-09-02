@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS Capture (
   PixelFormat        TEXT    NOT NULL,
   ByteSize           INTEGER NOT NULL CHECK (ByteSize >= 0),
   Sha256             TEXT    NOT NULL,
-  CapturedAt         INTEGER NOT NULL DEFAULT (unixepoch()),
+  CapturedAt         INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
   IsDiscarded        INTEGER NOT NULL DEFAULT 0 CHECK (IsDiscarded IN (0, 1))
 );
 

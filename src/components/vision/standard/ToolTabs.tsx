@@ -16,7 +16,7 @@ export function ToolTabs({
   ];
 
   return (
-    <div className="flex gap-2 p-2 bg-ca-panel border-b border-ca-border">
+    <div className="flex gap-2 p-2 bg-std-panel border-b border-std-border-dark">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isSelected = activeTab === tab.id;
@@ -24,26 +24,27 @@ export function ToolTabs({
           "flex-1 flex flex-col items-center justify-center p-1 rounded border h-16 transition-colors ";
 
         if (tab.disabled) {
-          buttonClass += "bg-gray-100 border-gray-200 text-gray-400 opacity-50 cursor-not-allowed";
+          buttonClass += "bg-std-chrome border-std-border-light opacity-50 cursor-not-allowed";
         } else if (isSelected) {
-          buttonClass += "bg-amber-400 border-amber-500 shadow-inner";
+          buttonClass += "bg-std-accent-active border-std-border-dark shadow-inner";
         } else {
-          buttonClass += "bg-gray-200 border-gray-300 text-gray-700 hover:bg-gray-300";
+          buttonClass += "bg-std-secondary-action border-std-border-light hover:brightness-110";
         }
 
         const iconClass = isSelected
-          ? "text-green-700"
+          ? "text-std-primary-action-text"
           : tab.disabled
-            ? "text-gray-400"
-            : "text-gray-600";
+            ? "text-std-text"
+            : "text-std-text";
         const textClass = isSelected
-          ? "text-black"
+          ? "text-std-primary-action-text"
           : tab.disabled
-            ? "text-gray-400"
-            : "text-gray-700";
+            ? "text-std-text"
+            : "text-std-text";
 
         return (
           <button
+            type="button"
             key={tab.id}
             disabled={tab.disabled}
             onClick={() => setActiveTab(tab.id)}
