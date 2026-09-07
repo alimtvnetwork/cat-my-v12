@@ -39,7 +39,7 @@ export function StandardToolGrid({
       {/* Sub-header Question & Search Strip */}
       <div className="px-4 py-2 bg-ca-panel-2 border-b border-ca-border flex flex-wrap items-center justify-between gap-2 shrink-0">
         <span className="text-xs font-semibold text-ca-ink flex items-center gap-1.5 font-mono">
-          <span className="text-amber-500 font-bold">▶</span>
+          <span className="text-ca-ink font-bold">▶</span>
           {category.promptQuestion}
         </span>
 
@@ -50,7 +50,7 @@ export function StandardToolGrid({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Filter inspection tools..."
-            className="pl-7 pr-2.5 py-1 text-xs bg-ca-bg border border-ca-border rounded text-ca-ink placeholder:text-ca-ink-muted focus:outline-none focus:border-amber-500 w-48 sm:w-60"
+            className="pl-7 pr-2.5 py-1 text-xs bg-ca-bg border border-ca-border rounded text-ca-ink placeholder:text-ca-ink-muted focus:outline-none focus:border-ca-ink w-48 sm:w-60"
           />
         </div>
       </div>
@@ -60,8 +60,8 @@ export function StandardToolGrid({
         {/* Preferred Tool / Auto-Teach Quick Action (Reference Image Feature) */}
         <div className="w-full md:w-44 shrink-0 flex flex-col gap-2">
           <div className="bg-ca-panel border border-ca-border rounded p-2.5 flex flex-col">
-            <div className="bg-amber-500/15 border border-amber-500/40 rounded px-2 py-0.5 mb-2 text-center">
-              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider font-mono">
+            <div className="bg-ca-panel-2 border border-ca-border rounded px-2 py-0.5 mb-2 text-center">
+              <span className="text-[10px] font-bold text-ca-ink uppercase tracking-wider font-mono">
                 Preferred Tool
               </span>
             </div>
@@ -77,11 +77,11 @@ export function StandardToolGrid({
               }}
               className={`p-3 rounded border flex flex-col items-center justify-center text-center gap-2 transition-all cursor-pointer ${
                 preferredTool && selectedToolId === preferredTool.id
-                  ? "border-amber-500 bg-amber-500/10 shadow-sm"
-                  : "border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-select"
+                  ? "border-ca-ink bg-ca-panel-2 shadow-sm"
+                  : "border-ca-border bg-ca-panel-2 hover:bg-ca-panel hover:border-ca-ink"
               }`}
             >
-              <div className="w-10 h-10 rounded border border-ca-border bg-ca-bg flex items-center justify-center text-amber-500">
+              <div className="w-10 h-10 rounded border border-ca-border bg-ca-bg flex items-center justify-center text-ca-ink">
                 <Wand2 className="w-5 h-5" />
               </div>
               <div className="flex flex-col">
@@ -116,15 +116,15 @@ export function StandardToolGrid({
                   onClick={() => onSelectTool(tool.id)}
                   className={`flex flex-col items-center justify-between p-3 rounded border text-center transition-all cursor-pointer group relative ${
                     isSelected
-                      ? "border-amber-500 bg-amber-500/10 shadow-md ring-1 ring-amber-500"
-                      : "border-ca-border bg-ca-panel hover:bg-ca-panel-2 hover:border-ca-select"
+                      ? "border-ca-ink bg-ca-panel-2 shadow-md ring-1 ring-ca-ink"
+                      : "border-ca-border bg-ca-panel hover:bg-ca-panel-2 hover:border-ca-ink"
                   }`}
                 >
                   {/* tool.displayCode Badge */}
                   <span
                     className={`absolute top-2 right-2 text-[9px] font-mono px-1 rounded ${
                       isSelected
-                        ? "bg-amber-500 text-slate-950 font-bold"
+                        ? "bg-ca-ink text-ca-bg font-bold"
                         : "bg-ca-panel-2 text-ca-ink-muted border border-ca-border"
                     }`}
                   >
@@ -135,7 +135,7 @@ export function StandardToolGrid({
                   <div
                     className={`w-12 h-12 rounded border flex items-center justify-center mb-2 transition-colors ${
                       isSelected
-                        ? "border-amber-500 bg-ca-bg text-amber-500 shadow-inner"
+                        ? "border-ca-ink bg-ca-bg text-ca-ink shadow-inner"
                         : "border-ca-border bg-ca-panel-2 text-ca-ink-muted group-hover:text-ca-ink"
                     }`}
                   >
@@ -155,7 +155,7 @@ export function StandardToolGrid({
                   {/* Active Indicator Bar */}
                   <div
                     className={`h-0.5 w-8 rounded mt-2.5 transition-colors ${
-                      isSelected ? "bg-amber-500" : "bg-transparent"
+                      isSelected ? "bg-ca-ink" : "bg-transparent"
                     }`}
                   />
                 </button>

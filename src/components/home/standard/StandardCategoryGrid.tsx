@@ -36,7 +36,7 @@ export function StandardCategoryGrid({
               onClick={() => onSelectCategory(cat.id)}
               className={`flex flex-col items-center justify-center p-2.5 sm:p-3 text-center transition-all cursor-pointer relative group ${
                 isSelected
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-inner"
+                  ? "bg-ca-ink text-ca-bg font-bold shadow-inner"
                   : "bg-ca-panel text-ca-ink hover:bg-ca-panel-2 hover:text-ca-ink"
               }`}
             >
@@ -46,7 +46,7 @@ export function StandardCategoryGrid({
               <div
                 className={`p-1.5 rounded mb-1.5 ${
                   isSelected
-                    ? "bg-black/15 text-slate-950"
+                    ? "bg-black/20 text-ca-bg"
                     : "bg-ca-panel-2 text-ca-ink-muted group-hover:text-ca-ink"
                 }`}
               >
@@ -57,7 +57,7 @@ export function StandardCategoryGrid({
               </span>
               <span
                 className={`text-[10px] mt-0.5 font-mono ${
-                  isSelected ? "text-slate-900 font-semibold" : "text-ca-ink-muted"
+                  isSelected ? "text-ca-bg/90 font-semibold" : "text-ca-ink-muted"
                 }`}
               >
                 {cat.id === CatalogCategoryIdType.FunctionList ? "All" : `${count} Tools`}

@@ -157,7 +157,7 @@ export function PatternRegionTab({
           <div className="flex justify-end gap-2 mt-2">
             <button
               type="button"
-              className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
+              className="px-4 py-1.5 bg-ca-panel border border-ca-border rounded text-xs text-ca-ink hover:bg-ca-panel-2 shadow-sm"
               onClick={() => {
                 setIsEditingRegion(false);
                 onCancel?.();
@@ -167,7 +167,7 @@ export function PatternRegionTab({
             </button>
             <button
               type="button"
-              className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
+              className="px-4 py-1.5 bg-ca-ink text-ca-bg rounded text-xs font-semibold hover:opacity-90 shadow-sm"
               onClick={() => {
                 setIsEditingRegion(false);
                 onOk?.();

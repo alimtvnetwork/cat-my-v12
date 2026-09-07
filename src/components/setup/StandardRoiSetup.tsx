@@ -107,7 +107,7 @@ export function StandardRoiSetup(): React.JSX.Element {
       <button
         type="button"
         onClick={handleOk}
-        className="px-3.5 py-1.5 bg-ca-select text-ca-bg font-bold rounded text-xs flex items-center gap-1 hover:brightness-110 shadow-sm"
+        className="px-3.5 py-1.5 bg-ca-ink text-ca-bg font-bold rounded text-xs flex items-center gap-1 hover:opacity-90 shadow-sm"
       >
         <Check size={13} />
         OK
@@ -115,7 +115,7 @@ export function StandardRoiSetup(): React.JSX.Element {
       <button
         type="button"
         onClick={handleCancel}
-        className="px-3 py-1.5 bg-ca-panel border border-ca-border text-ca-ink-muted rounded text-xs flex items-center gap-1 hover:bg-ca-panel-2"
+        className="px-3 py-1.5 bg-ca-panel border border-ca-border text-ca-ink rounded text-xs flex items-center gap-1 hover:bg-ca-panel-2"
       >
         <X size={13} />
         Cancel
@@ -156,7 +156,7 @@ export function StandardRoiSetup(): React.JSX.Element {
                     onClick={() => setShape(s.id)}
                     className={`px-2.5 py-1 rounded border flex items-center gap-1 font-medium transition-colors ${
                       active
-                        ? "bg-ca-select text-ca-bg border-ca-select font-bold shadow-sm"
+                        ? "bg-ca-ink text-ca-bg border-ca-ink font-bold shadow-sm"
                         : "bg-ca-panel-2 border-ca-border text-ca-ink hover:bg-ca-panel"
                     }`}
                   >
@@ -288,7 +288,7 @@ export function StandardRoiSetup(): React.JSX.Element {
               onClick={() => setActiveTab("geometry")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "geometry"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >
@@ -299,7 +299,7 @@ export function StandardRoiSetup(): React.JSX.Element {
               onClick={() => setActiveTab("masks")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "masks"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >
@@ -310,7 +310,7 @@ export function StandardRoiSetup(): React.JSX.Element {
               onClick={() => setActiveTab("anchor")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "anchor"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >

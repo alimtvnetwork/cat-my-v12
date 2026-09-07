@@ -160,7 +160,7 @@ export function StandardToolShell({
             {/* Tool Title Bar */}
             <div className="flex items-center justify-between border-b border-ca-border bg-ca-panel-2 px-3 py-1.5 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold bg-ca-select text-ca-bg px-1.5 py-0.5 rounded shadow-sm">
+                <span className="font-mono text-xs font-bold bg-ca-ink text-ca-bg px-1.5 py-0.5 rounded shadow-sm">
                   {toolKindId}
                 </span>
                 <span className="font-bold text-xs uppercase tracking-wide text-ca-ink">

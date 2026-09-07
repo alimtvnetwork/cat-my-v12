@@ -11,35 +11,35 @@ export function StandardAppShellNav(): React.JSX.Element | null {
     >
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 border-r border-ca-border/50 pr-6">
-          <Target className="h-5 w-5 text-blue-500" />
+          <Target className="h-5 w-5 text-ca-chrome-ink" />
           <span className="font-bold text-ca-chrome-ink tracking-wide">VISION SYS</span>
         </div>
 
         <nav className="flex items-center gap-1">
           <Link
             to="/"
-            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-ink [&.active]:text-ca-bg"
           >
             <Home className="h-4 w-4" />
             Home
           </Link>
           <Link
             to="/run"
-            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-ink [&.active]:text-ca-bg"
           >
             <LayoutDashboard className="h-4 w-4" />
             Run
           </Link>
           <Link
             to="/settings/camera"
-            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-ink [&.active]:text-ca-bg"
           >
             <Camera className="h-4 w-4" />
             Camera
           </Link>
           <Link
             to="/settings/lighting"
-            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-ink [&.active]:text-ca-bg"
           >
             <Sun className="h-4 w-4" />
             Lighting
@@ -52,7 +52,7 @@ export function StandardAppShellNav(): React.JSX.Element | null {
         <FlavorToggle />
         <Link
           to="/settings"
-          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-panel-2 [&.active]:text-ca-chrome-ink"
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ca-chrome-ink/70 hover:bg-ca-panel-2 hover:text-ca-chrome-ink [&.active]:bg-ca-ink [&.active]:text-ca-bg"
         >
           <Settings className="h-4 w-4" />
           Settings
