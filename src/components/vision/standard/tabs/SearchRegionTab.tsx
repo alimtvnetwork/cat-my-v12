@@ -178,7 +178,7 @@ export function SearchRegionTab({
           </div>
           <div className="flex flex-col gap-2 p-3 text-sm">
             {settings.masks.length > 4 && (
-              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+              <div className="text-xs text-ca-ink bg-ca-panel-2 border border-ca-border p-2 rounded">
                 Additional mask layers exist in Modern UI and are still applied.
               </div>
             )}
@@ -328,14 +328,14 @@ export function SearchRegionTab({
       <div className="flex justify-end gap-2 p-2 border-t border-ca-border bg-ca-panel shrink-0">
         <button
           type="button"
-          className="px-4 py-1.5 bg-gray-200 border border-gray-300 rounded text-sm hover:bg-gray-300 shadow-sm"
+          className="px-4 py-1.5 bg-ca-panel-2 border border-ca-border text-ca-ink rounded text-sm hover:bg-ca-panel shadow-sm font-medium"
           onClick={onCancel}
         >
           Cancel
         </button>
         <button
           type="button"
-          className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 shadow-sm"
+          className="px-4 py-1.5 bg-ca-ink text-ca-bg rounded text-sm hover:opacity-90 shadow-sm font-semibold"
           onClick={onOk}
         >
           OK

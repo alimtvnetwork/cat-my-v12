@@ -33,7 +33,7 @@ export function StandardToolDetailPanel({
       {/* Header with tool.displayCode and Name */}
       <div className="p-4 bg-ca-panel-2 border-b border-ca-border flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ca-ink bg-ca-panel-2 px-2 py-0.5 rounded border border-ca-border">
             Tool ID: {tool.displayCode}
           </span>
           <span className="text-[10px] text-ca-ink-muted uppercase font-mono">
@@ -62,7 +62,7 @@ export function StandardToolDetailPanel({
         {/* Detection Features */}
         <div className="flex flex-col gap-1.5">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-ca-ink-muted font-mono flex items-center gap-1.5">
-            <Sliders className="w-3 h-3 text-amber-500" />
+            <Sliders className="w-3 h-3 text-ca-ink-muted" />
             Detection Parameters
           </h3>
           <div className="grid grid-cols-2 gap-1.5">
@@ -72,7 +72,7 @@ export function StandardToolDetailPanel({
                 className="bg-ca-panel-2 border border-ca-border rounded px-2 py-1 text-[11px] text-ca-ink flex items-center gap-1.5 truncate"
                 title={feat}
               >
-                <span className="w-1 h-1 rounded-full bg-amber-500 shrink-0" />
+                <span className="w-1 h-1 rounded-full bg-ca-ink-muted shrink-0" />
                 <span className="truncate">{feat}</span>
               </div>
             ))}
@@ -103,12 +103,12 @@ export function StandardToolDetailPanel({
         <div className="flex flex-col gap-1.5 pt-1">
           <div className="flex items-center justify-between">
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-ca-ink-muted font-mono flex items-center gap-1.5">
-              <Layers className="w-3 h-3 text-blue-500" />
+              <Layers className="w-3 h-3 text-ca-ink-muted" />
               Connected Rules ({connectedRules.length})
             </h3>
             <Link
               to="/setup/rules"
-              className="text-[10px] text-ca-select hover:underline flex items-center"
+              className="text-[10px] text-ca-ink font-semibold hover:underline flex items-center"
             >
               All Rules <ChevronRight className="w-3 h-3" />
             </Link>
@@ -125,13 +125,13 @@ export function StandardToolDetailPanel({
                   key={r.id}
                   type="button"
                   onClick={() => onLaunchTool(tool, String(r.id))}
-                  className="flex items-center justify-between p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-bg hover:border-ca-select transition-colors text-left group"
+                  className="flex items-center justify-between p-2 rounded border border-ca-border bg-ca-panel-2 hover:bg-ca-bg hover:border-ca-ink transition-colors text-left group"
                 >
                   <div className="flex flex-col min-w-0 pr-2">
                     <span className="font-semibold text-ca-ink truncate text-[11px]">{r.name}</span>
                     <span className="text-[9px] text-ca-ink-muted font-mono">{r.id}</span>
                   </div>
-                  <ArrowRight className="w-3 h-3 text-ca-ink-muted group-hover:text-ca-select shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-ca-ink-muted group-hover:text-ca-ink shrink-0" />
                 </button>
               ))}
             </div>
@@ -144,7 +144,7 @@ export function StandardToolDetailPanel({
         <button
           type="button"
           onClick={() => onLaunchTool(tool)}
-          className="w-full py-2 px-3 bg-amber-500 text-slate-950 font-bold rounded text-xs flex items-center justify-center gap-1.5 hover:brightness-110 shadow-sm cursor-pointer"
+          className="w-full py-2 px-3 bg-ca-ink text-ca-bg font-bold rounded text-xs flex items-center justify-center gap-1.5 hover:opacity-90 shadow-sm cursor-pointer"
         >
           <Settings className="w-3.5 h-3.5" />
           <span>Configure / Launch Tool</span>
@@ -154,7 +154,7 @@ export function StandardToolDetailPanel({
           <button
             type="button"
             onClick={() => onCreateRuleWithTool(tool)}
-            className="py-1.5 px-2 bg-ca-panel border border-ca-border text-ca-ink font-semibold rounded text-[11px] flex items-center justify-center gap-1 hover:bg-ca-bg hover:border-ca-select"
+            className="py-1.5 px-2 bg-ca-panel border border-ca-border text-ca-ink font-semibold rounded text-[11px] flex items-center justify-center gap-1 hover:bg-ca-bg hover:border-ca-ink"
           >
             <Plus className="w-3 h-3" />
             <span>New Rule</span>
@@ -162,9 +162,9 @@ export function StandardToolDetailPanel({
 
           <Link
             to="/run"
-            className="py-1.5 px-2 bg-ca-panel border border-ca-border text-ca-ink font-semibold rounded text-[11px] flex items-center justify-center gap-1 hover:bg-ca-bg hover:border-ca-select text-center"
+            className="py-1.5 px-2 bg-ca-panel border border-ca-border text-ca-ink font-semibold rounded text-[11px] flex items-center justify-center gap-1 hover:bg-ca-bg hover:border-ca-ink text-center"
           >
-            <Sparkles className="w-3 h-3 text-emerald-500" />
+            <Sparkles className="w-3 h-3 text-ca-ink" />
             <span>Trial Run</span>
           </Link>
         </div>

@@ -56,10 +56,10 @@ export function StandardAppShell({
   };
 
   const navLinkClass = (isActive: boolean) =>
-    `flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors ${
+    `flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors whitespace-nowrap shrink-0 ${
       isActive
-        ? "bg-ca-select text-ca-bg shadow-sm"
-        : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
+        ? "bg-ca-ink text-ca-bg shadow-sm"
+        : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ca-border"
     }`;
 
   return (
@@ -70,16 +70,16 @@ export function StandardAppShell({
       className="flex flex-col flex-1 min-h-screen bg-ca-bg text-ca-ink font-sans"
     >
       {/* Industrial Top HMI Header */}
-      <header className="flex h-11 items-center justify-between border-b border-ca-border bg-ca-panel px-3 shrink-0 select-none z-30">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 border-r border-ca-border pr-4">
+      <header className="flex h-11 items-center justify-between border-b border-ca-border bg-ca-panel px-3 shrink-0 select-none z-30 min-w-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-2 border-r border-ca-border pr-3 sm:pr-4 shrink-0">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-xs font-bold tracking-wider text-ca-ink">
+            <span className="font-mono text-xs font-bold tracking-wider text-ca-ink whitespace-nowrap">
               CAT iVision HMI
             </span>
           </div>
 
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="flex items-center gap-1 overflow-x-auto min-w-0 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <Link to="/" className={navLinkClass(getNavActive("home"))}>
               <Home className="h-3.5 w-3.5" />
               <span>Home</span>
@@ -119,7 +119,7 @@ export function StandardAppShell({
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
           <UiModeSwitch />
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
@@ -136,7 +136,7 @@ export function StandardAppShell({
             )}
             {subtitle && <p className="text-xs text-ca-ink-muted">{subtitle}</p>}
           </div>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
+          {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
         </div>
       )}
 

@@ -35,7 +35,7 @@ export function StandardCatalogHeader({
             <Link
               to="/projects/$projectId"
               params={{ projectId: activeProjectId }}
-              className="text-xs font-bold text-ca-select hover:underline font-mono"
+              className="text-xs font-bold text-ca-ink hover:underline font-mono"
             >
               {activeProjectName || activeProjectId}
             </Link>
@@ -61,7 +61,7 @@ export function StandardCatalogHeader({
           <span className="text-[11px] font-mono uppercase tracking-wider text-ca-ink-muted">
             Available Tools:
           </span>
-          <span className="text-xs font-bold text-amber-500 font-mono">
+          <span className="text-xs font-bold text-ca-ink font-mono">
             {CATALOG_TOOLS.length} Units
           </span>
         </div>

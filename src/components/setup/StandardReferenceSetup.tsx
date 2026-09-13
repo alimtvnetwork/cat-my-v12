@@ -192,7 +192,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
       <button
         type="button"
         onClick={handleCaptureLive}
-        className="px-3 py-1.5 bg-ca-select text-ca-bg font-semibold rounded text-xs flex items-center gap-1.5 hover:brightness-110 shadow-sm"
+        className="px-3 py-1.5 bg-ca-ink text-ca-bg font-semibold rounded text-xs flex items-center gap-1.5 hover:opacity-90 shadow-sm"
       >
         <Camera size={13} />
         Live Grab
@@ -215,7 +215,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
       <button
         type="button"
         onClick={handleOk}
-        className="px-3.5 py-1.5 bg-ca-select text-ca-bg font-bold rounded text-xs flex items-center gap-1 hover:brightness-110 shadow-sm"
+        className="px-3.5 py-1.5 bg-ca-ink text-ca-bg font-bold rounded text-xs flex items-center gap-1 hover:opacity-90 shadow-sm"
       >
         <Check size={13} />
         OK
@@ -223,7 +223,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
       <button
         type="button"
         onClick={handleCancel}
-        className="px-3 py-1.5 bg-ca-panel border border-ca-border text-ca-ink-muted rounded text-xs flex items-center gap-1 hover:bg-ca-panel-2"
+        className="px-3 py-1.5 bg-ca-panel border border-ca-border text-ca-ink rounded text-xs flex items-center gap-1 hover:bg-ca-panel-2"
       >
         <X size={13} />
         Cancel
@@ -310,22 +310,22 @@ export function StandardReferenceSetup(): React.JSX.Element {
                 }}
               >
                 {/* Crosshairs & Reference Grid Overlay */}
-                <div className="absolute inset-0 pointer-events-none grid grid-cols-4 grid-rows-4 border border-ca-select/20">
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-b border-ca-select/20" />
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-r border-b border-ca-select/20" />
-                  <div className="border-b border-ca-select/20" />
+                <div className="absolute inset-0 pointer-events-none grid grid-cols-4 grid-rows-4 border border-white/20">
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-r border-b border-white/20" />
+                  <div className="border-b border-white/20" />
                 </div>
 
                 {/* Center Reticle */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                  <div className="w-8 h-8 rounded-full border border-ca-select/60" />
-                  <div className="w-12 h-[1px] bg-ca-select/60 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-                  <div className="h-12 w-[1px] bg-ca-select/60 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  <div className="w-8 h-8 rounded-full border border-white/60" />
+                  <div className="w-12 h-[1px] bg-white/60 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  <div className="h-12 w-[1px] bg-white/60 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
 
                 <img
@@ -351,7 +351,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
                   <button
                     type="button"
                     onClick={handleCaptureLive}
-                    className="px-3 py-1.5 bg-ca-select text-ca-bg font-semibold rounded text-xs flex items-center gap-1.5 hover:brightness-110"
+                    className="px-3 py-1.5 bg-ca-ink text-ca-bg font-semibold rounded text-xs flex items-center gap-1.5 hover:opacity-90 shadow-sm"
                   >
                     <Camera size={13} />
                     Live Grab
@@ -389,7 +389,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
                     onClick={() => setActiveSlotId(slot.id)}
                     className={`p-2 rounded border text-left flex items-center gap-2 transition-colors ${
                       isSelected
-                        ? "bg-ca-select/15 border-ca-select text-ca-ink ring-1 ring-ca-select font-semibold"
+                        ? "bg-ca-panel border-ca-ink text-ca-ink ring-1 ring-ca-ink font-semibold shadow-sm"
                         : "bg-ca-panel-2 border-ca-border text-ca-ink hover:bg-ca-panel"
                     }`}
                   >
@@ -418,7 +418,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
               onClick={() => setActiveTab("calibration")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "calibration"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >
@@ -429,7 +429,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
               onClick={() => setActiveTab("enhancement")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "enhancement"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >
@@ -440,7 +440,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
               onClick={() => setActiveTab("registration")}
               className={`flex-1 py-2.5 px-2 text-center font-medium border-b-2 transition-colors ${
                 activeTab === "registration"
-                  ? "border-ca-select text-ca-select bg-ca-panel font-bold"
+                  ? "border-ca-ink text-ca-ink bg-ca-panel font-bold"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
               }`}
             >
@@ -656,7 +656,7 @@ export function StandardReferenceSetup(): React.JSX.Element {
                     <button
                       type="button"
                       onClick={handleRegisterSlot}
-                      className="w-full py-1.5 bg-ca-select text-ca-bg font-semibold rounded text-xs flex items-center justify-center gap-1 hover:brightness-110"
+                      className="w-full py-1.5 bg-ca-ink text-ca-bg font-semibold rounded text-xs flex items-center justify-center gap-1 hover:opacity-90 shadow-sm"
                     >
                       <Check size={13} />
                       Set as Primary Master

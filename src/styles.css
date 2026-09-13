@@ -440,6 +440,23 @@
   --std-border-dark: oklch(0.1 0 0);
 }
 
+/*
+ * ---------------------------------------------------------------------
+ * Standard Mode Grayscale Enforcement
+ * ---------------------------------------------------------------------
+ * When Standard mode is active, remap interactive accent & selection tokens
+ * to neutral industrial grayscale tokens (--std-*).
+ * Protects Modern mode while guaranteeing that all Standard surfaces, menus,
+ * buttons, and tool controls use the approved grayscale visual language.
+ */
+html[data-ui-flavor="standard"],
+[data-standard-shell="true"] {
+  --ca-primary: var(--std-primary-action);
+  --ca-on-primary: var(--std-primary-action-text);
+  --ca-select: var(--std-accent-active);
+  --ca-focus-ring: var(--std-border-dark);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
