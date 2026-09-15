@@ -77,7 +77,7 @@ export const CATALOG_CATEGORIES: readonly CatalogCategory[] = [
   {
     id: CatalogCategoryIdType.FunctionList,
     label: "Function List",
-    sublabel: "All 15 machine-vision tools",
+    sublabel: "All 16 machine-vision tools",
     icon: ListFilter,
     description:
       "Direct catalog of all available machine-vision inspection algorithms with one-click parameter setup.",

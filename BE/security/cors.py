@@ -9,8 +9,14 @@ def install_cors(app: FastAPI, settings: Settings) -> None:
     """Attach CORS config to reject non-localhost origins by default."""
     origins = list(settings.cors_origins) if settings.cors_origins else []
 
-    if "http://localhost:5173" not in origins:
-        origins.append("http://localhost:5173")
+    for origin in (
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ):
+        if origin not in origins:
+            origins.append(origin)
     if "chrome-extension://*" not in origins:
         origins.append("chrome-extension://*")
 

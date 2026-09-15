@@ -15,6 +15,7 @@ import { StandardProfileWidthTool } from "./StandardProfileWidthTool";
 import { StandardIntensityTool } from "./StandardIntensityTool";
 import { StandardOcr2Tool } from "./StandardOcr2Tool";
 import { StandardCodeReaderTool } from "./StandardCodeReaderTool";
+import { StandardGreyscalePatternMatchingTool } from "./StandardGreyscalePatternMatchingTool";
 
 export interface StandardInspectionToolDispatcherProps {
   toolType?: string;
@@ -99,6 +100,14 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("stain")
   ) {
     return <StandardDefectTool {...props} />;
+  }
+  if (
+    normalized.includes("greyscale pattern") ||
+    normalized.includes("grayscale pattern") ||
+    normalized.includes("2-bit") ||
+    normalized.includes("light pattern")
+  ) {
+    return <StandardGreyscalePatternMatchingTool {...props} />;
   }
   // 10. Grayscale Blob
   if (

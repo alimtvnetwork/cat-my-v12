@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useBackendMode } from "../mode";
+import { DEFAULT_BACKEND_URL, useBackendMode } from "../mode";
 import { BackendModeType } from "../BackendModeType";
 
 vi.mock("sonner", () => ({
@@ -10,13 +10,13 @@ vi.mock("sonner", () => ({
 
 describe("useBackendMode", () => {
   beforeEach(() => {
-    useBackendMode.setState({ mode: BackendModeType.Seed, baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ mode: BackendModeType.Seed, baseUrl: DEFAULT_BACKEND_URL });
   });
 
-  it("defaults to seed and localhost:8000", () => {
+  it("defaults to seed and the app backend port", () => {
     const state = useBackendMode.getState();
     expect(state.mode).toBe(BackendModeType.Seed);
-    expect(state.baseUrl).toBe("http://localhost:8000");
+    expect(state.baseUrl).toBe(DEFAULT_BACKEND_URL);
   });
 
   it("updates mode", () => {

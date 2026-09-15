@@ -30,6 +30,7 @@ from BE.routes import meta as meta_route
 from BE.routes import rules as rules_route
 from BE.routes import samples as samples_route
 from BE.routes import system as system_route
+from BE.routes import vision as vision_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
@@ -86,6 +87,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+    app.include_router(vision_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:
