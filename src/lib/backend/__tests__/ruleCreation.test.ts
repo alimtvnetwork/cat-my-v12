@@ -9,7 +9,7 @@ vi.mock("@/lib/errors/notify", () => ({
 }));
 
 const server = setupServer(
-  http.post("http://localhost:8000/rules", async ({ request }) => {
+  http.post("http://127.0.0.1:8787/rules", async ({ request }) => {
     const body = (await request.json()) as any;
     return HttpResponse.json({
       Status: {

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import base64
 
-from fastapi.testclient import TestClient
-
 from BE.config import Environment, LogLevel, Settings
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 
 def _settings() -> Settings:

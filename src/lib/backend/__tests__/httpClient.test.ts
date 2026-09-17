@@ -10,7 +10,7 @@ vi.mock("@/lib/errors/notify", () => ({
 }));
 
 const server = setupServer(
-  http.get("http://localhost:8000/ping", () => {
+  http.get("http://127.0.0.1:8787/ping", () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -29,7 +29,7 @@ const server = setupServer(
       Results: [{ pong: true }],
     });
   }),
-  http.get("http://localhost:8000/rules", () => {
+  http.get("http://127.0.0.1:8787/rules", () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -62,7 +62,7 @@ const server = setupServer(
       ],
     });
   }),
-  http.get("http://localhost:8000/samples", () => {
+  http.get("http://127.0.0.1:8787/samples", () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -125,7 +125,7 @@ describe("HttpBackendClient", () => {
 
   it("throws on network error and calls showToastError", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get("http://127.0.0.1:8787/ping", () => {
         return HttpResponse.error();
       }),
     );
@@ -137,7 +137,7 @@ describe("HttpBackendClient", () => {
 
   it("throws on invalid envelope format and calls showToastError", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get("http://127.0.0.1:8787/ping", () => {
         return HttpResponse.json({ missingStatus: true });
       }),
     );
@@ -156,7 +156,7 @@ describe("HttpBackendClient", () => {
 
   it("throws BackendHttpError on failure envelope", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get("http://127.0.0.1:8787/ping", () => {
         return HttpResponse.json(
           {
             Status: {
@@ -195,7 +195,7 @@ describe("HttpBackendClient", () => {
 
   it("throws BackendHttpError with E9005 on non-JSON response", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get("http://127.0.0.1:8787/ping", () => {
         return HttpResponse.text("<html>Not Found</html>", { status: 404 });
       }),
     );

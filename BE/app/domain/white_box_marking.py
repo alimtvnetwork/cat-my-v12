@@ -10,18 +10,18 @@ from BE.errors.codes import ErrorCode
 
 
 @dataclass(frozen=True)
-class MarkingOptions:
-    white_threshold: int | None = None
-    min_area_px: int | None = None
-    search_region: "SearchRegion | None" = None
-
-
-@dataclass(frozen=True)
 class SearchRegion:
     x: int
     y: int
     width: int
     height: int
+
+
+@dataclass(frozen=True)
+class MarkingOptions:
+    white_threshold: int | None = None
+    min_area_px: int | None = None
+    search_region: SearchRegion | None = None
 
 
 @dataclass(frozen=True)
@@ -158,14 +158,21 @@ def _auto_min_area(region: SearchRegion) -> int:
     return max(2, round(region.width * region.height * 0.00008))
 
 
-def _looks_like_marking(component: "_Component", region: SearchRegion) -> bool:
+@dataclass(frozen=True)
+class _Component:
+    x0: int
+    y0: int
+    x1: int
+    y1: int
+    area: int
+
+
+def _looks_like_marking(component: _Component, region: SearchRegion) -> bool:
     if component.x1 <= component.x0 or component.y1 <= component.y0:
         return False
     component_width = component.x1 - component.x0 + 1
     component_height = component.y1 - component.y0 + 1
-    if component_width >= region.width * 0.85 or component_height >= region.height * 0.85:
-        return False
-    return True
+    return component_width < region.width * 0.85 and component_height < region.height * 0.85
 
 
 def _clamp_region(width: int, height: int, region: SearchRegion | None) -> SearchRegion:
@@ -176,15 +183,6 @@ def _clamp_region(width: int, height: int, region: SearchRegion | None) -> Searc
     x2 = max(0, min(width, region.x + region.width))
     y2 = max(0, min(height, region.y + region.height))
     return SearchRegion(x=x, y=y, width=max(0, x2 - x), height=max(0, y2 - y))
-
-
-@dataclass(frozen=True)
-class _Component:
-    x0: int
-    y0: int
-    x1: int
-    y1: int
-    area: int
 
 
 def _walk_component(
