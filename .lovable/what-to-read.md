@@ -4,6 +4,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-09-17T14:00:00Z, Ingested full codebase memory, git history (last 10 commits), and authoring rules. Generated .agents/rules/coding-guidelines.md, auto-generated Antigravity skills in .agents/skills/, and persisted learned context in .lovable/memory/learned/01-read-memory-enhanced.md.
 - 2026-08-17T00:00:00Z, Added `.lovable/overview.md` (project overview + diagrams) and `.lovable/ai-improvement-guidelines.md` (codebase-derived AI quality guide). Both are now step 2–3 in Read First.
 - 2026-08-16T01:43:26Z, Plan 98: Added Architecture state section (1b) with links to runtime map, facade policy, and implementation status.
 - 2026-08-13T00:00:00Z, Plan 98: Architecture & code observations + consolidation plan added under `.lovable/plans/architecture-and-code-observations.md` and `pending/98-architecture-consolidation-improvements.md`. Read before backend/runtime integration work.

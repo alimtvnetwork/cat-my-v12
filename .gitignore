@@ -66,3 +66,21 @@ Tool_Catalog_Function_List_Markdown_Package/
 .venv/
 build/
 
+# Cache & Temporary files
+tmp/
+.cache/
+
+# Test reports & coverage
+playwright-report/
+html-report/
+coverage/
+.coverage
+*.lcov
+
+# Artifacts & compiled binaries
+artifacts/
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
