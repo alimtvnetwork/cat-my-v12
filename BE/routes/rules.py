@@ -1,6 +1,6 @@
 """GET /rules and GET /rules/{rule_id} — stub CRUD, repo-only.
 
-Spec: spec/21-app/backend-implementation-request-v1.md
+Spec: 02-spec/21-app/backend-implementation-request-v1.md
 Step 18 lands wire-only stubs so Steps 20-22 (RuleProvider repo) have a real
 caller signature to match, and Step 30 (FE typed client) has stable URLs. No
 provider is wired yet: `list` returns an empty envelope, `get` always raises

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Human-friendly copy is centralised here so future error-label registry
-// integration (see spec/21-app) has one call site to swap.
+// integration (see 02-spec/21-app) has one call site to swap.
 const MSG = {
   nameRequired: "Name is required.",
   nameTooLong: "Keep it under 64 characters.",

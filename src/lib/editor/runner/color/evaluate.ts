@@ -1,5 +1,5 @@
 import { VerdictType } from "@/lib/editor/runner/types";
-// Plan 42 step 25. Color condition evaluator core (spec/21-app/48).
+// Plan 42 step 25. Color condition evaluator core (02-spec/21-app/48).
 //
 // Pure inputs (RGBA byte buffer + ColorCondition), pure outputs
 // (ConditionResult). Image acquisition and ROI cropping land in step 27;

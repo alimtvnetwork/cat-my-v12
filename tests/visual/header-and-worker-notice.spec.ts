@@ -92,7 +92,7 @@ test("worker health notice, when shown, is a fixed top-right card outside the he
 /**
  * Plan 71 Step 17: viewport-safe regression.
  *
- * Enforces `.lovable/spec/commands/25-hide-clipped-floating-notices.md`:
+ * Enforces `.ai-memory/02-spec/commands/25-hide-clipped-floating-notices.md`:
  * at any viewport width the WorkerHealthBanner MUST either be hidden or
  * fit fully inside the viewport. Overflow at any width is a hard fail.
  */

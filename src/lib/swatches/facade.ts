@@ -10,7 +10,7 @@
 //     `resetSwatches()` — all Promise-returning and best-effort.
 //   - `useSwatches()` — subscribable hook backed by useSyncExternalStore.
 //
-// A matching TODO lives at `.lovable/pending-facades/06-swatches-facade.md`
+// A matching TODO lives at `.ai-memory/pending-facades/06-swatches-facade.md`
 // describing the real SDK swap.
 
 import { useSyncExternalStore } from "react";

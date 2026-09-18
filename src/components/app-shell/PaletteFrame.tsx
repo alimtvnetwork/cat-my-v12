@@ -113,7 +113,7 @@ export function ResetLayoutButton(): React.JSX.Element | null {
   // workspace-layout store (panel dock slots + dock sizes). Previously the
   // button only cleared `palette.layout.v1`, leaving `workspace-layout:v1`
   // panel positions untouched, which is why the reset felt partial. See
-  // .lovable/plans/layout-persistence-audit.md.
+  // .ai-memory/plans/layout-persistence-audit.md.
   return (
     <>
       <button

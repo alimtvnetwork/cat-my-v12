@@ -7,7 +7,7 @@ interval while a long-running CLI subcommand runs. The `open-stream` and
 `doctor` can report last-heartbeat mtime.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes" (Heartbeat).
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes" (Heartbeat).
 - `BE/cli/common/ipc_models.py::HeartbeatPayload` (Uptime, MemoryMb, LastEvent).
 - `BE/cli/common/ipc.py::send` (typed model round-trip).
 

@@ -29,7 +29,7 @@ from app.capture.reference_driver import DeviceDisconnectedError, DeviceIO
 logger = logging.getLogger(__name__)
 
 
-# E_CAP_* failure taxonomy - see spec/21-app/68-v2-vendor-sdk-contract.md.
+# E_CAP_* failure taxonomy - see 02-spec/21-app/68-v2-vendor-sdk-contract.md.
 E_CAP_SDK_ABSENT = "E_CAP_SDK_ABSENT"
 E_CAP_ENUM_FAILED = "E_CAP_ENUM_FAILED"
 E_CAP_OPEN_FAILED = "E_CAP_OPEN_FAILED"

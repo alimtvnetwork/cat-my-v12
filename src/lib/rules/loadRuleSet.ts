@@ -1,6 +1,6 @@
 // Plan 90 Step 136. FE fetch client for `GET /rules/{RuleSetId}`.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // Used by the reload-server conflict resolver: on `E_BE_CONFLICT` the user
 // picks "reload server", we GET the freshly committed envelope, mirror it

@@ -1,7 +1,7 @@
 // Built-in sample gallery used by the setup canvas and reference image card.
 // Every sample declares the field-of-view (FOV) label so operators can pick
 // the pocket count that matches their camera. See
-// spec/21-app/61-sample-images-and-focus.md for the contract shipped to the
+// 02-spec/21-app/61-sample-images-and-focus.md for the contract shipped to the
 // Python backend.
 import pocket1Filled from "@/assets/samples/pocket-1-filled.jpg";
 import pocket2Filled from "@/assets/samples/pocket-2-filled.jpg";

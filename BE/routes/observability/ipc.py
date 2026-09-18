@@ -1,7 +1,7 @@
 """GET /observability/sessions/{cli_invocation_id}/ipc - Plan 90 Step 74.
 
 Read-only tail of the IPC mailbox associated with a CLI invocation. Mirrors
-`spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (one JSON message per
+`02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (one JSON message per
 file at ``<APP_IPC_ROOT>/<mailbox>/<ulid>.msg.json`` or ``.msg.ack.json``).
 
 Contract

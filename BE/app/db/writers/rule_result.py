@@ -1,12 +1,12 @@
 """RuleResult Task-DB writer (Plan 90 Step 97).
 
 Owning specs:
-  - `spec/21-app/24-results-json.md` §4 "Per-Judgment Shape" (one row per
+  - `02-spec/21-app/24-results-json.md` §4 "Per-Judgment Shape" (one row per
     evaluated rule; Inactive rules never land here).
-  - `spec/21-app/22-image-verdict.md` §4 (per-rule verdict is durable in
+  - `02-spec/21-app/22-image-verdict.md` §4 (per-rule verdict is durable in
     the Task DB; JSONL is a reproducible export).
-  - `spec/04-database-conventions/01-naming-conventions.md`.
-  - `spec/coding-guidelines/python.md`: typed dataclasses, positive `if`,
+  - `02-spec/04-database-conventions/01-naming-conventions.md`.
+  - `02-spec/coding-guidelines/python.md`: typed dataclasses, positive `if`,
     every `except` logs once with operation + subject id.
 
 Root cause (pre-Step-97): Step 96 landed `RunSession` but per-rule

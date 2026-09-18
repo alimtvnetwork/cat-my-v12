@@ -2,7 +2,7 @@
 
 > Inspection HMI for factory-floor operators. Set up rules, run captures, watch results, and keep the line moving.
 
-**Live preview:** https://cat-my-ui-v11.lovable.app
+**Live preview:** https://cat-my-ui-v11.ai-memory.app
 
 ![Control Automation HMI](docs/images/hero.png)
 
@@ -25,16 +25,16 @@ You switch modes from the homepage or from Settings. The chosen backend URL is r
 
 |                      |                                                                                      |
 | -------------------- | ------------------------------------------------------------------------------------ |
-| Live app             | https://cat-my-ui-v11.lovable.app                                                    |
-| **Project overview** | [`.lovable/overview.md`](.lovable/overview.md) — architecture, diagrams, what's good |
-| **AI quality guide** | [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md)     |
-| Spec root            | [`spec/00-overview.md`](spec/00-overview.md)                                         |
-| Onboarding trail     | [`.lovable/what-to-read.md`](.lovable/what-to-read.md)                               |
+| Live app             | https://cat-my-ui-v11.ai-memory.app                                                    |
+| **Project overview** | [`.ai-memory/overview.md`](.ai-memory/overview.md) — architecture, diagrams, what's good |
+| **AI quality guide** | [`.ai-memory/ai-improvement-guidelines.md`](.ai-memory/ai-improvement-guidelines.md)     |
+| Spec root            | [`02-spec/00-overview.md`](02-spec/00-overview.md)                                         |
+| Onboarding trail     | [`.ai-memory/what-to-read.md`](.ai-memory/what-to-read.md)                               |
 | Runtime map          | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md)               |
 | Agent playbook       | [`AGENTS.md`](AGENTS.md)                                                             |
 | Changelog            | [`CHANGELOG.md`](CHANGELOG.md)                                                       |
 | Release notes        | [`RELEASE_NOTES.md`](RELEASE_NOTES.md)                                               |
-| Plan index           | [`.lovable/plans/index.md`](.lovable/plans/index.md)                                 |
+| Plan index           | [`.ai-memory/plans/index.md`](.ai-memory/plans/index.md)                                 |
 | Project memory       | [`mem/index.md`](mem/index.md)                                                       |
 
 ## Local dev (BE+FE+Shell)
@@ -81,26 +81,26 @@ Once both are up, open the app and use the **Seed / Backend** toggle on the home
 | `worker/`, `services/validation-worker/` | Validation worker (Python HTTP scorer)                                                                                   |
 | `sdk/`                                   | Vendor SDK drops (never edited in place; wrapped by the facade)                                                          |
 | `app/`                                   | Capture, dispatcher, worker runtime (device I/O, rules, supervisor)                                                      |
-| `spec/`                                  | Full specification tree (see `spec/00-overview.md`)                                                                      |
+| `02-spec/`                                  | Full specification tree (see `02-spec/00-overview.md`)                                                                      |
 | `docs/`                                  | Diagrams, runbooks, verification notes, and [runtime map](docs/architecture/runtime-map.md)                              |
 | `docs/architecture/`                     | Runtime map, integration tests, architecture decisions                                                                   |
 | `scripts/`, `packaging/`, `linters/`     | Build, install, and lint tooling                                                                                         |
 | `tests/`                                 | Contract, integration, unit, and visual tests                                                                            |
-| `.lovable/`                              | Plans, memory, prompts, **[overview](.lovable/overview.md)**, **[AI guidelines](.lovable/ai-improvement-guidelines.md)** |
+| `.ai-memory/`                              | Plans, memory, prompts, **[overview](.ai-memory/overview.md)**, **[AI guidelines](.ai-memory/ai-improvement-guidelines.md)** |
 | `.githooks/`, `.github/`                 | Pre-commit hooks and CI workflows                                                                                        |
 
 ## How planning and memory are organised
 
 This repo tracks work in the open. If you want to know why something looks the way it does, these are the places to look:
 
-- **[`.lovable/overview.md`](.lovable/overview.md)** - project overview with architecture diagrams, strengths, gaps, and recent shipped work.
-- **[`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md)** - codebase-derived guide for AI agents: what to preserve, what to improve, mandatory workflow.
+- **[`.ai-memory/overview.md`](.ai-memory/overview.md)** - project overview with architecture diagrams, strengths, gaps, and recent shipped work.
+- **[`.ai-memory/ai-improvement-guidelines.md`](.ai-memory/ai-improvement-guidelines.md)** - codebase-derived guide for AI agents: what to preserve, what to improve, mandatory workflow.
 - **`mem/index.md`** - project-wide rules and design decisions the AI agent and humans both honour.
-- **`.lovable/plan.md`** - the active serial execution plan (what "next" means today).
-- **`.lovable/plans/`** - audits, planning docs, and per-plan working notes.
-- **`.lovable/memory/`** - closeout memos written when a plan finishes.
-- **`.lovable/pending-facades/`** - facade backlog (SDK wrappers, camera/rules/samples adapters).
-- **`.lovable/what-to-read.md`** - authoritative read-list pointer (must be read before taking action).
+- **`.ai-memory/plan.md`** - the active serial execution plan (what "next" means today).
+- **`.ai-memory/plans/`** - audits, planning docs, and per-plan working notes.
+- **`.ai-memory/memory/`** - closeout memos written when a plan finishes.
+- **`.ai-memory/pending-facades/`** - facade backlog (SDK wrappers, camera/rules/samples adapters).
+- **`.ai-memory/what-to-read.md`** - authoritative read-list pointer (must be read before taking action).
 
 ## Recently shipped
 
@@ -119,7 +119,7 @@ A short, human-readable slice of the last few weeks. See `CHANGELOG.md` for the 
 
 ## What's pending
 
-Work is grouped so it can be tackled in parallel where possible. The full list lives in [`.lovable/plans/index.md`](.lovable/plans/index.md).
+Work is grouped so it can be tackled in parallel where possible. The full list lives in [`.ai-memory/plans/index.md`](.ai-memory/plans/index.md).
 
 | Group | Focus              | Highlights                                                                                                                                         |
 | ----- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -129,14 +129,14 @@ Work is grouped so it can be tackled in parallel where possible. The full list l
 | D     | Docs viewer        | Copy-markdown, fullscreen mode, sidebar polish                                                                                                     |
 | E     | Backend / CLI      | Plan 90 tail steps (observability, installer, retention)                                                                                           |
 | F     | Error-code rollout | Plan 41 phases 2+ (typed AppError propagation across FE and BE)                                                                                    |
-| G     | Facade backlog     | Items under `.lovable/pending-facades/` (rule, category alias, mic, camera, project v4, swatches, samples, canvas prefs, type tool, palette state) |
+| G     | Facade backlog     | Items under `.ai-memory/pending-facades/` (rule, category alias, mic, camera, project v4, swatches, samples, canvas prefs, type tool, palette state) |
 
 ## Contributing
 
-- Read [`.lovable/overview.md`](.lovable/overview.md) and [`.lovable/what-to-read.md`](.lovable/what-to-read.md) before your first change.
-- AI agents: follow [`.lovable/ai-improvement-guidelines.md`](.lovable/ai-improvement-guidelines.md) alongside [`AGENTS.md`](AGENTS.md) and [`spec/02-coding-guidelines/`](spec/02-coding-guidelines/).
-- Every non-trivial task lands with a plan in `.lovable/plans/` and a closeout memo in `.lovable/memory/`.
-- Errors follow the Universal Response Envelope defined in [`spec/03-error-manage/`](spec/03-error-manage/). No swallowed catches.
+- Read [`.ai-memory/overview.md`](.ai-memory/overview.md) and [`.ai-memory/what-to-read.md`](.ai-memory/what-to-read.md) before your first change.
+- AI agents: follow [`.ai-memory/ai-improvement-guidelines.md`](.ai-memory/ai-improvement-guidelines.md) alongside [`AGENTS.md`](AGENTS.md) and [`02-spec/02-coding-guidelines/`](02-spec/02-coding-guidelines/).
+- Every non-trivial task lands with a plan in `.ai-memory/plans/` and a closeout memo in `.ai-memory/memory/`.
+- Errors follow the Universal Response Envelope defined in [`02-spec/03-error-manage/`](02-spec/03-error-manage/). No swallowed catches.
 - Prefer facades over direct SDK calls. Raw vendor SDKs are wrapped before they reach app code.
 - Run `bunx tsgo --noEmit` for the frontend and `pytest BE/ -q` for the backend before opening a PR.
 

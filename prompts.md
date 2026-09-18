@@ -1,7 +1,7 @@
 # prompts.md
 
 Short rules for `xx-next-task.md` files (the numbered "next task" notes
-under `.lovable/prompts/`).
+under `01-prompts/`).
 
 ## What they are
 
@@ -9,7 +9,7 @@ Each file is a pinned handoff for the _next_ AI session: what to do next,
 why, and what it unblocks. One file per turn. Filename pattern:
 
 ```
-.lovable/prompts/<NNN>-next-task.md
+01-prompts/<NNN>-next-task.md
 ```
 
 `NNN` is a monotonic 3-digit counter (`355`, `356`, ...). Never reuse a
@@ -40,7 +40,7 @@ Optional: open questions, known risks, decisions still pending.
 
 ## What to update in the same commit
 
-- `.lovable/prompt.md`: point its "current pinned prompt" line at the new
+- `.ai-memory/prompt.md`: point its "current pinned prompt" line at the new
   `<NNN>-next-task.md`.
 - `readme.md`, `changelog.md`, `release_notes.md`: only when the work
   itself moved the version or the top-level task list.
@@ -50,12 +50,12 @@ Optional: open questions, known risks, decisions still pending.
 
 - Do not delete or edit older `<NNN>-next-task.md` files. They are the
   audit trail.
-- Do not stuff long design discussion in here. Put that in `spec/` or
+- Do not stuff long design discussion in here. Put that in `02-spec/` or
   under `spec/*/_notes/` and link to it.
 - Do not restate the whole plan; only the next 2 steps plus the tail.
 
 ## Cross-references
 
-- Full onboarding map: `.lovable/what-to-read.md`
-- Memory index: `.lovable/memory/index.md`
-- Pinned prompt: `.lovable/prompt.md`
+- Full onboarding map: `.ai-memory/what-to-read.md`
+- Memory index: `.ai-memory/memory/index.md`
+- Pinned prompt: `.ai-memory/prompt.md`

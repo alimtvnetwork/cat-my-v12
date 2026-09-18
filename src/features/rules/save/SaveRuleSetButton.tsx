@@ -4,7 +4,7 @@
 // presentational modal (`SaveConflictModal`) so every editor call-site
 // shares the identical failure semantics.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // The button is presentation-thin: the caller supplies a `getEnvelope()`
 // thunk that returns the current draft envelope at click time (usually

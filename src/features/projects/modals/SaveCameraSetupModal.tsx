@@ -5,7 +5,7 @@
 //   The project editor's Camera Setup section could only bind an existing
 //   setting; operators had to leave for /setup/camera to duplicate one under
 //   a new name, breaking the six-section flow described in
-//   spec/21-app/53-ui-improvements-v4.md.
+//   02-spec/21-app/53-ui-improvements-v4.md.
 //
 // Behaviour:
 //   - Opens as a Radix dialog.

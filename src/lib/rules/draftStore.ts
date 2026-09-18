@@ -1,6 +1,6 @@
 // Plan 90 Step 132. FE IndexedDB draft store for RuleSetEnvelope.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 // BE schema mirror: BE/app/domain/rule_set.py (SCHEMA_VERSION = 1).
 //
 // Contract:

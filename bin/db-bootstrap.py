@@ -2,17 +2,17 @@
 """Plan 90 Step 39 - `bin/db-bootstrap.py`: three-tier DB bootstrap CLI.
 
 Anchors:
-- ``spec/21-app/76-cli-log-and-ipc.md`` §"Bootstrap" (single command that
+- ``02-spec/21-app/76-cli-log-and-ipc.md`` §"Bootstrap" (single command that
   materialises Root/Task/Rules DBs before any worker/processing subcommand
   runs; surfaces bootstrap errors in one place, not per-leaf).
-- ``spec/21-app/26-migrations.md`` §"Idempotence" (each migration file is
+- ``02-spec/21-app/26-migrations.md`` §"Idempotence" (each migration file is
   self-contained ``BEGIN``/``COMMIT`` with a terminal
   ``INSERT INTO SchemaVersion``; re-running a migration is a no-op).
-- ``spec/05-split-db-architecture/**`` (guarded per-tier connections;
+- ``02-spec/05-split-db-architecture/**`` (guarded per-tier connections;
   no ATTACH; no cross-tier joins).
-- ``spec/03-error-manage/02-error-architecture/05-response-envelope/``
+- ``02-spec/03-error-manage/02-error-architecture/05-response-envelope/``
   (Universal Envelope on stdout; PascalCase; Results always an array).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9-10 (per-tier
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9-10 (per-tier
   isolation; stdout reserved for Envelope JSON, human progress -> stderr).
 
 Contract:

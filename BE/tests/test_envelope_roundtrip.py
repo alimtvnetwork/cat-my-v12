@@ -5,7 +5,7 @@ Guards against silent drift between the PascalCase wire shape (produced by
 (consumed via `populate_by_name=True`). If either side stops honoring the
 alias map, round-trip equality breaks and this suite fails.
 
-Spec: `spec/03-error-manage/02-error-architecture/05-response-envelope/`.
+Spec: `02-spec/03-error-manage/02-error-architecture/05-response-envelope/`.
 """
 
 from __future__ import annotations

@@ -2,14 +2,14 @@
 
 Thin wrapper over `export_denial_events.percentile_payload`. Reads a JSONL of
 denial rows and writes a JSON payload with per-window percentiles, row counts,
-and first/last ts to a target path (default `.lovable/memory/v2/plan29/20-windows.json`).
+and first/last ts to a target path (default `.ai-memory/memory/v2/plan29/20-windows.json`).
 
 Plan 33 step 13. Deterministic: same JSONL in, same JSON out.
 
 Usage:
     python3 scripts/security/plan29_windows.py \\
         --jsonl tests/fixtures/security/denial_sample.jsonl \\
-        --out .lovable/memory/v2/plan29/20-windows.json
+        --out .ai-memory/memory/v2/plan29/20-windows.json
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from scripts.security.export_denial_events import percentile_payload
 
 log = logging.getLogger("ca.scripts.plan29_windows")
 
-DEFAULT_OUT = Path(".lovable/memory/v2/plan29/20-windows.json")
+DEFAULT_OUT = Path(".ai-memory/memory/v2/plan29/20-windows.json")
 
 
 def build(jsonl_path: Path) -> dict[str, object]:

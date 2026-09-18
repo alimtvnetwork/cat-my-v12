@@ -1,6 +1,6 @@
 """Plan 90 Step 107 - installer log rotation.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md``
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md``
 §"Manifest rotation" (added in this step).
 
 Root cause guarded (one sentence): Step 106 wires every installer action

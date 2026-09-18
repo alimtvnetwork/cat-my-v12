@@ -9,7 +9,7 @@ description: Autonomous self-looping execution when prompted with 'next' or 'con
 When the user says "next" or "continue", the agent executes consecutive pending subtasks autonomously without waiting for individual prompts, unless a breakage or failure occurs.
 
 ## Execution Pattern
-1. Read current active plan in `.lovable/plans/pending/`.
+1. Read current active plan in `.ai-memory/plans/pending/`.
 2. Pick the next unexecuted step or subtask.
 3. Execute within 5–8 file micro-batches.
 4. Run validation gates (`guidelines:check`, `pytest`, `typecheck`).

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble a GitHub Release body from CHANGELOG.md + build metadata.
 
-Owning spec: spec/12-cicd-pipeline-workflows/07-release-body-and-changelog.md
+Owning spec: 02-spec/12-cicd-pipeline-workflows/07-release-body-and-changelog.md
 Plan 90 Step 97.
 
 Adaptation vs. spec (called out per Working Stance rules):
@@ -19,7 +19,7 @@ Adaptation vs. spec (called out per Working Stance rules):
   "to" instead. Applies to prose emitted by this file (headings still use the
   literal characters found in CHANGELOG.md since we do not rewrite entries).
 
-Deliberate error-management posture (spec/03-error-manage/):
+Deliberate error-management posture (02-spec/03-error-manage/):
 
 * Every failure exits with a stable non-zero code AND writes a
   ``::error::`` GitHub Actions annotation to stderr, so CI logs point at the

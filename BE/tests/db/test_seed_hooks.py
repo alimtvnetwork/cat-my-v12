@@ -2,9 +2,9 @@
 
 Anchors:
 - ``BE/db/seed_hooks.py`` (contract under test).
-- ``spec/21-app/26-migrations.md`` §"Seed vs migration" (idempotence
+- ``02-spec/21-app/26-migrations.md`` §"Seed vs migration" (idempotence
   requirement; ``SchemaVersion`` untouched by seeds).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9 (per-tier
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9 (per-tier
   isolation; hooks receive an already-open connection).
 
 Coverage:

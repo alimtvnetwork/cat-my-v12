@@ -1,13 +1,13 @@
 $ErrorActionPreference = 'Continue'
-New-Item -Path .lovable\temp -ItemType Directory -Force | Out-Null
+New-Item -Path .ai-memory\temp -ItemType Directory -Force | Out-Null
 
 while ($true) {
     Write-Host "Syncing..."
     git reset --hard HEAD
-    git clean -fd .lovable/
+    git clean -fd .ai-memory/
     git pull
 
-    $files = Get-ChildItem -Path .lovable\plans\subtasks\96-plan-guideline-audit -Filter *.md | Select-Object -First 3
+    $files = Get-ChildItem -Path .ai-memory\plans\subtasks\96-plan-guideline-audit -Filter *.md | Select-Object -First 3
     if ($null -eq $files -or $files.Count -eq 0) {
         Write-Host "No more tasks!"
         break
@@ -54,6 +54,6 @@ while ($true) {
     
     # move to temp
     foreach ($c in $claimed) {
-        Move-Item -Path $c -Destination ".lovable\temp\" -Force
+        Move-Item -Path $c -Destination ".ai-memory\temp\" -Force
     }
 }

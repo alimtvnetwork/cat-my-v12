@@ -1,10 +1,10 @@
 """GET /api/cli/config/effective - 5-layer effective-config accordion feed.
 
-Plan 90 Step 120. Spec: spec/21-app/74-worker-cli.md and
-spec/21-app/76-cli-log-and-ipc.md (§Config resolution: defaults -> repo ->
+Plan 90 Step 120. Spec: 02-spec/21-app/74-worker-cli.md and
+02-spec/21-app/76-cli-log-and-ipc.md (§Config resolution: defaults -> repo ->
 user -> env -> flags). This endpoint powers `src/routes/cli.settings.tsx`.
 
-Honest wire (no false-OK per spec/03-error-manage/):
+Honest wire (no false-OK per 02-spec/03-error-manage/):
   - `defaults`: hardcoded snapshot derived from `BE.config.Settings` model
     field defaults - the only layer BE can prove today.
   - `env`: the actual `BE_*` env vars observed in `os.environ` at request

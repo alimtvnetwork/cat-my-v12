@@ -1,6 +1,6 @@
 """Plan 90 Step 15 - retention pruner for CLI JSONL logs.
 
-Anchor: `spec/21-app/76-cli-log-and-ipc.md` §"Rotation":
+Anchor: `02-spec/21-app/76-cli-log-and-ipc.md` §"Rotation":
     "nightly cleanup keeps 14 days by default (config)."
 
 Layout the pruner expects (written by `BE/cli/common/logger.py`, Step 14):

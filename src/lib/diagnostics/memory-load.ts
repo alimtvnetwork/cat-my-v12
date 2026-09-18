@@ -1,4 +1,4 @@
-// Diagnostics: load .lovable memory + plans at build time via Vite glob.
+// Diagnostics: load .ai-memory memory + plans at build time via Vite glob.
 // Client-safe. Returns a structured status the /diagnostics page renders.
 
 export interface MemoryFileEntry {
@@ -36,7 +36,7 @@ export function loadMemoryDiagnostics(): MemoryLoadResult {
   const errors: string[] = [];
   const memoryFiles: MemoryFileEntry[] = [];
   try {
-    const mem = import.meta.glob("/.lovable/memory/*.md", {
+    const mem = import.meta.glob("/.ai-memory/memory/*.md", {
       eager: true,
       query: "?raw",
       import: "default",
@@ -48,13 +48,13 @@ export function loadMemoryDiagnostics(): MemoryLoadResult {
       else memoryFiles.push(e);
     }
 
-    if (memoryFiles.length === 0) errors.push("No memory files matched .lovable/memory/*.md");
+    if (memoryFiles.length === 0) errors.push("No memory files matched .ai-memory/memory/*.md");
   } catch (err) {
     errors.push(`memory glob failed: ${(err as Error).message}`);
   }
 
   const pending = safeGlob(
-    import.meta.glob("/.lovable/plans/pending/*.md", {
+    import.meta.glob("/.ai-memory/plans/pending/*.md", {
       eager: true,
       query: "?raw",
       import: "default",
@@ -62,7 +62,7 @@ export function loadMemoryDiagnostics(): MemoryLoadResult {
     errors,
   );
   const done = safeGlob(
-    import.meta.glob("/.lovable/plans/done/*.md", {
+    import.meta.glob("/.ai-memory/plans/done/*.md", {
       eager: true,
       query: "?raw",
       import: "default",

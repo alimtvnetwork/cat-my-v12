@@ -1,6 +1,6 @@
 """GET /samples and GET /samples/{sample_id} — stub CRUD, repo-only.
 
-Spec: spec/21-app/backend-implementation-request-v1.md
+Spec: 02-spec/21-app/backend-implementation-request-v1.md
 Mirrors `BE/routes/rules.py` (Step 18) so Step 20 can design `SampleProvider`
 and `RuleProvider` Protocols as a matched pair (same list/get shape, same
 error contract). Sample ids follow the same monotonic positive-int alias
@@ -38,7 +38,7 @@ def _parse_sample_body(raw: object, expected_id: int | None = None) -> CatSample
     Any deviation (non-dict, missing key, wrong type, id/path mismatch) raises
     `AppError(E_BE_BAD_REQUEST)` so the Step-13 envelope handler renders it as
     a 400 with a stable code. No silent coercion, no default fills: the wire
-    format is strict on the way in per `spec/03-error-manage/`.
+    format is strict on the way in per `02-spec/03-error-manage/`.
     """
     if not isinstance(raw, dict):
         raise AppError(

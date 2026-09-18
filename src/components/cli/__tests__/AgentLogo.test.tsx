@@ -3,7 +3,7 @@
  * Plan 58 slice-2 gap #1: assert AgentLogo carries the class token that
  * lets `styles.css` hide it when the app-shell Titlebar is mounted, so
  * the "cat-my-ui" wordmark stops overlapping the Titlebar's own brand
- * ("Control Automation"). See `.lovable/memory/v2/plan35/40-slice-2.md`.
+ * ("Control Automation"). See `.ai-memory/memory/v2/plan35/40-slice-2.md`.
  *
  * Test is intentionally scoped to the class contract, not to a full DOM
  * gate (`body:has(...)` needs the real Titlebar mounted, which belongs

@@ -1,6 +1,6 @@
 """Derive `DenialRateLimiter` defaults from real `/ops` audit telemetry.
 
-Spec: `spec/21-app/69-v2-denial-tuning-contract.md` §4.
+Spec: `02-spec/21-app/69-v2-denial-tuning-contract.md` §4.
 
 READ-ONLY helper. MUST NOT write to the audit sink or to `SettingsStore`.
 Callers apply the returned values through the normal admin

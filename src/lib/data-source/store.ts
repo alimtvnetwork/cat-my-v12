@@ -3,7 +3,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // writes short-circuited) and "backend" (live remote reads + real
 // mutating HTTP calls). Persisted per-browser in localStorage.
 //
-// Observability: every set is logged (spec/03-error-manage §3).
+// Observability: every set is logged (02-spec/03-error-manage §3).
 
 import { useSyncExternalStore } from "react";
 

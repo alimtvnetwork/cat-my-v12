@@ -1,12 +1,12 @@
 """Plan 90 Step 62 - `processing-cli verify-bundle` subcommand.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Acceptance #4: `verify-bundle`
+- `02-spec/21-app/75-processing-cli.md` §Acceptance #4: `verify-bundle`
   exits non-zero with `E_RULE_BUNDLE_INVALID` when the bundle violates
   the acceptance contract.
-- `spec/21-app/33-rule-catalog.md` §3 (closed `RuleKind` enum) and §3a
+- `02-spec/21-app/33-rule-catalog.md` §3 (closed `RuleKind` enum) and §3a
   (closed `Status` enum {Active, Inactive, Silent}).
-- `spec/21-app/60-rule-acceptance-contract.md` §"Condition shape":
+- `02-spec/21-app/60-rule-acceptance-contract.md` §"Condition shape":
   `acceptanceConditions` is a JSON string in `rule.params`; each entry
   must have `presence in {present,absent,ignore}`, `targetColor` empty
   or `#rrggbb`, and integer `similarityPct` 0..100.
@@ -17,7 +17,7 @@ Anchors:
 
 Scope note: today `evaluate`/`batch`/`watch`/`dry-run` consume the
 "loose" JSON bundle (`{schemaVersion, rules:[...]}`). The full ZIP
-`.catrules` container per `spec/21-app/70` is Plan 16 scope, not
+`.catrules` container per `02-spec/21-app/70` is Plan 16 scope, not
 Plan 90. This subcommand validates the same loose JSON that the rest
 of the Processing CLI actually reads. Ratcheting to the ZIP layout is
 tracked with the Plan 16 milestone and will land as a follow-on kind

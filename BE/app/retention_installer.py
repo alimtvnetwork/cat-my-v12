@@ -1,6 +1,6 @@
 """Plan 90 Step 103 - Retention timer template renderers.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md``.
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md``.
 
 Pure string renderers for the systemd user unit + timer and the Windows
 Scheduled Task XML. No filesystem access, no subprocess calls: those

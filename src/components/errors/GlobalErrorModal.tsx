@@ -2,7 +2,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
 import { ErrorExportFormatType } from "@/lib/errors/export";
 // Plan 71 Step 9: Global Error Modal.
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §5
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §5
 //
 // Tabs (this step): Overview, Stack, Context, History.
 // Deeper backend/session/traversal tabs land in later steps once the API
@@ -589,7 +589,7 @@ export function GlobalErrorModal(): React.JSX.Element | null {
                 size="sm"
                 onClick={() =>
                   window.open(
-                    "/spec/03-error-manage/01-error-resolution/05-debugging-guides/00-overview.md",
+                    "/02-spec/03-error-manage/01-error-resolution/05-debugging-guides/00-overview.md",
                     "_blank",
                   )
                 }

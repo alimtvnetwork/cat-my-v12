@@ -1,6 +1,6 @@
 """FlawDetect evaluator (Plan 90 Step 85).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.2.
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.2.
 
 Contract (LOCKED by this step):
   Bound regions: 1 x `SearchRegion` (required), 0..N x `MaskRegion` (optional,

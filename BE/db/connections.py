@@ -1,12 +1,12 @@
 """Plan 90 Step 35 - split-DB connection factory for the CLIs and main app.
 
 Anchors:
-- ``spec/21-app/76-cli-log-and-ipc.md`` §"Database ownership" (three tiers:
+- ``02-spec/21-app/76-cli-log-and-ipc.md`` §"Database ownership" (three tiers:
   Root, Task, Rules; migration files under ``BE/db/migrations/<tier>/``).
-- ``spec/05-split-db-architecture/`` (each tier is a distinct SQLite file
+- ``02-spec/05-split-db-architecture/`` (each tier is a distinct SQLite file
   opened via a distinct connection; NO cross-tier joins, NO cross-tier
   FKs, NO ``ATTACH DATABASE``).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9 (cross-tier
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9 (cross-tier
   references are opaque INTEGERs; the guard here trips if any caller
   tries to attach a sibling tier to the same connection).
 
@@ -120,7 +120,7 @@ class _GuardedConnection(sqlite3.Connection):
                 ErrorCode.E_CLI_PREFLIGHT_FAILED,
                 (
                     f"Cross-tier ATTACH DATABASE is forbidden on the "
-                    f"{self._tier!r} connection (spec/05-split-db-architecture)."
+                    f"{self._tier!r} connection (02-spec/05-split-db-architecture)."
                 ),
                 details={"Tier": self._tier, "Statement": sql[:200]},
             )

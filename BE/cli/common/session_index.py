@@ -1,6 +1,6 @@
 """Plan 90 Step 17 - session index writer/reader.
 
-Anchor: `spec/21-app/76-cli-log-and-ipc.md` §"Index file":
+Anchor: `02-spec/21-app/76-cli-log-and-ipc.md` §"Index file":
 
     <APP_LOG_ROOT>/index/current.json  (rolling Sessions[] registry)
     <APP_LOG_ROOT>/index/current.json.lock  (mutex, spec 76)

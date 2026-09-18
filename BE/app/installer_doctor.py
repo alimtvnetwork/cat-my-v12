@@ -1,6 +1,6 @@
 """Plan 90 Step 106 - Installer-side pre-flight doctor.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md`` §"Doctor".
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md`` §"Doctor".
 
 Root cause guarded (one sentence): Step 105 landed the manifest
 reader/writer but nothing on the install path actually consults it, so

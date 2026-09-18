@@ -1,6 +1,6 @@
 """Contract tests for BE/cli/common/ipc.py (Plan 90 Step 23).
 
-Verifies spec/21-app/76-cli-log-and-ipc.md §"IPC protocol":
+Verifies 02-spec/21-app/76-cli-log-and-ipc.md §"IPC protocol":
 atomic write, one-message-per-file, PascalCase payload keys, Kind-specific
 required fields, ack rename, and E_IPC_* error surface.
 """

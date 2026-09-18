@@ -1,6 +1,6 @@
 """Plan 90 Step 123 - Release workflow presence + inventory-alignment tests.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md`` §"Release
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md`` §"Release
 workflow scaffold".
 
 Root cause guarded (one sentence): the release workflow reads

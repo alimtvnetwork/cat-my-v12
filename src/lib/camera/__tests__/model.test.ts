@@ -1,5 +1,5 @@
 // Plan 78 step 2 (I-SU-05): lock the model seam. Every rule below mirrors
-// spec/24-app-ui-design-system/17-camera-setup.md section 5 exactly.
+// 02-spec/24-app-ui-design-system/17-camera-setup.md section 5 exactly.
 import { describe, it, expect } from "vitest";
 import {
   CameraSettingSchema,

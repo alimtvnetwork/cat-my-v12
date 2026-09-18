@@ -12,7 +12,7 @@
     Design invariants:
       * Pure helpers. No side effects, no `exit`, no stderr writes.
         Callers own their exit-code contracts (reserved 9500-9599
-        per .lovable/memory/26-split-db-cli-cheatsheet.md Sec.12) and
+        per .ai-memory/memory/26-split-db-cli-cheatsheet.md Sec.12) and
         decide how to react when a helper returns $null.
       * Path-only. Helpers return paths (or $null); they never test
         that the returned file is executable. Wrappers still call
@@ -23,7 +23,7 @@
 
     Anchors:
       spec/21-app/77-cli-powershell-and-release.md (PowerShell wrappers)
-      .lovable/memory/26-split-db-cli-cheatsheet.md Sec.12 (exit codes)
+      .ai-memory/memory/26-split-db-cli-cheatsheet.md Sec.12 (exit codes)
 #>
 
 Set-StrictMode -Version Latest

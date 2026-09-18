@@ -55,7 +55,7 @@ error handling infrastructure across the Vision Standard UI.
 
 ### Documentation
 
-- `.lovable/docs/facade-architecture.md`: Human-readable facade guide
+- `.ai-memory/docs/facade-architecture.md`: Human-readable facade guide
 - `BE/app/domain/task_cleanup.py`: TaskDb cleanup utility
 
 ## Phase 6 Signoff

@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Project repository facade (Plan 42 follow-up).
 //
-// Applies the SDK-facade pattern from spec/21-app/52-sdk-facade-pattern.md to
+// Applies the SDK-facade pattern from 02-spec/21-app/52-sdk-facade-pattern.md to
 // the browser storage layer. Business logic (zustand store, routes, tests)
 // never talks to `localStorage`, `indexedDB`, or a future server API
 // directly — it goes through `ProjectRepositoryFacade`. The concrete

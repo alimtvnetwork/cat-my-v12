@@ -6,7 +6,7 @@
 
 ## Context
 
-Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.lovable/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
+Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.ai-memory/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
 
 The current pattern was introduced deliberately in a prior turn ("FIX [TypeError: fetch failed in sessions.functions.ts triggering blank screen]") as a stop-gap. This issue converts that stop-gap into a tracked defect so it does not become permanent.
 
@@ -38,6 +38,6 @@ Server-side (Worker) call sites. These are NOT covered by `beFetch` alone becaus
 
 ## Related
 
-- Plan 90 Steps 102, 105, 107-115 (`.lovable/plans/pending/90-worker-and-processing-cli.md`)
+- Plan 90 Steps 102, 105, 107-115 (`.ai-memory/plans/pending/90-worker-and-processing-cli.md`)
 - Plan 89 Phase 4
 - Issue #23, Issue #28

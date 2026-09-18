@@ -3,7 +3,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // `SaveState` union so every editor and the future conflict-resolution modal
 // bind to the same state machine.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // States:
 //   { kind: "idle" }

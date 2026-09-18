@@ -1,7 +1,7 @@
 """Plan 90 Step 48 - `worker-cli status` read-only reporter.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`status`).
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`status`).
 - Lease reader: `BE.cli.worker.camera_lease.peek` (Step 45).
 - Marker reader: `BE.cli.worker.stream_marker.peek` (Step 46).
 

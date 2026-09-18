@@ -1,4 +1,4 @@
-"""Fault-mode tests for the Pylon adapter (spec/21-app/63-v2-vendor-pylon.md).
+"""Fault-mode tests for the Pylon adapter (02-spec/21-app/63-v2-vendor-pylon.md).
 
 Uses a `FakePylonCamera` shaped like `pypylon.pylon.InstantCamera` — no
 real SDK import — so CI can prove exception mapping and re-arm behavior

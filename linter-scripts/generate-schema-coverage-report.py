@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate a schema coverage report for IPC $defs.
 
-For every ``spec/21-app/shell/schemas/ipc/*.schema.json`` file, list each
+For every ``02-spec/21-app/shell/schemas/ipc/*.schema.json`` file, list each
 ``$defs`` entry and mark whether it is referenced by an
-``<!-- ipc:ref=<name> -->`` block anywhere under ``spec/`` (real usage) or
+``<!-- ipc:ref=<name> -->`` block anywhere under ``02-spec/`` (real usage) or
 only under ``linter-scripts/fixtures/`` (test-only), plus any refs that
 are used but have no matching ``$defs`` target (missing).
 
@@ -22,7 +22,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_DIR = ROOT / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+SCHEMA_DIR = ROOT / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
 OUT_DIR = ROOT / "reports"
 REF_RE = re.compile(r"<!--\s*ipc:ref=([a-z][a-z0-9.]+\.(?:req|res|stream))\s*-->")
 
@@ -43,7 +43,7 @@ def collect_refs() -> tuple[dict[str, set[Path]], dict[str, set[Path]]]:
     for md_path in ROOT.rglob("*.md"):
         rel = md_path.relative_to(ROOT)
         parts = rel.parts
-        if parts and parts[0] not in {"spec", "linter-scripts"}:
+        if parts and parts[0] not in {"02-spec", "linter-scripts"}:
             continue
         try:
             text = md_path.read_text(encoding="utf-8")

@@ -4,7 +4,7 @@ Vendor-agnostic blob store used by BE tests, FE fixtures, and any pre-adapter
 integration work. Real adapters (S3, Supabase Storage, on-prem NAS) land after
 Plan 88 and reuse this contract verbatim.
 
-Rules (see `spec/21-app/40-error-manage.md` §3, `52-sdk-facade-pattern.md`):
+Rules (see `02-spec/21-app/40-error-manage.md` §3, `52-sdk-facade-pattern.md`):
 - Keys are opaque, non-empty, ASCII-printable, no NUL, no leading/trailing
   slash, no `..` segment. Bad keys raise `AppError(E_BE_BAD_REQUEST)` with
   `{key, reason}`.

@@ -2,8 +2,8 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 102: single HTTP client for the Universal Response Envelope.
 //
 // Spec:
-//   spec/03-error-manage/02-error-architecture/05-response-envelope/
-//   spec/03-error-manage/01-error-resolution/
+//   02-spec/03-error-manage/02-error-architecture/05-response-envelope/
+//   02-spec/03-error-manage/01-error-resolution/
 //   BE/envelope.py (CORRELATION_HEADER = "X-Correlation-Id")
 //
 // Contract:

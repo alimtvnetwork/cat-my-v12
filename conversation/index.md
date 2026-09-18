@@ -1,7 +1,7 @@
 # Conversation Log
 
 Structured record of design and decision conversations. Each entry lives at
-`conversation/<NN-feature>/<NN-title>.md` per `spec/24-app-ui-design-system/09-UI-improvements-v2.md` line 260.
+`conversation/<NN-feature>/<NN-title>.md` per `02-spec/24-app-ui-design-system/09-UI-improvements-v2.md` line 260.
 
 ## Index
 

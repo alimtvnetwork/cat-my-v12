@@ -10,7 +10,7 @@
  * facade served, blocking Step 119's per-sample drill-down from having a
  * parent to link back to.
  *
- * Honest-wire choices (no false-OK, per `spec/03-error-manage/`):
+ * Honest-wire choices (no false-OK, per `02-spec/03-error-manage/`):
  *  - The `CatSample` wire is `{id, rule_id, label, captured_at}` - there
  *    is NO `tag`, NO `status`, NO `thumbnail_url`. The step wording asks
  *    for "thumbnail grid, filter by tag/status, pagination via envelope

@@ -3,7 +3,7 @@
 // MemoryUiSeedFacade + SeedProvider path instead of relying on the
 // "no provider mounted" degrade branch. This locks the merge behavior
 // implemented in useCategoryOptions.ts against the same facade
-// contract production uses (spec/21-app/52-sdk-facade-pattern.md).
+// contract production uses (02-spec/21-app/52-sdk-facade-pattern.md).
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { renderHook, act, cleanup, waitFor } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";

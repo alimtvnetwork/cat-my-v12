@@ -1,6 +1,6 @@
 # Backend v1 Diagrams
 
-Frozen: 2026-07-21 (v3.987.0), grounded in `spec/21-app/backend-implementation-request-v1.md` (Status: accepted).
+Frozen: 2026-07-21 (v3.987.0), grounded in `02-spec/21-app/backend-implementation-request-v1.md` (Status: accepted).
 
 Every downstream Plan 88 spec cites these diagrams as the single source of truth for topology, envelope flow, and facade boundaries. If a spec disagrees with a diagram, the diagram wins until an amendment is landed here first.
 

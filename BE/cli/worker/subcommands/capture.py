@@ -1,7 +1,7 @@
 """Plan 90 Step 47 - `worker-cli capture` single-shot subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`capture (single)`) and
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`capture (single)`) and
   §Acceptance #4 (capture writes an image via the storage facade).
 - Lease: `BE.cli.worker.camera_lease` (Step 45). Capture REQUIRES the
   cross-invocation lease to already be held by this host for the

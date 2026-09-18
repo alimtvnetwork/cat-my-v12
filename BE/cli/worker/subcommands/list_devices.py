@@ -1,12 +1,12 @@
 """Plan 90 Step 44 - `worker-cli list-devices` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (canonical verb name
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (canonical verb name
   `list-devices`) and §Acceptance #2 (returns Universal Envelope with
   `Results = [DeviceInfo,...]`; failures use `E_CAM_*` codes).
 - `BE.sdk_facade.camera.InMemoryCameraFacade.list_devices` returns
   `list[DeviceInfo]` (frozen dataclass, snake_case attrs).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope
   on stdout; JSONL log lines via the shared logger).
 
 Contract:
@@ -64,7 +64,7 @@ def handle(ns: argparse.Namespace, ctx: SessionCtx) -> list[dict[str, Any]]:
         ctx={"Count": len(devices), "Provider": ns.provider},
     )
     # DeviceInfo has snake_case attrs; the wire contract in
-    # spec/21-app/74-worker-cli.md §Acceptance #2 is PascalCase.
+    # 02-spec/21-app/74-worker-cli.md §Acceptance #2 is PascalCase.
     return [
         {
             "Serial": d.serial,

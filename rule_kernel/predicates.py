@@ -9,7 +9,7 @@ dispatch contract:
 
     Predicate = Callable[[RuleContext, RuleSpec], RuleJudgment]
 
-Every closed `RuleKind` from `spec/21-app/33-rule-catalog.md` §3 is
+Every closed `RuleKind` from `02-spec/21-app/33-rule-catalog.md` §3 is
 registered with a `NotImplemented` stub that raises
 `AppError(E_RULE_EVAL_FAILED)` carrying the spec-defined reason code
 (`RuleUnsupported` for kinds without an evaluator yet,
@@ -36,7 +36,7 @@ from BE.errors.codes import ErrorCode
 
 Predicate = Callable[[RuleContext, RuleSpec], RuleJudgment]
 
-# Closed set from spec/21-app/33-rule-catalog.md §3. Kept in sync with
+# Closed set from 02-spec/21-app/33-rule-catalog.md §3. Kept in sync with
 # loader._RULE_KINDS via a cross-check test.
 _KNOWN_KINDS: frozenset[str] = frozenset({
     "PresenceAbsence", "FlawDetect", "Count",

@@ -2,7 +2,7 @@
 
 Synthesis of the 50 reference photos (49 JPGs + 1 externalized `.asset.json`, captured 2026-06-29 17:25–17:32) of a **legacy machine-vision inspection HMI** running program `an inspection program` on an an industrial monitor. Domain: 2D visual inspection of QFN semiconductor packages.
 
-Full evidence: `.lovable/plans/done/01-learn-tools-images.md` and `SS-01..SS-13`.
+Full evidence: `.ai-memory/plans/done/01-learn-tools-images.md` and `SS-01..SS-13`.
 
 ---
 
@@ -165,6 +165,6 @@ App titlebar · Mode/action header · Tool ribbon · Image viewport w/ ROI overl
 ## 8. Evidence trail
 
 - Raw images: `assets/tools-images/` (one externalized `.asset.json`, resolved at `/tmp/img-analysis/20260629_173118.jpg`).
-- Subtasks: `.lovable/plans/subtasks/01-learn-tools-images/SS-01..SS-13`.
-- Archived plan: `.lovable/plans/done/01-learn-tools-images.md`.
+- Subtasks: `.ai-memory/plans/subtasks/01-learn-tools-images/SS-01..SS-13`.
+- Archived plan: `.ai-memory/plans/done/01-learn-tools-images.md`.
 - Memory: `mem://design/hmi-brief`, `mem://design/hmi-tokens`, `mem://reference/learn-tools-images`, `mem://constraint/build-gates`.

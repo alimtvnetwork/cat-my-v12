@@ -1,6 +1,6 @@
 """FLIR Spinnaker (PySpin) adapter behind `VendorDeviceIO`.
 
-Anchor: spec/21-app/64-v2-vendor-spinnaker.md. PySpin is imported lazily inside
+Anchor: 02-spec/21-app/64-v2-vendor-spinnaker.md. PySpin is imported lazily inside
 the factory so unit tests stay hermetic; a `camera_factory` override lets
 tests inject a fake `PySpin.CameraPtr`-shaped object without touching the
 real SDK.
@@ -122,7 +122,7 @@ def _arm(cam: Any) -> None:
 
 
 def _grab(cam: Any, deadline_ms: int) -> bytes:
-    """Software-trigger + retrieve. Buffer ownership (spec/21-app/68):
+    """Software-trigger + retrieve. Buffer ownership (02-spec/21-app/68):
     copy the SDK-owned bytes BEFORE `image.Release()` so no vendor-thread
     reference escapes.
     """
@@ -247,7 +247,7 @@ def _default_camera_factory(cfg: SpinnakerConfig) -> Any:  # pragma: no cover - 
 
 
 def _translate(exc: BaseException) -> type[BaseException] | None:
-    """Public per spec/21-app/64-v2-vendor-spinnaker.md §Exception mapping.
+    """Public per 02-spec/21-app/64-v2-vendor-spinnaker.md §Exception mapping.
 
     Returns the typed error class for a Spinnaker exception, or `None` when
     the exception is not one we recognize (caller must re-raise untyped).

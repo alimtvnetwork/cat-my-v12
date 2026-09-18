@@ -1,6 +1,6 @@
 """Migration runner for root.db, per-Task task.db, and per-Task rules.db.
 
-Contract: spec/21-app/26-migrations.md §4.
+Contract: 02-spec/21-app/26-migrations.md §4.
 Failure codes: E_MIGRATION_GAP, E_MIGRATION_FAILED, E_SCHEMA_AHEAD, E_MIGRATION_TIMEOUT.
 """
 from __future__ import annotations

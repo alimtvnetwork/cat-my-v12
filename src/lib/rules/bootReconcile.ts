@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 138. Shell boot mount for `reconcileDrafts()`.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // Root cause this fixes (one sentence): `reconcileDrafts()` shipped in
 // Step 137 is an unreachable seam because no shell code invokes it on

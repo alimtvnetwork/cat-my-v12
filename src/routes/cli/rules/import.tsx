@@ -17,7 +17,7 @@ import { DraftOriginType } from "@/lib/rules/draftStore";
  * had to paste multi-KB JSON into the Step-116 textarea to seed a new
  * bundle, which risks whitespace corruption and skips the checksum
  * confirmation step required by the audit trail in
- * `spec/21-app/80-ruleset-draft-save.md`.
+ * `02-spec/21-app/80-ruleset-draft-save.md`.
  *
  * Guards:
  *   - Size ceiling: 1 MiB. Rule bundles are hand-authored JSON with a

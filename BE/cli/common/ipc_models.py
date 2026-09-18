@@ -1,6 +1,6 @@
 """Per-Kind Pydantic payload models for IPC (Plan 90 Step 24).
 
-One source of truth for `spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes".
+One source of truth for `02-spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes".
 All fields are PascalCase and frozen; extra fields are forbidden so a typo on
 the producer side surfaces as `E_IPC_PAYLOAD_INVALID` at the boundary, not
 as a silent no-op on the consumer.

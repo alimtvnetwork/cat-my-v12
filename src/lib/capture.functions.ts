@@ -27,7 +27,7 @@ import { HttpMethod } from "@/lib/constants";
  * Capture vendor server-fn bridge (closes v1.37 L1').
  *
  * All handlers funnel thrown errors through toCaptureError() so callers see
- * the locked E_* envelope from spec/21-app/67-v2-discovery-contract.md (Plan 15
+ * the locked E_* envelope from 02-spec/21-app/67-v2-discovery-contract.md (Plan 15
  * Step 10). Every failure is logged with structured context (including a
  * correlation ID that also travels back in the error message as
  * `[cid=xxxx]`) before it crosses the RPC boundary; the UI parses both the

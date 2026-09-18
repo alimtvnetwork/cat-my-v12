@@ -1,7 +1,7 @@
 """Tolerance resolver (Plan 90 Step 89).
 
-Owning spec: `spec/21-app/34-tolerance-model.md` + `spec/21-app/23-rules-db-overrides.md`
-(override cascade) + `spec/21-app/36-json-instruction-output.md` §5 (bundle
+Owning spec: `02-spec/21-app/34-tolerance-model.md` + `02-spec/21-app/23-rules-db-overrides.md`
+(override cascade) + `02-spec/21-app/36-json-instruction-output.md` §5 (bundle
 carries every referenced profile inline; workers never resolve from a DB).
 
 Contract (LOCKED by this step):

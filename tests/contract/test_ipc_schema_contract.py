@@ -1,7 +1,7 @@
 """Contract tests: every real IPC example payload validates against $defs.
 
 Parametrized over:
-  * every ``<!-- ipc:ref=X --> \\n ```json ... ``` `` block found under ``spec/``
+  * every ``<!-- ipc:ref=X --> \\n ```json ... ``` `` block found under ``02-spec/``
     (must validate cleanly)
   * every block under ``linter-scripts/fixtures/ipc-examples/good/``
     (positive fixture, must validate cleanly)
@@ -23,7 +23,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 CHECKER = ROOT / "linter-scripts" / "check-ipc-examples.py"
-SCHEMA_DIR = ROOT / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+SCHEMA_DIR = ROOT / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
 FIXTURE_GOOD = ROOT / "linter-scripts" / "fixtures" / "ipc-examples" / "good"
 FIXTURE_BAD = ROOT / "linter-scripts" / "fixtures" / "ipc-examples" / "bad"
 
@@ -67,12 +67,12 @@ def _extract(md_root: Path, schema_dir: Path) -> list[tuple[str, str, dict, dict
     return out
 
 
-SPEC_CASES = _extract(ROOT / "spec", SCHEMA_DIR)
+SPEC_CASES = _extract(ROOT / "02-spec", SCHEMA_DIR)
 GOOD_CASES = _extract(
-    FIXTURE_GOOD, FIXTURE_GOOD / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+    FIXTURE_GOOD, FIXTURE_GOOD / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
 )
 BAD_CASES = _extract(
-    FIXTURE_BAD, FIXTURE_BAD / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+    FIXTURE_BAD, FIXTURE_BAD / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
 )
 
 

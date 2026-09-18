@@ -2,7 +2,7 @@
 
 Wires an audited load of a JSONL export (with intentional bad rows) through
 `evaluate_all`, asserts the four candidate names from
-`spec/21-app/69a-v2-denial-tuning-evidence.md` are produced, and confirms
+`02-spec/21-app/69a-v2-denial-tuning-evidence.md` are produced, and confirms
 bad rows surface as `W_SEC_TUNING_EVIDENCE_LOAD_FAILED` in the same audit
 sink the burst emitter uses.
 
@@ -10,7 +10,7 @@ This is the smallest integration that covers all three seams:
   1. Loader (`load_evidence_with_audit`) -> AuditSink (failure path).
   2. Metrics (`evaluate_all`) -> CandidateResult provenance (happy path).
   3. Registry: every code exercised here is registered in
-     `spec/21-app/40-error-manage.md` A.1.
+     `02-spec/21-app/40-error-manage.md` A.1.
 """
 from __future__ import annotations
 

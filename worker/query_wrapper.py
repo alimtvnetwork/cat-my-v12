@@ -15,7 +15,7 @@ def safe_query(
 ) -> T:
     """
     Wraps any query or external RPC execution to automatically catch,
-    log, and manage errors following the `spec/03-error-manage` guidelines.
+    log, and manage errors following the `02-spec/03-error-manage` guidelines.
     Uses the standard `logging` library to explicitly log failures.
     """
     try:

@@ -1,9 +1,9 @@
 """Plan 90 Step 20 - worker-cli entrypoint and first subcommand (`probe`).
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §"Subcommands" (probe listed first),
+- `02-spec/21-app/74-worker-cli.md` §"Subcommands" (probe listed first),
   §"Acceptance #1" (probe enumerates devices via SDK facade).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract".
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract".
 - Facade: `BE.sdk_facade.camera.InMemoryCameraFacade.list_devices` returns
   `list[DeviceInfo]` (see `BE/sdk_facade/__init__.py` line 70).
 
@@ -102,7 +102,7 @@ def build_dispatcher() -> Dispatcher:
     d = Dispatcher(
         prog="worker-cli",
         source="worker-cli",
-        description="Vision worker CLI (Plan 90, spec/21-app/74).",
+        description="Vision worker CLI (Plan 90, 02-spec/21-app/74).",
         helptext_package="BE.cli.worker.helptext",
     )
     d.register(Subcommand(

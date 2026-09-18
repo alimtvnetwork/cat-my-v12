@@ -3,7 +3,7 @@
 Usage:
     python -m app.core.io.migrate_cli --db root|task|rules --path <file.db> [--dir <migrations>]
 
-Contract: spec/21-app/26-migrations.md §4.
+Contract: 02-spec/21-app/26-migrations.md §4.
 """
 from __future__ import annotations
 

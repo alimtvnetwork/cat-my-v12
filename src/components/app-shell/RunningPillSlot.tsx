@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
  * Header anchor that the floating <RunningPill> portals into when docked.
  * The slot only reserves layout space and exposes a stable DOM node.
  * Wiring to the pill lands in Plan 64 step 65.
- * See spec/24-app-ui-design-system/42-drag-drop-running-pill.md.
+ * See 02-spec/24-app-ui-design-system/42-drag-drop-running-pill.md.
  */
 export const RUNNING_PILL_SLOT_ID = "app-shell-running-pill-slot";
 

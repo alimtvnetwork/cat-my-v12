@@ -7,7 +7,7 @@ import { ErrorSourceType } from "@/lib/errors/error-record";
  * per-user persistence is scheduled with the `saveRule` server-fn migration
  * (Plan 64 step 85) so both writes share one migration/lockfile bump.
  *
- * See spec/24-app-ui-design-system/41-panel-docking-model.md.
+ * See 02-spec/24-app-ui-design-system/41-panel-docking-model.md.
  */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";

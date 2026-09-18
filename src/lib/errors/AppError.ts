@@ -1,4 +1,4 @@
-// Plan 41 step 11. Typed AppError per spec/03-error-manage.
+// Plan 41 step 11. Typed AppError per 02-spec/03-error-manage.
 
 import { ErrorCodeType } from "@/types/errors/ErrorCode";
 

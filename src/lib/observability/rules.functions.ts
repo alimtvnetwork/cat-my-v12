@@ -18,7 +18,7 @@
  * `UpdatedAt` is NOT part of the wire yet (`CatRule` is frozen at
  * `{id,name,version,enabled}`); the caller renders `"-"` rather than a
  * fabricated timestamp, matching the "no false-OK" rule in
- * `spec/03-error-manage/`.
+ * `02-spec/03-error-manage/`.
  */
 import { beFetch } from "@/lib/be-fetch";
 import { createServerFn } from "@tanstack/react-start";

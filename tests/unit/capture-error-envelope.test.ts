@@ -2,7 +2,7 @@
 // device-selection parser. Anchors:
 //   - src/lib/capture.shared.ts (CAPTURE_ERROR_CODES, toCaptureError,
 //     parseCaptureErrorCode, parseDeviceSelection)
-//   - spec/21-app/67-v2-discovery-contract.md Failure Taxonomy
+//   - 02-spec/21-app/67-v2-discovery-contract.md Failure Taxonomy
 import { describe, expect, it } from "vitest";
 
 import {

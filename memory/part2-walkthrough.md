@@ -82,7 +82,7 @@ upgrade, covering 200 tasks from the part2 plan.
 - **`content-visibility: auto`** on history rail thumbnails
 - **`min-h-0` layout fix** in `MainVisionCanvas`
 - **Responsive E2E**: Layout tests at 1920×1080, 1366×768, 1024×600
-- **Facade Architecture Docs**: `.lovable/docs/facade-architecture.md`
+- **Facade Architecture Docs**: `.ai-memory/docs/facade-architecture.md`
 
 ---
 

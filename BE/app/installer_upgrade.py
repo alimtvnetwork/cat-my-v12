@@ -1,6 +1,6 @@
 """Plan 90 Step 128 - Upgrade-in-place decision planner + manifest backup.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md``
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md``
 §"Upgrade lifecycle" (new subsection added in this step).
 
 Root cause guarded (one sentence): Steps 105-127 shipped install and
@@ -23,7 +23,7 @@ reinstall.
 Anchors:
 - ``BE/app/install_manifest.py`` (Step 105): manifest reader/writer.
 - ``BE/app/installer_plan.py`` (Steps 104/127): dispatched actions.
-- ``spec/coding-guidelines/python.md``: typed boundaries, no bare except,
+- ``02-spec/coding-guidelines/python.md``: typed boundaries, no bare except,
   <=15-line functions, positive if.
 """
 

@@ -1,6 +1,6 @@
-# Spec Gaps & Ambiguities — App `spec/21-app/**`
+# Spec Gaps & Ambiguities — App `02-spec/21-app/**`
 
-_Reference: Plan 88, Step 2 review of `spec/21-app/` docs._
+_Reference: Plan 88, Step 2 review of `02-spec/21-app/` docs._
 
 ## 1. Foundational Stack Ambiguities
 

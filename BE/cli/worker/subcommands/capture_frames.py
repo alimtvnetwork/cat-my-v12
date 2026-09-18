@@ -1,15 +1,15 @@
 """Plan 90 Step 22 - `worker-cli capture-frames` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §"Subcommands" (`capture (single)` + `stream`)
+- `02-spec/21-app/74-worker-cli.md` §"Subcommands" (`capture (single)` + `stream`)
   and §"Acceptance #4" (capture writes an image and emits `frame_ready` IPC).
   This step ships the storage handoff half; `frame_ready` IPC is Step 23.
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope).
-- `spec/21-app/52-sdk-facade-pattern.md` (camera -> storage boundary crosses
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope).
+- `02-spec/21-app/52-sdk-facade-pattern.md` (camera -> storage boundary crosses
   ONLY through the Protocols; no vendor imports here).
 - `BE/sdk_facade/camera.py` §grab (in-memory stub raises
   `E_CAM_CAPTURE_FAILED` per the "no fabricated frames" guardrail in
-  `spec/21-app/40-error-manage.md` §3).
+  `02-spec/21-app/40-error-manage.md` §3).
 - `BE/sdk_facade/storage.py` §put (opaque, printable, non-slashed keys;
   bytes only; 32 MiB ceiling).
 

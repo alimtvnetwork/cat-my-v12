@@ -8,10 +8,10 @@
 
 **Spec anchors (spec wins on any disagreement):**
 
-- `spec/21-app/52-sdk-facade-pattern.md` - the seam rule: business code never imports vendor types.
-- `spec/21-app/68-v2-vendor-sdk-contract.md` - lifecycle state machine + fault taxonomy.
-- `spec/21-app/73-daheng-galaxy-sdk-integration.md` - Daheng-specific mapping (this file's spec twin).
-- `spec/21-app/40-error-manage.md` §5 - central `E_*` registry; OVERRIDES §9 below on any conflict.
+- `02-spec/21-app/52-sdk-facade-pattern.md` - the seam rule: business code never imports vendor types.
+- `02-spec/21-app/68-v2-vendor-sdk-contract.md` - lifecycle state machine + fault taxonomy.
+- `02-spec/21-app/73-daheng-galaxy-sdk-integration.md` - Daheng-specific mapping (this file's spec twin).
+- `02-spec/21-app/40-error-manage.md` §5 - central `E_*` registry; OVERRIDES §9 below on any conflict.
 
 ---
 
@@ -56,7 +56,7 @@ If any row is missing, the adapter fails **loudly at construction time** with `E
 
 ## 3. Facade mapping (authoritative)
 
-Every method on `CameraFacade` (`BE/sdk_facade/__init__.py`, `SDK_FACADE_VERSION = 0.3.0-protocol`) maps to the following Galaxy SDK calls. **Business code never imports `gxipy` / `GxIAPI`** - violations are `E_BUG_SDK_LEAK` (`spec/21-app/52-sdk-facade-pattern.md`).
+Every method on `CameraFacade` (`BE/sdk_facade/__init__.py`, `SDK_FACADE_VERSION = 0.3.0-protocol`) maps to the following Galaxy SDK calls. **Business code never imports `gxipy` / `GxIAPI`** - violations are `E_BUG_SDK_LEAK` (`02-spec/21-app/52-sdk-facade-pattern.md`).
 
 | Facade method                           | Galaxy SDK call                                                | Notes                                                                      |
 | --------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -235,7 +235,7 @@ POL / SWIR SKUs reuse the same pixel formats with sensor-specific channel semant
 
 ## 9. Error mapping (authoritative: `BE/errors/codes.py`)
 
-Vendor exceptions raised inside the adapter MUST be re-raised as `AppError(..., cause=original)` with codes from the central `ErrorCode` enum (`spec/21-app/40-error-manage.md` §5). Prior drafts of this file cited `E_BE_*` codes for camera failures; that was **wrong** - `E_CAM_*` is reserved for facade errors and overrides any manual-side suggestion.
+Vendor exceptions raised inside the adapter MUST be re-raised as `AppError(..., cause=original)` with codes from the central `ErrorCode` enum (`02-spec/21-app/40-error-manage.md` §5). Prior drafts of this file cited `E_BE_*` codes for camera failures; that was **wrong** - `E_CAM_*` is reserved for facade errors and overrides any manual-side suggestion.
 
 | Vendor condition                                                      | `ErrorCode`                                            | HTTP |
 | --------------------------------------------------------------------- | ------------------------------------------------------ | ---- |
@@ -296,7 +296,7 @@ Everything else is decided by this file and the spec anchors above.
 - **v1.3**: landed real `DahengCameraFacade` adapter (Plan 90 Phase 12). Wired provider selection (`daheng`, `inmemory`, `replay`) in `worker-cli` and `processing-cli`. Added hardware smoke tests, offline `.npy` fixture replay, observability logging, and `metrics` integration.
 - **v1.2.1** (rename notice, no content change): consolidated location + numbering aliases so integrators grepping the old paths land here.
   - This manual lives at `sdk/daheng-galaxy-sdk-manual.md` (was `docs/vendor-sdk-manual.md` prior to v1.1). The PDF sidecar is `sdk/daheng-galaxy-sdk-manual.pdf.asset.json`.
-  - Companion spec moved from `spec/21-app/70-daheng-galaxy-sdk-integration.md` to `spec/21-app/73-daheng-galaxy-sdk-integration.md` (numbering collision with the rule bundle spec at 70). Content unchanged; update bookmarks and any `rg` patterns.
+  - Companion spec moved from `02-spec/21-app/70-daheng-galaxy-sdk-integration.md` to `02-spec/21-app/73-daheng-galaxy-sdk-integration.md` (numbering collision with the rule bundle spec at 70). Content unchanged; update bookmarks and any `rg` patterns.
   - No API, facade signature, or error code changes. `SDK_FACADE_VERSION` remains at the value pinned in v1.1 (`0.3.0-protocol`), and all `E_CAM_*` / `E_BE_*` mappings in §8 are still authoritative.
   - Old paths intentionally left un-redirected in the repo: an `rg` for `vendor-sdk-manual` or `70-daheng-galaxy-sdk` will hit only this entry and immutable asset-manifest fields, both of which point here.
 - **v1.2** (rewrite): reorganized around AI-actionable workflows (enumerate/open, configure, free-run, triggered, I/O) with explicit Prerequisites / Steps / Errors / Guardrails per workflow; added §0 usage guide, §2 host-prep matrix, §9 reconnect policy; kept §3 facade table and §9 error registry authoritative.

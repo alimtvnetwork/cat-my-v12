@@ -1,7 +1,7 @@
 """Plan 90 Step 52 - `worker-cli version` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`version`).
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`version`).
 - Plan 90 file item 51: return `{Name, Version, Commit, BuildDate}` via
   Universal Envelope so PowerShell wrappers and CI verify workflows
   (Step 95) can gate on a machine-readable identity payload.

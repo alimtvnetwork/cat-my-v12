@@ -7,7 +7,7 @@
     under scripts/ps/ so PSScriptAnalyzer (syntax) plus this suite
     (runtime) together gate the fleet.
 
-    Contract pinned here (see also .lovable/memory/26-split-db-cli-cheatsheet.md Sec.12):
+    Contract pinned here (see also .ai-memory/memory/26-split-db-cli-cheatsheet.md Sec.12):
       Invoke-DbBootstrap.ps1
         9510 = venv-missing         (no .venv/bin/python or .venv/Scripts/python.exe)
         9511 = python-not-found     (venv python exists, target script missing)
@@ -19,7 +19,7 @@
     tests assert only path shape, not filesystem executability.
 
     Anchors:
-      spec/21-app/77-cli-powershell-and-release.md
+      02-spec/21-app/77-cli-powershell-and-release.md
       scripts/ps/Common.psm1
 #>
 

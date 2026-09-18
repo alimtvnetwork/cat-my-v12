@@ -1,6 +1,6 @@
 """FastAPI exception handlers -> Universal Response Envelope.
 
-Spec: `spec/03-error-manage/02-error-architecture/05-response-envelope/`
+Spec: `02-spec/03-error-manage/02-error-architecture/05-response-envelope/`
 
 Three handlers so no error path escapes the envelope:
     AppError                 -> handler_app_error   (registry-driven status)
@@ -67,7 +67,7 @@ async def handler_app_error(request: Request, exc: AppError) -> JSONResponse:
             "operation": _operation(request),
             "code": exc.code.value,
             "subject_id": exc.details.get("subject_id") or exc.details.get("id"),
-            "cheat_sheet": "spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod and exc.http_status.value >= 500 else None,
+            "cheat_sheet": "02-spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod and exc.http_status.value >= 500 else None,
         },
     )
     envelope = exc.to_envelope(
@@ -108,7 +108,7 @@ async def handler_unhandled(request: Request, exc: Exception) -> JSONResponse:
             "operation": _operation(request),
             "code": code.value,
             "subject_id": None,
-            "cheat_sheet": "spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod else None,
+            "cheat_sheet": "02-spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod else None,
         },
     )
     envelope = failure(

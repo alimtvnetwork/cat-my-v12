@@ -40,7 +40,7 @@ describe("JsonUiSeedFacade (Plan 72 step 21)", () => {
   });
 
   it("rejects with ZodError when the payload violates the schema", async () => {
-    // Non-silent failure per spec/03-error-manage §3: parse errors must
+    // Non-silent failure per 02-spec/03-error-manage §3: parse errors must
     // surface, never be swallowed into an empty bundle.
     const loader = vi.fn().mockResolvedValue({ version: 42 });
     const facade = new JsonUiSeedFacade(loader);

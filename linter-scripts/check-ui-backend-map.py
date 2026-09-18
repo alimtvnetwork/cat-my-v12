@@ -188,7 +188,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def shell_paths(root: Path) -> dict[str, Path]:
-    shell = root / "spec" / "21-app" / "shell"
+    shell = root / "02-spec" / "21-app" / "shell"
     return {
         "map": shell / "05-ui-to-backend-map.md",
         "schema_readme": shell / "schemas" / "ipc" / "readme.md",

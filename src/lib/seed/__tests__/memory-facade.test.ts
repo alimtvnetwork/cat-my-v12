@@ -7,7 +7,7 @@ import type { CatSeedBundle } from "../types";
 
 // Memory facade must honor the same UiSeedFacade contract as the JSON
 // backing: validate on ingest, expose stable slice reads, never silently
-// swallow bad data (spec/03-error-manage §3). Tests here mirror the JSON
+// swallow bad data (02-spec/03-error-manage §3). Tests here mirror the JSON
 // facade suite plus the memory-only subscribe/setBundle surface.
 
 const SAMPLE_BUNDLE: CatSeedBundle = {

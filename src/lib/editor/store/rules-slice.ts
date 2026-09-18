@@ -1,6 +1,6 @@
 import { EditorToolFamilyType } from "@/lib/editor/types";
 // Rule-layer store slice, plan 30 step 71.
-// Spec: spec/24-app-ui-design-system/_notes/rule-layer-store-hardening.md
+// Spec: 02-spec/24-app-ui-design-system/_notes/rule-layer-store-hardening.md
 //
 // Pure reducers only. No Date.now / Math.random / crypto (G-STORE-03).
 // New ids and image bounds are injected by the caller so reducers stay pure

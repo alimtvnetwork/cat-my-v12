@@ -3,10 +3,10 @@ import { FeatureNameType } from "@/lib/license";
 /**
  * Casbin-style gated feature server fns.
  *
- * One handler per non-baseline FeatureName from spec/21-app/60-licensing.md.
+ * One handler per non-baseline FeatureName from 02-spec/21-app/60-licensing.md.
  * Every handler starts with `requireServerFeature(<Name>)`, so any call
  * without the corresponding license grant is rejected with the locked
- * `E_LIC_FEATURE_DENIED` envelope from spec/21-app/67-v2-discovery-contract.md.
+ * `E_LIC_FEATURE_DENIED` envelope from 02-spec/21-app/67-v2-discovery-contract.md.
  * Payloads are intentionally minimal stubs; the point is the gate, not the
  * business logic (which is tracked per feature in v2 plans).
  */

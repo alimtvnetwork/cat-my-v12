@@ -8,7 +8,7 @@
          the underlying interpreter (SupportsShouldProcess wiring).
       2. Missing interpreter path exits with reserved wrapper code
          9511 ('python-not-found') and writes the [9511] marker to
-         stderr, per .lovable/memory/26-split-db-cli-cheatsheet.md Sec.12.
+         stderr, per .ai-memory/memory/26-split-db-cli-cheatsheet.md Sec.12.
 
     Tests spin up a throwaway fake repo two levels above the copied
     wrapper so `Get-VisionAppRepoRoot` (Split-Path twice from
@@ -20,7 +20,7 @@
       scripts/ps/Invoke-WorkerCli.ps1
       scripts/ps/Invoke-ProcessingCli.ps1
       scripts/ps/Common.psm1 (Resolve-PythonExe, Get-VisionAppVenvPython)
-      spec/21-app/77-cli-powershell-and-release.md Sec.Deliverables
+      02-spec/21-app/77-cli-powershell-and-release.md Sec.Deliverables
       tests/pester/Wrappers.Tests.ps1 (sibling suite for db-bootstrap / retention)
 #>
 

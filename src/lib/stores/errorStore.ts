@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 71 Step 7: Zustand store for the Global Error Modal.
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §3
-//       spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §3
+//       02-spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md
 //
 // Responsibilities (minimum for this step; deeper enrichment lands in later steps):
 //   - Hold the currently visible error (`currentError`) and a bounded FIFO queue.

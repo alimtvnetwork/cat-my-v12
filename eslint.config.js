@@ -31,7 +31,7 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              // Plan 72 step 27 (Rule 53, spec/21-app/53-ui-seed-facade.md):
+              // Plan 72 step 27 (Rule 53, 02-spec/21-app/53-ui-seed-facade.md):
               // UI seed data must flow through the UiSeedFacade. Direct
               // imports of the bundled JSON (or anything else under
               // `src/lib/seed/data/`) from outside `src/lib/seed/**` bypass
@@ -45,7 +45,7 @@ export default tseslint.config(
                 "@/lib/seed/data/**",
               ],
               message:
-                "E_BUG_SEED_LEAK: import seed data through useSeedSlice / useSeedBundle (see spec/21-app/53-ui-seed-facade.md). Direct imports from src/lib/seed/data/** outside src/lib/seed/** are forbidden.",
+                "E_BUG_SEED_LEAK: import seed data through useSeedSlice / useSeedBundle (see 02-spec/21-app/53-ui-seed-facade.md). Direct imports from src/lib/seed/data/** outside src/lib/seed/** are forbidden.",
             },
             {
               // Plan 73 step 31b (Issue 26 closeout): the hardcoded sample

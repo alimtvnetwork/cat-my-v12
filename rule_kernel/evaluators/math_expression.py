@@ -1,6 +1,6 @@
 """MathExpression evaluator (Plan 90 Step 88).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.6 + §6 (ordering).
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.6 + §6 (ordering).
 
 Contract (LOCKED by this step):
   Bound regions: 0.

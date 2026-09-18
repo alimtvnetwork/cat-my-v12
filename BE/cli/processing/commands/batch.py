@@ -1,17 +1,17 @@
 """Plan 90 Step 59 - `processing-cli batch` subcommand.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Subcommands: `batch` fans `evaluate`
+- `02-spec/21-app/75-processing-cli.md` §Subcommands: `batch` fans `evaluate`
   across a folder or manifest and produces "one `<RunSessionId>.jsonl`
   per RunSession, N `Result` lines".
-- `spec/21-app/17-parallelism-guarantees.md` §3 "one writer per DB file"
+- `02-spec/21-app/17-parallelism-guarantees.md` §3 "one writer per DB file"
   invariant, generalized here to "one writer per JSONL file": the shared
   results file MUST be serialized behind a lock even when frames are
   fanned out to worker threads.
-- `spec/13-generic-cli/18-batch-execution.md` §"Continue on failure":
+- `02-spec/13-generic-cli/18-batch-execution.md` §"Continue on failure":
   a failing frame MUST NOT abort the batch; per-frame failures are
   collected into `Failures[]` and reported alongside successful `Results[]`.
-- `spec/21-app/24-results-json.md` §1 Write policy (append-only, fsync).
+- `02-spec/21-app/24-results-json.md` §1 Write policy (append-only, fsync).
 - Honesty rule (inherited from `commands/evaluate.py:12`): we do not
   fabricate verdicts. `E_BE_UNAVAILABLE` from `evaluate.handle` is
   captured per-frame; the batch itself only fails hard on argparse /

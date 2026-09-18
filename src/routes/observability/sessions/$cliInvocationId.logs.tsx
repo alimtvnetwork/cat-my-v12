@@ -162,7 +162,7 @@ function LogTailPage() {
       offsetRef.current = p.NextOffset ?? null;
       setError(null);
     } catch (e) {
-      // Loud-failure per spec/03-error-manage: surface, don't swallow.
+      // Loud-failure per 02-spec/03-error-manage: surface, don't swallow.
       setError(e instanceof Error ? e.message : String(e));
     }
   }, [call, idNum]);

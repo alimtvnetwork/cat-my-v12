@@ -1,8 +1,8 @@
 import os
 import glob
 
-pending_dir = ".lovable/plans/pending"
-completed_dir = ".lovable/plans/completed"
+pending_dir = ".ai-memory/plans/pending"
+completed_dir = ".ai-memory/plans/completed"
 
 files_to_move = [
     "29-denial-burst-threshold-tuning.md",

@@ -1,6 +1,6 @@
 // Plan 79 step 12. MicSettings V4 domain model.
 //
-// Source of truth: .lovable/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
+// Source of truth: .ai-memory/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
 // CRUD only. Referenced by Project.micSettingsId? (step 16).
 // Data-only: no persistence, no component imports. Facade lives in
 // src/lib/mic-settings/facade.ts (step 14).

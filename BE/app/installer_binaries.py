@@ -1,6 +1,6 @@
 """Plan 90 Step 117 - Canonical PyInstaller binary inventory.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md``
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md``
 §"Release artefacts".
 
 Root cause guarded (one sentence): the CLI fleet ships as loose ``.py``

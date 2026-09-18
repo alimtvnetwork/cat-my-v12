@@ -1,4 +1,4 @@
-"""Fault-mode tests for the Spinnaker adapter (spec/21-app/64-v2-vendor-spinnaker.md).
+"""Fault-mode tests for the Spinnaker adapter (02-spec/21-app/64-v2-vendor-spinnaker.md).
 
 Uses a `FakeSpinCamera` shaped like `PySpin.CameraPtr` (no real SDK import)
 so CI can prove errorcode mapping, TriggerMode sequence, and re-arm
@@ -213,7 +213,7 @@ def test_transient_timeout_then_success() -> None:
 
 
 def test_unknown_errorcode_wrapped_as_capture_adapter_error() -> None:
-    # Per SS-02 contract lock (spec/21-app/50 §VendorDeviceIO contract lock),
+    # Per SS-02 contract lock (02-spec/21-app/50 §VendorDeviceIO contract lock),
     # unmapped vendor exceptions are wrapped as CaptureAdapterError(E_CAP_UNKNOWN)
     # so callers never see a raw vendor class.
     from app.capture.vendor_device_io import CaptureAdapterError, E_CAP_UNKNOWN

@@ -1,4 +1,4 @@
-"""Tests for BE.envelope: Universal Response Envelope shape (spec/03-error-manage)."""
+"""Tests for BE.envelope: Universal Response Envelope shape (02-spec/03-error-manage)."""
 
 from __future__ import annotations
 

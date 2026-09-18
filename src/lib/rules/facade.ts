@@ -1,6 +1,6 @@
 // Plan 79 step 13. Rule facade (fake IndexedDB implementation).
 //
-// Contract: .lovable/pending-facades/01-rule-facade.md
+// Contract: .ai-memory/pending-facades/01-rule-facade.md
 // Model:    src/lib/rules/model.ts
 // Storage seam reused from src/lib/projects/facade.ts (ProjectRepositoryFacade).
 //

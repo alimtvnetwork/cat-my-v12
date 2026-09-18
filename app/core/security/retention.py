@@ -6,7 +6,7 @@ predates the multi-policy worker and is kept only for v1 callers still
 resolving `AuditLogRetention.prune()`. New code MUST NOT import from
 here; do not add fields, do not widen the API. Removal is scheduled
 after all v1 callers migrate to the worker (tracked in
-`.lovable/memory/v2/plan20/00-baseline-gap.md` §G2 follow-up).
+`.ai-memory/memory/v2/plan20/00-baseline-gap.md` §G2 follow-up).
 
 Contract (frozen):
   - ``AuditLogRetention.prune(now=...)`` deletes rows with ``ts < now - max_age_seconds``.

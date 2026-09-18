@@ -10,7 +10,7 @@ bash .githooks/install.sh
 ```
 
 This sets `core.hooksPath` to `.githooks` so `pre-commit` runs on every
-`git commit`. The hook only runs when files under `spec/21-app/shell/`,
+`git commit`. The hook only runs when files under `02-spec/21-app/shell/`,
 `linter-scripts/{check-ui-backend-map,check-ipc-examples,fixtures/...}`,
 `src/`, or `app/` are staged.
 

@@ -1,6 +1,6 @@
 """Three-tier typed error base classes.
 
-Anchor: spec/21-app/40-error-manage.md §1–§3, §7.
+Anchor: 02-spec/21-app/40-error-manage.md §1–§3, §7.
 
 - `DomainError` — expected, user-actionable (e.g. bad input, no matching rule).
 - `InfraError`  — transient/retryable per §4 (only tier that retries).

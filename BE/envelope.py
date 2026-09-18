@@ -1,6 +1,6 @@
 """Universal Response Envelope for BE.
 
-Implements `spec/03-error-manage/02-error-architecture/05-response-envelope/`
+Implements `02-spec/03-error-manage/02-error-architecture/05-response-envelope/`
 04-response-envelope-reference.md exactly:
 
     {

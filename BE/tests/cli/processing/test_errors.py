@@ -1,11 +1,11 @@
 """Plan 90 Step 67 - negative-path suite for `processing-cli watch`.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Acceptance #2: the watch loop
+- `02-spec/21-app/75-processing-cli.md` §Acceptance #2: the watch loop
   MUST process each message exactly once AND MUST continue after a
   per-message failure. Bubbling an `AppError` from a single poison
   file breaks both invariants; this suite pins that.
-- `spec/21-app/76-cli-log-and-ipc.md` §"Message lifecycle": poison
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Message lifecycle": poison
   files must be acked so they cannot be re-picked forever (rename to
   `*.msg.ack.json`).
 - `BE/cli/common/ipc.py::receive` - raises `E_IPC_PAYLOAD_INVALID`

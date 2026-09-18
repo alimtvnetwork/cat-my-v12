@@ -4,8 +4,8 @@ Wires together Steps 9-14: config (`get_settings`), structured JSON logging
 (`configure_logging`), and frozen-envelope exception handlers
 (`register_exception_handlers`). Steps 16-19 mount routers here.
 
-Spec: spec/21-app/backend-implementation-request-v1.md
-Guideline: spec/coding-guidelines/python.md (functions ≤ 15 lines, typed at boundary).
+Spec: 02-spec/21-app/backend-implementation-request-v1.md
+Guideline: 02-spec/coding-guidelines/python.md (functions ≤ 15 lines, typed at boundary).
 """
 
 from __future__ import annotations

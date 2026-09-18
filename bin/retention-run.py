@@ -2,12 +2,12 @@
 """Plan 90 Step 101/102 - `bin/retention-run.py`: Task-DB retention worker.
 
 Anchors:
-- ``spec/21-app/72-audit-persistence.md`` §"Retention" (retention worker
+- ``02-spec/21-app/72-audit-persistence.md`` §"Retention" (retention worker
   is the ONLY delete path for RunSession + child rows + artifact files).
-- ``spec/21-app/76-cli-log-and-ipc.md`` §"Bootstrap" (single-shot CLI
+- ``02-spec/21-app/76-cli-log-and-ipc.md`` §"Bootstrap" (single-shot CLI
   that emits ONE Universal Envelope on stdout; human progress on stderr).
-- ``spec/21-app/78-retention-schedule.md`` (loop mode contract).
-- ``spec/03-error-manage/02-error-architecture/05-response-envelope/``
+- ``02-spec/21-app/78-retention-schedule.md`` (loop mode contract).
+- ``02-spec/03-error-manage/02-error-architecture/05-response-envelope/``
   (Universal Envelope; PascalCase; Results always an array).
 
 Modes

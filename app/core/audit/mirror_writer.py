@@ -5,7 +5,7 @@ Pushes each AuditEvent to Supabase `public.audit_events` via
 mirror exists so the TS server functions (`getAuditRetentionStatus`,
 `exportAuditBundle`) can read a stable, admin-gated projection.
 
-Contract: spec/21-app/72-audit-persistence.md §72.5 (mirror), §72.8 (errors).
+Contract: 02-spec/21-app/72-audit-persistence.md §72.5 (mirror), §72.8 (errors).
 
 Design notes (user rule): no em dashes in prose or comments. Errors
 surface with code + context; silent widening is not acceptable.

@@ -2,12 +2,12 @@
 
 Evaluate a single frame against a rule bundle and emit a Universal
 Envelope whose `Results[0]` is a per-image `ResultRecord` per
-`spec/21-app/24-results-json.md` §3.
+`02-spec/21-app/24-results-json.md` §3.
 
 ## Arguments
 
 - `--frame <path>` (required): image file to evaluate.
-- `--bundle <path>` (required): rule bundle JSON per `spec/21-app/70`.
+- `--bundle <path>` (required): rule bundle JSON per `02-spec/21-app/70`.
 - `--run-id <id>` (optional): explicit `RunSessionId`; auto-generated when omitted.
 - `--results-dir <dir>` (optional): append `<RunSessionId>.jsonl` there with `fsync`.
 
@@ -24,5 +24,5 @@ Empty bundle (`rules: []`) is a valid case: returns `Verdict = "Pass"`,
 
 ## Anchors
 
-`spec/21-app/75-processing-cli.md` §Acceptance #1, §Outputs;
-`spec/21-app/24-results-json.md` §3; `spec/21-app/22` §4 (verdict precedence).
+`02-spec/21-app/75-processing-cli.md` §Acceptance #1, §Outputs;
+`02-spec/21-app/24-results-json.md` §3; `02-spec/21-app/22` §4 (verdict precedence).

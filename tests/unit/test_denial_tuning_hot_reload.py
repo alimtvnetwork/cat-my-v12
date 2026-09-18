@@ -1,6 +1,6 @@
 """Plan 19 Step 7: hot-reload contract for `DenialRateLimiter`.
 
-Locks spec/21-app/69 §2:
+Locks 02-spec/21-app/69 §2:
   - a fresh `security` write retunes the in-process limiter with NO restart,
   - the very next request over the new (lowered) threshold trips
     `RateLimitedError` carrying `code == "E_SEC_RATE_LIMITED"`,

@@ -1,6 +1,6 @@
 """Plan 90 Step 53 tests - `worker-cli` help system.
 
-Locks (spec/13-generic-cli/09-help-system.md):
+Locks (02-spec/13-generic-cli/09-help-system.md):
 - Every registered subcommand has a matching `<name>.md` in
   `BE/cli/worker/helptext/` (drift guard for CI Step 95).
 - Root help: `worker-cli --help`, `worker-cli -h`, and

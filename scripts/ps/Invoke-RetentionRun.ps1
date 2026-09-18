@@ -18,17 +18,17 @@
         4 = usage / invalid CLI args.
 
     Wrapper-only failures use the reserved 9500-9599 range per
-    `.lovable/memory/26-split-db-cli-cheatsheet.md` §12. This wrapper
+    `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §12. This wrapper
     claims slots 9530-9531 (9510-9511 = db-bootstrap, 9512 = cli-import,
     9520-9523 = register-retention-task):
         9530 = venv-missing
         9531 = script-missing
 
     Anchors:
-        spec/11-powershell-integration/{00,03-integration-guide,04-error-codes}.md
-        spec/21-app/77-cli-powershell-and-release.md
-        spec/21-app/78-retention-scheduler.md
-        .lovable/memory/26-split-db-cli-cheatsheet.md §12
+        02-spec/11-powershell-integration/{00,03-integration-guide,04-error-codes}.md
+        02-spec/21-app/77-cli-powershell-and-release.md
+        02-spec/21-app/78-retention-scheduler.md
+        .ai-memory/memory/26-split-db-cli-cheatsheet.md §12
 
 .EXAMPLE
     .\scripts\ps\Invoke-RetentionRun.ps1 --retention-days 30 --dry-run | ConvertFrom-Json

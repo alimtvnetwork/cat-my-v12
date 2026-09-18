@@ -1,6 +1,6 @@
 """`RuleSetEnvelope` domain object shared by IndexedDB drafts and SQLite saves.
 
-Spec: `spec/21-app/80-ruleset-draft-save.md`.
+Spec: `02-spec/21-app/80-ruleset-draft-save.md`.
 
 The FE mirrors this exact shape into IndexedDB on every quick edit and
 POSTs the identical payload on Save. Keeping one dataclass on the BE

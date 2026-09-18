@@ -1,6 +1,6 @@
 """PresenceAbsence evaluator (Plan 90 Step 82).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.1.
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.1.
 
 Contract:
   Params:

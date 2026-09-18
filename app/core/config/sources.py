@@ -1,6 +1,6 @@
 """Config layer sources. Injectable dicts keep boot IO out of the resolver.
 
-Anchor: spec/21-app/27-config-surface.md §3 (Where each layer lives).
+Anchor: 02-spec/21-app/27-config-surface.md §3 (Where each layer lives).
 """
 from __future__ import annotations
 

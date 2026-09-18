@@ -1,5 +1,5 @@
 // Plan 71 Step 8: canonical error types.
-// Source of truth: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2
+// Source of truth: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2
 // Keep the field set aligned with that spec. Downstream (errorStore, GlobalErrorModal,
 // registry, showApiError) imports every type from this module; no local re-declarations.
 

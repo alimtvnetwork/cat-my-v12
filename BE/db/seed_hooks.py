@@ -1,15 +1,15 @@
 """Plan 90 Step 38 - tier-scoped seed hook extension points.
 
 Anchors:
-- ``spec/21-app/26-migrations.md`` §"Seed vs migration" (migrations are
+- ``02-spec/21-app/26-migrations.md`` §"Seed vs migration" (migrations are
   forward-only, additive, idempotent DDL; environment-specific rows are
   layered ON TOP via seed hooks that never mutate applied migrations).
-- ``spec/06-seedable-config-architecture/**`` (layered composition:
+- ``02-spec/06-seedable-config-architecture/**`` (layered composition:
   defaults -> repo -> user -> env -> flags; seeding follows the same
   "safe to re-run" contract).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9 (per-tier
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9 (per-tier
   isolation; seed hooks are tier-scoped and MUST NOT reach across tiers).
-- ``spec/05-split-db-architecture/**`` (Root/Task/Rules are separate
+- ``02-spec/05-split-db-architecture/**`` (Root/Task/Rules are separate
   SQLite files; the seed hook signature accepts an already-open
   guarded connection so the caller controls which tier is touched).
 

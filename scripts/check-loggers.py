@@ -8,7 +8,7 @@ def check_loggers():
     # Matches console.log, console.error, console.warn (excluding // comments if possible, but basic regex is fine for strict enforcement)
     pattern = re.compile(r'[^/]console\.(error|log|warn)\(')
     
-    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'coverage', '.lovable', 'scripts', 'generated', '.venv']
+    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'coverage', '.ai-memory', 'scripts', 'generated', '.venv']
     # Exclude the logger utility itself
     exclude_files = ['client-logger.ts']
     

@@ -10,7 +10,7 @@
  *
  * These builders exist so any TS server route (src/routes/api/...) can emit
  * a spec-conformant envelope in one line. Mirrors BE/envelope.py exactly
- * (see `spec/03-error-manage/02-error-architecture/05-response-envelope/`).
+ * (see `02-spec/03-error-manage/02-error-architecture/05-response-envelope/`).
  */
 
 const CORRELATION_HEADER = "X-Correlation-Id";

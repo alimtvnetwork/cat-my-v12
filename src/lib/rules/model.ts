@@ -1,9 +1,9 @@
 // Plan 79 step 11. V4 Rule domain model + Zod schema + type guards.
 //
 // Sources of truth:
-//   .lovable/memory/features/rule-category-project-model.md
-//   .lovable/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
-//   spec/21-app/53-ui-improvements-v4.md sections 1, 4, 5
+//   .ai-memory/memory/features/rule-category-project-model.md
+//   .ai-memory/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
+//   02-spec/21-app/53-ui-improvements-v4.md sections 1, 4, 5
 //
 // This file is data-only: no imports of components, no persistence, no
 // side effects. Persistence lives behind `src/lib/rules/facade.ts` (step 13).
@@ -53,7 +53,7 @@ export const PocketSizeSchema = z.union([
   z.literal(8),
 ]);
 
-// --- Rule condition (opaque here; owned by spec/21-app/47) ---------------
+// --- Rule condition (opaque here; owned by 02-spec/21-app/47) ---------------
 
 // The condition shape is defined elsewhere. From this model's perspective the
 // only guarantee we need is that a condition is a plain object. Facades and

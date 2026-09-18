@@ -62,7 +62,7 @@ export function parseDeviceSelection(input: unknown): { vendor: CaptureVendor; s
   throw new Error("E_CFG_BAD_INPUT: serial");
 }
 // ---- Capture error envelope (Plan 15 Step 10) --------------------------
-// Locked codes from spec/21-app/67-v2-discovery-contract.md Failure Taxonomy.
+// Locked codes from 02-spec/21-app/67-v2-discovery-contract.md Failure Taxonomy.
 export const CAPTURE_ERROR_CODES = [
   "E_SEC_UNAUTH",
   "E_SEC_DENIED",

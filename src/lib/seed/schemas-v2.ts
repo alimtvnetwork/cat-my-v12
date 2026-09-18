@@ -3,11 +3,11 @@
 // Runs at facade load time. Bad JSON surfaces as a `SeedBundleValidationError`
 // carrying a structured `.issues[]` list (kind + path + expected + got +
 // message). The orchestrator wraps that into a CapturedError with a
-// correlationId (per spec/21-app/40-error-manage.md Appendix A) — never a
+// correlationId (per 02-spec/21-app/40-error-manage.md Appendix A) — never a
 // silent render glitch.
 //
 // Shape frozen by:
-//   .lovable/plans/subtasks/86-ui-v4-json-seed-facade-completion/
+//   .ai-memory/plans/subtasks/86-ui-v4-json-seed-facade-completion/
 //     SS-10-frozen-seed-surface-matrix.md
 //
 // What this file enforces:

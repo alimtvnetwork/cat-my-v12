@@ -1,7 +1,7 @@
 """Integration test — capture → dispatch → results append (end-to-end thin slice).
 
 Closes audit finding F-56 (integration tier of pytest pyramid).
-Anchor: spec/21-app/13-dispatcher.md §2, spec/21-app/24-results.md §4.
+Anchor: 02-spec/21-app/13-dispatcher.md §2, 02-spec/21-app/24-results.md §4.
 """
 from __future__ import annotations
 

@@ -6,7 +6,7 @@
 
 ## Context
 
-Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.lovable/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
+Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.ai-memory/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
 
 ## Root cause (one sentence)
 

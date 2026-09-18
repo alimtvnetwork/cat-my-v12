@@ -2,7 +2,7 @@
 
 Covers:
 - Bounded run on the in-memory stub yields Ok envelope with FramesEmitted=0
-  and StoredKeys=[] (spec/21-app/40-error-manage.md §3: no fabricated frames,
+  and StoredKeys=[] (02-spec/21-app/40-error-manage.md §3: no fabricated frames,
   therefore no fabricated storage blobs).
 - Unknown serial surfaces E_CAM_NOT_CONNECTED end-to-end.
 - Vendor provider fails loud with E_CLI_UNSUPPORTED_HOST.

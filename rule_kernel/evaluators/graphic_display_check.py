@@ -1,6 +1,6 @@
 """GraphicDisplayCheck evaluator (Plan 90 Step 87).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.5.
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.5.
 
 Contract:
   Bound regions: 1 x `ImageRegion` (required, wire-shape same as

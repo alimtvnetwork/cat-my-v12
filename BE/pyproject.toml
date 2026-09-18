@@ -8,7 +8,7 @@ packages = ["BE", "BE.app", "BE.app.db.writers", "BE.app.domain", "BE.app.facade
 [project]
 name = "be"
 version = "0.1.0"
-description = "Control Automation public HTTP surface (FastAPI). See Plan 88, spec/21-app/backend-implementation-request-v1.md."
+description = "Control Automation public HTTP surface (FastAPI). See Plan 88, 02-spec/21-app/backend-implementation-request-v1.md."
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115",
