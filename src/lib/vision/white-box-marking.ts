@@ -30,6 +30,29 @@ export interface WhiteBoxMarkingResult {
   boxes: WhiteBoxMark[];
 }
 
+const RGBA_STRIDE = 4;
+const RED_OFFSET = 0;
+const GREEN_OFFSET = 1;
+const BLUE_OFFSET = 2;
+const ALPHA_OFFSET = 3;
+const OPAQUE_ALPHA = 255;
+const LUMA_RED_WEIGHT = 0.299;
+const LUMA_GREEN_WEIGHT = 0.587;
+const LUMA_BLUE_WEIGHT = 0.114;
+const TWO_BIT_GRAY_LEVELS = [0, 85, 170, 255] as const;
+const TWO_BIT_GRAY_BREAKS = [64, 128, 192] as const;
+const AUTO_THRESHOLD_NO_MATCH = 256;
+const MIN_COMPONENT_AREA_RATIO = 0.00008;
+const MAX_MARKING_SIZE_RATIO = 0.85;
+const BOX_BORDER_RGBA = [255, 0, 0, 255] as const;
+const LABEL_BACKGROUND_RGBA = [255, 255, 255, 255] as const;
+const LABEL_TEXT_RGBA = [0, 0, 0, 255] as const;
+const DIGIT_WIDTH_PX = 3;
+const DIGIT_HEIGHT_PX = 5;
+const DIGIT_GAP_PX = 1;
+const LABEL_PADDING_PX = 1;
+
+// Tiny bitmap font used to draw stable box numbers directly onto the canvas pixels.
 const DIGITS: Record<string, readonly string[]> = {
   "0": ["111", "101", "101", "101", "111"],
   "1": ["010", "110", "010", "010", "111"],
@@ -132,25 +155,28 @@ export async function readImageFile(file: File): Promise<WhiteBoxMarkingInput> {
 }
 
 function assertRgba(input: WhiteBoxMarkingInput): void {
-  const expected = input.width * input.height * 4;
+  const expected = input.width * input.height * RGBA_STRIDE;
   if (input.width <= 0 || input.height <= 0) throw new Error("image dimensions must be positive");
   if (input.rgba.length !== expected) throw new Error(`rgba length mismatch: ${input.rgba.length}`);
 }
 
 function toTwoBitGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
-  const gray = new Uint8ClampedArray(rgba.length / 4);
-  for (let index = 0; index < rgba.length; index += 4) {
-    const lum = 0.299 * rgba[index] + 0.587 * rgba[index + 1] + 0.114 * rgba[index + 2];
-    gray[index / 4] = quantize(lum);
+  const gray = new Uint8ClampedArray(rgba.length / RGBA_STRIDE);
+  for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {
+    const lum =
+      LUMA_RED_WEIGHT * rgba[index + RED_OFFSET] +
+      LUMA_GREEN_WEIGHT * rgba[index + GREEN_OFFSET] +
+      LUMA_BLUE_WEIGHT * rgba[index + BLUE_OFFSET];
+    gray[index / RGBA_STRIDE] = quantize(lum);
   }
   return gray;
 }
 
 function quantize(value: number): number {
-  if (value < 64) return 0;
-  if (value < 128) return 85;
-  if (value < 192) return 170;
-  return 255;
+  if (value < TWO_BIT_GRAY_BREAKS[0]) return TWO_BIT_GRAY_LEVELS[0];
+  if (value < TWO_BIT_GRAY_BREAKS[1]) return TWO_BIT_GRAY_LEVELS[1];
+  if (value < TWO_BIT_GRAY_BREAKS[2]) return TWO_BIT_GRAY_LEVELS[2];
+  return TWO_BIT_GRAY_LEVELS[3];
 }
 
 function clampByte(value: number): number {
@@ -183,23 +209,23 @@ function findWhiteBoxes(
 }
 
 function autoThreshold(gray: Uint8ClampedArray, width: number, region: SearchRegion): number {
-  const counts: Record<number, number> = { 0: 0, 85: 0, 170: 0, 255: 0 };
+  const counts: Record<number, number> = Object.fromEntries(TWO_BIT_GRAY_LEVELS.map((level) => [level, 0]));
   for (let y = region.y; y < region.y + region.height; y += 1) {
     for (let x = region.x; x < region.x + region.width; x += 1) counts[gray[y * width + x]] += 1;
   }
-  const background = [0, 85, 170, 255].reduce((best, level) => (counts[level] > counts[best] ? level : best), 0);
-  return [85, 170, 255].find((level) => level > background && counts[level] > 0) ?? 256;
+  const background = TWO_BIT_GRAY_LEVELS.reduce((best, level) => (counts[level] > counts[best] ? level : best), 0);
+  return TWO_BIT_GRAY_LEVELS.find((level) => level > background && counts[level] > 0) ?? AUTO_THRESHOLD_NO_MATCH;
 }
 
 function autoMinArea(region: SearchRegion): number {
-  return Math.max(2, Math.round(region.width * region.height * 0.00008));
+  return Math.max(2, Math.round(region.width * region.height * MIN_COMPONENT_AREA_RATIO));
 }
 
 function looksLikeMarking(component: Component, region: SearchRegion): boolean {
   if (component.x1 <= component.x0 || component.y1 <= component.y0) return false;
   const componentWidth = component.x1 - component.x0 + 1;
   const componentHeight = component.y1 - component.y0 + 1;
-  return componentWidth < region.width * 0.85 && componentHeight < region.height * 0.85;
+  return componentWidth < region.width * MAX_MARKING_SIZE_RATIO && componentHeight < region.height * MAX_MARKING_SIZE_RATIO;
 }
 
 function clampRegion(width: number, height: number, region: SearchRegion | undefined): SearchRegion {
@@ -282,13 +308,13 @@ function readingOrder(a: WhiteBoxMark, b: WhiteBoxMark): number {
 }
 
 function grayToRgba(gray: Uint8ClampedArray): Uint8ClampedArray {
-  const out = new Uint8ClampedArray(gray.length * 4);
+  const out = new Uint8ClampedArray(gray.length * RGBA_STRIDE);
   for (let index = 0; index < gray.length; index += 1) {
-    const pos = index * 4;
-    out[pos] = gray[index];
-    out[pos + 1] = gray[index];
-    out[pos + 2] = gray[index];
-    out[pos + 3] = 255;
+    const pos = index * RGBA_STRIDE;
+    out[pos + RED_OFFSET] = gray[index];
+    out[pos + GREEN_OFFSET] = gray[index];
+    out[pos + BLUE_OFFSET] = gray[index];
+    out[pos + ALPHA_OFFSET] = OPAQUE_ALPHA;
   }
   return out;
 }
@@ -304,19 +330,30 @@ function drawRect(rgba: Uint8ClampedArray, width: number, height: number, box: W
   const x2 = box.x + box.width - 1;
   const y2 = box.y + box.height - 1;
   for (let x = box.x; x <= x2; x += 1) {
-    setPixel(rgba, width, height, x, box.y, [255, 0, 0, 255]);
-    setPixel(rgba, width, height, x, y2, [255, 0, 0, 255]);
+    setPixel(rgba, width, height, x, box.y, BOX_BORDER_RGBA);
+    setPixel(rgba, width, height, x, y2, BOX_BORDER_RGBA);
   }
   for (let y = box.y; y <= y2; y += 1) {
-    setPixel(rgba, width, height, box.x, y, [255, 0, 0, 255]);
-    setPixel(rgba, width, height, x2, y, [255, 0, 0, 255]);
+    setPixel(rgba, width, height, box.x, y, BOX_BORDER_RGBA);
+    setPixel(rgba, width, height, x2, y, BOX_BORDER_RGBA);
   }
 }
 
 function drawLabel(rgba: Uint8ClampedArray, width: number, height: number, box: WhiteBoxMark): void {
   const text = String(box.number);
-  fillRect(rgba, width, height, box.x, box.y, text.length * 4 + 2, 7, [255, 255, 255, 255]);
-  [...text].forEach((digit, offset) => drawDigit(rgba, width, height, box.x + 1 + offset * 4, box.y + 1, digit));
+  const labelWidth = text.length * (DIGIT_WIDTH_PX + DIGIT_GAP_PX) + LABEL_PADDING_PX * 2;
+  const labelHeight = DIGIT_HEIGHT_PX + LABEL_PADDING_PX * 2;
+  fillRect(rgba, width, height, box.x, box.y, labelWidth, labelHeight, LABEL_BACKGROUND_RGBA);
+  [...text].forEach((digit, offset) =>
+    drawDigit(
+      rgba,
+      width,
+      height,
+      box.x + LABEL_PADDING_PX + offset * (DIGIT_WIDTH_PX + DIGIT_GAP_PX),
+      box.y + LABEL_PADDING_PX,
+      digit,
+    ),
+  );
 }
 
 function drawDigit(
@@ -329,7 +366,7 @@ function drawDigit(
 ): void {
   DIGITS[digit]?.forEach((bits, row) => {
     [...bits].forEach((bit, col) => {
-      if (bit === "1") setPixel(rgba, width, height, x + col, y + row, [0, 0, 0, 255]);
+      if (bit === "1") setPixel(rgba, width, height, x + col, y + row, LABEL_TEXT_RGBA);
     });
   });
 }
@@ -358,9 +395,9 @@ function setPixel(
   color: readonly number[],
 ): void {
   if (x < 0 || y < 0 || x >= width || y >= height) return;
-  const pos = (y * width + x) * 4;
-  rgba[pos] = color[0];
-  rgba[pos + 1] = color[1];
-  rgba[pos + 2] = color[2];
-  rgba[pos + 3] = color[3];
+  const pos = (y * width + x) * RGBA_STRIDE;
+  rgba[pos + RED_OFFSET] = color[RED_OFFSET];
+  rgba[pos + GREEN_OFFSET] = color[GREEN_OFFSET];
+  rgba[pos + BLUE_OFFSET] = color[BLUE_OFFSET];
+  rgba[pos + ALPHA_OFFSET] = color[ALPHA_OFFSET];
 }

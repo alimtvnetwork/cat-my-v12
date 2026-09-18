@@ -2,14 +2,14 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { HttpBackendClient } from "../httpClient";
-import { useBackendMode } from "../mode";
+import { DEFAULT_BACKEND_URL, useBackendMode } from "../mode";
 
 vi.mock("@/lib/errors/notify", () => ({
   showToastError: vi.fn(),
 }));
 
 const server = setupServer(
-  http.post("http://127.0.0.1:8787/rules", async ({ request }) => {
+  http.post(`${DEFAULT_BACKEND_URL}/rules`, async ({ request }) => {
     const body = (await request.json()) as any;
     return HttpResponse.json({
       Status: {
@@ -48,7 +48,7 @@ afterEach(() => {
 
 describe("Rule Creation Integration", () => {
   it("creates a rule successfully and returns the mocked backend envelope", async () => {
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
 
     const payload = {

@@ -1,6 +1,6 @@
 import { useErrorStore } from "@/lib/stores/errorStore";
 import { lookupErrorCode } from "@/lib/errors";
-import { normalizeBackendBaseUrl, useBackendMode } from "./mode";
+import { useBackendMode } from "./mode";
 import { EnvelopeSchema } from "./envelope";
 import { Envelope } from "./types";
 import { newCorrelationId } from "@/types/errors";
@@ -27,11 +27,7 @@ export async function fetchBackend<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<Envelope<T>> {
-  const backendState = useBackendMode.getState();
-  const baseUrl = normalizeBackendBaseUrl(backendState.baseUrl);
-  if (baseUrl !== backendState.baseUrl) {
-    backendState.setBaseUrl(baseUrl);
-  }
+  const baseUrl = useBackendMode.getState().baseUrl;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;

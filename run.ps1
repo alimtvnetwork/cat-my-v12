@@ -26,6 +26,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$FrontendHostIp = "127.0.0.1"
+$FrontendHealthPath = "/setup"
+$FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
+$FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
+$BackendBaseUrl = "http://$HostIp`:$BePort"
 $jobs = @()
 
 try {
@@ -45,11 +50,11 @@ try {
     .\scripts\dev\wait-for-http.ps1 -Url "http://$HostIp`:$BePort/healthz" -TimeoutSec 60
 
     Write-Host "Starting frontend on port $FePort..."
-    $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --host 127.0.0.1 --port $FePort"
+    $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --host $FrontendHostIp --port $FePort"
     $jobs += $frontendProcess
 
     Write-Host "Waiting for frontend..."
-    .\scripts\dev\wait-for-http.ps1 -Url "http://127.0.0.1:$FePort/setup" -TimeoutSec 180
+    .\scripts\dev\wait-for-http.ps1 -Url $FrontendHealthUrl -TimeoutSec 180
 
     if (-not $NoShell) {
         Write-Host "Packaging Chromium shell..."
@@ -68,7 +73,7 @@ try {
         }
 
         Write-Host "Launching Chromium shell..."
-        $chromeArgs = "--app=http://127.0.0.1:$FePort`?backend=http://$HostIp`:$BePort"
+        $chromeArgs = "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl"
         $chromePaths = @(
             "C:\Program Files\Google\Chrome\Application\chrome.exe",
             "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -85,7 +90,7 @@ try {
             }
         }
         if (-not $chromeFound) {
-            Write-Host "Chrome/Edge not found in default paths. Please open http://127.0.0.1:$FePort?backend=http://$HostIp`:$BePort"
+            Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
         }
     } else {
         Write-Host "Running in --no-shell mode."
