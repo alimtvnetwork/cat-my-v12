@@ -3,24 +3,8 @@
 # Generated as a baseline; remove entries as links are fixed.
 # Baseline date: 2026-04-21 — count: 100
 
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:100:items
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:101:err
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:120:items
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:121:err
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:83:value
-spec/02-coding-guidelines/01-cross-language/02-boolean-principles/05-exemptions-and-api.md:84:err
-spec/02-coding-guidelines/01-cross-language/03-casting-elimination-patterns.md:452:val
-spec/02-coding-guidelines/01-cross-language/04-code-style/05-multi-line-formatting.md:264:apperror.Wrap(...
-spec/02-coding-guidelines/01-cross-language/15-master-coding-guidelines/04-type-safety.md:144:val
-spec/02-coding-guidelines/01-cross-language/15-master-coding-guidelines/04-type-safety.md:145:x
-spec/02-coding-guidelines/03-golang/04-golang-standards-reference/02-type-safety-and-errors.md:346:pluginResult.AppError(
-spec/02-coding-guidelines/03-golang/04-golang-standards-reference/02-type-safety-and-errors.md:346:src.AppError(
-spec/02-coding-guidelines/03-golang/04-golang-standards-reference/02-type-safety-and-errors.md:353:set.AppError(
-spec/02-coding-guidelines/03-golang/04-golang-standards-reference/02-type-safety-and-errors.md:95:src.AppError(
 spec/02-coding-guidelines/06-cicd-integration/00-overview.md:87:../17-consolidated-guidelines/00-overview.md
 spec/02-coding-guidelines/06-cicd-integration/07-performance.md:131:./00-overview.md#layer-1--portable-check-scripts-linters-cicdchecks
-spec/03-error-manage/02-error-architecture/06-apperror-package/01-apperror-reference/05-usage-and-adapters.md:70:err
-spec/09-code-block-system/08-checklist-blocks.md:92:url
 spec/12-cicd-pipeline-workflows/02-release-pipeline.md:98:./10-release-pipeline-issues-rca.md#issue-1--npm-ci-fails-lockfile-out-of-sync
 spec/12-cicd-pipeline-workflows/readme.md:25:images/ci-pipeline-flow.mmd
 spec/12-cicd-pipeline-workflows/readme.md:29:images/unified-architecture.mmd
@@ -70,7 +54,6 @@ spec/14-update/22-update-command-workflow.md:369:./15-config-file.md
 spec/14-update/diagrams/00-overview.md:39:../16-update-command-workflow.md
 spec/14-update/readme.md:32:images/unified-architecture.mmd
 spec/14-update/readme.md:36:images/self-update-flow.mmd
-spec/17-consolidated-guidelines/09-code-block-system.md:604:url
 
 # Missing-section waivers (anchor not found in target file)
 spec/02-coding-guidelines/06-cicd-integration/07-performance.md:131:./00-overview.md#layer-1--portable-check-scripts-linters-cicdchecks
