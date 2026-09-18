@@ -1,9 +1,9 @@
 // Plan 79 step 16. Project effective-chain expander (V4).
 //
 // Sources of truth:
-//   .lovable/memory/features/rule-category-project-model.md (Invariants 2, 5)
-//   spec/21-app/53-ui-improvements-v4.md sections 4, 5
-//   .lovable/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
+//   .ai-memory/memory/features/rule-category-project-model.md (Invariants 2, 5)
+//   02-spec/21-app/53-ui-improvements-v4.md sections 4, 5
+//   .ai-memory/plans/subtasks/79-ui-improvements-v4/SS-04-domain-model.md
 //
 // What this module does (and only this):
 //   Given an ordered list of "root" rule ids the user picked for a project,
@@ -54,7 +54,7 @@ export interface ChainResult {
  * Expand a project's `rules: RuleId[]` into the full evaluation order.
  *
  * Matches the reference algorithm in
- * `.lovable/memory/features/rule-category-project-model.md` §Chain expander.
+ * `.ai-memory/memory/features/rule-category-project-model.md` §Chain expander.
  */
 export function computeEffectiveChain(
   rootRuleIds: readonly RuleId[],

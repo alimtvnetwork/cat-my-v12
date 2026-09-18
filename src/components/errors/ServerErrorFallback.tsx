@@ -2,7 +2,7 @@
 // Drop into `errorComponent` on any route, or render directly from a page when
 // a fetch throws a `BackendEnvelopeError` (see Plan 89 Phase 4).
 //
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md
 // Rules:
 //   - Always shows the user-safe `Errors.Message` (or the JS error message).
 //   - Stack frames render only in dev or when `responseStatus >= 500`, matching

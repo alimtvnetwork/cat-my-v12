@@ -52,7 +52,7 @@ Legend: DONE = file exists at named path, imported live. RELOCATED = file exists
 
 ### Docs
 
-- `spec/21-app/53-ui-improvements-v4.md` DONE (rich cross-referenced).
+- `02-spec/21-app/53-ui-improvements-v4.md` DONE (rich cross-referenced).
 - `docs/plan-72/README.md` DONE.
 - `docs/plan-100/README.md` MISSING. PENDING (Plan 82 step 94).
 

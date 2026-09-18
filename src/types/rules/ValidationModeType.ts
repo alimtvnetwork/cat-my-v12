@@ -1,6 +1,6 @@
 // Plan 42 step 6. Per-ruleset short-circuit policy. Parallel = v2-equivalent
 // AND-merge across all rules; Sequential = top-to-bottom with skip-on-first
-// non-PASS (see spec/21-app/49-validation-order.md).
+// non-PASS (see 02-spec/21-app/49-validation-order.md).
 
 export enum ValidationModeType {
   Parallel = "parallel",

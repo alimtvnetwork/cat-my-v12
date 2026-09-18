@@ -1,7 +1,7 @@
 """Plan 90 Step 63 - `processing-cli status` acceptance tests.
 
-Pins spec/21-app/75 §Subcommands (`status` presence + read-only shape) and
-spec/21-app/76 §"IPC protocol" (four drop-dir names).
+Pins 02-spec/21-app/75 §Subcommands (`status` presence + read-only shape) and
+02-spec/21-app/76 §"IPC protocol" (four drop-dir names).
 """
 
 from __future__ import annotations

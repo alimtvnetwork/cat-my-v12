@@ -30,8 +30,8 @@
 | 22   | `provider.test.tsx` (loading / ready / error / reload)                                | v3.479.0 |
 | 23   | `projects/__tests__/seed.test.ts` (end-to-end pipeline)                               | v3.480.0 |
 | 24   | `useCategoryOptions.test.tsx` on real `SeedProvider`                                  | v3.480.0 |
-| 25   | Locked spec `spec/21-app/53-ui-seed-facade.md`                                        | v3.481.0 |
-| 26   | Design-system pointer in `spec/24-app-ui-design-system/00-overview.md`                | v3.481.0 |
+| 25   | Locked spec `02-spec/21-app/53-ui-seed-facade.md`                                        | v3.481.0 |
+| 26   | Design-system pointer in `02-spec/24-app-ui-design-system/00-overview.md`                | v3.481.0 |
 | 27   | ESLint boundary rule (`E_BUG_SEED_LEAK`) in `eslint.config.js`                        | v3.482.0 |
 | 28   | Full sweep: tsgo 0, vitest 704/704                                                    | v3.482.0 |
 | 29   | Playwright smoke on cleared storage                                                   | v3.483.0 |
@@ -67,7 +67,7 @@ Screenshots: `docs/plan-72/1_projects.png` (first load, seeded projects visible)
 
 ## Rule 53 enforcement summary
 
-- Spec: `spec/21-app/53-ui-seed-facade.md` (LOCKED).
+- Spec: `02-spec/21-app/53-ui-seed-facade.md` (LOCKED).
 - Lint: `eslint.config.js` blocks `**/lib/seed/data/**` imports outside `src/lib/seed/**` with `E_BUG_SEED_LEAK`.
 - Tests: 4 canonical suites (`json-facade.test.ts`, `provider.test.tsx`, `projects/__tests__/seed.test.ts`, `useCategoryOptions.test.tsx`).
 - Runtime: `SeedProvider` mounted in `src/routes/__root.tsx`; consumers use `useSeedSlice(k)` or `useSeedBundle()`.

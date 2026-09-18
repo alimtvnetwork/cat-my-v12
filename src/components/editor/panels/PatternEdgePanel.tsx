@@ -1,5 +1,5 @@
 // PatternEdgePanel, Plan 32 slice 2 (SG-31-01).
-// Spec: spec/24-app-ui-design-system/05-rule-controller.md matrix row "PatternEdge".
+// Spec: 02-spec/24-app-ui-design-system/05-rule-controller.md matrix row "PatternEdge".
 // Contract: matches ParamsPatternEdge from src/lib/editor/schema.ts.
 //
 // Slice 1 (v3.202.0) shipped the schema, defaults and normalizers. This slice

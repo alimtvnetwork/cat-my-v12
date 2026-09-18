@@ -2,7 +2,7 @@
 
 Slug: backend-v1-diagrams-index
 Status: accepted
-Source of truth: `spec/21-app/backend-implementation-request-v1.md` (accepted)
+Source of truth: `02-spec/21-app/backend-implementation-request-v1.md` (accepted)
 Companions: `00-index.md` (table of contents), individual `NN-*.md` files (per-diagram notes).
 
 This README embeds every Mermaid diagram in Plan 88 Step 4 in reading order so downstream implementers (Steps 6-15, 30-55, 56-66) have one canonical page to cite. Do not edit the diagrams here; edit the per-file source and re-run Step 5 to refresh embeds.

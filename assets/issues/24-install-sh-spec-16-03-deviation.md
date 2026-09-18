@@ -2,12 +2,12 @@
 
 Status: accepted deviation (documented, not a bug)
 Owner: Plan 90 Step 90 verification
-Related: `packaging/installers/install.sh`, `packaging/installers/install.ps1`, `spec/16-generic-release/03-install-scripts.md`, Plan 90 Step 106
+Related: `packaging/installers/install.sh`, `packaging/installers/install.ps1`, `02-spec/16-generic-release/03-install-scripts.md`, Plan 90 Step 106
 
 ## Context
 
 Plan 90 Step 90 requires verifying `packaging/installers/install.sh`
-against `spec/16-generic-release/03-install-scripts.md` §"Bash Installer"
+against `02-spec/16-generic-release/03-install-scripts.md` §"Bash Installer"
 acceptance criteria before flipping the step to `[DONE]`.
 
 Verbatim user text from the plan file:
@@ -68,7 +68,7 @@ Accept the deviation as documented and flip Plan 90 Step 90 to
 - `packaging/installers/install.sh` (lines 1-248): orchestrator with
   no download step, no archive extract, no shell-profile PATH edit.
 - `packaging/installers/install.ps1` (lines 1-283): matching orchestrator.
-- `spec/16-generic-release/03-install-scripts.md` §"Bash Installer"
+- `02-spec/16-generic-release/03-install-scripts.md` §"Bash Installer"
   (lines 144-308): release-download contract that neither script
   currently implements.
 
@@ -81,6 +81,6 @@ Accept the deviation as documented and flip Plan 90 Step 90 to
   `curl | sh` guard, `detect_os` / `detect_arch`, archive download +
   `sha256sum` verification against `SHA256SUMS.txt`, shell-profile
   PATH registration, and `trap cleanup EXIT`).
-- Update `spec/16-generic-release/03-install-scripts.md` to name both
+- Update `02-spec/16-generic-release/03-install-scripts.md` to name both
   installer families explicitly (orchestrator vs release-download) so
   future audits do not confuse the two.

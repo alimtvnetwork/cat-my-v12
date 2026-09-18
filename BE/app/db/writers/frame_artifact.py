@@ -1,14 +1,14 @@
 """FrameArtifact Task-DB writer (Plan 90 Step 98).
 
 Owning specs:
-  - `spec/21-app/24-results-json.md` §"safe-zone evidence" (each judgment
+  - `02-spec/21-app/24-results-json.md` §"safe-zone evidence" (each judgment
     may reference one or more binary artifacts; DB row is the durable
     pointer, JSONL is a reproducible export).
-  - `spec/21-app/72-audit-persistence.md` §72.10 (facade owns the only
+  - `02-spec/21-app/72-audit-persistence.md` §72.10 (facade owns the only
     write path; retention worker is the only delete path).
-  - `spec/04-database-conventions/01-naming-conventions.md` (singular
+  - `02-spec/04-database-conventions/01-naming-conventions.md` (singular
     PascalCase, INTEGER epoch `*At`, no cross-tier FKs).
-  - `spec/coding-guidelines/python.md`: typed dataclasses, positive `if`,
+  - `02-spec/coding-guidelines/python.md`: typed dataclasses, positive `if`,
     every `except` logs once with operation + subject id.
 
 Root cause guarded (pre-Step-98): `RuleResult` (Step 97) recorded per-rule

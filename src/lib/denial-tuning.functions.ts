@@ -10,7 +10,7 @@ import { HttpMethod } from "@/lib/constants";
  * see the current threshold + window without a process restart.
  *
  * Admin controls are intentionally NOT exposed here in v2.0.3 (CLI /
- * server-fn only, per `.lovable/plans/pending/19-*.md` step 8 deferral).
+ * server-fn only, per `.ai-memory/plans/pending/19-*.md` step 8 deferral).
  */
 
 export type DenialTuning = {

@@ -1,7 +1,7 @@
 // Plan 86 Step 22: DomainFacade<T> contract.
 //
 // Frozen by:
-//   .lovable/plans/subtasks/86-ui-v4-json-seed-facade-completion/
+//   .ai-memory/plans/subtasks/86-ui-v4-json-seed-facade-completion/
 //     SS-09-facade-contract-additions.md
 //
 // This is the SINGLE seam every per-slice facade (projects, categories,

@@ -4,7 +4,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // Persists the body content and ordering of the right-bottom
 // Layers / Channels / Paths palette per rule, via the shared
 // ProjectRepositoryFacade (IndexedDB in the browser). No component
-// touches storage directly, per spec/21-app/52-sdk-facade-pattern.md.
+// touches storage directly, per 02-spec/21-app/52-sdk-facade-pattern.md.
 //
 // Shape:
 //   ca:palette-state:v1 -> Record<ruleId, PaletteState>

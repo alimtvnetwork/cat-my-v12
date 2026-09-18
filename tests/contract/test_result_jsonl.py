@@ -1,7 +1,7 @@
 """Contract test — results JSONL rows satisfy schema v1 and reject reference paths.
 
 Closes audit finding F-55 (contract tier of pytest pyramid).
-Anchor: spec/21-app/24-results.md §4.
+Anchor: 02-spec/21-app/24-results.md §4.
 """
 from __future__ import annotations
 

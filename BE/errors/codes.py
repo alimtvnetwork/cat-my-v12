@@ -1,11 +1,11 @@
 """Central `E_*` error-code registry for BE.
 
 Spec anchors:
-- `spec/21-app/40-error-manage.md` §5 — codes MUST live in a central enum; inventing
+- `02-spec/21-app/40-error-manage.md` §5 — codes MUST live in a central enum; inventing
   a code at a call site is `E_BUG_UNKNOWN_CODE`.
-- `spec/21-app/backend-implementation-request-v1.md` — reserved families
+- `02-spec/21-app/backend-implementation-request-v1.md` — reserved families
   `E_BE_*`, `E_CAM_*`, `E_SDK_*`, `E_SEC_*`, `E_BUG_*`.
-- `spec/coding-guidelines/python.md` — every boundary error uses one wire code
+- `02-spec/coding-guidelines/python.md` — every boundary error uses one wire code
   from Appendix A; PascalCase class names, SCREAMING_SNAKE wire values.
 
 Owning step: Plan 88 Step 11. Consumers: Step 12 `AppError`, Step 13 handlers,
@@ -58,8 +58,8 @@ class ErrorCode(StrEnum):
     E_BUG_ENUM_ORPHAN = "E_BUG_ENUM_ORPHAN"
 
     # CLI boundary (E_CLI_*): worker/processing CLI preflight + host/asset checks.
-    # Plan 90 Step 10, anchored in `spec/21-app/74-worker-cli.md`,
-    # `spec/21-app/75-processing-cli.md`, `spec/21-app/77-cli-powershell-and-release.md`.
+    # Plan 90 Step 10, anchored in `02-spec/21-app/74-worker-cli.md`,
+    # `02-spec/21-app/75-processing-cli.md`, `02-spec/21-app/77-cli-powershell-and-release.md`.
     E_CLI_PREFLIGHT_FAILED = "E_CLI_PREFLIGHT_FAILED"
     E_CLI_UNSUPPORTED_HOST = "E_CLI_UNSUPPORTED_HOST"
     E_CLI_CHECKSUM_MISMATCH = "E_CLI_CHECKSUM_MISMATCH"
@@ -69,13 +69,13 @@ class ErrorCode(StrEnum):
     E_CLI_USAGE = "E_CLI_USAGE"
 
     # IPC boundary (E_IPC_*): JSONL envelope emission failures per
-    # `spec/21-app/76-cli-log-and-ipc.md`.
+    # `02-spec/21-app/76-cli-log-and-ipc.md`.
     E_IPC_UNKNOWN_KIND = "E_IPC_UNKNOWN_KIND"
     E_IPC_WRITE_FAILED = "E_IPC_WRITE_FAILED"
     E_IPC_PAYLOAD_INVALID = "E_IPC_PAYLOAD_INVALID"
 
     # Log substrate (E_LOG_*): rotating log root + index-lock issues per
-    # `spec/21-app/76-cli-log-and-ipc.md`.
+    # `02-spec/21-app/76-cli-log-and-ipc.md`.
     E_LOG_ROOT_UNWRITABLE = "E_LOG_ROOT_UNWRITABLE"
     E_LOG_INDEX_LOCKED = "E_LOG_INDEX_LOCKED"
 

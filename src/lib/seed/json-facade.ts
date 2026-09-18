@@ -7,7 +7,7 @@ import { parseCatSeedBundle } from "./schemas";
 // ./data/bundle.json with real content; today it is an empty bundle so
 // the import graph resolves. Validation failures reject every call;
 // SeedProvider (step 10) converts them into CapturedError per
-// spec/03-error-manage (no silent fallback in the facade itself).
+// 02-spec/03-error-manage (no silent fallback in the facade itself).
 
 export type CatSeedBundleLoader = () => Promise<unknown>;
 

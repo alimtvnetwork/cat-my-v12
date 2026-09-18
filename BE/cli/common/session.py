@@ -1,10 +1,10 @@
 """Plan 90 Step 18 - session lifecycle context manager for CLI entrypoints.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Session lifecycle" (open at boot,
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Session lifecycle" (open at boot,
   close with exit code on shutdown, guarantee under exception).
-- `spec/21-app/74-worker-cli.md` §"Acceptance #6" (exit-code contract).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §11 (single `run()`
+- `02-spec/21-app/74-worker-cli.md` §"Acceptance #6" (exit-code contract).
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §11 (single `run()`
   entrypoint; stdout reserved for Universal Envelope).
 
 This module is the ONE wiring seam that binds:

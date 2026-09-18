@@ -1,6 +1,6 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 /**
- * BugErrorModal - UI surface for `BugError` (spec/21-app/40-error-manage.md §6).
+ * BugErrorModal - UI surface for `BugError` (02-spec/21-app/40-error-manage.md §6).
  *
  * Contract:
  * - Never shows a stack trace.

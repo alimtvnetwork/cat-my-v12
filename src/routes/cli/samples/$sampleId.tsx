@@ -10,7 +10,7 @@
  * unreachable through the UI, so a bad bookmark silently 404'd against
  * the JSON API instead of rendering an operator-facing empty state.
  *
- * Honest-wire choices (no false-OK, per `spec/03-error-manage/`):
+ * Honest-wire choices (no false-OK, per `02-spec/03-error-manage/`):
  *  - `CatSample` (`BE/app/domain/cat_sample.py`) is
  *    `{id, rule_id, label, captured_at}`. There is NO `image_url`, NO
  *    `exif` blob, NO `rule_run_history` array, and NO `POST /samples/{id}/rerun`
@@ -306,7 +306,7 @@ function CliSampleViewer() {
                 </ul>
                 <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">
                   Extend <code>BE/app/domain/cat_sample.py</code> to populate. Rendering fabricated
-                  values here would violate <code>spec/03-error-manage/</code> no-false-OK.
+                  values here would violate <code>02-spec/03-error-manage/</code> no-false-OK.
                 </p>
               </div>
             </section>

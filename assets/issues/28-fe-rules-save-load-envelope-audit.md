@@ -6,7 +6,7 @@
 
 ## Context
 
-Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.lovable/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
+Verbatim user ask: "Audit existing FE surfaces (`src/routes/**`, `src/components/**`) and file `.ai-memory/issues/` entries for any surface still using legacy flat error shape or bespoke fetch (baseline for envelope migration)."
 
 Read-only audit turn. No code changed here; migration is owned by Step 104.
 
@@ -20,7 +20,7 @@ Read-only audit turn. No code changed here; migration is owned by Step 104.
 - `src/lib/rules/saveRuleSet.ts:47-52` - reads `body.Results` directly; on empty Results, fabricates an `E_BE_UNKNOWN` error client-side instead of trusting the envelope shape.
 - `src/lib/rules/loadRuleSet.ts:39` - identical hand-rolled pattern for GET `/rules/{id}/set`.
 - `rg beFetch src/` -> 0 hits. Wrapper still not landed (blocked on Step 102).
-- No `AbortController` / correlation id header on either call; retries and dedupe from `spec/03-error-manage/01-error-resolution/` cannot function.
+- No `AbortController` / correlation id header on either call; retries and dedupe from `02-spec/03-error-manage/01-error-resolution/` cannot function.
 
 ## Scope
 
@@ -35,6 +35,6 @@ Isolated to `src/lib/rules/{saveRuleSet,loadRuleSet}.ts` and their tests under `
 
 ## Related
 
-- Plan 90 Steps 102-105 (`.lovable/plans/pending/90-worker-and-processing-cli.md`)
-- Plan 89 Phase 4 (`.lovable/plans/pending/89-error-manage-01-error-resolution.md`)
+- Plan 90 Steps 102-105 (`.ai-memory/plans/pending/90-worker-and-processing-cli.md`)
+- Plan 89 Phase 4 (`.ai-memory/plans/pending/89-error-manage-01-error-resolution.md`)
 - Issue #23 (camera-bridge sibling case, same class of defect)

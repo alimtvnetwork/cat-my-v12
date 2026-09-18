@@ -12,14 +12,14 @@
     child's `$LASTEXITCODE` (0 / 3 / 4) unchanged.
 
     Wrapper-only failures use the reserved 9500-9599 range per
-    `.lovable/memory/26-split-db-cli-cheatsheet.md` §12:
+    `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §12:
         9510 = venv-missing
         9511 = python-not-found
 
     Anchors:
-        spec/11-powershell-integration/{00,03-integration-guide,04-error-codes}.md
-        spec/21-app/77-cli-powershell-and-release.md
-        .lovable/memory/26-split-db-cli-cheatsheet.md §12
+        02-spec/11-powershell-integration/{00,03-integration-guide,04-error-codes}.md
+        02-spec/21-app/77-cli-powershell-and-release.md
+        .ai-memory/memory/26-split-db-cli-cheatsheet.md §12
 
 .EXAMPLE
     .\scripts\ps\Invoke-DbBootstrap.ps1 --db-root C:\ProgramData\vision-app\db
@@ -38,7 +38,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Reserved wrapper-only exit codes (9500-9599). Do NOT collide with the
-# child's own 0/2/3/4/5 range from spec/21-app/74-worker-cli.md.
+# child's own 0/2/3/4/5 range from 02-spec/21-app/74-worker-cli.md.
 $EXIT_VENV_MISSING     = 9510
 $EXIT_PYTHON_NOT_FOUND = 9511
 

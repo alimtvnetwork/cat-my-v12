@@ -1,6 +1,6 @@
 """Plan 19 Steps 4-5: admin-write path for the `security` section.
 
-Locks spec/21-app/69 §1-§2:
+Locks 02-spec/21-app/69 §1-§2:
   - non-positive ints raise `E_CFG_INVALID_SECURITY` at write time,
   - non-admin callers raise `E_SEC_ROLE_DENIED` and NEVER touch the row,
   - admin success emits `I_SEC_ADMIN_WRITE` with

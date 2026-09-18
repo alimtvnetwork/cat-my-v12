@@ -1,6 +1,6 @@
 """Plan 90 Step 105 - Install manifest reader/writer (`install.json`).
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md``
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md``
 §"Install manifest" (added in this step).
 
 Root cause guarded (one sentence): Step 104 orchestrates installer actions
@@ -29,8 +29,8 @@ Design invariants
 Anchors
 -------
 - ``BE/app/installer_plan.py`` (Step 104): action names + criticality flags.
-- ``spec/03-error-manage/02-error-architecture/05-response-envelope/``.
-- ``spec/coding-guidelines/python.md``: typed boundaries, no bare except.
+- ``02-spec/03-error-manage/02-error-architecture/05-response-envelope/``.
+- ``02-spec/coding-guidelines/python.md``: typed boundaries, no bare except.
 """
 
 from __future__ import annotations

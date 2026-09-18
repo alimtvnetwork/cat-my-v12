@@ -2,9 +2,9 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 71 Step 15: error history persistence.
 //
 // The Zustand `useErrorStore` is in-memory only. To satisfy
-// spec/03-error-manage/02-error-architecture/04-error-modal/05-error-history-persistence.md
+// 02-spec/03-error-manage/02-error-architecture/04-error-modal/05-error-history-persistence.md
 // we snapshot the bounded FIFO to durable browser storage via the shared
-// SDK facade (spec/21-app/52-sdk-facade-pattern.md) so history survives
+// SDK facade (02-spec/21-app/52-sdk-facade-pattern.md) so history survives
 // reloads. IndexedDB is used in the browser (private-mode / SSR fall back
 // to the in-memory implementation). No React Query API surface yet, we
 // stay behind the same facade so the eventual backend swap only touches

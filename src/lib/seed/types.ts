@@ -5,7 +5,7 @@
 // behind `UiSeedFacade` (see `./facade.ts` in a later step). Business
 // logic must never import a JSON file from `src/lib/seed/data/*` directly.
 //
-// Naming follows spec/21-app/52-sdk-facade-pattern.md section 4:
+// Naming follows 02-spec/21-app/52-sdk-facade-pattern.md section 4:
 //   domain objects are prefixed `Cat<Concept>` so a grep proves no vendor
 //   type leaks. `Cat` here means "our own model", not "category".
 

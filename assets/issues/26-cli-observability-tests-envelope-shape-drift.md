@@ -25,10 +25,10 @@ appears polluted by an earlier test's global state.
 
 ## Evidence
 
-- `.lovable/evidence/plan-90/step-100/pytest-BE.txt` (full suite: 9 failed / 1409 passed)
-- `.lovable/evidence/plan-90/step-100/failures-detail.txt` (isolated `test_bad_source` still fails with `KeyError: 0`)
-- `.lovable/evidence/plan-90/step-100/failures-detail-2.txt` (`test_problem_taxonomy` + `test_help_system` PASS in isolation, confirming those 3 failures are cross-test pollution not source bugs)
-- Envelope spec: `spec/03-error-manage/`
+- `.ai-memory/evidence/plan-90/step-100/pytest-BE.txt` (full suite: 9 failed / 1409 passed)
+- `.ai-memory/evidence/plan-90/step-100/failures-detail.txt` (isolated `test_bad_source` still fails with `KeyError: 0`)
+- `.ai-memory/evidence/plan-90/step-100/failures-detail-2.txt` (`test_problem_taxonomy` + `test_help_system` PASS in isolation, confirming those 3 failures are cross-test pollution not source bugs)
+- Envelope spec: `02-spec/03-error-manage/`
 
 ## Fix (deferred to Phase 13, before UI wiring)
 

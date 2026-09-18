@@ -13,7 +13,7 @@
 #
 # Anchors:
 #   packaging/installers/install.ps1 (Step 106/124/125/129)
-#   spec/21-app/77-cli-powershell-and-release.md
+#   02-spec/21-app/77-cli-powershell-and-release.md
 #   assets/issues/24-install-sh-spec-16-03-deviation.md
 
 Describe 'install.ps1 - static contract' {

@@ -7,7 +7,7 @@ import { ListChecks } from "lucide-react";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
-// Implements spec/21-app/38-results-screen.md (v1 UI wiring, M4).
+// Implements 02-spec/21-app/38-results-screen.md (v1 UI wiring, M4).
 // Reads from the in-memory run store; JSONL backing lands in M6.
 export const Route = createFileRoute("/results")({
   head: () => ({

@@ -48,7 +48,7 @@ export function WorkerHealthBanner({
 
   // Ref used by `useViewportSafe` to hide the floating card when its
   // bounding rect would clip the viewport (split-view / narrow layouts).
-  // Enforces `.lovable/spec/commands/25-hide-clipped-floating-notices.md`.
+  // Enforces `.ai-memory/02-spec/commands/25-hide-clipped-floating-notices.md`.
   const cardRef = useRef<HTMLDivElement | null>(null);
   const fits = useViewportSafe(cardRef);
 
@@ -124,7 +124,7 @@ export function WorkerHealthBanner({
 
   // Colors: the floating variant is only rendered for the offline case
   // (see gating above), so it uses the spec's `--toast-error-*` tokens
-  // (spec/03-error-manage/02-error-architecture/03-notification-colors.md).
+  // (02-spec/03-error-manage/02-error-architecture/03-notification-colors.md).
   // The compact variant lives inside the validate dialog and reuses the
   // existing --ca-* semantic tones so it stays consistent with the dialog.
   const compactTone = loading

@@ -1,7 +1,7 @@
 // Plan 78 step 1 (I-SU-05 camera setup surface).
 //
 // Zod schema + defaults for CameraSetting records defined by
-// spec/24-app-ui-design-system/17-camera-setup.md. The schema mirrors the
+// 02-spec/24-app-ui-design-system/17-camera-setup.md. The schema mirrors the
 // spec's validation rules 1:1 so the same object can later be validated by a
 // server function; the route today uses it only client-side.
 import { z } from "zod";

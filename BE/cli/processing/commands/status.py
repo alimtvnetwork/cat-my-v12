@@ -1,8 +1,8 @@
 """Plan 90 Step 63 - `processing-cli status` read-only reporter.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Subcommands (`status`).
-- `spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (drop-dir layout).
+- `02-spec/21-app/75-processing-cli.md` §Subcommands (`status`).
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (drop-dir layout).
 - Shared root resolver: `BE/cli/common/paths.py:resolve_root`.
 - Drop-dir names: `BE/cli/common/ipc_bootstrap.py:DROP_DIRS`.
 

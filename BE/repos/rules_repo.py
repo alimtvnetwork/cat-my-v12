@@ -4,7 +4,7 @@ Protocol lives here (not `BE.sdk_facade`) because rules are a persisted
 domain slice, not a hardware/blob SDK. Same shape though: `runtime_checkable`
 Protocol, in-memory adapter for tests + FE unblocking, vendor adapter that
 today raises `E_SDK_INIT_FAILED` (503) until Plan 88 wires the real SQLite
-bundle reader (`spec/21-app/70-rule-bundle-import-export.md`).
+bundle reader (`02-spec/21-app/70-rule-bundle-import-export.md`).
 
 Route wiring:
 - `BE/routes/rules.py` calls `get_rules_repo()` (module-level accessor) so

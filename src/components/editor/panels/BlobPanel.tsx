@@ -1,5 +1,5 @@
 // BlobPanel, Plan 31 step 16.
-// Spec: spec/24-app-ui-design-system/05-rule-controller.md L49
+// Spec: 02-spec/24-app-ui-design-system/05-rule-controller.md L49
 //   (minArea / maxArea / expectedCount).
 // Contract: matches ParamsBlob from src/lib/editor/schema.ts.
 

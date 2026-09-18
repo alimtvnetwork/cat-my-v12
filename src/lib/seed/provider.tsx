@@ -8,7 +8,7 @@ import { useDataSource } from "@/lib/data-source";
 // SeedProvider (Plan 72 step 10). Owns a single UiSeedFacade instance,
 // loads the bundle once on mount, and exposes { facade, status, bundle,
 // error } to descendants via context. Errors are logged with the full
-// Zod path list (spec/03-error-manage: never silent) and surfaced via
+// Zod path list (02-spec/03-error-manage: never silent) and surfaced via
 // status so downstream UIs can render a boundary state rather than a
 // blank screen.
 
@@ -76,7 +76,7 @@ export function SeedProvider({ children, facade }: SeedProviderProps) {
         // Plan 72 step 18: boot-time slice inventory. One structured log
         // line so ops can confirm which bundle actually loaded on this
         // build (source + version) and spot missing slices before UIs
-        // render empty states silently (spec/03-error-manage §3).
+        // render empty states silently (02-spec/03-error-manage §3).
         ClientLogger.info(
           `[seed] SeedProvider ready source=${activeFacade.source} version=${next.version}`,
           {

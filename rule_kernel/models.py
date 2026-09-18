@@ -4,10 +4,10 @@ Field names mirror the `Results[]` wire shape emitted by
 `BE/cli/processing/commands/evaluate.py` (`SchemaVersion=2`, `RuleSet`,
 `Judgments`). PascalCase serialization is handled at the CLI / route
 boundary, not here: kernel code stays snake_case per
-`spec/coding-guidelines/python.md`.
+`02-spec/coding-guidelines/python.md`.
 
-Author-status vocabulary comes from `spec/21-app/24-runsession-record.md`
-and `spec/21-app/49-validation-order.md`: Active | Silent | Inactive.
+Author-status vocabulary comes from `02-spec/21-app/24-runsession-record.md`
+and `02-spec/21-app/49-validation-order.md`: Active | Silent | Inactive.
 Mode vocabulary: "full" (evaluate every Active rule) | "short-circuit"
 (early-exit at first FAIL).
 """

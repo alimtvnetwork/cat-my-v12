@@ -8,8 +8,8 @@ Locks the write path used by operator device selection:
   - unauthenticated caller is refused with `E_SEC_NOAUTH`.
   - unsupported vendor is a hard `UnsupportedVendorError` before any audit row.
 
-Anchors: spec/21-app/67-v2-discovery-contract.md §Select,
-`.lovable/plans/pending/25-v2.0.7-vendor-sdk-hardening.md` SS-08.
+Anchors: 02-spec/21-app/67-v2-discovery-contract.md §Select,
+`.ai-memory/plans/pending/25-v2.0.7-vendor-sdk-hardening.md` SS-08.
 """
 from __future__ import annotations
 

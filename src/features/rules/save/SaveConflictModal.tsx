@@ -1,6 +1,6 @@
 // Plan 90 Step 135. Conflict-resolution modal bound to `useSaveRuleSet`.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // Root cause guarded: Step 134 landed the SaveState state-machine but the
 // conflict branch (`{ kind: "conflict", localEnvelope, error }`) had no UI

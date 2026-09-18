@@ -1,6 +1,6 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 136. Resolvers that turn a `SaveConflictModal` click into
-// the actual side-effects documented in spec/21-app/80-ruleset-draft-save.md.
+// the actual side-effects documented in 02-spec/21-app/80-ruleset-draft-save.md.
 //
 // Root cause guarded: Step 135 shipped the presentational modal with three
 // injected resolver props but no default implementation, so any consumer

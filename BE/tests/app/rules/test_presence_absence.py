@@ -1,6 +1,6 @@
 """Tests for PresenceAbsence evaluator (Plan 90 Step 82).
 
-Pins spec/21-app/33-rule-catalog.md §3.1:
+Pins 02-spec/21-app/33-rule-catalog.md §3.1:
   - Mode=Present + coverage >= MinMatchPercent -> Pass.
   - Mode=Present + coverage <  MinMatchPercent -> Fail, ReasonCode=RuleBelowThreshold.
   - Mode=Absent + coverage <  MinMatchPercent -> Pass.

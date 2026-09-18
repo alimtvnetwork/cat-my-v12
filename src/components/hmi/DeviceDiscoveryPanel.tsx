@@ -35,7 +35,7 @@ type CaptureFailure = {
   correlationId: string | null;
 };
 
-// Human-facing copy for each locked E_* code (spec/21-app/67-v2-discovery-contract.md).
+// Human-facing copy for each locked E_* code (02-spec/21-app/67-v2-discovery-contract.md).
 const CAPTURE_ERROR_COPY: Record<CaptureErrorCode, string> = {
   E_SEC_UNAUTH: "Sign in required to change the active camera.",
   E_SEC_DENIED: "Admin role required to change the active camera.",

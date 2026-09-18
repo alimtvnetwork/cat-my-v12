@@ -1,6 +1,6 @@
 """Plan 90 Step 130 - Rollback-on-critical-failure module.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md``
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md``
 §"Upgrade lifecycle" (subsection "Rollback on critical failure").
 
 Root cause guarded (one sentence): Step 129 shipped the upgrade planner
@@ -38,7 +38,7 @@ Anchors:
 - ``BE/app/installer_upgrade.py`` (Step 128): produces the backup path.
 - ``BE/app/install_manifest.py`` (Step 105): manifest reader/writer +
   atomic-write primitive we mirror here.
-- ``spec/coding-guidelines/python.md``: typed boundaries, no bare except,
+- ``02-spec/coding-guidelines/python.md``: typed boundaries, no bare except,
   positive if, small pure functions.
 """
 

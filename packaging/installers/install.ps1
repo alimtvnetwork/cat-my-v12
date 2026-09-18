@@ -17,7 +17,7 @@
         install.sh.
 
     Wrapper-only exit codes (reserved 9500-9599 per
-    `.lovable/memory/26-split-db-cli-cheatsheet.md` §12):
+    `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §12):
         9530 = installer plan renderer failed
         9531 = a critical action failed (see child stderr)
         9532 = doctor reported blocking errors
@@ -27,8 +27,8 @@
         9536 = upgrade planner failed to back up install.json
 
     Anchors:
-        spec/21-app/77-cli-powershell-and-release.md
-        spec/21-app/79-installer-retention-timing.md §Orchestrator, §Doctor
+        02-spec/21-app/77-cli-powershell-and-release.md
+        02-spec/21-app/79-installer-retention-timing.md §Orchestrator, §Doctor
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'Install')]

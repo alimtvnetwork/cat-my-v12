@@ -1,7 +1,7 @@
 """Plan 90 Step 103 - retention installer template renderers.
 
 Owning module: ``BE/app/retention_installer.py``.
-Spec: ``spec/21-app/79-installer-retention-timing.md``.
+Spec: ``02-spec/21-app/79-installer-retention-timing.md``.
 """
 
 from __future__ import annotations

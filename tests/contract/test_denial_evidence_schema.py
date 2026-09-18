@@ -1,8 +1,8 @@
 """Contract tests for the Plan 29 denial-burst tuning evidence pipeline.
 
 Anchors:
-  - `spec/21-app/69a-v2-denial-tuning-evidence.md` (row schema + methodology)
-  - `spec/21-app/40-error-manage.md` A.1 (audit codes + detail payloads)
+  - `02-spec/21-app/69a-v2-denial-tuning-evidence.md` (row schema + methodology)
+  - `02-spec/21-app/40-error-manage.md` A.1 (audit codes + detail payloads)
   - `app/core/security/denial_metrics.py` (loader + evaluate_all)
   - `app/core/security/remediation.py` (BURST_APPROACHING + DENIAL_BURST emit)
   - `app/supervisor/boot.py::_record_thresholds_loaded`

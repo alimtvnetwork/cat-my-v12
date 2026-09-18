@@ -11,7 +11,7 @@ prepends new sections to changelog.md and release_notes.md, updates README.md.
 
 Source of the "Added" bullets, in order of preference:
   1. --notes PATH (markdown file, contents pasted verbatim)
-  2. spec/25-app-audit/latest/99-consolidated.md "Summary" section
+  2. 02-spec/25-app-audit/latest/99-consolidated.md "Summary" section
   3. Fallback single bullet with title only.
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 CHANGELOG = ROOT / "changelog.md"
 RELNOTES = ROOT / "release_notes.md"
-CONSOLIDATED = ROOT / "spec/25-app-audit/latest/99-consolidated.md"
+CONSOLIDATED = ROOT / "02-spec/25-app-audit/latest/99-consolidated.md"
 
 VERSION_RE = re.compile(r"\*\*Version:\*\*\s*([0-9]+)\.([0-9]+)\.([0-9]+)")
 

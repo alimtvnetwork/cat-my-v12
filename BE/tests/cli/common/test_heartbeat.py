@@ -16,7 +16,7 @@ def _drain(root: Path, dir_: str) -> list[ipc.Message]:
 
 
 def test_default_interval_matches_spec() -> None:
-    # spec/21-app/76-cli-log-and-ipc.md: heartbeat cadence is 5s.
+    # 02-spec/21-app/76-cli-log-and-ipc.md: heartbeat cadence is 5s.
     assert DEFAULT_INTERVAL_S == 5.0
 
 

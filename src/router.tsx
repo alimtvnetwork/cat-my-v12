@@ -4,7 +4,7 @@ import { routeTree } from "./routeTree.gen";
 import { showGlobalError } from "./lib/errors/notify";
 
 // Plan 71 Step 13: `meta.hasVisibility` opt-out.
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md
 declare module "@tanstack/react-query" {
   interface Register {
     queryMeta: { hasVisibility?: boolean };

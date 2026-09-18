@@ -1,6 +1,6 @@
 """Plan 90 Step 60 - `processing-cli watch` acceptance tests.
 
-Pins spec/21-app/75 §Acceptance #2 (poll IPC dir, exactly-once on
+Pins 02-spec/21-app/75 §Acceptance #2 (poll IPC dir, exactly-once on
 `(RunId, Seq)`, emit ResultReady to sibling dir) and the argparse
 guard rails on the exit-condition flags.
 

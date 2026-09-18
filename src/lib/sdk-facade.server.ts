@@ -2,7 +2,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 import { CaptureError, type CaptureErrorCode, newCorrelationId } from "./capture.shared";
 
 /**
- * SDK Facade retry helper (spec/21-app/52-sdk-facade-pattern.md).
+ * SDK Facade retry helper (02-spec/21-app/52-sdk-facade-pattern.md).
  *
  * Vendor SDK calls (enumerate / open / grab) occasionally fail with
  * transient conditions (bus contention, GigE ARP, USB re-enum). We retry

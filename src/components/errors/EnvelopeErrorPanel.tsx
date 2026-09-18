@@ -1,6 +1,6 @@
 // Renders Universal Response Envelope `Errors` payload plus dev-only stack frames.
 //
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2, §4
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2, §4
 //
 // Plan 90 Step 127 (root cause, one sentence): frame lists and the delegated
 // request block were rendered with bespoke `<ol>`/`<pre>` JSX that duplicated

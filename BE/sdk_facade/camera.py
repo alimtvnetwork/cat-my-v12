@@ -4,7 +4,7 @@ Mirrors the Daheng MERCURY2 surface documented in `sdk/daheng-galaxy-sdk-manual.
 §2 so FE work (device pickers, exposure/gain/ROI/trigger controls, opto I/O
 diagnostics) can proceed before a physical camera is wired.
 
-Rules (see `spec/21-app/40-error-manage.md` §3):
+Rules (see `02-spec/21-app/40-error-manage.md` §3):
 - No fabricated frame bytes. `grab()` raises `E_CAM_CAPTURE_FAILED` with
   message "not implemented" so callers cannot mistake the stub for real
   pixels. A future adapter overrides this.

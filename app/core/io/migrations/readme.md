@@ -2,7 +2,7 @@
 
 Forward-only, additive SQL migrations for the three SQLite databases.
 
-Anchors: `spec/21-app/26-migrations.md` (runner contract), `spec/21-app/21-root-db.md`, `spec/21-app/22-task-db.md`, `spec/21-app/23-rules-db-overrides.md`.
+Anchors: `02-spec/21-app/26-migrations.md` (runner contract), `02-spec/21-app/21-root-db.md`, `02-spec/21-app/22-task-db.md`, `02-spec/21-app/23-rules-db-overrides.md`.
 
 ## Layout
 

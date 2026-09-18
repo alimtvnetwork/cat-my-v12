@@ -30,7 +30,7 @@ import { DraftOriginType } from "@/lib/rules/draftStore";
 //     line so operators can see when they are stripped.
 //
 // EditorRuleKind -> RuleKind mapping (PROVISIONAL, documented as such
-// in spec/21-app/80-ruleset-draft-save.md; each letter maps to the
+// in 02-spec/21-app/80-ruleset-draft-save.md; each letter maps to the
 // closest domain kind so wire validation passes and Params preserve
 // the raw letter for a lossless reverse mapping in Step 142):
 //   C ("check")   -> "match"

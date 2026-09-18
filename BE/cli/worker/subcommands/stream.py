@@ -1,7 +1,7 @@
 """Plan 90 Step 46 - `worker-cli stream` subcommand (start | stop).
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`stream start|stop`) and
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`stream start|stop`) and
   §Acceptance #3 / #6 (single-open invariant + exit-code contract).
 - Lease: `BE.cli.worker.camera_lease` (Step 45). `stream start` REQUIRES
   the lease to already be held by this host for the requested serial.

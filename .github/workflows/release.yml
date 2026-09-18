@@ -1,11 +1,11 @@
 # Plan 90 Step 123 - Release workflow scaffold.
 #
-# Owning spec: spec/21-app/77-cli-powershell-and-release.md
+# Owning spec: 02-spec/21-app/77-cli-powershell-and-release.md
 # Anchors:
 #   BE/app/installer_binaries.py                     (BINARIES inventory)
 #   packaging/pyinstaller/db-bootstrap.spec          (Step 117)
 #   packaging/pyinstaller/retention-run.spec         (Step 117)
-#   .lovable/memory/26-split-db-cli-cheatsheet.md    (exit-code registry)
+#   .ai-memory/memory/26-split-db-cli-cheatsheet.md    (exit-code registry)
 #
 # Root cause guarded (one sentence): Steps 117-122 landed the
 # PyInstaller specs, install.json Binaries schema, record-binary CLI,
@@ -51,7 +51,7 @@ on:
         required: false
         default: "false"
   # Tag trigger is intentionally disabled until Step 125 (verify-install)
-  # lands - see spec/21-app/77-cli-powershell-and-release.md §"Gates".
+  # lands - see 02-spec/21-app/77-cli-powershell-and-release.md §"Gates".
   # push:
   #   tags: ["v*"]
 

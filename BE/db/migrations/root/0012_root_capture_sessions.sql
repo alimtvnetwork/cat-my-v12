@@ -3,12 +3,12 @@
 -- Anchors:
 --   * spec/21-app/76-cli-log-and-ipc.md §"Database ownership" (Root DB
 --     owns `capture_sessions`; DDL table is singular `CaptureSession`
---     per .lovable/memory/26-split-db-cli-cheatsheet.md §9).
+--     per .ai-memory/memory/26-split-db-cli-cheatsheet.md §9).
 --   * spec/21-app/74-worker-cli.md §"Session lifecycle" (`open` opens a
 --     session, `capture`/`stream` bind frames to it, `close` finalises).
 --   * spec/04-database-conventions/01-naming-conventions.md §"Foreign
 --     keys" (FK column name equals referenced PK exactly).
---   * .lovable/memory/26-split-db-cli-cheatsheet.md §9 "Cross-tier FKs
+--   * .ai-memory/memory/26-split-db-cli-cheatsheet.md §9 "Cross-tier FKs
 --     are forbidden": Task-DB `Frame.CaptureSessionId` will store this
 --     row's PK as an opaque integer key, NOT a SQL FOREIGN KEY.
 --   * spec/21-app/26-migrations.md §1.

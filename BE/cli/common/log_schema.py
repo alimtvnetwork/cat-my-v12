@@ -1,6 +1,6 @@
 """Plan 90 Step 16 - JSONL log-line lint.
 
-Anchor: `spec/21-app/76-cli-log-and-ipc.md` §"JSONL record schema (every line)".
+Anchor: `02-spec/21-app/76-cli-log-and-ipc.md` §"JSONL record schema (every line)".
 Reference impl: `BE/cli/common/logger.py` (Step 14) is the only writer.
 
 Contract enforced (matches the writer, not looser):

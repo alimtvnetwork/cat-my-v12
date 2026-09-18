@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Regenerates the bundled prompt index from `.lovable/prompts/*.md` into
-// `.lovable/prompts/_bundle.md`. This project has no `standalone-scripts/`
+// Regenerates the bundled prompt index from `01-prompts/*.md` into
+// `01-prompts/_bundle.md`. This project has no `standalone-scripts/`
 // tree; the release ceremony still calls this step, so it runs as a no-op
 // when there are no prompt sources.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
-const SRC = ".lovable/prompts";
+const SRC = ".ai-memory/prompts";
 const OUT = join(SRC, "_bundle.md");
 
 if (!existsSync(SRC)) {

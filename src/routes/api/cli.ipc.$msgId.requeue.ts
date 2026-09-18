@@ -11,7 +11,7 @@
  * Until the BE ships that handler, this route returns a well-formed
  * Universal Envelope with `E_BE_NOT_IMPLEMENTED` so the FE
  * `GlobalErrorModal` renders the operator-facing "not available yet"
- * copy from `spec/03-error-manage/`. That is loud-failure by design:
+ * copy from `02-spec/03-error-manage/`. That is loud-failure by design:
  * clicking Requeue must never silently succeed.
  *
  * Method contract:

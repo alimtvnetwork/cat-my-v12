@@ -1,14 +1,14 @@
 """Plan 90 Step 21 - `worker-cli open-stream` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §"Subcommands" (`stream start|stop`)
+- `02-spec/21-app/74-worker-cli.md` §"Subcommands" (`stream start|stop`)
   and §"Acceptance #6" (exit-code contract).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single envelope
   on stdout; JSONL log lines via the shared logger).
 - `BE/sdk_facade/camera.py` (`open` -> `start_stream` -> `grab` loop ->
   `stop_stream` -> `close`; `grab` on `InMemoryCameraFacade` raises
   `E_CAM_CAPTURE_FAILED` per the "no fabricated frames" guardrail in
-  `spec/21-app/40-error-manage.md` §3 and `sdk/daheng-galaxy-sdk-manual.md` §2).
+  `02-spec/21-app/40-error-manage.md` §3 and `sdk/daheng-galaxy-sdk-manual.md` §2).
 
 Contract:
     Args:

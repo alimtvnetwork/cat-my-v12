@@ -1,7 +1,7 @@
 import { Toaster as Sonner } from "sonner";
 
 // Plan 71 Step 14: sonner tokens per spec.
-// Spec: spec/03-error-manage/02-error-architecture/03-notification-colors.md
+// Spec: 02-spec/03-error-manage/02-error-architecture/03-notification-colors.md
 // Every color/border comes from a `--toast-*` HSL triple defined in styles.css.
 // No hardcoded colors here so light/dark themes flip in one place.
 

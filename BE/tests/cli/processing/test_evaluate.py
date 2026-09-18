@@ -1,7 +1,7 @@
 """Plan 90 Step 58 - `processing-cli evaluate` acceptance tests.
 
-Pins spec/21-app/75 §Acceptance #1 (envelope with `Results = [ResultRecord]`),
-spec/21-app/24 §3 counter invariants for the empty-bundle case, and the
+Pins 02-spec/21-app/75 §Acceptance #1 (envelope with `Results = [ResultRecord]`),
+02-spec/21-app/24 §3 counter invariants for the empty-bundle case, and the
 honesty-rule refusal path (`E_BE_UNAVAILABLE`) when a bundle declares
 rules the evaluator cannot yet execute.
 """

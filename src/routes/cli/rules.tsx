@@ -15,7 +15,7 @@
  *  - `UpdatedAt` is intentionally rendered as `"-"`: the `CatRule` wire
  *    (`BE/app/domain/cat_rule.py`) is currently `{id, name, version,
  *    enabled}` with no `updated_at` field. Fabricating a timestamp
- *    would violate the "no false-OK" rule in `spec/03-error-manage/`,
+ *    would violate the "no false-OK" rule in `02-spec/03-error-manage/`,
  *    so we surface the absence honestly and add a header note.
  *  - `Provider` reads from the envelope-level `provider` (facade class
  *    name) rather than a per-row field, because the facade owns every

@@ -1,6 +1,6 @@
 """Plan 21 Step 7 wiring test: append_event fires the mirror writer.
 
-Contract: spec/21-app/72-audit-persistence.md §72.5 (mirror is best-effort;
+Contract: 02-spec/21-app/72-audit-persistence.md §72.5 (mirror is best-effort;
 local SQLite is the source of truth; mirror failure MUST NOT block local
 persistence).
 """

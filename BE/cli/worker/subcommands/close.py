@@ -1,7 +1,7 @@
 """Plan 90 Step 45 - `worker-cli close` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`close`), §Acceptance #3
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`close`), §Acceptance #3
   (close is idempotent).
 - Lease implementation: `BE.cli.worker.camera_lease`.
 

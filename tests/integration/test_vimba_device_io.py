@@ -1,4 +1,4 @@
-"""Fault-mode tests for the Vimba adapter (spec/21-app/65-v2-vendor-vimba.md).
+"""Fault-mode tests for the Vimba adapter (02-spec/21-app/65-v2-vendor-vimba.md).
 
 Uses a `FakeVimbaCamera` shaped like `vmbpy.Camera` (no SDK import) so CI
 can prove class-name mapping, TriggerSelector-first arm sequence, and
@@ -239,7 +239,7 @@ def test_transient_timeout_then_success() -> None:
 
 
 def test_unknown_exception_wrapped_as_capture_adapter_error() -> None:
-    # Per SS-02 contract lock (spec/21-app/50-capture-modules.md): unmapped
+    # Per SS-02 contract lock (02-spec/21-app/50-capture-modules.md): unmapped
     # vendor exceptions from grab MUST be wrapped as
     # CaptureAdapterError(E_CAP_UNKNOWN); no untyped leaks across the seam.
     class WeirdError(Exception):

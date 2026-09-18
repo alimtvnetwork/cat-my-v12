@@ -9,11 +9,11 @@ feature: 01-plan-64
 Purpose: capture the standing "next 5 steps" prompt driving Plan 64 Section C
 work, so the sequencing is auditable outside the chat transcript.
 
-Referenced spec: `spec/24-app-ui-design-system/09-UI-improvements-v2.md`.
+Referenced spec: `02-spec/24-app-ui-design-system/09-UI-improvements-v2.md`.
 
 Rules the log follows, per user memory:
 
-1. Never re-create per-invocation archive files under `.lovable/prompts/`, only
+1. Never re-create per-invocation archive files under `01-prompts/`, only
    edit the canonical mirror if the prompt body itself changes.
 2. Never ask for plan approval, implement directly.
 3. Never use em dashes in prose or code.
@@ -36,4 +36,4 @@ Still open (short list, see spec for full):
 - Steps 95 to 100: Density and A11y passes, Playwright pass, tick checklist.
 
 Open architectural ambiguity: web-only on Cloud vs desktop Tauri with local
-SQLite vs hybrid, tracked in `.lovable/ambiguity-questions/`.
+SQLite vs hybrid, tracked in `.ai-memory/ambiguity-questions/`.

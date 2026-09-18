@@ -1,6 +1,6 @@
 // LightingDrawer, Plan 31 step 11.
-// Spec: spec/24-app-ui-design-system/02-layout.md L74-83 (dock + geometry)
-//       spec/24-app-ui-design-system/08-testing.md LC-01..LC-12 (acceptance).
+// Spec: 02-spec/24-app-ui-design-system/02-layout.md L74-83 (dock + geometry)
+//       02-spec/24-app-ui-design-system/08-testing.md LC-01..LC-12 (acceptance).
 //
 // Token-only styling: ca-* surface/ink tokens, hmi-* spacing tokens. No hex,
 // no bg-white/text-black. All coded log lines are the caller's responsibility;

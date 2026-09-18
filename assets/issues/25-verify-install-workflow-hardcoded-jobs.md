@@ -14,9 +14,9 @@ the workflow with a third job `post-publish-smoke` under a
 
 ## Evidence
 
-- `.lovable/evidence/plan-90/step-100/failures-detail.txt` (traceback)
+- `.ai-memory/evidence/plan-90/step-100/failures-detail.txt` (traceback)
 - `.github/workflows/verify-install.yml` (jobs: `posix`, `windows`, `post-publish-smoke`)
-- `.lovable/plans/pending/90-worker-and-processing-cli.md` L130 (Step 95 rationale)
+- `.ai-memory/plans/pending/90-worker-and-processing-cli.md` L130 (Step 95 rationale)
 
 ```
 AssertionError: assert {'posix', 'post-publish-smoke', 'windows'} == {'posix', 'windows'}

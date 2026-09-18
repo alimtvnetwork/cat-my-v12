@@ -1,9 +1,9 @@
 """Plan 90 Step 53 - shared help-text loader and interceptor.
 
 Anchors:
-- `spec/13-generic-cli/09-help-system.md` (Markdown per subcommand,
+- `02-spec/13-generic-cli/09-help-system.md` (Markdown per subcommand,
   interceptor pattern, `toolname help` root listing).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract": normal handler
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract": normal handler
   paths emit ONE Universal Envelope on stdout. Help output is the
   documented exception (also true for argparse `--help` before this
   change), and PowerShell wrappers key off `$LASTEXITCODE`, not stdout

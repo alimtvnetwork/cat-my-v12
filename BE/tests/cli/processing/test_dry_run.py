@@ -1,8 +1,8 @@
 """Plan 90 Step 61 - `processing-cli dry-run` acceptance tests.
 
 Pins:
-- spec/21-app/75 §Subcommands: dry-run rehearses evaluate/batch.
-- spec/21-app/24 §1 Write policy: dry-run MUST NOT persist JSONL.
+- 02-spec/21-app/75 §Subcommands: dry-run rehearses evaluate/batch.
+- 02-spec/21-app/24 §1 Write policy: dry-run MUST NOT persist JSONL.
 - Honesty rule: bundles with active rules surface as per-frame Failures[]
   carrying `E_BE_UNAVAILABLE`, not fabricated verdicts.
 """

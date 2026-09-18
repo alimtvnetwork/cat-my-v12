@@ -9,7 +9,7 @@ Scans one or more Markdown files for blocks of the form:
     ```
 
 Each block is validated against `$defs["<ref>"]` in whichever
-`spec/21-app/shell/schemas/ipc/*.schema.json` declares that entry.
+`02-spec/21-app/shell/schemas/ipc/*.schema.json` declares that entry.
 
 The validator is a minimal Draft 2020-12 subset covering constructs used
 by this project's IPC schemas: type (string/list), required, properties,
@@ -140,12 +140,12 @@ def scan_markdown(md_files: list[Path]) -> list[tuple[Path, str, Any]]:
 
 
 def collect_md(root: Path) -> list[Path]:
-    shell = root / "spec" / "21-app" / "shell"
+    shell = root / "02-spec" / "21-app" / "shell"
     return list(shell.rglob("*.md"))
 
 
 def run(root: Path) -> list[str]:
-    schema_dir = root / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+    schema_dir = root / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
     if not schema_dir.is_dir():
         return [f"{ERROR_CODE}: missing schema dir {schema_dir}"]
     ref_index, _roots = build_ref_index(schema_dir)

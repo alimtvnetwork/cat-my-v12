@@ -1,10 +1,10 @@
 """Plan 90 Step 31 - IPC drop-directory bootstrap.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (four drop-dirs under
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (four drop-dirs under
   `<APP_IPC_ROOT>`: `worker-out/`, `processing-in/`, `processing-out/`,
   `main-in/`).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §8 (env override chain).
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §8 (env override chain).
 
 Contract:
 

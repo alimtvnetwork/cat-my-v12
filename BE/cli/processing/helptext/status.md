@@ -36,4 +36,4 @@ run session).
 Universal envelope, exit 0 on success. Unresolvable host env
 (`E_CLI_UNSUPPORTED_HOST`) is the only expected failure path.
 
-Anchor: `spec/21-app/75-processing-cli.md` §Subcommands.
+Anchor: `02-spec/21-app/75-processing-cli.md` §Subcommands.

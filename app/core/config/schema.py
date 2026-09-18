@@ -1,6 +1,6 @@
 """Knob schema — the source of truth for allowed keys, types, ranges, enums.
 
-Anchor: spec/21-app/27-config-surface.md §2 (Master Knob Table), §4 (unknown = raise).
+Anchor: 02-spec/21-app/27-config-surface.md §2 (Master Knob Table), §4 (unknown = raise).
 Guideline: no magic numbers — all bounds live in this file next to their key.
 """
 from __future__ import annotations

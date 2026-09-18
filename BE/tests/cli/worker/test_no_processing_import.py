@@ -3,7 +3,7 @@
 Root cause guarded: if `BE.cli.processing.*` (rule loader, evaluator kernel,
 result writer) leaks into the `worker-cli` module graph, the capture bundle
 gains rule-engine weight, and camera hosts without rule assets crash on
-import. This test pins spec/21-app/74 §Boundary as the mirror of Step 69.
+import. This test pins 02-spec/21-app/74 §Boundary as the mirror of Step 69.
 
 Fresh interpreter is required because sibling suites already load processing
 code, so an in-process check would false-pass.

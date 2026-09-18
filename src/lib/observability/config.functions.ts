@@ -5,7 +5,7 @@
  * `GET /api/cli/config/effective` (see `BE/routes/cli_config.py`) that
  * keeps `BE_URL` off the browser bundle and enforces Universal Envelope
  * unwrap. Mirrors `samples.functions.ts` transport-failure surfacing 1:1
- * per Plan 89 (beFetch parity) + spec/03-error-manage/.
+ * per Plan 89 (beFetch parity) + 02-spec/03-error-manage/.
  *
  * Wire (envelope payload):
  *   { layers: Layer[], effective: EffectiveLayer, exposed_fields: string[] }

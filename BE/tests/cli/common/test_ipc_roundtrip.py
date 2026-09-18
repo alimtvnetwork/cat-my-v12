@@ -18,8 +18,8 @@ exit 0):
   R4. Producer stderr / consumer stdout carry the Universal Envelope
       shape (no bare tracebacks leaked to stderr).
 
-Spec anchors: `spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol"
-(atomic write, ack), `spec/21-app/74-worker-cli.md` §Acceptance #4.
+Spec anchors: `02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol"
+(atomic write, ack), `02-spec/21-app/74-worker-cli.md` §Acceptance #4.
 """
 
 from __future__ import annotations

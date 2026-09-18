@@ -13,7 +13,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 //      so the surrounding tree keeps rendering. Non-envelope errors are
 //      re-thrown so TanStack Router's `errorComponent` handles them.
 //
-// Spec: spec/03-error-manage/01-error-resolution/ (§Global surfacing).
+// Spec: 02-spec/03-error-manage/01-error-resolution/ (§Global surfacing).
 // Consumer: mounted once inside `src/routes/__root.tsx` wrapping <Outlet />.
 
 import { Component, useEffect, type ErrorInfo, type ReactNode } from "react";

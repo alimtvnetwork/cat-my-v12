@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Plan 90 Step 124 - Pre-install SHA256SUMS cross-check CLI.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md`` §4.
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md`` §4.
 
 Called by ``packaging/installers/install.ps1`` and ``install.sh`` BEFORE
 the pre-flight doctor and the plan renderer, so a tampered exe is
 refused before any file is laid down or ``install.json`` row recorded.
 
-CLI-only numeric exit codes (per spec 77 §4 + `.lovable/memory/26-*` §12):
+CLI-only numeric exit codes (per spec 77 §4 + `.ai-memory/memory/26-*` §12):
     0  every BINARIES entry matched its SHA256SUMS row.
     2  usage error (missing flags, bad platform).
    10  SHA256SUMS file not found (E_INSTALL_MANIFEST_MISSING).

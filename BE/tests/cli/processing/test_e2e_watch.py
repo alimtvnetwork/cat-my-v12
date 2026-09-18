@@ -1,9 +1,9 @@
 """Plan 90 Step 66 - end-to-end worker->watch chain via a real IPC dir.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Acceptance #2 (poll IPC dir, exactly
+- `02-spec/21-app/75-processing-cli.md` §Acceptance #2 (poll IPC dir, exactly
   once per `(RunId, Seq)`, emit `ResultReady` back).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Message lifecycle" (producer dir
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Message lifecycle" (producer dir
   `worker-out/` visible to consumer as `processing-in/` via link).
 - `BE/cli/common/ipc_bootstrap.py::bootstrap_ipc_dirs` (installs the
   `processing-in -> worker-out` link; junction fallback on Windows).

@@ -1,8 +1,8 @@
 // Plan 90 Step 105: uniform useQuery wrapper for Universal Envelope list routes.
 //
 // Spec:
-//   spec/03-error-manage/02-error-architecture/05-response-envelope/
-//   spec/coding-guidelines/typescript.md
+//   02-spec/03-error-manage/02-error-architecture/05-response-envelope/
+//   02-spec/coding-guidelines/typescript.md
 //   BE/envelope.py (Attributes.TotalRecords / PerPage / TotalPages / CurrentPage)
 //
 // Contract:

@@ -8,7 +8,7 @@
 // Contract:
 //   - `load()` is idempotent and cache-friendly. It MUST validate the
 //     payload against `parseCatSeedBundle` and reject on failure. Callers
-//     translate rejection into a `CapturedError` (spec/03-error-manage).
+//     translate rejection into a `CapturedError` (02-spec/03-error-manage).
 //   - `getSlice()` returns a stable reference for a given slice within a
 //     single facade instance so React `useSyncExternalStore` selectors
 //     stay referentially stable.

@@ -1,5 +1,5 @@
 /**
- * License verifier (spec/21-app/60-licensing.md).
+ * License verifier (02-spec/21-app/60-licensing.md).
  *
  * Fail-closed: any error, mismatch, or missing signal collapses the caller to
  * TierOne baseline. The client never trusts `features[]` unless the Ed25519

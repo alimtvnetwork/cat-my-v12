@@ -11,7 +11,7 @@
 --   * spec/04-database-conventions/01-naming-conventions.md (singular
 --     PascalCase tables; `<Table>Id INTEGER PRIMARY KEY AUTOINCREMENT`;
 --     `*At` columns INTEGER epoch except spec-locked SchemaVersion).
---   * .lovable/memory/26-split-db-cli-cheatsheet.md §9 (no cross-tier
+--   * .ai-memory/memory/26-split-db-cli-cheatsheet.md §9 (no cross-tier
 --     FKs: `RunId` is the join key across tiers).
 --
 -- Root cause guarded: today `evaluate` writes RunSession JSONL to disk

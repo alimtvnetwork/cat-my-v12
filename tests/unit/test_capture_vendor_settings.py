@@ -1,9 +1,9 @@
 """Tests for `capture` settings section (vendor selector).
 
 Anchors:
-  - spec/21-app/63-v2-vendor-pylon.md
-  - spec/21-app/64-v2-vendor-spinnaker.md
-  - spec/21-app/65-v2-vendor-vimba.md
+  - 02-spec/21-app/63-v2-vendor-pylon.md
+  - 02-spec/21-app/64-v2-vendor-spinnaker.md
+  - 02-spec/21-app/65-v2-vendor-vimba.md
 """
 from __future__ import annotations
 

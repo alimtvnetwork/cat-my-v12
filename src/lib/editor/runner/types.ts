@@ -3,8 +3,8 @@
 // short-circuit contracts can be unit-tested against injected evaluators.
 //
 // spec references:
-//  - spec/21-app/47 s6  : per-rule AND-merge across conditions
-//  - spec/21-app/49 s4-6: parallel vs sequential ruleset semantics
+//  - 02-spec/21-app/47 s6  : per-rule AND-merge across conditions
+//  - 02-spec/21-app/49 s4-6: parallel vs sequential ruleset semantics
 
 import type { ReasonCodeType } from "@/types/rules/ReasonCodeType";
 import type { RuleCondition, EditorRuleV3, Ruleset } from "@/lib/editor/schema";

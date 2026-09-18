@@ -16,7 +16,7 @@
 #    across builds; UPX compression is non-deterministic between hosts).
 # 3. Console app (`console=True`) so stdout carries the Universal
 #    Envelope JSON and stderr carries human progress, matching the
-#    CLI cheatsheet (spec 76 + `.lovable/memory/26-split-db-cli-cheatsheet.md`).
+#    CLI cheatsheet (spec 76 + `.ai-memory/memory/26-split-db-cli-cheatsheet.md`).
 # 4. `strip=False` on Windows (PE stripping is unsupported); True is
 #    still safe to omit here because the platform is decided at build
 #    time on the runner.

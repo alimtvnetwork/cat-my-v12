@@ -4,14 +4,14 @@ Parses the "loose" JSON bundle shape used by `processing-cli`
 (`{schemaVersion, validationMode?, rules:[...]}`) into a validated
 `RuleBundle`. Anchors:
 
-- `spec/21-app/33-rule-catalog.md` §3 (closed `RuleKind`) and §3a
+- `02-spec/21-app/33-rule-catalog.md` §3 (closed `RuleKind`) and §3a
   (closed `Status` {Active, Inactive, Silent}).
-- `spec/21-app/49-validation-order.md` §4 mode mapping:
+- `02-spec/21-app/49-validation-order.md` §4 mode mapping:
     validationMode: "parallel"   -> mode = "full"
     validationMode: "sequential" -> mode = "short-circuit"
     missing / unknown            -> mode = "full" (safe default,
     surfaced via a Problem so the anomaly is visible).
-- `spec/21-app/60-rule-acceptance-contract.md` §"Condition shape".
+- `02-spec/21-app/60-rule-acceptance-contract.md` §"Condition shape".
 
 Contract: collect ALL problems, then raise ONE
 `AppError(E_RULE_BUNDLE_INVALID)` with `details.Problems[]` so

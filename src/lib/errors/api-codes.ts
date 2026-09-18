@@ -54,7 +54,7 @@ export const API_CODE_REGISTRY: Record<string, ErrorCodeMeta> = {
     category: ErrorCategoryType.Worker,
     notification: "toast",
     retryable: true,
-    docPath: "spec/03-error-manage/02-error-architecture/03-notification-colors.md",
+    docPath: "02-spec/03-error-manage/02-error-architecture/03-notification-colors.md",
   },
   E9005: {
     code: "E9005",

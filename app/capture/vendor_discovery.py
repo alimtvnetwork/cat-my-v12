@@ -1,6 +1,6 @@
 """Vendor discovery aggregator (Plan 25 SS-05).
 
-Anchor: spec/21-app/66-v2-vendor-discovery.md.
+Anchor: 02-spec/21-app/66-v2-vendor-discovery.md.
 
 Merges `list_pylon_devices` / `list_spinnaker_devices` / `list_vimba_devices`
 into a single `list[VendorDeviceDescriptor]`, deduped on `(vendor, serial)`.

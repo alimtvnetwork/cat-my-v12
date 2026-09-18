@@ -3,7 +3,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  * Server-side license policy + Casbin-style feature gate.
  *
  * Fail-closed: if env is missing or verification fails, the process runs on
- * the TierOne baseline (spec/21-app/60-licensing.md 60.8). Every non-baseline
+ * the TierOne baseline (02-spec/21-app/60-licensing.md 60.8). Every non-baseline
  * feature call throws `E_LIC_FEATURE_DENIED` so the capture error envelope
  * carries it back to the UI.
  */

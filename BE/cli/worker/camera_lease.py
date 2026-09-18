@@ -1,7 +1,7 @@
 """Plan 90 Step 45 - cross-invocation camera lease.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`open`, `close`, single-open
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`open`, `close`, single-open
   invariant) and §Acceptance #3 (conflicting `open` returns envelope with
   `E_BE_CONFLICT`; `close` is idempotent).
 - `BE.sdk_facade.camera.InMemoryCameraFacade.open` already enforces the

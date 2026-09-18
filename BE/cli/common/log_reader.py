@@ -1,6 +1,6 @@
 """Plan 90 Step 71 - enumerate CLI session log files on disk.
 
-Anchor: `spec/21-app/76-cli-log-and-ipc.md` §Layout. Complements the
+Anchor: `02-spec/21-app/76-cli-log-and-ipc.md` §Layout. Complements the
 Root-DB-backed `/observability/sessions` route (Step 72) which only sees
 invocations that reached the DB writer. This reader answers the honest
 question "what JSONL files actually exist under `APP_LOG_ROOT`?" so the

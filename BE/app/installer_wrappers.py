@@ -1,6 +1,6 @@
 """Plan 90 Step 115 - Canonical wrapper inventory.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md``
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md``
 §"PowerShell wrappers".
 
 Root cause guarded (one sentence): ``run_doctor`` inspects planned action
@@ -24,7 +24,7 @@ Anchors
 - ``scripts/ps/Invoke-DbBootstrap.ps1`` (Plan 90 Step 40)
 - ``scripts/ps/Invoke-RetentionRun.ps1`` (Plan 90 Step 113)
 - ``scripts/ps/Register-RetentionTask.ps1`` (Plan 90 Steps 103, 114)
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §12 (exit-code map)
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §12 (exit-code map)
 """
 
 from __future__ import annotations

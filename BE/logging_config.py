@@ -14,7 +14,7 @@ in verbatim. Exception info is folded into `exc_type` / `exc_message` /
 
 Owning step: Plan 88 Step 14. Consumers: Step 15 `create_app` calls
 `configure_logging(settings.log_level)` once at startup.
-Guideline: spec/coding-guidelines/python.md (functions ≤ 15 lines).
+Guideline: 02-spec/coding-guidelines/python.md (functions ≤ 15 lines).
 """
 
 from __future__ import annotations

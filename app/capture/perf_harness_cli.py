@@ -1,7 +1,7 @@
 """Perf-harness CLI - `python -m app.capture.perf_harness_cli --vendor <v>`.
 
-Anchor: spec/21-app/68-v2-vendor-sdk-contract.md §4 (Verification hooks) +
-plan `.lovable/plans/pending/17-v2.0.2-vendor-sdk.md` Steps 7-8.
+Anchor: 02-spec/21-app/68-v2-vendor-sdk-contract.md §4 (Verification hooks) +
+plan `.ai-memory/plans/pending/17-v2.0.2-vendor-sdk.md` Steps 7-8.
 
 Behavior:
 - Builds a `VendorDeviceIO` for the requested vendor (pylon|spinnaker|vimba)

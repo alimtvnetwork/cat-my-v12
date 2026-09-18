@@ -1,6 +1,6 @@
 """Tests for `BE.app.domain.rule_set.parse_envelope`.
 
-Spec: `spec/21-app/80-ruleset-draft-save.md`.
+Spec: `02-spec/21-app/80-ruleset-draft-save.md`.
 """
 
 from __future__ import annotations

@@ -54,7 +54,7 @@ export const CONTROLLER_KINDS: readonly ControllerKind[] = [
 ];
 
 // Per-controller typed params. Field lists match
-// spec/24-app-ui-design-system/05-rule-controller.md lines 40-49.
+// 02-spec/24-app-ui-design-system/05-rule-controller.md lines 40-49.
 export interface ParamsPresence {
   threshold: number;
   minBlobPx: number;
@@ -96,7 +96,7 @@ export interface ParamsPattern {
   matchThreshold: number;
 }
 // PatternEdge: SG-31-01 (Plan 32 slice 1). Fields per
-// spec/24-app-ui-design-system/05-rule-controller.md matrix row "PatternEdge"
+// 02-spec/24-app-ui-design-system/05-rule-controller.md matrix row "PatternEdge"
 // and Plan 32 step 1.
 export const PATTERN_EDGE_KERNELS = ["sobel", "scharr", "prewitt"] as const;
 export type PatternEdgeKernel = (typeof PATTERN_EDGE_KERNELS)[number];
@@ -172,7 +172,7 @@ export const DEFAULT_PARAMS: {
   blob: { minArea: 0, maxArea: 0, expectedCount: 1, growthTolerance: 0.05 },
 };
 
-// Plan 42 step 8. Rule condition discriminated union per spec/21-app/47 and 48.
+// Plan 42 step 8. Rule condition discriminated union per 02-spec/21-app/47 and 48.
 // Every rule holds a non-empty `conditions` array; verdicts AND-merge (47 s6).
 
 // SameImage carries no per-instance params; the empty shape is intentional so

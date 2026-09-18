@@ -3,7 +3,7 @@
 Pins:
   - evaluate_bundle signature is pure and clock-free (evaluated_at
     is echoed back verbatim from RuleContext).
-  - Rule counters obey `spec/21-app/24-runsession-record.md` §3.
+  - Rule counters obey `02-spec/21-app/24-runsession-record.md` §3.
   - Unknown `mode` raises AppError(E_RULE_BUNDLE_INVALID) not a bare
     ValueError, so the CLI/HTTP boundary can serialize the envelope.
   - Skeleton verdict is Pass (no evaluator wired yet).

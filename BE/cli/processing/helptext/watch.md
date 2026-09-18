@@ -22,7 +22,7 @@ The loop stops on the first-hit of:
 
 ## Idempotency
 
-Per `spec/21-app/75-processing-cli.md` acceptance #2 the key is
+Per `02-spec/21-app/75-processing-cli.md` acceptance #2 the key is
 `(RunId, FrameSeq)`. The persistent `ipc_messages` writer lands at
 Plan 90 Step 87. Until then watch enforces the invariant two ways:
 each message is acked via `ipc.ack()` (rename to `.msg.ack.json`)

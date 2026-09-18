@@ -1,10 +1,10 @@
 """Plan 90 Step 110 - Persist per-pass retention outcomes to a rotated JSONL audit stream.
 
 Owning specs:
-- ``spec/21-app/78-retention-schedule.md`` §"Observability" (per-pass rows
+- ``02-spec/21-app/78-retention-schedule.md`` §"Observability" (per-pass rows
   must survive process exit so operators can answer "did last night's pass
   run?" without shell-tailing stderr).
-- ``spec/21-app/76-cli-log-and-ipc.md`` (JSONL machine-readable audit
+- ``02-spec/21-app/76-cli-log-and-ipc.md`` (JSONL machine-readable audit
   streams; rotate at a bounded size; never lose oldest generation
   silently).
 

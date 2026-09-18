@@ -1,17 +1,17 @@
 """Plan 90 Step 60 - `processing-cli watch` subcommand.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Subcommands + §Acceptance #2:
+- `02-spec/21-app/75-processing-cli.md` §Subcommands + §Acceptance #2:
   "polls the Worker IPC dir, processes each `frame_ready` message
   exactly once (idempotency key = `run_id + frame_seq`), and writes
   `result_ready` back to the same dir".
-- `spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (drop-dir names,
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol" (drop-dir names,
   atomic rename, ack semantics) - re-used through `BE.cli.common.ipc`.
 - `BE/cli/processing/commands/evaluate.py::handle` - single-frame
   contract; watch treats it as the pure kernel and never re-implements
   bundle loading or verdict shaping.
 
-Idempotency scope: `spec/21-app/75` acceptance #2 pins the key on
+Idempotency scope: `02-spec/21-app/75` acceptance #2 pins the key on
 `(RunId, Seq)`. The persistent `ipc_messages` table lands at Plan 90
 Step 87 (`ResultReady` writer + Task-DB row). Until then we enforce
 idempotency two ways:
@@ -33,7 +33,7 @@ never disguise itself as a `Pass` verdict downstream.
 
 Concurrency: `--max-workers 1` by default. `receive()` returns oldest
 first, so serial processing preserves the FIFO invariant from
-`spec/21-app/17-parallelism-guarantees.md` §5. Higher fan-out is
+`02-spec/21-app/17-parallelism-guarantees.md` §5. Higher fan-out is
 intentionally out of scope here; parallel watchers belong in Plan 90
 Step 65+ once IPC row locking is implemented.
 

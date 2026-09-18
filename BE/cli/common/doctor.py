@@ -1,14 +1,14 @@
 """Plan 90 Step 41 - shared DB-tier doctor probe.
 
 Anchors:
-- ``spec/21-app/74-worker-cli.md`` §"Subcommands" (`doctor` is the single
+- ``02-spec/21-app/74-worker-cli.md`` §"Subcommands" (`doctor` is the single
   preflight surface both CLIs expose; installers + CI ``verify-install``
   invoke it before any capture / processing subcommand runs).
-- ``spec/21-app/75-processing-cli.md`` (same ``doctor`` contract for the
+- ``02-spec/21-app/75-processing-cli.md`` (same ``doctor`` contract for the
   processing side, wired at Step 51 when its ``main.py`` lands).
 - ``bin/db-bootstrap.py`` §``run_check`` (read-only per-tier probe; this
   module is the in-process caller so worker/processing don't shell out).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §3 (CLIs MUST fail
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §3 (CLIs MUST fail
   with a preflight error if bootstrap has not been run; never auto-create).
 
 Contract:
@@ -116,7 +116,7 @@ def assert_healthy(summaries: list[dict[str, Any]]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Plan 90 Step 51 - extended preflight probes (spec/21-app/74 §Acceptance #5)
+# Plan 90 Step 51 - extended preflight probes (02-spec/21-app/74 §Acceptance #5)
 #
 # `run_doctor` above verifies DB tier drift only. Spec 74 requires the CLI
 # `doctor` subcommand to ALSO verify:

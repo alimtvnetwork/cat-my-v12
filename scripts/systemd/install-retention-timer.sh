@@ -3,8 +3,8 @@
 # as a systemd USER unit under ~/.config/systemd/user/.
 #
 # Anchors:
-#   spec/21-app/79-installer-retention-timing.md
-#   spec/21-app/78-retention-schedule.md
+#   02-spec/21-app/79-installer-retention-timing.md
+#   02-spec/21-app/78-retention-schedule.md
 #
 # Idempotent: --install twice is a no-op; --uninstall twice is a no-op.
 # Exit codes:

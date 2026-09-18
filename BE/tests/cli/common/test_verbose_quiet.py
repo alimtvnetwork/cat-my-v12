@@ -1,9 +1,9 @@
 """Plan 90 Step 54 - tests for global `--verbose` / `--quiet` flags.
 
 Anchors:
-- `spec/13-generic-cli/16-verbose-logging.md` (off by default, timestamped file
+- `02-spec/13-generic-cli/16-verbose-logging.md` (off by default, timestamped file
   under tool's default log folder, stderr mirror).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §11 (verbose file lives at
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §11 (verbose file lives at
   `<APP_LOG_ROOT>/verbose/<cli>-verbose-<ts>.log`; `--quiet` suppresses
   stderr human summary; stdout envelope unchanged).
 """

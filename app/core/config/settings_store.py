@@ -116,7 +116,7 @@ def _validate_retention_payload(value: dict[str, Any]) -> None:
 
 
 # Vendor selector for `capture` section. Anchored by
-# spec/21-app/63-v2-vendor-pylon.md, 11-vendor-spinnaker.md, 12-vendor-vimba.md.
+# 02-spec/21-app/63-v2-vendor-pylon.md, 11-vendor-spinnaker.md, 12-vendor-vimba.md.
 SUPPORTED_VENDORS: tuple[str, ...] = ("pylon", "spinnaker", "vimba")
 CAPTURE_DEFAULTS: dict[str, Any] = {"vendor": "pylon"}
 
@@ -283,7 +283,7 @@ class SettingsStore:
 
         Emits `I_SEC_ADMIN_WRITE` with subject `settings.capture.device` and
         prior/next JSON so the audit row shows exactly which (vendor, serial)
-        binding changed. Anchored by spec/21-app/67-v2-discovery-contract.md
+        binding changed. Anchored by 02-spec/21-app/67-v2-discovery-contract.md
         §Select and Plan 25 SS-08.
         """
         if not isinstance(vendor, str) or vendor not in SUPPORTED_VENDORS:
@@ -378,8 +378,8 @@ class SettingsStore:
     ) -> dict[str, Any]:
         """Persist audit retention policy into `audit` section.
 
-        Anchor: spec/21-app/51-security-and-config-modules.md §Retention +
-        spec/21-app/68-v2-audit-retention.md §68.3. Admin-gated;
+        Anchor: 02-spec/21-app/51-security-and-config-modules.md §Retention +
+        02-spec/21-app/68-v2-audit-retention.md §68.3. Admin-gated;
         emits `I_SEC_ADMIN_WRITE` with subject `settings.audit.retention`
         and prior/next JSON on success. `E_SEC_NOAUTH` / `E_SEC_ROLE_DENIED`
         are audited and the write NEVER lands on denial.

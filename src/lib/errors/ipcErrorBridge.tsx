@@ -2,8 +2,8 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 /**
  * Plan 90 Step 78 — `IpcErrorBridge`.
  *
- * Binds the FE Global Error Modal (`spec/03-error-manage/02-error-architecture/04-error-modal/`)
- * to the CLI IPC transport (`spec/03-error-manage/` + Plan 90 IPC mailboxes).
+ * Binds the FE Global Error Modal (`02-spec/03-error-manage/02-error-architecture/04-error-modal/`)
+ * to the CLI IPC transport (`02-spec/03-error-manage/` + Plan 90 IPC mailboxes).
  *
  * Root cause the binding fixes: before this component, an `Error` IPC frame
  * with `Envelope.Errors[]` written by worker-cli or processing-cli into the
@@ -11,7 +11,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  * `/observability/sessions/{id}/ipc` and manually scrolled. The Global
  * Error Modal never fired for CLI failures, so cross-process errors were
  * silent from the main app's point of view. Explicit spec violation:
- * `spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §5`
+ * `02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §5`
  * requires the modal to surface any Errors[]-bearing envelope, without
  * qualifying "only when produced by BE HTTP".
  *
@@ -25,7 +25,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  *      `Envelope.Errors[]`, push into `useErrorStore.captureError`.
  *   4. Bridge failures NEVER call `captureError` themselves — that would
  *      loop when the BE is down. Instead they log a single warn line
- *      and back off, per `spec/03-error-manage/` observability rule
+ *      and back off, per `02-spec/03-error-manage/` observability rule
  *      (surface loudly in logs, do not swallow, do not amplify).
  *
  * SSR-safe: all effects are client-only (`useEffect`). Never imports

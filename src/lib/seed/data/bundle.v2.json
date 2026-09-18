@@ -1580,7 +1580,7 @@
       "surface": "seed.orchestrator",
       "severity": "critical",
       "message": "Seed bundle failed schema validation.",
-      "hint": "Check .lovable/plans/subtasks/86 SS-10 for the frozen matrix."
+      "hint": "Check .ai-memory/plans/subtasks/86 SS-10 for the frozen matrix."
     },
     {
       "id": "err-seed-fk-broken",

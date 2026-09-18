@@ -1,7 +1,7 @@
 """POST /api/cli/doctor - HTTP surface over `BE.cli.common.doctor` probes.
 
 Plan 90 Step 122. Spec anchors:
-- ``spec/21-app/74-worker-cli.md`` §"Subcommands" (doctor is the single
+- ``02-spec/21-app/74-worker-cli.md`` §"Subcommands" (doctor is the single
   preflight surface the CLIs expose; this HTTP mirror lets the operator
   UI at `/cli/settings` run the same probes without shelling out).
 - ``BE/cli/common/doctor.py`` §``run_preflight`` (canonical probe list:
@@ -9,7 +9,7 @@ Plan 90 Step 122. Spec anchors:
   side-effect-safe process-local probes and calls into
   ``bin/db-bootstrap.py::run_check`` for the DB tiers - identical to
   what the CLI `doctor` subcommand would report.
-- ``spec/03-error-manage/`` §"honesty rule": no false-OK. Any probe that
+- ``02-spec/03-error-manage/`` §"honesty rule": no false-OK. Any probe that
   fails surfaces ``IsHealthy=false`` with a machine-readable ``Tier`` +
   a human ``Detail``; the envelope's top-level ``Status.IsSuccess``
   stays ``true`` (the request itself succeeded), while ``Results[0]``
@@ -20,7 +20,7 @@ Plan 90 Step 122. Spec anchors:
 Method: ``POST`` (not GET) because probes touch the filesystem
 (log-root write test) and load the bootstrap script; treating this as
 idempotent-safe would be a lie. Cost is ~milliseconds, but the verb
-still reflects the truth per spec/03-error-manage.
+still reflects the truth per 02-spec/03-error-manage.
 
 The FE panel lives at ``src/components/cli/DoctorPanel.tsx`` and mounts
 into ``/cli/settings``. Remediation copy is BE-provided per probe so a
@@ -92,7 +92,7 @@ def _probe_db_tiers() -> list[dict[str, Any]]:
 def _attach_remediation(probes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for p in probes:
         if not p.get("IsHealthy"):
-            p["Remediation"] = _REMEDIATION.get(p["Tier"], "See BE logs and spec/03-error-manage/ for triage steps.")
+            p["Remediation"] = _REMEDIATION.get(p["Tier"], "See BE logs and 02-spec/03-error-manage/ for triage steps.")
     return probes
 
 

@@ -1,7 +1,7 @@
 """Runtime settings for BE.
 
-Spec: spec/21-app/backend-implementation-request-v1.md (§ Config & CORS).
-Guideline: spec/coding-guidelines/python.md (typed at boundary, functions ≤ 15 lines).
+Spec: 02-spec/21-app/backend-implementation-request-v1.md (§ Config & CORS).
+Guideline: 02-spec/coding-guidelines/python.md (typed at boundary, functions ≤ 15 lines).
 
 Env var prefix: `BE_` (e.g. `BE_PORT=9000`). Defaults ship a dev-safe loopback bind.
 """

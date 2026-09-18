@@ -3,7 +3,7 @@ import { RpcErrorCodeType } from "@/lib/rpc/client";
 /**
  * Mutation + run-lock guards for RPC calls.
  * Closes audit F-30 (guard layer): mutations are blocked while a Run
- * session is active, matching spec/21-app/30-ui-overview.md.
+ * session is active, matching 02-spec/21-app/30-ui-overview.md.
  */
 import { RpcError } from "./client";
 
@@ -25,7 +25,7 @@ export function setRunLock(next: RunLockStateType): void {
 /**
  * Throws when a mutation is attempted during an active run.
  * The guard mints its own correlationId because it typically runs before
- * `invokeRpc` — the contract from `spec/coding-guidelines/typescript.md`
+ * `invokeRpc` — the contract from `02-spec/coding-guidelines/typescript.md`
  * still holds: every error carries `code, message, correlationId, operation`.
  */
 export function assertMutationAllowed(operation: string, correlationId?: string): void {

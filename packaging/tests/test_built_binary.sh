@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Plan 90 Step 88 - Built-binary smoke test for the release matrix.
 #
-# Owning spec: spec/21-app/77-cli-powershell-and-release.md
+# Owning spec: 02-spec/21-app/77-cli-powershell-and-release.md
 # §"Release artefacts" (worker-cli/processing-cli onefile binaries).
 #
 # Root cause guarded (one sentence): a PyInstaller build can succeed and

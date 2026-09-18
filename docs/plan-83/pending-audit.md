@@ -6,7 +6,7 @@ Inputs:
 
 - `docs/plan-83/raw-steps.md` (verbatim step inventory across Plans 79/80/81/82)
 - `docs/plan-83/evidence-corrected.md` (per-artifact DONE / RELOCATED / MISSING / PARTIAL grading)
-- `.lovable/issues/28..34` (open bug reports triaged against live code)
+- `.ai-memory/issues/28..34` (open bug reports triaged against live code)
 
 ## Frozen ordered backlog (step 5 will re-copy this list; keep the ordering stable)
 

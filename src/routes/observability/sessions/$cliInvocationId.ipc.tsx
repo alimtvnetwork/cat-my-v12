@@ -20,7 +20,7 @@
  *  - `includeAcked` toggle mirrors the BE param.
  *  - Loud-failure: poison items (`_ParseError`) render in red with the
  *    underlying `_Raw` path so corruption is visible, not swallowed
- *    (per `spec/03-error-manage/`).
+ *    (per `02-spec/03-error-manage/`).
  *  - `robots: noindex` (internal operator screen).
  */
 import { createFileRoute, Link } from "@tanstack/react-router";

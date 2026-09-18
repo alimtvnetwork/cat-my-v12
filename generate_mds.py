@@ -160,7 +160,7 @@ files = [
     "50-utility-menu-batch-test-monitor-settings.jpg"
 ]
 
-out_dir = "spec/24-app-ui-design-system/tools-images"
+out_dir = "02-spec/24-app-ui-design-system/tools-images"
 os.makedirs(out_dir, exist_ok=True)
 
 index_content = "# Tools Images Index\\n\\n"
@@ -185,10 +185,10 @@ with open(os.path.join(out_dir, "INDEX.md"), "w") as idx:
     idx.write(index_content)
     
 # Update 99-consistency-report.md
-report_path = "spec/99-consistency-report.md"
+report_path = "02-02-spec/99-consistency-report.md"
 if os.path.exists(report_path):
     with open(report_path, "a") as r:
-        r.write("\\n- Added `spec/24-app-ui-design-system/tools-images/` per Plan 40.\\n")
+        r.write("\\n- Added `02-spec/24-app-ui-design-system/tools-images/` per Plan 40.\\n")
 else:
     with open(report_path, "w") as r:
-        r.write("# Consistency Report\\n\\n- Added `spec/24-app-ui-design-system/tools-images/` per Plan 40.\\n")
+        r.write("# Consistency Report\\n\\n- Added `02-spec/24-app-ui-design-system/tools-images/` per Plan 40.\\n")

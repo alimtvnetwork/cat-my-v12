@@ -1,11 +1,11 @@
 """Plan 90 Step 57 - processing-cli entrypoint.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Subcommands (this file registers the
+- `02-spec/21-app/75-processing-cli.md` §Subcommands (this file registers the
   substrate; `evaluate` / `batch` / `watch` / `dry-run` / `verify-bundle` /
   `export` / `rules` are Plan 90 Steps 58-72).
-- `spec/21-app/74-worker-cli.md` §Acceptance #6 (shared exit-code table).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single Universal
+- `02-spec/21-app/74-worker-cli.md` §Acceptance #6 (shared exit-code table).
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (single Universal
   Envelope on stdout per invocation - enforced by the shared Dispatcher).
 - `BE/cli/common/dispatcher.py` (shared substrate; `Source` literal in
   `BE/cli/common/logger.py:34` already accepts `"processing-cli"`).
@@ -22,7 +22,7 @@ This step is deliberately SUBSTRATE ONLY:
   and IPC-dir probes are added at Step 68 per spec 75 §Acceptance #8).
 
 Rule bundle loading, camera code, and IPC writers are explicitly out of
-scope until Steps 58+. Adding them here would violate `spec/21-app/75`
+scope until Steps 58+. Adding them here would violate `02-spec/21-app/75`
 §"Scope (out)" and RULE 1 (no premature releases).
 """
 
@@ -111,7 +111,7 @@ def build_dispatcher() -> Dispatcher:
     d = Dispatcher(
         prog="processing-cli",
         source="processing-cli",
-        description="Vision processing CLI (Plan 90, spec/21-app/75).",
+        description="Vision processing CLI (Plan 90, 02-spec/21-app/75).",
         helptext_package="BE.cli.processing.helptext",
     )
     d.register(Subcommand(

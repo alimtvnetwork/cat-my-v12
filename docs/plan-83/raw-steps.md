@@ -2,17 +2,17 @@
 
 Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with source-plan tags. Evidence column filled in step 2.
 
-## Source: .lovable/plans/pending/79-ui-improvements-v4.md
+## Source: .ai-memory/plans/pending/79-ui-improvements-v4.md
 
 ## Steps
 
-1. Land the V4 spec at `spec/21-app/53-ui-improvements-v4.md` and confirm all 5 reference images resolve from that file (see ./subtasks/79-ui-improvements-v4/SS-01-spec-and-images.md).
-2. Update `.lovable/memory/index.md` (create if missing) with a Core rule pointer to `spec/21-app/53-ui-improvements-v4.md` so V4 intent survives fresh sessions.
-3. Author `.lovable/memory/design/v4-photoshop-palettes.md` capturing dock layout, palette density, and badge typography rules (13px tabular numerics, 22-24px rows, 4px grid).
-4. Author `.lovable/memory/features/rule-category-project-model.md` documenting Rule = Category, `appliesBefore` semantics, and Project chain expansion (`[X3,X4]` -> `[X1,X2,X3,X4]`).
-5. Author `.lovable/memory/features/facade-and-seed.md` reiterating: every V4 persistence surface goes through `src/lib/<domain>/facade.ts`, and every fake facade gets a TODO under `.lovable/pending-facades/`.
-6. Create `.lovable/pending-facades/README.md` explaining the TODO format (what the fake does, what the real SDK call must do, migration checklist, owner).
-7. Register facade TODOs: `.lovable/pending-facades/01-rule-facade.md`, `02-category-facade.md` (notes rules facade filters), `03-project-facade.md`, `04-camera-setting-facade.md`, `05-mic-settings-facade.md`.
+1. Land the V4 spec at `02-spec/21-app/53-ui-improvements-v4.md` and confirm all 5 reference images resolve from that file (see ./subtasks/79-ui-improvements-v4/SS-01-spec-and-images.md).
+2. Update `.ai-memory/memory/index.md` (create if missing) with a Core rule pointer to `02-spec/21-app/53-ui-improvements-v4.md` so V4 intent survives fresh sessions.
+3. Author `.ai-memory/memory/design/v4-photoshop-palettes.md` capturing dock layout, palette density, and badge typography rules (13px tabular numerics, 22-24px rows, 4px grid).
+4. Author `.ai-memory/memory/features/rule-category-project-model.md` documenting Rule = Category, `appliesBefore` semantics, and Project chain expansion (`[X3,X4]` -> `[X1,X2,X3,X4]`).
+5. Author `.ai-memory/memory/features/facade-and-seed.md` reiterating: every V4 persistence surface goes through `src/lib/<domain>/facade.ts`, and every fake facade gets a TODO under `.ai-memory/pending-facades/`.
+6. Create `.ai-memory/pending-facades/README.md` explaining the TODO format (what the fake does, what the real SDK call must do, migration checklist, owner).
+7. Register facade TODOs: `.ai-memory/pending-facades/01-rule-facade.md`, `02-category-facade.md` (notes rules facade filters), `03-project-facade.md`, `04-camera-setting-facade.md`, `05-mic-settings-facade.md`.
 8. Draw the palette dock wireframe as ASCII in ./subtasks/79-ui-improvements-v4/SS-02-editor-wireframe.md and link from Plan.
 9. Draw the selection-overlay badge layout (position + size + rotation) and rotate-handle geometry in ./subtasks/79-ui-improvements-v4/SS-03-selection-overlay.md.
 10. Draw the Rule / Project domain UML in ./subtasks/79-ui-improvements-v4/SS-04-domain-model.md, including `appliesBefore`, `isCategory`, `cameraSettingId`, `micSettingsId`.
@@ -54,16 +54,16 @@ Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with sourc
 46. Implement the Run button to iterate the expanded chain over selected sample(s) using the existing ruleset runner and populate the Result panel with per-rule pass/fail plus links back to the failing rule.
 47. Add unit tests: Rule facade CRUD, MicSettings facade CRUD, cycle rejection on save, seed idempotency.
 48. Add axe a11y run for `/setup/rules`, `/setup/rules/new`, `/projects`, `/projects/$id`; keep violations at zero.
-49. Run `tsgo`, `vitest`, Playwright visual gate, and axe; attach the summary to a completion memo under `.lovable/plans/completed/79-ui-improvements-v4.md`.
-50. Bump the minor version, update CHANGELOG / RELEASE_NOTES / README, `mv` this plan file to `.lovable/plans/completed/79-ui-improvements-v4.md`, and flip `Status:` to `completed`.
+49. Run `tsgo`, `vitest`, Playwright visual gate, and axe; attach the summary to a completion memo under `.ai-memory/plans/completed/79-ui-improvements-v4.md`.
+50. Bump the minor version, update CHANGELOG / RELEASE_NOTES / README, `mv` this plan file to `.ai-memory/plans/completed/79-ui-improvements-v4.md`, and flip `Status:` to `completed`.
 
 ## Verification
 
-## Source: .lovable/plans/pending/80-ui-improvements-v4-polish.md
+## Source: .ai-memory/plans/pending/80-ui-improvements-v4-polish.md
 
 ## Steps
 
-1. Read `spec/21-app/53-ui-improvements-v4.md` end to end and pin the open UI gaps in a scratch note inside `./subtasks/80-ui-improvements-v4-polish/SS-01-gap-inventory.md`. See ./subtasks/80-ui-improvements-v4-polish/SS-01-gap-inventory.md.
+1. Read `02-spec/21-app/53-ui-improvements-v4.md` end to end and pin the open UI gaps in a scratch note inside `./subtasks/80-ui-improvements-v4-polish/SS-01-gap-inventory.md`. See ./subtasks/80-ui-improvements-v4-polish/SS-01-gap-inventory.md.
 2. Snapshot current `/projects/$projectId` in Playwright at 1440x900 and 1280x800 to capture baseline before edits; store under `tests/reports/screenshots/plan80/before/`.
 3. Snapshot current `/setup/rules/$ruleId` (Properties + Layers palette) similarly under `tests/reports/screenshots/plan80/before/`.
 4. Render expanded rule chain badges per row in the Projects editor Rules section using `computeEffectiveChain`; badge shows the flattened id list right-aligned with `tabular-nums` 12px.
@@ -92,9 +92,9 @@ Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with sourc
 23. Tighten `Titlebar.tsx` header density: enforce a 44px comfortable / 36px compact row and verify no vertical padding creeps back; add a `data-testid="app-header"` for the visual gate.
 24. Extend `tests/visual/header-spacing.spec.ts` with a third assertion: the vertical distance between the header bottom border and the first `<main>` child is exactly `var(--space-2)` (8px).
 25. Land the real Project facade by replacing the in-memory stub in `src/lib/projects/facade.ts` with an `idb-keyval` backed implementation; migrate the Zustand persistence layer to route reads/writes through the facade only.
-26. Retire `.lovable/pending-facades/05-project-facade-v4.md` by moving it to `.lovable/pending-facades/completed/` and referencing the commit in the file body.
+26. Retire `.ai-memory/pending-facades/05-project-facade-v4.md` by moving it to `.ai-memory/pending-facades/completed/` and referencing the commit in the file body.
 27. Land the Swatches facade at `src/lib/swatches/facade.ts` (idb-keyval, list/add/remove/reorder) and wire the Properties palette Swatches tab to it.
-28. Retire `.lovable/pending-facades/06-swatches-facade.md` into `.lovable/pending-facades/completed/`.
+28. Retire `.ai-memory/pending-facades/06-swatches-facade.md` into `.ai-memory/pending-facades/completed/`.
 29. Seed 12 default swatches (theme accent tokens) into the swatches facade via `src/lib/seed/bundle.json` and the seed fan-out; idempotent by hex.
 30. Add unit tests for `SwatchesFacade` CRUD and reordering under `src/lib/swatches/__tests__/`.
 31. Verify all seven Properties palette panes render with axe zero violations on `/setup/rules/$ruleId`.
@@ -105,18 +105,18 @@ Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with sourc
 36. Run `vitest` for the whole repo; fix any regressions triggered by the facade swap or Rule type migration.
 37. Run the Playwright visual gate end-to-end; approve intentional deltas by refreshing baselines only for the touched routes.
 38. Run axe across `/setup/rules`, `/setup/rules/new`, `/setup/rules/$id`, `/projects`, `/projects/$id`; keep violations at zero.
-39. Update `.lovable/issues/27-properties-panel-and-badges-crappy.md` to `status: closed` with a link to the commit that lands the seven panes.
-40. Close Plan 79 remaining steps (42-48) in a completion memo at `.lovable/plans/completed/79-ui-improvements-v4.md`; mv the pending file over and flip `Status:` to `completed`.
-41. Update `.lovable/memory/features/facade-and-seed.md` to reflect that Project + Swatches facades are now real (not stubs).
-42. Update `spec/21-app/53-ui-improvements-v4.md` "Status" section at the bottom to mark the palette panes and Project modals as landed.
+39. Update `.ai-memory/issues/27-properties-panel-and-badges-crappy.md` to `status: closed` with a link to the commit that lands the seven panes.
+40. Close Plan 79 remaining steps (42-48) in a completion memo at `.ai-memory/plans/completed/79-ui-improvements-v4.md`; mv the pending file over and flip `Status:` to `completed`.
+41. Update `.ai-memory/memory/features/facade-and-seed.md` to reflect that Project + Swatches facades are now real (not stubs).
+42. Update `02-spec/21-app/53-ui-improvements-v4.md` "Status" section at the bottom to mark the palette panes and Project modals as landed.
 43. Bump minor version (`3.575.0` or next available), update `CHANGELOG.md` with the Plan 80 line items grouped by area (Projects, Properties palette, Facades, Verification).
 44. Update `RELEASE_NOTES.md` with a short paragraph pointing to CHANGELOG and pin the version in the root `README.md` badge.
-45. Add a short summary block to `.lovable/memory/index.md` Core pointing at Plan 80's completion memo location.
-46. `mv .lovable/plans/pending/80-ui-improvements-v4-polish.md .lovable/plans/completed/80-ui-improvements-v4-polish.md` and flip `Status:` frontmatter to `completed`.
+45. Add a short summary block to `.ai-memory/memory/index.md` Core pointing at Plan 80's completion memo location.
+46. `mv .ai-memory/plans/pending/80-ui-improvements-v4-polish.md .ai-memory/plans/completed/80-ui-improvements-v4-polish.md` and flip `Status:` frontmatter to `completed`.
 
 ## Verification
 
-## Source: .lovable/plans/pending/81-settings-rules-and-misc-polish.md
+## Source: .ai-memory/plans/pending/81-settings-rules-and-misc-polish.md
 
 ## Steps
 
@@ -143,22 +143,22 @@ Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with sourc
 
 ## Verification
 
-## Source: .lovable/plans/pending/82-plan100-ui-v4-100steps.md
+## Source: .ai-memory/plans/pending/82-plan100-ui-v4-100steps.md
 
 ## Steps
 
 ### Phase A — Detailed plan and spec capture (steps 1–10)
 
-1. Copy user upload-71..76 into `spec/21-app/53-ui-improvements-v4-assets/plan82/` (done in this planning turn) and reference them from `spec/21-app/53-ui-improvements-v4.md` under a new "Plan 100 references" section.
-2. Append a "Fullscreen + global shortcuts" section to `spec/21-app/53-ui-improvements-v4.md` describing the shortcut registry, `Ctrl+Shift+F` fullscreen, `Ctrl+Shift+/` cheat sheet, Alt mnemonics, and keyboard-first menu navigation. Link to `.lovable/spec/commands/29-…`.
-3. Append an "Inline edit commit semantics" section referencing `.lovable/spec/commands/30-…` (Enter/blur commit, Esc cancel, ✓/✕, F2 rename, min padding).
-4. Append a "Padding and readability baseline" section referencing `.lovable/spec/commands/31-…` (button sizes, row density, text sizes, single breadcrumb rule).
+1. Copy user upload-71..76 into `02-spec/21-app/53-ui-improvements-v4-assets/plan82/` (done in this planning turn) and reference them from `02-spec/21-app/53-ui-improvements-v4.md` under a new "Plan 100 references" section.
+2. Append a "Fullscreen + global shortcuts" section to `02-spec/21-app/53-ui-improvements-v4.md` describing the shortcut registry, `Ctrl+Shift+F` fullscreen, `Ctrl+Shift+/` cheat sheet, Alt mnemonics, and keyboard-first menu navigation. Link to `.ai-memory/02-spec/commands/29-…`.
+3. Append an "Inline edit commit semantics" section referencing `.ai-memory/02-spec/commands/30-…` (Enter/blur commit, Esc cancel, ✓/✕, F2 rename, min padding).
+4. Append a "Padding and readability baseline" section referencing `.ai-memory/02-spec/commands/31-…` (button sizes, row density, text sizes, single breadcrumb rule).
 5. Append an "Editor property surfaces" section describing docked Properties bridge + HUD-follows-shape + Presence/Absence/Ignore/Color inline group.
 6. Append a "Rules vs Categories separation" section: rules list filters `isCategory === false`; categories tab handles categories.
 7. Append an "Address bar navigation" section describing the Windows-Explorer-style titlebar path bar and removal of duplicated in-page breadcrumbs.
 8. Append a "Seed fixtures per screen" section listing which entity each hub must seed, wired via facades. See `./subtasks/82-plan100-ui-v4-100steps/SS-05-seed-fixtures-per-screen.md`.
 9. Append an "Error surfacing" section documenting the mandatory `showToastError`/`useErrorStore.captureException` funnel plus a "Copy details" button in `GlobalErrorModal`.
-10. Cross-link the plan file itself from `spec/21-app/53-ui-improvements-v4.md` and from the memory index (mem://index.md) as the active v4 plan.
+10. Cross-link the plan file itself from `02-spec/21-app/53-ui-improvements-v4.md` and from the memory index (mem://index.md) as the active v4 plan.
 
 ### Phase B — Foundations shipped (steps 11–20)
 
@@ -270,11 +270,11 @@ Generated 2026-07-19T06:01:31Z. Verbatim dump of Plans 79, 80, 81, 82 with sourc
 92. Add Playwright test for HUD following a dragged shape.
 93. Add Playwright test for rule row → editor route navigation.
 94. Update `docs/plan-72/README.md`-style doc: new `docs/plan-100/README.md` summarizing the shipped changes with screenshots of upload-71..76 as before/after references.
-95. Update `.lovable/memory` if any new persistent rule emerged (padding/readability baseline, single-breadcrumb rule).
-96. Update `spec/21-app/53-ui-improvements-v4.md` "Status" line to note Plan 100 completion.
+95. Update `.ai-memory/memory` if any new persistent rule emerged (padding/readability baseline, single-breadcrumb rule).
+96. Update `02-spec/21-app/53-ui-improvements-v4.md` "Status" line to note Plan 100 completion.
 97. Update `CHANGELOG.md` and `RELEASE_NOTES.md` with a Plan 100 entry covering shortcuts, inline edit, address bar, properties bridge, seed, error copy.
 98. Bump minor version at each meaningful checkpoint (phase boundaries) per project convention.
 99. Pin the final version in the root `README.md` version badge line.
-100.  Move `.lovable/plans/pending/82-plan100-ui-v4-100steps.md` → `.lovable/plans/completed/82-plan100-ui-v4-100steps.md` and flip `Status: completed` in the frontmatter.
+100.  Move `.ai-memory/plans/pending/82-plan100-ui-v4-100steps.md` → `.ai-memory/plans/completed/82-plan100-ui-v4-100steps.md` and flip `Status: completed` in the frontmatter.
 
 ## Verification

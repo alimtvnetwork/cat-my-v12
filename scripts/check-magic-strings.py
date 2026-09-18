@@ -16,7 +16,7 @@ def check_magic_strings():
     ]
     compiled_patterns = [re.compile(p) for p in patterns]
     
-    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'coverage', '.lovable', 'scripts', 'generated', '.venv']
+    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'coverage', '.ai-memory', 'scripts', 'generated', '.venv']
     
     for root, dirs, files in os.walk('.'):
         dirs[:] = [d for d in dirs if d not in exclude_dirs]

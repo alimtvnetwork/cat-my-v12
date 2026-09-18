@@ -5,7 +5,7 @@ Invoked by ``packaging/installers/install.{ps1,sh}`` BEFORE the action
 loop runs. Renders the current plan, reads ``install.json``, and prints
 a JSON report on stdout plus a human summary on stderr.
 
-Exit codes (aligned with ``.lovable/memory/26-split-db-cli-cheatsheet.md``
+Exit codes (aligned with ``.ai-memory/memory/26-split-db-cli-cheatsheet.md``
 §12 wrapper reservations 9500-9599):
 
 * 0    ok (info-only findings)

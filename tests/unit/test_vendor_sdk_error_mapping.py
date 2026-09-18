@@ -1,6 +1,6 @@
 """Plan 17 Step 9a: per-vendor SDK error mapping.
 
-Anchor: spec/21-app/68-v2-vendor-sdk-contract.md. Each vendor adapter's
+Anchor: 02-spec/21-app/68-v2-vendor-sdk-contract.md. Each vendor adapter's
 `_translate` and `_is_*` predicates MUST map SDK-native exceptions into
 the shared `E_CAP_*` taxonomy (`HardwareTimeoutError`,
 `DeviceDisconnectedError`, `HardwareBusyError`) without leaking raw

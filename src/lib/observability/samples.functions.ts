@@ -10,7 +10,7 @@
  * where `CatSample` (see `BE/app/domain/cat_sample.py`) is
  *   `{ id: number, rule_id: number, label: string, captured_at: string }`.
  *
- * IMPORTANT (honest-wire, no false-OK per `spec/03-error-manage/`):
+ * IMPORTANT (honest-wire, no false-OK per `02-spec/03-error-manage/`):
  *  - The wire has NO `tag`, NO `status`, NO thumbnail/image URL, and NO
  *    `Attributes.TotalRecords` (samples returns the full page in one shot).
  *    The Step-118 UI therefore renders placeholder thumbnails, filters on

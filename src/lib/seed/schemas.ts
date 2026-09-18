@@ -1,7 +1,7 @@
 // Zod schemas validating the JSON bundles that back `UiSeedFacade`.
 // Every field mirrors `./types.ts`. Validation runs at facade load time
 // so bad JSON surfaces as a `CapturedError` instead of a silent render
-// glitch downstream (spec/03-error-manage/ hard rule: no silent failure).
+// glitch downstream (02-spec/03-error-manage/ hard rule: no silent failure).
 import { z } from "zod";
 import type {
   CatSeedBundle,

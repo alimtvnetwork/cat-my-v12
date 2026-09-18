@@ -1,6 +1,6 @@
 """GET /meta -> version, capabilities, sdkFacadeVersion.
 
-Spec: spec/21-app/backend-implementation-request-v1.md
+Spec: 02-spec/21-app/backend-implementation-request-v1.md
 Consumers: FE typed client (Step 30) and Backend-Mode widget (Step 33) read
 this to gate features on the running backend build. Envelope shape:
 
