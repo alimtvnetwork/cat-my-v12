@@ -4,9 +4,20 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
+from typing import Final, Union
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
+
+MIN_PIXEL_INTENSITY: Final[int] = 0
+MAX_PIXEL_INTENSITY: Final[int] = 255
+WHITE_PIXEL_VALUE: Final[int] = 255
+BYTES_PER_RGBA_PIXEL: Final[int] = 4
+
+RED_COLOR_RGBA: Final[tuple[int, int, int, int]] = (255, 0, 0, 255)
+WHITE_COLOR_RGBA: Final[tuple[int, int, int, int]] = (255, 255, 255, 255)
+BLACK_COLOR_RGBA: Final[tuple[int, int, int, int]] = (0, 0, 0, 255)
+
 
 
 @dataclass(frozen=True)
@@ -109,9 +120,36 @@ def _quantize(value: int) -> int:
     return 255
 
 
-def _threshold_preview(gray: bytearray, white_threshold: int) -> bytearray:
-    threshold = max(0, min(255, round(white_threshold)))
-    return bytearray(255 if value >= threshold else value for value in gray)
+def clamp_pixel_intensity(raw_threshold: float | int) -> int:
+    """Safely rounds and clamps an arbitrary threshold into valid 8-bit range [0, 255]."""
+    rounded_threshold = round(raw_threshold)
+    return max(
+        MIN_PIXEL_INTENSITY,
+        min(MAX_PIXEL_INTENSITY, rounded_threshold),
+    )
+
+
+def build_threshold_lookup_table(clamped_threshold: int) -> bytes:
+    """Precompute 256-byte lookup table (LUT) eliminating per-pixel branching."""
+    return bytes(
+        WHITE_PIXEL_VALUE if value >= clamped_threshold else value
+        for value in range(MAX_PIXEL_INTENSITY + 1)
+    )
+
+
+def _threshold_preview(
+    gray: Union[bytearray, bytes],
+    white_threshold: float | int,
+) -> bytearray:
+    """Highlight pixels at or above `white_threshold` by setting them to pure white."""
+    clamped_threshold = clamp_pixel_intensity(white_threshold)
+    lookup_table = build_threshold_lookup_table(clamped_threshold)
+    return bytearray(gray.translate(lookup_table))
+
+
+# Public alias adhering to Prompt 26
+threshold_preview = _threshold_preview
+
 
 
 def _find_white_boxes(
@@ -256,10 +294,10 @@ def _renumber(number: int, box: MarkedBox) -> MarkedBox:
 
 
 def _gray_to_rgba(gray: bytearray) -> bytes:
-    out = bytearray(len(gray) * 4)
+    out = bytearray(len(gray) * BYTES_PER_RGBA_PIXEL)
     for idx, value in enumerate(gray):
-        pos = idx * 4
-        out[pos:pos + 4] = bytes((value, value, value, 255))
+        pos = idx * BYTES_PER_RGBA_PIXEL
+        out[pos : pos + BYTES_PER_RGBA_PIXEL] = bytes((value, value, value, WHITE_PIXEL_VALUE))
     return bytes(out)
 
 
@@ -273,16 +311,16 @@ def _draw_rect(rgba: bytearray, width: int, height: int, box: MarkedBox) -> None
     x2 = box.x + box.width - 1
     y2 = box.y + box.height - 1
     for x in range(box.x, x2 + 1):
-        _set_pixel(rgba, width, height, x, box.y, (255, 0, 0, 255))
-        _set_pixel(rgba, width, height, x, y2, (255, 0, 0, 255))
+        _set_pixel(rgba, width, height, x, box.y, RED_COLOR_RGBA)
+        _set_pixel(rgba, width, height, x, y2, RED_COLOR_RGBA)
     for y in range(box.y, y2 + 1):
-        _set_pixel(rgba, width, height, box.x, y, (255, 0, 0, 255))
-        _set_pixel(rgba, width, height, x2, y, (255, 0, 0, 255))
+        _set_pixel(rgba, width, height, box.x, y, RED_COLOR_RGBA)
+        _set_pixel(rgba, width, height, x2, y, RED_COLOR_RGBA)
 
 
 def _draw_label(rgba: bytearray, width: int, height: int, box: MarkedBox) -> None:
     text = str(box.number)
-    _fill_rect(rgba, width, height, box.x, box.y, len(text) * 4 + 2, 7, (255, 255, 255, 255))
+    _fill_rect(rgba, width, height, box.x, box.y, len(text) * 4 + 2, 7, WHITE_COLOR_RGBA)
     for offset, digit in enumerate(text):
         _draw_digit(rgba, width, height, box.x + 1 + offset * 4, box.y + 1, digit)
 
@@ -291,7 +329,7 @@ def _draw_digit(rgba: bytearray, width: int, height: int, x: int, y: int, digit:
     for row, bits in enumerate(_DIGITS.get(digit, ())):
         for col, bit in enumerate(bits):
             if bit == "1":
-                _set_pixel(rgba, width, height, x + col, y + row, (0, 0, 0, 255))
+                _set_pixel(rgba, width, height, x + col, y + row, BLACK_COLOR_RGBA)
 
 
 def _fill_rect(
@@ -319,5 +357,6 @@ def _set_pixel(
 ) -> None:
     if x < 0 or y < 0 or x >= width or y >= height:
         return
-    pos = (y * width + x) * 4
-    rgba[pos:pos + 4] = bytes(color)
+    pos = (y * width + x) * BYTES_PER_RGBA_PIXEL
+    rgba[pos : pos + BYTES_PER_RGBA_PIXEL] = bytes(color)
+
