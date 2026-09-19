@@ -1,31 +1,32 @@
 # Consistency Report: Retrospectives
 
-**Version:** 3.2.0  
-**Generated:** 2026-03-21  
+**Version:** 3.2.0
+**Generated:** 2026-03-21
 **Health Score:** 100/100 (A+)
 
 ---
 
 ## File Inventory
 
-| #   | File                                   | Status     |
-| --- | -------------------------------------- | ---------- |
-| 1   | `00-overview.md`                       | ✅ Present |
-| 2   | `01-health-endpoint-mismatch.md`       | ✅ Present |
-| 3   | `02-retry-debounce-dedup-fixes.md`     | ✅ Present |
-| 4   | `03-zip-finalization-before-return.md` | ✅ Present |
-| 5   | `04-activation-endpoint-mismatch.md`   | ✅ Present |
+| # | File | Status |
+|---|------|--------|
+| 1 | `01-index.md` | ✅ Present |
+| 2 | `02-health-endpoint-mismatch.md` | ✅ Present |
+| 3 | `03-retry-debounce-dedup-fixes.md` | ✅ Present |
+| 4 | `04-zip-finalization-before-return.md` | ✅ Present |
+| 5 | `05-activation-endpoint-mismatch.md` | ✅ Present |
+| 6 | `06-appfault-package-migration.md` | ✅ Present |
 
-**Total:** 5 files (excluding this report)
+**Total:** 6 files (excluding this report)
 
 ---
 
 ## Naming Convention Compliance
 
-| Check                | Result                 |
-| -------------------- | ---------------------- |
+| Check | Result |
+|-------|--------|
 | Lowercase kebab-case | ✅ All files compliant |
-| Numeric prefixes     | ✅ All files prefixed  |
+| Numeric prefixes | ✅ All files prefixed |
 
 ---
 
@@ -46,6 +47,6 @@ No external cross-references detected. ✅
 
 ## Validation History
 
-| Date       | Version | Action                             |
-| ---------- | ------- | ---------------------------------- |
-| 2026-03-21 | 1.0.0   | Initial consistency report created |
+| Date | Version | Action |
+|------|---------|--------|
+| 2026-03-21 | 1.0.0 | Initial consistency report created |

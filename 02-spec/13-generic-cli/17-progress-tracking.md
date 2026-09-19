@@ -20,15 +20,15 @@ what is happening, how far along the operation is, and how it concluded.
 
 ## Design Rules
 
-| Rule              | Detail                                                               |
-| ----------------- | -------------------------------------------------------------------- |
-| Counter format    | `[current/total]` prefix on every item line                          |
-| Repo name visible | Current repository name printed alongside the counter                |
-| Elapsed time      | Duration shown on completion of each item and in the summary         |
-| Summary at end    | Final line reports total items, elapsed time, success/failure counts |
-| Quiet mode        | `--quiet` flag suppresses all progress output for programmatic use   |
-| Stderr only       | All progress output goes to stderr — stdout is reserved for data     |
-| No progress bars  | Counter + name is sufficient; avoid complex progress bar libraries   |
+| Rule | Detail |
+|------|--------|
+| Counter format | `[current/total]` prefix on every item line |
+| Repo name visible | Current repository name printed alongside the counter |
+| Elapsed time | Duration shown on completion of each item and in the summary |
+| Summary at end | Final line reports total items, elapsed time, success/failure counts |
+| Quiet mode | `--quiet` flag suppresses all progress output for programmatic use |
+| Stderr only | All progress output goes to stderr — stdout is reserved for data |
+| No progress bars | Counter + name is sufficient; avoid complex progress bar libraries |
 
 ---
 
@@ -64,15 +64,15 @@ type Progress struct {
 }
 ```
 
-| Field     | Purpose                                             |
-| --------- | --------------------------------------------------- |
-| `total`   | Total number of items to process                    |
+| Field | Purpose |
+|-------|---------|
+| `total` | Total number of items to process |
 | `current` | Running counter, incremented on each `Begin()` call |
-| `start`   | Timestamp captured at construction for elapsed time |
-| `quiet`   | When true, all output methods become no-ops         |
-| `cloned`  | Success counter for new clones                      |
-| `pulled`  | Success counter for updates (pulls)                 |
-| `failed`  | Failure counter                                     |
+| `start` | Timestamp captured at construction for elapsed time |
+| `quiet` | When true, all output methods become no-ops |
+| `cloned` | Success counter for new clones |
+| `pulled` | Success counter for updates (pulls) |
+| `failed` | Failure counter |
 
 ---
 
@@ -176,7 +176,6 @@ func (p *Progress) PrintSummary() {
 ```
 
 **Output:**
-
 ```
 Done: 24/24 (1m 12s)
   Cloned: 18  Pulled: 5  Failed: 1
@@ -201,11 +200,11 @@ func formatDuration(d time.Duration) string {
 }
 ```
 
-| Duration            | Output   |
-| ------------------- | -------- |
-| 2.3 seconds         | `2.3s`   |
-| 72 seconds          | `1m 12s` |
-| 5 minutes 3 seconds | `5m 3s`  |
+| Duration | Output |
+|----------|--------|
+| 2.3 seconds | `2.3s` |
+| 72 seconds | `1m 12s` |
+| 5 minutes 3 seconds | `5m 3s` |
 
 **Rules:**
 

@@ -14,13 +14,13 @@
 When a command runs, produce **all** output formats in one pass.
 Generate everything and let the user pick what they need.
 
-| Format             | Destination | Purpose                     |
-| ------------------ | ----------- | --------------------------- |
-| Terminal (colored) | stdout      | Immediate human feedback    |
-| CSV                | file        | Spreadsheet / data import   |
-| JSON               | file        | Machine-readable, re-import |
-| Markdown           | file        | Documentation / review      |
-| Scripts            | file        | Automation / re-execution   |
+| Format | Destination | Purpose |
+|--------|-------------|---------|
+| Terminal (colored) | stdout | Immediate human feedback |
+| CSV | file | Spreadsheet / data import |
+| JSON | file | Machine-readable, re-import |
+| Markdown | file | Documentation / review |
+| Scripts | file | Automation / re-execution |
 
 ### Output Directory
 
@@ -32,7 +32,7 @@ target-dir/
 └── toolname-output/
     ├── data.csv
     ├── data.json
-    ├── structure.md
+    ├── 03-structure.md
     └── scripts/
 ```
 
@@ -61,13 +61,13 @@ const (
 )
 ```
 
-| Element             | Color    | Purpose          |
-| ------------------- | -------- | ---------------- |
-| Banner/headers      | Cyan     | Visual identity  |
-| Success markers (✓) | Green    | Confirmed items  |
-| Warnings (⚠)        | Yellow   | Non-fatal issues |
-| Data values         | White    | Primary content  |
-| Metadata            | Dim/Gray | Secondary info   |
+| Element | Color | Purpose |
+|---------|-------|---------|
+| Banner/headers | Cyan | Visual identity |
+| Success markers (✓) | Green | Confirmed items |
+| Warnings (⚠) | Yellow | Non-fatal issues |
+| Data values | White | Primary content |
+| Metadata | Dim/Gray | Secondary info |
 
 ### Terminal Report Sections
 

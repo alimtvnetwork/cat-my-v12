@@ -95,9 +95,9 @@ Root cause of `/setup` regressions: `opacity-40` on non-actionable disabled `Too
 
 ## Cross-References
 
-- [Design System (Core)](../07-design-system/00-overview.md) — Foundational design system spec
+- [Design System (Core)](../07-design-system/01-index.md) — Foundational design system spec
 - [App](../21-app/04-overview.md) — App-specific features and workflows
-- [Consolidated Design System](../17-consolidated-guidelines/07-design-system.md) — Consolidated summary
+- [Consolidated Design System](../17-consolidated-guidelines/10-design-system.md) — Consolidated summary
 - [UI Improvements V2 Enhancement (reconciled status)](./99d-ui-improvements-v2-enhancement.md) - single source of truth for what the V2 stream shipped, what is pending, and what is ambiguous. Search token: `v2-enhancement`.
 - [UI Seed Facade (Rule 53)](../21-app/53-ui-seed-facade.md) - developer pointer: any UI surface that consumes seed data (categories, rule templates, tool presets, sample images, programs) MUST go through `useSeedSlice` / `useSeedBundle`. Direct imports from `src/lib/seed/data/**` outside `src/lib/seed/**` are forbidden. Canonical test wrapper: `<SeedProvider facade={new MemoryUiSeedFacade(fixture)}>` (see `src/lib/projects/__tests__/useCategoryOptions.test.tsx`).
 

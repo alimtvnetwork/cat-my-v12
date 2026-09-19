@@ -12,11 +12,11 @@
 Defaults (hardcoded) → Config file (JSON) → CLI flags (highest priority)
 ```
 
-| Layer          | Source                                    | Priority              |
-| -------------- | ----------------------------------------- | --------------------- |
-| 1. Defaults    | Constants in code                         | Lowest                |
-| 2. Config file | `./data/config.json` or `--config <path>` | Medium                |
-| 3. CLI flags   | `--mode ssh`, `--output json`             | Highest (always wins) |
+| Layer | Source | Priority |
+|-------|--------|----------|
+| 1. Defaults | Constants in code | Lowest |
+| 2. Config file | `./data/config.json` or `--config <path>` | Medium |
+| 3. CLI flags | `--mode ssh`, `--output json` | Highest (always wins) |
 
 ## Config File
 
@@ -42,12 +42,12 @@ Define a flat JSON structure:
 
 ### Rules
 
-| Rule                | Detail                                    |
-| ------------------- | ----------------------------------------- |
-| Field names         | camelCase                                 |
-| Array fields        | Default to `[]`, never `null`             |
-| String fields       | Default to `""`, never `null`             |
-| No nested objects   | Unless absolutely necessary               |
+| Rule | Detail |
+|------|--------|
+| Field names | camelCase |
+| Array fields | Default to `[]`, never `null` |
+| String fields | Default to `""`, never `null` |
+| No nested objects | Unless absolutely necessary |
 | Struct mirrors JSON | No transformation between file and struct |
 
 ## Merge Logic
@@ -81,12 +81,12 @@ func LoadAndMerge(configPath, flagMode, flagOutput string) Config {
 
 ## Key Principles
 
-| Principle                       | Detail                                    |
-| ------------------------------- | ----------------------------------------- |
-| Never crash on missing config   | Use defaults, warn if needed              |
-| Flags always win                | Explicit user intent overrides everything |
-| Config paths relative to binary | Unless absolute                           |
-| Default paths in `constants`    | `DefaultConfigPath`, `DefaultOutputDir`   |
+| Principle | Detail |
+|-----------|--------|
+| Never crash on missing config | Use defaults, warn if needed |
+| Flags always win | Explicit user intent overrides everything |
+| Config paths relative to binary | Unless absolute |
+| Default paths in `constants` | `DefaultConfigPath`, `DefaultOutputDir` |
 
 ## Contributors
 

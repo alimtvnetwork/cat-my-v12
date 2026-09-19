@@ -5,7 +5,7 @@
 > - [11-build-deploy.md](11-build-deploy.md) — install/deploy step that places the binary on PATH
 > - [19-shell-completion.md](19-shell-completion.md) — completion install uses the same profile-injection pattern
 > - [13-checklist.md](13-checklist.md) — implementation phases that include setup
-> - Implementation reference: [06-version-and-help.md](../12-cicd-pipeline-workflows/06-version-and-help.md) — shell-integrated commands and help output
+> - Implementation reference: [12-version-and-help.md](../12-cicd-pipeline-workflows/12-version-and-help.md) — shell-integrated commands and help output
 > - Historical sibling-app issue references live outside this repo; this spec keeps the activation contract local
 
 ## Purpose
@@ -33,17 +33,17 @@ This contract eliminates the "PATH not active after install" and
 
 ---
 
-## Required Behaviours
+## Required Behaviors
 
-| ID    | Behaviour                                                                                                                                                      | Required For       |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| PIA-1 | `setup` writes shell snippet to user's profile, idempotent via marker comment.                                                                                 | All shells         |
-| PIA-2 | `setup` exports a shell-detection env var (e.g. `<TOOL>_WRAPPER=1`) so the binary can tell if the wrapper is active.                                           | All shells         |
-| PIA-3 | `setup` attempts in-process activation: dot-source `$PROFILE` (PowerShell) or `source ~/.bashrc` / `~/.zshrc` (Bash/Zsh).                                      | Interactive shells |
-| PIA-4 | When PIA-3 cannot run (different parent shell, non-interactive, Windows installer host), `setup` prints the **exact** reload one-liner for the detected shell. | All shells         |
-| PIA-5 | `doctor` reports wrapper status with one of three outcomes: `LOADED`, `INSTALLED_BUT_NOT_LOADED`, `NOT_INSTALLED`.                                             | All shells         |
-| PIA-6 | Shell-dependent subcommands (anything that must change the parent shell state) print a stderr warning when invoked without `<TOOL>_WRAPPER=1`.                 | All shells         |
-| PIA-7 | Profile snippet first-line marker uses the format `# <tool> shell wrapper v<N>` so future versions can rewrite it deterministically.                           | All shells         |
+| ID | Behavior | Required For |
+|----|-----------|--------------|
+| PIA-1 | `setup` writes shell snippet to user's profile, idempotent via marker comment. | All shells |
+| PIA-2 | `setup` exports a shell-detection env var (e.g. `<TOOL>_WRAPPER=1`) so the binary can tell if the wrapper is active. | All shells |
+| PIA-3 | `setup` attempts in-process activation: dot-source `$PROFILE` (PowerShell) or `source ~/.bashrc` / `~/.zshrc` (Bash/Zsh). | Interactive shells |
+| PIA-4 | When PIA-3 cannot run (different parent shell, non-interactive, Windows installer host), `setup` prints the **exact** reload one-liner for the detected shell. | All shells |
+| PIA-5 | `doctor` reports wrapper status with one of three outcomes: `LOADED`, `INSTALLED_BUT_NOT_LOADED`, `NOT_INSTALLED`. | All shells |
+| PIA-6 | Shell-dependent subcommands (anything that must change the parent shell state) print a stderr warning when invoked without `<TOOL>_WRAPPER=1`. | All shells |
+| PIA-7 | Profile snippet first-line marker uses the format `# <tool> shell wrapper v<N>` so future versions can rewrite it deterministically. | All shells |
 
 ---
 
@@ -80,36 +80,52 @@ matching closing marker so the CLI can rewrite or remove it without
 disturbing surrounding content:
 
 ```
+
 # <tool> shell wrapper v2 — managed by `<tool> setup`. Do not edit manually.
+
 ...snippet body...
+
 # <tool> shell wrapper v2 end
+
 ```
 
 ### PowerShell (`$PROFILE`)
 
 ```powershell
+
 # toolname shell wrapper v2 — managed by `toolname setup`. Do not edit manually.
+
 $env:TOOLNAME_WRAPPER = "1"
 function gcd { Set-Location (toolname cd @args) }
+
 # toolname shell wrapper v2 end
+
 ```
 
 ### Bash / Zsh (`~/.bashrc`, `~/.zshrc`)
 
 ```bash
+
 # toolname shell wrapper v2 — managed by `toolname setup`. Do not edit manually.
+
 export TOOLNAME_WRAPPER=1
 gcd() { cd "$(toolname cd "$@")" ; }
+
 # toolname shell wrapper v2 end
+
 ```
 
 ### Fish (`~/.config/fish/config.fish`)
 
 ```fish
+
 # toolname shell wrapper v2 — managed by `toolname setup`. Do not edit manually.
+
 set -gx TOOLNAME_WRAPPER 1
 function gcd; cd (toolname cd $argv); end
+
 # toolname shell wrapper v2 end
+
 ```
 
 The detection variable name MUST follow `<TOOL>_WRAPPER` (uppercased,
@@ -159,14 +175,14 @@ The `source ~/.<rc>` line MUST match the active profile (`~/.bashrc`,
 
 ## Shell Detection Rules
 
-| Detection Source             | Used For                                                        |
-| ---------------------------- | --------------------------------------------------------------- |
-| `$env:PSVersionTable` exists | PowerShell                                                      |
-| `$ZSH_VERSION` set           | Zsh                                                             |
-| `$BASH_VERSION` set          | Bash                                                            |
-| `$FISH_VERSION` set          | Fish                                                            |
-| Fallback: `basename $SHELL`  | Bash/Zsh on Linux/macOS                                         |
-| Fallback: `$ComSpec`         | cmd.exe (no wrapper supported — print install instruction only) |
+| Detection Source | Used For |
+|------------------|----------|
+| `$env:PSVersionTable` exists | PowerShell |
+| `$ZSH_VERSION` set | Zsh |
+| `$BASH_VERSION` set | Bash |
+| `$FISH_VERSION` set | Fish |
+| Fallback: `basename $SHELL` | Bash/Zsh on Linux/macOS |
+| Fallback: `$ComSpec` | cmd.exe (no wrapper supported — print install instruction only) |
 
 If the shell cannot be detected, `setup` prints the snippet for
 **both** Bash and PowerShell and asks the user to paste the matching
@@ -178,11 +194,11 @@ block into their profile.
 
 `doctor` MUST emit one of these three outcomes:
 
-| Status                   | Stdout                                                               | Exit |
-| ------------------------ | -------------------------------------------------------------------- | ---- |
-| LOADED                   | `[OK] Shell wrapper active (TOOLNAME_WRAPPER=1)`                     | 0    |
-| INSTALLED_BUT_NOT_LOADED | `[!!] Shell wrapper installed but not loaded — run: source ~/.zshrc` | 1    |
-| NOT_INSTALLED            | `[!!] Shell wrapper missing — run: toolname setup`                   | 1    |
+| Status | Stdout | Exit |
+|--------|--------|------|
+| LOADED | `[OK] Shell wrapper active (TOOLNAME_WRAPPER=1)` | 0 |
+| INSTALLED_BUT_NOT_LOADED | `[!!] Shell wrapper installed but not loaded — run: source ~/.zshrc` | 1 |
+| NOT_INSTALLED | `[!!] Shell wrapper missing — run: toolname setup` | 1 |
 
 Detection algorithm:
 
@@ -199,12 +215,12 @@ Detection algorithm:
 Any subcommand that requires the wrapper (typically anything that
 would change the parent shell's CWD or env) MUST detect missing
 wrapper state and print a stderr warning, then continue with reduced
-behaviour where possible:
+behavior where possible:
 
 ```
   ⚠ Shell wrapper not active. The current command will print the path
     instead of changing directory. Run `toolname setup` (and reload
-    your shell) to enable shell-integrated behaviour.
+    your shell) to enable shell-integrated behavior.
 ```
 
 The warning text MUST include both:
@@ -231,15 +247,15 @@ The warning text MUST include both:
 
 ## Cross-Platform Parity Table
 
-| Capability                        | PowerShell      | Bash                  | Zsh                  | Fish                                   |
-| --------------------------------- | --------------- | --------------------- | -------------------- | -------------------------------------- |
-| Profile detection                 | ✅ `$PROFILE`   | ✅ `~/.bashrc`        | ✅ `~/.zshrc`        | ✅ `~/.config/fish/config.fish`        |
-| Marker-based snippet              | ✅              | ✅                    | ✅                   | ✅                                     |
-| Wrapper detection env var         | ✅ `$env:`      | ✅ `export`           | ✅ `export`          | ✅ `set -gx`                           |
-| In-session activation             | ✅ dot-source   | ❌ (print one-liner)  | ❌ (print one-liner) | ❌ (print one-liner)                   |
-| `doctor` LOADED check             | ✅              | ✅                    | ✅                   | ✅                                     |
-| `doctor` INSTALLED_BUT_NOT_LOADED | ✅              | ✅                    | ✅                   | ✅                                     |
-| Reload one-liner printed          | ✅ `. $PROFILE` | ✅ `source ~/.bashrc` | ✅ `source ~/.zshrc` | ✅ `source ~/.config/fish/config.fish` |
+| Capability | PowerShell | Bash | Zsh | Fish |
+|------------|-----------|------|-----|------|
+| Profile detection | ✅ `$PROFILE` | ✅ `~/.bashrc` | ✅ `~/.zshrc` | ✅ `~/.config/fish/config.fish` |
+| Marker-based snippet | ✅ | ✅ | ✅ | ✅ |
+| Wrapper detection env var | ✅ `$env:` | ✅ `export` | ✅ `export` | ✅ `set -gx` |
+| In-session activation | ✅ dot-source | ❌ (print one-liner) | ❌ (print one-liner) | ❌ (print one-liner) |
+| `doctor` LOADED check | ✅ | ✅ | ✅ | ✅ |
+| `doctor` INSTALLED_BUT_NOT_LOADED | ✅ | ✅ | ✅ | ✅ |
+| Reload one-liner printed | ✅ `. $PROFILE` | ✅ `source ~/.bashrc` | ✅ `source ~/.zshrc` | ✅ `source ~/.config/fish/config.fish` |
 
 ---
 
@@ -284,11 +300,11 @@ The warning text MUST include both:
 
 These bugs in the gitmap project triggered this generic spec:
 
-| Issue                                           | Root Cause                                                                                            |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `22-installer-path-not-active-after-install`    | Installer wrote to PATH but never told the user to reload, and never auto-activated.                  |
-| `24-cd-command-does-not-change-shell-directory` | The `cd` subcommand silently no-op'd because the wrapper function was not loaded.                     |
-| `25-powershell-cd-wrapper-not-loaded`           | Same as 24 but on Windows — wrapper installed in `$PROFILE` but the running session never sourced it. |
+| Issue | Root Cause |
+|-------|------------|
+| `22-installer-path-not-active-after-install` | Installer wrote to PATH but never told the user to reload, and never auto-activated. |
+| `24-cd-command-does-not-change-shell-directory` | The `cd` subcommand silently no-op'd because the wrapper function was not loaded. |
+| `25-powershell-cd-wrapper-not-loaded` | Same as 24 but on Windows — wrapper installed in `$PROFILE` but the running session never sourced it. |
 
 By following the contract above, every new CLI in this framework
 inherits a deterministic, AI-implementable post-install activation

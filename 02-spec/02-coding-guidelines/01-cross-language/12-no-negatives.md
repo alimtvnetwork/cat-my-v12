@@ -1,7 +1,7 @@
 # Cross-Language Rule: No Raw Negations — Use Positive Guard Functions
 
-> **Version:** 2.1.0  
-> **Updated:** 2026-03-31  
+> **Version:** 2.1.0
+> **Updated:** 2026-03-31
 > **Applies to:** PHP, TypeScript, Go
 
 ---
@@ -16,16 +16,16 @@ Raw negations are easy to miss during code review, cause cognitive overhead, and
 
 ## The Rule
 
-| ❌ Forbidden              | ✅ Required                               | Why                               |
-| ------------------------- | ----------------------------------------- | --------------------------------- |
-| `!file_exists($path)`     | `PathHelper::isFileMissing($path)`        | Positive name; no `!` to overlook |
-| `!is_dir($path)`          | `PathHelper::isDirMissing($path)`         | Self-documenting intent           |
-| `!class_exists('X')`      | `BooleanHelpers::isClassMissing('X')`     | Centralized, testable             |
-| `!function_exists('f')`   | `BooleanHelpers::isFuncMissing('f')`      | Same principle                    |
-| `!extension_loaded('e')`  | `BooleanHelpers::isExtensionMissing('e')` | Same principle                    |
-| `!$obj->isActive()`       | `$obj->isDisabled()`                      | Semantic inverse on object        |
-| `!arr.includes(x)`        | `isMissing(arr, x)`                       | Named guard                       |
-| `!strings.Contains(s, x)` | `IsMissing(s, x)`                         | Named guard                       |
+| ❌ Forbidden | ✅ Required | Why |
+|-------------|------------|-----|
+| `!file_exists($path)` | `PathHelper::isFileMissing($path)` | Positive name; no `!` to overlook |
+| `!is_dir($path)` | `PathHelper::isDirMissing($path)` | Self-documenting intent |
+| `!class_exists('X')` | `BooleanHelpers::isClassMissing('X')` | Centralized, testable |
+| `!function_exists('f')` | `BooleanHelpers::isFuncMissing('f')` | Same principle |
+| `!extension_loaded('e')` | `BooleanHelpers::isExtensionMissing('e')` | Same principle |
+| `!$obj->isActive()` | `$obj->isDisabled()` | Semantic inverse on object |
+| `!arr.includes(x)` | `isMissing(arr, x)` | Named guard |
+| `!strings.Contains(s, x)` | `IsMissing(s, x)` | Named guard |
 
 ### Key: Every negative check becomes a **positively named function**
 
@@ -78,67 +78,67 @@ if (BooleanHelpers::isClassMissing('PDO')) {
 - `PathHelper` (`RiseupAsia\Helpers\PathHelper`) — file/directory guards
 - `BooleanHelpers` (`RiseupAsia\Helpers\BooleanHelpers`) — function/class/extension/database guards
 
-| Guard Method                | Replaces                                  | Class            |
-| --------------------------- | ----------------------------------------- | ---------------- |
-| `isFileMissing($path)`      | `!file_exists($path)`                     | `PathHelper`     |
-| `isFileExists($path)`       | `file_exists($path)` (with null guard)    | `PathHelper`     |
-| `isDirMissing($path)`       | `!is_dir($path)`                          | `PathHelper`     |
-| `isDirExists($path)`        | `is_dir($path)` (with null guard)         | `PathHelper`     |
-| `isDirWritable($path)`      | `is_dir($path) && is_writable($path)`     | `PathHelper`     |
-| `isDirReadonly($path)`      | `!is_dir($path) \|\| !is_writable($path)` | `PathHelper`     |
-| `isClassMissing($name)`     | `!class_exists($name)`                    | `BooleanHelpers` |
-| `isClassExists($name)`      | `class_exists($name)`                     | `BooleanHelpers` |
-| `isFuncMissing($name)`      | `!function_exists($name)`                 | `BooleanHelpers` |
-| `isFuncExists($name)`       | `function_exists($name)`                  | `BooleanHelpers` |
-| `isExtensionMissing($name)` | `!extension_loaded($name)`                | `BooleanHelpers` |
-| `isExtensionLoaded($name)`  | `extension_loaded($name)`                 | `BooleanHelpers` |
-| `isDbConnected($db)`        | `$db !== null && $db->isConnected()`      | `BooleanHelpers` |
-| `isDbDisconnected($db)`     | `$db === null \|\| !$db->isConnected()`   | `BooleanHelpers` |
+| Guard Method | Replaces | Class |
+|-------------|----------|-------|
+| `isFileMissing($path)` | `!file_exists($path)` | `PathHelper` |
+| `isFileExists($path)` | `file_exists($path)` (with null guard) | `PathHelper` |
+| `isDirMissing($path)` | `!is_dir($path)` | `PathHelper` |
+| `isDirExists($path)` | `is_dir($path)` (with null guard) | `PathHelper` |
+| `isDirWritable($path)` | `is_dir($path) && is_writable($path)` | `PathHelper` |
+| `isDirReadonly($path)` | `!is_dir($path) \|\| !is_writable($path)` | `PathHelper` |
+| `isClassMissing($name)` | `!class_exists($name)` | `BooleanHelpers` |
+| `isClassExists($name)` | `class_exists($name)` | `BooleanHelpers` |
+| `isFuncMissing($name)` | `!function_exists($name)` | `BooleanHelpers` |
+| `isFuncExists($name)` | `function_exists($name)` | `BooleanHelpers` |
+| `isExtensionMissing($name)` | `!extension_loaded($name)` | `BooleanHelpers` |
+| `isExtensionLoaded($name)` | `extension_loaded($name)` | `BooleanHelpers` |
+| `isDbConnected($db)` | `$db !== null && $db->isConnected()` | `BooleanHelpers` |
+| `isDbDisconnected($db)` | `$db === null \|\| !$db->isConnected()` | `BooleanHelpers` |
 
 ### TypeScript (camelCase functions)
 
 ```typescript
 // ❌ FORBIDDEN: Raw negation
 if (!fs.existsSync(path)) {
-  throw new Error("File not found");
+    throw new Error('File not found');
 }
 
 if (!response.ok) {
-  handleError(response);
+    handleError(response);
 }
 
 if (!array.includes(item)) {
-  array.push(item);
+    array.push(item);
 }
 
 // ✅ REQUIRED: Positive guard function
 if (isFileMissing(path)) {
-  throw new Error("File not found");
+    throw new Error('File not found');
 }
 
 if (isResponseFailed(response)) {
-  handleError(response);
+    handleError(response);
 }
 
 if (isItemMissing(array, item)) {
-  array.push(item);
+    array.push(item);
 }
 ```
 
 **Utility location:** `src/utils/guards.ts` or domain-specific guard files
 
-| Guard Function           | Replaces                            |
-| ------------------------ | ----------------------------------- |
-| `isFileMissing(path)`    | `!fs.existsSync(path)`              |
-| `isFileExists(path)`     | `fs.existsSync(path)`               |
-| `isResponseFailed(res)`  | `!res.ok`                           |
-| `isResponseSuccess(res)` | `res.ok`                            |
-| `isArrayEmpty(arr)`      | `!arr.length` or `arr.length === 0` |
-| `hasItems(arr)`          | `arr.length > 0`                    |
-| `isNullish(val)`         | `val == null`                       |
-| `isPresent(val)`         | `val != null`                       |
-| `isStringEmpty(str)`     | `!str` or `str === ''`              |
-| `hasContent(str)`        | `!!str` or `str.length > 0`         |
+| Guard Function | Replaces |
+|---------------|----------|
+| `isFileMissing(path)` | `!fs.existsSync(path)` |
+| `isFileExists(path)` | `fs.existsSync(path)` |
+| `isResponseFailed(res)` | `!res.ok` |
+| `isResponseSuccess(res)` | `res.ok` |
+| `isArrayEmpty(arr)` | `!arr.length` or `arr.length === 0` |
+| `hasItems(arr)` | `arr.length > 0` |
+| `isNullish(val)` | `val == null` |
+| `isPresent(val)` | `val != null` |
+| `isStringEmpty(str)` | `!str` or `str === ''` |
+| `hasContent(str)` | `!!str` or `str.length > 0` |
 
 ### Go (PascalCase exported functions)
 
@@ -170,21 +170,21 @@ if IsMissingSubstring(s, substr) {
 
 **Utility package:** `pkg/guards/` or `internal/guards/`
 
-| Guard Function               | Replaces                                           |
-| ---------------------------- | -------------------------------------------------- |
-| `IsFileMissing(path)`        | `!fileExists(path)`                                |
-| `IsFileExists(path)`         | `fileExists(path)`                                 |
-| `IsDirMissing(path)`         | `!dirExists(path)`                                 |
-| `IsDirExists(path)`          | `dirExists(path)`                                  |
-| `IsStringEmpty(s)`           | `s == ""` or `len(s) == 0`                         |
-| `HasContent(s)`              | `s != ""` or `len(s) > 0`                          |
-| `IsSliceEmpty(s)`            | `len(s) == 0`                                      |
-| `HasItems(s)`                | `len(s) > 0`                                       |
-| `IsMissingSubstring(s, sub)` | `!strings.Contains(s, sub)`                        |
-| `ContainsSubstring(s, sub)`  | `strings.Contains(s, sub)`                         |
-| `IsDefined(x)`               | `x != nil` (positive existence check)              |
-| `IsDefinedAndValid(x)`       | `x != nil && x.IsValid()` (existence + validation) |
-| `IsEmpty(x)`                 | `x == nil` (absence check)                         |
+| Guard Function | Replaces |
+|---------------|----------|
+| `IsFileMissing(path)` | `!fileExists(path)` |
+| `IsFileExists(path)` | `fileExists(path)` |
+| `IsDirMissing(path)` | `!dirExists(path)` |
+| `IsDirExists(path)` | `dirExists(path)` |
+| `IsStringEmpty(s)` | `s == ""` or `len(s) == 0` |
+| `HasContent(s)` | `s != ""` or `len(s) > 0` |
+| `IsSliceEmpty(s)` | `len(s) == 0` |
+| `HasItems(s)` | `len(s) > 0` |
+| `IsMissingSubstring(s, sub)` | `!strings.Contains(s, sub)` |
+| `ContainsSubstring(s, sub)` | `strings.Contains(s, sub)` |
+| `IsDefined(x)` | `x != nil` (positive existence check) |
+| `IsDefinedAndValid(x)` | `x != nil && x.IsValid()` (existence + validation) |
+| `IsEmpty(x)` | `x == nil` (absence check) |
 
 ---
 
@@ -204,35 +204,35 @@ if (!$task->isComplete())    → if ($task->isIncomplete())
 
 ### Common Semantic Inverse Pairs
 
-| Positive Method   | Semantic Inverse    | ❌ Never Use       |
-| ----------------- | ------------------- | ------------------ |
-| `isActive()`      | `isInactive()`      | `!isActive()`      |
-| `isEnabled()`     | `isDisabled()`      | `!isEnabled()`     |
-| `isBlocked()`     | `isUnblocked()`     | `!isBlocked()`     |
-| `isLocked()`      | `isUnlocked()`      | `!isLocked()`      |
-| `isConnected()`   | `isDisconnected()`  | `!isConnected()`   |
-| `isVisible()`     | `isHidden()`        | `!isVisible()`     |
-| `isOpen()`        | `isClosed()`        | `!isOpen()`        |
-| `isComplete()`    | `isIncomplete()`    | `!isComplete()`    |
-| `isValid()`       | `isInvalid()`       | `!isValid()`       |
-| `isAuthorized()`  | `isUnauthorized()`  | `!isAuthorized()`  |
+| Positive Method | Semantic Inverse | ❌ Never Use |
+|----------------|-----------------|-------------|
+| `isActive()` | `isInactive()` | `!isActive()` |
+| `isEnabled()` | `isDisabled()` | `!isEnabled()` |
+| `isBlocked()` | `isUnblocked()` | `!isBlocked()` |
+| `isLocked()` | `isUnlocked()` | `!isLocked()` |
+| `isConnected()` | `isDisconnected()` | `!isConnected()` |
+| `isVisible()` | `isHidden()` | `!isVisible()` |
+| `isOpen()` | `isClosed()` | `!isOpen()` |
+| `isComplete()` | `isIncomplete()` | `!isComplete()` |
+| `isValid()` | `isInvalid()` | `!isValid()` |
+| `isAuthorized()` | `isUnauthorized()` | `!isAuthorized()` |
 | `hasPermission()` | `lacksPermission()` | `!hasPermission()` |
-| `hasAccess()`     | `lacksAccess()`     | `!hasAccess()`     |
-| `isSubscribed()`  | `isUnsubscribed()`  | `!isSubscribed()`  |
+| `hasAccess()` | `lacksAccess()` | `!hasAccess()` |
+| `isSubscribed()` | `isUnsubscribed()` | `!isSubscribed()` |
 
 ### State Transition Pairs (Action Methods)
 
 These are **action methods** (not boolean checks) but follow the same naming philosophy:
 
-| Action        | Inverse Action  |
-| ------------- | --------------- |
-| `block()`     | `unblock()`     |
-| `activate()`  | `deactivate()`  |
-| `lock()`      | `unlock()`      |
-| `enable()`    | `disable()`     |
+| Action | Inverse Action |
+|--------|---------------|
+| `block()` | `unblock()` |
+| `activate()` | `deactivate()` |
+| `lock()` | `unlock()` |
+| `enable()` | `disable()` |
 | `subscribe()` | `unsubscribe()` |
-| `connect()`   | `disconnect()`  |
-| `show()`      | `hide()`        |
+| `connect()` | `disconnect()` |
+| `show()` | `hide()` |
 
 ```typescript
 // ❌ FORBIDDEN
@@ -266,15 +266,15 @@ stores **only the positive (canonical) form**, and the inverted accessor
 is **auto-generated as a computed method/getter** in the model, never as
 a second column.
 
-| Stored DB column | Auto-derived code accessor      | Derivation    |
-| ---------------- | ------------------------------- | ------------- |
-| `IsActive`       | `IsInactive()` / `isInactive()` | `!IsActive`   |
-| `IsEnabled`      | `IsDisabled()`                  | `!IsEnabled`  |
-| `HasLicense`     | `HasNoLicense()`                | `!HasLicense` |
+| Stored DB column | Auto-derived code accessor | Derivation |
+|------------------|----------------------------|-----------|
+| `IsActive`       | `IsInactive()` / `isInactive()` | `!IsActive` |
+| `IsEnabled`      | `IsDisabled()`              | `!IsEnabled` |
+| `HasLicense`     | `HasNoLicense()`            | `!HasLicense` |
 
-> **Spec:** [Database Naming Conventions — Rule 9: Auto-Generated Inverted (Computed) Fields](../../04-database-conventions/01-naming-conventions.md#rule-9-auto-generated-inverted-computed-fields-in-code)
+> **Spec:** [Database Naming Conventions — Rule 9: Auto-Generated Inverted (Computed) Fields](../../04-database-conventions/02-naming-conventions.md#rule-9-auto-generated-inverted-computed-fields-in-code)
 >
-> **Codegen:** `linters-cicd/codegen/` emits the inverse methods/traits/getters for Go, PHP, and TypeScript automatically.
+> **Codegen:** [`linters-cicd/codegen/`](../../../linters-cicd/codegen/readme.md) emits the inverse methods/traits/getters for Go, PHP, and TypeScript automatically.
 >
 > **Linter:** `BOOL-NEG-001` blocks `Not`/`No`-prefixed column names from being introduced via migration.
 
@@ -285,14 +285,12 @@ a second column.
 Raw negation is **only** acceptable for:
 
 1. **Simple boolean variable checks** where the variable is already a positively named `is_*`/`has_*` boolean:
-
    ```php
 
    if (!$isInitialized) { ... }  // ✅ OK — variable is already semantic
    ```
 
 2. **Logical operators in extracted named booleans** (inside the variable/method definition, not at the call site):
-
    ```php
    $isInvalid = !$isValid && !$hasOverride;  // ✅ OK — inside named boolean
 
@@ -300,7 +298,6 @@ Raw negation is **only** acceptable for:
    ```
 
 3. **Native type coercion** where no function exists:
-
    ```php
 
    if (!$value) { ... }  // ✅ OK — simple falsy check on primitive
@@ -328,14 +325,14 @@ Raw negation is **only** acceptable for:
 
 ## Cross-References
 
-- [Boolean Principles Overview](./02-boolean-principles/00-overview.md) — Is/Has prefix rules and parent index
-- [Database Naming — Rule 9 (Inverted Fields)](../../04-database-conventions/01-naming-conventions.md#rule-9-auto-generated-inverted-computed-fields-in-code) — DB-side inverse contract + codegen
-- [PHP Boolean Logic](../04-php/07-php-standards-reference/03-initialization-and-booleans.md#boolean-logic) — PHP-specific helpers
-- [PHP Forbidden Patterns](../04-php/02-forbidden-patterns.md) — Pattern 4.x
-- [Cross-Language Code Style](./04-code-style/00-overview.md) — Braces, nesting, spacing
-- [TypeScript Standards](../02-typescript/08-typescript-standards-reference.md)
-- [Golang Standards](../03-golang/04-golang-standards-reference/00-overview.md)
+- [Boolean Principles Overview](./02-boolean-principles/01-index.md) — Is/Has prefix rules and parent index
+- [Database Naming — Rule 9 (Inverted Fields)](../../04-database-conventions/02-naming-conventions.md#rule-9-auto-generated-inverted-computed-fields-in-code) — DB-side inverse contract + codegen
+- [PHP Boolean Logic](../04-php/07-php-standards-reference/04-initialization-and-booleans.md#boolean-logic) — PHP-specific helpers
+- [PHP Forbidden Patterns](../04-php/03-forbidden-patterns.md) — Pattern 4.x
+- [Cross-Language Code Style](./04-code-style/01-index.md) — Braces, nesting, spacing
+- [TypeScript Standards](../02-typescript/09-typescript-standards-reference.md)
+- [Golang Standards](../03-golang/04-golang-standards-reference/01-index.md)
 
 ---
 
-_No-negatives specification v2.2.0 — 2026-04-19_
+*No-negatives specification v2.2.0 — 2026-04-19*

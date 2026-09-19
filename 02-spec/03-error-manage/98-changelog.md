@@ -1,19 +1,46 @@
-# Error Management - Changelog
+# Error Management — Changelog
 
-**Version:** 3.3.0  
-**Last Updated:** 2026-07-15
+**Version:** 3.2.0
+**Last Updated:** 2026-04-16
 
 ---
 
-## v3.3.0 - 2026-07-15
+## v2.3.1 — 2026-09-01
 
-### Plan 35 Layer Interaction Codes
+### Mandatory Error Type First & Extended Collection Mutators
 
-#### Added - Layer code registration
+#### Changed — `pkg/appfault` Constructors
 
-- Registered `E_LAYER_REORDER_FAILED`, `E_LAYER_MERGE_INCOMPATIBLE`, and `W_LAYER_GROUP_EMPTY` in `02-spec/21-app/40-error-manage.md` Appendix A.4.
-- Added the Control Automation structured-code family to `03-error-code-registry/01-registry.md` and `error-codes-master.json` without allocating numeric ecosystem codes.
-- Pinned context schemas for reorder, merge rejection, and empty-group observability.
+- Mandated `errtype.Variation` as the first argument in `Wrap(errType, cause, msg)` and `WrapType(errType, cause)`.
+- Added `NewType(errType)` creating AppErrors with default type names.
+- Guaranteed nil return when `cause == nil` or `errType == None`.
+
+#### Added — `pkg/appfaults` Extended Mutators
+
+- `AddType(errType)`: Adds error from enum type.
+- `AddTypeMsg(errType, msg)`: Adds error from enum type + message.
+- `AddTypeMsgf(errType, fmt, args...)`: Formatted message error.
+- `AddError(errType, cause)`: Wraps cause error with explicit type.
+- `AddErrorMsg(errType, cause, msg)`: Wraps cause error with explicit type and message.
+- `AddWithContext(errType, msg, ctx)`: Adds error with custom context map.
+
+---
+
+## v2.3.0 — 2026-09-01
+
+### Dedicated `errtype` Package & Integer-Backed Enums
+
+#### Added — `pkg/errtype` Package
+
+- `type Variation uint16` with `None = 0` (no error / success).
+- Standard variations: `Generic (1)`, `Validation (2)`, `NotFound (3)`, `Precondition (4)`, `Execution (5)`, `Database (6)`, `Network (7)`, `Timeout (8)`, `IO (9)`, `Unauthorized (10)`, `Forbidden (11)`, `Internal (12)`, `Unknown (13)`.
+- Extensible custom error types (`const CustomErr errtype.Variation = 1001`).
+
+#### Added — Integer Enums with PascalCase Serialization
+
+- `SeverityType` (`byte`) and `PriorityType` (`byte`) enums in `pkg/appfault`.
+- PascalCase string outputs (`"Info"`, `"Warn"`, `"Error"`, `"Critical"`, `"Fatal"`) via `String()` and custom JSON/YAML marshaling.
+- Documented in retrospective `02-spec/03-error-manage/01-error-resolution/03-retrospectives/07-golang-integer-enums-and-pascal-serialization.md`.
 
 ---
 
@@ -120,12 +147,12 @@
 
 #### Files Modified
 
-| File                                                                                     | Change                            |
-| ---------------------------------------------------------------------------------------- | --------------------------------- |
-| `02-error-architecture/06-apperror-package/01-apperror-reference/05-apperrtype-enums.md` | Full rewrite to v2                |
-| `02-error-architecture/06-apperror-package/01-apperror-reference/02-apperror-struct.md`  | Display methods + signature fixes |
-| `02-error-architecture/06-apperror-package/01-apperror-reference/04-codes-and-policy.md` | v1→v2 examples                    |
-| `readme.md` (project root)                                                               | v1→v2 apperrtype section          |
+| File | Change |
+|------|--------|
+| `02-error-architecture/06-apperror-package/01-apperror-reference/05-apperrtype-enums.md` | Full rewrite to v2 |
+| `02-error-architecture/06-apperror-package/01-apperror-reference/02-apperror-struct.md` | Display methods + signature fixes |
+| `02-error-architecture/06-apperror-package/01-apperror-reference/04-codes-and-policy.md` | v1→v2 examples |
+| `readme.md` (project root) | v1→v2 apperrtype section |
 
 ---
 
@@ -137,7 +164,7 @@
 
 - Created `04-error-manage/` as the single canonical location for all error management specs
 - Organized into 3 categories: Error Resolution, Error Architecture, Error Code Registry
-- New `00-overview.md` with core principles, common pitfalls, and cross-references
+- New `01-index.md` with core principles, common pitfalls, and cross-references
 
 #### Consolidated From
 
@@ -149,4 +176,4 @@
 
 ---
 
-_Keep this file updated when specs change._
+*Keep this file updated when specs change.*

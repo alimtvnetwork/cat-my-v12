@@ -2,7 +2,7 @@
 
 > **Related specs:**
 >
-> - [01-overview.md](00-overview.md) — design philosophy and document index
+> - [01-overview.md](01-index.md) — design philosophy and document index
 > - [08-code-style.md](08-code-style.md) — code style rules enforced within this structure
 > - [15-constants-reference.md](15-constants-reference.md) — constants file organization within the package layout
 
@@ -53,24 +53,24 @@ toolname/
 
 ## Rules
 
-| Rule                           | Detail                                                                        |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| One responsibility per package | `cmd` routes, `scanner` scans, `formatter` renders                            |
-| No circular imports            | `cmd` calls others; others never import `cmd`                                 |
-| Leaf packages                  | `model` and `constants` are imported by many, import nothing project-specific |
-| File length                    | 100–200 lines max per file                                                    |
-| File naming                    | Lowercase, single word or hyphenated (`clone.go`, `rootflags.go`)             |
+| Rule | Detail |
+|------|--------|
+| One responsibility per package | `cmd` routes, `scanner` scans, `formatter` renders |
+| No circular imports | `cmd` calls others; others never import `cmd` |
+| Leaf packages | `model` and `constants` are imported by many, import nothing project-specific |
+| File length | 100–200 lines max per file |
+| File naming | Lowercase, single word or hyphenated (`clone.go`, `rootflags.go`) |
 
 ## Splitting Large Files
 
 When a file exceeds 200 lines, split by responsibility:
 
-| Signal                       | Action                                               |
-| ---------------------------- | ---------------------------------------------------- |
-| 2+ unrelated function groups | Split into separate files                            |
-| Large switch statement       | Each case branch → own file                          |
-| Types mixed with logic       | Separate `model.go` from logic                       |
-| Root command too large       | Split into `root.go`, `rootflags.go`, `rootusage.go` |
+| Signal | Action |
+|--------|--------|
+| 2+ unrelated function groups | Split into separate files |
+| Large switch statement | Each case branch → own file |
+| Types mixed with logic | Separate `model.go` from logic |
+| Root command too large | Split into `root.go`, `rootflags.go`, `rootusage.go` |
 
 ## Main Entry Point
 

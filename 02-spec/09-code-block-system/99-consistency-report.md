@@ -1,24 +1,24 @@
 # Consistency Report — Code Block System
 
-**Version:** 3.2.0  
+**Version:** 3.2.0
 **Updated:** 2026-04-24
 
 ---
 
 ## Cross-References
 
-| Spec File                        | References To                                                                                                                                                                          |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `01-architecture.md`             | All source files in `src/components/markdown/`                                                                                                                                         |
-| `02-html-structure.md`           | `codeBlockBuilder.ts` output                                                                                                                                                           |
-| `03-syntax-highlighting.md`      | `highlighter.ts`, `constants.ts`                                                                                                                                                       |
-| `04-interactions.md`             | `codeBlockActionHandlers.ts`, `codeBlockLineHandlers.ts`, `codeBlockDragHandlers.ts`                                                                                                   |
-| `05-styling.md`                  | `src/index.css` code block section                                                                                                                                                     |
-| `06-constants-and-maps.md`       | `constants.ts`, `codeBlockDomHelpers.ts`                                                                                                                                               |
-| `07-clipboard.md`                | `src/lib/clipboard.ts`                                                                                                                                                                 |
-| `08-checklist-blocks.md`         | `checklistBuilder.ts`                                                                                                                                                                  |
-| `09-tree-structure-rendering.md` | `highlighter.ts`, `constants.ts`, `src/index.css`                                                                                                                                      |
-| `10-selection-bar.md`            | `codeBlockLineHandlers.ts`, `codeBlockDragHandlers.ts`, `codeBlockActionHandlers.ts`, `codeBlockBuilder.ts`, `useCodeBlockEvents.ts`, `codeBlockDomHelpers.ts`, `src/lib/clipboard.ts` |
+| Spec File | References To |
+|-----------|---------------|
+| `02-architecture.md` | All source files in `src/components/markdown/` |
+| `03-html-03-structure.md` | `codeBlockBuilder.ts` output |
+| `04-syntax-highlighting.md` | `highlighter.ts`, `constants.ts` |
+| `05-interactions.md` | `codeBlockActionHandlers.ts`, `codeBlockLineHandlers.ts`, `codeBlockDragHandlers.ts` |
+| `06-styling.md` | `src/index.css` code block section |
+| `07-constants-and-maps.md` | `constants.ts`, `codeBlockDomHelpers.ts` |
+| `08-clipboard.md` | `src/lib/clipboard.ts` |
+| `09-checklist-blocks.md` | `checklistBuilder.ts` |
+| `10-tree-structure-rendering.md` | `highlighter.ts`, `constants.ts`, `src/index.css` |
+| `11-selection-bar.md` | `codeBlockLineHandlers.ts`, `codeBlockDragHandlers.ts`, `codeBlockActionHandlers.ts`, `codeBlockBuilder.ts`, `useCodeBlockEvents.ts`, `codeBlockDomHelpers.ts`, `src/lib/clipboard.ts` |
 
 ## Verified Completeness
 
@@ -37,4 +37,4 @@
 
 ---
 
-_Consistency Report — updated: 2026-04-08_
+*Consistency Report — updated: 2026-04-08*

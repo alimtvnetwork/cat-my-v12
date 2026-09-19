@@ -4,7 +4,7 @@
 >
 > - [05-configuration.md](05-configuration.md) — config layer that coexists with DB persistence
 > - [18-batch-execution.md](18-batch-execution.md) — DB-based repo loading for batch operations
-> - [02-project-structure.md](02-project-structure.md) — `store/` package placement for DB code
+> - [02-project-03-structure.md](./02-project-structure.md) — `store/` package placement for DB code
 
 ## Overview
 
@@ -21,10 +21,10 @@ No C compiler required.
 
 ### Location
 
-| Item      | Value                                  |
-| --------- | -------------------------------------- |
+| Item | Value |
+|------|-------|
 | Directory | `toolname-output/data/` (auto-created) |
-| File name | `toolname.db`                          |
+| File name | `toolname.db` |
 
 ### Auto-Creation
 
@@ -36,14 +36,14 @@ On first data-producing command:
 
 ## Schema Conventions
 
-| Convention      | Detail                                  |
-| --------------- | --------------------------------------- |
-| Table names     | PascalCase (`Repos`, `Groups`)          |
-| Column names    | PascalCase (`RepoName`, `AbsolutePath`) |
-| Primary keys    | `Id TEXT PRIMARY KEY` (UUID)            |
-| Timestamps      | `TEXT DEFAULT CURRENT_TIMESTAMP`        |
-| Booleans        | `INTEGER DEFAULT 0` (0/1)               |
-| String defaults | `DEFAULT ''` (never NULL)               |
+| Convention | Detail |
+|------------|--------|
+| Table names | PascalCase (`Repos`, `Groups`) |
+| Column names | PascalCase (`RepoName`, `AbsolutePath`) |
+| Primary keys | `Id TEXT PRIMARY KEY` (UUID) |
+| Timestamps | `TEXT DEFAULT CURRENT_TIMESTAMP` |
+| Booleans | `INTEGER DEFAULT 0` (0/1) |
+| String defaults | `DEFAULT ''` (never NULL) |
 
 ## Core Tables
 

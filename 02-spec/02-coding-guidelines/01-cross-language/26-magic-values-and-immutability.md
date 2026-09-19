@@ -1,8 +1,8 @@
 # Magic Values, Immutability & Class-First Design
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
-**Applies to:** All languages (Go, TypeScript, PHP, Rust, C#)  
+**Version:** 3.2.0
+**Updated:** 2026-04-16
+**Applies to:** All languages (Go, TypeScript, PHP, Rust, C#)
 **Source:** Consolidated from coding guidelines reviews, `18-code-mutation-avoidance.md`, and real-world `riseup-asia-uploader` patterns
 
 ---
@@ -34,16 +34,16 @@ if (retryCount > 3) { ... }
 
 ### Why They Are Dangerous
 
-| Danger                              | Explanation                                               | Real-World Impact                                                        |
-| ----------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Silent typos**                    | `"actve"` compiles fine but never matches                 | User locked out with no error — discovered weeks later                   |
-| **No IDE support**                  | Can't "Find All References" or refactor                   | Changing `"active"` to `"enabled"` requires grepping the entire codebase |
-| **No type safety**                  | Any string is accepted — the compiler can't help          | Wrong status string passes silently through 5 layers of code             |
-| **Duplicated knowledge**            | The same string appears in 20 files                       | One file gets updated, 19 don't — inconsistent behavior                  |
-| **Impossible to test exhaustively** | String space is infinite — you can't match every case     | `switch` without `default` silently skips unknown values                 |
-| **Hidden coupling**                 | Two systems agree on `"webhook_completed"` via copy-paste | Backend renames to `"webhook_done"`, frontend breaks silently            |
-| **Localization nightmare**          | `if (errorMsg === "Not found")` breaks in French          | Entire feature fails for non-English users                               |
-| **Security risk**                   | `if (role === "admin")` — attackers can guess the string  | Privilege escalation by sending `"admin"` in a JWT claim                 |
+| Danger | Explanation | Real-World Impact |
+|--------|-------------|-------------------|
+| **Silent typos** | `"actve"` compiles fine but never matches | User locked out with no error — discovered weeks later |
+| **No IDE support** | Can't "Find All References" or refactor | Changing `"active"` to `"enabled"` requires grepping the entire codebase |
+| **No type safety** | Any string is accepted — the compiler can't help | Wrong status string passes silently through 5 layers of code |
+| **Duplicated knowledge** | The same string appears in 20 files | One file gets updated, 19 don't — inconsistent behavior |
+| **Impossible to test exhaustively** | String space is infinite — you can't match every case | `switch` without `default` silently skips unknown values |
+| **Hidden coupling** | Two systems agree on `"webhook_completed"` via copy-paste | Backend renames to `"webhook_done"`, frontend breaks silently |
+| **Localization nightmare** | `if (errorMsg === "Not found")` breaks in French | Entire feature fails for non-English users |
+| **Security risk** | `if (role === "admin")` — attackers can guess the string | Privilege escalation by sending `"admin"` in a JWT claim |
 
 ### The Compounding Effect
 
@@ -73,10 +73,10 @@ Every string literal used in comparisons, switch statements, or assignments **mu
 ```typescript
 // ❌ FORBIDDEN — magic strings
 function getDiscount(tier: string): number {
-  if (tier === "premium") return 0.2;
-  if (tier === "basic") return 0.1;
+  if (tier === "premium") return 0.2
+  if (tier === "basic") return 0.1
 
-  return 0;
+  return 0
 }
 
 // ✅ CORRECT — enum
@@ -86,10 +86,10 @@ enum CustomerTier {
 }
 
 function getDiscount(tier: CustomerTier): number {
-  if (tier === CustomerTier.Premium) return 0.2;
-  if (tier === CustomerTier.Basic) return 0.1;
+  if (tier === CustomerTier.Premium) return 0.2
+  if (tier === CustomerTier.Basic) return 0.1
 
-  return 0;
+  return 0
 }
 ```
 
@@ -124,7 +124,7 @@ if ($order->status === 'completed') { ... }
 enum OrderStatus: string {
     case Pending = 'pending';
     case Completed = 'completed';
-    case Cancelled = 'cancelled';
+    case canceled = 'canceled';
 }
 
 if ($order->status->isEqual(OrderStatus::Completed)) { ... }
@@ -181,15 +181,15 @@ Every variable should be assigned **exactly once**. Use `const` (TypeScript/JS/C
 
 ```typescript
 // ❌ FORBIDDEN — mutable variable reassigned
-let discount = 0;
+let discount = 0
 if (isPremium) {
-  discount = 0.2;
+  discount = 0.2
 } else {
-  discount = 0.1;
+  discount = 0.1
 }
 
 // ✅ CORRECT — single assignment with ternary or function
-const discount = isPremium ? 0.2 : 0.1;
+const discount = isPremium ? 0.2 : 0.1
 ```
 
 ```go
@@ -209,22 +209,22 @@ return Result{
 
 ```typescript
 // ❌ FORBIDDEN — accumulating via mutation
-let items: string[] = [];
-items.push("a");
-items.push("b");
+let items: string[] = []
+items.push("a")
+items.push("b")
 
 // ✅ CORRECT — declare the full value
-const items: readonly string[] = ["a", "b"];
+const items: readonly string[] = ["a", "b"]
 ```
 
 #### When Mutation Is Unavoidable
 
-| Case                                | Why Allowed                              | Rule                                                 |
-| ----------------------------------- | ---------------------------------------- | ---------------------------------------------------- |
-| Loop accumulation (`append`/`push`) | Collecting iteration results             | Keep mutation in one method only                     |
-| Builder pattern                     | Accumulates instructions, builds once    | Final `.build()` call produces immutable value       |
-| Lazy/cached evaluation              | Value generated once, then never changes | Use mutex lock for concurrent access                 |
-| React `useState`                    | Framework requires it                    | State updates via setter only, never direct mutation |
+| Case | Why Allowed | Rule |
+|------|-------------|------|
+| Loop accumulation (`append`/`push`) | Collecting iteration results | Keep mutation in one method only |
+| Builder pattern | Accumulates instructions, builds once | Final `.build()` call produces immutable value |
+| Lazy/cached evaluation | Value generated once, then never changes | Use mutex lock for concurrent access |
+| React `useState` | Framework requires it | State updates via setter only, never direct mutation |
 
 ### Rule 4: Class-First Design (TypeScript/JavaScript)
 
@@ -232,18 +232,18 @@ Prefer classes over loose exported functions when there is **shared state, confi
 
 ```typescript
 // ❌ DISCOURAGED — loose exported functions with hidden coupling
-let apiUrl = "";
+let apiUrl = ""
 
 export function setApiUrl(url: string) {
-  apiUrl = url;
+  apiUrl = url
 }
 
 export function fetchUser(id: string) {
-  return fetch(`${apiUrl}/users/${id}`);
+  return fetch(`${apiUrl}/users/${id}`)
 }
 
 export function fetchOrder(id: string) {
-  return fetch(`${apiUrl}/orders/${id}`);
+  return fetch(`${apiUrl}/orders/${id}`)
 }
 ```
 
@@ -253,16 +253,16 @@ class ApiClient {
   constructor(private readonly baseUrl: string) {}
 
   fetchUser(id: string): Promise<Response> {
-    return fetch(`${this.baseUrl}/users/${id}`);
+    return fetch(`${this.baseUrl}/users/${id}`)
   }
 
   fetchOrder(id: string): Promise<Response> {
-    return fetch(`${this.baseUrl}/orders/${id}`);
+    return fetch(`${this.baseUrl}/orders/${id}`)
   }
 }
 
 // Usage — immutable, testable, no global state
-const api = new ApiClient("https://api.example.com");
+const api = new ApiClient("https://api.example.com")
 ```
 
 **When functions are fine:** Pure utility functions with no shared state (e.g., `formatDate()`, `slugify()`) can remain as standalone exports.
@@ -276,11 +276,11 @@ const api = new ApiClient("https://api.example.com");
 ```typescript
 // ❌ DANGEROUS — object mutation across functions
 function processOrder(order: Order): Order {
-  applyDiscount(order); // mutates order.price
-  calculateTax(order); // mutates order.tax (depends on mutated price)
-  applyShipping(order); // mutates order.shipping
+  applyDiscount(order)     // mutates order.price
+  calculateTax(order)      // mutates order.tax (depends on mutated price)
+  applyShipping(order)     // mutates order.shipping
 
-  return order;
+  return order
 }
 // Bug: if applyDiscount is called twice, tax is calculated on wrong price
 // Bug: reordering the calls produces different results
@@ -290,11 +290,11 @@ function processOrder(order: Order): Order {
 ```typescript
 // ✅ SAFE — each step produces a new immutable value
 function processOrder(order: Readonly<Order>): ProcessedOrder {
-  const discountedPrice = calculateDiscountedPrice(order.price, order.tier);
-  const tax = calculateTax(discountedPrice);
-  const shipping = calculateShipping(order.weight);
+  const discountedPrice = calculateDiscountedPrice(order.price, order.tier)
+  const tax = calculateTax(discountedPrice)
+  const shipping = calculateShipping(order.weight)
 
-  return { ...order, price: discountedPrice, tax, shipping };
+  return { ...order, price: discountedPrice, tax, shipping }
 }
 // Each function is pure — testable in isolation, order doesn't matter
 ```
@@ -346,10 +346,10 @@ func buildResponse(data []byte) *Response {
 
 - [Code Mutation Avoidance](./18-code-mutation-avoidance.md) — Detailed mutation rules and mutex patterns
 - [Strict Typing](./13-strict-typing.md) — No `any`/`interface{}`/`object`
-- [Boolean Principles](./02-boolean-principles.md) — Named booleans prevent `if (flag === true)`
-- [Master Coding Guidelines](./15-master-coding-guidelines/00-overview.md) — §7 Type Safety
+- [Boolean Principles](./03-boolean-principles.md) — Named booleans prevent `if (flag === true)`
+- [Master Coding Guidelines](./15-master-coding-guidelines/01-index.md) — §7 Type Safety
 - [Generic Return Types](./25-generic-return-types.md) — Typed returns eliminate `any`
 
 ---
 
-_Magic values, immutability & class-first design — cross-language specification._
+*Magic values, immutability & class-first design — cross-language specification.*

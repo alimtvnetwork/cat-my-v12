@@ -96,13 +96,13 @@ func runScan(args []string) {
 
 ## Rules
 
-| Rule                                               | Rationale                         |
-| -------------------------------------------------- | --------------------------------- |
-| One file per subcommand                            | Single responsibility             |
-| Handlers are unexported (`runScan`, not `RunScan`) | Only `Run()` is the public API    |
-| Unknown commands → stderr + exit 1                 | Fail fast, fail clearly           |
-| Aliases live in `constants`                        | No inline strings                 |
-| Each handler ≤ 15 lines                            | Extract helpers for complex flows |
+| Rule | Rationale |
+|------|-----------|
+| One file per subcommand | Single responsibility |
+| Handlers are unexported (`runScan`, not `RunScan`) | Only `Run()` is the public API |
+| Unknown commands → stderr + exit 1 | Fail fast, fail clearly |
+| Aliases live in `constants` | No inline strings |
+| Each handler ≤ 15 lines | Extract helpers for complex flows |
 
 ## Command Aliases
 

@@ -2,7 +2,7 @@
 
 > **Related specs:**
 >
-> - [02-project-structure.md](02-project-structure.md) — package layout that the build targets
+> - [02-project-03-structure.md](./02-project-structure.md) — package layout that the build targets
 > - [12-testing.md](12-testing.md) — tests that run as part of the build pipeline
 > - [13-checklist.md](13-checklist.md) — implementation phases including build setup
 
@@ -13,12 +13,12 @@ A single script at the repo root handles the full lifecycle:
 
 ### Step-Based Execution
 
-| Step | Action                     | Skippable   |
-| ---- | -------------------------- | ----------- |
-| 1/4  | Git pull latest source     | `-NoPull`   |
-| 2/4  | Resolve dependencies       | No          |
-| 3/4  | Compile binary             | No          |
-| 4/4  | Deploy to target directory | `-NoDeploy` |
+| Step | Action | Skippable |
+|------|--------|-----------|
+| 1/4 | Git pull latest source | `-NoPull` |
+| 2/4 | Resolve dependencies | No |
+| 3/4 | Compile binary | No |
+| 4/4 | Deploy to target directory | `-NoDeploy` |
 
 ### Configuration
 
@@ -106,24 +106,24 @@ Running `.exe` files hold a file lock and cannot be overwritten.
 
 ### Error Handling
 
-| Scenario                    | Behavior                        |
-| --------------------------- | ------------------------------- |
-| No repo path configured     | Print error, exit 1             |
-| Already up to date          | Print message, exit 0           |
-| Build fails                 | Backup remains, exit with error |
-| Deploy locked after retries | Restore backup, fail clearly    |
+| Scenario | Behavior |
+|----------|----------|
+| No repo path configured | Print error, exit 1 |
+| Already up to date | Print message, exit 0 |
+| Build fails | Backup remains, exit with error |
+| Deploy locked after retries | Restore backup, fail clearly |
 
 ## Semantic Logging
 
 Use color-coded logging functions:
 
-| Function        | Color   | Use Case               |
-| --------------- | ------- | ---------------------- |
-| `Write-Step`    | Magenta | Step headers `[1/4]`   |
-| `Write-Success` | Green   | Successful operations  |
-| `Write-Info`    | Cyan    | Informational messages |
-| `Write-Warn`    | Yellow  | Non-fatal warnings     |
-| `Write-Fail`    | Red     | Errors before exit     |
+| Function | Color | Use Case |
+|----------|-------|----------|
+| `Write-Step` | Magenta | Step headers `[1/4]` |
+| `Write-Success` | Green | Successful operations |
+| `Write-Info` | Cyan | Informational messages |
+| `Write-Warn` | Yellow | Non-fatal warnings |
+| `Write-Fail` | Red | Errors before exit |
 
 ## Contributors
 

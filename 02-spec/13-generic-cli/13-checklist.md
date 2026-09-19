@@ -2,8 +2,8 @@
 
 > **Related specs:**
 >
-> - [01-overview.md](00-overview.md) — design philosophy guiding each phase
-> - [02-project-structure.md](02-project-structure.md) — scaffold phase package layout
+> - [01-index.md](01-index.md) — design philosophy guiding each phase
+> - [02-project-03-structure.md](./02-project-structure.md) — scaffold phase package layout
 > - [11-build-deploy.md](11-build-deploy.md) — build and deploy phase details
 
 ## Instructions for AI
@@ -116,8 +116,15 @@ All constraints from `08-code-style.md` apply to every file you write.
 - [ ] For installer scripts, print a post-install summary with version, binary path, install directory, and PATH target/status
 - [ ] Implement `update` command with copy-and-handoff self-update
 - [ ] Implement `update-cleanup` command for artifact removal
+- [ ] Implement post-install shell wrapper per [21-post-install-shell-activation.md](21-post-install-shell-activation.md):
+  - [ ] Add `<TOOL>_WRAPPER` constant + `ShellWrapperMarkerPrefix`/`Suffix` constants
+  - [ ] Create `setup/wrapper.go` with `DetectShell`, `ResolveProfilePath`, `InjectSnippet`, `RemoveSnippet`, `TryInSessionActivate`, `PrintReloadInstruction`
+  - [ ] Wire wrapper injection into `setup` (and installer); attempt in-session activation, fall back to printed reload one-liner
+  - [ ] Add `doctor` check returning `LOADED` / `INSTALLED_BUT_NOT_LOADED` / `NOT_INSTALLED`
+  - [ ] Emit stderr warning from every shell-dependent subcommand when `<TOOL>_WRAPPER` is unset
+  - [ ] Tests: fresh injection, re-injection (no duplicates), marker-based removal, all three `doctor` states
 
-**Verify:** `./run.ps1` builds, deploys, and prints correct version; `./toolname update` works
+**Verify:** `./run.ps1` builds, deploys, and prints correct version; `./toolname update` works; `./toolname setup` activates the wrapper in the current shell (or prints the exact reload command); `./toolname doctor` reports `LOADED`
 
 ---
 
@@ -128,6 +135,7 @@ All constraints from `08-code-style.md` apply to every file you write.
 - [ ] Add unit tests for `formatter` (capture output via `io.Writer`)
 - [ ] Add unit tests for `store` (in-memory SQLite)
 - [ ] Add integration tests under `tests/` for command flag parsing
+- [ ] Add wrapper tests: snippet injection (fresh), re-injection (idempotent), marker-based removal, `doctor` status detection
 - [ ] Verify all tests pass: `go test ./...`
 
 **Verify:** `go test ./...` — zero failures
@@ -152,17 +160,17 @@ All constraints from `08-code-style.md` apply to every file you write.
 
 ## Quick Reference — File Counts
 
-| Phase         | Files Created                               |
-| ------------- | ------------------------------------------- |
-| Scaffold      | ~8                                          |
-| Configuration | ~3                                          |
-| Core Command  | ~3                                          |
-| Formatting    | ~7                                          |
-| Database      | ~4                                          |
-| Commands      | 1 per command                               |
-| Help          | 1 per command + `print.go` + `helpcheck.go` |
-| Build         | 1–2 scripts                                 |
-| Tests         | 1 per testable package                      |
+| Phase | Files Created |
+|-------|--------------|
+| Scaffold | ~8 |
+| Configuration | ~3 |
+| Core Command | ~3 |
+| Formatting | ~7 |
+| Database | ~4 |
+| Commands | 1 per command |
+| Help | 1 per command + `print.go` + `helpcheck.go` |
+| Build | 1–2 scripts |
+| Tests | 1 per testable package |
 
 ---
 

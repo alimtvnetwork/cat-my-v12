@@ -5,16 +5,16 @@
  * Usage: node 02-spec/07-error-code-registry/linter-scripts/generate-utilization-report.mjs
  */
 
-import { readFileSync, writeFileSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { readFileSync, writeFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dir, "../../..");
-const MASTER = resolve(ROOT, "02-spec/07-error-code-registry/error-codes-master.json");
-const OUTPUT = resolve(ROOT, "02-spec/07-error-code-registry/error-code-utilization-report.md");
+const ROOT = resolve(__dir, '../../..');
+const MASTER = resolve(ROOT, '02-spec/07-error-code-registry/error-codes-master.json');
+const OUTPUT = resolve(ROOT, '02-spec/07-error-code-registry/error-code-utilization-report.md');
 
-const master = JSON.parse(readFileSync(MASTER, "utf-8"));
+const master = JSON.parse(readFileSync(MASTER, 'utf-8'));
 const today = new Date().toISOString().slice(0, 10);
 
 function rangeCapacity(mod) {
@@ -25,12 +25,12 @@ function rangeCapacity(mod) {
 
 function rangeLabel(mod) {
   if (mod.Range) return `${mod.Range.Min}–${mod.Range.Max}`;
-  if (mod.Ranges) return mod.Ranges.map((r) => `${r.Min}–${r.Max}`).join(", ");
-  return "—";
+  if (mod.Ranges) return mod.Ranges.map(r => `${r.Min}–${r.Max}`).join(', ');
+  return '—';
 }
 
 function pct(used, cap) {
-  return cap > 0 ? ((used / cap) * 100).toFixed(1) + "%" : "—";
+  return cap > 0 ? ((used / cap) * 100).toFixed(1) + '%' : '—';
 }
 
 // --- Module table ---
@@ -38,7 +38,7 @@ const modules = master.Modules;
 let totalUsed = 0;
 let totalRetryable = 0;
 
-const moduleRows = modules.map((m) => {
+const moduleRows = modules.map(m => {
   const cap = rangeCapacity(m);
   const used = m.TotalCodes;
   totalUsed += used;
@@ -47,24 +47,24 @@ const moduleRows = modules.map((m) => {
 });
 
 // --- Special ranges ---
-const specialRows = (master.SpecialRanges || []).map((s) => {
+const specialRows = (master.SpecialRanges || []).map(s => {
   const range = s.Range
     ? `${s.Range.Min}–${s.Range.Max}`
-    : (s.Ranges || []).map((r) => `${r.Min}–${r.Max} (${r.Label})`).join(", ");
+    : (s.Ranges || []).map(r => `${r.Min}–${r.Max} (${r.Label})`).join(', ');
   return `| ${range} | ${s.Project} | ${s.Description || s.Name} |`;
 });
 
 // --- Unallocated ranges ---
 let totalUnallocated = 0;
-const unallocRows = (master.UnallocatedRanges || []).map((u) => {
+const unallocRows = (master.UnallocatedRanges || []).map(u => {
   const cap = u.Max - u.Min + 1;
   totalUnallocated += cap;
   return `| ${u.Min}–${u.Max} | ${cap.toLocaleString()} | ${u.Note} |`;
 });
 
 // --- Find highest/lowest utilization (active modules only) ---
-const active = modules.filter((m) => m.TotalCodes > 0);
-const withUtil = active.map((m) => ({ Project: m.Project, Util: m.TotalCodes / rangeCapacity(m) }));
+const active = modules.filter(m => m.TotalCodes > 0);
+const withUtil = active.map(m => ({ Project: m.Project, Util: m.TotalCodes / rangeCapacity(m) }));
 withUtil.sort((a, b) => b.Util - a.Util);
 const highest = withUtil[0];
 const lowest = withUtil[withUtil.length - 1];
@@ -78,19 +78,19 @@ const report = `# Error Code Range Utilization Report
 
 | Module | Project | Range | Capacity | Used | Utilization | Retryable |
 |--------|---------|-------|----------|------|-------------|-----------|
-${moduleRows.join("\n")}
+${moduleRows.join('\n')}
 
 ## Special / Cross-Cutting Ranges
 
 | Range | Project | Purpose |
 |-------|---------|---------|
-${specialRows.join("\n")}
+${specialRows.join('\n')}
 
 ## Unallocated Ranges
 
 | Range | Capacity | Location |
 |-------|----------|----------|
-${unallocRows.join("\n")}
+${unallocRows.join('\n')}
 
 **Total unallocated capacity: ${totalUnallocated.toLocaleString()} codes**
 
@@ -100,11 +100,11 @@ ${unallocRows.join("\n")}
 |--------|-------|
 | Total modules | ${modules.length} |
 | Modules with indexes | ${active.length} |
-| Pending modules | ${(master.Stats?.PendingModules || []).join(", ") || "—"} |
+| Pending modules | ${(master.Stats?.PendingModules || []).join(', ') || '—'} |
 | Total indexed codes | ${totalUsed} |
 | Total retryable codes | ${totalRetryable} |
-| Allocated ecosystem span | ${master.Stats?.AllocatedRange || "—"} |
-| Collision resolutions | ${master.Stats?.CollisionResolutions || "—"} |
+| Allocated ecosystem span | ${master.Stats?.AllocatedRange || '—'} |
+| Collision resolutions | ${master.Stats?.CollisionResolutions || '—'} |
 | Highest utilization | ${highest.Project} (${(highest.Util * 100).toFixed(1)}%) |
 | Lowest utilization (active) | ${lowest.Project} (${(lowest.Util * 100).toFixed(1)}%) |
 
@@ -113,5 +113,5 @@ ${unallocRows.join("\n")}
 *Report auto-generated from \`02-spec/07-error-code-registry/error-codes-master.json\`. Run \`npm run validate:errors\` to verify integrity.*
 `;
 
-writeFileSync(OUTPUT, report, "utf-8");
+writeFileSync(OUTPUT, report, 'utf-8');
 console.log(`✅ Utilization report written to ${OUTPUT}`);

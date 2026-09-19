@@ -1,8 +1,8 @@
 # Nesting Resolution Patterns
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
-**Applies to:** All languages  
+**Version:** 3.2.0
+**Updated:** 2026-04-16
+**Applies to:** All languages
 **Source:** Consolidated from `01-pre-code-review-guides/03-golang-code-review-guides.md`
 
 ---
@@ -142,20 +142,21 @@ func process(data *Data) error {
 
 // ❌ FORBIDDEN
 const getLabel = (status: string): string => {
-  if (status === "active") {
-    return "Active";
-  } else {
-    return "Inactive";
-  }
+    if (status === 'active') {
+        return 'Active';
+    } else {
+        return 'Inactive';
+    }
+
 };
 
 // ✅ REQUIRED
 const getLabel = (status: string): string => {
-  if (status === "active") {
-    return "Active";
-  }
+    if (status === 'active') {
+        return 'Active';
+    }
 
-  return "Inactive";
+    return 'Inactive';
 };
 ```
 
@@ -212,11 +213,11 @@ See [How to Reduce Code Nested Branching in Go](https://hackmd.io/@akarimevatix/
 
 ## 5. Cross-References
 
-- [Code Style §R2](./04-code-style/00-overview.md) — Zero nested `if` rule
+- [Code Style §R2](./04-code-style/01-index.md) — Zero nested `if` rule
 - [Cyclomatic Complexity](./06-cyclomatic-complexity.md) — Complexity limits
-- [Boolean Principles](./02-boolean-principles/00-overview.md) — Named boolean extraction
-- [Master Coding Guidelines §5](./15-master-coding-guidelines/00-overview.md) — Formatting rules
+- [Boolean Principles](./02-boolean-principles/01-index.md) — Named boolean extraction
+- [Master Coding Guidelines §5](./15-master-coding-guidelines/01-index.md) — Formatting rules
 
 ---
 
-_Nesting resolution patterns — consolidated from pre-code review guides._
+*Nesting resolution patterns — consolidated from pre-code review guides.*

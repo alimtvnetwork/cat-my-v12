@@ -71,14 +71,14 @@ the pattern's "Configuration Surface" table by reading the target
 repo. Do not invent defaults silently — if a value is unclear, ask
 the user.
 
-| Pattern | Critical Vars to Resolve First                                                 |
-| ------- | ------------------------------------------------------------------------------ |
-| 01      | `SOURCE_DIR` (which dir is flat-namespace?), `FILE_GLOB`, `FORBIDDEN_PATTERNS` |
-| 02      | `SOURCE_DIR`, `ALLOWED_PREFIX_REGEX`, decide where `BASELINE_FILE` lives       |
-| 03      | `FILE_GLOB`, `IDENT_RE`, `RAWSTRING_DELIM` for the language                    |
-| 04      | Linter JSON shape, normalizer function, baseline cache key                     |
-| 05      | `SUGGESTERS` table — needs an entry per linter on the project                  |
-| 06      | `PASS_MARKER` / `FAIL_MARKER` for the test framework                           |
+| Pattern | Critical Vars to Resolve First |
+|---------|--------------------------------|
+| 01 | `SOURCE_DIR` (which dir is flat-namespace?), `FILE_GLOB`, `FORBIDDEN_PATTERNS` |
+| 02 | `SOURCE_DIR`, `ALLOWED_PREFIX_REGEX`, decide where `BASELINE_FILE` lives |
+| 03 | `FILE_GLOB`, `IDENT_RE`, `RAWSTRING_DELIM` for the language |
+| 04 | Linter JSON shape, normalizer function, baseline cache key |
+| 05 | `SUGGESTERS` table — needs an entry per linter on the project |
+| 06 | `PASS_MARKER` / `FAIL_MARKER` for the test framework |
 
 ---
 
@@ -94,7 +94,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write # only if Pattern 05 posts comments
+  pull-requests: write   # only if Pattern 05 posts comments
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -147,7 +147,7 @@ jobs:
       - run: bash .github/scripts/test-summary.sh ./test-artifacts
 ```
 
-Apply the [shared conventions](../01-shared-conventions.md):
+Apply the [shared conventions](../03-shared-conventions.md):
 exact-version pinning, `working-directory:` instead of `cd`,
 least-privilege permissions.
 
@@ -155,16 +155,16 @@ least-privilege permissions.
 
 ## Common Mistakes to Avoid
 
-| Mistake                                    | Why It's Wrong                                  | Correct Approach                                                        |
-| ------------------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------- |
-| Use `@latest` for actions or tools         | Breaks reproducibility silently                 | Pin every version per [shared conventions](../01-shared-conventions.md) |
-| Use 3-arg `match()` in awk                 | Fails on mawk (default GH runner) with no error | Use 2-arg `match()` + `RSTART` / `RLENGTH`                              |
-| Skip string-literal awareness in extractor | False positives from SQL keywords               | Track raw-string + quote state per file                                 |
-| Sort baseline in non-C locale              | `comm -23` produces phantom diffs               | `LC_ALL=C sort -u` everywhere                                           |
-| Swallow errors in guard scripts            | Defeats the gate                                | Surface every failure with `::error::` annotation                       |
-| Hardcode repo paths in scripts             | Not portable across forks                       | Accept paths via env vars or `${1:-default}`                            |
-| Post stacking PR comments                  | Noisy review history                            | Use a unique HTML sentinel + create-or-update-comment                   |
-| Cancel in-progress release builds          | Leaves partial releases                         | `cancel-in-progress: false` for release branches                        |
+| Mistake | Why It's Wrong | Correct Approach |
+|---------|---------------|------------------|
+| Use `@latest` for actions or tools | Breaks reproducibility silently | Pin every version per [shared conventions](../03-shared-conventions.md) |
+| Use 3-arg `match()` in awk | Fails on mawk (default GH runner) with no error | Use 2-arg `match()` + `RSTART` / `RLENGTH` |
+| Skip string-literal awareness in extractor | False positives from SQL keywords | Track raw-string + quote state per file |
+| Sort baseline in non-C locale | `comm -23` produces phantom diffs | `LC_ALL=C sort -u` everywhere |
+| Swallow errors in guard scripts | Defeats the gate | Surface every failure with `::error::` annotation |
+| Hardcode repo paths in scripts | Not portable across forks | Accept paths via env vars or `${1:-default}` |
+| Post stacking PR comments | Noisy review history | Use a unique HTML sentinel + create-or-update-comment |
+| Cancel in-progress release builds | Leaves partial releases | `cancel-in-progress: false` for release branches |
 
 ---
 
@@ -200,11 +200,11 @@ answers:
 
 ## Cross-References
 
-- [00-overview.md](./00-overview.md) — Pattern inventory
-- [01-shared-conventions.md](../01-shared-conventions.md) — Pinning, triggers, permissions
-- [Coding Guidelines (Cross-Language)](../../02-coding-guidelines/01-cross-language/15-master-coding-guidelines/00-overview.md)
+- [01-index.md](./01-index.md) — Pattern inventory
+- [03-shared-conventions.md](../03-shared-conventions.md) — Pinning, triggers, permissions
+- [Coding Guidelines (Cross-Language)](../../02-coding-guidelines/01-cross-language/15-master-coding-guidelines/01-index.md)
 - [Linters CI/CD Integration](../../02-coding-guidelines/06-cicd-integration/97-acceptance-criteria.md)
 
 ---
 
-_AI implementation guide — v1.0.0 — 2026-04-21_
+*AI implementation guide — v1.0.0 — 2026-04-21*
