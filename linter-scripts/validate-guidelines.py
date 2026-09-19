@@ -1125,6 +1125,12 @@ def validate_file(filepath: str) -> List[Violation]:
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Cross-Language Coding Guidelines Validator")
     parser.add_argument("--path", default="src", help="Directory to scan (default: src)")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
