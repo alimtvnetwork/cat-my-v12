@@ -1,3 +1,30 @@
+## v4.111.0 - 2026-09-19
+
+### Install Control Automation v4.111.0
+
+To pin your repository to this exact version, run the following one-liner:
+
+Unix/Bash:
+`curl -sL https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.111.0/install.sh | bash -s -- ".ai-memory/prompts" "v4.111.0"`
+
+PowerShell:
+`Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.111.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v4.111.0"`
+
+### Added
+
+- Added root `version.json` manifest establishing canonical version authority and changelog configuration.
+- Added 4-part Root Cause Analysis (RCA) in `.ai-memory/issues/44-prettier-format-check-failed.md` and `.lovable/issues/44-prettier-format-check-failed.md`.
+
+### Changed
+
+- Bumped application minor version to `v4.111.0` across `package.json`, `version.json`, and `readme.md`.
+- Updated `.ai-memory/strictly-avoid.md` section 7 to mandate pre-commit Prettier runs across formattable files.
+
+### Fixed
+
+- Fixed CI formatting gate failure (exit code 123) by running Prettier formatting across all changed repository files.
+- Maintained zero typecheck regressions (`bun x tsc --noEmit` clean).
+
 ## v4.110.0 - 2026-09-19
 
 ### Fixed
