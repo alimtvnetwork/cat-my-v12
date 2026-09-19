@@ -24,12 +24,12 @@ toolname completion --list-groups
 toolname completion --list-commands
 ```
 
-### List Flag Behaviour
+### List Flag Behavior
 
-| Flag              | Output                                       |
-| ----------------- | -------------------------------------------- |
-| `--list-repos`    | One repo slug per line, no headers           |
-| `--list-groups`   | One group name per line, no headers          |
+| Flag | Output |
+|------|--------|
+| `--list-repos` | One repo slug per line, no headers |
+| `--list-groups` | One group name per line, no headers |
 | `--list-commands` | One command name per line (includes aliases) |
 
 All list outputs are plain text with no color or decoration.
@@ -39,13 +39,13 @@ They open the DB, query, print, and exit immediately.
 
 ## Completed Contexts
 
-| User Typing                   | Values Offered                                       |
-| ----------------------------- | ---------------------------------------------------- |
-| `toolname <tab>`              | All subcommand names and aliases                     |
-| `toolname cd <tab>`           | Repo slugs + `repos`, `set-default`, `clear-default` |
-| `toolname pull <tab>`         | Repo slugs                                           |
-| `toolname exec --group <tab>` | Group names                                          |
-| `toolname group <tab>`        | `create`, `add`, `remove`, `list`, `show`, `delete`  |
+| User Typing | Values Offered |
+|-------------|---------------|
+| `toolname <tab>` | All subcommand names and aliases |
+| `toolname cd <tab>` | Repo slugs + `repos`, `set-default`, `clear-default` |
+| `toolname pull <tab>` | Repo slugs |
+| `toolname exec --group <tab>` | Group names |
+| `toolname group <tab>` | `create`, `add`, `remove`, `list`, `show`, `delete` |
 
 ---
 
@@ -79,25 +79,25 @@ The `setup` command auto-installs completions:
 
 Installation is idempotent — the source line check prevents duplicates.
 
-| Shell      | Script Path                                | Profile     |
-| ---------- | ------------------------------------------ | ----------- |
-| PowerShell | `$APPDATA/toolname/completions.ps1`        | `$PROFILE`  |
-| Bash       | `~/.local/share/toolname/completions.bash` | `~/.bashrc` |
-| Zsh        | `~/.local/share/toolname/completions.zsh`  | `~/.zshrc`  |
+| Shell | Script Path | Profile |
+|-------|------------|---------|
+| PowerShell | `$APPDATA/toolname/completions.ps1` | `$PROFILE` |
+| Bash | `~/.local/share/toolname/completions.bash` | `~/.bashrc` |
+| Zsh | `~/.local/share/toolname/completions.zsh` | `~/.zshrc` |
 
 ---
 
 ## File Layout
 
-| File                                | Purpose                                |
-| ----------------------------------- | -------------------------------------- |
-| `constants/constants_completion.go` | Shell names, list flags, messages      |
-| `cmd/completion.go`                 | Subcommand handler + list printers     |
-| `completion/completion.go`          | `Generate()` + `AllCommands()`         |
-| `completion/powershell.go`          | PowerShell script generator            |
-| `completion/bash.go`                | Bash script generator                  |
-| `completion/zsh.go`                 | Zsh script generator                   |
-| `completion/install.go`             | Profile detection + source-line writer |
+| File | Purpose |
+|------|---------|
+| `constants/constants_completion.go` | Shell names, list flags, messages |
+| `cmd/completion.go` | Subcommand handler + list printers |
+| `completion/completion.go` | `Generate()` + `AllCommands()` |
+| `completion/powershell.go` | PowerShell script generator |
+| `completion/bash.go` | Bash script generator |
+| `completion/zsh.go` | Zsh script generator |
+| `completion/install.go` | Profile detection + source-line writer |
 
 ---
 

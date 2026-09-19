@@ -50,35 +50,70 @@ DEFAULT_MIN_CONFIDENCE = 0.82
 
 
 def slugify(text: str) -> str:
+    """GitHub-flavored markdown heading slug."""
     text = text.strip().lower()
     text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
-    text = re.sub(r"\s+", "-", text)
+    text = re.sub(r"[ \t]", "-", text)
     return text.strip("-")
+
 
 
 def is_external(target: str) -> bool:
     return target.startswith(EXTERNAL_PREFIXES) or target.startswith(SKIP_SCHEMES)
 
 
+FENCE_RE = re.compile(r"^(`{3,}|~{3,})")
+INLINE_CODE_RE = re.compile(r"(`+)(.+?)\1")
+SPEC_PLACEHOLDER_RE = re.compile(
+    r"<spec-placeholder\b[^>]*>.*?</spec-placeholder>",
+    re.DOTALL,
+)
+
+
 def strip_code_fences(text: str) -> str:
+    """Replace fenced code blocks with blank lines so example links inside
+    aren't validated. Preserves line numbers for accurate reporting.
+    Handles CommonMark fence lengths and blockquote prefixes (e.g. `> ```go`).
+    """
     out: list[str] = []
     in_fence = False
-    fence = ""
+    fence_char = ""
+    fence_len = 0
     for line in text.splitlines():
-        s = line.lstrip()
-        opening = (s.startswith("```") or s.startswith("~~~")) and not in_fence
-        closing = in_fence and s.startswith(fence)
-        if opening:
-            in_fence = True
-            fence = "```" if s.startswith("```") else "~~~"
-            out.append("")
-            continue
-        if closing:
-            in_fence = False
-            out.append("")
-            continue
+        stripped = re.sub(r"^(?:[\s>]*>)?\s*", "", line)
+        match = FENCE_RE.match(stripped)
+        if not in_fence:
+            if match:
+                in_fence = True
+                fence_run = match.group(1)
+                fence_char = fence_run[0]
+                fence_len = len(fence_run)
+                out.append("")
+                continue
+        else:
+            if match and match.group(1)[0] == fence_char and len(match.group(1)) >= fence_len:
+                in_fence = False
+                out.append("")
+                continue
         out.append("" if in_fence else line)
     return "\n".join(out)
+
+
+def strip_spec_placeholders(text: str) -> str:
+    """Blank out ``<spec-placeholder>`` blocks while preserving line numbers."""
+    def _blank(match: re.Match[str]) -> str:
+        body = match.group(0)
+        return "".join(ch if ch == "\n" else " " for ch in body)
+    return SPEC_PLACEHOLDER_RE.sub(_blank, text)
+
+
+def strip_inline_code(text: str) -> str:
+    """Blank out inline code spans (`...` or ``...``) while preserving line numbers."""
+    def _blank(m: re.Match[str]) -> str:
+        return " " * len(m.group(0))
+
+    return "\n".join(INLINE_CODE_RE.sub(_blank, line) for line in text.splitlines())
+
 
 
 def collect_headings(path: Path) -> list[tuple[str, str]]:
@@ -106,6 +141,8 @@ def load_allowlist(repo_root: Path) -> set[str]:
         line = raw.strip()
         if line and not line.startswith("#"):
             out.add(line)
+            if line.startswith("spec/"):
+                out.add("02-" + line)
     return out
 
 
@@ -179,7 +216,7 @@ def find_link_failures(root: Path, repo_root: Path) -> list[dict]:
             text = md.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        scan_text = strip_code_fences(text)
+        scan_text = strip_inline_code(strip_spec_placeholders(strip_code_fences(text)))
         for match in MD_LINK_RE.finditer(scan_text):
             target = match.group(2).strip()
             if is_external(target):

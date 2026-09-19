@@ -87,6 +87,10 @@ func (c *Config) IsDefinedAndValid() bool {
 ```
 
 > **Note:** On `apperror.Result[T]`, `IsDefined()` is already built-in. `IsSafe()` serves the same purpose as `IsDefinedAndValid()` (value exists AND no error).
+>
+> **Mandatory `IsDefined` Replacement for `!isEmpty`:** NEVER use inverted negative empty checks (`!isEmpty`, `!res.IsEmpty()`). Always use affirmative `IsDefined()` / `isDefined` when asserting that data or records are present. Use `isEmpty` ONLY in the affirmative when explicitly handling the empty/missing case (`if isEmpty { return ErrEmpty }`).
+>
+> **Map Lookups vs `isDefined`:** For map lookups, the canonical original names are `val, isFound := userMap[id]` or `val, isUserExist := userMap[id]`. Do NOT use `isDefined` for map lookups; `isDefined` is strictly reserved for replacing inverted `!isEmpty`.
 
 ### 2.3 — Positive Counterpart Variables (Rule P3)
 
@@ -111,7 +115,7 @@ if isLiveRunWithDeletions {
 }
 ```
 
-**Key principle:** Ask yourself: _"What does `!isDryRun` actually mean?"_ — it means the run is live. Name it `isLiveRun`. This makes the compound condition read as plain English: `isLiveRun && hasDeletions`.
+**Key principle:** Ask yourself: *"What does `!isDryRun` actually mean?"* — it means the run is live. Name it `isLiveRun`. This makes the compound condition read as plain English: `isLiveRun && hasDeletions`.
 
 More examples:
 
@@ -138,27 +142,27 @@ When a single boolean source is consumed in both its positive and negative forms
 
 ```go
 // ❌ FORBIDDEN — negation scattered, dual form not declared upfront
-isProjectExists := pathutil.IsDir(projectDir)
+isProjectDirDefined := pathutil.IsDir(projectDir)
 
-if isProjectExists {
+if isProjectDirDefined {
     loadProject(projectDir)
 }
 
 // ... 20 lines later ...
-if !isProjectExists {   // reader must mentally negate
+if !isProjectDirDefined {   // reader must mentally negate
     createProject(projectDir)
 }
 
 // ✅ REQUIRED — dual boolean fields declared together
-isProjectExists := pathutil.IsDir(projectDir)
-isProjectMissing := !isProjectExists
+isProjectDirDefined := pathutil.IsDir(projectDir)
+isProjectDirMissing := !isProjectDirDefined
 
-if isProjectExists {
+if isProjectDirDefined {
     loadProject(projectDir)
 }
 
 // ... 20 lines later ...
-if isProjectMissing {    // instantly clear
+if isProjectDirMissing {    // instantly clear
     createProject(projectDir)
 }
 ```
@@ -187,12 +191,12 @@ func (s *Session) IsAnonymous() bool {
 
 **When to create dual fields:**
 
-| Scenario                                    | Required?                                    |
-| ------------------------------------------- | -------------------------------------------- |
-| Both `isX` and `!isX` used in same function | ✅ Yes — declare both upfront                |
-| Only positive form used                     | ❌ No — single variable sufficient           |
-| Only negative form used                     | ✅ Yes — declare positive first, then negate |
-| Struct boolean accessed by multiple callers | ✅ Yes — provide dual accessor methods       |
+| Scenario | Required? |
+|----------|-----------|
+| Both `isX` and `!isX` used in same function | ✅ Yes — declare both upfront |
+| Only positive form used | ❌ No — single variable sufficient |
+| Only negative form used | ✅ Yes — declare positive first, then negate |
+| Struct boolean accessed by multiple callers | ✅ Yes — provide dual accessor methods |
 
 ### 2.4 — Positive Counterpart Methods
 
@@ -292,7 +296,43 @@ if !isValid {
 - `!isX && isY` or `isY && !isX` → ❌ Prohibited — extract `!isX` to a named positive counterpart first
 - `!isX && !isY` → ❌ Prohibited — two negations is never acceptable
 
-See [Boolean Principles P6](../01-cross-language/02-boolean-principles/03-parameters-and-conditions.md#principle-6-never-mix-positive-and-negative-booleans-in-a-single-condition) for the cross-language rule.
+### 2.7.1 — Total Ban on Compound Negative Chains (`!a || !b || c`)
+
+Chaining inverted negative checks (such as `!state.IsDefined || !state.IsEmpty || state.IsRepo`) violates both discrete assertion rules and positive logic standards.
+
+```go
+// ❌ FORBIDDEN — compound negative chain in test assertions
+if !state.IsDefined || !state.IsEmpty || state.IsRepo {
+    t.Errorf("expected empty non-repo directory: %+v", state)
+}
+
+// ✅ REQUIRED — discrete individual assertions
+if !state.IsDefined {
+    t.Errorf("expected directory to be defined: %+v", state)
+}
+
+if !state.IsEmpty {
+    t.Errorf("expected directory to be empty: %+v", state)
+}
+
+if state.IsRepo {
+    t.Errorf("expected non-repo directory: %+v", state)
+}
+
+// ❌ FORBIDDEN — compound negative in application logic
+if !params.State.IsDefined || params.State.IsEmpty {
+    performFreshClone(params)
+}
+
+// ✅ REQUIRED — extract affirmative composite predicate
+isCloneTargetFresh := !params.State.IsDefined || params.State.IsEmpty
+
+if isCloneTargetFresh {
+    performFreshClone(params)
+}
+```
+
+See [Boolean Principles P6](../01-cross-language/02-boolean-principles/04-parameters-and-conditions.md#principle-6-never-mix-positive-and-negative-booleans-in-a-single-condition) for the cross-language rule.
 
 ## 2.8 — No Inline Statements in `if` Conditions (Rule P7)
 
@@ -317,9 +357,9 @@ if _, err := os.Stat(projectDir); isProjectConflict {
 }
 
 // ✅ REQUIRED — separate computation from condition
-isProjectExists := pathutil.IsDir(projectDir)
+isProjectDirDefined := pathutil.IsDir(projectDir)
 isReadOnly := !isOverwrite
-isProjectConflict := isProjectExists && isReadOnly
+isProjectConflict := isProjectDirDefined && isReadOnly
 
 if isProjectConflict {
     return apperror.FailNew[ProjectResult](
@@ -378,7 +418,7 @@ if err := os.MkdirAll(outputDir, 0755); err != nil {
 }
 
 // ✅ REQUIRED — use pathutil wrappers
-isProjectExists := pathutil.IsDir(projectDir)
+isProjectDirDefined := pathutil.IsDir(projectDir)
 
 // ✅ REQUIRED — use pathutil with apperror
 if err := pathutil.EnsureDir(outputDir); err != nil {
@@ -388,15 +428,15 @@ if err := pathutil.EnsureDir(outputDir); err != nil {
 
 ### Required `pathutil` Inventory
 
-| Function              | Returns                             | Description                                            |
-| --------------------- | ----------------------------------- | ------------------------------------------------------ |
-| `IsDir(path)`         | `bool`                              | True if path exists and is a directory                 |
-| `IsDirMissing(path)`  | `bool`                              | True if path does not exist as directory               |
-| `IsFile(path)`        | `bool`                              | True if path exists and is a regular file              |
-| `IsFileMissing(path)` | `bool`                              | True if path does not exist as file                    |
-| `EnsureDir(path)`     | `*apperror.AppError`                | Creates directory if missing; returns structured error |
-| `Remove(path)`        | `*apperror.AppError`                | Removes file/dir; returns structured error             |
-| `Stat(path)`          | `(os.FileInfo, *apperror.AppError)` | Wraps `os.Stat` with `apperror`                        |
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `IsDir(path)` | `bool` | True if path exists and is a directory |
+| `IsDirMissing(path)` | `bool` | True if path does not exist as directory |
+| `IsFile(path)` | `bool` | True if path exists and is a regular file |
+| `IsFileMissing(path)` | `bool` | True if path does not exist as file |
+| `EnsureDir(path)` | `*apperror.AppError` | Creates directory if missing; returns structured error |
+| `Remove(path)` | `*apperror.AppError` | Removes file/dir; returns structured error |
+| `Stat(path)` | `(os.FileInfo, *apperror.AppError)` | Wraps `os.Stat` with `apperror` |
 
 ### Comprehensive Example — All Rules Combined
 
@@ -418,9 +458,9 @@ if _, err := os.Stat(projectDir); isProjectConflict {
 //   2. P7: no inline statement; all variables computed before if
 //   3. P6: mixed polarity extracted to single-intent boolean
 //   4. apperror.FailNew returns structured *apperror.AppError
-isProjectExists := pathutil.IsDir(projectDir)
+isProjectDirDefined := pathutil.IsDir(projectDir)
 isReadOnly := !isOverwrite
-isProjectConflict := isProjectExists && isReadOnly
+isProjectConflict := isProjectDirDefined && isReadOnly
 
 if isProjectConflict {
     return apperror.FailNew[ProjectResult](
@@ -530,7 +570,7 @@ The following patterns are **exempt** from negation elimination:
 
 ### 3.1 — Comma-ok Pattern
 
-The comma-ok return value **must** be renamed to a semantically meaningful positive boolean. The bare `ok` variable name is **prohibited** — always name it to describe what "ok" means in context (e.g., `isExists`, `isFound`, `isLoaded`).
+The comma-ok return value **must** be renamed to a semantically meaningful positive boolean. The bare `ok` variable name is **prohibited** — always name it to describe what "ok" means in context (e.g., `isFound`, `isLoaded`, `isUserExist`). Awkward/ungrammatical names like `isExists` are **strictly prohibited**. Never use `isDefined` for map lookups (`isDefined` is reserved for replacing `!isEmpty`).
 
 If the negative case is needed, create a positive counterpart on the next line:
 
@@ -542,17 +582,17 @@ if !ok {
 }
 
 // ✅ REQUIRED — semantic name describes the positive case
-value, isExists := someMap[key]
-isMissing := !isExists
+value, isFound := someMap[key]
+isMissing := !isFound
 
 if isMissing {
     return ErrNotFound
 }
 
 // ✅ Also acceptable — positive guard when you only need the positive path
-value, isExists := someMap[key]
+value, isFound := someMap[key]
 
-if isExists {
+if isFound {
     process(value)
 }
 ```
@@ -588,7 +628,7 @@ if isCacheMiss {
 }
 ```
 
-> **Note:** The inline comma-ok in `if` conditions (`if v, isExists := m[k]; isExists {`) remains exempt from Rule P7 but **must** still use a semantic name instead of `ok`.
+> **Note:** The inline comma-ok in `if` conditions (`if v, isFound := m[k]; isFound {`) remains exempt from Rule P7 but **must** still use a semantic name instead of `ok` (and never `isExists`).
 
 ### 3.2 — Handler Guard Returns
 
@@ -657,16 +697,16 @@ if isNonApiRoute {
 
 ## 4. Variable Naming Rules
 
-| Pattern                  | Example                                | Status                             |
-| ------------------------ | -------------------------------------- | ---------------------------------- |
-| `is` + PositiveAdjective | `isValid`, `isActive`, `isReady`       | ✅ Required                        |
-| `has` + PositiveNoun     | `hasPermission`, `hasRows`, `hasError` | ✅ Required                        |
-| `is` + NegativeResult    | `isDirMissing`, `isMkdirFailed`        | ✅ Permitted                       |
-| `isDefined`              | Positive nil/existence check           | ✅ Required on nullable structs    |
-| `isDefinedAndValid`      | Existence + validation combined        | ✅ Required when validation exists |
-| `not` prefix             | `notFound`, `notReady`                 | ❌ Prohibited                      |
-| `no` prefix              | `noResults`, `noPermission`            | ❌ Prohibited                      |
-| Bare `ok`                | `value, ok := map[key]`                | ❌ Prohibited — use semantic name  |
+| Pattern | Example | Status |
+|---------|---------|--------|
+| `is` + PositiveAdjective | `isValid`, `isActive`, `isReady` | ✅ Required |
+| `has` + PositiveNoun | `hasPermission`, `hasRows`, `hasError` | ✅ Required |
+| `is` + NegativeResult | `isDirMissing`, `isMkdirFailed` | ✅ Permitted |
+| `isDefined` | Positive nil/existence check | ✅ Required on nullable structs |
+| `isDefinedAndValid` | Existence + validation combined | ✅ Required when validation exists |
+| `not` prefix | `notFound`, `notReady` | ❌ Prohibited |
+| `no` prefix | `noResults`, `noPermission` | ❌ Prohibited |
+| Bare `ok` | `value, ok := map[key]` | ❌ Prohibited — use semantic name |
 
 ## 5. Enforcement
 
@@ -678,18 +718,34 @@ if isNonApiRoute {
 ## 6. Rule Summary
 
 | Rule | ID | Summary |
-| ------------------------------ | --- | ------------------------------------------------------------------------------------------------------- | --- | --- |
+|------|----|---------|
 | Positive Naming | P1 | All booleans use `is`/`has` positive prefixes |
 | Negation Elimination | P2 | Replace `!` with named positive variables |
 | Positive Counterpart Variables | P3 | Negated booleans must be assigned to a positive-named variable before use in compounds |
 | Dual Boolean Fields | P3b | Both positive and negative named forms declared together upfront; structs provide dual accessor methods |
 | Named Numeric Comparisons | P5 | Raw numeric comparisons → named booleans |
-| No Mixed Polarity | P6 | `!isX` only alone; never combined with `&&`/`                                                          |     |` |
+| No Mixed Polarity | P6 | `!isX` only alone; never combined with `&&`/`||` |
 | No Inline Statements | P7 | No semicolon assignments in `if`; exemptions for comma-ok, type assertions, error propagation |
 | No Raw Filesystem | P8 | Use `pathutil` wrappers, not raw `os` calls |
 | No Compound Errors | P9 | `err != nil` never combined with other conditions; use `appError.HasError()` |
-| Semantic Comma-ok | — | Rename `ok` to meaningful name (`isExists`, `isFound`, etc.) |
+| Semantic Comma-ok | — | Rename `ok` to meaningful name (`isDefined`, `isFound`, etc.; never `isExists`) |
 
 ## 7. Cross-Language Alignment
 
-This standard mirrors the cross-language [Boolean Principles](../01-cross-language/02-boolean-principles/00-overview.md) (P1–P6) and [No-Negatives](../01-cross-language/12-no-negatives.md) with Go-specific exemptions for idiomatic patterns (comma-ok, handler guards, error-nil checks) and Go-specific additions (P3b, P5, P7–P9). See [PHP Standards](../04-php/03-naming-conventions.md) for the PHP counterpart.
+This standard mirrors the cross-language [Boolean Principles](../01-cross-language/02-boolean-principles/01-index.md) (P1–P6) and [No-Negatives](../01-cross-language/12-no-negatives.md) with Go-specific exemptions for idiomatic patterns (comma-ok, handler guards, error-nil checks) and Go-specific additions (P3b, P5, P7–P9). See [PHP Standards](../../01-spec-authoring-guide/03-naming-conventions.md) for the PHP counterpart.
+
+## 8. Explicit `== true` Evaluation
+
+Never use `== true` for boolean conditions. If an explicit negative check (`== false`) is used to satisfy the ban on the `!` operator, **do not** erroneously generalize this to positive checks.
+
+```go
+// ❌ FORBIDDEN — redundant explicit check
+if hasMatch == true {
+    // ...
+}
+
+// ✅ REQUIRED — implicit evaluation
+if hasMatch {
+    // ...
+}
+```

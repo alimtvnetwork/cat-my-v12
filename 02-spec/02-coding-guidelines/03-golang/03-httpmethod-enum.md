@@ -1,7 +1,7 @@
 # HttpMethod Enum — `pkg/enums/httpmethodtype/variant.go`
 
-> **Version**: 3.0.0  
-> **Last updated**: 2026-02-28  
+> **Version**: 3.0.0
+> **Last updated**: 2026-02-28
 > **Shared package**: All CLIs import from `pkg/enums/httpmethodtype`
 
 ---
@@ -228,16 +228,16 @@ type Request struct {
 
 ## Variant Reference
 
-| Constant  | `.String()` | `.HttpVerb()` | `.HasBody()` | `.IsSafe()` | `.IsIdempotent()` |
-| --------- | ----------- | ------------- | ------------ | ----------- | ----------------- |
-| `Invalid` | `"Invalid"` | `""`          | `false`      | `false`     | `false`           |
-| `Get`     | `"Get"`     | `"GET"`       | `false`      | `true`      | `true`            |
-| `Head`    | `"Head"`    | `"HEAD"`      | `false`      | `true`      | `true`            |
-| `Post`    | `"Post"`    | `"POST"`      | `true`       | `false`     | `false`           |
-| `Put`     | `"Put"`     | `"PUT"`       | `true`       | `false`     | `true`            |
-| `Patch`   | `"Patch"`   | `"PATCH"`     | `true`       | `false`     | `false`           |
-| `Delete`  | `"Delete"`  | `"DELETE"`    | `false`      | `false`     | `true`            |
-| `Options` | `"Options"` | `"OPTIONS"`   | `false`      | `true`      | `true`            |
+| Constant | `.String()` | `.HttpVerb()` | `.HasBody()` | `.IsSafe()` | `.IsIdempotent()` |
+|----------|-------------|---------------|--------------|-------------|---------------------|
+| `Invalid` | `"Invalid"` | `""` | `false` | `false` | `false` |
+| `Get` | `"Get"` | `"GET"` | `false` | `true` | `true` |
+| `Head` | `"Head"` | `"HEAD"` | `false` | `true` | `true` |
+| `Post` | `"Post"` | `"POST"` | `true` | `false` | `false` |
+| `Put` | `"Put"` | `"PUT"` | `true` | `false` | `true` |
+| `Patch` | `"Patch"` | `"PATCH"` | `true` | `false` | `false` |
+| `Delete` | `"Delete"` | `"DELETE"` | `false` | `false` | `true` |
+| `Options` | `"Options"` | `"OPTIONS"` | `false` | `true` | `true` |
 
 ---
 

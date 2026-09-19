@@ -15,15 +15,24 @@
       "items": {}
     },
     "Navigation": {
-      "oneOf": [{ "$ref": "#/$defs/Navigation" }, { "type": "null" }],
+      "oneOf": [
+        { "$ref": "#/$defs/Navigation" },
+        { "type": "null" }
+      ],
       "description": "Pagination links. Present only for paginated list responses."
     },
     "Errors": {
-      "oneOf": [{ "$ref": "#/$defs/Errors" }, { "type": "null" }],
+      "oneOf": [
+        { "$ref": "#/$defs/Errors" },
+        { "type": "null" }
+      ],
       "description": "Error details. Present only when HasAnyErrors is true AND reporting is enabled."
     },
     "MethodsStack": {
-      "oneOf": [{ "$ref": "#/$defs/MethodsStack" }, { "type": "null" }],
+      "oneOf": [
+        { "$ref": "#/$defs/MethodsStack" },
+        { "type": "null" }
+      ],
       "description": "Debug call-chain trace. Present only when enabled in config."
     }
   },
@@ -156,7 +165,10 @@
           "description": "Reserved for frontend-injected error context."
         },
         "DelegatedRequestServer": {
-          "oneOf": [{ "$ref": "#/$defs/DelegatedRequestServer" }, { "type": "null" }],
+          "oneOf": [
+            { "$ref": "#/$defs/DelegatedRequestServer" },
+            { "type": "null" }
+          ],
           "description": "REQUIRED when IsFailed=true AND RequestDelegatedAt is non-empty. Must contain structured error details from the delegated downstream server (PHP, Chrome extension, or any 3rd-party). Omitting this when a delegated request failed is a backend bug."
         }
       }
@@ -220,11 +232,17 @@
         },
         "RequestBody": {
           "description": "Request body sent to the delegated server. Null for GET requests.",
-          "oneOf": [{ "type": "object" }, { "type": "null" }]
+          "oneOf": [
+            { "type": "object" },
+            { "type": "null" }
+          ]
         },
         "Response": {
           "description": "Full response body from the delegated server. Should include stacktrace if the delegated server supports structured error responses.",
-          "oneOf": [{ "type": "object" }, { "type": "null" }]
+          "oneOf": [
+            { "type": "object" },
+            { "type": "null" }
+          ]
         },
         "StackTrace": {
           "type": "array",

@@ -2,7 +2,7 @@
 
 > **Related specs:**
 >
-> - [02-project-structure.md](02-project-structure.md) — `constants/` package placement
+> - [02-project-03-structure.md](./02-project-structure.md) — `constants/` package placement
 > - [08-code-style.md](08-code-style.md) — naming conventions for constant identifiers
 > - [20-terminal-output-design.md](20-terminal-output-design.md) — terminal format constants used in rendering
 
@@ -19,15 +19,15 @@ The package is split into focused files to maintain the 200-line limit.
 
 ## File Organization
 
-| File                    | Responsibility                                             |
-| ----------------------- | ---------------------------------------------------------- |
-| `constants.go`          | Version, modes, formats, extensions, defaults, permissions |
-| `constants_cli.go`      | Command names, aliases, subcommand names                   |
-| `constants_terminal.go` | ANSI colors, banner art, table headers, row formats        |
-| `constants_messages.go` | User-facing messages, error strings, status icons          |
-| `constants_git.go`      | Git binary, subcommands, flags, format strings             |
-| `constants_store.go`    | DB paths, table names, SQL statements                      |
-| `constants_<domain>.go` | Domain-specific constants (one file per feature area)      |
+| File | Responsibility |
+|------|----------------|
+| `constants.go` | Version, modes, formats, extensions, defaults, permissions |
+| `constants_cli.go` | Command names, aliases, subcommand names |
+| `constants_terminal.go` | ANSI colors, banner art, table headers, row formats |
+| `constants_messages.go` | User-facing messages, error strings, status icons |
+| `constants_git.go` | Git binary, subcommands, flags, format strings |
+| `constants_store.go` | DB paths, table names, SQL statements |
+| `constants_<domain>.go` | Domain-specific constants (one file per feature area) |
 
 ### Splitting Rules
 
@@ -47,11 +47,11 @@ const Version = "1.0.0"
 var RepoPath = ""  // Set at build time via -ldflags
 ```
 
-| Constant        | Naming     | Example            |
-| --------------- | ---------- | ------------------ |
-| Version string  | `Version`  | `"2.8.0"`          |
+| Constant | Naming | Example |
+|----------|--------|---------|
+| Version string | `Version` | `"2.8.0"` |
 | Build-time vars | `RepoPath` | Set via `-ldflags` |
-| Tool name       | `ToolName` | `"toolname"`       |
+| Tool name | `ToolName` | `"toolname"` |
 
 ---
 
@@ -68,11 +68,11 @@ const (
 )
 ```
 
-| Naming Pattern | Convention            | Example                     |
-| -------------- | --------------------- | --------------------------- |
-| Command name   | `Cmd<Name>`           | `CmdScan = "scan"`          |
-| Command alias  | `Cmd<Name>Alias`      | `CmdScanAlias = "s"`        |
-| Subcommand     | `Cmd<Parent><Action>` | `CmdGroupCreate = "create"` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Command name | `Cmd<Name>` | `CmdScan = "scan"` |
+| Command alias | `Cmd<Name>Alias` | `CmdScanAlias = "s"` |
+| Subcommand | `Cmd<Parent><Action>` | `CmdGroupCreate = "create"` |
 
 ---
 
@@ -88,11 +88,11 @@ const (
 )
 ```
 
-| Naming Pattern | Convention     | Example                    |
-| -------------- | -------------- | -------------------------- |
-| Mode values    | `Mode<Name>`   | `ModeHTTPS`                |
-| Output formats | `Output<Name>` | `OutputJSON`               |
-| URL prefixes   | `Prefix<Name>` | `PrefixHTTPS = "https://"` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Mode values | `Mode<Name>` | `ModeHTTPS` |
+| Output formats | `Output<Name>` | `OutputJSON` |
+| URL prefixes | `Prefix<Name>` | `PrefixHTTPS = "https://"` |
 
 ---
 
@@ -112,11 +112,11 @@ const (
 )
 ```
 
-| Naming Pattern    | Convention             | Example             |
-| ----------------- | ---------------------- | ------------------- |
-| File extensions   | `Ext<Type>`            | `ExtJSON = ".json"` |
-| Default filenames | `Default<Type>File`    | `DefaultCSVFile`    |
-| Default paths     | `Default<Purpose>Path` | `DefaultConfigPath` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| File extensions | `Ext<Type>` | `ExtJSON = ".json"` |
+| Default filenames | `Default<Type>File` | `DefaultCSVFile` |
+| Default paths | `Default<Purpose>Path` | `DefaultConfigPath` |
 
 ---
 
@@ -131,11 +131,11 @@ const (
 )
 ```
 
-| Naming Pattern  | Convention      | Example           |
-| --------------- | --------------- | ----------------- |
-| Default values  | `Default<Name>` | `DefaultBranch`   |
-| Directory names | `<Purpose>Dir`  | `OutputDir`       |
-| Permissions     | `Perm<Type>`    | `PermDir = 0o755` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Default values | `Default<Name>` | `DefaultBranch` |
+| Directory names | `<Purpose>Dir` | `OutputDir` |
+| Permissions | `Perm<Type>` | `PermDir = 0o755` |
 
 ---
 
@@ -153,10 +153,10 @@ const (
 )
 ```
 
-| Naming Pattern | Convention    | Example               |
-| -------------- | ------------- | --------------------- |
-| Color codes    | `Color<Name>` | `ColorGreen`          |
-| Reset          | `ColorReset`  | Always first in group |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Color codes | `Color<Name>` | `ColorGreen` |
+| Reset | `ColorReset` | Always first in group |
 
 ---
 
@@ -170,11 +170,11 @@ const (
 )
 ```
 
-| Naming Pattern  | Convention              | Example              |
-| --------------- | ----------------------- | -------------------- |
-| Banner parts    | `<Section>Banner<Part>` | `StatusBannerTop`    |
-| Section headers | `<Section>Header`       | `ScanHeader`         |
-| Tree characters | `Tree<Type>`            | `TreeBranch = "├──"` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Banner parts | `<Section>Banner<Part>` | `StatusBannerTop` |
+| Section headers | `<Section>Header` | `ScanHeader` |
+| Tree characters | `Tree<Type>` | `TreeBranch = "├──"` |
 
 ---
 
@@ -188,12 +188,12 @@ const (
 )
 ```
 
-| Naming Pattern  | Convention            | Example           |
-| --------------- | --------------------- | ----------------- |
-| Row formats     | `<Section>RowFmt`     | `StatusRowFmt`    |
-| Header formats  | `<Section>HeaderFmt`  | `StatusHeaderFmt` |
-| Summary formats | `<Section>SummaryFmt` | `ScanSummaryFmt`  |
-| Count formats   | `<Section>CountFmt`   | `RepoCountFmt`    |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Row formats | `<Section>RowFmt` | `StatusRowFmt` |
+| Header formats | `<Section>HeaderFmt` | `StatusHeaderFmt` |
+| Summary formats | `<Section>SummaryFmt` | `ScanSummaryFmt` |
+| Count formats | `<Section>CountFmt` | `RepoCountFmt` |
 
 Table column headers use a `var` slice:
 
@@ -215,10 +215,10 @@ const (
 )
 ```
 
-| Naming Pattern    | Convention          | Example           |
-| ----------------- | ------------------- | ----------------- |
-| Icons             | `StatusIcon<State>` | `StatusIconClean` |
-| Indicator formats | `Status<Type>Fmt`   | `StatusSyncUpFmt` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Icons | `StatusIcon<State>` | `StatusIconClean` |
+| Indicator formats | `Status<Type>Fmt` | `StatusSyncUpFmt` |
 
 ---
 
@@ -233,11 +233,11 @@ const (
 )
 ```
 
-| Naming Pattern | Convention      | Example                     |
-| -------------- | --------------- | --------------------------- |
-| Static errors  | `Err<What>`     | `ErrSourceRequired`         |
-| Format errors  | `Err<What>Fmt`  | `ErrConfigLoad` (with `%s`) |
-| Generic errors | `ErrGenericFmt` | Catch-all `%v` format       |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Static errors | `Err<What>` | `ErrSourceRequired` |
+| Format errors | `Err<What>Fmt` | `ErrConfigLoad` (with `%s`) |
+| Generic errors | `ErrGenericFmt` | Catch-all `%v` format |
 
 **Rule:** Error messages must be actionable — tell the user what
 to do, not just what failed.
@@ -255,11 +255,11 @@ const (
 )
 ```
 
-| Naming Pattern   | Convention          | Example                       |
-| ---------------- | ------------------- | ----------------------------- |
-| Info messages    | `Msg<Action>`       | `MsgScanComplete`             |
-| Format messages  | `Msg<Action>Fmt`    | `MsgDesktopAdded` (with `%s`) |
-| Warning messages | `Msg<Topic>Warning` | `MsgFetchWarning`             |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Info messages | `Msg<Action>` | `MsgScanComplete` |
+| Format messages | `Msg<Action>Fmt` | `MsgDesktopAdded` (with `%s`) |
+| Warning messages | `Msg<Topic>Warning` | `MsgFetchWarning` |
 
 ---
 
@@ -277,13 +277,13 @@ const (
 )
 ```
 
-| Naming Pattern  | Convention           | Example                |
-| --------------- | -------------------- | ---------------------- |
-| Binary name     | `GitBin`             | `"git"`                |
-| Git subcommands | `Git<Command>`       | `GitClone`, `GitPull`  |
-| Git flags       | `Git<Flag>Flag`      | `GitBranchFlag = "-b"` |
-| Git refs        | `Git<Ref>`           | `GitHEAD = "HEAD"`     |
-| Format strings  | `Git<Purpose>Format` | `GitLogTipFormat`      |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Binary name | `GitBin` | `"git"` |
+| Git subcommands | `Git<Command>` | `GitClone`, `GitPull` |
+| Git flags | `Git<Flag>Flag` | `GitBranchFlag = "-b"` |
+| Git refs | `Git<Ref>` | `GitHEAD = "HEAD"` |
+| Format strings | `Git<Purpose>Format` | `GitLogTipFormat` |
 
 ---
 
@@ -304,15 +304,15 @@ const SQLCreateRepos = `CREATE TABLE IF NOT EXISTS Repos (...)`
 const SQLUpsertRepo  = `INSERT INTO Repos (...) ON CONFLICT(...) DO UPDATE SET ...`
 ```
 
-| Naming Pattern    | Convention             | Example             |
-| ----------------- | ---------------------- | ------------------- |
-| DB paths          | `DB<Part>`             | `DBDir`, `DBFile`   |
-| Table names       | `Table<Name>`          | `TableRepos`        |
-| CREATE statements | `SQLCreate<Table>`     | `SQLCreateRepos`    |
-| UPSERT statements | `SQLUpsert<Table>`     | `SQLUpsertRepo`     |
-| SELECT statements | `SQLSelect<What>`      | `SQLSelectAllRepos` |
-| DELETE statements | `SQLDelete<What>`      | `SQLDeleteGroup`    |
-| Index creation    | `SQLIndex<Table><Col>` | `SQLIndexReposPath` |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| DB paths | `DB<Part>` | `DBDir`, `DBFile` |
+| Table names | `Table<Name>` | `TableRepos` |
+| CREATE statements | `SQLCreate<Table>` | `SQLCreateRepos` |
+| UPSERT statements | `SQLUpsert<Table>` | `SQLUpsertRepo` |
+| SELECT statements | `SQLSelect<What>` | `SQLSelectAllRepos` |
+| DELETE statements | `SQLDelete<What>` | `SQLDeleteGroup` |
+| Index creation | `SQLIndex<Table><Col>` | `SQLIndexReposPath` |
 
 ---
 
@@ -336,11 +336,11 @@ const (
 )
 ```
 
-| Naming Pattern    | Convention       | Example                  |
-| ----------------- | ---------------- | ------------------------ |
-| Flag names        | `Flag<Name>`     | `FlagDryRun = "dry-run"` |
-| Flag descriptions | `HelpFlag<Name>` | `HelpFlagMode`           |
-| Flag defaults     | `Default<Flag>`  | `DefaultMode = "https"`  |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| Flag names | `Flag<Name>` | `FlagDryRun = "dry-run"` |
+| Flag descriptions | `HelpFlag<Name>` | `HelpFlagMode` |
+| Flag defaults | `Default<Flag>` | `DefaultMode = "https"` |
 
 ---
 
@@ -353,10 +353,10 @@ const (
 )
 ```
 
-| Naming Pattern | Convention            | Example             |
-| -------------- | --------------------- | ------------------- |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
 | Layout strings | `Date<Purpose>Layout` | `DateDisplayLayout` |
-| Suffixes       | `Date<Purpose>Suffix` | `DateUTCSuffix`     |
+| Suffixes | `Date<Purpose>Suffix` | `DateUTCSuffix` |
 
 ---
 
@@ -372,49 +372,49 @@ const (
 )
 ```
 
-| Naming Pattern    | Convention  | Example       |
-| ----------------- | ----------- | ------------- |
-| OS identifiers    | `OS<Name>`  | `OSWindows`   |
+| Naming Pattern | Convention | Example |
+|----------------|-----------|---------|
+| OS identifiers | `OS<Name>` | `OSWindows` |
 | Platform commands | `Cmd<Name>` | `CmdExplorer` |
 
 ---
 
 ## What Does NOT Belong in Constants
 
-| Category                            | Reason                                   |
-| ----------------------------------- | ---------------------------------------- |
-| Struct definitions                  | Belong in `model` package                |
-| Business logic                      | Belongs in domain packages               |
-| Template content                    | Use `go:embed` in `formatter/templates/` |
-| Test data strings                   | Stay local in test files                 |
-| Log messages unique to one location | Not compared or reused                   |
+| Category | Reason |
+|----------|--------|
+| Struct definitions | Belong in `model` package |
+| Business logic | Belongs in domain packages |
+| Template content | Use `go:embed` in `formatter/templates/` |
+| Test data strings | Stay local in test files |
+| Log messages unique to one location | Not compared or reused |
 
 ---
 
 ## Naming Quick Reference
 
-| Prefix    | Category             | Example             |
-| --------- | -------------------- | ------------------- |
-| `Cmd`     | CLI command names    | `CmdScan`           |
-| `Mode`    | Operation modes      | `ModeHTTPS`         |
-| `Output`  | Output formats       | `OutputJSON`        |
-| `Ext`     | File extensions      | `ExtCSV`            |
-| `Default` | Default values       | `DefaultBranch`     |
-| `Color`   | ANSI codes           | `ColorGreen`        |
-| `Err`     | Error messages       | `ErrSourceRequired` |
-| `Msg`     | User messages        | `MsgScanComplete`   |
-| `Git`     | Git commands/flags   | `GitClone`          |
-| `SQL`     | SQL statements       | `SQLCreateRepos`    |
-| `Table`   | Table names          | `TableRepos`        |
-| `DB`      | Database paths       | `DBFile`            |
-| `Flag`    | Flag names           | `FlagVerbose`       |
-| `Help`    | Help descriptions    | `HelpFlagMode`      |
-| `Status`  | UI indicators        | `StatusIconClean`   |
-| `Perm`    | Permissions          | `PermDir`           |
-| `Prefix`  | URL/string prefixes  | `PrefixHTTPS`       |
-| `Date`    | Date formatting      | `DateDisplayLayout` |
-| `OS`      | Platform identifiers | `OSWindows`         |
-| `Tree`    | Tree-drawing chars   | `TreeBranch`        |
+| Prefix | Category | Example |
+|--------|----------|---------|
+| `Cmd` | CLI command names | `CmdScan` |
+| `Mode` | Operation modes | `ModeHTTPS` |
+| `Output` | Output formats | `OutputJSON` |
+| `Ext` | File extensions | `ExtCSV` |
+| `Default` | Default values | `DefaultBranch` |
+| `Color` | ANSI codes | `ColorGreen` |
+| `Err` | Error messages | `ErrSourceRequired` |
+| `Msg` | User messages | `MsgScanComplete` |
+| `Git` | Git commands/flags | `GitClone` |
+| `SQL` | SQL statements | `SQLCreateRepos` |
+| `Table` | Table names | `TableRepos` |
+| `DB` | Database paths | `DBFile` |
+| `Flag` | Flag names | `FlagVerbose` |
+| `Help` | Help descriptions | `HelpFlagMode` |
+| `Status` | UI indicators | `StatusIconClean` |
+| `Perm` | Permissions | `PermDir` |
+| `Prefix` | URL/string prefixes | `PrefixHTTPS` |
+| `Date` | Date formatting | `DateDisplayLayout` |
+| `OS` | Platform identifiers | `OSWindows` |
+| `Tree` | Tree-drawing chars | `TreeBranch` |
 
 ---
 

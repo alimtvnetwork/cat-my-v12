@@ -22,6 +22,7 @@ import {
   Code,
   Workflow,
   Wand2,
+  Binary,
 } from "lucide-react";
 
 export interface ToolIconProps {
@@ -75,6 +76,8 @@ export function ToolIcon({ name, className = "w-6 h-6" }: ToolIconProps): React.
       return <Workflow className={className} />;
     case "Wand2":
       return <Wand2 className={className} />;
+    case "Binary":
+      return <Binary className={className} />;
     default:
       return <Sparkles className={className} />;
   }

@@ -22,12 +22,12 @@ function. No command formats dates inline.
 02-Jan-2006 03:04 PM
 ```
 
-| Component | Width    | Example    |
-| --------- | -------- | ---------- |
-| Day       | 2 digits | `06`       |
-| Month     | 3-letter | `Mar`      |
-| Year      | 4 digits | `2026`     |
-| Time      | 12-hour  | `03:17 AM` |
+| Component | Width | Example |
+|-----------|-------|---------|
+| Day | 2 digits | `06` |
+| Month | 3-letter | `Mar` |
+| Year | 4 digits | `2026` |
+| Time | 12-hour | `03:17 AM` |
 
 ## Implementation
 

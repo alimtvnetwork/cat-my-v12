@@ -1,7 +1,7 @@
 # DRY Principles — Coding Guidelines
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-09  
+> **Version:** 1.0.0
+> **Updated:** 2026-03-09
 > **Applies to:** All code (Go, TypeScript, PHP, PowerShell)
 
 ---
@@ -18,12 +18,12 @@
 
 Every concept, constant, type, or configuration must be defined in exactly one place.
 
-| What                    | Where                                          | Anti-pattern                                  |
-| ----------------------- | ---------------------------------------------- | --------------------------------------------- |
-| API endpoint paths      | `constants.php` (PHP), route registration (Go) | Hardcoded strings in handlers                 |
-| Response envelope types | `envelope.schema.json` → per-language types    | Independent type definitions that drift       |
-| Error codes             | Centralized constants file                     | Magic numbers in business logic               |
-| Feature flags           | Config file or database                        | Scattered `if` checks with hardcoded booleans |
+| What | Where | Anti-pattern |
+|------|-------|--------------|
+| API endpoint paths | `constants.php` (PHP), route registration (Go) | Hardcoded strings in handlers |
+| Response envelope types | `envelope.schema.json` → per-language types | Independent type definitions that drift |
+| Error codes | Centralized constants file | Magic numbers in business logic |
+| Feature flags | Config file or database | Scattered `if` checks with hardcoded booleans |
 
 ### 2. Extract, Don't Copy
 
@@ -69,10 +69,10 @@ export function useSites() { const { data } = useQuery(...); /* same error handl
 
 No single file should exceed **300 lines**. When it does, decompose:
 
-| Before                             | After                                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| Before | After |
+|--------|-------|
 | `GlobalErrorModal.tsx` (800 lines) | `modal/BackendSection.tsx`, `modal/FrontendSection.tsx`, `modal/TraversalDetails.tsx`, etc. |
-| `api.ts` (600 lines)               | `api/types.ts`, `api/envelope.ts`, `api/client.ts`, `api/methods.ts`                        |
+| `api.ts` (600 lines) | `api/types.ts`, `api/envelope.ts`, `api/client.ts`, `api/methods.ts` |
 
 ### 6. Cross-Stack Contracts
 
@@ -107,27 +107,27 @@ Ask these questions:
 
 ### Red Flags
 
-| Smell                                       | Likely Violation                  |
-| ------------------------------------------- | --------------------------------- |
-| Same error handling in 3+ places            | Missing centralized error handler |
-| Same API call shape in 3+ hooks             | Missing factory hook              |
-| Same constant string in 2+ files            | Missing constants file            |
-| Same validation logic in 2+ handlers        | Missing middleware/validator      |
-| Copy-pasting a component and tweaking props | Missing variant or composition    |
+| Smell | Likely Violation |
+|-------|-----------------|
+| Same error handling in 3+ places | Missing centralized error handler |
+| Same API call shape in 3+ hooks | Missing factory hook |
+| Same constant string in 2+ files | Missing constants file |
+| Same validation logic in 2+ handlers | Missing middleware/validator |
+| Copy-pasting a component and tweaking props | Missing variant or composition |
 
 ---
 
 ## Project-Specific DRY Patterns
 
-| Pattern                 | Implementation                         | Location                                |
-| ----------------------- | -------------------------------------- | --------------------------------------- |
-| API data fetching       | `useApiQuery` / `useApiQueryPaginated` | `src/hooks/useApiQuery.ts`              |
-| Error reporting         | Global error store                     | `src/stores/errorStore.ts`              |
-| Envelope parsing        | `parseEnvelope` utility                | `src/lib/api/envelope.ts`               |
-| PHP snapshot creation   | `SnapshotFactory`                      | `includes/Snapshot/SnapshotFactory.php` |
-| PHP logging context     | Centralized enrichment in logger       | `includes/Logging/FileLogger.php`       |
-| Go namespace resolution | `resolveNamespace` helper              | `internal/wordpress/namespace.go`       |
-| Go PHP stack parsing    | `php_stack.go` helper                  | `internal/wordpress/php_stack.go`       |
+| Pattern | Implementation | Location |
+|---------|---------------|----------|
+| API data fetching | `useApiQuery` / `useApiQueryPaginated` | `src/hooks/useApiQuery.ts` |
+| Error reporting | Global error store | `src/stores/errorStore.ts` |
+| Envelope parsing | `parseEnvelope` utility | `src/lib/api/envelope.ts` |
+| PHP snapshot creation | `SnapshotFactory` | `includes/Snapshot/SnapshotFactory.php` |
+| PHP logging context | Centralized enrichment in logger | `includes/Logging/FileLogger.php` |
+| Go namespace resolution | `resolveNamespace` helper | `internal/wordpress/namespace.go` |
+| Go PHP stack parsing | `php_stack.go` helper | `internal/wordpress/php_stack.go` |
 
 ---
 
@@ -135,10 +135,10 @@ Ask these questions:
 
 - [DRY Refactoring Summary](./09-dry-refactoring-summary.md) — Complete 10-phase history
 - [Response Envelope Schema](../../03-error-manage/02-error-architecture/05-response-envelope/envelope.schema.json) — Cross-stack type contract
-- [TypeScript Standards](../02-typescript/08-typescript-standards-reference.md) — TS-specific rules
-- [Golang Standards](../03-golang/04-golang-standards-reference/00-overview.md) — Go-specific rules
-- [PHP Standards](../04-php/07-php-standards-reference/00-overview.md) — PHP-specific rules
+- [TypeScript Standards](../02-typescript/09-typescript-standards-reference.md) — TS-specific rules
+- [Golang Standards](../03-golang/04-golang-standards-reference/01-index.md) — Go-specific rules
+- [PHP Standards](../04-php/07-php-standards-reference/01-index.md) — PHP-specific rules
 
 ---
 
-_DRY principles specification created: 2026-02-09_
+*DRY principles specification created: 2026-02-09*

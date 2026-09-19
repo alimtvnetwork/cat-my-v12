@@ -54,28 +54,49 @@ def slugify(text: str) -> str:
     return text.strip("-")
 
 
+FENCE_RE = re.compile(r"^(`{3,}|~{3,})")
+INLINE_CODE_RE = re.compile(r"(`+)(.+?)\1")
+
+
 def strip_code_fences(text: str) -> str:
     """Replace fenced code blocks with blank lines so example links inside
     aren't validated. Preserves line numbers for accurate reporting.
+    Handles CommonMark fence lengths and blockquote prefixes (e.g. `> ```go`).
     """
     out_lines: list[str] = []
     in_fence = False
-    fence_marker = ""
+    fence_char = ""
+    fence_len = 0
     for line in text.splitlines():
-        stripped = line.lstrip()
-        is_open = (stripped.startswith("```") or stripped.startswith("~~~")) and not in_fence
-        is_close = in_fence and stripped.startswith(fence_marker)
-        if is_open:
-            in_fence = True
-            fence_marker = "```" if stripped.startswith("```") else "~~~"
-            out_lines.append("")
-            continue
-        if is_close:
-            in_fence = False
-            out_lines.append("")
-            continue
+        stripped = re.sub(r"^(?:[\s>]*>)?\s*", "", line)
+        match = FENCE_RE.match(stripped)
+        if not in_fence:
+            if match:
+                in_fence = True
+                fence_run = match.group(1)
+                fence_char = fence_run[0]
+                fence_len = len(fence_run)
+                out_lines.append("")
+                continue
+        else:
+            if match and match.group(1)[0] == fence_char and len(match.group(1)) >= fence_len:
+                in_fence = False
+                out_lines.append("")
+                continue
         out_lines.append("" if in_fence else line)
     return "\n".join(out_lines)
+
+
+def strip_inline_code(text: str) -> str:
+    """Blank out inline code spans (`...` or ``...``) while preserving line numbers.
+    Links inside code spans are code examples or generics syntax (e.g. Result[T](v)),
+    not real markdown cross-references.
+    """
+    def _blank(m: re.Match[str]) -> str:
+        return " " * len(m.group(0))
+
+    return "\n".join(INLINE_CODE_RE.sub(_blank, line) for line in text.splitlines())
+
 
 
 # Custom placeholder tag — content is intentionally hidden from link
@@ -126,6 +147,8 @@ def load_allowlist(repo_root: Path) -> set[str]:
         line = raw.strip()
         if line and not line.startswith("#"):
             out.add(line)
+            if line.startswith("spec/"):
+                out.add("02-" + line)
     return out
 
 
@@ -191,7 +214,7 @@ def scan(root: Path, repo_root: Path) -> list[dict]:
         except OSError as exc:
             failures.append({"file": str(md), "kind": "read-error", "detail": str(exc)})
             continue
-        scan_text = strip_spec_placeholders(strip_code_fences(text))
+        scan_text = strip_inline_code(strip_spec_placeholders(strip_code_fences(text)))
         for match in MD_LINK_RE.finditer(scan_text):
             target = match.group(2).strip()
             if is_external(target):

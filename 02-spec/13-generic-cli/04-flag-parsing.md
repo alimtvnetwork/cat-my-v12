@@ -27,12 +27,12 @@ func parseScanFlags(args []string) (dir string, mode string) {
 
 ## Flag Naming Conventions
 
-| Pattern                           | Example           | Why                |
-| --------------------------------- | ----------------- | ------------------ |
-| Lowercase with hyphens            | `--target-dir`    | Readable, standard |
-| Boolean flags as switches         | `--dry-run`       | No value needed    |
-| Positional args for primary input | `tool scan <dir>` | Natural CLI UX     |
-| Short flags for frequent use      | `-v` for verbose  | Ergonomic          |
+| Pattern | Example | Why |
+|---------|---------|-----|
+| Lowercase with hyphens | `--target-dir` | Readable, standard |
+| Boolean flags as switches | `--dry-run` | No value needed |
+| Positional args for primary input | `tool scan <dir>` | Natural CLI UX |
+| Short flags for frequent use | `-v` for verbose | Ergonomic |
 
 ## Defaults
 
@@ -83,13 +83,13 @@ func runClone(args []string) {
 
 ## Rules
 
-| Rule                                              | Detail                                    |
-| ------------------------------------------------- | ----------------------------------------- |
-| One parse function per command                    | `parseScanFlags`, `parseCloneFlags`, etc. |
-| Parse function returns values, not a struct       | Unless 4+ flags                           |
-| Boolean flags never take values                   | `--dry-run`, not `--dry-run=true`         |
-| Missing required positional args → error + exit 1 | Never proceed with empty values           |
-| Flag help descriptions include type hints         | `"Output format (csv\|json\|terminal)"`   |
+| Rule | Detail |
+|------|--------|
+| One parse function per command | `parseScanFlags`, `parseCloneFlags`, etc. |
+| Parse function returns values, not a struct | Unless 4+ flags |
+| Boolean flags never take values | `--dry-run`, not `--dry-run=true` |
+| Missing required positional args → error + exit 1 | Never proceed with empty values |
+| Flag help descriptions include type hints | `"Output format (csv\|json\|terminal)"` |
 
 ## Contributors
 

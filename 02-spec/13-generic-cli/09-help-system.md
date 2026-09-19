@@ -21,6 +21,7 @@ toolname/helptext/<command-name>.md
 ## Help File Format
 
 ```markdown
+
 # toolname <command>
 
 <One-line description>
@@ -35,9 +36,9 @@ toolname/helptext/<command-name>.md
 
 ## Flags
 
-| Flag        | Default | Description  |
-| ----------- | ------- | ------------ |
-| --flag-name | value   | What it does |
+| Flag | Default | Description |
+|------|---------|-------------|
+| --flag-name | value | What it does |
 
 ## Prerequisites
 
@@ -119,15 +120,15 @@ func runScan(args []string) {
 
 ## Help Content Rules
 
-| Rule                 | Detail                                          |
-| -------------------- | ----------------------------------------------- |
-| Examples per command | 2–3, each with sample output                    |
-| Sample output        | 3–8 lines per example, realistic but anonymized |
-| Prerequisites        | Explicitly list commands that must run first    |
-| Cross-references     | Link to related command's help file             |
-| Flags table          | Include default values and type hints           |
-| File size            | Each help file ≤ 120 lines                      |
-| See Also section     | 2–5 related commands with one-line descriptions |
+| Rule | Detail |
+|------|--------|
+| Examples per command | 2–3, each with sample output |
+| Sample output | 3–8 lines per example, realistic but anonymized |
+| Prerequisites | Explicitly list commands that must run first |
+| Cross-references | Link to related command's help file |
+| Flags table | Include default values and type hints |
+| File size | Each help file ≤ 120 lines |
+| See Also section | 2–5 related commands with one-line descriptions |
 
 ## Root Help Output
 

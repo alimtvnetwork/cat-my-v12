@@ -64,6 +64,26 @@ export const CATALOG_TOOLS: readonly CatalogTool[] = [
     ruleMatcher: "blob",
   },
   {
+    id: "tool-greyscale-pattern-matching",
+    displayCode: "T116",
+    name: "Greyscale Pattern Matching",
+    category: CatalogCategoryIdType.PresenceAbsence,
+    iconName: "Binary",
+    badge: "2-bit Light Mark Extraction",
+    shortDesc: "Marks light greyscale characters and symbols inside a required region.",
+    fullDesc:
+      "Converts the uploaded image to 2-bit greyscale, analyzes the required search region, and marks connected light patterns such as letters, numbers, symbols, and non-character markings with numbered red boxes.",
+    detectionFeatures: [
+      "2-bit Greyscale Conversion",
+      "Required Search Region",
+      "Automatic Light Pattern Detection",
+      "Selectable Box Review",
+    ],
+    judgmentCriteria: ["Detected Pattern Count", "Box Position", "Box Size", "Manual Review Update"],
+    targetRoute: "/setup/white-boxes",
+    ruleMatcher: "greyscale-pattern",
+  },
+  {
     id: "tool-intensity",
     displayCode: "T113",
     name: "Intensity / Luminance",

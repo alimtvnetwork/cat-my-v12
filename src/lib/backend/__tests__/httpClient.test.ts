@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import { HttpBackendClient } from "../httpClient";
-import { useBackendMode } from "../mode";
+import { DEFAULT_BACKEND_URL, useBackendMode } from "../mode";
 import { showToastError } from "@/lib/errors/notify";
 
 vi.mock("@/lib/errors/notify", () => ({
@@ -10,7 +10,7 @@ vi.mock("@/lib/errors/notify", () => ({
 }));
 
 const server = setupServer(
-  http.get("http://localhost:8000/ping", () => {
+  http.get(`${DEFAULT_BACKEND_URL}/ping`, () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -29,7 +29,7 @@ const server = setupServer(
       Results: [{ pong: true }],
     });
   }),
-  http.get("http://localhost:8000/rules", () => {
+  http.get(`${DEFAULT_BACKEND_URL}/rules`, () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -62,7 +62,7 @@ const server = setupServer(
       ],
     });
   }),
-  http.get("http://localhost:8000/samples", () => {
+  http.get(`${DEFAULT_BACKEND_URL}/samples`, () => {
     return HttpResponse.json({
       Status: {
         IsSuccess: true,
@@ -98,7 +98,7 @@ afterEach(() => {
 
 describe("HttpBackendClient", () => {
   it("fetches successfully", async () => {
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     const res = await client.ping();
     expect(res.Status.IsSuccess).toBe(true);
@@ -106,7 +106,7 @@ describe("HttpBackendClient", () => {
   });
 
   it("fetches rules list successfully", async () => {
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     const res = await client.rules.list();
     expect(res.Status.IsSuccess).toBe(true);
@@ -115,7 +115,7 @@ describe("HttpBackendClient", () => {
   });
 
   it("fetches samples list successfully", async () => {
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     const res = await client.samples.list();
     expect(res.Status.IsSuccess).toBe(true);
@@ -125,11 +125,11 @@ describe("HttpBackendClient", () => {
 
   it("throws on network error and calls showToastError", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get(`${DEFAULT_BACKEND_URL}/ping`, () => {
         return HttpResponse.error();
       }),
     );
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     await expect(client.ping()).rejects.toThrow("E_UNREACHABLE");
     expect(showToastError).toHaveBeenCalled();
@@ -137,11 +137,11 @@ describe("HttpBackendClient", () => {
 
   it("throws on invalid envelope format and calls showToastError", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get(`${DEFAULT_BACKEND_URL}/ping`, () => {
         return HttpResponse.json({ missingStatus: true });
       }),
     );
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     await expect(client.ping()).rejects.toThrow("E_ENVELOPE_PARSE");
     expect(showToastError).toHaveBeenCalled();
@@ -156,7 +156,7 @@ describe("HttpBackendClient", () => {
 
   it("throws BackendHttpError on failure envelope", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get(`${DEFAULT_BACKEND_URL}/ping`, () => {
         return HttpResponse.json(
           {
             Status: {
@@ -179,7 +179,7 @@ describe("HttpBackendClient", () => {
         );
       }),
     );
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     let error;
     try {
@@ -195,11 +195,11 @@ describe("HttpBackendClient", () => {
 
   it("throws BackendHttpError with E9005 on non-JSON response", async () => {
     server.use(
-      http.get("http://localhost:8000/ping", () => {
+      http.get(`${DEFAULT_BACKEND_URL}/ping`, () => {
         return HttpResponse.text("<html>Not Found</html>", { status: 404 });
       }),
     );
-    useBackendMode.setState({ baseUrl: "http://localhost:8000" });
+    useBackendMode.setState({ baseUrl: DEFAULT_BACKEND_URL });
     const client = new HttpBackendClient();
     let error;
     try {

@@ -45,14 +45,14 @@ The migrator is a one-shot CI/CD-runnable script that:
 
 ### Inputs
 
-| Flag                     | Required        | Purpose                                                         |
-| ------------------------ | --------------- | --------------------------------------------------------------- |
-| `--from <slug>`          | yes             | Old repo slug, e.g. `alimtvnetwork/coding-guidelines-v24`.      |
-| `--to <slug>`            | yes             | New repo slug, e.g. `alimtvnetwork/coding-guidelines-v24`.      |
-| `--new-version <semver>` | yes             | New `package.json` version, e.g. `4.0.0`. Must be a major bump. |
-| `--dry-run`              | no (default ON) | Print planned changes; write nothing.                           |
-| `--confirm`              | no              | Required to actually write files. Without this, dry-run wins.   |
-| `--help`                 | no              | Print usage and exit 0.                                         |
+| Flag | Required | Purpose |
+|------|----------|---------|
+| `--from <slug>` | yes | Old repo slug, e.g. `alimtvnetwork/coding-guidelines-v24`. |
+| `--to <slug>` | yes | New repo slug, e.g. `alimtvnetwork/coding-guidelines-v24`. |
+| `--new-version <semver>` | yes | New `package.json` version, e.g. `4.0.0`. Must be a major bump. |
+| `--dry-run` | no (default ON) | Print planned changes; write nothing. |
+| `--confirm` | no | Required to actually write files. Without this, dry-run wins. |
+| `--help` | no | Print usage and exit 0. |
 
 ### Resolution Order
 
@@ -73,7 +73,7 @@ The script scans these file globs and replaces exact matches of `--from` with `-
 - `public/health-score.json`
 - `src/data/specTree.json`
 - `docs/**/*.md`
-- `spec/**/*.md`
+- `02-spec/**/*.md`
 - `scripts/**/*.{mjs,js,sh,ps1}`
 - `linter-scripts/**/*.{py,sh,ps1}`
 - `*.ps1`, `*.sh` at repo root (install scripts)
@@ -111,15 +111,15 @@ Excluded:
 
 ## Failure Modes
 
-| Exit | Reason                                                                          |
-| ---- | ------------------------------------------------------------------------------- |
-| 1    | Missing required arg (`--from`, `--to`, or `--new-version`).                    |
-| 2    | Invalid slug or version format.                                                 |
-| 3    | Major version did not increase, or `--from` == `--to`.                          |
-| 4    | Substring collision detected (old slug appears as part of a longer identifier). |
-| 5    | Excluded file matched (would have rewritten a forbidden path).                  |
-| 6    | Post-rewrite sync or lint failed; changes rolled back.                          |
-| 7    | Working tree not clean at start (uncommitted changes present).                  |
+| Exit | Reason |
+|------|--------|
+| 1 | Missing required arg (`--from`, `--to`, or `--new-version`). |
+| 2 | Invalid slug or version format. |
+| 3 | Major version did not increase, or `--from` == `--to`. |
+| 4 | Substring collision detected (old slug appears as part of a longer identifier). |
+| 5 | Excluded file matched (would have rewritten a forbidden path). |
+| 6 | Post-rewrite sync or lint failed; changes rolled back. |
+| 7 | Working tree not clean at start (uncommitted changes present). |
 
 ---
 
@@ -154,7 +154,7 @@ File: `.github/workflows/migrate-repo-version.yml`
 1. Slug regex: `^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$`.
 2. Version regex: `^\d+\.\d+\.\d+(-[A-Za-z0-9.]+)?$`.
 3. Major-bump check: `parseInt(newVersion.split('.')[0]) > parseInt(currentVersion.split('.')[0])`.
-4. Word-boundary match: replacement only fires when the old slug is preceded and followed by one of: start-of-string, end-of-string, whitespace, `"`, `'`, `(`, `)`, `<`, `>`, `,`, `` ` ``, `]`, `[`, newline.
+4. Word-boundary match: replacement only fires when the old slug is preceded and followed by one of: start-of-string, end-of-string, whitespace, `"`, `'`, `(`, `)`, `<`, `>`, `,`, ``` ` ```, `]`, `[`, newline.
 
 ---
 
@@ -167,7 +167,7 @@ File: `.github/workflows/migrate-repo-version.yml`
 5. If old slug appears inside a longer identifier (e.g. `coding-guidelines-v24-archive`), the script does NOT rewrite it and reports the collision.
 6. If working tree is dirty at start, exits 7 before any read.
 7. After a successful `--confirm` run, `npm run lint:readme` and `npm run sync` both pass on the resulting tree.
-8. The new 02-spec/14-update/26 file is referenced from `02-spec/14-update/00-overview.md` and `02-spec/14-update/readme.md`.
+8. The new 02-spec/14-update/26 file is referenced from `02-spec/14-update/01-index.md` and `02-spec/14-update/readme.md`.
 
 ---
 
@@ -186,7 +186,7 @@ File: `.github/workflows/migrate-repo-version.yml`
 2. Job 2: Implementation — BLOCKED on Open Items confirmation.
    a. Create `scripts/migrate-repo-major-version.mjs`.
    b. Create `.github/workflows/migrate-repo-version.yml`.
-   c. Add cross-references in `02-spec/14-update/00-overview.md` and `02-spec/14-update/readme.md`.
+   c. Add cross-references in `02-spec/14-update/01-index.md` and `02-spec/14-update/readme.md`.
    d. Add a `npm run migrate:repo` script entry pointing at the new script.
    e. Update root `readme.md` "Power-user flags" section to mention the migrator.
 

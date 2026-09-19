@@ -5,6 +5,8 @@ import { isValidBackendPrefix } from "./validate";
 
 import { BackendModeType } from "./BackendModeType";
 
+export const DEFAULT_BACKEND_URL = "http://localhost:8000";
+
 export interface BackendModeState {
   mode: BackendModeType;
   baseUrl: string;
@@ -16,7 +18,7 @@ export const useBackendMode = create<BackendModeState>()(
   persist(
     (set, get) => ({
       mode: BackendModeType.Seed,
-      baseUrl: "http://localhost:8000",
+      baseUrl: DEFAULT_BACKEND_URL,
       setMode: (mode) => set({ mode }),
       setBaseUrl: (url) => {
         if (!isValidBackendPrefix(url)) {
@@ -29,6 +31,7 @@ export const useBackendMode = create<BackendModeState>()(
     }),
     {
       name: "app.backend.baseUrl",
+      version: 1,
       partialize: (state) => ({ baseUrl: state.baseUrl, mode: state.mode }),
     },
   ),

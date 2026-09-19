@@ -27,7 +27,7 @@ export async function fetchBackend<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<Envelope<T>> {
-  const { baseUrl } = useBackendMode.getState();
+  const baseUrl = useBackendMode.getState().baseUrl;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;

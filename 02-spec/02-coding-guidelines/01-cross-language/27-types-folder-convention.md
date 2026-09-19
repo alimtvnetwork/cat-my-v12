@@ -1,8 +1,8 @@
 # Types Folder Convention & Common Type Aliases
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
-**Applies to:** All languages (Go, TypeScript, PHP, Rust, C#)  
+**Version:** 3.2.0
+**Updated:** 2026-04-16
+**Applies to:** All languages (Go, TypeScript, PHP, Rust, C#)
 **Source:** Derived from `apperror` package patterns, content type conventions, and real-world `riseup-asia-uploader` codebase
 
 ---
@@ -27,7 +27,6 @@ types/
 ```
 
 **TypeScript equivalent:**
-
 ```
 types/
 ├── ContentType.ts
@@ -40,7 +39,6 @@ types/
 ```
 
 **PHP equivalent:**
-
 ```
 types/
 ├── ContentType.php
@@ -113,12 +111,12 @@ func (h *PluginHandler) GetName(siteId string) apperror.StringResult {
 
 ```typescript
 // types/AppResults.ts
-import type { Result } from "@/lib/result";
+import type { Result } from "@/lib/result"
 
-export type BoolResult = Result<boolean>;
-export type StringResult = Result<string>;
-export type NumberResult = Result<number>;
-export type VoidResult = Result<void>;
+export type BoolResult = Result<boolean>
+export type StringResult = Result<string>
+export type NumberResult = Result<number>
+export type VoidResult = Result<void>
 ```
 
 #### C#
@@ -177,11 +175,11 @@ func (c ContentType) String() string {
 ```typescript
 // types/ContentType.ts
 export enum ContentType {
-  Json = "application/json",
-  Xml = "application/xml",
-  FormData = "multipart/form-data",
-  TextPlain = "text/plain",
-  OctetStream = "application/octet-stream",
+    Json = "application/json",
+    Xml = "application/xml",
+    FormData = "multipart/form-data",
+    TextPlain = "text/plain",
+    OctetStream = "application/octet-stream",
 }
 ```
 
@@ -236,13 +234,13 @@ func (m HttpMethod) String() string {
 ```typescript
 // types/HttpMethod.ts
 export enum HttpMethod {
-  Get = "GET",
-  Post = "POST",
-  Put = "PUT",
-  Patch = "PATCH",
-  Delete = "DELETE",
-  Head = "HEAD",
-  Options = "OPTIONS",
+    Get = "GET",
+    Post = "POST",
+    Put = "PUT",
+    Patch = "PATCH",
+    Delete = "DELETE",
+    Head = "HEAD",
+    Options = "OPTIONS",
 }
 ```
 
@@ -303,15 +301,15 @@ func (s HttpStatus) Code() int {
 ```typescript
 // types/HttpStatus.ts
 export enum HttpStatus {
-  Ok = 200,
-  Created = 201,
-  BadRequest = 400,
-  Unauthorized = 401,
-  Forbidden = 403,
-  NotFound = 404,
-  Conflict = 409,
-  InternalError = 500,
-  ServiceUnavailable = 503,
+    Ok = 200,
+    Created = 201,
+    BadRequest = 400,
+    Unauthorized = 401,
+    Forbidden = 403,
+    NotFound = 404,
+    Conflict = 409,
+    InternalError = 500,
+    ServiceUnavailable = 503,
 }
 ```
 
@@ -332,8 +330,8 @@ const (
 ```typescript
 // types/SortDirection.ts
 export enum SortDirection {
-  Asc = "asc",
-  Desc = "desc",
+    Asc = "asc",
+    Desc = "desc",
 }
 ```
 
@@ -355,9 +353,9 @@ const (
 ```typescript
 // types/Environment.ts
 export enum Environment {
-  Development = "development",
-  Staging = "staging",
-  Production = "production",
+    Development = "development",
+    Staging = "staging",
+    Production = "production",
 }
 ```
 
@@ -430,8 +428,8 @@ func Toggle() apperror.BoolResult { ... }
 - [Code Mutation Avoidance](./18-code-mutation-avoidance.md) — Immutable type values
 - [Strict Typing](./13-strict-typing.md) — No `any`/`interface{}`
 - [Generic Return Types](./25-generic-return-types.md) — Result[T] patterns
-- [Boolean Principles](./02-boolean-principles.md) — Boolean naming in type definitions
+- [Boolean Principles](./03-boolean-principles.md) — Boolean naming in type definitions
 
 ---
 
-_Types folder convention & common type aliases — cross-language specification._
+*Types folder convention & common type aliases — cross-language specification.*

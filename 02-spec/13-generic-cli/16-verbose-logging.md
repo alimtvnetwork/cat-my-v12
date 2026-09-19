@@ -16,16 +16,16 @@ capture full diagnostics for troubleshooting without polluting stdout.
 
 ## Design Rules
 
-| Rule                  | Detail                                                     |
-| --------------------- | ---------------------------------------------------------- |
-| Off by default        | No log file created unless `--verbose` is passed           |
-| File + stderr         | Every verbose entry writes to both the log file and stderr |
-| Timestamped entries   | Each line prefixed with `[HH:MM:SS.mmm]`                   |
-| Timestamped filenames | Log file named `toolname-verbose-YYYY-MM-DD_HH-mm-ss.log`  |
-| Output directory      | Logs written to the tool's default output folder           |
-| Dim on stderr         | Verbose stderr output uses dim/gray ANSI color             |
-| No stdout pollution   | Verbose output never mixes with normal command output      |
-| Global singleton      | One logger instance shared across all packages             |
+| Rule | Detail |
+|------|--------|
+| Off by default | No log file created unless `--verbose` is passed |
+| File + stderr | Every verbose entry writes to both the log file and stderr |
+| Timestamped entries | Each line prefixed with `[HH:MM:SS.mmm]` |
+| Timestamped filenames | Log file named `toolname-verbose-YYYY-MM-DD_HH-mm-ss.log` |
+| Output directory | Logs written to the tool's default output folder |
+| Dim on stderr | Verbose stderr output uses dim/gray ANSI color |
+| No stdout pollution | Verbose output never mixes with normal command output |
+| Global singleton | One logger instance shared across all packages |
 
 ---
 
@@ -180,18 +180,18 @@ func initVerboseLog() {
 
 ## What to Log
 
-| Category           | Examples                                          |
-| ------------------ | ------------------------------------------------- |
-| Git operations     | Clone/pull commands, remote URLs, branch names    |
-| Retry attempts     | Attempt number, delay, reason for retry           |
-| File I/O           | Paths read/written, file sizes, permissions       |
-| External processes | Command lines, exit codes, stdout/stderr          |
-| Timing             | Operation durations, elapsed time                 |
-| Environment        | OS, paths, config values loaded                   |
-| Errors (detailed)  | Full error chains, stack context                  |
-| Compression        | Archive size in bytes, SHA-1 hash per archive     |
-| Checksums          | Per-file SHA-256 hash during checksum generation  |
-| Asset uploads      | Target repo/tag, per-asset file size, HTTP status |
+| Category | Examples |
+|----------|----------|
+| Git operations | Clone/pull commands, remote URLs, branch names |
+| Retry attempts | Attempt number, delay, reason for retry |
+| File I/O | Paths read/written, file sizes, permissions |
+| External processes | Command lines, exit codes, stdout/stderr |
+| Timing | Operation durations, elapsed time |
+| Environment | OS, paths, config values loaded |
+| Errors (detailed) | Full error chains, stack context |
+| Compression | Archive size in bytes, SHA-1 hash per archive |
+| Checksums | Per-file SHA-256 hash during checksum generation |
+| Asset uploads | Target repo/tag, per-asset file size, HTTP status |
 
 **What NOT to log:**
 
@@ -208,24 +208,24 @@ All entries follow the `prefix: detail` convention.
 
 ### Stage Summary
 
-| #   | Stage                                                             | Prefix                | Source File                              |
-| --- | ----------------------------------------------------------------- | --------------------- | ---------------------------------------- |
-| 1   | [Version Resolution](#version-resolution-workflowgo)              | `version:`            | `workflow.go`                            |
-| 2   | [Source Resolution](#source-resolution-gitopsgo)                  | `source:`             | `gitops.go`                              |
-| 3   | [Git Operations](#git-operations-gitopsgo)                        | `git:`                | `gitops.go`                              |
-| 4   | [Asset Collection](#asset-collection-githubgo)                    | `assets:`             | `github.go`                              |
-| 5   | [Staging Directory](#staging-directory-assetsgo)                  | `staging:`            | `assets.go`                              |
-| 6   | [Cross-Compilation](#cross-compilation-assetsgo)                  | `build:`              | `assets.go`                              |
-| 7   | [Compression](#compression-compressgo)                            | `compress:`           | `compress.go`                            |
-| 8   | [Checksums](#checksums-checksumsgo)                               | `checksum:`           | `checksums.go`                           |
-| 9   | [Zip Group Processing](#zip-group-processing-workflowfinalizego)  | `zip-group:`          | `workflowfinalize.go`                    |
-| 10  | [Ad-Hoc Zip Archives](#ad-hoc-zip-archives-workflowfinalizego)    | `ad-hoc-zip:`         | `workflowfinalize.go`                    |
-| 11  | [Zip Group Archives](#zip-group-archives-ziparchivego)            | `zip-summary:`        | `ziparchive.go`                          |
-| 12  | [GitHub Upload](#github-upload-workflowfinalizego-assetsuploadgo) | `github:` / `upload:` | `workflowfinalize.go`, `assetsupload.go` |
-| 13  | [Retry](#retry-retrygo)                                           | `retry:`              | `retry.go`                               |
-| 14  | [Metadata Persistence](#metadata-persistence-workflowfinalizego)  | `metadata:`           | `workflowfinalize.go`                    |
-| 15  | [Rollback](#rollback-rollbackgo)                                  | `rollback:`           | `rollback.go`                            |
-| 16  | [Autocommit](#autocommit-autocommitgo)                            | `autocommit:`         | `autocommit.go`                          |
+| # | Stage | Prefix | Source File |
+|---|-------|--------|-------------|
+| 1 | [Version Resolution](#version-resolution-workflowgo) | `version:` | `workflow.go` |
+| 2 | [Source Resolution](#source-resolution-gitopsgo) | `source:` | `gitops.go` |
+| 3 | [Git Operations](#git-operations-gitopsgo) | `git:` | `gitops.go` |
+| 4 | [Asset Collection](#asset-collection-githubgo) | `assets:` | `github.go` |
+| 5 | [Staging Directory](#staging-directory-assetsgo) | `staging:` | `assets.go` |
+| 6 | [Cross-Compilation](#cross-compilation-assetsgo) | `build:` | `assets.go` |
+| 7 | [Compression](#compression-compressgo) | `compress:` | `compress.go` |
+| 8 | [Checksums](#checksums-checksumsgo) | `checksum:` | `checksums.go` |
+| 9 | [Zip Group Processing](#zip-group-processing-workflowfinalizego) | `zip-group:` | `workflowfinalize.go` |
+| 10 | [Ad-Hoc Zip Archives](#ad-hoc-zip-archives-workflowfinalizego) | `ad-hoc-zip:` | `workflowfinalize.go` |
+| 11 | [Zip Group Archives](#zip-group-archives-ziparchivego) | `zip-summary:` | `ziparchive.go` |
+| 12 | [GitHub Upload](#github-upload-workflowfinalizego-assetsuploadgo) | `github:` / `upload:` | `workflowfinalize.go`, `assetsupload.go` |
+| 13 | [Retry](#retry-retrygo) | `retry:` | `retry.go` |
+| 14 | [Metadata Persistence](#metadata-persistence-workflowfinalizego) | `metadata:` | `workflowfinalize.go` |
+| 15 | [Rollback](#rollback-rollbackgo) | `rollback:` | `rollback.go` |
+| 16 | [Autocommit](#autocommit-autocommitgo) | `autocommit:` | `autocommit.go` |
 
 ### Version Resolution (`workflow.go`)
 

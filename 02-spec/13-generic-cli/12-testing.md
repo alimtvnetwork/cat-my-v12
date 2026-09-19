@@ -4,7 +4,7 @@
 >
 > - [08-code-style.md](08-code-style.md) — code style rules that tests must also follow
 > - [11-build-deploy.md](11-build-deploy.md) — build pipeline that executes tests
-> - [02-project-structure.md](02-project-structure.md) — test file placement within the package layout
+> - [02-project-03-structure.md](./02-project-structure.md) — test file placement within the package layout
 
 ## Test Structure
 
@@ -23,14 +23,14 @@ toolname/
 
 ## Conventions
 
-| Convention           | Detail                                             |
-| -------------------- | -------------------------------------------------- |
-| Unit tests           | Same package, same directory as source             |
-| Integration tests    | Under `tests/` in separate packages                |
-| Test file naming     | `*_test.go` matching source file                   |
-| Test function naming | `TestFunctionName_Scenario`                        |
-| Table-driven tests   | Use for functions with multiple input/output cases |
-| Test data            | Inline in test, not external files (unless large)  |
+| Convention | Detail |
+|------------|--------|
+| Unit tests | Same package, same directory as source |
+| Integration tests | Under `tests/` in separate packages |
+| Test file naming | `*_test.go` matching source file |
+| Test function naming | `TestFunctionName_Scenario` |
+| Table-driven tests | Use for functions with multiple input/output cases |
+| Test data | Inline in test, not external files (unless large) |
 
 ## Table-Driven Tests
 
@@ -59,14 +59,14 @@ func TestSlugFromURL(t *testing.T) {
 
 ## What to Test
 
-| Layer       | What to Test                                     |
-| ----------- | ------------------------------------------------ |
-| `mapper`    | Data transformation correctness                  |
-| `config`    | Merge priority (defaults → file → flags)         |
+| Layer | What to Test |
+|-------|-------------|
+| `mapper` | Data transformation correctness |
+| `config` | Merge priority (defaults → file → flags) |
 | `formatter` | Output matches expected format (use `io.Writer`) |
-| `store`     | CRUD operations with in-memory SQLite            |
-| `cmd`       | Flag parsing returns correct values              |
-| `scanner`   | Detection rules match expected patterns          |
+| `store` | CRUD operations with in-memory SQLite |
+| `cmd` | Flag parsing returns correct values |
+| `scanner` | Detection rules match expected patterns |
 
 ## What NOT to Test
 

@@ -6,15 +6,15 @@
  * Usage: node 02-spec/07-error-code-registry/scripts/check-utilization-threshold.mjs
  */
 
-import { readFileSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const THRESHOLD = 0.3; // 30%
+const THRESHOLD = 0.30; // 30%
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const MASTER = resolve(__dir, "../../..", "02-spec/07-error-code-registry/error-codes-master.json");
-const master = JSON.parse(readFileSync(MASTER, "utf-8"));
+const MASTER = resolve(__dir, '../../..', '02-spec/07-error-code-registry/error-codes-master.json');
+const master = JSON.parse(readFileSync(MASTER, 'utf-8'));
 
 function rangeCapacity(mod) {
   if (mod.Range) return mod.Range.Max - mod.Range.Min + 1;
@@ -31,23 +31,14 @@ for (const m of master.Modules) {
   if (util >= THRESHOLD) {
     const pct = (util * 100).toFixed(1);
     const remaining = cap - m.TotalCodes;
-    warnings.push({
-      Project: m.Project,
-      Name: m.Name,
-      Pct: pct,
-      Used: m.TotalCodes,
-      Cap: cap,
-      Remaining: remaining,
-    });
+    warnings.push({ Project: m.Project, Name: m.Name, Pct: pct, Used: m.TotalCodes, Cap: cap, Remaining: remaining });
   }
 }
 
 if (warnings.length === 0) {
   console.log(`✅ All modules below ${(THRESHOLD * 100).toFixed(0)}% utilization threshold`);
 } else {
-  console.log(
-    `⚠️  ${warnings.length} module(s) exceed ${(THRESHOLD * 100).toFixed(0)}% utilization:\n`,
-  );
+  console.log(`⚠️  ${warnings.length} module(s) exceed ${(THRESHOLD * 100).toFixed(0)}% utilization:\n`);
   for (const w of warnings) {
     const msg = `${w.Name} (${w.Project}): ${w.Pct}% — ${w.Used}/${w.Cap} used, ${w.Remaining} remaining`;
     console.log(`  • ${msg}`);

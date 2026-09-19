@@ -1,7 +1,7 @@
 # Function Naming — No Boolean Flag Parameters
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-09  
+> **Version:** 1.0.0
+> **Updated:** 2026-03-09
 > **Applies to:** PHP, TypeScript, Go
 
 ---
@@ -118,22 +118,22 @@ return ErrorResponse::logAndReturnWithTrace($this->fileLogger, $e, 'Middleware e
 
 ## Guidelines
 
-| Situation                                 | Action                                           |
-| ----------------------------------------- | ------------------------------------------------ |
-| Boolean changes operation meaning         | Split into named methods                         |
-| Boolean adjusts a minor formatting detail | Acceptable as parameter (confirm first)          |
-| More than one boolean flag                | Always split — combinatorial APIs are unreadable |
-| Flag count growing over time              | Refactor to named methods immediately            |
+| Situation | Action |
+|-----------|--------|
+| Boolean changes operation meaning | Split into named methods |
+| Boolean adjusts a minor formatting detail | Acceptable as parameter (confirm first) |
+| More than one boolean flag | Always split — combinatorial APIs are unreadable |
+| Flag count growing over time | Refactor to named methods immediately |
 
 ---
 
 ## Cross-References
 
-- [PHP Standards](../04-php/07-php-standards-reference/00-overview.md)
-- [TypeScript Standards](../02-typescript/08-typescript-standards-reference.md)
-- [Go Standards](../03-golang/04-golang-standards-reference/00-overview.md)
-- [Cross-Language Code Style](./04-code-style/00-overview.md)
+- [PHP Standards](../04-php/07-php-standards-reference/01-index.md)
+- [TypeScript Standards](../02-typescript/09-typescript-standards-reference.md)
+- [Go Standards](../03-golang/04-golang-standards-reference/01-index.md)
+- [Cross-Language Code Style](./04-code-style/01-index.md)
 
 ---
 
-_Function naming specification v1.0.0 — 2026-02-14_
+*Function naming specification v1.0.0 — 2026-02-14*
