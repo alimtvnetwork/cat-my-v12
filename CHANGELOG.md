@@ -1,3 +1,19 @@
+## v4.112.0 - 2026-09-19
+
+### Install Control Automation v4.112.0
+
+To pin your repository to this exact version, run the following one-liner:
+
+Unix/Bash:
+`curl -sL https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.112.0/install.sh | bash -s -- ".ai-memory/prompts" "v4.112.0"`
+
+PowerShell:
+`Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.112.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v4.112.0"`
+
+### Changed
+
+- Implement release orchestrator automation and branch lifecycle
+
 ## v4.111.0 - 2026-09-19
 
 ### Install Control Automation v4.111.0

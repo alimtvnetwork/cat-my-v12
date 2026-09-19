@@ -1,3 +1,7 @@
+## v4.112.0 - 2026-09-19 - Implement release orchestrator automation and branch lifecycle
+
+Release v4.112.0: Implement release orchestrator automation and branch lifecycle.
+
 ## v4.111.0 - 2026-09-19 - Minor release for Prettier formatting gate compliance and RCA documentation
 
 Minor release establishing canonical version authority in root `version.json`, adding 4-part RCA documentation (#44) for CI Prettier check compliance, and updating `.ai-memory/strictly-avoid.md`. Version bump: v4.110.0 -> v4.111.0.
