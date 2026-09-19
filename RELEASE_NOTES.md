@@ -1,6 +1,6 @@
 ## v4.110.0 - 2026-09-19 - Resolve TS2322 in error capturing and document 4-part RCA #43
 
-Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` as the fallback in the ternary assignment. Documented 4-part Root Cause Analysis in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and updated `.ai-memory/strictly-avoid.md`. Version bump: v4.109.5 -> v4.110.0.
+Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` as the fallback in the ternary assignment. Formatted all touched files with Prettier to satisfy CI formatting gate. Documented 4-part Root Cause Analyses in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and `44-prettier-format-check-failed.md`, and updated `.ai-memory/strictly-avoid.md`. Version bump: v4.109.5 -> v4.110.0.
 
 ## v4.98.0 - 2026-07-21
 

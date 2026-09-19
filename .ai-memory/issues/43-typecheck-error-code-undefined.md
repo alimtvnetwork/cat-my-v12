@@ -4,7 +4,7 @@
 > **Target Repository:** `alimtvnetwork/cat-my-v12`  
 > **Failed Run:** [GitHub Actions Run #35417450944](https://github.com/alimtvnetwork/cat-my-v12/actions/runs/35417450944)  
 > **Commit SHA:** `2219652`  
-> **Date:** 2026-09-19  
+> **Date:** 2026-09-19
 
 ---
 
@@ -54,7 +54,7 @@ In `src/types/errors.ts` (line 240), replaced the fallback of `undefined` with `
 export function buildCapturedError(
   err: unknown,
   code: string = "E_UNKNOWN",
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): CapturedError {
   const base: CapturedError = {
     message: typeof err === "string" ? err : safeStringify(err),
@@ -76,6 +76,7 @@ export function buildCapturedError(
 ```
 
 This change:
+
 - Retains the default `code` argument (e.g. `"E_UNKNOWN"`) when `o.code` is not a string.
 - Strictly satisfies TypeScript's non-nullable `string` type invariant.
 - Introduces zero nested `if` statements.

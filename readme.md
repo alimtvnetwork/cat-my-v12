@@ -93,13 +93,13 @@ Two primary runtime modes ship in the box:
 
 Canonical specification and architectural entry points for AI agents:
 
-| Resource | Path | Description |
-| --- | --- | --- |
-| **System Spec Overview** | [`02-spec/01-index.md`](02-spec/01-index.md) | Full specification index & master architecture |
-| **Coding Guidelines** | [`.ai-memory/coding-guidelines.md`](.ai-memory/coding-guidelines.md) | Master consolidated coding guidelines |
-| **AI Quality Guide** | [`.ai-memory/ai-improvement-guidelines.md`](.ai-memory/ai-improvement-guidelines.md) | Codebase preservation rules & quality constraints |
-| **Agent Playbook** | [`AGENTS.md`](AGENTS.md) | Instructions and skill routing for autonomous agents |
-| **Runtime Map** | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md) | High-level execution architecture & runtime topologies |
+| Resource                 | Path                                                                                 | Description                                            |
+| ------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| **System Spec Overview** | [`02-spec/01-index.md`](02-spec/01-index.md)                                         | Full specification index & master architecture         |
+| **Coding Guidelines**    | [`.ai-memory/coding-guidelines.md`](.ai-memory/coding-guidelines.md)                 | Master consolidated coding guidelines                  |
+| **AI Quality Guide**     | [`.ai-memory/ai-improvement-guidelines.md`](.ai-memory/ai-improvement-guidelines.md) | Codebase preservation rules & quality constraints      |
+| **Agent Playbook**       | [`AGENTS.md`](AGENTS.md)                                                             | Instructions and skill routing for autonomous agents   |
+| **Runtime Map**          | [`docs/architecture/runtime-map.md`](docs/architecture/runtime-map.md)               | High-level execution architecture & runtime topologies |
 
 ---
 

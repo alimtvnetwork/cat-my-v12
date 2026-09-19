@@ -1,9 +1,11 @@
 ## v4.110.0 - 2026-09-19
 
 ### Fixed
+
 - Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` in ternary expression fallback instead of `undefined`.
 - Added 4-part Root Cause Analysis (RCA) in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and `.lovable/issues/43-typecheck-error-code-undefined.md`.
-- Updated `.ai-memory/strictly-avoid.md` to prevent assigning `undefined` to non-nullable properties during ternary refactoring.
+- Formatted all changed files with Prettier to satisfy CI forward-only formatting gate and documented RCA #44 in `.ai-memory/issues/44-prettier-format-check-failed.md`.
+- Updated `.ai-memory/strictly-avoid.md` to prevent assigning `undefined` to non-nullable properties during ternary refactoring and enforce pre-commit Prettier runs.
 - Updated `.gitignore` to exclude `.gitmap/pipeline/` execution artifacts.
 
 ## v4.98.0 - 2026-07-21
