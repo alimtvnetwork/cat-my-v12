@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
-from typing import Final, Union
+from typing import Final
 
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -138,7 +138,7 @@ def build_threshold_lookup_table(clamped_threshold: int) -> bytes:
 
 
 def _threshold_preview(
-    gray: Union[bytearray, bytes],
+    gray: bytearray | bytes,
     white_threshold: float | int,
 ) -> bytearray:
     """Highlight pixels at or above `white_threshold` by setting them to pure white."""

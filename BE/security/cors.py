@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import Enum
-from typing import Final, Iterable, Tuple
+from typing import Final
 
 from BE.config import Settings
 from fastapi import FastAPI
@@ -14,7 +15,7 @@ class DevHosts:
     LOCALHOST: Final[str] = "localhost"
     IPV4_LOOPBACK: Final[str] = "127.0.0.1"
 
-    ALL: Final[Tuple[str, ...]] = (LOCALHOST, IPV4_LOOPBACK)
+    ALL: Final[tuple[str, ...]] = (LOCALHOST, IPV4_LOOPBACK)
 
 
 class DevPorts:
@@ -23,7 +24,7 @@ class DevPorts:
     VITE_PRIMARY: Final[int] = 5173
     VITE_SECONDARY: Final[int] = 5174
 
-    ACTIVE_PORTS: Final[Tuple[int, ...]] = (
+    ACTIVE_PORTS: Final[tuple[int, ...]] = (
         VITE_PRIMARY,
         VITE_SECONDARY,
     )
@@ -39,12 +40,12 @@ def build_http_origins(
     ports: Iterable[int],
     hosts: Iterable[str] = DevHosts.ALL,
     scheme: str = "http",
-) -> Tuple[str, ...]:
+) -> tuple[str, ...]:
     """Generates a normalized, unique tuple of HTTP origin URLs from hosts and ports."""
     return tuple(f"{scheme}://{host}:{port}" for port in ports for host in hosts)
 
 
-COMPILED_DEV_ORIGIN_ITEMS: Final[Tuple[str, ...]] = build_http_origins(DevPorts.ACTIVE_PORTS)
+COMPILED_DEV_ORIGIN_ITEMS: Final[tuple[str, ...]] = build_http_origins(DevPorts.ACTIVE_PORTS)
 
 LocalhostOriginType = Enum(
     "LocalhostOriginType",
@@ -62,10 +63,10 @@ LocalhostOriginEnum = LocalhostOriginType
 class CorsDefaults:
     """Centralized, immutable defaults ready for injection into middleware."""
 
-    DEFAULT_DEV_ORIGINS: Final[Tuple[str, ...]] = COMPILED_DEV_ORIGIN_ITEMS
-    DEFAULT_EXTENSION_ORIGINS: Final[Tuple[str, ...]] = (ExtensionOrigin.CHROME_WILDCARD,)
+    DEFAULT_DEV_ORIGINS: Final[tuple[str, ...]] = COMPILED_DEV_ORIGIN_ITEMS
+    DEFAULT_EXTENSION_ORIGINS: Final[tuple[str, ...]] = (ExtensionOrigin.CHROME_WILDCARD,)
 
-    ALL_DEFAULT_ORIGINS: Final[Tuple[str, ...]] = (
+    ALL_DEFAULT_ORIGINS: Final[tuple[str, ...]] = (
         DEFAULT_DEV_ORIGINS + DEFAULT_EXTENSION_ORIGINS
     )
 
