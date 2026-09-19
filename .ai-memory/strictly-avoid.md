@@ -22,7 +22,8 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 ## 4. Uncaught Type Errors
 
 - **NEVER** leave a file with `TS2322` or `TS2339` errors unaddressed before moving on, unless specifically instructed to park it.
-- **ALWAYS** run `npx tsc --noEmit` to verify type safety.
+- **NEVER** assign `undefined` to strictly typed non-nullable fields when replacing or flattening `if` statements (e.g., use `base.code = typeof o.code === "string" ? o.code : base.code`, NOT `: undefined`).
+- **ALWAYS** run `npx tsc --noEmit` or `bun x tsc --noEmit` to verify type safety.
 
 ## 5. Query Wrappers and Error Logging
 

@@ -1,3 +1,7 @@
+## v4.110.0 - 2026-09-19 - Resolve TS2322 in error capturing and document 4-part RCA #43
+
+Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` as the fallback in the ternary assignment. Documented 4-part Root Cause Analysis in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and updated `.ai-memory/strictly-avoid.md`. Version bump: v4.109.5 -> v4.110.0.
+
 ## v4.98.0 - 2026-07-21
 
 Plan 90 Step 89: saved-views bookmark list on `/observability/sessions`. New `src/lib/observability/savedViews.ts` (SSR-safe localStorage, cap 20, 64-char names, JSON-parse-hardened, quota-safe writes with `console.warn` breadcrumbs) + a saved-views UI strip with apply/delete chips and an inline "Save current" form. Snapshots the post-middleware search so views stay canonical; apply re-runs `validateSearch` so schema evolution auto-repairs old views. tsgo clean. Version bump: v4.97.0 -> v4.98.0.

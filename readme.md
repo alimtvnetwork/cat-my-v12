@@ -12,7 +12,7 @@
 
 <!-- STAMP:BADGES -->
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v4.108.0-3B82F6" alt="Version v4.108.0" />
+  <img src="https://img.shields.io/badge/version-v4.110.0-3B82F6" alt="Version v4.110.0" />
   <img src="https://img.shields.io/badge/license-MIT-10B981" alt="License MIT" />
   <img src="https://img.shields.io/badge/status-active-22C55E" alt="Status Active" />
   <img src="https://img.shields.io/badge/ai--ready-100%25-FF6E3C" alt="AI Ready" />
@@ -40,7 +40,7 @@
 
 <p align="center">
   <sub>
-    <!-- STAMP:VERSION -->v4.108.0<!-- /STAMP:VERSION --> ·
+    <!-- STAMP:VERSION -->v4.110.0<!-- /STAMP:VERSION --> ·
     <!-- STAMP:UPDATED -->2026-09-19<!-- /STAMP:UPDATED --> ·
     <!-- STAMP:FILES -->1064 files<!-- /STAMP:FILES --> ·
     <!-- STAMP:FOLDERS -->142 folders<!-- /STAMP:FOLDERS --> ·
@@ -149,6 +149,7 @@ Detailed documentation guides and architectural references:
 
 See [`CHANGELOG.md`](CHANGELOG.md) for complete version release notes and update details.
 
+- **v4.110.0**: Resolve TS2322 type error in error capturing, document 4-part RCA #43, and align release.
 - **v4.108.0**: Greyscale + pattern inspection matching tool and white-box marking LUT translation layer.
 - **v4.107.0**: Multi-language static analysis quality gates & linter infrastructure alignment.
 - **v4.106.0**: Observability sessions log stream and error envelope toast deduplication.

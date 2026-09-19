@@ -1,3 +1,11 @@
+## v4.110.0 - 2026-09-19
+
+### Fixed
+- Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` in ternary expression fallback instead of `undefined`.
+- Added 4-part Root Cause Analysis (RCA) in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and `.lovable/issues/43-typecheck-error-code-undefined.md`.
+- Updated `.ai-memory/strictly-avoid.md` to prevent assigning `undefined` to non-nullable properties during ternary refactoring.
+- Updated `.gitignore` to exclude `.gitmap/pipeline/` execution artifacts.
+
 ## v4.98.0 - 2026-07-21
 
 Plan 90 Step 89: **saved-views bookmark list on `/observability/sessions`.** Root cause: Step 88 shipped one-shot copy-URL but there was no way to re-open a labeled view (e.g. "Failed worker runs") without re-typing filters or trusting a raw browser bookmark that silently rots when the search schema evolves. Fix: added `src/lib/observability/savedViews.ts` (SSR-safe localStorage wrapper under `hmi.observability.sessions.savedViews.v1`, cap 20 views, 64-char names, JSON-parse-hardened `safeRead` that returns `[]` on corrupt input with a `console.warn` breadcrumb, `safeWrite` that catches quota errors the same way) exposing `listSavedViews`, `addSavedView` (returns `{ok, reason}` for duplicate-name / empty / over-limit rejections), `removeSavedView`. Wired into `src/routes/observability.sessions.tsx`: lazy `useEffect` seed (avoids SSR mismatch), `handleSaveView` snapshots the currently-active search post-`stripSearchParams` so persisted views stay canonical, `handleApplyView` calls `navigate({ search: view.search as SearchState, replace: true })` so `validateSearch` + `fallback()` auto-repair views saved before a future schema change, and a new saved-views strip UI (bookmark chips with inline delete + right-aligned "Save current" form) surfaces success/failure via sonner with per-action context. Verified: `bunx tsgo --noEmit` clean. Version bump: v4.97.0 -> v4.98.0.
