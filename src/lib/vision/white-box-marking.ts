@@ -70,8 +70,10 @@ type Component = { x0: number; y0: number; x1: number; y1: number; area: number 
 
 export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResult {
   assertRgba(input);
-  const gray = toTwoBitGray(input.rgba);
+  const hasThreshold = input.whiteThreshold !== undefined && input.whiteThreshold !== null;
+  const gray = hasThreshold ? toContinuousGray(input.rgba) : toTwoBitGray(input.rgba);
   const boxes = findWhiteBoxes(gray, input.width, input.height, input.whiteThreshold, input.minAreaPx, input.searchRegion);
+
   return renderWhiteBoxMarks(input.width, input.height, gray, boxes);
 }
 
@@ -83,21 +85,27 @@ export function renderWhiteBoxMarks(
 ): WhiteBoxMarkingResult {
   const marked = grayToRgba(gray);
   drawBoxes(marked, width, height, boxes);
+
   return { width, height, rgba: marked, boxes };
 }
 
 export function toTwoBitGrayRgba(input: WhiteBoxMarkingInput): Uint8ClampedArray {
   assertRgba(input);
+
   return grayToRgba(toTwoBitGray(input.rgba));
 }
 
 export function toThresholdPreviewRgba(input: WhiteBoxMarkingInput, whiteThreshold: number): Uint8ClampedArray {
   assertRgba(input);
-  const gray = toTwoBitGray(input.rgba);
+  const gray = toContinuousGray(input.rgba);
   const threshold = clampByte(whiteThreshold);
+
   for (let index = 0; index < gray.length; index += 1) {
-    if (gray[index] >= threshold) gray[index] = 255;
+    if (gray[index] >= threshold) {
+      gray[index] = 255;
+    }
   }
+
   return grayToRgba(gray);
 }
 
@@ -112,6 +120,7 @@ export function renderSelectedWhiteBoxMarks(
       ? grayToRgba(toTwoBitGray(input.rgba))
       : toThresholdPreviewRgba(input, whiteThreshold);
   drawBoxes(rgba, input.width, input.height, boxes);
+
   return { width: input.width, height: input.height, rgba, boxes };
 }
 
@@ -158,6 +167,21 @@ function assertRgba(input: WhiteBoxMarkingInput): void {
   const expected = input.width * input.height * RGBA_STRIDE;
   if (input.width <= 0 || input.height <= 0) throw new Error("image dimensions must be positive");
   if (input.rgba.length !== expected) throw new Error(`rgba length mismatch: ${input.rgba.length}`);
+}
+
+export function toContinuousGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
+  const gray = new Uint8ClampedArray(rgba.length / RGBA_STRIDE);
+
+  for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {
+    const lum =
+      LUMA_RED_WEIGHT * rgba[index + RED_OFFSET] +
+      LUMA_GREEN_WEIGHT * rgba[index + GREEN_OFFSET] +
+      LUMA_BLUE_WEIGHT * rgba[index + BLUE_OFFSET];
+
+    gray[index / RGBA_STRIDE] = clampByte(lum);
+  }
+
+  return gray;
 }
 
 function toTwoBitGray(rgba: Uint8ClampedArray): Uint8ClampedArray {

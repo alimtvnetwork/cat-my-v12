@@ -27,22 +27,32 @@ export async function fetchBackend<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<Envelope<T>> {
-  const baseUrl = useBackendMode.getState().baseUrl;
+  const rawBase = useBackendMode.getState().baseUrl;
+  const baseUrl =
+    !rawBase ||
+    rawBase === "http://localhost:8000" ||
+    rawBase === "http://localhost:8080" ||
+    rawBase === "http://127.0.0.1:8080"
+      ? "http://localhost:8787"
+      : rawBase;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;
 
   const correlationId = newCorrelationId();
   const headers = new Headers(init?.headers);
+
   if (!headers.has("X-Correlation-Id")) {
     headers.set("X-Correlation-Id", correlationId);
   }
+
   if (!headers.has("X-Request-Id")) {
     const requestId =
       globalThis.crypto?.randomUUID?.() ||
       `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     headers.set("X-Request-Id", requestId);
   }
+
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }
@@ -55,10 +65,12 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   let response: Response;
+
   try {
     response = await fetch(url, { ...init, headers });
   } catch (cause) {
@@ -70,11 +82,13 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   let data: unknown;
   const text = await response.text();
+
   if (text) {
     try {
       data = JSON.parse(text);
@@ -91,12 +105,14 @@ export async function fetchBackend<T = unknown>(
         method: init?.method || HttpMethod.Get,
         source: "http",
       });
+
       throw e;
     }
   }
 
   const envelopeParse = EnvelopeSchema.safeParse(data);
   let envelope: Envelope<T> | null = null;
+
   if (envelopeParse.success) {
     envelope = data as Envelope<T>;
   }
@@ -114,10 +130,12 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   const isFail = envelope.Status.IsFailed || response.ok === false;
+
   if (isFail === true) {
     const wireCode = envelope.Errors?.Code || "E_NET";
     const meta = lookupErrorCode(wireCode);
@@ -130,6 +148,7 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 

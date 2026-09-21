@@ -65,7 +65,7 @@ def mark_white_boxes(
 ) -> MarkingResult:
     opts = options or MarkingOptions()
     rgba = _decode_rgba(width, height, rgba_base64)
-    gray = _to_two_bit_gray(rgba)
+    gray = _to_continuous_gray(rgba) if opts.white_threshold is not None else _to_two_bit_gray(rgba)
     boxes = _find_white_boxes(gray, width, height, opts)
     preview = _threshold_preview(gray, opts.white_threshold) if opts.white_threshold is not None else gray
     marked = bytearray(_gray_to_rgba(preview))
@@ -89,6 +89,14 @@ def _decode_rgba(width: int, height: int, rgba_base64: str) -> bytes:
 
 def _bad(message: str, details: dict[str, object]) -> None:
     raise AppError(ErrorCode.E_BE_BAD_REQUEST, message, details)
+
+
+def _to_continuous_gray(rgba: bytes) -> bytearray:
+    out = bytearray(len(rgba) // 4)
+    for idx in range(0, len(rgba), 4):
+        lum = int(round(0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2]))
+        out[idx // 4] = max(0, min(255, lum))
+    return out
 
 
 def _to_two_bit_gray(rgba: bytes) -> bytearray:

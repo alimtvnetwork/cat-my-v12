@@ -17,6 +17,7 @@ import { StandardOcr2Tool } from "./StandardOcr2Tool";
 import { StandardCodeReaderTool } from "./StandardCodeReaderTool";
 import { StandardGreyscalePatternMatchingTool } from "./StandardGreyscalePatternMatchingTool";
 
+
 export interface StandardInspectionToolDispatcherProps {
   toolType?: string;
   ruleName?: string;
@@ -25,23 +26,48 @@ export interface StandardInspectionToolDispatcherProps {
   onEvaluate?: () => void;
   onCancel?: () => void;
   onOk?: () => void;
+  onDelete?: () => void;
   onSettings?: () => void;
   onRegisterImage?: () => void;
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+
   onPreview?: () => void;
 }
 
 export function StandardInspectionToolDispatcher(
   props: StandardInspectionToolDispatcherProps,
 ): React.JSX.Element {
-  const normalized = (props.toolType || props.ruleName || "").toLowerCase();
+  const normalized = (
+    props.toolType ||
+    props.ruleName ||
+    (props.settings as any)?.toolType ||
+    (props.settings as any)?.type ||
+    ""
+  ).toLowerCase();
+
+  const isGreyscalePattern =
+    !normalized.includes("logo") &&
+    (normalized.includes("pattern match") ||
+      normalized.includes("greyscale pattern") ||
+      normalized.includes("grayscale pattern") ||
+      normalized.includes("white box") ||
+      normalized.includes("31 box") ||
+      normalized.includes("2-bit") ||
+      normalized.includes("light pattern") ||
+      (props.settings as any)?.type === "pattern_match" ||
+      Boolean((props.settings as any)?.constellation));
+
+  if (isGreyscalePattern) {
+    return <StandardGreyscalePatternMatchingTool {...props} />;
+  }
 
   // 1. Area Tool
   if (normalized.includes("area")) {
     return <StandardAreaTool {...props} />;
   }
+
   // 2. ShapeTrax3
   if (
     normalized.includes("shape") ||
@@ -50,6 +76,7 @@ export function StandardInspectionToolDispatcher(
   ) {
     return <StandardShapeTrax3Tool {...props} />;
   }
+
   // 3. Profile Width
   if (
     normalized.includes("profile") &&
@@ -59,10 +86,12 @@ export function StandardInspectionToolDispatcher(
   ) {
     return <StandardProfileWidthTool {...props} />;
   }
+
   // 4. Profile Position
   if (normalized.includes("profile")) {
     return <StandardProfilePositionTool {...props} />;
   }
+
   // 5. Edge Pitch
   if (
     normalized.includes("pitch") ||
@@ -71,10 +100,12 @@ export function StandardInspectionToolDispatcher(
   ) {
     return <StandardEdgePitchTool {...props} />;
   }
+
   // 6. Edge Pairs
   if (normalized.includes("pair")) {
     return <StandardEdgePairsTool {...props} />;
   }
+
   // 7. Edge Width
   if (
     normalized.includes("width") ||
@@ -83,6 +114,7 @@ export function StandardInspectionToolDispatcher(
   ) {
     return <StandardEdgeWidthTool {...props} />;
   }
+
   // 8. Edge Position
   if (
     normalized.includes("edge") ||
@@ -92,6 +124,7 @@ export function StandardInspectionToolDispatcher(
   ) {
     return <StandardEdgePositionTool {...props} />;
   }
+
   // 9. Defect
   if (
     normalized.includes("defect") ||
@@ -100,14 +133,6 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("stain")
   ) {
     return <StandardDefectTool {...props} />;
-  }
-  if (
-    normalized.includes("greyscale pattern") ||
-    normalized.includes("grayscale pattern") ||
-    normalized.includes("2-bit") ||
-    normalized.includes("light pattern")
-  ) {
-    return <StandardGreyscalePatternMatchingTool {...props} />;
   }
   // 10. Grayscale Blob
   if (
