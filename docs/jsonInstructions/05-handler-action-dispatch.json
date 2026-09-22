@@ -1,0 +1,333 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "HandlerActionDispatch",
+    "payloadId": "Cmd20260921000841",
+    "correlationId": "Corr-20260921-DRI1000-0018502",
+    "timestamp": "2026-09-21T07:15:30.000Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "listOfActionTypes": [
+      "CameraMove",
+      "CameraPovChange",
+      "LightTrigger",
+      "ImageCapture",
+      "FileSave"
+    ],
+    "tracking": {
+      "sequenceId": 18502,
+      "stationId": "StationBeltMultiAngleInspection",
+      "batchId": "Lot202609A",
+      "encoderTick": 485100,
+      "carrierNestId": "NestRow04CarrierB",
+      "notes": "Triggering multi-step inspection pipeline: mechanical move, optical POV shift, lighting strobe, sensor capture, and raw file persistence.",
+      "additionalInstruction": "Maintain encoder velocity tracking lock from tick 485100 through completion of all 5 actions."
+    },
+    "conveyorKinematics": {
+      "beltTrackingMode": "ContinuousMotionFlyBy",
+      "beltSpeedMmPerS": 450.0,
+      "encoderResolutionUmPerPulse": 12.5,
+      "motionCompensation": {
+        "isCompensationEnabled": true,
+        "allowableSmearPx": 0.5,
+        "spatialResolutionMmPerPx": 0.025,
+        "maxPermissibleExposureTimeUs": 800,
+        "calculatedTrackingOffsetMm": 15.75
+      },
+      "notes": "Conveyor moves continuously at 450 mm/s; optical strobe limits motion blur to under 0.5 pixels.",
+      "additionalInstruction": "Feed real-time belt encoder counts into camera Line 1 to compensate for instantaneous belt speed ripple."
+    },
+    "timingSchedule": {
+      "timelineReference": "MicrosecondsFromTriggerT0",
+      "scheduleSteps": [
+        {
+          "action": "CameraMove",
+          "offsetUs": 0,
+          "durationUs": 35000
+        },
+        {
+          "action": "CameraPovChange",
+          "offsetUs": 30000,
+          "durationUs": 5000
+        },
+        {
+          "action": "LightTrigger",
+          "offsetUs": 35030,
+          "durationUs": 500
+        },
+        {
+          "action": "ImageCapture",
+          "offsetUs": 35020,
+          "durationUs": 600
+        },
+        {
+          "action": "FileSave",
+          "offsetUs": 42000,
+          "durationUs": 12000
+        }
+      ],
+      "notes": "Camera shutter opens at 35020us, strobe fires 10us later for 500us; file save runs asynchronously via background worker.",
+      "additionalInstruction": "Abort sequence immediately if CameraMove in-position signal is not asserted before T0 + 34500us."
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "All safety circuits healthy: optical enclosure sealed, light curtain unviolated, and E-stop chain closed.",
+      "additionalInstruction": "Any breach of safety enclosure during CameraMove must drop gantry power and engage pneumatic brakes."
+    },
+    "notes": "Prerequisite environmental parameters, tracking coordinates, safety interlocks, and timing schedule for multi-step handler dispatch.",
+    "additionalInstruction": "Verify all safety interlocks and kinematic preconditions before initiating data action sequence."
+  },
+  "data": {
+    "executionPolicy": {
+      "executionMode": "SequentialWithAsyncDiskSave",
+      "totalActions": 5,
+      "maxTimeoutMs": 500,
+      "isAbortOnFailureEnabled": true,
+      "notes": "Actions 1 to 4 execute in synchronous hardware interlock; Action 5 (FileSave) pipelines in background DMA.",
+      "additionalInstruction": "If any synchronous action faults, execute its faultRecoveryPolicy and halt downstream reject diverters."
+    },
+    "actions": [
+      {
+        "actionId": "Act01CameraMove",
+        "actionSequence": 1,
+        "actionName": "CameraMove",
+        "targetSubsystem": "MultiAxisServoGantry",
+        "triggerMechanism": {
+          "interfaceType": "EtherCatServoDrive",
+          "axisIdentifier": "AxisGantryTiltZ",
+          "busAddress": "Node04",
+          "signalType": "TargetPositionProfilePacket"
+        },
+        "parameters": {
+          "kinematics": {
+            "referenceFrame": "ConveyorWorldOriginMm",
+            "currentPosition": {
+              "xMm": 150.0,
+              "yMm": 45.0,
+              "zHeightMm": 220.0,
+              "rollDeg": 0.0,
+              "pitchDeg": 0.0,
+              "yawDeg": 0.0
+            },
+            "targetPosition": {
+              "xMm": 150.0,
+              "yMm": 45.0,
+              "zHeightMm": 190.0,
+              "rollDeg": 0.0,
+              "pitchDeg": 30.0,
+              "yawDeg": 15.0
+            }
+          },
+          "motionDynamics": {
+            "velocityMmPerS": 120.0,
+            "accelerationMmPerS2": 600.0,
+            "maxJerkMmPerS3": 3000.0,
+            "settlingTimeMs": 35.0,
+            "inPositionToleranceMm": 0.02,
+            "inPositionAngleToleranceDeg": 0.05
+          }
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "RetractZAxisToSafeClearance",
+          "safeZRetractHeightMm": 260.0,
+          "errorCode": "E_CAMERA_MOVE_POSITION_FAULT"
+        },
+        "expectedOutcome": "CameraInTargetPosition",
+        "notes": "Mechanically repositions camera gantry to 190mm height and 30 degree oblique tilt above Device 2.",
+        "additionalInstruction": "Servo drive must assert InPositionWindow flag before signaling trigger readiness to optical lens driver."
+      },
+      {
+        "actionId": "Act02CameraPovChange",
+        "actionSequence": 2,
+        "actionName": "CameraPovChange",
+        "targetSubsystem": "MotorizedLensAndLiquidOptics",
+        "triggerMechanism": {
+          "interfaceType": "SerialI2cOpticsDriver",
+          "controllerId": "OpticsDriver01",
+          "signalType": "CurrentDriveCoilCommand",
+          "busAddress": "Port02"
+        },
+        "parameters": {
+          "opticsType": "LiquidLensFastTunableFocus",
+          "focalLengthMm": 25.0,
+          "nominalWorkingDistanceMm": 190.0,
+          "currentFocusDriveMa": 120,
+          "targetFocusDriveMa": 145,
+          "calculatedDepthOfFieldMm": 6.5,
+          "apertureFStop": 5.6,
+          "opticsSettlingTimeMs": 12.0
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "ResetCoilCurrentToZeroState",
+          "errorCode": "E_POV_FOCUS_DRIVER_OVERCURRENT"
+        },
+        "expectedOutcome": "OpticalFocalPlaneAdjusted",
+        "notes": "Shifts liquid lens optical POV current from 120mA to 145mA in 12ms to align focal plane on tilted device surface.",
+        "additionalInstruction": "Verify lens temperature compensation curve before applying target coil current."
+      },
+      {
+        "actionId": "Act03LightTrigger",
+        "actionSequence": 3,
+        "actionName": "LightTrigger",
+        "targetSubsystem": "HighSpeedOverdriveStrobeController",
+        "triggerMechanism": {
+          "interfaceType": "OptocoupledDifferentialLine",
+          "controllerId": "LightCtrl01",
+          "channelOutputPin": "OutStrobeLine2",
+          "signalType": "PulseWidthModulatedStrobe",
+          "triggerVoltageV": 24.0,
+          "triggerToPulseDelayUs": 5
+        },
+        "parameters": {
+          "mode": "OverdriveStrobeSync",
+          "overdriveMultiplier": 3.0,
+          "dutyCycleSafetyLimitPercent": 5.0,
+          "strobeDurationUs": 500,
+          "preTriggerLeadUs": 10,
+          "opticalSpectrum": {
+            "dominantWavelengthNm": 465,
+            "color": "RoyalBlue",
+            "polarizationMode": "CrossPolarized"
+          },
+          "channels": [
+            {
+              "channelId": 1,
+              "name": "CoaxialTopWhite",
+              "currentMa": 1800,
+              "intensityPercent": 75,
+              "pulseWidthUs": 500,
+              "isEnabled": true
+            },
+            {
+              "channelId": 2,
+              "name": "RingDarkfieldOblique",
+              "currentMa": 2400,
+              "intensityPercent": 85,
+              "pulseWidthUs": 500,
+              "isEnabled": true
+            },
+            {
+              "channelId": 3,
+              "name": "BacklightDiffuse",
+              "currentMa": 0,
+              "intensityPercent": 0,
+              "pulseWidthUs": 0,
+              "isEnabled": false
+            }
+          ]
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "TripThermalOverdriveCutoff",
+          "backupChannelId": 1,
+          "errorCode": "E_LIGHT_OVERDRIVE_OVERCURRENT"
+        },
+        "expectedOutcome": "OverdriveStrobeDelivered",
+        "notes": "Fires 500us cross-polarized Royal Blue strobe pulse at 2400mA across darkfield ring to reveal white box relief.",
+        "additionalInstruction": "Hardware thermal monitor must clamp maximum duty cycle to 5% to prevent LED junction degradation."
+      },
+      {
+        "actionId": "Act04ImageCapture",
+        "actionSequence": 4,
+        "actionName": "ImageCapture",
+        "targetSubsystem": "IndustrialGigECamera",
+        "triggerMechanism": {
+          "interfaceType": "DifferentialGpioLine",
+          "cameraId": "Cam01TopGige",
+          "triggerLine": "Line1InRisingEdge",
+          "signalType": "HardwareElectricalPulse",
+          "debounceUs": 2
+        },
+        "parameters": {
+          "opticalMetrology": {
+            "pixelSizeUm": {
+              "x": 3.45,
+              "y": 3.45
+            },
+            "spatialResolutionMmPerPx": 0.025,
+            "fieldOfViewMm": {
+              "width": 48.0,
+              "height": 27.0
+            },
+            "workingDistanceMm": 190.0
+          },
+          "sensorAcquisition": {
+            "exposureTimeUs": 600,
+            "gainDb": 4.5,
+            "analogGainMode": "LowNoiseHdr",
+            "blackLevelOffsetDn": 32,
+            "pixelFormat": "Mono8",
+            "gamma": 1.0,
+            "frameRateCeilingFps": 60.0
+          },
+          "roiBoundsPx": {
+            "offsetX": 350,
+            "offsetY": 180,
+            "width": 1280,
+            "height": 720
+          },
+          "chunkDataPacket": {
+            "isChunkDataEnabled": true,
+            "embeddedFields": [
+              "EncoderTick",
+              "TimestampUtc",
+              "FrameSequenceId",
+              "ExposureDurationUs"
+            ]
+          },
+          "memoryBufferDestination": "shm://vision_raw_ring_slot_02"
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "ResetFrameGrabberDmaAndRetryOnce",
+          "maxRetryCount": 1,
+          "errorCode": "E_CAMERA_FRAME_GRAB_TIMEOUT"
+        },
+        "expectedOutcome": "FrameAcquiredAndStreamedToRam",
+        "notes": "Captures 1280x720 ROI with global shutter 600us, streaming raw bytes into shared memory slot 02.",
+        "additionalInstruction": "Confirm frame packet CRC passes before dispatching image buffer pointer to inspection workers."
+      },
+      {
+        "actionId": "Act05FileSave",
+        "actionSequence": 5,
+        "actionName": "FileSave",
+        "targetSubsystem": "HighSpeedNvmeStorageSubsystem",
+        "triggerMechanism": {
+          "interfaceType": "WorkerIpcEventPipe",
+          "channelIdentifier": "PipeStorageWorker01",
+          "signalType": "MemoryPointerHandoffEvent"
+        },
+        "parameters": {
+          "sourceMemoryBuffer": "shm://vision_raw_ring_slot_02",
+          "targetFilePath": "D:/cat-data/inspections/lot_202609a/seq_18502_device_2_oblique.tiff",
+          "fileFormat": "TiffUncompressed",
+          "compressionMode": "None",
+          "metadataEmbedding": "ExifWithConveyorTicks",
+          "diskSyncPolicy": "WriteThroughFsync",
+          "maxDiskWriteBudgetMs": 15.0
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "SpoolToRamRingBufferAndFlagDiskAlert",
+          "errorCode": "E_STORAGE_WRITE_LATENCY_EXCEEDED"
+        },
+        "expectedOutcome": "ImageFileCommittedToDisk",
+        "notes": "Writes uncompressed 16-bit tagged TIFF with conveyor encoder stamps to NVMe storage for MES traceability.",
+        "additionalInstruction": "Execute save asynchronously to avoid blocking the main 40 parts/second inspection cycle."
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 50,
+      "notes": "Handler controller must reply with ActionAck packet detailing execution time of each step.",
+      "additionalInstruction": "Log communication timeout alert if Handler ACK is not acknowledged within 50ms of sequence termination."
+    }
+  }
+}

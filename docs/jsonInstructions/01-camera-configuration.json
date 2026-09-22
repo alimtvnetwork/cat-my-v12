@@ -1,0 +1,120 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "CameraConfiguration",
+    "payloadId": "Cmd20260921000901",
+    "correlationId": "Corr-20260921-DRI1000-0018501",
+    "timestamp": "2026-09-21T07:16:00.000Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "tracking": {
+      "sequenceId": 18501,
+      "stationId": "StationBeltMultiAngleInspection",
+      "batchId": "Lot202609A",
+      "encoderTick": 485100,
+      "carrierNestId": "NestRow04CarrierB",
+      "notes": "Reconfiguring camera sensor settings on DRI1000 for high-contrast white box inspection.",
+      "additionalInstruction": "Confirm GenICam node parameters are locked before conveyor triggers next row capture."
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "All safety interlocks clear for camera sensor online reconfiguration.",
+      "additionalInstruction": "Ensure optical enclosure is latched to prevent ambient light bleed into sensor."
+    },
+    "notes": "Instruction to update exposure, analog gain, ROI, and trigger modes for Cam01TopGige.",
+    "additionalInstruction": "Ensure sensor temperature is below 50C before applying high analog gain mode."
+  },
+  "data": {
+    "executionPolicy": {
+      "executionMode": "AtomicParameterUpdate",
+      "totalActions": 1,
+      "maxTimeoutMs": 100,
+      "isAbortOnFailureEnabled": true,
+      "notes": "Single-step atomic camera reconfiguration via GigE Vision GVCP control channel.",
+      "additionalInstruction": "If camera returns parameter write error, revert immediately to previous cached config."
+    },
+    "actions": [
+      {
+        "actionId": "Act01ReconfigureCamera",
+        "actionSequence": 1,
+        "actionName": "CameraReconfigure",
+        "targetSubsystem": "IndustrialGigECamera",
+        "triggerMechanism": {
+          "interfaceType": "GigEVisionControlProtocol",
+          "cameraId": "Cam01TopGige",
+          "ipAddress": "192.168.10.21",
+          "subnetMask": "255.255.255.0",
+          "genicamXmlVersion": "3.4.0"
+        },
+        "parameters": {
+          "cameraModel": "BaslerAcA1920",
+          "serialNumber": "24910842",
+          "sensorMode": "GlobalShutterCMOS",
+          "pixelFormat": "Mono8",
+          "acquisitionControls": {
+            "exposureTimeUs": 800,
+            "exposureAuto": "Off",
+            "gainDb": 4.5,
+            "gainAuto": "Off",
+            "analogGainMode": "LowNoiseHdr",
+            "blackLevelOffsetDn": 32,
+            "gamma": 1.0,
+            "frameRateCeilingFps": 60.0
+          },
+          "triggerControls": {
+            "triggerSelector": "FrameStart",
+            "triggerMode": "On",
+            "triggerSource": "Line1InRisingEdge",
+            "triggerActivation": "RisingEdge",
+            "triggerDelayUs": 25,
+            "triggerDebounceUs": 2
+          },
+          "roiBoundsPx": {
+            "offsetX": 0,
+            "offsetY": 0,
+            "width": 1920,
+            "height": 1080
+          },
+          "binning": {
+            "horizontal": 1,
+            "vertical": 1
+          },
+          "chunkDataPacket": {
+            "isChunkDataEnabled": true,
+            "embeddedFields": [
+              "EncoderTick",
+              "TimestampUtc",
+              "FrameSequenceId",
+              "ExposureDurationUs"
+            ]
+          },
+          "memoryBufferDestination": "shm://vision_raw_ring_slot_01"
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "RevertToFactoryDefaultAndLog",
+          "errorCode": "E_CAMERA_RECONFIG_FAILED",
+          "maxRetryCount": 2
+        },
+        "expectedOutcome": "CameraConfigAppliedAndReadyForTrigger",
+        "notes": "Applies 800us exposure, 4.5dB gain, and Line 1 opto hardware trigger for 1920x1080 frame acquisition.",
+        "additionalInstruction": "Validate camera internal PLL lock before clearing trigger enable flag."
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 50,
+      "notes": "Host camera manager must reply with status 200 within 50ms.",
+      "additionalInstruction": "Raise alert if camera fails to acknowledge parameter receipt."
+    }
+  }
+}
