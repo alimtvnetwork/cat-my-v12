@@ -19,6 +19,7 @@ WHITE_COLOR_RGBA: Final[tuple[int, int, int, int]] = (255, 255, 255, 255)
 BLACK_COLOR_RGBA: Final[tuple[int, int, int, int]] = (0, 0, 0, 255)
 
 
+
 @dataclass(frozen=True)
 class SearchRegion:
     x: int
@@ -75,7 +76,7 @@ def mark_white_boxes(
 ) -> MarkingResult:
     opts = options or MarkingOptions()
     rgba = _decode_rgba(width, height, rgba_base64)
-    gray = _to_continuous_gray(rgba) if opts.white_threshold is not None else _to_two_bit_gray(rgba)
+    gray = _to_two_bit_gray(rgba)
     boxes = _find_white_boxes(gray, width, height, opts)
     preview = _threshold_preview(gray, opts.white_threshold) if opts.white_threshold is not None else gray
     marked = bytearray(_gray_to_rgba(preview))
@@ -101,19 +102,11 @@ def _bad(message: str, details: dict[str, object]) -> None:
     raise AppError(ErrorCode.E_BE_BAD_REQUEST, message, details)
 
 
-def _to_continuous_gray(rgba: bytes) -> bytearray:
-    out = bytearray(len(rgba) // BYTES_PER_RGBA_PIXEL)
-    for idx in range(0, len(rgba), BYTES_PER_RGBA_PIXEL):
-        lum = int(round(0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2]))
-        out[idx // BYTES_PER_RGBA_PIXEL] = max(MIN_PIXEL_INTENSITY, min(MAX_PIXEL_INTENSITY, lum))
-    return out
-
-
 def _to_two_bit_gray(rgba: bytes) -> bytearray:
-    out = bytearray(len(rgba) // BYTES_PER_RGBA_PIXEL)
-    for idx in range(0, len(rgba), BYTES_PER_RGBA_PIXEL):
+    out = bytearray(len(rgba) // 4)
+    for idx in range(0, len(rgba), 4):
         lum = int(0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2])
-        out[idx // BYTES_PER_RGBA_PIXEL] = _quantize(lum)
+        out[idx // 4] = _quantize(lum)
     return out
 
 
@@ -158,6 +151,7 @@ def _threshold_preview(
 threshold_preview = _threshold_preview
 
 
+
 def _find_white_boxes(
     gray: bytearray,
     width: int,
@@ -177,86 +171,121 @@ def _find_white_boxes(
             value = gray[index]
             if value < threshold or seen[index] == 1:
                 continue
-            box = _flood_fill(gray, seen, width, height, x, y, threshold, region)
-            if box.area >= min_area:
-                boxes.append(box)
-    boxes.sort(key=lambda b: (b.y, b.x))
-    return [_renumber(idx + 1, box) for idx, box in enumerate(boxes)]
+            component = _walk_component(gray, seen, width, height, index, threshold, region)
+            if component.area >= min_area and _looks_like_marking(component, region):
+                boxes.append(_numbered_box(len(boxes) + 1, component))
+    boxes.sort(key=lambda box: (box.y, box.x))
+    return [_renumber(i + 1, box) for i, box in enumerate(boxes)]
+
+
+def _auto_threshold(gray: bytearray, width: int, region: SearchRegion) -> int:
+    counts = {0: 0, 85: 0, 170: 0, 255: 0}
+    for y in range(region.y, region.y + region.height):
+        start = y * width + region.x
+        end = start + region.width
+        for value in gray[start:end]:
+            counts[value] += 1
+    background = max(counts, key=lambda level: counts[level])
+    for level in (85, 170, 255):
+        if level > background and counts[level] > 0:
+            return level
+    return 256
+
+
+def _auto_min_area(region: SearchRegion) -> int:
+    return max(2, round(region.width * region.height * 0.00008))
+
+
+@dataclass(frozen=True)
+class _Component:
+    x0: int
+    y0: int
+    x1: int
+    y1: int
+    area: int
+
+
+def _looks_like_marking(component: _Component, region: SearchRegion) -> bool:
+    if component.x1 <= component.x0 or component.y1 <= component.y0:
+        return False
+    component_width = component.x1 - component.x0 + 1
+    component_height = component.y1 - component.y0 + 1
+    return component_width < region.width * 0.85 and component_height < region.height * 0.85
 
 
 def _clamp_region(width: int, height: int, region: SearchRegion | None) -> SearchRegion:
     if region is None:
-        return SearchRegion(0, 0, width, height)
+        return SearchRegion(x=0, y=0, width=width, height=height)
     x = max(0, min(width, region.x))
     y = max(0, min(height, region.y))
-    w = max(0, min(width - x, region.width))
-    h = max(0, min(height - y, region.height))
-    return SearchRegion(x, y, w, h)
+    x2 = max(0, min(width, region.x + region.width))
+    y2 = max(0, min(height, region.y + region.height))
+    return SearchRegion(x=x, y=y, width=max(0, x2 - x), height=max(0, y2 - y))
 
 
-def _auto_threshold(gray: bytearray, width: int, region: SearchRegion) -> int:
-    values: list[int] = []
-    for y in range(region.y, region.y + region.height):
-        row_start = y * width + region.x
-        values.extend(gray[row_start : row_start + region.width])
-    if not values:
-        return 170
-    values.sort()
-    p90_idx = int(len(values) * 0.9)
-    p90 = values[min(p90_idx, len(values) - 1)]
-    return max(128, min(250, p90))
-
-
-def _auto_min_area(region: SearchRegion) -> int:
-    region_area = region.width * region.height
-    return max(16, int(region_area * 0.0005))
-
-
-def _flood_fill(
+def _walk_component(
     gray: bytearray,
     seen: bytearray,
     width: int,
     height: int,
-    start_x: int,
-    start_y: int,
+    start: int,
     threshold: int,
     region: SearchRegion,
-) -> MarkedBox:
-    queue = [(start_x, start_y)]
-    seen[start_y * width + start_x] = 1
-    min_x, max_x = start_x, start_x
-    min_y, max_y = start_y, start_y
+) -> _Component:
+    stack = [start]
+    seen[start] = 1
+    x0 = x1 = start % width
+    y0 = y1 = start // width
     area = 0
-    rx2 = region.x + region.width
-    ry2 = region.y + region.height
-
-    while queue:
-        cx, cy = queue.pop()
+    while stack:
+        current = stack.pop()
         area += 1
-        if cx < min_x:
-            min_x = cx
-        if cx > max_x:
-            max_x = cx
-        if cy < min_y:
-            min_y = cy
-        if cy > max_y:
-            max_y = cy
+        x = current % width
+        y = current // width
+        x0, y0, x1, y1 = min(x0, x), min(y0, y), max(x1, x), max(y1, y)
+        _push_neighbors(gray, seen, stack, width, height, current, threshold, region)
+    return _Component(x0=x0, y0=y0, x1=x1, y1=y1, area=area)
 
-        for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
-            if nx < region.x or ny < region.y or nx >= rx2 or ny >= ry2:
+
+def _push_neighbors(
+    gray: bytearray,
+    seen: bytearray,
+    stack: list[int],
+    width: int,
+    height: int,
+    current: int,
+    threshold: int,
+    region: SearchRegion,
+) -> None:
+    x = current % width
+    y = current // width
+    for nx in range(x - 1, x + 2):
+        for ny in range(y - 1, y + 2):
+            if nx == x and ny == y:
                 continue
-            idx = ny * width + nx
-            if seen[idx] == 0 and gray[idx] >= threshold:
-                seen[idx] = 1
-                queue.append((nx, ny))
+            if (
+                nx < region.x
+                or ny < region.y
+                or nx >= region.x + region.width
+                or ny >= region.y + region.height
+                or nx >= width
+                or ny >= height
+            ):
+                continue
+            ni = ny * width + nx
+            if seen[ni] == 0 and gray[ni] >= threshold:
+                seen[ni] = 1
+                stack.append(ni)
 
+
+def _numbered_box(number: int, component: _Component) -> MarkedBox:
     return MarkedBox(
-        number=0,
-        x=min_x,
-        y=min_y,
-        width=max_x - min_x + 1,
-        height=max_y - min_y + 1,
-        area=area,
+        number=number,
+        x=component.x0,
+        y=component.y0,
+        width=component.x1 - component.x0 + 1,
+        height=component.y1 - component.y0 + 1,
+        area=component.area,
     )
 
 
@@ -330,3 +359,4 @@ def _set_pixel(
         return
     pos = (y * width + x) * BYTES_PER_RGBA_PIXEL
     rgba[pos : pos + BYTES_PER_RGBA_PIXEL] = bytes(color)
+
