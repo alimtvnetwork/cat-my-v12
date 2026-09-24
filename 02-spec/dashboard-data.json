@@ -3,7 +3,9 @@
   "Health": {
     "Score": 80,
     "Grade": "B",
-    "Deductions": ["32 broken links (-20)"]
+    "Deductions": [
+      "32 broken links (-20)"
+    ]
   },
   "Links": {
     "TotalChecked": 1642,
@@ -60,175 +62,175 @@
         "Resolved": "02-app-issues/25-powershell-cd-wrapper-not-loaded.md"
       },
       {
-        "Source": "14-update/01-self-update-overview.md",
+        "Source": "14-update/02-self-update-overview.md",
         "Line": 180,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/01-self-update-overview.md",
+        "Source": "14-update/02-self-update-overview.md",
         "Line": 181,
         "Text": "03-self-update-mechanism.md",
         "Target": "../03-general/03-self-update-mechanism.md",
         "Resolved": "03-general/03-self-update-mechanism.md"
       },
       {
-        "Source": "14-update/01-self-update-overview.md",
+        "Source": "14-update/02-self-update-overview.md",
         "Line": 182,
         "Text": "09-build-deploy.md",
         "Target": "../01-app/09-build-deploy.md",
         "Resolved": "01-app/09-build-deploy.md"
       },
       {
-        "Source": "14-update/02-deploy-path-resolution.md",
+        "Source": "14-update/03-deploy-path-resolution.md",
         "Line": 379,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/02-deploy-path-resolution.md",
+        "Source": "14-update/03-deploy-path-resolution.md",
         "Line": 380,
         "Text": "09-build-deploy.md",
         "Target": "../01-app/09-build-deploy.md",
         "Resolved": "01-app/09-build-deploy.md"
       },
       {
-        "Source": "14-update/03-rename-first-deploy.md",
+        "Source": "14-update/04-rename-first-deploy.md",
         "Line": 236,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/03-rename-first-deploy.md",
+        "Source": "14-update/04-rename-first-deploy.md",
         "Line": 237,
         "Text": "03-self-update-mechanism.md",
         "Target": "../03-general/03-self-update-mechanism.md",
         "Resolved": "03-general/03-self-update-mechanism.md"
       },
       {
-        "Source": "14-update/03-rename-first-deploy.md",
+        "Source": "14-update/04-rename-first-deploy.md",
         "Line": 238,
         "Text": "09-build-deploy.md",
         "Target": "../01-app/09-build-deploy.md",
         "Resolved": "01-app/09-build-deploy.md"
       },
       {
-        "Source": "14-update/04-build-scripts.md",
+        "Source": "14-update/05-build-scripts.md",
         "Line": 295,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/04-build-scripts.md",
+        "Source": "14-update/05-build-scripts.md",
         "Line": 296,
         "Text": "09-build-deploy.md",
         "Target": "../01-app/09-build-deploy.md",
         "Resolved": "01-app/09-build-deploy.md"
       },
       {
-        "Source": "14-update/05-handoff-mechanism.md",
+        "Source": "14-update/06-handoff-mechanism.md",
         "Line": 253,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/05-handoff-mechanism.md",
+        "Source": "14-update/06-handoff-mechanism.md",
         "Line": 254,
         "Text": "03-self-update-mechanism.md",
         "Target": "../03-general/03-self-update-mechanism.md",
         "Resolved": "03-general/03-self-update-mechanism.md"
       },
       {
-        "Source": "14-update/06-cleanup.md",
+        "Source": "14-update/07-cleanup.md",
         "Line": 181,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "14-update/06-cleanup.md",
+        "Source": "14-update/07-cleanup.md",
         "Line": 182,
         "Text": "03-self-update-mechanism.md",
         "Target": "../03-general/03-self-update-mechanism.md",
         "Resolved": "03-general/03-self-update-mechanism.md"
       },
       {
-        "Source": "14-update/07-console-safe-handoff.md",
+        "Source": "14-update/08-console-safe-handoff.md",
         "Line": 261,
         "Text": "../03-general/02f-self-update-orchestration.md",
         "Target": "../03-general/02f-self-update-orchestration.md",
         "Resolved": "03-general/02f-self-update-orchestration.md"
       },
       {
-        "Source": "14-update/07-console-safe-handoff.md",
+        "Source": "14-update/08-console-safe-handoff.md",
         "Line": 262,
         "Text": "../03-general/03-self-update-mechanism.md",
         "Target": "../03-general/03-self-update-mechanism.md",
         "Resolved": "03-general/03-self-update-mechanism.md"
       },
       {
-        "Source": "14-update/07-console-safe-handoff.md",
+        "Source": "14-update/08-console-safe-handoff.md",
         "Line": 263,
         "Text": "../02-app-issues/03-update-sync-lock-loop.md",
         "Target": "../02-app-issues/03-update-sync-lock-loop.md",
         "Resolved": "02-app-issues/03-update-sync-lock-loop.md"
       },
       {
-        "Source": "16-generic-release/02-release-pipeline.md",
+        "Source": "16-generic-release/05-release-pipeline.md",
         "Line": 218,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "16-generic-release/02-release-pipeline.md",
+        "Source": "16-generic-release/05-release-pipeline.md",
         "Line": 219,
-        "Text": "05-code-signing.md",
-        "Target": "../03-general/05-code-signing.md",
-        "Resolved": "03-general/05-code-signing.md"
+        "Text": "10-code-signing.md",
+        "Target": "../03-general/10-code-signing.md",
+        "Resolved": "03-general/10-code-signing.md"
       },
       {
-        "Source": "16-generic-release/02-release-pipeline.md",
+        "Source": "16-generic-release/05-release-pipeline.md",
         "Line": 220,
         "Text": "12-release-command.md",
         "Target": "../01-app/12-release-command.md",
         "Resolved": "01-app/12-release-command.md"
       },
       {
-        "Source": "16-generic-release/03-install-scripts.md",
+        "Source": "16-generic-release/04-install-scripts.md",
         "Line": 348,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "16-generic-release/06-release-metadata.md",
+        "Source": "16-generic-release/07-release-metadata.md",
         "Line": 174,
         "Text": "02-powershell-build-deploy.md",
         "Target": "../03-general/02-powershell-build-deploy.md",
         "Resolved": "03-general/02-powershell-build-deploy.md"
       },
       {
-        "Source": "16-generic-release/06-release-metadata.md",
+        "Source": "16-generic-release/07-release-metadata.md",
         "Line": 175,
         "Text": "13-release-data-model.md",
         "Target": "../01-app/13-release-data-model.md",
         "Resolved": "01-app/13-release-data-model.md"
       },
       {
-        "Source": "16-generic-release/07-known-issues-and-fixes.md",
+        "Source": "16-generic-release/08-known-issues-and-fixes.md",
         "Line": 341,
         "Text": "02-spec/02-app-issues/13-release-pipeline-dist-directory.md",
         "Target": "../02-app-issues/13-release-pipeline-dist-directory.md",
         "Resolved": "02-app-issues/13-release-pipeline-dist-directory.md"
       },
       {
-        "Source": "16-generic-release/07-known-issues-and-fixes.md",
+        "Source": "16-generic-release/08-known-issues-and-fixes.md",
         "Line": 342,
         "Text": "02-spec/14-update/09-winres-icon-constraint.md",
         "Target": "../14-update/09-winres-icon-constraint.md",
@@ -253,7 +255,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "99-consistency-report.md",
           "folder-structure-root.md",
           "health-dashboard.md",
@@ -269,18 +271,18 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
-          "01-folder-structure.md",
-          "02-naming-conventions.md",
-          "03-required-files.md",
-          "04-ai-onboarding-prompt.md",
-          "04-cli-module-template.md",
-          "05-app-project-template.md",
-          "06-non-cli-module-template.md",
-          "07-memory-folder-guide.md",
-          "08-cross-references.md",
-          "09-exceptions.md",
-          "10-mandatory-linter-infrastructure.md",
+          "01-index.md",
+          "02-folder-structure.md",
+          "03-naming-conventions.md",
+          "04-required-files.md",
+          "05-ai-onboarding-prompt.md",
+          "06-cli-module-template.md",
+          "07-app-project-template.md",
+          "08-non-cli-module-template.md",
+          "09-memory-folder-guide.md",
+          "10-cross-references.md",
+          "11-exceptions.md",
+          "12-mandatory-linter-infra03-structure.md",
           "97-acceptance-criteria.md",
           "98-changelog.md",
           "99-consistency-report.md"
@@ -295,11 +297,11 @@
         "HasChangelog": false,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "97-acceptance-criteria.md",
           "99-consistency-report.md",
-          "consolidated-review-guide-condensed.md",
-          "consolidated-review-guide.md"
+          "04-consolidated-review-guide-condensed.md",
+          "05-consolidated-review-guide.md"
         ]
       },
       {
@@ -311,7 +313,7 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-issues-and-fixes-log.md",
           "02-boolean-principles.md",
           "03-casting-elimination-patterns.md",
@@ -324,7 +326,7 @@
           "11-key-naming-pascalcase.md",
           "12-no-negatives.md",
           "13-strict-typing.md",
-          "14-test-naming-and-structure.md",
+          "14-test-naming-and-03-structure.md",
           "15-master-coding-guidelines.md",
           "16-lazy-evaluation-patterns.md",
           "17-regex-usage-guidelines.md",
@@ -353,7 +355,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-naming-prefixes.md",
           "02-guards-and-extraction.md",
           "03-parameters-and-conditions.md",
@@ -371,7 +373,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-braces-and-nesting.md",
           "02-conditions-and-extraction.md",
           "03-blank-lines-and-spacing.md",
@@ -391,7 +393,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-naming-and-database.md",
           "02-boolean-and-enum.md",
           "03-code-style-and-errors.md",
@@ -411,7 +413,7 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "02-go-golangci-lint.md",
           "03-php-phpcs-phpstan.md",
           "04-csharp-stylecop.md",
@@ -435,14 +437,14 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-connection-status-enum.md",
           "02-entity-status-enum.md",
           "03-execution-status-enum.md",
           "04-export-status-enum.md",
           "05-http-method-enum.md",
           "06-message-status-enum.md",
-          "07-type-safety-remediation-plan.md",
+          "07-type-safety-remediation-29-plan.md",
           "08-typescript-standards-reference.md",
           "09-promise-await-patterns.md",
           "10-log-level-enum.md",
@@ -462,7 +464,7 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "02-boolean-standards.md",
           "03-httpmethod-enum.md",
           "04-golang-standards-reference.md",
@@ -484,10 +486,10 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-enum-pattern.md",
           "02-required-methods.md",
-          "03-folder-structure.md",
+          "03-folder-03-structure.md",
           "04-validation-checklist.md",
           "05-info-object-pattern.md",
           "99-consistency-report.md"
@@ -502,7 +504,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-file-and-function-rules.md",
           "02-type-safety-and-errors.md",
           "03-database-and-structs.md",
@@ -521,7 +523,7 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-enums.md",
           "02-forbidden-patterns.md",
           "03-naming-conventions.md",
@@ -544,7 +546,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-naming-and-errors.md",
           "02-constants-and-deps.md",
           "03-initialization-and-booleans.md",
@@ -562,8 +564,8 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
-          "01-naming-conventions.md",
+          "01-index.md",
+          "02-naming-conventions.md",
           "02-error-handling.md",
           "03-async-patterns.md",
           "04-memory-safety.md",
@@ -583,7 +585,7 @@
         "HasChangelog": false,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-anti-hallucination-rules.md",
           "02-ai-quick-reference-checklist.md",
           "03-common-ai-mistakes.md",
@@ -602,7 +604,7 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-naming-and-conventions.md",
           "02-method-design.md",
           "03-error-handling.md",
@@ -621,7 +623,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-cross-language.md",
           "02-php-wordpress.md",
           "03-golang.md",
@@ -638,7 +640,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/10-research",
@@ -648,7 +652,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/11-security",
@@ -658,7 +664,10 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/11-security/01-axios-version-control",
@@ -669,7 +678,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-implementation-rules.md",
           "02-security-notes.md",
           "99-consistency-report.md"
@@ -683,7 +692,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/22-app-issues",
@@ -693,7 +704,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/23-app-db",
@@ -703,7 +716,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "02-coding-guidelines/24-app-ui-design-system",
@@ -713,7 +728,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "03-error-manage",
@@ -724,11 +741,11 @@
         "HasChangelog": true,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "97-acceptance-criteria.md",
           "98-changelog.md",
           "99-consistency-report.md",
-          "structure.md"
+          "03-structure.md"
         ]
       },
       {
@@ -741,7 +758,7 @@
         "HasAcceptance": false,
         "Files": [
           "00-error-documentation-guideline.md",
-          "00-overview.md",
+          "01-index.md",
           "01-cross-reference-diagram.md",
           "02-debugging-cheat-sheet.md",
           "99-consistency-report.md"
@@ -756,7 +773,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-health-endpoint-mismatch.md",
           "02-retry-debounce-dedup-fixes.md",
           "03-zip-finalization-before-return.md",
@@ -772,7 +789,11 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "01-frontend-backend-sync.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "01-frontend-backend-sync.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "03-error-manage/01-error-resolution/05-debugging-guides",
@@ -783,7 +804,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-debugging-php.md",
           "02-debugging-go.md",
           "03-debugging-typescript.md",
@@ -799,7 +820,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "2026-04-02-url-error-casing-fix.md",
           "99-consistency-report.md",
           "error-management-file-path-and-missing-file-code-red-rule.md"
@@ -814,7 +835,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-error-handling-reference.md",
           "02-go-delegation-fix.md",
           "03-notification-colors.md",
@@ -830,7 +851,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-copy-formats.md",
           "02-react-components.md",
           "03-error-modal-reference.md",
@@ -849,7 +870,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-compact-report.md",
           "02-full-report.md",
           "03-full-report-with-backend-logs.md",
@@ -871,7 +892,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-typescript-interfaces.md",
           "02-error-store.md",
           "03-api-types.md",
@@ -892,11 +913,11 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-data-model.md",
           "02-capture-pipeline.md",
           "03-envelope-parsing.md",
-          "04-modal-structure.md",
+          "04-modal-03-structure.md",
           "05-backend-tabs.md",
           "06-frontend-tabs.md",
           "07-request-chain.md",
@@ -918,7 +939,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-design-tokens.md",
           "02-backend-tab-colors.md",
           "03-frontend-and-ui-colors.md",
@@ -934,7 +955,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-adr.md",
           "02-changelog.md",
           "03-configurability.md",
@@ -950,7 +971,11 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "01-apperror-reference.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "01-apperror-reference.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "03-error-manage/02-error-architecture/06-apperror-package/01-apperror-reference",
@@ -961,7 +986,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-overview-and-stack.md",
           "02-apperror-struct.md",
           "03-result-types.md",
@@ -981,7 +1006,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-react-execution-logger.md",
           "02-session-based-logging.md",
           "99-consistency-report.md"
@@ -996,7 +1021,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-registry.md",
           "02-integration-guide.md",
           "03-collision-resolution-summary.md",
@@ -1013,7 +1038,10 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "03-error-manage/03-error-code-registry/08-linter-scripts",
@@ -1023,7 +1051,10 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "03-error-manage/03-error-code-registry/09-templates",
@@ -1033,7 +1064,11 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "01-error-codes-template.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "01-error-codes-template.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "04-database-conventions",
@@ -1044,14 +1079,14 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-naming-conventions.md",
-          "02-schema-design.md",
-          "03-orm-and-views.md",
-          "04-testing-strategy.md",
-          "05-relationship-diagrams.md",
-          "06-rest-api-format.md",
-          "07-split-db-pattern.md",
+          "01-index.md",
+          "02-naming-conventions.md",
+          "03-schema-design.md",
+          "04-orm-and-views.md",
+          "05-testing-strategy.md",
+          "06-relationship-diagrams.md",
+          "07-rest-api-format.md",
+          "08-split-db-pattern.md",
           "99-consistency-report.md"
         ]
       },
@@ -1064,8 +1099,8 @@
         "HasChangelog": false,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
-          "01-fundamentals.md",
+          "01-index.md",
+          "02-fundamentals.md",
           "97-acceptance-criteria.md",
           "97-changelog.md",
           "98-acceptance-criteria.md",
@@ -1081,7 +1116,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-cli-examples.md",
           "02-reset-api-standard.md",
           "03-database-flow-diagrams.md",
@@ -1098,7 +1133,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "06-seedable-config-architecture",
@@ -1109,8 +1146,8 @@
         "HasChangelog": false,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
-          "01-fundamentals.md",
+          "01-index.md",
+          "02-fundamentals.md",
           "97-acceptance-criteria.md",
           "97-changelog.md",
           "98-acceptance-criteria.md",
@@ -1126,7 +1163,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-rag-chunk-settings.md",
           "02-rag-validation-helpers.md",
           "03-rag-validation-tests.md",
@@ -1143,7 +1180,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "07-design-system",
@@ -1154,20 +1193,20 @@
         "HasChangelog": false,
         "HasAcceptance": true,
         "Files": [
-          "00-overview.md",
-          "01-design-principles.md",
-          "02-theme-variable-architecture.md",
-          "03-typography.md",
-          "04-spacing-layout.md",
-          "05-borders-shapes.md",
-          "06-motion-transitions.md",
-          "07-code-blocks.md",
-          "08-header-navigation.md",
-          "09-button-system.md",
-          "10-sidebar-system.md",
-          "11-section-patterns.md",
-          "12-page-creation-rules.md",
-          "13-wordpress-migration.md",
+          "01-index.md",
+          "02-design-principles.md",
+          "03-theme-variable-architecture.md",
+          "04-typography.md",
+          "05-spacing-layout.md",
+          "06-borders-shapes.md",
+          "08-motion-transitions.md",
+          "09-code-blocks.md",
+          "10-header-navigation.md",
+          "11-button-system.md",
+          "12-sidebar-system.md",
+          "13-section-patterns.md",
+          "14-page-creation-rules.md",
+          "15-wordpress-migration.md",
           "97-acceptance-criteria.md",
           "99-consistency-report.md"
         ]
@@ -1180,7 +1219,11 @@
         "HasConsistency": true,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md", "01-fundamentals.md", "99-consistency-report.md"]
+        "Files": [
+          "01-index.md",
+          "02-fundamentals.md",
+          "99-consistency-report.md"
+        ]
       },
       {
         "Folder": "08-docs-viewer-ui/02-features",
@@ -1191,7 +1234,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-typography.md",
           "02-syntax-highlighting.md",
           "03-fullscreen-mode.md",
@@ -1211,7 +1254,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["01-code-line-alignment.md"]
+        "Files": [
+          "01-code-line-alignment.md"
+        ]
       },
       {
         "Folder": "09-code-block-system",
@@ -1222,17 +1267,17 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-architecture.md",
-          "02-html-structure.md",
-          "03-syntax-highlighting.md",
-          "04-interactions.md",
-          "05-styling.md",
-          "06-constants-and-maps.md",
-          "07-clipboard.md",
-          "08-checklist-blocks.md",
-          "09-tree-structure-rendering.md",
-          "10-selection-bar.md",
+          "01-index.md",
+          "02-architecture.md",
+          "03-html-03-structure.md",
+          "04-syntax-highlighting.md",
+          "05-interactions.md",
+          "06-styling.md",
+          "07-constants-and-maps.md",
+          "08-clipboard.md",
+          "09-checklist-blocks.md",
+          "10-tree-structure-rendering.md",
+          "11-selection-bar.md",
           "99-consistency-report.md"
         ]
       },
@@ -1244,7 +1289,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "11-powershell-integration",
@@ -1255,18 +1302,18 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-configuration-schema.md",
-          "01-template-vs-project-differences.md",
-          "02-script-reference.md",
-          "03-integration-guide.md",
-          "04-error-codes.md",
-          "05-firewall-rules.md",
-          "06-php-known-issues.md",
-          "25-multi-site-deployment.md",
+          "01-index.md",
+          "02-configuration-schema.md",
+          "03-template-vs-project-differences.md",
+          "04-script-reference.md",
+          "05-integration-guide.md",
+          "06-error-codes.md",
+          "07-firewall-rules.md",
+          "08-php-known-issues.md",
+          "09-multi-site-deployment.md",
           "99-consistency-report.md",
           "changelog.md",
-          "parallel-work-sync-output.md",
+          "11-parallel-work-sync-output.md",
           "readme.md"
         ]
       },
@@ -1279,23 +1326,23 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-ci-pipeline.md",
-          "01-shared-conventions.md",
-          "02-github-release-standard.md",
-          "02-release-pipeline.md",
-          "03-vulnerability-scanning.md",
-          "04-install-script-generation.md",
-          "04-installation-flow.md",
-          "05-changelog-integration.md",
-          "05-code-signing.md",
-          "06-self-update-mechanism.md",
-          "06-version-and-help.md",
-          "07-environment-variable-setup.md",
-          "07-release-body-and-changelog.md",
-          "08-terminal-output-standards.md",
-          "09-binary-icon-branding.md",
-          "10-release-pipeline-issues-rca.md",
+          "01-index.md",
+          "02-ci-pipeline.md",
+          "03-shared-conventions.md",
+          "04-github-release-standard.md",
+          "05-release-pipeline.md",
+          "06-vulnerability-scanning.md",
+          "07-install-script-generation.md",
+          "08-installation-flow.md",
+          "09-changelog-integration.md",
+          "10-code-signing.md",
+          "11-self-update-mechanism.md",
+          "12-version-and-help.md",
+          "13-environment-variable-setup.md",
+          "14-release-body-and-changelog.md",
+          "15-terminal-output-standards.md",
+          "16-binary-icon-branding.md",
+          "17-release-pipeline-issues-rca.md",
           "99-consistency-report.md",
           "readme.md"
         ]
@@ -1309,9 +1356,9 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-ci-pipeline.md",
-          "02-release-pipeline.md",
+          "01-index.md",
+          "02-ci-pipeline.md",
+          "05-release-pipeline.md",
           "99-consistency-report.md"
         ]
       },
@@ -1324,9 +1371,9 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-ci-pipeline.md",
-          "02-release-pipeline.md",
+          "01-index.md",
+          "02-ci-pipeline.md",
+          "05-release-pipeline.md",
           "03-complete-workflow-reference.md",
           "99-consistency-report.md"
         ]
@@ -1340,8 +1387,8 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "02-project-structure.md",
+          "01-index.md",
+          "02-project-03-structure.md",
           "03-subcommand-architecture.md",
           "04-flag-parsing.md",
           "05-configuration.md",
@@ -1373,15 +1420,15 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-self-update-overview.md",
-          "02-deploy-path-resolution.md",
-          "03-rename-first-deploy.md",
-          "04-build-scripts.md",
-          "05-handoff-mechanism.md",
-          "06-cleanup.md",
-          "07-console-safe-handoff.md",
-          "08-repo-path-sync.md",
+          "01-index.md",
+          "02-self-update-overview.md",
+          "03-deploy-path-resolution.md",
+          "04-rename-first-deploy.md",
+          "05-build-scripts.md",
+          "06-handoff-mechanism.md",
+          "07-cleanup.md",
+          "08-console-safe-handoff.md",
+          "09-repo-path-sync.md",
           "99-consistency-report.md",
           "readme.md"
         ]
@@ -1395,13 +1442,13 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-self-update-overview.md",
-          "02-deploy-path-resolution.md",
-          "03-rename-first-deploy.md",
-          "04-build-scripts.md",
-          "05-handoff-mechanism.md",
-          "06-cleanup.md",
+          "01-index.md",
+          "02-self-update-overview.md",
+          "03-deploy-path-resolution.md",
+          "04-rename-first-deploy.md",
+          "05-build-scripts.md",
+          "06-handoff-mechanism.md",
+          "07-cleanup.md",
           "07-release-assets.md",
           "08-checksums-verification.md",
           "09-release-versioning.md",
@@ -1423,7 +1470,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "16-generic-release",
@@ -1434,14 +1483,14 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-cross-compilation.md",
-          "02-release-pipeline.md",
-          "03-install-scripts.md",
-          "04-checksums-verification.md",
-          "05-release-assets.md",
-          "06-release-metadata.md",
-          "07-known-issues-and-fixes.md",
+          "01-index.md",
+          "02-cross-compilation.md",
+          "05-release-pipeline.md",
+          "04-install-scripts.md",
+          "05-checksums-verification.md",
+          "06-release-assets.md",
+          "07-release-metadata.md",
+          "08-known-issues-and-fixes.md",
           "99-consistency-report.md"
         ]
       },
@@ -1454,30 +1503,30 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "01-spec-authoring.md",
-          "02-coding-guidelines.md",
-          "03-error-management.md",
-          "04-enum-standards.md",
-          "05-split-db-architecture.md",
-          "06-seedable-config.md",
-          "07-design-system.md",
-          "08-docs-viewer-ui.md",
-          "09-code-block-system.md",
-          "10-powershell-integration.md",
-          "11-research.md",
-          "12-root-research.md",
-          "13-app.md",
-          "14-app-issues.md",
-          "15-cicd-pipeline-workflows.md",
-          "16-app-design-system-and-ui.md",
-          "17-self-update-app-update.md",
-          "18-database-conventions.md",
-          "19-gap-analysis.md",
-          "20-wp-plugin-conventions.md",
-          "21-lovable-folder-structure.md",
-          "22-app-database.md",
-          "23-generic-cli.md",
+          "01-index.md",
+          "04-spec-authoring.md",
+          "05-coding-guidelines.md",
+          "06-error-management.md",
+          "07-enum-standards.md",
+          "08-split-db-architecture.md",
+          "09-seedable-config.md",
+          "10-design-system.md",
+          "11-docs-viewer-ui.md",
+          "12-code-block-system.md",
+          "13-powershell-integration.md",
+          "14-research.md",
+          "15-root-research.md",
+          "16-app.md",
+          "17-app-issues.md",
+          "18-cicd-pipeline-workflows.md",
+          "19-app-design-system-and-ui.md",
+          "20-self-update-app-update.md",
+          "21-database-conventions.md",
+          "22-gap-analysis.md",
+          "23-wp-plugin-conventions.md",
+          "24-lovable-folder-03-structure.md",
+          "25-app-database.md",
+          "26-generic-cli.md",
           "99-consistency-report.md"
         ]
       },
@@ -1490,28 +1539,28 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
-          "00-quick-start.md",
-          "01-foundation-and-architecture.md",
-          "03-traits-and-composition.md",
-          "04-logging-and-error-handling.md",
-          "05-helpers-responses-and-integration.md",
-          "06-input-validation-patterns.md",
-          "07-reference-implementations.md",
-          "08-wordpress-integration-patterns.md",
-          "09-testing-patterns.md",
-          "10-deployment-patterns.md",
-          "11-frontend-and-template-patterns.md",
-          "12-design-system.md",
-          "13-admin-ui-patterns.md",
-          "14-rest-api-conventions.md",
-          "15-settings-architecture.md",
-          "16-error-handling-extraction.md",
-          "17-data-file-patterns.md",
-          "18-frontend-javascript-patterns.md",
-          "19-micro-orm-and-root-db.md",
-          "20-end-to-end-walkthrough.md",
-          "21-ping-endpoint.md",
+          "01-index.md",
+          "02-quick-start.md",
+          "03-foundation-and-architecture.md",
+          "04-traits-and-composition.md",
+          "05-logging-and-error-handling.md",
+          "06-helpers-responses-and-integration.md",
+          "07-input-validation-patterns.md",
+          "08-reference-implementations.md",
+          "09-wordpress-integration-patterns.md",
+          "10-testing-patterns.md",
+          "11-deployment-patterns.md",
+          "12-frontend-and-template-patterns.md",
+          "13-design-system.md",
+          "14-admin-ui-patterns.md",
+          "15-rest-api-conventions.md",
+          "16-settings-architecture.md",
+          "17-error-handling-extraction.md",
+          "18-data-file-patterns.md",
+          "19-frontend-javascript-patterns.md",
+          "20-micro-orm-and-root-db.md",
+          "21-end-to-end-walkthrough.md",
+          "22-ping-endpoint.md",
           "99-consistency-report.md",
           "changelog.md",
           "readme.md"
@@ -1526,7 +1575,7 @@
         "HasChangelog": false,
         "HasAcceptance": false,
         "Files": [
-          "00-overview.md",
+          "01-index.md",
           "01-enum-architecture.md",
           "02-enum-metadata-pattern.md",
           "03-self-update-status-enum.md",
@@ -1542,7 +1591,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "22-app-issues",
@@ -1552,7 +1603,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "23-app-db",
@@ -1562,7 +1615,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       },
       {
         "Folder": "24-app-ui-design-system",
@@ -1572,7 +1627,9 @@
         "HasConsistency": false,
         "HasChangelog": false,
         "HasAcceptance": false,
-        "Files": ["00-overview.md"]
+        "Files": [
+          "01-index.md"
+        ]
       }
     ]
   }

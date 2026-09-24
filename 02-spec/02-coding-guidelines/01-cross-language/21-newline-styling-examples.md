@@ -1,16 +1,16 @@
 # Newline Styling Examples
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
-**Applies to:** All languages (Go examples)  
-**Source:** Consolidated from `01-pre-code-review-guides/03-golang-code-review-guides.md`  
-**Supplements:** [Code Style](./04-code-style/00-overview.md) rules R4, R5, R10, R12, R13
+**Version:** 3.2.0
+**Updated:** 2026-04-16
+**Applies to:** All languages (Go examples)
+**Source:** Consolidated from `01-pre-code-review-guides/03-golang-code-review-guides.md`
+**Supplements:** [Code Style](./04-code-style/01-index.md) rules R4, R5, R10, R12, R13
 
 ---
 
 ## 1. Purpose
 
-Detailed before/after examples for newline rules. These supplement the formal rules in [04-code-style.md](./04-code-style/00-overview.md).
+Detailed before/after examples for newline rules. These supplement the formal rules in [04-code-style.md](./04-code-style/01-index.md).
 
 ---
 
@@ -118,7 +118,6 @@ func Something() int {
 func Something() int {
     doSomething()
 
-
     return constants.One
 }
 ```
@@ -144,18 +143,18 @@ if guardB {
 
 Use `constants.NewLineUnix` (`"\n"`) in 90% of cases. Only use `constants.NewLine` (OS-specific) when the user explicitly needs OS-dependent newline handling.
 
-| Constant                | Value        | When to Use                                                     |
-| ----------------------- | ------------ | --------------------------------------------------------------- |
-| `constants.NewLineUnix` | `"\n"`       | Default — 90% of cases                                          |
-| `constants.NewLine`     | OS-dependent | Only when OS-specific newline is needed (e.g., IDE file saving) |
+| Constant | Value | When to Use |
+|----------|-------|-------------|
+| `constants.NewLineUnix` | `"\n"` | Default — 90% of cases |
+| `constants.NewLine` | OS-dependent | Only when OS-specific newline is needed (e.g., IDE file saving) |
 
 ---
 
 ## 8. Cross-References
 
-- [Code Style](./04-code-style/00-overview.md) — Formal rule definitions (R4, R5, R10, R12, R13)
-- [Master Coding Guidelines §5](./15-master-coding-guidelines/00-overview.md) — Formatting rules summary
+- [Code Style](./04-code-style/01-index.md) — Formal rule definitions (R4, R5, R10, R12, R13)
+- [Master Coding Guidelines §5](./15-master-coding-guidelines/01-index.md) — Formatting rules summary
 
 ---
 
-_Newline styling examples — consolidated from pre-code review guides._
+*Newline styling examples — consolidated from pre-code review guides.*

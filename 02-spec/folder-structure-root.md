@@ -6,9 +6,10 @@
 
 ## Single Source of Truth
 
-The complete folder structure specification — including numbering policy, required folders, rules, validation checklist, decision guide, and examples — is maintained in a **single canonical location**:
+The complete folder structure specification — including repository organization, `.ai-memory/` AI metadata layers, numbering policy, required folders, rules, and validation checklists — is maintained in:
 
-> **📄 [`01-spec-authoring-guide/01-folder-structure.md`](./01-spec-authoring-guide/01-folder-structure.md)**
+> **📄 [Canonical Folder Structure Specification](../.ai-memory/folder-structure.md)**
+> **📄 [`02-spec/01-spec-authoring-guide/02-folder-structure.md`](./01-spec-authoring-guide/02-folder-structure.md)** (Spec Hierarchy Guide)
 
 This file previously contained a full copy of the folder structure rules. To eliminate duplication and maintain a single source of truth, all content has been consolidated into the spec authoring guide.
 
@@ -16,10 +17,10 @@ This file previously contained a full copy of the folder structure rules. To eli
 
 ## Quick Reference
 
-| Range | Purpose                                                           |
-| ----- | ----------------------------------------------------------------- |
+| Range | Purpose |
+|-------|---------|
 | 01–20 | Core fundamentals (principles, standards, integrations, research) |
-| 21+   | App-specific content (features, workflows, issue analysis)        |
+| 21+ | App-specific content (features, workflows, issue analysis) |
 
 For the full specification, required folder list, AI instructions, and validation checklist, see the canonical source above.
 
@@ -27,7 +28,7 @@ For the full specification, required folder list, AI instructions, and validatio
 
 ```
 IMPORTANT — AI INSTRUCTION:
-- The canonical folder structure spec is 01-spec-authoring-guide/01-folder-structure.md
+- The canonical folder structure spec is 01-spec-authoring-guide/02-folder-structure.md
 - This file is a redirect — do NOT duplicate folder structure rules here.
 - Read the canonical source for all structural decisions.
 ```

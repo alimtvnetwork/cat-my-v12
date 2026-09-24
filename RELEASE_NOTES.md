@@ -1,3 +1,15 @@
+## v4.112.0 - 2026-09-19 - Implement release orchestrator automation and branch lifecycle
+
+Release v4.112.0: Implement release orchestrator automation and branch lifecycle.
+
+## v4.111.0 - 2026-09-19 - Minor release for Prettier formatting gate compliance and RCA documentation
+
+Minor release establishing canonical version authority in root `version.json`, adding 4-part RCA documentation (#44) for CI Prettier check compliance, and updating `.ai-memory/strictly-avoid.md`. Version bump: v4.110.0 -> v4.111.0.
+
+## v4.110.0 - 2026-09-19 - Resolve TS2322 in error capturing and document 4-part RCA #43
+
+Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` as the fallback in the ternary assignment. Formatted all touched files with Prettier to satisfy CI formatting gate. Documented 4-part Root Cause Analyses in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and `44-prettier-format-check-failed.md`, and updated `.ai-memory/strictly-avoid.md`. Version bump: v4.109.5 -> v4.110.0.
+
 ## v4.98.0 - 2026-07-21
 
 Plan 90 Step 89: saved-views bookmark list on `/observability/sessions`. New `src/lib/observability/savedViews.ts` (SSR-safe localStorage, cap 20, 64-char names, JSON-parse-hardened, quota-safe writes with `console.warn` breadcrumbs) + a saved-views UI strip with apply/delete chips and an inline "Save current" form. Snapshots the post-middleware search so views stay canonical; apply re-runs `validateSearch` so schema evolution auto-repairs old views. tsgo clean. Version bump: v4.97.0 -> v4.98.0.

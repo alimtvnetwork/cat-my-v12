@@ -1,9 +1,9 @@
 # Boolean Flag Method Splitting
 
-> **Parent:** [Cross-Language Overview](./00-overview.md)  
-> **Version:** 1.0.0  
-> **Updated:** 2026-04-02  
-> **AI Confidence:** Production-Ready  
+> **Parent:** [Cross-Language Overview](./01-index.md)
+> **Version:** 1.0.0
+> **Updated:** 2026-04-02
+> **AI Confidence:** Production-Ready
 > **Ambiguity:** None
 
 ## Keywords
@@ -66,19 +66,19 @@ func ProcessStandardOrder(order Order) error {
 ```typescript
 // ❌ BAD
 function formatUser(user: User, isDetailed: boolean): string {
-  if (isDetailed) {
-    return `${user.name} (${user.email}, ${user.role})`;
-  }
-  return user.name;
+    if (isDetailed) {
+        return `${user.name} (${user.email}, ${user.role})`;
+    }
+    return user.name;
 }
 
 // ✅ GOOD
 function formatUserSummary(user: User): string {
-  return user.name;
+    return user.name;
 }
 
 function formatUserDetailed(user: User): string {
-  return `${user.name} (${user.email}, ${user.role})`;
+    return `${user.name} (${user.email}, ${user.role})`;
 }
 ```
 
@@ -177,17 +177,17 @@ func finalizeOrder(order Order) error { /* ... */ }
 
 ## Exemptions
 
-| Case                          | Reason                                                                                                |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Options/config structs**    | Booleans inside an options struct are acceptable — caller sees named fields (`Config{Verbose: true}`) |
-| **Standard library wrappers** | Thin wrappers around stdlib that pass through bool params (e.g., `os.OpenFile` flags)                 |
-| **Toggle methods**            | Methods that flip state (`SetEnabled(bool)`) where the name already describes intent                  |
+| Case | Reason |
+|------|--------|
+| **Options/config structs** | Booleans inside an options struct are acceptable — caller sees named fields (`Config{Verbose: true}`) |
+| **Standard library wrappers** | Thin wrappers around stdlib that pass through bool params (e.g., `os.OpenFile` flags) |
+| **Toggle methods** | Methods that flip state (`SetEnabled(bool)`) where the name already describes intent |
 
 ---
 
 ## Cross-References
 
-- [Boolean Principles](./02-boolean-principles/00-overview.md) — P5: No boolean parameters
+- [Boolean Principles](./02-boolean-principles/01-index.md) — P5: No boolean parameters
 - [Function Naming](./10-function-naming.md) — naming conventions for split methods
 - [Cyclomatic Complexity](./06-cyclomatic-complexity.md) — flag splitting reduces branching
 - [SOLID Principles](./23-solid-principles.md) — Single Responsibility applied to methods

@@ -1,6 +1,6 @@
 # Slug Conventions
 
-**Version:** 3.2.0  
+**Version:** 3.2.0
 **Updated:** 2026-04-16
 
 ---
@@ -23,14 +23,14 @@ Slugs are URL-safe, human-readable identifiers used in URLs, API endpoints, data
 lowercase-words-separated-by-hyphens
 ```
 
-| Rule                     | Convention                                                  |
-| ------------------------ | ----------------------------------------------------------- |
-| Case                     | **Always lowercase**                                        |
-| Separator                | **Hyphens** (`-`) only — never underscores, spaces, or dots |
-| Characters               | `a-z`, `0-9`, `-` only                                      |
-| Leading/trailing hyphens | ❌ Forbidden                                                |
-| Consecutive hyphens      | ❌ Forbidden (`my--slug`)                                   |
-| Max length               | 80 characters recommended                                   |
+| Rule | Convention |
+|------|-----------|
+| Case | **Always lowercase** |
+| Separator | **Hyphens** (`-`) only — never underscores, spaces, or dots |
+| Characters | `a-z`, `0-9`, `-` only |
+| Leading/trailing hyphens | ❌ Forbidden |
+| Consecutive hyphens | ❌ Forbidden (`my--slug`) |
+| Max length | 80 characters recommended |
 
 ---
 
@@ -79,6 +79,7 @@ DELETE /api/v1/error-logs/2026-04-02-url-error
 ### Full REST API Design Sample
 
 ```yaml
+
 # OpenAPI-style paths — all slugs are lowercase kebab-case
 
 paths:
@@ -86,11 +87,11 @@ paths:
     get:
       summary: List all blog posts
       parameters:
-        - name: category-slug # ← query param slug
+        - name: category-slug        # ← query param slug
           in: query
           example: "tech-tutorials"
 
-  /api/v1/blog-posts/{post-slug}: # ← path param slug
+  /api/v1/blog-posts/{post-slug}:    # ← path param slug
     get:
       summary: Get a single blog post
       parameters:
@@ -168,11 +169,11 @@ func ToSlug(input string) string {
 
 ```typescript
 function toSlug(input: string): string {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-|-$/g, "");
+    return input
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/-{2,}/g, "-")
+        .replace(/^-|-$/g, "");
 }
 
 // toSlug("My Awesome Plugin!") → "my-awesome-plugin"
@@ -197,22 +198,22 @@ function to_slug(string $input): string {
 
 ## Where Slugs Are Used
 
-| Context                | Example                            |
-| ---------------------- | ---------------------------------- |
-| URL paths              | `/blog/my-first-post`              |
-| REST API resources     | `/api/v1/user-profiles/john-doe`   |
-| Database identifiers   | `slug = 'getting-started-with-go'` |
-| Plugin/theme slugs     | `my-awesome-plugin`                |
-| Error documentation    | `2026-04-02-url-error-casing-fix`  |
-| Config keys (URL-safe) | `smtp-email-settings`              |
-| File names (spec docs) | `08-cross-references.md`           |
+| Context | Example |
+|---------|---------|
+| URL paths | `/blog/my-first-post` |
+| REST API resources | `/api/v1/user-profiles/john-doe` |
+| Database identifiers | `slug = 'getting-started-with-go'` |
+| Plugin/theme slugs | `my-awesome-plugin` |
+| Error documentation | `2026-04-02-url-error-casing-fix` |
+| Config keys (URL-safe) | `smtp-email-settings` |
+| File names (spec docs) | `10-cross-references.md` |
 
 ---
 
 ## Cross-References
 
-| Reference               | Location                                                                   |
-| ----------------------- | -------------------------------------------------------------------------- |
-| Cross-Language Overview | [./00-overview.md](./00-overview.md)                                       |
-| Variable Naming         | [./22-variable-naming-conventions.md](./22-variable-naming-conventions.md) |
-| Key Naming PascalCase   | [./11-key-naming-pascalcase.md](./11-key-naming-pascalcase.md)             |
+| Reference | Location |
+|-----------|----------|
+| Cross-Language Overview | [./01-index.md](./01-index.md) |
+| Variable Naming | [./22-variable-naming-conventions.md](./22-variable-naming-conventions.md) |
+| Key Naming PascalCase | [./11-key-naming-pascalcase.md](./11-key-naming-pascalcase.md) |

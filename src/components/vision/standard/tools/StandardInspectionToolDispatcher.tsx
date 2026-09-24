@@ -20,7 +20,6 @@ import { StandardGreyscaleSimulationTool } from "./StandardGreyscaleSimulationTo
 import { StandardPin1ConfigTool } from "./StandardPin1ConfigTool";
 import { StandardDefectMatchingTool } from "./StandardDefectMatchingTool";
 
-
 export interface StandardInspectionToolDispatcherProps {
   toolType?: string;
   ruleName?: string;
@@ -174,6 +173,14 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("stain")
   ) {
     return <StandardDefectTool {...props} />;
+  }
+  if (
+    normalized.includes("greyscale pattern") ||
+    normalized.includes("grayscale pattern") ||
+    normalized.includes("2-bit") ||
+    normalized.includes("light pattern")
+  ) {
+    return <StandardGreyscalePatternMatchingTool {...props} />;
   }
   // 10. Grayscale Blob
   if (

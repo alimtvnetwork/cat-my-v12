@@ -95,7 +95,7 @@
     },
     "cleanPaths": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {"type": "string"},
       "default": ["node_modules", "dist", ".vite", ".pnp.cjs"],
       "description": "Paths to remove when using -Force flag. Supports wildcards.",
       "examples": [
@@ -138,16 +138,16 @@
     },
     "requiredModules": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {"type": "string"},
       "default": [],
       "description": "NPM modules that trigger reinstall if missing (catches new deps after git pull)",
       "examples": [["react", "lucide-react", "marked"]]
     },
     "env": {
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "additionalProperties": {"type": "string"},
       "description": "Environment variables to set before running commands",
-      "examples": [{ "NODE_ENV": "production", "GO_ENV": "development" }]
+      "examples": [{"NODE_ENV": "production", "GO_ENV": "development"}]
     },
     "wpPlugins": {
       "type": "object",

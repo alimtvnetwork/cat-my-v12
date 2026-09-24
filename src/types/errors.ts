@@ -8,6 +8,7 @@ export enum ErrorLevelType {
   Warn = "warn",
   Info = "info",
 }
+
 export type ErrorLevel = ErrorLevelType;
 
 export interface StackFrame {
@@ -237,8 +238,7 @@ export function buildCapturedError(
   if (err && typeof err === "object") {
     const o = err as Record<string, unknown>;
     base.message = typeof o.message === "string" ? o.message : safeStringify(err);
-
-    if (typeof o.code === "string") base.code = o.code;
+    base.code = typeof o.code === "string" ? o.code : base.code;
 
     return base;
   }

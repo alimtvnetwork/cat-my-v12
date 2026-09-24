@@ -23,16 +23,16 @@ success/failure across the entire batch.
 
 ## Design Rules
 
-| Rule                   | Detail                                                      |
-| ---------------------- | ----------------------------------------------------------- |
-| Arbitrary git commands | Any valid `git` subcommand and arguments are accepted       |
-| Two-tier repo lookup   | Database first, JSON file fallback                          |
-| Scope filtering        | `--all` for every repo, `--group` for a named subset        |
-| Per-repo isolation     | Each command runs in the repo's directory independently     |
-| Continue on failure    | A failed repo does not abort the batch                      |
-| Captured output        | stdout and stderr from each repo are captured and displayed |
-| Summary at end         | Final line reports succeeded, failed, and missing counts    |
-| Banner header          | Visual header showing the command and repo count            |
+| Rule | Detail |
+|------|--------|
+| Arbitrary git commands | Any valid `git` subcommand and arguments are accepted |
+| Two-tier repo lookup | Database first, JSON file fallback |
+| Scope filtering | `--all` for every repo, `--group` for a named subset |
+| Per-repo isolation | Each command runs in the repo's directory independently |
+| Continue on failure | A failed repo does not abort the batch |
+| Captured output | stdout and stderr from each repo are captured and displayed |
+| Summary at end | Final line reports succeeded, failed, and missing counts |
+| Banner header | Visual header showing the command and repo count |
 
 ---
 
@@ -42,15 +42,14 @@ success/failure across the entire batch.
 toolname exec [--all | --group <name>] <git-args...>
 ```
 
-| Flag      | Short | Default | Description                          |
-| --------- | ----- | ------- | ------------------------------------ |
-| `--all`   | —     | `false` | Run across all repos in the database |
-| `--group` | `-g`  | `""`    | Run across repos in a named group    |
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--all` | — | `false` | Run across all repos in the database |
+| `--group` | `-g` | `""` | Run across repos in a named group |
 
 Positional arguments after flags are passed directly to `git`.
 
 **Examples:**
-
 ```
 toolname exec status                    # All repos from JSON
 toolname exec --all fetch --prune       # All DB repos
@@ -95,11 +94,11 @@ func loadExecByScope(groupName string, all bool) []model.ScanRecord {
 }
 ```
 
-| Priority | Source           | When                                |
-| -------- | ---------------- | ----------------------------------- |
-| 1        | Database (group) | `--group` flag provided             |
-| 2        | Database (all)   | `--all` flag provided               |
-| 3        | JSON file        | Neither flag — use last scan output |
+| Priority | Source | When |
+|----------|--------|------|
+| 1 | Database (group) | `--group` flag provided |
+| 2 | Database (all) | `--all` flag provided |
+| 3 | JSON file | Neither flag — use last scan output |
 
 **Rules:**
 

@@ -22,7 +22,8 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 ## 4. Uncaught Type Errors
 
 - **NEVER** leave a file with `TS2322` or `TS2339` errors unaddressed before moving on, unless specifically instructed to park it.
-- **ALWAYS** run `npx tsc --noEmit` to verify type safety.
+- **NEVER** assign `undefined` to strictly typed non-nullable fields when replacing or flattening `if` statements (e.g., use `base.code = typeof o.code === "string" ? o.code : base.code`, NOT `: undefined`).
+- **ALWAYS** run `npx tsc --noEmit` or `bun x tsc --noEmit` to verify type safety.
 
 ## 5. Query Wrappers and Error Logging
 
@@ -32,9 +33,15 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 
 ## 6. Python uv Build Caching (Stale Code)
 
-- **NEVER** leave *.egg-info directories tracked in git or allow them to persist between uv run sessions when working on a local project.
-- **Root Cause**: The python backend e is defined as a project in BE/pyproject.toml. When uv run --project BE is executed, it builds a wheel using setuptools which leaves behind a BE/be.egg-info directory. If this directory persists (or is accidentally committed to git), subsequent runs of uv run will use the stale cached build instead of picking up new code changes, leading to baffling errors where bugs remain even after fixing the source file.
-- **ALWAYS** defensively delete BE/be.egg-info in launcher scripts (e.g. run.ps1 and run.sh) before invoking uv run to guarantee fresh code execution, and ensure *.egg-info is in .gitignore.
+- **NEVER** leave \*.egg-info directories tracked in git or allow them to persist between uv run sessions when working on a local project.
+- **Root Cause**: The python backend e is defined as a project in BE/pyproject.toml. When uv run --project BE is executed, it builds a wheel using setuptools which leaves behind a BE/be.egg-info directory. If this directory persists (or is accidentally committed to git), subsequent runs of uv run will use the stale cached build instead of picking up new code changes, leading to baffling errors where bugs remain even after fixing the source file.
+- **ALWAYS** defensively delete BE/be.egg-info in launcher scripts (e.g. run.ps1 and run.sh) before invoking uv run to guarantee fresh code execution, and ensure \*.egg-info is in .gitignore.
+
+## 7. Prettier Forward-Only Formatting Violations
+
+- **NEVER** push commits touching `.ts`, `.tsx`, `.js`, `.jsx`, `.json`, `.css`, or `.md` files without running Prettier.
+- **Root Cause**: GitHub Actions enforces `echo "${CHANGED}" | xargs bunx prettier --check` on all files modified between `BASE_SHA` and `HEAD`. Unformatted files will fail the CI gate with exit code 123.
+- **ALWAYS** run `bun x prettier --write <files>` and verify with `bun x prettier --check <files>` prior to committing.
 
 - Never skip cross-verifying the pending plans index with the actual file system in \.ai-memory/plans/pending/\. Do not assume all index entries exist on disk.
 - Never commit temporary scratchfiles (\ emp.txt\, \ emp2.txt\) from agent loops.

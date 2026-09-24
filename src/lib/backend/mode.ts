@@ -5,7 +5,7 @@ import { isValidBackendPrefix } from "./validate";
 
 import { BackendModeType } from "./BackendModeType";
 
-export const DEFAULT_BACKEND_URL = "http://localhost:8787";
+export const DEFAULT_BACKEND_URL = "http://localhost:8000";
 
 export interface BackendModeState {
   mode: BackendModeType;
@@ -31,22 +31,7 @@ export const useBackendMode = create<BackendModeState>()(
     }),
     {
       name: "app.backend.baseUrl",
-      version: 3,
-      migrate: (persistedState: unknown) => {
-        const state = (persistedState ?? {}) as Partial<BackendModeState>;
-        const oldUrl = state.baseUrl;
-
-        if (
-          !oldUrl ||
-          oldUrl === "http://localhost:8000" ||
-          oldUrl === "http://localhost:8080" ||
-          oldUrl === "http://127.0.0.1:8080"
-        ) {
-          return { ...state, baseUrl: DEFAULT_BACKEND_URL };
-        }
-
-        return state;
-      },
+      version: 1,
       partialize: (state) => ({ baseUrl: state.baseUrl, mode: state.mode }),
     },
   ),

@@ -1,6 +1,6 @@
 # PHP Standards — Changelog
 
-**Version:** 3.2.0  
+**Version:** 3.2.0
 **Last Updated:** 2026-04-16
 
 All notable changes to the PHP Standards specification are documented here.
@@ -29,4 +29,4 @@ Project-wide major version increment (+1.0.0) applied to all specification files
 
 ---
 
-_Keep this file updated when specs change._
+*Keep this file updated when specs change.*

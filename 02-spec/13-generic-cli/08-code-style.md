@@ -2,20 +2,20 @@
 
 > **Related specs:**
 >
-> - [02-project-structure.md](02-project-structure.md) — package layout these rules apply within
+> - [02-project-03-structure.md](./02-project-structure.md) — package layout these rules apply within
 > - [12-testing.md](12-testing.md) — test conventions that complement code style
 > - [15-constants-reference.md](15-constants-reference.md) — naming conventions for constants
 
 ## Mandatory Constraints
 
-| Constraint              | Rule                                                |
-| ----------------------- | --------------------------------------------------- |
-| `if` conditions         | Always positive — no `!`, no `!=`                   |
-| Function length         | 8–15 lines (excluding blanks and comments)          |
-| File length             | 100–200 lines max                                   |
-| Package granularity     | One responsibility per package                      |
+| Constraint | Rule |
+|------------|------|
+| `if` conditions | Always positive — no `!`, no `!=` |
+| Function length | 8–15 lines (excluding blanks and comments) |
+| File length | 100–200 lines max |
+| Package granularity | One responsibility per package |
 | Newline before `return` | Always, unless `return` is the only line in an `if` |
-| No magic strings        | All literals in `constants` package                 |
+| No magic strings | All literals in `constants` package |
 
 ## Conditionals — No Negation
 
@@ -59,11 +59,11 @@ if !fileMissing(path) {
 
 When a file exceeds 200 lines, split by responsibility:
 
-| Signal                       | Action                    |
-| ---------------------------- | ------------------------- |
+| Signal | Action |
+|--------|--------|
 | 2+ unrelated function groups | Split into separate files |
-| Large switch statement       | Each case → own file      |
-| Types mixed with logic       | Separate model from logic |
+| Large switch statement | Each case → own file |
+| Types mixed with logic | Separate model from logic |
 
 ## Return Formatting
 
@@ -104,14 +104,14 @@ if mode == "https" {
 
 ## Naming Conventions
 
-| Element              | Convention             | Example                      |
-| -------------------- | ---------------------- | ---------------------------- |
-| Package names        | Lowercase, single word | `scanner`, `formatter`       |
-| Exported functions   | PascalCase, verb-led   | `BuildRecords`, `WriteCSV`   |
-| Unexported functions | camelCase, verb-led    | `parseFlags`, `resolveDir`   |
-| Constants            | PascalCase             | `DefaultBranch`, `ModeHTTPS` |
-| Files                | Lowercase, single word | `terminal.go`, `csv.go`      |
-| Test files           | `*_test.go`            | `mapper_test.go`             |
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Package names | Lowercase, single word | `scanner`, `formatter` |
+| Exported functions | PascalCase, verb-led | `BuildRecords`, `WriteCSV` |
+| Unexported functions | camelCase, verb-led | `parseFlags`, `resolveDir` |
+| Constants | PascalCase | `DefaultBranch`, `ModeHTTPS` |
+| Files | Lowercase, single word | `terminal.go`, `csv.go` |
+| Test files | `*_test.go` | `mapper_test.go` |
 
 ## Contributors
 

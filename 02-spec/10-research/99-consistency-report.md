@@ -1,15 +1,15 @@
 # Consistency Report — Research
 
-**Version:** 1.0.0  
+**Version:** 1.0.0
 **Updated:** 2026-04-24
 
 ---
 
 ## File Inventory
 
-| #   | File             | Status     |
-| --- | ---------------- | ---------- |
-| 1   | `00-overview.md` | ✅ Present |
+| # | File | Status |
+|---|------|--------|
+| 1 | `01-index.md` | ✅ Present |
 
 **Total:** 1 file (excluding this report)
 
@@ -20,7 +20,7 @@
 - Folder is currently a single-overview placeholder. Acceptance criteria
   (planned `97-acceptance-criteria.md`) and at least one example research
   document (planned `01-example-research.md`) are not yet authored.
-- See `/mnt/documents/spec-patch-plan.md` § `02-spec/10-research/` for the full
+- See `/mnt/documents/spec-patch-29-plan.md` § `02-spec/10-research/` for the full
   remediation plan and example acceptance criteria.
 
 ---
@@ -43,10 +43,10 @@
 
 ## Validation History
 
-| Date       | Version | Action                                          |
-| ---------- | ------- | ----------------------------------------------- |
-| 2026-04-21 | 1.0.0   | Initial consistency report — inventory baseline |
+| Date | Version | Action |
+|------|---------|--------|
+| 2026-04-21 | 1.0.0 | Initial consistency report — inventory baseline |
 
 ---
 
-_Consistency Report — updated: 2026-04-21_
+*Consistency Report — updated: 2026-04-21*

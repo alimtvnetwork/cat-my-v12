@@ -1,18 +1,18 @@
 # Consistency Report — Go Binary Deploy
 
-**Version:** 3.2.0  
+**Version:** 3.2.0
 **Updated:** 2026-04-16
 
 ---
 
 ## File Inventory
 
-| #   | File                                | Status     |
-| --- | ----------------------------------- | ---------- |
-| 1   | `00-overview.md`                    | ✅ Present |
-| 2   | `01-ci-pipeline.md`                 | ✅ Present |
-| 3   | `02-release-pipeline.md`            | ✅ Present |
-| 4   | `03-complete-workflow-reference.md` | ✅ Present |
+| # | File | Status |
+|---|------|--------|
+| 1 | `01-index.md` | ✅ Present |
+| 2 | `02-ci-pipeline.md` | ✅ Present |
+| 3 | `05-release-pipeline.md` | ✅ Present |
+| 4 | `03-complete-workflow-reference.md` | ✅ Present |
 
 **Total:** 4 files (excluding this report)
 
@@ -34,11 +34,11 @@
 
 ## Validation History
 
-| Date       | Version | Action                                                    |
-| ---------- | ------- | --------------------------------------------------------- |
-| 2026-04-09 | 1.0.0   | Initial consistency report with 3 files                   |
-| 2026-04-13 | 2.0.0   | Added 03-complete-workflow-reference; fixed broken anchor |
+| Date | Version | Action |
+|------|---------|--------|
+| 2026-04-09 | 1.0.0 | Initial consistency report with 3 files |
+| 2026-04-13 | 2.0.0 | Added 03-complete-workflow-reference; fixed broken anchor |
 
 ---
 
-_Consistency Report — updated: 2026-04-13_
+*Consistency Report — updated: 2026-04-13*

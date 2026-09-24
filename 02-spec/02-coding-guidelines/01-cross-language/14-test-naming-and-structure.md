@@ -1,7 +1,7 @@
 # Cross-Language Rule: Test Naming & Structure
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-11  
+> **Version:** 1.0.0
+> **Updated:** 2026-03-11
 > **Applies to:** Go, TypeScript, PHP
 
 ---
@@ -16,11 +16,11 @@ This spec defines mandatory conventions for test file organization, test functio
 
 Test files must mirror the source file they test, with a language-appropriate test suffix.
 
-| Language   | Source File          | Test File                |
-| ---------- | -------------------- | ------------------------ |
-| Go         | `SiteManager.go`     | `SiteManager_test.go`    |
-| TypeScript | `UserProfile.tsx`    | `UserProfile.test.tsx`   |
-| PHP        | `FileOperations.php` | `FileOperationsTest.php` |
+| Language | Source File | Test File |
+|----------|------------|-----------|
+| Go | `SiteManager.go` | `SiteManager_test.go` |
+| TypeScript | `UserProfile.tsx` | `UserProfile.test.tsx` |
+| PHP | `FileOperations.php` | `FileOperationsTest.php` |
 
 ### Constraints
 
@@ -51,11 +51,11 @@ Every test function name must follow the pattern:
 Test{Unit}_{Scenario}_{ExpectedOutcome}
 ```
 
-| Segment             | Purpose                                       | Example            |
-| ------------------- | --------------------------------------------- | ------------------ |
-| `{Unit}`            | The function, method, or component under test | `CreateSession`    |
-| `{Scenario}`        | The condition or input variation              | `WithExpiredToken` |
-| `{ExpectedOutcome}` | What should happen                            | `ReturnsAuthError` |
+| Segment | Purpose | Example |
+|---------|---------|---------|
+| `{Unit}` | The function, method, or component under test | `CreateSession` |
+| `{Scenario}` | The condition or input variation | `WithExpiredToken` |
+| `{ExpectedOutcome}` | What should happen | `ReturnsAuthError` |
 
 ### Go
 
@@ -155,28 +155,28 @@ func TestValidateEmail(t *testing.T) {
 
 ```typescript
 // ✅ REQUIRED — table-driven with it.each or similar
-describe("validateEmail", () => {
-  const cases = [
-    {
-      name: "WithEmptyString_ReturnsError",
-      input: "",
-      isValid: false,
-    },
-    {
-      name: "WithNoAtSign_ReturnsError",
-      input: "invalid",
-      isValid: false,
-    },
-    {
-      name: "WithValidFormat_ReturnsTrue",
-      input: "user@example.com",
-      isValid: true,
-    },
-  ];
+describe('validateEmail', () => {
+    const cases = [
+        {
+            name: 'WithEmptyString_ReturnsError',
+            input: '',
+            isValid: false,
+        },
+        {
+            name: 'WithNoAtSign_ReturnsError',
+            input: 'invalid',
+            isValid: false,
+        },
+        {
+            name: 'WithValidFormat_ReturnsTrue',
+            input: 'user@example.com',
+            isValid: true,
+        },
+    ];
 
-  it.each(cases)("$name", ({ input, isValid }) => {
-    expect(validateEmail(input)).toBe(isValid);
-  });
+    it.each(cases)('$name', ({ input, isValid }) => {
+        expect(validateEmail(input)).toBe(isValid);
+    });
 });
 ```
 
@@ -192,11 +192,11 @@ describe("validateEmail", () => {
 
 ### Placement
 
-| Helper Scope                     | Location                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------- |
-| Used by one test file            | Bottom of the same `_test.go` / `.test.tsx` file                                |
+| Helper Scope | Location |
+|-------------|----------|
+| Used by one test file | Bottom of the same `_test.go` / `.test.tsx` file |
 | Used across files in one package | `testutil_test.go` (Go) / `__testutils__.ts` (TypeScript) in the same directory |
-| Used across packages             | `internal/testutil/` (Go) / `src/test-utils/` (TypeScript)                      |
+| Used across packages | `internal/testutil/` (Go) / `src/test-utils/` (TypeScript) |
 
 ### Naming
 
@@ -322,14 +322,14 @@ func TestDatabaseSync_WithLiveConnection_SyncsAllTables(t *testing.T) {
 ### TypeScript
 
 ```typescript
-describe.skipIf(process.env.CI !== "true")("DatabaseSync", () => {
-  it("WithLiveConnection_SyncsAllTables", async () => {
-    const db = await setupTestDatabase();
+describe.skipIf(process.env.CI !== 'true')('DatabaseSync', () => {
+    it('WithLiveConnection_SyncsAllTables', async () => {
+        const db = await setupTestDatabase();
 
-    const result = await syncAllTables(db);
+        const result = await syncAllTables(db);
 
-    expect(result.tablesProcessed).toBe(5);
-  });
+        expect(result.tablesProcessed).toBe(5);
+    });
 });
 ```
 
@@ -337,12 +337,12 @@ describe.skipIf(process.env.CI !== "true")("DatabaseSync", () => {
 
 ## Complexity Targets
 
-| Metric                         | Target                             |
-| ------------------------------ | ---------------------------------- |
-| Test function length           | ≤ 20 lines (excluding table cases) |
-| Table case fields              | ≤ 6                                |
-| Assertions per test            | ≤ 5 (split if more needed)         |
-| Cyclomatic complexity per test | 0–1 (no branching in tests)        |
+| Metric | Target |
+|--------|--------|
+| Test function length | ≤ 20 lines (excluding table cases) |
+| Table case fields | ≤ 6 |
+| Assertions per test | ≤ 5 (split if more needed) |
+| Cyclomatic complexity per test | 0–1 (no branching in tests) |
 
 ---
 
@@ -363,12 +363,12 @@ describe.skipIf(process.env.CI !== "true")("DatabaseSync", () => {
 
 ## Cross-References
 
-- [Code Style — Rule 6: 15-Line Limit](./04-code-style/00-overview.md) — Test functions have a relaxed 20-line limit
+- [Code Style — Rule 6: 15-Line Limit](./04-code-style/01-index.md) — Test functions have a relaxed 20-line limit
 - [Cyclomatic Complexity](./06-cyclomatic-complexity.md) — Tests must have 0–1 complexity
 - [Function Naming](./10-function-naming.md) — Test helpers follow the same no-boolean-flag rule
-- [Boolean Principles](./02-boolean-principles/00-overview.md) — Table case fields use `is`/`has` prefixes for boolean columns
-- [Master Coding Guidelines — §13](./15-master-coding-guidelines/00-overview.md) — Summary table in the master reference
+- [Boolean Principles](./02-boolean-principles/01-index.md) — Table case fields use `is`/`has` prefixes for boolean columns
+- [Master Coding Guidelines — §13](./15-master-coding-guidelines/01-index.md) — Summary table in the master reference
 
 ---
 
-_Test naming & structure specification v1.0.0 — 2026-03-11_
+*Test naming & structure specification v1.0.0 — 2026-03-11*

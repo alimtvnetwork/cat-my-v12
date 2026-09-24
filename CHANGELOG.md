@@ -1,3 +1,56 @@
+## v4.112.0 - 2026-09-19
+
+### Install Control Automation v4.112.0
+
+To pin your repository to this exact version, run the following one-liner:
+
+Unix/Bash:
+`curl -sL https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.112.0/install.sh | bash -s -- ".ai-memory/prompts" "v4.112.0"`
+
+PowerShell:
+`Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.112.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v4.112.0"`
+
+### Changed
+
+- Implement release orchestrator automation and branch lifecycle
+
+## v4.111.0 - 2026-09-19
+
+### Install Control Automation v4.111.0
+
+To pin your repository to this exact version, run the following one-liner:
+
+Unix/Bash:
+`curl -sL https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.111.0/install.sh | bash -s -- ".ai-memory/prompts" "v4.111.0"`
+
+PowerShell:
+`Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/cat-my-v12/v4.111.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v4.111.0"`
+
+### Added
+
+- Added root `version.json` manifest establishing canonical version authority and changelog configuration.
+- Added 4-part Root Cause Analysis (RCA) in `.ai-memory/issues/44-prettier-format-check-failed.md` and `.lovable/issues/44-prettier-format-check-failed.md`.
+
+### Changed
+
+- Bumped application minor version to `v4.111.0` across `package.json`, `version.json`, and `readme.md`.
+- Updated `.ai-memory/strictly-avoid.md` section 7 to mandate pre-commit Prettier runs across formattable files.
+
+### Fixed
+
+- Fixed CI formatting gate failure (exit code 123) by running Prettier formatting across all changed repository files.
+- Maintained zero typecheck regressions (`bun x tsc --noEmit` clean).
+
+## v4.110.0 - 2026-09-19
+
+### Fixed
+
+- Resolved `TS2322: Type 'string | undefined' is not assignable to type 'string'` in `src/types/errors.ts` by preserving `base.code` in ternary expression fallback instead of `undefined`.
+- Added 4-part Root Cause Analysis (RCA) in `.ai-memory/issues/43-typecheck-error-code-undefined.md` and `.lovable/issues/43-typecheck-error-code-undefined.md`.
+- Formatted all changed files with Prettier to satisfy CI forward-only formatting gate and documented RCA #44 in `.ai-memory/issues/44-prettier-format-check-failed.md`.
+- Updated `.ai-memory/strictly-avoid.md` to prevent assigning `undefined` to non-nullable properties during ternary refactoring and enforce pre-commit Prettier runs.
+- Updated `.gitignore` to exclude `.gitmap/pipeline/` execution artifacts.
+
 ## v4.98.0 - 2026-07-21
 
 Plan 90 Step 89: **saved-views bookmark list on `/observability/sessions`.** Root cause: Step 88 shipped one-shot copy-URL but there was no way to re-open a labeled view (e.g. "Failed worker runs") without re-typing filters or trusting a raw browser bookmark that silently rots when the search schema evolves. Fix: added `src/lib/observability/savedViews.ts` (SSR-safe localStorage wrapper under `hmi.observability.sessions.savedViews.v1`, cap 20 views, 64-char names, JSON-parse-hardened `safeRead` that returns `[]` on corrupt input with a `console.warn` breadcrumb, `safeWrite` that catches quota errors the same way) exposing `listSavedViews`, `addSavedView` (returns `{ok, reason}` for duplicate-name / empty / over-limit rejections), `removeSavedView`. Wired into `src/routes/observability.sessions.tsx`: lazy `useEffect` seed (avoids SSR mismatch), `handleSaveView` snapshots the currently-active search post-`stripSearchParams` so persisted views stay canonical, `handleApplyView` calls `navigate({ search: view.search as SearchState, replace: true })` so `validateSearch` + `fallback()` auto-repair views saved before a future schema change, and a new saved-views strip UI (bookmark chips with inline delete + right-aligned "Save current" form) surfaces success/failure via sonner with per-action context. Verified: `bunx tsgo --noEmit` clean. Version bump: v4.97.0 -> v4.98.0.

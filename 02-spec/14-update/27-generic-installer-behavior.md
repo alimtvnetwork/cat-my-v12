@@ -6,7 +6,7 @@
 > **Companion specs:**
 >
 > - `25-release-pinned-installer.md` (release-pinned variant details)
-> - `24-update-check-mechanism/01-fundamentals.md` (V → V+N parallel discovery)
+> - `24-update-check-mechanism/02-fundamentals.md` (V → V+N parallel discovery)
 > - `26-repo-major-version-migrator.md` (cross-major repo migration)
 
 ---
@@ -36,12 +36,12 @@ project.
 Any script whose primary purpose is to fetch + extract + install a
 release of a repository. Examples (names are illustrative, not required):
 
-| Family                | Typical names                                                                                                                                     |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Quick / generic       | `install.sh`, `install.ps1`, `quick-install.*`                                                                                                    |
-| Release-pinned        | `release-install.sh`, `release-install.ps1`                                                                                                       |
-| Feature/bundle        | `error-manage-install.*`, `linters-install.*`, `slides-install.*`, `wp-install.*`, `cli-install.*`, `splitdb-install.*`, `consolidated-install.*` |
-| Repo-specific helpers | anything else that downloads and installs                                                                                                         |
+| Family | Typical names |
+|--------|---------------|
+| Quick / generic | `install.sh`, `install.ps1`, `quick-install.*` |
+| Release-pinned | `release-install.sh`, `release-install.ps1` |
+| Feature/bundle  | `error-manage-install.*`, `linters-install.*`, `slides-install.*`, `wp-install.*`, `cli-install.*`, `splitdb-install.*`, `consolidated-install.*` |
+| Repo-specific helpers | anything else that downloads and installs |
 
 ### 1.2 Not in scope
 
@@ -54,14 +54,14 @@ release of a repository. Examples (names are illustrative, not required):
 
 ## 2. Terminology
 
-| Term                     | Meaning                                                                                                                                                   |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Strict version**       | A version explicitly supplied by the user via CLI flag (`--version`, `-Version`), env var, or baked-in placeholder in a release-asset copy of the script. |
-| **Implicit mode**        | No strict version supplied — installer may pick a source.                                                                                                 |
-| **Pinned mode**          | Strict version supplied — installer MUST install exactly that.                                                                                            |
-| **Main branch fallback** | Downloading the tip of the default branch (usually `main`) as a tarball/zipball.                                                                          |
-| **Versioned repo**       | A repo whose name encodes a major version, e.g. `repo-v15`, `repo-v16`.                                                                                   |
-| **V → V+N discovery**    | Probing the current repo and the next N versioned repos in parallel to find the highest existing one.                                                     |
+| Term | Meaning |
+|------|---------|
+| **Strict version** | A version explicitly supplied by the user via CLI flag (`--version`, `-Version`), env var, or baked-in placeholder in a release-asset copy of the script. |
+| **Implicit mode** | No strict version supplied — installer may pick a source. |
+| **Pinned mode** | Strict version supplied — installer MUST install exactly that. |
+| **Main branch fallback** | Downloading the tip of the default branch (usually `main`) as a tarball/zipball. |
+| **Versioned repo** | A repo whose name encodes a major version, e.g. `repo-v15`, `repo-v16`. |
+| **V → V+N discovery** | Probing the current repo and the next N versioned repos in parallel to find the highest existing one. |
 
 ---
 
@@ -151,11 +151,11 @@ At each step, log which source was tried and the outcome
 
 Implementations MUST offer the following flags to disable individual sources (exact names; no synonyms):
 
-| Flag (Bash / PowerShell)                 | Effect                                               |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `--no-discovery` / `-NoDiscovery`        | Skip §5.1 step 2 (V → V+N).                          |
-| `--no-main-fallback` / `-NoMainFallback` | Skip §5.1 step 3.                                    |
-| `--offline` / `-Offline`                 | Skip all network operations; use local archive only. |
+| Flag (Bash / PowerShell) | Effect |
+|--------------------------|--------|
+| `--no-discovery` / `-NoDiscovery` | Skip §5.1 step 2 (V → V+N). |
+| `--no-main-fallback` / `-NoMainFallback` | Skip §5.1 step 3. |
+| `--offline` / `-Offline` | Skip all network operations; use local archive only. |
 
 ---
 
@@ -179,7 +179,7 @@ installer proceeds to main-branch fallback.
 1. Parse current `{N}` from the repo name.
 2. Build candidate names for `{N+1}` through `{N+LOOKAHEAD}`.
    - **Default `LOOKAHEAD = 20`** (per user requirement; was 5 in the
-     older `24-update-check-mechanism/01-fundamentals.md`). New
+     older `24-update-check-mechanism/02-fundamentals.md`). New
      installers MUST adopt `LOOKAHEAD = 20`. Installers explicitly
      tagged `legacy` in their manifest MAY retain `LOOKAHEAD = 5`;
      all other implementations MUST use 20.
@@ -203,13 +203,13 @@ installer proceeds to main-branch fallback.
 
 ### 6.3 HTTP client requirements
 
-| Setting                  | Value                                 |
-| ------------------------ | ------------------------------------- |
-| Per-probe timeout        | 5 seconds                             |
-| Total discovery deadline | 10 seconds                            |
-| Retries                  | 0                                     |
-| User-Agent               | `<InstallerName>/<Version> Discovery` |
-| Proxy                    | Inherit `HTTP_PROXY` / `HTTPS_PROXY`  |
+| Setting | Value |
+|---------|-------|
+| Per-probe timeout | 5 seconds |
+| Total discovery deadline | 10 seconds |
+| Retries | 0 |
+| User-Agent | `<InstallerName>/<Version> Discovery` |
+| Proxy | Inherit `HTTP_PROXY` / `HTTPS_PROXY` |
 
 A timed-out discovery is NOT an error — it falls through to the next
 source in §5.1.
@@ -245,14 +245,14 @@ On failure, print the exit code and a one-line cause.
 
 ## 8. Exit Codes (Normative)
 
-| Code | Meaning                                                                                               |
-| ---- | ----------------------------------------------------------------------------------------------------- |
-| `0`  | Success                                                                                               |
-| `1`  | Generic failure (missing tool, unknown flag, network error in implicit mode after all sources failed) |
-| `2`  | Offline mode required a network operation                                                             |
-| `3`  | Pinned release / asset not found (PINNED MODE only)                                                   |
-| `4`  | Verification failed (checksum / required-paths check)                                                 |
-| `5`  | Inner installer / handoff rejected                                                                    |
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Generic failure (missing tool, unknown flag, network error in implicit mode after all sources failed) |
+| `2` | Offline mode required a network operation |
+| `3` | Pinned release / asset not found (PINNED MODE only) |
+| `4` | Verification failed (checksum / required-paths check) |
+| `5` | Inner installer / handoff rejected |
 
 Implementations MAY add codes ≥ `10` for repo-specific conditions but
 MUST NOT redefine `0–5`.
@@ -317,4 +317,4 @@ any repository.
 
 ---
 
-_Generic Installer Behavior — v1.0.0 — 2026-04-22_
+*Generic Installer Behavior — v1.0.0 — 2026-04-22*

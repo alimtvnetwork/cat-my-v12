@@ -30,7 +30,10 @@
   "runCommand": "go run cmd/server/main.go",
   "configFile": "config.json",
   "configExampleFile": "config.example.json",
-  "requiredModules": ["react", "react-dom"],
+  "requiredModules": [
+    "react",
+    "react-dom"
+  ],
   "env": {
     "NODE_ENV": "production"
   },

@@ -1,7 +1,7 @@
 # Cross-Language Database Naming Convention — PascalCase
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-09  
+> **Version:** 1.0.0
+> **Updated:** 2026-03-09
 > **Applies to:** PHP (SQLite), Go (SQLite), TypeScript (frontend references)
 
 ---
@@ -16,15 +16,15 @@ All **custom** database table names and column names MUST use **PascalCase** acr
 
 ## Scope
 
-| Category                     | Convention                   | Example                                                    |
-| ---------------------------- | ---------------------------- | ---------------------------------------------------------- |
-| Custom SQLite table names    | PascalCase                   | `Transactions`, `AgentSites`, `SnapshotProgress`           |
-| Custom SQLite column names   | PascalCase                   | `PluginSlug`, `CreatedAt`, `AgentSiteId`                   |
-| Custom SQLite index names    | PascalCase with `Idx` prefix | `IdxTransactions_CreatedAt`                                |
-| WordPress core tables        | snake_case (exempt)          | `wp_posts`, `wp_options`                                   |
-| WordPress core columns       | snake_case (exempt)          | `post_title`, `option_value`                               |
-| Go struct JSON tags          | Omit redundant tags          | No explicit tag needed — Go marshals PascalCase by default |
-| PHP enum-backed table values | PascalCase                   | `TableType::AgentSites = 'AgentSites'`                     |
+| Category | Convention | Example |
+|----------|-----------|---------|
+| Custom SQLite table names | PascalCase | `Transactions`, `AgentSites`, `SnapshotProgress` |
+| Custom SQLite column names | PascalCase | `PluginSlug`, `CreatedAt`, `AgentSiteId` |
+| Custom SQLite index names | PascalCase with `Idx` prefix | `IdxTransactions_CreatedAt` |
+| WordPress core tables | snake_case (exempt) | `wp_posts`, `wp_options` |
+| WordPress core columns | snake_case (exempt) | `post_title`, `option_value` |
+| Go struct JSON tags | Omit redundant tags | No explicit tag needed — Go marshals PascalCase by default |
+| PHP enum-backed table values | PascalCase | `TableType::AgentSites = 'AgentSites'` |
 
 ---
 
@@ -83,14 +83,14 @@ CREATE INDEX IdxTransactions_CreatedAt ON Transaction(CreatedAt);
 Abbreviations are NOT fully capitalized — only the first letter is uppercase:
 
 | ❌ Wrong | ✅ Correct |
-| -------- | ---------- |
-| `ID`     | `Id`       |
-| `URL`    | `Url`      |
-| `MD5`    | `Md5`      |
-| `JSON`   | `Json`     |
-| `SQL`    | `Sql`      |
-| `IP`     | `Ip`       |
-| `API`    | `Api`      |
+|----------|-----------|
+| `ID` | `Id` |
+| `URL` | `Url` |
+| `MD5` | `Md5` |
+| `JSON` | `Json` |
+| `SQL` | `Sql` |
+| `IP` | `Ip` |
+| `API` | `Api` |
 
 ### Rule 5: WordPress Core — Exempt
 
@@ -205,11 +205,11 @@ TypeScript types referencing database columns must use PascalCase to match the A
 
 ```typescript
 interface Transaction {
-  Id: number;
-  PluginSlug: string;
-  CreatedAt: string;
-  Status: string;
-  AgentSiteId: number | null;
+    Id: number;
+    PluginSlug: string;
+    CreatedAt: string;
+    Status: string;
+    AgentSiteId: number | null;
 }
 ```
 
@@ -219,13 +219,13 @@ interface Transaction {
 
 A 5-phase migration plan converts all existing snake_case tables and columns to PascalCase:
 
-| Phase   | Scope             | Description                                             |
-| ------- | ----------------- | ------------------------------------------------------- |
-| Phase 1 | Specs & Standards | This document + memory updates + coding guidelines      |
-| Phase 2 | Go Backend        | SplitDB (3 tables) + E2E Service (4 tables)             |
-| Phase 3 | PHP Plugin        | 12 tables via migration v13 + `TableType` enum update   |
-| Phase 4 | PHP Root DB       | 5 per-snapshot tables + backward compatibility layer    |
-| Phase 5 | Validation        | Full grep sweep + test suite + snapshot round-trip test |
+| Phase | Scope | Description |
+|-------|-------|-------------|
+| Phase 1 | Specs & Standards | This document + memory updates + coding guidelines |
+| Phase 2 | Go Backend | SplitDB (3 tables) + E2E Service (4 tables) |
+| Phase 3 | PHP Plugin | 12 tables via migration v13 + `TableType` enum update |
+| Phase 4 | PHP Root DB | 5 per-snapshot tables + backward compatibility layer |
+| Phase 5 | Validation | Full grep sweep + test suite + snapshot round-trip test |
 
 ### Safety Rules
 
@@ -305,8 +305,8 @@ type Project struct {
 
 ## Cross-Reference
 
-- [Cross-Language Code Style](./04-code-style/00-overview.md) — Formatting rules
-- [PHP Naming Conventions](../04-php/00-overview.md) — PHP-specific naming
-- [Go Coding Standards](../03-golang/04-golang-standards-reference/00-overview.md) — Go-specific naming
-- [Master Coding Guidelines](./15-master-coding-guidelines/00-overview.md) — Consolidated cross-language reference
-- [Issues & Fixes Log](./01-issues-and-fixes-log.md) — Full historical fixes
+- [Cross-Language Code Style](./04-code-style/01-index.md) — Formatting rules
+- [PHP Naming Conventions](../04-php/01-index.md) — PHP-specific naming
+- [Go Coding Standards](../03-golang/04-golang-standards-reference/01-index.md) — Go-specific naming
+- [Master Coding Guidelines](./15-master-coding-guidelines/01-index.md) — Consolidated cross-language reference
+- [Issues & Fixes Log](./02-issues-and-fixes-log.md) — Full historical fixes

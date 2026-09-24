@@ -1,7 +1,7 @@
 # SOLID Principles Reference
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-31  
+> **Version:** 1.0.0
+> **Updated:** 2026-03-31
 > **Applies to:** All languages
 
 ---
@@ -133,20 +133,20 @@ type PluginNotifier interface {
 ```typescript
 // ❌ FORBIDDEN: Component accepts unused props
 interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  onHover: () => void; // Most consumers don't need this
-  analytics: AnalyticsConfig; // Only used in 1 place
+    label: string;
+    onClick: () => void;
+    onHover: () => void;     // Most consumers don't need this
+    analytics: AnalyticsConfig; // Only used in 1 place
 }
 
 // ✅ REQUIRED: Core props only, extend when needed
 interface ButtonProps {
-  label: string;
-  onClick: () => void;
+    label: string;
+    onClick: () => void;
 }
 
 interface AnalyticsButtonProps extends ButtonProps {
-  analytics: AnalyticsConfig;
+    analytics: AnalyticsConfig;
 }
 ```
 
@@ -175,12 +175,12 @@ type PluginService struct {
 ```typescript
 // ❌ FORBIDDEN: Hook hardcoded to fetch
 const usePlugins = () => {
-  return fetch("/api/plugins").then((r) => r.json());
+    return fetch('/api/plugins').then(r => r.json());
 };
 
 // ✅ REQUIRED: Injectable data source
 const usePlugins = (fetcher: () => Promise<Plugin[]>) => {
-  return useQuery({ queryKey: ["plugins"], queryFn: fetcher });
+    return useQuery({ queryKey: ['plugins'], queryFn: fetcher });
 };
 ```
 
@@ -201,11 +201,11 @@ const usePlugins = (fetcher: () => Promise<Plugin[]>) => {
 ## Cross-References
 
 - [Function Naming](./10-function-naming.md) — Verb-led, single-purpose naming
-- [Code Style §R6](./04-code-style/00-overview.md) — Max 15 lines per function (SRP at function level)
-- [Code Style §R17](./04-code-style/00-overview.md) — Max 120 lines per struct/class (SRP at type level)
+- [Code Style §R6](./04-code-style/01-index.md) — Max 15 lines per function (SRP at function level)
+- [Code Style §R17](./04-code-style/01-index.md) — Max 120 lines per struct/class (SRP at type level)
 - [DRY Principles](./08-dry-principles.md) — Avoid duplication (supports OCP)
 - [Strict Typing](./13-strict-typing.md) — Type safety supports LSP
 
 ---
 
-_SOLID principles reference v1.0.0 — 2026-03-31_
+*SOLID principles reference v1.0.0 — 2026-03-31*

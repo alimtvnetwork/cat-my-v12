@@ -8,20 +8,20 @@
 
 ## Exit Codes
 
-| Code     | Meaning                                            |
-| -------- | -------------------------------------------------- |
-| 0        | Success                                            |
-| 1        | User error (bad args, missing file, invalid input) |
-| Non-zero | Propagated from child processes                    |
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | User error (bad args, missing file, invalid input) |
+| Non-zero | Propagated from child processes |
 
 ## Error Message Rules
 
-| Rule                                    | Detail                                         |
-| --------------------------------------- | ---------------------------------------------- |
-| All error format strings in `constants` | `ErrSourceRequired`, `ErrConfigLoad`, etc.     |
-| Errors print to stderr                  | Never stdout                                   |
-| Exit immediately after error            | Don't continue with bad state                  |
-| Messages are actionable                 | Tell the user what to do, not just what failed |
+| Rule | Detail |
+|------|--------|
+| All error format strings in `constants` | `ErrSourceRequired`, `ErrConfigLoad`, etc. |
+| Errors print to stderr | Never stdout |
+| Exit immediately after error | Don't continue with bad state |
+| Messages are actionable | Tell the user what to do, not just what failed |
 
 ### Example
 

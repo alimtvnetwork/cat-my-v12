@@ -145,7 +145,6 @@ describe("StandardToolGrid Component", () => {
     expect(tool?.displayCode).toBe("T116");
     expect(tool?.targetRoute).toBe("/setup/white-boxes");
   });
-
   it("includes Greyscle simulation in Presence / Absence", () => {
     const tools = getToolsForCategory(CatalogCategoryIdType.PresenceAbsence);
     const tool = tools.find((item) => item.id === "tool-greyscale-simulation");

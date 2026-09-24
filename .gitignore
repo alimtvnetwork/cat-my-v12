@@ -31,6 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 .gitmap/release-assets
+.gitmap/pipeline/
 release-assets
 
 # Launcher logs

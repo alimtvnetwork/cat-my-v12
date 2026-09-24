@@ -1,7 +1,7 @@
 # Go String & Slice Internals
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
+**Version:** 3.2.0
+**Updated:** 2026-04-16
 **Source:** Consolidated from `01-pre-code-review-guides/03-golang-code-review-guides.md`
 
 ---
@@ -68,4 +68,4 @@ type SliceHeader struct {
 
 ---
 
-_Go string & slice internals — consolidated from pre-code review guides._
+*Go string & slice internals — consolidated from pre-code review guides.*

@@ -1,9 +1,9 @@
 # Go Utility Packages: `pathutil` and `fileutil`
 
-> **Version:** 1.0.0  
-> **Updated:** 2026-03-31  
-> **Applies to:** All Go backend code  
-> **Cross-refs:** [no-negatives](../01-cross-language/12-no-negatives.md), [golang-standards-reference](./04-golang-standards-reference/00-overview.md), [error-code-registry](../../03-error-manage/03-error-code-registry/01-registry.md#gen-700-file-system)
+> **Version:** 1.0.0
+> **Updated:** 2026-03-31
+> **Applies to:** All Go backend code
+> **Cross-refs:** [no-negatives](../01-cross-language/12-no-negatives.md), [golang-standards-reference](./04-golang-standards-reference/01-index.md), [error-code-registry](../../03-error-manage/03-error-code-registry/02-registry.md#gen-700-file-system)
 
 ---
 
@@ -11,10 +11,10 @@
 
 Two utility packages eliminate raw `os`/`io` calls from application code:
 
-| Package    | Role                                                        | Returns                                        |
-| ---------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| `pathutil` | Boolean guard functions for file/directory existence checks | `bool` — positive-named, no `!` needed         |
-| `fileutil` | File I/O wrappers that return `apperror.Result[T]`          | `apperror.Result[T]` — no raw `error` escaping |
+| Package | Role | Returns |
+|---------|------|---------|
+| `pathutil` | Boolean guard functions for file/directory existence checks | `bool` — positive-named, no `!` needed |
+| `fileutil` | File I/O wrappers that return `apperror.Result[T]` | `apperror.Result[T]` — no raw `error` escaping |
 
 **Rule:** Application code MUST NOT call `os.Open`, `os.Stat`, `os.ReadFile`, `os.WriteFile`, `os.MkdirAll`, or `os.Remove` directly. Use the corresponding `pathutil` or `fileutil` wrapper.
 
@@ -89,11 +89,11 @@ if !isValid {
 
 ### Naming Convention
 
-| Pattern       | Positive         | Negative         |
-| ------------- | ---------------- | ---------------- |
-| File exists   | `IsFileExists`   | `IsFileMissing`  |
-| Dir exists    | `IsDir`          | `IsDirMissing`   |
-| Dir writable  | `IsDirWritable`  | `IsDirReadonly`  |
+| Pattern | Positive | Negative |
+|---------|----------|----------|
+| File exists | `IsFileExists` | `IsFileMissing` |
+| Dir exists | `IsDir` | `IsDirMissing` |
+| Dir writable | `IsDirWritable` | `IsDirReadonly` |
 | Path absolute | `IsPathAbsolute` | `IsPathRelative` |
 
 **Rule:** Every `Is<Thing>` MUST have its negation counterpart so callers never write `!pathutil.Is<Thing>()`.
@@ -129,16 +129,16 @@ func FileSize(path string) apperror.Result[int64]        // Stat + Size()
 
 ### Error Code Mapping
 
-All error codes are from the [GEN-700: File System](../../03-error-manage/03-error-code-registry/01-registry.md#gen-700-file-system) range:
+All error codes are from the [GEN-700: File System](../../03-error-manage/03-error-code-registry/02-registry.md#gen-700-file-system) range:
 
-| Function    | Success       | Error Code | Error Constant       |
-| ----------- | ------------- | ---------- | -------------------- |
-| `Open`      | `*os.File`    | GEN-700-01 | `ErrFileNotFound`    |
-| `ReadAll`   | `[]byte`      | GEN-700-02 | `ErrFileReadFailed`  |
-| `WriteFile` | `true`        | GEN-700-03 | `ErrFileWriteFailed` |
-| `MkdirAll`  | `true`        | GEN-700-04 | `ErrDirCreateFailed` |
-| `Stat`      | `os.FileInfo` | GEN-700-01 | `ErrFileNotFound`    |
-| `EnsureDir` | `true`        | GEN-700-04 | `ErrDirCreateFailed` |
+| Function | Success | Error Code | Error Constant |
+|----------|---------|------------|----------------|
+| `Open` | `*os.File` | GEN-700-01 | `ErrFileNotFound` |
+| `ReadAll` | `[]byte` | GEN-700-02 | `ErrFileReadFailed` |
+| `WriteFile` | `true` | GEN-700-03 | `ErrFileWriteFailed` |
+| `MkdirAll` | `true` | GEN-700-04 | `ErrDirCreateFailed` |
+| `Stat` | `os.FileInfo` | GEN-700-01 | `ErrFileNotFound` |
+| `EnsureDir` | `true` | GEN-700-04 | `ErrDirCreateFailed` |
 
 Permission errors (any function): GEN-700-05 / `ErrFsPermissionDenied`
 
@@ -233,12 +233,12 @@ func (s *ExportService) SaveExport(dir, name string, data []byte) apperror.Resul
 
 ## Decision Matrix: `pathutil` vs `fileutil`
 
-| Need                                     | Use                                                         | Why                                                  |
-| ---------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
-| "Does this path exist?" (boolean check)  | `pathutil.IsFileExists` / `pathutil.IsDir`                  | No error propagation needed                          |
+| Need | Use | Why |
+|------|-----|-----|
+| "Does this path exist?" (boolean check) | `pathutil.IsFileExists` / `pathutil.IsDir` | No error propagation needed |
 | "Open/read/write a file" (I/O operation) | `fileutil.Open` / `fileutil.ReadAll` / `fileutil.WriteFile` | Returns `apperror.Result[T]` with proper error codes |
-| "Guard clause before I/O"                | `pathutil` check → early return → `fileutil` operation      | Boolean guard first, then typed I/O                  |
-| "Clean up a temp file"                   | `pathutil.Remove`                                           | Fire-and-forget cleanup at stdlib boundary           |
+| "Guard clause before I/O" | `pathutil` check → early return → `fileutil` operation | Boolean guard first, then typed I/O |
+| "Clean up a temp file" | `pathutil.Remove` | Fire-and-forget cleanup at stdlib boundary |
 
 ---
 
@@ -246,12 +246,12 @@ func (s *ExportService) SaveExport(dir, name string, data []byte) apperror.Resul
 
 PHP uses a static helper class with the same positive-naming principle:
 
-| Go (`pathutil`)             | PHP (`PathHelper`)              |
-| --------------------------- | ------------------------------- |
-| `pathutil.IsFileExists(p)`  | `PathHelper::isFileExists($p)`  |
+| Go (`pathutil`) | PHP (`PathHelper`) |
+|-----------------|-------------------|
+| `pathutil.IsFileExists(p)` | `PathHelper::isFileExists($p)` |
 | `pathutil.IsFileMissing(p)` | `PathHelper::isFileMissing($p)` |
-| `pathutil.IsDir(p)`         | `PathHelper::isDirExists($p)`   |
-| `pathutil.IsDirMissing(p)`  | `PathHelper::isDirMissing($p)`  |
+| `pathutil.IsDir(p)` | `PathHelper::isDirExists($p)` |
+| `pathutil.IsDirMissing(p)` | `PathHelper::isDirMissing($p)` |
 | `pathutil.IsDirWritable(p)` | `PathHelper::isDirWritable($p)` |
 | `pathutil.IsDirReadonly(p)` | `PathHelper::isDirReadonly($p)` |
 

@@ -1,9 +1,9 @@
 # Generic Return Types — No interface{}/any/object Returns
 
-> **Parent:** [Cross-Language Overview](./00-overview.md)  
-> **Version:** 1.0.0  
-> **Updated:** 2026-04-02  
-> **AI Confidence:** Production-Ready  
+> **Parent:** [Cross-Language Overview](./01-index.md)
+> **Version:** 1.0.0
+> **Updated:** 2026-04-02
+> **AI Confidence:** Production-Ready
 > **Ambiguity:** None
 
 ## Keywords
@@ -78,27 +78,21 @@ func (s *Service) ProcessRefund(input Input) apperror.Result[RefundData] {
 ```typescript
 // ❌ BAD — any/unknown return
 function fetchData(endpoint: string): Promise<any> {
-  return axios.get(endpoint).then((r) => r.data);
+    return axios.get(endpoint).then(r => r.data);
 }
 
 // ❌ BAD — union that forces narrowing everywhere
-function getItem(id: string): User | Order | Product {
-  /* ... */
-}
+function getItem(id: string): User | Order | Product { /* ... */ }
 
 // ✅ GOOD — generic function
 async function fetchData<T>(endpoint: string): Promise<T> {
-  const response = await axios.get<T>(endpoint);
-  return response.data;
+    const response = await axios.get<T>(endpoint);
+    return response.data;
 }
 
 // ✅ GOOD — separate typed methods
-async function fetchUser(id: string): Promise<User> {
-  /* ... */
-}
-async function fetchOrder(id: string): Promise<Order> {
-  /* ... */
-}
+async function fetchUser(id: string): Promise<User> { /* ... */ }
+async function fetchOrder(id: string): Promise<Order> { /* ... */ }
 ```
 
 ### C#
@@ -168,12 +162,12 @@ enum ProcessResult {
 
 ## Decision Guide
 
-| Situation                         | Solution                                                                             |
-| --------------------------------- | ------------------------------------------------------------------------------------ |
-| Same logic, different output type | Generic function `Fn[T]()`                                                           |
-| Different logic per type          | Separate named methods (see [24-boolean-flag-methods](./24-boolean-flag-methods.md)) |
-| Known set of variant types        | Enum/union with exhaustive matching                                                  |
-| External API boundary             | Deserialize into concrete type immediately at boundary                               |
+| Situation | Solution |
+|-----------|----------|
+| Same logic, different output type | Generic function `Fn[T]()` |
+| Different logic per type | Separate named methods (see [24-boolean-flag-methods](./24-boolean-flag-methods.md)) |
+| Known set of variant types | Enum/union with exhaustive matching |
+| External API boundary | Deserialize into concrete type immediately at boundary |
 
 ---
 
@@ -234,19 +228,19 @@ type OrderResult = Result<Order, AppError>;
 
 ## Exemptions
 
-| Case                            | Reason                                                                            |
-| ------------------------------- | --------------------------------------------------------------------------------- |
-| **Serialization boundaries**    | `json.Unmarshal`, `sql.Scan` — cast at the boundary with `// EXEMPTED` annotation |
-| **Plugin/extension systems**    | Dynamic dispatch where types are unknown at compile time                          |
-| **Reflection-based frameworks** | DI containers, ORM internals — exempted at framework boundary only                |
+| Case | Reason |
+|------|--------|
+| **Serialization boundaries** | `json.Unmarshal`, `sql.Scan` — cast at the boundary with `// EXEMPTED` annotation |
+| **Plugin/extension systems** | Dynamic dispatch where types are unknown at compile time |
+| **Reflection-based frameworks** | DI containers, ORM internals — exempted at framework boundary only |
 
 ---
 
 ## Cross-References
 
 - [Strict Typing](./13-strict-typing.md) — all parameters and returns must be explicitly typed
-- [Casting Elimination Patterns](./03-casting-elimination-patterns.md) — centralize casts at boundaries
+- [Casting Elimination Patterns](./04-casting-elimination-patterns.md) — centralize casts at boundaries
 - [Boolean Flag Methods](./24-boolean-flag-methods.md) — split methods instead of returning different types
-- [AppError Result Types](../../03-error-manage/02-error-architecture/06-apperror-package/01-apperror-reference/03-result-types.md) — Go Result[T] pattern
+- [AppError Result Types](../../03-error-manage/02-error-architecture/06-apperror-package/01-apperror-reference/04-result-types.md) — Go Result[T] pattern
 
 ---

@@ -50,7 +50,9 @@
         "Configuration",
         "Encryption"
       ],
-      "Notes": ["Uses local codes (1xxx-12xxx) internally; ecosystem-mapped to SM-GS 18000-18249"]
+      "Notes": [
+        "Uses local codes (1xxx-12xxx) internally; ecosystem-mapped to SM-GS 18000-18249"
+      ]
     },
     {
       "Project": "AB",
@@ -92,7 +94,9 @@
       },
       "TotalCodes": 0,
       "RetryableCodes": 0,
-      "Notes": ["Range allocated within GS superrange, no error code index yet"]
+      "Notes": [
+        "Range allocated within GS superrange, no error code index yet"
+      ]
     },
     {
       "Project": "NF",
@@ -104,7 +108,12 @@
       "IndexFile": "02-spec/12-nexus-flow-cli/error-codes.json",
       "TotalCodes": 15,
       "RetryableCodes": 1,
-      "Categories": ["Canvas", "Workflow", "Execution", "State"]
+      "Categories": [
+        "Canvas",
+        "Workflow",
+        "Execution",
+        "State"
+      ]
     },
     {
       "Project": "WPB",
@@ -116,8 +125,16 @@
       "IndexFile": "02-spec/14-wp-plugin-builder/error-codes.json",
       "TotalCodes": 70,
       "RetryableCodes": 9,
-      "Categories": ["General", "Template", "Generation", "Validation", "File System"],
-      "Notes": ["Compressed from original 10000-10999; codes 10500-10999 are unallocated"]
+      "Categories": [
+        "General",
+        "Template",
+        "Generation",
+        "Validation",
+        "File System"
+      ],
+      "Notes": [
+        "Compressed from original 10000-10999; codes 10500-10999 are unallocated"
+      ]
     },
     {
       "Project": "SRC",
@@ -128,7 +145,9 @@
       },
       "TotalCodes": 0,
       "RetryableCodes": 0,
-      "Notes": ["Range allocated, no error code index yet"]
+      "Notes": [
+        "Range allocated, no error code index yet"
+      ]
     },
     {
       "Project": "WSP",
@@ -218,7 +237,9 @@
         "Configuration",
         "System/Fatal"
       ],
-      "Notes": ["Local PHP ERR_xxxx codes remapped to ecosystem integers 14500-14999"]
+      "Notes": [
+        "Local PHP ERR_xxxx codes remapped to ecosystem integers 14500-14999"
+      ]
     },
     {
       "Project": "LM",
@@ -230,7 +251,9 @@
       "IndexFile": "02-spec/19-license-manager/error-codes.json",
       "TotalCodes": 0,
       "RetryableCodes": 0,
-      "Notes": ["Range allocated, no error code spec exists yet"]
+      "Notes": [
+        "Range allocated, no error code spec exists yet"
+      ]
     },
     {
       "Project": "SM-CG",
@@ -313,7 +336,9 @@
       "IndexFile": "02-spec/11-ai-bridge-cli/error-codes.json",
       "TotalCodes": 6,
       "RetryableCodes": 0,
-      "Notes": ["Subset of AB index; reassigned via Resolution 13"]
+      "Notes": [
+        "Subset of AB index; reassigned via Resolution 13"
+      ]
     },
     {
       "Project": "MWS",
@@ -352,53 +377,7 @@
       "Notes": [
         "Two-tier service; Worker uses 21000-21099, Main uses 21100-21199.",
         "Both prefixed (WORKER-XYY-ZZ / MAIN-XYY-ZZ) and flat (21NNN) formats are valid; mapping is bijective.",
-        "Authoritative catalogue: 02-spec/19-main-worker-service/13-error-codes.md."
-      ]
-    },
-    {
-      "Project": "CAT",
-      "Name": "Control Automation UI Structured Codes",
-      "Format": "Structured string codes (E_LAYER_*, W_LAYER_*, I_UI_*)",
-      "IndexFile": "02-spec/21-app/40-error-manage.md",
-      "RelatedIndexFiles": ["02-spec/24-app-ui-design-system/07-errors-logging.md"],
-      "TotalCodes": 6,
-      "RetryableCodes": 0,
-      "Categories": ["LayerInteraction", "RuleEditorObservability", "WorkspaceLayout"],
-      "Codes": [
-        {
-          "Code": "E_LAYER_REORDER_FAILED",
-          "Tier": "BugError",
-          "Context": ["sourceId", "targetId", "position", "reason"]
-        },
-        {
-          "Code": "E_LAYER_MERGE_INCOMPATIBLE",
-          "Tier": "DomainError",
-          "Context": ["selectionKey", "reason", "count", "kinds"]
-        },
-        {
-          "Code": "W_LAYER_GROUP_EMPTY",
-          "Tier": "Observability",
-          "Context": ["groupId", "trigger", "childCount"]
-        },
-        {
-          "Code": "E_LAYOUT_PERSIST_FAILED",
-          "Tier": "InfraError",
-          "Context": ["panelId", "reason", "bytes"]
-        },
-        {
-          "Code": "W_PANEL_DROP_INVALID",
-          "Tier": "Observability",
-          "Context": ["panelId", "sourceDock", "targetDock", "reason"]
-        },
-        {
-          "Code": "E_PANEL_UNKNOWN_ID",
-          "Tier": "BugError",
-          "Context": ["panelId", "caller", "knownIds"]
-        }
-      ],
-      "Notes": [
-        "Structured UI codes are not allocated from numeric ecosystem ranges.",
-        "Canonical rows and UI mappings live in 02-spec/21-app/40-error-manage.md Appendix A.4."
+        "Authoritative catalogue: 02-spec/19-main-worker-service/14-error-codes.md."
       ]
     }
   ],
@@ -476,10 +455,14 @@
     }
   ],
   "Stats": {
-    "TotalModules": 18,
-    "IndexedModules": 14,
-    "PendingModules": ["SM", "BR", "SRC"],
-    "TotalIndexedCodes": 984,
+    "TotalModules": 17,
+    "IndexedModules": 13,
+    "PendingModules": [
+      "SM",
+      "BR",
+      "SRC"
+    ],
+    "TotalIndexedCodes": 981,
     "TotalRetryableCodes": 166,
     "AllocatedRange": "2000-21199",
     "CollisionResolutions": 13,

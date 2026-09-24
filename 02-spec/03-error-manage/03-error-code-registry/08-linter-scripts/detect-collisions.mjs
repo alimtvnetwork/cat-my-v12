@@ -1,27 +1,27 @@
 #!/usr/bin/env node
 /**
  * Collision Detection Script for Ecosystem Error Codes
- *
+ * 
  * Validates that no two modules have overlapping ecosystem integer codes
  * across all error-codes.json index files.
- *
+ * 
  * Usage: node 02-spec/07-error-code-registry/scripts/detect-collisions.mjs
  */
 
-import { readFileSync, existsSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { readFileSync, existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "../../..");
+const ROOT = resolve(__dirname, '../../..');
 
-const MASTER_INDEX = resolve(ROOT, "02-spec/07-error-code-registry/error-codes-master.json");
+const MASTER_INDEX = resolve(ROOT, '02-spec/07-error-code-registry/error-codes-master.json');
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function loadJson(path) {
   if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf-8"));
+  return JSON.parse(readFileSync(path, 'utf-8'));
 }
 
 function extractEcosystemCodes(index) {
@@ -32,7 +32,7 @@ function extractEcosystemCodes(index) {
     if (!cat.Codes) continue;
     for (const entry of cat.Codes) {
       // Integer code = ecosystem code
-      if (typeof entry.Code === "number") {
+      if (typeof entry.Code === 'number') {
         codes.push({
           Code: entry.Code,
           Constant: entry.Constant,
@@ -49,13 +49,13 @@ function extractEcosystemCodes(index) {
 // ── Main ─────────────────────────────────────────────────────────────
 
 function main() {
-  console.log("╔══════════════════════════════════════════════════════════╗");
-  console.log("║   Error Code Collision Detection                       ║");
-  console.log("╚══════════════════════════════════════════════════════════╝\n");
+  console.log('╔══════════════════════════════════════════════════════════╗');
+  console.log('║   Error Code Collision Detection                       ║');
+  console.log('╚══════════════════════════════════════════════════════════╝\n');
 
   const master = loadJson(MASTER_INDEX);
   if (!master) {
-    console.error("❌ Master index not found:", MASTER_INDEX);
+    console.error('❌ Master index not found:', MASTER_INDEX);
     process.exit(1);
   }
 
@@ -70,7 +70,7 @@ function main() {
     const index = loadJson(indexPath);
 
     if (!index) {
-      moduleResults.push({ Project: mod.Project, Name: mod.Name, Status: "MISSING", Codes: 0 });
+      moduleResults.push({ Project: mod.Project, Name: mod.Name, Status: 'MISSING', Codes: 0 });
       continue;
     }
 
@@ -78,7 +78,7 @@ function main() {
     const codes = extractEcosystemCodes(index);
     totalCodes += codes.length;
 
-    moduleResults.push({ Project: mod.Project, Name: mod.Name, Status: "OK", Codes: codes.length });
+    moduleResults.push({ Project: mod.Project, Name: mod.Name, Status: 'OK', Codes: codes.length });
 
     for (const c of codes) {
       if (!allCodes.has(c.Code)) {
@@ -95,18 +95,15 @@ function main() {
 
   // ── Module summary ───────────────────────────────────────────────
 
-  console.log("Modules scanned:");
-  console.log("─".repeat(60));
+  console.log('Modules scanned:');
+  console.log('─'.repeat(60));
   for (const m of moduleResults) {
-    const icon = m.Status === "OK" ? "✅" : m.Status === "MISSING" ? "⚠️ " : "❌";
-    const codesStr =
-      m.Codes > 0 ? `${m.Codes} codes` : m.Status === "MISSING" ? "file missing" : "0 codes";
+    const icon = m.Status === 'OK' ? '✅' : m.Status === 'MISSING' ? '⚠️ ' : '❌';
+    const codesStr = m.Codes > 0 ? `${m.Codes} codes` : m.Status === 'MISSING' ? 'file missing' : '0 codes';
     console.log(`  ${icon} ${m.Project.padEnd(8)} ${m.Name.padEnd(40)} ${codesStr}`);
   }
-  console.log("─".repeat(60));
-  console.log(
-    `  Files: ${filesScanned}/${master.Modules.length}  |  Ecosystem codes: ${totalCodes}\n`,
-  );
+  console.log('─'.repeat(60));
+  console.log(`  Files: ${filesScanned}/${master.Modules.length}  |  Ecosystem codes: ${totalCodes}\n`);
 
   // ── Collision detection ──────────────────────────────────────────
 
@@ -135,8 +132,8 @@ function main() {
       if (a.Min <= b.Max && b.Min <= a.Max) {
         // Check if it's the known intentional PS/AB overlap
         const knownOverlap =
-          (a.Project === "AB" || b.Project === "AB") &&
-          master.SpecialRanges?.some((s) => s.Project === "PS/AB");
+          (a.Project === 'AB' || b.Project === 'AB') &&
+          master.SpecialRanges?.some(s => s.Project === 'PS/AB');
         rangeOverlaps.push({
           A: `${a.Project} [${a.Min}-${a.Max}]`,
           B: `${b.Project} [${b.Min}-${b.Max}]`,
@@ -153,7 +150,7 @@ function main() {
   for (let i = 0; i < sortedRanges.length - 1; i++) {
     const gapStart = sortedRanges[i].Max + 1;
     const gapEnd = sortedRanges[i + 1].Min - 1;
-    if (gapEnd >= gapStart && gapEnd - gapStart >= 10) {
+    if (gapEnd >= gapStart && (gapEnd - gapStart) >= 10) {
       gaps.push({ Min: gapStart, Max: gapEnd, Size: gapEnd - gapStart + 1 });
     }
   }
@@ -175,13 +172,10 @@ function main() {
             Project: mod.Project,
             Constant: entry.Constant,
             First: seen.get(entry.Constant),
-            Second: typeof entry.Code === "number" ? entry.Code : (entry.LocalCode ?? entry.Code),
+            Second: typeof entry.Code === 'number' ? entry.Code : entry.LocalCode ?? entry.Code,
           });
         } else {
-          seen.set(
-            entry.Constant,
-            typeof entry.Code === "number" ? entry.Code : (entry.LocalCode ?? entry.Code),
-          );
+          seen.set(entry.Constant, typeof entry.Code === 'number' ? entry.Code : entry.LocalCode ?? entry.Code);
         }
       }
     }
@@ -189,13 +183,13 @@ function main() {
 
   // ── Results ──────────────────────────────────────────────────────
 
-  console.log("══════════════════════════════════════════════════════════");
-  console.log("  RESULTS");
-  console.log("══════════════════════════════════════════════════════════\n");
+  console.log('══════════════════════════════════════════════════════════');
+  console.log('  RESULTS');
+  console.log('══════════════════════════════════════════════════════════\n');
 
   // Code collisions
   if (collisions.length === 0) {
-    console.log("✅ Code Collisions: NONE — all ecosystem integer codes are unique\n");
+    console.log('✅ Code Collisions: NONE — all ecosystem integer codes are unique\n');
   } else {
     console.log(`❌ Code Collisions: ${collisions.length} FOUND\n`);
     for (const c of collisions) {
@@ -209,10 +203,10 @@ function main() {
 
   // Range overlaps
   if (rangeOverlaps.length === 0) {
-    console.log("✅ Range Overlaps: NONE\n");
+    console.log('✅ Range Overlaps: NONE\n');
   } else {
-    const intentional = rangeOverlaps.filter((r) => r.Intentional);
-    const unintentional = rangeOverlaps.filter((r) => !r.Intentional);
+    const intentional = rangeOverlaps.filter(r => r.Intentional);
+    const unintentional = rangeOverlaps.filter(r => !r.Intentional);
     if (unintentional.length > 0) {
       console.log(`❌ Range Overlaps: ${unintentional.length} UNINTENTIONAL\n`);
       for (const r of unintentional) {
@@ -231,7 +225,7 @@ function main() {
 
   // Duplicate constants
   if (dupConstants.length === 0) {
-    console.log("✅ Duplicate Constants: NONE\n");
+    console.log('✅ Duplicate Constants: NONE\n');
   } else {
     console.log(`⚠️  Duplicate Constants: ${dupConstants.length} found\n`);
     for (const d of dupConstants) {
@@ -250,13 +244,13 @@ function main() {
   }
 
   // Final verdict
-  const hasFailures = collisions.length > 0 || rangeOverlaps.some((r) => !r.Intentional);
-  console.log("══════════════════════════════════════════════════════════");
+  const hasFailures = collisions.length > 0 || rangeOverlaps.some(r => !r.Intentional);
+  console.log('══════════════════════════════════════════════════════════');
   if (hasFailures) {
-    console.log("  ❌ VALIDATION FAILED — collisions detected");
+    console.log('  ❌ VALIDATION FAILED — collisions detected');
     process.exit(1);
   } else {
-    console.log("  ✅ VALIDATION PASSED — no collisions detected");
+    console.log('  ✅ VALIDATION PASSED — no collisions detected');
     process.exit(0);
   }
 }

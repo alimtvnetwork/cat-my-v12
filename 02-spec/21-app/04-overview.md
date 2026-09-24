@@ -38,7 +38,7 @@ _No app-specific specs added yet. Add specs as numbered files within this folder
 | Reference            | Location                                                                               |
 | -------------------- | -------------------------------------------------------------------------------------- |
 | App Issues           | [../22-app-issues/00-overview.md](../22-app-issues/00-overview.md)                     |
-| Spec Authoring Guide | [../01-spec-authoring-guide/00-overview.md](../01-spec-authoring-guide/00-overview.md) |
+| Spec Authoring Guide | [../01-spec-authoring-guide/01-index.md](../01-spec-authoring-guide/01-index.md) |
 
 ---
 

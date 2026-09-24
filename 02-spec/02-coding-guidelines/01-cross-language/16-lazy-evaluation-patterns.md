@@ -1,8 +1,8 @@
 # Lazy Evaluation Patterns
 
-**Version:** 3.2.0  
-**Updated:** 2026-04-16  
-**Applies to:** Go (primary), general principle cross-language  
+**Version:** 3.2.0
+**Updated:** 2026-04-16
+**Applies to:** Go (primary), general principle cross-language
 **Source:** Consolidated from `01-pre-code-review-guides/03-golang-code-review-guides.md`
 
 ---
@@ -17,21 +17,21 @@ Lazy evaluation means **don't execute until needed**. It acts as caching — gen
 
 ### ✅ APPLY when:
 
-| Condition                                               | Example                           |
-| ------------------------------------------------------- | --------------------------------- |
-| Heavy lifting / expensive computation                   | Database query, file parsing      |
-| Static value that doesn't change                        | Configuration, computed constants |
-| Same data requested by many callers                     | Shared lookup tables              |
-| 60%+ cases don't need the value at all                  | Optional expensive fields         |
-| Builder pattern — instructions collected, executed once | `Builder.Build()`                 |
+| Condition | Example |
+|-----------|---------|
+| Heavy lifting / expensive computation | Database query, file parsing |
+| Static value that doesn't change | Configuration, computed constants |
+| Same data requested by many callers | Shared lookup tables |
+| 60%+ cases don't need the value at all | Optional expensive fields |
+| Builder pattern — instructions collected, executed once | `Builder.Build()` |
 
 ### ❌ DO NOT apply when:
 
-| Condition                                                 | Reason                                   |
-| --------------------------------------------------------- | ---------------------------------------- |
-| Data changes per request                                  | Cannot cache varying results             |
-| Function requires parameters to produce different results | Not cacheable                            |
-| Value is cheap to compute                                 | Overhead of lazy machinery not justified |
+| Condition | Reason |
+|-----------|--------|
+| Data changes per request | Cannot cache varying results |
+| Function requires parameters to produce different results | Not cacheable |
+| Value is cheap to compute | Overhead of lazy machinery not justified |
 
 ---
 
@@ -148,8 +148,8 @@ if g.Members().Length() > 0 { ... }
 
 - [Code Mutation Avoidance](./18-code-mutation-avoidance.md) — Lazy fields are an exempted mutation case
 - [Cyclomatic Complexity](./06-cyclomatic-complexity.md) — Lazy getters keep callers simple
-- [Master Coding Guidelines](./15-master-coding-guidelines/00-overview.md) — §7 Type Safety
+- [Master Coding Guidelines](./15-master-coding-guidelines/01-index.md) — §7 Type Safety
 
 ---
 
-_Lazy evaluation patterns — consolidated from pre-code review guides._
+*Lazy evaluation patterns — consolidated from pre-code review guides.*

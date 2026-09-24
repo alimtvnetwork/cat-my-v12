@@ -35,16 +35,16 @@ directly to **stdout**.
 
 ## Design Principles
 
-| #   | Principle                              | Detail                                                                                |
-| --- | -------------------------------------- | ------------------------------------------------------------------------------------- |
-| 1   | **Sections, not walls**                | Break output into clearly labeled sections with headers and dividers                  |
-| 2   | **Emoji as type indicators**           | Use emoji to convey item type at a glance — never decorative                          |
-| 3   | **Counter-prefixed items**             | Every item in a list shows `N/Total` so the user knows progress and scale             |
-| 4   | **Two-line item blocks**               | Line 1 = identity (name, status). Line 2 = actionable detail (command, path, URL)     |
-| 5   | **Tree for hierarchy**                 | Nested data renders as a Unicode tree with box-drawing characters                     |
-| 6   | **Action section at end**              | Tell the user what to do next — numbered steps, copy-pasteable commands               |
-| 7   | **Stderr for chrome, stdout for data** | All visual formatting goes to stderr. Stdout is reserved for machine-parseable output |
-| 8   | **Constants, not literals**            | Every format string, emoji, label, and divider lives in `constants/`                  |
+| # | Principle | Detail |
+|---|-----------|--------|
+| 1 | **Sections, not walls** | Break output into clearly labeled sections with headers and dividers |
+| 2 | **Emoji as type indicators** | Use emoji to convey item type at a glance — never decorative |
+| 3 | **Counter-prefixed items** | Every item in a list shows `N/Total` so the user knows progress and scale |
+| 4 | **Two-line item blocks** | Line 1 = identity (name, status). Line 2 = actionable detail (command, path, URL) |
+| 5 | **Tree for hierarchy** | Nested data renders as a Unicode tree with box-drawing characters |
+| 6 | **Action section at end** | Tell the user what to do next — numbered steps, copy-pasteable commands |
+| 7 | **Stderr for chrome, stdout for data** | All visual formatting goes to stderr. Stdout is reserved for machine-parseable output |
+| 8 | **Constants, not literals** | Every format string, emoji, label, and divider lives in `constants/` |
 
 ---
 
@@ -84,14 +84,14 @@ characters for a framed appearance.
 
 ### Rules
 
-| Rule             | Detail                                                       |
-| ---------------- | ------------------------------------------------------------ |
-| Width            | Fixed at 38 inner characters (40 total with frame)           |
-| Centering        | Tool name + version centered with padding                    |
-| Indentation      | 2-space left margin for visual breathing room                |
-| Frame characters | `╔` `═` `╗` `║` `╚` `╝` (Unicode box-drawing, double-line)   |
-| Color            | Cyan (`\033[36m`) for the entire frame                       |
-| Content          | `toolname v{MAJOR}.{MINOR}.{PATCH}` — always include version |
+| Rule | Detail |
+|------|--------|
+| Width | Fixed at 38 inner characters (40 total with frame) |
+| Centering | Tool name + version centered with padding |
+| Indentation | 2-space left margin for visual breathing room |
+| Frame characters | `╔` `═` `╗` `║` `╚` `╝` (Unicode box-drawing, double-line) |
+| Color | Cyan (`\033[36m`) for the entire frame |
+| Content | `toolname v{MAJOR}.{MINOR}.{PATCH}` — always include version |
 
 ### Constants
 
@@ -137,22 +137,22 @@ A single line confirming the result count, prefixed with a success checkmark.
 
 ### Rules
 
-| Rule        | Detail                                                                   |
-| ----------- | ------------------------------------------------------------------------ |
-| Prefix      | `✓` (green) for success, `⚠` (yellow) for partial, `✗` (red) for failure |
-| Indentation | 2-space left margin, consistent with banner                              |
-| Noun        | Always pluralized correctly (`1 item` vs `41 items`)                     |
-| Color       | Green for the checkmark, white/default for the text                      |
+| Rule | Detail |
+|------|--------|
+| Prefix | `✓` (green) for success, `⚠` (yellow) for partial, `✗` (red) for failure |
+| Indentation | 2-space left margin, consistent with banner |
+| Noun | Always pluralized correctly (`1 item` vs `41 items`) |
+| Color | Green for the checkmark, white/default for the text |
 
 ### Generic Examples
 
-| Domain   | Output                     |
-| -------- | -------------------------- |
-| Repos    | `✓ Found 41 repositories`  |
-| Movies   | `✓ Found 128 movies`       |
-| Devices  | `✓ Discovered 12 devices`  |
-| Packages | `✓ Scanned 89 packages`    |
-| Servers  | `✓ Connected to 5 servers` |
+| Domain | Output |
+|--------|--------|
+| Repos | `✓ Found 41 repositories` |
+| Movies | `✓ Found 128 movies` |
+| Devices | `✓ Discovered 12 devices` |
+| Packages | `✓ Scanned 89 packages` |
+| Servers | `✓ Connected to 5 servers` |
 
 ### Constants
 
@@ -191,12 +191,12 @@ line 1, actionable detail on line 2.
   {counter}/{total} {emoji} {name} ({status})
 ```
 
-| Element | Purpose                          | Example                                     |
-| ------- | -------------------------------- | ------------------------------------------- |
-| Counter | Position in list                 | `1/41`                                      |
-| Emoji   | Type indicator                   | `📦` (package), `🎬` (movie), `📡` (device) |
-| Name    | Primary identifier, bold concept | `agent-experiment`                          |
-| Status  | Current state in parentheses     | `(main)`, `(released)`, `(online)`          |
+| Element | Purpose | Example |
+|---------|---------|---------|
+| Counter | Position in list | `1/41` |
+| Emoji | Type indicator | `📦` (package), `🎬` (movie), `📡` (device) |
+| Name | Primary identifier, bold concept | `agent-experiment` |
+| Status | Current state in parentheses | `(main)`, `(released)`, `(online)` |
 
 ### Line 2 — Detail Line
 
@@ -204,21 +204,21 @@ line 1, actionable detail on line 2.
        └─ {actionable detail}
 ```
 
-| Element        | Purpose                            | Example                         |
-| -------------- | ---------------------------------- | ------------------------------- |
-| Tree connector | `└─` visually links to header      | `└─`                            |
-| Indent         | Aligns under the name (7 spaces)   | `       `                       |
-| Detail         | Command, path, URL, or description | `git clone -b main https://...` |
+| Element | Purpose | Example |
+|---------|---------|---------|
+| Tree connector | `└─` visually links to header | `└─` |
+| Indent | Aligns under the name (7 spaces) | `       ` |
+| Detail | Command, path, URL, or description | `git clone -b main https://...` |
 
 ### Rules
 
-| Rule          | Detail                                                                |
-| ------------- | --------------------------------------------------------------------- |
-| Blank line    | One blank line between each item block                                |
+| Rule | Detail |
+|------|--------|
+| Blank line | One blank line between each item block |
 | Counter width | Right-aligned to match the widest number (`1/41` aligns with `41/41`) |
-| Emoji         | One emoji per item type — never mix within a list                     |
-| Status        | Always in parentheses, always present (use `(unknown)` if missing)    |
-| Detail line   | Optional — omit if no actionable detail exists                        |
+| Emoji | One emoji per item type — never mix within a list |
+| Status | Always in parentheses, always present (use `(unknown)` if missing) |
+| Detail line | Optional — omit if no actionable detail exists |
 
 ### Section Header
 
@@ -229,16 +229,15 @@ Each item list section starts with a **section header**:
   ──────────────────────────────────────────
 ```
 
-| Element | Detail                                                              |
-| ------- | ------------------------------------------------------------------- |
-| Icon    | `■` (filled square) — consistent across all sections                |
-| Title   | Capitalized, descriptive (`Repositories`, `Movies`, `Output Files`) |
-| Divider | 42 `─` characters (em dash), indented 2 spaces                      |
+| Element | Detail |
+|---------|--------|
+| Icon | `■` (filled square) — consistent across all sections |
+| Title | Capitalized, descriptive (`Repositories`, `Movies`, `Output Files`) |
+| Divider | 42 `─` characters (em dash), indented 2 spaces |
 
 ### Generic Examples
 
 **Movie catalog:**
-
 ```
   ■ Movies
   ──────────────────────────────────────────
@@ -251,7 +250,6 @@ Each item list section starts with a **section header**:
 ```
 
 **Server inventory:**
-
 ```
   ■ Servers
   ──────────────────────────────────────────
@@ -267,7 +265,6 @@ Each item list section starts with a **section header**:
 ```
 
 **Package audit:**
-
 ```
   ■ Dependencies
   ──────────────────────────────────────────
@@ -318,37 +315,36 @@ dependency graphs, category hierarchies, or any parent-child relationship.
 
 ### Tree Characters
 
-| Character | Usage                                                   |
-| --------- | ------------------------------------------------------- |
-| `├──`     | Non-last child at current level                         |
-| `└──`     | Last child at current level                             |
-| `│   `    | Continuation line from a parent that has more children  |
-| `    `    | Continuation line from a parent that was the last child |
+| Character | Usage |
+|-----------|-------|
+| `├──` | Non-last child at current level |
+| `└──` | Last child at current level |
+| `│   ` | Continuation line from a parent that has more children |
+| `    ` | Continuation line from a parent that was the last child |
 
 ### Emoji in Trees
 
-| Emoji | Meaning                                               |
-| ----- | ----------------------------------------------------- |
-| `📦`  | Leaf item (repo, package, file)                       |
-| `📁`  | Container/folder (has children, is not itself a leaf) |
-| `📄`  | Document/file artifact                                |
-| `🎬`  | Media item                                            |
-| `📡`  | Network/service item                                  |
+| Emoji | Meaning |
+|-------|---------|
+| `📦` | Leaf item (repo, package, file) |
+| `📁` | Container/folder (has children, is not itself a leaf) |
+| `📄` | Document/file artifact |
+| `🎬` | Media item |
+| `📡` | Network/service item |
 
 ### Rules
 
-| Rule           | Detail                                                 |
-| -------------- | ------------------------------------------------------ |
-| Depth limit    | Maximum 4 levels deep — flatten beyond that            |
-| Sorting        | Folders first, then items, both alphabetically         |
-| Emoji          | Containers use `📁`, leaves use the domain emoji       |
-| Status         | Shown in parentheses after the name, same as item list |
-| No detail line | Trees show identity only — no second line              |
+| Rule | Detail |
+|------|--------|
+| Depth limit | Maximum 4 levels deep — flatten beyond that |
+| Sorting | Folders first, then items, both alphabetically |
+| Emoji | Containers use `📁`, leaves use the domain emoji |
+| Status | Shown in parentheses after the name, same as item list |
+| No detail line | Trees show identity only — no second line |
 
 ### Generic Examples
 
 **Category hierarchy (movies):**
-
 ```
   ├── 📁 Action
   │   ├── 🎬 Die Hard (1988)
@@ -363,7 +359,6 @@ dependency graphs, category hierarchies, or any parent-child relationship.
 ```
 
 **Dependency tree (packages):**
-
 ```
   ├── 📦 express (4.18.2)
   │   ├── 📦 body-parser (1.20.2)
@@ -419,10 +414,10 @@ filename, and a short description.
   ■ Output Files
   ──────────────────────────────────────────
 
-  📁 D:\projects\.toolname\output/
+  📁 /projects/.toolname/output/
   ├── 📄 data.csv  Data in CSV format
   ├── 📄 data.json  Data in JSON format
-  ├── 📄 structure.md  Folder tree
+  ├── 📄 03-structure.md  Folder tree
   ├── 📄 clone.ps1  PowerShell clone script
   ├── 📄 direct-clone.ps1  Plain clone commands (HTTPS)
   ├── 📄 direct-clone-ssh.ps1  Plain clone commands (SSH)
@@ -431,17 +426,16 @@ filename, and a short description.
 
 ### Rules
 
-| Rule        | Detail                                                       |
-| ----------- | ------------------------------------------------------------ |
-| Root line   | First line shows the output directory path with `📁`         |
-| File lines  | Tree-connected with `📄` emoji                               |
+| Rule | Detail |
+|------|--------|
+| Root line | First line shows the output directory path with `📁` |
+| File lines | Tree-connected with `📄` emoji |
 | Description | Two-space gap after filename, then short purpose (≤40 chars) |
-| Order       | Alphabetical, or logical grouping (data → scripts → docs)    |
+| Order | Alphabetical, or logical grouping (data → scripts → docs) |
 
 ### Generic Examples
 
 **Movie catalog output:**
-
 ```
   📁 ~/.moviecli/output/
   ├── 📄 movies.csv  Movie data in CSV
@@ -476,18 +470,17 @@ copy-pasteable command.
 
 ### Rules
 
-| Rule              | Detail                                              |
-| ----------------- | --------------------------------------------------- |
-| Numbered steps    | Sequential, 1-indexed                               |
-| Commands indented | 5-space indent (aligned under the step text)        |
-| Aliases shown     | Short alias on the line below the full command      |
-| Context lines     | Plain text explaining the step precedes the command |
-| Maximum steps     | 8 steps — if more are needed, link to documentation |
+| Rule | Detail |
+|------|--------|
+| Numbered steps | Sequential, 1-indexed |
+| Commands indented | 5-space indent (aligned under the step text) |
+| Aliases shown | Short alias on the line below the full command |
+| Context lines | Plain text explaining the step precedes the command |
+| Maximum steps | 8 steps — if more are needed, link to documentation |
 
 ### Generic Examples
 
 **Movie catalog next steps:**
-
 ```
   ■ What You Can Do Next
   ──────────────────────────────────────────
@@ -517,21 +510,21 @@ plain, unformatted confirmation lines.
 ### Format
 
 ```
-CSV written to D:\projects\.toolname\output\data.csv
-JSON written to D:\projects\.toolname\output\data.json
-Structure written to D:\projects\.toolname\output\structure.md
+CSV written to /projects/.toolname/output/data.csv
+JSON written to /projects/.toolname/output/data.json
+Structure written to /projects/.toolname/output/03-structure.md
 Database updated: 41 items upserted
 ```
 
 ### Rules
 
-| Rule           | Detail                                              |
-| -------------- | --------------------------------------------------- |
-| Format         | `{Type} written to {absolute path}`                 |
-| No emoji       | These are machine-log-style confirmations           |
+| Rule | Detail |
+|------|--------|
+| Format | `{Type} written to {absolute path}` |
+| No emoji | These are machine-log-style confirmations |
 | Absolute paths | Always show the full path for unambiguous reference |
-| Database line  | `Database updated: {N} {noun} upserted`             |
-| Order          | Same order as the Output Files section              |
+| Database line | `Database updated: {N} {noun} upserted` |
+| Order | Same order as the Output Files section |
 
 ---
 
@@ -556,20 +549,20 @@ const (
 
 ### Color Assignments
 
-| Element                  | Color      | Code       | Purpose                          |
-| ------------------------ | ---------- | ---------- | -------------------------------- |
-| Banner frame             | Cyan       | `\033[36m` | Visual identity, eye-catching    |
-| Section headers (`■`)    | Cyan       | `\033[36m` | Section separation               |
-| Section dividers (`───`) | Dim        | `\033[2m`  | Subtle visual break              |
-| Success icon (`✓`)       | Green      | `\033[32m` | Positive confirmation            |
-| Warning icon (`⚠`)       | Yellow     | `\033[33m` | Non-fatal alert                  |
-| Failure icon (`✗`)       | Red        | `\033[31m` | Error state                      |
-| Item names               | White/Bold | `\033[1m`  | Primary content                  |
-| Status in parens         | Dim        | `\033[2m`  | Secondary metadata               |
-| Commands                 | White      | default    | Copy-pasteable, no color noise   |
-| File paths               | Blue       | `\033[34m` | Clickable in supported terminals |
-| Counters (`1/41`)        | Dim        | `\033[2m`  | Present but not dominant         |
-| Emoji                    | No color   | —          | Emoji carry their own color      |
+| Element | Color | Code | Purpose |
+|---------|-------|------|---------|
+| Banner frame | Cyan | `\033[36m` | Visual identity, eye-catching |
+| Section headers (`■`) | Cyan | `\033[36m` | Section separation |
+| Section dividers (`───`) | Dim | `\033[2m` | Subtle visual break |
+| Success icon (`✓`) | Green | `\033[32m` | Positive confirmation |
+| Warning icon (`⚠`) | Yellow | `\033[33m` | Non-fatal alert |
+| Failure icon (`✗`) | Red | `\033[31m` | Error state |
+| Item names | White/Bold | `\033[1m` | Primary content |
+| Status in parens | Dim | `\033[2m` | Secondary metadata |
+| Commands | White | default | Copy-pasteable, no color noise |
+| File paths | Blue | `\033[34m` | Clickable in supported terminals |
+| Counters (`1/41`) | Dim | `\033[2m` | Present but not dominant |
+| Emoji | No color | — | Emoji carry their own color |
 
 ### No-Color Mode
 
@@ -592,31 +585,31 @@ func supportsColor() bool {
 
 ### Standard Emoji Set
 
-| Emoji | Meaning                                 | Use When                                       |
-| ----- | --------------------------------------- | ---------------------------------------------- |
-| `📦`  | Package / repository / installable unit | Source code repos, npm packages, Docker images |
-| `📁`  | Folder / container / group              | Directory with children, category header       |
-| `📄`  | Document / file artifact                | Generated output files, configs                |
-| `🎬`  | Media / video / movie                   | Entertainment, video content                   |
-| `📡`  | Network / server / endpoint             | APIs, servers, IoT devices                     |
-| `🔧`  | Tool / configuration                    | Settings, configs, CLI tools                   |
-| `🔒`  | Security / locked / private             | Auth, encryption, access control               |
-| `🚀`  | Deploy / release / launch               | Releases, deployments, launches                |
-| `💾`  | Database / storage / persistence        | DB records, cache, storage                     |
-| `📊`  | Chart / analytics / metrics             | Dashboards, reports, statistics                |
-| `🏷️`  | Tag / label / version                   | Version tags, release labels                   |
-| `✅`  | Completed / passed / verified           | Test results, checks                           |
-| `❌`  | Failed / blocked / error                | Test failures, blockers                        |
-| `⏳`  | Pending / in-progress / waiting         | Queued items, running tasks                    |
+| Emoji | Meaning | Use When |
+|-------|---------|----------|
+| `📦` | Package / repository / installable unit | Source code repos, npm packages, Docker images |
+| `📁` | Folder / container / group | Directory with children, category header |
+| `📄` | Document / file artifact | Generated output files, configs |
+| `🎬` | Media / video / movie | Entertainment, video content |
+| `📡` | Network / server / endpoint | APIs, servers, IoT devices |
+| `🔧` | Tool / configuration | Settings, configs, CLI tools |
+| `🔒` | Security / locked / private | Auth, encryption, access control |
+| `🚀` | Deploy / release / launch | Releases, deployments, launches |
+| `💾` | Database / storage / persistence | DB records, cache, storage |
+| `📊` | Chart / analytics / metrics | Dashboards, reports, statistics |
+| `🏷️` | Tag / label / version | Version tags, release labels |
+| `✅` | Completed / passed / verified | Test results, checks |
+| `❌` | Failed / blocked / error | Test failures, blockers |
+| `⏳` | Pending / in-progress / waiting | Queued items, running tasks |
 
 ### Rules
 
-| Rule                    | Detail                                                                        |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| One emoji per item type | Never mix `📦` and `📁` for the same item category                            |
-| Containers vs leaves    | Containers (groups with children) always use `📁`; domain emoji is for leaves |
-| No decorative emoji     | Every emoji must communicate item type — never aesthetic                      |
-| Cross-platform          | Use only emoji with broad terminal support (avoid newer Unicode)              |
+| Rule | Detail |
+|------|--------|
+| One emoji per item type | Never mix `📦` and `📁` for the same item category |
+| Containers vs leaves | Containers (groups with children) always use `📁`; domain emoji is for leaves |
+| No decorative emoji | Every emoji must communicate item type — never aesthetic |
+| Cross-platform | Use only emoji with broad terminal support (avoid newer Unicode) |
 
 ---
 
@@ -624,31 +617,31 @@ func supportsColor() bool {
 
 ### Global Rules
 
-| Element            | Indent          | Example                   |
-| ------------------ | --------------- | ------------------------- |
-| Banner             | 2 spaces        | `  ╔═══...`               |
-| Summary line       | 2 spaces        | `  ✓ Found 41 items`      |
-| Section header     | 2 spaces        | `  ■ Section Title`       |
-| Section divider    | 2 spaces        | `  ────────...`           |
-| Item header        | 2 spaces        | `  1/41 📦 name (status)` |
-| Item detail        | 7 spaces        | `       └─ detail`        |
-| Tree root          | 2 spaces        | `  ├── 📦 item`           |
-| Tree nested        | 2 + (4 × depth) | `  │   ├── 📦 child`      |
-| Action steps       | 2 spaces        | `  1. Step text`          |
-| Action commands    | 5 spaces        | `     toolname cmd`       |
-| File confirmations | 0 spaces        | `CSV written to /path`    |
+| Element | Indent | Example |
+|---------|--------|---------|
+| Banner | 2 spaces | `  ╔═══...` |
+| Summary line | 2 spaces | `  ✓ Found 41 items` |
+| Section header | 2 spaces | `  ■ Section Title` |
+| Section divider | 2 spaces | `  ────────...` |
+| Item header | 2 spaces | `  1/41 📦 name (status)` |
+| Item detail | 7 spaces | `       └─ detail` |
+| Tree root | 2 spaces | `  ├── 📦 item` |
+| Tree nested | 2 + (4 × depth) | `  │   ├── 📦 child` |
+| Action steps | 2 spaces | `  1. Step text` |
+| Action commands | 5 spaces | `     toolname cmd` |
+| File confirmations | 0 spaces | `CSV written to /path` |
 
 ### Blank Lines
 
-| Between                             | Blank lines |
-| ----------------------------------- | ----------- |
-| Banner and summary                  | 1           |
-| Summary and first section           | 1           |
-| Section header and first item       | 1           |
-| Between items                       | 1           |
-| Between sections                    | 1           |
-| Last section and file confirmations | 1           |
-| Between file confirmation lines     | 0           |
+| Between | Blank lines |
+|---------|-------------|
+| Banner and summary | 1 |
+| Summary and first section | 1 |
+| Section header and first item | 1 |
+| Between items | 1 |
+| Between sections | 1 |
+| Last section and file confirmations | 1 |
+| Between file confirmation lines | 0 |
 
 ---
 
@@ -788,22 +781,22 @@ Database updated: 4 servers upserted
 
 ## Implementation Checklist
 
-| #   | Task                                 | File                            |
-| --- | ------------------------------------ | ------------------------------- |
-| 1   | Define all format constants          | `constants/constants_output.go` |
-| 2   | Define emoji constants               | `constants/constants_output.go` |
-| 3   | Define color constants               | `constants/constants_output.go` |
-| 4   | Implement `printBanner()`            | `formatter/terminal.go`         |
-| 5   | Implement `printSummary()`           | `formatter/terminal.go`         |
-| 6   | Implement `printItemList()`          | `formatter/terminal.go`         |
-| 7   | Implement `printTree()`              | `formatter/terminal.go`         |
-| 8   | Implement `printOutputFiles()`       | `formatter/terminal.go`         |
-| 9   | Implement `printActionGuide()`       | `formatter/terminal.go`         |
-| 10  | Implement `printFileConfirmations()` | `formatter/terminal.go`         |
-| 11  | Implement `supportsColor()`          | `formatter/color.go`            |
-| 12  | Implement `centerPad()`              | `formatter/terminal.go`         |
-| 13  | Write tests for tree rendering       | `formatter/terminal_test.go`    |
-| 14  | Write tests for color suppression    | `formatter/color_test.go`       |
+| # | Task | File |
+|---|------|------|
+| 1 | Define all format constants | `constants/constants_output.go` |
+| 2 | Define emoji constants | `constants/constants_output.go` |
+| 3 | Define color constants | `constants/constants_output.go` |
+| 4 | Implement `printBanner()` | `formatter/terminal.go` |
+| 5 | Implement `printSummary()` | `formatter/terminal.go` |
+| 6 | Implement `printItemList()` | `formatter/terminal.go` |
+| 7 | Implement `printTree()` | `formatter/terminal.go` |
+| 8 | Implement `printOutputFiles()` | `formatter/terminal.go` |
+| 9 | Implement `printActionGuide()` | `formatter/terminal.go` |
+| 10 | Implement `printFileConfirmations()` | `formatter/terminal.go` |
+| 11 | Implement `supportsColor()` | `formatter/color.go` |
+| 12 | Implement `centerPad()` | `formatter/terminal.go` |
+| 13 | Write tests for tree rendering | `formatter/terminal_test.go` |
+| 14 | Write tests for color suppression | `formatter/color_test.go` |
 
 ---
 

@@ -2,8 +2,8 @@
 
 **Last Updated:** 2026-04-16
 
-> **Version:** 1.0.0  
-> **Since:** 2.2.0  
+> **Version:** 1.0.0
+> **Since:** 2.2.0
 > **Scope:** All internal service result arrays in the `RiseupAsia` namespace.
 
 ---
@@ -22,18 +22,18 @@ Internal PHP service methods return structured arrays to communicate success/fai
 
 ## 2. ResultHelper — Factory Methods
 
-**Location:** `includes/Helpers/ResultHelper.php`  
+**Location:** `includes/Helpers/ResultHelper.php`
 **Namespace:** `RiseupAsia\Helpers`
 
 ### 2.1 Available Methods
 
-| Method                                                                      | Returns                                           | Use Case                      |
-| --------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------- |
-| `ResultHelper::ok(array $extra = [])`                                       | `{success: true, ...}`                            | Successful operation          |
-| `ResultHelper::failed(array $extra = [])`                                   | `{success: false, ...}`                           | Bare failure (no message)     |
-| `ResultHelper::error(string $msg, array $extra = [])`                       | `{success: false, error: $msg, ...}`              | Failure with message          |
+| Method | Returns | Use Case |
+|--------|---------|----------|
+| `ResultHelper::ok(array $extra = [])` | `{success: true, ...}` | Successful operation |
+| `ResultHelper::failed(array $extra = [])` | `{success: false, ...}` | Bare failure (no message) |
+| `ResultHelper::error(string $msg, array $extra = [])` | `{success: false, error: $msg, ...}` | Failure with message |
 | `ResultHelper::errorWithCode(string $msg, string $code, array $extra = [])` | `{success: false, error: $msg, code: $code, ...}` | Failure with message and code |
-| `ResultHelper::errorFromException(Throwable $e, array $extra = [])`         | `{success: false, error: $e->getMessage(), ...}`  | Failure from caught exception |
+| `ResultHelper::errorFromException(Throwable $e, array $extra = [])` | `{success: false, error: $e->getMessage(), ...}` | Failure from caught exception |
 
 ### 2.2 Usage Examples
 
@@ -89,21 +89,21 @@ return array(ResponseKeyType::Success->value => true, ResponseKeyType::Rows->val
 
 ## 3. ResponseKeyType — Zero Magic Strings
 
-**Location:** `includes/Enums/ResponseKeyType.php`  
+**Location:** `includes/Enums/ResponseKeyType.php`
 **Namespace:** `RiseupAsia\Enums`
 
 Every key in a service result array or structured response **must** use a `ResponseKeyType` case. No bare string keys are permitted in response arrays.
 
 ### 3.1 Key Categories
 
-| Category               | Cases                                                                                                                                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Envelope**           | `Success`, `Error`, `Message`, `Data`, `Code`, `Valid`, `Errors`, `Cached`, `Phase`, `Reason`                                                                       |
-| **Domain Collections** | `Total`, `Agents`, `Actions`, `Logs`, `Snapshots`, `Sql`, `Params`, `Sets`, `Plugins`, `Tables`                                                                     |
-| **Pagination**         | `Limit`, `Offset`                                                                                                                                                   |
-| **Domain Entities**    | `Posts`, `Categories`, `Category`, `Export`, `Incrementals`, `TotalSize`, `Applied`, `Folder`                                                                       |
-| **File/Size**          | `Rows`, `Bytes`, `Size`, `FileSize`, `Path`, `Filename`, `Checksum`, `Duration`, `Count`, `Files`, `Directory`, `Scope`, `Exported`, `Entry`, `Computed`, `Removed` |
-| **Snapshot Domain**    | `SnapshotId`, `Sequence`, `FolderName`, `TablesChanged`, `TotalRows`, `TotalNewRows`, `ZipSize`, `BackupId`, `ZipFailed`, `SkipAudit`, `TablesRestored`             |
+| Category | Cases |
+|----------|-------|
+| **Envelope** | `Success`, `Error`, `Message`, `Data`, `Code`, `Valid`, `Errors`, `Cached`, `Phase`, `Reason` |
+| **Domain Collections** | `Total`, `Agents`, `Actions`, `Logs`, `Snapshots`, `Sql`, `Params`, `Sets`, `Plugins`, `Tables` |
+| **Pagination** | `Limit`, `Offset` |
+| **Domain Entities** | `Posts`, `Categories`, `Category`, `Export`, `Incrementals`, `TotalSize`, `Applied`, `Folder` |
+| **File/Size** | `Rows`, `Bytes`, `Size`, `FileSize`, `Path`, `Filename`, `Checksum`, `Duration`, `Count`, `Files`, `Directory`, `Scope`, `Exported`, `Entry`, `Computed`, `Removed` |
+| **Snapshot Domain** | `SnapshotId`, `Sequence`, `FolderName`, `TablesChanged`, `TotalRows`, `TotalNewRows`, `ZipSize`, `BackupId`, `ZipFailed`, `SkipAudit`, `TablesRestored` |
 
 ### 3.2 When to Add a New Case
 
@@ -184,12 +184,12 @@ Per the namespace import integrity lesson, PHP traits do not inherit `use` impor
 
 ## 6. Decision Matrix: ResultHelper vs EnvelopeBuilder
 
-| Scenario                                                      | Use                                                       |
-| ------------------------------------------------------------- | --------------------------------------------------------- |
-| Internal service method returning success/failure to a caller | `ResultHelper`                                            |
-| REST endpoint building a full JSON response for the client    | `EnvelopeBuilder`                                         |
-| Admin AJAX handler returning via `wp_send_json_success/error` | `ResultHelper` for building the data array                |
-| Trait returning partial data to an orchestrating method       | `ResultHelper` or plain array with `ResponseKeyType` keys |
+| Scenario | Use |
+|----------|-----|
+| Internal service method returning success/failure to a caller | `ResultHelper` |
+| REST endpoint building a full JSON response for the client | `EnvelopeBuilder` |
+| Admin AJAX handler returning via `wp_send_json_success/error` | `ResultHelper` for building the data array |
+| Trait returning partial data to an orchestrating method | `ResultHelper` or plain array with `ResponseKeyType` keys |
 
 ---
 

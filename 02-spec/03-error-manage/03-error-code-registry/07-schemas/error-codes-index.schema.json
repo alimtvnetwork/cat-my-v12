@@ -76,7 +76,10 @@
     },
     "Stats": { "$ref": "#/definitions/Stats" }
   },
-  "oneOf": [{ "required": ["Range"] }, { "required": ["Ranges"] }],
+  "oneOf": [
+    { "required": ["Range"] },
+    { "required": ["Ranges"] }
+  ],
   "additionalProperties": false,
   "definitions": {
     "Range": {
@@ -128,25 +131,13 @@
         "Code": {
           "oneOf": [
             { "type": "integer", "minimum": 0, "description": "Integer error code" },
-            {
-              "type": "string",
-              "pattern": "^E[0-9]{4}$",
-              "description": "Prefixed code (e.g., E1001)"
-            }
+            { "type": "string", "pattern": "^E[0-9]{4}$", "description": "Prefixed code (e.g., E1001)" }
           ]
         },
         "LocalCode": {
           "oneOf": [
-            {
-              "type": "string",
-              "pattern": "^ERR_[0-9]{4}$",
-              "description": "Local PHP string code (e.g., ERR_1001)"
-            },
-            {
-              "type": "integer",
-              "minimum": 1000,
-              "description": "Local integer code (e.g., 1001 for Go CLI tools)"
-            }
+            { "type": "string", "pattern": "^ERR_[0-9]{4}$", "description": "Local PHP string code (e.g., ERR_1001)" },
+            { "type": "integer", "minimum": 1000, "description": "Local integer code (e.g., 1001 for Go CLI tools)" }
           ],
           "description": "Local code before ecosystem remapping"
         },
