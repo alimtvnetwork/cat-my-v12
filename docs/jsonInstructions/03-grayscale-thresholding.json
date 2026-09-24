@@ -1,0 +1,152 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "GrayscaleThresholding",
+    "payloadId": "Cmd20260921000903",
+    "correlationId": "Corr-20260921-DRI1000-0018501",
+    "timestamp": "2026-09-21T07:16:30.000Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "tracking": {
+      "sequenceId": 18501,
+      "stationId": "StationBeltMultiAngleInspection",
+      "batchId": "Lot202609A",
+      "encoderTick": 485100,
+      "carrierNestId": "NestRow04CarrierB",
+      "notes": "Configuring 2-bit grayscale quantization, white box thresholding (170 cutoff), and 31-box pattern matching geometry.",
+      "additionalInstruction": "Confirm SIMD AVX2 acceleration is active in vision host worker before loading lookup tables."
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "Algorithm configuration is purely software-based; hardware interlocks verified nominal.",
+      "additionalInstruction": "Maintain interlock monitoring in background during algorithm updates."
+    },
+    "notes": "Defines discrete quantization thresholds (0, 85, 170, 255) and 31-box constellation template rules.",
+    "additionalInstruction": "Ensure minimum white box area is calibrated against 0.025 mm/pixel spatial resolution."
+  },
+  "data": {
+    "executionPolicy": {
+      "executionMode": "AlgorithmKernelConfiguration",
+      "totalActions": 1,
+      "maxTimeoutMs": 50,
+      "isAbortOnFailureEnabled": true,
+      "notes": "Compiles lookup tables (LUT) directly into CPU cache of vision processing workers.",
+      "additionalInstruction": "Re-run pattern template self-test on test frame before certifying kernel ready."
+    },
+    "actions": [
+      {
+        "actionId": "Act01ConfigureGrayscaleEngine",
+        "actionSequence": 1,
+        "actionName": "GrayscaleKernelSetup",
+        "targetSubsystem": "VisionProcessingHostWorker",
+        "triggerMechanism": {
+          "interfaceType": "WorkerSharedMemoryConfigPipe",
+          "processId": "CatVisionWorker01",
+          "channelIdentifier": "PipeAlgorithmConfig01",
+          "signalType": "KernelLookupTableLoadPacket"
+        },
+        "parameters": {
+          "luminanceWeights": {
+            "red": 0.299,
+            "green": 0.587,
+            "blue": 0.114
+          },
+          "quantization": {
+            "mode": "TwoBitFixedBins",
+            "bitDepth": 2,
+            "totalLevels": 4,
+            "bins": [
+              {
+                "binIndex": 0,
+                "rawIntensityMin": 0,
+                "rawIntensityMax": 63,
+                "quantizedValue": 0,
+                "semantic": "DeepBlackVoid"
+              },
+              {
+                "binIndex": 1,
+                "rawIntensityMin": 64,
+                "rawIntensityMax": 127,
+                "quantizedValue": 85,
+                "semantic": "DarkGrayPackageSubstrate"
+              },
+              {
+                "binIndex": 2,
+                "rawIntensityMin": 128,
+                "rawIntensityMax": 191,
+                "quantizedValue": 170,
+                "semantic": "LightGrayWhiteMarkBorder"
+              },
+              {
+                "binIndex": 3,
+                "rawIntensityMin": 192,
+                "rawIntensityMax": 255,
+                "quantizedValue": 255,
+                "semantic": "SaturatedWhiteFiducial"
+              }
+            ]
+          },
+          "thresholding": {
+            "whiteBoxThresholdCutoff": 170,
+            "minMarkAreaPx": 12,
+            "maxMarkAreaPx": 450,
+            "isMorphologicalFilterEnabled": true,
+            "kernelSizePx": 3,
+            "notes": "Pixels with quantized value >= 170 are classified as white marking candidate regions."
+          },
+          "patternSearchConstellation": {
+            "patternName": "GreyscalePatternMatch31Box",
+            "totalExpectedBoxes": 31,
+            "templateDimensionsPx": {
+              "width": 260,
+              "height": 180
+            },
+            "crossCorrelationThreshold": 0.85,
+            "positionalToleranceMm": {
+              "deltaX": 0.05,
+              "deltaY": 0.05
+            },
+            "rotationalToleranceDeg": 1.5,
+            "criticalBoxesMandatory": [
+              1,
+              2,
+              3,
+              15,
+              16,
+              30,
+              31
+            ],
+            "defectClassification": {
+              "onCorrelationFailure": "DefGreyscalePatternMismatch",
+              "onMissingMandatoryBox": "DefMissingWhiteBoxMarking",
+              "onExcessNoiseBoxes": "DefExtraneousInkArtifact"
+            }
+          }
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "RevertToContinuousGrayFallback",
+          "errorCode": "E_GRAYSCALE_CONFIG_REJECTED"
+        },
+        "expectedOutcome": "VisionWorkerKernelLutUpdated",
+        "notes": "Loads 2-bit quantization and 31-box geometry into inspection worker ring buffers.",
+        "additionalInstruction": "Verify LUT table memory lock (mlock) to prevent page faults during realtime inspection."
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 30,
+      "notes": "Vision worker replies with compiled LUT hash and CPU cache verification flag.",
+      "additionalInstruction": "Flag error if worker fails to ack LUT compilation within 30ms."
+    }
+  }
+}
