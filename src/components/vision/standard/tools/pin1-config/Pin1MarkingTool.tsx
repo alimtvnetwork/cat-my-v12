@@ -11,12 +11,14 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const buttonLabel = props.actionButtonLabel ?? "Save as Pin 1 Rule";
 
+  const { source, loadSampleAtmel } = model;
+
   // Pre-load authentic Atmel MEGA32U4 chip sample if empty
   useEffect(() => {
-    if (!model.source) {
-      void model.loadSampleAtmel();
+    if (!source) {
+      void loadSampleAtmel();
     }
-  }, []);
+  }, [source, loadSampleAtmel]);
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-x-auto bg-std-chrome text-ca-ink font-sans select-none">

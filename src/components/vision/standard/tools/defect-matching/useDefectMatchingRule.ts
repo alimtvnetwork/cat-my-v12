@@ -14,6 +14,7 @@ import { evaluateDefectPixelsReal } from "./defect-detector";
 import type { DefectBoxItem, DefectMatchResult, DefectToolProps } from "./types";
 
 export function useDefectMatchingRule(props: DefectToolProps) {
+  const { onChange } = props;
   const settings = props.settings as any;
 
   const referenceBoxes = useMemo<DefectBoxItem[]>(() => {
@@ -118,7 +119,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
 
         if (result.hasDefect) {
           toast.error(
-            `Defect Detected: ${result.score}% match $\ge$ ${minMatchPercent}% threshold (REJECT)`,
+            `Defect Detected: ${result.score}% match >= ${minMatchPercent}% threshold (REJECT)`,
           );
         } else {
           toast.success(
@@ -159,7 +160,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
 
       if (result.hasDefect) {
         toast.error(
-          `Defect Detected: ${result.score}% match $\ge$ ${minMatchPercent}% threshold (REJECT)`,
+          `Defect Detected: ${result.score}% match >= ${minMatchPercent}% threshold (REJECT)`,
         );
       } else {
         toast.success(
@@ -174,7 +175,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
     (newRegion: SearchRegion | null) => {
       setSearchRegion(newRegion);
 
-      props.onChange((prev: any) => ({
+      onChange((prev: any) => ({
         ...prev,
         searchRegion: newRegion
           ? {
@@ -204,18 +205,18 @@ export function useDefectMatchingRule(props: DefectToolProps) {
         setMatchResult(result);
       }
     },
-    [source, referenceBoxes, greyscaleLevel, tolerancePx, minMatchPercent, props.onChange],
+    [source, referenceBoxes, greyscaleLevel, tolerancePx, minMatchPercent, onChange],
   );
 
   const clearCanvas = useCallback(() => {
     setSource(null);
     setSearchRegion(null);
     setMatchResult(null);
-    props.onChange((prev: any) => ({
+    onChange((prev: any) => ({
       ...prev,
       searchRegion: null,
     }));
-  }, [props.onChange]);
+  }, [onChange]);
 
   const runMatch = useCallback(() => {
     if (!source) {
@@ -249,7 +250,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
 
     if (result.hasDefect) {
       toast.error(
-        `Defect Detected: ${result.score}% match $\ge$ ${minMatchPercent}% threshold (REJECT)`,
+        `Defect Detected: ${result.score}% match >= ${minMatchPercent}% threshold (REJECT)`,
       );
     } else {
       toast.success(
@@ -263,7 +264,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
       const clamped = Math.max(1, Math.min(100, newVal));
       setMinMatchPercent(clamped);
 
-      props.onChange((prev: any) => ({
+      onChange((prev: any) => ({
         ...prev,
         minMatchPercent: clamped,
       }));
@@ -283,7 +284,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
         setMatchResult(result);
       }
     },
-    [source, searchRegion, referenceBoxes, greyscaleLevel, tolerancePx, props.onChange],
+    [source, searchRegion, referenceBoxes, greyscaleLevel, tolerancePx, onChange],
   );
 
   const changeTolerance = useCallback(
@@ -291,7 +292,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
       const clamped = Math.max(1, Math.min(30, newVal));
       setTolerancePx(clamped);
 
-      props.onChange((prev: any) => ({
+      onChange((prev: any) => ({
         ...prev,
         tolerancePx: clamped,
       }));
@@ -311,7 +312,7 @@ export function useDefectMatchingRule(props: DefectToolProps) {
         setMatchResult(result);
       }
     },
-    [source, searchRegion, referenceBoxes, greyscaleLevel, minMatchPercent, props.onChange],
+    [source, searchRegion, referenceBoxes, greyscaleLevel, minMatchPercent, onChange],
   );
 
   return {
