@@ -261,7 +261,20 @@ async def run_viewport(page, label: str, w: int, h: int) -> None:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     fixture = page.locator("#e2e-wrap-fixture")
     await expect(fixture).to_be_visible()
-    await fixture.screenshot(path=str(REPORT_DIR / f"fixture_{label}_{w}x{h}.png"))
+    await fixture.evaluate(
+        "el => el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' })"
+    )
+    try:
+        await fixture.screenshot(
+            path=str(REPORT_DIR / f"fixture_{label}_{w}x{h}.png"),
+            animations="disabled",
+            timeout=5000,
+        )
+    except Exception:
+        await page.screenshot(
+            path=str(REPORT_DIR / f"fixture_{label}_{w}x{h}.png"),
+            animations="disabled",
+        )
 
 
 async def run() -> None:
