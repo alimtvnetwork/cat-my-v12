@@ -108,7 +108,15 @@ export function StandardHomeView({
 
       // 1. Greyscale Pattern Matching (T116) - dedicated, strict matcher
       if (isGreyscaleTool) {
-        if (r.id === "rule-logo-match" || r.id === "rule-logo-presence") return false;
+        if (
+          r.id === "rule-logo-match" ||
+          r.id === "rule-logo-presence" ||
+          (r.conditions?.[0] as any)?.type === "defect_match" ||
+          (r.conditions?.[0] as any)?.toolType === "Defect Matching" ||
+          Boolean((r.conditions?.[0] as any)?.isDefectReject)
+        ) {
+          return false;
+        }
 
         const cond = r.conditions?.[0] as { toolType?: string; type?: string } | undefined;
 
@@ -120,6 +128,49 @@ export function StandardHomeView({
           r.id.startsWith("rule-greyscale-pattern-match-") ||
           r.name.startsWith("greyscale-pattern-match-") ||
           Boolean((cond as any)?.constellation)
+        );
+      }
+
+      const isPin1Tool = selectedTool.id === "tool-pin1-config";
+      if (isPin1Tool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "pin1_config" ||
+          cond?.toolType === "Pin 1 Orientation Config" ||
+          r.id.startsWith("rule-pin1-") ||
+          r.name.toLowerCase().includes("pin 1") ||
+          r.name.toLowerCase().includes("pin1") ||
+          Boolean(cond?.pin1Config)
+        );
+      }
+
+      const isDefectMatchingTool = selectedTool.id === "tool-defect-matching";
+      if (isDefectMatchingTool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "defect_match" ||
+          cond?.toolType === "Defect Matching" ||
+          cond?.toolType === "tool-defect-matching" ||
+          r.id.startsWith("rule-defect-match-") ||
+          r.name.startsWith("defect-match-") ||
+          r.name.toLowerCase().includes("defect match") ||
+          Boolean(cond?.isDefectReject)
+        );
+      }
+
+      const isSimulationTool = selectedTool.id === "tool-greyscale-simulation";
+      if (isSimulationTool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "greyscale_simulation" ||
+          cond?.toolType === "Greyscle simulation" ||
+          cond?.toolType === "tool-greyscale-simulation" ||
+          r.id.startsWith("rule-greyscale-simulation-") ||
+          r.name.toLowerCase().includes("greyscle simulation") ||
+          r.name.toLowerCase().includes("greyscale simulation")
         );
       }
 
@@ -165,57 +216,78 @@ export function StandardHomeView({
 
   // Automatically prune any legacy duplicate pattern rules from library
   React.useEffect(() => {
-    if (!selectedTool || selectedTool.id !== "tool-greyscale-pattern-matching" || !rules) return;
+    if (!selectedTool || !rules) return;
 
-    const patternRules = rules.filter((r) => {
-      const cond = r.conditions?.[0] as any;
+    if (selectedTool.id === "tool-greyscale-pattern-matching") {
+      const patternRules = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
 
-      return (
-        !r.isCategory &&
-        r.id !== "rule-logo-match" &&
-        r.id !== "rule-logo-presence" &&
-        (cond?.type === "pattern_match" ||
-          cond?.toolType === "Greyscale Pattern Matching" ||
-          r.id === "rule-greyscale-pattern-01" ||
-          r.id.startsWith("rule-greyscale-pattern-match-") ||
-          r.id.startsWith("rule-pattern-") ||
-          r.id.includes("greyscale-pattern"))
-      );
-    });
+        return (
+          !r.isCategory &&
+          r.id !== "rule-logo-match" &&
+          r.id !== "rule-logo-presence" &&
+          (cond?.type === "pattern_match" ||
+            cond?.toolType === "Greyscale Pattern Matching" ||
+            r.id === "rule-greyscale-pattern-01" ||
+            r.id.startsWith("rule-greyscale-pattern-match-") ||
+            r.id.startsWith("rule-pattern-") ||
+            r.id.includes("greyscale-pattern"))
+        );
+      });
 
-    // Automatically prune any stale or duplicate pattern rules lacking threshold or constellation
-    const staleOrDuplicate = rules.filter((r) => {
-      const cond = r.conditions?.[0] as any;
-      const isPattern =
-        !r.isCategory &&
-        r.id !== "rule-logo-match" &&
-        r.id !== "rule-logo-presence" &&
-        (cond?.type === "pattern_match" ||
-          cond?.toolType === "Greyscale Pattern Matching" ||
-          r.id === "rule-greyscale-pattern-01" ||
-          r.id.startsWith("rule-greyscale-pattern-match-") ||
-          r.id.startsWith("rule-pattern-") ||
-          r.id.includes("greyscale-pattern"));
+      // Automatically prune any stale or duplicate pattern rules lacking threshold or constellation
+      const staleOrDuplicate = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
+        const isPattern =
+          !r.isCategory &&
+          r.id !== "rule-logo-match" &&
+          r.id !== "rule-logo-presence" &&
+          (cond?.type === "pattern_match" ||
+            cond?.toolType === "Greyscale Pattern Matching" ||
+            r.id === "rule-greyscale-pattern-01" ||
+            r.id.startsWith("rule-greyscale-pattern-match-") ||
+            r.id.startsWith("rule-pattern-") ||
+            r.id.includes("greyscale-pattern"));
 
-      if (!isPattern) return false;
-      // Stale if missing threshold or missing constellation
-      const isMissingConfig = cond?.threshold === undefined || !Array.isArray(cond?.constellation);
-      return isMissingConfig;
-    });
+        if (!isPattern) return false;
+        // Stale if missing threshold or missing constellation
+        const isMissingConfig = cond?.threshold === undefined || !Array.isArray(cond?.constellation);
+        return isMissingConfig;
+      });
 
-    for (const stale of staleOrDuplicate) {
-      void remove(stale.id).catch(() => {});
+      for (const stale of staleOrDuplicate) {
+        void remove(stale.id).catch(() => {});
+      }
+
+      if (patternRules.length > 1) {
+        const canonical =
+          patternRules.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
+          patternRules.find((r) => r.id === "rule-greyscale-pattern-01") ??
+          patternRules[0];
+        const duplicates = patternRules.filter((r) => r.id !== canonical.id);
+
+        for (const dup of duplicates) {
+          void remove(dup.id).catch(() => {});
+        }
+      }
     }
 
-    if (patternRules.length > 1) {
-      const canonical =
-        patternRules.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
-        patternRules.find((r) => r.id === "rule-greyscale-pattern-01") ??
-        patternRules[0];
-      const duplicates = patternRules.filter((r) => r.id !== canonical.id);
+    if (selectedTool.id === "tool-pin1-config") {
+      const stalePin1 = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
+        const isPin1 =
+          !r.isCategory &&
+          (cond?.type === "pin1_config" ||
+            cond?.toolType === "Pin 1 Orientation Config" ||
+            r.id.includes("pin1"));
 
-      for (const dup of duplicates) {
-        void remove(dup.id).catch(() => {});
+        if (!isPin1) return false;
+
+        return !cond?.pin1Config?.registeredPin1;
+      });
+
+      for (const stale of stalePin1) {
+        void remove(stale.id).catch(() => {});
       }
     }
   }, [selectedTool, rules, remove]);
@@ -254,6 +326,12 @@ export function StandardHomeView({
         return;
       }
 
+      const isPin1Tool = tool.id === "tool-pin1-config";
+      if (isPin1Tool) {
+        void navigate({ to: "/setup/pin1" });
+        return;
+      }
+
       // 5. Otherwise create a new rule with this tool pre-configured
       try {
         const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
@@ -289,6 +367,21 @@ export function StandardHomeView({
 
   const handleCreateRuleWithTool = useCallback(
     async (tool: CatalogTool) => {
+      if (tool.id === "tool-greyscale-pattern-matching") {
+        void navigate({ to: "/setup/white-boxes" });
+        return;
+      }
+
+      if (tool.id === "tool-pin1-config") {
+        void navigate({ to: "/setup/pin1" });
+        return;
+      }
+
+      if (tool.id === "tool-defect-matching") {
+        void navigate({ to: "/setup/defect-matching" });
+        return;
+      }
+
       try {
         const count = connectedRules.length + 1;
         const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;

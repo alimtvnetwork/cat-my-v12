@@ -16,6 +16,9 @@ import { StandardIntensityTool } from "./StandardIntensityTool";
 import { StandardOcr2Tool } from "./StandardOcr2Tool";
 import { StandardCodeReaderTool } from "./StandardCodeReaderTool";
 import { StandardGreyscalePatternMatchingTool } from "./StandardGreyscalePatternMatchingTool";
+import { StandardGreyscaleSimulationTool } from "./StandardGreyscaleSimulationTool";
+import { StandardPin1ConfigTool } from "./StandardPin1ConfigTool";
+import { StandardDefectMatchingTool } from "./StandardDefectMatchingTool";
 
 
 export interface StandardInspectionToolDispatcherProps {
@@ -47,12 +50,39 @@ export function StandardInspectionToolDispatcher(
     ""
   ).toLowerCase();
 
+  const isDefectMatch =
+    normalized.includes("defect match") ||
+    normalized.includes("flaw match") ||
+    (props.settings as any)?.toolType === "Defect Matching" ||
+    (props.settings as any)?.type === "defect_match" ||
+    Boolean((props.settings as any)?.isDefectReject);
+
+  if (isDefectMatch) {
+    return <StandardDefectMatchingTool {...props} />;
+  }
+
+  const isGreyscaleSimulation =
+    normalized.includes("greyscle simulation") ||
+    normalized.includes("greyscale simulation") ||
+    normalized.includes("carrier tape") ||
+    normalized.includes("carrier-tape") ||
+    (props.settings as any)?.toolType === "Greyscle simulation" ||
+    (props.settings as any)?.type === "greyscale_simulation";
+
+  if (isGreyscaleSimulation) {
+    return <StandardGreyscaleSimulationTool {...props} />;
+  }
+
   const isGreyscalePattern =
     !normalized.includes("logo") &&
+    !normalized.includes("defect") &&
+    !normalized.includes("flaw") &&
+    !(props.settings as any)?.isDefectReject &&
     (normalized.includes("pattern match") ||
       normalized.includes("greyscale pattern") ||
       normalized.includes("grayscale pattern") ||
       normalized.includes("white box") ||
+      normalized.includes("24 box") ||
       normalized.includes("31 box") ||
       normalized.includes("2-bit") ||
       normalized.includes("light pattern") ||
@@ -61,6 +91,17 @@ export function StandardInspectionToolDispatcher(
 
   if (isGreyscalePattern) {
     return <StandardGreyscalePatternMatchingTool {...props} />;
+  }
+
+  const isPin1 =
+    normalized.includes("pin1") ||
+    normalized.includes("pin 1") ||
+    normalized.includes("pin-1") ||
+    (props.settings as any)?.type === "pin1_config" ||
+    Boolean((props.settings as any)?.pin1Config);
+
+  if (isPin1) {
+    return <StandardPin1ConfigTool {...props} />;
   }
 
   // 1. Area Tool

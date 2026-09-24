@@ -10,6 +10,7 @@ import {
   DraftOriginType,
 } from "./draftStore";
 import { useBackendMode } from "@/lib/backend/mode";
+import { HttpMethod } from "@/lib/constants";
 
 export interface SyncRuleToBackendParams {
   ruleId: string;
@@ -22,6 +23,7 @@ export interface SyncRuleToBackendParams {
   constellation?: unknown[];
   searchRegion?: unknown;
   patternBounds?: { x: number; y: number; width: number; height: number };
+  pin1Config?: unknown;
 }
 
 export async function syncRuleToBackend(
@@ -58,6 +60,7 @@ export async function syncRuleToBackend(
         TotalBoxCount: params.totalBoxCount ?? params.activeBoxCount ?? 31,
         Constellation: params.constellation ?? [],
         SearchRegion: params.searchRegion,
+        Pin1Config: params.pin1Config,
       },
     };
 
@@ -126,7 +129,7 @@ export async function syncRuleToBackend(
     };
 
     const putResp = await fetch(`${normalizedBase}/rules/${wirePayload.RuleSetId}`, {
-      method: "PUT",
+      method: HttpMethod.Put,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
