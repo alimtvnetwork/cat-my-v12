@@ -1,0 +1,228 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "InspectionResult",
+    "payloadId": "Act2026092100018501",
+    "correlationId": "Corr-20260921-DRI1000-0018501",
+    "timestamp": "2026-09-21T06:53:14.210Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "tracking": {
+      "sequenceId": 18501,
+      "stationId": "StationBeltRowInspection",
+      "encoderTick": 484200,
+      "beltSpeedMPerS": 0.45,
+      "notes": "Belt conveyor row inspection with 3 side-by-side devices captured at encoder position 484200.",
+      "additionalInstruction": "Track conveyor travel distance from tick 484200 to downstream reject station."
+    },
+    "opticalSetup": {
+      "notes": "Hardware GPIO strobe sync calibrated for 170-level white mark detection.",
+      "additionalInstruction": "Verify strobe driver voltage if ambient temperature drifts above 45C.",
+      "camera": {
+        "cameraId": "Cam01TopGige",
+        "model": "BaslerAcA1920",
+        "serialNumber": "24910842",
+        "triggerSource": "HardwareGpioLine1",
+        "triggerDelayUs": 25,
+        "exposureTimeUs": 800,
+        "gainDb": 4.5,
+        "pixelFormat": "Mono8",
+        "frameRateFps": 60.0,
+        "resolution": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "lighting": {
+        "controllerId": "LightCtrl01",
+        "controllerModel": "GardasoftCc320",
+        "mode": "StrobeSync",
+        "strobeDurationUs": 500,
+        "channels": [
+          {
+            "channelId": 1,
+            "name": "CoaxialTopWhite",
+            "intensityPercent": 75,
+            "pulseWidthUs": 500,
+            "isEnabled": true
+          },
+          {
+            "channelId": 2,
+            "name": "RingDarkfield45Deg",
+            "intensityPercent": 60,
+            "pulseWidthUs": 500,
+            "isEnabled": true
+          },
+          {
+            "channelId": 3,
+            "name": "BacklightDiffuse",
+            "intensityPercent": 0,
+            "pulseWidthUs": 0,
+            "isEnabled": false
+          }
+        ]
+      }
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "All safety interlocks clear during row capture.",
+      "additionalInstruction": "Ensure reject safety cage is secured downstream."
+    },
+    "notes": "Prerequisite environmental parameters, tracking coordinates, and optical setup for row inspection.",
+    "additionalInstruction": "Verify optical exposure calibration and encoder synchronization before evaluating device inspection data."
+  },
+  "data": {
+    "fastPlcInterface": {
+      "rejectMask": [0, 1, 0],
+      "passMask": [1, 0, 1],
+      "rejectSummaryHex": "0x02",
+      "nozzleEjectSignals": {
+        "isLane1LeftActive": false,
+        "isLane2CenterActive": true,
+        "isLane3RightActive": false
+      },
+      "notes": "Lane 2 solenoid must fire when Device 2 reaches pneumatic ejector sensor.",
+      "additionalInstruction": "Maintain lanes 1 and 3 solenoids off to allow good devices to pass to packing tray."
+    },
+    "marking": {
+      "isMarkingRequired": true,
+      "markType": "InkjetDot",
+      "referenceFrame": "ConveyorBeltOriginMm",
+      "notes": "Inkjet head 2 targeted on Center Device pattern defect zone.",
+      "additionalInstruction": "Fire a 0.5mm red dot on mark location before belt transfers unit to reject lane.",
+      "targets": [
+        {
+          "deviceIndex": 2,
+          "devicePosition": "Center",
+          "markCenterXmm": 150.0,
+          "markCenterYmm": 45.0,
+          "defectCode": "DefGreyscalePatternMismatch"
+        }
+      ]
+    },
+    "devices": [
+      {
+        "deviceIndex": 1,
+        "devicePosition": "Left",
+        "hasPassed": true,
+        "hasFailed": false,
+        "result": "Pass",
+        "handlerAction": "Keep",
+        "notes": "Device 1 passed all 31 pattern mark criteria with 100% score.",
+        "additionalInstruction": "Allow Device 1 to pass through to packing tray.",
+        "searchRegion": {
+          "regionId": "RegionDevice1",
+          "geometryPx": {
+            "x": 60,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 50.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "matchedBoxes": 31,
+          "expectedBoxes": 31,
+          "correlationScore": 0.992,
+          "whiteThresholdCutoff": 170,
+          "quantizationLevels": [0, 85, 170, 255]
+        }
+      },
+      {
+        "deviceIndex": 2,
+        "devicePosition": "Center",
+        "hasPassed": false,
+        "hasFailed": true,
+        "result": "Fail",
+        "handlerAction": "Reject",
+        "defectCategory": "PatternAnomaly",
+        "defectCode": "DefGreyscalePatternMismatch",
+        "notes": "Device 2 failed pattern match: box 16 missing white mark cutoff 170 (measured intensity 112).",
+        "additionalInstruction": "Divert Device 2 to pneumatic reject bin 2.",
+        "searchRegion": {
+          "regionId": "RegionDevice2",
+          "geometryPx": {
+            "x": 350,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 150.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "matchedBoxes": 30,
+          "expectedBoxes": 31,
+          "correlationScore": 0.624,
+          "whiteThresholdCutoff": 170,
+          "quantizationLevels": [0, 85, 170, 255],
+          "failedBoxes": [
+            {
+              "boxIndex": 16,
+              "expectedQuantizedLevel": 170,
+              "actualQuantizedLevel": 85,
+              "measuredLuminance": 112
+            }
+          ]
+        }
+      },
+      {
+        "deviceIndex": 3,
+        "devicePosition": "Right",
+        "hasPassed": true,
+        "hasFailed": false,
+        "result": "Pass",
+        "handlerAction": "Keep",
+        "notes": "Device 3 passed all 31 pattern mark criteria with 98.7% score.",
+        "additionalInstruction": "Allow Device 3 to pass through to packing tray.",
+        "searchRegion": {
+          "regionId": "RegionDevice3",
+          "geometryPx": {
+            "x": 640,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 250.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "matchedBoxes": 31,
+          "expectedBoxes": 31,
+          "correlationScore": 0.987,
+          "whiteThresholdCutoff": 170,
+          "quantizationLevels": [0, 85, 170, 255]
+        }
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 50,
+      "notes": "PLC confirms receipt of reject mask within 50ms to ensure timely solenoid trigger.",
+      "additionalInstruction": "If PLC does not ACK, raise immediate line stoppage alarm."
+    }
+  }
+}

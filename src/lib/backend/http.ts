@@ -34,15 +34,18 @@ export async function fetchBackend<T = unknown>(
 
   const correlationId = newCorrelationId();
   const headers = new Headers(init?.headers);
+
   if (!headers.has("X-Correlation-Id")) {
     headers.set("X-Correlation-Id", correlationId);
   }
+
   if (!headers.has("X-Request-Id")) {
     const requestId =
       globalThis.crypto?.randomUUID?.() ||
       `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     headers.set("X-Request-Id", requestId);
   }
+
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json");
   }
@@ -55,10 +58,12 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   let response: Response;
+
   try {
     response = await fetch(url, { ...init, headers });
   } catch (cause) {
@@ -70,11 +75,13 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   let data: unknown;
   const text = await response.text();
+
   if (text) {
     try {
       data = JSON.parse(text);
@@ -91,12 +98,14 @@ export async function fetchBackend<T = unknown>(
         method: init?.method || HttpMethod.Get,
         source: "http",
       });
+
       throw e;
     }
   }
 
   const envelopeParse = EnvelopeSchema.safeParse(data);
   let envelope: Envelope<T> | null = null;
+
   if (envelopeParse.success) {
     envelope = data as Envelope<T>;
   }
@@ -114,10 +123,12 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 
   const isFail = envelope.Status.IsFailed || response.ok === false;
+
   if (isFail === true) {
     const wireCode = envelope.Errors?.Code || "E_NET";
     const meta = lookupErrorCode(wireCode);
@@ -130,6 +141,7 @@ export async function fetchBackend<T = unknown>(
       method: init?.method || HttpMethod.Get,
       source: "http",
     });
+
     throw e;
   }
 

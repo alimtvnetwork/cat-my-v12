@@ -36,12 +36,56 @@ class RulesRepo(Protocol):
     def get_rule_set(self, rule_set_id: int) -> RuleSetEnvelope: ...
 
 
-class InMemoryRulesRepo:
-    """Deterministic in-memory adapter. Empty by default; seed via constructor."""
+import json
+import logging
 
-    def __init__(self, seed: Iterable[CatRule] | None = None) -> None:
+logger = logging.getLogger("BE.repos.rules_repo")
+
+
+class InMemoryRulesRepo:
+    """Deterministic in-memory adapter with optional SQLite rules.db persistence."""
+
+    def __init__(
+        self, seed: Iterable[CatRule] | None = None, *, persist_db: bool = False
+    ) -> None:
         self._by_id: dict[int, CatRule] = {r.id: r for r in (seed or ())}
         self._rule_sets: dict[int, RuleSetEnvelope] = {}
+        self._persist_db = persist_db
+        if self._persist_db:
+            self._load_persisted()
+
+    def _load_persisted(self) -> None:
+        try:
+            from BE.app.domain.rule_set import parse_envelope
+            from BE.db.connections import get_rules_conn
+
+            conn = get_rules_conn()
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS rule_sets (
+                    rule_set_id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    payload TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+                """
+            )
+            rows = conn.execute(
+                "SELECT rule_set_id, name, version, enabled, payload FROM rule_sets"
+            ).fetchall()
+            for r_id, r_name, r_ver, r_en, r_payload in rows:
+                try:
+                    env = parse_envelope(json.loads(r_payload))
+                    self._rule_sets[r_id] = env
+                    self._by_id[r_id] = CatRule(
+                        id=r_id, name=r_name, version=r_ver, enabled=bool(r_en)
+                    )
+                except Exception as row_exc:
+                    logger.warning(f"Could not parse persisted rule_set {r_id}: {row_exc}")
+        except Exception as exc:
+            logger.warning(f"Could not load persistent rule_sets from rules.db: {exc}")
 
     def list_rules(self) -> list[CatRule]:
         return sorted(self._by_id.values(), key=lambda r: r.id)
@@ -77,6 +121,51 @@ class InMemoryRulesRepo:
             ),
         )
         self._rule_sets[envelope.RuleSetId] = committed
+        self._by_id[envelope.RuleSetId] = CatRule(
+            id=envelope.RuleSetId,
+            name=envelope.Name,
+            version=new_version,
+            enabled=envelope.Enabled,
+        )
+        if self._persist_db:
+            try:
+                from BE.db.connections import get_rules_conn
+
+                conn = get_rules_conn()
+                conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS rule_sets (
+                        rule_set_id INTEGER PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        version INTEGER NOT NULL,
+                        enabled INTEGER NOT NULL DEFAULT 1,
+                        payload TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    INSERT INTO rule_sets (rule_set_id, name, version, enabled, payload, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(rule_set_id) DO UPDATE SET
+                        name=excluded.name,
+                        version=excluded.version,
+                        enabled=excluded.enabled,
+                        payload=excluded.payload,
+                        updated_at=excluded.updated_at
+                    """,
+                    (
+                        envelope.RuleSetId,
+                        envelope.Name,
+                        new_version,
+                        1 if envelope.Enabled else 0,
+                        json.dumps(committed.to_wire()),
+                        committed.DraftMeta.UpdatedAt,
+                    ),
+                )
+            except Exception as exc:
+                logger.warning(f"Could not persist rule_set to rules.db: {exc}")
         return committed
 
     def get_rule_set(self, rule_set_id: int) -> RuleSetEnvelope:
@@ -141,7 +230,7 @@ assert isinstance(VendorRulesRepo(), RulesRepo), "VendorRulesRepo drifted from R
 
 # ---- module-level accessor (test-swappable) --------------------------------
 
-_active: RulesRepo = InMemoryRulesRepo()
+_active: RulesRepo = InMemoryRulesRepo(persist_db=True)
 
 
 def get_rules_repo() -> RulesRepo:

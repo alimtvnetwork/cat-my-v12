@@ -50,18 +50,32 @@ function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
   });
 }
 
+export interface LoadRuleSetOptions {
+  suppressCapture?: boolean;
+}
+
 /**
  * GET the current server-committed envelope for `ruleSetId` and mirror it
  * into IndexedDB. Throws `LoadRuleSetError` on any failure.
  */
-export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
+export async function loadRuleSet(
+  ruleSetId: number,
+  opts: LoadRuleSetOptions = {},
+): Promise<RuleSetEnvelope> {
   const url = `/rules/${ruleSetId}/set`;
+
   try {
-    const resEnvelope = await beFetch<RuleSetEnvelope>(url, {
-      method: HttpMethod.Get,
-      headers: { Accept: "application/json" },
-    });
+    const resEnvelope = await beFetch<RuleSetEnvelope>(
+      url,
+      {
+        method: HttpMethod.Get,
+        headers: { Accept: "application/json" },
+      },
+      { suppressCapture: opts.suppressCapture ?? true },
+    );
+
     const committed = resEnvelope.Results[0];
+
     if (!committed) {
       throw new LoadRuleSetError({
         code: "E_BE_UNKNOWN",
@@ -73,6 +87,7 @@ export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
         envelope: resEnvelope,
       });
     }
+
     await putDraft({
       ...committed,
       DraftMeta: { ...committed.DraftMeta, Origin: DraftOriginType.Server },

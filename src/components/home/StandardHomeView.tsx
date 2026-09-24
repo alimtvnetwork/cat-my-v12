@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
+import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
 import {
   CatalogCategoryIdType,
   type CatalogTool,
@@ -55,7 +56,7 @@ export function StandardHomeView({
   recentProjects = [],
 }: StandardHomeViewProps): React.JSX.Element {
   const navigate = useNavigate();
-  const { rules, save } = useRulesLibrary();
+  const { rules, save, remove } = useRulesLibrary();
 
   const [activeCategory, setActiveCategory] = useState<CatalogCategoryIdType>(
     CatalogCategoryIdType.PresenceAbsence,
@@ -99,23 +100,99 @@ export function StandardHomeView({
   // Match rules from shared library to currently selected tool
   const connectedRules = useMemo(() => {
     if (!selectedTool || !rules) return [];
-    return rules.filter((r) => {
+
+    const isGreyscaleTool = selectedTool.id === "tool-greyscale-pattern-matching";
+
+    const matched = rules.filter((r) => {
       if (r.isCategory) return false;
 
-      // 1. Strict canonical match for rules with stored toolType
-      const cond = r.conditions?.[0] as { toolType?: string } | undefined;
-      if (cond && typeof cond.toolType === "string") {
-        return cond.toolType === selectedTool.name || cond.toolType === selectedTool.id;
+      // 1. Greyscale Pattern Matching (T116) - dedicated, strict matcher
+      if (isGreyscaleTool) {
+        if (
+          r.id === "rule-logo-match" ||
+          r.id === "rule-logo-presence" ||
+          (r.conditions?.[0] as any)?.type === "defect_match" ||
+          (r.conditions?.[0] as any)?.toolType === "Defect Matching" ||
+          Boolean((r.conditions?.[0] as any)?.isDefectReject)
+        ) {
+          return false;
+        }
+
+        const cond = r.conditions?.[0] as { toolType?: string; type?: string } | undefined;
+
+        return (
+          cond?.type === "pattern_match" ||
+          cond?.toolType === "Greyscale Pattern Matching" ||
+          cond?.toolType === "tool-greyscale-pattern-matching" ||
+          r.id === "rule-greyscale-pattern-01" ||
+          r.id.startsWith("rule-greyscale-pattern-match-") ||
+          r.name.startsWith("greyscale-pattern-match-") ||
+          Boolean((cond as any)?.constellation)
+        );
       }
 
-      // 2. Deterministic lookup for legacy/seed rules without conditions[0].toolType
+      const isPin1Tool = selectedTool.id === "tool-pin1-config";
+      if (isPin1Tool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "pin1_config" ||
+          cond?.toolType === "Pin 1 Orientation Config" ||
+          r.id.startsWith("rule-pin1-") ||
+          r.name.toLowerCase().includes("pin 1") ||
+          r.name.toLowerCase().includes("pin1") ||
+          Boolean(cond?.pin1Config)
+        );
+      }
+
+      const isDefectMatchingTool = selectedTool.id === "tool-defect-matching";
+      if (isDefectMatchingTool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "defect_match" ||
+          cond?.toolType === "Defect Matching" ||
+          cond?.toolType === "tool-defect-matching" ||
+          r.id.startsWith("rule-defect-match-") ||
+          r.name.startsWith("defect-match-") ||
+          r.name.toLowerCase().includes("defect match") ||
+          Boolean(cond?.isDefectReject)
+        );
+      }
+
+      const isSimulationTool = selectedTool.id === "tool-greyscale-simulation";
+      if (isSimulationTool) {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          cond?.type === "greyscale_simulation" ||
+          cond?.toolType === "Greyscle simulation" ||
+          cond?.toolType === "tool-greyscale-simulation" ||
+          r.id.startsWith("rule-greyscale-simulation-") ||
+          r.name.toLowerCase().includes("greyscle simulation") ||
+          r.name.toLowerCase().includes("greyscale simulation")
+        );
+      }
+
+      // 2. Strict canonical match for rules with stored toolType
+      const cond = r.conditions?.[0] as { toolType?: string; type?: string } | undefined;
+
+      if (cond && typeof cond.toolType === "string") {
+        if (cond.toolType === selectedTool.name || cond.toolType === selectedTool.id) {
+          return true;
+        }
+      }
+
+      // 3. Deterministic lookup for legacy/seed rules without conditions[0].toolType
       const legacyToolIds = LEGACY_RULE_TOOL_MAP[r.id];
+
       if (legacyToolIds && legacyToolIds.includes(selectedTool.id)) {
         return true;
       }
 
       if (r.categoryId) {
         const catToolIds = LEGACY_CATEGORY_TOOL_MAP[r.categoryId];
+
         if (catToolIds && catToolIds.includes(selectedTool.id)) {
           return true;
         }
@@ -123,7 +200,97 @@ export function StandardHomeView({
 
       return false;
     });
+
+    // For greyscale pattern matching, enforce strictly 1 canonical rule
+    if (isGreyscaleTool && matched.length > 1) {
+      const canonical =
+        matched.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
+        matched.find((r) => r.id === "rule-greyscale-pattern-01") ??
+        matched[0];
+
+      return [canonical];
+    }
+
+    return matched;
   }, [selectedTool, rules]);
+
+  // Automatically prune any legacy duplicate pattern rules from library
+  React.useEffect(() => {
+    if (!selectedTool || !rules) return;
+
+    if (selectedTool.id === "tool-greyscale-pattern-matching") {
+      const patternRules = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
+
+        return (
+          !r.isCategory &&
+          r.id !== "rule-logo-match" &&
+          r.id !== "rule-logo-presence" &&
+          (cond?.type === "pattern_match" ||
+            cond?.toolType === "Greyscale Pattern Matching" ||
+            r.id === "rule-greyscale-pattern-01" ||
+            r.id.startsWith("rule-greyscale-pattern-match-") ||
+            r.id.startsWith("rule-pattern-") ||
+            r.id.includes("greyscale-pattern"))
+        );
+      });
+
+      // Automatically prune any stale or duplicate pattern rules lacking threshold or constellation
+      const staleOrDuplicate = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
+        const isPattern =
+          !r.isCategory &&
+          r.id !== "rule-logo-match" &&
+          r.id !== "rule-logo-presence" &&
+          (cond?.type === "pattern_match" ||
+            cond?.toolType === "Greyscale Pattern Matching" ||
+            r.id === "rule-greyscale-pattern-01" ||
+            r.id.startsWith("rule-greyscale-pattern-match-") ||
+            r.id.startsWith("rule-pattern-") ||
+            r.id.includes("greyscale-pattern"));
+
+        if (!isPattern) return false;
+        // Stale if missing threshold or missing constellation
+        const isMissingConfig = cond?.threshold === undefined || !Array.isArray(cond?.constellation);
+        return isMissingConfig;
+      });
+
+      for (const stale of staleOrDuplicate) {
+        void remove(stale.id).catch(() => {});
+      }
+
+      if (patternRules.length > 1) {
+        const canonical =
+          patternRules.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
+          patternRules.find((r) => r.id === "rule-greyscale-pattern-01") ??
+          patternRules[0];
+        const duplicates = patternRules.filter((r) => r.id !== canonical.id);
+
+        for (const dup of duplicates) {
+          void remove(dup.id).catch(() => {});
+        }
+      }
+    }
+
+    if (selectedTool.id === "tool-pin1-config") {
+      const stalePin1 = rules.filter((r) => {
+        const cond = r.conditions?.[0] as any;
+        const isPin1 =
+          !r.isCategory &&
+          (cond?.type === "pin1_config" ||
+            cond?.toolType === "Pin 1 Orientation Config" ||
+            r.id.includes("pin1"));
+
+        if (!isPin1) return false;
+
+        return !cond?.pin1Config?.registeredPin1;
+      });
+
+      for (const stale of stalePin1) {
+        void remove(stale.id).catch(() => {});
+      }
+    }
+  }, [selectedTool, rules, remove]);
 
   const handleLaunchTool = useCallback(
     async (tool: CatalogTool, specificRuleId?: string) => {
@@ -152,20 +319,34 @@ export function StandardHomeView({
         return;
       }
 
-      // 4. Otherwise create a new rule with this tool pre-configured
+      // 4. For pattern tool without existing rule, open white-boxes tool directly
+      const isPatternTool = tool.id === "tool-greyscale-pattern-matching";
+      if (isPatternTool) {
+        void navigate({ to: "/setup/white-boxes" });
+        return;
+      }
+
+      const isPin1Tool = tool.id === "tool-pin1-config";
+      if (isPin1Tool) {
+        void navigate({ to: "/setup/pin1" });
+        return;
+      }
+
+      // 5. Otherwise create a new rule with this tool pre-configured
       try {
         const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
         const newRuleName = `${tool.name} 01`;
+
+        const conditionPayload = {
+          toolType: tool.name,
+        } as any;
+
         await save({
           id: newId as any,
           name: newRuleName,
           isCategory: false,
           appliesBefore: [],
-          conditions: [
-            {
-              toolType: tool.name,
-            } as any, // Standard mode demo pass-through
-          ],
+          conditions: [conditionPayload as any],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           notes: tool.shortDesc,
@@ -186,6 +367,21 @@ export function StandardHomeView({
 
   const handleCreateRuleWithTool = useCallback(
     async (tool: CatalogTool) => {
+      if (tool.id === "tool-greyscale-pattern-matching") {
+        void navigate({ to: "/setup/white-boxes" });
+        return;
+      }
+
+      if (tool.id === "tool-pin1-config") {
+        void navigate({ to: "/setup/pin1" });
+        return;
+      }
+
+      if (tool.id === "tool-defect-matching") {
+        void navigate({ to: "/setup/defect-matching" });
+        return;
+      }
+
       try {
         const count = connectedRules.length + 1;
         const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;

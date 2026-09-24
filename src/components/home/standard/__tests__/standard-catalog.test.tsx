@@ -145,6 +145,24 @@ describe("StandardToolGrid Component", () => {
     expect(tool?.displayCode).toBe("T116");
     expect(tool?.targetRoute).toBe("/setup/white-boxes");
   });
+  it("includes Greyscle simulation in Presence / Absence", () => {
+    const tools = getToolsForCategory(CatalogCategoryIdType.PresenceAbsence);
+    const tool = tools.find((item) => item.id === "tool-greyscale-simulation");
+
+    expect(tool).toBeDefined();
+    expect(tool?.name).toBe("Greyscle simulation");
+    expect(tool?.displayCode).toBe("T119");
+    expect(tool?.targetRoute).toBe("/setup/rules");
+  });
+
+  it("includes Defect Matching in Flaw Detection", () => {
+    const tools = getToolsForCategory(CatalogCategoryIdType.FlawDetection);
+    const tool = tools.find((item) => item.id === "tool-defect-matching");
+
+    expect(tool).toBeDefined();
+    expect(tool?.displayCode).toBe("T118");
+    expect(tool?.targetRoute).toBe("/setup/defect-matching");
+  });
 });
 
 describe("StandardToolDetailPanel Component", () => {

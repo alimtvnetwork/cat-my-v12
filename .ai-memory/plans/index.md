@@ -48,3 +48,4 @@ Registry of every plan in `.ai-memory/plans/pending/` and `.ai-memory/plans/comp
 - 92 - ci-cd-ts-remediation - completed - see `completed/92-ci-cd-ts-remediation.md`
 - 92 - code-quality-and-wrappers - completed - see `completed/92-code-quality-and-wrappers.md`
 - SS-29 - fixture-audit - completed - see `completed/SS-29-fixture-audit.md`
+- 03 - json-instructions-architecture - completed - see `completed/03-json-instructions-architecture.md`

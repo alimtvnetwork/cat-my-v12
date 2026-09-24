@@ -1,0 +1,135 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "LightingControl",
+    "payloadId": "Cmd20260921000902",
+    "correlationId": "Corr-20260921-DRI1000-0018501",
+    "timestamp": "2026-09-21T07:16:15.000Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "tracking": {
+      "sequenceId": 18501,
+      "stationId": "StationBeltMultiAngleInspection",
+      "batchId": "Lot202609A",
+      "encoderTick": 485100,
+      "carrierNestId": "NestRow04CarrierB",
+      "notes": "Multi-channel strobe illumination configuration for DRI1000 optical station.",
+      "additionalInstruction": "Verify total strobe thermal dissipation does not exceed 45W continuous equivalent."
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "Optical enclosure verified light-tight; personnel safe from high-intensity pulsed strobe flashes.",
+      "additionalInstruction": "Do not energize ultraviolet or overdrive channels if enclosure safety switch reports open."
+    },
+    "notes": "Programs Gardasoft CC320 4-channel controller for dual-channel overdrive darkfield and coaxial flash.",
+    "additionalInstruction": "Ensure pulse width does not exceed 500 microseconds under 300% overdrive."
+  },
+  "data": {
+    "executionPolicy": {
+      "executionMode": "SynchronousControllerProgram",
+      "totalActions": 1,
+      "maxTimeoutMs": 80,
+      "isAbortOnFailureEnabled": true,
+      "notes": "Transmits current profiles and pulse widths directly to controller internal EEPROM/RAM registers.",
+      "additionalInstruction": "If controller reports channel over-current warning, fall back to safe continuous mode."
+    },
+    "actions": [
+      {
+        "actionId": "Act01ProgramLightChannels",
+        "actionSequence": 1,
+        "actionName": "LightChannelProgram",
+        "targetSubsystem": "HighSpeedOverdriveStrobeController",
+        "triggerMechanism": {
+          "interfaceType": "EtherNetIpSerialBridge",
+          "controllerId": "LightCtrl01",
+          "controllerModel": "GardasoftCc320",
+          "ipAddress": "192.168.10.31",
+          "channelCount": 4
+        },
+        "parameters": {
+          "globalMode": "OverdriveStrobeSync",
+          "externalTriggerSource": "OptoIsolatedInput1",
+          "maxDutyCyclePercent": 5.0,
+          "overdriveMultiplier": 3.0,
+          "preTriggerLeadUs": 10,
+          "strobeDurationUs": 500,
+          "channels": [
+            {
+              "channelId": 1,
+              "name": "CoaxialTopWhite",
+              "wavelength": "White6500K",
+              "isEnabled": true,
+              "intensityPercent": 75,
+              "currentMa": 1800,
+              "pulseWidthUs": 500,
+              "pulseDelayUs": 0,
+              "notes": "Coaxial on-axis brightfield illumination for surface markings and lead coplanarity."
+            },
+            {
+              "channelId": 2,
+              "name": "RingDarkfield45Deg",
+              "wavelength": "RoyalBlue465nm",
+              "isEnabled": true,
+              "intensityPercent": 85,
+              "currentMa": 2400,
+              "pulseWidthUs": 500,
+              "pulseDelayUs": 5,
+              "notes": "Oblique darkfield ring illumination to emphasize white box perimeter and edge relief."
+            },
+            {
+              "channelId": 3,
+              "name": "BacklightDiffuse",
+              "wavelength": "Red630nm",
+              "isEnabled": false,
+              "intensityPercent": 0,
+              "currentMa": 0,
+              "pulseWidthUs": 0,
+              "pulseDelayUs": 0,
+              "notes": "Diffuse silhouette backlight for dimensional contour inspection (disabled for surface marking)."
+            },
+            {
+              "channelId": 4,
+              "name": "AngleZoneAuxiliary",
+              "wavelength": "Uv385nm",
+              "isEnabled": false,
+              "intensityPercent": 0,
+              "currentMa": 0,
+              "pulseWidthUs": 0,
+              "pulseDelayUs": 0,
+              "notes": "Fluorescent UV quadrant lighting reserved for conformal coating inspection."
+            }
+          ],
+          "thermalSupervision": {
+            "isThermalSensorActive": true,
+            "maxHeatsinkTempC": 65.0,
+            "tripAction": "ClampDutyCycleTo1Percent"
+          }
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "TripThermalOverdriveCutoff",
+          "backupChannelId": 1,
+          "errorCode": "E_LIGHT_OVERDRIVE_OVERCURRENT"
+        },
+        "expectedOutcome": "StrobeChannelsArmedAndReadyForTrigger",
+        "notes": "Arms channels 1 and 2 with synchronized 500us pulses triggered by Opto Input 1.",
+        "additionalInstruction": "Verify LED current loop feedback before asserting strobe ready bit."
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 40,
+      "notes": "Strobe controller replies with channel resistance and programmed voltage status.",
+      "additionalInstruction": "Abort sequence if controller reports open circuit on enabled channels."
+    }
+  }
+}

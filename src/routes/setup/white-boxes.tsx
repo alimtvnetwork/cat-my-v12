@@ -13,7 +13,7 @@ function WhiteBoxesScreen() {
       title="Greyscale Pattern Matching"
       subtitle="2-bit greyscale conversion with numbered pattern review"
     >
-      <WhiteBoxMarkingTool />
+      <WhiteBoxMarkingTool actionButtonLabel="Save Pattern" />
     </StandardAppShell>
   );
 }
