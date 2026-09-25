@@ -7,20 +7,6 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  vite: {
-    server: {
-      proxy: {
-        "/rules": {
-          target: "http://127.0.0.1:8787",
-          changeOrigin: true,
-        },
-        "/samples": {
-          target: "http://127.0.0.1:8787",
-          changeOrigin: true,
-        },
-      },
-    },
-  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
@@ -29,11 +15,30 @@ export default defineConfig({
   vite: {
     server: {
       proxy: {
-        "/camera": "http://127.0.0.1:8787",
-        "/score": "http://127.0.0.1:8787",
-        "/images": "http://127.0.0.1:8787",
-        "/rules": "http://127.0.0.1:8787",
-        "/samples": "http://127.0.0.1:8787",
+        "/camera": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
+        "/score": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
+        "/images": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
+        "/rules": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
+        "/samples": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
+        "/telemetry": {
+          target: "http://127.0.0.1:8787",
+          changeOrigin: true,
+        },
       },
     },
   },
