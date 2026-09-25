@@ -304,13 +304,11 @@ function RunPage() {
         .then((resp) => {
           const payload = resp.Results[0];
           const isOk = payload ? payload.is_pass : sample.isPass;
-          const score = payload ? payload.confidence : (isOk ? 92.5 : 12.5);
+          const score = payload ? payload.confidence : isOk ? 92.5 : 12.5;
           const tool = "Grayscale Match";
           const reason =
             payload?.reason ??
-            (isOk
-              ? "Inspection within tolerance (PASS)"
-              : "Defect detected (FAIL)");
+            (isOk ? "Inspection within tolerance (PASS)" : "Defect detected (FAIL)");
 
           const tick = useRunStore.getState().tick;
           tick(isOk ? "ok" : "ng", { tool, reason, score });

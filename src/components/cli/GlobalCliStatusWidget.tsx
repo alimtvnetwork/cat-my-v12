@@ -83,7 +83,7 @@ export function GlobalCliStatusWidget(): React.JSX.Element | null {
     queryKey: ["cli", "status"],
     queryFn: () => fetchStatus({ data: {} }),
     enabled: shouldFetch,
-    refetchInterval: (tabVisible && shouldFetch) ? pausePollOnError(POLL_INTERVAL_MS) : false,
+    refetchInterval: tabVisible && shouldFetch ? pausePollOnError(POLL_INTERVAL_MS) : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     throwOnError: false,

@@ -215,6 +215,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
     # Day 5/6: TaskDb durable persistence of inspection runs and verdict
     try:
         import json
+
         from BE.repos.sqlite_results_repo import SqliteResultsRepo
         repo = SqliteResultsRepo()
         run_id = f"01J{int(time.time() * 1000):012d}R1"

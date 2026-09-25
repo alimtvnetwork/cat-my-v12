@@ -16,7 +16,8 @@ export function ScoreResultBadge({ result, confidence }: Props): React.JSX.Eleme
         className="flex items-center justify-between px-4 py-2 bg-ca-panel-2 border-t border-ca-border text-xs"
       >
         <span className="font-medium text-ca-ink-muted">
-          Vision Status: <span className="text-ca-ink font-semibold">Ready</span> (Select a sample thumbnail below or click &quot;Evaluate Inspection&quot;)
+          Vision Status: <span className="text-ca-ink font-semibold">Ready</span> (Select a sample
+          thumbnail below or click &quot;Evaluate Inspection&quot;)
         </span>
         <span className="font-mono text-ca-ink-muted">No inspection run yet</span>
       </div>
@@ -38,12 +39,15 @@ export function ScoreResultBadge({ result, confidence }: Props): React.JSX.Eleme
             <span className="text-green-400 font-extrabold">PASS</span>
           ) : (
             <span className="text-red-500 font-extrabold">FAIL</span>
-          )}:
+          )}
+          :
         </span>
         <Badge
           variant="outline"
           className={`text-[13px] tabular-nums font-mono font-bold ${
-            isPassing ? "text-green-400 border-green-500/40 bg-green-950/20" : "text-red-400 border-red-500/40 bg-red-950/20"
+            isPassing
+              ? "text-green-400 border-green-500/40 bg-green-950/20"
+              : "text-red-400 border-red-500/40 bg-red-950/20"
           }`}
         >
           {displayConfidence.toFixed(1)}% Match
@@ -54,9 +58,7 @@ export function ScoreResultBadge({ result, confidence }: Props): React.JSX.Eleme
           {result.reason}
         </span>
       ) : result?.label ? (
-        <span className="text-xs font-mono text-ca-ink-muted">
-          Rule: {result.label}
-        </span>
+        <span className="text-xs font-mono text-ca-ink-muted">Rule: {result.label}</span>
       ) : null}
     </div>
   );

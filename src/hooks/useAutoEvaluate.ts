@@ -63,9 +63,12 @@ export function useAutoEvaluate(imageId: string | null, ruleType: string = "patt
 /**
  * Manually trigger a vision evaluation against /score.
  */
-export async function evaluateCurrentVision(ruleType: string = "grayscale_tolerance"): Promise<void> {
+export async function evaluateCurrentVision(
+  ruleType: string = "grayscale_tolerance",
+): Promise<void> {
   const { confidenceThreshold, segments, activeSegmentId } = useVisionStore.getState();
-  const activeSegment = segments.find((s) => s.visionSettings?.id === activeSegmentId) ?? segments[0];
+  const activeSegment =
+    segments.find((s) => s.visionSettings?.id === activeSegmentId) ?? segments[0];
   const roi = activeSegment?.visionSettings?.roi;
   const currentSample = getReferenceImage();
 

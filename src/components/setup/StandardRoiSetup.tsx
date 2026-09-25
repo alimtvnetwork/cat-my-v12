@@ -630,7 +630,10 @@ export function StandardRoiSetup(_props?: StandardRoiSetupProps): React.JSX.Elem
   );
 }
 
-export function resolveStandardRuleSetId(rulesetIdParam?: string, _projectIdParam?: string): number | null {
+export function resolveStandardRuleSetId(
+  rulesetIdParam?: string,
+  _projectIdParam?: string,
+): number | null {
   if (rulesetIdParam) {
     const num = Number(rulesetIdParam);
     if (!Number.isNaN(num)) return num;
@@ -643,4 +646,3 @@ export function findMatchingRuleItem(rules: any[], targetId?: string): any | und
   const numId = Number(targetId);
   return rules.find((r) => r.Id === numId || r.Params?._LegacyId === targetId);
 }
-

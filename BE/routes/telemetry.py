@@ -92,7 +92,7 @@ async def get_telemetry_summary(request: Request) -> JSONResponse:
     try:
         cur = conn.execute(
             """
-            SELECT 
+            SELECT
                 COUNT(*) as Total,
                 SUM(CASE WHEN LOWER(Verdict) = 'pass' THEN 1 ELSE 0 END) as PassCount,
                 SUM(CASE WHEN LOWER(Verdict) != 'pass' THEN 1 ELSE 0 END) as FailCount

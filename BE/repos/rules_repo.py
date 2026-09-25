@@ -232,9 +232,6 @@ assert isinstance(VendorRulesRepo(), RulesRepo), "VendorRulesRepo drifted from R
 
 from BE.repos.sqlite_rules_repo import SqliteRulesRepo
 
-
-
-
 assert isinstance(SqliteRulesRepo(), RulesRepo), "SqliteRulesRepo drifted from RulesRepo"
 _active: RulesRepo = SqliteRulesRepo()
 

@@ -380,10 +380,7 @@ def _measure_edge_width(
     col_sums = np.sum(edges > 0, axis=0)
     indices = np.where(col_sums > 0)[0]
 
-    if len(indices) >= 2:
-        width_px = float(indices[-1] - indices[0])
-    else:
-        width_px = float(image.shape[1])
+    width_px = float(indices[-1] - indices[0]) if len(indices) >= 2 else float(image.shape[1])
 
     delta_px = abs(width_px - expected_width_px)
     is_pass = delta_px <= tolerance_px
