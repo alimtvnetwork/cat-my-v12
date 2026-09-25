@@ -1,4 +1,4 @@
-﻿"""SQLite implementation of ResultsRepo for Day 1 MVP TaskDb persistence."""
+"""SQLite implementation of ResultsRepo for Day 1 MVP TaskDb persistence."""
 
 from __future__ import annotations
 
@@ -21,12 +21,29 @@ class SqliteResultsRepo:
         task_id: str | None = None,
         mode: str = "auto",
         verdict: str = "Pass",
+        image_file_path: str | None = None,
+        rule_count: int = 1,
+        active_count: int = 1,
+        pass_count: int = 0,
+        fail_count: int = 0,
     ) -> int:
         """Create a RunSession record. Returns RunSessionId."""
         try:
             cur = self.conn.execute(
-                "INSERT INTO RunSession (RunId, TaskId, Verdict, Mode) VALUES (?, ?, ?, ?)",
-                (run_id, task_id, verdict, mode),
+                "INSERT INTO RunSession ("
+                "RunId, TaskId, Verdict, Mode, ImageFilePath, RuleCount, ActiveCount, PassCount, FailCount"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    run_id,
+                    task_id,
+                    verdict,
+                    mode,
+                    image_file_path,
+                    rule_count,
+                    active_count,
+                    pass_count,
+                    fail_count,
+                ),
             )
             return cur.lastrowid
         except Exception as e:
@@ -149,4 +166,78 @@ class SqliteResultsRepo:
                 ErrorCode.E_BE_INTERNAL,
                 f"Failed to fetch results for run: {e}",
                 {"provider": "SqliteResultsRepo", "run_id": run_id},
+            ) from e
+
+    def save_result_detail(
+        self,
+        result_id: int,
+        rule_id: int = 1,
+        rule_name: str = "Inspection Rule",
+        is_passed: bool = True,
+        measured_value: float | None = None,
+        expected_min: float | None = None,
+        expected_max: float | None = None,
+        message: str | None = None,
+    ) -> int:
+        """Save a ResultDetail record. Returns ResultDetailId."""
+        try:
+            cur = self.conn.execute(
+                "INSERT INTO ResultDetail ("
+                "ResultId, RuleId, RuleName, IsPassed, MeasuredValue, ExpectedMin, ExpectedMax, Message"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    result_id,
+                    rule_id,
+                    rule_name,
+                    1 if is_passed else 0,
+                    measured_value,
+                    expected_min,
+                    expected_max,
+                    message,
+                ),
+            )
+            return cur.lastrowid
+        except Exception as e:
+            raise AppError(
+                ErrorCode.E_BE_INTERNAL,
+                f"Failed to save result detail: {e}",
+                {"provider": "SqliteResultsRepo", "result_id": result_id},
+            ) from e
+
+    def save_rule_result(
+        self,
+        run_session_id: int,
+        rule_id: str = "01JDEFAULT0000000000000001",
+        verdict: str = "Pass",
+        rule_kind: str = "GrayscaleTolerance",
+        order_index: int = 0,
+        reason_code: str | None = None,
+        reason_message: str | None = None,
+        elapsed_ms: float = 0.0,
+        metrics_json: str | None = None,
+    ) -> int:
+        """Save a RuleResult record. Returns RuleResultId."""
+        try:
+            cur = self.conn.execute(
+                "INSERT INTO RuleResult ("
+                "RunSessionId, RuleId, RuleKind, OrderIndex, Verdict, ReasonCode, ReasonMessage, ElapsedMs, MetricsJson"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    run_session_id,
+                    rule_id,
+                    rule_kind,
+                    order_index,
+                    verdict,
+                    reason_code,
+                    reason_message,
+                    elapsed_ms,
+                    metrics_json,
+                ),
+            )
+            return cur.lastrowid
+        except Exception as e:
+            raise AppError(
+                ErrorCode.E_BE_INTERNAL,
+                f"Failed to save rule result: {e}",
+                {"provider": "SqliteResultsRepo", "run_session_id": run_session_id},
             ) from e

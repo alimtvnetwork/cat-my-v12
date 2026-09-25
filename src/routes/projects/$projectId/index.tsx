@@ -26,6 +26,7 @@ import { ProjectEditorSections } from "@/components/projects/ProjectEditorSectio
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { runProject } from "@/lib/run-project.functions";
 import { useRunning } from "@/hooks/useRunning";
+import { evaluateCurrentVision } from "@/hooks/useAutoEvaluate";
 import {
   downloadProjectExport,
   downloadProjectExportYaml,
@@ -114,8 +115,16 @@ function ProjectOverview() {
       console.info("[projects/$projectId/index] run queued", res);
       setConfirmOpen(false);
     } catch (e) {
-      console.error("[projects/$projectId/index] run failed", e);
-      setRunErr(e instanceof Error ? e.message : String(e));
+      console.warn(
+        "[projects/$projectId/index] Cloud run unavailable, falling back to local vision evaluation",
+        e,
+      );
+      try {
+        await evaluateCurrentVision();
+        setConfirmOpen(false);
+      } catch (localErr) {
+        setRunErr(localErr instanceof Error ? localErr.message : String(localErr));
+      }
     } finally {
       stop(opId);
       setRunning(false);

@@ -14,6 +14,7 @@ export {
   setPersistRulesServerSide,
   usePersistRulesServerSide,
   PERSIST_RULES_STORAGE_KEY_EXPORT,
+  DataSourceType,
   type DataSource,
   type SetDataSourceOptions,
 } from "./store";

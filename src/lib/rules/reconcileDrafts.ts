@@ -69,7 +69,7 @@ export async function reconcileDrafts(
     let server: RuleSetEnvelope | null = null;
     let error: { Code: string; Message: string } | undefined;
     try {
-      server = await loadRuleSet(id);
+      server = await loadRuleSet(id, { suppressCapture: true });
     } catch (e) {
       if (isLoadRuleSetError(e)) {
         error = { Code: e.code, Message: e.backendMessage };

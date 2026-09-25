@@ -33,10 +33,12 @@ function TrialRunResults() {
     throw notFound();
   }
 
-  if (!ruleset || ruleset.projectId !== projectId) {
+  if (!ruleset || (project && ruleset.projectId !== project.id)) {
     console.warn("[trial-run/$runId] ruleset mismatch", {
       runId,
       projectId,
+      expectedProjectId: project?.id,
+      actualProjectId: ruleset?.projectId,
       rulesetId: run.rulesetId,
     });
 

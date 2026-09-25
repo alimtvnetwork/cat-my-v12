@@ -27,7 +27,7 @@ export async function fetchBackend<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<Envelope<T>> {
-  const { baseUrl } = useBackendMode.getState();
+  const baseUrl = useBackendMode.getState().baseUrl || "http://127.0.0.1:8787";
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;
@@ -65,11 +65,13 @@ export async function fetchBackend<T = unknown>(
     const errorMsg = cause instanceof Error ? cause.message : String(cause);
     const meta = lookupErrorCode("E_UNREACHABLE");
     const e = new BackendHttpError(meta.code, errorMsg, 0, correlationId);
-    showToastError(meta.label, e, {
-      endpoint: url,
-      method: init?.method || HttpMethod.Get,
-      source: "http",
-    });
+    if (!headers.has("X-Suppress-Toast")) {
+      showToastError(meta.label, e, {
+        endpoint: url,
+        method: init?.method || HttpMethod.Get,
+        source: "http",
+      });
+    }
     throw e;
   }
 

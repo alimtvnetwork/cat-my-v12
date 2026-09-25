@@ -3,6 +3,8 @@ import type { ReferenceImage } from "@/types/vision/ReferenceImage";
 import { getActiveProfile } from "@/lib/seed/active-profile";
 import { fetchBackend } from "@/lib/backend/http";
 import { HttpMethod } from "@/lib/constants";
+import { useBackendMode } from "@/lib/backend/mode";
+import { BackendModeType } from "@/lib/backend/BackendModeType";
 
 class MockVisionFacade implements VisionFacade {
   async captureImage(cameraId: string): Promise<ReferenceImage> {
@@ -56,11 +58,17 @@ class ApiVisionFacade implements VisionFacade {
   }
 
   async getCameraStatus(cameraId: string): Promise<CameraStatusResponse> {
-    const res = await fetchBackend<CameraStatusResponse>(`camera/status?cameraId=${cameraId}`);
-    if (!res.Results || res.Results.length === 0) {
-      throw new Error("No status returned");
+    try {
+      const res = await fetchBackend<CameraStatusResponse>(`camera/status?cameraId=${cameraId}`, {
+        headers: { "X-Suppress-Toast": "true" },
+      });
+      if (!res.Results || res.Results.length === 0) {
+        return { status: "disconnected", message: "No status returned" };
+      }
+      return res.Results[0];
+    } catch {
+      return { status: "disconnected", message: "Camera unreachable" };
     }
-    return res.Results[0];
   }
 
   async getReference(projectId: string): Promise<ReferenceImage | undefined> {
@@ -98,7 +106,9 @@ class ApiVisionFacade implements VisionFacade {
 export const visionFacade: VisionFacade = new Proxy({} as VisionFacade, {
   get(target, prop: keyof VisionFacade) {
     const profile = getActiveProfile();
-    const instance = profile ? new MockVisionFacade() : new ApiVisionFacade();
+    const mode = useBackendMode.getState().mode;
+    const isMock = profile !== null || mode === BackendModeType.Seed;
+    const instance = isMock ? new MockVisionFacade() : new ApiVisionFacade();
     return instance[prop];
   },
 });

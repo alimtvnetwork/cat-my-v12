@@ -6,6 +6,8 @@ import { useVisionStore } from "@/lib/vision/store";
 import { useCaptureImage } from "@/hooks/use-vision-api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { setReferenceImage } from "@/lib/stores/reference-image-store";
+import { addCaptureToHistory } from "@/lib/stores/capture-history-store";
 
 export function CaptureTriggerButton(): React.JSX.Element | null {
   const isCapturing = useVisionStore((s) => s.isCapturing);
@@ -17,8 +19,11 @@ export function CaptureTriggerButton(): React.JSX.Element | null {
     if (isCapturing) return;
     setIsCapturing(true);
     try {
-      await captureImage("default-camera");
-      // Handle success (e.g. save to store)
+      const img = await captureImage("default-camera");
+      if (img?.url) {
+        setReferenceImage(img.url);
+        addCaptureToHistory({ dataUrl: img.url });
+      }
     } catch (err: unknown) {
       showToastError("Capture Failed", err, { source: "CaptureTriggerButton" });
     } finally {

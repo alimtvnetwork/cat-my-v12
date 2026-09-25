@@ -12,4 +12,15 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      proxy: {
+        "/camera": "http://127.0.0.1:8787",
+        "/score": "http://127.0.0.1:8787",
+        "/images": "http://127.0.0.1:8787",
+        "/rules": "http://127.0.0.1:8787",
+        "/samples": "http://127.0.0.1:8787",
+      },
+    },
+  },
 });

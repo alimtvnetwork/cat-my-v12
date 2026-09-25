@@ -13,6 +13,8 @@ import {
 import type { CameraCapabilityError } from "@/lib/camera/capability";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { setReferenceImage } from "@/lib/stores/reference-image-store";
+import { evaluateCurrentVision } from "@/hooks/useAutoEvaluate";
 
 const MAX_SAMPLE_BYTES = 8 * 1024 * 1024; // 8 MB guard for base64 payloads.
 
@@ -376,8 +378,14 @@ export function ImageSamplesSection({ project }: { project: Project }): React.JS
           {all.map((s, i) => (
             <li
               key={s.id}
+              onClick={() => {
+                if (s.dataUrl) {
+                  setReferenceImage(s.dataUrl);
+                  void evaluateCurrentVision();
+                }
+              }}
               className={
-                "group relative flex flex-col overflow-hidden rounded-md border bg-ca-panel-2 transition hover:border-ca-select focus-within:border-ca-select outline-none focus-visible:ring-2 focus-visible:ring-ca-select " +
+                "group relative flex flex-col overflow-hidden rounded-md border bg-ca-panel-2 transition hover:border-ca-select focus-within:border-ca-select outline-none focus-visible:ring-2 focus-visible:ring-ca-select cursor-pointer " +
                 (dragId === s.id ? "border-ca-select opacity-60 " : "border-ca-border ") +
                 (dropIndex !== null &&
                 (dropIndex === i || (dropIndex === all.length && i === all.length - 1))
@@ -451,7 +459,10 @@ export function ImageSamplesSection({ project }: { project: Project }): React.JS
                     <button
                       type="button"
                       aria-label="Move sample up"
-                      onClick={() => void onMove(i, -1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onMove(i, -1);
+                      }}
                       disabled={i === 0}
                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-ca-border bg-ca-panel text-ca-ink transition hover:border-ca-select disabled:opacity-40"
                       data-testid="sample-move-up"
@@ -461,7 +472,10 @@ export function ImageSamplesSection({ project }: { project: Project }): React.JS
                     <button
                       type="button"
                       aria-label="Move sample down"
-                      onClick={() => void onMove(i, 1)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onMove(i, 1);
+                      }}
                       disabled={i === all.length - 1}
                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-ca-border bg-ca-panel text-ca-ink transition hover:border-ca-select disabled:opacity-40"
                       data-testid="sample-move-down"
@@ -473,7 +487,10 @@ export function ImageSamplesSection({ project }: { project: Project }): React.JS
                     <button
                       type="button"
                       aria-label="Rename sample"
-                      onClick={() => void onRename(s)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onRename(s);
+                      }}
                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-ca-border bg-ca-panel text-ca-ink transition hover:border-ca-select"
                     >
                       <Pencil aria-hidden size={12} />
@@ -481,7 +498,10 @@ export function ImageSamplesSection({ project }: { project: Project }): React.JS
                     <button
                       type="button"
                       aria-label="Delete sample"
-                      onClick={() => void onRemove(s)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onRemove(s);
+                      }}
                       className="inline-flex h-6 w-6 items-center justify-center rounded border border-ca-border bg-ca-panel text-ca-ng transition hover:border-ca-select"
                     >
                       <Trash2 aria-hidden size={12} />

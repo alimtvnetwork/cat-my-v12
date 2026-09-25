@@ -15,6 +15,11 @@
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 import { putDraft, DraftOriginType, type RuleSetEnvelope } from "./draftStore";
 import { HttpMethod } from "@/lib/constants";
+import { resolveBackendUrl } from "@/lib/data-source";
+
+export interface LoadRuleSetOptions {
+  suppressCapture?: boolean;
+}
 
 export class LoadRuleSetError extends EnvelopeError {
   get httpStatus(): number {
@@ -54,13 +59,20 @@ function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
  * GET the current server-committed envelope for `ruleSetId` and mirror it
  * into IndexedDB. Throws `LoadRuleSetError` on any failure.
  */
-export async function loadRuleSet(ruleSetId: number): Promise<RuleSetEnvelope> {
-  const url = `/rules/${ruleSetId}/set`;
+export async function loadRuleSet(
+  ruleSetId: number,
+  opts?: LoadRuleSetOptions,
+): Promise<RuleSetEnvelope> {
+  const url = resolveBackendUrl(`/rules/${ruleSetId}/set`);
   try {
-    const resEnvelope = await beFetch<RuleSetEnvelope>(url, {
-      method: HttpMethod.Get,
-      headers: { Accept: "application/json" },
-    });
+    const resEnvelope = await beFetch<RuleSetEnvelope>(
+      url,
+      {
+        method: HttpMethod.Get,
+        headers: { Accept: "application/json" },
+      },
+      { suppressCapture: opts?.suppressCapture ?? true },
+    );
     const committed = resEnvelope.Results[0];
     if (!committed) {
       throw new LoadRuleSetError({

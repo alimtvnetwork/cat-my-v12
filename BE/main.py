@@ -26,10 +26,15 @@ from BE.routes import cli_config as cli_config_route
 from BE.routes import cli_doctor as cli_doctor_route
 from BE.routes import cli_observability as cli_observability_route
 from BE.routes import health as health_route
+from BE.routes import camera as camera_route
+from BE.routes import images as images_route
 from BE.routes import meta as meta_route
 from BE.routes import rules as rules_route
 from BE.routes import samples as samples_route
+from BE.routes import score as score_route
+from BE.routes import seed as seed_route
 from BE.routes import system as system_route
+from BE.routes import telemetry as telemetry_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
@@ -76,8 +81,13 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(system_route.router)
     app.include_router(health_route.router)
     app.include_router(meta_route.router)
+    app.include_router(seed_route.router)
     app.include_router(rules_route.router)
     app.include_router(samples_route.router)
+    app.include_router(camera_route.router)
+    app.include_router(images_route.router)
+    app.include_router(score_route.router)
+    app.include_router(telemetry_route.router)
     app.include_router(observability_sessions_route.router)
     app.include_router(cli_observability_route.router)
     app.include_router(observability_logs_route.router)
