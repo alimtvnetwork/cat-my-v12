@@ -4,6 +4,7 @@ Read this file first when starting any task in this repo. It maps every folder a
 
 ## Changelog
 
+- 2026-09-24T12:40:00Z, Ingested full codebase memory, last 20 git commits, DRI1000 machine instruction protocol, and standard grayscale vision engine. Created 5 specialized Antigravity skills in .agents/skills/ (coding-guidelines-enforcer, standard-mode-grayscale-ui, vision-inspection-engine, dri1000-machine-protocol, fastapi-backend-and-runtime), and updated learned memory in .ai-memory/memory/learned/01-read-memory-enhanced.md.
 - 2026-09-17T14:00:00Z, Ingested full codebase memory, git history (last 10 commits), and authoring rules. Generated .agents/rules/coding-guidelines.md, auto-generated Antigravity skills in .agents/skills/, and persisted learned context in .ai-memory/memory/learned/01-read-memory-enhanced.md.
 - 2026-08-17T00:00:00Z, Added `.ai-memory/overview.md` (project overview + diagrams) and `.ai-memory/ai-improvement-guidelines.md` (codebase-derived AI quality guide). Both are now step 2–3 in Read First.
 - 2026-08-16T01:43:26Z, Plan 98: Added Architecture state section (1b) with links to runtime map, facade policy, and implementation status.
