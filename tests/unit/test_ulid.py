@@ -1,4 +1,4 @@
-"""ULID validator contract (spec/21-app/20)."""
+"""ULID validator contract (02-spec/21-app/20)."""
 from __future__ import annotations
 
 import pytest

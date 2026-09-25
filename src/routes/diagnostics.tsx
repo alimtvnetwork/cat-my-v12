@@ -64,7 +64,7 @@ function DiagnosticsPage() {
       <SeedGapCheckSection />
       <Section title={`Memory files (${r.memoryFiles.length})`}>
         {r.memoryFiles.length === 0 ? (
-          <Empty label="No memory files loaded. Check .lovable/memory/*.md exists and Vite root includes it." />
+          <Empty label="No memory files loaded. Check .ai-memory/memory/*.md exists and Vite root includes it." />
         ) : (
           <ul className="grid gap-hmi-1">
             {r.memoryFiles.map((f) => (
@@ -82,11 +82,11 @@ function DiagnosticsPage() {
       <Section title={`Pending plans (${r.pendingPlanIds.length})`}>
         <IdList
           ids={r.pendingPlanIds}
-          empty="No pending plans found under .lovable/plans/pending/."
+          empty="No pending plans found under .ai-memory/plans/pending/."
         />
       </Section>
       <Section title={`Done plans (${r.donePlanIds.length})`}>
-        <IdList ids={r.donePlanIds} empty="No completed plans found under .lovable/plans/done/." />
+        <IdList ids={r.donePlanIds} empty="No completed plans found under .ai-memory/plans/done/." />
       </Section>
       <Section title={`Spec source (${r.specOverviewPaths.length} 00-overview.md files)`}>
         <IdList

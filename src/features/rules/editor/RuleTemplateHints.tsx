@@ -10,7 +10,7 @@
 // This is a hints surface (read-only): applying a template is a
 // separate action landed in step 17 alongside the sample-tile refactor.
 // Explicit "no data" and "load failure" states keep the panel honest
-// per spec/03-error-manage — silent empty states are not acceptable.
+// per 02-spec/03-error-manage — silent empty states are not acceptable.
 import { useMemo } from "react";
 import { SeedSlot } from "@/lib/seed";
 import type { CatSeedRuleKind, CatSeedRuleTemplate } from "@/lib/seed/types";

@@ -3,7 +3,7 @@
 -- Anchors:
 --   * spec/21-app/76-cli-log-and-ipc.md §"Database ownership" (Root DB
 --     owns `devices`; DDL table is singular `Device` per
---     .lovable/memory/26-split-db-cli-cheatsheet.md §9).
+--     .ai-memory/memory/26-split-db-cli-cheatsheet.md §9).
 --   * spec/21-app/73-daheng-galaxy-sdk-integration.md §"Device identity"
 --     (`Serial` is the stable natural key across reconnects; `Model` and
 --     `Vendor` are populated from `list_devices()`).

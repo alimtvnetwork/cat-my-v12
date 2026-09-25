@@ -1,6 +1,6 @@
 """Tests for `BE.cli.common.exit_codes.ExitCode`.
 
-Locks the contract from `spec/21-app/74-worker-cli.md` §Acceptance #6
+Locks the contract from `02-spec/21-app/74-worker-cli.md` §Acceptance #6
 so a silent renumber or accidental value drift fails CI before it can
 break PowerShell wrappers (memory §12) or downstream dispatchers.
 """
@@ -15,7 +15,7 @@ from BE.cli.common.exit_codes import ExitCode
 
 
 def test_canonical_values_match_spec_74_acceptance_6() -> None:
-    # spec/21-app/74-worker-cli.md §Acceptance #6 pins these five.
+    # 02-spec/21-app/74-worker-cli.md §Acceptance #6 pins these five.
     assert ExitCode.Ok == 0
     assert ExitCode.Usage == 2
     assert ExitCode.DomainError == 3
@@ -35,7 +35,7 @@ def test_no_success_alias_reserved_1() -> None:
 
 
 def test_no_overlap_with_powershell_wrapper_range() -> None:
-    # spec/11-powershell-integration/04-error-codes.md reserves
+    # 02-spec/11-powershell-integration/04-error-codes.md reserves
     # 9500-9599 for the wrapper layer.
     for e in ExitCode:
         assert not (9500 <= int(e) <= 9599), e

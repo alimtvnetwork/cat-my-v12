@@ -1,12 +1,12 @@
 """Plan 90 Step 19 - generic CLI dispatcher.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (exactly one
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Stdout contract" (exactly one
   Universal Envelope JSON on stdout per invocation; human line -> stderr).
-- `spec/21-app/74-worker-cli.md` §Acceptance #6 (exit-code table).
-- `spec/03-error-manage/02-error-architecture/05-response-envelope/`
+- `02-spec/21-app/74-worker-cli.md` §Acceptance #6 (exit-code table).
+- `02-spec/03-error-manage/02-error-architecture/05-response-envelope/`
   (Envelope shape via `BE/envelope.py`).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §11 (single `run()`
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §11 (single `run()`
   entrypoint, argparse, stdout reserved for envelope).
 
 Contract:
@@ -87,7 +87,7 @@ class Dispatcher:
 
     def _build_parser(self) -> _EnvelopeArgumentParser:
         parser = _EnvelopeArgumentParser(prog=self.prog, description=self.description)
-        # Global flags per spec/13-generic-cli/16 + memory §11. Registered on
+        # Global flags per 02-spec/13-generic-cli/16 + memory §11. Registered on
         # both the root parser AND every subparser (via `parents=[global_parser]`)
         # so `worker-cli --verbose probe` AND `worker-cli probe --verbose` both
         # parse identically. `--verbose` -> `<APP_LOG_ROOT>/verbose/<cli>-verbose-<ts>.log`
@@ -151,7 +151,7 @@ class Dispatcher:
         err = stderr if stderr is not None else sys.stderr
         requested_at = _now_iso()
 
-        # 0) Help interceptor (spec/13-generic-cli/09-help-system.md).
+        # 0) Help interceptor (02-spec/13-generic-cli/09-help-system.md).
         help_result = self._try_intercept_help(argv, out, err, requested_at)
         if help_result is not None:
             return help_result
@@ -177,7 +177,7 @@ class Dispatcher:
         verbose_flag = bool(getattr(ns, "verbose", False))
         entry = self.subcommands[ns.subcmd]
 
-        # Verbose init per spec/13-generic-cli/16 - non-fatal on failure.
+        # Verbose init per 02-spec/13-generic-cli/16 - non-fatal on failure.
         if verbose_flag:
             try:
                 from BE.cli.common import verbose as _verbose

@@ -5,7 +5,7 @@
  * log root / DB tiers) plus BE-provided remediation copy for any
  * unhealthy probe. Mounted into `/cli/settings`.
  *
- * Rendering rules per spec/03-error-manage/ §honesty:
+ * Rendering rules per 02-spec/03-error-manage/ §honesty:
  * - overall banner is emerald only when ALL probes report healthy;
  *   any single unhealthy probe flips the banner to destructive.
  * - each probe row surfaces `Detail` verbatim (never truncated) so an
@@ -53,7 +53,7 @@ export function DoctorPanel(): React.JSX.Element | null {
 
   // Run once on mount so the panel is not blank on first paint. Explicit
   // (not `useQuery`) so the operator sees a "Run diagnostics" button that
-  // matches the destructive-nature of the POST verb per spec/03-error-manage.
+  // matches the destructive-nature of the POST verb per 02-spec/03-error-manage.
   useEffect(() => {
     const isReportLoaded = report !== null && report !== undefined;
     const isErrorPresent = error !== null;

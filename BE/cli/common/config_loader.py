@@ -1,13 +1,13 @@
 """Plan 90 Step 12 - unified config loader for worker + processing CLIs.
 
-Layer order (increasing precedence), locked in `.lovable/memory/26-split-db-cli-cheatsheet.md` §8:
+Layer order (increasing precedence), locked in `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §8:
 
     defaults -> repo `config/*.toml` -> `<APP_CONFIG_ROOT>/*.toml` -> env vars -> CLI flags
 
 Anchors:
-- `spec/06-seedable-config-architecture/{00,01,02}` (persistence + versioning).
-- `spec/21-app/76-cli-log-and-ipc.md` §"Seedable config" (runtime overlay).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §8.
+- `02-spec/06-seedable-config-architecture/{00,01,02}` (persistence + versioning).
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Seedable config" (runtime overlay).
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §8.
 
 This module is deliberately narrow. It does NOT touch the Root DB seed table
 (that arrives at Step 33). It exposes the runtime-overlay resolution only, so

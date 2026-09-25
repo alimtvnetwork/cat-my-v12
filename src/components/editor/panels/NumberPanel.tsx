@@ -1,5 +1,5 @@
 // NumberPanel, Plan 31 step 13.
-// Spec: spec/24-app-ui-design-system/05-rule-controller.md L44 (min/max/unit).
+// Spec: 02-spec/24-app-ui-design-system/05-rule-controller.md L44 (min/max/unit).
 // Contract: matches ParamsNumber from src/lib/editor/schema.ts.
 
 import { useId } from "react";

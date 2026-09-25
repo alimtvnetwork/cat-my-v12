@@ -21,8 +21,8 @@ Root anchors:
 - `BE/cli/common/dispatcher.py::Dispatcher.run` (stdout / stderr / exit contract)
 - `BE/cli/common/logger.py::_build_log_path` (log path format)
 - `BE/cli/common/paths.py::resolve_root` (APP_LOG_ROOT resolution)
-- `spec/21-app/76-cli-log-and-ipc.md` §Stdout contract
-- `spec/21-app/74-worker-cli.md` §Acceptance #6 (exit-code table)
+- `02-spec/21-app/76-cli-log-and-ipc.md` §Stdout contract
+- `02-spec/21-app/74-worker-cli.md` §Acceptance #6 (exit-code table)
 """
 
 from __future__ import annotations

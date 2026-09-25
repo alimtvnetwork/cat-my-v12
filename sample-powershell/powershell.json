@@ -1,5 +1,5 @@
 {
-  "$schema": "./spec/powershell-integration/schemas/powershell.schema.json",
+  "$schema": "./02-spec/powershell-integration/schemas/powershell.schema.json",
   "version": "2.14.0",
   "projectName": "WP Plugin Publish",
   "rootDir": ".",

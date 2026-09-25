@@ -3,9 +3,9 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // N hours of denial-related audit rows.
 //
 // Anchored by:
-// - spec/21-app/40-error-manage.md A.1 (Security codes)
-// - spec/21-app/69a-v2-denial-tuning-evidence.md (tuning_version=plan-29-v1)
-// - Plan file: .lovable/plans/pending/48-plan33-server-fn-and-percentiles.md
+// - 02-spec/21-app/40-error-manage.md A.1 (Security codes)
+// - 02-spec/21-app/69a-v2-denial-tuning-evidence.md (tuning_version=plan-29-v1)
+// - Plan file: .ai-memory/plans/pending/48-plan33-server-fn-and-percentiles.md
 //
 // RLS + auth model:
 // - `.middleware([requireSupabaseAuth])` gives us `context.supabase` scoped to
@@ -19,7 +19,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 //   NOT call `has_role()` because that function's EXECUTE grant to
 //   `authenticated` was revoked in migration 20260713153814 and only
 //   `service_role` can invoke it. Fixing that grant is out-of-scope for this
-//   slice; documented in `.lovable/memory/v2/plan29/30-derivation-inputs.md`.
+//   slice; documented in `.ai-memory/memory/v2/plan29/30-derivation-inputs.md`.
 
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";

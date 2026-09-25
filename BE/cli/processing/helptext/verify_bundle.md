@@ -25,7 +25,7 @@ rules-editor can render one actionable list.
 - `rule.status` (default `Active`) must be one of `Active|Inactive|Silent`
   (spec 33 §3a).
 - `rule.params.acceptanceConditions` (when present) must parse per
-  `spec/21-app/60-rule-acceptance-contract.md` §Condition shape:
+  `02-spec/21-app/60-rule-acceptance-contract.md` §Condition shape:
   a JSON string decoding to an array of `{presence,targetColor,similarityPct}`.
 
 ## Exit
@@ -35,6 +35,6 @@ InactiveCount, SilentCount, Kinds}` on success.
 - Non-zero with `E_RULE_BUNDLE_INVALID` and `Errors.Details.Problems[]` on
   any violation. Every problem carries `{At, Code, Message, Details?}`.
 
-Anchors: `spec/21-app/75-processing-cli.md` §Acceptance #4,
-`spec/21-app/33-rule-catalog.md` §3 + §3a,
-`spec/21-app/60-rule-acceptance-contract.md`.
+Anchors: `02-spec/21-app/75-processing-cli.md` §Acceptance #4,
+`02-spec/21-app/33-rule-catalog.md` §3 + §3a,
+`02-spec/21-app/60-rule-acceptance-contract.md`.

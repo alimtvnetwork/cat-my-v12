@@ -1,7 +1,7 @@
 """Pure ROI reader for the rule kernel (Plan 90 Step 82).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3 (bound regions),
-`spec/21-app/47-rule-condition-model.md` (XyBox shape).
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3 (bound regions),
+`02-spec/21-app/47-rule-condition-model.md` (XyBox shape).
 
 Responsibility: given a numpy frame injected via `RuleContext.metadata["Frame"]`
 and a rule with `params.SearchRegion.XyBox = {X, Y, W, H}`, return the sliced

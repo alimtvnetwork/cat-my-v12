@@ -110,6 +110,6 @@ export function requestAppFullscreen(): void {
 }
 
 export function openHelpDocs(): void {
-  window.open("https://docs.lovable.dev/", "_blank", "noopener,noreferrer");
+  window.open("https://docs.ai-memory.dev/", "_blank", "noopener,noreferrer");
   ClientLogger.info("[top-menu] help docs opened");
 }

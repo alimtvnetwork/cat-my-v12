@@ -1,6 +1,6 @@
 """Basler Pylon adapter behind `VendorDeviceIO`.
 
-Anchor: spec/21-app/63-v2-vendor-pylon.md. Vendor SDK (`pypylon`) is imported
+Anchor: 02-spec/21-app/63-v2-vendor-pylon.md. Vendor SDK (`pypylon`) is imported
 lazily inside the factory so unit tests stay hermetic; a `camera_factory`
 override lets tests inject a fake InstantCamera-shaped object without
 touching the real SDK.
@@ -83,7 +83,7 @@ def _grab(cam: Any, deadline_ms: int) -> bytes:
     """Software-trigger + retrieve. Raises vendor exceptions unchanged;
     `VendorDeviceIO` translates them via the injected predicates.
 
-    Buffer ownership (spec/21-app/68): copy the SDK-owned bytes BEFORE
+    Buffer ownership (02-spec/21-app/68): copy the SDK-owned bytes BEFORE
     releasing the grab result so no vendor-thread reference escapes.
     Any failed / empty / None result raises a retryable exception rather
     than returning a stale or partial frame.

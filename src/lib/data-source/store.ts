@@ -3,9 +3,10 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // writes short-circuited) and "backend" (live remote reads + real
 // mutating HTTP calls). Persisted per-browser in localStorage.
 //
-// Observability: every set is logged (spec/03-error-manage §3).
+// Observability: every set is logged (02-spec/03-error-manage §3).
 
 import { useSyncExternalStore } from "react";
+import { useBackendMode } from "@/lib/backend/mode";
 
 export enum DataSourceType {
   Seed = "seed",
@@ -54,8 +55,19 @@ function readInitialBaseUrl(): string {
   if (typeof window === "undefined") return DEFAULT_BACKEND_BASE_URL;
   try {
     const raw = window.localStorage.getItem(BASE_URL_STORAGE_KEY);
+    const normalized = normalizeBaseUrl(raw);
 
-    return normalizeBaseUrl(raw) || DEFAULT_BACKEND_BASE_URL;
+    if (
+      normalized === "http://localhost:8000" ||
+      normalized === "http://localhost:8080" ||
+      normalized === "http://127.0.0.1:8080"
+    ) {
+      window.localStorage.setItem(BASE_URL_STORAGE_KEY, "http://localhost:8787");
+
+      return "http://localhost:8787";
+    }
+
+    return normalized || DEFAULT_BACKEND_BASE_URL;
   } catch {
     return DEFAULT_BACKEND_BASE_URL;
   }
@@ -161,6 +173,12 @@ export function setBackendBaseUrl(next: string, opts: { reason?: string } = {}):
       if (normalized) window.localStorage.setItem(BASE_URL_STORAGE_KEY, normalized);
       else window.localStorage.removeItem(BASE_URL_STORAGE_KEY);
     }
+  } catch {
+    // ignore
+  }
+
+  try {
+    useBackendMode.getState().setBaseUrl(normalized || "http://localhost:8787");
   } catch {
     // ignore
   }

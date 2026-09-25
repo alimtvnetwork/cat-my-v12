@@ -1,6 +1,6 @@
 """Plan 90 Step 104 - Top-level installer action planner.
 
-Owning spec: ``spec/21-app/79-installer-retention-timing.md`` §"Orchestrator"
+Owning spec: ``02-spec/21-app/79-installer-retention-timing.md`` §"Orchestrator"
 (new subsection added in this step).
 
 Root cause guarded (one sentence): Step 103 shipped the retention registrar
@@ -21,10 +21,10 @@ and ``install.sh``) must execute. Keeping the plan pure means:
   scripts.
 
 Anchors:
-- ``spec/21-app/77-cli-powershell-and-release.md`` §"PowerShell installer"
-- ``spec/21-app/79-installer-retention-timing.md``
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §12 (wrapper exit codes)
-- ``spec/coding-guidelines/python.md`` (typed boundaries, PascalCase codes)
+- ``02-spec/21-app/77-cli-powershell-and-release.md`` §"PowerShell installer"
+- ``02-spec/21-app/79-installer-retention-timing.md``
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §12 (wrapper exit codes)
+- ``02-spec/coding-guidelines/python.md`` (typed boundaries, PascalCase codes)
 """
 
 from __future__ import annotations

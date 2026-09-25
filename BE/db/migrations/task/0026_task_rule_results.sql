@@ -9,7 +9,7 @@
 --   * spec/04-database-conventions/01-naming-conventions.md (singular
 --     PascalCase; `<Table>Id INTEGER PRIMARY KEY AUTOINCREMENT`; INTEGER
 --     epoch `*At`; SchemaVersion terminal).
---   * .lovable/memory/26-split-db-cli-cheatsheet.md §9 (Task-tier only;
+--   * .ai-memory/memory/26-split-db-cli-cheatsheet.md §9 (Task-tier only;
 --     no cross-tier FKs).
 --
 -- Root cause guarded (Step 96 landed the parent row but per-rule verdicts

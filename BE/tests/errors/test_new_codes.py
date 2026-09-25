@@ -2,9 +2,9 @@
 
 Anchors:
 - `BE/errors/codes.py` (Step 10 registry).
-- `spec/21-app/74-worker-cli.md`, `75-processing-cli.md`,
+- `02-spec/21-app/74-worker-cli.md`, `75-processing-cli.md`,
   `76-cli-log-and-ipc.md`, `77-cli-powershell-and-release.md`.
-- `spec/03-error-manage/` - every wire code must resolve to a stable HTTP status.
+- `02-spec/03-error-manage/` - every wire code must resolve to a stable HTTP status.
 
 If any assertion here fails, downstream CLI/IPC steps and the FE `types.ts`
 mirror are silently drifting from the contract. Do not weaken these tests to

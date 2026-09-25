@@ -4,8 +4,8 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  * ShortcutProvider (dispatch), ShortcutCheatSheet (listing), and
  * AltMnemonicLayer (Alt letter highlights).
  *
- * See spec/21-app/53-ui-improvements-v4.md §13 and
- * .lovable/spec/commands/29-fullscreen-and-shortcut-conventions.md.
+ * See 02-spec/21-app/53-ui-improvements-v4.md §13 and
+ * .ai-memory/02-spec/commands/29-fullscreen-and-shortcut-conventions.md.
  *
  * Error surfacing: duplicate ids emit a dev warning routed through
  * console.warn with {shortcutId, existingScope, incomingScope}. Handlers

@@ -1,9 +1,9 @@
 """Plan 90 Step 28 - logger -> IPC Error mirror on FATAL.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes" (Kind=Error carries
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Payload shapes" (Kind=Error carries
   the Universal Envelope, Payload=null).
-- `spec/03-error-manage/` (never swallow errors; observability across
+- `02-spec/03-error-manage/` (never swallow errors; observability across
   processes, not just on disk).
 
 Invariants:

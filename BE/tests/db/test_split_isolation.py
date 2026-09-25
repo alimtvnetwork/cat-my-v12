@@ -1,13 +1,13 @@
 """Plan 90 Step 37 - split-DB isolation runtime proof.
 
 Anchors:
-- ``spec/05-split-db-architecture/**`` (each tier is a distinct SQLite
+- ``02-spec/05-split-db-architecture/**`` (each tier is a distinct SQLite
   file; NO cross-tier joins, NO cross-tier FKs, NO ``ATTACH DATABASE``).
-- ``spec/21-app/76-cli-log-and-ipc.md`` §"Database ownership"
+- ``02-spec/21-app/76-cli-log-and-ipc.md`` §"Database ownership"
   (Root owns ``CliInvocation``, ``Device``, ``CaptureSession``; Task
   owns ``Capture``, ``Frame``, ``Result``, ``ResultDetail``,
   ``IpcMessage``; Rules owns the rule bundles).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9 (cross-tier
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9 (cross-tier
   references are opaque INTEGERs; the guard on ``_GuardedConnection``
   trips on ``ATTACH``).
 

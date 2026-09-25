@@ -41,7 +41,7 @@ import { DraftOriginType } from "@/lib/rules/draftStore";
  *   3. "Dry-run" re-runs the same validator and prints a green summary
  *      (rule count, kinds) or the first parse error verbatim. This is
  *      client-side ONLY - BE dry-run endpoint is not in v1 (see
- *      `spec/21-app/80-ruleset-draft-save.md`, "Future work"); the
+ *      `02-spec/21-app/80-ruleset-draft-save.md`, "Future work"); the
  *      button label + tooltip explicitly say "client-side".
  *   4. "Diff" toggles a line-diff pane vs `baseline` (the last saved /
  *      loaded envelope, PascalCase-normalised via JSON.stringify). Naive

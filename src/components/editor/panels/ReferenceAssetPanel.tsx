@@ -1,5 +1,5 @@
 // ReferenceAssetPanel, Plan 31 step 12.
-// Spec: spec/24-app-ui-design-system/05-rule-controller.md L47 (Pattern row).
+// Spec: 02-spec/24-app-ui-design-system/05-rule-controller.md L47 (Pattern row).
 // Contract: matches ParamsPattern from src/lib/editor/schema.ts.
 // Persists { referenceAsset: string, matchThreshold: number (0..1) }.
 

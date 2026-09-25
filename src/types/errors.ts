@@ -1,5 +1,5 @@
 // Plan 71 Step 8: canonical error types.
-// Source of truth: spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2
+// Source of truth: 02-spec/03-error-manage/02-error-architecture/04-error-modal/03-error-modal-reference.md §2
 // Keep the field set aligned with that spec. Downstream (errorStore, GlobalErrorModal,
 // registry, showApiError) imports every type from this module; no local re-declarations.
 
@@ -8,6 +8,7 @@ export enum ErrorLevelType {
   Warn = "warn",
   Info = "info",
 }
+
 export type ErrorLevel = ErrorLevelType;
 
 export interface StackFrame {
@@ -237,8 +238,7 @@ export function buildCapturedError(
   if (err && typeof err === "object") {
     const o = err as Record<string, unknown>;
     base.message = typeof o.message === "string" ? o.message : safeStringify(err);
-
-    if (typeof o.code === "string") base.code = o.code;
+    base.code = typeof o.code === "string" ? o.code : base.code;
 
     return base;
   }

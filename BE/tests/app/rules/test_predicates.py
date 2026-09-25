@@ -1,7 +1,7 @@
 """Predicate registry + engine dispatch contract tests (Plan 90 Step 81).
 
 Pins:
-  - Every closed `RuleKind` from spec/21-app/33-rule-catalog.md §3 has
+  - Every closed `RuleKind` from 02-spec/21-app/33-rule-catalog.md §3 has
     a registered predicate (stub or real). No silent gaps.
   - `OcrText` stub raises with `ReasonCode=RuleDisabledInV1` per spec
     33 §4.

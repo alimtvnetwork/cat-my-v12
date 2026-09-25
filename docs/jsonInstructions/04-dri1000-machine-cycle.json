@@ -1,0 +1,257 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "MachineCycle",
+    "payloadId": "Cycle2026092100018502",
+    "correlationId": "Corr-20260921-DRI1000-0018502",
+    "timestamp": "2026-09-21T07:15:30.000Z",
+    "machineProfile": {
+      "machineId": "DRI1000-Station01",
+      "model": "DRI1000",
+      "firmwareVersion": "2.4.1",
+      "stationRole": "MultiAngleOpticalInspection"
+    },
+    "tracking": {
+      "sequenceId": 18502,
+      "stationId": "StationBeltMultiAngleInspection",
+      "batchId": "Lot202609A",
+      "encoderTick": 485100,
+      "carrierNestId": "NestRow04CarrierB",
+      "beltSpeedMmPerS": 450.0,
+      "encoderResolutionUmPerPulse": 12.5,
+      "notes": "Full end-to-end DRI1000 synchronous inspection and reject cycle.",
+      "additionalInstruction": "Track carrier nest position across 3 discrete lane ejector sensors."
+    },
+    "conveyorKinematics": {
+      "beltTrackingMode": "ContinuousMotionFlyBy",
+      "beltSpeedMmPerS": 450.0,
+      "encoderResolutionUmPerPulse": 12.5,
+      "motionCompensation": {
+        "isCompensationEnabled": true,
+        "allowableSmearPx": 0.5,
+        "spatialResolutionMmPerPx": 0.025,
+        "maxPermissibleExposureTimeUs": 800,
+        "calculatedTrackingOffsetMm": 15.75
+      },
+      "notes": "Continuous conveyor movement at 450 mm/s with optical strobe limiting smear below 0.5 pixels.",
+      "additionalInstruction": "Feed real-time belt encoder counts into camera Line 1 to compensate for velocity ripple."
+    },
+    "opticalSetup": {
+      "camera": {
+        "cameraId": "Cam01TopGige",
+        "model": "BaslerAcA1920",
+        "exposureTimeUs": 600,
+        "gainDb": 4.5,
+        "pixelFormat": "Mono8"
+      },
+      "lighting": {
+        "controllerId": "LightCtrl01",
+        "mode": "OverdriveStrobeSync",
+        "strobeDurationUs": 500,
+        "channelsEnabled": [1, 2]
+      }
+    },
+    "safetyInterlocks": {
+      "isConveyorSafe": true,
+      "hasMotionClearance": true,
+      "isEmergencyStopClear": true,
+      "isLightCurtainIntact": true,
+      "isOpticalEnclosureSealed": true,
+      "notes": "All safety circuits healthy: optical enclosure sealed, light curtain unviolated, and E-stop chain closed.",
+      "additionalInstruction": "Any breach of safety enclosure during cycle drops gantry power and halts conveyor."
+    },
+    "notes": "Complete DRI1000 hardware cycle unifying kinematics, liquid optics, strobe, image grab, and pneumatic rejection.",
+    "additionalInstruction": "Confirm all sub-systems are interlocked before asserting T0 start trigger."
+  },
+  "data": {
+    "executionPolicy": {
+      "executionMode": "HardwarePipelinedCycle",
+      "cycleBudgetMs": 50.0,
+      "totalActions": 6,
+      "maxTimeoutMs": 500,
+      "isAbortOnFailureEnabled": true,
+      "notes": "Actions 1 to 5 execute in synchronous microsecond sequence; Action 6 fires reject solenoids downstream.",
+      "additionalInstruction": "If any synchronous step faults, abort cycle and lock reject gate to divert all parts to quarantine."
+    },
+    "actions": [
+      {
+        "actionId": "Act01GantryPositioning",
+        "actionSequence": 1,
+        "actionName": "GantryPositioning",
+        "targetSubsystem": "MultiAxisServoGantry",
+        "triggerMechanism": {
+          "interfaceType": "EtherCatServoDrive",
+          "axisIdentifier": "AxisGantryTiltZ",
+          "busAddress": "Node04",
+          "signalType": "TargetPositionProfilePacket"
+        },
+        "parameters": {
+          "kinematics": {
+            "currentZMm": 220.0,
+            "targetZMm": 190.0,
+            "targetPitchDeg": 30.0,
+            "targetYawDeg": 15.0,
+            "targetRollDeg": 0.0
+          },
+          "motionDynamics": {
+            "velocityMmPerS": 120.0,
+            "accelerationMmPerS2": 600.0,
+            "settlingTimeMs": 35.0,
+            "inPositionToleranceMm": 0.02
+          }
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "RetractZAxisToSafeClearance",
+          "safeZRetractHeightMm": 260.0,
+          "errorCode": "E_CAMERA_MOVE_POSITION_FAULT"
+        },
+        "expectedOutcome": "GantryInTargetPosition"
+      },
+      {
+        "actionId": "Act02LiquidLensFocusShift",
+        "actionSequence": 2,
+        "actionName": "LiquidLensFocusShift",
+        "targetSubsystem": "MotorizedLensAndLiquidOptics",
+        "triggerMechanism": {
+          "interfaceType": "SerialI2cOpticsDriver",
+          "controllerId": "OpticsDriver01",
+          "signalType": "CurrentDriveCoilCommand",
+          "busAddress": "Port02"
+        },
+        "parameters": {
+          "focalLengthMm": 25.0,
+          "currentFocusDriveMa": 120,
+          "targetFocusDriveMa": 145,
+          "opticsSettlingTimeMs": 12.0
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "ResetCoilCurrentToZeroState",
+          "errorCode": "E_POV_FOCUS_DRIVER_OVERCURRENT"
+        },
+        "expectedOutcome": "OpticalFocalPlaneAdjusted"
+      },
+      {
+        "actionId": "Act03SynchronizedStrobeFlash",
+        "actionSequence": 3,
+        "actionName": "SynchronizedStrobeFlash",
+        "targetSubsystem": "HighSpeedOverdriveStrobeController",
+        "triggerMechanism": {
+          "interfaceType": "OptocoupledDifferentialLine",
+          "controllerId": "LightCtrl01",
+          "channelOutputPin": "OutStrobeLine2",
+          "signalType": "PulseWidthModulatedStrobe"
+        },
+        "parameters": {
+          "mode": "OverdriveStrobeSync",
+          "strobeDurationUs": 500,
+          "channels": [
+            {
+              "channelId": 1,
+              "name": "CoaxialTopWhite",
+              "intensityPercent": 75,
+              "currentMa": 1800,
+              "pulseWidthUs": 500,
+              "isEnabled": true
+            },
+            {
+              "channelId": 2,
+              "name": "RingDarkfieldOblique",
+              "intensityPercent": 85,
+              "currentMa": 2400,
+              "pulseWidthUs": 500,
+              "isEnabled": true
+            }
+          ]
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "TripThermalOverdriveCutoff",
+          "backupChannelId": 1,
+          "errorCode": "E_LIGHT_OVERDRIVE_OVERCURRENT"
+        },
+        "expectedOutcome": "OverdriveStrobeDelivered"
+      },
+      {
+        "actionId": "Act04GlobalShutterCapture",
+        "actionSequence": 4,
+        "actionName": "GlobalShutterCapture",
+        "targetSubsystem": "IndustrialGigECamera",
+        "triggerMechanism": {
+          "interfaceType": "DifferentialGpioLine",
+          "cameraId": "Cam01TopGige",
+          "triggerLine": "Line1InRisingEdge",
+          "signalType": "HardwareElectricalPulse",
+          "debounceUs": 2
+        },
+        "parameters": {
+          "exposureTimeUs": 600,
+          "gainDb": 4.5,
+          "roiBoundsPx": {
+            "offsetX": 350,
+            "offsetY": 180,
+            "width": 1280,
+            "height": 720
+          },
+          "memoryBufferDestination": "shm://vision_raw_ring_slot_02"
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "ResetFrameGrabberDmaAndRetryOnce",
+          "maxRetryCount": 1,
+          "errorCode": "E_CAMERA_FRAME_GRAB_TIMEOUT"
+        },
+        "expectedOutcome": "FrameAcquiredAndStreamedToRam"
+      },
+      {
+        "actionId": "Act05RealtimeInspectionAndDecision",
+        "actionSequence": 5,
+        "actionName": "RealtimeInspectionAndDecision",
+        "targetSubsystem": "VisionProcessingHostWorker",
+        "triggerMechanism": {
+          "interfaceType": "WorkerIpcEventPipe",
+          "channelIdentifier": "PipeStorageWorker01",
+          "signalType": "MemoryPointerHandoffEvent"
+        },
+        "parameters": {
+          "sourceMemoryBuffer": "shm://vision_raw_ring_slot_02",
+          "algorithm": "2BitGrayscaleAnd31BoxPatternMatching",
+          "whiteThresholdCutoff": 170,
+          "requiredPassingScorePercent": 85.0
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "FlagAllDevicesAsDefectiveAndReject",
+          "errorCode": "E_PATTERN_CORRELATION_FAIL"
+        },
+        "expectedOutcome": "InspectionDecisionGenerated"
+      },
+      {
+        "actionId": "Act06FastPlcRejectActuation",
+        "actionSequence": 6,
+        "actionName": "FastPlcRejectActuation",
+        "targetSubsystem": "PneumaticRejectDiverter",
+        "triggerMechanism": {
+          "interfaceType": "FastPlcDigitalOutput",
+          "solenoidVoltageV": 24.0,
+          "triggerDelayEncoderPulses": 120
+        },
+        "parameters": {
+          "rejectMask": [0, 1, 0],
+          "passMask": [1, 0, 1],
+          "pulseDurationMs": 30,
+          "pneumaticPressureBar": 6.0
+        },
+        "faultRecoveryPolicy": {
+          "onFaultAction": "EmergencyStopConveyor",
+          "errorCode": "E_PNEUMATIC_PRESSURE_LOW"
+        },
+        "expectedOutcome": "DefectivePartsEjectedToBin"
+      }
+    ],
+    "handshake": {
+      "isAckRequired": true,
+      "replyChannel": "TcpSocketLoopback",
+      "replyPort": 9050,
+      "expectedAckWithinMs": 50,
+      "notes": "DRI1000 machine supervisor reports complete cycle metrics.",
+      "additionalInstruction": "Log cycle timing jitter telemetry if total cycle exceeds 48ms."
+    }
+  }
+}

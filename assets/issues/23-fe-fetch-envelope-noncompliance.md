@@ -12,7 +12,7 @@ Audit was read-only. No code was changed because Plan 89 Phase 4 already owns th
 
 ## Root cause (one sentence)
 
-Every browser fetch in the app reads the legacy flat `{error, message}` shape, but spec/03-error-manage mandates the Universal Envelope `{Status, Attributes, Results, Errors:[{Code,…}]}`, so non-200 responses lose `Errors[].Code`, `Status.Message`, and `correlationId` and never surface through `GlobalErrorModal`.
+Every browser fetch in the app reads the legacy flat `{error, message}` shape, but 02-spec/03-error-manage mandates the Universal Envelope `{Status, Attributes, Results, Errors:[{Code,…}]}`, so non-200 responses lose `Errors[].Code`, `Status.Message`, and `correlationId` and never surface through `GlobalErrorModal`.
 
 ## Evidence
 
@@ -36,6 +36,6 @@ Only two client-reachable fetch sites exist (both in `capture-bridge.ts`). Every
 
 ## Related
 
-- Plan 89 (`.lovable/plans/pending/89-error-manage-01-error-resolution.md`), Phase 4.
-- `spec/03-error-manage/01-error-resolution/` (envelope + Code Red field mandates).
+- Plan 89 (`.ai-memory/plans/pending/89-error-manage-01-error-resolution.md`), Phase 4.
+- `02-spec/03-error-manage/01-error-resolution/` (envelope + Code Red field mandates).
 - Prior AppError enrichment for BE side landed in `BE/sdk_facade/camera.py` this session; that work only helps once Phase 4 lands the FE consumer.

@@ -32,8 +32,8 @@
 | `errors.schema.json`   | `error.item`                  | unused       | -                                                                                                                                               |
 | `errors.schema.json`   | `errors.list.req`             | unused       | -                                                                                                                                               |
 | `errors.schema.json`   | `errors.list.res`             | unused       | -                                                                                                                                               |
-| `home.schema.json`     | `home.summary.req`            | fixture-only | linter-scripts/fixtures/ipc-examples/bad/spec/21-app/shell/examples.md, linter-scripts/fixtures/ipc-examples/good/spec/21-app/shell/examples.md |
-| `home.schema.json`     | `home.summary.res`            | fixture-only | linter-scripts/fixtures/ipc-examples/good/spec/21-app/shell/examples.md                                                                         |
+| `home.schema.json`     | `home.summary.req`            | fixture-only | linter-scripts/fixtures/ipc-examples/bad/02-spec/21-app/shell/examples.md, linter-scripts/fixtures/ipc-examples/good/02-spec/21-app/shell/examples.md |
+| `home.schema.json`     | `home.summary.res`            | fixture-only | linter-scripts/fixtures/ipc-examples/good/02-spec/21-app/shell/examples.md                                                                         |
 | `license.schema.json`  | `license.features.req`        | unused       | -                                                                                                                                               |
 | `license.schema.json`  | `license.features.res`        | unused       | -                                                                                                                                               |
 | `ops.schema.json`      | `audit.retention.req`         | unused       | -                                                                                                                                               |
@@ -103,4 +103,4 @@
 
 | Ref                | Referenced from                                                        |
 | ------------------ | ---------------------------------------------------------------------- |
-| `nope.missing.req` | linter-scripts/fixtures/ipc-examples/bad/spec/21-app/shell/examples.md |
+| `nope.missing.req` | linter-scripts/fixtures/ipc-examples/bad/02-spec/21-app/shell/examples.md |

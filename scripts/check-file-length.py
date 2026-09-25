@@ -6,7 +6,7 @@ def check_file_length():
     violating_files = []
     
     # Exclude directories
-    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'generated', 'coverage', '.lovable', 'scripts', '.venv']
+    exclude_dirs = ['node_modules', '.git', 'dist', 'build', '__tests__', 'tests', 'generated', 'coverage', '.ai-memory', 'scripts', '.venv']
     
     for root, dirs, files in os.walk('.'):
         dirs[:] = [d for d in dirs if d not in exclude_dirs]

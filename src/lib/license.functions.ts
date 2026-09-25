@@ -5,7 +5,7 @@ import { LicenseStatusType } from "@/lib/license";
  * License snapshot + activation server fns.
  *
  * The client asks the server whether a named feature is enabled instead of
- * inspecting a tier string (spec/21-app/60-licensing.md 60.4). Activation
+ * inspecting a tier string (02-spec/21-app/60-licensing.md 60.4). Activation
  * verifies the pasted/uploaded LicenseRecord against the pinned Ed25519
  * public key, stores it in the isolate's license store, and returns a fresh
  * snapshot. Verification is fail-closed: an invalid record is rejected and

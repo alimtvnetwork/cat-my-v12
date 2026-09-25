@@ -1,12 +1,12 @@
 """Plan 90 Step 59 - `processing-cli batch` acceptance tests.
 
 Pins:
-- spec/21-app/75 §Subcommands "batch" (fan `evaluate` over N frames,
+- 02-spec/21-app/75 §Subcommands "batch" (fan `evaluate` over N frames,
   one envelope on stdout).
-- spec/13-generic-cli/18 "continue on failure" (per-frame errors land
+- 02-spec/13-generic-cli/18 "continue on failure" (per-frame errors land
   in `Failures[]`, batch keeps going).
-- spec/21-app/17 §5 ordering (input order preserved).
-- spec/21-app/24 §1 single-writer JSONL persistence.
+- 02-spec/21-app/17 §5 ordering (input order preserved).
+- 02-spec/21-app/24 §1 single-writer JSONL persistence.
 
 These use `subprocess` so we exercise the real dispatcher stdout /
 exit-code contract, not the in-process handler.

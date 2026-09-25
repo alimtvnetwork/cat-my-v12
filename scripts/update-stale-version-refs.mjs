@@ -31,7 +31,7 @@ const SKIP_DIRS = new Set([
   ".tanstack",
   ".cache",
   "coverage",
-  ".lovable",
+  ".ai-memory",
   "docs",
   "tests",
   "playwright-report",

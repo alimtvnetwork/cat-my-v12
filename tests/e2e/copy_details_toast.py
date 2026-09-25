@@ -76,7 +76,7 @@ async def main() -> None:
         )
         assert "code: " in clip, f"missing code line: {clip!r}"
         assert "label: " in clip, f"missing label line: {clip!r}"
-        # 8-char correlation id per spec/21-app/40-error-manage.md.
+        # 8-char correlation id per 02-spec/21-app/40-error-manage.md.
         first_line = clip.splitlines()[0]
         cid = first_line.replace("id: ", "").strip()
         assert len(cid) == 8, f"correlation id length != 8: {cid!r}"

@@ -1,6 +1,6 @@
 """GET /healthz -> success envelope with liveness + monotonic uptime.
 
-Spec: spec/21-app/backend-implementation-request-v1.md §Home Backend-Mode
+Spec: 02-spec/21-app/backend-implementation-request-v1.md §Home Backend-Mode
 widget uses this as the reachability probe (`Test connection -> GET /healthz`).
 
 Envelope shape (per BE/envelope.py, frozen):

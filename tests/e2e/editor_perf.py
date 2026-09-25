@@ -90,7 +90,7 @@ async def main() -> int:
     try:
         data = await run()
         summary = summarize(data["frames"])
-        # Budget per spec/24-app-ui-design-system/08-testing.md C-8.
+        # Budget per 02-spec/24-app-ui-design-system/08-testing.md C-8.
         # rAF deltas are vsync-capped near 16.67 ms at 60 Hz, so the useful
         # signal is "no dropped frames": p95 within one vsync + jitter, max
         # under two vsyncs. Sub-vsync work time is not observable via rAF.

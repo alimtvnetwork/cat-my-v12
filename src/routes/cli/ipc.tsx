@@ -18,7 +18,7 @@
  * `.msg.ack.json` files render side by side.
  *
  * Kind badges are derived from the item payload (`Kind` field on the
- * envelope body, per `spec/21-app/74-worker-cli.md`). Unknown kinds
+ * envelope body, per `02-spec/21-app/74-worker-cli.md`). Unknown kinds
  * still render as neutral outline badges so partial/legacy payloads
  * remain triageable.
  *

@@ -2,7 +2,7 @@
 
 Every boundary error MUST raise `AppError` so the FastAPI handler in
 `BE.errors.handlers` can build the Universal Response Envelope
-(`spec/03-error-manage/02-error-architecture/05-response-envelope/`).
+(`02-spec/03-error-manage/02-error-architecture/05-response-envelope/`).
 """
 
 from __future__ import annotations

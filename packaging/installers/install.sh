@@ -13,8 +13,8 @@
 #     receives an append-only audit trail matching install.ps1
 #
 # Anchors:
-#   spec/21-app/77-cli-powershell-and-release.md
-#   spec/21-app/79-installer-retention-timing.md §Orchestrator, §Doctor
+#   02-spec/21-app/77-cli-powershell-and-release.md
+#   02-spec/21-app/79-installer-retention-timing.md §Orchestrator, §Doctor
 #
 # Exit codes:
 #   0  success

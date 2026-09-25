@@ -8,7 +8,7 @@
 // readConditions() migrates those into a one-element list, and every
 // write mirrors the first condition back into those flat fields.
 //
-// Backend contract lives at spec/21-app/60-rule-acceptance-contract.md.
+// Backend contract lives at 02-spec/21-app/60-rule-acceptance-contract.md.
 import { useId, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { PresenceModeType } from "@/lib/enums/editor";

@@ -1,8 +1,8 @@
 """Supervisor boot-time checks.
 
-Anchors: spec/21-app/20-folder-structure.md §5 (boot-time checks),
-         spec/21-app/21-root-db.md §5 (single writer),
-         spec/21-app/26-migrations.md §4 (runner).
+Anchors: 02-spec/21-app/20-folder-structure.md §5 (boot-time checks),
+         02-spec/21-app/21-root-db.md §5 (single writer),
+         02-spec/21-app/26-migrations.md §4 (runner).
 """
 from __future__ import annotations
 

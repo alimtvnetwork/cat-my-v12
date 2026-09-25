@@ -1,12 +1,12 @@
 """Plan 90 Step 36 - convention compliance scanner for migration files.
 
 Anchors:
-- ``spec/04-database-conventions/01-naming-conventions.md`` (PascalCase
+- ``02-spec/04-database-conventions/01-naming-conventions.md`` (PascalCase
   singular tables, ``{Table}Id`` PKs, ``Is``/``Has`` boolean prefix,
   ``Idx{Table}_{Column}`` index names).
-- ``spec/21-app/26-migrations.md`` (idempotent ``CREATE TABLE IF NOT
+- ``02-spec/21-app/26-migrations.md`` (idempotent ``CREATE TABLE IF NOT
   EXISTS``, terminal ``INSERT INTO SchemaVersion`` row per migration).
-- ``.lovable/memory/26-split-db-cli-cheatsheet.md`` §9 (epoch-INTEGER
+- ``.ai-memory/memory/26-split-db-cli-cheatsheet.md`` §9 (epoch-INTEGER
   ``*At``, no cross-tier FKs).
 
 The scanner is intentionally regex-based rather than a full SQL parser

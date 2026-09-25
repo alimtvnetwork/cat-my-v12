@@ -1,6 +1,6 @@
 """Plan 90 Step 118 - Binary signature + SHA256 helper for install manifest.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md``
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md``
 §"Release artefacts" (SHA256SUMS.txt + optional Authenticode signing).
 
 Root cause guarded (one sentence): without a persisted SHA256 +

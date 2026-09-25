@@ -1,0 +1,376 @@
+{
+  "attributes": {
+    "protocolVersion": "1.0.0",
+    "payloadType": "InspectionResult",
+    "actionId": "Act2026092100018501",
+    "timestamp": "2026-09-21T06:53:14.210Z",
+    "tracking": {
+      "sequenceId": 18501,
+      "stationId": "StationBeltRowInspection",
+      "encoderTick": 484200,
+      "beltSpeedMPerS": 0.45,
+      "notes": "Belt conveyor row inspection with 3 side-by-side devices captured at encoder position 484200.",
+      "additionalInstruction": "Track conveyor travel distance from tick 484200 to downstream reject station."
+    },
+    "opticalSetup": {
+      "notes": "Hardware GPIO strobe sync calibrated for 170-level white mark detection.",
+      "additionalInstruction": "Verify strobe driver voltage if ambient temperature drifts above 45C.",
+      "camera": {
+        "cameraId": "Cam01TopGige",
+        "model": "BaslerAcA1920",
+        "serialNumber": "24910842",
+        "triggerSource": "HardwareGpioLine1",
+        "triggerDelayUs": 25,
+        "exposureTimeUs": 800,
+        "gainDb": 4.5,
+        "pixelFormat": "Mono8",
+        "frameRateFps": 60.0,
+        "resolution": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "lighting": {
+        "controllerId": "LightCtrl01",
+        "controllerModel": "GardasoftCc320",
+        "mode": "StrobeSync",
+        "strobeDurationUs": 500,
+        "channels": [
+          {
+            "channelId": 1,
+            "name": "CoaxialTopWhite",
+            "intensityPercent": 75,
+            "pulseWidthUs": 500,
+            "isEnabled": true
+          },
+          {
+            "channelId": 2,
+            "name": "RingDarkfield45Deg",
+            "intensityPercent": 60,
+            "pulseWidthUs": 500,
+            "isEnabled": true
+          },
+          {
+            "channelId": 3,
+            "name": "BacklightDiffuse",
+            "intensityPercent": 0,
+            "pulseWidthUs": 0,
+            "isEnabled": false
+          }
+        ]
+      }
+    },
+    "notes": "Prerequisite environmental parameters, tracking coordinates, and optical setup for row inspection.",
+    "additionalInstruction": "Verify optical exposure calibration and encoder synchronization before evaluating device inspection data."
+  },
+  "data": {
+    "fastPlcInterface": {
+      "rejectMask": [0, 1, 0],
+      "passMask": [1, 0, 1],
+      "rejectSummaryHex": "0x02",
+      "nozzleEjectSignals": {
+        "isLane1LeftActive": false,
+        "isLane2CenterActive": true,
+        "isLane3RightActive": false
+      },
+      "notes": "Lane 2 solenoid must fire when Device 2 reaches pneumatic ejector sensor.",
+      "additionalInstruction": "Maintain lanes 1 and 3 solenoids off to allow good devices to pass to packing tray."
+    },
+    "marking": {
+      "isMarkingRequired": true,
+      "markType": "InkjetDot",
+      "referenceFrame": "ConveyorBeltOriginMm",
+      "notes": "Inkjet head 2 targeted on Center Device pattern defect zone.",
+      "additionalInstruction": "Fire a 0.5mm red dot on mark location before belt transfers unit to reject lane.",
+      "targets": [
+        {
+          "deviceIndex": 2,
+          "devicePosition": "Center",
+          "markCenterXmm": 150.0,
+          "markCenterYmm": 45.0,
+          "defectCode": "DefGreyscalePatternMismatch"
+        }
+      ]
+    },
+    "devices": [
+      {
+        "deviceIndex": 1,
+        "devicePosition": "Left",
+        "hasPassed": true,
+        "hasFailed": false,
+        "result": "Pass",
+        "handlerAction": "Keep",
+        "notes": "Device 1 passed all 31 pattern mark criteria with 100% score.",
+        "additionalInstruction": "Allow Device 1 to pass through to packing tray.",
+        "searchRegion": {
+          "regionId": "RegionDevice1",
+          "geometryPx": {
+            "x": 60,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 50.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "toolType": "GreyscalePatternMatching",
+          "hasPassed": true,
+          "hasFailed": false,
+          "result": "Pass",
+          "matchScorePercent": 100.0,
+          "minThresholdPercent": 100.0,
+          "matchedBoxes": 31,
+          "totalBoxes": 31,
+          "failureDetails": null
+        }
+      },
+      {
+        "deviceIndex": 2,
+        "devicePosition": "Center",
+        "hasPassed": false,
+        "hasFailed": true,
+        "result": "Fail",
+        "handlerAction": "MarkAndEject",
+        "notes": "Device 2 pattern failed with 5 missing boxes in upper-right constellation quadrant.",
+        "additionalInstruction": "Inkjet mark at (150.0, 45.0)mm and divert pneumatic diverter 2 to rework bin.",
+        "searchRegion": {
+          "regionId": "RegionDevice2",
+          "geometryPx": {
+            "x": 350,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 150.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "toolType": "GreyscalePatternMatching",
+          "hasPassed": false,
+          "hasFailed": true,
+          "result": "Fail",
+          "matchScorePercent": 83.8,
+          "minThresholdPercent": 100.0,
+          "matchedBoxes": 26,
+          "totalBoxes": 31,
+          "missingBoxNumbers": [14, 15, 16, 30, 31],
+          "greyscaleThreshold": 170,
+          "tolerancePx": 8,
+          "failureDetails": {
+            "failureLocation": "Pattern region quadrant top-right (pixel box cluster X: 480..520, Y: 210..245 / belt coordinate X: 154.2mm, Y: 46.8mm).",
+            "failureReason": "Boxes 14, 15, 16, 30, 31 failed minimum luminance cutoff 170 (measured average pixel value: 114). Missing printed white marking or surface occlusion detected.",
+            "expectedTargetPosition": {
+              "referenceFrame": "ConveyorBeltOriginMm",
+              "patternOriginPx": {
+                "x": 420,
+                "y": 200
+              },
+              "patternOriginMm": {
+                "x": 150.0,
+                "y": 45.0
+              },
+              "patternSizePx": {
+                "width": 120,
+                "height": 140
+              },
+              "patternSizeMm": {
+                "width": 12.0,
+                "height": 14.0
+              },
+              "boxCountExpected": 31,
+              "missingBoxPositions": [
+                {
+                  "boxNumber": 14,
+                  "expectedPx": {
+                    "x": 484,
+                    "y": 212
+                  },
+                  "expectedMm": {
+                    "x": 154.2,
+                    "y": 46.8
+                  },
+                  "measuredLuminance": 112,
+                  "cutoffRequired": 170,
+                  "hasMatched": false
+                },
+                {
+                  "boxNumber": 15,
+                  "expectedPx": {
+                    "x": 498,
+                    "y": 212
+                  },
+                  "expectedMm": {
+                    "x": 155.6,
+                    "y": 46.8
+                  },
+                  "measuredLuminance": 115,
+                  "cutoffRequired": 170,
+                  "hasMatched": false
+                },
+                {
+                  "boxNumber": 16,
+                  "expectedPx": {
+                    "x": 512,
+                    "y": 212
+                  },
+                  "expectedMm": {
+                    "x": 157.0,
+                    "y": 46.8
+                  },
+                  "measuredLuminance": 109,
+                  "cutoffRequired": 170,
+                  "hasMatched": false
+                },
+                {
+                  "boxNumber": 30,
+                  "expectedPx": {
+                    "x": 498,
+                    "y": 240
+                  },
+                  "expectedMm": {
+                    "x": 155.6,
+                    "y": 49.6
+                  },
+                  "measuredLuminance": 118,
+                  "cutoffRequired": 170,
+                  "hasMatched": false
+                },
+                {
+                  "boxNumber": 31,
+                  "expectedPx": {
+                    "x": 512,
+                    "y": 240
+                  },
+                  "expectedMm": {
+                    "x": 157.0,
+                    "y": 49.6
+                  },
+                  "measuredLuminance": 116,
+                  "cutoffRequired": 170,
+                  "hasMatched": false
+                }
+              ]
+            },
+            "searchRegion": {
+              "regionId": "RegionDevice2",
+              "geometryPx": {
+                "x": 350,
+                "y": 180,
+                "width": 260,
+                "height": 180
+              },
+              "geometryMm": {
+                "x": 140.0,
+                "y": 40.0,
+                "width": 26.0,
+                "height": 18.0
+              },
+              "beltCenterMm": {
+                "x": 150.0,
+                "y": 45.0
+              }
+            },
+            "tolerance": {
+              "positionTolerancePx": 8,
+              "positionToleranceMm": 0.8,
+              "searchMarginPx": 8,
+              "minMatchScorePercent": 100.0,
+              "achievedMatchScorePercent": 83.8,
+              "luminanceThreshold": 170
+            },
+            "cameraShutterSpeed": {
+              "exposureTimeUs": 800,
+              "exposureTimeMs": 0.8,
+              "shutterFraction": "1/1250 s",
+              "strobePulseWidthUs": 500
+            },
+            "stackTrace": [
+              "at VisionPipeline.evaluateFrame (src/lib/vision/pipeline.ts:184:12)",
+              "at RuleEngine.evaluateDeviceRule (src/lib/rules/engine.ts:92:8)",
+              "at PatternMatcher.matchConstellation (src/lib/vision/pattern-matcher.ts:145:15)",
+              "at BoxEvaluator.verifyLuminanceThreshold (src/lib/vision/pattern-matcher.ts:210:22)"
+            ],
+            "errorReferenceId": "Err20260921001"
+          }
+        }
+      },
+      {
+        "deviceIndex": 3,
+        "devicePosition": "Right",
+        "hasPassed": true,
+        "hasFailed": false,
+        "result": "Pass",
+        "handlerAction": "Keep",
+        "notes": "Device 3 passed all 31 pattern marks with 100% score.",
+        "additionalInstruction": "Allow Device 3 to pass through to packing tray.",
+        "searchRegion": {
+          "regionId": "RegionDevice3",
+          "geometryPx": {
+            "x": 640,
+            "y": 180,
+            "width": 260,
+            "height": 180
+          },
+          "beltCenterMm": {
+            "x": 250.0,
+            "y": 45.0
+          }
+        },
+        "ruleEvaluation": {
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "ruleName": "GreyscalePatternMatch31Box",
+          "toolType": "GreyscalePatternMatching",
+          "hasPassed": true,
+          "hasFailed": false,
+          "result": "Pass",
+          "matchScorePercent": 100.0,
+          "minThresholdPercent": 100.0,
+          "matchedBoxes": 31,
+          "totalBoxes": 31,
+          "failureDetails": null
+        }
+      }
+    ],
+    "errors": {
+      "hasErrors": true,
+      "errorCount": 1,
+      "notes": "Evaluation errors logged during rule execution for rejected parts.",
+      "additionalInstruction": "Log failure record to MES audit database and check lot defect trend.",
+      "errorList": [
+        {
+          "errorId": "Err20260921001",
+          "deviceIndex": 2,
+          "devicePosition": "Center",
+          "ruleId": "RuleGreyscalePatternMatch31Box",
+          "errorCode": "E_PATTERN_MATCH_THRESHOLD",
+          "category": "InspectionJudgmentFailure",
+          "errorMessage": "Greyscale pattern match score 83.8% fell below strict 100.0% acceptance threshold.",
+          "stackTrace": [
+            "at VisionPipeline.evaluateFrame (src/lib/vision/pipeline.ts:184:12)",
+            "at RuleEngine.evaluateDeviceRule (src/lib/rules/engine.ts:92:8)",
+            "at PatternMatcher.matchConstellation (src/lib/vision/pattern-matcher.ts:145:15)",
+            "at BoxEvaluator.verifyLuminanceThreshold (src/lib/vision/pattern-matcher.ts:210:22)"
+          ],
+          "notes": "Luminance verification failed on 5 white boxes in constellation.",
+          "additionalInstruction": "Inspect laser marking station upstream if consecutive Center lane devices fail."
+        }
+      ]
+    },
+    "telemetry": {
+      "captureLatencyMs": 3.8,
+      "inferenceLatencyMs": 14.8,
+      "totalCycleTimeMs": 18.6,
+      "notes": "Frame captured in 3.8ms, all 3 search regions evaluated in 14.8ms.",
+      "additionalInstruction": "Cycle time 18.6ms is within 25ms belt pitch budget (nominal 40 parts/sec)."
+    }
+  }
+}

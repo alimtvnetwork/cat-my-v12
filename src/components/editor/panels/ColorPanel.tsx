@@ -1,5 +1,5 @@
 // ColorPanel, Plan 31 step 14.
-// Spec: spec/24-app-ui-design-system/05-rule-controller.md L46 + L100-101.
+// Spec: 02-spec/24-app-ui-design-system/05-rule-controller.md L46 + L100-101.
 // Contract: matches ParamsColor from src/lib/editor/schema.ts.
 // K-5: swatch pair updates same frame as picker.
 

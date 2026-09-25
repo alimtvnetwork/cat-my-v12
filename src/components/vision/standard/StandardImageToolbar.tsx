@@ -36,28 +36,55 @@ export function StandardImageToolbar({
   const handleZoom = (delta: number) => {
     setSettings((s) => ({
       ...s,
-      view: { ...s.view, zoom: Math.max(10, Math.min(500, s.view.zoom + delta)) },
+      view: {
+        ...(s?.view ?? { source: ImageSourceType.Camera, rendering: RenderModeType.Normal, zoom: 100 }),
+        zoom: Math.max(10, Math.min(500, (s?.view?.zoom ?? 100) + delta)),
+      },
     }));
   };
-  const handleFit = () => setSettings((s) => ({ ...s, view: { ...s.view, zoom: 100 } })); // TBD fit logic
+
+  const handleFit = () =>
+    setSettings((s) => ({
+      ...s,
+      view: {
+        ...(s?.view ?? { source: ImageSourceType.Camera, rendering: RenderModeType.Normal }),
+        zoom: 100,
+      },
+    }));
+
   const handleRefresh = () => {
     if (onRefresh) {
       onRefresh();
+
       return;
     }
-    setSettings((s) => ({ ...s, view: { ...s.view, zoom: 100 } }));
+
+    setSettings((s) => ({
+      ...s,
+      view: {
+        ...(s?.view ?? { source: ImageSourceType.Camera, rendering: RenderModeType.Normal }),
+        zoom: 100,
+      },
+    }));
   };
+
+  const viewSource = settings?.view?.source ?? ImageSourceType.Camera;
+  const viewRendering = settings?.view?.rendering ?? RenderModeType.Normal;
+  const viewZoom = settings?.view?.zoom ?? 100;
 
   return (
     <div className="flex items-center gap-4 bg-std-chrome p-2 border-b border-std-border text-sm shrink-0 min-w-0 overflow-x-auto select-none">
       <div className="flex items-center gap-2">
         <label className="font-semibold text-std-text">Source:</label>
         <select
-          value={settings.view.source}
+          value={viewSource}
           onChange={(e) =>
             setSettings((s) => ({
               ...s,
-              view: { ...s.view, source: e.target.value as ImageSourceType },
+              view: {
+                ...(s?.view ?? { rendering: RenderModeType.Normal, zoom: 100 }),
+                source: e.target.value as ImageSourceType,
+              },
             }))
           }
           className="bg-std-readout-bg border border-std-border rounded px-2 py-1 text-std-text"
@@ -73,11 +100,14 @@ export function StandardImageToolbar({
       <div className="flex items-center gap-2">
         <label className="font-semibold text-std-text">Rendering:</label>
         <select
-          value={settings.view.rendering}
+          value={viewRendering}
           onChange={(e) =>
             setSettings((s) => ({
               ...s,
-              view: { ...s.view, rendering: e.target.value as RenderModeType },
+              view: {
+                ...(s?.view ?? { source: ImageSourceType.Camera, zoom: 100 }),
+                rendering: e.target.value as RenderModeType,
+              },
             }))
           }
           className="bg-std-readout-bg border border-std-border rounded px-2 py-1 text-std-text"
@@ -101,10 +131,16 @@ export function StandardImageToolbar({
 
       <div className="flex items-center gap-2 ml-auto">
         <select
-          value={settings.view.zoom}
+          value={viewZoom}
           onChange={(e) => {
             const val = e.target.value === "fit" ? 100 : Number(e.target.value);
-            setSettings((s) => ({ ...s, view: { ...s.view, zoom: val } }));
+            setSettings((s) => ({
+              ...s,
+              view: {
+                ...(s?.view ?? { source: ImageSourceType.Camera, rendering: RenderModeType.Normal }),
+                zoom: val,
+              },
+            }));
           }}
           className="bg-transparent border-none text-std-text-muted cursor-pointer hover:text-std-text"
         >

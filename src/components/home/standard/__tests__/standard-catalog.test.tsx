@@ -40,8 +40,8 @@ describe("Standard Tool Catalog Data", () => {
     expect(categoryIds).toContain(CatalogCategoryIdType.FunctionList);
   });
 
-  it("contains all 15 inspection tools and dedicated setup surfaces", () => {
-    expect(CATALOG_TOOLS.length).toBeGreaterThanOrEqual(15);
+  it("contains all 16 inspection tools and dedicated setup surfaces", () => {
+    expect(CATALOG_TOOLS.length).toBeGreaterThanOrEqual(16);
     const codes = CATALOG_TOOLS.map((t) => t.displayCode);
     expect(codes).toContain("T101"); // Area
     expect(codes).toContain("T102"); // Pattern Match
@@ -51,6 +51,7 @@ describe("Standard Tool Catalog Data", () => {
     expect(codes).toContain("T108"); // Defect
     expect(codes).toContain("T114"); // OCR2
     expect(codes).toContain("T115"); // Code Reader
+    expect(codes).toContain("T116"); // Greyscale Pattern Matching
     expect(codes).toContain("S201"); // ROI Setup
   });
 
@@ -115,6 +116,7 @@ describe("StandardToolGrid Component", () => {
 
     expect(screen.getByText("Area")).toBeDefined();
     expect(screen.getByText("Pattern Match (Shading)")).toBeDefined();
+    expect(screen.getByText("Greyscale Pattern Matching")).toBeDefined();
 
     // Click tool
     fireEvent.click(screen.getByText("Pattern Match (Shading)"));
@@ -133,6 +135,33 @@ describe("StandardToolGrid Component", () => {
     );
 
     expect(screen.getByText("Area")).toBeDefined();
+  });
+
+  it("includes Greyscale Pattern Matching in Presence / Absence", () => {
+    const tools = getToolsForCategory(CatalogCategoryIdType.PresenceAbsence);
+    const tool = tools.find((item) => item.id === "tool-greyscale-pattern-matching");
+
+    expect(tool).toBeDefined();
+    expect(tool?.displayCode).toBe("T116");
+    expect(tool?.targetRoute).toBe("/setup/white-boxes");
+  });
+  it("includes Greyscle simulation in Presence / Absence", () => {
+    const tools = getToolsForCategory(CatalogCategoryIdType.PresenceAbsence);
+    const tool = tools.find((item) => item.id === "tool-greyscale-simulation");
+
+    expect(tool).toBeDefined();
+    expect(tool?.name).toBe("Greyscle simulation");
+    expect(tool?.displayCode).toBe("T119");
+    expect(tool?.targetRoute).toBe("/setup/rules");
+  });
+
+  it("includes Defect Matching in Flaw Detection", () => {
+    const tools = getToolsForCategory(CatalogCategoryIdType.FlawDetection);
+    const tool = tools.find((item) => item.id === "tool-defect-matching");
+
+    expect(tool).toBeDefined();
+    expect(tool?.displayCode).toBe("T118");
+    expect(tool?.targetRoute).toBe("/setup/defect-matching");
   });
 });
 

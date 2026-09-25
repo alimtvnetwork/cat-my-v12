@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Plan 20 Blind-AI rescore of audit-retention specs.
 
-Scope: `spec/21-app/{40-error-manage,51-security-and-config-modules,68-v2-audit-retention}.md`.
+Scope: `02-spec/21-app/{40-error-manage,51-security-and-config-modules,68-v2-audit-retention}.md`.
 Rubric mirrors scripts/rescore_plan26.py (5 checks x 20 pts).
 
   1. `## Acceptance Checklist` present.
@@ -16,8 +16,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC_DIR = ROOT / "spec" / "21-app"
-OUT = ROOT / "spec" / "25-app-audit" / "latest" / "plan20" / "00-rescore.json"
+SPEC_DIR = ROOT / "02-spec" / "21-app"
+OUT = ROOT / "02-spec" / "25-app-audit" / "latest" / "plan20" / "00-rescore.json"
 
 FILES = [
     "40-error-manage.md",

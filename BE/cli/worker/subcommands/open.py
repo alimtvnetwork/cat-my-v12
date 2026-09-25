@@ -1,7 +1,7 @@
 """Plan 90 Step 45 - `worker-cli open` subcommand.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`open`), §Acceptance #3
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`open`), §Acceptance #3
   (single-open invariant; conflict envelope uses `E_BE_CONFLICT`).
 - Lease implementation: `BE.cli.worker.camera_lease` (this plan Step 45).
 - Facade contract: `BE.sdk_facade.camera.InMemoryCameraFacade.open`

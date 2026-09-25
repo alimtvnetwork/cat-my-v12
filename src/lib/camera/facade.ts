@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 79 step 15. CameraSetting facade wrap.
 //
-// Contract: .lovable/pending-facades/04-camera-setting-facade-wrap.md
+// Contract: .ai-memory/pending-facades/04-camera-setting-facade-wrap.md
 // Wraps the existing localStorage-backed helpers in src/lib/camera/store.ts
 // (Plan 78) so V4 code can talk to a uniform facade surface without moving
 // the underlying persistence (bundle round-trips + Playwright fixtures keep

@@ -1,7 +1,7 @@
 """Plan 26 SS-03: lock `resolve_selection` raise contract.
 
 Anchors:
-  - spec/21-app/66-v2-vendor-discovery.md §Operator selection contract
+  - 02-spec/21-app/66-v2-vendor-discovery.md §Operator selection contract
   - app/capture/vendor_discovery.py:74-90
 
 Asserts that `resolve_selection` returns the matching descriptor on a hit

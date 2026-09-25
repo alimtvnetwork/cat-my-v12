@@ -1,7 +1,7 @@
 """Plan 90 Step 74 - contract tests for GET /observability/sessions/{id}/ipc.
 
 Locks the mailbox tail endpoint against the on-disk IPC format from
-`BE/cli/common/ipc.py` and `spec/21-app/76-cli-log-and-ipc.md`. Covers:
+`BE/cli/common/ipc.py` and `02-spec/21-app/76-cli-log-and-ipc.md`. Covers:
 default-mailbox derivation from CliName, RunId isolation, cursor paging,
 tail slicing, include_acked toggle, poison files, path-escape defense,
 mailbox allowlist, missing directory, and unknown session.

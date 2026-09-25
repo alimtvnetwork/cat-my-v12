@@ -7,9 +7,9 @@ consumer, UI Sessions tail) can silently ghost frames, so the contract
 must be provable in one file.
 
 Anchors:
-- spec/21-app/76-cli-log-and-ipc.md §"IPC protocol" (atomic write, ack,
+- 02-spec/21-app/76-cli-log-and-ipc.md §"IPC protocol" (atomic write, ack,
   24h retention on `.ack.json`).
-- spec/21-app/74-worker-cli.md §Acceptance #4 (`frame_ready` observability).
+- 02-spec/21-app/74-worker-cli.md §Acceptance #4 (`frame_ready` observability).
 
 Invariants covered:
   C1. Atomic visibility  - `receive` never yields a partial `.tmp` file.

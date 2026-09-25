@@ -1,6 +1,6 @@
 """Per-rule telemetry helpers (Plan 90 Step 83).
 
-Owning spec: `spec/21-app/24-runsession-record.md` §4 (per-rule audit
+Owning spec: `02-spec/21-app/24-runsession-record.md` §4 (per-rule audit
 trail requires latency + ROI content hash + predicate build id so
 operators can answer "which rules are slow", "did the ROI change
 between runs", "which build produced this Fail").

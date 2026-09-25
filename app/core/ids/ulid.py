@@ -1,4 +1,4 @@
-"""Crockford Base32 ULID validator (spec/21-app/20 §Identifier contract).
+"""Crockford Base32 ULID validator (02-spec/21-app/20 §Identifier contract).
 
 Length 26, alphabet [0-9A-HJKMNP-TV-Z]. No decoding — validation only.
 Used by every boundary that accepts a jobId/taskId/ruleId route param

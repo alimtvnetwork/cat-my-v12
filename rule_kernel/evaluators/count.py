@@ -1,6 +1,6 @@
 """Count evaluator (Plan 90 Step 86).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.3.
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.3.
 
 Contract (LOCKED by this step):
   Bound regions: 1 x `SearchRegion` (required), 1 x `PatternRegion` (required).

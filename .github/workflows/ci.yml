@@ -30,7 +30,7 @@ jobs:
       - name: IPC + UI-backend-map coverage (strict)
         run: python3 linter-scripts/check-ui-backend-map.py --strict-schema
 
-      # Validates every example payload under spec/21-app/shell/schemas/ipc/examples/
+      # Validates every example payload under 02-spec/21-app/shell/schemas/ipc/examples/
       # against its schema, and every fixture under linter-scripts/fixtures/ipc-examples/
       # (good/ must pass, bad/ must fail).
       - name: IPC example payloads validate against schemas
@@ -83,7 +83,7 @@ jobs:
       - name: Typecheck (tsc, authoritative syntax gate)
         run: bunx tsc --noEmit --pretty false
       # Composed lint: eslint + magic-strings guard (Plan 43 slice-2).
-      # Coding-guidelines gate (see .lovable/coding-guidelines/coding-guidelines.md).
+      # Coding-guidelines gate (see .ai-memory/coding-guidelines.md).
       # Prettier runs against files changed vs the PR base (or last commit on
       # push) so the enforcement is forward-only: existing unformatted files
       # do not fail CI, but any file you touch must be formatted. Recover with

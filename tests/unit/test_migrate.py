@@ -1,7 +1,7 @@
 """Unit test — migrate runner applies root DB and reports PascalCase-consistent schema.
 
 Closes audit finding F-54 (unit tier of pytest pyramid).
-Anchor: spec/21-app/26-migrations.md §3.
+Anchor: 02-spec/21-app/26-migrations.md §3.
 """
 from __future__ import annotations
 

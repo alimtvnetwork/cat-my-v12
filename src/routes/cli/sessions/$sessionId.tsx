@@ -437,7 +437,7 @@ function CliSessionDrilldown() {
       });
       es.addEventListener("error", (ev) => {
         // Surface as a warning frame in the UI (no swallowing per
-        // spec/03-error-manage). Then let the browser's EventSource
+        // 02-spec/03-error-manage). Then let the browser's EventSource
         // auto-retry - if that fails permanently, `onerror` will re-fire.
         // eslint-disable-next-line no-console
         console.warn("[cli-session-live-tail] SSE error", { runId, ev });
@@ -543,7 +543,7 @@ function CliSessionDrilldown() {
       await navigator.clipboard.writeText(text);
       setCopiedKey(key);
     } catch (err) {
-      // Do not swallow: per spec/03-error-manage this is a UI-degraded state
+      // Do not swallow: per 02-spec/03-error-manage this is a UI-degraded state
       // (typically insecure context / missing permission), not a wire error,
       // so log it and surface an inline "copy failed" pill.
       // eslint-disable-next-line no-console

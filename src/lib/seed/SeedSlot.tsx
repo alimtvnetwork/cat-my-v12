@@ -11,10 +11,10 @@
 // renderer, everything else is defaulted.
 //
 // Spec references:
-//   - spec/03-error-manage §3: no silent failure. `error` branch is
+//   - 02-spec/03-error-manage §3: no silent failure. `error` branch is
 //     always visible; the caller can override the copy but not the
 //     "something happened" fact.
-//   - spec/21-app/52 (SDK facade pattern): consumers stay ignorant of
+//   - 02-spec/21-app/52 (SDK facade pattern): consumers stay ignorant of
 //     the concrete facade implementation. `SeedSlot` reads through the
 //     existing hooks only.
 import { AlertTriangle } from "lucide-react";

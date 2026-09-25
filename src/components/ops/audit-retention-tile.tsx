@@ -16,7 +16,7 @@ import { formatIdentifierLabel, formatUiText } from "@/lib/display-labels";
 /**
  * Plan 20 Step 8 UI: read-only /ops tile.
  *
- * Contract locked in spec/21-app/71-audit-retention.md §71.6:
+ * Contract locked in 02-spec/21-app/71-audit-retention.md §71.6:
  *   - 15s poll cadence via getAuditRetentionStatus
  *   - stale-data guard fires at fetchedAt age > 60s
  *   - status colors bound to --hmi-* tokens

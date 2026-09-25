@@ -5,7 +5,7 @@ Read-only page-and-tail of the JSONL log file recorded in
 FE log-tail viewer (Step 76). Poll-based (not SSE) to stay compatible with
 uvicorn / edge runtimes and to keep the handler shape identical to
 Step 72's `sessions.py` (functions <=15 lines per
-`spec/coding-guidelines/python.md`).
+`02-spec/coding-guidelines/python.md`).
 
 Contract
 --------

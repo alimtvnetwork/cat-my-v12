@@ -11,7 +11,7 @@ class CatSample:
     id: int
     rule_id: int
     label: str
-    captured_at: str  # ISO-8601 UTC (spec/03-error-manage timestamp shape)
+    captured_at: str  # ISO-8601 UTC (02-spec/03-error-manage timestamp shape)
 
     def to_wire(self) -> dict[str, Any]:
         return asdict(self)

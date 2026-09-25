@@ -1,6 +1,6 @@
 // Plan 78 step 2 (I-SU-05 camera setup surface).
 //
-// Full CameraSetting list + editor keyed to `spec/24-app-ui-design-system/17-camera-setup.md`.
+// Full CameraSetting list + editor keyed to `02-spec/24-app-ui-design-system/17-camera-setup.md`.
 // Storage flows through the SDK facade via the camera library store; a memory
 // stub is used during SSR/tests. Server-fn hooks (Enumerate Devices, Test
 // Capture, live preview) are still blocked on the worker build (I-BE-04) and

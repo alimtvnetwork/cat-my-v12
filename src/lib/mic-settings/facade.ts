@@ -1,6 +1,6 @@
 // Plan 79 step 14. MicSettings facade (fake IndexedDB implementation).
 //
-// Contract: .lovable/pending-facades/03-mic-settings-facade.md
+// Contract: .ai-memory/pending-facades/03-mic-settings-facade.md
 // Model:    src/lib/mic-settings/model.ts
 // Storage seam: reused from src/lib/projects/facade.ts.
 //

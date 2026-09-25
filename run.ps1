@@ -26,6 +26,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$FrontendHostIp = "127.0.0.1"
+$FrontendHealthPath = "/setup"
+$FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
+$FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
+$BackendBaseUrl = "http://$HostIp`:$BePort"
 $jobs = @()
 
 try {
@@ -33,20 +38,23 @@ try {
     if (Test-Path "BE\be.egg-info") {
         Remove-Item -Recurse -Force "BE\be.egg-info" -ErrorAction SilentlyContinue
     }
+
+    Write-Host "Bootstrapping local databases..."
+    & uv run --project BE python bin\db-bootstrap.py
     
     Write-Host "Starting backend on port $BePort..."
     $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort"
     $jobs += $backendProcess
 
     Write-Host "Waiting for backend..."
-    .\scripts\dev\wait-for-http.ps1 -Url "http://localhost:$BePort/healthz" -TimeoutSec 30
+    .\scripts\dev\wait-for-http.ps1 -Url "http://$HostIp`:$BePort/healthz" -TimeoutSec 60
 
     Write-Host "Starting frontend on port $FePort..."
-    $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --port $FePort"
+    $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --host $FrontendHostIp --port $FePort"
     $jobs += $frontendProcess
 
     Write-Host "Waiting for frontend..."
-    .\scripts\dev\wait-for-http.ps1 -Url "http://localhost:$FePort/" -TimeoutSec 30
+    .\scripts\dev\wait-for-http.ps1 -Url $FrontendHealthUrl -TimeoutSec 180
 
     if (-not $NoShell) {
         Write-Host "Packaging Chromium shell..."
@@ -65,7 +73,7 @@ try {
         }
 
         Write-Host "Launching Chromium shell..."
-        $chromeArgs = "--app=http://localhost:$FePort`?backend=http://localhost:$BePort"
+        $chromeArgs = "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl"
         $chromePaths = @(
             "C:\Program Files\Google\Chrome\Application\chrome.exe",
             "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -82,7 +90,7 @@ try {
             }
         }
         if (-not $chromeFound) {
-            Write-Host "Chrome/Edge not found in default paths. Please open http://localhost:$FePort?backend=http://localhost:$BePort"
+            Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
         }
     } else {
         Write-Host "Running in --no-shell mode."

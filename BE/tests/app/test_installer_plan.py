@@ -1,7 +1,7 @@
 """Plan 90 Step 104 - Installer plan tests.
 
 Owning module: ``BE/app/installer_plan.py``.
-Spec: ``spec/21-app/79-installer-retention-timing.md`` §"Orchestrator".
+Spec: ``02-spec/21-app/79-installer-retention-timing.md`` §"Orchestrator".
 """
 
 from __future__ import annotations

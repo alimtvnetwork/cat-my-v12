@@ -8,7 +8,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // consumer independently renders "unavailable" without telling the
 // operator that the whole seed bundle failed to load. This is silent
 // failure of the system, even though every consumer is technically
-// honest, and it's exactly what spec/03-error-manage §3 forbids.
+// honest, and it's exactly what 02-spec/03-error-manage §3 forbids.
 //
 // Fix: a single, floating, non-blocking recovery toast that reads the
 // SeedProvider status, extracts a human-readable summary from a
@@ -111,7 +111,7 @@ export function SeedRecoveryToast() {
               onClick={() => {
                 // Structured log so the retry is observable and
                 // pairs with the original `[seed] SeedProvider load
-                // failed` line (spec/03-error-manage §3).
+                // failed` line (02-spec/03-error-manage §3).
                 ClientLogger.info("[seed] SeedRecoveryToast retry clicked", {
                   source: ctx.facade.source,
                 });

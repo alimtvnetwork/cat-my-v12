@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from BE.main import create_app
+from BE.repos.rules_repo import InMemoryRulesRepo, get_rules_repo, set_rules_repo
+
+
+@pytest.fixture(autouse=True)
+def _isolate_rules_repo():
+    prev = get_rules_repo()
+    set_rules_repo(InMemoryRulesRepo())
+    yield
+    set_rules_repo(prev)
 
 
 def _client() -> TestClient:

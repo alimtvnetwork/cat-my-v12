@@ -1,6 +1,6 @@
 """Central registry of typed error codes.
 
-Anchor: spec/21-app/40-error-manage.md §2, §5.
+Anchor: 02-spec/21-app/40-error-manage.md §2, §5.
 
 Rule: inventing an `E_*` code at a call site is `E_BUG_UNKNOWN_CODE`. Every code
 that crosses a boundary MUST exist in this enum. Adding a code requires (a) an

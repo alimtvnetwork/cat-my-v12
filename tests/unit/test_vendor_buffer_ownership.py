@@ -1,6 +1,6 @@
 """Plan 17 Step 9b: vendor adapter buffer-ownership.
 
-Anchor: spec/21-app/68-v2-vendor-sdk-contract.md §2. Every `_grab` MUST
+Anchor: 02-spec/21-app/68-v2-vendor-sdk-contract.md §2. Every `_grab` MUST
 return a caller-owned bytes copy and MUST release the SDK-owned buffer
 before returning (Pylon `result.Release()`, Spinnaker `image.Release()`,
 Vimba `camera.queue_frame(frame)`). If the copy step raises, the release

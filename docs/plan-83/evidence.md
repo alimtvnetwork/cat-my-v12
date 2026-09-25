@@ -1,7 +1,7 @@
 path|exists|imported_from
 docs/plan-100/README.md|MISSING|-
 docs/plan-72/README.md|yes|src/lib/projects/bundle.ts,src/lib/projects/**tests**/bundle.test.ts,
-spec/21-app/53-ui-improvements-v4.md|yes|src/lib/shortcuts/registry.ts,src/features/projects/modals/SaveCameraSetupModal.tsx,src/components/rules/tools/toolTooltipMap.ts,
+02-spec/21-app/53-ui-improvements-v4.md|yes|src/lib/shortcuts/registry.ts,src/features/projects/modals/SaveCameraSetupModal.tsx,src/components/rules/tools/toolTooltipMap.ts,
 src/components/primitives/InlineEdit.tsx|MISSING|-
 src/components/settings/SettingsCard.tsx|yes|src/routes/settings.trigger.tsx,src/routes/settings.lighting.tsx,src/routes/settings.index.tsx,
 src/components/shell/AddressBar.tsx|MISSING|-

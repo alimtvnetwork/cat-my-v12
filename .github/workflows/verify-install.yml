@@ -1,6 +1,6 @@
 # Plan 90 Step 125 - verify-install CI gate.
 #
-# Owning spec: spec/21-app/77-cli-powershell-and-release.md §Gates.
+# Owning spec: 02-spec/21-app/77-cli-powershell-and-release.md §Gates.
 # Anchors:
 #   packaging/installers/install.sh   (--verify-only, exit 6)
 #   packaging/installers/install.ps1  (-VerifyOnly,  exit 9533)

@@ -31,6 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 .gitmap/release-assets
+.gitmap/pipeline/
 release-assets
 
 # Launcher logs
@@ -45,9 +46,9 @@ __pycache__/
 # Tests
 test-results/
 tests/reports/
-.lovable/temp/
-.lovable/temp/
-.lovable/temp/
+.ai-memory/temp/
+.ai-memory/temp/
+.ai-memory/temp/
 temp-scripts/
 
 # Generated Files
@@ -66,3 +67,21 @@ Tool_Catalog_Function_List_Markdown_Package/
 .venv/
 build/
 
+# Cache & Temporary files
+tmp/
+.cache/
+
+# Test reports & coverage
+playwright-report/
+html-report/
+coverage/
+.coverage
+*.lcov
+
+# Artifacts & compiled binaries
+artifacts/
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin

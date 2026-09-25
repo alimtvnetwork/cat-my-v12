@@ -1,6 +1,6 @@
 # 05 - Launcher Sequence (`run.ps1` / `run.sh`)
 
-Startup order and readiness gates for the dev launcher. Feeds `spec/21-app/shell/26-dev-launcher.md` (Step 7).
+Startup order and readiness gates for the dev launcher. Feeds `02-spec/21-app/shell/26-dev-launcher.md` (Step 7).
 
 ```mermaid
 sequenceDiagram
@@ -37,4 +37,4 @@ sequenceDiagram
 
 - `BE_PORT` (default 8787), `FE_PORT` (default 5173), `UI_BACKEND_BASE_URL` (default `http://localhost:$BE_PORT`).
 - Health probe endpoint: `GET /healthz` returns envelope `{ Status:{IsSuccess:true, HttpCode:200} }`.
-- Chromium shell scope pending `spec/21-app/shell/01-adr-shell-choice.md` re-read at Step 21; if that ADR forbids a production extension shell, the `CH` participant downgrades to a dev harness only.
+- Chromium shell scope pending `02-spec/21-app/shell/01-adr-shell-choice.md` re-read at Step 21; if that ADR forbids a production extension shell, the `CH` participant downgrades to a dev harness only.

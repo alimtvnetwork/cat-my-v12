@@ -5,11 +5,11 @@
 --     owns `captures`, `frames`, `results`, `result_details`,
 --     `ipc_messages`; table names are singular PascalCase per
 --     spec/04-database-conventions/01-naming-conventions.md and
---     .lovable/memory/26-split-db-cli-cheatsheet.md §9).
+--     .ai-memory/memory/26-split-db-cli-cheatsheet.md §9).
 --   * spec/21-app/26-migrations.md §1 (forward-only, additive, idempotent
 --     via IF NOT EXISTS, one file = one atomic transaction, final row
 --     inserted into SchemaVersion).
---   * .lovable/memory/26-split-db-cli-cheatsheet.md §9 (no cross-tier FKs;
+--   * .ai-memory/memory/26-split-db-cli-cheatsheet.md §9 (no cross-tier FKs;
 --     `CaptureSessionId` here is an opaque INTEGER referencing the Root
 --     DB `CaptureSession.CaptureSessionId`, NOT a REFERENCES clause).
 --

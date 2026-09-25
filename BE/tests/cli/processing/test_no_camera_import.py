@@ -2,7 +2,7 @@
 
 Root cause guarded: if `BE.sdk_facade.camera` or any vendor adapter leaks into
 the `processing-cli` module graph, PyInstaller bundles bloat and the CLI
-crashes on hosts without vendor DLLs. This test pins spec/21-app/75 §Boundary
+crashes on hosts without vendor DLLs. This test pins 02-spec/21-app/75 §Boundary
 by loading `BE.cli.processing.main` in a fresh subprocess and asserting no
 forbidden module lands in `sys.modules`.
 

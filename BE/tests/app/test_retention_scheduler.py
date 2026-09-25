@@ -1,6 +1,6 @@
 """Tests for the Step 102 retention scheduler (`BE/app/retention_scheduler.py`).
 
-Owning spec: ``spec/21-app/78-retention-schedule.md`` (all 6 acceptance
+Owning spec: ``02-spec/21-app/78-retention-schedule.md`` (all 6 acceptance
 criteria are exercised below by ID).
 """
 

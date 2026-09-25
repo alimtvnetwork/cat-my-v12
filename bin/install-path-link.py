@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Plan 90 Step 126 - PATH-link install/uninstall CLI.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md`` §"PATH linking".
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md`` §"PATH linking".
 
 Root cause guarded (one sentence): without a dedicated CLI, both
 installers would have to inline shim/symlink logic and drift; this CLI

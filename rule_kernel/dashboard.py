@@ -1,9 +1,9 @@
 """Per-code / per-rule budget + problem telemetry aggregator (Plan 90 Step 95).
 
 Owning specs:
-  - `spec/21-app/33-rule-evaluation.md` §5 (per-rule LatencyMs + TimeoutMs budget)
-  - `spec/21-app/24-runsession-record.md` §4 (per-rule audit trail keys)
-  - `spec/21-app/76-observability.md` (dashboard consumers)
+  - `02-spec/21-app/33-rule-evaluation.md` §5 (per-rule LatencyMs + TimeoutMs budget)
+  - `02-spec/21-app/24-runsession-record.md` §4 (per-rule audit trail keys)
+  - `02-spec/21-app/76-observability.md` (dashboard consumers)
 
 Rationale
 ---------

@@ -1,6 +1,6 @@
 """Plan 90 Step 44 tests - `worker-cli list-devices`.
 
-Locks the operator-facing verb named in `spec/21-app/74-worker-cli.md`
+Locks the operator-facing verb named in `02-spec/21-app/74-worker-cli.md`
 §Acceptance #2: single-line Universal Envelope on stdout, PascalCase
 DeviceInfo records, stub serials present, vendor provider fails with
 `E_CLI_UNSUPPORTED_HOST` at `ExitCode.VendorError`, and the session log

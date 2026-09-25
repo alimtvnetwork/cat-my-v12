@@ -1,6 +1,6 @@
 """SQLite audit sink (Plan 21 Step 4 - physical writes).
 
-Contract: spec/21-app/72-audit-persistence.md §72.3 (columns LOCKED),
+Contract: 02-spec/21-app/72-audit-persistence.md §72.3 (columns LOCKED),
 §72.4 (indexes LOCKED), §72.10 (facade shape).
 
 Design note (user rule): no em dashes in prose or comments.

@@ -1,11 +1,11 @@
 """RunSession Task-DB writer (Plan 90 Step 96).
 
 Owning specs:
-  - `spec/21-app/24-results-json.md` §1 "Two Files per RunSession" (task.db
+  - `02-spec/21-app/24-results-json.md` §1 "Two Files per RunSession" (task.db
     row is authoritative; JSONL is a reproducible export).
-  - `spec/21-app/76-cli-log-and-ipc.md` §"Database ownership" (Task tier
+  - `02-spec/21-app/76-cli-log-and-ipc.md` §"Database ownership" (Task tier
     owns per-invocation run bookkeeping; RunId is the cross-tier join key).
-  - `spec/04-database-conventions/01-naming-conventions.md` (PascalCase
+  - `02-spec/04-database-conventions/01-naming-conventions.md` (PascalCase
     columns; INTEGER epoch for `*At`; no cross-tier FKs).
 
 Root cause (pre-Step-96): `evaluate` only appended JSONL to disk; no Task

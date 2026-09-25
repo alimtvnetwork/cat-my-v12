@@ -5,8 +5,8 @@ import shutil
 import time
 import subprocess
 
-TASK_DIR = r"d:\work\cat-my\.lovable\plans\subtasks\96-plan-guideline-audit"
-TEMP_DIR = r"d:\work\cat-my\.lovable\temp"
+TASK_DIR = r"d:\work\cat-my\.ai-memory\plans\subtasks\96-plan-guideline-audit"
+TEMP_DIR = r"d:\work\cat-my\.ai-memory\temp"
 
 def run_git(cmd):
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=r"d:\work\cat-my")

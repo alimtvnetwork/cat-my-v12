@@ -2,13 +2,13 @@
 """
 audit_consolidate.py
 
-Reads spec/ and every audit artifact under spec/25-app-audit/, detects
+Reads spec/ and every audit artifact under 02-spec/25-app-audit/, detects
 outdated sections (version drift, dangling plan/spec refs, [TBD] markers,
 stale dates), consolidates everything into ONE current audit document at
-spec/25-app-audit/latest/99-consolidated.md, and prints a change summary
+02-spec/25-app-audit/latest/99-consolidated.md, and prints a change summary
 to stdout.
 
-Read-only for spec/, .lovable/. Only writes 99-consolidated.md.
+Read-only for spec/, .ai-memory/. Only writes 99-consolidated.md.
 
 Usage: python3 scripts/audit_consolidate.py [--check]
   --check  exit 1 if any outdated sections found (CI mode); do not write.
@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC_DIR = ROOT / "spec"
+SPEC_DIR = ROOT / "02-spec"
 APP_SPEC = SPEC_DIR / "21-app"
 AUDIT_DIR = SPEC_DIR / "25-app-audit"
 LATEST = AUDIT_DIR / "latest"
@@ -34,15 +34,15 @@ README = ROOT / "readme.md"
 CHANGELOG = ROOT / "changelog.md"
 RELEASE = ROOT / "release_notes.md"
 
-PLANS_PENDING = ROOT / ".lovable/plans/pending"
-PLANS_DONE = ROOT / ".lovable/plans/done"
+PLANS_PENDING = ROOT / ".ai-memory/plans/pending"
+PLANS_DONE = ROOT / ".ai-memory/plans/done"
 
 VERSION_RE = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
 CHANGELOG_HEAD_RE = re.compile(r"^##\s*\[(\d+\.\d+\.\d+)\]", re.M)
 README_PIN_RE = re.compile(r"\*\*Version:\*\*\s*(\d+\.\d+\.\d+)")
 TBD_RE = re.compile(r"\[TBD\]|TODO|FIXME|XXX", re.I)
 SPEC_REF_RE = re.compile(r"spec/[0-9a-z_\-/]+\.md", re.I)
-PLAN_REF_RE = re.compile(r"\.lovable/plans/(pending|done)/[0-9a-z_\-.]+\.md", re.I)
+PLAN_REF_RE = re.compile(r"\.ai-memory/plans/(pending|done)/[0-9a-z_\-.]+\.md", re.I)
 DATE_RE = re.compile(r"20\d{2}-\d{2}-\d{2}")
 
 
@@ -102,7 +102,7 @@ def detect_outdated(current_ver: str) -> list[dict]:
         })
 
     # 2) Sweep spec + audit + memory + plans for signals.
-    scan_bases = [SPEC_DIR, ROOT / ".lovable/memory", PLANS_PENDING, PLANS_DONE]
+    scan_bases = [SPEC_DIR, ROOT / ".ai-memory/memory", PLANS_PENDING, PLANS_DONE]
     for base in scan_bases:
         for f in collect_files(base):
             rel = str(f.relative_to(ROOT))
@@ -192,7 +192,7 @@ def render(current_ver: str, findings: list[dict], version_warns: list[str]) -> 
     lines.append(f"# Consolidated Audit - v{current_ver}")
     lines.append("")
     lines.append(f"Generated: {now} by `scripts/audit_consolidate.py`.")
-    lines.append("This document supersedes all prior audit bundles; source: `spec/25-app-audit/latest/`.")
+    lines.append("This document supersedes all prior audit bundles; source: `02-spec/25-app-audit/latest/`.")
     lines.append("")
 
     lines.append("## Version pins")
@@ -203,8 +203,8 @@ def render(current_ver: str, findings: list[dict], version_warns: list[str]) -> 
     lines.append("")
 
     lines.append("## Inputs consolidated")
-    lines.append(f"- App specs (`spec/21-app/`): **{len(spec_files)}** files")
-    lines.append(f"- Latest audit bundle (`spec/25-app-audit/latest/`): **{len(audit_files)}** files")
+    lines.append(f"- App specs (`02-spec/21-app/`): **{len(spec_files)}** files")
+    lines.append(f"- Latest audit bundle (`02-spec/25-app-audit/latest/`): **{len(audit_files)}** files")
     lines.append(f"- Plans pending: **{len(pending)}** / done: **{len(done)}**")
     lines.append("")
 
@@ -235,10 +235,10 @@ def render(current_ver: str, findings: list[dict], version_warns: list[str]) -> 
 def cleanup_obsolete(dry_run: bool) -> list[str]:
     """Remove obsolete audit artifacts kept only for history.
 
-    Safe targets (only these, never touches spec/21-app/, plans, or memory):
-      - Non-`latest` bundle directories under spec/25-app-audit/ (superseded
+    Safe targets (only these, never touches 02-spec/21-app/, plans, or memory):
+      - Non-`latest` bundle directories under 02-spec/25-app-audit/ (superseded
         by the consolidated doc under latest/).
-      - Loose files at spec/25-app-audit/ root that are not part of the
+      - Loose files at 02-spec/25-app-audit/ root that are not part of the
         canonical set (00-history-timeline.md, 00-overview.md, 00-rubric.md,
         00-scope.md, CONVENTIONS.md, latest/).
 

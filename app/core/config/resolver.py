@@ -1,6 +1,6 @@
 """Config resolver. Precedence: runtime > task > app > seed.
 
-Anchor: spec/21-app/27-config-surface.md §4 (contract), §6 (failure codes).
+Anchor: 02-spec/21-app/27-config-surface.md §4 (contract), §6 (failure codes).
 Guideline: no `!`; positive conditions only; ≤ 15-line functions.
 """
 from __future__ import annotations

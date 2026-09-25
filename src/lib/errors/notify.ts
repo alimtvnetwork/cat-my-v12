@@ -6,7 +6,7 @@ import { AnnouncePriorityType } from "@/lib/a11y/announcer";
 // "View Details" action is raised. Kept side-effect free at import time so it
 // is safe to reference from the SSR-executed router bootstrap.
 //
-// Spec: spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md §2.1
+// Spec: 02-spec/03-error-manage/02-error-architecture/04-error-modal/06-suppress-global-error.md §2.1
 
 import { toast } from "sonner";
 import { createElement } from "react";

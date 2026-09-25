@@ -4,7 +4,7 @@
 --   * spec/21-app/76-cli-log-and-ipc.md §"Database ownership" (Root DB owns
 --     `cli_invocations`; DDL table name is singular PascalCase per
 --     spec/04-database-conventions/01-naming-conventions.md and
---     .lovable/memory/26-split-db-cli-cheatsheet.md §9).
+--     .ai-memory/memory/26-split-db-cli-cheatsheet.md §9).
 --   * spec/21-app/26-migrations.md §1 (forward-only, additive-only,
 --     idempotent via IF NOT EXISTS, one file = one atomic transaction,
 --     final row inserted into SchemaVersion).
@@ -15,7 +15,7 @@
 --     to leave headroom for the split-DB series (0010-0019 Root,
 --     0020-0029 Task, 0030+ Rules). Plan wording wins for this file
 --     name; the runner sorts lexically so both widths are safe.
---     Filed as issue-follow-up under `.lovable/issues/39-*` (spec vs plan
+--     Filed as issue-follow-up under `.ai-memory/issues/39-*` (spec vs plan
 --     migration-numbering).
 --   * SchemaVersion.AppliedAt is TEXT here to match the LOCKED shape in
 --     spec 26 §3; the epoch-INTEGER rule (conventions §7.1) applies to

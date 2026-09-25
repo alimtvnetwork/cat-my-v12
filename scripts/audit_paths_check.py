@@ -4,32 +4,32 @@ Verify that plan, memory index, and active audit paths all agree on the
 single consolidated audit source. Exits non-zero on drift.
 
 Canonical source of truth:
-  spec/25-app-audit/latest/               (bundle directory)
-  spec/25-app-audit/latest/99-consolidated.md   (consolidated document)
+  02-spec/25-app-audit/latest/               (bundle directory)
+  02-spec/25-app-audit/latest/99-consolidated.md   (consolidated document)
 
 Rules enforced:
   1. Canonical bundle dir + consolidated file exist.
-  2. readme.md points at spec/25-app-audit/latest/.
-  3. .lovable/memory/index.md references spec/25-app-audit/latest/ (not any
-     older audit path such as .lovable/memory/audit/ or version-pinned
+  2. readme.md points at 02-spec/25-app-audit/latest/.
+  3. .ai-memory/memory/index.md references 02-spec/25-app-audit/latest/ (not any
+     older audit path such as .ai-memory/memory/audit/ or version-pinned
      bundle dirs).
-  4. Pending plans reference only spec/25-app-audit/latest/ when they
+  4. Pending plans reference only 02-spec/25-app-audit/latest/ when they
      mention the audit bundle (done/ plans are historical, exempt).
-  5. No file under spec/25-app-audit/ (outside latest/) shadows the
+  5. No file under 02-spec/25-app-audit/ (outside latest/) shadows the
      canonical bundle with sibling audit dirs.
 """
 from __future__ import annotations
 import re, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CANON_DIR = "spec/25-app-audit/latest"
+CANON_DIR = "02-spec/25-app-audit/latest"
 CANON_DOC = f"{CANON_DIR}/99-consolidated.md"
 
 # Legacy / drifted paths that must NOT appear in active references.
 LEGACY = [
-    re.compile(r"\.lovable/memory/audit/"),
-    re.compile(r"spec/25-app-audit/v\d+\.\d+"),      # version-pinned dirs
-    re.compile(r"spec/25-app-audit/\d{4}-\d{2}-\d{2}"),  # date-pinned dirs
+    re.compile(r"\.ai-memory/memory/audit/"),
+    re.compile(r"02-spec/25-app-audit/v\d+\.\d+"),      # version-pinned dirs
+    re.compile(r"02-spec/25-app-audit/\d{4}-\d{2}-\d{2}"),  # date-pinned dirs
 ]
 
 def scan(path: pathlib.Path, must_have_canon: bool) -> list[str]:
@@ -38,7 +38,7 @@ def scan(path: pathlib.Path, must_have_canon: bool) -> list[str]:
     for pat in LEGACY:
         for m in pat.finditer(text):
             errs.append(f"{path}: legacy audit path {m.group(0)!r}")
-    if must_have_canon and "spec/25-app-audit/" in text and CANON_DIR not in text:
+    if must_have_canon and "02-spec/25-app-audit/" in text and CANON_DIR not in text:
         errs.append(f"{path}: mentions audit bundle but not canonical {CANON_DIR}")
     return errs
 
@@ -52,17 +52,17 @@ def main() -> int:
 
     targets: list[tuple[pathlib.Path, bool]] = [
         (ROOT / "readme.md", True),
-        (ROOT / ".lovable/memory/index.md", True),
+        (ROOT / ".ai-memory/memory/index.md", True),
     ]
-    for p in (ROOT / ".lovable/plans/pending").glob("*.md"):
+    for p in (ROOT / ".ai-memory/plans/pending").glob("*.md"):
         targets.append((p, False))
 
     for path, must in targets:
         if path.exists():
             errors.extend(scan(path, must))
 
-    # Sibling drift: only latest/ + top-level *.md allowed under spec/25-app-audit/
-    audit_root = ROOT / "spec/25-app-audit"
+    # Sibling drift: only latest/ + top-level *.md allowed under 02-spec/25-app-audit/
+    audit_root = ROOT / "02-spec/25-app-audit"
     if audit_root.is_dir():
         for child in audit_root.iterdir():
             if child.is_dir() and child.name != "latest":

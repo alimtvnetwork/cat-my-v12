@@ -1,16 +1,16 @@
 """Canonical CLI process exit codes.
 
-Source of truth: `spec/21-app/74-worker-cli.md` §Acceptance criteria #6
-(also binding on `processing-cli` per `spec/21-app/75-processing-cli.md`).
+Source of truth: `02-spec/21-app/74-worker-cli.md` §Acceptance criteria #6
+(also binding on `processing-cli` per `02-spec/21-app/75-processing-cli.md`).
 
-The generic CLI spec (`spec/13-generic-cli/03-dispatch.md`) uses 0/1 for
+The generic CLI spec (`02-spec/13-generic-cli/03-dispatch.md`) uses 0/1 for
 success/failure; the app-specific spec 74 overrides with the richer
-0/2/3/4/5 scheme. See `.lovable/memory/26-split-db-cli-cheatsheet.md`
+0/2/3/4/5 scheme. See `.ai-memory/memory/26-split-db-cli-cheatsheet.md`
 §11 for the resolution.
 
 Ranges reserved elsewhere:
 - 9500-9599: PowerShell wrapper self-errors
-  (`spec/11-powershell-integration/04-error-codes.md` + memory §12).
+  (`02-spec/11-powershell-integration/04-error-codes.md` + memory §12).
   Child-process codes below are always preserved by wrappers via
   `$LASTEXITCODE`.
 
@@ -27,7 +27,7 @@ from enum import IntEnum
 class ExitCode(IntEnum):
     """Process exit code contract for every CLI in this repo.
 
-    Bound to `spec/21-app/74-worker-cli.md` §Acceptance #6. Any change
+    Bound to `02-spec/21-app/74-worker-cli.md` §Acceptance #6. Any change
     here requires a spec bump AND a coordinated PowerShell wrapper
     update (memory §12).
     """

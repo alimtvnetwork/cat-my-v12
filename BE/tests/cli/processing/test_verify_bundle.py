@@ -1,6 +1,6 @@
 """Plan 90 Step 62 - `processing-cli verify-bundle` acceptance tests.
 
-Pins spec/21-app/75 §Acceptance #4 and the collection-not-short-circuit
+Pins 02-spec/21-app/75 §Acceptance #4 and the collection-not-short-circuit
 behaviour that Step 66's FE rules-editor button depends on.
 """
 

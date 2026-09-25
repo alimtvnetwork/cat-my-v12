@@ -1,6 +1,6 @@
 // Plan 90 Step 136. FE fetch client for `GET /rules/{RuleSetId}`.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // Used by the reload-server conflict resolver: on `E_BE_CONFLICT` the user
 // picks "reload server", we GET the freshly committed envelope, mirror it
@@ -55,6 +55,10 @@ function wrapLoadError(err: unknown, url: string): LoadRuleSetError {
   });
 }
 
+export interface LoadRuleSetOptions {
+  suppressCapture?: boolean;
+}
+
 /**
  * GET the current server-committed envelope for `ruleSetId` and mirror it
  * into IndexedDB. Throws `LoadRuleSetError` on any failure.
@@ -74,6 +78,7 @@ export async function loadRuleSet(
       { suppressCapture: opts?.suppressCapture ?? true },
     );
     const committed = resEnvelope.Results[0];
+
     if (!committed) {
       throw new LoadRuleSetError({
         code: "E_BE_UNKNOWN",
@@ -85,6 +90,7 @@ export async function loadRuleSet(
         envelope: resEnvelope,
       });
     }
+
     await putDraft({
       ...committed,
       DraftMeta: { ...committed.DraftMeta, Origin: DraftOriginType.Server },

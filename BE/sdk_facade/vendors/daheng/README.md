@@ -13,7 +13,7 @@ For `import gxipy` to succeed:
 
 ## Reconnect Policy
 
-Per `spec/21-app/73`, the adapter implements an exponential backoff reconnect policy:
+Per `02-spec/21-app/73`, the adapter implements an exponential backoff reconnect policy:
 
 - Delays: 200ms, 500ms, 1s, 2s, 5s.
 - Capped at 5 attempts.

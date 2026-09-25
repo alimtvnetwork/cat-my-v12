@@ -3,7 +3,7 @@ import { useErrorStore } from "@/lib/stores/errorStore";
 
 /**
  * Wraps any promise-based query (fetch, axios, RPC) to automatically catch
- * and log errors using the guidelines in `spec/03-error-manage`.
+ * and log errors using the guidelines in `02-spec/03-error-manage`.
  * Connects to `useErrorStore` for unified error handling.
  */
 export async function QueryWrapper<T>(

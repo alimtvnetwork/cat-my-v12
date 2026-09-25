@@ -10,7 +10,7 @@
     task path `\vision-app\retention`.
 
     Wrapper-only exit codes (reserved 9500-9599 per
-    `.lovable/memory/26-split-db-cli-cheatsheet.md` §12):
+    `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §12):
         9520 = schtasks.exe not found
         9521 = task xml template / venv / wrapper missing
         9522 = invalid IntervalHours / RetentionDays
@@ -19,8 +19,8 @@
 
 
     Anchors:
-        spec/21-app/79-installer-retention-timing.md
-        spec/21-app/78-retention-schedule.md
+        02-spec/21-app/79-installer-retention-timing.md
+        02-spec/21-app/78-retention-schedule.md
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true, DefaultParameterSetName = 'Install')]

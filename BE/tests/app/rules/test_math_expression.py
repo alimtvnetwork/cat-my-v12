@@ -1,6 +1,6 @@
 """Tests for `MathExpression` predicate (Plan 90 Step 88).
 
-Owning spec: `spec/21-app/33-rule-catalog.md` §3.6 + §6.
+Owning spec: `02-spec/21-app/33-rule-catalog.md` §3.6 + §6.
 """
 
 from __future__ import annotations

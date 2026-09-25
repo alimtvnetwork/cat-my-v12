@@ -242,7 +242,7 @@ def test_missing_table_surfaces_internal_error_not_empty(db_root: Path) -> None:
 
 
 def test_route_never_touches_task_or_rules_tier(db_root: Path) -> None:
-    """Guarantee spec/05-split-db-architecture: no cross-tier reads."""
+    """Guarantee 02-spec/05-split-db-architecture: no cross-tier reads."""
     _apply_root_migration()
     # If the route ever opened task.db or rules.db, those files would exist
     # after the request. Only root.db is permitted.

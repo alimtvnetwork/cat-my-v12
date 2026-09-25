@@ -4,8 +4,8 @@ Wires together Steps 9-14: config (`get_settings`), structured JSON logging
 (`configure_logging`), and frozen-envelope exception handlers
 (`register_exception_handlers`). Steps 16-19 mount routers here.
 
-Spec: spec/21-app/backend-implementation-request-v1.md
-Guideline: spec/coding-guidelines/python.md (functions ≤ 15 lines, typed at boundary).
+Spec: 02-spec/21-app/backend-implementation-request-v1.md
+Guideline: 02-spec/coding-guidelines/python.md (functions ≤ 15 lines, typed at boundary).
 """
 
 from __future__ import annotations
@@ -34,7 +34,11 @@ from BE.routes import samples as samples_route
 from BE.routes import score as score_route
 from BE.routes import seed as seed_route
 from BE.routes import system as system_route
+
 from BE.routes import telemetry as telemetry_route
+
+from BE.routes import vision as vision_route
+
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
@@ -96,6 +100,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+    app.include_router(vision_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:

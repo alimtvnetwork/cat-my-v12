@@ -1,6 +1,6 @@
 """Plan 20 Step 7: multi-policy audit rotation worker.
 
-Implements the contract locked in `spec/21-app/71-audit-retention.md`
+Implements the contract locked in `02-spec/21-app/71-audit-retention.md`
 §71.3. One transactional delete per policy, capped batch size, per-policy
 budget, exponential back-off on SQLite lock errors, clock-skew guard, and
 a self-audit `AuditRetentionRun` row so the rotation is itself observable.

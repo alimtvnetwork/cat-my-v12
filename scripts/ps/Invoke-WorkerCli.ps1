@@ -15,16 +15,16 @@
     Forwards ALL remaining args verbatim, streams stdout/stderr
     untouched so the caller can pipe the Universal Envelope JSON
     directly into `ConvertFrom-Json`, and propagates `$LASTEXITCODE`
-    unchanged (per spec/21-app/74-worker-cli.md exit contract 0/2/3/4/5).
+    unchanged (per 02-spec/21-app/74-worker-cli.md exit contract 0/2/3/4/5).
 
     Tee log: one `start` and one `end` JSONL record per invocation
     under `<APP_LOG_ROOT>/ps-wrapper/<YYYY-MM-DD>/Invoke-WorkerCli-<pid>.jsonl`
     via Write-PsWrapperLog. Log-write failures are non-fatal (swallowed
-    inside Write-PsWrapperLog) per spec/03-error-manage/ observability
+    inside Write-PsWrapperLog) per 02-spec/03-error-manage/ observability
     rule: wrapper telemetry must NEVER be able to crash the CLI.
 
     Wrapper-only failures reserve 9500-9599 per
-    .lovable/memory/26-split-db-cli-cheatsheet.md §12:
+    .ai-memory/memory/26-split-db-cli-cheatsheet.md §12:
         9511 = python-not-found (no interpreter and no installed exe)
 
     -WhatIf: SupportsShouldProcess is declared so operators can preview
@@ -33,10 +33,10 @@
     and exits 0.
 
     Anchors:
-        spec/21-app/77-cli-powershell-and-release.md (§Deliverables)
-        spec/21-app/74-worker-cli.md (exit contract)
-        spec/11-powershell-integration/03-integration-guide.md
-        .lovable/memory/26-split-db-cli-cheatsheet.md §12
+        02-spec/21-app/77-cli-powershell-and-release.md (§Deliverables)
+        02-spec/21-app/74-worker-cli.md (exit contract)
+        02-spec/11-powershell-integration/03-integration-guide.md
+        .ai-memory/memory/26-split-db-cli-cheatsheet.md §12
 
 .EXAMPLE
     .\scripts\ps\Invoke-WorkerCli.ps1 list-devices --json

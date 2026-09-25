@@ -25,8 +25,8 @@ import { ErrorLevelType } from "@/types/errors";
  *     always written before `close_session` returns and is therefore
  *     already in the historical projection by the time the row is closed.
  *
- * Spec: spec/03-error-manage/02-error-architecture/05-response-envelope/
- *       spec/21-app/74-worker-cli.md §"Acceptance #6" (exit-code contract)
+ * Spec: 02-spec/03-error-manage/02-error-architecture/05-response-envelope/
+ *       02-spec/21-app/74-worker-cli.md §"Acceptance #6" (exit-code contract)
  */
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText } from "lucide-react";

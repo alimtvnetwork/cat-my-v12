@@ -127,7 +127,7 @@ def test_category_policy_map_matches_taxonomy() -> None:
 
 # ---------------------------------------------------------------------------
 # Plan 20 follow-up: exercise both cross-taxonomy codes end-to-end, and pin
-# the resolve-before-persist invariant from spec/21-app/68-v2-audit-retention.md §68.2.
+# the resolve-before-persist invariant from 02-spec/21-app/68-v2-audit-retention.md §68.2.
 # ---------------------------------------------------------------------------
 
 
@@ -222,7 +222,7 @@ def test_uncaught_sqlite_error_emits_e_sec_retention_failed(sink: AuditSink, cap
 
 
 def test_policies_snapshot_before_prune_invariant() -> None:
-    """spec/21-app/68-v2-audit-retention.md §68.2: policy list is resolved BEFORE any DELETE.
+    """02-spec/21-app/68-v2-audit-retention.md §68.2: policy list is resolved BEFORE any DELETE.
 
     Regression guard: `run_once` must materialize `policies` into a list up front,
     so a generator/iterable given by the caller is consumed exactly once and

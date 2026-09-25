@@ -4,7 +4,7 @@ import { useEffect, useState, type RefObject } from "react";
  * Returns `true` when the element referenced by `ref` fits inside the
  * viewport at its current fixed/floating position, `false` otherwise.
  *
- * Purpose: enforces `.lovable/spec/commands/25-hide-clipped-floating-notices.md`
+ * Purpose: enforces `.ai-memory/02-spec/commands/25-hide-clipped-floating-notices.md`
  * ("If this notification bar is cut, then hide it.") for any fixed
  * floating card. Callers gate rendering on the boolean, so clipped
  * chrome is never drawn.

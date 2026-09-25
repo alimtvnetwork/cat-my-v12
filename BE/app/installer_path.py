@@ -1,6 +1,6 @@
 """Plan 90 Step 126 - PATH-link lifecycle for shipped PyInstaller binaries.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md`` §"PATH linking".
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md`` §"PATH linking".
 
 Root cause guarded (one sentence): Steps 117-125 built and verified the
 onefile ``.exe`` payloads but left them stranded in an out-of-PATH
@@ -29,7 +29,7 @@ Anchors
 - ``BE/app/installer_binaries.py`` (Step 117) - single source of truth.
 - ``BE/app/install_manifest.py`` (Step 105) - callers append a
   ``ManifestActionRecord`` with ``Name="path-link"``.
-- ``spec/coding-guidelines/python.md`` - typed boundaries, PascalCase codes.
+- ``02-spec/coding-guidelines/python.md`` - typed boundaries, PascalCase codes.
 """
 
 from __future__ import annotations

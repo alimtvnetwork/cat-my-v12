@@ -1,10 +1,10 @@
 """Plan 90 Step 13 - canonical filesystem-root resolver for the CLIs.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Root layout" (Windows `%LOCALAPPDATA%`,
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Root layout" (Windows `%LOCALAPPDATA%`,
   Linux `~/.local/state`, sibling `<APP_IPC_ROOT>`).
-- `spec/21-app/74-worker-cli.md` + `75-processing-cli.md` (consumers).
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §8 (env-var override order:
+- `02-spec/21-app/74-worker-cli.md` + `75-processing-cli.md` (consumers).
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §8 (env-var override order:
   env layer between user TOML and CLI flags).
 
 Root name matrix (all under `<app_root>`):

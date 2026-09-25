@@ -1,6 +1,6 @@
 """SDK facade package: the ONLY BE surface that may touch raw vendor SDKs.
 
-Per `spec/21-app/52-sdk-facade-pattern.md`: routes, workers, and repos import
+Per `02-spec/21-app/52-sdk-facade-pattern.md`: routes, workers, and repos import
 `SdkFacade` from here, never `sdk/**` directly (violations raise
 `E_BUG_SDK_LEAK`). Vendor handles (device pointers, file descriptors,
 stream objects) MUST NOT escape this package; facades return plain
@@ -16,7 +16,7 @@ Protocol surface (Plan 88 Step 21, expanded to match `sdk/daheng-galaxy-sdk-manu
 
 Guideline conflict note: `sdk/daheng-galaxy-sdk-manual.md` §8 suggests mapping
 camera errors to `E_BE_*` (including a non-existent `E_BE_TIMEOUT`). The
-folder spec `spec/21-app/40-error-manage.md` + `BE/errors/codes.py` reserves
+folder spec `02-spec/21-app/40-error-manage.md` + `BE/errors/codes.py` reserves
 the `E_CAM_*` family for facade errors and is authoritative. Manual guidance
 was adapted: NOT_FOUND -> E_CAM_NOT_CONNECTED, TIMEOUT -> E_CAM_TIMEOUT,
 CAPTURE/BANDWIDTH/USB -> E_CAM_CAPTURE_FAILED, param out-of-range ->

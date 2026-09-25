@@ -1,14 +1,14 @@
 """Plan 90 Step 58 - `processing-cli evaluate` subcommand.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Acceptance #1: `processing-cli evaluate
+- `02-spec/21-app/75-processing-cli.md` §Acceptance #1: `processing-cli evaluate
   --frame <path> --bundle <path> --json` returns envelope with
   `Results = [ResultRecord]`.
-- `spec/21-app/24-results-json.md` §3 (per-image line shape, `schemaVersion=2`,
+- `02-spec/21-app/24-results-json.md` §3 (per-image line shape, `schemaVersion=2`,
   PascalCase enum values, `ruleSet.*Count` invariants:
   `activeCount + inactiveCount + silentCount == ruleCount`;
   `passCount + failCount + errorCount == activeCount`).
-- `spec/21-app/47-rule-condition-model.md` and `49-validation-order.md`
+- `02-spec/21-app/47-rule-condition-model.md` and `49-validation-order.md`
   own the evaluator loop; this file is the CLI surface, not the engine.
 
 Honesty rule (mirrors `BE/sdk_facade/camera.py:107`'s "no fabricated frames"):
@@ -33,7 +33,7 @@ Honesty rule (mirrors `BE/sdk_facade/camera.py:107`'s "no fabricated frames"):
 Wire shape returned in `Results[0]` mirrors spec 24 §3 field-for-field
 (PascalCase JSON keys via `_result_wire()`), stripped to the fields the
 evaluator can produce today. Adding fake `judgments` here would violate
-spec/21-app/24 §2 "no fabricated verdicts" enforcement.
+02-spec/21-app/24 §2 "no fabricated verdicts" enforcement.
 
 Persistence is opt-in via `--results-dir`; when set we write the JSONL
 line to `<results-dir>/<RunSessionId>.jsonl` with `fsync` per spec 24 §1
@@ -237,7 +237,7 @@ def _write_jsonl(results_dir: Path, run_id: str, record: dict[str, Any]) -> Path
     return out
 
 
-# spec/21-app/49-validation-order.md §4 pins the two authored values:
+# 02-spec/21-app/49-validation-order.md §4 pins the two authored values:
 #   validationMode: "parallel"   -> evaluate every Active rule ("full")
 #   validationMode: "sequential" -> early-exit at first FAIL ("short-circuit")
 # Any other bundle value is a bundle-authoring bug (E_RULE_BUNDLE_INVALID

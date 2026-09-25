@@ -1,7 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 // Plan 90 Step 137. Boot reconciliation for locally-cached RuleSet drafts.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 //
 // Root cause guarded: Steps 132-136 give the editor a per-ruleset draft
 // -> save -> conflict-modal loop, but if the browser reopens after another

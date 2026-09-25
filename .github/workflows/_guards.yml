@@ -1,6 +1,6 @@
 # Plan 90 Step 94 - Reusable CI guards workflow.
 #
-# Owning spec: spec/12-cicd-pipeline-workflows/03-reusable-ci-guards/
+# Owning spec: 02-spec/12-cicd-pipeline-workflows/03-reusable-ci-guards/
 #   00-overview.md          (pattern inventory + design principles)
 #   07-shared-cli-wrapper.md (single dispatch surface)
 #   09-workflow-templates.md (three-layer templates: composite, reusable, starter)

@@ -4,7 +4,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  *
  * Closes audit finding F-30. Every server function is called through
  * `invokeRpc` / `useRpc`, so this file is the single choke point where
- * the boundary contract in `spec/coding-guidelines/typescript.md`
+ * the boundary contract in `02-spec/coding-guidelines/typescript.md`
  * (Error and correlation rules) is enforced:
  *
  *   Every IPC error carries { code, message, correlationId, operation }

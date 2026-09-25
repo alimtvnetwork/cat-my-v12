@@ -6,7 +6,7 @@
 // single `body` sentence to structured content (summary + how-to steps +
 // tips + when-to-use) so the tooltip can render formatted help without
 // the palette owning any copy.
-// Spec: spec/21-app/53-ui-improvements-v4.md section 3.
+// Spec: 02-spec/21-app/53-ui-improvements-v4.md section 3.
 
 export enum ToolIdType {
   Select = "select",

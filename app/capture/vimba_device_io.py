@@ -1,6 +1,6 @@
 """Allied Vision Vimba (`vmbpy`) adapter behind `VendorDeviceIO`.
 
-Anchor: spec/21-app/65-v2-vendor-vimba.md. `vmbpy` is imported lazily inside
+Anchor: 02-spec/21-app/65-v2-vendor-vimba.md. `vmbpy` is imported lazily inside
 the factory so unit tests stay hermetic; a `camera_factory` override lets
 tests inject a fake `vmbpy.Camera`-shaped object without touching the SDK.
 
@@ -9,7 +9,7 @@ handle bundles both and `_close` exits them in reverse order. Exception
 classes from `vmbpy.error` are matched by class-name MRO (predicate style)
 because we cannot import the SDK in this sandbox and future `vmbpy`
 builds may add wrapper classes. Per SS-02 contract lock
-(spec/21-app/50-capture-modules.md), unmapped exceptions from `grab` are
+(02-spec/21-app/50-capture-modules.md), unmapped exceptions from `grab` are
 wrapped by `VendorDeviceIO._normalize` as `CaptureAdapterError(E_CAP_UNKNOWN)`;
 no untyped exception ever crosses the seam.
 """
@@ -119,7 +119,7 @@ def _noop_handler(cam: Any, stream: Any, frame: Any) -> None:  # pragma: no cove
 
 
 def _grab(h: VimbaHandle, deadline_ms: int) -> bytes:
-    """Software-trigger + retrieve. Buffer ownership (spec/21-app/68):
+    """Software-trigger + retrieve. Buffer ownership (02-spec/21-app/68):
     copy the SDK-owned frame BEFORE returning it to the queue so no
     vendor-thread reference escapes.
     """
@@ -235,7 +235,7 @@ def _default_camera_factory(cfg: VimbaConfig) -> VimbaHandle:  # pragma: no cove
 
 
 def _translate(exc: BaseException) -> type[BaseException] | None:
-    """Public per spec/21-app/65-v2-vendor-vimba.md §Exception mapping.
+    """Public per 02-spec/21-app/65-v2-vendor-vimba.md §Exception mapping.
 
     Returns the typed error class for a `vmbpy` exception, or `None` when
     the exception is not one we recognize. Direct callers get `None`; the

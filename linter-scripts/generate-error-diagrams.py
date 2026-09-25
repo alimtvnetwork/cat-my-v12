@@ -21,7 +21,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_DIR = ROOT / "spec" / "21-app" / "shell" / "schemas" / "ipc"
+SCHEMA_DIR = ROOT / "02-spec" / "21-app" / "shell" / "schemas" / "ipc"
 OUT_DIR = ROOT / "docs" / "diagrams"
 REF_RE = re.compile(r"<!--\s*ipc:ref=([a-z][a-z0-9.]+\.(?:req|res|stream))\s*-->")
 
@@ -41,7 +41,7 @@ def collect() -> tuple[dict[str, list[str]], dict[str, set[Path]], dict[str, set
     fixture: dict[str, set[Path]] = {}
     for md_path in ROOT.rglob("*.md"):
         rel = md_path.relative_to(ROOT)
-        if rel.parts and rel.parts[0] not in {"spec", "linter-scripts"}:
+        if rel.parts and rel.parts[0] not in {"02-spec", "linter-scripts"}:
             continue
         bucket = fixture if "fixtures" in rel.parts else real
         try:

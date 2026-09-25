@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // PatternEdgePanel tests, Plan 32 slice 2.
-// Anchored by spec/24-app-ui-design-system/05-rule-controller.md matrix row
+// Anchored by 02-spec/24-app-ui-design-system/05-rule-controller.md matrix row
 // "PatternEdge" and ParamsPatternEdge in src/lib/editor/schema.ts.
 
 import { describe, it, expect, vi, afterEach } from "vitest";

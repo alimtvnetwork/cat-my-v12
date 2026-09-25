@@ -1,13 +1,13 @@
 """Plan 90 Step 61 - `processing-cli dry-run` subcommand.
 
 Anchors:
-- `spec/21-app/75-processing-cli.md` §Subcommands: `dry-run` is the
+- `02-spec/21-app/75-processing-cli.md` §Subcommands: `dry-run` is the
   read-only rehearsal of `evaluate` / `batch`. It MUST NOT write JSONL,
   MUST NOT emit `ResultReady` IPC (Step 64), and MUST NOT touch the
   Task-DB (Step 87). Its only job is to answer "what verdicts would we
   produce for this frame set against this bundle right now?" so QA and
   bundle authors can iterate without side effects.
-- `spec/21-app/24-results-json.md` §1 "Write policy": persistence is
+- `02-spec/21-app/24-results-json.md` §1 "Write policy": persistence is
   opt-in; a dry-run is the canonical opt-out.
 - Honesty rule (inherited from `commands/evaluate.py:14`): a dry-run
   still refuses to fabricate verdicts. `E_BE_UNAVAILABLE` for bundles

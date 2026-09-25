@@ -2,7 +2,7 @@
 
 Covers:
 - Bounded run via --max-duration-ms returns Ok envelope with FramesEmitted=0
-  (stub cannot fabricate frames per spec/21-app/40-error-manage.md §3).
+  (stub cannot fabricate frames per 02-spec/21-app/40-error-manage.md §3).
 - --max-frames=0 combined with a tiny duration exits cleanly.
 - Unknown serial surfaces E_CAM_NOT_CONNECTED via the facade -> failure envelope.
 - --provider vendor fails loud with E_CLI_UNSUPPORTED_HOST (not silent fallback).

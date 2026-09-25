@@ -15,7 +15,7 @@ Exactly one of `--frame`, `--input-dir`, `--manifest` is required.
 
 ## Flags
 
-- `--bundle <path>` Rule bundle JSON (spec/21-app/70).
+- `--bundle <path>` Rule bundle JSON (02-spec/21-app/70).
 - `--frame <path>` Single image path.
 - `--input-dir <d>` Non-recursive folder of `.png .jpg .jpeg .bmp .tif .tiff`.
 - `--manifest <p>` JSON `["path", ...]` or `{"frames":["path", ...]}`.
@@ -45,5 +45,5 @@ enumeration / bundle loading fails.
 - No IPC produced.
 - No DB access.
 
-Anchors: `spec/21-app/75-processing-cli.md` §Subcommands,
-`spec/21-app/24-results-json.md` §1 "Write policy".
+Anchors: `02-spec/21-app/75-processing-cli.md` §Subcommands,
+`02-spec/21-app/24-results-json.md` §1 "Write policy".

@@ -1,7 +1,7 @@
 # Guideline Digest
 
 **Consolidated Coding Guidelines & Error Management**
-_Reference: `spec/02-coding-guidelines`, `spec/17-consolidated-guidelines`, `spec/03-error-manage`_
+_Reference: `02-spec/02-coding-guidelines`, `02-spec/17-consolidated-guidelines`, `02-spec/03-error-manage`_
 
 ## 1. Error Management (Highest Priority - 🔴 CODE RED)
 

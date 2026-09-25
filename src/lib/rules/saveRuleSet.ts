@@ -1,6 +1,6 @@
 // Plan 90 Step 133. FE Save-button client for RuleSetEnvelope.
 //
-// Spec: spec/21-app/80-ruleset-draft-save.md
+// Spec: 02-spec/21-app/80-ruleset-draft-save.md
 // Wire: PUT /rules/{RuleSetId} with the identical PascalCase envelope written
 // to IndexedDB by `draftStore.putDraft`. On success, mirror the server
 // response back into IndexedDB with `Origin: "server"` so subsequent quick

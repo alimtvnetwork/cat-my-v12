@@ -1,6 +1,6 @@
 """File-based IPC producer/consumer.
 
-Implements `spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol": one message
+Implements `02-spec/21-app/76-cli-log-and-ipc.md` §"IPC protocol": one message
 per file at `<APP_IPC_ROOT>/<dir>/<ulid>.msg.json`, written atomically via
 `<ulid>.tmp` then `os.replace`. Consumers rename to `.msg.ack.json` after
 processing.
@@ -327,7 +327,7 @@ def prune_ipc(
     writer (older than the same cutoff). Live `.msg.json` files are NEVER
     touched: they are the unread queue.
 
-    Anchor: `spec/21-app/76-cli-log-and-ipc.md` line 107 (24h retention for
+    Anchor: `02-spec/21-app/76-cli-log-and-ipc.md` line 107 (24h retention for
     acked messages).
 
     Raises `AppError(E_IPC_WRITE_FAILED)` on any OSError so `doctor` can

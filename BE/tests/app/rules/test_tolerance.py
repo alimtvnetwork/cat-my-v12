@@ -1,6 +1,6 @@
 """Tolerance resolver + engine pre-flight tests (Plan 90 Step 89).
 
-Covers spec `spec/21-app/34-tolerance-model.md`:
+Covers spec `02-spec/21-app/34-tolerance-model.md`:
   §3 profile validation per kind (Scalar/Percent/XY/MatchPercent)
   §4 rule-kind -> tolerance-kind compat matrix
   §5 resolution + missing-profile handling

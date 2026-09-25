@@ -1,6 +1,6 @@
 """Plan 90 Step 124 - SHA256SUMS.txt parsing and pre-install verification.
 
-Owning spec: ``spec/21-app/77-cli-powershell-and-release.md`` §4 ("Verify
+Owning spec: ``02-spec/21-app/77-cli-powershell-and-release.md`` §4 ("Verify
 SHA256; abort with ``E_CLI_CHECKSUM_MISMATCH`` on failure").
 
 Root cause guarded (one sentence): Step 123 published ``SHA256SUMS.txt``

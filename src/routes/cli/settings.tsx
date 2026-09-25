@@ -12,7 +12,7 @@ import { EmptyStateActionVariantType } from "@/components/common/EmptyState";
  * (matches the effective value but was overridden by a higher-precedence
  * layer), or `differs` (present but shadowed). `not-implemented` layers
  * render an amber caption with the BE-provided `reason` so operators
- * see honestly that repo/user/flags are not wired yet (spec/03-error-manage/
+ * see honestly that repo/user/flags are not wired yet (02-spec/03-error-manage/
  * §honesty rule: no false-OK).
  *
  * Precedence (low -> high): defaults, repo, user, env, flags. The winning

@@ -1,15 +1,15 @@
 """Plan 90 Step 101 - Task-DB retention/vacuum pass.
 
 Owning specs:
-  - ``spec/21-app/72-audit-persistence.md`` §"Retention" (facade owns the
+  - ``02-spec/21-app/72-audit-persistence.md`` §"Retention" (facade owns the
     only write path; retention worker is the only delete path; audit
     window is bounded).
-  - ``spec/21-app/24-results-json.md`` §"Two Files per RunSession" (the
+  - ``02-spec/21-app/24-results-json.md`` §"Two Files per RunSession" (the
     Task-DB row is authoritative; JSONL sidecars are reproducible
     exports and MAY be unlinked when the parent RunSession is purged).
-  - ``spec/05-split-db-architecture/`` (Task-tier only; no cross-tier
+  - ``02-spec/05-split-db-architecture/`` (Task-tier only; no cross-tier
     ATTACH; guarded connection).
-  - ``spec/coding-guidelines/python.md`` (typed dataclasses, positive
+  - ``02-spec/coding-guidelines/python.md`` (typed dataclasses, positive
     `if`, every `except` logs once with operation + subject id).
 
 Root cause guarded (pre-Step-101): Steps 96-100 built the full write and

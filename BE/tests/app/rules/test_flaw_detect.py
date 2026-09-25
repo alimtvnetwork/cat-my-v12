@@ -1,6 +1,6 @@
 """Tests for FlawDetect evaluator (Plan 90 Step 85).
 
-Pins spec/21-app/33-rule-catalog.md §3.2:
+Pins 02-spec/21-app/33-rule-catalog.md §3.2:
   - Pass when FlawCount <= MaxAllowedFlawCount.
   - Fail with ReasonCode=RuleAboveThreshold otherwise.
   - Outputs: FlawCount, LargestFlawAreaPx, FlawCentroidsJson (capped 128),

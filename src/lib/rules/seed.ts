@@ -285,6 +285,23 @@ function makeSeedRows(): Rule[] {
       notes: "ROI must contain a pill (edge density > 0.35)",
     },
     {
+      id: id("rule", "greyscale-simulation-01"),
+      name: "Greyscle simulation 01",
+      isCategory: false,
+      categoryId: catPresence,
+      appliesBefore: [],
+      conditions: [
+        {
+          toolType: "Greyscle simulation",
+          type: "greyscale_simulation",
+        } as any,
+      ],
+      pocketSize: 3,
+      createdAt: t,
+      updatedAt: t,
+      notes: "Discrete camera capture 3-pocket carrier tape multi-rule simulation",
+    },
+    {
       id: id("rule", "empty-pocket"),
       name: "Empty Pocket Check",
       isCategory: false,

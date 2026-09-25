@@ -61,7 +61,7 @@ Failure surface
   bug that must surface, not a "0 sessions" false-negative.
 
 Never queries Task or Rules tiers. Cross-tier joins are forbidden per
-``spec/05-split-db-architecture/`` and enforced by the guarded connection
+``02-spec/05-split-db-architecture/`` and enforced by the guarded connection
 in ``BE/db/connections.py``.
 """
 

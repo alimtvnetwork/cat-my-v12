@@ -1226,6 +1226,42 @@
           }
         }
       }
+    },
+    "/vision/white-box-marking": {
+      "post": {
+        "summary": "Post White Box Marking",
+        "operationId": "post_white_box_marking_vision_white_box_marking_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhiteBoxRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1242,6 +1278,38 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "SearchRegionRequest": {
+        "properties": {
+          "X": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "X"
+          },
+          "Y": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Y"
+          },
+          "Width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "Height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "X",
+          "Y",
+          "Width",
+          "Height"
+        ],
+        "title": "SearchRegionRequest"
       },
       "ValidationError": {
         "properties": {
@@ -1282,6 +1350,66 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WhiteBoxRequest": {
+        "properties": {
+          "Width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "Height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "RgbaBase64": {
+            "type": "string",
+            "title": "Rgbabase64"
+          },
+          "WhiteThreshold": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 255.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whitethreshold"
+          },
+          "MinAreaPx": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minareapx"
+          },
+          "SearchRegion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchRegionRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "Width",
+          "Height",
+          "RgbaBase64"
+        ],
+        "title": "WhiteBoxRequest"
       }
     }
   }

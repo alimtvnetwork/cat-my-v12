@@ -9,4 +9,4 @@ Tracking Plan 41 (Keyboard DnD & Code Quality) steps 23 to 30.
 - `[x]` 27. Add Vitest suite for the keyboard controller. See `./subtasks/41-keyboard-dnd-and-code-quality-pass/SS-02-tests.md`.
 - `[x]` 28. Add a Playwright case to `tests/e2e/` that focuses the rule list, presses Space, arrows, then Enter, and asserts the canvas HUD shows the updated `(x,y)`.
 - `[x]` 29. Update guideline docs to codify the new rules. See `./subtasks/41-keyboard-dnd-and-code-quality-pass/SS-03-guideline-update.md`.
-- `[x]` 30. Once steps 1-29 pass tsgo + vitest + the new e2e, flip Status to `completed` and `mv` this file to `.lovable/plans/done/41-keyboard-dnd-and-code-quality-pass.md`.
+- `[x]` 30. Once steps 1-29 pass tsgo + vitest + the new e2e, flip Status to `completed` and `mv` this file to `.ai-memory/plans/done/41-keyboard-dnd-and-code-quality-pass.md`.

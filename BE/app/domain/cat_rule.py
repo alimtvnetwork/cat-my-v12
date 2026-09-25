@@ -5,7 +5,7 @@ Field names are the exact JSON keys returned inside `Results[]` from
 `GET /rules` and `GET /rules/{id}` (see `BE/routes/rules.py`).
 
 Keep this dataclass frozen and vendor-free. Rule bundle importers
-(`spec/21-app/70-rule-bundle-import-export.md`) translate raw SQLite rows into
+(`02-spec/21-app/70-rule-bundle-import-export.md`) translate raw SQLite rows into
 `CatRule` inside the facade adapter, never at the route or component layer.
 """
 

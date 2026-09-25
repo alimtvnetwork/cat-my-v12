@@ -1,8 +1,8 @@
 """Plan 90 Step 14 - JSONL logger for CLI processes.
 
 Anchors:
-- `spec/21-app/76-cli-log-and-ipc.md` §"Log storage" (path layout + JSONL schema).
-- `spec/coding-guidelines/python.md` (functions <=15 lines, PascalCase exceptions,
+- `02-spec/21-app/76-cli-log-and-ipc.md` §"Log storage" (path layout + JSONL schema).
+- `02-spec/coding-guidelines/python.md` (functions <=15 lines, PascalCase exceptions,
   wire codes from registry, log with `CorrelationId`/`operation`/`code`).
 - `BE/cli/common/paths.py` (Step 13) for `APP_LOG_ROOT`.
 - `BE/errors/codes.py` `is_registered()` gates the `Code` field.

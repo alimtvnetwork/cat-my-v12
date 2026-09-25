@@ -6,11 +6,11 @@ inside the app runtime.
 
 Owning specs:
 
-- `spec/21-app/77-cli-powershell-and-release.md` (release artefacts,
+- `02-spec/21-app/77-cli-powershell-and-release.md` (release artefacts,
   SHA256SUMS, install one-liners).
-- `spec/16-generic-release/05-release-assets.md` (per-platform asset
+- `02-spec/16-generic-release/05-release-assets.md` (per-platform asset
   matrix and naming).
-- `spec/12-cicd-pipeline-workflows/` (build-matrix + verify-install).
+- `02-spec/12-cicd-pipeline-workflows/` (build-matrix + verify-install).
 
 Root cause guarded (one sentence): without a single documented build path
 per binary, operators end up hand-crafting PyInstaller invocations that
@@ -108,7 +108,7 @@ Before signing a release:
 ## Do NOT
 
 - Do NOT enable UPX; determinism is more valuable than a smaller binary.
-- Do NOT bundle secrets, `.env` files, or anything under `.lovable/`.
+- Do NOT bundle secrets, `.env` files, or anything under `.ai-memory/`.
 - Do NOT ship an `--onedir` variant; the release surface is onefile only
   per spec 77 §Release artefacts.
 - Do NOT invoke PyInstaller from application code paths; it is a

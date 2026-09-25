@@ -7,7 +7,7 @@ each vendor (`pylon`, `spinnaker`, `vimba`) and asserts the achieved fps
 clears the 77 fps SLO defined in `app/capture/perf_harness.TARGET_FPS`.
 
 Also records p50 / p95 / p99 and writes an evidence snapshot to
-`.lovable/memory/v2/plan25/06-perf-harness.md` so the SLO signal is
+`.ai-memory/memory/v2/plan25/06-perf-harness.md` so the SLO signal is
 pinned in memory per plan Step 7 verification.
 """
 from __future__ import annotations
@@ -108,6 +108,6 @@ def test_pin_perf_evidence(perf_reports: dict[str, object]) -> None:
         "Real-camera runs replace `FakeVendorSdk` with a vendor binding under `extras/vendors/*`.",
         "",
     ]
-    out = Path(".lovable/memory/v2/plan25/06-perf-harness.md")
+    out = Path(".ai-memory/memory/v2/plan25/06-perf-harness.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines), encoding="utf-8")

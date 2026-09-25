@@ -1,8 +1,8 @@
 """Plan 90 Step 46 - cross-invocation streaming state marker.
 
 Anchors:
-- `spec/21-app/74-worker-cli.md` §Subcommands (`stream start|stop`).
-- `spec/21-app/76-cli-log-and-ipc.md` §Session lifecycle.
+- `02-spec/21-app/74-worker-cli.md` §Subcommands (`stream start|stop`).
+- `02-spec/21-app/76-cli-log-and-ipc.md` §Session lifecycle.
 - Companion to `BE.cli.worker.camera_lease` (Step 45).
 
 File layout: ``<APP_DATA_ROOT>/worker/stream.state.json``

@@ -14,7 +14,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 //   - maskRotationDeg: -180..180 degrees, rotates around the ROI center
 //
 // The Python worker consumes these to build an actual pixel mask; see
-// spec/21-app/62-rule-mask-image.md.
+// 02-spec/21-app/62-rule-mask-image.md.
 import { useEffect, useId, useRef, useState } from "react";
 import { ImagePlus, RotateCcw, Trash2 } from "lucide-react";
 import type { EditorRule, EditorRuleParams } from "@/lib/editor/types";

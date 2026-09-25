@@ -1,13 +1,13 @@
 """Plan 90 Step 54 - `--verbose` / `--quiet` global CLI flags.
 
 Anchors:
-- `spec/13-generic-cli/16-verbose-logging.md` - off by default, timestamped
+- `02-spec/13-generic-cli/16-verbose-logging.md` - off by default, timestamped
   file + dim stderr mirror, one file per invocation, filename
   `<tool>-verbose-YYYY-MM-DD_HH-mm-ss.log`, output under the tool's default
   folder.
-- `.lovable/memory/26-split-db-cli-cheatsheet.md` §11 - verbose file lives
+- `.ai-memory/memory/26-split-db-cli-cheatsheet.md` §11 - verbose file lives
   at `<APP_LOG_ROOT>/verbose/<cli>-verbose-<ts>.log`, SEPARATE from the
-  `spec/21-app/76` JSONL session log. `--quiet` suppresses the stderr
+  `02-spec/21-app/76` JSONL session log. `--quiet` suppresses the stderr
   human summary; stdout envelope is always emitted.
 
 Contract:

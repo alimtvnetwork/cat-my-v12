@@ -1,6 +1,6 @@
 """Plan 90 Step 102 - Retention scheduler (in-process ticker).
 
-Owning spec: ``spec/21-app/78-retention-schedule.md``.
+Owning spec: ``02-spec/21-app/78-retention-schedule.md``.
 Companion module: ``BE/app/retention.py`` (Step 101, single-shot pass).
 
 Root cause guarded: Step 101 exposed ``run_retention(...)`` as the only
@@ -111,7 +111,7 @@ def run_scheduled(
 ) -> tuple[list[RetentionOutcome], AppError | None]:
     """Run ``single_pass`` on an ``interval_hours`` cadence.
 
-    See ``spec/21-app/78-retention-schedule.md`` §2.4.
+    See ``02-spec/21-app/78-retention-schedule.md`` §2.4.
 
     First pass always runs immediately (never sleep before the first
     pass). Subsequent passes sleep first, then run. If ``stop_event``
