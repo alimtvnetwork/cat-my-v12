@@ -1,6 +1,6 @@
 import { useErrorStore } from "@/lib/stores/errorStore";
 import { lookupErrorCode } from "@/lib/errors";
-import { useBackendMode } from "./mode";
+import { useBackendMode, resolveBackendBaseUrl } from "./mode";
 import { EnvelopeSchema } from "./envelope";
 import { Envelope } from "./types";
 import { newCorrelationId } from "@/types/errors";
@@ -28,13 +28,7 @@ export async function fetchBackend<T = unknown>(
   init?: RequestInit,
 ): Promise<Envelope<T>> {
   const rawBase = useBackendMode.getState().baseUrl;
-  const baseUrl =
-    !rawBase ||
-    rawBase === "http://localhost:8000" ||
-    rawBase === "http://localhost:8080" ||
-    rawBase === "http://127.0.0.1:8080"
-      ? "http://localhost:8787"
-      : rawBase;
+  const baseUrl = resolveBackendBaseUrl(rawBase);
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;

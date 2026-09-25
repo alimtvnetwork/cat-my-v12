@@ -9,7 +9,7 @@ import {
   ToleranceKindType,
   DraftOriginType,
 } from "./draftStore";
-import { useBackendMode } from "@/lib/backend/mode";
+import { useBackendMode, resolveBackendBaseUrl } from "@/lib/backend/mode";
 import { HttpMethod } from "@/lib/constants";
 
 export interface SyncRuleToBackendParams {
@@ -69,10 +69,7 @@ export async function syncRuleToBackend(
           ...currentDraft,
           RuleSetId: ruleSetId,
           Name: params.ruleName,
-          Rules: [
-            ...currentDraft.Rules.filter((r) => r.Kind !== RuleKindType.Match),
-            newRuleItem,
-          ],
+          Rules: [...currentDraft.Rules.filter((r) => r.Kind !== RuleKindType.Match), newRuleItem],
           DraftMeta: {
             ...currentDraft.DraftMeta,
             UpdatedAt: nowIso,
@@ -96,13 +93,7 @@ export async function syncRuleToBackend(
     committedEnvelope = await putDraft(envelopeToSave);
 
     const rawBase = useBackendMode.getState().baseUrl;
-    const baseUrl =
-      !rawBase ||
-      rawBase === "http://localhost:8000" ||
-      rawBase === "http://localhost:8080" ||
-      rawBase === "http://127.0.0.1:8080"
-        ? "http://localhost:8787"
-        : rawBase;
+    const baseUrl = resolveBackendBaseUrl(rawBase);
     const normalizedBase = baseUrl.replace(/\/+$/, "");
 
     let serverVersion = committedEnvelope.Version;

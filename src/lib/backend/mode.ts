@@ -7,6 +7,30 @@ import { BackendModeType } from "./BackendModeType";
 
 export const DEFAULT_BACKEND_URL = "http://localhost:8787";
 
+export const LEGACY_BACKEND_URLS = Object.freeze([
+  "http://localhost:8000",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+] as const);
+
+export function isLegacyBackendUrl(url: string | null | undefined): boolean {
+  if (!url) {
+    return true;
+  }
+
+  const normalized = url.replace(/\/+$/, "");
+
+  return (LEGACY_BACKEND_URLS as readonly string[]).includes(normalized);
+}
+
+export function resolveBackendBaseUrl(rawBase: string | null | undefined): string {
+  if (isLegacyBackendUrl(rawBase)) {
+    return DEFAULT_BACKEND_URL;
+  }
+
+  return rawBase ?? DEFAULT_BACKEND_URL;
+}
+
 export interface BackendModeState {
   mode: BackendModeType;
   baseUrl: string;
@@ -33,12 +57,7 @@ export const useBackendMode = create<BackendModeState>()(
       name: "app.backend.baseUrl",
       version: 2,
       migrate: (persistedState: any) => {
-        if (
-          persistedState &&
-          (persistedState.baseUrl === "http://localhost:8000" ||
-            persistedState.baseUrl === "http://localhost:8080" ||
-            persistedState.baseUrl === "http://127.0.0.1:8080")
-        ) {
+        if (persistedState && isLegacyBackendUrl(persistedState.baseUrl)) {
           return { ...persistedState, baseUrl: DEFAULT_BACKEND_URL };
         }
 
