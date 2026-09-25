@@ -27,7 +27,14 @@ export async function fetchBackend<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<Envelope<T>> {
-  const baseUrl = useBackendMode.getState().baseUrl;
+  const rawBase = useBackendMode.getState().baseUrl;
+  const baseUrl =
+    !rawBase ||
+    rawBase === "http://localhost:8000" ||
+    rawBase === "http://localhost:8080" ||
+    rawBase === "http://127.0.0.1:8080"
+      ? "http://localhost:8787"
+      : rawBase;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.replace(/^\/+/, "");
   const url = `${normalizedBase}/${normalizedPath}`;
