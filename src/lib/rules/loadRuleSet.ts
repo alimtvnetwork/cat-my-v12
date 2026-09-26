@@ -15,6 +15,11 @@
 import { beFetch, EnvelopeError } from "@/lib/be-fetch";
 import { putDraft, DraftOriginType, type RuleSetEnvelope } from "./draftStore";
 import { HttpMethod } from "@/lib/constants";
+import { resolveBackendUrl } from "@/lib/data-source";
+
+export interface LoadRuleSetOptions {
+  suppressCapture?: boolean;
+}
 
 export class LoadRuleSetError extends EnvelopeError {
   get httpStatus(): number {
@@ -60,10 +65,9 @@ export interface LoadRuleSetOptions {
  */
 export async function loadRuleSet(
   ruleSetId: number,
-  opts: LoadRuleSetOptions = {},
+  opts?: LoadRuleSetOptions,
 ): Promise<RuleSetEnvelope> {
-  const url = `/rules/${ruleSetId}/set`;
-
+  const url = resolveBackendUrl(`/rules/${ruleSetId}/set`);
   try {
     const resEnvelope = await beFetch<RuleSetEnvelope>(
       url,
@@ -71,9 +75,8 @@ export async function loadRuleSet(
         method: HttpMethod.Get,
         headers: { Accept: "application/json" },
       },
-      { suppressCapture: opts.suppressCapture ?? true },
+      { suppressCapture: opts?.suppressCapture ?? true },
     );
-
     const committed = resEnvelope.Results[0];
 
     if (!committed) {

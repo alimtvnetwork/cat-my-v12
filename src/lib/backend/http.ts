@@ -71,12 +71,13 @@ export async function fetchBackend<T = unknown>(
     const errorMsg = cause instanceof Error ? cause.message : String(cause);
     const meta = lookupErrorCode("E_UNREACHABLE");
     const e = new BackendHttpError(meta.code, errorMsg, 0, correlationId);
-    showToastError(meta.label, e, {
-      endpoint: url,
-      method: init?.method || HttpMethod.Get,
-      source: "http",
-    });
-
+    if (!headers.has("X-Suppress-Toast")) {
+      showToastError(meta.label, e, {
+        endpoint: url,
+        method: init?.method || HttpMethod.Get,
+        source: "http",
+      });
+    }
     throw e;
   }
 

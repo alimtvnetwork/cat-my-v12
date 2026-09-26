@@ -42,7 +42,7 @@ export const useBackendMode = create<BackendModeState>()(
   persist(
     (set, get) => ({
       mode: BackendModeType.Seed,
-      baseUrl: DEFAULT_BACKEND_URL,
+      baseUrl: "http://127.0.0.1:8787",
       setMode: (mode) => set({ mode }),
       setBaseUrl: (url) => {
         if (!isValidBackendPrefix(url)) {
@@ -64,6 +64,11 @@ export const useBackendMode = create<BackendModeState>()(
         return persistedState;
       },
       partialize: (state) => ({ baseUrl: state.baseUrl, mode: state.mode }),
+      onRehydrateStorage: () => (state) => {
+        if (state && (state.baseUrl.includes(":8000") || !isValidBackendPrefix(state.baseUrl))) {
+          state.baseUrl = "http://127.0.0.1:8787";
+        }
+      },
     },
   ),
 );

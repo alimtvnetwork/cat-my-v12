@@ -15,6 +15,7 @@ import type {
 import { ImageSourceModeType } from "@/types/vision/ImageSourceModeType";
 import { DrawingToolType } from "./DrawingToolType";
 import { PolarityType } from "./PolarityType";
+import type { ScoreResponse } from "./score-schema";
 
 interface VisionState {
   imageSourceMode: ImageSourceModeType;
@@ -55,6 +56,9 @@ interface VisionState {
   /** Confidence threshold 0-100 for PASS/FAIL determination */
   confidenceThreshold: number;
   setConfidenceThreshold: (val: number) => void;
+  /** Result of last vision evaluation */
+  lastScoreResult: ScoreResponse | null;
+  setLastScoreResult: (val: ScoreResponse | null) => void;
 }
 
 const mockSegments: RecipeSegment[] = [
@@ -121,6 +125,8 @@ export const useVisionStore = create<VisionState>((set) => ({
   setIsAutoEvaluate: (val) => set({ isAutoEvaluate: val }),
   confidenceThreshold: 80,
   setConfidenceThreshold: (val) => set({ confidenceThreshold: val }),
+  lastScoreResult: null,
+  setLastScoreResult: (val) => set({ lastScoreResult: val }),
   segments: mockSegments,
   activeSegmentId: null,
   setActiveSegmentId: (id) => set({ activeSegmentId: id }),

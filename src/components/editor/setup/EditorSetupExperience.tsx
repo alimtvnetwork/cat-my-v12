@@ -115,9 +115,15 @@ export function EditorSetupExperience({
         if (isCancelled) return;
         const state = mod.useProjectStore.getState();
         const ruleset = mod.selectRuleset(state, rulesetId);
+        const project = mod.selectProject(state, projectId);
 
-        if (!ruleset || ruleset.projectId !== projectId) {
-          ClientLogger.warn("[setup/roi] bridge: ruleset not found", { projectId, rulesetId });
+        if (!ruleset || (project && ruleset.projectId !== project.id)) {
+          ClientLogger.warn("[setup/roi] bridge: ruleset not found", {
+            projectId,
+            rulesetId,
+            expectedProjectId: project?.id,
+            actualProjectId: ruleset?.projectId,
+          });
 
           if (useRulesStore.getState().rules.length === 0) {
             storeReplaceAll(initialRules, [initialRules[0].id]);

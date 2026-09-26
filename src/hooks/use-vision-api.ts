@@ -16,6 +16,9 @@ export function useCameraStatus(cameraId: string) {
     queryKey: visionKeys.status(cameraId),
     queryFn: () => visionFacade.getCameraStatus(cameraId),
     refetchInterval: 5000,
+    meta: {
+      hasVisibility: false,
+    },
   });
 }
 

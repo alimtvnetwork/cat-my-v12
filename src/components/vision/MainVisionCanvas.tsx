@@ -8,17 +8,16 @@ import { FocusPeakingVisualizer } from "./FocusPeakingVisualizer";
 import { RuleDrawingOverlay } from "./RuleDrawingOverlay";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-// Import connection facade when available, for now using mock state
-// import { useCameraStatus } from "@/lib/facades/camera";
+import { useCameraStatus } from "@/hooks/use-vision-api";
 
 export function MainVisionCanvas(): React.JSX.Element | null {
   const mode = useVisionStore((s) => s.imageSourceMode);
   const isCapturing = useVisionStore((s) => s.isCapturing);
-  // Mock connection status for now to show Empty State UI
-  const [isConnected, setIsConnected] = useState(false);
+  const { data: cameraStatus } = useCameraStatus("default");
+  const isConnected = cameraStatus?.status === "connected";
 
   return (
-    <div className="relative flex flex-col flex-1 w-full min-h-0 bg-ca-panel rounded-md border border-ca-border overflow-hidden">
+    <div className="absolute inset-0 flex flex-col w-full h-full bg-ca-panel overflow-hidden">
       <ZoomableCanvas>
         <div className="relative flex items-center justify-center w-full h-full min-h-0">
           {mode === ImageSourceModeType.SPLIT ? (

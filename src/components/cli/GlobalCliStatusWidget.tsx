@@ -77,14 +77,13 @@ export function GlobalCliStatusWidget(): React.JSX.Element | null {
   const tabVisible = useTabVisibility();
   const fetchStatus = useServerFn(getCliStatus);
 
-  if (dataSource !== DataSourceType.Backend || !baseUrl) {
-    return null;
-  }
+  const shouldFetch = dataSource === DataSourceType.Backend && !!baseUrl;
 
   const query = useAppQuery<CliStatus, Error>({
     queryKey: ["cli", "status"],
     queryFn: () => fetchStatus({ data: {} }),
-    refetchInterval: tabVisible ? pausePollOnError(POLL_INTERVAL_MS) : false,
+    enabled: shouldFetch,
+    refetchInterval: tabVisible && shouldFetch ? pausePollOnError(POLL_INTERVAL_MS) : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     throwOnError: false,
@@ -108,6 +107,10 @@ export function GlobalCliStatusWidget(): React.JSX.Element | null {
     () => (status ? toneForWorker(status.Worker) : StatusToneType.Muted),
     [status],
   );
+
+  if (!shouldFetch) {
+    return null;
+  }
   const ipcPending = status?.Ipc.Pending ?? 0;
   const ipcTruncated = status?.Ipc.Truncated ?? false;
   const lastError = status?.LastErrorCode ?? null;

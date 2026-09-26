@@ -50,7 +50,6 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "lib/rules/draftPersistence.ts",
   "lib/rules/envelopeAdapter.ts",
   "lib/rules/rule-id-alias.ts",
-  "lib/rules/ruleset-id-alias.ts",
   "routes/index.tsx",
   "routes/observability/sessions.tsx",
   // Supabase client mentions `localStorage` in its config comments.

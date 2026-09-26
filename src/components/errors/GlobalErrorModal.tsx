@@ -599,6 +599,19 @@ export function GlobalErrorModal(): React.JSX.Element | null {
                 <FileText className="h-3.5 w-3.5 mr-1" />
                 Debug guide
               </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  useErrorStore.getState().clearHistory();
+                  useErrorStore.getState().closeErrorModal();
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+                title="Dismiss all errors and clear error history"
+              >
+                Dismiss All
+              </Button>
             </div>
           </div>
         </DialogHeader>

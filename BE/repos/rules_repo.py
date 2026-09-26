@@ -227,25 +227,26 @@ class VendorRulesRepo:
 assert isinstance(InMemoryRulesRepo(), RulesRepo), "InMemoryRulesRepo drifted from RulesRepo"
 assert isinstance(VendorRulesRepo(), RulesRepo), "VendorRulesRepo drifted from RulesRepo"
 
-
 # ---- module-level accessor (test-swappable) --------------------------------
 
-_active: RulesRepo = InMemoryRulesRepo(persist_db=True)
 
+from BE.repos.sqlite_rules_repo import SqliteRulesRepo
+
+assert isinstance(SqliteRulesRepo(), RulesRepo), "SqliteRulesRepo drifted from RulesRepo"
+_active: RulesRepo = SqliteRulesRepo()
 
 def get_rules_repo() -> RulesRepo:
     return _active
-
 
 def set_rules_repo(facade: RulesRepo) -> None:
     """Swap the active facade. Tests should restore the previous value in teardown."""
     global _active
     _active = facade
 
-
 __all__ = [
     "InMemoryRulesRepo",
     "RulesRepo",
+    "SqliteRulesRepo",
     "VendorRulesRepo",
     "get_rules_repo",
     "set_rules_repo",

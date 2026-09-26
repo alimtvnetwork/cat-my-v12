@@ -40,6 +40,8 @@ import { SaveRuleSetButton } from "@/features/rules/save/SaveRuleSetButton";
 import { projectRulesetToEnvelope, envelopeToProjectRuleset } from "@/lib/rules/envelopeAdapter";
 import type { RuleSetEnvelope } from "@/lib/rules/draftStore";
 import { persistRulesetDraft } from "@/lib/rules/draftPersistence";
+import { useDataSource } from "@/lib/data-source";
+import { useRulesetHydration } from "@/lib/rules/useRulesetHydration";
 
 export const Route = createFileRoute("/projects/$projectId/rulesets/$rulesetId")({
   component: RulesetEditor,
@@ -127,10 +129,12 @@ function RulesetEditorBody() {
     throw notFound();
   }
 
-  if (!ruleset || ruleset.projectId !== projectId) {
+  if (!ruleset || ruleset.projectId !== project.id) {
     console.warn("[rulesets/$rulesetId] ruleset not found for project", {
       projectId,
       rulesetId,
+      expectedProjectId: project.id,
+      actualProjectId: ruleset?.projectId,
     });
 
     throw notFound();
@@ -142,6 +146,12 @@ function RulesetEditorBody() {
   // ruleset has never been saved to the server; the BE treats that as
   // create-or-fail.
   const [savedVersion, setSavedVersion] = useState<number>(0);
+  const savedVersionRef = useRef<number>(0);
+  const updateSavedVersion = useCallback((v: number) => {
+    savedVersionRef.current = v;
+    setSavedVersion(v);
+  }, []);
+
   const getEnvelope = useCallback((): RuleSetEnvelope => {
     // Read the freshest ruleset from the store at click time, not the
     // closed-over `ruleset` from render, so a concurrent edit right before
@@ -150,7 +160,7 @@ function RulesetEditorBody() {
 
     if (!fresh) throw new Error(`[rulesets/$rulesetId] ruleset gone at save: ${rulesetId}`);
     const { envelope, droppedCategories } = projectRulesetToEnvelope(fresh, {
-      version: savedVersion,
+      version: savedVersionRef.current,
     });
 
     if (droppedCategories > 0) {
@@ -161,15 +171,20 @@ function RulesetEditorBody() {
     }
 
     return envelope;
-  }, [rulesetId, savedVersion]);
-  const onSaved = useCallback((committed: RuleSetEnvelope) => {
-    setSavedVersion(committed.Version);
-    markSaved();
-    console.info("[rulesets/$rulesetId] saved", {
-      RuleSetId: committed.RuleSetId,
-      Version: committed.Version,
-    });
-  }, []);
+  }, [rulesetId]);
+
+  const onSaved = useCallback(
+    (committed: RuleSetEnvelope) => {
+      updateSavedVersion(committed.Version);
+      markSaved();
+      console.info("[rulesets/$rulesetId] saved", {
+        RuleSetId: committed.RuleSetId,
+        Version: committed.Version,
+      });
+    },
+    [updateSavedVersion],
+  );
+
   const onServerReloaded = useCallback(
     (env: RuleSetEnvelope) => {
       // Plan 90 Step 143. Close the loop from Step 142's reverse adapter:
@@ -181,15 +196,15 @@ function RulesetEditorBody() {
       // rendering the stale local draft the operator was told to
       // discard - a silent data-loss trap.
       const back = envelopeToProjectRuleset(env, {
-        projectId,
+        projectId: project.id,
         categoryName: ruleset.categoryName,
-        rulesetId,
+        rulesetId: ruleset.id,
       });
-      updateRulesetRules(rulesetId, back.rules);
+      updateRulesetRules(ruleset.id, back.rules);
       useRulesStore
         .getState()
         .replaceAll(back.rules, back.rules.length > 0 ? [back.rules[0].id] : [], []);
-      setSavedVersion(env.Version);
+      updateSavedVersion(env.Version);
       setSelectedIds(back.rules.length > 0 ? [back.rules[0].id] : []);
       console.info("[rulesets/$rulesetId] server reloaded after conflict", {
         RuleSetId: env.RuleSetId,
@@ -197,8 +212,15 @@ function RulesetEditorBody() {
         Rules: back.rules.length,
       });
     },
-    [projectId, rulesetId, ruleset.categoryName, updateRulesetRules],
+    [projectId, rulesetId, ruleset.categoryName, updateRulesetRules, updateSavedVersion],
   );
+
+  const dataSource = useDataSource();
+  useRulesetHydration({
+    rulesetId: ruleset.id,
+    dataSource,
+    onHydrated: onServerReloaded,
+  });
 
   // Store is the source of truth: read rules directly so external mutations
   // (import, cross-tab persist) surface immediately.
@@ -272,7 +294,7 @@ function RulesetEditorBody() {
       // `persistRulesetDraft` (150 ms) to coalesce param-drag bursts.
       const fresh = selectRuleset(useProjectStore.getState(), rulesetId);
 
-      if (fresh) persistRulesetDraft(fresh, { version: savedVersion });
+      if (fresh) persistRulesetDraft(fresh, { version: savedVersionRef.current });
     });
 
     return () => {
@@ -698,12 +720,19 @@ function RulesetEditorBody() {
 
         <div className="grid grid-cols-1 gap-hmi-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <Section density={SectionDensityType.Compact} variant={SectionVariantType.Panel}>
-            {ruleset.imageRef ? (
-              <img
-                src={ruleset.imageRef}
-                alt={`${ruleset.name} reference`}
-                className="mx-auto max-h-[70vh] w-auto rounded-sm border border-ca-border object-contain"
-              />
+            {ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg" ? (
+              <div className="flex flex-col items-center justify-center p-2">
+                <img
+                  src={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                  alt={`${ruleset.name} reference`}
+                  className="mx-auto max-h-[70vh] w-auto rounded-sm border border-ca-border object-contain"
+                />
+                {!ruleset.imageRef && (
+                  <span className="mt-2 text-xs text-ca-ink-muted font-mono bg-ca-panel px-2 py-0.5 rounded border border-ca-border/60">
+                    Default Golden Reference (pocket-1-filled.jpg)
+                  </span>
+                )}
+              </div>
             ) : (
               <div className="flex min-h-64 items-center justify-center text-hmi-body text-ca-ink-muted">
                 No reference image on this rule set.
@@ -731,7 +760,7 @@ function RulesetEditorBody() {
       </div>
       <DesignModeOverlay
         open={designOpen}
-        imageRef={ruleset.imageRef ?? null}
+        imageRef={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
         suggestedName={`${ruleset.name} shape`}
         onClose={() => setDesignOpen(false)}
       />
@@ -739,7 +768,7 @@ function RulesetEditorBody() {
         open={validateOpen}
         rulesetId={rulesetId}
         rules={rules}
-        defaultImageRef={ruleset.imageRef ?? null}
+        defaultImageRef={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
         onClose={() => setValidateOpen(false)}
       />
     </div>

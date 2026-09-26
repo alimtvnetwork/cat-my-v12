@@ -41,7 +41,12 @@ export interface StandardRoiData {
   }[];
 }
 
-export function StandardRoiSetup(): React.JSX.Element {
+export interface StandardRoiSetupProps {
+  rulesetId?: string;
+  ruleId?: string;
+}
+
+export function StandardRoiSetup(_props?: StandardRoiSetupProps): React.JSX.Element {
   const navigate = useNavigate();
 
   const [shape, setShape] = useState<RoiShapeType>("rectangle");
@@ -623,4 +628,21 @@ export function StandardRoiSetup(): React.JSX.Element {
       </div>
     </StandardAppShell>
   );
+}
+
+export function resolveStandardRuleSetId(
+  rulesetIdParam?: string,
+  _projectIdParam?: string,
+): number | null {
+  if (rulesetIdParam) {
+    const num = Number(rulesetIdParam);
+    if (!Number.isNaN(num)) return num;
+  }
+  return null;
+}
+
+export function findMatchingRuleItem(rules: any[], targetId?: string): any | undefined {
+  if (!targetId) return rules[0];
+  const numId = Number(targetId);
+  return rules.find((r) => r.Id === numId || r.Params?._LegacyId === targetId);
 }

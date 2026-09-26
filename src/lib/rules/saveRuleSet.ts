@@ -12,6 +12,7 @@
 
 import { putDraft, type RuleSetEnvelope } from "./draftStore";
 import { HttpMethod } from "@/lib/constants";
+import { resolveBackendUrl } from "@/lib/data-source";
 
 export interface SaveRuleSetError extends Error {
   code: string;
@@ -36,7 +37,8 @@ function toSaveError(status: number, body: unknown): SaveRuleSetError {
  * back into IndexedDB. Throws `SaveRuleSetError` on any non-2xx response.
  */
 export async function saveRuleSet(envelope: RuleSetEnvelope): Promise<RuleSetEnvelope> {
-  const resp = await fetch(`/rules/${envelope.RuleSetId}`, {
+  const url = resolveBackendUrl(`/rules/${envelope.RuleSetId}`);
+  const resp = await fetch(url, {
     method: HttpMethod.Put,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(envelope),
