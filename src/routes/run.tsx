@@ -6,7 +6,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore, selectProject, type RuleSet } from "@/lib/projects/store";
 import { resolveOverrideChain, summarizeOverrideChain } from "@/lib/projects/override-chain";
-import { Pencil } from "lucide-react";
+import { Pencil, FastForward, RotateCcw } from "lucide-react";
+import { ScoreResultBadge } from "@/components/vision/ScoreResultBadge";
 import {
   HmiShell,
   Viewport,
@@ -160,6 +161,199 @@ function RunPage() {
     [],
   );
 
+  const [latestScoreResult, setLatestScoreResult] = useState<ScoreResponse | undefined>(undefined);
+  const [handlerState, setHandlerState] = useState<{
+    isRunning: boolean;
+    cycleCount: number;
+    currentPocketId: string;
+    acceptCount: number;
+    rejectCount: number;
+    lastEvent: {
+      cycleNumber: number;
+      partId: string;
+      imageFilePath: string;
+      is_pass: boolean;
+      verdict: string;
+      score: number;
+      reason: string;
+      sortDestination: string;
+      durationMs: number;
+      runSessionId: number;
+      timestamp: number;
+    } | null;
+  }>({
+    isRunning: false,
+    cycleCount: 0,
+    currentPocketId: "LOT-2026-P0001",
+    acceptCount: 0,
+    rejectCount: 0,
+    lastEvent: null,
+  });
+
+  const stepHandlerSim = useCallback(async () => {
+    try {
+      const resp = await fetchBackend<{
+        cycle: {
+          cycleNumber: number;
+          partId: string;
+          imageFilePath: string;
+          is_pass: boolean;
+          verdict: string;
+          score: number;
+          reason: string;
+          sortDestination: string;
+          durationMs: number;
+          runSessionId: number;
+          timestamp: number;
+        };
+        simulatorState: {
+          cycleCount: number;
+          acceptCount: number;
+          rejectCount: number;
+          isRunning: boolean;
+        };
+      }>("handler/step", {
+        method: HttpMethod.Post,
+      });
+
+      if (resp.Results && resp.Results.length > 0) {
+        const data = resp.Results[0];
+        const cycle = data.cycle;
+        setHandlerState({
+          isRunning: data.simulatorState.isRunning,
+          cycleCount: data.simulatorState.cycleCount,
+          acceptCount: data.simulatorState.acceptCount,
+          rejectCount: data.simulatorState.rejectCount,
+          currentPocketId: cycle.partId,
+          lastEvent: cycle,
+        });
+
+        setReferenceImage(cycle.imageFilePath);
+        setLatestScoreResult({
+          confidence: cycle.score,
+          verdict: cycle.verdict,
+          is_pass: cycle.is_pass,
+          label: "grayscale_tolerance",
+          reason: cycle.reason,
+          trace: {
+            metric: "grayscale_mean",
+            measured: cycle.score,
+            partId: cycle.partId,
+            sortDestination: cycle.sortDestination,
+          },
+        });
+
+        const tick = useRunStore.getState().tick;
+        tick(cycle.is_pass ? "ok" : "ng", {
+          tool: "Post-Seal Handler Inspect",
+          reason: cycle.reason,
+          score: cycle.score,
+        });
+
+        push({
+          severity: cycle.is_pass ? StatusSeverityType.Ok : StatusSeverityType.Ng,
+          message: `[Handler] ${cycle.partId} -> ${cycle.sortDestination} (${cycle.score}%): ${cycle.reason}`,
+        });
+      }
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      push({ severity: StatusSeverityType.Ng, message: `Handler step failed: ${e.message}` });
+    }
+  }, [push]);
+
+  const toggleHandlerAuto = useCallback(async () => {
+    const nextRunning = !handlerState.isRunning;
+    try {
+      const endpoint = nextRunning ? "handler/start" : "handler/stop";
+      await fetchBackend(endpoint, { method: HttpMethod.Post });
+      setHandlerState((prev) => ({ ...prev, isRunning: nextRunning }));
+      push({
+        severity: StatusSeverityType.Info,
+        message: nextRunning
+          ? "Handler automated feeder started (1.5s/part)"
+          : "Handler automated feeder stopped",
+      });
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      push({
+        severity: StatusSeverityType.Ng,
+        message: `Handler auto toggle failed: ${e.message}`,
+      });
+    }
+  }, [handlerState.isRunning, push]);
+
+  const resetHandlerSim = useCallback(async () => {
+    try {
+      await fetchBackend("handler/reset", { method: HttpMethod.Post });
+      setHandlerState({
+        isRunning: false,
+        cycleCount: 0,
+        currentPocketId: "LOT-2026-P0001",
+        acceptCount: 0,
+        rejectCount: 0,
+        lastEvent: null,
+      });
+      setLatestScoreResult(undefined);
+      push({ severity: StatusSeverityType.Info, message: "Handler simulation counters reset" });
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      push({ severity: StatusSeverityType.Ng, message: `Handler reset failed: ${e.message}` });
+    }
+  }, [push]);
+
+  useEffect(() => {
+    if (!handlerState.isRunning) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const resp = await fetchBackend<{
+          is_running: boolean;
+          cycle_count: number;
+          current_pocket_id: string;
+          accept_count: number;
+          reject_count: number;
+          last_event: any;
+        }>("handler/status", {
+          method: HttpMethod.Get,
+          headers: { "X-Suppress-Toast": "true" },
+        });
+
+        if (resp.Results && resp.Results.length > 0) {
+          const s = resp.Results[0];
+          setHandlerState({
+            isRunning: s.is_running,
+            cycleCount: s.cycle_count,
+            currentPocketId: s.current_pocket_id,
+            acceptCount: s.accept_count,
+            rejectCount: s.reject_count,
+            lastEvent: s.last_event,
+          });
+
+          if (s.last_event) {
+            setReferenceImage(s.last_event.imageFilePath);
+            setLatestScoreResult({
+              confidence: s.last_event.score,
+              verdict: s.last_event.verdict,
+              is_pass: s.last_event.is_pass,
+              label: "grayscale_tolerance",
+              reason: s.last_event.reason,
+              trace: {
+                metric: "grayscale_mean",
+                measured: s.last_event.score,
+                partId: s.last_event.partId,
+                sortDestination: s.last_event.sortDestination,
+              },
+            });
+          }
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 1500);
+
+    return () => clearInterval(timer);
+  }, [handlerState.isRunning]);
+
   const start = () => {
     try {
       startRun();
@@ -303,6 +497,9 @@ function RunPage() {
       })
         .then((resp) => {
           const payload = resp.Results[0];
+          if (payload) {
+            setLatestScoreResult(payload);
+          }
           const isOk = payload ? payload.is_pass : sample.isPass;
           const score = payload ? payload.confidence : isOk ? 92.5 : 12.5;
           const tool = "Grayscale Match";
@@ -392,6 +589,63 @@ function RunPage() {
               </div>
             </div>
           </div>
+          {/* Day 10: Handler Simulator Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-hmi-3 px-hmi-3 py-1.5 bg-ca-panel-2 border-y border-ca-border text-xs">
+            <div className="flex items-center gap-3">
+              <span className="font-semibold text-ca-ink">Handler Feeder:</span>
+              <span className="font-mono text-ca-ink bg-ca-panel px-1.5 py-0.5 rounded border border-ca-border/60">
+                {handlerState.currentPocketId}
+              </span>
+              {handlerState.lastEvent && (
+                <span
+                  className={`px-2 py-0.5 rounded font-medium ${
+                    handlerState.lastEvent.is_pass
+                      ? "bg-ca-ok/10 text-ca-ok border border-ca-ok/30"
+                      : "bg-ca-ng/10 text-ca-ng border border-ca-ng/30"
+                  }`}
+                >
+                  Sort: {handlerState.lastEvent.sortDestination}
+                </span>
+              )}
+              <span className="text-ca-ink-muted">
+                Accepts: <strong className="text-ca-ok">{handlerState.acceptCount}</strong> ·
+                Rejects: <strong className="text-ca-ng">{handlerState.rejectCount}</strong>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={stepHandlerSim}
+                disabled={handlerState.isRunning}
+                className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded hover:bg-ca-panel-2 text-ca-ink font-medium disabled:opacity-50 transition-colors inline-flex items-center gap-1.5"
+                title="Simulate 1 Part Index & Sort Cycle"
+              >
+                <FastForward className="h-3.5 w-3.5" />
+                <span>Step Part</span>
+              </button>
+              <button
+                type="button"
+                onClick={toggleHandlerAuto}
+                className={`px-2.5 py-1 rounded font-medium text-white transition-colors inline-flex items-center gap-1.5 ${
+                  handlerState.isRunning
+                    ? "bg-rose-600 hover:bg-rose-700"
+                    : "bg-ca-ink text-ca-bg hover:opacity-90"
+                }`}
+              >
+                <span>{handlerState.isRunning ? "Stop Feeder" : "Auto-Feed (1.5s)"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={resetHandlerSim}
+                disabled={handlerState.isRunning}
+                className="p-1 text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel rounded transition-colors"
+                title="Reset simulation counters"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
           <Viewport>
             <MachineFrame live={RunStatusType.isRunning(status)} />
             <ViewportImageControls />
@@ -456,6 +710,7 @@ function RunPage() {
               </div>
             ) : null}
           </Viewport>
+          <ScoreResultBadge result={latestScoreResult} />
           <StatusLog entries={log} />
         </div>
       )}
