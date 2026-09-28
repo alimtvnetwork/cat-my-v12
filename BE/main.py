@@ -37,7 +37,6 @@ from BE.routes import seed as seed_route
 from BE.routes import system as system_route
 from BE.routes import telemetry as telemetry_route
 from BE.routes import vision as vision_route
-
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
