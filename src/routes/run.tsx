@@ -579,6 +579,12 @@ function RunPage() {
               aria-live="polite"
             />
             <div className="ml-auto flex items-center gap-hmi-4 text-hmi-body text-ca-ink-muted">
+              {RunStatusType.isRunning(status) && startedAt ? (
+                <div className="flex flex-col items-end">
+                  <span className="text-hmi-caption uppercase tracking-wide">Elapsed</span>
+                  <span className="font-mono tabular-nums text-ca-ink">{elapsed}</span>
+                </div>
+              ) : null}
               <div className="flex flex-col items-end">
                 <span className="text-hmi-caption uppercase tracking-wide">Pass rate</span>
                 <span className="font-mono tabular-nums text-ca-ink">{passRate.toFixed(1)}%</span>
@@ -587,6 +593,17 @@ function RunPage() {
                 <span className="text-hmi-caption uppercase tracking-wide">Frames / s</span>
                 <span className="font-mono tabular-nums text-ca-ink">{fps}</span>
               </div>
+              <span
+                role="status"
+                aria-live="polite"
+                className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-hmi-caption font-semibold uppercase tracking-wide ${statusTone}`}
+              >
+                <span
+                  aria-hidden
+                  className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse" : "bg-ca-ink-muted"}`}
+                />
+                {formatIdentifierLabel(status)}
+              </span>
             </div>
           </div>
           {/* Day 10: Handler Simulator Bar */}
@@ -939,26 +956,7 @@ function RunPage() {
     <HmiShell
       program="Program 01"
       title="Run"
-      headerActions={
-        <div className="flex items-center gap-hmi-3 text-hmi-body">
-          {RunStatusType.isRunning(status) ? (
-            <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
-              {elapsed}
-            </span>
-          ) : null}
-          <span
-            role="status"
-            aria-live="polite"
-            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-hmi-caption font-semibold uppercase tracking-wide ${statusTone}`}
-          >
-            <span
-              aria-hidden
-              className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse" : "bg-ca-ink-muted"}`}
-            />
-            {formatIdentifierLabel(status)}
-          </span>
-        </div>
-      }
+      hideHeader
       actionBarLeft={
         <div className="flex items-center gap-hmi-2">
           <button
