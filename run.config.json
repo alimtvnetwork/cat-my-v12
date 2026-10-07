@@ -23,5 +23,5 @@
     "bun": true,
     "python": true
   },
-  "cleanPaths": ["node_modules/.vite", "dist", ".output", ".logs/launcher"]
+  "cleanPaths": ["dist", ".output", ".logs/launcher"]
 }

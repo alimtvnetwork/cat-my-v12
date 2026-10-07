@@ -264,6 +264,10 @@ export function CommandPalette(): React.JSX.Element | null {
   // indices drive the highlight. Empty query returns the full list in
   // registry order so the palette does not reshuffle on open.
   const filtered = useMemo(() => {
+    if (!open) {
+      return [];
+    }
+
     const commands = buildCommands();
     const q = query.trim();
 
@@ -290,7 +294,7 @@ export function CommandPalette(): React.JSX.Element | null {
     scored.sort((a, b) => b.score - a.score);
 
     return scored;
-  }, [query]);
+  }, [open, query]);
 
   if (!open) return null;
 

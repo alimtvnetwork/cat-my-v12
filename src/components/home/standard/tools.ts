@@ -69,12 +69,12 @@ export const CATALOG_TOOLS: readonly CatalogTool[] = [
     name: "Greyscale Pattern Matching",
     category: CatalogCategoryIdType.PresenceAbsence,
     iconName: "Binary",
-    badge: "2-bit Light Mark Extraction",
+    badge: "Light Mark Extraction",
     shortDesc: "Marks light greyscale characters and symbols inside a required region.",
     fullDesc:
-      "Converts the uploaded image to 2-bit greyscale, analyzes the required search region, and marks connected light patterns such as letters, numbers, symbols, and non-character markings with numbered red boxes.",
+      "Analyzes the required search region in high-contrast greyscale, and marks connected light patterns such as letters, numbers, symbols, and non-character markings with numbered red boxes.",
     detectionFeatures: [
-      "2-bit Greyscale Conversion",
+      "Adaptive Greyscale Segmentation",
       "Required Search Region",
       "Automatic Light Pattern Detection",
       "Selectable Box Review",

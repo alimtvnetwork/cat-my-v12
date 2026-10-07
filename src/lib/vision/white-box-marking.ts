@@ -1,10 +1,16 @@
 export interface WhiteBoxMark {
   number: number;
+  label?: string;
   x: number;
   y: number;
   width: number;
   height: number;
   area: number;
+  expectedLuma?: number;
+  relX?: number;
+  relY?: number;
+  relWidth?: number;
+  relHeight?: number;
 }
 
 export interface SearchRegion {
@@ -29,6 +35,69 @@ export interface WhiteBoxMarkingResult {
   rgba: Uint8ClampedArray;
   boxes: WhiteBoxMark[];
 }
+
+export function getPatternBoxesForRegion(region: SearchRegion): WhiteBoxMark[] {
+  const scaleX = region.width / 100;
+  const scaleY = region.height / 100;
+
+  return [
+    // Row 1: "MEGA32U4"
+    { number: 1, label: "M", relX: 8.0, relY: 6.0, width: 9.0, height: 10.0 },
+    { number: 2, label: "E", relX: 19.5, relY: 6.0, width: 8.0, height: 10.0 },
+    { number: 3, label: "G", relX: 29.5, relY: 6.0, width: 9.0, height: 10.0 },
+    { number: 4, label: "A", relX: 41.0, relY: 6.0, width: 9.5, height: 10.0 },
+    { number: 5, label: "3", relX: 52.5, relY: 6.0, width: 8.0, height: 10.0 },
+    { number: 6, label: "2", relX: 62.0, relY: 6.0, width: 8.0, height: 10.0 },
+    { number: 7, label: "U", relX: 72.0, relY: 6.0, width: 9.0, height: 10.0 },
+    { number: 8, label: "4", relX: 83.5, relY: 6.0, width: 9.0, height: 10.0 },
+
+    // Row 2: "-AU"
+    { number: 9, label: "-", relX: 41.0, relY: 23.0, width: 7.0, height: 9.0 },
+    { number: 10, label: "A", relX: 52.5, relY: 23.0, width: 9.5, height: 9.0 },
+    { number: 11, label: "U", relX: 64.0, relY: 23.0, width: 9.5, height: 9.0 },
+
+    // Row 3: "1035E KR"
+    { number: 12, label: "1", relX: 15.5, relY: 59.0, width: 6.0, height: 15.0 },
+    { number: 13, label: "0", relX: 23.5, relY: 59.0, width: 8.0, height: 15.0 },
+    { number: 14, label: "3", relX: 33.0, relY: 59.0, width: 8.0, height: 15.0 },
+    { number: 15, label: "5", relX: 42.5, relY: 59.0, width: 8.0, height: 15.0 },
+    { number: 16, label: "E", relX: 52.5, relY: 59.0, width: 8.0, height: 15.0 },
+    { number: 17, label: "K", relX: 73.5, relY: 59.0, width: 9.5, height: 15.0 },
+    { number: 18, label: "R", relX: 85.0, relY: 59.0, width: 9.5, height: 15.0 },
+
+    // Row 4: "0G3455"
+    { number: 19, label: "0", relX: 12.0, relY: 83.0, width: 9.5, height: 13.0 },
+    { number: 20, label: "G", relX: 23.5, relY: 83.0, width: 9.5, height: 13.0 },
+    { number: 21, label: "3", relX: 35.0, relY: 83.0, width: 9.5, height: 13.0 },
+    { number: 22, label: "4", relX: 46.5, relY: 83.0, width: 9.5, height: 13.0 },
+    { number: 23, label: "5", relX: 58.0, relY: 83.0, width: 9.5, height: 13.0 },
+    { number: 24, label: "5", relX: 69.5, relY: 83.0, width: 9.5, height: 13.0 },
+  ].map((def) => {
+    const boxX = Math.round(region.x + def.relX * scaleX);
+    const boxY = Math.round(region.y + def.relY * scaleY);
+    const boxW = Math.max(4, Math.round(def.width * scaleX));
+    const boxH = Math.max(4, Math.round(def.height * scaleY));
+
+    return {
+      number: def.number,
+      label: def.label,
+      relX: def.relX,
+      relY: def.relY,
+      relWidth: def.width,
+      relHeight: def.height,
+      x: boxX,
+      y: boxY,
+      width: boxW,
+      height: boxH,
+      area: boxW * boxH,
+    };
+  });
+}
+
+// Canonical 24 laser marking character positions (Row 1: MEGA32U4, Row 2: -AU, Row 3: 1035E KR, Row 4: 0G3455)
+export const DEFAULT_24_PATTERN_BOXES: readonly WhiteBoxMark[] = Object.freeze(
+  getPatternBoxesForRegion({ x: 380, y: 190, width: 260, height: 155 }),
+);
 
 const RGBA_STRIDE = 4;
 const RED_OFFSET = 0;
@@ -153,14 +222,93 @@ export function drawRgbaToCanvas(
   context.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
 }
 
-export async function readImageFile(file: File): Promise<WhiteBoxMarkingInput> {
+export const STANDARD_CANVAS_WIDTH = 960;
+export const STANDARD_CANVAS_HEIGHT = 540;
+
+export async function readImageFile(
+  file: File,
+  targetWidth = STANDARD_CANVAS_WIDTH,
+  targetHeight = STANDARD_CANVAS_HEIGHT,
+): Promise<WhiteBoxMarkingInput> {
   const bitmap = await createImageBitmap(file);
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-  const context = canvas.getContext("2d");
-  if (context === null) throw new Error("2d canvas context unavailable");
-  context.drawImage(bitmap, 0, 0);
-  const image = context.getImageData(0, 0, bitmap.width, bitmap.height);
-  return { width: bitmap.width, height: bitmap.height, rgba: image.data };
+  const width = targetWidth;
+  const height = targetHeight;
+  let canvas: HTMLCanvasElement | OffscreenCanvas;
+  let context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null = null;
+
+  if (typeof OffscreenCanvas !== "undefined") {
+    canvas = new OffscreenCanvas(width, height);
+    context = canvas.getContext("2d");
+  } else {
+    canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    context = canvas.getContext("2d");
+  }
+
+  if (context === null) {
+    throw new Error("2d canvas context unavailable");
+  }
+
+  context.drawImage(bitmap, 0, 0, width, height);
+  const image = context.getImageData(0, 0, width, height);
+
+  return { width, height, rgba: image.data };
+}
+
+export async function readImageUrl(
+  url: string,
+  targetWidth = 960,
+  targetHeight = 540,
+): Promise<WhiteBoxMarkingInput> {
+  return new Promise((resolve, reject) => {
+    if (!url || typeof url !== "string") {
+      reject(new Error("Invalid image URL provided"));
+
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      try {
+        const width = targetWidth;
+        const height = targetHeight;
+
+        let canvas: HTMLCanvasElement | OffscreenCanvas;
+        let context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null = null;
+
+        if (typeof OffscreenCanvas !== "undefined") {
+          canvas = new OffscreenCanvas(width, height);
+          context = canvas.getContext("2d");
+        } else {
+          canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          context = canvas.getContext("2d");
+        }
+
+        if (!context) {
+          reject(new Error("2d canvas context unavailable"));
+
+          return;
+        }
+
+        context.drawImage(img, 0, 0, width, height);
+        const image = context.getImageData(0, 0, width, height);
+        resolve({ width, height, rgba: image.data });
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error(`Failed to load image from URL: ${url.slice(0, 50)}...`));
+    };
+
+    img.src = url;
+  });
 }
 
 function assertRgba(input: WhiteBoxMarkingInput): void {
@@ -226,9 +374,12 @@ function findWhiteBoxes(
       const index = y * width + x;
       if (gray[index] < threshold || seen[index] === 1) continue;
       const component = walkComponent(gray, seen, width, height, index, threshold, region);
-      if (component.area >= minArea && looksLikeMarking(component, region)) boxes.push(toBox(boxes.length + 1, component));
+      if (component.area >= minArea && looksLikeMarking(component, region)) {
+        boxes.push(toBox(boxes.length + 1, component, gray, width, height, region));
+      }
     }
   }
+
   return boxes.sort(readingOrder).map((box, index) => ({ ...box, number: index + 1 }));
 }
 
@@ -316,14 +467,69 @@ function pushNeighbors(
   }
 }
 
-function toBox(number: number, component: Component): WhiteBoxMark {
+function toBox(
+  number: number,
+  component: Component,
+  gray?: Uint8ClampedArray,
+  width?: number,
+  height?: number,
+  searchRegion?: SearchRegion,
+): WhiteBoxMark {
+  let expectedLuma: number | undefined;
+
+  if (gray && width && height) {
+    let sum = 0;
+    let count = 0;
+
+    for (let y = component.y0; y <= component.y1; y += 1) {
+      for (let x = component.x0; x <= component.x1; x += 1) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          sum += gray[y * width + x];
+          count += 1;
+        }
+      }
+    }
+
+    if (count > 0) {
+      expectedLuma = Math.round(sum / count);
+    }
+  }
+
+  const boxW = component.x1 - component.x0 + 1;
+  const boxH = component.y1 - component.y0 + 1;
+
+  const relX =
+    searchRegion && searchRegion.width > 0
+      ? Math.round((((component.x0 - searchRegion.x) / searchRegion.width) * 100) * 10) / 10
+      : undefined;
+
+  const relY =
+    searchRegion && searchRegion.height > 0
+      ? Math.round((((component.y0 - searchRegion.y) / searchRegion.height) * 100) * 10) / 10
+      : undefined;
+
+  const relWidth =
+    searchRegion && searchRegion.width > 0
+      ? Math.round(((boxW / searchRegion.width) * 100) * 10) / 10
+      : undefined;
+
+  const relHeight =
+    searchRegion && searchRegion.height > 0
+      ? Math.round(((boxH / searchRegion.height) * 100) * 10) / 10
+      : undefined;
+
   return {
     number,
     x: component.x0,
     y: component.y0,
-    width: component.x1 - component.x0 + 1,
-    height: component.y1 - component.y0 + 1,
+    width: boxW,
+    height: boxH,
     area: component.area,
+    expectedLuma,
+    relX,
+    relY,
+    relWidth,
+    relHeight,
   };
 }
 

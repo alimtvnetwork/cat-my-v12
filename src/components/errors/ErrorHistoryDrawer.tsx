@@ -41,6 +41,15 @@ function formatTimestamp(iso: string): string {
 
 export function ErrorHistoryDrawer(): React.JSX.Element | null {
   const isOpen = useErrorStore((s) => s.isHistoryDrawerOpen);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return <ErrorHistoryDrawerContent />;
+}
+
+function ErrorHistoryDrawerContent(): React.JSX.Element {
   const closeDrawer = useErrorStore((s) => s.closeHistoryDrawer);
   const openErrorModal = useErrorStore((s) => s.openErrorModal);
   const clearHistory = useErrorStore((s) => s.clearHistory);
@@ -109,7 +118,7 @@ export function ErrorHistoryDrawer(): React.JSX.Element | null {
 
   return (
     <Sheet
-      open={isOpen}
+      open={true}
       onOpenChange={(next) => {
         if (!next) closeDrawer();
       }}

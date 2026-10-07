@@ -3,7 +3,7 @@
 // inline-editable name, hidden meta, visibility toggle, lock toggle,
 // delete button. Composes existing hmi editor tokens.
 import { forwardRef, useRef, type CSSProperties } from "react";
-import { Copy, Eye, EyeOff, GripVertical, Link2, Lock, Pencil, Trash2, Unlock } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, GripVertical, Link2, Lock, Pencil, Trash2, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 import { editorKindLabel } from "@/lib/editor/tools";
@@ -40,6 +40,8 @@ export interface LayerRowProps {
   onRename: (nextName: string) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   /** Step 10 wiring: drag/drop and Alt+Arrow keyboard reorder. */
   dragHandleProps?: {
     draggable: true;
@@ -95,6 +97,8 @@ export const LayerRow = forwardRef<HTMLDivElement, LayerRowProps>(function Layer
     onRename,
     onDelete,
     onDuplicate,
+    onMoveUp,
+    onMoveDown,
     dragHandleProps,
     dropTargetProps,
     dropIndicator,
@@ -173,18 +177,54 @@ export const LayerRow = forwardRef<HTMLDivElement, LayerRowProps>(function Layer
         <GripVertical size={16} />
       </span>
       {typeof orderIndex === "number" ? (
-        <span
-          data-testid="layer-order-badge"
-          data-order-index={orderIndex}
-          aria-label={`Run order ${orderIndex}${
-            typeof orderTotal === "number" ? ` of ${orderTotal}` : ""
-          }`}
-          title={`Execution order: ${orderIndex}${
-            typeof orderTotal === "number" ? ` / ${orderTotal}` : ""
-          }. Drag or Alt+Arrow to change.`}
-          className="editor-rule-order-badge"
-        >
-          {orderIndex}
+        <span className="flex items-center gap-0.5 shrink-0">
+          <span
+            data-testid="layer-order-badge"
+            data-order-index={orderIndex}
+            aria-label={`Run order ${orderIndex}${
+              typeof orderTotal === "number" ? ` of ${orderTotal}` : ""
+            }`}
+            title={`Execution order: ${orderIndex}${
+              typeof orderTotal === "number" ? ` / ${orderTotal}` : ""
+            }. Click arrows, drag, or Alt+Arrow to reorder.`}
+            className="editor-rule-order-badge"
+          >
+            {orderIndex}
+          </span>
+          {(onMoveUp || onMoveDown) && (
+            <span className="flex flex-col -space-y-1">
+              {onMoveUp && (
+                <button
+                  type="button"
+                  aria-label={`Move ${rule.name} up in sequence`}
+                  title={`Move up in sequence (order ${orderIndex})`}
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveUp();
+                  }}
+                  className="p-0 text-ca-ink-muted hover:text-ca-select transition"
+                >
+                  <ChevronUp size={11} />
+                </button>
+              )}
+              {onMoveDown && (
+                <button
+                  type="button"
+                  aria-label={`Move ${rule.name} down in sequence`}
+                  title={`Move down in sequence (order ${orderIndex})`}
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveDown();
+                  }}
+                  className="p-0 text-ca-ink-muted hover:text-ca-select transition"
+                >
+                  <ChevronDown size={11} />
+                </button>
+              )}
+            </span>
+          )}
         </span>
       ) : null}
       <button
@@ -248,6 +288,8 @@ export const LayerRow = forwardRef<HTMLDivElement, LayerRowProps>(function Layer
           </InlineEdit>
           <span className="editor-rule-meta" aria-hidden>
             {editorKindLabel(rule.kind)}
+            {rule.categoryName ? ` · ${rule.categoryName}` : (typeof rule.params?.category === "string" ? ` · ${rule.params.category}` : "")}
+            {typeof rule.params?.toolCode === "string" ? ` · [${rule.params.toolCode}]` : ""}
             {rule.isLocked ? " · Locked" : ""}
             {rule.isHidden ? " · Hidden" : ""}
           </span>

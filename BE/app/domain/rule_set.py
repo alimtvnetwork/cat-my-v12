@@ -42,6 +42,22 @@ class Tolerance:
 
 
 @dataclass(frozen=True)
+class RuleCameraSettings:
+    ExposureUs: int
+    GainDb: float
+    WhiteBalanceKelvin: int | None = None
+    Gamma: float | None = None
+
+
+@dataclass(frozen=True)
+class RuleLightSettings:
+    Intensity: float
+    Channel: int = 1
+    StrobeDurationUs: int | None = None
+    HasStrobe: bool = False
+
+
+@dataclass(frozen=True)
 class RuleItem:
     Id: int
     Kind: RuleKind
@@ -49,6 +65,8 @@ class RuleItem:
     Shape: Shape
     Tolerance: Tolerance
     Params: dict[str, Any] = field(default_factory=dict)
+    CameraSettings: RuleCameraSettings | None = None
+    LightSettings: RuleLightSettings | None = None
 
 
 @dataclass(frozen=True)
@@ -87,6 +105,45 @@ _VALID_ORIGINS = {"indexeddb", "server"}
 
 def _bad(message: str, context: dict[str, Any]) -> AppError:
     return AppError(ErrorCode.E_BE_BAD_REQUEST, message, context)
+
+
+def _parse_camera_settings(raw: Any, index: int) -> RuleCameraSettings | None:
+    if raw is None:
+        return None
+
+    if not isinstance(raw, dict):
+        raise _bad("Rules[i].CameraSettings must be object", {"index": index})
+
+    try:
+        wb = raw.get("WhiteBalanceKelvin", raw.get("whiteBalanceKelvin"))
+        gamma = raw.get("Gamma", raw.get("gamma"))
+        exp_us = int(raw.get("ExposureUs", raw.get("exposureUs", 1000)))
+        gain_db = float(raw.get("GainDb", raw.get("gainDb", 0.0)))
+        wb_val = int(wb) if wb is not None else None
+        gamma_val = float(gamma) if gamma is not None else None
+
+        return RuleCameraSettings(exp_us, gain_db, wb_val, gamma_val)
+    except (TypeError, ValueError) as exc:
+        raise _bad("Rules[i].CameraSettings invalid", {"index": index, "cause": str(exc)}) from exc
+
+
+def _parse_light_settings(raw: Any, index: int) -> RuleLightSettings | None:
+    if raw is None:
+        return None
+
+    if not isinstance(raw, dict):
+        raise _bad("Rules[i].LightSettings must be object", {"index": index})
+
+    try:
+        strobe = raw.get("StrobeDurationUs", raw.get("strobeDurationUs"))
+        intensity = float(raw.get("Intensity", raw.get("intensity", 100.0)))
+        channel = int(raw.get("Channel", raw.get("channel", 1)))
+        strobe_val = int(strobe) if strobe is not None else None
+        has_strobe = bool(raw.get("HasStrobe", raw.get("hasStrobe", False)))
+
+        return RuleLightSettings(intensity, channel, strobe_val, has_strobe)
+    except (TypeError, ValueError) as exc:
+        raise _bad("Rules[i].LightSettings invalid", {"index": index, "cause": str(exc)}) from exc
 
 
 def parse_envelope(raw: dict[str, Any]) -> RuleSetEnvelope:
@@ -164,7 +221,21 @@ def parse_envelope(raw: dict[str, Any]) -> RuleSetEnvelope:
         params = r.get("Params", {})
         if not isinstance(params, dict):
             raise _bad("Rules[i].Params must be object", {"index": i})
-        rules.append(RuleItem(Id=rid, Kind=kind, Enabled=r_enabled, Shape=shape, Tolerance=tol, Params=params))
+
+        cam_settings = _parse_camera_settings(r.get("CameraSettings", r.get("cameraSettings")), i)
+        light_settings = _parse_light_settings(r.get("LightSettings", r.get("lightSettings")), i)
+        rules.append(
+            RuleItem(
+                Id=rid,
+                Kind=kind,
+                Enabled=r_enabled,
+                Shape=shape,
+                Tolerance=tol,
+                Params=params,
+                CameraSettings=cam_settings,
+                LightSettings=light_settings,
+            )
+        )
 
     dm_raw = raw.get("DraftMeta")
     if not isinstance(dm_raw, dict):
@@ -194,6 +265,8 @@ __all__ = [
     "SCHEMA_VERSION",
     "RuleSetEnvelope",
     "RuleItem",
+    "RuleCameraSettings",
+    "RuleLightSettings",
     "Shape",
     "Tolerance",
     "DraftMeta",

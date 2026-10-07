@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+
 import { fetchBackend } from "@/lib/backend/http";
 import { HttpMethod } from "@/lib/constants";
 import { ShapeType } from "@/domain/vision/shapes";
@@ -25,15 +26,23 @@ import {
 import { syncRuleToBackend } from "@/lib/rules/backendSync";
 import {
   readImageFile,
+  readImageUrl,
   rgbaToBase64,
   base64ToRgba,
+  markWhiteBoxes,
   type WhiteBoxMark,
   type WhiteBoxMarkingInput,
   type WhiteBoxMarkingResult,
   type SearchRegion,
 } from "@/lib/vision/white-box-marking";
 import { computePatternGeometry } from "./pattern-geometry";
-import type { BackendResult, FormulatedPatternGeometry, RegionDrag, WhiteBoxToolProps } from "./types";
+import type {
+  BackendResult,
+  FormulatedPatternGeometry,
+  PatternRegionEditMode,
+  RegionDrag,
+  WhiteBoxToolProps,
+} from "./types";
 
 export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const requestIdRef = useRef(0);
@@ -66,12 +75,85 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     }
     return null;
   });
+  const [maskRegions, setMaskRegions] = useState<SearchRegion[]>(() => {
+    const rawMaskRegions = initialSettings?.maskRegions;
+
+    if (!Array.isArray(rawMaskRegions)) {
+      return [];
+    }
+
+    return rawMaskRegions.flatMap((region: Partial<SearchRegion>) => {
+      if (
+        typeof region.x === "number" &&
+        typeof region.y === "number" &&
+        typeof region.width === "number" &&
+        typeof region.height === "number"
+      ) {
+        return [
+          {
+            x: Math.round(region.x),
+            y: Math.round(region.y),
+            width: Math.round(region.width),
+            height: Math.round(region.height),
+          },
+        ];
+      }
+
+      return [];
+    });
+  });
+  const [regionEditMode, setRegionEditMode] = useState<PatternRegionEditMode>("search");
+  const [selectedMaskIndex, setSelectedMaskIndex] = useState<number | null>(null);
 
   const [dragState, setDragState] = useState<RegionDrag | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [message, setMessage] = useState("Load image to start.");
+
+  useEffect(() => {
+    let isCancelled = false;
+    const targetUrl = props?.imageRef || (props?.settings as any)?.imageRef;
+
+    if (!targetUrl || source !== null) {
+      return;
+    }
+
+    void readImageUrl(targetUrl)
+      .then((input) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setSource(input);
+        setMessage(`Ready to calibrate pattern elements (${input.width}×${input.height}).`);
+
+        const fullRegion: SearchRegion = {
+          x: 0,
+          y: 0,
+          width: input.width,
+          height: input.height,
+        };
+
+        setSearchRegion(fullRegion);
+
+        const initialBoxes: WhiteBoxMark[] =
+          Array.isArray(initialSettings?.referenceBoxes) && initialSettings.referenceBoxes.length > 0
+            ? initialSettings.referenceBoxes
+            : Array.isArray(initialSettings?.constellation) && initialSettings.constellation.length > 0
+              ? initialSettings.constellation
+              : [];
+
+        setDetectedBoxes(initialBoxes);
+      })
+      .catch(() => {
+        // Ignored
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [props?.imageRef, props?.settings]);
 
   const formulatedPattern = useMemo<FormulatedPatternGeometry | null>(() => {
     if (source === null || detectedBoxes.length === 0) {
@@ -82,10 +164,110 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       boxes: detectedBoxes,
       excludedNumbers,
       marginPx,
+      searchRegion,
+      maskRegions,
       imageWidth: source.width,
       imageHeight: source.height,
     });
-  }, [detectedBoxes, excludedNumbers, marginPx, source]);
+  }, [detectedBoxes, excludedNumbers, marginPx, maskRegions, searchRegion, source]);
+
+  useEffect(() => {
+    if (!props?.onSettingsChange || !formulatedPattern) {
+      return;
+    }
+
+    props.onSettingsChange((prev: any) => ({
+      ...prev,
+      patternBounds: {
+        x: formulatedPattern.x,
+        y: formulatedPattern.y,
+        width: formulatedPattern.width,
+        height: formulatedPattern.height,
+      },
+      referenceBoxes: formulatedPattern.referenceBoxes,
+      activeBoxCount: formulatedPattern.activeBoxCount,
+      totalBoxCount: formulatedPattern.totalBoxCount,
+      tolerancePx: formulatedPattern.tolerancePx,
+      marginPx: formulatedPattern.marginPx,
+      searchRegion: formulatedPattern.searchRegion,
+      patternRegion: formulatedPattern.patternRegion,
+      maskRegions: formulatedPattern.maskRegions,
+      constellationJson: JSON.stringify(formulatedPattern.referenceBoxes),
+    }));
+  }, [formulatedPattern, props?.onSettingsChange]);
+
+  function changeRegionEditMode(mode: PatternRegionEditMode): void {
+    setRegionEditMode(mode);
+
+    if (mode === "mask" && selectedMaskIndex === null && maskRegions.length > 0) {
+      setSelectedMaskIndex(0);
+    }
+  }
+
+  function addMaskRegion(): void {
+    const width = source?.width ?? 960;
+    const height = source?.height ?? 540;
+    const nextRegion: SearchRegion = {
+      x: Math.round(width * 0.42),
+      y: Math.round(height * 0.42),
+      width: Math.round(width * 0.16),
+      height: Math.round(height * 0.16),
+    };
+
+    setMaskRegions((prev) => {
+      const next = [...prev, nextRegion];
+      setSelectedMaskIndex(next.length - 1);
+
+      return next;
+    });
+    setRegionEditMode("mask");
+  }
+
+  function selectMaskRegion(index: number): void {
+    setSelectedMaskIndex(index);
+    setRegionEditMode("mask");
+  }
+
+  function deleteMaskRegion(index: number): void {
+    setMaskRegions((prev) => prev.filter((_, regionIndex) => regionIndex !== index));
+    setSelectedMaskIndex((prev) => {
+      if (prev === null) {
+        return null;
+      }
+
+      if (prev === index) {
+        return null;
+      }
+
+      return prev > index ? prev - 1 : prev;
+    });
+  }
+
+  function changeActiveCanvasRegion(region: SearchRegion | null): void {
+    if (regionEditMode === "search") {
+      setSearchRegion(region);
+
+      return;
+    }
+
+    if (selectedMaskIndex === null) {
+      return;
+    }
+
+    setMaskRegions((prev) =>
+      prev.flatMap((existing, index) => {
+        if (index !== selectedMaskIndex) {
+          return [existing];
+        }
+
+        return region ? [region] : [];
+      }),
+    );
+
+    if (region === null) {
+      setSelectedMaskIndex(null);
+    }
+  }
 
   async function loadFile(file: File | undefined): Promise<void> {
     if (file === undefined) {
@@ -97,10 +279,15 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setResult(null);
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
-    setSearchRegion(null);
+    setMaskRegions([]);
+    setSelectedMaskIndex(null);
+    setRegionEditMode("search");
+    const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
+    setSearchRegion(fullRegion);
     setDragState(null);
     setSaveMessage(null);
-    setMessage(`Loaded ${file.name}. Draw the required region.`);
+    setMessage(`Loaded "${file.name}". Detecting pattern elements across workpiece...`);
+    void processRegion(input, fullRegion);
   }
 
   function loadCapturedFrame(input: WhiteBoxMarkingInput): void {
@@ -108,10 +295,15 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setResult(null);
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
-    setSearchRegion(null);
+    setMaskRegions([]);
+    setSelectedMaskIndex(null);
+    setRegionEditMode("search");
+    const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
+    setSearchRegion(fullRegion);
     setDragState(null);
     setSaveMessage(null);
-    setMessage(`Captured frame (${input.width}×${input.height}). Draw the required region.`);
+    setMessage(`Captured frame (${input.width}×${input.height}). Detecting pattern elements across workpiece...`);
+    void processRegion(input, fullRegion);
   }
 
   async function processRegion(input: WhiteBoxMarkingInput, region: SearchRegion): Promise<void> {
@@ -147,12 +339,23 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       setDetectedBoxes(body.Boxes);
       setExcludedNumbers(new Set());
       setMessage(`Marked ${body.Boxes.length} pattern element(s).`);
-    } catch (error) {
+    } catch {
       if (requestIdRef.current !== requestId) {
         return;
       }
 
-      setMessage(error instanceof Error ? error.message : "Processing failed.");
+      const clientResult = markWhiteBoxes({
+        width: input.width,
+        height: input.height,
+        rgba: input.rgba,
+        whiteThreshold: greyscaleLevel,
+        searchRegion: region,
+      });
+
+      setResult(clientResult);
+      setDetectedBoxes(clientResult.boxes);
+      setExcludedNumbers(new Set());
+      setMessage(`Marked ${clientResult.boxes.length} pattern element(s).`);
     } finally {
       if (requestIdRef.current === requestId) {
         setIsProcessing(false);
@@ -165,7 +368,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setResult(null);
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
-    setMessage(searchRegion === null ? "Draw the required region." : "Greyscale level changed. Press Process.");
+    setMessage("Greyscale level changed. Click Process to re-detect.");
   }
 
   function changeMarginPx(value: number): void {
@@ -239,8 +442,15 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       const facade = makeRuleFacade();
       const allRules = facade.list();
       const rawId = props?.settings?.id;
+      const isDraftRule =
+        rawId === "draft-rule" ||
+        rawId === "rule-draft-rule" ||
+        (typeof rawId === "string" && rawId.startsWith("draft-")) ||
+        Boolean(props?.onApply);
       const formattedRawId = rawId
-        ? ((rawId.startsWith("rule-") ? rawId : `rule-${rawId}`) as RuleId)
+        ? isDraftRule
+          ? ("draft-rule" as RuleId)
+          : ((rawId.startsWith("rule-") ? rawId : `rule-${rawId}`) as RuleId)
         : null;
 
       const existingPatternRule = allRules.find(
@@ -263,8 +473,9 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       const canonicalRuleName = `greyscale-pattern-match-${boxCount}-box`;
       const defaultRuleId = `rule-greyscale-pattern-match-${boxCount}-box` as RuleId;
 
-      const targetRuleId: RuleId =
-        formattedRawId && formattedRawId !== "rule-logo-match"
+      const targetRuleId: RuleId = isDraftRule
+        ? ("draft-rule" as RuleId)
+        : formattedRawId && formattedRawId !== "rule-logo-match"
           ? formattedRawId
           : existingPatternRule?.id ?? defaultRuleId;
 
@@ -306,25 +517,61 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
             height: formulatedPattern.height + marginPx * 2,
           };
 
-      const constellation = formulatedPattern.referenceBoxes.map((b) => ({
-        boxNumber: b.number,
-        x: b.x,
-        y: b.y,
-        relX: b.x - formulatedPattern.x,
-        relY: b.y - formulatedPattern.y,
-        width: b.width,
-        height: b.height,
-        area: b.area,
-      }));
+      const constellation = formulatedPattern.referenceBoxes.map((b) => {
+        let boxLuma = 52;
 
-      const referenceBoxes = formulatedPattern.referenceBoxes.map((b) => ({
-        boxNumber: b.number,
-        x: b.x,
-        y: b.y,
-        width: b.width,
-        height: b.height,
-        area: b.area,
-      }));
+        if (source) {
+          let sum = 0;
+          let count = 0;
+
+          for (let r = b.y; r < b.y + b.height; r += 1) {
+            for (let c = b.x; c < b.x + b.width; c += 1) {
+              if (r >= 0 && r < source.height && c >= 0 && c < source.width) {
+                const idx = (r * source.width + c) * 4;
+                sum +=
+                  0.299 * source.rgba[idx] +
+                  0.587 * source.rgba[idx + 1] +
+                  0.114 * source.rgba[idx + 2];
+                count += 1;
+              }
+            }
+          }
+
+          if (count > 0) {
+            boxLuma = Math.round((sum / count) * 10) / 10;
+          }
+        }
+
+        return {
+          number: b.number,
+          boxNumber: b.number,
+          label: b.label,
+          x: b.x,
+          y: b.y,
+          relX: b.x - formulatedPattern.x,
+          relY: b.y - formulatedPattern.y,
+          width: b.width,
+          height: b.height,
+          area: b.area,
+          expectedLuma: boxLuma,
+        };
+      });
+
+      const referenceBoxes = formulatedPattern.referenceBoxes.map((b) => {
+        const matching = constellation.find((c) => c.boxNumber === b.number);
+
+        return {
+          number: b.number,
+          boxNumber: b.number,
+          label: b.label,
+          x: b.x,
+          y: b.y,
+          width: b.width,
+          height: b.height,
+          area: b.area,
+          expectedLuma: matching?.expectedLuma ?? 52,
+        };
+      });
 
       const patternBounds = {
         x: formulatedPattern.x,
@@ -332,6 +579,18 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         width: formulatedPattern.width,
         height: formulatedPattern.height,
       };
+      const patternRegionGeometry = {
+        x: formulatedPattern.patternRegion.x,
+        y: formulatedPattern.patternRegion.y,
+        width: formulatedPattern.patternRegion.width,
+        height: formulatedPattern.patternRegion.height,
+      };
+      const maskRegions = formulatedPattern.maskRegions.map((region) => ({
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height,
+      }));
 
       const conditionPayload = {
         ...defaultSettings,
@@ -357,13 +616,9 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         },
         patternRegion: {
           shape: ShapeType.Rectangle,
-          geometry: {
-            x: formulatedPattern.x,
-            y: formulatedPattern.y,
-            width: formulatedPattern.width,
-            height: formulatedPattern.height,
-          },
+          geometry: patternRegionGeometry,
         },
+        maskRegions,
         region: {
           x: formulatedPattern.x,
           y: formulatedPattern.y,
@@ -382,28 +637,47 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         }));
       }
 
-      const ruleParams: Record<string, string | number | boolean> = {
+      const ruleParams: Record<string, any> = {
         threshold: greyscaleLevel,
+        greyscaleLevel,
+        lumaTolerance: 32,
         marginPx,
         tolerancePx: formulatedPattern.tolerancePx,
         activeBoxCount: formulatedPattern.activeBoxCount,
         totalBoxCount: formulatedPattern.totalBoxCount,
         minMatchPercent: 100,
+        searchRegion: computedSearchGeometry,
+        patternRegion: patternRegionGeometry,
+        maskRegions,
+        referenceBoxes,
+        constellation,
         constellationJson: JSON.stringify(constellation),
-        ...(searchRegion ? { searchRegionJson: JSON.stringify(searchRegion) } : {}),
+        searchRegionJson: JSON.stringify(computedSearchGeometry),
+        patternRegionJson: JSON.stringify(patternRegionGeometry),
+        maskRegionsJson: JSON.stringify(maskRegions),
+        referenceBoxesJson: JSON.stringify(referenceBoxes),
       };
+
+      const enrichedPattern: FormulatedPatternGeometry = {
+        ...formulatedPattern,
+        referenceBoxes,
+        threshold: greyscaleLevel,
+      };
+
+      if (targetRuleId === "draft-rule" || isDraftRule || Boolean(props?.onApply)) {
+        if (props?.onApply) {
+          props.onApply(enrichedPattern);
+        }
+
+        toast.success(`Pattern calibrated (${formulatedPattern.activeBoxCount} boxes)!`);
+        setSaveMessage(`Calibrated (${formulatedPattern.activeBoxCount} boxes, ±${marginPx}px margin)!`);
+
+        return;
+      }
 
       const store = useRulesStore.getState();
       const existingRules = store.rules;
-      const targetStoreRule = existingRules.find(
-        (r) =>
-          r.id !== "rule-logo-match" &&
-          (r.id === targetRuleId ||
-            r.id.includes("greyscale-pattern") ||
-            (r.name.toLowerCase().includes("pattern") &&
-              !r.name.toLowerCase().includes("logo"))),
-      );
-
+      const targetStoreRule = existingRules.find((r) => r.id === targetRuleId);
       const targetStoreId = targetStoreRule?.id ?? targetRuleId;
       const updatedStoreRule = {
         id: targetStoreId,
@@ -419,14 +693,11 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         params: ruleParams,
       };
 
-      const nonPatternRules = existingRules.filter(
-        (r) =>
-          r.id === "rule-logo-match" ||
-          (r.id !== targetStoreId &&
-            !r.id.includes("greyscale-pattern") &&
-            !r.name.toLowerCase().includes("pattern")),
-      );
-      store.replaceAll([...nonPatternRules, updatedStoreRule], [updatedStoreRule.id]);
+      const updatedRules = existingRules.some((r) => r.id === targetStoreId)
+        ? existingRules.map((r) => (r.id === targetStoreId ? updatedStoreRule : r))
+        : [...existingRules, updatedStoreRule];
+
+      store.replaceAll(updatedRules, [updatedStoreRule.id]);
 
       const nowIso = new Date().toISOString();
       const libraryRule: Rule = {
@@ -466,7 +737,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       }
 
       if (props?.onApply) {
-        props.onApply(formulatedPattern);
+        props.onApply(enrichedPattern);
       }
 
       const isApplyMode = props?.actionButtonLabel === "Apply Pattern" || Boolean(props?.settings);
@@ -492,6 +763,9 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     marginPx,
     greyscaleLevel,
     searchRegion,
+    maskRegions,
+    regionEditMode,
+    selectedMaskIndex,
     dragState,
     isProcessing,
     isSaving,
@@ -499,6 +773,12 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     message,
     formulatedPattern,
     setSearchRegion,
+    setMaskRegions,
+    changeRegionEditMode,
+    addMaskRegion,
+    selectMaskRegion,
+    deleteMaskRegion,
+    changeActiveCanvasRegion,
     setDragState,
     loadFile,
     loadCapturedFrame,

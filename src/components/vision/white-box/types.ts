@@ -7,6 +7,7 @@ export interface CanvasPoint {
 }
 
 export type RegionHandle = "move" | "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
+export type PatternRegionEditMode = "search" | "mask";
 
 export interface RegionDrag {
   handle: RegionHandle | "new";
@@ -28,12 +29,16 @@ export interface FormulatedPatternGeometry {
   y: number;
   width: number;
   height: number;
+  searchRegion: SearchRegion;
+  patternRegion: SearchRegion;
+  maskRegions: SearchRegion[];
   marginPx: number;
   tolerancePx: number;
   activeBoxCount: number;
   totalBoxCount: number;
   referenceBoxes: WhiteBoxMark[];
   toleranceZones: BoxToleranceZone[];
+  threshold?: number;
 }
 
 export interface WhiteBoxToolProps {
@@ -42,6 +47,7 @@ export interface WhiteBoxToolProps {
   onApply?: (pattern: FormulatedPatternGeometry) => void;
   onCancel?: () => void;
   actionButtonLabel?: string;
+  imageRef?: string;
 }
 
 export interface BackendResult {
@@ -58,11 +64,18 @@ export interface BoxReviewPanelProps {
   excludedNumbers: ReadonlySet<number>;
   formulatedPattern: FormulatedPatternGeometry | null;
   searchRegion: SearchRegion | null;
+  maskRegions: readonly SearchRegion[];
+  regionEditMode: PatternRegionEditMode;
+  selectedMaskIndex: number | null;
   isSaving: boolean;
   saveMessage: string | null;
   actionButtonLabel?: string;
   onGreyscaleChange: (val: number) => void;
   onMarginChange: (val: number) => void;
+  onRegionEditModeChange: (mode: PatternRegionEditMode) => void;
+  onAddMaskRegion: () => void;
+  onSelectMaskRegion: (index: number) => void;
+  onDeleteMaskRegion: (index: number) => void;
   onRemoveBox: (num: number) => void;
   onRestoreBox: (num: number) => void;
   onToggleBox: (num: number) => void;
@@ -70,6 +83,7 @@ export interface BoxReviewPanelProps {
   onExcludeAll: () => void;
   onInvert: () => void;
   onApplyPattern: () => void;
+  onCancel?: () => void;
 }
 
 export type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult };

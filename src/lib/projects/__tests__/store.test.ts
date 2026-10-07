@@ -191,4 +191,38 @@ describe("projects store", () => {
       expect(useProjectStore.getState().projects["missing"]).toBeUndefined();
     });
   });
+
+  describe("deviceId hardware binding", () => {
+    it("creates a project with an optional deviceId", () => {
+      const id = useProjectStore.getState().createProject("Line B", { deviceId: "dev-camera-1" });
+      const p = selectProject(useProjectStore.getState(), id);
+      expect(p?.deviceId).toBe("dev-camera-1");
+    });
+
+    it("preserves deviceId when duplicating a project", () => {
+      const pid = useProjectStore.getState().createProject("Source", { deviceId: "SN-STUB-0000" });
+      const copyId = useProjectStore.getState().duplicateProject(pid);
+      expect(copyId).not.toBeNull();
+      const copy = selectProject(useProjectStore.getState(), copyId!);
+      expect(copy?.deviceId).toBe("SN-STUB-0000");
+    });
+
+    it("binds and clears deviceId via setProjectDevice", () => {
+      const id = useProjectStore.getState().createProject("P");
+      useProjectStore.getState().setProjectDevice(id, "dev-1");
+      expect(selectProject(useProjectStore.getState(), id)?.deviceId).toBe("dev-1");
+
+      useProjectStore.getState().setProjectDevice(id, null);
+      expect(selectProject(useProjectStore.getState(), id)?.deviceId).toBeUndefined();
+
+      useProjectStore.getState().setProjectDevice(id, "dev-2");
+      useProjectStore.getState().setProjectDevice(id, "   ");
+      expect(selectProject(useProjectStore.getState(), id)?.deviceId).toBeUndefined();
+    });
+
+    it("no-ops setProjectDevice on unknown projectId", () => {
+      expect(() => useProjectStore.getState().setProjectDevice("missing", "dev-1")).not.toThrow();
+      expect(useProjectStore.getState().projects["missing"]).toBeUndefined();
+    });
+  });
 });

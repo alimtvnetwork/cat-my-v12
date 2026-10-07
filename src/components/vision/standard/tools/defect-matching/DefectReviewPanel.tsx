@@ -112,7 +112,7 @@ export function DefectReviewPanel(props: DefectReviewPanelProps): React.JSX.Elem
           <div className="max-h-52 overflow-y-auto divide-y divide-ca-border/40">
             {props.detectedBoxes.length === 0 ? (
               <div className="p-3 text-center text-ca-ink-muted text-[11px]">
-                No defect features extracted. Draw ROI and click Process.
+                No defect features extracted. Adjust sensitivity or click Process.
               </div>
             ) : (
               props.detectedBoxes.map((box) => {

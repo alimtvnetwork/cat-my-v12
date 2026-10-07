@@ -11,7 +11,7 @@ function WhiteBoxesScreen() {
     <StandardAppShell
       activeNav="setup"
       title="Greyscale Pattern Matching"
-      subtitle="2-bit greyscale conversion with numbered pattern review"
+      subtitle="Greyscale pattern detection with numbered feature review"
     >
       <WhiteBoxMarkingTool actionButtonLabel="Save Pattern" />
     </StandardAppShell>

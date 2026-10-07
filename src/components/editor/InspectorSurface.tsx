@@ -36,9 +36,11 @@ export function InspectorSurface({ imageBounds }: InspectorSurfaceProps): React.
   const updateParams = useRulesStore((s) => s.updateParams);
   const setRuleBounds = useRulesStore((s) => s.setRuleBounds);
   const reorderRule = useRulesStore((s) => s.reorderRule);
+  const reorderRules = useRulesStore((s) => s.reorderRules);
   const groupSelected = useRulesStore((s) => s.groupSelected);
   const ungroup = useRulesStore((s) => s.ungroup);
   const mergeSelected = useRulesStore((s) => s.mergeSelected);
+  const updateRuleOptical = useRulesStore((s) => s.updateRuleOptical);
 
   const onSelect = useCallback(
     (id: string, mode: SelectionModeType) => {
@@ -176,8 +178,10 @@ export function InspectorSurface({ imageBounds }: InspectorSurfaceProps): React.
         updateParams={updateParams}
         setRuleBounds={setRuleBounds}
         reorderRule={reorderRule}
+        reorderRules={reorderRules}
         deleteRules={deleteRules}
         duplicateRules={duplicateRules}
+        updateRuleOptical={updateRuleOptical}
       />
     </div>
   );
@@ -206,8 +210,10 @@ interface InspectorTabsProps {
   updateParams: ReturnType<typeof useRulesStore.getState>["updateParams"];
   setRuleBounds: ReturnType<typeof useRulesStore.getState>["setRuleBounds"];
   reorderRule: ReturnType<typeof useRulesStore.getState>["reorderRule"];
+  reorderRules: ReturnType<typeof useRulesStore.getState>["reorderRules"];
   deleteRules: (ids: string[]) => void;
   duplicateRules: ReturnType<typeof useRulesStore.getState>["duplicateRules"];
+  updateRuleOptical: ReturnType<typeof useRulesStore.getState>["updateRuleOptical"];
 }
 
 export enum InspectorTabType {
@@ -313,6 +319,20 @@ function InspectorTabs(props: InspectorTabsProps) {
               onReorder={({ sourceId, targetId, position }) =>
                 props.reorderRule(sourceId, targetId, position)
               }
+              onMoveUp={(id) => {
+                const idx = props.rules.findIndex((r) => r.id === id);
+
+                if (idx > 0) {
+                  props.reorderRules([id], idx - 1);
+                }
+              }}
+              onMoveDown={(id) => {
+                const idx = props.rules.findIndex((r) => r.id === id);
+
+                if (idx >= 0 && idx < props.rules.length - 1) {
+                  props.reorderRules([id], idx + 1);
+                }
+              }}
               onGroupSelected={props.onGroup}
               onUngroupSelected={props.onUngroup}
               onMergeSelected={props.onMergeSelected}
@@ -332,6 +352,7 @@ function InspectorTabs(props: InspectorTabsProps) {
               onSetBounds={(id, rect) => props.setRuleBounds(id, rect, props.imageBounds)}
               onSetHidden={(ids, hidden) => props.setHidden(ids, hidden)}
               onSetLocked={(ids, locked) => props.setLocked(ids, locked)}
+              onUpdateOptical={props.updateRuleOptical}
             />
           </div>
         )}

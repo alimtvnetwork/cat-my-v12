@@ -60,6 +60,7 @@ export interface EvaluateDefectParams {
 export interface DefectMarkingToolProps {
   settings?: PatternSearchSettings;
   onSettingsChange?: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  onChange?: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
   actionButtonLabel?: string;
 }
 

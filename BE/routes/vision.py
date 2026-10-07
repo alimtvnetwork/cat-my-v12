@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from BE.app.domain.pin1_detection import Pin1Options, detect_pin1
 from BE.app.domain.white_box_marking import MarkingOptions, SearchRegion, mark_white_boxes
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 
@@ -28,6 +29,21 @@ class WhiteBoxRequest(BaseModel):
     WhiteThreshold: int | None = Field(default=None, ge=0, le=255)
     MinAreaPx: int | None = Field(default=None, ge=1)
     SearchRegion: SearchRegionRequest | None = None
+
+
+class Pin1Request(BaseModel):
+    Width: int = Field(gt=0)
+    Height: int = Field(gt=0)
+    RgbaBase64: str
+    Polarity: str = "DarkIndentation"
+    ThresholdLuma: int = Field(default=35, ge=0, le=255)
+    MinCircularityPercent: int = Field(default=45, ge=0, le=100)
+    MinRadiusPx: int = Field(default=3, ge=1)
+    MaxRadiusPx: int = Field(default=60, ge=1)
+    TolerancePx: int = Field(default=25, ge=0)
+    SearchRegion: SearchRegionRequest | None = None
+    PackageRegion: SearchRegionRequest | None = None
+    RegisteredPin1: dict[str, object] | None = None
 
 
 @router.post("/white-box-marking")
@@ -57,6 +73,31 @@ def _to_search_region(region: SearchRegionRequest | None) -> SearchRegion | None
     if region is None:
         return None
     return SearchRegion(x=region.X, y=region.Y, width=region.Width, height=region.Height)
+
+
+@router.post("/pin1-detection")
+async def post_pin1_detection(request: Request, payload: Pin1Request) -> JSONResponse:
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    result = detect_pin1(
+        width=payload.Width,
+        height=payload.Height,
+        rgba_base64=payload.RgbaBase64,
+        options=Pin1Options(
+            polarity="LightDot" if payload.Polarity == "LightDot" else "DarkIndentation",
+            threshold_luma=payload.ThresholdLuma,
+            min_circularity_percent=payload.MinCircularityPercent,
+            min_radius_px=payload.MinRadiusPx,
+            max_radius_px=payload.MaxRadiusPx,
+            tolerance_px=payload.TolerancePx,
+            search_region=_to_search_region(payload.SearchRegion),
+            package_region=_to_search_region(payload.PackageRegion),
+            registered_pin1=payload.RegisteredPin1,
+        ),
+    )
+    body = asdict(result)
+    envelope = success(body, requested_at=str(request.url))
+
+    return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
 __all__ = ["router"]

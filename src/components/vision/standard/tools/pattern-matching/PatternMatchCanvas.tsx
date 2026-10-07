@@ -189,9 +189,6 @@ export function PatternMatchCanvas(props: PatternMatchCanvasProps): React.JSX.El
 
         ctx.putImageData(imgData, 0, 0);
       } else {
-        ctx.fillStyle = "#12151b";
-        ctx.fillRect(0, 0, width, height);
-
         const previewRgba = toThresholdPreviewRgba(props.source, props.greyscaleLevel);
         const offCanvas = document.createElement("canvas");
         offCanvas.width = props.source.width;
@@ -206,13 +203,7 @@ export function PatternMatchCanvas(props: PatternMatchCanvasProps): React.JSX.El
           );
           offCtx.putImageData(imgData, 0, 0);
 
-          const scale = Math.min(380 / props.source.width, 380 / props.source.height);
-          const dw = Math.round(props.source.width * scale);
-          const dh = Math.round(props.source.height * scale);
-          const dx = Math.round((width - dw) / 2);
-          const dy = Math.round((height - dh) / 2);
-
-          ctx.drawImage(offCanvas, dx, dy, dw, dh);
+          ctx.drawImage(offCanvas, 0, 0, width, height);
         }
       }
     } else {
@@ -253,12 +244,12 @@ export function PatternMatchCanvas(props: PatternMatchCanvasProps): React.JSX.El
     <div className="relative flex flex-1 h-full w-full min-h-0 items-center justify-center overflow-hidden bg-[#0d0f12] p-1.5">
       <canvas
         ref={canvasRef}
-        width={isSimulating ? 1400 : 960}
-        height={isSimulating ? 820 : 540}
+        width={960}
+        height={540}
         onPointerDown={isSimulating ? undefined : drag.handlePointerDown}
         onPointerMove={isSimulating ? undefined : drag.handlePointerMove}
         onPointerUp={isSimulating ? undefined : drag.handlePointerUp}
-        className="h-full w-full max-h-full max-w-full rounded border border-ca-border bg-black object-contain shadow-2xl cursor-default"
+        className="aspect-video h-full w-full max-h-full max-w-full rounded border border-ca-border bg-black object-contain shadow-2xl cursor-default"
       />
     </div>
   );

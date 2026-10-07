@@ -482,6 +482,15 @@ function HistoryTab() {
 export function GlobalErrorModal(): React.JSX.Element | null {
   const isOpen = useErrorStore((s) => s.isOpen);
   const currentError = useErrorStore((s) => s.currentError);
+
+  if (!isOpen || !currentError) {
+    return null;
+  }
+
+  return <GlobalErrorModalContent currentError={currentError} />;
+}
+
+function GlobalErrorModalContent({ currentError }: { currentError: CapturedError }): React.JSX.Element {
   const closeErrorModal = useErrorStore((s) => s.closeErrorModal);
   const [tab, setTab] = useState<string>("overview");
   const [retrying, setRetrying] = useState(false);
@@ -520,7 +529,7 @@ export function GlobalErrorModal(): React.JSX.Element | null {
   };
 
   return (
-    <Dialog open={isOpen && !!currentError} onOpenChange={handleOpenChange}>
+    <Dialog open={true} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl gap-3 max-h-[85vh] flex flex-col p-4 sm:p-6">
         <DialogHeader className="pr-8 shrink-0">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 min-w-0">

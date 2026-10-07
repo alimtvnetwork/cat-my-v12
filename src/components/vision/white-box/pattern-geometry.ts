@@ -13,6 +13,8 @@ export interface PatternComputeParams {
   excludedNumbers: ReadonlySet<number>;
   marginPx: number;
   tolerancePx?: number;
+  searchRegion?: SearchRegion | null;
+  maskRegions?: readonly SearchRegion[];
   imageWidth: number;
   imageHeight: number;
 }
@@ -63,6 +65,19 @@ export function computePatternGeometry(params: PatternComputeParams): Formulated
     y: clampedY,
     width: Math.max(1, boundedMaxX - clampedX),
     height: Math.max(1, boundedMaxY - clampedY),
+    searchRegion: params.searchRegion ?? {
+      x: clampedX,
+      y: clampedY,
+      width: Math.max(1, boundedMaxX - clampedX),
+      height: Math.max(1, boundedMaxY - clampedY),
+    },
+    patternRegion: {
+      x: Math.max(0, minX),
+      y: Math.max(0, minY),
+      width: Math.max(1, Math.min(params.imageWidth, maxX) - Math.max(0, minX)),
+      height: Math.max(1, Math.min(params.imageHeight, maxY) - Math.max(0, minY)),
+    },
+    maskRegions: [...(params.maskRegions ?? [])],
     marginPx: params.marginPx,
     tolerancePx: tolerance,
     activeBoxCount: activeBoxes.length,

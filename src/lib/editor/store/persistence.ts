@@ -29,6 +29,24 @@ import { makeProjectRepositoryFacade } from "@/lib/projects/facade";
 import type { EditorRule } from "../types";
 import type { RuleGroup } from "./history-types";
 
+const RuleCameraSettingsSchema = z
+  .object({
+    exposureUs: z.number(),
+    gainDb: z.number(),
+    whiteBalanceKelvin: z.number().optional(),
+    gamma: z.number().optional(),
+  })
+  .optional();
+
+const RuleLightSettingsSchema = z
+  .object({
+    channel: z.number().optional(),
+    intensity: z.number(),
+    strobeDurationUs: z.number().optional(),
+    hasStrobe: z.boolean().optional(),
+  })
+  .optional();
+
 // Full snapshot schema. `unknown` inside params so we never reject an
 // otherwise-valid layer state just because a param variant evolved.
 const EditorRuleSchema = z
@@ -43,6 +61,8 @@ const EditorRuleSchema = z
     width: z.number(),
     height: z.number(),
     rotation: z.number().optional(),
+    cameraSettings: RuleCameraSettingsSchema,
+    lightSettings: RuleLightSettingsSchema,
   })
   .passthrough();
 

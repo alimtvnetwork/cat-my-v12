@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Square,
   Circle,
@@ -18,6 +18,9 @@ import {
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { loadRuleSet } from "@/lib/rules/loadRuleSet";
+import { saveRuleSet } from "@/lib/rules/saveRuleSet";
+import type { RuleSetEnvelope } from "@/lib/rules/draftStore";
 
 export type RoiShapeType = "rectangle" | "rotated_rect" | "circle" | "ring" | "polygon";
 
@@ -46,7 +49,7 @@ export interface StandardRoiSetupProps {
   ruleId?: string;
 }
 
-export function StandardRoiSetup(_props?: StandardRoiSetupProps): React.JSX.Element {
+export function StandardRoiSetup(props?: StandardRoiSetupProps): React.JSX.Element {
   const navigate = useNavigate();
 
   const [shape, setShape] = useState<RoiShapeType>("rectangle");
@@ -57,6 +60,34 @@ export function StandardRoiSetup(_props?: StandardRoiSetupProps): React.JSX.Elem
   const [angleDeg, setAngleDeg] = useState<number>(0);
   const [innerRadius, setInnerRadius] = useState<number>(40);
   const [outerRadius, setOuterRadius] = useState<number>(120);
+
+  const loadedEnvelopeRef = useRef<RuleSetEnvelope | null>(null);
+
+  useEffect(() => {
+    const rsId = resolveStandardRuleSetId(props?.rulesetId);
+    if (rsId === null) return;
+
+    let isMounted = true;
+    void loadRuleSet(rsId, { suppressCapture: true })
+      .then((env) => {
+        if (!isMounted || !env) return;
+        loadedEnvelopeRef.current = env;
+        const matched = findMatchingRuleItem(env.Rules, props?.ruleId);
+        if (matched?.Shape) {
+          if (typeof matched.Shape.X === "number") setX(matched.Shape.X);
+          if (typeof matched.Shape.Y === "number") setY(matched.Shape.Y);
+          if (typeof matched.Shape.W === "number") setWidth(matched.Shape.W);
+          if (typeof matched.Shape.H === "number") setHeight(matched.Shape.H);
+        }
+      })
+      .catch((err) => {
+        console.warn("[StandardRoiSetup] Failed to load ruleset envelope", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [props?.rulesetId, props?.ruleId]);
 
   const [masks, setMasks] = useState([
     { id: 0, name: "Mask 0 (Center Hole)", enabled: false, x: 360, y: 260, w: 80, h: 80 },
@@ -69,12 +100,80 @@ export function StandardRoiSetup(_props?: StandardRoiSetupProps): React.JSX.Elem
   const [anchorTracking, setAnchorTracking] = useState<boolean>(true);
   const [anchorRuleName, setAnchorRuleName] = useState<string>("Pattern Search 01 (Origin)");
 
-  const handleApply = () => {
-    toast.success("ROI and Mask configuration applied to active inspection rule.");
+  const handleApply = async () => {
+    if (loadedEnvelopeRef.current) {
+      const current = loadedEnvelopeRef.current;
+      const matched = findMatchingRuleItem(current.Rules, props?.ruleId);
+      const targetRuleId = matched?.Id ?? current.Rules[0]?.Id;
+
+      const nextRules = current.Rules.map((r) =>
+        r.Id === targetRuleId
+          ? {
+              ...r,
+              Shape: {
+                ...r.Shape,
+                X: x,
+                Y: y,
+                W: width,
+                H: height,
+              },
+            }
+          : r,
+      );
+
+      const nextEnvelope: RuleSetEnvelope = {
+        ...current,
+        Rules: nextRules,
+      };
+
+      try {
+        const saved = await saveRuleSet(nextEnvelope);
+        loadedEnvelopeRef.current = saved;
+        toast.success("ROI and Mask configuration applied to active inspection rule.");
+      } catch (err) {
+        console.error("[StandardRoiSetup] saveRuleSet failed", err);
+        toast.error("Failed to save ROI settings.");
+      }
+    } else {
+      toast.success("ROI and Mask configuration applied to active inspection rule.");
+    }
   };
 
-  const handleOk = () => {
-    toast.success("Saved Region of Interest (ROI) settings.");
+  const handleOk = async () => {
+    if (loadedEnvelopeRef.current) {
+      const current = loadedEnvelopeRef.current;
+      const matched = findMatchingRuleItem(current.Rules, props?.ruleId);
+      const targetRuleId = matched?.Id ?? current.Rules[0]?.Id;
+
+      const nextRules = current.Rules.map((r) =>
+        r.Id === targetRuleId
+          ? {
+              ...r,
+              Shape: {
+                ...r.Shape,
+                X: x,
+                Y: y,
+                W: width,
+                H: height,
+              },
+            }
+          : r,
+      );
+
+      const nextEnvelope: RuleSetEnvelope = {
+        ...current,
+        Rules: nextRules,
+      };
+
+      try {
+        await saveRuleSet(nextEnvelope);
+        toast.success("Saved Region of Interest (ROI) settings.");
+      } catch (err) {
+        console.error("[StandardRoiSetup] saveRuleSet failed on OK", err);
+      }
+    } else {
+      toast.success("Saved Region of Interest (ROI) settings.");
+    }
     void navigate({ to: "/setup" });
   };
 

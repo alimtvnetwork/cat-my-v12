@@ -26,6 +26,7 @@ export function InspectorPanel({ imageBounds }: InspectorPanelProps): React.JSX.
   const setRuleBounds = useRulesStore((s) => s.setRuleBounds);
   const setHidden = useRulesStore((s) => s.setHidden);
   const setLocked = useRulesStore((s) => s.setLocked);
+  const updateRuleOptical = useRulesStore((s) => s.updateRuleOptical);
 
   const bounds = imageBounds ?? IMAGE_BOUNDS;
 
@@ -50,6 +51,7 @@ export function InspectorPanel({ imageBounds }: InspectorPanelProps): React.JSX.
         onSetBounds={onSetBounds}
         onSetHidden={setHidden}
         onSetLocked={setLocked}
+        onUpdateOptical={updateRuleOptical}
       />
     </div>
   );

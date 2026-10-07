@@ -54,13 +54,18 @@ export function InputModalityTracker(): null {
 
     document.documentElement.dataset.inputModality = current;
     const onKey = (e: KeyboardEvent) => {
+      const key = e?.key;
+
+      if (!key) {
+        return;
+      }
+
       if (
-        KeyboardKeyType.isEscape(e.key) ||
-        e.key.startsWith("Arrow") ||
-        KeyboardKeyType.isTab(e.key) ||
-        KeyboardKeyType.isEnter(e.key) ||
-        KeyboardKeyType.isSpace(e.key) ||
-        e.key.length === 1
+        KeyboardKeyType.isEscape(key) ||
+        KeyboardKeyType.isArrowKey(key) ||
+        KeyboardKeyType.isTab(key) ||
+        KeyboardKeyType.isEnterOrSpace(key) ||
+        key.length === 1
       ) {
         set(ModalityType.Keyboard);
       }

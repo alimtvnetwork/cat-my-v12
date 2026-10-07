@@ -1,5 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { drawRgbaToCanvas } from "@/lib/vision/white-box-marking";
+import {
+  drawRgbaToCanvas,
+  STANDARD_CANVAS_WIDTH,
+  STANDARD_CANVAS_HEIGHT,
+} from "@/lib/vision/white-box-marking";
 import { drawSearchRegion } from "@/components/vision/white-box/canvas-drawing";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
 import type { RegionDrag } from "@/components/vision/white-box/types";
@@ -101,7 +105,12 @@ export function DefectMatchCanvas(props: DefectMatchCanvasProps): React.JSX.Elem
     if (!ctx) return;
 
     if (props.source) {
-      drawRgbaToCanvas(canvas, props.source.width, props.source.height, props.source.rgba);
+      drawRgbaToCanvas(
+        canvas,
+        STANDARD_CANVAS_WIDTH,
+        STANDARD_CANVAS_HEIGHT,
+        props.source.rgba,
+      );
     } else {
       // Clean industrial stage backdrop
       ctx.fillStyle = "#0f172a";
@@ -144,8 +153,8 @@ export function DefectMatchCanvas(props: DefectMatchCanvasProps): React.JSX.Elem
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center overflow-auto bg-ca-bg p-3 select-none">
       <canvas
         ref={canvasRef}
-        width={props.source?.width ?? 960}
-        height={props.source?.height ?? 540}
+        width={STANDARD_CANVAS_WIDTH}
+        height={STANDARD_CANVAS_HEIGHT}
         onPointerDown={drag.handlePointerDown}
         onPointerMove={drag.handlePointerMove}
         onPointerUp={drag.handlePointerUp}

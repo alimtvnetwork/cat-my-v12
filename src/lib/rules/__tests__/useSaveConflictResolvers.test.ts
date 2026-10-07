@@ -69,7 +69,7 @@ describe("useSaveConflictResolvers", () => {
       await result.current.onReloadServer(envelope(1));
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "/rules/7/set",
+      expect.stringMatching(/\/rules\/7\/set$/),
       expect.objectContaining({ method: "GET" }),
     );
     expect(onServerReloaded).toHaveBeenCalledWith(expect.objectContaining({ Version: 9 }));

@@ -12,7 +12,11 @@ import time
 from pathlib import Path
 from typing import Any
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
 import numpy as np
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -29,6 +33,7 @@ from BE.app.domain.vision_eval import (
     evaluate_grayscale_tolerance,
     evaluate_pattern_match,
 )
+from BE.app.domain.vision_preprocess import apply_optical_settings, maybe_downsample
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -114,59 +119,117 @@ async def evaluate_score(request: Request) -> JSONResponse:
     ref_bytes = _load_image_bytes(body.get("referenceImageUrl"))
     smp_bytes = _load_image_bytes(sample_param)
 
+    rule_obj = body.get("rule") or body.get("Rule")
+    if not isinstance(rule_obj, dict):
+        rule_obj = {}
+
+    cam_settings = (
+        body.get("cameraSettings")
+        or body.get("CameraSettings")
+        or rule_obj.get("cameraSettings")
+        or rule_obj.get("CameraSettings")
+    )
+    light_settings = (
+        body.get("lightSettings")
+        or body.get("LightSettings")
+        or rule_obj.get("lightSettings")
+        or rule_obj.get("LightSettings")
+    )
+
+    smp_img: np.ndarray | None = None
+    if smp_bytes and cv2 is not None:
+        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
+        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
+
+        if smp_img is not None:
+            smp_img = maybe_downsample(smp_img)
+
+            if cam_settings or light_settings:
+                smp_img = apply_optical_settings(smp_img, cam_settings, light_settings)
+
     start_time = time.perf_counter()
     result: ConfidenceResult
 
     if rule_type == "grayscale_tolerance":
-        result = await evaluate_grayscale_tolerance(
-            reference_bytes=ref_bytes,
-            sample_bytes=smp_bytes,
-            roi=roi,
-            tolerance=tolerance,
-            threshold=threshold,
-        )
+        if roi is None:
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="missing_roi",
+                verdict="FAIL",
+                reason="Greyscale inspection is not configured: missing saved search ROI.",
+            )
+        else:
+            result = await evaluate_grayscale_tolerance(
+                reference_bytes=ref_bytes,
+                sample_bytes=smp_img if smp_img is not None else smp_bytes,
+                roi=roi,
+                tolerance=tolerance,
+                threshold=threshold,
+            )
     elif rule_type == "pattern_match":
         ref_arr = np.frombuffer(ref_bytes, dtype=np.uint8)
         ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_COLOR)
-        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
 
         if ref_img is None or smp_img is None:
-            result = ConfidenceResult(score=0.0, is_pass=False, label="decode_error", verdict="FAIL", reason="Failed to decode image buffers")
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="decode_error",
+                verdict="FAIL",
+                reason="Failed to decode image buffers",
+            )
+        elif roi is None:
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="missing_roi",
+                verdict="FAIL",
+                reason="Pattern inspection is not configured: missing saved search ROI.",
+            )
         else:
-            if roi is not None:
-                tmpl_img = _clip_to_roi(ref_img, roi)
-                search_roi = BoundingBox(
-                    x=max(0, roi.x - 20),
-                    y=max(0, roi.y - 20),
-                    width=min(smp_img.shape[1] - max(0, roi.x - 20), roi.width + 40),
-                    height=min(smp_img.shape[0] - max(0, roi.y - 20), roi.height + 40),
-                )
-                search_area = _clip_to_roi(smp_img, search_roi)
-                result = _match_pattern(search_area, tmpl_img, threshold=threshold)
-            else:
-                result = _match_pattern(smp_img, ref_img, threshold=threshold)
+            tmpl_img = _clip_to_roi(ref_img, roi)
+            search_roi = BoundingBox(
+                x=max(0, roi.x - 20),
+                y=max(0, roi.y - 20),
+                width=min(smp_img.shape[1] - max(0, roi.x - 20), roi.width + 40),
+                height=min(smp_img.shape[0] - max(0, roi.y - 20), roi.height + 40),
+            )
+            search_area = _clip_to_roi(smp_img, search_roi)
+            result = _match_pattern(search_area, tmpl_img, threshold=threshold)
     elif rule_type == "shape_track":
-        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
         if smp_img is None:
-            result = ConfidenceResult(score=0.0, is_pass=False, label="decode_error", verdict="FAIL", reason="Failed to decode sample image")
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="decode_error",
+                verdict="FAIL",
+                reason="Failed to decode sample image",
+            )
         else:
             clipped = _clip_to_roi(smp_img, roi)
             result = _track_shapes(clipped, threshold=threshold)
     elif rule_type == "color_area":
-        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
         if smp_img is None:
-            result = ConfidenceResult(score=0.0, is_pass=False, label="decode_error", verdict="FAIL", reason="Failed to decode sample image")
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="decode_error",
+                verdict="FAIL",
+                reason="Failed to decode sample image",
+            )
         else:
             clipped = _clip_to_roi(smp_img, roi)
             result = _check_color_area(clipped, (0, 30, 30), (180, 255, 255), threshold=threshold)
     elif rule_type in ("blob_area", "blob", "defect"):
-        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
         if smp_img is None:
-            result = ConfidenceResult(score=0.0, is_pass=False, label="decode_error", verdict="FAIL", reason="Failed to decode sample image")
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="decode_error",
+                verdict="FAIL",
+                reason="Failed to decode sample image",
+            )
         else:
             clipped = _clip_to_roi(smp_img, roi)
             result = _measure_blob_area(
@@ -175,10 +238,14 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 unit=calibration_unit,
             )
     elif rule_type in ("edge_width", "profile_width", "edge_pitch"):
-        smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
-        smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
         if smp_img is None:
-            result = ConfidenceResult(score=0.0, is_pass=False, label="decode_error", verdict="FAIL", reason="Failed to decode sample image")
+            result = ConfidenceResult(
+                score=0.0,
+                is_pass=False,
+                label="decode_error",
+                verdict="FAIL",
+                reason="Failed to decode sample image",
+            )
         else:
             clipped = _clip_to_roi(smp_img, roi)
             result = _measure_edge_width(
@@ -190,7 +257,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
         # Default fallback to grayscale tolerance
         result = await evaluate_grayscale_tolerance(
             reference_bytes=ref_bytes,
-            sample_bytes=smp_bytes,
+            sample_bytes=smp_img if smp_img is not None else smp_bytes,
             roi=roi,
             tolerance=tolerance,
             threshold=threshold,
@@ -209,6 +276,12 @@ async def evaluate_score(request: Request) -> JSONResponse:
             "factor": calibration_factor,
             "unit": calibration_unit,
         },
+        "optical": {
+            "cameraSettings": cam_settings,
+            "lightSettings": light_settings,
+        }
+        if (cam_settings or light_settings)
+        else None,
         "duration_ms": duration_ms,
     }
 
@@ -269,6 +342,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
             "verdict": score_payload["verdict"],
             "is_pass": score_payload["is_pass"],
             "confidence": score_payload["confidence"],
+            "hasOptical": bool(cam_settings or light_settings),
             "runId": score_payload.get("runId"),
         },
     )
@@ -282,6 +356,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
     wire["reason"] = score_payload["reason"]
     wire["trace"] = score_payload["trace"]
     wire["calibration"] = score_payload["calibration"]
+    wire["optical"] = score_payload["optical"]
     wire["runId"] = score_payload.get("runId")
 
     return JSONResponse(content=wire, headers={CORRELATION_HEADER: cid})

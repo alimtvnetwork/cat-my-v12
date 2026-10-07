@@ -31,6 +31,7 @@ export function DockedPropertiesPanel({
   const setRuleBounds = useRulesStore((s) => s.setRuleBounds);
   const setHidden = useRulesStore((s) => s.setHidden);
   const setLocked = useRulesStore((s) => s.setLocked);
+  const updateRuleOptical = useRulesStore((s) => s.updateRuleOptical);
   const bounds = imageBounds ?? IMAGE_BOUNDS;
 
   // Observability: log when the docked panel receives a selection so we
@@ -57,6 +58,7 @@ export function DockedPropertiesPanel({
         onSetBounds={(id, rect) => setRuleBounds(id, rect, bounds)}
         onSetHidden={setHidden}
         onSetLocked={setLocked}
+        onUpdateOptical={updateRuleOptical}
       />
     </div>
   );

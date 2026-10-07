@@ -34,6 +34,9 @@ export interface BoxMatchItem {
   width: number;
   height: number;
   isMatched: boolean;
+  measuredLuma?: number;
+  expectedLuma?: number;
+  lumaDelta?: number;
 }
 
 export interface PatternMatchResult {
@@ -201,28 +204,44 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
 
   const targetRegion = isDefaultPlaceholder ? undefined : params.searchRegion;
   const minCandidateArea = 2;
+  const rawThreshold = params.threshold ?? 170;
+  const effectiveThreshold =
+    rawThreshold >= 120 && rawThreshold <= 220 ? rawThreshold : 170;
 
   let markingResult = markWhiteBoxes({
     width: params.targetWidth,
     height: params.targetHeight,
     rgba: params.targetRgba,
-    whiteThreshold: params.threshold ?? 170,
+    whiteThreshold: effectiveThreshold,
     minAreaPx: minCandidateArea,
     searchRegion: targetRegion,
   });
 
-  // If searchRegion misses boxes, fall back to searching full image with minAreaPx: 2
-  if (markingResult.boxes.length < totalCount) {
-    const fullImageResult = markWhiteBoxes({
+  // If searchRegion misses boxes, fall back to searching constellation-bounded region instead of unconstrained full image
+  if (markingResult.boxes.length < totalCount && params.referenceBoxes.length > 0) {
+    const refMinX = Math.min(...params.referenceBoxes.map((b) => b.x));
+    const refMinY = Math.min(...params.referenceBoxes.map((b) => b.y));
+    const refMaxX = Math.max(...params.referenceBoxes.map((b) => b.x + b.width));
+    const refMaxY = Math.max(...params.referenceBoxes.map((b) => b.y + b.height));
+
+    const boundedRegion: SearchRegion = {
+      x: Math.max(0, refMinX - 8),
+      y: Math.max(0, refMinY),
+      width: Math.min(params.targetWidth - Math.max(0, refMinX - 8), refMaxX - refMinX + 16),
+      height: Math.min(params.targetHeight - Math.max(0, refMinY), refMaxY - refMinY + 8),
+    };
+
+    const boundedResult = markWhiteBoxes({
       width: params.targetWidth,
       height: params.targetHeight,
       rgba: params.targetRgba,
-      whiteThreshold: params.threshold ?? 170,
+      whiteThreshold: effectiveThreshold,
       minAreaPx: minCandidateArea,
+      searchRegion: boundedRegion,
     });
 
-    if (fullImageResult.boxes.length > markingResult.boxes.length) {
-      markingResult = fullImageResult;
+    if (boundedResult.boxes.length > markingResult.boxes.length) {
+      markingResult = boundedResult;
     }
   }
 

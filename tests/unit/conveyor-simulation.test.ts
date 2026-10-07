@@ -111,14 +111,14 @@ describe("evaluateChipPixelsReal genuine vision evaluation", () => {
     expect(result.totalCount).toBe(24);
     expect(result.boxResults.length).toBe(24);
 
-    // Box 1 (M: relX 21.0, relY 34.0, width 7.2, height 9.5)
+    // Box 1 (M: relX 8.0, relY 6.0, width 9.0, height 10.0)
     // Scale is 200/100 = 2, 200/100 = 2
     const box1 = result.boxResults[0];
     expect(box1.boxNumber).toBe(1);
-    expect(box1.matchedX).toBe(200 + Math.round(21.0 * 2)); // 242
-    expect(box1.matchedY).toBe(150 + Math.round(34.0 * 2)); // 218
-    expect(box1.width).toBe(Math.round(7.2 * 2)); // 14
-    expect(box1.height).toBe(Math.round(9.5 * 2)); // 19
+    expect(box1.matchedX).toBe(200 + Math.round(8.0 * 2)); // 216
+    expect(box1.matchedY).toBe(150 + Math.round(6.0 * 2)); // 162
+    expect(box1.width).toBe(Math.round(9.0 * 2)); // 18
+    expect(box1.height).toBe(Math.round(10.0 * 2)); // 20
 
     // All boxes must be strictly within searchRegion bounds
     for (const box of result.boxResults) {
@@ -139,10 +139,10 @@ describe("evaluateChipPixelsReal genuine vision evaluation", () => {
 
     const box1 = boxes[0];
     expect(box1.boxNumber).toBe(1);
-    expect(box1.x).toBe(100 + Math.round(21.0 * 2)); // 142
-    expect(box1.y).toBe(50 + Math.round(34.0 * 2)); // 118
-    expect(box1.width).toBe(14);
-    expect(box1.height).toBe(19);
+    expect(box1.x).toBe(100 + Math.round(8.0 * 2)); // 116
+    expect(box1.y).toBe(50 + Math.round(6.0 * 2)); // 62
+    expect(box1.width).toBe(18);
+    expect(box1.height).toBe(20);
   });
 
   it("createDefaultSearchRegion correctly bounds small chip sprites vs large board images", () => {

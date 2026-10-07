@@ -4,6 +4,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { PropertiesPanel } from "@/components/editor/PropertiesPanel";
 import type { EditorRule } from "@/lib/editor/types";
 
+if (typeof window.ResizeObserver === "undefined") {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 function makeRule(overrides: Partial<EditorRule> = {}): EditorRule {
   return {
     id: "rule-1",

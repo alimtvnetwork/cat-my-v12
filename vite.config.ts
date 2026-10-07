@@ -13,6 +13,21 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "lucide-react",
+        "recharts",
+        "react-hook-form",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-popover",
+        "@radix-ui/react-tooltip",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-select"
+      ],
+    },
     server: {
       proxy: {
         "/camera": {

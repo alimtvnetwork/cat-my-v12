@@ -60,7 +60,7 @@ export function useCarrierTapeSimulation(options: UseCarrierTapeSimulationOption
     options.initialMarginTolerancePx ?? 8,
   );
   const [angleToleranceDeg, setAngleToleranceDegRaw] = useState<number>(
-    options.initialAngleToleranceDeg ?? 10.0,
+    options.initialAngleToleranceDeg ?? 1.0,
   );
   const [minMatchPercent, setMinMatchPercentRaw] = useState<number>(
     options.initialMinMatchPercent ?? 80,

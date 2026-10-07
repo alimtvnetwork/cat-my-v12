@@ -1,8 +1,13 @@
 import React from "react";
-import { Check, Eye, EyeOff, Loader2, Save, Target } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2, Plus, Save, Target } from "lucide-react";
 import { GreyscaleSliderCard } from "@/components/vision/white-box/GreyscaleSliderCard";
 import type { SearchRegion } from "@/lib/vision/white-box-marking";
-import { HolePolarityType, type Pin1HoleItem } from "./types";
+import {
+  HolePolarityType,
+  type Pin1HoleItem,
+  type Pin1MatchResult,
+  type Pin1RegionEditMode,
+} from "./types";
 
 export interface Pin1ReviewPanelProps {
   thresholdLuma: number;
@@ -12,8 +17,11 @@ export interface Pin1ReviewPanelProps {
   maxRadiusPx: number;
   tolerancePx: number;
   searchRegion: SearchRegion | null;
+  packageRegion: SearchRegion | null;
+  regionEditMode: Pin1RegionEditMode;
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1: Pin1HoleItem | null;
+  matchResult: Pin1MatchResult | null;
   isSaving?: boolean;
   saveMessage?: string | null;
   actionButtonLabel?: string;
@@ -22,11 +30,14 @@ export interface Pin1ReviewPanelProps {
   onCircularityChange: (val: number) => void;
   onRadiusRangeChange: (minR: number, maxR: number) => void;
   onToleranceChange: (val: number) => void;
+  onRegionEditModeChange: (mode: Pin1RegionEditMode) => void;
+  onAddPackageRegion: () => void;
   onToggleKeepHole: (id: number) => void;
   onSelectPrimaryPin1: (id: number) => void;
   onIncludeAll: () => void;
   onExcludeAll: () => void;
   onSaveRule: () => void;
+  onCancel?: () => void;
 }
 
 export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element {
@@ -49,32 +60,96 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
           onGreyscaleChange={props.onThresholdChange}
         />
 
-        {/* 2. Search Region & Dimple Geometry Card */}
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
           <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
-            <span>Search Region (ROI)</span>
-            <span className="font-mono text-[11px] text-cyan-400">
-              {props.searchRegion
-                ? `${Math.round(props.searchRegion.width)}×${Math.round(props.searchRegion.height)}`
-                : "None"}
+            <span>Regions</span>
+            <span className="font-mono text-[11px] text-ca-ink-muted">Search / Package</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("search")}
+              className={`rounded border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                props.regionEditMode === "search"
+                  ? "border-yellow-400 bg-yellow-400/15 text-yellow-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-bg"
+              }`}
+            >
+              Search Region
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("package")}
+              className={`rounded border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                props.regionEditMode === "package"
+                  ? "border-sky-400 bg-sky-400/15 text-sky-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-bg"
+              }`}
+            >
+              Package Region
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <RegionReadout label="Search" region={props.searchRegion} />
+            <RegionReadout label="Package" region={props.packageRegion} />
+          </div>
+
+          {!props.packageRegion && (
+            <button
+              type="button"
+              onClick={props.onAddPackageRegion}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2 py-1.5 text-[11px] font-semibold text-ca-ink hover:bg-ca-bg"
+            >
+              <Plus className="h-3.5 w-3.5 text-ca-select" />
+              Add Package Region
+            </button>
+          )}
+        </div>
+
+        {/* 2. Pin 1 Fiducial Geometry Card */}
+        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
+          <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
+            <span>Pin 1 Fiducial Geometry</span>
+            <span className="font-mono text-[11px] text-ca-select">
+              {primaryHole ? `R=${Math.round(primaryHole.radius)}px` : "None"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs font-mono">
             <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
-              <span className="text-[10px] text-ca-ink-muted block uppercase">X / Y</span>
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Fiducial Center</span>
               <span className="text-ca-ink">
-                {props.searchRegion
-                  ? `${Math.round(props.searchRegion.x)}, ${Math.round(props.searchRegion.y)}`
+                {primaryHole
+                  ? `${Math.round(primaryHole.centerX)}, ${Math.round(primaryHole.centerY)}`
                   : "--"}
               </span>
             </div>
             <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
-              <span className="text-[10px] text-ca-ink-muted block uppercase">Primary Dimple</span>
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Circularity</span>
               <span className={primaryHole ? "text-emerald-400 font-semibold" : "text-amber-400"}>
-                {primaryHole ? `#${primaryHole.id} (${primaryHole.circularity}%)` : "Not Selected"}
+                {primaryHole ? `${primaryHole.circularity}%` : "Not Selected"}
               </span>
             </div>
+          </div>
+        </div>
+
+        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
+          <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
+            <span>Shape Measurement</span>
+            <span className={props.matchResult?.isPass ? "font-mono text-emerald-400" : "font-mono text-rose-300"}>
+              {props.matchResult?.status ?? "Not Run"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <MeasurementReadout label="Pos X" value={props.matchResult?.activeHole?.centerX ?? primaryHole?.centerX} suffix="px" />
+            <MeasurementReadout label="Pos Y" value={props.matchResult?.activeHole?.centerY ?? primaryHole?.centerY} suffix="px" />
+            <MeasurementReadout label="Angle" value={props.matchResult?.angleDeg} suffix="deg" />
+            <MeasurementReadout label="Match" value={props.matchResult?.matchPercent ?? props.matchResult?.score} suffix="%" />
+            <MeasurementReadout label="Scale" value={props.matchResult?.scale} />
+            <MeasurementReadout label="Offset" value={props.matchResult?.deltaDistance} suffix="px" />
           </div>
         </div>
 
@@ -224,7 +299,7 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
               })
             ) : (
               <p className="py-4 text-center text-[11px] text-ca-ink-muted">
-                No circular holes detected. Adjust greyscale or draw ROI.
+                No circular holes detected. Adjust greyscale threshold or polarity.
               </p>
             )}
           </div>
@@ -239,17 +314,56 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
       </div>
 
       {/* 5. Save Button Footer */}
-      <div className="border-t border-ca-border bg-ca-panel-2 p-3">
+      <div className="border-t border-[#333] bg-[#1e1e1e] p-3 flex gap-2">
         <button
           type="button"
           onClick={props.onSaveRule}
           disabled={!primaryHole || props.isSaving}
-          className="flex w-full items-center justify-center gap-2 rounded bg-ca-select py-2 font-semibold text-xs text-ca-bg shadow transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex-1 items-center justify-center gap-2 rounded bg-[#00ff9d] text-black py-2 font-bold text-xs shadow transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {props.isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          <span>{props.isSaving ? "Saving..." : label}</span>
+          <span>{props.isSaving ? "SAVING..." : "OK"}</span>
         </button>
+        {props.onCancel && (
+          <button
+            type="button"
+            onClick={props.onCancel}
+            className="flex-1 items-center justify-center gap-2 rounded bg-transparent border border-[#555] py-2 font-bold text-xs text-white hover:bg-[#333]"
+          >
+            CANCEL
+          </button>
+        )}
       </div>
     </aside>
+  );
+}
+
+function RegionReadout(props: { label: string; region: SearchRegion | null }): React.JSX.Element {
+  return (
+    <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+      <span className="block text-[10px] uppercase text-ca-ink-muted">{props.label}</span>
+      <span className="text-ca-ink">
+        {props.region
+          ? `${props.region.x},${props.region.y} ${props.region.width}x${props.region.height}`
+          : "--"}
+      </span>
+    </div>
+  );
+}
+
+function MeasurementReadout(props: {
+  label: string;
+  value: number | undefined;
+  suffix?: string;
+}): React.JSX.Element {
+  const display =
+    typeof props.value === "number"
+      ? `${Number.isInteger(props.value) ? props.value : props.value.toFixed(1)}${props.suffix ? ` ${props.suffix}` : ""}`
+      : "--";
+
+  return (
+    <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+      <span className="block text-[10px] uppercase text-ca-ink-muted">{props.label}</span>
+      <span className="text-ca-ink">{display}</span>
+    </div>
   );
 }

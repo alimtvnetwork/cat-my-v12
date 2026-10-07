@@ -201,7 +201,7 @@ async def evaluate_pattern_match(
 
 async def evaluate_grayscale_tolerance(
     reference_bytes: bytes,
-    sample_bytes: bytes,
+    sample_bytes: bytes | np.ndarray,
     roi: BoundingBox | None,
     tolerance: int,
     threshold: float,
@@ -214,13 +214,25 @@ async def evaluate_grayscale_tolerance(
             import cv2
             ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
             ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_GRAYSCALE)
-            smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
-            smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_GRAYSCALE)
+
+            if isinstance(sample_bytes, np.ndarray):
+                if len(sample_bytes.shape) == 3:
+                    smp_img = cv2.cvtColor(sample_bytes, cv2.COLOR_BGR2GRAY)
+                else:
+                    smp_img = sample_bytes
+            else:
+                smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
+                smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_GRAYSCALE)
         except ImportError:
             ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
-            smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
+
+            if isinstance(sample_bytes, np.ndarray):
+                smp_img = sample_bytes
+            else:
+                smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
+                smp_img = smp_arr
+
             ref_img = ref_arr
-            smp_img = smp_arr
 
         if ref_img is None or smp_img is None:
             return ConfidenceResult(score=0.0, is_pass=False, label="decode_error")

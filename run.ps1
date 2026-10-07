@@ -31,6 +31,7 @@ $FrontendHealthPath = "/setup"
 $FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
 $FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
 $BackendBaseUrl = "http://$HostIp`:$BePort"
+$UvCacheDir = Join-Path (Get-Location) ".uv-cache"
 $jobs = @()
 
 try {
@@ -38,6 +39,10 @@ try {
     if (Test-Path "BE\be.egg-info") {
         Remove-Item -Recurse -Force "BE\be.egg-info" -ErrorAction SilentlyContinue
     }
+    if (-not (Test-Path $UvCacheDir)) {
+        New-Item -ItemType Directory -Path $UvCacheDir | Out-Null
+    }
+    $env:UV_CACHE_DIR = $UvCacheDir
 
     Write-Host "Bootstrapping local databases..."
     & uv run --project BE python bin\db-bootstrap.py
@@ -60,13 +65,27 @@ try {
         Write-Host "Packaging Chromium shell..."
         if (Test-Path "chromium-shell") {
             try {
+                $needsZip = $true
                 if (Test-Path "public\app-shell.zip") {
-                    Remove-Item "public\app-shell.zip" -Force
+                    $zipDate = (Get-Item "public\app-shell.zip").LastWriteTime
+                    $newestFile = Get-ChildItem -Path "chromium-shell" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                    if ($newestFile -and $newestFile.LastWriteTime -le $zipDate) {
+                        $needsZip = $false
+                    }
                 }
-                if (-not (Test-Path "public")) {
-                    New-Item -ItemType Directory -Path "public" | Out-Null
+                
+                if ($needsZip) {
+                    if (Test-Path "public\app-shell.zip") {
+                        Remove-Item "public\app-shell.zip" -Force
+                    }
+                    if (-not (Test-Path "public")) {
+                        New-Item -ItemType Directory -Path "public" | Out-Null
+                    }
+                    Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
+                    Write-Host "Chromium shell packaged."
+                } else {
+                    Write-Host "Chromium shell is up to date, skipping package."
                 }
-                Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
             } catch {
                 Write-Host "Failed to package extension using Compress-Archive. Continuing without it."
             }

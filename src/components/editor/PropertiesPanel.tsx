@@ -21,7 +21,14 @@ import { Eye, EyeOff, Link2, Link2Off, Lock, Unlock } from "lucide-react";
 import { SelectionModeType, PresenceModeType } from "@/lib/enums/editor";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 import { editorKindLabel } from "@/lib/editor/tools";
-import type { EditorRect, EditorRule, EditorRuleKind, EditorRuleParams } from "@/lib/editor/types";
+import type {
+  EditorRect,
+  EditorRule,
+  EditorRuleKind,
+  EditorRuleParams,
+  RuleCameraSettings,
+  RuleLightSettings,
+} from "@/lib/editor/types";
 import {
   RULE_NAME_MAX,
   validateRuleBounds,
@@ -38,6 +45,8 @@ import { MathRuleEditor } from "./rail/MathRuleEditor";
 import { AcceptancePanel, readConditions, writeConditions } from "./panels/AcceptancePanel";
 import { MaskPanel } from "./panels/MaskPanel";
 import { FocusPanel } from "./panels/FocusPanel";
+import { OpticalSettingsPanel } from "./panels/OpticalSettingsPanel";
+import { ToolAlgorithmConfigPanel } from "./panels/ToolAlgorithmConfigPanel";
 
 interface RuleKindOption {
   value: EditorRuleKindType;
@@ -62,11 +71,37 @@ export interface PropertiesPanelProps {
   onSetBounds: (id: string, rect: EditorRect) => void;
   onSetHidden: (ids: string[], hidden: boolean) => void;
   onSetLocked: (ids: string[], locked: boolean) => void;
+  onUpdateOptical?: (
+    id: string,
+    optical: {
+      cameraSettings?: RuleCameraSettings;
+      lightSettings?: RuleLightSettings;
+    },
+  ) => void;
 }
 
-export function PropertiesPanel({
+interface SingleRulePropertiesProps {
+  rule: EditorRule;
+  rules: readonly EditorRule[];
+  imageBounds: EditorRect;
+  onRename: (id: string, name: string) => void;
+  onSetKind: (id: string, kind: EditorRuleKind) => void;
+  onUpdateParams: (id: string, params: EditorRuleParams) => void;
+  onSetBounds: (id: string, rect: EditorRect) => void;
+  onSetHidden: (ids: string[], hidden: boolean) => void;
+  onSetLocked: (ids: string[], locked: boolean) => void;
+  onUpdateOptical?: (
+    id: string,
+    optical: {
+      cameraSettings?: RuleCameraSettings;
+      lightSettings?: RuleLightSettings;
+    },
+  ) => void;
+}
+
+function SingleRuleProperties({
+  rule,
   rules,
-  selectedIds,
   imageBounds,
   onRename,
   onSetKind,
@@ -74,58 +109,8 @@ export function PropertiesPanel({
   onSetBounds,
   onSetHidden,
   onSetLocked,
-}: PropertiesPanelProps): React.JSX.Element | null {
-  const selected = rules.filter((r) => selectedIds.includes(r.id));
-
-  if (selected.length === 0) {
-    return (
-      <div className="editor-properties-panel flex flex-col items-center justify-center gap-hmi-2 p-hmi-4 text-center text-ca-ink-muted">
-        <p className="text-hmi-body">No layer selected.</p>
-        <p className="text-hmi-caption">Pick a rule in the Layers panel to edit its properties.</p>
-      </div>
-    );
-  }
-
-  if (selected.length > 1) {
-    const anyVisible = selected.some((r) => !r.isHidden);
-    const anyUnlocked = selected.some((r) => !r.isLocked);
-
-    return (
-      <div
-        className="editor-properties-panel flex flex-col gap-hmi-2 p-hmi-3"
-        role="region"
-        aria-label="Properties"
-      >
-        <header className="text-hmi-header text-ca-ink">{selected.length} layers selected</header>
-        <button
-          type="button"
-          className="editor-btn"
-          onClick={() =>
-            onSetHidden(
-              selected.map((r) => r.id),
-              anyVisible,
-            )
-          }
-        >
-          {anyVisible ? "Hide all" : "Show all"}
-        </button>
-        <button
-          type="button"
-          className="editor-btn"
-          onClick={() =>
-            onSetLocked(
-              selected.map((r) => r.id),
-              anyUnlocked,
-            )
-          }
-        >
-          {anyUnlocked ? "Lock all" : "Unlock all"}
-        </button>
-      </div>
-    );
-  }
-
-  const rule = selected[0];
+  onUpdateOptical,
+}: SingleRulePropertiesProps): React.JSX.Element {
   const order = rules.findIndex((r) => r.id === rule.id) + 1;
   const intId = useMemo(() => {
     try {
@@ -262,6 +247,36 @@ export function PropertiesPanel({
 
         <div
           className="editor-properties-card"
+          data-tone="ok"
+          data-inspector-section="tool-config"
+          data-testid="properties-tool-config-card"
+          id="inspector-section-tool-config"
+        >
+          <div
+            className="editor-properties-section-body p-hmi-2"
+            data-testid="properties-tool-config-body"
+          >
+            <ToolAlgorithmConfigPanel rule={rule} onUpdateParams={onUpdateParams} />
+          </div>
+        </div>
+
+        <div
+          className="editor-properties-card"
+          data-tone="ok"
+          data-inspector-section="optical"
+          data-testid="properties-optical-card"
+          id="inspector-section-optical"
+        >
+          <div
+            className="editor-properties-section-body p-hmi-2"
+            data-testid="properties-optical-body"
+          >
+            <OpticalSettingsPanel rule={rule} onUpdateOptical={onUpdateOptical} />
+          </div>
+        </div>
+
+        <div
+          className="editor-properties-card"
           data-tone="muted"
           data-inspector-section="more"
           data-testid="properties-more-card"
@@ -281,6 +296,85 @@ export function PropertiesPanel({
             chrome that ate ~48px of scarce panel height. */}
       </div>
     </div>
+  );
+}
+
+export function PropertiesPanel({
+  rules,
+  selectedIds,
+  imageBounds,
+  onRename,
+  onSetKind,
+  onUpdateParams,
+  onSetBounds,
+  onSetHidden,
+  onSetLocked,
+  onUpdateOptical,
+}: PropertiesPanelProps): React.JSX.Element | null {
+  const selected = rules.filter((r) => selectedIds.includes(r.id));
+
+  if (selected.length === 0) {
+    return (
+      <div className="editor-properties-panel flex flex-col items-center justify-center gap-hmi-2 p-hmi-4 text-center text-ca-ink-muted">
+        <p className="text-hmi-body">No layer selected.</p>
+        <p className="text-hmi-caption">Pick a rule in the Layers panel to edit its properties.</p>
+      </div>
+    );
+  }
+
+  if (selected.length > 1) {
+    const anyVisible = selected.some((r) => !r.isHidden);
+    const anyUnlocked = selected.some((r) => !r.isLocked);
+
+    return (
+      <div
+        className="editor-properties-panel flex flex-col gap-hmi-2 p-hmi-3"
+        role="region"
+        aria-label="Properties"
+      >
+        <header className="text-hmi-header text-ca-ink">{selected.length} layers selected</header>
+        <button
+          type="button"
+          className="editor-btn"
+          onClick={() =>
+            onSetHidden(
+              selected.map((r) => r.id),
+              anyVisible,
+            )
+          }
+        >
+          {anyVisible ? "Hide all" : "Show all"}
+        </button>
+        <button
+          type="button"
+          className="editor-btn"
+          onClick={() =>
+            onSetLocked(
+              selected.map((r) => r.id),
+              anyUnlocked,
+            )
+          }
+        >
+          {anyUnlocked ? "Lock all" : "Unlock all"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <SingleRuleProperties
+      key={selected[0].id}
+      rule={selected[0]}
+      rules={rules}
+      imageBounds={imageBounds}
+      onRename={onRename}
+      onSetKind={onSetKind}
+      onUpdateParams={onUpdateParams}
+      onSetBounds={onSetBounds}
+      onSetHidden={onSetHidden}
+      onSetLocked={onSetLocked}
+      onUpdateOptical={onUpdateOptical}
+    />
   );
 }
 
@@ -437,7 +531,8 @@ function BoundsRow({
     let width = next.width ?? rule.width;
     let height = next.height ?? rule.height;
 
-    const shouldComputeAspect = aspectLocked && (next.width !== undefined || next.height !== undefined);
+    const shouldComputeAspect =
+      aspectLocked && (next.width !== undefined || next.height !== undefined);
     if (shouldComputeAspect) {
       const ratio = rule.width > 0 && rule.height > 0 ? rule.width / rule.height : 1;
 

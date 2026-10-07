@@ -13,48 +13,8 @@ import { resolveIdParam as _resolveIdParam, seedIntParams } from "@/lib/ids/int-
 const rid = (id: string): string => _resolveIdParam(IntAliasNamespaceType.Ruleset, id) || id;
 const pid = (id: string): string => _resolveIdParam(IntAliasNamespaceType.Project, id) || id;
 
-export interface Project {
-  id: string;
-  name: string;
-  createdAt: number;
-  rulesetIds: string[];
-  /** Plan 64 step 72: optional attachments captured at create time. */
-  cameraName?: string;
-  /**
-   * Plan 78 slice 4 (I-SU-05 bind): reference to a CameraSetting from
-   * `src/lib/camera/store.ts` library. Optional so pre-binding projects
-   * hydrate untouched. Cleared via `setProjectCamera(id, null)`.
-   */
-  cameraSettingId?: string;
-  categoryNames?: string[];
-  /**
-   * Plan 79 step 44 (V4 Mics Settings binding): optional reference to a
-   * `MicSettings` entry from `src/lib/mic-settings/facade.ts`. Optional so
-   * pre-binding projects hydrate untouched. Cleared via
-   * `setProjectMicSettings(id, null)`.
-   */
-  micSettingsId?: string;
-  /**
-   * Plan 67 step 39 (PR-03): per-project AI Testing configuration.
-   * All fields optional so existing persisted projects hydrate untouched.
-   */
-  aiSettings?: {
-    model?: string;
-    temperature?: number;
-    systemPrompt?: string;
-  };
-}
-
-export interface RuleSet {
-  id: string;
-  projectId: string;
-  name: string;
-  imageRef?: string;
-  rules: EditorRule[];
-  categoryName?: string;
-  overrideMode?: "direct" | "reference" | "snapshot";
-  parentRulesetId?: string;
-}
+import type { Project, RuleSet } from "./types";
+export type { Project, RuleSet };
 
 export interface ProjectStoreState {
   projects: Record<string, Project>;
@@ -62,6 +22,7 @@ export interface ProjectStoreState {
   createProject: (
     name: string,
     opts?: {
+      deviceId?: string;
       cameraName?: string;
       rulesetNames?: string[];
       categoryNames?: string[];
@@ -86,6 +47,7 @@ export interface ProjectStoreState {
   renameRuleset: (id: string, name: string) => void;
   updateRulesetCategory: (id: string, categoryName?: string) => void;
   updateRulesetRules: (id: string, rules: EditorRule[]) => void;
+  updateRulesetImageRef: (id: string, imageRef: string) => void;
   deleteRuleset: (id: string) => void;
   /**
    * Reinsert a ruleset previously removed by `deleteRuleset`. Used by the
@@ -115,6 +77,8 @@ export interface ProjectStoreState {
   setProjectCamera: (projectId: string, cameraSettingId: string | null) => void;
   /** Plan 79 step 44: bind (or unbind) a MicSettings id to a project. */
   setProjectMicSettings: (projectId: string, micSettingsId: string | null) => void;
+  /** Bind (or unbind) a target hardware device id to a project. */
+  setProjectDevice: (projectId: string, deviceId: string | null) => void;
 }
 
 function cleanName(name: string): string {
@@ -186,6 +150,7 @@ export const useProjectStore = create<ProjectStoreState>()(
                 name,
                 createdAt: Date.now(),
                 rulesetIds,
+                deviceId: opts?.deviceId?.trim() || undefined,
                 cameraName: opts?.cameraName?.trim() || undefined,
                 categoryNames: categoryNames.length > 0 ? categoryNames : undefined,
               },
@@ -196,6 +161,7 @@ export const useProjectStore = create<ProjectStoreState>()(
         ClientLogger.info("[projects/store] createProject", {
           id,
           name,
+          deviceId: opts?.deviceId?.trim() || null,
           rulesetCount: rulesetNames.length,
           categoryCount: categoryNames.length,
           cameraName: opts?.cameraName ?? null,
@@ -205,6 +171,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       renameProject: (id, name) => {
+        id = pid(id);
         set((state) => {
           const existing = state.projects[id];
 
@@ -293,22 +260,28 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       createRuleset: (projectId, name, imageRef) => {
+        const targetProjectId = pid(projectId);
         const id = newId();
         set((state) => {
-          const project = state.projects[projectId];
+          const project = state.projects[targetProjectId] ?? state.projects[projectId];
 
           if (!project) {
-            ClientLogger.error("[projects/store] createRuleset: unknown project", projectId);
+            ClientLogger.error("[projects/store] createRuleset: unknown project", {
+              projectId,
+              targetProjectId,
+            });
 
             return state;
           }
+
+          const canonicalProjectId = project.id;
 
           return {
             rulesets: {
               ...state.rulesets,
               [id]: {
                 id,
-                projectId,
+                projectId: canonicalProjectId,
                 name: cleanName(name),
                 imageRef,
                 rules: [],
@@ -317,7 +290,7 @@ export const useProjectStore = create<ProjectStoreState>()(
             },
             projects: {
               ...state.projects,
-              [projectId]: { ...project, rulesetIds: [...project.rulesetIds, id] },
+              [canonicalProjectId]: { ...project, rulesetIds: [...project.rulesetIds, id] },
             },
           };
         });
@@ -326,19 +299,25 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       cloneRuleset: (projectId, sourceRulesetId, name, mode) => {
+        const targetProjectId = pid(projectId);
+        const targetSourceId = rid(sourceRulesetId);
         const id = newId();
         set((state) => {
-          const project = state.projects[projectId];
-          const source = state.rulesets[sourceRulesetId];
+          const project = state.projects[targetProjectId] ?? state.projects[projectId];
+          const source = state.rulesets[targetSourceId] ?? state.rulesets[sourceRulesetId];
 
           if (!project || !source) {
             ClientLogger.error("[projects/store] cloneRuleset: unknown ids", {
               projectId,
+              targetProjectId,
               sourceRulesetId,
+              targetSourceId,
             });
 
             return state;
           }
+
+          const canonicalProjectId = project.id;
 
           return {
             rulesets: {
@@ -346,16 +325,16 @@ export const useProjectStore = create<ProjectStoreState>()(
               [id]: {
                 ...source,
                 id,
-                projectId,
+                projectId: canonicalProjectId,
                 name: cleanName(name),
                 rules: source.rules.map((rule) => ({ ...rule })),
                 overrideMode: mode,
-                parentRulesetId: mode === "reference" ? sourceRulesetId : undefined,
+                parentRulesetId: mode === "reference" ? source.id : undefined,
               },
             },
             projects: {
               ...state.projects,
-              [projectId]: { ...project, rulesetIds: [...project.rulesetIds, id] },
+              [canonicalProjectId]: { ...project, rulesetIds: [...project.rulesetIds, id] },
             },
           };
         });
@@ -364,6 +343,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       renameRuleset: (id, name) => {
+        id = rid(id);
         set((state) => {
           const existing = state.rulesets[id];
 
@@ -401,17 +381,58 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       updateRulesetRules: (id, rules) => {
-        id = rid(id);
+        const real = rid(id);
         set((state) => {
-          const existing = state.rulesets[id];
+          const targetKey =
+            state.rulesets[real]
+              ? real
+              : state.rulesets[id]
+                ? id
+                : Object.keys(state.rulesets).find(
+                    (k) =>
+                      k === id ||
+                      k === real ||
+                      state.rulesets[k]?.id === id ||
+                      state.rulesets[k]?.id === real,
+                  );
 
-          if (!existing) {
+          if (!targetKey || !state.rulesets[targetKey]) {
             ClientLogger.warn("[projects/store] updateRulesetRules: unknown id", id);
 
             return state;
           }
 
-          return { rulesets: { ...state.rulesets, [id]: { ...existing, rules } } };
+          const existing = state.rulesets[targetKey];
+
+          return { rulesets: { ...state.rulesets, [targetKey]: { ...existing, rules } } };
+        });
+      },
+
+      updateRulesetImageRef: (id, imageRef) => {
+        const real = rid(id);
+        set((state) => {
+          const targetKey =
+            state.rulesets[real]
+              ? real
+              : state.rulesets[id]
+                ? id
+                : Object.keys(state.rulesets).find(
+                    (k) =>
+                      k === id ||
+                      k === real ||
+                      state.rulesets[k]?.id === id ||
+                      state.rulesets[k]?.id === real,
+                  );
+
+          if (!targetKey || !state.rulesets[targetKey]) {
+            ClientLogger.warn("[projects/store] updateRulesetImageRef: unknown id", id);
+
+            return state;
+          }
+
+          const existing = state.rulesets[targetKey];
+
+          return { rulesets: { ...state.rulesets, [targetKey]: { ...existing, imageRef } } };
         });
       },
 
@@ -461,6 +482,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       reorderProjectRulesets: (projectId, orderedIds) => {
+        projectId = pid(projectId);
         // Plan 79 step 42. Reorder guarded by exact-permutation check.
         set((state) => {
           const project = state.projects[projectId];
@@ -519,6 +541,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       addProjectCategory: (projectId, name) => {
+        projectId = pid(projectId);
         set((state) => {
           const project = state.projects[projectId];
 
@@ -537,6 +560,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       renameProjectCategory: (projectId, oldName, newName) => {
+        projectId = pid(projectId);
         set((state) => {
           const project = state.projects[projectId];
           const clean = cleanName(newName);
@@ -564,6 +588,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       deleteProjectCategory: (projectId, name) => {
+        projectId = pid(projectId);
         set((state) => {
           const project = state.projects[projectId];
 
@@ -630,6 +655,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       updateProjectAiSettings: (projectId, settings) => {
+        projectId = pid(projectId);
         set((state) => {
           const project = state.projects[projectId];
 
@@ -668,6 +694,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       setProjectCamera: (projectId, cameraSettingId) => {
+        projectId = pid(projectId);
         set((state) => {
           const project = state.projects[projectId];
 
@@ -695,6 +722,7 @@ export const useProjectStore = create<ProjectStoreState>()(
       },
 
       setProjectMicSettings: (projectId, micSettingsId) => {
+        projectId = pid(projectId);
         // Plan 79 step 44. Mirrors setProjectCamera: null/empty clears.
         set((state) => {
           const project = state.projects[projectId];
@@ -717,6 +745,34 @@ export const useProjectStore = create<ProjectStoreState>()(
             projects: {
               ...state.projects,
               [projectId]: { ...project, micSettingsId: nextId },
+            },
+          };
+        });
+      },
+
+      setProjectDevice: (projectId, deviceId) => {
+        projectId = pid(projectId);
+        set((state) => {
+          const project = state.projects[projectId];
+
+          if (!project) {
+            ClientLogger.warn("[projects/store] setProjectDevice: unknown project", projectId);
+
+            return state;
+          }
+
+          const nextId = deviceId && deviceId.trim() ? deviceId.trim() : undefined;
+
+          if (project.deviceId === nextId) return state;
+          ClientLogger.info("[projects/store] setProjectDevice", {
+            projectId,
+            deviceId: nextId ?? null,
+          });
+
+          return {
+            projects: {
+              ...state.projects,
+              [projectId]: { ...project, deviceId: nextId },
             },
           };
         });

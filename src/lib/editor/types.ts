@@ -27,6 +27,34 @@ export interface EditorRect {
 
 export type EditorRuleParams = Record<string, string | number | boolean>;
 
+export interface RuleCameraSettings {
+  exposureUs: number;
+  gainDb: number;
+  whiteBalanceKelvin?: number;
+  gamma?: number;
+}
+
+export const DEFAULT_RULE_CAMERA_SETTINGS: RuleCameraSettings = {
+  exposureUs: 20000,
+  gainDb: 0.0,
+  whiteBalanceKelvin: 5000,
+  gamma: 1.0,
+};
+
+export interface RuleLightSettings {
+  channel?: number;
+  intensity: number;
+  strobeDurationUs?: number;
+  hasStrobe?: boolean;
+}
+
+export const DEFAULT_RULE_LIGHT_SETTINGS: RuleLightSettings = {
+  channel: 1,
+  intensity: 80,
+  strobeDurationUs: 1000,
+  hasStrobe: true,
+};
+
 export interface EditorRule {
   id: string;
   name: string;
@@ -38,7 +66,10 @@ export interface EditorRule {
   y: number;
   width: number;
   height: number;
+  categoryName?: string;
   params?: EditorRuleParams;
+  cameraSettings?: RuleCameraSettings;
+  lightSettings?: RuleLightSettings;
   /**
    * Plan 67 step 23 (Reference vs Copy clone).
    * When present, this rule was cloned as a reference to the rule with

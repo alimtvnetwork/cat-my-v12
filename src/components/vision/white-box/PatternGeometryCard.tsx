@@ -58,7 +58,7 @@ export function PatternGeometryCard({
           <div className="flex items-center justify-between text-emerald-400 font-semibold mb-1">
             <span className="flex items-center gap-1 text-[11px]">
               <CheckCircle2 className="h-3 w-3" />
-              <span>Formulated Master ROI</span>
+              <span>Pattern Feature Constellation</span>
             </span>
             <span className="text-[10px] font-mono">
               {formulatedPattern.activeBoxCount} of {formulatedPattern.totalBoxCount} active
@@ -66,16 +66,13 @@ export function PatternGeometryCard({
           </div>
           <div className="font-mono text-[11px] text-ca-ink space-y-0.5">
             <div>
-              Bounds: X {formulatedPattern.x}, Y {formulatedPattern.y}
-            </div>
-            <div>
-              Size: {formulatedPattern.width} × {formulatedPattern.height} px
+              Span: {formulatedPattern.width} × {formulatedPattern.height} px
             </div>
           </div>
         </div>
       ) : (
         <div className="rounded border border-dashed border-ca-border/60 bg-ca-bg/50 p-2 text-center text-[11px] text-ca-ink-muted">
-          Process image to formulate pattern
+          Load image to calibrate pattern elements
         </div>
       )}
     </div>

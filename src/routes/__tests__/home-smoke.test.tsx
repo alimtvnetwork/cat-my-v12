@@ -20,6 +20,11 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => () => {},
 }));
 
+vi.mock("@/hooks/useUiMode", () => ({
+  useUiMode: () => ({ mode: "modern" }),
+  UiModeType: { Modern: "modern", Standard: "standard" },
+}));
+
 vi.mock("@/components/hmi", () => ({
   HmiShell: ({ title, children }: { title: string; children: ReactNode }) => (
     <div data-testid="hmi-shell" data-title={title}>
