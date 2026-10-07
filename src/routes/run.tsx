@@ -6,7 +6,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useProjectStore, selectProject, type RuleSet } from "@/lib/projects/store";
 import { resolveOverrideChain, summarizeOverrideChain } from "@/lib/projects/override-chain";
-import { Pencil, FastForward, RotateCcw } from "lucide-react";
+import { Pencil, FastForward, RotateCcw, Play, Square } from "lucide-react";
 import { ScoreResultBadge } from "@/components/vision/ScoreResultBadge";
 import {
   HmiShell,
@@ -644,12 +644,22 @@ function RunPage() {
               <button
                 type="button"
                 onClick={toggleHandlerAuto}
-                className={`px-2.5 py-1 rounded font-medium text-white transition-colors inline-flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded font-medium transition-colors inline-flex items-center gap-1.5 shadow-sm ${
                   handlerState.isRunning
-                    ? "bg-rose-600 hover:bg-rose-700"
-                    : "bg-ca-ink text-ca-bg hover:opacity-90"
+                    ? "bg-rose-600 hover:bg-rose-700 text-white"
+                    : "bg-ca-panel border border-ca-border hover:bg-ca-panel-2 text-ca-ink"
                 }`}
+                title={
+                  handlerState.isRunning
+                    ? "Stop automatic part feeding"
+                    : "Start automatic feeder (feeds every 1.5s)"
+                }
               >
+                {handlerState.isRunning ? (
+                  <Square className="h-3 w-3 fill-current text-white" />
+                ) : (
+                  <Play className="h-3 w-3 fill-current text-ca-ink" />
+                )}
                 <span>{handlerState.isRunning ? "Stop Feeder" : "Auto-Feed (1.5s)"}</span>
               </button>
               <button
