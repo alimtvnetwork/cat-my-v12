@@ -1,6 +1,6 @@
 {
-  "version": "4.112.14",
-  "releaseDate": "2026-10-03",
+  "version": "4.112.15",
+  "releaseDate": "2026-10-07",
   "changelog": {
     "file_path": "CHANGELOG.md",
     "format": "keep-a-changelog"
