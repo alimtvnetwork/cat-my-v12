@@ -14,8 +14,9 @@ import asyncio
 import json
 import logging
 import time
+from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -35,15 +36,49 @@ router = APIRouter(prefix="/handler")
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 
+
+class SortDestinationType(StrEnum):
+    """Destination tray or rejection bin for sorted parts."""
+
+    TRAY_A_ACCEPTED = "Tray A (Accepted / Good)"
+    BIN_B_REJECTED = "Bin B (Rejected / Defect)"
+
+
+class VerdictType(StrEnum):
+    """Standard inspection verdict."""
+
+    PASS = "Pass"
+    FAIL = "Fail"
+
+
+class DecisionType(StrEnum):
+    """High-level inspection decision."""
+
+    PASS = "PASS"
+    FAIL = "FAIL"
+
+
+# Optical and inspection parameters
+DEFAULT_ROI_X: Final[int] = 100
+DEFAULT_ROI_Y: Final[int] = 100
+DEFAULT_ROI_WIDTH: Final[int] = 440
+DEFAULT_ROI_HEIGHT: Final[int] = 320
+DEFAULT_TOLERANCE: Final[int] = 40
+DEFAULT_THRESHOLD: Final[float] = 0.8
+DEFAULT_FEED_RATE_MS: Final[int] = 1500
+
+FALLBACK_IMAGE_WIDTH: Final[int] = 640
+FALLBACK_IMAGE_HEIGHT: Final[int] = 480
+
 # Standard carrier tape fixture samples representing production stream
-_HANDLER_SAMPLE_STREAM = [
+HANDLER_SAMPLE_STREAM: Final[tuple[str, ...]] = (
     "/src/assets/samples/pocket-1-filled.jpg",
     "/src/assets/samples/pocket-2-filled.jpg",
     "/src/assets/samples/pocket-2-empty-mixed.jpg",
     "/src/assets/samples/pocket-3-filled.jpg",
     "/src/assets/samples/pocket-4-filled.jpg",
     "/src/assets/samples/pocket-5-partial.jpg",
-]
+)
 
 _SIMULATOR_STATE: dict[str, Any] = {
     "is_running": False,
@@ -54,7 +89,7 @@ _SIMULATOR_STATE: dict[str, Any] = {
     "reject_count": 0,
     "last_cycle_ms": 0,
     "last_event": None,
-    "feed_rate_ms": 1500,
+    "feed_rate_ms": DEFAULT_FEED_RATE_MS,
 }
 
 _BACKGROUND_TASK: asyncio.Task[None] | None = None
@@ -74,7 +109,7 @@ def _load_sample_image(rel_path: str) -> bytes:
     import cv2
     import numpy as np
 
-    img = np.zeros((480, 640, 3), dtype=np.uint8)
+    img = np.zeros((FALLBACK_IMAGE_HEIGHT, FALLBACK_IMAGE_WIDTH, 3), dtype=np.uint8)
     cv2.rectangle(img, (200, 150), (440, 330), (180, 180, 180), -1)
     _, enc = cv2.imencode(".jpg", img)
     return enc.tobytes()
@@ -85,41 +120,46 @@ async def _execute_single_cycle() -> dict[str, Any]:
     start_time = time.perf_counter()
     _SIMULATOR_STATE["cycle_count"] += 1
     stream_idx = _SIMULATOR_STATE["current_stream_index"]
-    sample_path = _HANDLER_SAMPLE_STREAM[stream_idx]
-    _SIMULATOR_STATE["current_stream_index"] = (stream_idx + 1) % len(_HANDLER_SAMPLE_STREAM)
+    sample_path = HANDLER_SAMPLE_STREAM[stream_idx]
+    _SIMULATOR_STATE["current_stream_index"] = (stream_idx + 1) % len(HANDLER_SAMPLE_STREAM)
 
     pocket_num = _SIMULATOR_STATE["cycle_count"]
     part_id = f"LOT-2026-P{pocket_num:04d}"
     _SIMULATOR_STATE["current_pocket_id"] = part_id
 
     # 1. Acquire reference and sample frame
-    ref_bytes = _load_sample_image("/src/assets/samples/pocket-1-filled.jpg")
+    ref_bytes = _load_sample_image(HANDLER_SAMPLE_STREAM[0])
     smp_bytes = _load_sample_image(sample_path)
 
     # 2. Evaluate against standard Post-Seal ROI inspection
-    roi = BoundingBox(x=100, y=100, width=440, height=320)
+    roi = BoundingBox(
+        x=DEFAULT_ROI_X,
+        y=DEFAULT_ROI_Y,
+        width=DEFAULT_ROI_WIDTH,
+        height=DEFAULT_ROI_HEIGHT,
+    )
     conf_res = await evaluate_grayscale_tolerance(
         reference_bytes=ref_bytes,
         sample_bytes=smp_bytes,
         roi=roi,
-        tolerance=40,
-        threshold=0.8,
+        tolerance=DEFAULT_TOLERANCE,
+        threshold=DEFAULT_THRESHOLD,
     )
 
     elapsed_ms = max(1, int((time.perf_counter() - start_time) * 1000))
     _SIMULATOR_STATE["last_cycle_ms"] = elapsed_ms
 
     is_pass = conf_res.is_pass
-    verdict_str = "Pass" if is_pass else "Fail"
-    decision_str = "PASS" if is_pass else "FAIL"
+    verdict_str = VerdictType.PASS.value if is_pass else VerdictType.FAIL.value
+    decision_str = DecisionType.PASS.value if is_pass else DecisionType.FAIL.value
 
     # 3. Handler sorting mechanism
     if is_pass:
         _SIMULATOR_STATE["accept_count"] += 1
-        sort_destination = "Tray A (Accepted / Good)"
+        sort_destination = SortDestinationType.TRAY_A_ACCEPTED.value
     else:
         _SIMULATOR_STATE["reject_count"] += 1
-        sort_destination = "Bin B (Rejected / Defect)"
+        sort_destination = SortDestinationType.BIN_B_REJECTED.value
 
     # 4. Durable persistence to SQLite task.db
     run_id = f"01J{int(time.time() * 1000):012d}H1"

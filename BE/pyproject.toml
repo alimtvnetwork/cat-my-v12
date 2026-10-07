@@ -16,6 +16,7 @@ dependencies = [
   "pydantic>=2.9",
   "pydantic-settings>=2.6",
   "numpy>=1.26",
+  "opencv-python-headless>=4.8",
 ]
 
 [project.optional-dependencies]

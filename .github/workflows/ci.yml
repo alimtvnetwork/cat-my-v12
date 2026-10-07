@@ -119,7 +119,7 @@ jobs:
           python-version: "3.11"
       - name: Install test deps
         run: |
-          python3 -m pip install --quiet pytest jsonschema numpy
+          python3 -m pip install --quiet pytest jsonschema numpy opencv-python-headless
           python3 -m pip install -e ./BE[dev] || python3 -m pip install ./BE
       - name: Run pytest
         run: python3 -m pytest BE/tests -x --tb=short
@@ -380,7 +380,7 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: |
-          python3 -m pip install --quiet ruff mypy
+          python3 -m pip install --quiet ruff mypy opencv-python-headless
           python3 -m pip install -e ./BE[dev] || python3 -m pip install ./BE
       - name: Run ruff
         run: python3 -m ruff check BE/
