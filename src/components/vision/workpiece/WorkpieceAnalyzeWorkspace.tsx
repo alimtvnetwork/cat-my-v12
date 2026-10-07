@@ -6,6 +6,7 @@ import {
   VisualToolTuningModal,
 } from "./index";
 import { AddRuleFromToolModal } from "@/components/rules/AddRuleFromToolModal";
+import { AddRulesetModal } from "@/components/rules/AddRulesetModal";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
 import type { Project, RuleSet } from "@/lib/projects/types";
@@ -102,6 +103,7 @@ export function WorkpieceAnalyzeWorkspace({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [visualTunerRuleId, setVisualTunerRuleId] = useState<string | null>(null);
   const [isAddRuleModalOpen, setIsAddRuleModalOpen] = useState(false);
+  const [isAddRulesetModalOpen, setIsAddRulesetModalOpen] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const updateRulesetImageRef = useCallback((rsId: string, ref: string) => {
     updateRulesetImageRefInStore(rsId, ref);
@@ -265,18 +267,17 @@ export function WorkpieceAnalyzeWorkspace({
     [rules, commit, project.id, ruleset],
   );
 
-  const handleAddRuleset = useCallback(() => {
-    const rulesetCount = rulesets?.length ?? project.rulesetIds.length;
-    const newRulesetName = `RuleSet ${String(rulesetCount + 1).padStart(2, "0")}`;
+  const handleAddRuleset = useCallback((name: string, description?: string) => {
     const newRulesetId = createRuleset(
       projectId,
-      newRulesetName,
+      name,
       ruleset.imageRef || defaultWorkpieceFilledSample,
     );
 
     onSelectRuleset?.(newRulesetId);
-    toast.success(`Rule set "${newRulesetName}" added.`);
-  }, [createRuleset, onSelectRuleset, project.rulesetIds.length, projectId, ruleset.imageRef, rulesets?.length]);
+    toast.success(`Rule set "${name}" added.`);
+    setIsAddRulesetModalOpen(false);
+  }, [createRuleset, onSelectRuleset, projectId, ruleset.imageRef]);
 
   const handleDeleteRuleset = useCallback(() => {
     const isConfirmed = window.confirm(`Delete rule set "${ruleset.name}"? This removes its rules from this project.`);
@@ -683,6 +684,15 @@ export function WorkpieceAnalyzeWorkspace({
 
         {/* 2. Horizontal rule/tool thumbnail strip */}
         <div className="flex items-center gap-2 overflow-x-auto p-2 bg-[#252525] border-b border-[#333] shrink-0 min-h-[80px]">
+          {/* Add Ruleset Tile */}
+          <button
+            onClick={() => setIsAddRulesetModalOpen(true)}
+            className="flex flex-col items-center justify-center w-20 h-16 bg-[#1a1a1a] border border-[#444] rounded hover:border-amber-400 transition-colors shrink-0"
+          >
+            <Plus size={16} className="text-amber-500 mb-1" />
+            <span className="text-[10px] text-amber-500 font-bold uppercase">Add Ruleset</span>
+          </button>
+          
           {/* Add Tools Tile */}
           <button
             onClick={() => setIsAddRuleModalOpen(true)}
@@ -899,6 +909,11 @@ export function WorkpieceAnalyzeWorkspace({
           existingRules={rules}
         />
       )}
+      <AddRulesetModal
+        isOpen={isAddRulesetModalOpen}
+        onClose={() => setIsAddRulesetModalOpen(false)}
+        onAdd={handleAddRuleset}
+      />
     </div>
   );
 }
