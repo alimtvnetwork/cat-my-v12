@@ -1,6 +1,18 @@
-# Golang Coding Standards — File naming, size, function size, nesting ban
+# Golang Coding Standards — File naming, size, function size, nesting ban (AI Execution Prompt)
 
-> **Parent:** [Golang Coding Standards](./01-index.md)
+> **/goal** Enforce strict Go source architecture limits: PascalCase file naming matching primary types, 300-line file caps, 15-line function ceilings, zero nested if statements, and single-letter abbreviation casing.
+> **/learn** Internalize file splitting conventions, guard clause flattening, package naming rules (lowercase, no stuttering), and decomposition patterns to eliminate complexity.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Ensure all `.go` files follow PascalCase naming matching primary types with zero underscores (except test files).
+- [ ] `/learn` Never allow functions to exceed 15 lines; decompose logic into focused, single-responsibility helper functions.
+- [ ] `/goal` Enforce the absolute ban on nested `if` statements and mixed polarity conditions, refactoring with positive guard clauses.
+- [ ] `/learn` Ensure files exceeding the 300-line target are split using standard PascalCase suffix conventions (`Crud`, `Helpers`, `Validation`).
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
+
+> **Parent:** [Golang Coding Standards](./readme.md)
 > **Version:** 3.7.0
 > **Updated:** 2026-03-31
 
@@ -40,7 +52,7 @@ Every `.go` file targets **300 lines**. Up to **400 lines is acceptable** but mu
 
 ## Function Size — Max 15 Lines
 
-> **Canonical source:** [Cross-Language Code Style](../../01-cross-language/04-code-style/01-index.md) — Rule 6
+> **Canonical source:** [Cross-Language Code Style](../../01-cross-language/04-code-style/readme.md) — Rule 6
 
 Every function body must be **15 lines or fewer**. Extract logic into small, well-named helpers.
 
@@ -71,7 +83,7 @@ func ProcessUpload(ctx context.Context, req UploadRequest) error {
 
 ## Zero Nested `if` — Absolute Ban
 
-> **Canonical source:** [Cross-Language Code Style](../../01-cross-language/04-code-style/01-index.md) — Rule 2 & 7
+> **Canonical source:** [Cross-Language Code Style](../../01-cross-language/04-code-style/readme.md) — Rule 2 & 7
 
 Nested `if` blocks are **absolutely forbidden** — zero tolerance. Flatten with combined conditions or early returns.
 
@@ -104,7 +116,7 @@ if hasIssue {
 
 ## Abbreviation Casing — First Letter Only
 
-> **Canonical source:** [Master Coding Guidelines §1.2](../../01-cross-language/15-master-coding-guidelines/01-index.md)
+> **Canonical source:** [Master Coding Guidelines §1.2](../../01-cross-language/15-master-coding-guidelines/readme.md)
 
 Abbreviations in identifiers are treated as regular words — only capitalize the first letter. This applies to struct fields, variables, function names, parameters, enum constants, and `variantLabels` values.
 
@@ -220,3 +232,19 @@ config.go           → Config + ServerConfig + WatcherConfig + BackupConfig
 - [Boolean Flag Method Splitting](../../01-cross-language/24-boolean-flag-methods.md) — Split bool-flag methods into two named methods (Go examples included)
 
 ---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/03-golang/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-GO-REF-002: Go File Sizing, Function Limits, and Complexity Rules
+
+**Given** Go source code under review or development.
+**When** Codebases are audited against Go coding standards.
+**Then** File naming matches primary types, file sizes respect the 300-line target, function lengths remain under 15 lines, and nested `if` statements are completely absent with exit code 0.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/03-golang/04-golang-standards-reference --check-only
+```
+**Expected:** exit 0. Zero violations.

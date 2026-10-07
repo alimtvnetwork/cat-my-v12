@@ -37,7 +37,6 @@ release-assets
 # Launcher logs
 .logs/
 scratch/
-/scratch/
 
 # Python cache
 __pycache__/
@@ -46,8 +45,6 @@ __pycache__/
 # Tests
 test-results/
 tests/reports/
-.ai-memory/temp/
-.ai-memory/temp/
 .ai-memory/temp/
 temp-scripts/
 
@@ -85,3 +82,11 @@ artifacts/
 *.so
 *.dylib
 *.bin
+
+
+# GitMap & Task Persistence
+.gitmap/backup/
+antigravity-resume_task.json
+.antigravity_resume_task.json
+antigravity_resume_task.json
+.antigravity-resume_task.json

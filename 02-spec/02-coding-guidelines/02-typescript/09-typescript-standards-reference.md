@@ -1,4 +1,16 @@
-# TypeScript Coding Standards
+# TypeScript Coding Standards Reference (AI Execution Prompt)
+
+> **/goal** Enforce generics-first architecture, zero-`any` strict typing, PascalCase enums, and bounded function lengths across all frontend TypeScript code.
+> **/learn** Master TypeScript core standards: generic envelopes, strict type guards, isolated boolean properties (`is*` and `has*` only), and early-return patterns.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Ensure all reusable utilities, API clients, and response envelopes utilize generics first without loose types.
+- [ ] `/learn` Never use `any`, `unknown`, or `Record<string, unknown>` in application code where concrete interfaces or generics apply.
+- [ ] `/goal` Enforce PascalCase enum definitions and eliminate all magic string comparisons.
+- [ ] `/learn` Validate compliance using `python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/02-typescript --check-only`.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 > **Version:** 3.0.0
 > **Updated:** 2026-03-09
@@ -254,7 +266,7 @@ type ActivityMetadata = PublishMetadata | SnapshotMetadata | PluginMetadata | Co
 
 ## 5. Function Size — Max 15 Lines
 
-> **Canonical source:** [Cross-Language Code Style](../01-cross-language/04-code-style/01-index.md) — Rule 6
+> **Canonical source:** [Cross-Language Code Style](../01-cross-language/04-code-style/readme.md) — Rule 6
 
 Every function/method body must be **15 lines or fewer**. Extract logic into small, well-named helper functions.
 
@@ -277,7 +289,7 @@ const handleSubmit = async (data: FormData) => {
 
 ## 6. Zero Nested `if` — Absolute Ban
 
-> **Canonical source:** [Cross-Language Code Style](../01-cross-language/04-code-style/01-index.md) — Rule 2 & 7
+> **Canonical source:** [Cross-Language Code Style](../01-cross-language/04-code-style/readme.md) — Rule 2 & 7
 
 Nested `if` blocks are **absolutely forbidden** — zero tolerance, no exceptions. Flatten with early returns or combined conditions.
 
@@ -352,7 +364,7 @@ if (isFileMissing(path)) { throw new Error('Missing'); }
 
 ## 9. `isDefined()` and `isDefinedAndValid()` — Positive Null/Existence Guards
 
-> **Cross-language parity:** [Go Standards §IsDefined](../03-golang/04-golang-standards-reference/01-index.md)
+> **Cross-language parity:** [Go Standards §IsDefined](../03-golang/04-golang-standards-reference/readme.md)
 
 Raw `!== null` / `!== undefined` combined with negation or nested validity checks creates cognitive overhead. Use positive guard functions that express intent clearly.
 
@@ -582,14 +594,32 @@ All standardized TypeScript enums for the frontend. Each enum has a dedicated sp
 ## Cross-References
 
 - [No Raw Negations](../01-cross-language/12-no-negatives.md) — Positive guard functions (all languages)
-- [Cross-Language Code Style](../01-cross-language/04-code-style/01-index.md) — Braces, nesting & spacing rules (canonical)
+- [Cross-Language Code Style](../01-cross-language/04-code-style/readme.md) — Braces, nesting & spacing rules (canonical)
 - [Function Naming](../01-cross-language/10-function-naming.md) — No boolean flag parameters (all languages)
 - [Boolean Flag Method Splitting](../01-cross-language/24-boolean-flag-methods.md) — Split bool-flag methods into two named methods
 - [Strict Typing](../01-cross-language/13-strict-typing.md) — Type declarations & docblock rules (all languages)
 - [DRY Principles](../01-cross-language/08-dry-principles.md)
-- [Golang Standards](../03-golang/04-golang-standards-reference/01-index.md)
+- [Golang Standards](../03-golang/04-golang-standards-reference/readme.md)
 - [Response Envelope Spec](../../03-error-manage/02-error-architecture/05-response-envelope/envelope.schema.json)
 
 ---
 
 *TypeScript standards v3.2.0 — generics-first, zero-any, no-magic-strings, max-15-lines, zero-nesting, isDefined-guards — 2026-02-25*
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/02-typescript/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-TS-009: TypeScript Standards Reference and Architectural Patterns
+
+**Given** TypeScript source code under implementation or review.
+**When** Codebases are audited against TypeScript language standards.
+**Then** Generics-first typing, strict enum conventions, function length bounds, and clean boolean principles are strictly satisfied with zero violations and exit code 0.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/02-typescript --check-only
+```
+**Expected:** exit 0. Zero violations.

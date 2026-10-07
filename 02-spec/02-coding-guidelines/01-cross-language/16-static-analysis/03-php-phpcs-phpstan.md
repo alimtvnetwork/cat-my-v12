@@ -1,4 +1,16 @@
-# PHP — PHP_CodeSniffer + PHPStan Enforcement Rule Mapping
+# PHP — PHP_CodeSniffer + PHPStan Enforcement Rule Mapping (AI Execution Prompt)
+
+> **/goal** Configure and enforce PHP_CodeSniffer (PHPCS) and PHPStan at Level 9 to automate PHP coding standards and type safety in CI/CD pipelines.
+> **/learn** Enforce zero nested if statements, max 15 lines per function, max 3 parameters, cognitive complexity ≤ 10, strict return types, and affirmative boolean naming.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Enforce `Generic.Metrics.NestingLevel` (`absoluteNestingLevel: 1`) and early returns via `SlevomatCodingStandard.ControlStructures.EarlyExit`.
+- [ ] `/learn` Configure `PHPStan` at `level: 9` with `phpstan-strict-rules` enabled to eliminate unhandled types and dead code.
+- [ ] `/goal` Configure `Generic.Metrics.FunctionLength` (`maxLength: 15`) and `SlevomatCodingStandard.ControlStructures.JumpStatementsSpacing` for clean vertical spacing.
+- [ ] `/learn` Enforce affirmative `is`/`has` boolean naming and ban raw negations (`!$this->isValid()`) across all PHP codebases.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 **Version:** 3.2.0
 **Updated:** 2026-04-16
@@ -17,7 +29,7 @@
 
 | Criterion | Status |
 |-----------|--------|
-| `01-index.md` present | ✅ |
+| `readme.md` present | ✅ |
 | AI Confidence assigned | ✅ |
 | Ambiguity assigned | ✅ |
 | Keywords present | ✅ |
@@ -52,7 +64,7 @@ Maps every cross-language coding guideline to its **PHP_CodeSniffer (PHPCS)** an
 | No `else` after return | [Code Style §R7](../04-code-style/02-braces-and-nesting.md) | `SlevomatCodingStandard.ControlStructures.EarlyExit` | (enabled) |
 | Max 15-line functions | [Code Style §R6](../04-code-style/05-function-and-type-size.md) | `Generic.Metrics.FunctionLength` | `maxLength: 15` |
 | Blank line before return | [Code Style §R4](../04-code-style/04-blank-lines-and-spacing.md) | `SlevomatCodingStandard.ControlStructures.JumpStatementsSpacing` | `linesCountBeforeFirst: 1` |
-| No dead code | [Code Style §R5](../04-code-style/01-index.md) | `SlevomatCodingStandard.Functions.UnusedInheritedVariablePassedToClosure` | (enabled) |
+| No dead code | [Code Style §R5](../04-code-style/readme.md) | `SlevomatCodingStandard.Functions.UnusedInheritedVariablePassedToClosure` | (enabled) |
 | Max 400-line files | [File Rules](../04-code-style/05-function-and-type-size.md) | `Generic.Files.LineLength` + `Generic.Metrics.ClassLength` | custom |
 | Braces on same line | [Code Style §R1](../04-code-style/02-braces-and-nesting.md) | `PSR12.ControlStructures.ControlStructureSpacing` | PSR-12 default |
 
@@ -60,7 +72,7 @@ Maps every cross-language coding guideline to its **PHP_CodeSniffer (PHPCS)** an
 
 | Guideline | Spec Source | PHPCS Sniff | Setting |
 |-----------|-------------|-------------|---------|
-| Boolean naming (`is/has only (all other prefixes banned)`) | [Boolean Principles](../02-boolean-principles/01-index.md) | `SlevomatCodingStandard.Variables.UnusedVariable` + custom sniff | regex pattern |
+| Boolean naming (`is/has only (all other prefixes banned)`) | [Boolean Principles](../02-boolean-principles/readme.md) | `SlevomatCodingStandard.Variables.UnusedVariable` + custom sniff | regex pattern |
 | PascalCase keys (API/DB) | [Key Naming](../11-key-naming-pascalcase.md) | custom sniff | `PascalCase` enforcement |
 | No boolean flag params | [Function Naming](../10-function-naming.md) | `SlevomatCodingStandard.Functions.FunctionLength` | code review |
 | No raw negation (`!fn()`) | [No Negatives](../12-no-negatives.md) | custom sniff | `!$this->isValid()` detection |
@@ -84,7 +96,7 @@ PHPStan at **level 9** (strictest) enforces type safety:
 | No `mixed` type (equiv. of `any`) | [Strict Typing](../13-strict-typing.md) | Level 9 | All types must be explicit |
 | No unsafe member access | [Strict Typing](../13-strict-typing.md) | Level 6+ | Property/method access on mixed |
 | No unsafe return | [Strict Typing](../13-strict-typing.md) | Level 7+ | Return type must match declaration |
-| No unused parameters | [Dead Code](../04-code-style/01-index.md) | `phpstan-strict-rules` | Unused parameter detection |
+| No unused parameters | [Dead Code](../04-code-style/readme.md) | `phpstan-strict-rules` | Unused parameter detection |
 | No magic `__get`/`__set` | [Strict Typing](../13-strict-typing.md) | Level 9 | Force typed properties |
 | Max 3 parameters | [Strict Typing](../13-strict-typing.md) | `phpstan-strict-rules` | Custom rule |
 | Null safety | [Null Safety](../19-null-pointer-safety.md) | Level 8+ | Null pointer detection |
@@ -203,11 +215,29 @@ rules:
 
 ## Cross-References
 
-- [Static Analysis Overview](./01-index.md) — Cross-language analyzer guide
-- [Cross-Language Code Style](../04-code-style/01-index.md) — Formatting rules
-- [Boolean Principles](../02-boolean-principles/01-index.md) — Boolean naming rules
+- [Static Analysis Overview](./readme.md) — Cross-language analyzer guide
+- [Cross-Language Code Style](../04-code-style/readme.md) — Formatting rules
+- [Boolean Principles](../02-boolean-principles/readme.md) — Boolean naming rules
 - [Strict Typing](../13-strict-typing.md) — Type safety rules
 - [DRY Principles](../08-dry-principles.md) — Deduplication rules
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-LINT-PHP: PHP PHP_CodeSniffer & PHPStan Static Analysis Enforcement
+
+**Given** PHP source files and configuration (`phpcs.xml`, `phpstan.neon`).
+**When** PHPCS and PHPStan audit the codebase during local checks or CI runs.
+**Then** Nesting depth is ≤ 1, functions do not exceed 15 lines, PHPStan passes at Level 9 with strict rules, and all coding standard violations trigger build failures.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language/16-static-analysis --check-only
+```
+**Expected:** exit 0. Zero violations.
 
 ---
 

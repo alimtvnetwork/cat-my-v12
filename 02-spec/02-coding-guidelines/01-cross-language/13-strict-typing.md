@@ -1,4 +1,16 @@
-# Strict Typing — Cross-Language Type Declaration Rules
+# Strict Typing — Cross-Language Type Declaration Rules (AI Execution Prompt)
+
+> **/goal** Enforce exhaustive and strict type declarations across all functions, parameters, return values, and class properties across Go, TypeScript, and PHP, eliminating untyped definitions, any types, and unvalidated type assertions.
+> **/learn** Master the strict typing principles across PHP 7.4+/8.0+, TypeScript strict mode, and Go value/result paradigms. Understand the mandatory Result Guard Rule before accessing monadic container values.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Declare explicit types for every function parameter, return value, and class property across all supported languages.
+- [ ] `/learn` Ban untyped variables, bare `any`, implicit `mixed`, and unvalidated raw interface assertions in business logic.
+- [ ] `/goal` Enforce the Result Guard Rule: precede every `Result.Value()`, `ResultSlice.Items()`, and `ResultMap.Get()` call with `HasError()` or `IsSafe()` checks.
+- [ ] `/learn` Verify strict typing and zero missing type annotations via automated CI linters and autofixers.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 > **Version:** 1.0.0
 > **Updated:** 2026-03-09
@@ -79,7 +91,7 @@ Already enforced by the generics-first rule and `strict: true` in tsconfig. Key 
 
 Already statically typed. Key reinforcements:
 
-- `interface{}` / `any` is **prohibited** in exported APIs (see [Go Standards](../03-golang/04-golang-standards-reference/01-index.md))
+- `interface{}` / `any` is **prohibited** in exported APIs (see [Go Standards](../03-golang/04-golang-standards-reference/readme.md))
 - Use concrete types or constrained generics (`[T any]` in generic signatures is acceptable)
 - All struct fields must use concrete types, not `map[string]interface{}`
 - **Single return value:** Functions return `apperror.Result[T]` — never `(T, error)` or multi-value tuples (see [§7.1](./15-master-coding-guidelines/05-type-safety.md#71-single-return-value-rule-go))
@@ -305,13 +317,31 @@ func (a *Adapter) GetById(ctx context.Context, id int64) (*models.Plugin, error)
 
 ## Cross-References
 
-- [PHP Standards](../04-php/07-php-standards-reference/01-index.md)
+- [PHP Standards](../04-php/07-php-standards-reference/readme.md)
 - [TypeScript Standards](../02-typescript/09-typescript-standards-reference.md)
-- [Go Standards](../03-golang/04-golang-standards-reference/01-index.md)
+- [Go Standards](../03-golang/04-golang-standards-reference/readme.md)
 - [Function Naming](./10-function-naming.md)
-- Generic Enforce <!-- external: 02-spec/31-generic-enforce/01-index.md -->
+- Generic Enforce <!-- external: 02-spec/31-generic-enforce/readme.md -->
 - apperror Package — Result Guard Rule <!-- external: 02-spec/03-error-manage/01-error-resolution/10-apperror-package/01-apperror-reference.md -->
 - [Master Guidelines — Section 6.1](./15-master-coding-guidelines/04-code-style-and-errors.md#61--result-guard-rule-zero-silent-failures)
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-TYPE-013: Strict Typing and Type Safety Enforcement
+
+**Given** Source code files across Go, TypeScript, and PHP codebases.
+**When** Codebases are analyzed by type checkers, static analysis tools, or CI/CD verification workflows.
+**Then** All function parameters, return values, struct fields, and class properties contain explicit type declarations with zero untyped definitions and full compliance with the Result Guard Rule.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language --check-only
+```
+**Expected:** exit 0. Zero violations.
 
 ---
 

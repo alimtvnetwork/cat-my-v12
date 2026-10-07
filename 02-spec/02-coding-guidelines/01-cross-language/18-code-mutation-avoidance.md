@@ -1,4 +1,16 @@
-# Code Mutation Avoidance
+# Code Mutation Avoidance (AI Execution Prompt)
+
+> **/goal** Eliminate in-place variable and post-construction object mutation across the codebase, enforcing single-assignment immutability, pure constructor returns, and concurrency thread-safety.
+> **/learn** Understand the architectural instability, race conditions, and cognitive load caused by in-place mutations across functions and conditional branches. Master immutable construction and mutex locking for justified mutable caches.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Enforce single-assignment principles: initialize variables once with complete values and ban post-construction field mutation.
+- [ ] `/learn` Never pass an object across multiple methods to mutate its internal state; return new immutable instances instead.
+- [ ] `/goal` Protect unavoidable mutable state (lazy caching, thread-safe buffers) behind synchronized mutex locks.
+- [ ] `/learn` Verify zero unshielded variable mutations and full immutability conformance via automated guideline checks.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 **Version:** 3.2.0
 **Updated:** 2026-04-16
@@ -126,7 +138,34 @@ File writing operations must be safe, flexible, and concurrency-guarded:
 1. **Unified Writing Entry Point:** Provide a generic `Write(path, payload, perm)` that accepts any payload (struct, map, array, string, bytes) and routes through the standalone converter.
 2. **Dedicated Typed Writers:** Provide explicit helpers (`WriteJSON`, `WriteLines`, `WriteString`, `WriteBytes`).
 3. **File-Path Based Mutex Locking:** File writes in concurrent contexts must support locked variants (`WriteLocked`, `WriteJSONLocked`, etc.) resolving a path-level `sync.RWMutex`.
-4. **Zero Memory Leak Policy:** Path mutexes must use reference counting and be evicted upon release when the reference count drops to 0 (`ReleaseFileLock(path)`).
+
+### Rule 7: Branch Immutability & Constructor Helper Return Pattern (TOTAL BAN on In-Place Branch Mutation)
+
+Never mutate fields on an existing struct or object instance across conditional branches (`if`/`else` ladders or `switch` cases).
+
+```go
+// ❌ WRONG — mutating fields across branching conditions
+if len(items) >= 2 && !isValid(items[0]) && isValid(items[1]) {
+    cfg.Target = items[1]
+    if cfg.Alias == "" {
+        cfg.Alias = items[0]
+    }
+    return cfg, nil
+}
+```
+
+Instead, decompose branching paths so each branch calls a pure constructor or builder helper that constructs and returns a complete, immutable struct instance directly:
+
+```go
+// ✅ CORRECT — pure construction with dedicated helpers
+if isAlternateOrder {
+    return buildAlternateConfig(items, baseConfig), nil
+}
+
+return buildStandardConfig(items, baseConfig), nil
+```
+
+See [32-branch-immutability-and-clean-construction.md](./32-branch-immutability-and-clean-construction.md) for full architecture and cross-language specifications.
 
 ---
 
@@ -170,7 +209,25 @@ func (r *Receiver) SetValue(v string) {
 
 - [Lazy Evaluation Patterns](./16-lazy-evaluation-patterns.md) — Exempted mutation for caching
 - [DRY Principles](./08-dry-principles.md) — Constructor-based initialization
-- [Master Coding Guidelines](./15-master-coding-guidelines/01-index.md) — §7 Type Safety
+- [Master Coding Guidelines](./15-master-coding-guidelines/readme.md) — §7 Type Safety
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-TYPE-018: In-Place Mutation Avoidance and Immutability
+
+**Given** Variable declarations, object initializations, and state transitions across Go and cross-language codebases.
+**When** Codebases are audited for variable mutations, post-construction assignments, and thread-safety.
+**Then** All variables adhere to single assignment, structs are fully initialized at construction, and mutable caches are shielded with mutex locks, achieving exit code 0.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language --check-only
+```
+**Expected:** exit 0. Zero violations.
 
 ---
 

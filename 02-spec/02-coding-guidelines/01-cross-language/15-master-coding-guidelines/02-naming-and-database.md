@@ -1,8 +1,20 @@
-# Master Coding Guidelines — Naming conventions, database naming, file naming
+# Master Coding Guidelines — Naming conventions, database naming, file naming (AI Execution Prompt)
 
-> **Parent:** [Master Coding Guidelines](./01-index.md)
-> **Version:** 2.1.0
-> **Updated:** 2026-03-31
+> **/goal** Standardize universal naming conventions, database schemas, and source file naming patterns across Go, PHP, and TypeScript codebases.
+> **/learn** Master PascalCase entity naming, abbreviation capitalization rules (e.g. `Id`, `Url`), zero-underscore logic policies, and PascalCase database tables and columns.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Enforce PascalCase for class/struct definitions, source filenames defining primary types, and database table/column names.
+- [ ] `/learn` Capitalize only the first letter of acronyms and abbreviations (e.g., `postId`, `fileUrl`, `PluginSlug`, `IdxTransactions_CreatedAt`).
+- [ ] `/goal` Prohibit snake_case in logic-level variables, methods, parameters, and array keys across all supported languages.
+- [ ] `/learn` Validate compliance across naming and database specifications using `python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language/15-master-coding-guidelines --check-only`.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
+
+> **Parent:** [Master Coding Guidelines](./readme.md)
+> **Version:** 3.2.0
+> **Updated:** 2026-10-02
 
 ---
 
@@ -10,11 +22,11 @@
 
 This is the **master reference**. Every rule here is enforced across all languages. Language-specific details are in:
 
-- [PHP Standards](../../04-php/01-index.md)
-- [Go Standards](../../03-golang/04-golang-standards-reference/01-index.md)
+- [PHP Standards](../../04-php/readme.md)
+- [Go Standards](../../03-golang/04-golang-standards-reference/readme.md)
 - [TypeScript Standards](../../02-typescript/09-typescript-standards-reference.md)
 - [Database Naming](../07-database-naming.md)
-- [Boolean Principles](../02-boolean-principles/01-index.md)
+- [Boolean Principles](../02-boolean-principles/readme.md)
 - [No-Negatives](../12-no-negatives.md)
 - [Test Naming & Structure](../14-test-naming-and-structure.md)
 - [Lazy Evaluation Patterns](../16-lazy-evaluation-patterns.md)
@@ -171,3 +183,19 @@ type Tx struct {
 ```
 
 ---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-MASTER-NAME: Universal Naming & Database Schema Conformance
+
+**Given** Universal naming and database guidelines across polyglot implementations.
+**When** Codebases and database schemas are audited for PascalCase conventions, abbreviation rules, and zero-underscore policies.
+**Then** All classes, structs, single-type source files, database tables, and database columns adhere to PascalCase with zero snake_case in logic identifiers.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language/15-master-coding-guidelines --check-only
+```
+**Expected:** exit 0. Zero violations.

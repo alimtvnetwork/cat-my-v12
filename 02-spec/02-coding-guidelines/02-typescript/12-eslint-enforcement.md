@@ -1,4 +1,16 @@
-# TypeScript ESLint Enforcement — Rule Mapping
+# TypeScript ESLint Enforcement — Rule Mapping (AI Execution Prompt)
+
+> **/goal** Map and automate all TypeScript coding guidelines through custom and recommended ESLint rules to enforce zero-warning CI/CD gates.
+> **/learn** Master static analysis enforcement: configure `@typescript-eslint` type checking, custom AST linters, SonarJS quality metrics, and automated PR gates.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Enforce strict `@typescript-eslint/no-explicit-any` and related unsafe rules as errors.
+- [ ] `/learn` Never allow unchecked PR merges without automated lint checks running at `--max-warnings 0`.
+- [ ] `/goal` Maintain active AST rules for boolean naming, no-nested-if, max function lines, and Promise.all concurrency.
+- [ ] `/learn` Validate compliance using `python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/02-typescript --check-only`.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 **Version:** 3.2.0
 **Updated:** 2026-04-16
@@ -17,7 +29,7 @@
 
 | Criterion | Status |
 |-----------|--------|
-| `01-index.md` present | ✅ |
+| `readme.md` present | ✅ |
 | AI Confidence assigned | ✅ |
 | Ambiguity assigned | ✅ |
 | Keywords present | ✅ |
@@ -38,7 +50,7 @@ Source: `eslint-plugins/coding-guidelines/index.js`
 | Rule | Severity | Spec Source | Description |
 |------|----------|-------------|-------------|
 | `coding-guidelines/no-nested-if` | `error` | [Code Style §R2](../01-cross-language/04-code-style/02-braces-and-nesting.md) | Zero nested `if` — flatten with early returns |
-| `coding-guidelines/boolean-naming` | `error` | [Boolean Principles](../01-cross-language/02-boolean-principles/01-index.md) | Boolean vars must use `is/has only (all other prefixes banned)` prefix |
+| `coding-guidelines/boolean-naming` | `error` | [Boolean Principles](../01-cross-language/02-boolean-principles/readme.md) | Boolean vars must use `is/has only (all other prefixes banned)` prefix |
 | `coding-guidelines/no-magic-strings` | `warn` | [TS Standards §3](./09-typescript-standards-reference.md) | No raw string literals in `===`/`!==`/`switch` — use enum/constant |
 | `coding-guidelines/max-function-lines` | `error` | [Code Style §R6](../01-cross-language/04-code-style/05-function-and-type-size.md) | Max 15 lines per function body (non-blank, non-comment) |
 | `coding-guidelines/promise-all-independent` | `error` | [Promise Patterns §3](./10-promise-await-patterns.md) | Sequential `await` on independent promises → use `Promise.all` |
@@ -58,6 +70,18 @@ These enforce type safety rules from [TS Standards §1–§2](./09-typescript-st
 | `@typescript-eslint/no-unsafe-member-access` | `error` | TS Standards §2.1 | No member access on `any`-typed values |
 | `@typescript-eslint/no-unsafe-call` | `error` | TS Standards §2.1 | No calling `any`-typed values |
 | `@typescript-eslint/no-unsafe-return` | `error` | TS Standards §2.1 | No returning `any`-typed values |
+
+```typescript
+// ❌ FORBIDDEN: Using any type in signatures
+function parseResponse(data: any): any {
+  return data.result;
+}
+
+// ✅ REQUIRED: Explicit domain types and unknown with narrowing
+function parseResponse<T>(data: unknown, validator: (raw: unknown) => T): T {
+  return validator(data);
+}
+```
 
 > **Note:** The `no-unsafe-*` rules require `parserOptions.project` pointing to `tsconfig.json` for type-aware linting.
 
@@ -137,9 +161,27 @@ The canonical ESLint configuration lives at `eslint.config.js` in the project ro
 - [Custom Plugin Source](../../../eslint-plugins/coding-guidelines/index.js) — Rule implementations
 - [Promise Patterns](./10-promise-await-patterns.md) — Promise.all enforcement rationale
 - [TS Standards Reference](./09-typescript-standards-reference.md) — Full TypeScript rules
-- [Cross-Language Code Style](../01-cross-language/04-code-style/01-index.md) — Formatting rules
-- [Static Analysis Overview](../01-cross-language/16-static-analysis/01-index.md) — Cross-language analyzer guide
+- [Cross-Language Code Style](../01-cross-language/04-code-style/readme.md) — Formatting rules
+- [Static Analysis Overview](../01-cross-language/16-static-analysis/readme.md) — Cross-language analyzer guide
 
 ---
 
 *TypeScript ESLint enforcement v1.0.0 — maps every coding guideline to an enforced lint rule — 2026-04-01*
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/02-typescript/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-TS-012: TypeScript ESLint Rules, Type Checking, and Lint Automation
+
+**Given** TypeScript source code under implementation or review.
+**When** Codebases are audited against TypeScript language standards.
+**Then** All static analysis and ESLint enforcement mappings pass with zero warnings, zero errors, and exit code 0.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/02-typescript --check-only
+```
+**Expected:** exit 0. Zero violations.

@@ -1,3 +1,47 @@
+# Changelog
+
+## [v4.112.14] - 2026-10-03
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.13] - 2026-10-02
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.12] - 2026-10-02
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.11] - 2026-10-02
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.10] - 2026-10-01
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.9] - 2026-10-01
+
+### Added
+- Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines
+
+---
+
 ## v4.112.0 - 2026-09-19
 
 ### Install Control Automation v4.112.0

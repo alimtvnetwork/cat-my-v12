@@ -1,4 +1,16 @@
-# C# — StyleCop Analyzers + Roslyn Enforcement Rule Mapping
+# C# — StyleCop Analyzers + Roslyn Enforcement Rule Mapping (AI Execution Prompt)
+
+> **/goal** Configure and enforce StyleCop.Analyzers, Microsoft.CodeAnalysis.NetAnalyzers, Roslynator, and SonarAnalyzer for C# projects to automate coding guidelines in CI/CD pipelines.
+> **/learn** Enforce zero nested if statements, max 15 lines per function, max 3 parameters, cognitive complexity ≤ 10, nullable reference types (`Nullable = enable`), and ban magic strings.
+
+## 🎯 Actionable CI/CD & Agent Checklist
+
+- [ ] `/goal` Enforce `TreatWarningsAsErrors = true` and `Nullable = enable` across all C# project files.
+- [ ] `/learn` Map Roslynator (RCS1208), StyleCop (SA1503), and SonarAnalyzer (S134) rules to eliminate nested `if` statements and enforce curly braces.
+- [ ] `/goal` Configure function length caps (`dotnet_diagnostic.S138.severity = error`) and parameter count caps (`dotnet_diagnostic.S107.severity = error`).
+- [ ] `/learn` Enforce affirmative `is`/`has` boolean prefixes and ban magic string literals via SonarAnalyzer rule `S1192`.
+
+. **CRITICAL AI INSTRUCTION:** This specification is an active AI execution directive. All code generated or modified must strictly follow the rules below.
 
 **Version:** 3.2.0
 **Updated:** 2026-04-16
@@ -17,7 +29,7 @@
 
 | Criterion | Status |
 |-----------|--------|
-| `01-index.md` present | ✅ |
+| `readme.md` present | ✅ |
 | AI Confidence assigned | ✅ |
 | Ambiguity assigned | ✅ |
 | Keywords present | ✅ |
@@ -72,15 +84,15 @@ Maps every cross-language coding guideline to its **StyleCop Analyzers**, **Rosl
 | No `else` after return (alt) | [Code Style §R7](../04-code-style/02-braces-and-nesting.md) | SonarAnalyzer | `S1126` | Return boolean directly |
 | Max 15-line functions | [Code Style §R6](../04-code-style/05-function-and-type-size.md) | SonarAnalyzer | `S138` | `max: 15` |
 | Blank line before return | [Code Style §R4](../04-code-style/04-blank-lines-and-spacing.md) | StyleCop | `SA1513` | Closing brace followed by blank line |
-| No dead code | [Code Style §R5](../04-code-style/01-index.md) | NetAnalyzers | `IDE0051` | Remove unused private members |
-| No dead code (alt) | [Code Style §R5](../04-code-style/01-index.md) | NetAnalyzers | `IDE0052` | Remove unread private members |
+| No dead code | [Code Style §R5](../04-code-style/readme.md) | NetAnalyzers | `IDE0051` | Remove unused private members |
+| No dead code (alt) | [Code Style §R5](../04-code-style/readme.md) | NetAnalyzers | `IDE0052` | Remove unread private members |
 | Braces required | [Code Style §R1](../04-code-style/02-braces-and-nesting.md) | StyleCop | `SA1503` | Braces should not be omitted |
 
 ### 2.2 Naming Conventions
 
 | Guideline | Spec Source | Analyzer | Rule ID | Setting |
 |-----------|-------------|----------|---------|---------|
-| Boolean naming (`Is/Has/Can/Should/Was/Will`) | [Boolean Principles](../02-boolean-principles/01-index.md) | custom `.editorconfig` | `dotnet_naming_rule` | prefix pattern |
+| Boolean naming (`Is/Has/Can/Should/Was/Will`) | [Boolean Principles](../02-boolean-principles/readme.md) | custom `.editorconfig` | `dotnet_naming_rule` | prefix pattern |
 | PascalCase for public members | [Key Naming](../11-key-naming-pascalcase.md) | StyleCop | `SA1300` | Element must begin with upper-case |
 | PascalCase for constants | [Key Naming](../11-key-naming-pascalcase.md) | StyleCop | `SA1303` | Const field names must begin with upper-case |
 | No boolean flag params | [Function Naming](../10-function-naming.md) | SonarAnalyzer | `S2360` | Optional parameters should not be used |
@@ -227,12 +239,30 @@ dotnet_diagnostic.S107.severity = error
 
 ## Cross-References
 
-- [Static Analysis Overview](./01-index.md) — Cross-language analyzer guide
-- [Cross-Language Code Style](../04-code-style/01-index.md) — Formatting rules
-- [Boolean Principles](../02-boolean-principles/01-index.md) — Boolean naming rules
+- [Static Analysis Overview](./readme.md) — Cross-language analyzer guide
+- [Cross-Language Code Style](../04-code-style/readme.md) — Formatting rules
+- [Boolean Principles](../02-boolean-principles/readme.md) — Boolean naming rules
 - [Strict Typing](../13-strict-typing.md) — Type safety rules
 - [Null Safety](../19-null-pointer-safety.md) — Null/nil safety guards
 - [DRY Principles](../08-dry-principles.md) — Deduplication rules
+
+---
+
+## Verification & Acceptance Criteria
+
+_Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-criteria.md` for the full criteria index._
+
+### AC-CG-LINT-CSHARP: C# StyleCop Analyzers & Roslyn Static Analysis Enforcement
+
+**Given** C# source files and solution configurations (`.csproj`, `Directory.Build.props`, `.editorconfig`).
+**When** Roslyn analyzers and StyleCop audit the codebase during compilation or CI pipelines.
+**Then** All warnings are treated as errors (`TreatWarningsAsErrors = true`), nesting depth is ≤ 1, functions do not exceed 15 lines, and zero analyzer violations occur.
+
+**Verification command:**
+```bash
+python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language/16-static-analysis --check-only
+```
+**Expected:** exit 0. Zero violations.
 
 ---
 
