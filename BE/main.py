@@ -22,11 +22,12 @@ from BE.errors.handlers import register_exception_handlers
 from BE.logging_config import configure_logging
 from BE.middleware.rate_limit import RateLimitMiddleware
 from BE.middleware.request_id import RequestIdMiddleware
+from BE.routes import camera as camera_route
 from BE.routes import cli_config as cli_config_route
 from BE.routes import cli_doctor as cli_doctor_route
 from BE.routes import cli_observability as cli_observability_route
+from BE.routes import handler as handler_route
 from BE.routes import health as health_route
-from BE.routes import camera as camera_route
 from BE.routes import images as images_route
 from BE.routes import meta as meta_route
 from BE.routes import rules as rules_route
@@ -34,11 +35,8 @@ from BE.routes import samples as samples_route
 from BE.routes import score as score_route
 from BE.routes import seed as seed_route
 from BE.routes import system as system_route
-
 from BE.routes import telemetry as telemetry_route
-
 from BE.routes import vision as vision_route
-
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
 from BE.routes.observability import retention as observability_retention_route
@@ -101,6 +99,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
     app.include_router(vision_route.router)
+    app.include_router(handler_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:

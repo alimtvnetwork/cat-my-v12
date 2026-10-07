@@ -24,21 +24,21 @@ const dotClass: Record<StatusSeverity, string> = {
 
 export function StatusLog({ entries }: { entries: StatusLogEntry[] }): React.JSX.Element | null {
   return (
-    <ul className="font-hmi text-hmi-body text-ca-ink divide-y divide-ca-border bg-ca-panel border border-ca-border rounded-lg max-h-72 overflow-y-auto">
+    <ul className="font-hmi text-xs text-ca-ink divide-y divide-ca-border/60 bg-ca-panel border border-ca-border rounded-lg max-h-40 overflow-y-auto shrink-0 shadow-sm">
       {entries.length === 0 ? (
-        <li className="px-hmi-4 py-hmi-4 text-ca-ink-muted text-center">No events yet</li>
+        <li className="px-3 py-2 text-ca-ink-muted text-center">No inspection events yet</li>
       ) : (
         entries.map((e) => (
           <li
             key={e.id}
-            className="flex items-center gap-hmi-3 px-hmi-4 py-hmi-2 min-h-10 hover:bg-ca-panel-2 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-ca-panel-2 transition-colors font-mono"
           >
             <span
-              className={`inline-block h-2.5 w-2.5 rounded-full ${dotClass[e.severity]}`}
+              className={`inline-block h-2 w-2 rounded-full shrink-0 ${dotClass[e.severity]}`}
               aria-hidden
             />
-            <span className="hmi-tabular text-hmi-badge text-ca-ink-muted min-w-24">{e.ts}</span>
-            <span className="flex-1">{e.message}</span>
+            <span className="tabular-nums text-ca-ink-muted shrink-0 text-[11px]">{e.ts}</span>
+            <span className="flex-1 truncate text-ca-ink">{e.message}</span>
           </li>
         ))
       )}

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 
 def _client() -> TestClient:

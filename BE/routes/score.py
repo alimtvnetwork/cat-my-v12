@@ -12,7 +12,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None  # type: ignore[assignment]
 import numpy as np
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse

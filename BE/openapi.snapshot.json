@@ -75,6 +75,40 @@
         }
       }
     },
+    "/seed": {
+      "get": {
+        "summary": "Get Seed",
+        "description": "Return CatSeedBundle JSON for RemoteUiSeedFacade.",
+        "operationId": "get_seed_seed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seed": {
+      "get": {
+        "summary": "Get Seed",
+        "description": "Return CatSeedBundle JSON for RemoteUiSeedFacade.",
+        "operationId": "get_seed_api_seed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/rules": {
       "get": {
         "summary": "List Rules",
@@ -340,6 +374,276 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/status": {
+      "get": {
+        "summary": "Get Camera Status",
+        "description": "Return camera connection status.",
+        "operationId": "get_camera_status_camera_status_get",
+        "parameters": [
+          {
+            "name": "cameraId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Cameraid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/capture": {
+      "post": {
+        "summary": "Capture Frame",
+        "description": "Simulate frame acquisition and return a ReferenceImage payload.",
+        "operationId": "capture_frame_camera_capture_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/settings": {
+      "put": {
+        "summary": "Update Camera Settings",
+        "description": "Update camera settings and trigger mode.",
+        "operationId": "update_camera_settings_camera_settings_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/reference": {
+      "get": {
+        "summary": "Get Reference Image",
+        "description": "Return active reference image for project.",
+        "operationId": "get_reference_image_images_reference_get",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Projectid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set Reference Image",
+        "description": "Update active reference image for project.",
+        "operationId": "set_reference_image_images_reference_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/processed": {
+      "get": {
+        "summary": "Get Processed Images",
+        "description": "Return recent processed and preset images.",
+        "operationId": "get_processed_images_images_processed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/upload": {
+      "post": {
+        "summary": "Upload Image",
+        "description": "Receive an uploaded image (data URL or raw JSON) and return image metadata.",
+        "operationId": "upload_image_images_upload_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/score": {
+      "post": {
+        "summary": "Evaluate Score",
+        "description": "Evaluate image against deterministic rule criteria (Day 4 Orchestrator).",
+        "operationId": "evaluate_score_score_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/latest": {
+      "get": {
+        "summary": "Get Latest Telemetry",
+        "description": "Return the most recent live inspection result and trace.",
+        "operationId": "get_latest_telemetry_telemetry_latest_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/summary": {
+      "get": {
+        "summary": "Get Telemetry Summary",
+        "description": "Return aggregated runtime statistics (yield, counts, avg cycle time).",
+        "operationId": "get_telemetry_summary_telemetry_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/history": {
+      "get": {
+        "summary": "Get Telemetry History",
+        "description": "Return recent inspection session runs for HMI rails.",
+        "operationId": "get_telemetry_history_telemetry_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/reset": {
+      "post": {
+        "summary": "Reset Telemetry",
+        "description": "Acknowledge runtime session reset.",
+        "operationId": "reset_telemetry_telemetry_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -1257,6 +1561,91 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/handler/status": {
+      "get": {
+        "summary": "Get Handler Status",
+        "description": "Return the current handler simulation and sorting bin status.",
+        "operationId": "get_handler_status_handler_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/handler/step": {
+      "post": {
+        "summary": "Step Handler",
+        "description": "Trigger a single index -> capture -> evaluate -> sort cycle.",
+        "operationId": "step_handler_handler_step_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/handler/start": {
+      "post": {
+        "summary": "Start Handler",
+        "description": "Start continuous automated part feeding and inspection.",
+        "operationId": "start_handler_handler_start_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/handler/stop": {
+      "post": {
+        "summary": "Stop Handler",
+        "description": "Stop continuous automated part feeding.",
+        "operationId": "stop_handler_handler_stop_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/handler/reset": {
+      "post": {
+        "summary": "Reset Handler",
+        "description": "Reset simulator counters and sorting bins.",
+        "operationId": "reset_handler_handler_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }

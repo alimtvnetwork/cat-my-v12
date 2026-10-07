@@ -10,8 +10,9 @@ Provides:
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
@@ -25,6 +26,18 @@ logger = logging.getLogger("BE.routes.telemetry")
 
 router = APIRouter(prefix="/telemetry")
 
+DEFAULT_RUN_ID: Final[str] = "01J00000000000000000000000"
+DEFAULT_SAMPLE_IMAGE_PATH: Final[str] = "/src/assets/samples/pocket-1-filled.jpg"
+DEFAULT_SCORE: Final[float] = 100.0
+DEFAULT_CYCLE_TIME_MS: Final[float] = 15.0
+DEFAULT_RULE_KIND: Final[str] = "grayscale_tolerance"
+DEFAULT_INITIAL_RULE_KIND: Final[str] = "None"
+DEFAULT_READY_REASON: Final[str] = "Ready for inspection"
+DEFAULT_EVALUATED_REASON: Final[str] = "Evaluated"
+DEFAULT_PASS_VERDICT: Final[str] = "Pass"
+DEFAULT_FAIL_VERDICT: Final[str] = "Fail"
+ONLINE_STATUS: Final[str] = "online"
+
 
 @router.get("/latest")
 async def get_latest_telemetry(request: Request) -> JSONResponse:
@@ -32,56 +45,65 @@ async def get_latest_telemetry(request: Request) -> JSONResponse:
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     conn = get_task_conn()
     try:
-        cur = conn.execute(
-            """
-            SELECT s.RunSessionId, s.RunId, s.Verdict, s.Mode, s.ImageFilePath, s.PersistedAt,
-                   r.Decision, r.ScorePercent, r.DurationMs,
-                   rr.RuleKind, rr.ReasonMessage, rr.MetricsJson
-            FROM RunSession s
-            LEFT JOIN Result r ON r.RunId = s.RunId
-            LEFT JOIN RuleResult rr ON rr.RunSessionId = s.RunSessionId
-            ORDER BY s.RunSessionId DESC
-            LIMIT 1
-            """
-        )
-        row = cur.fetchone()
+        row = None
+        try:
+            cur = conn.execute(
+                """
+                SELECT s.RunSessionId, s.RunId, s.Verdict, s.Mode, s.ImageFilePath, s.PersistedAt,
+                       r.Decision, r.ScorePercent, r.DurationMs,
+                       rr.RuleKind, rr.ReasonMessage, rr.MetricsJson
+                FROM RunSession s
+                LEFT JOIN Result r ON r.RunId = s.RunId
+                LEFT JOIN RuleResult rr ON rr.RunSessionId = s.RunSessionId
+                ORDER BY s.RunSessionId DESC
+                LIMIT 1
+                """
+            )
+            row = cur.fetchone()
+        except sqlite3.OperationalError as db_err:
+            logger.info("RunSession table not queryable, using default telemetry: %s", db_err)
+
         if not row:
-            # Fallback default when no run recorded yet
+            # Fallback default when no run recorded yet or table uninitialized
             payload = {
-                "runId": "01J00000000000000000000000",
+                "runId": DEFAULT_RUN_ID,
                 "runSessionId": 0,
-                "verdict": "Pass",
+                "verdict": DEFAULT_PASS_VERDICT,
                 "is_pass": True,
-                "score": 100.0,
-                "imageFilePath": "/src/assets/samples/pocket-1-filled.jpg",
-                "ruleKind": "None",
-                "reason": "Ready for inspection",
+                "score": DEFAULT_SCORE,
+                "imageFilePath": DEFAULT_SAMPLE_IMAGE_PATH,
+                "ruleKind": DEFAULT_INITIAL_RULE_KIND,
+                "reason": DEFAULT_READY_REASON,
                 "durationMs": 0,
                 "persistedAt": int(time.time()),
             }
         else:
-            verdict_str = row[2] or "Pass"
+            verdict_str = row[2] or DEFAULT_PASS_VERDICT
             is_pass = verdict_str.lower() == "pass"
+
             payload = {
                 "runSessionId": row[0],
                 "runId": row[1],
                 "verdict": verdict_str,
                 "is_pass": is_pass,
                 "mode": row[3],
-                "imageFilePath": row[4] or "/src/assets/samples/pocket-1-filled.jpg",
+                "imageFilePath": row[4] or DEFAULT_SAMPLE_IMAGE_PATH,
                 "persistedAt": row[5],
-                "decision": row[6] or ("PASS" if is_pass else "FAIL"),
-                "score": float(row[7]) if row[7] is not None else 100.0,
+                "decision": row[6] or (DEFAULT_PASS_VERDICT.upper() if is_pass else DEFAULT_FAIL_VERDICT.upper()),
+                "score": float(row[7]) if row[7] is not None else DEFAULT_SCORE,
                 "durationMs": row[8] or 0,
-                "ruleKind": row[9] or "grayscale_tolerance",
-                "reason": row[10] or "Evaluated",
+                "ruleKind": row[9] or DEFAULT_RULE_KIND,
+                "reason": row[10] or DEFAULT_EVALUATED_REASON,
                 "metricsJson": row[11],
             }
 
         env = success(payload, requested_at=str(request.url))
+
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
         raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to retrieve latest telemetry: {exc}") from exc
+    finally:
+        conn.close()
 
 
 @router.get("/summary")
@@ -90,24 +112,30 @@ async def get_telemetry_summary(request: Request) -> JSONResponse:
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     conn = get_task_conn()
     try:
-        cur = conn.execute(
-            """
-            SELECT
-                COUNT(*) as Total,
-                SUM(CASE WHEN LOWER(Verdict) = 'pass' THEN 1 ELSE 0 END) as PassCount,
-                SUM(CASE WHEN LOWER(Verdict) != 'pass' THEN 1 ELSE 0 END) as FailCount
-            FROM RunSession
-            """
-        )
-        row = cur.fetchone()
-        total = row[0] if row else 0
+        row = None
+        cur_dur = None
+        try:
+            cur = conn.execute(
+                """
+                SELECT
+                    COUNT(*) as Total,
+                    SUM(CASE WHEN LOWER(Verdict) = 'pass' THEN 1 ELSE 0 END) as PassCount,
+                    SUM(CASE WHEN LOWER(Verdict) != 'pass' THEN 1 ELSE 0 END) as FailCount
+                FROM RunSession
+                """
+            )
+            row = cur.fetchone()
+            cur_dur = conn.execute("SELECT AVG(DurationMs) FROM Result WHERE DurationMs > 0")
+        except sqlite3.OperationalError as db_err:
+            logger.info("Telemetry summary tables not queryable: %s", db_err)
+
+        total = row[0] if row and row[0] is not None else 0
         pass_count = row[1] if row and row[1] is not None else 0
         fail_count = row[2] if row and row[2] is not None else 0
         yield_pct = round((pass_count / total * 100.0), 1) if total > 0 else 100.0
 
-        cur_dur = conn.execute("SELECT AVG(DurationMs) FROM Result WHERE DurationMs > 0")
-        dur_row = cur_dur.fetchone()
-        avg_dur_ms = round(float(dur_row[0]), 1) if dur_row and dur_row[0] is not None else 15.0
+        dur_row = cur_dur.fetchone() if cur_dur else None
+        avg_dur_ms = round(float(dur_row[0]), 1) if dur_row and dur_row[0] is not None else DEFAULT_CYCLE_TIME_MS
 
         payload = {
             "total": total,
@@ -115,12 +143,15 @@ async def get_telemetry_summary(request: Request) -> JSONResponse:
             "ng": fail_count,
             "yieldPct": yield_pct,
             "avgDurationMs": avg_dur_ms,
-            "status": "online",
+            "status": ONLINE_STATUS,
         }
         env = success(payload, requested_at=str(request.url))
+
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
         raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to calculate telemetry summary: {exc}") from exc
+    finally:
+        conn.close()
 
 
 @router.get("/history")
@@ -132,38 +163,46 @@ async def get_telemetry_history(
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     conn = get_task_conn()
     try:
-        cur = conn.execute(
-            """
-            SELECT s.RunSessionId, s.RunId, s.Verdict, s.ImageFilePath, s.PersistedAt,
-                   r.ScorePercent, r.DurationMs, rr.RuleKind, rr.ReasonMessage
-            FROM RunSession s
-            LEFT JOIN Result r ON r.RunId = s.RunId
-            LEFT JOIN RuleResult rr ON rr.RunSessionId = s.RunSessionId
-            ORDER BY s.RunSessionId DESC
-            LIMIT ?
-            """,
-            (limit,),
-        )
-        rows = cur.fetchall()
+        rows: list[Any] = []
+        try:
+            cur = conn.execute(
+                """
+                SELECT s.RunSessionId, s.RunId, s.Verdict, s.ImageFilePath, s.PersistedAt,
+                       r.ScorePercent, r.DurationMs, rr.RuleKind, rr.ReasonMessage
+                FROM RunSession s
+                LEFT JOIN Result r ON r.RunId = s.RunId
+                LEFT JOIN RuleResult rr ON rr.RunSessionId = s.RunSessionId
+                ORDER BY s.RunSessionId DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+            rows = cur.fetchall()
+        except sqlite3.OperationalError as db_err:
+            logger.info("Telemetry history table not queryable: %s", db_err)
+
         history = [
             {
                 "runSessionId": r[0],
                 "runId": r[1],
                 "verdict": r[2],
                 "is_pass": (r[2] or "").lower() == "pass",
-                "imageFilePath": r[3] or "/src/assets/samples/pocket-1-filled.jpg",
+                "imageFilePath": r[3] or DEFAULT_SAMPLE_IMAGE_PATH,
                 "persistedAt": r[4],
-                "score": float(r[5]) if r[5] is not None else 100.0,
+                "score": float(r[5]) if r[5] is not None else DEFAULT_SCORE,
                 "durationMs": r[6] or 0,
-                "ruleKind": r[7] or "grayscale_tolerance",
+                "ruleKind": r[7] or DEFAULT_RULE_KIND,
                 "reason": r[8] or "",
             }
             for r in rows
         ]
         env = success(history, requested_at=str(request.url))
+
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
         raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to retrieve telemetry history: {exc}") from exc
+    finally:
+        conn.close()
 
 
 @router.post("/reset")
@@ -172,6 +211,7 @@ async def reset_telemetry(request: Request) -> JSONResponse:
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
     payload = {"reset": True, "timestamp": int(time.time())}
     env = success(payload, requested_at=str(request.url))
+
     return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
 
 

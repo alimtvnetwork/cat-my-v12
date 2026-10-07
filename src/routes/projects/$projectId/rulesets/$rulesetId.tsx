@@ -720,22 +720,24 @@ function RulesetEditorBody() {
 
         <div className="grid grid-cols-1 gap-hmi-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <Section density={SectionDensityType.Compact} variant={SectionVariantType.Panel}>
-            {ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg" ? (
+            {ruleset.imageRef ? (
               <div className="flex flex-col items-center justify-center p-2">
                 <img
-                  src={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                  src={ruleset.imageRef}
                   alt={`${ruleset.name} reference`}
                   className="mx-auto max-h-[70vh] w-auto rounded-sm border border-ca-border object-contain"
                 />
-                {!ruleset.imageRef && (
-                  <span className="mt-2 text-xs text-ca-ink-muted font-mono bg-ca-panel px-2 py-0.5 rounded border border-ca-border/60">
-                    Default Golden Reference (pocket-1-filled.jpg)
-                  </span>
-                )}
               </div>
             ) : (
-              <div className="flex min-h-64 items-center justify-center text-hmi-body text-ca-ink-muted">
-                No reference image on this rule set.
+              <div className="flex flex-col items-center justify-center p-2">
+                <img
+                  src="/src/assets/samples/pocket-1-filled.jpg"
+                  alt={`${ruleset.name} default reference`}
+                  className="mx-auto max-h-[70vh] w-auto rounded-sm border border-ca-border object-contain"
+                />
+                <span className="mt-2 text-xs text-ca-ink-muted font-mono bg-ca-panel px-2 py-0.5 rounded border border-ca-border/60">
+                  Default Golden Reference (pocket-1-filled.jpg)
+                </span>
               </div>
             )}
           </Section>

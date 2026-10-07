@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+
 import pytest
 
 from BE.app.domain.rule_set import DraftMeta, RuleItem, RuleSetEnvelope, Shape, Tolerance
 from BE.db.connections import get_root_conn, get_task_conn
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
-from BE.repos.sqlite_rules_repo import SqliteRulesRepo
 from BE.repos.sqlite_results_repo import SqliteResultsRepo
+from BE.repos.sqlite_rules_repo import SqliteRulesRepo
 
 ROOT_MIGRATIONS = Path(__file__).resolve().parents[2] / "db" / "migrations" / "root"
 TASK_MIGRATIONS = Path(__file__).resolve().parents[2] / "db" / "migrations" / "task"

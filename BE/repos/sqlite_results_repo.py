@@ -27,7 +27,12 @@ class SqliteResultsRepo:
         pass_count: int = 0,
         fail_count: int = 0,
     ) -> int:
-        """Create a RunSession record. Returns RunSessionId."""
+        if pass_count == 0 and fail_count == 0 and active_count > 0:
+            if verdict.lower() == "pass":
+                pass_count = active_count
+            else:
+                fail_count = active_count
+
         try:
             cur = self.conn.execute(
                 "INSERT INTO RunSession ("
@@ -45,7 +50,7 @@ class SqliteResultsRepo:
                     fail_count,
                 ),
             )
-            return cur.lastrowid
+            return int(cur.lastrowid or 0)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -73,13 +78,13 @@ class SqliteResultsRepo:
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (run_id, 1, cap_key, width, height, pixel_format, byte_size, sha256, now),
             )
-            capture_id = cur_cap.lastrowid
+            capture_id = int(cur_cap.lastrowid or 0)
             cur_frame = self.conn.execute(
                 "INSERT INTO Frame (CaptureId, FrameIndex, FrameKey, Width, Height, PixelFormat, ByteSize, Sha256, DerivedAt) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (capture_id, frame_index, frame_key, width, height, pixel_format, byte_size, sha256, now),
             )
-            return cur_frame.lastrowid
+            return int(cur_frame.lastrowid or 0)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -104,7 +109,7 @@ class SqliteResultsRepo:
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (run_id, frame_id, bundle_id, bundle_version, decision, score_percent, duration_ms),
             )
-            return cur.lastrowid
+            return int(cur.lastrowid or 0)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -196,7 +201,7 @@ class SqliteResultsRepo:
                     message,
                 ),
             )
-            return cur.lastrowid
+            return int(cur.lastrowid or 0)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -234,7 +239,7 @@ class SqliteResultsRepo:
                     metrics_json,
                 ),
             )
-            return cur.lastrowid
+            return int(cur.lastrowid or 0)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
