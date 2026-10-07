@@ -1,4 +1,4 @@
-import { ATMEL_24_BOX_DEFINITIONS } from "../atmel-chip-boxes";
+import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxes";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
@@ -14,6 +14,11 @@ import type {
 // Canonical rule names requested by user
 export const RULE_1_NAME = "Rule 1: Pin 1 Orientation Rule";
 export const RULE_2_NAME = "Rule 2: greyscale-pattern-match-24-box";
+
+const FALLBACK_CHIP_CENTER_X = 68.0;
+const FALLBACK_CHIP_CENTER_Y = 76.0;
+const FALLBACK_MARKING_WIDTH = 58.0;
+const FALLBACK_MARKING_HEIGHT = 44.0;
 
 // Expected relative positions of 24 laser marking features on the Atmel chip body (normalized -1..1 from center)
 const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedLuma: number }[] = [
@@ -397,21 +402,43 @@ export function analyzeRule2PatternReal(
   tolerances: MultiRuleToleranceParams,
 ): Rule2PatternResult {
   const { rgba, width, height } = buffer;
-  const centerX = 68.0;
-  const centerY = 76.0;
-  const boxOriginX = centerX - 46.0;
-  const boxOriginY = centerY - 46.0;
-  const chipScale = 92.0 / 100.0;
-  const toleranceLuma = 19.0;
+  const measuredDevice = measureDeviceEdges(buffer);
+  const isMeasuredDeviceUsable = Boolean(
+    measuredDevice &&
+      measuredDevice.widthPx >= width * 0.55 &&
+      measuredDevice.widthPx <= width * 0.95 &&
+      measuredDevice.heightPx >= height * 0.45 &&
+      measuredDevice.heightPx <= height * 0.95 &&
+      measuredDevice.leftEdgePx <= width * 0.25,
+  );
+  const chipCenterX = isMeasuredDeviceUsable && measuredDevice
+    ? measuredDevice.leftEdgePx + measuredDevice.widthPx / 2
+    : FALLBACK_CHIP_CENTER_X;
+  const chipCenterY = isMeasuredDeviceUsable && measuredDevice
+    ? measuredDevice.topEdgePx + measuredDevice.heightPx / 2
+    : FALLBACK_CHIP_CENTER_Y;
+  const markingWidth = isMeasuredDeviceUsable && measuredDevice
+    ? Math.max(48, Math.min(64, measuredDevice.widthPx * 0.52))
+    : FALLBACK_MARKING_WIDTH;
+  const markingHeight = isMeasuredDeviceUsable && measuredDevice
+    ? Math.max(34, Math.min(48, measuredDevice.heightPx * 0.44))
+    : FALLBACK_MARKING_HEIGHT;
+  const boxOriginX = chipCenterX - markingWidth / 2;
+  const boxOriginY = chipCenterY - markingHeight / 2;
+  const chipScaleX = markingWidth / 100.0;
+  const chipScaleY = markingHeight / 100.0;
+  const threshold = Math.max(0, Math.min(255, tolerances.greyscaleLevel));
+  const toleranceLuma = Math.max(12, Math.min(38, 36 - Math.max(0, threshold - 128) * 0.12));
+  const minContrast = Math.max(4, Math.min(18, 4 + Math.max(0, threshold - 120) * 0.08));
 
   let matchedCount = 0;
   const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
 
-  const boxResults: Rule2BoxItem[] = ATMEL_24_BOX_DEFINITIONS.map((def) => {
-    const boxX = Math.round(boxOriginX + def.relX * chipScale);
-    const boxY = Math.round(boxOriginY + def.relY * chipScale);
-    const boxW = Math.max(1, Math.round(def.width * chipScale));
-    const boxH = Math.max(1, Math.round(def.height * chipScale));
+  const boxResults: Rule2BoxItem[] = ATMEL_24_BOX_DEFINITIONS.map((def, idx) => {
+    const boxX = Math.round(boxOriginX + def.relX * chipScaleX);
+    const boxY = Math.round(boxOriginY + def.relY * chipScaleY);
+    const boxW = Math.max(1, Math.round(def.width * chipScaleX));
+    const boxH = Math.max(1, Math.round(def.height * chipScaleY));
 
     let sum = 0;
     let count = 0;
@@ -427,8 +454,10 @@ export function analyzeRule2PatternReal(
     }
 
     const measuredLuma = count > 0 ? Math.round(sum / count) : 0;
-    const diff = Math.abs(measuredLuma - 40);
-    const isMatched = diff <= toleranceLuma;
+    const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
+    const diff = Math.abs(measuredLuma - expectedLuma);
+    const localContrast = measureLocalContrast(buffer, boxX, boxY, boxW, boxH);
+    const isMatched = (diff <= toleranceLuma || Math.abs(localContrast) >= minContrast) && measuredLuma > 18;
 
     if (isMatched) {
       matchedCount += 1;
@@ -461,6 +490,47 @@ export function analyzeRule2PatternReal(
       : `Pattern score ${score}% below limit (${tolerances.minMatchPercent}%)`,
     boxResults,
   };
+}
+
+function measureLocalContrast(
+  buffer: PixelBufferInput,
+  boxX: number,
+  boxY: number,
+  boxW: number,
+  boxH: number,
+): number {
+  const { rgba, width, height } = buffer;
+  const pad = Math.max(2, Math.round(Math.min(boxW, boxH) * 0.65));
+  let innerSum = 0;
+  let innerCount = 0;
+  let outerSum = 0;
+  let outerCount = 0;
+
+  for (let y = boxY - pad; y < boxY + boxH + pad; y += 1) {
+    for (let x = boxX - pad; x < boxX + boxW + pad; x += 1) {
+      if (x < 0 || y < 0 || x >= width || y >= height) {
+        continue;
+      }
+
+      const idx = (y * width + x) * 4;
+      const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+      const isInner = x >= boxX && x < boxX + boxW && y >= boxY && y < boxY + boxH;
+
+      if (isInner) {
+        innerSum += luma;
+        innerCount += 1;
+      } else {
+        outerSum += luma;
+        outerCount += 1;
+      }
+    }
+  }
+
+  if (innerCount === 0 || outerCount === 0) {
+    return 0;
+  }
+
+  return innerSum / innerCount - outerSum / outerCount;
 }
 
 // Fallback synthetic evaluations for unit tests where pure PocketDef is passed without canvas buffer

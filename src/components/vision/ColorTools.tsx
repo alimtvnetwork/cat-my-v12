@@ -84,7 +84,6 @@ export function ColorTools(): React.JSX.Element | null {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="grayscale">Grayscale</SelectItem>
-                <SelectItem value="2-bit">2-bit (Black/White)</SelectItem>
                 <SelectItem value="heatmap">Heatmap (Jet)</SelectItem>
                 <SelectItem value="key-color">Key Color Extraction</SelectItem>
               </SelectContent>

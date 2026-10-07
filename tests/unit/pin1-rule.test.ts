@@ -21,9 +21,9 @@ describe("usePin1Rule controller hook", () => {
     );
 
     expect(result.current.polarity).toBe(HolePolarityType.DarkIndentation);
-    expect(result.current.thresholdLuma).toBe(80);
-    expect(result.current.minCircularity).toBe(70);
-    expect(result.current.tolerancePx).toBe(8);
+    expect(result.current.thresholdLuma).toBe(35);
+    expect(result.current.minCircularity).toBe(45);
+    expect(result.current.tolerancePx).toBe(25);
     expect(result.current.detectedHoles).toEqual([]);
     expect(result.current.matchResult).toBeNull();
   });
@@ -114,7 +114,7 @@ describe("usePin1Rule controller hook", () => {
     expect(updatedState.toolType).toBe("Pin 1 Orientation Config");
     expect(updatedState.pin1Config).toBeDefined();
     expect(updatedState.pin1Config.polarity).toBe(HolePolarityType.DarkIndentation);
-    expect(updatedState.pin1Config.thresholdLuma).toBe(80);
+    expect(updatedState.pin1Config.thresholdLuma).toBe(35);
     expect(updatedState.pin1Config.registeredPin1).toEqual(dummyHole);
   });
 

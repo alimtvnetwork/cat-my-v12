@@ -18,6 +18,7 @@ import type { Rule, RuleId } from "@/lib/rules/model";
 import { fromIntId } from "@/lib/rules/rule-id-alias";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
+import { ScanSearch } from "lucide-react";
 import { StandardPatternSearch } from "@/components/vision/standard/StandardPatternSearch";
 import { StandardInspectionToolDispatcher } from "@/components/vision/standard/tools/StandardInspectionToolDispatcher";
 import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSearch";
@@ -410,6 +411,16 @@ function RuleEditorRoute() {
         activeNav="setup"
         title={rule ? `Rule: ${rule.name}` : "Inspection Rule"}
         subtitle="Standard Inspection Tool Parameters"
+        actions={
+          <Link
+            to="/analyze"
+            search={{ rule: rule?.id } as any}
+            className="inline-flex items-center gap-1.5 px-3 py-1 bg-ca-select text-ca-bg text-xs font-semibold rounded hover:brightness-110 shadow-sm transition-all"
+          >
+            <ScanSearch className="w-3.5 h-3.5" />
+            <span>Open in Visual Analyze Canvas</span>
+          </Link>
+        }
       >
         {validationError && (
           <div className="bg-ca-panel text-ca-danger px-4 py-2 text-sm border-b border-ca-border">

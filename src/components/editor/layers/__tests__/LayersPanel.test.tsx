@@ -127,4 +127,22 @@ describe("LayersPanel", () => {
     expect(props.onSelect).toHaveBeenCalledWith("c", "range");
     expect(props.onDeleteSelected).toHaveBeenCalledTimes(1);
   });
+
+  it("triggers onMoveUp and onMoveDown when reorder buttons are clicked", () => {
+    const onMoveUp = vi.fn();
+    const onMoveDown = vi.fn();
+    setup({ onMoveUp, onMoveDown });
+
+    const moveUpBeta = screen.getByRole("button", { name: /Move Beta up in sequence/i });
+    const moveDownBeta = screen.getByRole("button", { name: /Move Beta down in sequence/i });
+
+    expect(moveUpBeta).toBeTruthy();
+    expect(moveDownBeta).toBeTruthy();
+
+    fireEvent.click(moveUpBeta);
+    expect(onMoveUp).toHaveBeenCalledWith("b");
+
+    fireEvent.click(moveDownBeta);
+    expect(onMoveDown).toHaveBeenCalledWith("b");
+  });
 });

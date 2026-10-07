@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 from BE.main import create_app
+from fastapi.testclient import TestClient
 
 
 def _client() -> TestClient:
@@ -76,3 +75,45 @@ def test_score_evaluation_pattern_match() -> None:
     assert body["Status"]["IsSuccess"] is True
     assert "confidence" in body
     assert "is_pass" in body
+
+
+def test_score_evaluation_with_optical_settings() -> None:
+    client = _client()
+    resp = client.post(
+        "/score",
+        json={
+            "ruleType": "grayscale_tolerance",
+            "threshold": 0.8,
+            "tolerance": 20,
+            "roi": {"x": 10, "y": 10, "width": 50, "height": 50},
+            "cameraSettings": {"exposureUs": 20000, "gainDb": 0.0},
+            "lightSettings": {"intensity": 100.0, "channel": 1},
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["Status"]["IsSuccess"] is True
+    assert body["is_pass"] is True
+    assert body["optical"] is not None
+    assert body["optical"]["cameraSettings"]["exposureUs"] == 20000
+
+
+def test_score_evaluation_optical_underexposure_fails() -> None:
+    client = _client()
+    resp = client.post(
+        "/score",
+        json={
+            "ruleType": "grayscale_tolerance",
+            "threshold": 0.9,
+            "tolerance": 10,
+            "roi": {"x": 10, "y": 10, "width": 50, "height": 50},
+            "cameraSettings": {"exposureUs": 200, "gainDb": 0.0},
+            "lightSettings": {"intensity": 5.0, "channel": 1},
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["Status"]["IsSuccess"] is True
+    assert body["is_pass"] is False
+    assert body["optical"] is not None
+

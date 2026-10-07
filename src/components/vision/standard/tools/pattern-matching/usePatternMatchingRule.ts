@@ -18,6 +18,7 @@ import {
   CHIP_GOOD_DATA_URL,
   CHIP_STM8_DATA_URL,
 } from "./chip-assets";
+
 import type { PatternMatchingRuleProps } from "./types";
 import { useConveyorSimulation } from "./useConveyorSimulation";
 
@@ -31,53 +32,17 @@ export async function normalizeImageToStandardCanvas(
   origH: number,
   isChipSample = false,
 ): Promise<{ source: WhiteBoxMarkingInput; searchRegion: SearchRegion }> {
-  // Compute standard scale and centered placement
-  const scale = Math.min(
-    STANDARD_IMAGE_MAX_SIZE / Math.max(1, origW),
-    STANDARD_IMAGE_MAX_SIZE / Math.max(1, origH),
-  );
-  const destW = Math.max(20, Math.round(origW * scale));
-  const destH = Math.max(20, Math.round(origH * scale));
-  const destX = Math.round((STANDARD_CANVAS_WIDTH - destW) / 2);
-  const destY = Math.round((STANDARD_CANVAS_HEIGHT - destH) / 2);
-
-  let searchRegion: SearchRegion;
-
-  if (isChipSample && origW === 140 && origH === 148) {
-    const scaleX = destW / 140;
-    const scaleY = destH / 148;
-    searchRegion = {
-      x: Math.round(destX + 9 * scaleX),
-      y: Math.round(destY + 10 * scaleY),
-      width: Math.round(122 * scaleX),
-      height: Math.round(122 * scaleY),
-    };
-  } else if (
-    (origW === 467 && origH === 428) ||
-    (origW >= 400 && origW <= 500 && origH >= 380 && origH <= 460)
-  ) {
-    // The uploaded Atmel board photo (media_1789983809287.jpg) with solid chip body at (114, 75, 296, 296)
-    const scaleX = destW / origW;
-    const scaleY = destH / origH;
-    searchRegion = {
-      x: Math.round(destX + 114 * scaleX),
-      y: Math.round(destY + 75 * scaleY),
-      width: Math.round(296 * scaleX),
-      height: Math.round(296 * scaleY),
-    };
-  } else {
-    searchRegion = {
-      x: destX,
-      y: destY,
-      width: destW,
-      height: destH,
-    };
-  }
-
   const canvas = document.createElement("canvas");
   canvas.width = STANDARD_CANVAS_WIDTH;
   canvas.height = STANDARD_CANVAS_HEIGHT;
   const ctx = canvas.getContext("2d");
+
+  const searchRegion: SearchRegion = {
+    x: 350,
+    y: 220,
+    width: 350,
+    height: 180,
+  };
 
   if (!ctx) {
     return {
@@ -90,30 +55,8 @@ export async function normalizeImageToStandardCanvas(
     };
   }
 
-  // Dark industrial inspection stage background
-  ctx.fillStyle = "#12151b";
-  ctx.fillRect(0, 0, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT);
-
-  // Subtle inspection stage grid
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.025)";
-  ctx.lineWidth = 1;
-
-  for (let x = 0; x < STANDARD_CANVAS_WIDTH; x += 32) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, STANDARD_CANVAS_HEIGHT);
-    ctx.stroke();
-  }
-
-  for (let y = 0; y < STANDARD_CANVAS_HEIGHT; y += 32) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(STANDARD_CANVAS_WIDTH, y);
-    ctx.stroke();
-  }
-
-  // Draw centered image onto inspection stage
-  ctx.drawImage(imageSource, destX, destY, destW, destH);
+  // Draw image to fill standard 960x540 canvas (identical to Workpiece Canvas)
+  ctx.drawImage(imageSource, 0, 0, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT);
 
   const imgData = ctx.getImageData(0, 0, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT);
 
@@ -239,6 +182,48 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   const [matchResult, setMatchResult] = useState<PatternMatchResult | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const targetUrl =
+      (props as any)?.imageRef ||
+      (props.settings as any)?.imageRef;
+
+    if (!targetUrl || source !== null) {
+      return;
+    }
+
+    void dataUrlToStandardImageInput(targetUrl, true)
+      .then(({ source: stdSource, searchRegion: stdRegion }) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setSource(stdSource);
+
+        if (!searchRegion) {
+          setSearchRegion(stdRegion);
+        }
+
+        const result = evaluateChipPixelsReal({
+          targetRgba: stdSource.rgba,
+          targetWidth: stdSource.width,
+          targetHeight: stdSource.height,
+          searchRegion: searchRegion ?? stdRegion,
+          toleranceLuma: 22,
+          minMatchPercent,
+        });
+
+        setMatchResult(result);
+      })
+      .catch(() => {
+        // Ignored
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [props.settings]);
 
   const handleSearchRegionChange = useCallback(
     (newRegion: SearchRegion | null) => {

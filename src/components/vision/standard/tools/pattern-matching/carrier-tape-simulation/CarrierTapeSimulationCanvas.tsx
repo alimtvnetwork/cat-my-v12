@@ -10,6 +10,7 @@ import type {
   CarrierTapeFrame,
   DeviceMeasurement,
   MultiRuleToleranceParams,
+  PocketDef,
   PocketInspectionResult,
 } from "./types";
 
@@ -28,6 +29,15 @@ export interface CarrierTapeSimulationCanvasProps {
 interface CameraClickTransition {
   startTime: number;
   durationMs: number;
+}
+
+interface ChipOverlayGeometry {
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+  markingWidth: number;
+  markingHeight: number;
 }
 
 // Conveyor registration jitter (pronounced mechanical displacement per frame: moves up/down/left/right)
@@ -216,13 +226,13 @@ export function CarrierTapeSimulationCanvas(
   }, [frame, isAnalyzing, hasOverlays, selectedPocketIndex, tolerances, onResultsAnalyzed]);
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center overflow-auto bg-ca-bg p-3 select-none">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 items-start justify-center overflow-hidden bg-ca-bg px-2 pb-2 pt-1 select-none">
       <canvas
         ref={canvasRef}
         width={CARRIER_TAPE_WIDTH}
         height={CARRIER_TAPE_HEIGHT}
-        className="rounded border border-ca-border bg-black shadow-2xl"
-        style={{ width: 690, height: 388 }}
+        className="max-h-full max-w-full rounded border border-ca-border bg-black shadow-2xl"
+        style={{ width: "min(100%, 690px)", height: "auto" }}
       />
     </div>
   );
@@ -251,6 +261,40 @@ function extractSubRegion(
   return dest;
 }
 
+function getChipOverlayGeometry(
+  pocket: PocketDef,
+  measurement: DeviceMeasurement | null,
+): ChipOverlayGeometry {
+  const isMeasurementUsable = Boolean(
+    measurement &&
+      measurement.widthPx >= pocket.width * 0.55 &&
+      measurement.widthPx <= pocket.width * 0.95 &&
+      measurement.heightPx >= pocket.height * 0.45 &&
+      measurement.heightPx <= pocket.height * 0.95 &&
+      measurement.leftEdgePx <= pocket.width * 0.25,
+  );
+
+  if (isMeasurementUsable && measurement) {
+    return {
+      centerX: pocket.x + measurement.leftEdgePx + measurement.widthPx / 2,
+      centerY: pocket.y + measurement.topEdgePx + measurement.heightPx / 2,
+      width: measurement.widthPx,
+      height: measurement.heightPx,
+      markingWidth: Math.max(48, Math.min(64, measurement.widthPx * 0.52)),
+      markingHeight: Math.max(34, Math.min(48, measurement.heightPx * 0.44)),
+    };
+  }
+
+  return {
+    centerX: pocket.x + 68,
+    centerY: pocket.y + 76,
+    width: 92,
+    height: 92,
+    markingWidth: 58,
+    markingHeight: 44,
+  };
+}
+
 function drawPocketInspectionOverlays(
   ctx: CanvasRenderingContext2D,
   frame: CarrierTapeFrame,
@@ -275,9 +319,10 @@ function drawPocketInspectionOverlays(
     const isPass = res?.verdict === "PASS";
     const isFail = res?.verdict === "FAIL";
     const isEmpty = res?.verdict === "EMPTY";
-
-    const centerX = x + 72;
-    const centerY = y + 75;
+    const measurement = deviceMeasurements[i] ?? null;
+    const chipGeometry = getChipOverlayGeometry(pocket, measurement);
+    const centerX = chipGeometry.centerX;
+    const centerY = chipGeometry.centerY;
 
     // 1. Device Bounding Box: ONLY on the device component (not on the pocket)
     if (isEmpty) {
@@ -289,15 +334,11 @@ function drawPocketInspectionOverlays(
       ctx.setLineDash([]);
     } else {
       // Occupied pocket: Green (PASS) or Red (REJECT) rectangle drawn strictly on the CHIP DEVICE
-      const devHalfW = 51;
-      const devHalfH = 47;
+      const devHalfW = chipGeometry.width / 2;
+      const devHalfH = chipGeometry.height / 2;
 
       ctx.save();
       ctx.translate(centerX, centerY);
-
-      if (pocket.rotationDeg !== 0) {
-        ctx.rotate((pocket.rotationDeg * Math.PI) / 180);
-      }
 
       if (isPass) {
         ctx.strokeStyle = "#10b981";
@@ -353,21 +394,21 @@ function drawPocketInspectionOverlays(
     const badgeY = y - badgeH - 3;
     ctx.font = "bold 8.5px monospace";
 
-    let badgeText = `POCKET #${i + 1}: `;
+    let badgeText = `P${i + 1}: `;
     let badgeBg = "#334155";
     const badgeFg = "#ffffff";
 
     if (isEmpty) {
-      badgeText += "EMPTY [NO COMPONENT]";
+      badgeText += "EMPTY";
       badgeBg = "#475569";
     } else if (isPass) {
-      badgeText += `PASS [R1: OK • R2: ${res?.rule2Pattern?.matchedCount ?? 24}/24 (100%)]`;
+      badgeText += `PASS R1 OK R2 ${res?.rule2Pattern?.matchedCount ?? 24}/24`;
       badgeBg = "#059669";
     } else if (isFail) {
       if (res?.failedRuleIndex === 1) {
-        badgeText += "REJECT [R1: PIN 1 FAIL • R2: SKIPPED]";
+        badgeText += "FAIL R1";
       } else {
-        badgeText += `REJECT [R1: OK • R2: PATTERN ${res?.rule2Pattern?.score ?? 0}%]`;
+        badgeText += `FAIL R2 ${res?.rule2Pattern?.score ?? 0}%`;
       }
 
       badgeBg = "#dc2626";
@@ -386,11 +427,10 @@ function drawPocketInspectionOverlays(
 
     // 3. Detailed Inspection Visualizations for Occupied Device
     if (!isEmpty && res) {
-      // Cavity center inside uncutoff pocket is at (x + 68, y + 76)
-      const centerX = x + 68;
-      const centerY = y + 76;
-      const chipSize = 92;
-      const half = chipSize / 2;
+      const markingWidth = chipGeometry.markingWidth;
+      const markingHeight = chipGeometry.markingHeight;
+      const halfW = markingWidth / 2;
+      const halfH = markingHeight / 2;
 
       // ---------------------------------------------------------
       // RULE 1: Pin 1 Orientation Rule Visual Representation
@@ -549,17 +589,14 @@ function drawPocketInspectionOverlays(
         ctx.save();
         ctx.translate(centerX, centerY);
 
-        if (pocket.rotationDeg !== 0) {
-          ctx.rotate((pocket.rotationDeg * Math.PI) / 180);
-        }
-
         const boxes = res.rule2Pattern?.boxResults ?? [];
+        const isRule2Pass = Boolean(res.rule2Pattern?.isPass);
 
         // 1. Draw Pattern Envelope (Bounding ROI around laser marking features)
-        const envX = -32;
-        const envY = -20;
-        const envW = 64;
-        const envH = 50;
+        const envX = -halfW - 3;
+        const envY = -halfH - 3;
+        const envW = markingWidth + 6;
+        const envH = markingHeight + 6;
 
         ctx.strokeStyle = res.rule2Pattern?.isPass
           ? "rgba(6, 182, 212, 0.75)"
@@ -581,10 +618,10 @@ function drawPocketInspectionOverlays(
 
         // 2. Draw all 24 individual character boxes with color-coded results
         for (const b of boxes) {
-          const bX = -half + (b.relX / 100) * chipSize;
-          const bY = -half + (b.relY / 100) * chipSize;
-          const bW = (b.width / 100) * chipSize;
-          const bH = (b.height / 100) * chipSize;
+          const bX = -halfW + (b.relX / 100) * markingWidth;
+          const bY = -halfH + (b.relY / 100) * markingHeight;
+          const bW = (b.width / 100) * markingWidth;
+          const bH = (b.height / 100) * markingHeight;
 
           if (b.isMatched) {
             ctx.strokeStyle = "#10b981";
@@ -595,6 +632,17 @@ function drawPocketInspectionOverlays(
 
             ctx.font = "bold 5px monospace";
             ctx.fillStyle = "#34d399";
+            ctx.textAlign = "center";
+            ctx.fillText(b.label, bX + bW / 2, bY + bH - 1.0);
+          } else if (isRule2Pass) {
+            ctx.strokeStyle = "#f59e0b";
+            ctx.fillStyle = "rgba(245, 158, 11, 0.16)";
+            ctx.lineWidth = 0.9;
+            ctx.fillRect(bX, bY, bW, bH);
+            ctx.strokeRect(bX, bY, bW, bH);
+
+            ctx.font = "bold 5px monospace";
+            ctx.fillStyle = "#fbbf24";
             ctx.textAlign = "center";
             ctx.fillText(b.label, bX + bW / 2, bY + bH - 1.0);
           } else {
@@ -628,8 +676,6 @@ function drawPocketInspectionOverlays(
       // DEVICE WIDTH Dimension Line (real edge-detected measurement)
       // Positioned BELOW the pocket boundary for clear visibility
       // ---------------------------------------------------------
-      const measurement = deviceMeasurements[i];
-
       if (measurement) {
         // Edges are relative to pocket origin — convert to canvas coords
         const dimLeftX = x + measurement.leftEdgePx;

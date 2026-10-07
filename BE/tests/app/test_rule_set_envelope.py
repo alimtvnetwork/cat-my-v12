@@ -81,3 +81,35 @@ def test_non_dict_root_rejected() -> None:
     with pytest.raises(AppError) as ei:
         parse_envelope([])  # type: ignore[arg-type]
     assert ei.value.code == ErrorCode.E_BE_BAD_REQUEST
+
+
+def test_camera_and_light_settings_roundtrip() -> None:
+    payload = _valid()
+    payload["Rules"][0]["CameraSettings"] = {"ExposureUs": 2500, "GainDb": 6.0}
+    payload["Rules"][0]["LightSettings"] = {"Intensity": 75.0, "Channel": 2, "HasStrobe": True}
+    env = parse_envelope(payload)
+    wire = env.to_wire()
+    rule = wire["Rules"][0]
+    assert rule["CameraSettings"]["ExposureUs"] == 2500
+    assert rule["LightSettings"]["Intensity"] == 75.0
+    assert rule["LightSettings"]["HasStrobe"] is True
+
+
+def test_camera_and_light_settings_camelcase_parsing() -> None:
+    payload = _valid()
+    payload["Rules"][0]["cameraSettings"] = {"exposureUs": 3000, "gainDb": 12.0}
+    payload["Rules"][0]["lightSettings"] = {"intensity": 50.0, "channel": 1}
+    env = parse_envelope(payload)
+    assert env.Rules[0].CameraSettings is not None
+    assert env.Rules[0].CameraSettings.ExposureUs == 3000
+    assert env.Rules[0].LightSettings is not None
+    assert env.Rules[0].LightSettings.Intensity == 50.0
+
+
+def test_invalid_camera_settings_rejected() -> None:
+    payload = _valid()
+    payload["Rules"][0]["CameraSettings"] = "invalid_not_an_object"
+    with pytest.raises(AppError) as ei:
+        parse_envelope(payload)
+    assert ei.value.code == ErrorCode.E_BE_BAD_REQUEST
+

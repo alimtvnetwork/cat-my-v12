@@ -18,10 +18,15 @@ import {
   Copy,
   Trash2,
   Play,
+  Plus,
+  Cpu,
 } from "lucide-react";
 import { HmiShell } from "@/components/hmi";
 import { SectionTopBar } from "@/components/nav/SectionTopBar";
 import { useProjectStore } from "@/lib/projects/store";
+import { useCameraLibrary } from "@/lib/camera/useCameraLibrary";
+import { useDeviceStore } from "@/lib/devices/store";
+import { AddDeviceModal } from "@/components/devices/AddDeviceModal";
 import { useServerFn } from "@tanstack/react-start";
 import { runProject } from "@/lib/run-project.functions";
 import { StorageKey } from "@/lib/constants";
@@ -145,11 +150,22 @@ function ProjectsIndex() {
   const [rowError, setRowError] = useState<string | null>(null);
   // Plan 64 step 72: optional New Project attachments (camera / rulesets / categories).
   const [cameraName, setCameraName] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [rulesetNamesRaw, setRulesetNamesRaw] = useState("");
   const [categoryNamesRaw, setCategoryNamesRaw] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importErr, setImportErr] = useState<string | null>(null);
+
+  const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
+  const devices = useDeviceStore((s) => s.devices);
+
+  const deviceOptions = useMemo(() => {
+    return Object.values(devices).map((d) => ({
+      id: d.id,
+      label: `${d.name} (${d.id}) - ${d.packageType}`,
+    }));
+  }, [devices]);
 
   // Plan 64 step 93: Command Palette "New Project" opens the create dialog.
   useEffect(() => {
@@ -233,6 +249,7 @@ function ProjectsIndex() {
 
   function openDialog() {
     setName("");
+    setDeviceId("");
     setCameraName("");
     setRulesetNamesRaw("");
     setCategoryNamesRaw("");
@@ -262,11 +279,22 @@ function ProjectsIndex() {
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-      const categoryNames = categoryNamesRaw
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+      const standardCategories = [
+        "Presence / Absence",
+        "Flaw Detection",
+        "Count & Measure",
+        "ID / OCR",
+        "Color & Coating",
+      ];
+      const categoryNames =
+        categoryNamesRaw.trim().length > 0
+          ? categoryNamesRaw
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0)
+          : standardCategories;
       const projectId = createProject(trimmed, {
+        deviceId: deviceId.trim() || undefined,
         cameraName: cameraName.trim() || undefined,
         rulesetNames,
         categoryNames,
@@ -274,6 +302,7 @@ function ProjectsIndex() {
       console.info("[projects/new] created", {
         projectId,
         name: trimmed,
+        deviceId: deviceId.trim() || null,
         rulesetCount: rulesetNames.length,
         categoryCount: categoryNames.length,
         cameraName: cameraName.trim() || null,
@@ -565,6 +594,11 @@ function ProjectsIndex() {
                               {p.rulesetIds.length}{" "}
                               {p.rulesetIds.length === 1 ? "rule set" : "rule sets"}
                             </span>
+                            {p.deviceId ? (
+                              <span className="inline-flex items-center gap-1 rounded-sm border border-ca-border bg-ca-select/10 px-hmi-2 py-[2px] font-mono text-[11px] text-ca-select">
+                                Device: {p.deviceId}
+                              </span>
+                            ) : null}
                           </p>
                           <p
                             className="mt-hmi-1 truncate font-mono text-[11px] leading-tight text-ca-ink-muted/80"
@@ -677,6 +711,40 @@ function ProjectsIndex() {
                   Use the part number or lot code so it's easy to find later.
                 </span>
               </label>
+              <div className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
+                <div className="flex items-center justify-between">
+                  <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+                    Inspected Device (Target Chip / Circuit)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddDeviceOpen(true)}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-ca-primary hover:underline"
+                  >
+                    <Plus size={12} />
+                    Add New Device
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    list="device-options"
+                    value={deviceId}
+                    onChange={(e) => setDeviceId(e.target.value)}
+                    placeholder="e.g. STM32F4-MCU-BOARD, PCB-ECU-MAIN, or custom part ID"
+                    className="w-full rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
+                  />
+                  <datalist id="device-options">
+                    {deviceOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
+                <span className="text-hmi-caption text-ca-ink-muted">
+                  Binds this project to the physical chip, circuit board, or DUT (Device Under Test) being inspected.
+                </span>
+              </div>
               <label className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
                 <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
                   Camera (optional)
@@ -706,9 +774,23 @@ function ProjectsIndex() {
                 <input
                   value={categoryNamesRaw}
                   onChange={(e) => setCategoryNamesRaw(e.target.value)}
-                  placeholder="e.g. Solder, OCR, Missing"
+                  placeholder="e.g. Presence / Absence, Flaw Detection"
                   className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
                 />
+                <div className="mt-1 flex items-center justify-between text-[11px] text-ca-ink-muted">
+                  <span>Defaults to standard 5 AOI categories if blank.</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCategoryNamesRaw(
+                        "Presence / Absence, Flaw Detection, Count & Measure, ID / OCR, Color & Coating",
+                      )
+                    }
+                    className="font-semibold text-ca-select hover:underline"
+                  >
+                    + Pre-fill All 5 Categories
+                  </button>
+                </div>
               </label>
               {error ? (
                 <p
@@ -753,6 +835,11 @@ function ProjectsIndex() {
                   {name.trim() || "Your project"}
                 </h3>
                 <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">0 rule sets</p>
+                {deviceId.trim() ? (
+                  <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-select">
+                    Device: {deviceId.trim()}
+                  </p>
+                ) : null}
                 <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-ink-muted">
                   proj_...
                   {name.trim() ? name.trim().slice(0, 6).toLowerCase().replace(/\s+/g, "-") : "new"}
@@ -780,6 +867,12 @@ function ProjectsIndex() {
           </form>
         </div>
       ) : null}
+
+      <AddDeviceModal
+        isOpen={isAddDeviceOpen}
+        onClose={() => setIsAddDeviceOpen(false)}
+        onDeviceCreated={(created) => setDeviceId(created.id)}
+      />
 
       {renameFor ? (
         <div

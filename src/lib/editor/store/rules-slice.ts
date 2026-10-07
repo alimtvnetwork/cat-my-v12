@@ -8,7 +8,7 @@ import { EditorToolFamilyType } from "@/lib/editor/types";
 import { create } from "zustand";
 import { logger } from "../errors";
 import { hydrateRuleSetForStore } from "../migrations";
-import type { EditorRect, EditorRule } from "../types";
+import type { EditorRect, EditorRule, RuleCameraSettings, RuleLightSettings } from "../types";
 import { recordRuleHistory, recordRuleHistoryCoalesced } from "./history-slice";
 import type { HistoryKind, RuleGroup } from "./history-types";
 
@@ -353,9 +353,41 @@ export function applySetBounds(
   return { ...state, rules };
 }
 
+export function applyUpdateRuleOptical(
+  state: RulesState,
+  ruleId: string,
+  optical: {
+    cameraSettings?: RuleCameraSettings;
+    lightSettings?: RuleLightSettings;
+  },
+): RulesState {
+  let hasChanged = false;
+  const rules = state.rules.map((r) => {
+    if (r.id !== ruleId || r.isLocked) return r;
+    hasChanged = true;
+
+    return {
+      ...r,
+      ...(optical.cameraSettings !== undefined ? { cameraSettings: optical.cameraSettings } : {}),
+      ...(optical.lightSettings !== undefined ? { lightSettings: optical.lightSettings } : {}),
+    };
+  });
+
+  if (!hasChanged) return state;
+
+  return { ...state, rules };
+}
+
 // ----- Commit boundary: emits one log line per action, wraps pure reducers.
 
 export interface RulesActions {
+  updateRuleOptical: (
+    ruleId: string,
+    optical: {
+      cameraSettings?: RuleCameraSettings;
+      lightSettings?: RuleLightSettings;
+    },
+  ) => void;
   setLocked: (ruleIds: string[], locked: boolean) => void;
   setHidden: (ruleIds: string[], hidden: boolean) => void;
   deleteRules: (ruleIds: string[]) => void;
@@ -499,6 +531,16 @@ const INITIAL_STATE: RulesState = { rules: [], selectedIds: [], groups: [], acti
 
 export const useRulesStore = create<RulesStore>((set, get) => ({
   ...INITIAL_STATE,
+
+  updateRuleOptical: (ruleId, optical) => {
+    const before = get();
+    const next = applyUpdateRuleOptical(before, ruleId, optical);
+
+    if (next === before) return;
+    set(next);
+    recordRuleHistoryCoalesced("params.edit", before, next, `optical.edit:${ruleId}`);
+    logger.info("I_UI_RULE_OPTICAL_CHANGED", { ruleId });
+  },
 
   setLocked: (ruleIds, locked) => {
     const before = get();

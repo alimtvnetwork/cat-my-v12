@@ -10,6 +10,7 @@ import { SaveCameraSetupModal } from "@/features/projects/modals/SaveCameraSetup
 export function ProjectCameraSection({ project }: { project: Project }): React.JSX.Element | null {
   const { all } = useCameraLibrary();
   const setProjectCamera = useProjectStore((s) => s.setProjectCamera);
+  const setProjectDevice = useProjectStore((s) => s.setProjectDevice);
   const [error, setError] = useState<string | null>(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const selectedId = project.cameraSettingId ?? "";
@@ -82,6 +83,19 @@ export function ProjectCameraSection({ project }: { project: Project }): React.J
             </option>
           ))}
         </select>
+      </div>
+      <div className="mt-hmi-3 flex items-center gap-hmi-2">
+        <label htmlFor="project-device-input" className="text-hmi-caption text-ca-ink-muted">
+          Inspected Device (Chip / Circuit)
+        </label>
+        <input
+          id="project-device-input"
+          data-testid="project-device-input"
+          value={project.deviceId ?? ""}
+          placeholder="(e.g. STM32F4-MCU-BOARD, PCB-ECU-MAIN)"
+          onChange={(e) => setProjectDevice(project.id, e.target.value.trim() || null)}
+          className="flex-1 rounded-md border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-hmi-body text-ca-ink"
+        />
       </div>
       {selectedId && all.some((c) => c.id === selectedId) === false ? (
         <p role="alert" className="mt-hmi-2 text-hmi-caption text-ca-ng">

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Binary, Camera, Cpu, RefreshCw, Trash2, Upload } from "lucide-react";
+import React, { useState } from "react";
+import { Binary, Camera, RefreshCw, Trash2, Upload } from "lucide-react";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
 import { Pin1Canvas } from "./Pin1Canvas";
 import { Pin1ReviewPanel } from "./Pin1ReviewPanel";
@@ -10,91 +10,44 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
   const model = usePin1Rule(props as any);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const buttonLabel = props.actionButtonLabel ?? "Save as Pin 1 Rule";
-
-  const { source, loadSampleAtmel } = model;
-
-  // Pre-load authentic Atmel MEGA32U4 chip sample if empty
-  useEffect(() => {
-    if (!source) {
-      void loadSampleAtmel();
-    }
-  }, [source, loadSampleAtmel]);
+  const activeRegion =
+    model.regionEditMode === "package" ? model.packageRegion : model.searchRegion;
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-x-auto bg-std-chrome text-ca-ink font-sans select-none">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white font-sans select-none">
       <div className="flex h-full min-h-[720px] min-w-[1024px] flex-col">
-        {/* Stage 1 Authoring Header: Clean generic actions */}
-        <header className="flex h-10 shrink-0 flex-wrap items-center gap-3 border-b border-ca-border bg-ca-panel-2 px-3 py-1.5">
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2.5 py-1 text-xs font-semibold text-ca-ink hover:bg-ca-bg">
-            <Upload className="h-3.5 w-3.5" />
-            <span>Load Image</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => void model.loadFile(e.target.files?.[0])}
-              className="sr-only"
-            />
-          </label>
+        {/* Main Workspace */}
+        <div className="flex min-h-0 flex-1">
+          {/* Left: Canvas */}
+          <div className="flex min-h-0 flex-1 flex-col relative border-r border-[#333]">
+            {/* Top-left absolute toolbar (Old HMI style over canvas) */}
+            <div className="absolute top-2 left-2 z-10 flex gap-2">
+              <button
+                type="button"
+                onClick={model.toggleGreyscalePreview}
+                className={`px-3 py-1.5 text-xs font-bold uppercase rounded shadow border ${
+                  model.hasGreyscalePreview
+                    ? "bg-[#00ff9d]/20 border-[#00ff9d] text-[#00ff9d]"
+                    : "bg-[#222]/80 border-[#444] text-white hover:bg-[#333]"
+                }`}
+              >
+                {model.hasGreyscalePreview ? "FILTERED (Binarized)" : "RAW (RGB)"}
+              </button>
+              <button
+                type="button"
+                onClick={model.clearCanvas}
+                className="px-3 py-1.5 text-xs font-bold uppercase rounded shadow border border-[#444] bg-[#222]/80 text-white hover:bg-[#333]"
+              >
+                Clear
+              </button>
+            </div>
 
-          <button
-            type="button"
-            onClick={() => void model.loadSampleAtmel()}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2.5 py-1 text-xs font-semibold text-ca-ink hover:bg-ca-bg"
-            title="Load authentic Atmel MEGA32U4 chip sample"
-          >
-            <Cpu className="h-3.5 w-3.5 text-ca-select" />
-            <span>Sample Chip</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsCameraOpen(true)}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2.5 py-1 text-xs font-semibold text-ca-ink hover:bg-ca-bg"
-          >
-            <Camera className="h-3.5 w-3.5 text-ca-select" />
-            <span>Live Camera</span>
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2.5 py-1 text-xs font-semibold text-ca-ink hover:bg-ca-bg disabled:opacity-50"
-            onClick={model.runDetection}
-            disabled={model.source === null || model.isDetecting}
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${model.isDetecting ? "animate-spin" : ""}`} />
-            <span>{model.isDetecting ? "Detecting..." : "Detect Hole"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={model.toggleGreyscalePreview}
-            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold transition-colors ${
-              model.hasGreyscalePreview
-                ? "border-ca-select bg-ca-select/20 text-ca-select"
-                : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-panel-2"
-            }`}
-          >
-            <Binary className="h-3.5 w-3.5" />
-            <span>{model.hasGreyscalePreview ? "Binarized Preview" : "RGB Normal"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={model.clearCanvas}
-            className="inline-flex items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2 py-1 text-xs font-semibold text-ca-ink hover:bg-ca-panel-2"
-          >
-            <Trash2 className="h-3.5 w-3.5 text-ca-ink-muted hover:text-rose-400" />
-            <span>Clear</span>
-          </button>
-
-          <span className="ml-auto font-mono text-[11px] text-ca-ink-muted">{model.message}</span>
-        </header>
-
-        {/* Main Workspace: 960x540 Canvas + Review Panel */}
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_380px]">
-          <Pin1Canvas
+            <Pin1Canvas
             source={model.source}
             searchRegion={model.searchRegion}
+            packageRegion={model.packageRegion}
+            activeRegion={activeRegion}
+            regionEditMode={model.regionEditMode}
             detectedHoles={model.detectedHoles}
             registeredPin1={model.registeredPin1}
             matchResult={model.matchResult}
@@ -103,7 +56,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
             dragState={model.dragState}
-            onSearchRegionChange={model.handleSearchRegionChange}
+            onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}
           />
@@ -116,8 +69,11 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             maxRadiusPx={model.maxRadiusPx}
             tolerancePx={model.tolerancePx}
             searchRegion={model.searchRegion}
+            packageRegion={model.packageRegion}
+            regionEditMode={model.regionEditMode}
             detectedHoles={model.detectedHoles}
             registeredPin1={model.registeredPin1}
+            matchResult={model.matchResult}
             isSaving={model.isSaving}
             saveMessage={model.saveMessage}
             actionButtonLabel={buttonLabel}
@@ -129,12 +85,50 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
               model.setMaxRadiusPx(maxR);
             }}
             onToleranceChange={model.setTolerancePx}
+            onRegionEditModeChange={model.setRegionEditMode}
+            onAddPackageRegion={model.addPackageRegion}
             onToggleKeepHole={model.toggleKeepHole}
             onSelectPrimaryPin1={model.setPrimaryPin1Hole}
             onIncludeAll={model.includeAllHoles}
             onExcludeAll={model.excludeAllHoles}
             onSaveRule={model.savePin1Rule}
+            onCancel={props.onCancel}
           />
+          </div>
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="h-12 bg-[#2d2d2d] flex items-center justify-between px-4 shrink-0 border-t border-[#444]">
+          <div className="flex items-center gap-4">
+            <label className="cursor-pointer px-4 py-1.5 bg-[#444] hover:bg-[#555] text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2">
+              <Upload size={14} />
+              Register Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => void model.loadFile(e.target.files?.[0])}
+                className="sr-only"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsCameraOpen(true)}
+              className="px-4 py-1.5 bg-[#444] hover:bg-[#555] text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2"
+            >
+              <Camera size={14} />
+              Live Camera
+            </button>
+            <button
+              type="button"
+              className="px-4 py-1.5 bg-[#00ff9d] text-black text-xs font-bold uppercase rounded transition-colors flex items-center gap-2 disabled:opacity-50"
+              onClick={model.runDetection}
+              disabled={model.source === null || model.isDetecting}
+            >
+              <RefreshCw size={14} className={model.isDetecting ? "animate-spin" : ""} />
+              {model.isDetecting ? "Detecting..." : "Run"}
+            </button>
+          </div>
+          <span className="font-mono text-xs text-ca-ink-muted">{model.message}</span>
         </div>
       </div>
 

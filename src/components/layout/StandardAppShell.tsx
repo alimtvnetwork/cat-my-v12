@@ -2,6 +2,7 @@ import React, { type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
+  ScanSearch,
   LayoutDashboard,
   Settings,
   Activity,
@@ -20,6 +21,7 @@ export interface StandardAppShellProps {
   subtitle?: string;
   activeNav?:
     | "home"
+    | "analyze"
     | "run"
     | "ops"
     | "setup"
@@ -44,6 +46,7 @@ export function StandardAppShell({
   const getNavActive = (key: string) => {
     if (activeNav) return activeNav === key;
     if (key === "home" && pathname === "/") return true;
+    if (key === "analyze" && pathname.startsWith("/analyze")) return true;
     if (key === "run" && pathname.startsWith("/run")) return true;
     if (key === "ops" && pathname.startsWith("/ops")) return true;
     if (key === "setup" && pathname.startsWith("/setup")) return true;
@@ -83,6 +86,10 @@ export function StandardAppShell({
             <Link to="/" className={navLinkClass(getNavActive("home"))}>
               <Home className="h-3.5 w-3.5" />
               <span>Home</span>
+            </Link>
+            <Link to="/analyze" className={navLinkClass(getNavActive("analyze"))}>
+              <ScanSearch className="h-3.5 w-3.5" />
+              <span>Analyze</span>
             </Link>
             <Link to="/run" className={navLinkClass(getNavActive("run"))}>
               <LayoutDashboard className="h-3.5 w-3.5" />

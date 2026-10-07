@@ -36,6 +36,8 @@ export interface Pin1InspectionSettings {
   maxRadiusPx: number;
   tolerancePx: number;
   registeredPin1?: Pin1HoleItem | null;
+  searchRegion?: SearchRegion | null;
+  packageRegion?: SearchRegion | null;
 }
 
 export interface Pin1MatchResult {
@@ -49,21 +51,35 @@ export interface Pin1MatchResult {
   deltaX: number;
   deltaY: number;
   deltaDistance: number;
+  angleDeg?: number;
+  matchPercent?: number;
+  scale?: number;
+  packageRegion?: SearchRegion | null;
   executionTimeMs: number;
 }
+
+export type Pin1RegionEditMode = "search" | "package";
 
 export interface Pin1ToolProps {
   toolType?: string;
   ruleName?: string;
-  settings: PatternSearchSettings;
-  onChange: React.Dispatch<React.SetStateAction<PatternSearchSettings>>;
+  settings?: PatternSearchSettings;
+  onChange?: React.Dispatch<React.SetStateAction<PatternSearchSettings>> | ((prev: any) => void);
   onEvaluate?: () => void;
   onCancel?: () => void;
-  onOk?: () => void;
+  onOk?: (payload?: any) => void;
+  onApply?: (payload?: any) => void;
+  imageRef?: string;
 }
 
 export interface Pin1MarkingToolProps {
   actionButtonLabel?: string;
   onSave?: (registered: Pin1HoleItem) => void;
+  settings?: PatternSearchSettings;
+  onChange?: React.Dispatch<React.SetStateAction<PatternSearchSettings>> | ((prev: any) => void);
+  onOk?: (payload?: any) => void;
+  onApply?: (payload?: any) => void;
+  onCancel?: () => void;
+  imageRef?: string;
 }
 

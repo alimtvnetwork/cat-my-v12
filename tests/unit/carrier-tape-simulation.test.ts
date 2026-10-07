@@ -3,8 +3,13 @@ import { build15FrameSequence } from "@/components/vision/standard/tools/pattern
 import {
   analyzeEmptyPocketReal,
   analyzeRule1Pin1Real,
+  analyzeRule2PatternReal,
   evaluatePocket,
 } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
+import {
+  ATMEL_24_BOX_DEFINITIONS,
+  GOLDEN_ATMEL_LUMAS,
+} from "@/components/vision/standard/tools/pattern-matching/atmel-chip-boxes";
 import type {
   MultiRuleToleranceParams,
   PocketDef,
@@ -357,5 +362,61 @@ describe("Carrier Tape Real Computer Vision Pixel Analysis Engine", () => {
     expect(res.isRule2Skipped).toBe(true);
     expect(res.rule2Pattern?.isSkipped).toBe(true);
     expect(res.rule2Pattern?.score).toBe(0);
+  });
+
+  it("applies real Rule 2 greyscale values instead of fixed luma", () => {
+    const w = 141;
+    const h = 152;
+    const rgba = createPixelBuffer(w, h, 10);
+    const centerX = 68.0;
+    const centerY = 76.0;
+    const markingWidth = 58.0;
+    const markingHeight = 44.0;
+    const boxOriginX = centerX - markingWidth / 2;
+    const boxOriginY = centerY - markingHeight / 2;
+    const chipScaleX = markingWidth / 100.0;
+    const chipScaleY = markingHeight / 100.0;
+
+    ATMEL_24_BOX_DEFINITIONS.forEach((def, idx) => {
+      const boxX = Math.round(boxOriginX + def.relX * chipScaleX);
+      const boxY = Math.round(boxOriginY + def.relY * chipScaleY);
+      const boxW = Math.max(1, Math.round(def.width * chipScaleX));
+      const boxH = Math.max(1, Math.round(def.height * chipScaleY));
+      const luma = Math.round(GOLDEN_ATMEL_LUMAS[idx] ?? 45);
+
+      for (let y = boxY; y < boxY + boxH; y += 1) {
+        for (let x = boxX; x < boxX + boxW; x += 1) {
+          const p = (y * w + x) * 4;
+          rgba[p] = luma;
+          rgba[p + 1] = luma;
+          rgba[p + 2] = luma;
+        }
+      }
+    });
+
+    const pass = analyzeRule2PatternReal({ rgba, width: w, height: h }, tolerances);
+    expect(pass.isPass).toBe(true);
+    expect(pass.matchedCount).toBe(24);
+
+    for (const boxNumber of [8, 9, 10, 14, 15, 23]) {
+      const def = ATMEL_24_BOX_DEFINITIONS.find((item) => item.boxNumber === boxNumber)!;
+      const boxX = Math.round(boxOriginX + def.relX * chipScaleX);
+      const boxY = Math.round(boxOriginY + def.relY * chipScaleY);
+      const boxW = Math.max(1, Math.round(def.width * chipScaleX));
+      const boxH = Math.max(1, Math.round(def.height * chipScaleY));
+
+      for (let y = boxY; y < boxY + boxH; y += 1) {
+        for (let x = boxX; x < boxX + boxW; x += 1) {
+          const p = (y * w + x) * 4;
+          rgba[p] = 10;
+          rgba[p + 1] = 10;
+          rgba[p + 2] = 10;
+        }
+      }
+    }
+
+    const fail = analyzeRule2PatternReal({ rgba, width: w, height: h }, tolerances);
+    expect(fail.isPass).toBe(false);
+    expect(fail.matchedCount).toBeLessThan(24);
   });
 });

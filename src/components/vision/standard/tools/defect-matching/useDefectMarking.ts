@@ -327,6 +327,22 @@ export function useDefectMarking(props?: DefectMarkingToolProps) {
         constellation,
       };
 
+      const notifyChange = props?.onChange ?? props?.onSettingsChange;
+
+      if (notifyChange) {
+        notifyChange((prev: any) => ({
+          ...prev,
+          ...conditionPayload,
+        }));
+      }
+
+      if (String(targetRuleId).includes("draft-rule") || notifyChange) {
+        setSaveMessage(`Calibrated defect rule (${ruleName})`);
+        toast.success(`Defect Rule "${ruleName}" calibrated.`);
+
+        return;
+      }
+
       const existingRule = allRules.find((r) => r.id === targetRuleId);
       const newRule: Rule = {
         id: targetRuleId,

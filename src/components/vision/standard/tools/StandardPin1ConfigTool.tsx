@@ -13,6 +13,8 @@ export function StandardPin1ConfigTool(
 ): React.JSX.Element {
   const model = usePin1Rule(props);
   const [hasOverlays, setHasOverlays] = useState(true);
+  const activeRegion =
+    model.regionEditMode === "package" ? model.packageRegion : model.searchRegion;
 
   const handleReconfigure = () => {
     if (typeof window !== "undefined") {
@@ -21,8 +23,7 @@ export function StandardPin1ConfigTool(
   };
 
   const handleApply = () => {
-    model.runDetection();
-    props.onOk?.();
+    void model.savePin1Rule();
   };
 
   return (
@@ -46,7 +47,10 @@ export function StandardPin1ConfigTool(
           <Pin1Canvas
             source={model.source}
             searchRegion={model.searchRegion}
-            detectedHoles={model.matchResult?.activeHole ? [model.matchResult.activeHole] : []}
+            packageRegion={model.packageRegion}
+            activeRegion={activeRegion}
+            regionEditMode={model.regionEditMode}
+            detectedHoles={model.detectedHoles}
             registeredPin1={model.registeredPin1}
             matchResult={model.matchResult}
             hasOverlays={hasOverlays}
@@ -54,8 +58,9 @@ export function StandardPin1ConfigTool(
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
             dragState={model.dragState}
-            onSearchRegionChange={model.handleSearchRegionChange}
+            onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
+            onSelectHole={model.setPrimaryPin1Hole}
           />
 
           <div className="flex flex-col h-full border-l border-ca-border bg-ca-panel-2 p-2.5 overflow-y-auto gap-3">

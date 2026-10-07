@@ -1,5 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { drawRgbaToCanvas, toThresholdPreviewRgba } from "@/lib/vision/white-box-marking";
+import {
+  drawRgbaToCanvas,
+  toThresholdPreviewRgba,
+  STANDARD_CANVAS_WIDTH,
+  STANDARD_CANVAS_HEIGHT,
+} from "@/lib/vision/white-box-marking";
 import { drawFormulatedEnvelope, drawSearchRegion, drawToleranceZones } from "@/components/vision/white-box/canvas-drawing";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
 import type { FormulatedPatternGeometry, RegionDrag, SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult } from "@/components/vision/white-box/types";
@@ -79,7 +84,7 @@ export function DefectCanvas(props: DefectCanvasProps): React.JSX.Element {
       return;
     }
 
-    drawRgbaToCanvas(canvas, image.width, image.height, image.rgba);
+    drawRgbaToCanvas(canvas, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT, image.rgba);
 
     const ctx = canvas.getContext("2d");
 
@@ -113,15 +118,15 @@ export function DefectCanvas(props: DefectCanvasProps): React.JSX.Element {
   ]);
 
   return (
-    <div className="h-full overflow-auto border-r border-ca-border bg-ca-bg p-3">
+    <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
       <canvas
         ref={canvasRef}
-        width={props.source?.width ?? 960}
-        height={props.source?.height ?? 540}
+        width={STANDARD_CANVAS_WIDTH}
+        height={STANDARD_CANVAS_HEIGHT}
         onPointerDown={drag.handlePointerDown}
         onPointerMove={drag.handlePointerMove}
         onPointerUp={drag.handlePointerUp}
-        className="max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
+        className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
       />
     </div>
   );

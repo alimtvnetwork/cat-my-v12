@@ -6,30 +6,29 @@ import type {
   WhiteBoxMark,
 } from "./types";
 
-export function drawSearchRegion(context: CanvasRenderingContext2D, region: SearchRegion): void {
-  context.save();
-  context.strokeStyle = "#22d3ee";
-  context.lineWidth = 2;
-  context.setLineDash([8, 5]);
-  context.strokeRect(region.x + 0.5, region.y + 0.5, region.width, region.height);
-  context.setLineDash([]);
-  context.fillStyle = "#22d3ee";
-  context.strokeStyle = "#001015";
-
-  for (const handle of regionHandles(region)) {
-    context.fillRect(handle.x - 4, handle.y - 4, 8, 8);
-    context.strokeRect(handle.x - 4.5, handle.y - 4.5, 9, 9);
-  }
-
-  context.restore();
+export function drawSearchRegion(_context: CanvasRenderingContext2D, _region: SearchRegion): void {
+  // Zero-ROI: Bounding box rectangles and resize handles eliminated
 }
 
 export function drawPatternBoxes(
   context: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
+  status?: "pass" | "fail" | "warn" | "pending",
 ): void {
   context.save();
+
+  const isPass = status === "pass";
+  const isFailed = status === "fail";
+  const isWarn = status === "warn";
+  const activeColor = isPass ? "#10b981" : isWarn ? "#f59e0b" : "#ef4444";
+  const activeFill = isPass
+    ? "rgba(16, 185, 129, 0.16)"
+    : isWarn
+      ? "rgba(245, 158, 11, 0.15)"
+      : isFailed
+        ? "rgba(239, 68, 68, 0.15)"
+        : "rgba(239, 68, 68, 0.08)";
 
   for (const box of boxes) {
     const isExcluded = excludedNumbers.has(box.number);
@@ -40,16 +39,18 @@ export function drawPatternBoxes(
       context.setLineDash([4, 4]);
       context.strokeRect(box.x + 0.5, box.y + 0.5, box.width, box.height);
     } else {
-      context.strokeStyle = "#ef4444";
+      context.strokeStyle = activeColor;
       context.lineWidth = 2;
       context.setLineDash([]);
+      context.fillStyle = activeFill;
+      context.fillRect(box.x + 0.5, box.y + 0.5, box.width, box.height);
       context.strokeRect(box.x + 0.5, box.y + 0.5, box.width, box.height);
 
       const text = String(box.number);
       const badgeW = Math.max(16, text.length * 7 + 6);
       const badgeY = box.y >= 14 ? box.y - 13 : box.y + 2;
 
-      context.fillStyle = "#ef4444";
+      context.fillStyle = activeColor;
       context.fillRect(box.x, badgeY, badgeW, 12);
       context.fillStyle = "#ffffff";
       context.font = "bold 9px monospace";
@@ -61,20 +62,11 @@ export function drawPatternBoxes(
 }
 
 export function drawFormulatedEnvelope(
-  context: CanvasRenderingContext2D,
-  pattern: FormulatedPatternGeometry,
+  _context: CanvasRenderingContext2D,
+  _pattern: FormulatedPatternGeometry,
+  _status?: "pass" | "fail" | "warn" | "pending",
 ): void {
-  context.save();
-  context.strokeStyle = "#10b981";
-  context.lineWidth = 2;
-  context.setLineDash([6, 4]);
-  context.strokeRect(pattern.x + 0.5, pattern.y + 0.5, pattern.width, pattern.height);
-  context.fillStyle = "rgba(16, 185, 129, 0.12)";
-  context.fillRect(pattern.x, pattern.y, pattern.width, pattern.height);
-  context.fillStyle = "#10b981";
-  context.font = "bold 10px monospace";
-  context.fillText(`PATTERN (+${pattern.marginPx}px)`, pattern.x + 4, Math.max(14, pattern.y - 4));
-  context.restore();
+  // Zero-ROI: Enclosing bounding boxes eliminated
 }
 
 export function drawToleranceZones(

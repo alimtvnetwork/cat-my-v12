@@ -9,6 +9,7 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
+  ScanSearch,
 } from "lucide-react";
 import type { CatalogTool, CatalogCategory } from "./types";
 import type { Rule } from "@/lib/rules/model";
@@ -149,6 +150,14 @@ export function StandardToolDetailPanel({
           <Settings className="w-3.5 h-3.5" />
           <span>Configure / Launch Tool</span>
         </button>
+
+        <Link
+          to="/analyze"
+          className="w-full py-1.5 px-3 bg-ca-select text-ca-bg font-bold rounded text-xs flex items-center justify-center gap-1.5 hover:brightness-110 shadow-sm text-center"
+        >
+          <ScanSearch className="w-3.5 h-3.5" />
+          <span>Visual Analyze Workpiece</span>
+        </Link>
 
         <div className="grid grid-cols-2 gap-2">
           <button

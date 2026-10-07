@@ -15,6 +15,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const CreateProjectInput = z.object({
   name: z.string().min(1).max(80),
+  deviceId: z.string().max(128).optional(),
   cameraSettingsId: z.string().uuid().optional(),
   rulesetIds: z.array(z.string().uuid()).max(32).optional(),
   categoryNames: z.array(z.string().min(1).max(80)).max(32).optional(),
@@ -36,8 +37,11 @@ export const createProject = createServerFn({ method: HttpMethod.Post })
     const insertPayload: {
       owner_id: string;
       name: string;
+      device_id?: string;
       camera_settings_id?: string;
     } = { owner_id: userId, name: data.name };
+
+    if (data.deviceId) insertPayload.device_id = data.deviceId;
 
     if (data.cameraSettingsId) insertPayload.camera_settings_id = data.cameraSettingsId;
 

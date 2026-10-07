@@ -2,7 +2,7 @@ import type { BoxReviewPanelProps } from "./types";
 import { BoxReviewCard } from "./BoxReviewCard";
 import { GreyscaleSliderCard } from "./GreyscaleSliderCard";
 import { PatternGeometryCard } from "./PatternGeometryCard";
-import { Check, Loader2, Save } from "lucide-react";
+import { Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
 
 export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
   const hasBoxes = props.detectedBoxes.length > 0;
@@ -21,6 +21,105 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
           greyscaleLevel={props.greyscaleLevel}
           onGreyscaleChange={props.onGreyscaleChange}
         />
+
+        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
+          <div className="flex items-center justify-between border-b border-ca-border pb-1.5">
+            <span className="font-semibold uppercase text-xs">Regions</span>
+            <span className="font-mono text-[10px] text-ca-ink-muted">
+              Search / Pattern / Mask
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("search")}
+              className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${
+                props.regionEditMode === "search"
+                  ? "border-yellow-400 bg-yellow-400/15 text-yellow-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
+              }`}
+            >
+              Search Region
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("mask")}
+              className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${
+                props.regionEditMode === "mask"
+                  ? "border-emerald-400 bg-emerald-400/15 text-emerald-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
+              }`}
+            >
+              Mask Region
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+            <div className="rounded border border-yellow-500/40 bg-yellow-500/10 p-1.5 text-yellow-200">
+              Search
+              <div className="mt-0.5 text-ca-ink-muted">
+                {props.searchRegion
+                  ? `${props.searchRegion.width}x${props.searchRegion.height}`
+                  : "none"}
+              </div>
+            </div>
+            <div className="rounded border border-rose-500/40 bg-rose-500/10 p-1.5 text-rose-200">
+              Pattern
+              <div className="mt-0.5 text-ca-ink-muted">
+                {props.formulatedPattern
+                  ? `${Math.round(props.formulatedPattern.patternRegion.width)}x${Math.round(
+                      props.formulatedPattern.patternRegion.height,
+                    )}`
+                  : "none"}
+              </div>
+            </div>
+            <div className="rounded border border-emerald-500/40 bg-emerald-500/10 p-1.5 text-emerald-200">
+              Masks
+              <div className="mt-0.5 text-ca-ink-muted">{props.maskRegions.length}</div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={props.onAddMaskRegion}
+            className="flex w-full items-center justify-center gap-1.5 rounded border border-emerald-500/50 bg-emerald-950/30 px-2 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-900/40"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Mask Region
+          </button>
+
+          {props.maskRegions.length > 0 && (
+            <div className="space-y-1">
+              {props.maskRegions.map((region, index) => (
+                <div
+                  key={`${region.x}-${region.y}-${region.width}-${region.height}-${index}`}
+                  className={`flex items-center gap-1 rounded border px-2 py-1 text-[11px] ${
+                    props.selectedMaskIndex === index
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-100"
+                      : "border-ca-border bg-ca-panel text-ca-ink-muted"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => props.onSelectMaskRegion(index)}
+                    className="min-w-0 flex-1 text-left font-mono hover:text-ca-ink"
+                  >
+                    Mask {index + 1}: {region.width}x{region.height}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => props.onDeleteMaskRegion(index)}
+                    className="rounded p-1 text-rose-300 hover:bg-rose-950/40"
+                    title={`Delete mask ${index + 1}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <PatternGeometryCard
           formulatedPattern={props.formulatedPattern}
@@ -70,16 +169,24 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
         )}
       </div>
 
-      <div className="border-t border-ca-border bg-ca-panel-2 p-3">
+      <div className="border-t border-[#333] bg-[#1e1e1e] p-3 flex gap-2">
         <button
           type="button"
           onClick={props.onApplyPattern}
           disabled={props.formulatedPattern === null || props.isSaving}
-          className="flex w-full items-center justify-center gap-2 rounded bg-ca-select py-2 font-semibold text-xs text-ca-bg shadow transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex-1 items-center justify-center gap-2 rounded bg-[#00ff9d] text-black py-2 font-bold text-xs shadow transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {props.isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          <span>{props.isSaving ? "Saving..." : activeCount > 0 ? `${label} (${activeCount} boxes)` : label}</span>
+          <span>{props.isSaving ? "SAVING..." : "OK"}</span>
         </button>
+        {props.onCancel && (
+          <button
+            type="button"
+            onClick={props.onCancel}
+            className="flex-1 items-center justify-center gap-2 rounded bg-transparent border border-[#555] py-2 font-bold text-xs text-white hover:bg-[#333]"
+          >
+            CANCEL
+          </button>
+        )}
       </div>
     </aside>
   );

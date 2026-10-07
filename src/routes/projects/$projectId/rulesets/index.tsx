@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   XCircle,
   MinusCircle,
+  Trash2,
 } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
@@ -35,6 +36,7 @@ function RulesetsList() {
   const { projectId } = Route.useParams();
   const project = useProjectStore((s) => selectProject(s, projectId));
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
+  const deleteRuleset = useProjectStore((s) => s.deleteRuleset);
   const seeded = useSeededEmptyStateAction("rulesets.list");
 
   if (!project) {
@@ -112,6 +114,26 @@ function RulesetsList() {
                   <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-ink-muted">{r.id}</p>
                   <div className="mt-auto pt-hmi-3" />
                 </Link>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isConfirmed = window.confirm(`Delete rule set "${r.name}"? This removes its rules from this project.`);
+
+                    if (!isConfirmed) {
+                      return;
+                    }
+
+                    deleteRuleset(r.id);
+                    notifySuccess(`Rule set "${r.name}" deleted.`);
+                  }}
+                  className="absolute right-hmi-3 top-hmi-3 inline-flex rounded-sm border border-rose-800/70 bg-ca-bg/80 p-1.5 text-rose-300 transition hover:bg-rose-950/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+                  title="Delete rule set"
+                  aria-label={`Delete rule set ${r.name}`}
+                >
+                  <Trash2 aria-hidden size={14} />
+                </button>
                 <RulesetTestRunPill ruleset={r} />
               </li>
             ))}

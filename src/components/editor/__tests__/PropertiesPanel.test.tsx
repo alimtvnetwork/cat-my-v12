@@ -46,6 +46,7 @@ function setup(over: Partial<React.ComponentProps<typeof PropertiesPanel>> = {})
     onSetBounds: vi.fn(),
     onSetHidden: vi.fn(),
     onSetLocked: vi.fn(),
+    onUpdateOptical: vi.fn(),
     ...over,
   };
 
@@ -55,6 +56,17 @@ function setup(over: Partial<React.ComponentProps<typeof PropertiesPanel>> = {})
 describe("PropertiesPanel", () => {
   it("renders the empty state when no rule is selected", () => {
     setup({ selectedIds: [] });
+    expect(screen.getByText("No layer selected.")).toBeTruthy();
+  });
+
+  it("transitions between empty selection and single selection without hook order violation", () => {
+    const { rerender, props } = setup({ selectedIds: [] });
+    expect(screen.getByText("No layer selected.")).toBeTruthy();
+
+    rerender(<PropertiesPanel {...props} selectedIds={["a"]} />);
+    expect(screen.getByTestId("properties-panel")).toBeTruthy();
+
+    rerender(<PropertiesPanel {...props} selectedIds={[]} />);
     expect(screen.getByText("No layer selected.")).toBeTruthy();
   });
 
@@ -112,5 +124,21 @@ describe("PropertiesPanel", () => {
     setup({ rules: [makeRule({ isLocked: true })] });
     expect((screen.getByLabelText("X") as HTMLInputElement).disabled).toBe(true);
     expect((screen.getByLabelText("Rule kind") as HTMLSelectElement).disabled).toBe(true);
+  });
+
+  it("renders the optical settings section and forwards updates", async () => {
+    const user = userEvent.setup();
+    const { props } = setup();
+
+    expect(screen.getByTestId("properties-optical-card")).toBeTruthy();
+    expect(screen.getByText("Camera & Illumination")).toBeTruthy();
+
+    const channel3Btn = screen.getByRole("button", { name: "3" });
+    await user.click(channel3Btn);
+
+    expect(props.onUpdateOptical).toHaveBeenCalledWith("a", {
+      cameraSettings: expect.objectContaining({ exposureUs: 20000 }),
+      lightSettings: expect.objectContaining({ channel: 3 }),
+    });
   });
 });

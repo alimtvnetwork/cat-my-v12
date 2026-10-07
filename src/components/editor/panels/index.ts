@@ -17,3 +17,7 @@ export type { PatternEdgePanelProps } from "./PatternEdgePanel";
 export { ControllerPanel } from "./resolver";
 export type { ControllerPanelProps } from "./resolver";
 export { ColorPalettePanel } from "./ColorPalettePanel";
+export { OpticalSettingsPanel } from "./OpticalSettingsPanel";
+export { ToolAlgorithmConfigPanel } from "./ToolAlgorithmConfigPanel";
+export type { ToolAlgorithmConfigPanelProps } from "./ToolAlgorithmConfigPanel";
+export type { OpticalSettingsPanelProps } from "./OpticalSettingsPanel";

@@ -16,14 +16,14 @@ export function CameraCaptureModal({ isOpen, onClose, onCapture }: CameraCapture
 
     if (!video || video.videoWidth === 0 || video.videoHeight === 0) return;
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = 960;
+    canvas.height = 540;
     const ctx = canvas.getContext("2d");
 
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-    const img = ctx.getImageData(0, 0, video.videoWidth, video.videoHeight);
-    onCapture({ width: video.videoWidth, height: video.videoHeight, rgba: img.data });
+    ctx.drawImage(video, 0, 0, 960, 540);
+    const img = ctx.getImageData(0, 0, 960, 540);
+    onCapture({ width: 960, height: 540, rgba: img.data });
     onClose();
   }
 

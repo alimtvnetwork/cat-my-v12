@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, HardDrive, Cpu, Layers } from "lucide-react";
+import { Activity, HardDrive, Cpu, Layers, ScanSearch } from "lucide-react";
 import { DataSourceToggle } from "@/components/data-source/DataSourceToggle";
 import { CATALOG_TOOLS } from "./tools";
 
@@ -68,6 +68,13 @@ export function StandardCatalogHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        <Link
+          to="/analyze"
+          className="inline-flex items-center gap-1.5 px-3 py-1 bg-ca-select text-ca-bg text-xs font-semibold rounded hover:brightness-110 shadow-sm transition-all"
+        >
+          <ScanSearch className="w-3.5 h-3.5" />
+          <span>Analyze Workpiece</span>
+        </Link>
         <DataSourceToggle />
       </div>
     </div>

@@ -43,6 +43,8 @@ export interface LayersPanelProps {
   onDuplicate?: (id: string) => void;
   /** Step 10/11 wiring. When omitted, DnD and keyboard reorder are inert. */
   onReorder?: (args: LayerDndReorderArgs) => void;
+  onMoveUp?: (id: string) => void;
+  onMoveDown?: (id: string) => void;
   /** Step 16 shortcuts. Omit any handler to leave that shortcut inert. */
   onGroupSelected?: () => void;
   onUngroupSelected?: () => void;
@@ -72,6 +74,8 @@ export interface LayerSection {
   entries: FlatEntry[];
 }
 
+
+
 export function LayersPanel({
   rules,
   selectedIds,
@@ -83,6 +87,8 @@ export function LayersPanel({
   onDelete,
   onDuplicate,
   onReorder,
+  onMoveUp,
+  onMoveDown,
   onGroupSelected,
   onUngroupSelected,
   onMergeSelected,
@@ -445,6 +451,16 @@ export function LayersPanel({
                   onRename={(name) => onRename(e.rule!.id, name)}
                   onDelete={onDelete ? () => onDelete(e.rule!.id) : undefined}
                   onDuplicate={onDuplicate ? () => onDuplicate(e.rule!.id) : undefined}
+                  onMoveUp={
+                    onMoveUp && rules.indexOf(e.rule!) > 0
+                      ? () => onMoveUp(e.rule!.id)
+                      : undefined
+                  }
+                  onMoveDown={
+                    onMoveDown && rules.indexOf(e.rule!) < rules.length - 1
+                      ? () => onMoveDown(e.rule!.id)
+                      : undefined
+                  }
                   dragHandleProps={onReorder ? dnd.getDraggableProps(e.rule.id) : undefined}
                   dropTargetProps={onReorder ? dnd.getDropTargetProps(e.rule.id) : undefined}
                   dropIndicator={dnd.hover?.targetId === e.rule.id ? dnd.hover.position : null}

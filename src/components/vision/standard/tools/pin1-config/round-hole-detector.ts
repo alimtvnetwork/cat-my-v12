@@ -76,6 +76,9 @@ function buildBinaryGrid(params: DetectRoundHolesParams): {
   const binary = new Uint8Array(total);
   const lumas = new Float32Array(total);
 
+  let sumRegionLuma = 0;
+  let countRegionLuma = 0;
+
   for (let y = bounds.startY; y < bounds.endY; y += 1) {
     for (let x = bounds.startX; x < bounds.endX; x += 1) {
       const idx = y * targetWidth + x;
@@ -93,8 +96,31 @@ function buildBinaryGrid(params: DetectRoundHolesParams): {
       );
 
       lumas[idx] = luma;
+      sumRegionLuma += luma;
+      countRegionLuma += 1;
+    }
+  }
 
-      if (isPixelActive(luma, thresh, pol)) {
+  const meanRegionLuma = countRegionLuma > 0 ? sumRegionLuma / countRegionLuma : 50;
+  const isDarkIndentation = pol === HolePolarityType.DarkIndentation;
+  const isThreshAboveBackground = thresh >= meanRegionLuma;
+
+  const effectiveThresh =
+    isDarkIndentation && isThreshAboveBackground
+      ? Math.max(15, Math.round(meanRegionLuma * 0.75))
+      : thresh;
+
+  for (let y = bounds.startY; y < bounds.endY; y += 1) {
+    for (let x = bounds.startX; x < bounds.endX; x += 1) {
+      const idx = y * targetWidth + x;
+      const pixelIdx = idx * 4;
+      const alpha = targetRgba[pixelIdx + 3];
+
+      if (alpha < 128) {
+        continue;
+      }
+
+      if (isPixelActive(lumas[idx], effectiveThresh, pol)) {
         binary[idx] = 1;
       }
     }
@@ -183,8 +209,10 @@ function calculateCircularity(comp: ComponentBounds): number {
   }
 
   // Circularity = 4 * PI * Area / (Perimeter^2)
+  // Normalized for discrete pixel grid Manhattan boundary (pi^2 / 16 ~ 0.61685)
   const rawCircularity = (4 * Math.PI * comp.area) / (comp.perimeter * comp.perimeter);
-  const percentage = Math.round(rawCircularity * 100);
+  const normalized = rawCircularity / ((Math.PI * Math.PI) / 16);
+  const percentage = Math.round(normalized * 100);
 
   return Math.max(0, Math.min(100, percentage));
 }
@@ -200,6 +228,15 @@ function processCandidate(
   const radius = Math.sqrt(comp.area / Math.PI);
 
   if (radius < minR || radius > maxR) {
+    return null;
+  }
+
+  const boxW = comp.maxX - comp.minX + 1;
+  const boxH = comp.maxY - comp.minY + 1;
+  const aspectRatio = Math.min(boxW, boxH) / Math.max(1, Math.max(boxW, boxH));
+  const fillRatio = comp.area / Math.max(1, boxW * boxH);
+
+  if (aspectRatio < 0.45 || fillRatio < 0.28 || fillRatio > 0.96) {
     return null;
   }
 
@@ -234,9 +271,9 @@ function processCandidate(
 
 export function detectRoundHolesInRegion(params: DetectRoundHolesParams): Pin1HoleItem[] {
   const { targetWidth, targetHeight } = params;
-  const minCirc = params.minCircularityPercent ?? 60;
+  const minCirc = params.minCircularityPercent ?? 45;
   const minR = params.minRadiusPx ?? 2;
-  const maxR = params.maxRadiusPx ?? 40;
+  const maxR = params.maxRadiusPx ?? 60;
   const { binary, lumas, bounds } = buildBinaryGrid(params);
   const visited = new Uint8Array(targetWidth * targetHeight);
   const holes: Pin1HoleItem[] = [];
@@ -268,24 +305,24 @@ export function detectRoundHolesInRegion(params: DetectRoundHolesParams): Pin1Ho
     }
   }
 
-  // Sort: Prioritize candidates in top-left quadrant and higher circularity
-  const midX = (bounds.startX + bounds.endX) / 2;
-  const midY = (bounds.startY + bounds.endY) / 2;
-
   holes.sort((a, b) => {
-    const isATopLeft = a.centerX < midX && a.centerY < midY;
-    const isBTopLeft = b.centerX < midX && b.centerY < midY;
+    // If one candidate is a substantial hole (area >= 150px²) and another is a tiny speck (< 80px²):
+    const isASubstantial = a.areaPx >= 150;
+    const isBSubstantial = b.areaPx >= 150;
 
-    if (isATopLeft && !isBTopLeft) {
+    if (isASubstantial && !isBSubstantial) {
       return -1;
     }
 
-    if (!isATopLeft && isBTopLeft) {
+    if (!isASubstantial && isBSubstantial) {
       return 1;
     }
 
-    if (Math.abs(b.circularity - a.circularity) > 15) {
-      return b.circularity - a.circularity;
+    const prominenceA = (a.circularity / 100) * Math.log10(Math.max(10, a.areaPx));
+    const prominenceB = (b.circularity / 100) * Math.log10(Math.max(10, b.areaPx));
+
+    if (Math.abs(prominenceB - prominenceA) > 0.15) {
+      return prominenceB - prominenceA;
     }
 
     return b.areaPx - a.areaPx;
@@ -302,13 +339,21 @@ export interface EvaluatePin1Params {
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1?: Pin1HoleItem | null;
   searchRegion?: SearchRegion | null;
+  packageRegion?: SearchRegion | null;
   tolerancePx?: number;
 }
 
 export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1MatchResult {
   const start = performance.now();
-  const { detectedHoles, registeredPin1, searchRegion } = params;
+  const { detectedHoles, registeredPin1, searchRegion, packageRegion } = params;
   const tolerance = params.tolerancePx ?? 10;
+  const angleRegion = packageRegion ?? searchRegion ?? null;
+  const packageCenterX = angleRegion
+    ? Math.round(angleRegion.x + angleRegion.width / 2)
+    : registeredPin1?.centerX ?? 0;
+  const packageCenterY = angleRegion
+    ? Math.round(angleRegion.y + angleRegion.height / 2)
+    : registeredPin1?.centerY ?? 0;
 
   if (!registeredPin1) {
     const primary = detectedHoles.find((h) => h.isPrimaryPin1 && h.isKept) ?? null;
@@ -324,13 +369,21 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
       deltaX: 0,
       deltaY: 0,
       deltaDistance: 0,
+      angleDeg: primary
+        ? Math.round(((Math.atan2(primary.centerY - packageCenterY, primary.centerX - packageCenterX) * 180) / Math.PI) * 10) / 10
+        : 0,
+      matchPercent: primary ? primary.circularity : 0,
+      scale: 1,
+      packageRegion: angleRegion,
       executionTimeMs: Math.round((performance.now() - start) * 100) / 100,
     };
   }
 
   // Expected absolute position is the registered Pin 1 reference coordinate
-  const expectedX = registeredPin1.centerX;
-  const expectedY = registeredPin1.centerY;
+  const fallbackX = searchRegion ? Math.round(searchRegion.x + searchRegion.width / 2) : 0;
+  const fallbackY = searchRegion ? Math.round(searchRegion.y + searchRegion.height / 2) : 0;
+  const expectedX = registeredPin1.centerX ?? (registeredPin1 as any).x ?? fallbackX;
+  const expectedY = registeredPin1.centerY ?? (registeredPin1 as any).y ?? fallbackY;
 
   let bestMatch: Pin1HoleItem | null = null;
   let minDistance = Number.POSITIVE_INFINITY;
@@ -365,6 +418,15 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
   const deltaX = hasHole && bestMatch ? bestMatch.centerX - expectedX : 0;
   const deltaY = hasHole && bestMatch ? bestMatch.centerY - expectedY : 0;
   const score = hasHole && bestMatch ? bestMatch.circularity : 0;
+  const angleDeg =
+    hasHole && bestMatch
+      ? Math.round(((Math.atan2(bestMatch.centerY - packageCenterY, bestMatch.centerX - packageCenterX) * 180) / Math.PI) * 10) / 10
+      : 0;
+  const registeredDiameter = Math.max(1, registeredPin1.diameter ?? registeredPin1.radius * 2);
+  const scale =
+    hasHole && bestMatch
+      ? Math.round((bestMatch.diameter / registeredDiameter) * 1000) / 1000
+      : 0;
 
   return {
     isPass: isWithinTolerance,
@@ -377,6 +439,10 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
     deltaX,
     deltaY,
     deltaDistance: deltaDist,
+    angleDeg,
+    matchPercent: score,
+    scale,
+    packageRegion: angleRegion,
     executionTimeMs: Math.round((performance.now() - start) * 100) / 100,
   };
 

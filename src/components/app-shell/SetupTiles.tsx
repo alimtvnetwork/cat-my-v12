@@ -1,12 +1,13 @@
+import { Camera, ScanSearch, Sliders, Sun } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Camera, Sliders, Sun } from "lucide-react";
 
 /**
- * Plan 67 step 15: three large animated tiles for `/setup/`.
+ * Plan 67 step 15: animated tiles for `/setup/`.
  * Wired from `src/routes/setup.index.tsx` as the setup landing hub.
  * Uses only design tokens (ca-*) so it themes with the rest of the app.
  */
 export enum TileRouteType {
+  SetupAnalyze = "/analyze",
   SetupRules = "/setup/rules",
   SetupReference = "/setup/reference",
   SetupCamera = "/setup/camera",
@@ -22,6 +23,12 @@ interface Tile {
 }
 
 const TILES: readonly Tile[] = [
+  {
+    to: TileRouteType.SetupAnalyze,
+    title: "Workpiece Analysis",
+    blurb: "Inspection hierarchy tree, circuit IC DUT, and live workpiece canvas.",
+    Icon: ScanSearch,
+  },
   {
     to: TileRouteType.SetupCamera,
     title: "Camera Setup",
@@ -47,7 +54,7 @@ export function SetupTiles(): React.JSX.Element | null {
     <section
       aria-label="Setup"
       data-testid="setup-tiles"
-      className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-6 py-8 sm:grid-cols-3"
+      className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4"
     >
       {TILES.map((t) => (
         <Link
