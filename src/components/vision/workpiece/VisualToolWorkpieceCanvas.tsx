@@ -1500,17 +1500,56 @@ export function VisualToolWorkpieceCanvas({
     return "default";
   }, []);
 
+  const visualRulesList = overlayRules.length > 0 ? overlayRules : [];
+  const visualPassCount =
+    visualRulesList.length > 0
+      ? visualRulesList.filter((r) => {
+          const res = validationResultsMap?.[r.id];
+
+          return res?.status === "pass" || (r.id === selectedRuleId && validationStatus === "pass");
+        }).length
+      : validationStatus === "pass"
+        ? 1
+        : 0;
+  const visualFailCount =
+    visualRulesList.length > 0
+      ? visualRulesList.filter((r) => {
+          const res = validationResultsMap?.[r.id];
+
+          return res?.status === "fail" || (r.id === selectedRuleId && validationStatus === "fail");
+        }).length
+      : validationStatus === "fail"
+        ? 1
+        : 0;
+  const visualTotalCount = visualRulesList.length || 1;
+  const isFramePass = visualFailCount === 0 && (visualPassCount > 0 || validationStatus === "pass");
+  const isFrameFail = visualFailCount > 0;
+  const frameStatusLabel = isAnalyzing
+    ? "Scanning"
+    : isFrameFail
+      ? "Reject"
+      : isFramePass
+        ? "Pass"
+        : "Ready";
+  const frameStatusClass = isAnalyzing
+    ? "border-cyan-500/50 bg-cyan-950/40 text-cyan-300"
+    : isFrameFail
+      ? "border-rose-500/50 bg-rose-950/50 text-rose-300"
+      : isFramePass
+        ? "border-emerald-500/50 bg-emerald-950/50 text-emerald-300"
+        : "border-ca-border bg-ca-panel-2 text-ca-ink-muted";
+
   return (
-    <div className="flex flex-col h-full w-full bg-std-chrome border border-ca-border rounded-lg overflow-hidden select-none">
+    <div className="flex h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
       {/* Top HUD Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-ca-panel-2 border-b border-ca-border text-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-ca-ink flex items-center gap-1.5">
+      <div className="border-b border-ca-border bg-[#11161b] text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
               <ScanSearch size={14} className="text-ca-select" />
               {isAnalyzeMode ? "Auto-Analysis:" : "Auto-Inspection:"}
             </span>
-            <span className="font-mono text-xs text-emerald-400 bg-ca-panel px-2 py-0.5 rounded border border-ca-border/60">
+            <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-2 py-0.5 font-mono text-xs text-emerald-400">
               {isAnalyzeMode
                 ? isAnalyzing
                   ? "Scanning Full Workpiece..."
@@ -1518,7 +1557,7 @@ export function VisualToolWorkpieceCanvas({
                 : (toolName || "Autonomous Tool Inspection")}
             </span>
             {isPatternMatching && (
-              <span className="font-mono text-ca-ink-muted bg-ca-panel px-1.5 py-0.5 rounded border border-ca-border/60 text-xs">
+              <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-xs text-ca-ink-muted">
                 {(() => {
                   const count =
                     activeBoxesToDraw.length > 0
@@ -1532,92 +1571,97 @@ export function VisualToolWorkpieceCanvas({
               </span>
             )}
             {isPin1 && (
-              <span className="font-mono text-cyan-400 bg-ca-panel px-1.5 py-0.5 rounded border border-ca-border/60 text-xs">
+              <span className="rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-xs text-cyan-400">
                 Pin 1 Reticle Calibrated
               </span>
             )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {!isAnalyzeMode && isPatternMatching && (
-            <button
-              type="button"
-              onClick={() => handleDetectElements(true)}
-              className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold bg-ca-panel text-ca-ink border border-ca-border hover:bg-ca-panel-2 transition shadow-xs"
-              title="Run 2-bit connected components detection to extract real pattern elements"
-            >
-              <Sparkles size={13} className="text-ca-select" />
-              Detect Elements ({activeBoxesToDraw.length})
-            </button>
-          )}
-
-          {!isAnalyzeMode && onLaunchPatternTuner && (
-            <button
-              type="button"
-              onClick={onLaunchPatternTuner}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-ca-select/15 text-ca-select border border-ca-select/40 hover:bg-ca-select/25 transition"
-            >
-              <Sliders size={13} />
-              Tune Tool Visually
-            </button>
-          )}
-
-          <div className="flex items-center border border-ca-border rounded bg-ca-panel">
-            <button
-              type="button"
-              onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.2))}
-              className="p-1 text-ca-ink-muted hover:text-ca-ink"
-              title="Zoom out"
-            >
-              <ZoomOut size={13} />
-            </button>
-            <span className="px-1.5 font-mono text-[11px] text-ca-ink">
-              {Math.round(zoomLevel * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() => setZoomLevel((z) => Math.min(2.5, z + 0.2))}
-              className="p-1 text-ca-ink-muted hover:text-ca-ink"
-              title="Zoom in"
-            >
-              <ZoomIn size={13} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoomLevel(1)}
-              className="p-1 text-ca-ink-muted hover:text-ca-ink border-l border-ca-border"
-              title="Reset Zoom"
-            >
-              <Maximize size={12} />
-            </button>
+            {isAnalyzeMode && (
+              <span className={`rounded border px-2 py-0.5 font-mono text-xs font-bold uppercase ${frameStatusClass}`}>
+                {frameStatusLabel} · {visualPassCount}/{visualTotalCount}
+              </span>
+            )}
           </div>
 
-          {onRunAnalysis && (
-            <button
-              type="button"
-              onClick={onRunAnalysis}
-              disabled={isAnalyzing}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 transition shadow-xs disabled:opacity-50"
-              title="Run automated optical inspection analysis on workpiece image"
-            >
-              <PlayCircle size={13} className={isAnalyzing ? "animate-spin" : ""} />
-              {isAnalyzing ? "Analyzing..." : "Analyze Inspection"}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {!isAnalyzeMode && isPatternMatching && (
+              <button
+                type="button"
+                onClick={() => handleDetectElements(true)}
+                className="inline-flex items-center gap-1.5 rounded border border-ca-border bg-ca-panel px-2 py-1 text-xs font-semibold text-ca-ink transition hover:bg-ca-panel-2"
+                title="Run 2-bit connected components detection to extract real pattern elements"
+              >
+                <Sparkles size={13} className="text-ca-select" />
+                Detect Elements ({activeBoxesToDraw.length})
+              </button>
+            )}
 
-          {actionSlot}
+            {!isAnalyzeMode && onLaunchPatternTuner && (
+              <button
+                type="button"
+                onClick={onLaunchPatternTuner}
+                className="inline-flex items-center gap-1.5 rounded border border-ca-select/40 bg-ca-select/15 px-2.5 py-1 text-xs font-semibold text-ca-select transition hover:bg-ca-select/25"
+              >
+                <Sliders size={13} />
+                Tune Tool Visually
+              </button>
+            )}
+
+            <div className="flex items-center rounded border border-ca-border bg-[#0b0f12]">
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.2))}
+                className="p-1 text-ca-ink-muted hover:text-ca-ink"
+                title="Zoom out"
+              >
+                <ZoomOut size={13} />
+              </button>
+              <span className="px-1.5 font-mono text-[11px] text-ca-ink">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.min(2.5, z + 0.2))}
+                className="p-1 text-ca-ink-muted hover:text-ca-ink"
+                title="Zoom in"
+              >
+                <ZoomIn size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomLevel(1)}
+                className="border-l border-ca-border p-1 text-ca-ink-muted hover:text-ca-ink"
+                title="Reset Zoom"
+              >
+                <Maximize size={12} />
+              </button>
+            </div>
+
+            {onRunAnalysis && (
+              <button
+                type="button"
+                onClick={onRunAnalysis}
+                disabled={isAnalyzing}
+                className="inline-flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-600/20 px-2.5 py-1 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-600/30 disabled:opacity-50"
+                title="Run automated optical inspection analysis on workpiece image"
+              >
+                <PlayCircle size={13} className={isAnalyzing ? "animate-spin" : ""} />
+                {isAnalyzing ? "Analyzing..." : "Analyze Inspection"}
+              </button>
+            )}
+
+            {actionSlot}
+          </div>
         </div>
       </div>
 
       {/* Main Canvas Viewport */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto flex items-center justify-center p-3 bg-black/90 min-h-[260px] relative"
+        className="relative flex min-h-[260px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-4"
       >
         {isAnalyzeMode && overlayRules.length > 0 && (
-          <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 rounded border border-ca-border/80 bg-ca-panel/95 px-3 py-1.5 text-xs shadow-lg backdrop-blur-xs font-mono select-none">
-            <span className="flex items-center gap-1.5 font-bold text-ca-ink">
+          <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] flex-wrap items-center gap-2 rounded border border-ca-border/80 bg-[#10161c]/95 px-3 py-1.5 font-mono text-xs shadow-lg backdrop-blur-xs">
+            <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.12em] text-ca-ink">
               <span
                 className={`h-2 w-2 rounded-full ${
                   isAnalyzing
@@ -1662,6 +1706,8 @@ export function VisualToolWorkpieceCanvas({
           </div>
         )}
 
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
+
         <canvas
           ref={canvasRef}
           width={960}
@@ -1679,7 +1725,7 @@ export function VisualToolWorkpieceCanvas({
             cursor: cursorStyle,
             touchAction: "none",
           }}
-          className="aspect-video rounded border border-ca-border/70 shadow-2xl transition-transform duration-75 max-w-full max-h-full object-contain outline-none focus:ring-1 focus:ring-ca-select"
+          className="relative aspect-video max-h-full max-w-full rounded-sm border border-ca-border/80 object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.55)] outline-none transition-transform duration-75 focus:ring-1 focus:ring-ca-select"
         />
       </div>
 
@@ -1688,50 +1734,25 @@ export function VisualToolWorkpieceCanvas({
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)) && (
         <section
           aria-label="Visual Analysis Results"
-          className="shrink-0 border-t border-ca-border/80 bg-ca-panel/95 p-3 text-xs font-mono shadow-inner flex flex-col gap-2 max-h-56 overflow-y-auto"
+          className="flex max-h-56 shrink-0 flex-col gap-2 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-3 font-mono text-xs shadow-inner"
         >
           {(() => {
-            const rulesList = overlayRules.length > 0 ? overlayRules : [];
-            const passCount =
-              rulesList.length > 0
-                ? rulesList.filter((r) => {
-                    const res = validationResultsMap?.[r.id];
-
-                    return (
-                      res?.status === "pass" ||
-                      (r.id === selectedRuleId && validationStatus === "pass")
-                    );
-                  }).length
-                : validationStatus === "pass"
-                  ? 1
-                  : 0;
-            const failCount =
-              rulesList.length > 0
-                ? rulesList.filter((r) => {
-                    const res = validationResultsMap?.[r.id];
-
-                    return (
-                      res?.status === "fail" ||
-                      (r.id === selectedRuleId && validationStatus === "fail")
-                    );
-                  }).length
-                : validationStatus === "fail"
-                  ? 1
-                  : 0;
-            const overallPass = failCount === 0 && (passCount > 0 || validationStatus === "pass");
-            const effectiveStatus = failCount > 0 ? "fail" : overallPass ? "pass" : "warn";
+            const rulesList = visualRulesList;
+            const passCount = visualPassCount;
+            const failCount = visualFailCount;
+            const effectiveStatus = isFrameFail ? "fail" : isFramePass ? "pass" : "warn";
 
             return (
               <>
-                <div className="flex items-center justify-between gap-2 border-b border-ca-border/50 pb-1.5">
+                <div className="flex items-center justify-between gap-2 border-b border-ca-border/50 pb-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-bold uppercase tracking-wider text-[11px] ${
+                      className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
                         effectiveStatus === "pass"
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
                           : effectiveStatus === "fail"
-                            ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                            : "bg-amber-500/20 text-amber-400 border border-amber-500/40"
+                            ? "border-rose-500/40 bg-rose-500/20 text-rose-400"
+                            : "border-amber-500/40 bg-amber-500/20 text-amber-400"
                       }`}
                     >
                       {effectiveStatus === "pass" ? (
@@ -1750,11 +1771,17 @@ export function VisualToolWorkpieceCanvas({
                       VISUAL ANALYSIS ({passCount}/{rulesList.length || 1} PASS)
                     </span>
                   </div>
+                  <div className="hidden items-center gap-2 text-[10px] uppercase tracking-wider text-ca-ink-muted sm:flex">
+                    <span>Rules {rulesList.length || 1}</span>
+                    <span className="text-ca-border">|</span>
+                    <span className="text-emerald-400">Pass {passCount}</span>
+                    <span className="text-rose-400">Fail {failCount}</span>
+                  </div>
                 </div>
 
                 {/* All Rules Verdict Pills */}
                 {rulesList.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 py-1">
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-1.5 py-1">
                     {rulesList.map((r, idx) => {
                       const rRes = validationResultsMap?.[r.id];
                       const rStatus =
@@ -1768,21 +1795,21 @@ export function VisualToolWorkpieceCanvas({
                           key={r.id}
                           type="button"
                           onClick={() => onSelectRule?.(r.id)}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono border transition ${
+                          className={`flex min-w-0 items-center justify-between gap-2 rounded border px-2 py-1 text-[10px] font-mono transition ${
                             rStatus === "pass"
-                              ? "bg-emerald-950/70 border-emerald-700/70 text-emerald-300 hover:bg-emerald-900/80"
+                              ? "border-emerald-700/70 bg-emerald-950/70 text-emerald-300 hover:bg-emerald-900/80"
                               : rStatus === "fail"
-                                ? "bg-rose-950/70 border-rose-700/70 text-rose-300 hover:bg-rose-900/80"
+                                ? "border-rose-700/70 bg-rose-950/70 text-rose-300 hover:bg-rose-900/80"
                                 : rStatus === "warn"
-                                  ? "bg-amber-950/70 border-amber-700/70 text-amber-300 hover:bg-amber-900/80"
-                                  : "bg-ca-panel border-ca-border/60 text-ca-ink-muted hover:text-ca-ink"
+                                  ? "border-amber-700/70 bg-amber-950/70 text-amber-300 hover:bg-amber-900/80"
+                                  : "border-ca-border/60 bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
                           } ${isAct ? "ring-1 ring-cyan-400 font-semibold" : ""}`}
                           title={`Focus rule [${idx + 1}] ${r.name}`}
                         >
-                          <span>
+                          <span className="min-w-0 truncate">
                             [{idx + 1}] {r.name}:
                           </span>
-                          <span className="font-bold">
+                          <span className="shrink-0 font-bold">
                             {rStatus ? rStatus.toUpperCase() : "READY"}
                             {typeof rScore === "number" ? ` ${(rScore * 100).toFixed(0)}%` : ""}
                           </span>
@@ -1870,17 +1897,17 @@ export function VisualToolWorkpieceCanvas({
                     <div
                       className={`grid grid-cols-1 sm:grid-cols-2 ${
                         isAnalyzeMode ? "md:grid-cols-3" : "md:grid-cols-4"
-                      } gap-2 text-[11px] text-ca-ink pt-1 border-t border-ca-border/40`}
+                      } gap-2 border-t border-ca-border/40 pt-2 text-[11px] text-ca-ink`}
                     >
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-ca-ink-muted">Feature Rule</span>
-                        <span>
+                      <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
+                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Feature Rule</span>
+                        <span className="truncate">
                           <strong>{displayRuleName}</strong> [{displayToolCode}]
                         </span>
                       </div>
 
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-ca-ink-muted">Match Score</span>
+                      <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
+                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Match Score</span>
                         <strong>
                           {typeof displayScore === "number"
                             ? `${(displayScore * 100).toFixed(1)}%`
@@ -1889,8 +1916,8 @@ export function VisualToolWorkpieceCanvas({
                       </div>
 
                       {isPatternMatch && (
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-ca-ink-muted">Pattern Elements</span>
+                        <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
+                          <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Pattern Elements</span>
                           <strong>
                             {matchedCount} / {totalCount} matched ({percent}%)
                           </strong>
