@@ -200,6 +200,20 @@ jobs:
           '
         shell: bash
 
+
+      - name: Install Bun & Build Frontend
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      
+      - name: Compile Frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+          # Compile to executable (assumes nitro server output)
+          bun build --compile .output/server/index.mjs --outfile dist/control-automation-frontend${{ matrix.exe_suffix }}
+        shell: bash
+
       - name: Compute SHA256SUMS.txt
         # Emits `<hex>  <filename>` per binary (two-space GNU coreutils
         # format so `sha256sum -c` on Linux and PowerShell's
@@ -218,6 +232,12 @@ jobs:
                   raise SystemExit(f"[release] missing build artefact: {exe}")
               digest = hashlib.sha256(exe.read_bytes()).hexdigest()
               lines.append(f"{digest}  {exe.name}")
+          
+          # Add frontend executable
+          frontend_exe = Path("dist") / f"control-automation-frontend{suffix}"
+          if frontend_exe.is_file():
+              digest = hashlib.sha256(frontend_exe.read_bytes()).hexdigest()
+              lines.append(f"{digest}  {frontend_exe.name}")
           out.write_text("\n".join(lines) + "\n", encoding="utf-8")
           print(out.read_text())
           PY
@@ -268,6 +288,11 @@ jobs:
             done
           done
           (cd release && sha256sum *-* > SHA256SUMS.txt)
+          
+          # Zip all binaries into OS-specific packages
+          (cd release && zip control-automation-windows.zip windows-*)
+          (cd release && zip control-automation-linux.zip linux-*)
+          
           cat release/SHA256SUMS.txt
           echo "ok=true" >> "$GITHUB_OUTPUT"
       - name: Upload combined release payload
@@ -361,6 +386,17 @@ jobs:
         run: |
           ls -la release
           cat release/SHA256SUMS.txt
+
+      - name: Generate install.ps1
+        run: |
+          echo "Write-Host 'Downloading Control Automation...'" > release/install.ps1
+          echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
+          echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\ControlAutomation -Force" >> release/install.ps1
+          echo "\$WshShell = New-Object -comObject WScript.Shell" >> release/install.ps1
+          echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\Control Automation.lnk\\")" >> release/install.ps1
+          echo "\$Shortcut.TargetPath = \\"\$env:LOCALAPPDATA\ControlAutomation\windows-control-automation-frontend.exe\\"" >> release/install.ps1
+          echo "\$Shortcut.Save()" >> release/install.ps1
+          echo "Write-Host 'Installation Complete! Desktop shortcut created.'" >> release/install.ps1
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2

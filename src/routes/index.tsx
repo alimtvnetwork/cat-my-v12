@@ -23,7 +23,6 @@ import {
   BookOpen,
   type LucideIcon,
 } from "lucide-react";
-import { HmiShell } from "@/components/hmi";
 import { HomeError, HomePending, HomeErrorBoundary } from "@/components/home/HomeBoundaries";
 import { useRouter } from "@tanstack/react-router";
 import { RecentProjectsChip } from "@/components/home/RecentProjectsChip";
@@ -173,6 +172,13 @@ const TONE: Record<Tone, { ink: string; ring: string; glow: string }> = {
 };
 
 function Index() {
+  const { mode } = useUiMode();
+  const recentProjects = useRecentProjects();
+
+  if (mode === UiModeType.Standard) {
+    return <StandardHomeView recentProjects={recentProjects} />;
+  }
+
   return (
     <div className="flex h-full w-full flex-col bg-[#0b0c10] text-ca-ink font-mono antialiased overflow-hidden">
       {/* Header */}

@@ -11,7 +11,7 @@ export function useRootBootOrchestrator() {
   useCliHotkeys();
 
   useEffect(() => {
-    // Ensure every time the UI opens, it opens in Standard mode
+    // Ensure every time the UI opens, it opens in Standard mode.
     useUiMode.getState().setMode(UiModeType.Standard);
     useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
     void import("@/lib/data-source/url-bootstrap").then((m) => m.applyDataSourceFromUrl());

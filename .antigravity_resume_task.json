@@ -1,12 +1,14 @@
 {
-  "prompt_id": "prompt-fdbd60cd-1e36-49fe-8a58-a44077fe720e",
-  "project_id": "cat-my-v12-fdbd60cd",
+  "prompt_id": "prompt-4064c97e-3d59-4d33-bb57-41ce34e660c3",
+  "project_id": "cat-my-v12-4064c97e",
   "instance_id": "default",
   "repo_path": "d:\\others\\Github\\cat-my-v12",
-  "prompt_content": "<USER_REQUEST>\nwhat about other pages, make plan for whole webstie according to previous instruciton for UI\n</USER_REQUEST>\n<ADDITIONAL_METADATA>\nThe current local time is: 2026-10-08T13:26:29+06:00.\n</ADDITIONAL_METADATA>",
+  "prompt_content": "<USER_REQUEST>\ngive 2-3 point of what did we changed now\n</USER_REQUEST>\n<ADDITIONAL_METADATA>\nThe current local time is: 2026-10-06T18:35:56+06:00.\n</ADDITIONAL_METADATA>",
   "model": "gemini-pro",
   "image_payload": null,
+  "image_paths": [],
   "has_image": false,
   "auto_boot": true,
-  "resumed_at": 1791450514
+  "status": "dispatched",
+  "resumed_at": 1791466600
 }

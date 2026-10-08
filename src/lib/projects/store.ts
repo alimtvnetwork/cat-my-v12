@@ -26,6 +26,8 @@ export interface ProjectStoreState {
       cameraName?: string;
       rulesetNames?: string[];
       categoryNames?: string[];
+      projectCode?: string;
+      description?: string;
     },
   ) => string;
   renameProject: (id: string, name: string) => void;

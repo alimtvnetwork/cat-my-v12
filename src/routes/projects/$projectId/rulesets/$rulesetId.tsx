@@ -20,14 +20,10 @@ import {
 } from "@tanstack/react-router";
 import { Plus, FileImage, Camera, Save, ScanSearch } from "lucide-react";
 import { toast } from "sonner";
-import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
-import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import {
   VisualToolWorkpieceCanvas,
-  VisualToolTuningModal,
   type WorkpieceRoi,
 } from "@/components/vision/workpiece";
-import { AddRuleFromToolModal } from "@/components/rules/AddRuleFromToolModal";
 import { RightRail } from "@/components/editor/rail";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
@@ -222,17 +218,17 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   // create-or-fail.
   const [savedVersion, setSavedVersion] = useState<number>(0);
   const savedVersionRef = useRef<number>(0);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [visualTunerRuleId, setVisualTunerRuleId] = useState<string | null>(null);
-  const [isAddRuleModalOpen, setIsAddRuleModalOpen] = useState(false);
 
   useEffect(() => {
     return visualTunerBus.subscribe((ruleId) => {
       setSelectedIds([ruleId]);
-      setVisualTunerRuleId(ruleId);
+      void navigate({
+        to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
+        params: { projectId, rulesetId, ruleId },
+      });
     });
-  }, []);
+  }, [navigate, projectId, rulesetId]);
 
   const updateSavedVersion = useCallback((v: number) => {
     savedVersionRef.current = v;
@@ -315,11 +311,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   });
 
   const rules = ruleset.rules;
-
-  const ruleToTune = useMemo(
-    () => rules.find((r) => r.id === visualTunerRuleId),
-    [rules, visualTunerRuleId],
-  );
 
   const handleSaveRuleSet = useCallback(async () => {
     setIsSaving(true);
@@ -498,24 +489,11 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   );
 
   const addRule = useCallback(() => {
-    setIsAddRuleModalOpen(true);
-  }, []);
-
-  const handleAddRuleFromTool = useCallback(
-    (newRule: EditorRule, overrideImageRef?: string) => {
-      const nextRules = [...rules, newRule];
-      setSelectedIds([newRule.id]);
-      commit(nextRules, "add-from-tool", [newRule.id]);
-      useRulesStore.getState().setSelection([newRule.id], "add-from-tool");
-      
-      if (overrideImageRef && overrideImageRef !== ruleset.imageRef) {
-        updateRulesetImageRef(ruleset.id, overrideImageRef);
-      }
-      
-      toast.success(`Rule "${newRule.name}" added to ruleset!`);
-    },
-    [rules, commit, ruleset.id, ruleset.imageRef, updateRulesetImageRef],
-  );
+    void navigate({
+      to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
+      params: { projectId, rulesetId },
+    });
+  }, [navigate, projectId, rulesetId]);
 
   const onImportImage = useCallback(
     (file: File) => {
@@ -537,30 +515,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         setImportError(`Image import failed: ${message}`);
-      }
-    },
-    [ruleset.id, updateRulesetImageRef],
-  );
-
-  const onCaptureCamera = useCallback(
-    (input: WhiteBoxMarkingInput) => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = input.width;
-        canvas.height = input.height;
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-          const clampedArray = new Uint8ClampedArray(input.rgba);
-          const imgData = new ImageData(clampedArray, input.width, input.height);
-          ctx.putImageData(imgData, 0, 0);
-          const dataUrl = canvas.toDataURL("image/png");
-          updateRulesetImageRef(ruleset.id, dataUrl);
-          toast.success("Captured live camera frame as ruleset image");
-        }
-      } catch (err) {
-        console.error("[camera-capture] failed", err);
-        toast.error("Failed to process captured camera frame");
       }
     },
     [ruleset.id, updateRulesetImageRef],
@@ -746,7 +700,12 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </button>
           <button
             type="button"
-            onClick={() => setIsCameraOpen(true)}
+            onClick={() => {
+              void navigate({
+                to: "/projects/$projectId/camera",
+                params: { projectId },
+              });
+            }}
             className="inline-flex items-center gap-2 border border-cyan-500 bg-cyan-950/50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400 transition hover:bg-cyan-900 focus-visible:outline-none"
             title="Live Camera Mode: Capture frame from camera stream"
           >
@@ -797,7 +756,10 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
                 }}
                 onLaunchPatternTuner={() => {
                   if (activeRule) {
-                    setVisualTunerRuleId(activeRule.id);
+                    void navigate({
+                      to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
+                      params: { projectId, rulesetId, ruleId: activeRule.id },
+                    });
                   }
                 }}
               />
@@ -822,39 +784,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </div>
         </div>
       </div>
-      {isCameraOpen && (
-        <CameraCaptureModal
-          isOpen={isCameraOpen}
-          onClose={() => setIsCameraOpen(false)}
-          onCapture={onCaptureCamera}
-        />
-      )}
-      {ruleToTune && (
-        <VisualToolTuningModal
-          isOpen={Boolean(ruleToTune)}
-          onClose={() => setVisualTunerRuleId(null)}
-          rule={ruleToTune}
-          imageRef={ruleset.imageRef}
-          onApplyRule={(updatedRule) => {
-            const nextRules = rules.map((r) => (r.id === updatedRule.id ? updatedRule : r));
-            commit(nextRules, "visual-tune");
-            setVisualTunerRuleId(null);
-            toast.success(`Visual tuning applied to ${updatedRule.name}!`);
-          }}
-        />
-      )}
-      {isAddRuleModalOpen && (
-        <AddRuleFromToolModal
-          isOpen={isAddRuleModalOpen}
-          onClose={() => setIsAddRuleModalOpen(false)}
-          onAddRule={(newRule, overrideImageRef) => {
-            handleAddRuleFromTool(newRule, overrideImageRef);
-            // After image choice, it should open the tuner automatically
-            setVisualTunerRuleId(newRule.id);
-          }}
-          existingRules={rules}
-        />
-      )}
     </div>
   );
 }

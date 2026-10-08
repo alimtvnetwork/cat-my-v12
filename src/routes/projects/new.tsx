@@ -26,8 +26,8 @@ function NewProjectPage() {
 
     try {
       const projectId = createProject(name.trim(), {
-        // the user said "optional project/program code, optional description"
-        // we store code in description for now since there's no native code field, or just leave it for now
+        projectCode: code,
+        description: description
       });
       await navigate({ to: "/projects/$projectId", params: { projectId } });
     } catch (err) {

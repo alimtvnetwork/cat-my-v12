@@ -1,6 +1,22 @@
 import React, { useState, useMemo, useRef } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { Camera, Upload, Settings, Archive, Search, ChevronRight, Check } from "lucide-react";
+import {
+  Activity,
+  Bug,
+  Camera,
+  CircleDot,
+  Crosshair,
+  Grid2X2,
+  PaintBucket,
+  QrCode,
+  Ruler,
+  ScanSearch,
+  Settings,
+  Type,
+  Upload,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
 import {
   VISION_TOOL_CATALOG,
@@ -19,6 +35,23 @@ function generateRuleId(): string {
   const g = globalThis as { crypto?: { randomUUID?: () => string } };
   if (g.crypto?.randomUUID) return g.crypto.randomUUID();
   return `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getToolIcon(tool: VisionToolDefinition): LucideIcon {
+  const normalized = `${tool.code} ${tool.name}`.toLowerCase();
+
+  if (normalized.includes("pin 1") || normalized.includes("pin1")) return CircleDot;
+  if (normalized.includes("pattern") || tool.code === "T102") return ScanSearch;
+  if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
+  if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
+  if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
+  if (normalized.includes("void") || normalized.includes("circle") || tool.code === "T111") return Crosshair;
+  if (normalized.includes("caliper") || normalized.includes("gauge") || tool.code === "T110") return Ruler;
+  if (normalized.includes("qr") || normalized.includes("datamatrix") || tool.code === "T103") return QrCode;
+  if (normalized.includes("ocr") || normalized.includes("marking") || tool.code === "T106") return Type;
+  if (normalized.includes("coating") || normalized.includes("color") || tool.code === "T112") return PaintBucket;
+
+  return ScanSearch;
 }
 
 function AddRuleWizard() {
@@ -81,16 +114,7 @@ function AddRuleWizard() {
     const ruleId = generateRuleId();
     const effectiveName = `Rule ${ruleCount + 1}: ${selectedTool.name.replace(/ \(.*\)/, "")}`;
     
-    let initialRoiVal = { x: 180, y: 120, width: 220, height: 220 };
-    if (selectedTool.code === "T102" || selectedTool.code === "T116" || selectedTool.name.toLowerCase().includes("pattern")) {
-      initialRoiVal = { x: 340, y: 175, width: 350, height: 180 };
-    } else if (selectedTool.code === "T105" || selectedTool.code === "T117" || selectedTool.name.toLowerCase().includes("pin 1")) {
-      initialRoiVal = { x: 200, y: 215, width: 100, height: 100 };
-    } else if (selectedTool.code === "T118" || selectedTool.name.toLowerCase().includes("defect") || selectedTool.name.toLowerCase().includes("flaw")) {
-      initialRoiVal = { x: 200, y: 360, width: 480, height: 160 };
-    } else if (selectedTool.code === "T110" || selectedTool.name.toLowerCase().includes("caliper")) {
-      initialRoiVal = { x: 180, y: 200, width: 280, height: 120 };
-    }
+    const initialRoiVal = { x: 0, y: 0, width: 1, height: 1 };
 
     const newRule: EditorRule = {
       id: ruleId,
@@ -104,6 +128,11 @@ function AddRuleWizard() {
       y: initialRoiVal.y,
       width: initialRoiVal.width,
       height: initialRoiVal.height,
+      params: {
+        ...selectedTool.defaultParamValues,
+        toolCode: selectedTool.code,
+        hasUnconfiguredRegion: true,
+      },
     };
 
     useProjectStore.getState().updateRulesetRules(rulesetId, [...ruleset.rules, newRule]);
@@ -227,25 +256,36 @@ function AddRuleWizard() {
               <div className="flex-1 overflow-y-auto p-6 bg-[#0b0c10]">
                 <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-ca-ink-muted">Preferred Tools</h3>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {filteredTools.map((tool) => (
-                    <button
-                      key={tool.code}
-                      onClick={() => setSelectedTool(tool)}
-                      className={`flex flex-col gap-2 rounded border p-4 text-left transition-colors ${
-                        selectedTool?.code === tool.code
-                          ? "border-ca-primary bg-[#1a1c23]"
-                          : "border-[#22252a] bg-[#111318] hover:border-[#444]"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="text-xs font-bold text-ca-ink">{tool.name.replace(/ \(.*\)/, "")}</span>
-                        <span className="rounded bg-[#22252a] px-1.5 py-0.5 text-[9px] font-mono font-bold text-ca-ink-muted">
-                          {tool.code}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-ca-ink-muted line-clamp-2">{tool.description}</span>
-                    </button>
-                  ))}
+                  {filteredTools.map((tool) => {
+                    const ToolIcon = getToolIcon(tool);
+
+                    return (
+                      <button
+                        key={tool.code}
+                        onClick={() => setSelectedTool(tool)}
+                        className={`flex flex-col gap-3 rounded border p-4 text-left transition-colors ${
+                          selectedTool?.code === tool.code
+                            ? "border-ca-primary bg-[#1a1c23]"
+                            : "border-[#22252a] bg-[#111318] hover:border-[#444]"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-[#2d333b] bg-[#0b0c10] text-ca-primary">
+                              <ToolIcon size={18} aria-hidden />
+                            </span>
+                            <span className="min-w-0 text-xs font-bold text-ca-ink">
+                              {tool.name.replace(/ \(.*\)/, "")}
+                            </span>
+                          </div>
+                          <span className="rounded bg-[#22252a] px-1.5 py-0.5 text-[9px] font-mono font-bold text-ca-ink-muted">
+                            {tool.code}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-ca-ink-muted line-clamp-2">{tool.description}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
