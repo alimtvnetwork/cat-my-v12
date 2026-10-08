@@ -27,6 +27,7 @@ import { AddressBar } from "@/components/shell/AddressBar";
 import { Search as SearchIcon } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
+import { ModernMainNav } from "@/components/hmi/ModernMainNav";
 
 export function HeaderBrand(): React.JSX.Element | null {
   return (
@@ -64,25 +65,13 @@ export function HeaderCrumbs({
   showBreadcrumb,
   program,
 }: HeaderCrumbsProps): React.JSX.Element | null {
-  const density = useUiPrefsStore((s) => s.headerDensity);
-
-  if (showBreadcrumb) {
-    return (
-      <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-        {density !== "compact" && <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />}
-        <AddressBar />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-hmi-2">
-      {program && density !== "compact" ? (
-        <span className="block truncate text-hmi-caption font-semibold text-ca-ink-muted">
-          {program}
-        </span>
-      ) : null}
-      <AddressBar />
+    <div className="flex min-w-0 flex-1 items-center gap-4 justify-between px-2">
+      <div className="flex items-center gap-4">
+        {showBreadcrumb && <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />}
+        <CommandPaletteTrigger />
+      </div>
+      <ModernMainNav />
     </div>
   );
 }
@@ -107,7 +96,6 @@ export function HeaderActions({ right }: HeaderActionsProps): React.JSX.Element 
         data-testid="titlebar-editor-slot"
         className="flex min-w-0 items-center gap-1"
       />
-      <CommandPaletteTrigger />
       <TopMenuBar />
       <div className="flex items-center mx-1">
         <UiModeSwitch />

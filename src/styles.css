@@ -113,11 +113,10 @@
   --shadow-hmi-glow: 0 0 0 1px var(--ca-primary), 0 0 24px -4px oklch(0.65 0.18 250 / 0.35);
 
   /* HMI typography size tokens (canonical app UI scale) */
-  --font-display: "Ubuntu", "Poppins", system-ui, sans-serif;
-  --font-sans: "Poppins", system-ui, sans-serif;
-  --font-hmi:
-    "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-hmi-mono: ui-monospace, "SF Mono", Menlo, Consolas, "JetBrains Mono", monospace;
+  --font-display: "Inter", "Geist", "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "Inter", "Geist", "IBM Plex Sans", system-ui, sans-serif;
+  --font-hmi: "Inter", "Geist", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-hmi-mono: "JetBrains Mono", "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
   --text-hmi-title: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
   --text-hmi-header: clamp(1.125rem, 1rem + 0.55vw, 1.4rem);
   --text-hmi-body: clamp(0.9375rem, 0.88rem + 0.28vw, 1.0625rem);

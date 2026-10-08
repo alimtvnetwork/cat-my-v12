@@ -248,18 +248,12 @@ function ProjectsIndex() {
   }
 
   function openDialog() {
-    setName("");
-    setDeviceId("");
-    setCameraName("");
-    setRulesetNamesRaw("");
-    setCategoryNamesRaw("");
-    setError(null);
-    setDialogOpen(true);
+    navigate({ to: "/projects/new" });
   }
 
   function closeDialog() {
     if (submitting) return;
-    setDialogOpen(false);
+    // no-op, as dialogOpen is removed
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -655,218 +649,7 @@ function ProjectsIndex() {
         </div>
       </div>
 
-      {dialogOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="create-project-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ca-bg/70 p-hmi-4 backdrop-blur-md animate-in fade-in duration-150"
-          onClick={closeDialog}
-        >
-          <form
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={handleCreate}
-            className="relative grid w-full max-w-3xl grid-cols-1 overflow-hidden rounded-xl border border-ca-border bg-ca-panel shadow-hmi-modal md:grid-cols-[minmax(0,1fr)_18rem]"
-          >
-            <button
-              type="button"
-              onClick={closeDialog}
-              disabled={submitting}
-              aria-label="Close"
-              className="absolute right-hmi-3 top-hmi-3 z-10 grid h-8 w-8 place-items-center rounded-md text-ca-ink-muted transition hover:bg-ca-panel-2 hover:text-ca-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-            >
-              <X aria-hidden size={16} />
-            </button>
-
-            <div className="p-hmi-6">
-              <p className="inline-flex items-center gap-hmi-1 text-hmi-caption uppercase tracking-[0.2em] text-ca-select">
-                <Sparkles aria-hidden size={12} />
-                New workspace
-              </p>
-              <h2
-                id="create-project-title"
-                className="mt-hmi-1 font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink"
-              >
-                Create a project
-              </h2>
-              <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
-                Projects hold rule sets, trial runs, and AI testing history for one inspection
-                target.
-              </p>
-
-              <label className="mt-hmi-5 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
-                <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                  Project name
-                </span>
-                <input
-                  autoFocus
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. QFN-2407-A"
-                  aria-invalid={error ? true : undefined}
-                  className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-3 text-hmi-body text-ca-ink shadow-inner outline-none transition placeholder:text-ca-ink-muted focus:border-ca-select focus:ring-2 focus:ring-ca-select/30"
-                />
-                <span className="text-hmi-caption text-ca-ink-muted">
-                  Use the part number or lot code so it's easy to find later.
-                </span>
-              </label>
-              <div className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
-                <div className="flex items-center justify-between">
-                  <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                    Inspected Device (Target Chip / Circuit)
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsAddDeviceOpen(true)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-ca-primary hover:underline"
-                  >
-                    <Plus size={12} />
-                    Add New Device
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    list="device-options"
-                    value={deviceId}
-                    onChange={(e) => setDeviceId(e.target.value)}
-                    placeholder="e.g. STM32F4-MCU-BOARD, PCB-ECU-MAIN, or custom part ID"
-                    className="w-full rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
-                  />
-                  <datalist id="device-options">
-                    {deviceOptions.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </datalist>
-                </div>
-                <span className="text-hmi-caption text-ca-ink-muted">
-                  Binds this project to the physical chip, circuit board, or DUT (Device Under Test) being inspected.
-                </span>
-              </div>
-              <label className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
-                <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                  Camera (optional)
-                </span>
-                <input
-                  value={cameraName}
-                  onChange={(e) => setCameraName(e.target.value)}
-                  placeholder="e.g. Basler ace 2 a2A2590"
-                  className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
-                />
-              </label>
-              <label className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
-                <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                  Rule Sets (comma-separated, optional)
-                </span>
-                <input
-                  value={rulesetNamesRaw}
-                  onChange={(e) => setRulesetNamesRaw(e.target.value)}
-                  placeholder="e.g. Top, Bottom, Side"
-                  className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
-                />
-              </label>
-              <label className="mt-hmi-3 flex flex-col gap-hmi-2 text-hmi-body text-ca-ink">
-                <span className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                  Categories (comma-separated, optional)
-                </span>
-                <input
-                  value={categoryNamesRaw}
-                  onChange={(e) => setCategoryNamesRaw(e.target.value)}
-                  placeholder="e.g. Presence / Absence, Flaw Detection"
-                  className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
-                />
-                <div className="mt-1 flex items-center justify-between text-[11px] text-ca-ink-muted">
-                  <span>Defaults to standard 5 AOI categories if blank.</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCategoryNamesRaw(
-                        "Presence / Absence, Flaw Detection, Count & Measure, ID / OCR, Color & Coating",
-                      )
-                    }
-                    className="font-semibold text-ca-select hover:underline"
-                  >
-                    + Pre-fill All 5 Categories
-                  </button>
-                </div>
-              </label>
-              {error ? (
-                <p
-                  role="alert"
-                  className="mt-hmi-3 rounded-md border border-ca-ng/40 bg-ca-ng/10 px-hmi-3 py-hmi-2 text-hmi-caption text-ca-ng"
-                >
-                  {error}
-                </p>
-              ) : null}
-
-              <div className="mt-hmi-6 flex justify-end gap-hmi-2">
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  disabled={submitting}
-                  className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-ink transition hover:border-ca-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting || name.trim().length === 0}
-                  className="inline-flex items-center gap-hmi-2 rounded-md bg-ca-select px-hmi-5 py-hmi-2 text-hmi-body font-semibold text-ca-bg shadow-[0_8px_24px_-8px_color-mix(in_oklab,var(--color-ca-select)_60%,transparent)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-                >
-                  <FolderPlus aria-hidden size={16} />
-                  {submitting ? "Creating..." : "Create project"}
-                </button>
-              </div>
-            </div>
-
-            <aside
-              aria-hidden
-              className="relative hidden overflow-hidden border-l border-ca-border bg-gradient-to-br from-ca-panel-2 via-ca-panel-2 to-ca-select/15 p-hmi-5 md:block"
-            >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-ca-select/25 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-ca-select/10 blur-3xl" />
-              <p className="text-hmi-caption uppercase tracking-[0.2em] text-ca-ink-muted">
-                Preview
-              </p>
-              <div className="mt-hmi-3 rounded-lg border border-ca-border bg-ca-panel p-hmi-4 shadow-hmi-panel">
-                <h3 className="font-display text-hmi-header font-extrabold text-ca-ink">
-                  {name.trim() || "Your project"}
-                </h3>
-                <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">0 rule sets</p>
-                {deviceId.trim() ? (
-                  <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-select">
-                    Device: {deviceId.trim()}
-                  </p>
-                ) : null}
-                <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-ink-muted">
-                  proj_...
-                  {name.trim() ? name.trim().slice(0, 6).toLowerCase().replace(/\s+/g, "-") : "new"}
-                </p>
-                <div className="mt-hmi-3 flex items-center gap-hmi-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-ca-select" />
-                  <span className="h-1 w-8 rounded-full bg-ca-border" />
-                </div>
-              </div>
-              <ul className="mt-hmi-4 space-y-hmi-2 text-hmi-caption text-ca-ink-muted">
-                <li className="flex items-center gap-hmi-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-ca-select" />
-                  Rule sets and trial runs
-                </li>
-                <li className="flex items-center gap-hmi-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-ca-select" />
-                  AI testing history
-                </li>
-                <li className="flex items-center gap-hmi-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-ca-select" />
-                  Camera and lighting presets
-                </li>
-              </ul>
-            </aside>
-          </form>
-        </div>
-      ) : null}
+      
 
       <AddDeviceModal
         isOpen={isAddDeviceOpen}
@@ -1025,3 +808,4 @@ function RowIconButton({
     </button>
   );
 }
+

@@ -181,7 +181,7 @@ function AnalyzeScreen(): React.JSX.Element {
       searchRule={search.rule}
       onSelectRuleset={(rulesetId) => {
         void navigate({
-          search: (prev) => ({
+          search: (prev: Record<string, unknown>) => ({
             ...prev,
             project: targetProject.id,
             ruleset: rulesetId,
