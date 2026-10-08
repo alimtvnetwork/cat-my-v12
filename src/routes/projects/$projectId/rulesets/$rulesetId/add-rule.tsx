@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
+import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import {
   VISION_TOOL_CATALOG,
   InspectionCategoryType,
@@ -60,11 +61,23 @@ function AddRuleWizard() {
 
   const project = useProjectStore((s) => selectProject(s, projectId));
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
-  const ruleset = useMemo(() => rulesets.find((r: any) => r.id === rulesetId), [rulesets, rulesetId]);
+  const resolvedRulesetId = useMemo(
+    () => resolveIdParam(IntAliasNamespaceType.Ruleset, rulesetId) || rulesetId,
+    [rulesetId],
+  );
+  const ruleset = useMemo(
+    () =>
+      rulesets.find(
+        (r: any) =>
+          r.id === rulesetId ||
+          r.id === resolvedRulesetId ||
+          resolveIdParam(IntAliasNamespaceType.Ruleset, r.id) === rulesetId,
+      ),
+    [rulesets, rulesetId, resolvedRulesetId],
+  );
   
   // State for wizard
-  const [step, setStep] = useState<"source" | "catalog" | "tuning">("source");
-  const [imageRef, setImageRef] = useState<string | undefined>(undefined);
+  const [step, setStep] = useState<"catalog" | "source">("catalog");
   
   // Catalog State
   const [selectedCategory, setSelectedCategory] = useState<InspectionCategoryType | "All">("All");
@@ -78,8 +91,7 @@ function AddRuleWizard() {
 
   const handleImageChoice = (choice: "current" | "upload") => {
     if (choice === "current") {
-      setImageRef(undefined); // use whatever current camera source is
-      setStep("catalog");
+      void commitRule(undefined);
     } else {
       fileInputRef.current?.click();
     }
@@ -93,8 +105,7 @@ function AddRuleWizard() {
     reader.onload = () => {
       const dataUrl = reader.result as string;
       if (dataUrl) {
-        setImageRef(dataUrl);
-        setStep("catalog");
+        void commitRule(dataUrl);
       }
     };
     reader.readAsDataURL(file);
@@ -107,7 +118,7 @@ function AddRuleWizard() {
       : getVisionToolsByCategory(selectedCategory);
   }, [selectedCategory]);
 
-  const commitRule = async () => {
+  const commitRule = async (overrideImageRef?: string) => {
     if (!selectedTool) return;
     
     const ruleCount = ruleset.rules.length;
@@ -115,6 +126,11 @@ function AddRuleWizard() {
     const effectiveName = `Rule ${ruleCount + 1}: ${selectedTool.name.replace(/ \(.*\)/, "")}`;
     
     const initialRoiVal = { x: 0, y: 0, width: 1, height: 1 };
+    const defaultThresh =
+      selectedTool.defaultParamValues?.threshold ??
+      selectedTool.defaultParamValues?.greyscaleLevel ??
+      170;
+    const defaultTol = selectedTool.defaultParamValues?.tolerancePx ?? 8;
 
     const newRule: EditorRule = {
       id: ruleId,
@@ -131,18 +147,39 @@ function AddRuleWizard() {
       params: {
         ...selectedTool.defaultParamValues,
         toolCode: selectedTool.code,
+        category: selectedTool.category,
+        x: initialRoiVal.x,
+        y: initialRoiVal.y,
+        width: initialRoiVal.width,
+        height: initialRoiVal.height,
+        threshold: Number(defaultThresh),
+        marginPx: Number(defaultTol),
+        tolerancePx: Number(defaultTol),
+        activeBoxCount: 0,
+        totalBoxCount: 0,
+        constellationJson: "[]",
         hasUnconfiguredRegion: true,
+      },
+      cameraSettings: {
+        exposureUs: Math.round(selectedTool.defaultExposureMs * 1000),
+        gainDb: selectedTool.defaultGainDb,
+      },
+      lightSettings: {
+        intensity: selectedTool.defaultLightPct,
+        channel: selectedTool.defaultChannels[0] || 1,
+        strobeDurationUs: selectedTool.defaultStrobeUs,
+        hasStrobe: true,
       },
     };
 
-    useProjectStore.getState().updateRulesetRules(rulesetId, [...ruleset.rules, newRule]);
-    if (imageRef) {
-      useProjectStore.getState().updateRulesetImageRef(rulesetId, imageRef);
+    useProjectStore.getState().updateRulesetRules(ruleset.id, [...ruleset.rules, newRule]);
+    if (overrideImageRef) {
+      useProjectStore.getState().updateRulesetImageRef(ruleset.id, overrideImageRef);
     }
 
     await navigate({
       to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-      params: { projectId, rulesetId, ruleId: newRule.id },
+      params: { projectId, rulesetId: ruleset.id, ruleId: newRule.id },
     });
   };
 
@@ -164,10 +201,17 @@ function AddRuleWizard() {
       {/* Main Wizard Area */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         
-        {step === "source" && (
+        {step === "source" && selectedTool && (
           <div className="flex flex-1 flex-col items-center justify-center p-8">
-            <h2 className="mb-2 text-xl font-bold uppercase tracking-wide text-ca-ink">Choose Image Source</h2>
-            <p className="mb-10 text-sm text-ca-ink-muted">Select an image to use for rule setup.</p>
+            <div className="mb-8 text-center">
+              <span className="mb-3 inline-flex rounded border border-[#2d333b] bg-[#111318] px-2 py-1 text-[10px] font-mono font-bold text-ca-ink-muted">
+                {selectedTool.code}
+              </span>
+              <h2 className="mb-2 text-xl font-bold uppercase tracking-wide text-ca-ink">Choose Image Source</h2>
+              <p className="text-sm text-ca-ink-muted">
+                Select the setup image for {selectedTool.name.replace(/ \(.*\)/, "")}.
+              </p>
+            </div>
             
             <div className="flex w-full max-w-2xl gap-6">
               {/* Current Camera Image */}
@@ -180,7 +224,7 @@ function AddRuleWizard() {
                 </div>
                 <div>
                   <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-ca-ink">Current camera image</h3>
-                  <p className="text-xs text-ca-ink-muted">Use the latest frame from this project camera</p>
+                  <p className="text-xs text-ca-ink-muted">Use the current project camera/reference frame</p>
                 </div>
               </button>
               
@@ -194,7 +238,7 @@ function AddRuleWizard() {
                 </div>
                 <div>
                   <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-ca-ink">Upload image</h3>
-                  <p className="text-xs text-ca-ink-muted">Use an image file for rule setup</p>
+                  <p className="text-xs text-ca-ink-muted">Register an image file for rule setup</p>
                 </div>
               </button>
             </div>
@@ -205,6 +249,13 @@ function AddRuleWizard() {
               accept="image/*" 
               onChange={handleFileUpload} 
             />
+            <button
+              type="button"
+              onClick={() => setStep("catalog")}
+              className="mt-8 text-xs font-semibold uppercase tracking-wider text-ca-ink-muted hover:text-ca-ink"
+            >
+              Back to tool catalog
+            </button>
           </div>
         )}
 
@@ -212,20 +263,15 @@ function AddRuleWizard() {
           <div className="flex flex-1 flex-col h-full bg-[#0b0c10]">
             <div className="flex items-center gap-3 border-b border-[#22252a] bg-[#111318] p-4">
               <button 
-                onClick={() => setStep("source")}
+                onClick={() => void navigate({ to: "/projects/$projectId", params: { projectId } })}
                 className="flex items-center gap-2 text-xs font-bold uppercase text-ca-ink-muted hover:text-ca-ink"
               >
-                <ChevronRight size={14} className="rotate-180" /> Back to Source
+                <ChevronRight size={14} className="rotate-180" /> Back to Project
               </button>
               <div className="ml-auto flex items-center gap-3">
-                <span className="text-[10px] font-bold text-ca-ink-muted uppercase">Image Selected</span>
-                {imageRef ? (
-                  <img src={imageRef} className="h-8 w-12 rounded object-cover border border-[#333]" alt="Selected" />
-                ) : (
-                  <div className="flex h-8 w-12 items-center justify-center rounded border border-[#333] bg-[#1a1c23]">
-                    <Camera size={14} className="text-ca-ink-muted" />
-                  </div>
-                )}
+                <span className="text-[10px] font-bold uppercase text-ca-ink-muted">
+                  Select tool, then choose current image or upload
+                </span>
               </div>
             </div>
 
@@ -236,7 +282,7 @@ function AddRuleWizard() {
                   <h3 className="text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted">Categories</h3>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
-                  {(["All", "Presence/Absence", "Flaw Detection", "Alignment", "Count", "ID & OCR/OCV", "Graphic Display", "Mathematical Operations", "Function List", "Position Adjustment"] as (InspectionCategoryType | "All")[]).map((cat) => (
+                  {(["All", ...Object.values(InspectionCategoryType)] as (InspectionCategoryType | "All")[]).map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
@@ -308,11 +354,11 @@ function AddRuleWizard() {
                     </div>
                     <div className="p-4 border-t border-[#22252a] bg-[#0b0c10]">
                       <button
-                        onClick={commitRule}
+                        onClick={() => setStep("source")}
                         className="flex w-full items-center justify-center gap-2 rounded bg-ca-primary py-3 text-xs font-bold uppercase tracking-wider text-[#000] hover:brightness-110 transition-colors"
                       >
                         <Settings size={16} className="fill-current" />
-                        Add / Configure
+                        Continue
                       </button>
                     </div>
                   </>

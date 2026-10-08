@@ -716,10 +716,10 @@ export function WorkpieceAnalyzeWorkspace({
   );
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col h-full bg-[#111] text-ca-ink">
-      <div className="flex flex-col h-full w-full">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#111] text-ca-ink">
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
         {/* 1. Top Ribbon */}
-        <div className="flex items-center justify-between bg-[#1e1e1e] border-b border-[#333] px-4 py-2 shrink-0">
+        <div className="flex shrink-0 items-center justify-between border-b border-[#333] bg-[#1e1e1e] px-3 py-1">
           <div className="flex items-center gap-4">
             <span className="text-ca-ink font-bold text-sm tracking-wide">
               PROJECT: {project.name}
@@ -733,27 +733,45 @@ export function WorkpieceAnalyzeWorkspace({
             <button
               onClick={handleSaveRuleSet}
               disabled={isSaving}
-              className="px-3 py-1 bg-ca-select text-white text-xs font-bold uppercase rounded disabled:opacity-50"
+              className="rounded bg-ca-select px-3 py-1 text-xs font-bold uppercase text-black disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save"}
             </button>
-            <button className="px-3 py-1 bg-[#2d2d2d] border border-[#444] text-white text-xs font-bold uppercase rounded hover:bg-[#3d3d3d] transition-colors">
-              Utility
+            <button
+              type="button"
+              onClick={() => {
+                void navigate({
+                  to: "/projects/$projectId/categories",
+                  params: { projectId },
+                });
+              }}
+              className="rounded border border-[#444] bg-[#2d2d2d] px-3 py-1 text-xs font-bold uppercase text-white transition-colors hover:bg-[#3d3d3d]"
+            >
+              Categories
             </button>
-            <button className="px-3 py-1 bg-[#2d2d2d] border border-[#444] text-white text-xs font-bold uppercase rounded hover:bg-[#3d3d3d] transition-colors">
-              Run Mode
+            <button
+              type="button"
+              onClick={() => {
+                void navigate({
+                  to: "/projects/$projectId/trial-run",
+                  params: { projectId },
+                });
+              }}
+              className="rounded border border-[#444] bg-[#2d2d2d] px-3 py-1 text-xs font-bold uppercase text-white transition-colors hover:bg-[#3d3d3d]"
+            >
+              Trial Run
             </button>
           </div>
         </div>
 
         {/* 2. Horizontal rule/tool thumbnail strip */}
-        <div className="flex items-center gap-2 overflow-x-auto p-2 bg-[#252525] border-b border-[#333] shrink-0 min-h-[80px]">
+        <div className="flex min-h-[44px] shrink-0 items-center gap-2 overflow-x-auto border-b border-[#333] bg-[#252525] p-1">
           {/* Add Ruleset Tile */}
           <button
             onClick={handleStartAddRuleset}
-            className="flex flex-col items-center justify-center w-20 h-16 bg-[#1a1a1a] border border-[#444] rounded hover:border-amber-400 transition-colors shrink-0"
+            className="flex h-9 w-24 shrink-0 items-center justify-center gap-1 rounded border border-[#444] bg-[#1a1a1a] transition-colors hover:border-amber-400"
           >
-            <Plus size={16} className="text-amber-500 mb-1" />
+            <Plus size={14} className="text-amber-500" />
             <span className="text-[10px] text-amber-500 font-bold uppercase">Add Ruleset</span>
           </button>
 
@@ -763,7 +781,7 @@ export function WorkpieceAnalyzeWorkspace({
                 event.preventDefault();
                 handleSubmitRuleset();
               }}
-              className="flex h-16 w-64 shrink-0 items-center gap-2 rounded border border-amber-500/70 bg-amber-950/20 px-2"
+              className="flex h-9 w-64 shrink-0 items-center gap-2 rounded border border-amber-500/70 bg-amber-950/20 px-2"
             >
               <input
                 value={draftRulesetName}
@@ -791,13 +809,13 @@ export function WorkpieceAnalyzeWorkspace({
             </form>
           ) : null}
           
-          {/* Add Tools Tile */}
+          {/* Add Rule Tile */}
           <button
             onClick={() => handleNavigateAddRule()}
-            className="flex flex-col items-center justify-center w-20 h-16 bg-[#1a1a1a] border border-[#444] rounded hover:border-ca-select transition-colors shrink-0"
+            className="flex h-9 w-24 shrink-0 items-center justify-center gap-1 rounded border border-[#444] bg-[#1a1a1a] transition-colors hover:border-ca-select"
           >
-            <Plus size={16} className="text-ca-ink-muted mb-1" />
-            <span className="text-[10px] text-ca-ink-muted font-bold uppercase">Add Tools</span>
+            <Plus size={14} className="text-ca-ink-muted" />
+            <span className="text-[10px] text-ca-ink-muted font-bold uppercase">Add Rule</span>
           </button>
           
           {/* Set Camera Tile */}
@@ -808,9 +826,9 @@ export function WorkpieceAnalyzeWorkspace({
                 params: { projectId },
               });
             }}
-            className="flex flex-col items-center justify-center w-20 h-16 bg-[#1a1a1a] border border-[#444] rounded hover:border-cyan-400 transition-colors shrink-0"
+            className="flex h-9 w-24 shrink-0 items-center justify-center gap-1 rounded border border-[#444] bg-[#1a1a1a] transition-colors hover:border-cyan-400"
           >
-            <Camera size={16} className="text-ca-ink-muted mb-1" />
+            <Camera size={14} className="text-ca-ink-muted" />
             <span className="text-[10px] text-ca-ink-muted font-bold uppercase">Set Camera</span>
           </button>
 
@@ -834,21 +852,18 @@ export function WorkpieceAnalyzeWorkspace({
                   setSelectedIds([r.id]);
                   useRulesStore.getState().setSelection([r.id], "thumbnail-strip");
                 }}
-                className={`flex flex-col relative items-center justify-center w-28 h-16 bg-[#1a1a1a] border rounded transition-colors shrink-0 ${isSelected ? "border-amber-400 bg-amber-400/10" : "border-[#444] hover:border-[#666]"}`}
+                className={`relative flex h-9 w-32 shrink-0 items-center justify-center gap-1 rounded border bg-[#1a1a1a] px-6 transition-colors ${isSelected ? "border-amber-400 bg-amber-400/10" : "border-[#444] hover:border-[#666]"}`}
               >
                 <span className="text-[10px] text-ca-ink-muted absolute top-1 left-1">
                   {String(idx + 1).padStart(2, "0")}
                 </span>
                 <ToolIcon
                   size={16}
-                  className={`mb-1 ${isSelected ? "text-amber-400" : "text-ca-ink-muted"}`}
+                  className={isSelected ? "shrink-0 text-amber-400" : "shrink-0 text-ca-ink-muted"}
                   aria-hidden
                 />
                 <span className={`text-[10px] font-bold truncate w-full px-1 ${isSelected ? "text-amber-400" : "text-ca-ink"}`}>
                   {r.name}
-                </span>
-                <span className="w-full truncate px-1 text-[9px] text-ca-ink-muted">
-                  {ownerRuleset.name}
                 </span>
                 {toolCode ? (
                   <span className="absolute right-1 top-1 rounded bg-[#2d2d2d] px-1 text-[9px] font-mono text-ca-ink-muted">
@@ -861,11 +876,59 @@ export function WorkpieceAnalyzeWorkspace({
           })}
         </div>
 
-        {/* 3 & 4. Main workspace (left inspection, right tree/settings) */}
-        <div className="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_380px] bg-[#111]">
-          {/* Left: camera/current image viewport */}
-          <div className="relative flex min-w-0 flex-col overflow-hidden border-r border-[#333] p-1">
-             <VisualToolWorkpieceCanvas
+        {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
+        <div className="grid min-h-0 flex-1 grid-cols-[420px_minmax(0,1fr)] bg-[#111]">
+          {/* Left: inspection hierarchy tree */}
+          <div className="flex min-w-0 flex-col gap-1 overflow-hidden border-r border-[#333] bg-[#1a1a1a] p-1">
+            <InspectionHierarchyTree
+              project={project}
+              ruleset={ruleset}
+              rulesets={projectRulesetsForAnalysis}
+              onSelectRuleset={onSelectRuleset}
+              rules={projectOverlayRules}
+              selectedRuleId={activeRule?.id ?? null}
+              onSelectRule={handleSelectProjectRule}
+              onToggleHidden={railHandlers.onToggleHidden}
+              onDeleteRule={railHandlers.onDelete}
+              onReorderRule={railHandlers.onReorder}
+              onAddRuleClick={handleNavigateAddRule}
+              onAddRulesetClick={handleStartAddRuleset}
+              onDeleteRulesetClick={handleDeleteRuleset}
+              onTuneRule={handleNavigateTuneRule}
+              onUpdateCameraSettings={handleUpdateRuleCameraSettings}
+              onUpdateLightSettings={handleUpdateRuleLightSettings}
+            />
+            <section className="shrink-0 rounded border border-ca-border/70 bg-ca-panel/90 p-1.5">
+              <div className="mb-1 flex items-center justify-between">
+                <div>
+                  <h2 className="text-[11px] font-bold uppercase tracking-wider text-ca-ink">
+                    Image Samples
+                  </h2>
+                  <p className="text-[9px] text-ca-ink-muted">
+                    {ruleset.imageRef ? "1 registered reference" : "No reference registered"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="rounded border border-ca-border bg-ca-panel-2 px-2 py-1 text-[10px] font-semibold text-ca-ink hover:border-ca-select"
+                >
+                  Upload
+                </button>
+              </div>
+              <div className="h-10 overflow-hidden rounded border border-ca-border/60 bg-[#0b0c10]">
+                <img
+                  src={ruleset.imageRef || defaultWorkpieceFilledSample}
+                  alt="Current inspection reference"
+                  className="h-full w-full object-cover opacity-90"
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* Right: camera/current image viewport */}
+          <div className="relative flex min-w-0 flex-col overflow-hidden p-1">
+            <VisualToolWorkpieceCanvas
                 imageRef={ruleset.imageRef || defaultWorkpieceFilledSample}
                 toolCode={
                   typeof activeRule?.params?.toolCode === "string"
@@ -888,58 +951,10 @@ export function WorkpieceAnalyzeWorkspace({
                 isAnalyzing={isAnalyzing}
               />
           </div>
-          
-          {/* Right: inspection hierarchy tree */}
-          <div className="flex min-w-0 flex-col gap-2 overflow-hidden bg-[#1a1a1a] p-2">
-            <InspectionHierarchyTree
-              project={project}
-              ruleset={ruleset}
-              rulesets={projectRulesetsForAnalysis}
-              onSelectRuleset={onSelectRuleset}
-              rules={projectOverlayRules}
-              selectedRuleId={activeRule?.id ?? null}
-              onSelectRule={handleSelectProjectRule}
-              onToggleHidden={railHandlers.onToggleHidden}
-              onDeleteRule={railHandlers.onDelete}
-              onReorderRule={railHandlers.onReorder}
-              onAddRuleClick={handleNavigateAddRule}
-              onAddRulesetClick={handleStartAddRuleset}
-              onDeleteRulesetClick={handleDeleteRuleset}
-              onTuneRule={handleNavigateTuneRule}
-              onUpdateCameraSettings={handleUpdateRuleCameraSettings}
-              onUpdateLightSettings={handleUpdateRuleLightSettings}
-            />
-            <section className="shrink-0 rounded-lg border border-ca-border/70 bg-ca-panel/90 p-3">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-ca-ink">
-                    Image Samples
-                  </h2>
-                  <p className="text-[10px] text-ca-ink-muted">
-                    {ruleset.imageRef ? "1 registered reference" : "No reference registered"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="rounded border border-ca-border bg-ca-panel-2 px-2 py-1 text-[11px] font-semibold text-ca-ink hover:border-ca-select"
-                >
-                  Upload
-                </button>
-              </div>
-              <div className="h-20 overflow-hidden rounded border border-ca-border/60 bg-[#0b0c10]">
-                <img
-                  src={ruleset.imageRef || defaultWorkpieceFilledSample}
-                  alt="Current inspection reference"
-                  className="h-full w-full object-cover opacity-90"
-                />
-              </div>
-            </section>
-          </div>
         </div>
 
         {/* 5. Bottom action bar */}
-        <div className="flex items-center justify-end gap-3 bg-[#1e1e1e] border-t border-[#333] p-2 shrink-0">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[#333] bg-[#1e1e1e] p-1">
           <input
             ref={imageInputRef}
             type="file"
@@ -954,7 +969,7 @@ export function WorkpieceAnalyzeWorkspace({
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            className="px-4 py-2 bg-[#2d2d2d] hover:bg-[#3d3d3d] border border-[#444] text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 rounded border border-[#444] bg-[#2d2d2d] px-3 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:bg-[#3d3d3d]"
           >
             <FileImage size={14} />
             Register Image
@@ -963,7 +978,7 @@ export function WorkpieceAnalyzeWorkspace({
             type="button"
             onClick={handleManualRunAnalysis}
             disabled={isAnalyzing}
-            className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="flex items-center gap-2 rounded bg-emerald-600 px-5 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
           >
             <Play size={14} className={isAnalyzing ? "animate-spin" : ""} />
             {isAnalyzing ? "Running..." : "Run"}

@@ -1540,10 +1540,10 @@ export function VisualToolWorkpieceCanvas({
         : "border-ca-border bg-ca-panel-2 text-ca-ink-muted";
 
   return (
-    <div className="flex h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
+    <div className="flex min-h-0 h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
       {/* Top HUD Controls */}
       <div className="border-b border-ca-border bg-[#11161b] text-xs">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 px-2 py-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
               <ScanSearch size={14} className="text-ca-select" />
@@ -1657,7 +1657,7 @@ export function VisualToolWorkpieceCanvas({
       {/* Main Canvas Viewport */}
       <div
         ref={containerRef}
-        className="relative flex min-h-[260px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-4"
+        className="relative flex min-h-[180px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-2"
       >
         {isAnalyzeMode && overlayRules.length > 0 && (
           <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] flex-wrap items-center gap-2 rounded border border-ca-border/80 bg-[#10161c]/95 px-3 py-1.5 font-mono text-xs shadow-lg backdrop-blur-xs">
@@ -1734,7 +1734,7 @@ export function VisualToolWorkpieceCanvas({
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)) && (
         <section
           aria-label="Visual Analysis Results"
-          className="flex max-h-56 shrink-0 flex-col gap-2 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-3 font-mono text-xs shadow-inner"
+          className="flex max-h-32 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-2 font-mono text-xs shadow-inner"
         >
           {(() => {
             const rulesList = visualRulesList;

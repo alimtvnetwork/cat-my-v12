@@ -491,9 +491,9 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   const addRule = useCallback(() => {
     void navigate({
       to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-      params: { projectId, rulesetId },
+      params: { projectId, rulesetId: ruleset.id },
     });
-  }, [navigate, projectId, rulesetId]);
+  }, [navigate, projectId, ruleset.id]);
 
   const onImportImage = useCallback(
     (file: File) => {
@@ -655,15 +655,15 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   }, [addRuleWithPreset]);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-4">
-      <div className="mx-auto w-full max-w-[1720px]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0b0c10] p-3 font-mono text-ca-ink antialiased">
+      <div className="flex min-h-0 w-full flex-1 flex-col">
         {/*
          * Compact single-band toolbar.
          */}
         <div
           role="toolbar"
           aria-label="Ruleset actions"
-          className="mb-4 flex flex-wrap items-center gap-2 border-b border-[#333] bg-[#1a1c23] p-2"
+          className="mb-2 flex flex-wrap items-center gap-2 border-b border-[#333] bg-[#1a1c23] p-1.5"
         >
           <Link
             to="/projects/$projectId"
@@ -718,7 +718,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
             className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary focus-visible:outline-none"
           >
             <Plus aria-hidden size={14} />
-            Add rule
+            Add tool
           </button>
           <button
             type="button"
@@ -737,9 +737,31 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
-          <Section density={SectionDensityType.Compact} variant={SectionVariantType.Panel}>
-            <div className="h-[74vh] min-h-[500px] w-full p-0 flex flex-col overflow-hidden border border-[#333] bg-[#000]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-[380px_minmax(0,1fr)]">
+          <div className="flex min-h-0 flex-col overflow-hidden border border-[#333] bg-[#1a1c23]">
+            <RightRail
+              rules={rules}
+              selectedIds={selectedIds}
+              onSelect={railHandlers.onSelect}
+              onToggleHidden={railHandlers.onToggleHidden}
+              onToggleLocked={railHandlers.onToggleLocked}
+              onReorder={railHandlers.onReorder as any}
+              onReorderToIndex={railHandlers.onReorderToIndex}
+              onUpdateParams={railHandlers.onUpdateParams}
+              onDelete={railHandlers.onDelete}
+              onDuplicate={railHandlers.onDuplicate}
+              onImportRules={railHandlers.onImportRules}
+              onImportError={railHandlers.onImportError}
+            />
+          </div>
+
+          <Section
+            className="min-h-0 overflow-hidden"
+            bodyClassName="min-h-0 flex-1"
+            density={SectionDensityType.Compact}
+            variant={SectionVariantType.Panel}
+          >
+            <div className="flex h-full min-h-[320px] w-full flex-col overflow-hidden border border-[#333] bg-[#000] p-0">
               <VisualToolWorkpieceCanvas
                 imageRef={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
                 roi={activeRoi}
@@ -765,23 +787,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
               />
             </div>
           </Section>
-
-          <div className="flex h-[74vh] min-h-[500px] flex-col overflow-hidden border border-[#333] bg-[#1a1c23]">
-            <RightRail
-              rules={rules}
-              selectedIds={selectedIds}
-              onSelect={railHandlers.onSelect}
-              onToggleHidden={railHandlers.onToggleHidden}
-              onToggleLocked={railHandlers.onToggleLocked}
-              onReorder={railHandlers.onReorder as any}
-              onReorderToIndex={railHandlers.onReorderToIndex}
-              onUpdateParams={railHandlers.onUpdateParams}
-              onDelete={railHandlers.onDelete}
-              onDuplicate={railHandlers.onDuplicate}
-              onImportRules={railHandlers.onImportRules}
-              onImportError={railHandlers.onImportError}
-            />
-          </div>
         </div>
       </div>
     </div>
