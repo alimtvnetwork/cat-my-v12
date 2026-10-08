@@ -389,12 +389,12 @@ jobs:
 
       - name: Generate install.ps1
         run: |
-          echo "Write-Host 'Downloading Control Automation...'" > release/install.ps1
+          echo "Write-Host 'Downloading CAT iVISION...'" > release/install.ps1
           echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag || github.ref_name }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
-          echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\ControlAutomation -Force" >> release/install.ps1
+          echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\CAT-iVISION -Force" >> release/install.ps1
           echo "\$WshShell = New-Object -comObject WScript.Shell" >> release/install.ps1
-          echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\Control Automation.lnk\\")" >> release/install.ps1
-          echo "\$Shortcut.TargetPath = \\"\$env:LOCALAPPDATA\ControlAutomation\windows-control-automation-frontend.exe\\"" >> release/install.ps1
+          echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\CAT iVISION.lnk\\")" >> release/install.ps1
+          echo "\$Shortcut.TargetPath = \\"\$env:LOCALAPPDATA\CAT-iVISION\windows-control-automation-frontend.exe\\"" >> release/install.ps1
           echo "\$Shortcut.Save()" >> release/install.ps1
           echo "Write-Host 'Installation Complete! Desktop shortcut created.'" >> release/install.ps1
 

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useProjectStore, selectRulesetsForProject } from "@/lib/projects/store";
+import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import type { EditorRule } from "@/lib/editor/types";
 import { createDefaultPatternSearchSettings, type PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { WhiteBoxMarkingTool } from "@/components/vision/WhiteBoxMarkingTool";
@@ -77,7 +78,20 @@ function TuneRulePage() {
   const navigate = useNavigate();
 
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
-  const ruleset = useMemo(() => rulesets.find((r: any) => r.id === rulesetId), [rulesets, rulesetId]);
+  const resolvedRulesetId = useMemo(
+    () => resolveIdParam(IntAliasNamespaceType.Ruleset, rulesetId) || rulesetId,
+    [rulesetId],
+  );
+  const ruleset = useMemo(
+    () =>
+      rulesets.find(
+        (r: any) =>
+          r.id === rulesetId ||
+          r.id === resolvedRulesetId ||
+          resolveIdParam(IntAliasNamespaceType.Ruleset, r.id) === rulesetId,
+      ),
+    [rulesets, rulesetId, resolvedRulesetId],
+  );
   
   const rule = useMemo(() => ruleset?.rules.find((r: any) => r.id === ruleId) as EditorRule | undefined, [ruleset, ruleId]);
 
@@ -125,7 +139,7 @@ function TuneRulePage() {
 
   const applyRuleToStore = async (updatedRule: EditorRule) => {
     const nextRules = ruleset.rules.map((r: any) => (r.id === updatedRule.id ? updatedRule : r));
-    useProjectStore.getState().updateRulesetRules(rulesetId, nextRules);
+    useProjectStore.getState().updateRulesetRules(ruleset.id, nextRules);
     await navigateBack();
   };
 
