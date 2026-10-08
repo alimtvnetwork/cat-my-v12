@@ -378,278 +378,204 @@ function ProjectsIndex() {
   const { mode } = useUiMode();
 
   const mainContent = (
-    <>
-      <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
-        <div className="mx-auto w-full max-w-5xl">
-          <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
-            <div className="min-w-0 flex items-baseline gap-hmi-3">
-              <h1 className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
-                Projects
-              </h1>
-              <span className="text-hmi-caption tabular-nums text-ca-ink-muted">
-                {hydrated ? `${list.length} / ${totalCount}` : "\u00A0"}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-hmi-2">
-              <label
-                className="inline-flex shrink-0 cursor-pointer items-center gap-hmi-2 rounded-md border border-ca-border bg-ca-panel-2/80 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink transition hover:-translate-y-px hover:border-ca-select hover:bg-ca-panel-2 focus-within:outline focus-within:outline-2 focus-within:outline-ca-focus"
-                aria-label="Import project from JSON or YAML"
-              >
-                <Upload aria-hidden size={16} />
-                Import project
-                <input
-                  type="file"
-                  accept=".json,.yaml,.yml,application/json,application/yaml"
-                  className="sr-only"
-                  onChange={(e) => {
-                    const f = e.currentTarget.files?.[0];
-
-                    if (f) void handleImportFile(f);
-                    e.currentTarget.value = "";
-                  }}
-                />
-              </label>
-              <button
-                type="button"
-                onClick={openDialog}
-                className="inline-flex shrink-0 items-center gap-hmi-2 rounded-md bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg shadow-[0_8px_24px_-8px_color-mix(in_oklab,var(--color-ca-select)_60%,transparent)] transition hover:-translate-y-px hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-              >
-                <FolderPlus aria-hidden size={18} />
-                Create project
-              </button>
-            </div>
-          </header>
-
-          {importErr ? (
-            <p role="alert" className="mb-hmi-3 text-hmi-caption text-ca-ng">
-              Import failed: {importErr}
-            </p>
-          ) : null}
-
-          <div className="mb-hmi-4 flex flex-col gap-hmi-2 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative flex-1 sm:max-w-sm">
-              <Search
-                aria-hidden
-                size={16}
-                className="pointer-events-none absolute left-hmi-3 top-1/2 -translate-y-1/2 text-ca-ink-muted"
-              />
-              <input
-                type="search"
-                value={prefs.query}
-                onChange={(e) => setPrefs((p) => ({ ...p, query: e.target.value }))}
-                placeholder="Filter by name"
-                aria-label="Filter projects by name"
-                disabled={!hydrated || totalCount === 0}
-                className="w-full rounded-sm border border-ca-border bg-ca-panel-2 py-hmi-2 pl-9 pr-hmi-3 text-hmi-body text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none disabled:opacity-50"
-              />
-            </label>
-            <label className="flex items-center gap-hmi-2 text-hmi-caption text-ca-ink-muted">
-              Sort
-              <select
-                value={prefs.sort}
-                onChange={(e) => setPrefs((p) => ({ ...p, sort: e.target.value as SortKey }))}
-                aria-label="Sort projects"
-                disabled={!hydrated || totalCount === 0}
-                className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-2 py-hmi-2 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none disabled:opacity-50"
-              >
-                <option value="createdDesc">Newest first</option>
-                <option value="createdAsc">Oldest first</option>
-                <option value="nameAsc">Name (A-Z)</option>
-                <option value="nameDesc">Name (Z-A)</option>
-              </select>
-            </label>
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-6">
+      <div className="mx-auto w-full max-w-7xl">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#333] pb-4">
+          <div className="min-w-0 flex items-baseline gap-4">
+            <h1 className="text-xl font-bold uppercase tracking-wider text-ca-ink flex items-center gap-2">
+              <Cpu className="text-ca-primary" size={20} />
+              Project Database
+            </h1>
+            <span className="text-xs tracking-widest tabular-nums text-ca-ink-muted">
+              {hydrated ? `TOTAL: ${list.length}` : "LOADING..."}
+            </span>
           </div>
-
-          {!hydrated ? (
-            <ul
-              role="status"
-              aria-live="polite"
-              aria-label="Loading projects"
-              className="grid grid-cols-1 gap-hmi-3 md:grid-cols-2 xl:grid-cols-3"
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              className="inline-flex cursor-pointer items-center gap-2 border border-[#333] bg-[#1a1c23] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:border-ca-primary transition-colors focus-within:border-ca-primary"
+              aria-label="Import project from JSON or YAML"
             >
-              {Array.from({ length: 6 }).map((_, i) => (
-                <li
-                  key={i}
-                  className="flex flex-col rounded-lg border border-ca-border bg-ca-panel p-hmi-4 shadow-hmi-panel"
-                  aria-hidden
-                >
-                  <SkeletonLine
-                    width="66%"
-                    height="calc(var(--text-hmi-header-size,1.25rem)*1.2)"
-                  />
-                  <SkeletonLine
-                    className="mt-hmi-2"
-                    width="33%"
-                    height="var(--spacing-hmi-3, 0.75rem)"
-                  />
-                  <SkeletonLine
-                    className="mt-hmi-1"
-                    width="50%"
-                    height="var(--spacing-hmi-3, 0.75rem)"
-                  />
-                </li>
-              ))}
-            </ul>
-          ) : showEmpty ? (
-            <EmptyState
-              icon={FolderOpen}
-              illustration={<ProjectsIllustration />}
-              title={seededEmpty?.title ?? "No projects yet"}
-              description={
-                seededEmpty?.body ??
-                "Create your first project to hold rule sets, trial runs and AI testing results."
-              }
-              actions={[
-                ...(seededAction.cta
-                  ? [
-                      {
-                        label: seededAction.cta.label,
-                        onClick: seededAction.cta.onClick,
-                        testId: seededAction.cta.testId,
-                        variant: EmptyStateActionVariantType.Secondary as const,
-                      },
-                    ]
-                  : []),
-                {
-                  label: "Create project",
-                  onClick: openDialog,
-                  testId: "projects-empty-create",
-                  variant: EmptyStateActionVariantType.Primary,
-                },
-              ]}
-              testId="projects-empty"
-              className="rounded-lg border border-dashed border-ca-border bg-ca-panel"
-            />
-          ) : showNoMatch ? (
-            <EmptyState
-              title="No matches"
-              description={`No projects match "${prefs.query}". Try a different filter.`}
-              actions={[
-                {
-                  label: "Clear filter",
-                  onClick: () => setPrefs((p) => ({ ...p, query: "" })),
-                  testId: "projects-nomatch-clear",
-                  variant: EmptyStateActionVariantType.Secondary,
-                },
-              ]}
-              testId="projects-nomatch"
-              className="rounded-lg border border-dashed border-ca-border bg-ca-panel"
-            />
-          ) : (
-            <>
-              {rowError ? (
-                <p role="alert" className="mb-hmi-3 text-hmi-caption text-ca-ng">
-                  {rowError}
-                </p>
-              ) : null}
-              <ul className="grid grid-cols-1 gap-hmi-3 sm:grid-cols-2 xl:grid-cols-3">
-                {list.map((p) => {
-                  const busy = rowBusyId === p.id;
-                  const canRun = p.rulesetIds.length > 0 && !busy;
-                  const initial = (p.name.trim().charAt(0) || "?").toUpperCase();
+              <Upload aria-hidden size={14} />
+              Import
+              <input
+                type="file"
+                accept=".json,.yaml,.yml,application/json,application/yaml"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.currentTarget.files?.[0];
+                  if (f) void handleImportFile(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={openDialog}
+              className="inline-flex items-center gap-2 bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover transition-colors focus-visible:outline-none"
+            >
+              <Plus aria-hidden size={16} />
+              New Project
+            </button>
+          </div>
+        </header>
 
-                  return (
-                    <li
-                      key={p.id}
-                      className="group relative flex flex-col overflow-hidden rounded-lg border border-ca-border bg-ca-panel p-hmi-4 shadow-hmi-panel transition duration-200 hover:-translate-y-px hover:border-ca-select hover:bg-ca-panel-2/60 hover:shadow-[0_14px_36px_-16px_color-mix(in_oklab,var(--color-ca-select)_60%,transparent)] focus-within:border-ca-select"
-                    >
-                      {/* Left accent bar: neutral by default, brand on hover / focus-within. */}
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-y-0 left-0 w-[3px] bg-ca-border transition-colors duration-200 group-hover:bg-ca-select group-focus-within:bg-ca-select"
-                      />
-                      {/* Corner glow: only visible on hover, matches Home WorkflowCard idiom. */}
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-40"
-                        style={{
-                          background:
-                            "radial-gradient(circle at center, color-mix(in oklab, var(--color-ca-select) 60%, transparent) 0%, transparent 70%)",
-                        }}
-                      />
-                      <Link
-                        to="/projects/$projectId"
-                        params={{ projectId: toIntParam(IntAliasNamespaceType.Project, p.id) }}
-                        className="relative flex min-w-0 items-start gap-hmi-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-                        aria-label={`Open ${p.name}`}
-                      >
-                        <div
-                          aria-hidden
-                          className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-ca-border bg-gradient-to-br from-ca-panel-2 to-ca-select/25 font-display text-hmi-header font-black uppercase tracking-tight text-ca-ink shadow-inner"
+        {importErr ? (
+          <div className="mb-4 rounded-sm border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-500">
+            ERR: {importErr}
+          </div>
+        ) : null}
+
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-[#1a1c23] p-3 border border-[#333]">
+          <div className="relative flex-1 sm:max-w-md flex items-center">
+            <Search
+              aria-hidden
+              size={14}
+              className="absolute left-3 text-ca-ink-muted pointer-events-none"
+            />
+            <input
+              type="search"
+              value={prefs.query}
+              onChange={(e) => setPrefs((p) => ({ ...p, query: e.target.value }))}
+              placeholder="SEARCH PROJECTS..."
+              aria-label="Filter projects by name"
+              disabled={!hydrated || totalCount === 0}
+              className="w-full bg-[#0b0c10] border border-[#333] py-2 pl-9 pr-3 text-xs text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-primary focus:outline-none disabled:opacity-50 uppercase"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-ca-ink-muted uppercase">Sort:</span>
+            <select
+              value={prefs.sort}
+              onChange={(e) => setPrefs((p) => ({ ...p, sort: e.target.value as SortKey }))}
+              aria-label="Sort projects"
+              disabled={!hydrated || totalCount === 0}
+              className="bg-[#0b0c10] border border-[#333] px-3 py-2 text-xs text-ca-ink focus:border-ca-primary focus:outline-none disabled:opacity-50 uppercase appearance-none cursor-pointer"
+            >
+              <option value="createdDesc">DESC (NEWEST)</option>
+              <option value="createdAsc">ASC (OLDEST)</option>
+              <option value="nameAsc">ALPHA (A-Z)</option>
+              <option value="nameDesc">ALPHA (Z-A)</option>
+            </select>
+          </div>
+        </div>
+
+        {!hydrated ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="border border-[#333] bg-[#1a1c23] p-5 h-32 animate-pulse flex flex-col justify-between">
+                 <div className="h-4 bg-[#333] w-2/3"></div>
+                 <div className="h-3 bg-[#333] w-1/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : showEmpty ? (
+          <div className="flex flex-col items-center justify-center p-12 border border-dashed border-[#444] bg-[#1a1c23]">
+            <FolderOpen size={48} className="text-ca-ink-muted mb-4 opacity-50" />
+            <h2 className="text-lg font-bold text-ca-ink uppercase tracking-widest mb-2">DB EMPTY</h2>
+            <p className="text-sm text-ca-ink-muted text-center max-w-sm mb-6">
+              No inspection projects exist in the current configuration matrix.
+            </p>
+            <button
+              onClick={openDialog}
+              className="border border-[#444] bg-transparent px-6 py-2 text-sm font-bold uppercase tracking-wider text-ca-ink hover:border-ca-primary transition-colors"
+            >
+              INITIALIZE PROJECT
+            </button>
+          </div>
+        ) : showNoMatch ? (
+           <div className="flex flex-col items-center justify-center p-12 border border-[#333] bg-[#1a1c23]">
+             <span className="text-sm font-bold text-ca-ink-muted uppercase">QUERY_RESULT: 0 MATCHES</span>
+           </div>
+        ) : (
+          <>
+            {rowError ? (
+              <div className="mb-4 rounded-sm border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-500">
+                {rowError}
+              </div>
+            ) : null}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {list.map((p) => {
+                const busy = rowBusyId === p.id;
+                const canRun = p.rulesetIds.length > 0 && !busy;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="group relative flex flex-col border border-[#333] bg-[#1a1c23] transition-colors hover:border-ca-primary"
+                  >
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#333] transition-colors group-hover:bg-ca-primary" />
+                    
+                    <div className="p-4 flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <Link
+                          to="/projects/$projectId"
+                          params={{ projectId: toIntParam(IntAliasNamespaceType.Project, p.id) }}
+                          className="flex-1 min-w-0 pr-4 hover:opacity-80"
                         >
-                          {initial}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h2 className="truncate font-display text-hmi-header font-black uppercase leading-tight tracking-tight text-ca-ink">
+                          <h2 className="truncate text-base font-bold uppercase tracking-wider text-ca-ink">
                             {p.name}
                           </h2>
-                          <p className="mt-hmi-1 flex items-center gap-hmi-2 text-hmi-caption text-ca-ink-muted">
-                            <span className="inline-flex items-center gap-1 rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-2 py-[2px] tabular-nums">
-                              {p.rulesetIds.length}{" "}
-                              {p.rulesetIds.length === 1 ? "rule set" : "rule sets"}
-                            </span>
-                            {p.deviceId ? (
-                              <span className="inline-flex items-center gap-1 rounded-sm border border-ca-border bg-ca-select/10 px-hmi-2 py-[2px] font-mono text-[11px] text-ca-select">
-                                Device: {p.deviceId}
-                              </span>
-                            ) : null}
-                          </p>
-                          <p
-                            className="mt-hmi-1 truncate font-mono text-[11px] leading-tight text-ca-ink-muted/80"
-                            title={p.id}
-                          >
-                            {p.id.slice(0, 8)}
-                          </p>
-                        </div>
-                      </Link>
-                      <div
-                        className="relative mt-hmi-3 flex items-center gap-hmi-1 border-t border-ca-border/60 pt-hmi-3"
-                        role="group"
-                        aria-label={`Actions for ${p.name}`}
-                      >
-                        <RowIconButton
-                          Icon={Play}
-                          label={`Run ${p.name}`}
-                          onClick={() => void handleRun(p.id)}
-                          disabled={!canRun}
-                          tone="primary"
-                        />
-                        <RowIconButton
-                          Icon={Pencil}
-                          label={`Rename ${p.name}`}
-                          onClick={() => {
-                            setRowError(null);
-                            setRenameFor({ id: p.id, name: p.name });
-                          }}
-                          disabled={busy}
-                        />
-                        <RowIconButton
-                          Icon={Copy}
-                          label={`Duplicate ${p.name}`}
-                          onClick={() => void handleDuplicate(p.id)}
-                          disabled={busy}
-                        />
-                        <RowIconButton
-                          Icon={Trash2}
-                          label={`Delete ${p.name}`}
-                          onClick={() => {
-                            setRowError(null);
-                            setDeleteFor({ id: p.id, name: p.name });
-                          }}
-                          disabled={busy}
-                          tone="danger"
-                        />
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="text-[10px] text-ca-ink-muted">ID: {p.id.slice(0, 8)}</span>
+                          </div>
+                        </Link>
+                        {p.deviceId && (
+                           <div className="shrink-0 flex items-center justify-center border border-ca-primary/50 bg-ca-primary/10 px-2 py-0.5 text-[10px] text-ca-primary tracking-wider">
+                              CAM_LINK
+                           </div>
+                        )}
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
 
-      
+                      <div className="mt-4 flex flex-wrap gap-2 text-[10px] uppercase font-bold tracking-wider">
+                        <div className="border border-[#444] bg-[#0b0c10] px-2 py-1 text-ca-ink-muted">
+                          {p.rulesetIds.length} {p.rulesetIds.length === 1 ? "RULESET" : "RULESETS"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-[#333] bg-[#0b0c10] px-4 py-2">
+                      <div className="flex gap-2">
+                         <button
+                           title="Rename"
+                           onClick={() => { setRowError(null); setRenameFor({ id: p.id, name: p.name }); }}
+                           disabled={busy}
+                           className="text-ca-ink-muted hover:text-ca-ink transition-colors disabled:opacity-50"
+                         >
+                           <Pencil size={14} />
+                         </button>
+                         <button
+                           title="Duplicate"
+                           onClick={() => void handleDuplicate(p.id)}
+                           disabled={busy}
+                           className="text-ca-ink-muted hover:text-ca-ink transition-colors disabled:opacity-50"
+                         >
+                           <Copy size={14} />
+                         </button>
+                         <button
+                           title="Delete"
+                           onClick={() => { setRowError(null); setDeleteFor({ id: p.id, name: p.name }); }}
+                           disabled={busy}
+                           className="text-ca-ink-muted hover:text-red-500 transition-colors disabled:opacity-50"
+                         >
+                           <Trash2 size={14} />
+                         </button>
+                      </div>
+                      <button
+                        onClick={() => void handleRun(p.id)}
+                        disabled={!canRun}
+                        className="flex items-center gap-2 border border-ca-primary bg-ca-primary/10 px-3 py-1 text-[10px] font-bold text-ca-primary hover:bg-ca-primary hover:text-black transition-colors disabled:opacity-30 disabled:border-[#444] disabled:text-[#444] disabled:bg-transparent"
+                      >
+                        <Play size={12} className={canRun ? "fill-current" : ""} />
+                        EXECUTE
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
 
       <AddDeviceModal
         isOpen={isAddDeviceOpen}
@@ -658,51 +584,38 @@ function ProjectsIndex() {
       />
 
       {renameFor ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="rename-project-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ca-bg/70 p-hmi-4 backdrop-blur-md"
-          onClick={() => setRenameFor(null)}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              commitRename();
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-xl border border-ca-border bg-ca-panel p-hmi-5 shadow-hmi-modal"
+            onSubmit={(e) => { e.preventDefault(); commitRename(); }}
+            className="w-full max-w-sm border border-[#444] bg-[#0b0c10] shadow-2xl"
           >
-            <h2
-              id="rename-project-title"
-              className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink"
-            >
-              Rename project
-            </h2>
-            <label className="mt-hmi-3 flex flex-col gap-hmi-1 text-hmi-caption text-ca-ink-muted">
-              Name
+            <div className="border-b border-[#333] bg-[#1a1c23] px-4 py-3">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-ca-ink">RENAME PROJECT</h2>
+            </div>
+            <div className="p-4">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted mb-2 block">
+                NEW NAME
+              </label>
               <input
                 autoFocus
                 value={renameFor.name}
-                onChange={(e) =>
-                  setRenameFor((prev) => (prev ? { ...prev, name: e.target.value } : prev))
-                }
-                className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none"
+                onChange={(e) => setRenameFor((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
+                className="w-full border border-[#444] bg-[#1a1c23] px-3 py-2 text-sm text-ca-ink focus:border-ca-primary focus:outline-none"
               />
-            </label>
-            <div className="mt-hmi-4 flex justify-end gap-hmi-2">
+            </div>
+            <div className="flex gap-2 border-t border-[#333] bg-[#1a1c23] p-4">
               <button
                 type="button"
                 onClick={() => setRenameFor(null)}
-                className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink hover:border-ca-select"
+                className="flex-1 border border-[#444] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-[#333]"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="submit"
-                className="rounded-md bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
+                className="flex-1 bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover"
               >
-                Save
+                APPLY
               </button>
             </div>
           </form>
@@ -710,56 +623,41 @@ function ProjectsIndex() {
       ) : null}
 
       {deleteFor ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-project-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ca-bg/70 p-hmi-4 backdrop-blur-md"
-          onClick={() => setDeleteFor(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-xl border border-ca-border bg-ca-panel p-hmi-5 shadow-hmi-modal"
-          >
-            <h2
-              id="delete-project-title"
-              className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink"
-            >
-              Delete project?
-            </h2>
-            <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
-              This removes "{deleteFor.name}" and every ruleset it owns from this browser. This
-              cannot be undone.
-            </p>
-            <div className="mt-hmi-4 flex justify-end gap-hmi-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm border border-red-500/50 bg-[#0b0c10] shadow-2xl">
+            <div className="border-b border-red-500/20 bg-red-500/10 px-4 py-3">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-red-500">DELETE PROJECT?</h2>
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-ca-ink leading-relaxed">
+                <span className="font-bold text-red-400">WARNING:</span> This removes "{deleteFor.name}" and every ruleset it owns from this browser. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-2 border-t border-[#333] bg-[#1a1c23] p-4">
               <button
                 type="button"
                 onClick={() => setDeleteFor(null)}
-                className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink hover:border-ca-select"
+                className="flex-1 border border-[#444] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-[#333]"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="button"
                 onClick={commitDelete}
-                className="rounded-md bg-ca-ng px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
+                className="flex-1 bg-red-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-600"
               >
-                Delete
+                PURGE
               </button>
             </div>
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 
   if (mode === UiModeType.Standard) {
     return (
-      <StandardAppShell
-        activeNav="projects"
-        title="Projects Database"
-        subtitle={hydrated ? `${list.length} / ${totalCount} projects` : "Loading..."}
-      >
+      <StandardAppShell activeNav="projects" title="PROJECTS_DB">
         {mainContent}
       </StandardAppShell>
     );
@@ -772,40 +670,3 @@ function ProjectsIndex() {
     </HmiShell>
   );
 }
-
-function RowIconButton({
-  Icon,
-  label,
-  onClick,
-  disabled,
-  tone,
-}: {
-  Icon: typeof Pencil;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  tone?: "primary" | "danger";
-}) {
-  const base =
-    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-ca-border bg-ca-panel-2 text-ca-ink transition hover:border-ca-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus disabled:cursor-not-allowed disabled:opacity-50";
-  const toneCls =
-    tone === "primary"
-      ? " text-ca-select hover:text-ca-select"
-      : tone === "danger"
-        ? " text-ca-ng hover:text-ca-ng"
-        : "";
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      className={base + toneCls}
-    >
-      <Icon aria-hidden size={16} />
-    </button>
-  );
-}
-

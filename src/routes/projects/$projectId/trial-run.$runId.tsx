@@ -54,7 +54,7 @@ function TrialRunResults() {
   const StatusIcon = run.verdict === "OK" ? CheckCircle2 : XCircle;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-6">
       <div className="mx-auto w-full max-w-5xl">
         <header className="mb-hmi-5">
           <Link
@@ -64,19 +64,19 @@ function TrialRunResults() {
           >
             <ArrowLeft aria-hidden size={14} /> Trial run
           </Link>
-          <h1 className="mt-hmi-2 font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
+          <h1 className="mt-2 text-sm font-bold uppercase tracking-widest text-ca-ink">
             Run results
           </h1>
-          <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
+          <p className="mt-1 text-xs text-ca-ink-muted">
             {ruleset.name} · {new Date(run.createdAt).toLocaleString()}
             {typeof run.durationMs === "number" ? ` · ${run.durationMs} ms` : ""}
           </p>
-          <p className="mt-hmi-1 font-mono text-hmi-caption text-ca-ink-muted">{run.id}</p>
+          <p className="mt-1 text-[10px] text-[#555]">{run.id}</p>
         </header>
 
         <section
           aria-label="Run summary"
-          className={`mb-hmi-5 flex items-center gap-hmi-4 rounded-lg border p-hmi-4 ${
+          className={`mb-6 flex items-center gap-4 border p-4 ${
             run.verdict === "OK" ? "border-ca-ok/40 bg-ca-ok/5" : "border-ca-ng/40 bg-ca-ng/5"
           }`}
         >
@@ -87,7 +87,7 @@ function TrialRunResults() {
           />
           <div className="min-w-0">
             <p
-              className={`font-display text-hmi-header font-extrabold uppercase tracking-wide ${
+              className={`text-2xl font-bold uppercase tracking-wider ${
                 run.verdict === "OK" ? "text-ca-ok" : "text-ca-ng"
               }`}
             >
@@ -100,9 +100,9 @@ function TrialRunResults() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-hmi-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <section aria-label="Outputs" className="rounded-lg border border-ca-border bg-ca-panel">
-            <header className="border-b border-ca-border px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+          <section aria-label="Outputs" className="border border-[#22252a] bg-[#111318]">
+            <header className="border-b border-[#22252a] bg-[#15171e] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
               Outputs
             </header>
             {run.results.length === 0 ? (
@@ -112,24 +112,24 @@ function TrialRunResults() {
             ) : (
               <table className="w-full text-hmi-body">
                 <thead>
-                  <tr className="border-b border-ca-border text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                    <th className="px-hmi-3 py-hmi-2 text-left">Rule</th>
-                    <th className="px-hmi-3 py-hmi-2 text-left">Kind</th>
-                    <th className="px-hmi-3 py-hmi-2 text-right">Score</th>
-                    <th className="px-hmi-3 py-hmi-2 text-right">Verdict</th>
+                  <tr className="border-b border-[#22252a] text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
+                    <th className="px-4 py-2 text-left">Rule</th>
+                    <th className="px-4 py-2 text-left">Kind</th>
+                    <th className="px-4 py-2 text-right">Score</th>
+                    <th className="px-4 py-2 text-right">Verdict</th>
                   </tr>
                 </thead>
                 <tbody>
                   {run.results.map((r) => (
-                    <tr key={r.ruleId} className="border-b border-ca-border/60 last:border-0">
-                      <td className="px-hmi-3 py-hmi-2 text-ca-ink">{r.ruleName}</td>
-                      <td className="px-hmi-3 py-hmi-2 text-ca-ink-muted">
+                    <tr key={r.ruleId} className="border-b border-[#22252a] last:border-0">
+                      <td className="px-4 py-3 text-xs text-ca-ink font-bold">{r.ruleName}</td>
+                      <td className="px-4 py-3 text-xs text-ca-ink-muted">
                         {editorKindLabel(r.kind)}
                       </td>
-                      <td className="px-hmi-3 py-hmi-2 text-right font-mono text-ca-ink">
+                      <td className="px-4 py-3 text-xs text-right font-mono text-ca-ink">
                         {r.score.toFixed(3)}
                       </td>
-                      <td className="px-hmi-3 py-hmi-2 text-right">
+                      <td className="px-4 py-2 text-right">
                         <span
                           className={`inline-flex items-center rounded-sm px-hmi-2 py-hmi-1 text-hmi-caption font-semibold ${
                             r.verdict === "OK" ? "bg-ca-ok/10 text-ca-ok" : "bg-ca-ng/10 text-ca-ng"
@@ -147,13 +147,13 @@ function TrialRunResults() {
 
           <aside
             aria-label="Logs"
-            className="flex min-h-0 flex-col rounded-lg border border-ca-border bg-ca-panel"
+            className="flex min-h-0 flex-col border border-[#22252a] bg-[#000]"
           >
-            <header className="flex items-center justify-between border-b border-ca-border px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+            <header className="flex items-center justify-between border-b border-[#22252a] bg-[#111318] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
               <span>Logs</span>
               <span>{run.logs?.length ?? 0}</span>
             </header>
-            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap p-hmi-3 font-mono text-hmi-caption text-ca-ink">
+            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap p-4 font-mono text-xs text-[#0f0]">
               {(run.logs ?? ["No logs captured for this run."]).join("\n")}
             </pre>
           </aside>

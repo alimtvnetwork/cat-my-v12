@@ -184,22 +184,22 @@ function SetupChainEventsPage() {
 
   const body = (
     <div className="flex flex-1 min-h-0">
-      <aside className="flex w-80 flex-col border-r border-ca-border bg-ca-panel-2">
-        <div className="flex items-center gap-hmi-1 border-b border-ca-border p-hmi-2">
+      <aside className="flex w-80 flex-col border-r border-[#22252a] bg-[#1a1c23]">
+        <div className="flex items-center gap-hmi-1 border-b border-[#22252a] p-hmi-2">
           <button
             type="button"
             onClick={createNew}
-            className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink hover:border-ca-select"
+            className="inline-flex items-center gap-hmi-1 border border-[#22252a] bg-ca-bg px-hmi-2 py-hmi-1 text-xs text-ca-ink hover:border-ca-select"
           >
             <Plus size={14} aria-hidden /> New
           </button>
-          <span className="ml-auto text-hmi-caption text-ca-ink-muted">
+          <span className="ml-auto text-[10px] uppercase tracking-wider text-ca-ink-muted">
             {library.entries.length} fn
           </span>
         </div>
         <ul className="flex-1 overflow-auto">
           {events.events.length === 0 ? (
-            <li className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
+            <li className="p-hmi-3 text-[10px] uppercase tracking-wider text-ca-ink-muted">
               No chain events yet. Click New to bind one.
             </li>
           ) : (
@@ -212,23 +212,23 @@ function SetupChainEventsPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedId(ev.id)}
-                    className={`flex w-full flex-col items-start gap-0.5 border-b border-ca-border p-hmi-2 text-left hover:bg-ca-bg ${
+                    className={`flex w-full flex-col items-start gap-0.5 border-b border-[#22252a] p-hmi-2 text-left hover:bg-ca-bg ${
                       selectedId === ev.id ? "bg-ca-bg" : ""
                     }`}
                   >
                     <span className="flex w-full items-center justify-between gap-hmi-1">
-                      <span className="truncate text-hmi-body text-ca-ink">
+                      <span className="truncate text-xs text-ca-ink">
                         {ev.trigger}
                         {ev.ruleId ? ` @ ${ev.ruleId}` : ""}
                       </span>
                       {!ev.enabled ? (
-                        <span className="font-hmi-mono text-hmi-caption text-ca-ink-muted">
+                        <span className="font-hmi-mono text-[10px] uppercase tracking-wider text-ca-ink-muted">
                           off
                         </span>
                       ) : null}
                     </span>
                     <span
-                      className={`truncate font-hmi-mono text-hmi-caption ${
+                      className={`truncate font-hmi-mono text-[10px] uppercase tracking-wider ${
                         dangling ? "text-ca-ng" : "text-ca-ink-muted"
                       }`}
                     >
@@ -245,12 +245,12 @@ function SetupChainEventsPage() {
         {selected ? (
           <div className="flex flex-1 flex-col gap-hmi-3">
             <div className="grid grid-cols-2 gap-hmi-2">
-              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+              <label className="flex flex-col gap-hmi-1 text-xs text-ca-ink">
                 <span>Trigger</span>
                 <select
                   value={selected.trigger}
                   onChange={(e) => patch({ trigger: e.target.value as ChainEventTrigger })}
-                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                  className="bg-ca-bg border border-[#22252a] p-hmi-1 text-ca-ink"
                 >
                   <option value="beforeRuleset">beforeRuleset</option>
                   <option value="afterRuleset">afterRuleset</option>
@@ -258,12 +258,12 @@ function SetupChainEventsPage() {
                   <option value="afterRule">afterRule</option>
                 </select>
               </label>
-              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+              <label className="flex flex-col gap-hmi-1 text-xs text-ca-ink">
                 <span>Function</span>
                 <select
                   value={selected.functionId}
                   onChange={(e) => patch({ functionId: e.target.value })}
-                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                  className="bg-ca-bg border border-[#22252a] p-hmi-1 text-ca-ink"
                 >
                   {library.entries.length === 0 ? (
                     <option value="">(no functions)</option>
@@ -277,12 +277,12 @@ function SetupChainEventsPage() {
                 </select>
               </label>
               {(selected.trigger === "beforeRule" || selected.trigger === "afterRule") && (
-                <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+                <label className="flex flex-col gap-hmi-1 text-xs text-ca-ink">
                   <span>Rule</span>
                   <select
                     value={selected.ruleId ?? ""}
                     onChange={(e) => patch({ ruleId: e.target.value || undefined })}
-                    className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                    className="bg-ca-bg border border-[#22252a] p-hmi-1 text-ca-ink"
                   >
                     <option value="">(pick a rule)</option>
                     {rulePool.map((r) => (
@@ -293,16 +293,16 @@ function SetupChainEventsPage() {
                   </select>
                 </label>
               )}
-              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
+              <label className="flex flex-col gap-hmi-1 text-xs text-ca-ink">
                 <span>Order</span>
                 <input
                   type="number"
                   value={selected.order}
                   onChange={(e) => patch({ order: Number(e.target.value) })}
-                  className="bg-ca-bg border border-ca-border p-hmi-1 text-ca-ink"
+                  className="bg-ca-bg border border-[#22252a] p-hmi-1 text-ca-ink"
                 />
               </label>
-              <label className="flex items-center gap-hmi-2 text-hmi-body text-ca-ink">
+              <label className="flex items-center gap-hmi-2 text-xs text-ca-ink">
                 <input
                   type="checkbox"
                   checked={selected.enabled}
@@ -315,19 +315,19 @@ function SetupChainEventsPage() {
             {danglingIds.has(selected.id) ? (
               <div
                 role="alert"
-                className="border border-ca-ng bg-ca-bg p-hmi-2 text-hmi-caption text-ca-ng"
+                className="border border-ca-ng bg-ca-bg p-hmi-2 text-[10px] uppercase tracking-wider text-ca-ng"
               >
                 Function id `{selected.functionId}` is not in the library. Add it in
                 /setup/functions or pick a different function.
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between border-t border-ca-border pt-hmi-2 text-hmi-caption text-ca-ink-muted">
+            <div className="flex items-center justify-between border-t border-[#22252a] pt-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink-muted">
               <span className="font-hmi-mono">id: {selected.id}</span>
               <button
                 type="button"
                 onClick={() => remove(selected.id)}
-                className="inline-flex items-center gap-hmi-1 border border-ca-border bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ink hover:border-ca-ng hover:text-ca-ng"
+                className="inline-flex items-center gap-hmi-1 border border-[#22252a] bg-ca-bg px-hmi-2 py-hmi-1 text-ca-ink hover:border-ca-ng hover:text-ca-ng"
               >
                 <Trash2 size={14} aria-hidden /> Delete
               </button>
@@ -335,7 +335,7 @@ function SetupChainEventsPage() {
 
             <section
               aria-label="Execution preview"
-              className="flex flex-col gap-hmi-2 border-t border-ca-border pt-hmi-2"
+              className="flex flex-col gap-hmi-2 border-t border-[#22252a] pt-hmi-2"
             >
               <h2 className="text-hmi-header text-ca-ink">Execution preview</h2>
               {(["beforeRuleset", "afterRuleset"] as const).map((t) => {
@@ -343,8 +343,8 @@ function SetupChainEventsPage() {
 
                 return (
                   <div key={t}>
-                    <p className="text-hmi-caption text-ca-ink-muted">{t}</p>
-                    <ol className="ml-hmi-3 list-decimal font-hmi-mono text-hmi-caption text-ca-ink">
+                    <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">{t}</p>
+                    <ol className="ml-hmi-3 list-decimal font-hmi-mono text-[10px] uppercase tracking-wider text-ca-ink">
                       {list.length === 0 ? (
                         <li className="list-none text-ca-ink-muted">(none)</li>
                       ) : (
@@ -360,8 +360,8 @@ function SetupChainEventsPage() {
               })}
               {[...sorted.perRule.entries()].map(([key, list]) => (
                 <div key={key}>
-                  <p className="text-hmi-caption text-ca-ink-muted">{key}</p>
-                  <ol className="ml-hmi-3 list-decimal font-hmi-mono text-hmi-caption text-ca-ink">
+                  <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">{key}</p>
+                  <ol className="ml-hmi-3 list-decimal font-hmi-mono text-[10px] uppercase tracking-wider text-ca-ink">
                     {list.map((ev) => {
                       const fn = library.entries.find((e) => e.id === ev.functionId);
 
@@ -373,7 +373,7 @@ function SetupChainEventsPage() {
             </section>
           </div>
         ) : (
-          <div className="m-auto text-hmi-caption text-ca-ink-muted">
+          <div className="m-auto text-[10px] uppercase tracking-wider text-ca-ink-muted">
             Select an event on the left, or click New.
           </div>
         )}
@@ -395,9 +395,9 @@ function SetupChainEventsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-col gap-hmi-1 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
+      <header className="flex flex-col gap-hmi-1 border-b border-[#22252a] bg-[#1a1c23] px-hmi-4 py-hmi-2">
         <h1 className="text-hmi-header text-ca-ink">Chain events</h1>
-        <p className="text-hmi-caption text-ca-ink-muted">
+        <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
           Bind functions to ruleset / per-rule triggers. {events.events.length} event
           {events.events.length === 1 ? "" : "s"} bound.
           {integrity.length > 0 ? (

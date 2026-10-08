@@ -361,7 +361,7 @@ function RunPage() {
   const statusTone = RunStatusType.isRunning(status)
     ? "bg-ca-ok/15 text-ca-ok border-ca-ok/40"
     : RunStatusType.isIdle(status)
-      ? "bg-ca-ink-muted/15 text-ca-ink-muted border-ca-border"
+      ? "bg-ca-ink-muted/15 text-ca-ink-muted border-[#22252a]"
       : "bg-ca-warn/15 text-ca-warn border-ca-warn/40";
 
   const { mode } = useUiMode();
@@ -372,7 +372,7 @@ function RunPage() {
         <RunSkeleton />
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex flex-wrap items-center gap-hmi-3 p-hmi-3 bg-ca-panel">
+          <div className="flex flex-wrap items-center gap-hmi-3 p-hmi-3 bg-[#111318]">
             <Counter variant={CounterVariantType.Total} value={counters.total} />
             <Counter variant={CounterVariantType.Ok} value={counters.ok} />
             <Counter
@@ -381,13 +381,13 @@ function RunPage() {
               data-testid="counter-ng"
               aria-live="polite"
             />
-            <div className="ml-auto flex items-center gap-hmi-4 text-hmi-body text-ca-ink-muted">
+            <div className="ml-auto flex items-center gap-hmi-4 text-xs text-ca-ink-muted">
               <div className="flex flex-col items-end">
-                <span className="text-hmi-caption uppercase tracking-wide">Pass rate</span>
+                <span className="text-[10px] uppercase tracking-wider uppercase tracking-wide">Pass rate</span>
                 <span className="font-mono tabular-nums text-ca-ink">{passRate.toFixed(1)}%</span>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-hmi-caption uppercase tracking-wide">Frames / s</span>
+                <span className="text-[10px] uppercase tracking-wider uppercase tracking-wide">Frames / s</span>
                 <span className="font-mono tabular-nums text-ca-ink">{fps}</span>
               </div>
             </div>
@@ -396,12 +396,12 @@ function RunPage() {
             <MachineFrame live={RunStatusType.isRunning(status)} />
             <ViewportImageControls />
             {pickedRulesets.length > 0 ? (
-              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-md border border-ca-border bg-ca-panel/90 p-hmi-3 shadow-hmi-panel backdrop-blur">
+              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-sm border border-[#22252a] bg-ca-panel/90 p-hmi-3 shadow-hmi-panel backdrop-blur">
                 <div className="flex items-center justify-between gap-hmi-2">
-                  <p className="font-display text-hmi-caption font-semibold uppercase tracking-wide text-ca-ink">
+                  <p className="font-display text-[10px] uppercase tracking-wider font-semibold uppercase tracking-wide text-ca-ink">
                     {project?.name ?? "Selected rule sets"}
                   </p>
-                  <span className="text-hmi-caption text-ca-ink-muted">
+                  <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
                     {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
                   </span>
                 </div>
@@ -412,11 +412,11 @@ function RunPage() {
                     return (
                       <li
                         key={r.id}
-                        className="flex items-center gap-hmi-2 rounded-sm bg-ca-panel-2 px-hmi-2 py-hmi-1"
+                        className="flex items-center gap-hmi-2 rounded-sm bg-[#1a1c23] px-hmi-2 py-hmi-1"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-hmi-body text-ca-ink">{r.name}</p>
-                          <p className="truncate text-hmi-caption text-ca-ink-muted">
+                          <p className="truncate text-xs text-ca-ink">{r.name}</p>
+                          <p className="truncate text-[10px] uppercase tracking-wider text-ca-ink-muted">
                             {r.rules.length} rules, {summary}
                           </p>
                         </div>
@@ -427,7 +427,7 @@ function RunPage() {
                               projectId,
                               rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
                             }}
-                            className="inline-flex items-center gap-hmi-1 rounded-sm border border-ca-border px-hmi-1 text-hmi-caption text-ca-ink hover:border-ca-select"
+                            className="inline-flex items-center gap-hmi-1 rounded-sm border border-[#22252a] px-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-select"
                             aria-label={`Edit ${r.name}`}
                           >
                             <Pencil aria-hidden size={12} /> Edit
@@ -441,13 +441,13 @@ function RunPage() {
             ) : null}
             {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="rounded-md border border-ca-border bg-ca-panel/85 px-hmi-5 py-hmi-4 text-center shadow-hmi-panel backdrop-blur">
-                  <p className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
+                <div className="rounded-sm border border-[#22252a] bg-ca-panel/85 px-hmi-5 py-hmi-4 text-center shadow-hmi-panel backdrop-blur">
+                  <p className="font-display text-xs font-bold uppercase tracking-widest uppercase tracking-wide text-ca-ink">
                     Ready to run
                   </p>
-                  <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
+                  <p className="mt-hmi-1 text-xs text-ca-ink-muted">
                     Press{" "}
-                    <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
+                    <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
                       Space
                     </kbd>{" "}
                     or the Start button to begin.
@@ -485,7 +485,7 @@ function RunPage() {
           id="run-settings-popover"
           role="dialog"
           aria-label="Run options"
-          className="fixed right-4 top-24 z-40 w-80 rounded-md border border-ca-border bg-ca-panel p-hmi-4 shadow-hmi-panel space-y-hmi-3"
+          className="fixed right-4 top-24 z-40 w-80 rounded-sm border border-[#22252a] bg-[#111318] p-hmi-4 shadow-hmi-panel space-y-hmi-3"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-hmi-title font-semibold uppercase tracking-wide text-ca-ink">
@@ -500,7 +500,7 @@ function RunPage() {
               ×
             </button>
           </div>
-          <label className="flex items-center justify-between gap-hmi-2 text-hmi-body text-ca-ink">
+          <label className="flex items-center justify-between gap-hmi-2 text-xs text-ca-ink">
             <span>Auto-reset on start</span>
             <input
               type="checkbox"
@@ -509,7 +509,7 @@ function RunPage() {
               className="h-4 w-4"
             />
           </label>
-          <label className="flex items-center justify-between gap-hmi-2 text-hmi-body text-ca-ink">
+          <label className="flex items-center justify-between gap-hmi-2 text-xs text-ca-ink">
             <span>Sound on NG</span>
             <input
               type="checkbox"
@@ -518,7 +518,7 @@ function RunPage() {
               className="h-4 w-4"
             />
           </label>
-          <label className="flex items-center justify-between gap-hmi-2 text-hmi-body text-ca-ink">
+          <label className="flex items-center justify-between gap-hmi-2 text-xs text-ca-ink">
             <span>Target FPS</span>
             <input
               type="number"
@@ -526,10 +526,10 @@ function RunPage() {
               max={30}
               value={settings.targetFps}
               onChange={(e) => setSettings({ targetFps: Number(e.target.value) || 5 })}
-              className="w-20 rounded border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-right font-mono"
+              className="w-20 rounded border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-1 text-right font-mono"
             />
           </label>
-          <p className="text-hmi-caption text-ca-ink-muted">
+          <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
             Saved automatically. Restored on refresh.
           </p>
         </div>
@@ -538,7 +538,7 @@ function RunPage() {
         <div
           role="dialog"
           aria-label="Keyboard shortcuts"
-          className="fixed bottom-24 right-4 z-40 w-72 rounded-md border border-ca-border bg-ca-panel p-hmi-4 shadow-hmi-panel"
+          className="fixed bottom-24 right-4 z-40 w-72 rounded-sm border border-[#22252a] bg-[#111318] p-hmi-4 shadow-hmi-panel"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-hmi-title font-semibold uppercase tracking-wide text-ca-ink">
@@ -553,11 +553,11 @@ function RunPage() {
               ×
             </button>
           </div>
-          <dl className="mt-hmi-2 space-y-hmi-1 text-hmi-body text-ca-ink">
+          <dl className="mt-hmi-2 space-y-hmi-1 text-xs text-ca-ink">
             <div className="flex items-center justify-between">
               <dt>Start / Stop run</dt>
               <dd>
-                <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
+                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
                   Space
                 </kbd>
               </dd>
@@ -565,7 +565,7 @@ function RunPage() {
             <div className="flex items-center justify-between">
               <dt>Toggle this help</dt>
               <dd>
-                <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
+                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
                   ?
                 </kbd>
               </dd>
@@ -573,7 +573,7 @@ function RunPage() {
             <div className="flex items-center justify-between">
               <dt>Close dialogs</dt>
               <dd>
-                <kbd className="rounded border border-ca-border bg-ca-panel-2 px-hmi-1 font-mono">
+                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
                   Esc
                 </kbd>
               </dd>
@@ -592,31 +592,31 @@ function RunPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-ca-panel border border-ca-border shadow-hmi-panel min-w-80 max-w-md"
+            className="bg-[#111318] border border-[#22252a] shadow-hmi-panel min-w-80 max-w-md"
           >
             <div className="px-hmi-4 py-hmi-2 bg-ca-chrome text-ca-chrome-ink text-hmi-title uppercase tracking-wide">
               <span id="confirm-stop-title">Stop run?</span>
             </div>
-            <div className="p-hmi-4 space-y-hmi-2 text-hmi-body text-ca-ink">
+            <div className="p-hmi-4 space-y-hmi-2 text-xs text-ca-ink">
               <p>
                 Stopping halts the frame loop and releases nav-lock. Counters (
                 <span className="hmi-tabular">{counters.total}</span> total,{" "}
                 <span className="hmi-tabular">{counters.ng}</span> NG) remain until reset.
               </p>
             </div>
-            <div className="flex justify-end gap-hmi-2 px-hmi-4 py-hmi-2 border-t border-ca-border">
+            <div className="flex justify-end gap-hmi-2 px-hmi-4 py-hmi-2 border-t border-[#22252a]">
               <button
                 type="button"
                 onClick={cancelStop}
                 autoFocus
-                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md"
+                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm"
               >
                 Keep running
               </button>
               <button
                 type="button"
                 onClick={confirmStopRun}
-                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 bg-ca-ng text-ca-bg text-hmi-body font-medium rounded-md"
+                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 bg-ca-ng text-ca-bg text-xs font-medium rounded-sm"
               >
                 Stop run
               </button>
@@ -652,14 +652,14 @@ function RunPage() {
         type="button"
         onClick={doReset}
         disabled={RunStatusType.isRunning(status) || counters.total === 0}
-        className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded text-xs text-ca-ink hover:bg-ca-panel-2 shadow-sm font-medium disabled:opacity-50"
+        className="px-2.5 py-1 bg-[#111318] border border-[#22252a] rounded text-xs text-ca-ink hover:bg-[#1a1c23] shadow-sm font-medium disabled:opacity-50"
       >
         Reset
       </button>
       <button
         type="button"
         onClick={() => setShowHistory((v) => !v)}
-        className="px-2.5 py-1 bg-ca-panel border border-ca-border rounded text-xs text-ca-ink hover:bg-ca-panel-2 shadow-sm font-medium"
+        className="px-2.5 py-1 bg-[#111318] border border-[#22252a] rounded text-xs text-ca-ink hover:bg-[#1a1c23] shadow-sm font-medium"
       >
         History
       </button>
@@ -685,7 +685,7 @@ function RunPage() {
       program="Program 01"
       title="Run"
       headerActions={
-        <div className="flex items-center gap-hmi-3 text-hmi-body">
+        <div className="flex items-center gap-hmi-3 text-xs">
           {RunStatusType.isRunning(status) ? (
             <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
               {elapsed}
@@ -694,7 +694,7 @@ function RunPage() {
           <span
             role="status"
             aria-live="polite"
-            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-hmi-caption font-semibold uppercase tracking-wide ${statusTone}`}
+            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-[10px] uppercase tracking-wider font-semibold uppercase tracking-wide ${statusTone}`}
           >
             <span
               aria-hidden
@@ -711,7 +711,7 @@ function RunPage() {
             onClick={() => setShowHistory((v) => !v)}
             aria-pressed={showHistory}
             aria-label={showHistory ? "Hide run history" : "Show run history"}
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
           >
             History
           </button>
@@ -720,13 +720,13 @@ function RunPage() {
             onClick={() => setShowSettings((v) => !v)}
             aria-expanded={showSettings}
             aria-controls="run-settings-popover"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
           >
             Options
           </button>
           <Link
             to="/setup"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
           >
             Back to Setup
           </Link>
@@ -735,7 +735,7 @@ function RunPage() {
             onClick={doReset}
             disabled={RunStatusType.isRunning(status) || counters.total === 0}
             aria-label="Reset counters and event log"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
             title="Clear counters and event log"
           >
             Reset

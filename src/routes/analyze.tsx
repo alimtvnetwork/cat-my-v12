@@ -198,7 +198,7 @@ function AnalyzeScreen(): React.JSX.Element {
         title={`Inspection Analysis — ${targetRuleset.name}`}
         subtitle={`Device: ${targetProject.deviceId || "Circuit IC"} · ${targetRuleset.rules?.length ?? 0} Rules Loaded`}
       >
-        <div className="flex flex-1 flex-col min-h-0 bg-ca-panel">
+        <div className="flex flex-1 flex-col min-h-0 bg-[#111318]">
           {workspace}
         </div>
       </StandardAppShell>

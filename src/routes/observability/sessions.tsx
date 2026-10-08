@@ -426,7 +426,7 @@ function SessionListPage() {
                 toast.error("Copy failed", { description: msg });
               }
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
+            className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
             aria-label="Copy shareable URL for this view"
             title="Copy shareable URL for this filtered/sorted view"
           >
@@ -437,7 +437,7 @@ function SessionListPage() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
             aria-label="Refresh sessions"
           >
             {loading ? (
@@ -545,7 +545,7 @@ function SessionListPage() {
           <button
             type="submit"
             disabled={savingName.trim().length === 0}
-            className="rounded-md border border-white/10 px-3 py-1 hover:bg-white/5 disabled:opacity-40"
+            className="rounded-sm border border-white/10 px-3 py-1 hover:bg-white/5 disabled:opacity-40"
           >
             Save
           </button>
@@ -651,7 +651,7 @@ function SessionListPage() {
           type="button"
           onClick={() => void loadMore()}
           disabled={!nextCursor || loadingMore || loading}
-          className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
           aria-label={nextCursor ? "Load next page of sessions" : "No more sessions to load"}
         >
           {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

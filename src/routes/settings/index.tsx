@@ -465,14 +465,14 @@ function SettingsIndex() {
   const { mode } = useUiMode();
 
   const content = (
-    <div className="flex-1 overflow-auto">
-      <div className="mx-auto w-full max-w-6xl p-hmi-6">
-        <header className="mb-hmi-4 flex flex-wrap items-center justify-between gap-hmi-3 border-b border-ca-border pb-hmi-3">
+    <div className="flex-1 overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased">
+      <div className="mx-auto w-full max-w-6xl p-6">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#22252a] pb-4">
           <div className="min-w-0">
-            <h1 className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
+            <h1 className="text-sm font-bold uppercase tracking-widest text-[#f5a623]">
               Settings
             </h1>
-            <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">
+            <p className="mt-1 text-xs text-ca-ink-muted">
               Device, capture, operator and retention configuration.
             </p>
           </div>
@@ -486,7 +486,7 @@ function SettingsIndex() {
               placeholder="Filter settings..."
               aria-label="Filter settings"
               data-testid="settings-search"
-              className="w-full min-h-9 rounded-md bg-ca-panel-2 border border-ca-border pl-8 pr-8 py-hmi-2 text-hmi-body text-ca-ink hmi-tabular placeholder:text-ca-ink-muted focus:border-ca-select focus:outline-none"
+              className="w-full min-h-9 border border-[#333] bg-[#0b0c10] pl-8 pr-8 py-2 text-xs text-ca-ink placeholder:text-[#555] focus:border-[#f5a623] focus:outline-none"
             />
             {query ? (
               <button
@@ -501,7 +501,7 @@ function SettingsIndex() {
           </label>
         </header>
 
-        <div className="grid grid-cols-1 gap-hmi-5 lg:grid-cols-[minmax(200px,220px)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(200px,220px)_minmax(0,1fr)]">
           <aside className="lg:sticky lg:top-hmi-4 lg:self-start">
             <SettingsSidenav />
           </aside>
@@ -514,9 +514,9 @@ function SettingsIndex() {
                     <li key={to}>
                       <Link
                         to={to}
-                        className="group flex items-center gap-hmi-3 rounded-md border border-ca-border bg-ca-panel px-hmi-3 py-hmi-3 text-hmi-body text-ca-ink transition hover:-translate-y-px hover:border-ca-select hover:shadow-[0_10px_30px_-14px_color-mix(in_oklab,var(--color-ca-select)_60%,transparent)]"
+                        className="group flex items-center gap-3 border border-[#22252a] bg-[#111318] px-4 py-3 text-xs text-ca-ink transition hover:border-[#f5a623]"
                       >
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-ca-border bg-ca-panel-2 text-ca-select transition group-hover:bg-ca-select/10">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center bg-[#0b0c10] text-[#f5a623] transition group-hover:bg-[#1a1c23]">
                           <Icon size={16} aria-hidden />
                         </span>
                         <span className="font-medium">{label}</span>
@@ -563,7 +563,7 @@ function SettingsIndex() {
                         onChange={saveVendor}
                         describedBy="capture-vendor-active"
                       />
-                      <div className="mt-hmi-3 text-hmi-caption text-ca-ink-muted hmi-tabular">
+                      <div className="mt-3 text-[10px] text-ca-ink-muted hmi-tabular">
                         <span id="capture-vendor-active">
                           Active:{" "}
                           <span className="text-ca-ink">{formatIdentifierLabel(vendor)}</span>
@@ -621,7 +621,7 @@ function SettingsIndex() {
                           onChange={(e) => setOperatorId(e.target.value)}
                           placeholder="e.g. op-alice"
                           maxLength={64}
-                          className="mt-hmi-1 block w-full min-h-10 rounded-md bg-ca-panel-2 border border-ca-border px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink hmi-tabular focus:border-ca-select focus:outline-none"
+                          className="mt-1 block w-full min-h-10 border border-[#333] bg-[#0b0c10] px-3 py-2 text-xs text-ca-ink focus:border-[#f5a623] focus:outline-none"
                         />
                       </label>
                       <div className="mt-hmi-3 flex items-center gap-hmi-3">
@@ -749,7 +749,7 @@ function SettingsIndex() {
                           );
                         })}
                       </div>
-                      <div className="mt-hmi-3 text-hmi-caption text-ca-ink-muted hmi-tabular">
+                      <div className="mt-3 text-[10px] text-ca-ink-muted hmi-tabular">
                         Active:{" "}
                         <span className="text-ca-ink">
                           {toolTooltipMode === "hover"
@@ -971,7 +971,7 @@ function DataSourceCard() {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="http://localhost:8787"
           spellCheck={false}
-          className="mt-hmi-1 block w-full min-h-10 rounded-md bg-ca-panel-2 border border-ca-border px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink hmi-tabular focus:border-ca-select focus:outline-none"
+          className="mt-1 block w-full min-h-10 border border-[#333] bg-[#0b0c10] px-3 py-2 text-xs text-ca-ink focus:border-[#f5a623] focus:outline-none"
         />
       </label>
       <div className="mt-hmi-3 flex flex-wrap items-center gap-hmi-2">
@@ -1024,7 +1024,7 @@ function DataSourceCard() {
           />
           Persist rules server-side
         </label>
-        <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">
+        <p className="mt-1 text-xs text-ca-ink-muted">
           Defaults to ON in Backend mode. When disabled, rule mutations only update local IndexedDB.
         </p>
       </div>

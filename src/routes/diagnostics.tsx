@@ -50,7 +50,7 @@ function DiagnosticsPage() {
         <h1 className="text-hmi-header font-black uppercase tracking-wider">Memory Diagnostics</h1>
         <StatusPill ok={r.ok} />
       </header>
-      <p className="text-hmi-caption text-ca-ink-muted">Loaded at {r.loadedAt}</p>
+      <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Loaded at {r.loadedAt}</p>
       {r.errors.length > 0 ? <ErrorList errors={r.errors} /> : null}
       <HomeErrorSection
         record={homeError}
@@ -70,10 +70,10 @@ function DiagnosticsPage() {
             {r.memoryFiles.map((f) => (
               <li
                 key={f.path}
-                className="flex items-baseline justify-between border-b border-ca-border/60 py-1"
+                className="flex items-baseline justify-between border-b border-[#22252a]/60 py-1"
               >
                 <span className="font-semibold">{f.name}</span>
-                <span className="text-hmi-caption text-ca-ink-muted hmi-tabular">{f.bytes} B</span>
+                <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted hmi-tabular">{f.bytes} B</span>
               </li>
             ))}
           </ul>
@@ -104,7 +104,7 @@ function DiagnosticsPage() {
         title="Memory Diagnostics"
         subtitle={`Loaded at ${r.loadedAt}`}
       >
-        <div className="flex-1 overflow-auto bg-ca-panel">{body}</div>
+        <div className="flex-1 overflow-auto bg-[#111318]">{body}</div>
       </StandardAppShell>
     );
   }
@@ -119,7 +119,7 @@ function StatusPill({ ok }: { ok: boolean }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-hmi-1 border px-hmi-2 py-1 text-hmi-body font-bold uppercase ${cls}`}
+      className={`inline-flex items-center gap-hmi-1 border px-hmi-2 py-1 text-xs font-bold uppercase ${cls}`}
     >
       <span aria-hidden>{ok ? "OK" : "FAIL"}</span>
       <span className="sr-only">Memory load {ok ? "succeeded" : "failed"}</span>
@@ -130,15 +130,15 @@ function StatusPill({ ok }: { ok: boolean }) {
 function ErrorList({ errors }: { errors: string[] }) {
   return (
     <section aria-label="Errors" className="border border-ca-ng bg-ca-ng/10 p-hmi-3">
-      <h2 className="text-hmi-body font-bold text-ca-ng">Actionable errors</h2>
-      <ul className="mt-hmi-2 list-disc pl-hmi-4 text-hmi-body text-ca-ink">
+      <h2 className="text-xs font-bold text-ca-ng">Actionable errors</h2>
+      <ul className="mt-hmi-2 list-disc pl-hmi-4 text-xs text-ca-ink">
         {errors.map((e, i) => (
           <li key={i}>
             <code>{e}</code>
           </li>
         ))}
       </ul>
-      <p className="mt-hmi-2 text-hmi-caption text-ca-ink-muted">
+      <p className="mt-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink-muted">
         Fixes: confirm the file/folder exists in the repo, that Vite has access to the project root,
         and that the glob pattern in <code>src/lib/diagnostics/memory-load.ts</code> matches.
         Restart the dev server after moving files.
@@ -149,8 +149,8 @@ function ErrorList({ errors }: { errors: string[] }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border border-ca-border bg-ca-panel p-hmi-3">
-      <h2 className="mb-hmi-2 text-hmi-body font-bold uppercase tracking-wide">{title}</h2>
+    <section className="border border-[#22252a] bg-[#111318] p-hmi-3">
+      <h2 className="mb-hmi-2 text-xs font-bold uppercase tracking-wide">{title}</h2>
       {children}
     </section>
   );
@@ -162,7 +162,7 @@ function IdList({ ids, empty }: { ids: string[]; empty: string }) {
   return (
     <ul className="grid grid-cols-1 gap-x-hmi-3 gap-y-1 md:grid-cols-2 lg:grid-cols-3">
       {ids.map((id) => (
-        <li key={id} className="truncate font-mono text-hmi-caption text-ca-ink">
+        <li key={id} className="truncate font-mono text-[10px] uppercase tracking-wider text-ca-ink">
           {id}
         </li>
       ))}
@@ -171,7 +171,7 @@ function IdList({ ids, empty }: { ids: string[]; empty: string }) {
 }
 
 function Empty({ label }: { label: string }) {
-  return <p className="text-hmi-caption text-ca-ink-muted">{label}</p>;
+  return <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">{label}</p>;
 }
 
 function RuleAuditSection() {
@@ -195,12 +195,12 @@ function RuleAuditSection() {
 
   return (
     <section
-      className="border border-ca-border bg-ca-panel p-hmi-3"
+      className="border border-[#22252a] bg-[#111318] p-hmi-3"
       aria-label="Rule audit trail"
       data-testid="diagnostics-rule-audit"
     >
       <div className="mb-hmi-2 flex items-center justify-between gap-hmi-3">
-        <h2 className="text-hmi-body font-bold uppercase tracking-wide">
+        <h2 className="text-xs font-bold uppercase tracking-wide">
           Rule audit trail ({isFiltered ? `${filtered.length}/${events.length}` : events.length})
         </h2>
         {events.length > 0 ? (
@@ -209,7 +209,7 @@ function RuleAuditSection() {
               type="button"
               onClick={() => downloadRuleAudit(filtered, RuleAuditExportFormatType.Json)}
               disabled={filtered.length === 0}
-              className="border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-hmi-caption text-ca-ink hover:border-ca-focus disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-focus disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="diagnostics-rule-audit-export-json"
               title={`Export ${filtered.length} event(s) as JSON`}
             >
@@ -219,7 +219,7 @@ function RuleAuditSection() {
               type="button"
               onClick={() => downloadRuleAudit(filtered, RuleAuditExportFormatType.Csv)}
               disabled={filtered.length === 0}
-              className="border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-hmi-caption text-ca-ink hover:border-ca-focus disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-focus disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="diagnostics-rule-audit-export-csv"
               title={`Export ${filtered.length} event(s) as CSV`}
             >
@@ -228,7 +228,7 @@ function RuleAuditSection() {
             <button
               type="button"
               onClick={clear}
-              className="border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-hmi-caption text-ca-ink hover:border-ca-focus"
+              className="border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-focus"
               data-testid="diagnostics-rule-audit-clear"
             >
               Clear
@@ -238,12 +238,12 @@ function RuleAuditSection() {
       </div>
       {events.length > 0 ? (
         <div className="mb-hmi-2 flex flex-wrap items-center gap-hmi-2">
-          <label className="flex items-center gap-hmi-1 text-hmi-caption text-ca-ink-muted">
+          <label className="flex items-center gap-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink-muted">
             <span className="uppercase tracking-wide">Source</span>
             <select
               value={sourceFilter}
               onChange={(ev) => setSourceFilter(ev.target.value as RuleAuditSource | "all")}
-              className="border border-ca-border bg-ca-panel-2 px-hmi-1 py-0.5 text-hmi-caption text-ca-ink focus:border-ca-focus focus:outline-none"
+              className="border border-[#22252a] bg-[#1a1c23] px-hmi-1 py-0.5 text-[10px] uppercase tracking-wider text-ca-ink focus:border-ca-focus focus:outline-none"
               data-testid="diagnostics-rule-audit-source"
             >
               <option value="all">All</option>
@@ -252,14 +252,14 @@ function RuleAuditSection() {
               <option value="bulk-undo">bulk-undo</option>
             </select>
           </label>
-          <label className="flex flex-1 items-center gap-hmi-1 text-hmi-caption text-ca-ink-muted">
+          <label className="flex flex-1 items-center gap-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink-muted">
             <span className="uppercase tracking-wide">Search</span>
             <input
               type="search"
               value={query}
               onChange={(ev) => setQuery(ev.target.value)}
               placeholder="Rule name or id"
-              className="min-w-0 flex-1 border border-ca-border bg-ca-panel-2 px-hmi-2 py-0.5 text-hmi-caption text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-focus focus:outline-none"
+              className="min-w-0 flex-1 border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-0.5 text-[10px] uppercase tracking-wider text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-focus focus:outline-none"
               data-testid="diagnostics-rule-audit-query"
             />
           </label>
@@ -270,7 +270,7 @@ function RuleAuditSection() {
                 setSourceFilter("all");
                 setQuery("");
               }}
-              className="border border-ca-border bg-ca-panel-2 px-hmi-2 py-0.5 text-hmi-caption text-ca-ink hover:border-ca-focus"
+              className="border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-0.5 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-focus"
               data-testid="diagnostics-rule-audit-reset"
             >
               Reset
@@ -288,7 +288,7 @@ function RuleAuditSection() {
             <RuleAuditRow key={e.id} event={e} />
           ))}
           {filtered.length > recent.length ? (
-            <li className="pt-hmi-1 text-hmi-caption text-ca-ink-muted">
+            <li className="pt-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink-muted">
               +{filtered.length - recent.length} older matching event(s) in the ring buffer.
             </li>
           ) : null}
@@ -305,7 +305,7 @@ function RuleAuditRow({ event }: { event: RuleAuditEvent }) {
 
   return (
     <li
-      className="flex items-baseline justify-between gap-hmi-3 border-b border-ca-border/60 py-1 text-hmi-caption"
+      className="flex items-baseline justify-between gap-hmi-3 border-b border-[#22252a]/60 py-1 text-[10px] uppercase tracking-wider"
       data-testid="diagnostics-rule-audit-row"
     >
       <span className="hmi-tabular text-ca-ink-muted" title={when}>
@@ -344,18 +344,18 @@ function HomeErrorSection({
   return (
     <section className="border border-ca-ng bg-ca-ng/10 p-hmi-3" aria-label="Home error boundary">
       <div className="flex items-center justify-between gap-hmi-3">
-        <h2 className="text-hmi-body font-bold uppercase tracking-wide text-ca-ng">
+        <h2 className="text-xs font-bold uppercase tracking-wide text-ca-ng">
           Home error boundary
         </h2>
         <button
           type="button"
           onClick={onClear}
-          className="border border-ca-border bg-ca-panel-2 px-hmi-2 py-1 text-hmi-caption text-ca-ink hover:border-ca-focus"
+          className="border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-focus"
         >
           Clear
         </button>
       </div>
-      <dl className="mt-hmi-2 grid gap-hmi-1 text-hmi-body">
+      <dl className="mt-hmi-2 grid gap-hmi-1 text-xs">
         <div className="flex gap-hmi-2">
           <dt className="w-32 text-ca-ink-muted">Captured at</dt>
           <dd className="hmi-tabular">{record.at}</dd>
@@ -364,8 +364,8 @@ function HomeErrorSection({
           <div className="flex gap-hmi-2">
             <dt className="w-32 text-ca-ink-muted">Code</dt>
             <dd>
-              <code className="font-mono text-hmi-caption text-ca-ng">{record.code}</code>
-              <span className="ml-hmi-2 text-hmi-caption text-ca-ink-muted">
+              <code className="font-mono text-[10px] uppercase tracking-wider text-ca-ng">{record.code}</code>
+              <span className="ml-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink-muted">
                 ({ERROR_CODE_LABEL[record.code] || record.code})
               </span>
             </dd>
@@ -385,7 +385,7 @@ function HomeErrorSection({
             ) : (
               <ul className="flex flex-wrap gap-hmi-1">
                 {record.failedPlanIds.map((id) => (
-                  <li key={id} className="font-mono text-hmi-caption">
+                  <li key={id} className="font-mono text-[10px] uppercase tracking-wider">
                     {id}
                   </li>
                 ))}
@@ -396,10 +396,10 @@ function HomeErrorSection({
       </dl>
       {record.stack ? (
         <details className="mt-hmi-2">
-          <summary className="cursor-pointer text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+          <summary className="cursor-pointer text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
             Stack trace
           </summary>
-          <pre className="mt-hmi-1 max-h-64 overflow-auto whitespace-pre-wrap break-words border border-ca-border bg-ca-panel p-hmi-2 text-hmi-caption text-ca-ink">
+          <pre className="mt-hmi-1 max-h-64 overflow-auto whitespace-pre-wrap break-words border border-[#22252a] bg-[#111318] p-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink">
             {record.stack}
           </pre>
         </details>

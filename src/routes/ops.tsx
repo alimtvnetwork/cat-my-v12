@@ -113,32 +113,32 @@ function OpsPage() {
   const { mode } = useUiMode();
 
   const content = (
-    <div className="flex-1 overflow-auto bg-ca-panel">
-      <div className="grid grid-cols-4 gap-hmi-2 p-hmi-3 border-b border-ca-border">
+    <div className="flex-1 overflow-auto bg-[#111318]">
+      <div className="grid grid-cols-4 gap-hmi-2 p-hmi-3 border-b border-[#22252a]">
         <Tile label="Audit pruned" value={counts.I_SEC_AUDIT_PRUNED} tone="info" />
         <Tile label="Admin writes" value={counts.I_SEC_ADMIN_WRITE} tone="info" />
         <Tile label="Denial bursts" value={counts.E_SEC_DENIAL_BURST} tone="alert" />
         <Tile label="Role denied" value={counts.E_SEC_ROLE_DENIED} tone="alert" />
       </div>
 
-      <div className="px-hmi-3 pt-hmi-3 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+      <div className="px-hmi-3 pt-hmi-3 text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
         Denial bursts: read-only tuning
       </div>
       <div
-        className="grid grid-cols-3 gap-hmi-2 p-hmi-3 border-b border-ca-border"
+        className="grid grid-cols-3 gap-hmi-2 p-hmi-3 border-b border-[#22252a]"
         data-testid="denial-tuning-panel"
         aria-label="Denial bursts tuning (read-only)"
       >
         <Tile label="Denial threshold" value={tuning?.threshold ?? 0} tone="info" />
         <Tile label="Window (s)" value={tuning?.windowSeconds ?? 0} tone="info" />
-        <div className="border border-ca-border bg-ca-panel-2 p-hmi-3">
-          <div className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+        <div className="border border-[#22252a] bg-[#1a1c23] p-hmi-3">
+          <div className="text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
             Last derivation
           </div>
-          <div className="text-hmi-body hmi-tabular text-ca-ink">
+          <div className="text-xs hmi-tabular text-ca-ink">
             {tuning?.derivedAt ?? "unknown"}
           </div>
-          <div className="text-hmi-caption text-ca-ink-muted mt-hmi-1">
+          <div className="text-[10px] uppercase tracking-wider text-ca-ink-muted mt-hmi-1">
             {formatUiText(tuning?.derivation ?? "read-only, admin via CLI (v2.0.3)")}
           </div>
         </div>
@@ -150,8 +150,8 @@ function OpsPage() {
 
       <CaptureDeviceAuditPanel events={events} />
 
-      <table className="w-full text-hmi-body text-ca-ink">
-        <thead className="bg-ca-chrome text-ca-chrome-ink text-hmi-caption uppercase tracking-wide">
+      <table className="w-full text-xs text-ca-ink">
+        <thead className="bg-ca-chrome text-ca-chrome-ink text-[10px] uppercase tracking-wider uppercase tracking-wide">
           <tr>
             <th className="text-left px-hmi-3 py-hmi-2">Time</th>
             <th className="text-left px-hmi-3 py-hmi-2">Code</th>
@@ -164,7 +164,7 @@ function OpsPage() {
           {events.map((e) => (
             <tr
               key={e.id}
-              className="border-b border-ca-border"
+              className="border-b border-[#22252a]"
               data-cid={e.correlationId ?? undefined}
             >
               <td className="px-hmi-3 py-hmi-2 hmi-tabular">{e.ts}</td>
@@ -181,7 +181,7 @@ function OpsPage() {
         </tbody>
       </table>
 
-      <p className="p-hmi-3 text-hmi-caption text-ca-ink-muted">
+      <p className="p-hmi-3 text-[10px] uppercase tracking-wider text-ca-ink-muted">
         Live bridge active: rows served by getAuditEvents() over TSS RPC, worker-side buffer mirrors
         AuditSink schema.
       </p>
@@ -205,14 +205,14 @@ function OpsPage() {
       program="Program 01"
       title="Ops Telemetry"
       headerActions={
-        <span className="text-hmi-body text-ca-ink-muted hmi-tabular">
+        <span className="text-xs text-ca-ink-muted hmi-tabular">
           {loaded ? `${events.length} events in buffer` : "loading..."}
         </span>
       }
       actionBarLeft={
         <Link
           to="/"
-          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink"
+          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink"
         >
           Back to Home
         </Link>
@@ -227,8 +227,8 @@ function Tile({ label, value, tone }: { label: string; value: number; tone: "inf
   const valueClass = tone === "alert" ? "text-ca-status-ng" : "text-ca-ink";
 
   return (
-    <div className="border border-ca-border bg-ca-panel-2 p-hmi-3">
-      <div className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">{label}</div>
+    <div className="border border-[#22252a] bg-[#1a1c23] p-hmi-3">
+      <div className="text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">{label}</div>
       <div className={`text-hmi-counter hmi-tabular ${valueClass}`}>{value}</div>
     </div>
   );
@@ -244,15 +244,15 @@ function CaptureDeviceAuditPanel({ events }: { events: OpsEvent[] }) {
 
   return (
     <section
-      className="border-b border-ca-border"
+      className="border-b border-[#22252a]"
       data-testid="capture-device-audit-panel"
       aria-label="Capture device audit rows"
     >
-      <div className="px-hmi-3 pt-hmi-3 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+      <div className="px-hmi-3 pt-hmi-3 text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
         Capture device: audit trail ({rows.length})
       </div>
-      <table className="w-full text-hmi-body text-ca-ink">
-        <thead className="bg-ca-chrome text-ca-chrome-ink text-hmi-caption uppercase tracking-wide">
+      <table className="w-full text-xs text-ca-ink">
+        <thead className="bg-ca-chrome text-ca-chrome-ink text-[10px] uppercase tracking-wider uppercase tracking-wide">
           <tr>
             <th className="text-left px-hmi-3 py-hmi-2">Time</th>
             <th className="text-left px-hmi-3 py-hmi-2">Code</th>
@@ -274,7 +274,7 @@ function CaptureDeviceAuditPanel({ events }: { events: OpsEvent[] }) {
             rows.map((e) => (
               <tr
                 key={e.id}
-                className="border-b border-ca-border"
+                className="border-b border-[#22252a]"
                 data-row-code={e.code}
                 data-cid={e.correlationId ?? undefined}
               >
@@ -320,15 +320,15 @@ function RetentionAuditPanel({ events }: { events: OpsEvent[] }) {
 
   return (
     <section
-      className="border-b border-ca-border"
+      className="border-b border-[#22252a]"
       data-testid="retention-audit-panel"
       aria-label="Audit retention rows"
     >
-      <div className="px-hmi-3 pt-hmi-3 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+      <div className="px-hmi-3 pt-hmi-3 text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
         Audit retention: audit trail ({rows.length})
       </div>
-      <table className="w-full text-hmi-body text-ca-ink">
-        <thead className="bg-ca-chrome text-ca-chrome-ink text-hmi-caption uppercase tracking-wide">
+      <table className="w-full text-xs text-ca-ink">
+        <thead className="bg-ca-chrome text-ca-chrome-ink text-[10px] uppercase tracking-wider uppercase tracking-wide">
           <tr>
             <th className="text-left px-hmi-3 py-hmi-2">Time</th>
             <th className="text-left px-hmi-3 py-hmi-2">Code</th>
@@ -350,7 +350,7 @@ function RetentionAuditPanel({ events }: { events: OpsEvent[] }) {
             rows.map((e) => (
               <tr
                 key={e.id}
-                className="border-b border-ca-border"
+                className="border-b border-[#22252a]"
                 data-row-code={e.code}
                 data-cid={e.correlationId ?? undefined}
               >

@@ -701,7 +701,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
   }, [addRuleWithPreset]);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-4">
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-4">
       <div className="mx-auto w-full max-w-[1720px]">
         {/*
          * Compact single-band toolbar.
@@ -709,12 +709,12 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
         <div
           role="toolbar"
           aria-label="Ruleset actions"
-          className="mb-hmi-3 flex flex-wrap items-center gap-hmi-1 rounded-md border border-ca-border/60 bg-ca-panel/50 p-hmi-1"
+          className="mb-4 flex flex-wrap items-center gap-2 border-b border-[#333] bg-[#1a1c23] p-2"
         >
           <Link
             to="/projects/$projectId"
             params={{ projectId }}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-ca-border bg-ca-panel px-2.5 py-1 text-hmi-caption font-semibold text-ca-ink transition hover:border-ca-select hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary focus-visible:outline-none"
             title="Return to Inspection Analysis on Project Page"
           >
             <ScanSearch size={14} className="text-ca-select" />
@@ -738,7 +738,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            className="inline-flex items-center gap-hmi-2 rounded-sm border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-caption font-semibold text-ca-ink transition hover:border-ca-select hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary focus-visible:outline-none"
             title="Import an image file as reference"
           >
             <FileImage aria-hidden size={14} />
@@ -747,7 +747,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           <button
             type="button"
             onClick={() => setIsCameraOpen(true)}
-            className="inline-flex items-center gap-hmi-2 rounded-sm border border-cyan-500/60 bg-cyan-950/30 px-hmi-2 py-hmi-1 text-hmi-caption font-semibold text-cyan-200 transition hover:bg-cyan-900/40 hover:border-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center gap-2 border border-cyan-500 bg-cyan-950/50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400 transition hover:bg-cyan-900 focus-visible:outline-none"
             title="Live Camera Mode: Capture frame from camera stream"
           >
             <Camera aria-hidden size={14} className="text-cyan-400" />
@@ -756,7 +756,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           <button
             type="button"
             onClick={addRule}
-            className="inline-flex items-center gap-hmi-2 rounded-sm border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-caption font-semibold text-ca-ink transition hover:border-ca-select hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary focus-visible:outline-none"
           >
             <Plus aria-hidden size={14} />
             Add rule
@@ -765,7 +765,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
             type="button"
             onClick={handleSaveRuleSet}
             disabled={isSaving}
-            className="inline-flex items-center gap-hmi-2 rounded-sm bg-ca-select px-hmi-3 py-hmi-1 text-hmi-caption font-semibold text-ca-bg transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus disabled:opacity-50"
+            className="inline-flex items-center gap-2 bg-ca-primary px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-black transition hover:brightness-110 focus-visible:outline-none disabled:opacity-30"
           >
             <Save aria-hidden size={14} />
             {isSaving ? "Saving..." : "Save"}
@@ -778,9 +778,9 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-hmi-4 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
           <Section density={SectionDensityType.Compact} variant={SectionVariantType.Panel}>
-            <div className="h-[74vh] min-h-[500px] w-full p-1.5 flex flex-col overflow-hidden bg-ca-panel">
+            <div className="h-[74vh] min-h-[500px] w-full p-0 flex flex-col overflow-hidden border border-[#333] bg-[#000]">
               <VisualToolWorkpieceCanvas
                 imageRef={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
                 roi={activeRoi}
@@ -804,7 +804,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
             </div>
           </Section>
 
-          <div className="flex h-[74vh] min-h-[500px] flex-col overflow-hidden rounded-lg border border-ca-border">
+          <div className="flex h-[74vh] min-h-[500px] flex-col overflow-hidden border border-[#333] bg-[#1a1c23]">
             <RightRail
               rules={rules}
               selectedIds={selectedIds}

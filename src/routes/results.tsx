@@ -42,10 +42,10 @@ function ResultsPage() {
           testId="results-empty"
         />
       ) : (
-        <div className="border border-ca-border rounded-lg overflow-hidden bg-ca-panel">
-          <table className="w-full text-hmi-body text-ca-ink border-collapse">
+        <div className="border border-[#22252a] rounded-none overflow-hidden bg-[#111318]">
+          <table className="w-full text-xs text-ca-ink border-collapse">
             <thead>
-              <tr className="text-left border-b border-ca-border text-ca-ink-muted bg-ca-panel-2">
+              <tr className="text-left border-b border-[#22252a] text-ca-ink-muted bg-[#1a1c23]">
                 <th className="py-hmi-2 px-hmi-3">Frame</th>
                 <th className="py-hmi-2 px-hmi-3">Time</th>
                 <th className="py-hmi-2 px-hmi-3">Judgment</th>
@@ -55,7 +55,7 @@ function ResultsPage() {
             </thead>
             <tbody>
               {ngEvents.map((e) => (
-                <tr key={e.id} className="border-b border-ca-border/60 last:border-b-0">
+                <tr key={e.id} className="border-b border-[#22252a]/60 last:border-b-0">
                   <td className="py-hmi-2 px-hmi-3 hmi-tabular">{e.frame}</td>
                   <td className="py-hmi-2 px-hmi-3 hmi-tabular">{e.ts}</td>
                   <td className="py-hmi-2 px-hmi-3 text-ca-ng font-medium">NG</td>
@@ -89,7 +89,7 @@ function ResultsPage() {
       actionBarLeft={
         <Link
           to="/run"
-          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2"
+          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23]"
         >
           Back to Run
         </Link>
@@ -97,7 +97,7 @@ function ResultsPage() {
       actionBarRight={
         <Link
           to="/errors"
-          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-ca-border text-hmi-body text-ca-ink rounded-md hover:bg-ca-panel-2"
+          className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23]"
         >
           NG Events
         </Link>
