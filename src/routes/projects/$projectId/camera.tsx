@@ -1,17 +1,11 @@
-// Plan 78 slice 4 (I-SU-05 bind): the Project Camera tab is a live view of
-// the project's bound CameraSetting from the camera library store. Users can
-// pick from cameras managed in `/setup/camera`, unbind, or navigate to the
-// library. Zero business logic here beyond a store dispatch; the source of
-// truth for camera details stays in `src/lib/camera/store.ts`.
 import { useEffect, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Camera, ExternalLink, Unlink } from "lucide-react";
+import { Camera, ExternalLink, Unlink, Server, Cpu, Monitor, Maximize } from "lucide-react";
 import { toast } from "sonner";
 import { useProjectStore, selectProject } from "@/lib/projects/store";
 import { useCameraLibrary } from "@/lib/camera/useCameraLibrary";
 
 export const Route = createFileRoute("/projects/$projectId/camera")({
-  staticData: { crumb: "Camera" },
   component: ProjectCameraTab,
 });
 
@@ -27,8 +21,6 @@ function ProjectCameraTab() {
     [library.all, project?.cameraSettingId],
   );
 
-  // If the bound CameraSetting was deleted in `/setup/camera`, surface it
-  // instead of silently pretending nothing is bound.
   useEffect(() => {
     if (project?.cameraSettingId && !bound) {
       console.warn("[projects/camera-tab] bound cameraSettingId not found in library", {
@@ -40,11 +32,9 @@ function ProjectCameraTab() {
 
   if (!project) {
     return (
-      <section aria-labelledby="camera-tab-heading" className="mx-auto w-full max-w-4xl p-hmi-6">
-        <h2 id="camera-tab-heading" className="text-hmi-title text-ca-ink">
-          Camera
-        </h2>
-        <p className="mt-2 text-hmi-body text-ca-ink-muted">Project not found.</p>
+      <section className="flex-1 p-6 bg-[#0b0c10] text-ca-ink">
+        <h2 className="text-xl font-bold font-sans uppercase tracking-wider mb-2">Camera Binding</h2>
+        <p className="text-sm font-mono text-ca-ink-muted">Project not found.</p>
       </section>
     );
   }
@@ -63,110 +53,117 @@ function ProjectCameraTab() {
   const missingBinding = Boolean(project.cameraSettingId && !bound);
 
   return (
-    <section
-      aria-labelledby="camera-tab-heading"
-      className="mx-auto w-full max-w-4xl p-hmi-6"
-      data-project-id={projectId}
-    >
-      <div className="flex items-center justify-between gap-hmi-3">
-        <h2 id="camera-tab-heading" className="flex items-center gap-2 text-hmi-title text-ca-ink">
-          <Camera className="h-5 w-5 text-ca-primary" aria-hidden /> Camera
-        </h2>
-        <Link
-          to="/setup/camera"
-          className="inline-flex items-center gap-1 text-hmi-body text-ca-ink-muted underline hover:text-ca-ink"
-        >
-          Manage library <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        </Link>
-      </div>
-
-      <div className="mt-hmi-3 flex flex-col gap-2">
-        <label htmlFor="camera-binding" className="text-hmi-caption text-ca-ink-muted">
-          Bound CameraSetting
-        </label>
-        <div className="flex items-center gap-2">
-          <select
-            id="camera-binding"
-            className="min-w-0 flex-1 rounded-md border border-ca-border bg-ca-surface p-2 text-hmi-body text-ca-ink"
-            value={project.cameraSettingId ?? ""}
-            onChange={(e) => onSelect(e.target.value)}
-            aria-invalid={missingBinding ? true : undefined}
+    <section className="flex-1 flex flex-col p-6 bg-[#0b0c10] text-ca-ink overflow-y-auto">
+      <div className="max-w-5xl">
+        <div className="flex items-center justify-between mb-8 border-b border-ca-border pb-4">
+          <h2 className="flex items-center gap-3 text-2xl font-bold font-sans uppercase tracking-wider">
+            <Camera className="h-6 w-6 text-ca-primary" aria-hidden /> 
+            Camera Binding
+          </h2>
+          <Link
+            to="/setup/camera"
+            className="flex items-center gap-2 px-3 py-1.5 bg-ca-panel hover:bg-ca-panel-2 border border-ca-border rounded text-xs font-mono font-bold uppercase transition"
           >
-            <option value="">(none)</option>
-            {library.all.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name} ({e.vendor}
-                {e.deviceSerial ? ` · ${e.deviceSerial}` : ""})
-              </option>
-            ))}
-          </select>
-          {project.cameraSettingId ? (
-            <button
-              type="button"
-              onClick={() => onSelect("")}
-              className="inline-flex items-center gap-1 rounded-md border border-ca-border px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-surface-hover"
-              aria-label="Unbind camera from project"
-            >
-              <Unlink className="h-3.5 w-3.5" aria-hidden /> Unbind
-            </button>
-          ) : null}
+            Manage Global Library <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </Link>
         </div>
-        {library.all.length === 0 ? (
-          <p className="text-hmi-caption text-ca-ink-muted">
-            No CameraSetting records yet. Create one in{" "}
-            <Link to="/setup/camera" className="underline hover:text-ca-ink">
-              /setup/camera
-            </Link>
-            .
-          </p>
-        ) : null}
-        {missingBinding ? (
-          <p role="alert" className="text-hmi-caption text-ca-danger">
-            The previously bound camera ({project.cameraSettingId}) was removed from the library.
-            Pick another or unbind.
-          </p>
-        ) : null}
-      </div>
 
-      {bound ? (
-        <dl className="mt-hmi-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-md border border-ca-border p-3 text-hmi-body">
-          <dt className="text-ca-ink-muted">Name</dt>
-          <dd className="text-ca-ink">{bound.name}</dd>
-          <dt className="text-ca-ink-muted">Vendor</dt>
-          <dd className="text-ca-ink">{bound.vendor}</dd>
-          {bound.deviceSerial ? (
-            <>
-              <dt className="text-ca-ink-muted">Serial</dt>
-              <dd className="text-ca-ink">{bound.deviceSerial}</dd>
-            </>
-          ) : null}
-          <dt className="text-ca-ink-muted">Resolution</dt>
-          <dd className="text-ca-ink">
-            {bound.resolutionW} x {bound.resolutionH}
-          </dd>
-          <dt className="text-ca-ink-muted">FOV (mm)</dt>
-          <dd className="text-ca-ink">
-            {bound.fovMmW} x {bound.fovMmH}
-          </dd>
-          <dt className="text-ca-ink-muted">Exposure</dt>
-          <dd className="text-ca-ink">{bound.exposureUs} us</dd>
-          <dt className="text-ca-ink-muted">Gain</dt>
-          <dd className="text-ca-ink">{bound.gainDb} dB</dd>
-          <dt className="text-ca-ink-muted">Trigger</dt>
-          <dd className="text-ca-ink">{bound.triggerMode}</dd>
-          <dt className="text-ca-ink-muted">Frame rate</dt>
-          <dd className="text-ca-ink">{bound.frameRateHz} Hz</dd>
-          <dt className="text-ca-ink-muted">Color mode</dt>
-          <dd className="text-ca-ink">{bound.ColorModeType}</dd>
-          <dt className="text-ca-ink-muted">Pockets</dt>
-          <dd className="text-ca-ink">{bound.pockets}</dd>
-        </dl>
-      ) : project.cameraName ? (
-        <p className="mt-hmi-4 text-hmi-body text-ca-ink-muted">
-          Legacy label: <span className="text-ca-ink">{project.cameraName}</span>. Pick a
-          CameraSetting above to replace it with live values.
-        </p>
-      ) : null}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div className="bg-ca-panel border border-ca-border rounded p-5 space-y-4 shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-ca-ink mb-4 flex items-center gap-2">
+                <Server size={16} className="text-ca-primary" /> Active Connection
+              </h3>
+              
+              <div className="space-y-2">
+                <label htmlFor="camera-binding" className="text-xs font-mono text-ca-ink-muted uppercase block">
+                  Select Hardware Source
+                </label>
+                <div className="flex items-stretch gap-2">
+                  <select
+                    id="camera-binding"
+                    className="flex-1 rounded-sm border border-ca-border bg-[#0b0c10] p-2.5 text-sm font-mono text-ca-ink focus:border-ca-primary focus:ring-1 focus:ring-ca-primary outline-none transition"
+                    value={project.cameraSettingId ?? ""}
+                    onChange={(e) => onSelect(e.target.value)}
+                    aria-invalid={missingBinding ? true : undefined}
+                  >
+                    <option value="">[ NONE SELECTED ]</option>
+                    {library.all.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name} {e.vendor ? `(${e.vendor})` : ""} {e.deviceSerial ? `[${e.deviceSerial}]` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {project.cameraSettingId && (
+                    <button
+                      type="button"
+                      onClick={() => onSelect("")}
+                      className="px-4 bg-[#0b0c10] border border-ca-border hover:border-ca-danger hover:text-ca-danger rounded-sm text-xs font-bold uppercase transition flex items-center justify-center"
+                      title="Unbind Camera"
+                    >
+                      <Unlink className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                
+                {library.all.length === 0 && (
+                  <p className="text-xs font-mono text-ca-ink-muted mt-2">
+                    No cameras registered in the global library.
+                  </p>
+                )}
+                
+                {missingBinding && (
+                  <p role="alert" className="text-xs font-mono text-red-400 mt-2 bg-red-400/10 p-2 rounded border border-red-400/20">
+                    ERR: Previously bound camera [{project.cameraSettingId}] is missing from library.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {!bound && project.cameraName && (
+              <div className="bg-ca-panel border border-ca-border border-dashed rounded p-5">
+                <p className="text-xs font-mono text-ca-ink-muted mb-1 uppercase">Legacy Configuration</p>
+                <p className="text-sm font-bold">{project.cameraName}</p>
+                <p className="text-xs text-ca-ink-muted mt-2">Please select a formal hardware source above to upgrade this project.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-ca-panel border border-ca-border rounded p-5 shadow-sm">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-ca-ink mb-4 flex items-center gap-2">
+              <Cpu size={16} className="text-green-400" /> Sensor Telemetry
+            </h3>
+
+            {bound ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                <TelemetryStat label="Resolution" value={`${bound.resolutionW} x ${bound.resolutionH}`} icon={<Maximize size={14}/>} />
+                <TelemetryStat label="FOV (mm)" value={`${bound.fovMmW} x ${bound.fovMmH}`} icon={<Monitor size={14}/>} />
+                <TelemetryStat label="Exposure" value={`${bound.exposureUs} us`} />
+                <TelemetryStat label="Gain" value={`${bound.gainDb} dB`} />
+                <TelemetryStat label="Trigger Mode" value={bound.triggerMode} />
+                <TelemetryStat label="Frame Rate" value={`${bound.frameRateHz} Hz`} />
+                <TelemetryStat label="Color Mode" value={bound.ColorModeType} />
+                <TelemetryStat label="Pockets" value={bound.pockets} />
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-ca-ink-muted font-mono text-xs border border-ca-border border-dashed rounded">
+                NO SENSOR BOUND
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
+  );
+}
+
+function TelemetryStat({ label, value, icon }: { label: string; value: string | number; icon?: React.ReactNode }) {
+  return (
+    <div className="bg-[#0b0c10] border border-ca-border/50 rounded p-2 flex flex-col">
+      <span className="text-[10px] font-mono text-ca-ink-muted uppercase mb-1 flex items-center gap-1">
+        {icon} {label}
+      </span>
+      <span className="text-sm font-bold font-mono text-ca-ink truncate">{value}</span>
+    </div>
   );
 }

@@ -1,11 +1,7 @@
 import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
-// Trial-run route (Plan 34, step 17, SS-04). Operator picks a ruleset,
-// drops an image (or reuses the ruleset's reference image), and runs
-// `runRuleset` from `@/lib/projects/trials`. Every run appends to the
-// per-ruleset history (FIFO cap TRIAL_HISTORY_CAP). No backend.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, createFileRoute, notFound, useRouter } from "@tanstack/react-router";
-import { Play, Upload, X } from "lucide-react";
+import { Play, Upload, X, Camera, AlertCircle, History, Image as ImageIcon } from "lucide-react";
 import {
   useProjectStore,
   selectProject,
@@ -20,14 +16,11 @@ import {
 } from "@/lib/projects/trials";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { toIntParam } from "@/lib/ids/int-alias";
-import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 export const Route = createFileRoute("/projects/$projectId/trial-run")({
   component: TrialRunPage,
-  errorComponent: TrialRunError,
-  notFoundComponent: TrialRunNotFound,
 });
 
 function readAsDataUrl(file: File): Promise<string> {
@@ -36,7 +29,6 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error("File read failed"));
     reader.onload = () => {
       const result = reader.result;
-
       if (typeof result !== "string") return reject(new Error("Unexpected FileReader result"));
       resolve(result);
     };
@@ -50,11 +42,7 @@ function TrialRunPage() {
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
   const appendRun = useTrialStore((s) => s.appendRun);
 
-  if (!project) {
-    console.warn("[trial-run] project not found", { projectId });
-
-    throw notFound();
-  }
+  if (!project) throw notFound();
 
   const [rulesetId, setRulesetId] = useState<string>(rulesets[0]?.id ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -73,7 +61,6 @@ function TrialRunPage() {
     if (isNonFile) return setPreview(null);
     const url = URL.createObjectURL(file);
     setPreview(url);
-
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -84,297 +71,205 @@ function TrialRunPage() {
 
   function pickFile(f: File | null) {
     setError(null);
-
     if (!f) return setFile(null);
-
     if (f.type.startsWith("image/") === false) {
-      console.warn("[trial-run] rejected file, mime", { name: f.name, type: f.type });
       setError(`Not an image file (${f.type || "unknown"}).`);
-
       return;
     }
-
     if (f.size > MAX_IMAGE_BYTES) {
-      console.warn("[trial-run] rejected file, size", { name: f.name, size: f.size });
-      setError(
-        `Image too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Max ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`,
-      );
-
+      setError(`Image too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Max 4 MB.`);
       return;
     }
-
     setFile(f);
   }
 
   async function handleRun() {
-    if (!activeRuleset) {
-      setError("Choose a rule set first.");
-
-      return;
-    }
-
-    setRunning(true);
-    setError(null);
+    if (!activeRuleset) return;
     try {
-      const imageRef = file ? await readAsDataUrl(file) : (activeRuleset.imageRef ?? "");
+      setRunning(true);
+      setError(null);
+      let runImage = activeRuleset.imageRef;
+      if (file) {
+        runImage = await readAsDataUrl(file);
+      }
+      if (!runImage) throw new Error("No image source available");
 
-      if (!imageRef) throw new Error("No image available for this run.");
-      const run = runRuleset({
-        rulesetId: activeRuleset.id,
-        imageRef,
-        rules: activeRuleset.rules,
+      const result = await runRuleset(activeRuleset, runImage);
+      appendRun(result);
+      if (fileInput.current) fileInput.current.value = "";
+      setFile(null);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Run failed.");
+      reportLovableError({
+        message: err.message,
+        type: "Error",
+        source: "trial-run",
       });
-      appendRun(run);
-      console.info("[trial-run] completed", {
-        rulesetId: activeRuleset.id,
-        runId: run.id,
-        verdict: run.verdict,
-      });
-    } catch (err) {
-      console.error("[trial-run] run failed", err);
-      reportLovableError(err instanceof Error ? err : new Error(String(err)), {
-        boundary: "projects_$projectId_trial_run_handle_run",
-      });
-      setError(err instanceof Error ? err.message : "Could not run the rule set.");
     } finally {
       setRunning(false);
     }
   }
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="mb-hmi-5">
-          <p className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-            {project.name}
-          </p>
-          <h1 className="mt-hmi-1 font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-            Trial run
-          </h1>
-          <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
-            Score a rule set against an image. Runs are saved per rule set (last {20}).
-          </p>
-        </header>
-
-        {rulesets.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-ca-border bg-ca-panel p-hmi-6 text-center">
-            <p className="text-hmi-body text-ca-ink-muted">No rule sets in this project yet.</p>
-            <Link
-              to="/projects/$projectId/rulesets/new"
-              params={{ projectId }}
-              className="mt-hmi-3 inline-block rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
-            >
-              Create your first rule set
-            </Link>
+    <section className="flex flex-col h-full bg-[#0b0c10] text-ca-ink p-6 overflow-y-auto">
+      <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+        
+        {/* Left Column - Main Interface */}
+        <div className="flex flex-col space-y-6">
+          <div className="flex items-center justify-between border-b border-ca-border pb-4">
+            <h2 className="flex items-center gap-3 text-2xl font-bold font-sans uppercase tracking-wider">
+              <Play className="h-6 w-6 text-ca-primary" fill="currentColor" /> 
+              Trial Run Console
+            </h2>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-hmi-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <section className="flex flex-col gap-hmi-4">
-              <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-                Rule set
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-ca-panel border border-ca-border rounded p-4 flex flex-col justify-between">
+              <div>
+                <label className="text-xs font-mono text-ca-ink-muted uppercase block mb-2">
+                  Active Ruleset / Target
+                </label>
                 <select
+                  className="w-full rounded-sm border border-ca-border bg-[#0b0c10] p-2 text-sm font-bold font-sans uppercase focus:border-ca-primary focus:ring-1 focus:ring-ca-primary outline-none transition"
                   value={rulesetId}
                   onChange={(e) => {
-                    setRulesetId(e.currentTarget.value);
+                    setRulesetId(e.target.value);
+                    setFile(null);
                     setError(null);
                   }}
-                  className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none"
                 >
-                  {rulesets.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.rules.length} rules)
+                  {rulesets.map((rs) => (
+                    <option key={rs.id} value={rs.id}>
+                      {rs.name} [{rs.id.slice(0,6)}]
                     </option>
                   ))}
                 </select>
-              </label>
+              </div>
+            </div>
 
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => fileInput.current?.click()}
-                onKeyDown={(e) => {
-                  if (KeyboardKeyType.isEnterOrSpace(e.key)) {
-                    e.preventDefault();
-                    fileInput.current?.click();
-                  }
-                }}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  pickFile(e.dataTransfer.files?.[0] ?? null);
-                }}
-                className="flex min-h-56 cursor-pointer flex-col items-center justify-center gap-hmi-2 rounded-lg border border-dashed border-ca-border bg-ca-panel p-hmi-5 text-center transition hover:border-ca-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-              >
-                {preview ? (
-                  <>
-                    <img
-                      src={preview}
-                      alt="Trial image preview"
-                      className="max-h-64 max-w-full rounded-sm border border-ca-border object-contain"
-                    />
-                    <p className="text-hmi-caption text-ca-ink-muted">
-                      {file?.name}, {file ? (file.size / 1024).toFixed(0) : "0"} KB
-                    </p>
+            <div className="bg-ca-panel border border-ca-border rounded p-4 flex flex-col justify-between">
+              <div>
+                <label className="text-xs font-mono text-ca-ink-muted uppercase block mb-2">
+                  Input Source Image
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileInput.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#0b0c10] hover:bg-ca-panel-2 border border-ca-border rounded-sm text-xs font-bold uppercase transition"
+                  >
+                    <Upload size={14} /> {file ? "Change Image" : "Upload Override"}
+                  </button>
+                  {file && (
                     <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        pickFile(null);
-                      }}
-                      className="mt-hmi-1 inline-flex items-center gap-hmi-1 rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1 text-hmi-caption text-ca-ink hover:border-ca-select"
+                      onClick={() => setFile(null)}
+                      className="px-3 py-2 bg-[#0b0c10] hover:bg-red-900/50 border border-ca-border hover:border-red-500 rounded-sm text-red-500 transition"
+                      title="Clear Override"
                     >
-                      <X aria-hidden size={14} />
-                      Remove
+                      <X size={14} />
                     </button>
-                  </>
-                ) : activeRuleset?.imageRef ? (
-                  <>
-                    <img
-                      src={activeRuleset.imageRef}
-                      alt="Rule set reference"
-                      className="max-h-64 max-w-full rounded-sm border border-ca-border object-contain opacity-80"
-                    />
-                    <p className="text-hmi-caption text-ca-ink-muted">
-                      Using rule set reference. Drop an image to override.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <Upload aria-hidden size={32} className="text-ca-ink-muted" />
-                    <p className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
-                      Drop an image or click to choose
-                    </p>
-                    <p className="text-hmi-caption text-ca-ink-muted">
-                      PNG or JPEG, up to {MAX_IMAGE_BYTES / 1024 / 1024} MB.
-                    </p>
-                  </>
-                )}
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(e) => pickFile(e.currentTarget.files?.[0] ?? null)}
-                />
-              </div>
-
-              {error ? (
-                <p role="alert" className="text-hmi-caption text-ca-ng">
-                  {error}
-                </p>
-              ) : null}
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleRun}
-                  disabled={!canRun || running}
-                  className="inline-flex items-center gap-hmi-2 rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-                >
-                  <Play aria-hidden size={18} />
-                  {running ? "Running..." : "Run"}
-                </button>
-              </div>
-            </section>
-
-            <aside className="flex min-h-0 flex-col rounded-lg border border-ca-border bg-ca-panel">
-              <header className="flex items-center justify-between border-b border-ca-border px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-                <span>History</span>
-                <span>{runs.length}</span>
-              </header>
-              {runs.length === 0 ? (
-                <div className="p-hmi-4 text-hmi-body text-ca-ink-muted">
-                  No runs yet for this rule set.
+                  )}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    ref={fileInput}
+                    onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+                  />
                 </div>
-              ) : (
-                <ul className="flex flex-col divide-y divide-ca-border">
-                  {runs.map((run) => (
-                    <TrialRunRow key={run.id} run={run} projectId={projectId} />
-                  ))}
-                </ul>
-              )}
-            </aside>
+              </div>
+              <p className="text-[10px] font-mono text-ca-ink-muted mt-2">
+                {file ? file.name : (activeRuleset?.imageRef ? "Using original reference image." : "No reference image available.")}
+              </p>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
-function TrialRunRow({ run, projectId }: { run: TrialRun; projectId: string }) {
-  const okCount = run.results.filter((r) => r.verdict === "OK").length;
+          {error && (
+            <div className="flex items-start gap-3 bg-red-950/30 border border-red-500/50 rounded p-4 text-red-400">
+              <AlertCircle className="shrink-0 mt-0.5" size={18} />
+              <div>
+                <p className="text-sm font-bold uppercase">Run Error</p>
+                <p className="text-xs font-mono mt-1">{error}</p>
+              </div>
+            </div>
+          )}
 
-  return (
-    <li>
-      <Link
-        to="/projects/$projectId/trial-run/$runId"
-        params={{ projectId, runId: toIntParam(IntAliasNamespaceType.Run, run.id) }}
-        className="flex flex-col gap-hmi-1 p-hmi-3 transition hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-      >
-        <div className="flex items-center justify-between">
-          <span
-            className={`inline-flex items-center rounded-sm px-hmi-2 py-hmi-1 text-hmi-caption font-semibold ${
-              run.verdict === "OK" ? "bg-ca-ok/10 text-ca-ok" : "bg-ca-ng/10 text-ca-ng"
-            }`}
-          >
-            {run.verdict}
-          </span>
-          <span className="text-hmi-caption text-ca-ink-muted">
-            {new Date(run.createdAt).toLocaleTimeString()}
-          </span>
+          {/* Live Preview Area */}
+          <div className="flex-1 min-h-[400px] border border-ca-border rounded bg-[#0b0c10] relative flex items-center justify-center overflow-hidden">
+            {preview || activeRuleset?.imageRef ? (
+              <img
+                src={preview || activeRuleset?.imageRef}
+                alt="Input Preview"
+                className="max-w-full max-h-full object-contain opacity-80"
+              />
+            ) : (
+              <div className="text-center text-ca-ink-muted flex flex-col items-center">
+                <ImageIcon size={48} className="opacity-20 mb-4" />
+                <p className="text-sm font-mono uppercase">Awaiting Image Source</p>
+              </div>
+            )}
+            
+            {/* Absolute Execution Button Overlay */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+              <button
+                onClick={handleRun}
+                disabled={!canRun || running}
+                className="flex items-center gap-3 px-8 py-4 rounded font-bold uppercase tracking-widest text-sm transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed
+                  bg-ca-primary text-ca-bg hover:bg-ca-primary/90 hover:scale-105 active:scale-95"
+              >
+                {running ? (
+                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-ca-bg border-t-transparent rounded-full animate-spin"/> Executing</span>
+                ) : (
+                  <><Play size={18} fill="currentColor"/> Execute Trial Run</>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-        <p className="text-hmi-caption text-ca-ink-muted">
-          {okCount} / {run.results.length} rules passed · View details
-        </p>
-      </Link>
-    </li>
-  );
-}
 
-function TrialRunError({ error, reset }: { error: Error; reset: () => void }) {
-  const router = useRouter();
-  useEffect(() => {
-    console.error("[trial-run] error boundary", error);
-    reportLovableError(error, { boundary: "projects_$projectId_trial_run_error_component" });
-  }, [error]);
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-      <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-        Trial run didn't load
-      </h1>
-      <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">{error.message}</p>
-      <button
-        type="button"
-        onClick={() => {
-          router.invalidate();
-          reset();
-        }}
-        className="mt-hmi-4 rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
-      >
-        Try again
-      </button>
-    </div>
-  );
-}
-
-function TrialRunNotFound() {
-  const { projectId } = Route.useParams();
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-      <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-        Project not found
-      </h1>
-      <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
-        No project matches <span className="font-mono">{projectId}</span>.
-      </p>
-      <Link
-        to="/projects"
-        className="mt-hmi-4 rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
-      >
-        All projects
-      </Link>
-    </div>
+        {/* Right Column - Trial History */}
+        <div className="flex flex-col bg-ca-panel border border-ca-border rounded overflow-hidden">
+          <div className="flex items-center gap-2 p-3 bg-ca-panel-2 border-b border-ca-border">
+            <History size={16} className="text-ca-ink-muted" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ca-ink">Trial History</h3>
+            <span className="ml-auto text-[10px] font-mono bg-[#0b0c10] px-2 py-0.5 rounded text-ca-ink-muted border border-ca-border">
+              {runs.length} RUNS
+            </span>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            {runs.length === 0 ? (
+              <p className="text-xs font-mono text-ca-ink-muted text-center p-4">No trial runs recorded for this ruleset.</p>
+            ) : (
+              runs.map((r, i) => (
+                <Link
+                  key={r.id}
+                  to={`/projects/$projectId/trial-run/$runId`}
+                  params={{ projectId, runId: toIntParam(r.id, IntAliasNamespaceType.TrialRun) }}
+                  className={`block border rounded p-3 transition hover:bg-ca-panel-2 ${
+                    r.isPass ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
+                      r.isPass ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                    }`}>
+                      {r.isPass ? "PASS" : "FAIL"}
+                    </span>
+                    <span className="text-[10px] font-mono text-ca-ink-muted">
+                      {new Date(r.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-mono text-ca-ink-muted mt-2 pt-2 border-t border-ca-border/50">
+                    <span>{r.evaluations.length} tools</span>
+                    <span>{r.durationMs.toFixed(1)}ms</span>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
