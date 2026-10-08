@@ -1,148 +1,11 @@
-import { RunningOpKindType } from "@/lib/stores/running-ops-store";
-// Project overview index (Plan 34, step 11). Renders inside the
-// projects.$projectId layout's <Outlet />, so it does NOT re-mount
-// HmiShell or SectionTopBar. Shows project name, ruleset count, quick
-// links to the plan's project sub-surfaces, and a legacy operator group.
-import { useEffect, useState } from "react";
-import { Link, createFileRoute, notFound, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  Layers,
-  PlayCircle,
-  Sparkles,
-  Gauge,
-  ListChecks,
-  AlertTriangle,
-  Settings,
-  Play,
-  Download,
-  FileDown,
-  Archive,
-  ScanSearch,
-  Plus,
-} from "lucide-react";
-import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
-import { resolveAllCategories } from "@/lib/projects/category-resolver";
-import { RulesetPicker } from "@/components/projects/RulesetPicker";
-import { ProjectEditorSections } from "@/components/projects/ProjectEditorSections";
+const fs = require('fs');
+let code = fs.readFileSync('src/routes/projects/$projectId/index.tsx', 'utf8');
 
-import { WorkpieceAnalyzeWorkspace } from "@/components/vision/workpiece";
-import { reportLovableError } from "@/lib/lovable-error-reporting";
-import { runProject } from "@/lib/run-project.functions";
-import { useRunning } from "@/hooks/useRunning";
-import { evaluateCurrentVision } from "@/hooks/useAutoEvaluate";
-import {
-  downloadProjectExport,
-  downloadProjectExportYaml,
-  downloadProjectExportZip,
-} from "@/lib/export-project";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+// The new layout needs to replace the main return area
+const returnMatch = code.indexOf('return (');
+const endMatch = code.lastIndexOf(');');
 
-export const Route = createFileRoute("/projects/$projectId/")({
-  component: ProjectOverview,
-  errorComponent: OverviewError,
-  notFoundComponent: OverviewNotFound,
-});
-
-function ProjectOverview() {
-  const { projectId } = Route.useParams();
-  const project = useProjectStore((s) => selectProject(s, projectId));
-  const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
-  const updateProjectAiSettings = useProjectStore((s) => s.updateProjectAiSettings);
-  const runProjectFn = useServerFn(runProject);
-  const { start, stop } = useRunning();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [runErr, setRunErr] = useState<string | null>(null);
-  const [running, setRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analysis" | "overview">("analysis");
-
-  const [activeRulesetId, setActiveRulesetId] = useState<string | null>(null);
-
-  if (!project) {
-    console.warn("[projects/$projectId/index] project not found", { projectId });
-
-    throw notFound();
-  }
-
-  const created = new Date(project.createdAt).toLocaleString();
-  const isRunnable = rulesets.length > 0 && !running;
-  const activeRuleset =
-    (activeRulesetId ? rulesets.find((r) => r.id === activeRulesetId) : null) ??
-    rulesets[0];
-  const categoryResolutions = resolveAllCategories(project, rulesets);
-  const categoryEntries = Object.entries(categoryResolutions).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
-  const ai = project.aiSettings ?? {};
-
-
-  function handleExport() {
-    if (!project) return;
-    try {
-      downloadProjectExport(project, rulesets);
-    } catch (e) {
-      console.error("[projects/$projectId/index] export failed", e);
-    }
-  }
-
-  function handleExportYaml() {
-    if (!project) return;
-    try {
-      downloadProjectExportYaml(project, rulesets);
-    } catch (e) {
-      console.error("[projects/$projectId/index] export yaml failed", e);
-    }
-  }
-
-  async function handleExportZip() {
-    if (!project) return;
-    try {
-      await downloadProjectExportZip(project, rulesets);
-    } catch (e) {
-      console.error("[projects/$projectId/index] export zip failed", e);
-    }
-  }
-
-  async function handleRunConfirmed() {
-    setRunErr(null);
-    setRunning(true);
-    const opId = `run-${Date.now().toString(36)}`;
-    start({ id: opId, kind: RunningOpKindType.Run, label: `Run ${project?.name ?? projectId}` });
-    try {
-      const res = await runProjectFn({
-        data: {
-          projectId,
-          rulesetIds: rulesets.map((r) => r.id),
-        },
-      });
-      console.info("[projects/$projectId/index] run queued", res);
-      setConfirmOpen(false);
-    } catch (e) {
-      console.warn(
-        "[projects/$projectId/index] Cloud run unavailable, falling back to local vision evaluation",
-        e,
-      );
-      try {
-        await evaluateCurrentVision();
-        setConfirmOpen(false);
-      } catch (localErr) {
-        setRunErr(localErr instanceof Error ? localErr.message : String(localErr));
-      }
-    } finally {
-      stop(opId);
-      setRunning(false);
-    }
-  }
-
-  return (
+const newReturnContent = `return (
     <HmiShell>
       <div className="flex flex-col h-full bg-[#0b0c10]">
         {/* Header */}
@@ -155,7 +18,7 @@ function ProjectOverview() {
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ca-ink">{project.name}</h1>
             <div className="mt-1 flex items-center gap-4 text-xs text-ca-ink-muted">
               <span>{rulesets.length} rule sets</span>
-              <span>ï¿½</span>
+              <span>•</span>
               <span>{new Date().toLocaleDateString()}</span>
             </div>
           </div>
@@ -198,11 +61,11 @@ function ProjectOverview() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
-              className={`border-b-2 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+              className={\`border-b-2 py-3 text-xs font-bold uppercase tracking-wider transition-colors \${
                 activeTab === tab
                   ? "border-ca-primary text-ca-primary"
                   : "border-transparent text-ca-ink-muted hover:text-ca-ink"
-              }`}
+              }\`}
             >
               {tab}
             </button>
@@ -383,5 +246,9 @@ function ProjectOverview() {
         </DialogContent>
       </Dialog>
     </HmiShell>
-  );
-}
+  );`
+
+const newCode = code.slice(0, returnMatch) + newReturnContent + code.slice(endMatch + 2);
+
+fs.writeFileSync('src/routes/projects/$projectId/index.tsx', newCode);
+console.log('Successfully updated file.');

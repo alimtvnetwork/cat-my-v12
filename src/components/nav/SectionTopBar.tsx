@@ -68,9 +68,9 @@ export function SectionTopBar({ section, active, params }: SectionTopBarProps): 
     <nav
       aria-label={`${section} sub-navigation`}
       data-section={section}
-      className="flex min-w-0 items-center gap-hmi-2 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-1"
+      className="flex min-w-0 items-center gap-hmi-2 border-b border-ca-border/60 bg-ca-panel px-4"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-hmi-2 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
         {options.map((opt) => {
           const isActive = opt.id === active;
 
@@ -78,14 +78,14 @@ export function SectionTopBar({ section, active, params }: SectionTopBarProps): 
             <Link
               key={opt.id}
               to={opt.to}
-              params={params}
+              params={params as any}
               preload="intent"
               data-option={opt.id}
               data-active={isActive ? "true" : "false"}
-              className={`inline-flex shrink-0 items-center rounded px-hmi-3 py-hmi-1 text-hmi-body transition ${
+              className={`inline-flex shrink-0 items-center justify-center px-4 py-2.5 text-[0.8rem] font-semibold tracking-wide transition-colors border-b-2 ${
                 isActive
-                  ? "bg-ca-panel text-ca-ink shadow-hmi-panel"
-                  : "text-ca-ink-muted hover:bg-ca-panel hover:text-ca-ink"
+                  ? "border-ca-primary text-ca-ink"
+                  : "border-transparent text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel-2/50"
               }`}
             >
               {opt.label}

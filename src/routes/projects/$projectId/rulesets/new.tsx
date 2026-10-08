@@ -71,66 +71,74 @@ function NewRuleset() {
   }
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto p-hmi-6">
-      <div className="mx-auto w-full max-w-3xl">
-        <header className="mb-hmi-5">
-          <p className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-            {project.name}
+    <div className="flex h-full w-full flex-col bg-[#0b0c10] text-ca-ink font-hmi antialiased">
+      {/* Header */}
+      <header className="flex h-14 shrink-0 items-center border-b border-[#22252a] bg-[#111318] px-4">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-ca-ink-muted uppercase tracking-wider">{project.name}</span>
+          <h1 className="text-sm font-bold text-ca-ink tracking-wide">INITIALIZE NEW RULESET</h1>
+        </div>
+      </header>
+
+      {/* Main Panel */}
+      <div className="flex flex-1 items-center justify-center p-4">
+        <div className="w-full max-w-lg rounded border border-[#22252a] bg-[#111318] p-6">
+          <p className="mb-6 text-xs text-ca-ink-muted leading-relaxed">
+            Configure a new inspection ruleset group. Images and tools are assigned after creation.
           </p>
-          <h1 className="mt-hmi-1 font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-            New Rule Set / Group
-          </h1>
-          <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
-            Create a logical group for your inspection rules.
-          </p>
-        </header>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-hmi-4">
-          <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-            Name
-            <input
-              autoFocus
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Flaw Detection Group"
-              className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none"
-            />
-          </label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-ca-ink">Rule Set Name</span>
+              <input
+                autoFocus
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. QFN ALIGNMENT"
+                className="rounded border border-[#333] bg-[#0b0c10] px-3 py-2 text-sm text-ca-ink placeholder:text-[#444] focus:border-ca-primary focus:outline-none"
+              />
+            </label>
 
-          <label className="flex flex-col gap-hmi-1 text-hmi-body text-ca-ink">
-            Category / Description (Optional)
-            <input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Surface Inspection"
-              className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none"
-            />
-          </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-ca-ink-muted">
+                Category (Optional)
+              </span>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. TOP-SIDE-INSPECT"
+                className="rounded border border-[#333] bg-[#0b0c10] px-3 py-2 text-sm text-ca-ink placeholder:text-[#444] focus:border-ca-primary focus:outline-none"
+              />
+            </label>
 
-          {error ? (
-            <p role="alert" className="text-hmi-caption text-ca-ng">
-              {error}
-            </p>
-          ) : null}
+            {error && (
+              <div className="flex items-center gap-2 rounded border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+                <X size={14} />
+                {error}
+              </div>
+            )}
 
-          <div className="flex justify-end gap-hmi-2">
-            <Link
-              to="/projects/$projectId"
-              params={{ projectId }}
-              className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body font-semibold text-ca-ink hover:border-ca-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={submitting || name.trim().length === 0}
-              className="rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
-            >
-              {submitting ? "Creating..." : "Create rule set"}
-            </button>
-          </div>
-        </form>
+            <div className="mt-4 flex items-center justify-end gap-3 border-t border-[#22252a] pt-5">
+              <Link
+                to="/projects/$projectId"
+                params={{ projectId }}
+                className="px-4 py-2 text-xs font-bold uppercase text-ca-ink-muted hover:text-ca-ink transition-colors"
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                disabled={submitting || name.trim().length === 0}
+                className="flex items-center gap-2 rounded bg-ca-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-[#000] hover:brightness-110 disabled:opacity-50 transition-colors"
+              >
+                <Sparkles size={14} className="fill-current" />
+                {submitting ? "Creating..." : "Create Ruleset"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

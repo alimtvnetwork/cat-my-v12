@@ -131,8 +131,23 @@ export function HmiShell({
       className="flex flex-col h-screen bg-ca-bg text-ca-ink font-hmi antialiased"
     >
       <Titlebar program={program} right={right} showBreadcrumb={!hideNav} />
-      {hideHeader ? null : <ModeHeader title={title} actions={headerActions} />}
-      {hideNav || hideHeader ? null : <FavoritesBar />}
+      {hideHeader ? null : (
+        <section
+          role="region"
+          aria-label={title}
+          className="flex h-9 items-center gap-4 bg-gradient-to-b from-ca-panel/40 to-ca-bg px-4 text-ca-ink font-hmi border-b border-ca-border/60"
+        >
+          <h1 className="text-[0.82rem] font-semibold uppercase tracking-[0.14em] text-ca-ink/90">
+            {title}
+          </h1>
+          {!hideNav && (
+            <div className="flex-1 flex items-center justify-between">
+              <FavoritesBar />
+              {headerActions ? <div className="flex items-center gap-1.5">{headerActions}</div> : null}
+            </div>
+          )}
+        </section>
+      )}
       <main
         id="app-main"
         tabIndex={-1}
