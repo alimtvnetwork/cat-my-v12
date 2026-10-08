@@ -94,7 +94,11 @@ function TrialRunPage() {
       }
       if (!runImage) throw new Error("No image source available");
 
-      const result = await runRuleset(activeRuleset, runImage);
+      const result = runRuleset({
+        rulesetId: activeRuleset.id,
+        rules: activeRuleset.rules,
+        imageRef: runImage,
+      });
       appendRun(result);
       if (fileInput.current) fileInput.current.value = "";
       setFile(null);
@@ -241,31 +245,34 @@ function TrialRunPage() {
             {runs.length === 0 ? (
               <p className="text-xs font-mono text-ca-ink-muted text-center p-4">No trial runs recorded for this ruleset.</p>
             ) : (
-              runs.map((r, i) => (
-                <Link
-                  key={r.id}
-                  to={`/projects/$projectId/trial-run/$runId`}
-                  params={{ projectId, runId: toIntParam(r.id, IntAliasNamespaceType.TrialRun) }}
-                  className={`block border rounded p-3 transition hover:bg-ca-panel-2 ${
-                    r.isPass ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
-                      r.isPass ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                    }`}>
-                      {r.isPass ? "PASS" : "FAIL"}
-                    </span>
-                    <span className="text-[10px] font-mono text-ca-ink-muted">
-                      {new Date(r.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] font-mono text-ca-ink-muted mt-2 pt-2 border-t border-ca-border/50">
-                    <span>{r.evaluations.length} tools</span>
-                    <span>{r.durationMs.toFixed(1)}ms</span>
-                  </div>
-                </Link>
-              ))
+              runs.map((r, i) => {
+                const isPass = r.verdict === "OK";
+                return (
+                  <Link
+                    key={r.id}
+                    to={`/projects/$projectId/trial-run/$runId`}
+                    params={{ projectId, runId: r.id }}
+                    className={`block border rounded p-3 transition hover:bg-ca-panel-2 ${
+                      isPass ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
+                        isPass ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                      }`}>
+                        {isPass ? "PASS" : "FAIL"}
+                      </span>
+                      <span className="text-[10px] font-mono text-ca-ink-muted">
+                        {new Date(r.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] font-mono text-ca-ink-muted mt-2 pt-2 border-t border-ca-border/50">
+                      <span>{r.results?.length ?? 0} tools</span>
+                      <span>{r.durationMs?.toFixed(1) ?? 0}ms</span>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
