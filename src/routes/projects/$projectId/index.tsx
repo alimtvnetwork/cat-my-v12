@@ -21,6 +21,7 @@ import {
   Archive,
   ScanSearch,
   Plus,
+  FileCode, Image, SplitSquareHorizontal, Camera
 } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
 import { resolveAllCategories } from "@/lib/projects/category-resolver";
