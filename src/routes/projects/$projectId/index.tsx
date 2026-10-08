@@ -49,8 +49,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/projects/$projectId/")({
   component: ProjectOverview,
-  errorComponent: OverviewError,
-  notFoundComponent: OverviewNotFound,
+  
 });
 
 function ProjectOverview() {
@@ -144,7 +143,7 @@ function ProjectOverview() {
   }
 
   return (
-    <HmiShell>
+    <HmiShell title="Project Overview">
       <div className="flex flex-col h-full bg-[#0b0c10]">
         {/* Header */}
         <header className="flex items-center justify-between border-b border-[#22252a] bg-[#111318] px-6 py-4">
