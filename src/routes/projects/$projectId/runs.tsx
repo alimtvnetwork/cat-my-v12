@@ -1,12 +1,8 @@
-// Plan 64 step 78: Runs tab. Lists in-flight ops from `useRunning()` and
-// shows an empty state for the persisted history until step 85's `runs`
-// table lands.
 import { createFileRoute } from "@tanstack/react-router";
-import { PlayCircle, Loader2 } from "lucide-react";
+import { PlayCircle, Loader2, Activity } from "lucide-react";
 import { useRunning } from "@/hooks/useRunning";
 
 export const Route = createFileRoute("/projects/$projectId/runs")({
-  staticData: { crumb: "Runs" },
   component: ProjectRunsTab,
 });
 
@@ -16,37 +12,58 @@ function ProjectRunsTab() {
   const runOps = ops.filter((o) => o.kind === "run");
 
   return (
-    <section
-      aria-labelledby="runs-tab-heading"
-      className="mx-auto w-full max-w-4xl p-hmi-6"
-      data-project-id={projectId}
-    >
-      <h2 id="runs-tab-heading" className="flex items-center gap-2 text-hmi-title text-ca-ink">
-        <PlayCircle className="h-5 w-5 text-ca-primary" aria-hidden /> Runs
-      </h2>
-      {runOps.length > 0 ? (
-        <ul
-          aria-label="In-flight runs"
-          className="mt-3 divide-y divide-ca-border rounded-md border border-ca-border"
-        >
-          {runOps.map((op) => (
-            <li key={op.id} className="flex items-center justify-between px-3 py-2">
-              <span className="flex items-center gap-2 text-hmi-body text-ca-ink">
-                <Loader2 className="h-4 w-4 animate-spin text-ca-primary" aria-hidden />
-                <span className="truncate">{op.label}</span>
-              </span>
-              <span className="text-hmi-caption text-ca-ink-muted">
-                {new Date(op.startedAt).toLocaleTimeString()}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <p className="mt-3 text-hmi-body text-ca-ink-muted" role="status">
-        {runOps.length === 0
-          ? "No runs in flight. Persisted run history lands with the step 85 migration bundle."
-          : "Persisted run history lands with the step 85 migration bundle."}
-      </p>
+    <section className="flex flex-col h-full bg-[#0b0c10] text-ca-ink p-6 font-sans">
+      <div className="max-w-5xl">
+        <div className="flex items-center justify-between mb-8 border-b border-ca-border pb-4">
+          <h2 className="flex items-center gap-3 text-2xl font-bold uppercase tracking-wider">
+            <Activity className="h-6 w-6 text-ca-primary" aria-hidden /> 
+            Live Execution Queue
+          </h2>
+          <div className="text-xs font-mono font-bold uppercase bg-ca-panel px-3 py-1.5 border border-ca-border rounded flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${runOps.length > 0 ? "bg-green-400" : "bg-ca-ink-muted"}`}></span>
+              <span className={`relative inline-flex rounded-full h-2 w-2 ${runOps.length > 0 ? "bg-green-500" : "bg-ca-ink-muted"}`}></span>
+            </span>
+            {runOps.length} IN-FLIGHT
+          </div>
+        </div>
+
+        <div className="bg-ca-panel border border-ca-border rounded-sm overflow-hidden shadow-sm">
+          <div className="px-4 py-3 bg-ca-panel-2 border-b border-ca-border flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-ca-ink-muted flex items-center gap-2">
+              Active Processes
+            </h3>
+          </div>
+
+          {runOps.length > 0 ? (
+            <div className="divide-y divide-ca-border/50">
+              {runOps.map((op) => (
+                <div key={op.id} className="flex items-center justify-between px-4 py-4 bg-[#0b0c10] group hover:bg-[#12141a] transition">
+                  <div className="flex items-center gap-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-ca-primary" aria-hidden />
+                    <div>
+                      <div className="text-sm font-bold uppercase text-ca-ink">{op.label}</div>
+                      <div className="text-[10px] font-mono text-ca-ink-muted mt-1">ID: {op.id}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono text-ca-ink-muted flex flex-col items-end">
+                    <span className="uppercase text-[10px] tracking-wider mb-1">Started</span>
+                    <span>{new Date(op.startedAt).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 flex flex-col items-center justify-center text-ca-ink-muted border-t border-ca-border/20">
+              <Activity size={32} className="opacity-20 mb-3" />
+              <p className="text-sm font-bold uppercase tracking-widest">No Active Jobs</p>
+              <p className="text-[10px] font-mono mt-2 opacity-70">
+                Awaiting execution commands. Persisted historical metrics are pending DB migration.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
