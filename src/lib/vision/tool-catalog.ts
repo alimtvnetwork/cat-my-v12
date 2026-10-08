@@ -156,11 +156,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       tolerancePx: 25,
       expectedDiameterPx: 24,
       minCircularityPct: 75,
-      pin1ConfigJson: JSON.stringify({
-        registeredPin1: { x: 230, y: 236, radius: 18, confidence: 1.0 },
-        tolerancePx: 25,
-        thresholdLuma: 75,
-      }),
     },
     params: [
       {

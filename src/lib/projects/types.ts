@@ -4,6 +4,8 @@ export interface Project {
   id: string;
   name: string;
   createdAt: number;
+  projectCode?: string;
+  description?: string;
   rulesetIds: string[];
   /**
    * Inspected device binding: references the target physical chip, circuit board,

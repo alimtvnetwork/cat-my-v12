@@ -2,15 +2,12 @@ import React, { type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
-  ScanSearch,
-  LayoutDashboard,
+  FolderKanban,
+  Play,
   Settings,
-  Activity,
-  AlertTriangle,
-  FileSpreadsheet,
-  Sparkles,
   Sliders,
-  FolderOpen,
+  TestTube2,
+  Wrench,
 } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -25,6 +22,8 @@ export interface StandardAppShellProps {
     | "run"
     | "ops"
     | "setup"
+    | "rules"
+    | "test"
     | "diagnostics"
     | "errors"
     | "results"
@@ -46,14 +45,11 @@ export function StandardAppShell({
   const getNavActive = (key: string) => {
     if (activeNav) return activeNav === key;
     if (key === "home" && pathname === "/") return true;
-    if (key === "analyze" && pathname.startsWith("/analyze")) return true;
-    if (key === "run" && pathname.startsWith("/run")) return true;
-    if (key === "ops" && pathname.startsWith("/ops")) return true;
-    if (key === "setup" && pathname.startsWith("/setup")) return true;
-    if (key === "diagnostics" && pathname.startsWith("/diagnostics")) return true;
-    if (key === "errors" && pathname.startsWith("/errors")) return true;
-    if (key === "results" && pathname.startsWith("/results")) return true;
     if (key === "projects" && pathname.startsWith("/projects")) return true;
+    if (key === "setup" && pathname.startsWith("/setup") && !pathname.startsWith("/setup/rules")) return true;
+    if (key === "rules" && pathname.startsWith("/setup/rules")) return true;
+    if (key === "test" && (pathname.startsWith("/trial-run") || pathname.startsWith("/ai-testing"))) return true;
+    if (key === "run" && pathname.startsWith("/run")) return true;
     if (key === "settings" && pathname.startsWith("/settings")) return true;
     return false;
   };
@@ -87,37 +83,25 @@ export function StandardAppShell({
               <Home className="h-3.5 w-3.5" />
               <span>Home</span>
             </Link>
-            <Link to="/analyze" className={navLinkClass(getNavActive("analyze"))}>
-              <ScanSearch className="h-3.5 w-3.5" />
-              <span>Analyze</span>
-            </Link>
-            <Link to="/run" className={navLinkClass(getNavActive("run"))}>
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>Run</span>
-            </Link>
-            <Link to="/ops" className={navLinkClass(getNavActive("ops"))}>
-              <Activity className="h-3.5 w-3.5" />
-              <span>Ops</span>
+            <Link to="/projects" className={navLinkClass(getNavActive("projects"))}>
+              <FolderKanban className="h-3.5 w-3.5" />
+              <span>Project</span>
             </Link>
             <Link to="/setup" className={navLinkClass(getNavActive("setup"))}>
-              <Sliders className="h-3.5 w-3.5" />
+              <Wrench className="h-3.5 w-3.5" />
               <span>Setup</span>
             </Link>
-            <Link to="/diagnostics" className={navLinkClass(getNavActive("diagnostics"))}>
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Diagnostics</span>
+            <Link to="/setup/rules" className={navLinkClass(getNavActive("rules"))}>
+              <Sliders className="h-3.5 w-3.5" />
+              <span>Rules</span>
             </Link>
-            <Link to="/errors" className={navLinkClass(getNavActive("errors"))}>
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Errors</span>
+            <Link to="/trial-run" className={navLinkClass(getNavActive("test"))}>
+              <TestTube2 className="h-3.5 w-3.5" />
+              <span>Test</span>
             </Link>
-            <Link to="/results" className={navLinkClass(getNavActive("results"))}>
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              <span>Results</span>
-            </Link>
-            <Link to="/projects" className={navLinkClass(getNavActive("projects"))}>
-              <FolderOpen className="h-3.5 w-3.5" />
-              <span>Projects</span>
+            <Link to="/run" className={navLinkClass(getNavActive("run"))}>
+              <Play className="h-3.5 w-3.5" />
+              <span>Run</span>
             </Link>
             <Link to="/settings" className={navLinkClass(getNavActive("settings"))}>
               <Settings className="h-3.5 w-3.5" />

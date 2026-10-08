@@ -51,13 +51,6 @@ export function RootShellLayout({ children }: { children: ReactNode }) {
       <InputModalityTracker />
       <InlineEditNavigationGuard />
       <LiveAnnouncer />
-      {isModern ? (
-        <>
-          <GlobalHomeAffordance />
-          <AppShellNav />
-          <AppShellSidebar />
-        </>
-      ) : null}
     </>
   );
 }

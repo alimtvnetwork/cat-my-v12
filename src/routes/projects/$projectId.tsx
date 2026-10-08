@@ -19,6 +19,16 @@ import { reportLovableError } from "@/lib/lovable-error-reporting";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
+const PROJECT_STANDARD_TABS = [
+  { label: "Overview", to: "/projects/$projectId", key: "overview" },
+  { label: "Camera", to: "/projects/$projectId/camera", key: "camera" },
+  { label: "Rule sets", to: "/projects/$projectId/rulesets", key: "rulesets" },
+  { label: "Categories", to: "/projects/$projectId/categories", key: "categories" },
+  { label: "Runs", to: "/projects/$projectId/runs", key: "runs" },
+  { label: "Trial run", to: "/projects/$projectId/trial-run", key: "trial-run" },
+  { label: "AI testing", to: "/projects/$projectId/ai-testing", key: "ai-testing" },
+] as const;
+
 export const Route = createFileRoute("/projects/$projectId")({
   component: ProjectLayout,
   errorComponent: ProjectError,
@@ -48,9 +58,32 @@ function ProjectLayout() {
       <StandardAppShell
         activeNav="projects"
         title={project.name}
-        subtitle={`Project ID: ${projectId} · Active Segment: ${getProjectActive(pathname)}`}
+        subtitle={`Project ID: ${projectId}`}
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-ca-panel">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-ca-panel">
+          <nav
+            aria-label="Project workspace tabs"
+            className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-ca-border bg-ca-panel px-4 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {PROJECT_STANDARD_TABS.map((tab) => {
+              const isActive = getProjectActive(pathname) === tab.key;
+
+              return (
+                <Link
+                  key={tab.key}
+                  to={tab.to}
+                  params={{ projectId }}
+                  className={`rounded px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "bg-ca-ink text-ca-bg shadow-sm"
+                      : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
           <Outlet />
         </div>
       </StandardAppShell>

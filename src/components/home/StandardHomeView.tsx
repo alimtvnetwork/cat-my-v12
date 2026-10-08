@@ -35,10 +35,10 @@ export function StandardHomeView({
       title="System Dashboard"
       subtitle="Main Operations & Status"
     >
-      <div className="flex-1 bg-ca-bg text-ca-ink p-6 overflow-auto">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex-1 bg-ca-bg text-ca-ink p-4 overflow-auto">
+        <div className="w-full space-y-4">
           {/* Status Strip */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
             <StatusCard
               icon={<CameraIcon className="text-ca-primary" />}
               label="Camera Link"
@@ -65,7 +65,7 @@ export function StandardHomeView({
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] gap-4">
             {/* Left Column - Recent Projects */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
@@ -86,7 +86,7 @@ export function StandardHomeView({
                   <p className="text-sm mt-1">Create a new program to start inspection.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
                   {recentProjects.map((p) => (
                     <ProjectCard key={p.projectId} project={p} />
                   ))}
