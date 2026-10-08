@@ -1,52 +1,19 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
+import React from "react";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
-import { useRulesLibrary } from "@/lib/rules/useRulesLibrary";
-import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
 import {
-  CatalogCategoryIdType,
-  type CatalogTool,
-  getCategoryById,
-  getToolsForCategory,
-  getToolById,
-  getDefaultToolForCategory,
-  StandardCatalogHeader,
-  StandardCategoryGrid,
-  StandardToolGrid,
-  StandardToolDetailPanel,
-} from "./standard";
-
-/** Deterministic mapping table for legacy/seed rules without a stored conditions[0].toolType */
-const LEGACY_RULE_TOOL_MAP: Record<string, readonly string[]> = {
-  "rule-label-presence": ["tool-pattern-presence", "tool-area"],
-  "rule-logo-match": ["tool-pattern-presence"],
-  "rule-pill-presence": ["tool-area", "tool-pattern-presence"],
-  "rule-empty-pocket": ["tool-area"],
-  "rule-solder-bridge": ["tool-defect", "tool-blob-presence"],
-  "rule-silkscreen-ocr": ["tool-ocr2"],
-  "rule-lot-code-ocr": ["tool-ocr2"],
-  "rule-pocket-count": ["tool-blob-presence", "tool-edge-pitch"],
-  "rule-cap-color": ["tool-intensity"],
-  "rule-cap-color-delta": ["tool-intensity"],
-  "rule-fill-height": ["tool-edge-position", "tool-profile-position"],
-  "rule-ic-placement": ["tool-shapetrax3", "tool-edge-position"],
-  "rule-pin1-marker": ["tool-pattern-presence", "tool-shapetrax3"],
-  "rule-torque-mark": ["tool-edge-position", "tool-shapetrax3"],
-  "rule-yield-ratio": ["tool-functions"],
-};
-
-const LEGACY_CATEGORY_TOOL_MAP: Record<string, readonly string[]> = {
-  "cat-ocr": ["tool-ocr2"],
-  "cat-text": ["tool-ocr2"],
-  "cat-presence": ["tool-pattern-presence", "tool-area"],
-  "cat-absence": ["tool-area", "tool-blob-presence"],
-  "cat-color": ["tool-intensity"],
-  "cat-geometry": ["tool-edge-position", "tool-edge-width", "tool-edge-pitch"],
-  "cat-math": ["tool-functions", "tool-chain-events"],
-  "cat-label": ["tool-pattern-presence", "tool-area"],
-  "cat-solder": ["tool-defect", "tool-blob-presence"],
-};
+  FolderKanban,
+  Activity,
+  Server,
+  HardDrive,
+  Cpu,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  PlayCircle,
+  Settings as SettingsIcon,
+  Search,
+} from "lucide-react";
 
 export interface StandardHomeViewProps {
   recentProjects?: Array<{ projectId: string; name: string; openedAt: number }>;
@@ -56,415 +23,192 @@ export function StandardHomeView({
   recentProjects = [],
 }: StandardHomeViewProps): React.JSX.Element {
   const navigate = useNavigate();
-  const { rules, save, remove } = useRulesLibrary();
 
-  const [activeCategory, setActiveCategory] = useState<CatalogCategoryIdType>(
-    CatalogCategoryIdType.PresenceAbsence,
-  );
-
-  const activeCategoryObj = useMemo(() => {
-    return (
-      getCategoryById(activeCategory) ?? getCategoryById(CatalogCategoryIdType.PresenceAbsence)!
-    );
-  }, [activeCategory]);
-
-  const categoryTools = useMemo(() => {
-    return getToolsForCategory(activeCategory);
-  }, [activeCategory]);
-
-  const [selectedToolId, setSelectedToolId] = useState<string>(() => {
-    return getDefaultToolForCategory(CatalogCategoryIdType.PresenceAbsence)?.id ?? "tool-area";
-  });
-
-  const selectedTool = useMemo(() => {
-    return (
-      getToolById(selectedToolId) ?? categoryTools[0] ?? getDefaultToolForCategory(activeCategory)!
-    );
-  }, [selectedToolId, categoryTools, activeCategory]);
-
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
-  const handleSelectCategory = useCallback((catId: CatalogCategoryIdType) => {
-    setActiveCategory(catId);
-    setSearchQuery("");
-    const defaultTool = getDefaultToolForCategory(catId);
-    if (defaultTool) {
-      setSelectedToolId(defaultTool.id);
-    }
-  }, []);
-
-  const handleSelectTool = useCallback((toolId: string) => {
-    setSelectedToolId(toolId);
-  }, []);
-
-  // Match rules from shared library to currently selected tool
-  const connectedRules = useMemo(() => {
-    if (!selectedTool || !rules) return [];
-
-    const isGreyscaleTool = selectedTool.id === "tool-greyscale-pattern-matching";
-
-    const matched = rules.filter((r) => {
-      if (r.isCategory) return false;
-
-      // 1. Greyscale Pattern Matching (T116) - dedicated, strict matcher
-      if (isGreyscaleTool) {
-        if (
-          r.id === "rule-logo-match" ||
-          r.id === "rule-logo-presence" ||
-          (r.conditions?.[0] as any)?.type === "defect_match" ||
-          (r.conditions?.[0] as any)?.toolType === "Defect Matching" ||
-          Boolean((r.conditions?.[0] as any)?.isDefectReject)
-        ) {
-          return false;
-        }
-
-        const cond = r.conditions?.[0] as { toolType?: string; type?: string } | undefined;
-
-        return (
-          cond?.type === "pattern_match" ||
-          cond?.toolType === "Greyscale Pattern Matching" ||
-          cond?.toolType === "tool-greyscale-pattern-matching" ||
-          r.id === "rule-greyscale-pattern-01" ||
-          r.id.startsWith("rule-greyscale-pattern-match-") ||
-          r.name.startsWith("greyscale-pattern-match-") ||
-          Boolean((cond as any)?.constellation)
-        );
-      }
-
-      const isPin1Tool = selectedTool.id === "tool-pin1-config";
-      if (isPin1Tool) {
-        const cond = r.conditions?.[0] as any;
-
-        return (
-          cond?.type === "pin1_config" ||
-          cond?.toolType === "Pin 1 Orientation Config" ||
-          r.id.startsWith("rule-pin1-") ||
-          r.name.toLowerCase().includes("pin 1") ||
-          r.name.toLowerCase().includes("pin1") ||
-          Boolean(cond?.pin1Config)
-        );
-      }
-
-      const isDefectMatchingTool = selectedTool.id === "tool-defect-matching";
-      if (isDefectMatchingTool) {
-        const cond = r.conditions?.[0] as any;
-
-        return (
-          cond?.type === "defect_match" ||
-          cond?.toolType === "Defect Matching" ||
-          cond?.toolType === "tool-defect-matching" ||
-          r.id.startsWith("rule-defect-match-") ||
-          r.name.startsWith("defect-match-") ||
-          r.name.toLowerCase().includes("defect match") ||
-          Boolean(cond?.isDefectReject)
-        );
-      }
-
-      const isSimulationTool = selectedTool.id === "tool-greyscale-simulation";
-      if (isSimulationTool) {
-        const cond = r.conditions?.[0] as any;
-
-        return (
-          cond?.type === "greyscale_simulation" ||
-          cond?.toolType === "Greyscle simulation" ||
-          cond?.toolType === "tool-greyscale-simulation" ||
-          r.id.startsWith("rule-greyscale-simulation-") ||
-          r.name.toLowerCase().includes("greyscle simulation") ||
-          r.name.toLowerCase().includes("greyscale simulation")
-        );
-      }
-
-      // 2. Strict canonical match for rules with stored toolType
-      const cond = r.conditions?.[0] as { toolType?: string; type?: string } | undefined;
-
-      if (cond && typeof cond.toolType === "string") {
-        if (cond.toolType === selectedTool.name || cond.toolType === selectedTool.id) {
-          return true;
-        }
-      }
-
-      // 3. Deterministic lookup for legacy/seed rules without conditions[0].toolType
-      const legacyToolIds = LEGACY_RULE_TOOL_MAP[r.id];
-
-      if (legacyToolIds && legacyToolIds.includes(selectedTool.id)) {
-        return true;
-      }
-
-      if (r.categoryId) {
-        const catToolIds = LEGACY_CATEGORY_TOOL_MAP[r.categoryId];
-
-        if (catToolIds && catToolIds.includes(selectedTool.id)) {
-          return true;
-        }
-      }
-
-      return false;
-    });
-
-    // For greyscale pattern matching, enforce strictly 1 canonical rule
-    if (isGreyscaleTool && matched.length > 1) {
-      const canonical =
-        matched.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
-        matched.find((r) => r.id === "rule-greyscale-pattern-01") ??
-        matched[0];
-
-      return [canonical];
-    }
-
-    return matched;
-  }, [selectedTool, rules]);
-
-  // Automatically prune any legacy duplicate pattern rules from library
-  React.useEffect(() => {
-    if (!selectedTool || !rules) return;
-
-    if (selectedTool.id === "tool-greyscale-pattern-matching") {
-      const patternRules = rules.filter((r) => {
-        const cond = r.conditions?.[0] as any;
-
-        return (
-          !r.isCategory &&
-          r.id !== "rule-logo-match" &&
-          r.id !== "rule-logo-presence" &&
-          (cond?.type === "pattern_match" ||
-            cond?.toolType === "Greyscale Pattern Matching" ||
-            r.id === "rule-greyscale-pattern-01" ||
-            r.id.startsWith("rule-greyscale-pattern-match-") ||
-            r.id.startsWith("rule-pattern-") ||
-            r.id.includes("greyscale-pattern"))
-        );
-      });
-
-      // Automatically prune any stale or duplicate pattern rules lacking threshold or constellation
-      const staleOrDuplicate = rules.filter((r) => {
-        const cond = r.conditions?.[0] as any;
-        const isPattern =
-          !r.isCategory &&
-          r.id !== "rule-logo-match" &&
-          r.id !== "rule-logo-presence" &&
-          (cond?.type === "pattern_match" ||
-            cond?.toolType === "Greyscale Pattern Matching" ||
-            r.id === "rule-greyscale-pattern-01" ||
-            r.id.startsWith("rule-greyscale-pattern-match-") ||
-            r.id.startsWith("rule-pattern-") ||
-            r.id.includes("greyscale-pattern"));
-
-        if (!isPattern) return false;
-        // Stale if missing threshold or missing constellation
-        const isMissingConfig = cond?.threshold === undefined || !Array.isArray(cond?.constellation);
-        return isMissingConfig;
-      });
-
-      for (const stale of staleOrDuplicate) {
-        void remove(stale.id).catch(() => {});
-      }
-
-      if (patternRules.length > 1) {
-        const canonical =
-          patternRules.find((r) => r.id.startsWith("rule-greyscale-pattern-match-")) ??
-          patternRules.find((r) => r.id === "rule-greyscale-pattern-01") ??
-          patternRules[0];
-        const duplicates = patternRules.filter((r) => r.id !== canonical.id);
-
-        for (const dup of duplicates) {
-          void remove(dup.id).catch(() => {});
-        }
-      }
-    }
-
-    if (selectedTool.id === "tool-pin1-config") {
-      const stalePin1 = rules.filter((r) => {
-        const cond = r.conditions?.[0] as any;
-        const isPin1 =
-          !r.isCategory &&
-          (cond?.type === "pin1_config" ||
-            cond?.toolType === "Pin 1 Orientation Config" ||
-            r.id.includes("pin1"));
-
-        if (!isPin1) return false;
-
-        return !cond?.pin1Config?.registeredPin1;
-      });
-
-      for (const stale of stalePin1) {
-        void remove(stale.id).catch(() => {});
-      }
-    }
-  }, [selectedTool, rules, remove]);
-
-  const handleLaunchTool = useCallback(
-    async (tool: CatalogTool, specificRuleId?: string) => {
-      // 1. If explicit rule ID provided, open rule editor
-      if (specificRuleId) {
-        void navigate({
-          to: "/setup/rules/$id",
-          params: { id: specificRuleId },
-        });
-        return;
-      }
-
-      // 2. If target route is dedicated setup surface (ROI, Reference, Camera, Lighting, Functions)
-      if (tool.targetRoute !== "/setup/rules") {
-        void navigate({ to: tool.targetRoute as any });
-        return;
-      }
-
-      // 3. If connected rules exist for this inspection tool, open the first rule
-      if (connectedRules.length > 0) {
-        const firstRule = connectedRules[0];
-        void navigate({
-          to: "/setup/rules/$id",
-          params: { id: String(firstRule.id) },
-        });
-        return;
-      }
-
-      // 4. For pattern tool without existing rule, open white-boxes tool directly
-      const isPatternTool = tool.id === "tool-greyscale-pattern-matching";
-      if (isPatternTool) {
-        void navigate({ to: "/setup/white-boxes" });
-        return;
-      }
-
-      const isPin1Tool = tool.id === "tool-pin1-config";
-      if (isPin1Tool) {
-        void navigate({ to: "/setup/pin1" });
-        return;
-      }
-
-      // 5. Otherwise create a new rule with this tool pre-configured
-      try {
-        const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
-        const newRuleName = `${tool.name} 01`;
-
-        const conditionPayload = {
-          toolType: tool.name,
-        } as any;
-
-        await save({
-          id: newId as any,
-          name: newRuleName,
-          isCategory: false,
-          appliesBefore: [],
-          conditions: [conditionPayload as any],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          notes: tool.shortDesc,
-        });
-
-        toast.success(`Created inspection rule: ${newRuleName}`);
-        void navigate({
-          to: "/setup/rules/$id",
-          params: { id: newId },
-        });
-      } catch (err) {
-        console.error("Failed to auto-create rule:", err);
-        void navigate({ to: "/setup/rules" });
-      }
-    },
-    [connectedRules, navigate, save],
-  );
-
-  const handleCreateRuleWithTool = useCallback(
-    async (tool: CatalogTool) => {
-      if (tool.id === "tool-greyscale-pattern-matching") {
-        void navigate({ to: "/setup/white-boxes" });
-        return;
-      }
-
-      if (tool.id === "tool-pin1-config") {
-        void navigate({ to: "/setup/pin1" });
-        return;
-      }
-
-      if (tool.id === "tool-defect-matching") {
-        void navigate({ to: "/setup/defect-matching" });
-        return;
-      }
-
-      try {
-        const count = connectedRules.length + 1;
-        const newId = `rule-${tool.id.replace("tool-", "")}-${Date.now().toString(36).slice(-4)}`;
-        const newRuleName = `${tool.name} ${count < 10 ? `0${count}` : count}`;
-
-        await save({
-          id: newId as any,
-          name: newRuleName,
-          isCategory: false,
-          appliesBefore: [],
-          conditions: [
-            {
-              toolType: tool.name,
-            } as any, // Standard mode demo pass-through
-          ],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          notes: tool.shortDesc,
-        });
-
-        toast.success(`Created rule: ${newRuleName}`);
-        void navigate({
-          to: "/setup/rules/$id",
-          params: { id: newId },
-        });
-      } catch (err) {
-        toast.error("Failed to create rule");
-        console.error(err);
-      }
-    },
-    [connectedRules.length, navigate, save],
-  );
-
-  const handleAutoTeach = useCallback(() => {
-    toast.info("Auto-Teach: Initializing golden reference and auto-threshold detection...");
-    void navigate({
-      to: "/setup/roi" as any,
-      search: { project: undefined, ruleset: undefined, rule: undefined } as any,
-    });
-  }, [navigate]);
-
-  const topProject = recentProjects[0];
+  const handleCreateProject = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    navigate({ to: "/projects?new=1" as any });
+  };
 
   return (
     <StandardAppShell
       activeNav="home"
-      title="Tool Catalog"
-      subtitle="Industrial Machine-Vision Inspection Launcher"
+      title="System Dashboard"
+      subtitle="Main Operations & Status"
     >
-      <div className="flex-1 flex flex-col min-h-0 bg-ca-bg">
-        {/* Compact Industrial Status Header */}
-        <StandardCatalogHeader
-          activeProjectName={topProject?.name}
-          activeProjectId={topProject?.projectId}
-        />
+      <div className="flex-1 bg-ca-bg text-ca-ink p-6 overflow-auto">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Status Strip */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <StatusCard
+              icon={<CameraIcon className="text-ca-primary" />}
+              label="Camera Link"
+              value="CONNECTED"
+              status="good"
+            />
+            <StatusCard
+              icon={<Activity className="text-blue-500" />}
+              label="System IO"
+              value="ACTIVE"
+              status="good"
+            />
+            <StatusCard
+              icon={<Cpu className="text-purple-500" />}
+              label="DSP Load"
+              value="12%"
+              status="neutral"
+            />
+            <StatusCard
+              icon={<HardDrive className="text-amber-500" />}
+              label="Disk Space"
+              value="820 GB Free"
+              status="neutral"
+            />
+          </div>
 
-        {/* Top Category Strip */}
-        <StandardCategoryGrid
-          activeCategory={activeCategory}
-          onSelectCategory={handleSelectCategory}
-        />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Recent Projects */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold tracking-tight uppercase">Programs</h2>
+                <button
+                  onClick={handleCreateProject}
+                  className="px-4 py-2 bg-ca-primary text-ca-on-primary text-sm font-bold uppercase rounded hover:bg-ca-primary/90 flex items-center gap-2 transition"
+                >
+                  <FolderKanban size={16} />
+                  New Program
+                </button>
+              </div>
 
-        {/* Main Workspace: Central Tool Grid + Right Detail Panel */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-          <StandardToolGrid
-            category={activeCategoryObj}
-            tools={categoryTools}
-            selectedToolId={selectedTool.id}
-            onSelectTool={handleSelectTool}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onAutoTeach={handleAutoTeach}
-          />
+              {recentProjects.length === 0 ? (
+                <div className="border border-ca-border/50 bg-ca-panel p-12 text-center rounded text-ca-ink-muted">
+                  <FolderKanban size={32} className="mx-auto mb-4 opacity-50" />
+                  <p>No programs loaded.</p>
+                  <p className="text-sm mt-1">Create a new program to start inspection.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {recentProjects.map((p) => (
+                    <ProjectCard key={p.projectId} project={p} />
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <StandardToolDetailPanel
-            tool={selectedTool}
-            category={activeCategoryObj}
-            connectedRules={connectedRules}
-            onLaunchTool={handleLaunchTool}
-            onCreateRuleWithTool={handleCreateRuleWithTool}
-          />
+            {/* Right Column - Logs / System Info */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold tracking-tight uppercase">System Event Log</h2>
+              <div className="border border-ca-border/50 bg-ca-panel rounded p-4 text-xs font-mono text-ca-ink-muted space-y-2 h-[400px] overflow-y-auto">
+                <div className="flex gap-3">
+                  <span className="text-blue-400">10:45:01</span>
+                  <span>System boot sequence completed.</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-blue-400">10:45:02</span>
+                  <span>Camera ETH_0 initialized.</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-blue-400">10:45:05</span>
+                  <span>Trigger mode set to CONTINUOUS.</span>
+                </div>
+                {recentProjects.length > 0 && (
+                  <div className="flex gap-3 text-ca-ink">
+                    <span className="text-green-400">10:46:12</span>
+                    <span>Loaded program {recentProjects[0].name}.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </StandardAppShell>
+  );
+}
+
+function CameraIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+}
+
+function StatusCard({
+  icon,
+  label,
+  value,
+  status,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  status: "good" | "bad" | "neutral";
+}) {
+  return (
+    <div className="border border-ca-border/50 bg-ca-panel p-4 rounded flex items-center gap-4">
+      <div className="p-3 bg-ca-bg rounded border border-ca-border/30">{icon}</div>
+      <div>
+        <p className="text-xs font-mono text-ca-ink-muted uppercase">{label}</p>
+        <p
+          className={`text-lg font-bold font-mono uppercase ${
+            status === "good"
+              ? "text-green-400"
+              : status === "bad"
+                ? "text-red-400"
+                : "text-ca-ink"
+          }`}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({
+  project,
+}: {
+  project: { projectId: string; name: string; openedAt: number };
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="group border border-ca-border/50 bg-ca-panel hover:bg-ca-panel-2 hover:border-ca-primary/50 transition p-4 rounded flex flex-col justify-between h-[160px]">
+      <div>
+        <div className="flex items-start justify-between">
+          <h3 className="font-bold text-lg text-ca-ink uppercase truncate pr-4">{project.name}</h3>
+          <span className="text-xs font-mono text-ca-ink-muted shrink-0">ID: {project.projectId.slice(0,6)}</span>
+        </div>
+        <p className="text-xs text-ca-ink-muted flex items-center gap-1 mt-1">
+          <Clock size={12} /> Last opened {new Date(project.openedAt).toLocaleDateString()}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-ca-border/30">
+        <button
+          onClick={() => navigate({ to: "/projects/$projectId", params: { projectId: project.projectId } })}
+          className="flex-1 px-3 py-1.5 bg-ca-bg border border-ca-border/50 text-ca-ink text-sm font-bold uppercase rounded hover:border-ca-primary hover:text-ca-primary transition flex items-center justify-center gap-2"
+        >
+          <SettingsIcon size={14} /> Setup
+        </button>
+        <button
+          onClick={() => navigate({ to: "/projects/$projectId/trial-run", params: { projectId: project.projectId } })}
+          className="flex-1 px-3 py-1.5 bg-ca-bg border border-ca-border/50 text-ca-ink text-sm font-bold uppercase rounded hover:border-ca-primary hover:text-ca-primary transition flex items-center justify-center gap-2"
+        >
+          <PlayCircle size={14} /> Run
+        </button>
+      </div>
+    </div>
   );
 }
