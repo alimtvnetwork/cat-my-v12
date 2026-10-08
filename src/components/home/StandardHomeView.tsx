@@ -1,213 +1,319 @@
 import React from "react";
-import { useNavigate, Link } from "@tanstack/react-router";
-import { StandardAppShell } from "@/components/layout/StandardAppShell";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  ArrowRight,
+  BarChart3,
+  Camera,
+  FlaskConical,
   FolderKanban,
-  Activity,
-  Server,
-  HardDrive,
-  Cpu,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
+  FolderOpen,
+  FolderPlus,
+  Image as ImageIcon,
+  ListChecks,
   PlayCircle,
   Settings as SettingsIcon,
-  Search,
+  Sliders,
+  Sparkles,
+  Sun,
+  Tags,
+  type LucideIcon,
 } from "lucide-react";
+import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 export interface StandardHomeViewProps {
   recentProjects?: Array<{ projectId: string; name: string; openedAt: number }>;
 }
+
+interface Workflow {
+  id: string;
+  label: string;
+  description: string;
+  to: "/setup" | "/projects" | "/run" | "/ai-testing";
+  icon: LucideIcon;
+  tone: "cyan" | "amber" | "green" | "violet";
+  quickActions: readonly QuickAction[];
+}
+
+interface QuickAction {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+}
+
+const WORKFLOWS: readonly Workflow[] = [
+  {
+    id: "setup",
+    label: "Setup",
+    description: "Camera, lighting and ROI recipe preparation.",
+    to: "/setup",
+    icon: SettingsIcon,
+    tone: "cyan",
+    quickActions: [
+      { label: "Camera", to: "/settings/camera", icon: Camera },
+      { label: "Rules", to: "/setup/rules", icon: Tags },
+      { label: "Lighting", to: "/settings/lighting", icon: Sun },
+      { label: "ROI", to: "/setup/roi", icon: Sliders },
+    ],
+  },
+  {
+    id: "projects",
+    label: "Project",
+    description: "Create, open, and maintain inspection programs.",
+    to: "/projects",
+    icon: FolderKanban,
+    tone: "amber",
+    quickActions: [
+      { label: "New", to: "/projects?new=1", icon: FolderPlus },
+      { label: "Open", to: "/projects", icon: FolderOpen },
+    ],
+  },
+  {
+    id: "trial",
+    label: "Trial run",
+    description: "Run a recipe against a sample image before production.",
+    to: "/run",
+    icon: PlayCircle,
+    tone: "green",
+    quickActions: [
+      { label: "Image", to: "/run", icon: ImageIcon },
+      { label: "Results", to: "/results", icon: ListChecks },
+    ],
+  },
+  {
+    id: "ai",
+    label: "AI testing",
+    description: "Batch-test rulesets and compare inspection results.",
+    to: "/ai-testing",
+    icon: Sparkles,
+    tone: "violet",
+    quickActions: [
+      { label: "Batch", to: "/ai-testing", icon: FlaskConical },
+      { label: "Report", to: "/results", icon: BarChart3 },
+    ],
+  },
+] as const;
+
+const TONE_CLASS: Record<Workflow["tone"], { icon: string; border: string; glow: string }> = {
+  cyan: {
+    icon: "text-cyan-300",
+    border: "hover:border-cyan-400/70",
+    glow: "from-cyan-400/10",
+  },
+  amber: {
+    icon: "text-amber-300",
+    border: "hover:border-amber-400/70",
+    glow: "from-amber-400/10",
+  },
+  green: {
+    icon: "text-emerald-300",
+    border: "hover:border-emerald-400/70",
+    glow: "from-emerald-400/10",
+  },
+  violet: {
+    icon: "text-violet-300",
+    border: "hover:border-violet-400/70",
+    glow: "from-violet-400/10",
+  },
+};
 
 export function StandardHomeView({
   recentProjects = [],
 }: StandardHomeViewProps): React.JSX.Element {
   const navigate = useNavigate();
 
-  const handleCreateProject = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const primaryProject = recentProjects[0];
+  const handlePrimary = () => {
+    if (primaryProject) {
+      navigate({ to: "/projects/$projectId", params: { projectId: primaryProject.projectId } });
+
+      return;
+    }
+
     navigate({ to: "/projects?new=1" as any });
   };
 
   return (
     <StandardAppShell
       activeNav="home"
-      title="System Dashboard"
-      subtitle="Main Operations & Status"
+      title="HMI Main Console"
+      subtitle="Workflow launch and program status"
     >
-      <div className="flex-1 bg-ca-bg text-ca-ink p-4 overflow-auto">
-        <div className="w-full space-y-4">
-          {/* Status Strip */}
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
-            <StatusCard
-              icon={<CameraIcon className="text-ca-primary" />}
-              label="Camera Link"
-              value="CONNECTED"
-              status="good"
-            />
-            <StatusCard
-              icon={<Activity className="text-blue-500" />}
-              label="System IO"
-              value="ACTIVE"
-              status="good"
-            />
-            <StatusCard
-              icon={<Cpu className="text-purple-500" />}
-              label="DSP Load"
-              value="12%"
-              status="neutral"
-            />
-            <StatusCard
-              icon={<HardDrive className="text-amber-500" />}
-              label="Disk Space"
-              value="820 GB Free"
-              status="neutral"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] gap-4">
-            {/* Left Column - Recent Projects */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold tracking-tight uppercase">Programs</h2>
+      <div className="flex-1 overflow-auto bg-[#080b0e] p-4 text-ca-ink">
+        <div className="grid min-h-full grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="flex min-w-0 flex-col gap-4">
+            <div className="rounded border border-ca-border bg-[#11161b] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.85)]" />
+                    System Status
+                  </div>
+                  <h1 className="text-lg font-black uppercase tracking-wide text-ca-ink">
+                    HMI Main Console
+                  </h1>
+                  <p className="mt-1 text-xs text-ca-ink-muted">
+                    Select a workflow, continue the last program, or start a new inspection setup.
+                  </p>
+                </div>
                 <button
-                  onClick={handleCreateProject}
-                  className="px-4 py-2 bg-ca-primary text-ca-on-primary text-sm font-bold uppercase rounded hover:bg-ca-primary/90 flex items-center gap-2 transition"
+                  type="button"
+                  onClick={handlePrimary}
+                  className="inline-flex items-center gap-2 rounded border border-ca-primary/50 bg-ca-primary px-4 py-2 text-xs font-bold uppercase text-ca-on-primary shadow-sm transition hover:brightness-110"
                 >
-                  <FolderKanban size={16} />
-                  New Program
+                  {primaryProject ? `Continue ${primaryProject.name}` : "Create Project"}
+                  <ArrowRight size={14} />
                 </button>
               </div>
-
-              {recentProjects.length === 0 ? (
-                <div className="border border-ca-border/50 bg-ca-panel p-12 text-center rounded text-ca-ink-muted">
-                  <FolderKanban size={32} className="mx-auto mb-4 opacity-50" />
-                  <p>No programs loaded.</p>
-                  <p className="text-sm mt-1">Create a new program to start inspection.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
-                  {recentProjects.map((p) => (
-                    <ProjectCard key={p.projectId} project={p} />
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Right Column - Logs / System Info */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold tracking-tight uppercase">System Event Log</h2>
-              <div className="border border-ca-border/50 bg-ca-panel rounded p-4 text-xs font-mono text-ca-ink-muted space-y-2 h-[400px] overflow-y-auto">
-                <div className="flex gap-3">
-                  <span className="text-blue-400">10:45:01</span>
-                  <span>System boot sequence completed.</span>
-                </div>
-                <div className="flex gap-3">
-                  <span className="text-blue-400">10:45:02</span>
-                  <span>Camera ETH_0 initialized.</span>
-                </div>
-                <div className="flex gap-3">
-                  <span className="text-blue-400">10:45:05</span>
-                  <span>Trigger mode set to CONTINUOUS.</span>
-                </div>
-                {recentProjects.length > 0 && (
-                  <div className="flex gap-3 text-ca-ink">
-                    <span className="text-green-400">10:46:12</span>
-                    <span>Loaded program {recentProjects[0].name}.</span>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {WORKFLOWS.map((workflow) => (
+                <WorkflowCard key={workflow.id} workflow={workflow} />
+              ))}
+            </div>
+          </section>
+
+          <aside className="flex min-w-0 flex-col gap-4">
+            <section className="rounded border border-ca-border bg-[#11161b]">
+              <div className="border-b border-ca-border px-3 py-2">
+                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
+                  Recent Programs
+                </h2>
+              </div>
+              <div className="space-y-2 p-3">
+                {recentProjects.length === 0 ? (
+                  <div className="rounded border border-dashed border-ca-border/70 bg-[#0b0f12] p-6 text-center">
+                    <FolderKanban size={24} className="mx-auto mb-3 text-ca-ink-muted" />
+                    <p className="text-xs font-semibold uppercase text-ca-ink">No program loaded</p>
+                    <p className="mt-1 text-xs text-ca-ink-muted">
+                      Create a project to start inspection setup.
+                    </p>
                   </div>
+                ) : (
+                  recentProjects.slice(0, 5).map((project) => (
+                    <ProjectRow key={project.projectId} project={project} />
+                  ))
                 )}
               </div>
-            </div>
-          </div>
+            </section>
+
+            <section className="rounded border border-ca-border bg-[#11161b]">
+              <div className="border-b border-ca-border px-3 py-2">
+                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
+                  Line Readiness
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 gap-px bg-ca-border">
+                <StatusCell label="Vision Engine" value="Active" tone="good" />
+                <StatusCell label="Camera Link" value="Ready" tone="good" />
+                <StatusCell label="Lighting" value="Standby" tone="neutral" />
+                <StatusCell label="Recipe" value={primaryProject ? "Loaded" : "None"} tone="neutral" />
+              </div>
+            </section>
+          </aside>
         </div>
       </div>
     </StandardAppShell>
   );
 }
 
-function CameraIcon(props: React.SVGProps<SVGSVGElement>) {
+function WorkflowCard({ workflow }: { workflow: Workflow }): React.JSX.Element {
+  const tone = TONE_CLASS[workflow.tone];
+  const Icon = workflow.icon;
+
   return (
-    <svg
-      {...props}
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+    <article
+      className={`group relative min-h-[220px] overflow-hidden rounded border border-ca-border bg-[#11161b] transition ${tone.border}`}
     >
-      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-      <circle cx="12" cy="13" r="3" />
-    </svg>
-  );
-}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.glow} to-transparent opacity-70`}
+      />
+      <div className="relative flex h-full flex-col justify-between p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded border border-ca-border bg-[#0b0f12]">
+            <Icon size={20} className={tone.icon} />
+          </div>
+          <Link
+            to={workflow.to}
+            className="inline-flex items-center gap-2 rounded border border-ca-border bg-[#0b0f12] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary"
+          >
+            Enter
+            <ArrowRight size={12} />
+          </Link>
+        </div>
 
-function StatusCard({
-  icon,
-  label,
-  value,
-  status,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  status: "good" | "bad" | "neutral";
-}) {
-  return (
-    <div className="border border-ca-border/50 bg-ca-panel p-4 rounded flex items-center gap-4">
-      <div className="p-3 bg-ca-bg rounded border border-ca-border/30">{icon}</div>
-      <div>
-        <p className="text-xs font-mono text-ca-ink-muted uppercase">{label}</p>
-        <p
-          className={`text-lg font-bold font-mono uppercase ${
-            status === "good"
-              ? "text-green-400"
-              : status === "bad"
-                ? "text-red-400"
-                : "text-ca-ink"
-          }`}
-        >
-          {value}
-        </p>
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-ca-ink">
+            {workflow.label}
+          </h2>
+          <p className="mt-1 text-xs text-ca-ink-muted">{workflow.description}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {workflow.quickActions.map((action) => {
+              const ActionIcon = action.icon;
+
+              return (
+                <Link
+                  key={action.label}
+                  to={action.to as any}
+                  className="flex items-center justify-between rounded border border-ca-border bg-[#0b0f12] px-3 py-2 text-xs font-semibold text-ca-ink transition hover:border-ca-primary/60 hover:bg-ca-panel-2"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ActionIcon size={14} className="shrink-0 text-ca-ink-muted" />
+                    <span className="truncate uppercase">{action.label}</span>
+                  </span>
+                  <ArrowRight size={11} className="shrink-0 text-ca-ink-muted" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }
 
-function ProjectCard({
+function ProjectRow({
   project,
 }: {
   project: { projectId: string; name: string; openedAt: number };
-}) {
-  const navigate = useNavigate();
-
+}): React.JSX.Element {
   return (
-    <div className="group border border-ca-border/50 bg-ca-panel hover:bg-ca-panel-2 hover:border-ca-primary/50 transition p-4 rounded flex flex-col justify-between h-[160px]">
-      <div>
-        <div className="flex items-start justify-between">
-          <h3 className="font-bold text-lg text-ca-ink uppercase truncate pr-4">{project.name}</h3>
-          <span className="text-xs font-mono text-ca-ink-muted shrink-0">ID: {project.projectId.slice(0,6)}</span>
-        </div>
-        <p className="text-xs text-ca-ink-muted flex items-center gap-1 mt-1">
-          <Clock size={12} /> Last opened {new Date(project.openedAt).toLocaleDateString()}
-        </p>
+    <Link
+      to="/projects/$projectId"
+      params={{ projectId: project.projectId }}
+      className="block rounded border border-ca-border bg-[#0b0f12] p-3 transition hover:border-ca-primary/60 hover:bg-ca-panel-2"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-sm font-bold uppercase text-ca-ink">{project.name}</span>
+        <ArrowRight size={13} className="shrink-0 text-ca-ink-muted" />
       </div>
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-mono uppercase text-ca-ink-muted">
+        <span>ID {project.projectId.slice(0, 6)}</span>
+        <span>{new Date(project.openedAt).toLocaleDateString()}</span>
+      </div>
+    </Link>
+  );
+}
 
-      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-ca-border/30">
-        <button
-          onClick={() => navigate({ to: "/projects/$projectId", params: { projectId: project.projectId } })}
-          className="flex-1 px-3 py-1.5 bg-ca-bg border border-ca-border/50 text-ca-ink text-sm font-bold uppercase rounded hover:border-ca-primary hover:text-ca-primary transition flex items-center justify-center gap-2"
-        >
-          <SettingsIcon size={14} /> Setup
-        </button>
-        <button
-          onClick={() => navigate({ to: "/projects/$projectId/trial-run", params: { projectId: project.projectId } })}
-          className="flex-1 px-3 py-1.5 bg-ca-bg border border-ca-border/50 text-ca-ink text-sm font-bold uppercase rounded hover:border-ca-primary hover:text-ca-primary transition flex items-center justify-center gap-2"
-        >
-          <PlayCircle size={14} /> Run
-        </button>
+function StatusCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "good" | "neutral";
+}): React.JSX.Element {
+  return (
+    <div className="bg-[#0b0f12] p-3">
+      <div className="text-[10px] font-mono uppercase text-ca-ink-muted">{label}</div>
+      <div
+        className={`mt-1 text-sm font-bold uppercase ${
+          tone === "good" ? "text-emerald-400" : "text-ca-ink"
+        }`}
+      >
+        {value}
       </div>
     </div>
   );

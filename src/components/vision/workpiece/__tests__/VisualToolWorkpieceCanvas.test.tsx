@@ -243,8 +243,7 @@ describe("VisualToolWorkpieceCanvas", () => {
     expect(screen.queryByText(/Region of Interest/i)).toBeNull();
     expect(screen.queryByText(/Inspection Scope/i)).toBeNull();
 
-    // Footer describes auto-analyzed full workpiece picture
-    expect(screen.getByText(/Full workpiece picture auto-analyzed sequentially/i)).toBeTruthy();
+    expect(screen.getByRole("region", { name: /Visual Analysis Results/i })).toBeTruthy();
   });
 
   it("renders visual analysis floating HUD overlay and allows switching rules in analyze mode", () => {

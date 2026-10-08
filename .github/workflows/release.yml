@@ -52,8 +52,8 @@ on:
         default: "false"
   # Tag trigger is intentionally disabled until Step 125 (verify-install)
   # lands - see 02-spec/21-app/77-cli-powershell-and-release.md §"Gates".
-  # push:
-  #   tags: ["v*"]
+  push:
+    tags: ["v*"]
 
 # Cancel superseded runs on the same ref so a rapid re-dispatch does not
 # race two builds writing the same artefact name.
@@ -369,7 +369,7 @@ jobs:
   publish:
     name: Publish draft release
     needs: [checksum, verify-install]
-    if: ${{ github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '' }}
+    if: ${{ (github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '') || github.event_name == 'push' }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -390,7 +390,7 @@ jobs:
       - name: Generate install.ps1
         run: |
           echo "Write-Host 'Downloading Control Automation...'" > release/install.ps1
-          echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
+          echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag || github.ref_name }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
           echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\ControlAutomation -Force" >> release/install.ps1
           echo "\$WshShell = New-Object -comObject WScript.Shell" >> release/install.ps1
           echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\Control Automation.lnk\\")" >> release/install.ps1
@@ -401,13 +401,13 @@ jobs:
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.release_tag }}
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
           draft: true
-          prerelease: ${{ contains(github.event.inputs.release_tag, '-rc') || contains(github.event.inputs.release_tag, '-beta') }}
+          prerelease: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-rc') || contains(github.event.inputs.release_tag || github.ref_name, '-beta') }}
           files: release/*
           fail_on_unmatched_files: true
           body: |
-            Automated draft release for ${{ github.event.inputs.release_tag }}.
+            Automated draft release for ${{ github.event.inputs.release_tag || github.ref_name }}.
 
             **Note:** binaries in this release are NOT Authenticode-signed
             (signing lands in Plan 90 Step 141). `install.json` will record

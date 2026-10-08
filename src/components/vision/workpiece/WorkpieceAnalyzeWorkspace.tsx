@@ -281,10 +281,10 @@ export function WorkpieceAnalyzeWorkspace({
     [ruleset.id, updateRulesetRules, selectedIds],
   );
 
-  const handleNavigateAddRule = useCallback(() => {
+  const handleNavigateAddRule = useCallback((targetRulesetId?: string) => {
     void navigate({
       to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-      params: { projectId, rulesetId: ruleset.id },
+      params: { projectId, rulesetId: targetRulesetId ?? ruleset.id },
     });
   }, [navigate, projectId, ruleset.id]);
 
@@ -315,21 +315,23 @@ export function WorkpieceAnalyzeWorkspace({
     setIsAddingRuleset(false);
   }, [draftRulesetName, handleAddRuleset]);
 
-  const handleDeleteRuleset = useCallback(() => {
-    const isConfirmed = window.confirm(`Delete rule set "${ruleset.name}"? This removes its rules from this project.`);
+  const handleDeleteRuleset = useCallback((targetRulesetId?: string) => {
+    const targetRuleset =
+      (rulesets ?? []).find((rs) => rs.id === (targetRulesetId ?? ruleset.id)) ?? ruleset;
+    const isConfirmed = window.confirm(`Delete rule set "${targetRuleset.name}"? This removes its rules from this project.`);
 
     if (!isConfirmed) {
       return;
     }
 
-    const nextRuleset = (rulesets ?? []).find((rs) => rs.id !== ruleset.id) ?? null;
-    deleteRuleset(ruleset.id);
+    const nextRuleset = (rulesets ?? []).find((rs) => rs.id !== targetRuleset.id) ?? null;
+    deleteRuleset(targetRuleset.id);
 
     if (nextRuleset) {
       onSelectRuleset?.(nextRuleset.id);
     }
 
-    toast.success(`Rule set "${ruleset.name}" deleted.`);
+    toast.success(`Rule set "${targetRuleset.name}" deleted.`);
   }, [deleteRuleset, onSelectRuleset, ruleset.id, ruleset.name, rulesets]);
 
   const activeRule = useMemo(() => {
@@ -791,7 +793,7 @@ export function WorkpieceAnalyzeWorkspace({
           
           {/* Add Tools Tile */}
           <button
-            onClick={handleNavigateAddRule}
+            onClick={() => handleNavigateAddRule()}
             className="flex flex-col items-center justify-center w-20 h-16 bg-[#1a1a1a] border border-[#444] rounded hover:border-ca-select transition-colors shrink-0"
           >
             <Plus size={16} className="text-ca-ink-muted mb-1" />
@@ -892,7 +894,7 @@ export function WorkpieceAnalyzeWorkspace({
             <InspectionHierarchyTree
               project={project}
               ruleset={ruleset}
-              rulesets={rulesets}
+              rulesets={projectRulesetsForAnalysis}
               onSelectRuleset={onSelectRuleset}
               rules={projectOverlayRules}
               selectedRuleId={activeRule?.id ?? null}
