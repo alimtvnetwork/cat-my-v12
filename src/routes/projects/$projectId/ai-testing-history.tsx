@@ -79,18 +79,18 @@ function AiTestingHistoryPage() {
   const compareB = rows.find((r) => r.id === selectedIds[1]);
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto">
-      <div className="p-hmi-6">
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased">
+      <div className="p-6">
         <div className="mx-auto w-full max-w-7xl">
-          <header className="mb-hmi-5 flex flex-wrap items-end justify-between gap-hmi-3">
+          <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-[#22252a] pb-4">
             <div>
-              <p className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
                 {project.name}
               </p>
-              <h1 className="mt-hmi-1 font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
+              <h1 className="mt-1 text-sm font-bold uppercase tracking-widest text-[#f5a623]">
                 AI testing history
               </h1>
-              <p className="mt-hmi-1 text-hmi-body text-ca-ink-muted">
+              <p className="mt-1 text-xs text-ca-ink-muted">
                 Compare runs, see how metrics change over time, and rerun with the same rule set.
               </p>
             </div>
@@ -98,19 +98,19 @@ function AiTestingHistoryPage() {
               to="/projects/$projectId/ai-testing"
               params={{ projectId }}
               search={{ rulesetId: undefined }}
-              className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink hover:border-ca-select"
+              className="inline-flex items-center gap-2 border border-[#444] bg-[#111318] px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-[#f5a623] hover:text-[#f5a623]"
             >
               Back to AI testing
             </Link>
           </header>
 
-          <section className="mb-hmi-4 flex flex-wrap items-center gap-hmi-3 rounded-lg border border-ca-border bg-ca-panel p-hmi-3">
-            <label className="flex items-center gap-hmi-2 text-hmi-body text-ca-ink">
+          <section className="mb-4 flex flex-wrap items-center gap-3 border border-[#22252a] bg-[#111318] p-3">
+            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink">
               Rule set
               <select
                 value={rulesetFilter}
                 onChange={(e) => setRulesetFilter(e.currentTarget.value)}
-                className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1 text-hmi-body text-ca-ink focus:border-ca-select focus:outline-none"
+                className="border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-xs text-ca-ink focus:border-[#f5a623] focus:outline-none"
               >
                 <option value="">All rule sets</option>
                 {rulesets.map((rs) => (
@@ -120,7 +120,7 @@ function AiTestingHistoryPage() {
                 ))}
               </select>
             </label>
-            <div className="text-hmi-caption text-ca-ink-muted">
+            <div className="text-[10px] uppercase text-ca-ink-muted">
               {rows.length} run{rows.length === 1 ? "" : "s"} · select up to 2 to compare
             </div>
             {rulesetFilter ? (
@@ -132,7 +132,7 @@ function AiTestingHistoryPage() {
                     setSelectedIds([]);
                   }
                 }}
-                className="ml-auto rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1 text-hmi-caption text-ca-ink-muted hover:border-ca-ng hover:text-ca-ng"
+                className="ml-auto inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted hover:border-red-500 hover:text-red-500"
               >
                 Clear history
               </button>
@@ -140,16 +140,16 @@ function AiTestingHistoryPage() {
           </section>
 
           {rows.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-ca-border bg-ca-panel p-hmi-6 text-center text-hmi-body text-ca-ink-muted">
+            <div className="border border-dashed border-[#444] bg-[#111318] p-8 text-center text-xs text-ca-ink-muted font-mono">
               No AI testing runs recorded yet.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-hmi-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <section className="overflow-hidden rounded-lg border border-ca-border bg-ca-panel">
-                <header className="border-b border-ca-border px-hmi-3 py-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <section className="flex flex-col border border-[#22252a] bg-[#111318]">
+                <header className="border-b border-[#22252a] bg-[#15171e] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
                   Runs
                 </header>
-                <ul className="divide-y divide-ca-border">
+                <ul className="divide-y divide-[#22252a]">
                   {rows.map((s) => (
                     <RunRow
                       key={s.id}
@@ -163,14 +163,14 @@ function AiTestingHistoryPage() {
                 </ul>
               </section>
 
-              <section className="rounded-lg border border-ca-border bg-ca-panel p-hmi-3">
-                <h2 className="font-display text-hmi-header font-extrabold uppercase tracking-wide text-ca-ink">
+              <section className="border border-[#22252a] bg-[#111318] p-4">
+                <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-ca-ink">
                   Compare
                 </h2>
                 {compareA && compareB ? (
                   <ComparePanel a={compareA} b={compareB} rulesetNameById={rulesetNameById} />
                 ) : (
-                  <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
+                  <p className="text-xs text-ca-ink-muted">
                     Select two runs on the left to see per-rule differences.
                   </p>
                 )}
@@ -193,7 +193,7 @@ interface RunRowProps {
 
 function RunRow({ summary, rulesetName, projectId, selected, onToggle }: RunRowProps) {
   return (
-    <li className="flex flex-wrap items-center gap-hmi-3 p-hmi-3">
+    <li className="flex flex-wrap items-center gap-4 p-4 hover:bg-[#1a1c23] transition-colors">
       <input
         type="checkbox"
         aria-label={`Select run from ${new Date(summary.createdAt).toLocaleString()}`}
@@ -203,8 +203,8 @@ function RunRow({ summary, rulesetName, projectId, selected, onToggle }: RunRowP
       />
       <StatusPill verdict={summary.verdict} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-hmi-body font-semibold text-ca-ink">{rulesetName}</p>
-        <p className="text-hmi-caption text-ca-ink-muted">
+        <p className="truncate text-xs font-bold text-ca-ink">{rulesetName}</p>
+        <p className="text-[10px] uppercase text-ca-ink-muted">
           {new Date(summary.createdAt).toLocaleString()} · {summary.imageCount} images ·{" "}
           {summary.ruleCount} rules · {Math.round(summary.passRate * 100)}% pass
         </p>
@@ -213,7 +213,7 @@ function RunRow({ summary, rulesetName, projectId, selected, onToggle }: RunRowP
         to="/projects/$projectId/ai-testing"
         params={{ projectId }}
         search={{ rulesetId: summary.rulesetId }}
-        className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1 text-hmi-caption text-ca-ink hover:border-ca-select"
+        className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-[#f5a623] hover:text-[#f5a623]"
         title="Reopen AI testing with this rule set preselected"
       >
         Rerun
@@ -235,8 +235,8 @@ function ComparePanel({ a, b, rulesetNameById }: ComparePanelProps) {
   const passDelta = later.passRate - earlier.passRate;
 
   return (
-    <div className="mt-hmi-3 flex flex-col gap-hmi-3">
-      <div className="grid grid-cols-2 gap-hmi-3">
+    <div className="mt-4 flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <CompareHeader
           label="Earlier"
           summary={earlier}
@@ -249,8 +249,8 @@ function ComparePanel({ a, b, rulesetNameById }: ComparePanelProps) {
         />
       </div>
 
-      <div className="rounded-sm border border-ca-border bg-ca-panel-2 p-hmi-3">
-        <p className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+      <div className="border border-[#22252a] bg-[#0b0c10] p-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
           Pass rate change
         </p>
         <p
@@ -271,7 +271,7 @@ function ComparePanel({ a, b, rulesetNameById }: ComparePanelProps) {
         {perRule.length === 0 ? (
           <p className="px-hmi-3 py-hmi-3 text-hmi-body text-ca-ink-muted">No comparable rules.</p>
         ) : (
-          <ul className="divide-y divide-ca-border">
+          <ul className="divide-y divide-[#22252a]">
             {perRule.map((r) => (
               <li
                 key={r.ruleId}
@@ -312,15 +312,15 @@ function CompareHeader({
   name: string;
 }) {
   return (
-    <div className="rounded-sm border border-ca-border bg-ca-panel-2 p-hmi-3">
-      <p className="text-hmi-caption uppercase tracking-wide text-ca-ink-muted">{label}</p>
+    <div className="border border-[#22252a] bg-[#0b0c10] p-4">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">{label}</p>
       <p className="mt-hmi-1 truncate text-hmi-body font-semibold text-ca-ink">{name}</p>
-      <p className="text-hmi-caption text-ca-ink-muted">
+      <p className="text-[10px] uppercase text-ca-ink-muted">
         {new Date(summary.createdAt).toLocaleString()}
       </p>
       <div className="mt-hmi-2 flex items-center gap-hmi-2">
         <StatusPill verdict={summary.verdict} />
-        <span className="text-hmi-caption text-ca-ink-muted">
+        <span className="text-[10px] uppercase text-ca-ink-muted">
           {Math.round(summary.passRate * 100)}% · {summary.imageCount} imgs
         </span>
       </div>
@@ -403,7 +403,7 @@ function AiTestingHistoryError({ error, reset }: { error: Error; reset: () => vo
       <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
         History didn't load
       </h1>
-      <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">{error.message}</p>
+      <p className="text-xs text-ca-ink-muted">{error.message}</p>
       <button
         type="button"
         onClick={() => {
@@ -426,7 +426,7 @@ function AiTestingHistoryNotFound() {
       <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
         Project not found
       </h1>
-      <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
+      <p className="text-xs text-ca-ink-muted">
         No project matches <span className="font-mono">{projectId}</span>.
       </p>
       <Link

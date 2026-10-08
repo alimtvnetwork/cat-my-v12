@@ -82,10 +82,10 @@ export type StatusFilter = StatusFilterType;
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-select focus-visible:ring-offset-2 focus-visible:ring-offset-ca-panel";
-const CHIP_BASE = `inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-hmi-1 text-hmi-body transition-colors ${FOCUS_RING}`;
-const BUTTON_PRIMARY = `inline-flex items-center gap-hmi-2 rounded-sm bg-ca-select px-hmi-3 py-hmi-2 text-hmi-body font-semibold text-ca-bg transition-opacity hover:opacity-90 ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-60`;
-const BUTTON_SECONDARY = `inline-flex items-center gap-hmi-2 rounded-sm border border-ca-border bg-ca-panel px-hmi-3 py-hmi-2 text-hmi-body font-semibold text-ca-ink transition-colors hover:border-ca-select hover:bg-ca-panel-2 ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-60`;
-const ROW_DELETE = `inline-flex h-7 w-7 items-center justify-center rounded-sm text-ca-ink-muted transition-colors hover:bg-ca-panel-2 hover:text-ca-danger ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-30`;
+const CHIP_BASE = `inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-hmi-1 text-xs transition-colors ${FOCUS_RING}`;
+const BUTTON_PRIMARY = `inline-flex items-center gap-hmi-2 rounded-sm bg-ca-select px-hmi-3 py-hmi-2 text-xs font-semibold text-ca-bg transition-opacity hover:opacity-90 ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-60`;
+const BUTTON_SECONDARY = `inline-flex items-center gap-hmi-2 rounded-sm border border-[#22252a] bg-ca-panel px-hmi-3 py-hmi-2 text-xs font-semibold text-ca-ink transition-colors hover:border-ca-select hover:bg-[#1a1c23] ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-60`;
+const ROW_DELETE = `inline-flex h-7 w-7 items-center justify-center rounded-sm text-ca-ink-muted transition-colors hover:bg-[#1a1c23] hover:text-ca-danger ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-30`;
 
 export const Route = createFileRoute("/setup/rules")({
   staticData: { crumb: "Rules" },
@@ -501,11 +501,11 @@ function SetupRulesPage() {
 
   const rulesBody = (
     <>
-      <div className="border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-3">
+      <div className="border-b border-[#22252a] bg-ca-panel px-hmi-4 py-hmi-3">
         <div className="flex flex-wrap items-center justify-between gap-hmi-3">
           <div className="min-w-0">
             <h1 className="text-hmi-h2 font-semibold text-ca-ink">Rules</h1>
-            <p className="text-hmi-body text-ca-ink-muted">
+            <p className="text-xs text-ca-ink-muted">
               Shared rule library. Categories are managed separately.
             </p>
           </div>
@@ -533,7 +533,7 @@ function SetupRulesPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-hmi-3 border-b border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2">
+      <div className="flex flex-wrap items-center gap-hmi-3 border-b border-[#22252a] bg-[#1a1c23] px-hmi-4 py-hmi-2">
         <div
           className={`${CHIP_BASE} border-ca-select bg-ca-panel text-ca-ink shadow-hmi-panel`}
           data-testid="setup-rules-count-chip"
@@ -541,7 +541,7 @@ function SetupRulesPage() {
           <Sparkles size={12} aria-hidden />
           Rules ({rules.length})
         </div>
-        <label className="ml-auto flex min-w-[220px] items-center gap-hmi-2 rounded-sm border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink focus-within:border-ca-select">
+        <label className="ml-auto flex min-w-[220px] items-center gap-hmi-2 rounded-sm border border-[#22252a] bg-ca-panel px-hmi-2 py-hmi-1 text-xs text-ca-ink focus-within:border-ca-select">
           <Search size={12} aria-hidden className="text-ca-ink-muted" />
           <input
             ref={searchRef}
@@ -555,7 +555,7 @@ function SetupRulesPage() {
                 setQuery("");
               }
             }}
-            className="w-full bg-transparent text-hmi-body text-ca-ink outline-none placeholder:text-ca-ink-muted"
+            className="w-full bg-transparent text-xs text-ca-ink outline-none placeholder:text-ca-ink-muted"
             aria-label="Search rules by name"
             data-testid="setup-rules-search"
           />
@@ -568,18 +568,18 @@ function SetupRulesPage() {
               }}
               aria-label="Clear search"
               data-testid="setup-rules-search-clear"
-              className={`inline-flex h-5 w-5 items-center justify-center rounded-sm text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink ${FOCUS_RING}`}
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-sm text-ca-ink-muted hover:bg-[#1a1c23] hover:text-ca-ink ${FOCUS_RING}`}
             >
               <X size={12} aria-hidden />
             </button>
           ) : null}
         </label>
-        <label className="flex items-center gap-hmi-2 text-hmi-caption text-ca-ink-muted">
+        <label className="flex items-center gap-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink-muted">
           <span>Sort</span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKind)}
-            className="rounded-sm border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink"
+            className="rounded-sm border border-[#22252a] bg-ca-panel px-hmi-2 py-hmi-1 text-xs text-ca-ink"
             aria-label="Sort rules"
             data-testid="setup-rules-sort"
           >
@@ -587,12 +587,12 @@ function SetupRulesPage() {
             <option value="deps">Dependencies (most first)</option>
           </select>
         </label>
-        <label className="flex items-center gap-hmi-2 text-hmi-caption text-ca-ink-muted">
+        <label className="flex items-center gap-hmi-2 text-[10px] uppercase tracking-wider text-ca-ink-muted">
           <span>Status</span>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="rounded-sm border border-ca-border bg-ca-panel px-hmi-2 py-hmi-1 text-hmi-body text-ca-ink"
+            className="rounded-sm border border-[#22252a] bg-ca-panel px-hmi-2 py-hmi-1 text-xs text-ca-ink"
             aria-label="Filter rules by enabled status"
             data-testid="setup-rules-status"
           >
@@ -605,7 +605,7 @@ function SetupRulesPage() {
 
       {visibleRules.length > 0 ? (
         <div
-          className="flex flex-wrap items-center gap-hmi-3 border-b border-ca-border bg-ca-panel px-hmi-4 py-hmi-1 text-hmi-caption text-ca-ink-muted"
+          className="flex flex-wrap items-center gap-hmi-3 border-b border-[#22252a] bg-ca-panel px-hmi-4 py-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink-muted"
           data-testid="setup-rules-bulk-bar"
         >
           <span>
@@ -626,7 +626,7 @@ function SetupRulesPage() {
                   ? "No disabled rules in the current view"
                   : `Enable ${visibleEnableableCount} rule(s)`
               }
-              className={`${CHIP_BASE} border-ca-border bg-ca-panel-2 text-ca-ink hover:border-ca-select disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`${CHIP_BASE} border-[#22252a] bg-[#1a1c23] text-ca-ink hover:border-ca-select disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <Power size={12} aria-hidden />
               Enable {visibleEnableableCount || ""}
@@ -641,7 +641,7 @@ function SetupRulesPage() {
                   ? "No enabled rules in the current view"
                   : `Disable ${visibleDisableableCount} rule(s)`
               }
-              className={`${CHIP_BASE} border-ca-border bg-ca-panel-2 text-ca-ink hover:border-ca-select disabled:cursor-not-allowed disabled:opacity-50`}
+              className={`${CHIP_BASE} border-[#22252a] bg-[#1a1c23] text-ca-ink hover:border-ca-select disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <PowerOff size={12} aria-hidden />
               Disable {visibleDisableableCount || ""}
@@ -781,7 +781,7 @@ function RuleRow({ row, onDelete, onDuplicate, onToggleEnabled }: RuleRowProps):
           <Link
             {...target}
             preload="intent"
-            className={`flex items-center gap-hmi-3 px-hmi-4 py-hmi-2 text-ca-ink hover:bg-ca-panel-2 ${
+            className={`flex items-center gap-hmi-3 px-hmi-4 py-hmi-2 text-ca-ink hover:bg-[#1a1c23] ${
               enabled ? "" : "opacity-60"
             } ${FOCUS_RING}`}
             data-testid="setup-rules-row-link"
@@ -791,11 +791,11 @@ function RuleRow({ row, onDelete, onDuplicate, onToggleEnabled }: RuleRowProps):
           >
             <RulePreviewThumbnail rule={row} />
             <RuleKindBadge rule={row} />
-            <span className="min-w-0 flex-1 truncate text-hmi-body">
+            <span className="min-w-0 flex-1 truncate text-xs">
               {row.name}
               {!enabled ? (
                 <span
-                  className="ml-hmi-2 rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ca-ink-muted"
+                  className="ml-hmi-2 rounded-sm border border-[#22252a] bg-[#1a1c23] px-hmi-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ca-ink-muted"
                   data-testid="setup-rules-row-disabled-badge"
                 >
                   Disabled
@@ -803,14 +803,14 @@ function RuleRow({ row, onDelete, onDuplicate, onToggleEnabled }: RuleRowProps):
               ) : null}
             </span>
             <span
-              className="inline-flex shrink-0 items-center gap-hmi-1 rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-2 py-0.5 font-mono text-[13px] tabular-nums text-ca-ink-muted"
+              className="inline-flex shrink-0 items-center gap-hmi-1 rounded-sm border border-[#22252a] bg-[#1a1c23] px-hmi-2 py-0.5 font-mono text-[13px] tabular-nums text-ca-ink-muted"
               title={`Applies before ${row.appliesBefore.length} rule(s)`}
             >
               <ArrowRight size={11} aria-hidden />
               {row.appliesBefore.length}
             </span>
             {row.pocketSize ? (
-              <span className="shrink-0 rounded-sm border border-ca-border px-hmi-2 py-0.5 font-mono text-[11px] tabular-nums text-ca-ink-muted">
+              <span className="shrink-0 rounded-sm border border-[#22252a] px-hmi-2 py-0.5 font-mono text-[11px] tabular-nums text-ca-ink-muted">
                 P{row.pocketSize}
               </span>
             ) : null}
@@ -820,7 +820,7 @@ function RuleRow({ row, onDelete, onDuplicate, onToggleEnabled }: RuleRowProps):
               aria-checked={enabled}
               aria-label={`${enabled ? "Disable" : "Enable"} rule ${row.name}`}
               data-testid="setup-rules-row-enable-toggle"
-              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-ca-panel-2 ${
+              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm transition-colors hover:bg-[#1a1c23] ${
                 enabled ? "text-ca-select" : "text-ca-ink-muted"
               } ${FOCUS_RING}`}
               onClick={(e) => {

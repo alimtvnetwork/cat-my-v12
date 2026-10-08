@@ -191,13 +191,13 @@ function SetupCameraPage() {
 
   const body = (
     <div className="flex flex-1 min-h-0">
-      <aside className="flex w-72 flex-col border-r border-ca-border bg-ca-panel-2">
-        <div className="flex flex-col gap-2 border-b border-ca-border p-2">
+      <aside className="flex w-72 flex-col border-r border-[#22252a] bg-[#1a1c23]">
+        <div className="flex flex-col gap-2 border-b border-[#22252a] p-2">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={createNew}
-              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel"
+              className="flex items-center gap-1 border border-[#22252a] bg-ca-bg px-2 py-1 text-xs text-ca-ink hover:bg-ca-panel"
             >
               <Plus size={14} aria-hidden /> New
             </button>
@@ -206,7 +206,7 @@ function SetupCameraPage() {
               onClick={duplicateSelected}
               disabled={!selected}
               title={selected ? "Duplicate selected camera" : "Select a camera to duplicate"}
-              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
+              className="flex items-center gap-1 border border-[#22252a] bg-ca-bg px-2 py-1 text-xs text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
             >
               <Copy size={14} aria-hidden /> Duplicate
             </button>
@@ -214,7 +214,7 @@ function SetupCameraPage() {
               type="button"
               disabled
               title="Enumerate Devices requires the worker build (I-BE-04)"
-              className="ml-auto flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-body text-ca-ink-muted opacity-60"
+              className="ml-auto flex items-center gap-1 border border-[#22252a] bg-ca-bg px-2 py-1 text-xs text-ca-ink-muted opacity-60"
             >
               Enumerate
             </button>
@@ -225,7 +225,7 @@ function SetupCameraPage() {
               onClick={handleExport}
               disabled={entries.length === 0}
               title="Export camera library as JSON"
-              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
+              className="flex items-center gap-1 border border-[#22252a] bg-ca-bg px-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
             >
               <Download size={12} aria-hidden /> Export
             </button>
@@ -233,7 +233,7 @@ function SetupCameraPage() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               title="Import camera library from JSON"
-              className="flex items-center gap-1 border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel"
+              className="flex items-center gap-1 border border-[#22252a] bg-ca-bg px-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:bg-ca-panel"
             >
               <Upload size={12} aria-hidden /> Import
             </button>
@@ -256,14 +256,14 @@ function SetupCameraPage() {
               placeholder="Filter cameras..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-ca-bg border border-ca-border pl-7 pr-2 py-1 text-hmi-body text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary"
+              className="w-full bg-ca-bg border border-[#22252a] pl-7 pr-2 py-1 text-xs text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary"
             />
           </div>
         </div>
 
         <ul className="flex flex-1 flex-col overflow-y-auto" role="listbox" aria-label="Cameras">
           {filtered.length === 0 ? (
-            <li className="p-3 text-hmi-caption text-ca-ink-muted">
+            <li className="p-3 text-[10px] uppercase tracking-wider text-ca-ink-muted">
               {entries.length === 0 ? "No cameras configured" : "No matches"}
             </li>
           ) : (
@@ -276,7 +276,7 @@ function SetupCameraPage() {
                   role="option"
                   aria-selected={active}
                   onClick={() => setSelectedId(c.id)}
-                  className={`flex cursor-pointer flex-col gap-0.5 border-b border-ca-border px-3 py-2 text-hmi-body transition-colors ${
+                  className={`flex cursor-pointer flex-col gap-0.5 border-b border-[#22252a] px-3 py-2 text-xs transition-colors ${
                     active
                       ? "bg-ca-panel text-ca-ink font-semibold"
                       : "text-ca-ink hover:bg-ca-panel/60"
@@ -284,9 +284,9 @@ function SetupCameraPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">{c.name}</span>
-                    <span className="text-hmi-caption text-ca-ink-muted">{c.ColorModeType}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">{c.ColorModeType}</span>
                   </div>
-                  <span className="text-hmi-caption text-ca-ink-muted">
+                  <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
                     {c.resolutionW}x{c.resolutionH} · {c.exposureUs} µs · {c.fovMmW}x{c.fovMmH} mm
                   </span>
                 </li>
@@ -304,7 +304,7 @@ function SetupCameraPage() {
             onDelete={() => reportRemoveOutcome(library.remove(selected.id), "setup/camera.remove")}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-hmi-body text-ca-ink-muted">
+          <div className="flex flex-1 items-center justify-center text-xs text-ca-ink-muted">
             Select a camera on the left, or create a new one.
           </div>
         )}
@@ -326,11 +326,11 @@ function SetupCameraPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-col gap-1 border-b border-ca-border bg-ca-panel-2 px-4 py-3">
+      <header className="flex flex-col gap-1 border-b border-[#22252a] bg-[#1a1c23] px-4 py-3">
         <h1 className="flex items-center gap-2 text-hmi-header text-ca-ink">
           <Camera className="h-5 w-5 text-ca-primary" aria-hidden /> Camera Setup
         </h1>
-        <p className="text-hmi-caption text-ca-ink-muted">
+        <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
           CameraSetting records shared across projects. Identity, optics, exposure, and acquisition.
         </p>
       </header>
@@ -341,8 +341,8 @@ function SetupCameraPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-hmi-body text-ca-ink">
-      <span className="text-hmi-caption text-ca-ink-muted">{label}</span>
+    <label className="flex flex-col gap-1 text-xs text-ca-ink">
+      <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">{label}</span>
       {children}
     </label>
   );
@@ -364,12 +364,12 @@ function CameraEditor({
   onDelete: () => void;
 }) {
   const inputCls =
-    "bg-ca-bg border border-ca-border px-2 py-1 text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary";
+    "bg-ca-bg border border-[#22252a] px-2 py-1 text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary";
 
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="cam-identity" className="flex flex-col gap-3">
-        <h2 id="cam-identity" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-identity" className="text-xs font-semibold text-ca-ink">
           Identity
         </h2>
         <div className="grid grid-cols-2 gap-3">
@@ -417,7 +417,7 @@ function CameraEditor({
       </section>
 
       <section aria-labelledby="cam-optics" className="flex flex-col gap-3">
-        <h2 id="cam-optics" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-optics" className="text-xs font-semibold text-ca-ink">
           Optics
         </h2>
         <div className="grid grid-cols-3 gap-3">
@@ -473,7 +473,7 @@ function CameraEditor({
       </section>
 
       <section aria-labelledby="cam-exposure" className="flex flex-col gap-3">
-        <h2 id="cam-exposure" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-exposure" className="text-xs font-semibold text-ca-ink">
           Exposure
         </h2>
         <div className="grid grid-cols-4 gap-3">
@@ -525,7 +525,7 @@ function CameraEditor({
       </section>
 
       <section aria-labelledby="cam-acq" className="flex flex-col gap-3">
-        <h2 id="cam-acq" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-acq" className="text-xs font-semibold text-ca-ink">
           Acquisition
         </h2>
         <div className="grid grid-cols-4 gap-3">
@@ -595,7 +595,7 @@ function CameraEditor({
       </section>
 
       <section aria-labelledby="cam-notes" className="flex flex-col gap-2">
-        <h2 id="cam-notes" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-notes" className="text-xs font-semibold text-ca-ink">
           Notes
         </h2>
         <textarea
@@ -608,7 +608,7 @@ function CameraEditor({
 
       <RoiEditor entry={entry} onPatch={onPatch} />
 
-      <div className="flex items-center justify-between border-t border-ca-border pt-3 text-hmi-caption text-ca-ink-muted">
+      <div className="flex items-center justify-between border-t border-[#22252a] pt-3 text-[10px] uppercase tracking-wider text-ca-ink-muted">
         <span className="font-hmi-mono">id: {entry.id}</span>
         <button
           type="button"
@@ -690,7 +690,7 @@ function RoiEditor({
 
   const roi = entry.roi;
   const inputCls =
-    "bg-ca-bg border border-ca-border px-2 py-1 text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary";
+    "bg-ca-bg border border-[#22252a] px-2 py-1 text-ca-ink focus:outline-none focus:ring-1 focus:ring-ca-primary";
 
   function patchRoiField(k: "x" | "y" | "w" | "h", v: number) {
     const base = roi ?? { x: 0, y: 0, w: entry.resolutionW, h: entry.resolutionH };
@@ -718,19 +718,19 @@ function RoiEditor({
   return (
     <section aria-labelledby="cam-roi" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 id="cam-roi" className="text-hmi-body font-semibold text-ca-ink">
+        <h2 id="cam-roi" className="text-xs font-semibold text-ca-ink">
           Region of Interest
         </h2>
         <button
           type="button"
           onClick={() => onPatch({ roi: null })}
           disabled={!roi}
-          className="border border-ca-border bg-ca-bg px-2 py-1 text-hmi-caption text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
+          className="border border-[#22252a] bg-ca-bg px-2 py-1 text-[10px] uppercase tracking-wider text-ca-ink hover:bg-ca-panel disabled:opacity-50 disabled:hover:bg-ca-bg"
         >
           Clear ROI
         </button>
       </div>
-      <p className="text-hmi-caption text-ca-ink-muted">
+      <p className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
         Drag on the preview to select. Hold Shift to lock a square. Coordinates are in image pixels
         relative to {entry.resolutionW}x{entry.resolutionH}.
       </p>
@@ -743,7 +743,7 @@ function RoiEditor({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{ aspectRatio: `${entry.resolutionW} / ${entry.resolutionH}` }}
-        className="relative w-full max-w-xl select-none border border-ca-border bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.02)_0_8px,transparent_8px_16px)] bg-ca-panel-2 touch-none"
+        className="relative w-full max-w-xl select-none border border-[#22252a] bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.02)_0_8px,transparent_8px_16px)] bg-[#1a1c23] touch-none"
       >
         {pct ? (
           <div

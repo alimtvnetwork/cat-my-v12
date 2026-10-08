@@ -111,11 +111,11 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
         const isActive = pathname === tab.futurePath || pathname.startsWith(`${tab.futurePath}/`);
         const Icon = tab.Icon;
         const baseClass = cn(
-          "inline-flex items-center gap-hmi-2 min-h-11 rounded-hmi-sm px-hmi-3 py-hmi-2 text-hmi-body text-left",
+          "inline-flex items-center gap-hmi-2 min-h-11 rounded-hmi-sm px-hmi-3 py-hmi-2 text-xs text-left",
           "border border-transparent",
           isActive
             ? "bg-ca-accent-soft text-ca-accent border-ca-accent"
-            : "text-ca-ink hover:bg-ca-surface-alt hover:border-ca-border",
+            : "text-ca-ink hover:bg-ca-surface-alt hover:border-[#22252a]",
         );
 
         if (tab.live) {
@@ -147,7 +147,7 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
           >
             <Icon aria-hidden className="size-4" />
             <span className="flex-1">{tab.label}</span>
-            <span className="text-hmi-caption text-ca-ink-muted">S{tab.step}</span>
+            <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">S{tab.step}</span>
           </button>
         );
       })}
@@ -171,25 +171,25 @@ function CliLayout() {
   return (
     <div className="flex min-h-[calc(100dvh-var(--hmi-header-height,4rem))] w-full flex-col md:flex-row">
       {/* Mobile top nav (< md) */}
-      <div className="flex items-center justify-between gap-hmi-2 border-b border-ca-border bg-ca-surface px-hmi-3 py-hmi-2 md:hidden">
+      <div className="flex items-center justify-between gap-hmi-2 border-b border-[#22252a] bg-ca-surface px-hmi-3 py-hmi-2 md:hidden">
         <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
           <SheetTrigger
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-hmi-sm border border-ca-border bg-ca-surface-alt text-ca-ink hover:bg-ca-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-focus"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-hmi-sm border border-[#22252a] bg-ca-surface-alt text-ca-ink hover:bg-ca-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-focus"
             aria-label="Open CLI navigation"
           >
             <Menu aria-hidden className="size-5" />
           </SheetTrigger>
           <SheetContent
             side="left"
-            className="w-72 border-r border-ca-border bg-ca-surface p-hmi-2"
+            className="w-72 border-r border-[#22252a] bg-ca-surface p-hmi-2"
           >
-            <SheetTitle className="px-hmi-2 pb-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+            <SheetTitle className="px-hmi-2 pb-hmi-2 text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
               CLI Console
             </SheetTitle>
             <NavList pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
           </SheetContent>
         </Sheet>
-        <span className="truncate text-hmi-body font-medium text-ca-ink" aria-live="polite">
+        <span className="truncate text-xs font-medium text-ca-ink" aria-live="polite">
           {activeLabel}
         </span>
         <span aria-hidden className="min-w-11" />
@@ -198,9 +198,9 @@ function CliLayout() {
       {/* Desktop sidebar (>= md) */}
       <aside
         aria-label="CLI navigation"
-        className="hidden shrink-0 flex-col gap-hmi-1 border-r border-ca-border bg-ca-surface p-hmi-2 md:flex md:w-56"
+        className="hidden shrink-0 flex-col gap-hmi-1 border-r border-[#22252a] bg-ca-surface p-hmi-2 md:flex md:w-56"
       >
-        <div className="px-hmi-2 pb-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
+        <div className="px-hmi-2 pb-hmi-2 text-[10px] uppercase tracking-wider uppercase tracking-wide text-ca-ink-muted">
           CLI Console
         </div>
         <NavList pathname={pathname} />
