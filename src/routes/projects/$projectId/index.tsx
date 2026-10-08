@@ -63,7 +63,7 @@ function ProjectOverview() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [runErr, setRunErr] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analysis" | "overview">("analysis");
+  const [activeTab, setActiveTab] = useState<string>("Overview");
 
   const [activeRulesetId, setActiveRulesetId] = useState<string | null>(null);
 
