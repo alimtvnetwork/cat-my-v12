@@ -1,3 +1,4 @@
+import { HmiShell } from "@/components/hmi/HmiShell";
 import { RunningOpKindType } from "@/lib/stores/running-ops-store";
 // Project overview index (Plan 34, step 11). Renders inside the
 // projects.$projectId layout's <Outlet />, so it does NOT re-mount
