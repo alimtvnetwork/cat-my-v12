@@ -66,7 +66,7 @@ export function StandardAppShell({
       data-app-shell="true"
       data-standard-shell="true"
       data-testid="standard-app-shell"
-      className="flex flex-col flex-1 min-h-screen bg-ca-bg text-ca-ink font-sans"
+      className="flex h-screen min-h-0 flex-col overflow-hidden bg-ca-bg text-ca-ink font-sans"
     >
       {/* Industrial Top HMI Header */}
       <header className="flex h-11 items-center justify-between border-b border-ca-border bg-ca-panel px-3 shrink-0 select-none z-30 min-w-0">
@@ -132,7 +132,7 @@ export function StandardAppShell({
       )}
 
       {/* Main Content Area */}
-      <main className="flex flex-1 flex-col min-h-0 overflow-auto">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
     </div>
   );
 }

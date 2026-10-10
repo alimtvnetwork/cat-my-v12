@@ -3,6 +3,7 @@ import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { Geometry, ShapeType } from "@/domain/vision/shapes";
 import { imageToScreen, clampRectToBounds, IMAGE_BOUNDS, screenToImage } from "@/lib/editor/coords";
 import { Viewport } from "@/lib/editor/types";
+import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
 
 import { RegionOverlay } from "./RegionOverlay";
 
@@ -18,6 +19,7 @@ export function StandardCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  const [renderImageRef, setRenderImageRef] = useState(settings.imageRef || defaultWorkpieceFilledSample);
 
   const zoomFactor = settings.view.zoom / 100;
   const viewport: Viewport = { panX, panY, zoom: zoomFactor };
@@ -94,6 +96,12 @@ export function StandardCanvas({
   };
 
   const showRegions = viewModes?.regions ?? true;
+  const imageRef = settings.imageRef || defaultWorkpieceFilledSample;
+  const hasGrid = viewModes?.grid ?? false;
+
+  useEffect(() => {
+    setRenderImageRef(imageRef);
+  }, [imageRef]);
 
   return (
     <div
@@ -109,10 +117,30 @@ export function StandardCanvas({
           width: IMAGE_BOUNDS.width * zoomFactor,
           height: IMAGE_BOUNDS.height * zoomFactor,
           backgroundColor: "#333",
-          backgroundImage: "radial-gradient(#444 1px, transparent 1px)",
-          backgroundSize: `${20 * zoomFactor}px ${20 * zoomFactor}px`,
+          backgroundImage: `url("${renderImageRef}")`,
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "100% 100%",
         }}
-      />
+      >
+        <img
+          key={renderImageRef}
+          src={renderImageRef}
+          alt="Registered reference"
+          draggable={false}
+          onError={() => setRenderImageRef(defaultWorkpieceFilledSample)}
+          className="h-full w-full select-none object-fill opacity-100"
+        />
+        {hasGrid ? (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(rgba(255,255,255,0.22) 1px, transparent 1px)",
+              backgroundSize: `${20 * zoomFactor}px ${20 * zoomFactor}px`,
+            }}
+          />
+        ) : null}
+      </div>
 
       {showRegions && (
         <>

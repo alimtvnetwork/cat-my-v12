@@ -1311,8 +1311,11 @@ export function VisualToolWorkpieceCanvas({
 
         if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
-          const hX = pinCfg?.centerX ?? pinCfg?.registeredPin1?.centerX ?? pinCfg?.registeredPin1?.x;
-          const hY = pinCfg?.centerY ?? pinCfg?.registeredPin1?.centerY ?? pinCfg?.registeredPin1?.y;
+          const ruleDebug = (ruleResult as any)?.debug;
+          const debugHoleX = ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
+          const debugHoleY = ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
+          const hX = debugHoleX ?? pinCfg?.centerX ?? pinCfg?.registeredPin1?.centerX ?? pinCfg?.registeredPin1?.x;
+          const hY = debugHoleY ?? pinCfg?.centerY ?? pinCfg?.registeredPin1?.centerY ?? pinCfg?.registeredPin1?.y;
 
           if (typeof hX === "number" && typeof hY === "number") {
             badgeX = Math.max(10, Math.round(hX - 60));
@@ -1657,7 +1660,7 @@ export function VisualToolWorkpieceCanvas({
       {/* Main Canvas Viewport */}
       <div
         ref={containerRef}
-        className="relative flex min-h-[180px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-2"
+        className="relative flex min-h-[140px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-1.5"
       >
         {isAnalyzeMode && overlayRules.length > 0 && (
           <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] flex-wrap items-center gap-2 rounded border border-ca-border/80 bg-[#10161c]/95 px-3 py-1.5 font-mono text-xs shadow-lg backdrop-blur-xs">
@@ -1734,7 +1737,7 @@ export function VisualToolWorkpieceCanvas({
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)) && (
         <section
           aria-label="Visual Analysis Results"
-          className="flex max-h-32 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-2 font-mono text-xs shadow-inner"
+          className="flex max-h-24 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-1.5 font-mono text-xs shadow-inner"
         >
           {(() => {
             const rulesList = visualRulesList;

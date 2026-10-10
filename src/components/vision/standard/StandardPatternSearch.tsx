@@ -1,11 +1,12 @@
 import React from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { toast } from "sonner";
 import { StandardHeaderReadouts } from "./StandardHeaderReadouts";
 import { StandardImageToolbar } from "./StandardImageToolbar";
 import { StandardCanvas } from "./StandardCanvas";
 import { StandardToolPanel } from "./StandardToolPanel";
 import { StandardActionBar } from "./StandardActionBar";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import { ImageSourceType, PatternSearchSettings } from "@/domain/vision/pattern-search";
 
 export interface StandardPatternSearchProps {
   settings: PatternSearchSettings;
@@ -35,6 +36,24 @@ export function StandardPatternSearch({
   onPreview,
 }: StandardPatternSearchProps): React.JSX.Element | null {
   const [viewModes, setViewModes] = React.useState({ regions: true, results: true, grid: false });
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
+  const [evaluationMessage, setEvaluationMessage] = React.useState<string | null>(null);
+  const [registeredImageRef, setRegisteredImageRef] = React.useState<string | undefined>(
+    settings.imageRef,
+  );
+  const visibleSettings = React.useMemo(
+    () => ({
+      ...settings,
+      ...(registeredImageRef ? { imageRef: registeredImageRef } : {}),
+    }),
+    [registeredImageRef, settings],
+  );
+
+  React.useEffect(() => {
+    if (settings.imageRef) {
+      setRegisteredImageRef(settings.imageRef);
+    }
+  }, [settings.imageRef]);
 
   const handleCancel =
     onCancel ??
@@ -60,17 +79,58 @@ export function StandardPatternSearch({
       }
     });
 
-  const handleRegisterImage =
-    onRegisterImage ??
-    (() => {
+  const handleRegisterImage = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageFileChange = (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    const objectUrl =
+      typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
+        ? URL.createObjectURL(file)
+        : "";
+
+    if (objectUrl) {
+      setRegisteredImageRef(objectUrl);
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imageRef = typeof reader.result === "string" ? reader.result : "";
+
+      if (!imageRef) {
+        toast.error("Image registration failed.");
+
+        return;
+      }
+
       onChange((s) => ({
         ...s,
+        imageRef,
         referenceImage: {
           ...s.referenceImage,
           index: s.referenceImage.index + 1,
         },
+        view: {
+          ...s.view,
+          source: ImageSourceType.File,
+        },
       }));
-    });
+      setRegisteredImageRef(imageRef);
+      onRegisterImage?.();
+      toast.success(`Registered image: ${file.name}`);
+    };
+
+    reader.onerror = () => {
+      toast.error(`Failed to register image: ${file.name}`);
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const handleOriginPoint =
     onOriginPoint ??
@@ -105,11 +165,33 @@ export function StandardPatternSearch({
       onEvaluate?.();
     });
 
-  const handlePreview = onPreview ?? onEvaluate;
+  const handleEvaluate = () => {
+    setEvaluationMessage(
+      `Evaluation ready: search ${Math.round(settings.searchRegion.geometry.width || 0)}x${Math.round(
+        settings.searchRegion.geometry.height || 0,
+      )}, pattern ${Math.round(settings.patternRegion.geometry.width || 0)}x${Math.round(
+        settings.patternRegion.geometry.height || 0,
+      )}.`,
+    );
+    toast.success("Rule evaluated with current regions.");
+    onEvaluate?.();
+  };
+
+  const handlePreview = onPreview ?? handleEvaluate;
 
   return (
     <div className="flex flex-col h-full bg-std-chrome overflow-x-auto text-std-text font-sans">
       <div className="flex flex-col min-w-[1024px] min-h-[768px] h-full relative">
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
+          className="sr-only"
+          onChange={(event) => {
+            handleImageFileChange(event.target.files?.[0]);
+            event.target.value = "";
+          }}
+        />
         <ResizablePanelGroup orientation="horizontal" className="flex flex-1 min-h-0">
           <ResizablePanel
             defaultSize="62%"
@@ -127,7 +209,12 @@ export function StandardPatternSearch({
               <div className="absolute top-3 left-3 z-10 pointer-events-auto">
                 <StandardHeaderReadouts />
               </div>
-              <StandardCanvas settings={settings} setSettings={onChange} viewModes={viewModes} />
+              {evaluationMessage ? (
+                <div className="absolute bottom-3 left-3 z-10 border border-emerald-400 bg-black/80 px-3 py-2 text-xs font-semibold text-emerald-300">
+                  {evaluationMessage}
+                </div>
+              ) : null}
+              <StandardCanvas settings={visibleSettings} setSettings={onChange} viewModes={viewModes} />
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle aria-label="Resize panels" />
@@ -145,7 +232,7 @@ export function StandardPatternSearch({
           </ResizablePanel>
         </ResizablePanelGroup>
         <StandardActionBar
-          onEvaluate={onEvaluate}
+          onEvaluate={handleEvaluate}
           onCancel={handleCancel}
           onOk={handleOk}
           onSettings={handleSettings}

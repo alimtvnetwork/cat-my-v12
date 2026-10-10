@@ -135,7 +135,8 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
           height: input.height,
         };
 
-        setSearchRegion(fullRegion);
+        const activeRegion = searchRegion ?? fullRegion;
+        setSearchRegion(activeRegion);
 
         const initialBoxes: WhiteBoxMark[] =
           Array.isArray(initialSettings?.referenceBoxes) && initialSettings.referenceBoxes.length > 0
@@ -145,6 +146,10 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
               : [];
 
         setDetectedBoxes(initialBoxes);
+
+        if (initialBoxes.length === 0) {
+          void processRegion(input, activeRegion);
+        }
       })
       .catch(() => {
         // Ignored

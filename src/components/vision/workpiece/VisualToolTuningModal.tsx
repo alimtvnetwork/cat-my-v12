@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { X, Sliders, Check } from "lucide-react";
 import type { EditorRule } from "@/lib/editor/types";
 import {
@@ -10,6 +10,7 @@ import { WhiteBoxMarkingTool } from "../WhiteBoxMarkingTool";
 import { Pin1MarkingTool } from "../standard/tools/pin1-config/Pin1MarkingTool";
 import { StandardInspectionToolDispatcher } from "../standard/tools/StandardInspectionToolDispatcher";
 import type { FormulatedPatternGeometry } from "../white-box/types";
+import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
 
 export interface VisualToolTuningModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export interface VisualToolTuningModalProps {
   rule: EditorRule;
   onApplyRule: (updatedRule: EditorRule) => void;
   imageRef?: string;
+  onImageRegistered?: (imageRef: string) => void;
 }
 
 function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSearchSettings {
@@ -131,9 +133,11 @@ export function VisualToolTuningModal({
   rule,
   onApplyRule,
   imageRef,
+  onImageRegistered,
 }: VisualToolTuningModalProps): React.JSX.Element | null {
   const initialSettings = useMemo(() => buildSettingsFromRule(rule, imageRef), [rule, imageRef]);
   const [settings, setSettings] = useState<PatternSearchSettings>(initialSettings);
+  const [registeredImageRef, setRegisteredImageRef] = useState<string | undefined>(imageRef);
 
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
   const normalizedName = rule.name.toLowerCase();
@@ -153,7 +157,18 @@ export function VisualToolTuningModal({
     normalizedName.includes("pin 1") ||
     normalizedName.includes("pin1");
 
-  const effectiveImageRef = imageRef || "";
+  const effectiveImageRef = registeredImageRef || imageRef || defaultWorkpieceFilledSample;
+  const handleImageRegistered = useCallback(
+    (nextImageRef: string) => {
+      setRegisteredImageRef(nextImageRef);
+      setSettings((prev) => ({
+        ...prev,
+        imageRef: nextImageRef,
+      }));
+      onImageRegistered?.(nextImageRef);
+    },
+    [onImageRegistered],
+  );
 
   if (!isOpen) {
     return null;
@@ -348,6 +363,7 @@ export function VisualToolTuningModal({
             onApply={handleApplyPattern}
             onCancel={onClose}
             imageRef={effectiveImageRef}
+            onImageRegistered={handleImageRegistered}
           />
         ) : isPin1 ? (
           <Pin1MarkingTool
@@ -359,6 +375,7 @@ export function VisualToolTuningModal({
               onOk: handleApplyPin1,
               onCancel: onClose,
               imageRef: effectiveImageRef,
+              onImageRegistered: handleImageRegistered,
             } as any)}
           />
         ) : (

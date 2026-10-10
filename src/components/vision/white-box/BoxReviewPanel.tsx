@@ -10,21 +10,21 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
   const label = props.actionButtonLabel ?? "Save Pattern";
 
   return (
-    <aside className="flex h-full flex-col overflow-hidden border-l border-ca-border bg-ca-panel text-ca-ink">
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-ca-border px-3">
-        <span className="font-semibold uppercase tracking-wide text-xs">Pattern Configuration</span>
-        <span className="font-mono text-[11px] text-ca-ink-muted">T116</span>
+    <aside className="flex h-full flex-col overflow-hidden bg-[#11161b] text-ca-ink">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#2a3138] bg-[#151c23] px-3">
+        <span className="text-xs font-semibold uppercase tracking-[0.14em]">Pattern Configuration</span>
+        <span className="rounded border border-[#303943] bg-[#0c1116] px-2 py-0.5 font-mono text-[10px] text-ca-ink-muted">T116</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 space-y-3 overflow-y-auto p-3">
         <GreyscaleSliderCard
           greyscaleLevel={props.greyscaleLevel}
           onGreyscaleChange={props.onGreyscaleChange}
         />
 
-        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
-          <div className="flex items-center justify-between border-b border-ca-border pb-1.5">
-            <span className="font-semibold uppercase text-xs">Regions</span>
+        <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#303943] pb-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em]">Regions</span>
             <span className="font-mono text-[10px] text-ca-ink-muted">
               Search / Pattern / Mask
             </span>
@@ -83,7 +83,7 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
           <button
             type="button"
             onClick={props.onAddMaskRegion}
-            className="flex w-full items-center justify-center gap-1.5 rounded border border-emerald-500/50 bg-emerald-950/30 px-2 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-900/40"
+            className="flex w-full items-center justify-center gap-1.5 rounded border border-emerald-500/50 bg-emerald-950/30 px-2 py-2 text-[11px] font-semibold text-emerald-200 transition hover:bg-emerald-900/40"
           >
             <Plus className="h-3.5 w-3.5" />
             Add Mask Region
@@ -127,9 +127,9 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
           onMarginChange={props.onMarginChange}
         />
 
-        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
-          <div className="flex items-center justify-between border-b border-ca-border pb-1.5">
-            <span className="font-semibold uppercase text-xs">
+        <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#303943] pb-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.12em]">
               Boxes ({props.detectedBoxes.length})
             </span>
             {hasBoxes && (
@@ -169,12 +169,12 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
         )}
       </div>
 
-      <div className="border-t border-[#333] bg-[#1e1e1e] p-3 flex gap-2">
+      <div className="flex gap-2 border-t border-[#2a3138] bg-[#151c23] p-3">
         <button
           type="button"
           onClick={props.onApplyPattern}
           disabled={props.formulatedPattern === null || props.isSaving}
-          className="flex-1 items-center justify-center gap-2 rounded bg-[#00ff9d] text-black py-2 font-bold text-xs shadow transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex-1 items-center justify-center gap-2 rounded bg-[#00ff9d] py-2 font-bold text-xs text-black shadow transition hover:brightness-110 disabled:opacity-50"
         >
           <span>{props.isSaving ? "SAVING..." : "OK"}</span>
         </button>
@@ -182,7 +182,7 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
           <button
             type="button"
             onClick={props.onCancel}
-            className="flex-1 items-center justify-center gap-2 rounded bg-transparent border border-[#555] py-2 font-bold text-xs text-white hover:bg-[#333]"
+            className="flex-1 items-center justify-center gap-2 rounded border border-[#3c4650] bg-[#20262d] py-2 font-bold text-xs text-white transition hover:border-ca-select hover:bg-[#2a3138]"
           >
             CANCEL
           </button>

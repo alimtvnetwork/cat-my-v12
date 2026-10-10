@@ -106,7 +106,24 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => void model.loadFile(e.target.files?.[0])}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+
+                  if (!file) return;
+
+                  if (props.onImageRegistered) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+
+                      if (dataUrl) props.onImageRegistered?.(dataUrl);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+
+                  void model.loadFile(file);
+                  e.target.value = "";
+                }}
                 className="sr-only"
               />
             </label>

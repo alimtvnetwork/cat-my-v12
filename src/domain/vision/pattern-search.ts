@@ -41,6 +41,7 @@ export interface PatternSearchSettings {
     detectionColor: DetectionColorType;
   };
   view: { source: ImageSourceType; rendering: RenderModeType; zoom: number };
+  imageRef?: string;
 }
 
 export const createDefaultPatternSearchSettings = (id: string): PatternSearchSettings => ({

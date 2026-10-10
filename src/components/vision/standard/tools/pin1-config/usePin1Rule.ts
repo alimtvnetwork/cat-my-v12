@@ -268,7 +268,18 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
         setSource(stdSource);
 
-        const activeSearchRegion = searchRegion ?? null;
+        const fullRegion: SearchRegion = {
+          x: 0,
+          y: 0,
+          width: stdSource.width,
+          height: stdSource.height,
+        };
+        const activeSearchRegion = searchRegion ?? fullRegion;
+
+        if (!searchRegion) {
+          setSearchRegion(fullRegion);
+        }
+
         await executeDetection(stdSource, activeSearchRegion);
 
         setMessage("Loaded workpiece image. Ready for Pin 1 verification.");
@@ -419,7 +430,19 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       const stdSource = await readImageFile(file, 960, 540);
       setSource(stdSource);
 
-      await executeDetection(stdSource, searchRegion);
+      const fullRegion: SearchRegion = {
+        x: 0,
+        y: 0,
+        width: stdSource.width,
+        height: stdSource.height,
+      };
+      const activeSearchRegion = searchRegion ?? fullRegion;
+
+      if (!searchRegion) {
+        setSearchRegion(fullRegion);
+      }
+
+      await executeDetection(stdSource, activeSearchRegion);
 
       setMessage(`Loaded "${file.name}". Analyzing workpiece for circular Pin 1 fiducial hole...`);
       toast.success(`Loaded "${file.name}"`);
@@ -431,7 +454,19 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const loadCapturedFrame = async (input: WhiteBoxMarkingInput) => {
     setSource(input);
 
-    await executeDetection(input, searchRegion);
+    const fullRegion: SearchRegion = {
+      x: 0,
+      y: 0,
+      width: input.width,
+      height: input.height,
+    };
+    const activeSearchRegion = searchRegion ?? fullRegion;
+
+    if (!searchRegion) {
+      setSearchRegion(fullRegion);
+    }
+
+    await executeDetection(input, activeSearchRegion);
 
     setIsCameraOpen(false);
     setMessage("Captured frame from camera. Analyzing workpiece for circular Pin 1 fiducial hole...");

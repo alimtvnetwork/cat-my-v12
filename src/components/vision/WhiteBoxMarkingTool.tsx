@@ -16,12 +16,12 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
       : model.searchRegion;
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white font-sans select-none">
-      <div className="flex h-full min-h-[720px] min-w-[1024px] flex-col">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#080b0f] text-white font-sans select-none">
+      <div className="flex h-full min-h-0 min-w-[1024px] flex-col">
         {/* Main Workspace (Left Canvas + Right Panel) */}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 gap-2 p-2 pb-0">
           {/* Left: Canvas */}
-          <div className="flex min-h-0 flex-1 flex-col relative border-r border-[#333]">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-[#2a3138] bg-[#0b0f14] shadow-sm">
             <PatternCanvas
               source={model.source}
               result={model.result}
@@ -41,7 +41,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
           </div>
           
           {/* Right: Settings Panel */}
-          <div className="w-[380px] shrink-0 bg-[#1e1e1e] flex flex-col">
+          <div className="flex w-[400px] shrink-0 flex-col overflow-hidden rounded border border-[#2a3138] bg-[#11161b] shadow-sm">
             <BoxReviewPanel
               greyscaleLevel={model.greyscaleLevel}
               marginPx={model.marginPx}
@@ -74,29 +74,45 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="h-12 bg-[#2d2d2d] flex items-center justify-between px-4 shrink-0 border-t border-[#444]">
+        <div className="m-2 flex h-12 shrink-0 items-center justify-between rounded border border-[#2a3138] bg-[#171b20] px-3 shadow-sm">
           <div className="flex items-center gap-4">
-            <label className="cursor-pointer px-4 py-1.5 bg-[#444] hover:bg-[#555] text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2">
+            <label className="flex cursor-pointer items-center gap-2 rounded border border-[#3c4650] bg-[#20262d] px-4 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:border-ca-select hover:bg-[#2a3138]">
               <Upload size={14} />
               Register Image
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => model.loadFile(e.target.files?.[0])}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+
+                  if (!file) return;
+
+                  if (props.onImageRegistered) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+
+                      if (dataUrl) props.onImageRegistered?.(dataUrl);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+
+                  void model.loadFile(file);
+                  e.target.value = "";
+                }}
                 className="sr-only"
               />
             </label>
             <button
               type="button"
               onClick={() => setIsCameraOpen(true)}
-              className="px-4 py-1.5 bg-[#444] hover:bg-[#555] text-white text-xs font-bold uppercase rounded transition-colors flex items-center gap-2"
+              className="flex items-center gap-2 rounded border border-[#3c4650] bg-[#20262d] px-4 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:border-cyan-400 hover:bg-cyan-950/20"
             >
               <Camera size={14} />
               Live Camera
             </button>
             <button
               type="button"
-              className="px-4 py-1.5 bg-[#00ff9d] text-black text-xs font-bold uppercase rounded transition-colors flex items-center gap-2 disabled:opacity-50"
               onClick={() => {
                 if (model.source) {
                   const targetRegion = model.searchRegion ?? {
@@ -109,6 +125,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
                 }
               }}
               disabled={model.source === null || model.isProcessing}
+              className="flex items-center gap-2 rounded bg-[#00ff9d] px-4 py-1.5 text-xs font-bold uppercase text-black shadow-sm transition hover:brightness-110 disabled:opacity-50"
             >
               <RefreshCw size={14} className={model.isProcessing ? "animate-spin" : ""} />
               {model.isProcessing ? "Processing" : "Run"}
