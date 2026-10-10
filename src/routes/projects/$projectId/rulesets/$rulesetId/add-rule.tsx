@@ -1,9 +1,8 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import {
   Activity,
   Bug,
-  Camera,
   CircleDot,
   Crosshair,
   Grid2X2,
@@ -12,9 +11,10 @@ import {
   Ruler,
   ScanSearch,
   Settings,
+  Search,
   Type,
-  Upload,
   ChevronRight,
+  CopyPlus,
   type LucideIcon,
 } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
@@ -55,12 +55,36 @@ function getToolIcon(tool: VisionToolDefinition): LucideIcon {
   return ScanSearch;
 }
 
+function getRuleToolIcon(rule: EditorRule): LucideIcon {
+  const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
+  const normalized = `${toolCode} ${rule.name}`.toLowerCase();
+
+  if (normalized.includes("pin 1") || normalized.includes("pin1")) return CircleDot;
+  if (normalized.includes("pattern") || toolCode === "T102") return ScanSearch;
+  if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
+  if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
+  if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
+  if (normalized.includes("void") || normalized.includes("circle") || toolCode === "T111") return Crosshair;
+  if (normalized.includes("caliper") || normalized.includes("gauge") || toolCode === "T110") return Ruler;
+  if (normalized.includes("qr") || normalized.includes("datamatrix") || toolCode === "T103") return QrCode;
+  if (normalized.includes("ocr") || normalized.includes("marking") || toolCode === "T106") return Type;
+  if (normalized.includes("coating") || normalized.includes("color") || toolCode === "T112") return PaintBucket;
+
+  return ScanSearch;
+}
+
+function cleanRuleBaseName(name: string): string {
+  return name.replace(/^Rule\s+\d+\s*:\s*/i, "").trim() || "Existing Rule";
+}
+
 function AddRuleWizard() {
   const { projectId, rulesetId } = Route.useParams();
   const navigate = useNavigate();
 
   const project = useProjectStore((s) => selectProject(s, projectId));
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
+  const allProjects = useProjectStore((s) => s.projects);
+  const allRulesets = useProjectStore((s) => s.rulesets);
   const resolvedRulesetId = useMemo(
     () => resolveIdParam(IntAliasNamespaceType.Ruleset, rulesetId) || rulesetId,
     [rulesetId],
@@ -76,41 +100,14 @@ function AddRuleWizard() {
     [rulesets, rulesetId, resolvedRulesetId],
   );
   
-  // State for wizard
-  const [step, setStep] = useState<"catalog" | "source">("catalog");
-  
   // Catalog State
   const [selectedCategory, setSelectedCategory] = useState<InspectionCategoryType | "All">("All");
   const [selectedTool, setSelectedTool] = useState<VisionToolDefinition | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [existingRuleSearch, setExistingRuleSearch] = useState("");
 
   if (!project || !ruleset) {
     return <div className="p-8 text-ca-ink">Project or ruleset not found.</div>;
   }
-
-  const handleImageChoice = (choice: "current" | "upload") => {
-    if (choice === "current") {
-      void commitRule(undefined);
-    } else {
-      fileInputRef.current?.click();
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      if (dataUrl) {
-        void commitRule(dataUrl);
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
 
   const filteredTools = useMemo(() => {
     return selectedCategory === "All"
@@ -118,7 +115,51 @@ function AddRuleWizard() {
       : getVisionToolsByCategory(selectedCategory);
   }, [selectedCategory]);
 
-  const commitRule = async (overrideImageRef?: string) => {
+  const existingRuleOptions = useMemo(() => {
+    return Object.values(allRulesets)
+      .flatMap((sourceRuleset) => {
+        const sourceProject = allProjects[sourceRuleset.projectId];
+
+        return (sourceRuleset.rules ?? []).map((rule) => ({
+          rule,
+          sourceProjectName: sourceProject?.name ?? "Unknown project",
+          sourceRulesetName: sourceRuleset.name,
+          sourceRulesetId: sourceRuleset.id,
+        }));
+      })
+      .sort((a, b) => {
+        const byProject = a.sourceProjectName.localeCompare(b.sourceProjectName);
+        if (byProject !== 0) return byProject;
+        const byRuleset = a.sourceRulesetName.localeCompare(b.sourceRulesetName);
+        if (byRuleset !== 0) return byRuleset;
+
+        return a.rule.name.localeCompare(b.rule.name);
+      });
+  }, [allProjects, allRulesets]);
+
+  const filteredExistingRuleOptions = useMemo(() => {
+    const term = existingRuleSearch.trim().toLowerCase();
+
+    if (!term) return existingRuleOptions;
+
+    return existingRuleOptions.filter((item) => {
+      const toolCode =
+        typeof item.rule.params?.toolCode === "string" ? item.rule.params.toolCode : item.rule.kind;
+      const haystack = [
+        item.rule.name,
+        item.sourceProjectName,
+        item.sourceRulesetName,
+        toolCode,
+        item.rule.categoryName ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
+  }, [existingRuleOptions, existingRuleSearch]);
+
+  const commitRule = async () => {
     if (!selectedTool) return;
     
     const ruleCount = ruleset.rules.length;
@@ -173,13 +214,37 @@ function AddRuleWizard() {
     };
 
     useProjectStore.getState().updateRulesetRules(ruleset.id, [...ruleset.rules, newRule]);
-    if (overrideImageRef) {
-      useProjectStore.getState().updateRulesetImageRef(ruleset.id, overrideImageRef);
-    }
 
     await navigate({
       to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
       params: { projectId, rulesetId: ruleset.id, ruleId: newRule.id },
+    });
+  };
+
+  const commitExistingRule = async (sourceRule: EditorRule) => {
+    if (!ruleset) return;
+
+    const ruleCount = ruleset.rules.length;
+    const newRuleId = generateRuleId();
+    const clonedRule: EditorRule = {
+      ...sourceRule,
+      id: newRuleId,
+      name: `Rule ${ruleCount + 1}: ${cleanRuleBaseName(sourceRule.name)}`,
+      isHidden: false,
+      isLocked: false,
+      params: {
+        ...(sourceRule.params ?? {}),
+        copiedFromRuleId: sourceRule.id,
+      },
+      cameraSettings: sourceRule.cameraSettings ? { ...sourceRule.cameraSettings } : undefined,
+      lightSettings: sourceRule.lightSettings ? { ...sourceRule.lightSettings } : undefined,
+    };
+
+    useProjectStore.getState().updateRulesetRules(ruleset.id, [...ruleset.rules, clonedRule]);
+
+    await navigate({
+      to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
+      params: { projectId, rulesetId: ruleset.id, ruleId: clonedRule.id },
     });
   };
 
@@ -200,66 +265,6 @@ function AddRuleWizard() {
 
       {/* Main Wizard Area */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        
-        {step === "source" && selectedTool && (
-          <div className="flex flex-1 flex-col items-center justify-center p-8">
-            <div className="mb-8 text-center">
-              <span className="mb-3 inline-flex rounded border border-[#2d333b] bg-[#111318] px-2 py-1 text-[10px] font-mono font-bold text-ca-ink-muted">
-                {selectedTool.code}
-              </span>
-              <h2 className="mb-2 text-xl font-bold uppercase tracking-wide text-ca-ink">Choose Image Source</h2>
-              <p className="text-sm text-ca-ink-muted">
-                Select the setup image for {selectedTool.name.replace(/ \(.*\)/, "")}.
-              </p>
-            </div>
-            
-            <div className="flex w-full max-w-2xl gap-6">
-              {/* Current Camera Image */}
-              <button 
-                onClick={() => handleImageChoice("current")}
-                className="group flex flex-1 flex-col items-center justify-center gap-4 rounded border border-[#22252a] bg-[#111318] p-8 text-center transition-colors hover:border-ca-primary hover:bg-[#1a1c23]"
-              >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ca-primary/10 text-ca-primary transition-transform group-hover:scale-110">
-                  <Camera size={32} />
-                </div>
-                <div>
-                  <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-ca-ink">Current camera image</h3>
-                  <p className="text-xs text-ca-ink-muted">Use the current project camera/reference frame</p>
-                </div>
-              </button>
-              
-              {/* Upload Image */}
-              <button 
-                onClick={() => handleImageChoice("upload")}
-                className="group flex flex-1 flex-col items-center justify-center gap-4 rounded border border-[#22252a] bg-[#111318] p-8 text-center transition-colors hover:border-ca-primary hover:bg-[#1a1c23]"
-              >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ca-primary/10 text-ca-primary transition-transform group-hover:scale-110">
-                  <Upload size={32} />
-                </div>
-                <div>
-                  <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-ca-ink">Upload image</h3>
-                  <p className="text-xs text-ca-ink-muted">Register an image file for rule setup</p>
-                </div>
-              </button>
-            </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              style={{ display: "none" }} 
-              accept="image/*" 
-              onChange={handleFileUpload} 
-            />
-            <button
-              type="button"
-              onClick={() => setStep("catalog")}
-              className="mt-8 text-xs font-semibold uppercase tracking-wider text-ca-ink-muted hover:text-ca-ink"
-            >
-              Back to tool catalog
-            </button>
-          </div>
-        )}
-
-        {step === "catalog" && (
           <div className="flex flex-1 flex-col h-full bg-[#0b0c10]">
             <div className="flex items-center gap-3 border-b border-[#22252a] bg-[#111318] p-4">
               <button 
@@ -270,7 +275,7 @@ function AddRuleWizard() {
               </button>
               <div className="ml-auto flex items-center gap-3">
                 <span className="text-[10px] font-bold uppercase text-ca-ink-muted">
-                  Select tool, then choose current image or upload
+                  Select a tool or existing rule to configure
                 </span>
               </div>
             </div>
@@ -299,9 +304,9 @@ function AddRuleWizard() {
               </div>
 
               {/* Tools Grid */}
-              <div className="flex-1 overflow-y-auto p-6 bg-[#0b0c10]">
-                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-ca-ink-muted">Preferred Tools</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="flex-1 overflow-y-auto bg-[#0b0c10] p-5">
+                <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-ca-ink-muted">Available Tools</h3>
+                <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
                   {filteredTools.map((tool) => {
                     const ToolIcon = getToolIcon(tool);
 
@@ -335,6 +340,77 @@ function AddRuleWizard() {
                 </div>
               </div>
 
+              {/* Existing Rules */}
+              <section className="flex min-h-0 w-96 shrink-0 flex-col border-l border-[#22252a] bg-[#0f1217]">
+                <div className="border-b border-[#22252a] p-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-ca-ink">Existing Rules</h3>
+                  <p className="mt-1 text-[10px] text-ca-ink-muted">
+                    Copy a tuned rule into this ruleset.
+                  </p>
+                  <div className="relative mt-3">
+                    <Search size={13} className="absolute left-2.5 top-2 text-ca-ink-muted" />
+                    <input
+                      type="search"
+                      value={existingRuleSearch}
+                      onChange={(event) => setExistingRuleSearch(event.target.value)}
+                      placeholder="Search existing rules..."
+                      className="w-full rounded border border-[#2d333b] bg-[#0b0c10] py-1.5 pl-7 pr-2 text-xs text-ca-ink outline-none placeholder:text-ca-ink-muted/60 focus:border-ca-primary"
+                    />
+                  </div>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                  {filteredExistingRuleOptions.length === 0 ? (
+                    <div className="rounded border border-dashed border-[#2d333b] p-4 text-center text-xs text-ca-ink-muted">
+                      {existingRuleOptions.length === 0
+                        ? "No existing rules saved yet."
+                        : "No rules match this search."}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredExistingRuleOptions.map((item) => {
+                        const RuleIcon = getRuleToolIcon(item.rule);
+                        const toolCode =
+                          typeof item.rule.params?.toolCode === "string"
+                            ? item.rule.params.toolCode
+                            : item.rule.kind;
+                        const isSameRuleset = item.sourceRulesetId === ruleset.id;
+
+                        return (
+                          <button
+                            key={`${item.sourceRulesetId}:${item.rule.id}`}
+                            type="button"
+                            onClick={() => void commitExistingRule(item.rule)}
+                            className="group flex w-full items-start gap-3 rounded border border-[#22252a] bg-[#111318] p-3 text-left transition-colors hover:border-ca-primary hover:bg-[#1a1c23]"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#2d333b] bg-[#0b0c10] text-ca-primary">
+                              <RuleIcon size={16} aria-hidden />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-bold text-ca-ink">
+                                {item.rule.name}
+                              </span>
+                              <span className="mt-1 block truncate text-[10px] text-ca-ink-muted">
+                                {item.sourceProjectName} / {item.sourceRulesetName}
+                                {isSameRuleset ? " / current" : ""}
+                              </span>
+                            </span>
+                            <span className="flex shrink-0 flex-col items-end gap-1">
+                              <span className="rounded bg-[#22252a] px-1.5 py-0.5 text-[9px] font-mono font-bold text-ca-ink-muted">
+                                {toolCode}
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-ca-ink-muted group-hover:text-ca-primary">
+                                <CopyPlus size={12} />
+                                Add
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+
               {/* Right panel: Tool Details */}
               <div className="w-80 border-l border-[#22252a] bg-[#111318] flex flex-col">
                 {selectedTool ? (
@@ -354,7 +430,7 @@ function AddRuleWizard() {
                     </div>
                     <div className="p-4 border-t border-[#22252a] bg-[#0b0c10]">
                       <button
-                        onClick={() => setStep("source")}
+                        onClick={() => void commitRule()}
                         className="flex w-full items-center justify-center gap-2 rounded bg-ca-primary py-3 text-xs font-bold uppercase tracking-wider text-[#000] hover:brightness-110 transition-colors"
                       >
                         <Settings size={16} className="fill-current" />
@@ -372,7 +448,6 @@ function AddRuleWizard() {
               </div>
             </div>
           </div>
-        )}
       </div>
     </div>
   );

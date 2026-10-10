@@ -48,6 +48,7 @@ export interface WhiteBoxToolProps {
   onCancel?: () => void;
   actionButtonLabel?: string;
   imageRef?: string;
+  onImageRegistered?: (imageRef: string) => void;
 }
 
 export interface BackendResult {

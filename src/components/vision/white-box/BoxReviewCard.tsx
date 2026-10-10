@@ -20,10 +20,10 @@ export function BoxReviewCard({
 
   return (
     <div
-      className={`flex items-center justify-between gap-2.5 rounded border p-2 text-xs transition-colors ${
+      className={`flex items-center justify-between gap-2.5 rounded border p-2 text-xs shadow-sm transition-colors ${
         isExcluded
           ? "border-ca-border/40 bg-ca-panel/40 opacity-70"
-          : "border-ca-border bg-ca-panel hover:border-ca-select/60"
+          : "border-[#303943] bg-[#12181f] hover:border-ca-select/60 hover:bg-[#151d25]"
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -32,8 +32,8 @@ export function BoxReviewCard({
           onClick={() => onToggle(box.number)}
           className={`font-mono text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm ${
             isExcluded
-              ? "bg-ca-bg text-ca-ink-muted border border-ca-border/50"
-              : "bg-ca-select/20 text-ca-select border border-ca-select/40"
+              ? "border border-ca-border/50 bg-ca-bg text-ca-ink-muted"
+              : "border border-ca-select/40 bg-ca-select/20 text-ca-select"
           }`}
           title={isExcluded ? "Click to include in pattern" : "Click to exclude"}
         >

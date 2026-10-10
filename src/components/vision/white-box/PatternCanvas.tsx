@@ -156,17 +156,30 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
   ]);
 
   return (
-    <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
-      <canvas
-        ref={canvasRef}
-        width={STANDARD_CANVAS_WIDTH}
-        height={STANDARD_CANVAS_HEIGHT}
-        onPointerDown={drag.handlePointerDown}
-        onPointerMove={drag.handlePointerMove}
-        onPointerUp={drag.handlePointerUp}
-        onPointerCancel={drag.handlePointerUp}
-        className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
-      />
+    <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#080b0f] select-none">
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-[#242c35] bg-[#111820] px-3">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-ca-select shadow-[0_0_10px_rgba(0,255,157,0.7)]" />
+          <span className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
+            Pattern Image
+          </span>
+        </div>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ca-ink-muted">
+          Drag ROI handles to tune
+        </span>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:32px_32px] p-6">
+        <canvas
+          ref={canvasRef}
+          width={STANDARD_CANVAS_WIDTH}
+          height={STANDARD_CANVAS_HEIGHT}
+          onPointerDown={drag.handlePointerDown}
+          onPointerMove={drag.handlePointerMove}
+          onPointerUp={drag.handlePointerUp}
+          onPointerCancel={drag.handlePointerUp}
+          className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-[#4b5563] bg-black object-contain shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
+        />
+      </div>
     </div>
   );
 }

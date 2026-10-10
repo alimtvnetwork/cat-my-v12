@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from "react";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { StandardPatternSearch } from "../StandardPatternSearch";
 import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
@@ -85,7 +85,7 @@ describe("StandardPatternSearch Component Verification (Plan 91 Steps 81-85)", (
 
     // Register Image
     fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.RegisterImage }));
-    expect(onRegisterImage).toHaveBeenCalledTimes(1);
+    expect(onRegisterImage).toHaveBeenCalledTimes(0);
 
     // Evaluate Rule
     fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.EvaluateRule }));
@@ -116,6 +116,35 @@ describe("StandardPatternSearch Component Verification (Plan 91 Steps 81-85)", (
     const refreshBtn = screen.getByTitle("Refresh");
     fireEvent.click(refreshBtn);
     expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an uploaded registered image immediately in the canvas", async () => {
+    const settings = createDefaultPatternSearchSettings("T106");
+    const onChange = vi.fn();
+    const onRegisterImage = vi.fn();
+
+    const { container } = render(
+      <StandardPatternSearch
+        settings={settings}
+        onChange={onChange}
+        onRegisterImage={onRegisterImage}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.RegisterImage }));
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["registered-image"], "registered.png", { type: "image/png" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+      expect(onRegisterImage).toHaveBeenCalledTimes(1);
+      expect((screen.getByAltText("Registered reference") as HTMLImageElement).src).toContain(
+        "data:image/png;base64",
+      );
+    });
   });
 
   it("tests Pattern Region tab Cancel and OK buttons and state toggle", () => {
@@ -236,9 +265,10 @@ describe("StandardPatternSearch Component Verification (Plan 91 Steps 81-85)", (
     fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.OriginPoint }));
     expect(onChange).toHaveBeenCalled();
 
-    // Click Register Image -> increments referenceImage index
+    // Click Register Image opens the file picker; state changes after a file is selected.
+    onChange.mockClear();
     fireEvent.click(screen.getByRole("button", { name: StandardActionLabel.RegisterImage }));
-    expect(onChange).toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
 
     // Click Refresh -> resets zoom to 100
     fireEvent.click(screen.getByTitle("Refresh"));

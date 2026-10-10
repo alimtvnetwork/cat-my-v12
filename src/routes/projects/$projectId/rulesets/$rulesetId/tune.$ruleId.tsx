@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useProjectStore, selectRulesetsForProject } from "@/lib/projects/store";
 import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
+import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
 import type { EditorRule } from "@/lib/editor/types";
 import { createDefaultPatternSearchSettings, type PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { WhiteBoxMarkingTool } from "@/components/vision/WhiteBoxMarkingTool";
@@ -65,6 +66,7 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
     activeBoxCount,
     totalBoxCount,
     referenceBoxes,
+    imageRef,
     ...(rule.params?.searchRegion ? { searchRegion: rule.params.searchRegion as any } : {}),
     ...(rule.params?.patternRegion ? { patternRegion: rule.params.patternRegion as any } : {}),
     ...(Array.isArray(rule.params?.maskRegions) ? { maskRegions: rule.params.maskRegions as any } : {}),
@@ -101,6 +103,22 @@ function TuneRulePage() {
   }, [rule, ruleset?.imageRef]);
   
   const [settings, setSettings] = useState<any>(initialSettings);
+  const activeRulesetId = ruleset?.id ?? "";
+
+  const handleImageRegistered = useCallback(
+    (imageRef: string) => {
+      if (!activeRulesetId) {
+        return;
+      }
+
+      useProjectStore.getState().updateRulesetImageRef(activeRulesetId, imageRef);
+      setSettings((prev: any) => ({
+        ...prev,
+        imageRef,
+      }));
+    },
+    [activeRulesetId],
+  );
 
   if (!ruleset || !rule || !settings) {
     return <div className="flex h-full w-full items-center justify-center bg-[#0b0c10] text-ca-ink">Rule not found.</div>;
@@ -124,7 +142,7 @@ function TuneRulePage() {
     normalizedName.includes("pin 1") ||
     normalizedName.includes("pin1");
 
-  const effectiveImageRef = ruleset.imageRef || "";
+  const effectiveImageRef = ruleset.imageRef || defaultWorkpieceFilledSample;
 
   const navigateBack = async () => {
     await navigate({
@@ -330,6 +348,7 @@ function TuneRulePage() {
           onApply={handleApplyPattern}
           onCancel={navigateBack}
           imageRef={effectiveImageRef}
+          onImageRegistered={handleImageRegistered}
         />
       ) : isPin1 ? (
         <Pin1MarkingTool
@@ -341,6 +360,7 @@ function TuneRulePage() {
             onOk: handleApplyPin1,
             onCancel: navigateBack,
             imageRef: effectiveImageRef,
+            onImageRegistered: handleImageRegistered,
           } as any)}
         />
       ) : (

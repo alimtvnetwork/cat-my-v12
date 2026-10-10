@@ -15,13 +15,13 @@ export function PatternGeometryCard({
   onMarginChange,
 }: PatternGeometryCardProps): React.JSX.Element {
   return (
-    <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2.5">
-      <div className="flex items-center justify-between border-b border-ca-border pb-1.5">
+    <div className="space-y-2.5 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
+      <div className="flex items-center justify-between border-b border-[#303943] pb-2">
         <div className="flex items-center gap-1.5 font-semibold uppercase tracking-wide text-xs text-ca-ink">
           <SlidersHorizontal className="h-3.5 w-3.5 text-ca-select" />
           <span>Tolerance Space (Jitter)</span>
         </div>
-        <span className="font-mono text-xs font-bold text-ca-select">±{marginPx} px</span>
+        <span className="rounded border border-ca-select/30 bg-ca-select/10 px-2 py-0.5 font-mono text-xs font-bold text-ca-select">±{marginPx} px</span>
       </div>
 
       <div className="space-y-1.5">
@@ -54,7 +54,7 @@ export function PatternGeometryCard({
       </div>
 
       {formulatedPattern ? (
-        <div className="mt-2 rounded border border-emerald-500/40 bg-emerald-500/10 p-2 text-xs">
+        <div className="mt-2 rounded border border-emerald-500/40 bg-emerald-500/10 p-2 text-xs shadow-inner">
           <div className="flex items-center justify-between text-emerald-400 font-semibold mb-1">
             <span className="flex items-center gap-1 text-[11px]">
               <CheckCircle2 className="h-3 w-3" />

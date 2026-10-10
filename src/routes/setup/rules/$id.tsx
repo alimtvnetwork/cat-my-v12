@@ -67,6 +67,7 @@ function buildSettingsFromRule(rule: Rule | undefined, fallbackId: string): Patt
     ...(constellation ? { constellation } : {}),
     ...(typeof condAny.tolerancePx === "number" ? { tolerancePx: condAny.tolerancePx } : {}),
     ...(typeof condAny.minMatchPercent === "number" ? { minMatchPercent: condAny.minMatchPercent } : {}),
+    ...(typeof condAny.imageRef === "string" ? { imageRef: condAny.imageRef } : {}),
     ...(condAny.pin1Config
       ? { pin1Config: condAny.pin1Config }
       : ruleAny?.params?.Pin1Config

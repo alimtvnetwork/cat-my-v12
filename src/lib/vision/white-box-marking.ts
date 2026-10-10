@@ -230,7 +230,18 @@ export async function readImageFile(
   targetWidth = STANDARD_CANVAS_WIDTH,
   targetHeight = STANDARD_CANVAS_HEIGHT,
 ): Promise<WhiteBoxMarkingInput> {
-  const bitmap = await createImageBitmap(file);
+  if (typeof createImageBitmap !== "function") {
+    return readImageFileViaDataUrl(file, targetWidth, targetHeight);
+  }
+
+  let bitmap: ImageBitmap;
+
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return readImageFileViaDataUrl(file, targetWidth, targetHeight);
+  }
+
   const width = targetWidth;
   const height = targetHeight;
   let canvas: HTMLCanvasElement | OffscreenCanvas;
@@ -256,6 +267,34 @@ export async function readImageFile(
   return { width, height, rgba: image.data };
 }
 
+function readImageFileViaDataUrl(
+  file: File,
+  targetWidth: number,
+  targetHeight: number,
+): Promise<WhiteBoxMarkingInput> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+
+      if (!dataUrl) {
+        reject(new Error("Image file did not produce a readable data URL"));
+
+        return;
+      }
+
+      readImageUrl(dataUrl, targetWidth, targetHeight).then(resolve, reject);
+    };
+
+    reader.onerror = () => {
+      reject(new Error(`Failed to read image file: ${file.name}`));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 export async function readImageUrl(
   url: string,
   targetWidth = 960,
@@ -269,7 +308,14 @@ export async function readImageUrl(
     }
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    const isForeignUrl =
+      (url.startsWith("http://") || url.startsWith("https://")) &&
+      typeof window !== "undefined" &&
+      url.startsWith(window.location.origin) === false;
+
+    if (isForeignUrl) {
+      img.crossOrigin = "anonymous";
+    }
 
     img.onload = () => {
       try {

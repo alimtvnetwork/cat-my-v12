@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   Navigate,
+  Outlet,
   createFileRoute,
   notFound,
   useNavigate,
@@ -56,6 +57,7 @@ import { persistRulesetDraft } from "@/lib/rules/draftPersistence";
 import { useDataSource } from "@/lib/data-source";
 import { useRulesetHydration } from "@/lib/rules/useRulesetHydration";
 import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
+import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
 
 const pid = (id: string): string => resolveIdParam(IntAliasNamespaceType.Project, id) || id;
 
@@ -103,11 +105,9 @@ function useProjectStoreHydrated(): boolean {
 }
 
 function RulesetEditor() {
-  // Legacy-URL redirect. The child `/rules/$ruleId` route never mounts
-  // because this parent doesn't render an <Outlet />, so we intercept
-  // the pathname here and hop to the integer-alias URL (or `/setup/roi`
-  // when the alias resolves). Split into two components so the redirect
-  // path never runs the editor's hooks (avoids hook-order violations).
+  // Legacy rule URLs are still intercepted here because `/rules/$ruleId`
+  // only redirects to the older setup flow. Actual setup children like
+  // `/add-rule` and `/tune/$ruleId` render through <Outlet /> below.
   const { projectId, rulesetId } = Route.useParams();
   const search = Route.useSearch() as { rule?: string };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -187,6 +187,10 @@ function RulesetEditor() {
 
   if (!isMatchingProject) {
     return <RulesetEditorNotFound />;
+  }
+
+  if (pathname.endsWith("/add-rule") || pathname.includes("/tune/")) {
+    return <Outlet />;
   }
 
   return (
@@ -718,7 +722,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
             className="inline-flex items-center gap-2 border border-[#444] bg-[#0b0c10] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ca-ink transition hover:border-ca-primary hover:text-ca-primary focus-visible:outline-none"
           >
             <Plus aria-hidden size={14} />
-            Add tool
+            Add rule
           </button>
           <button
             type="button"
@@ -763,7 +767,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           >
             <div className="flex h-full min-h-[320px] w-full flex-col overflow-hidden border border-[#333] bg-[#000] p-0">
               <VisualToolWorkpieceCanvas
-                imageRef={ruleset.imageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                imageRef={ruleset.imageRef || defaultWorkpieceFilledSample}
                 roi={activeRoi}
                 onChangeRoi={handleCanvasChangeRoi}
                 toolCode={typeof activeRule?.params?.toolCode === "string" ? activeRule.params.toolCode : undefined}

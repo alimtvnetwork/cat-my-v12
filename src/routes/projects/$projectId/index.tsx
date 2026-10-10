@@ -66,7 +66,7 @@ function ProjectOverview() {
   const activeRuleset = (activeRulesetId ? rulesets.find((r) => r.id === activeRulesetId) : null) ?? rulesets[0];
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden bg-[#0b0c10]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#0b0c10]">
       {activeRuleset ? (
         <WorkpieceAnalyzeWorkspace
           key={activeRuleset.id}

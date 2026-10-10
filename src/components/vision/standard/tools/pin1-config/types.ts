@@ -81,5 +81,6 @@ export interface Pin1MarkingToolProps {
   onApply?: (payload?: any) => void;
   onCancel?: () => void;
   imageRef?: string;
+  onImageRegistered?: (imageRef: string) => void;
 }
 
