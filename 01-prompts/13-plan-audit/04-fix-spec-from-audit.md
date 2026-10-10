@@ -134,7 +134,7 @@ To prevent cross-task pollution and ensure seamless agent communication, every t
 - [ ] Zero Skipped Findings: Every row in the audit Summary Table must have a corresponding code fix.
 - [ ] No Lingering Audit Files: `02-spec/25-app-spec-audit/` must be clean of the resolved audit file.
 - [ ] Strictly Unix LF (`\n`) line endings and UTF-8 encoding.
-- [ ] No absolute file paths or `file:///` URIs.
+- [ ] Strict Relative Git Paths: Only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well (TOTAL BAN on `file:///` URIs and absolute filesystem paths).
 - [ ] All 36 CI/CD gates green.
 
 ## MUST FOLLOW NON-NEGOTIABLE
