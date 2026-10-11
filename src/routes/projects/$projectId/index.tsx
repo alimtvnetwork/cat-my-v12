@@ -20,6 +20,8 @@ import {
   Archive,
 } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
+import { useUiMode, UiModeType } from "@/hooks/useUiMode";
+import { ProjectStructureSection } from "@/components/projects/tree/ProjectStructureSection";
 import { resolveAllCategories } from "@/lib/projects/category-resolver";
 import { RulesetPicker } from "@/components/projects/RulesetPicker";
 import { ProjectEditorSections } from "@/components/projects/ProjectEditorSections";
@@ -58,6 +60,8 @@ function ProjectOverview() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [runErr, setRunErr] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const { mode } = useUiMode();
+  const isStandardMode = mode === UiModeType.Standard;
 
   if (!project) {
     console.warn("[projects/$projectId/index] project not found", { projectId });
@@ -215,6 +219,10 @@ function ProjectOverview() {
             desc="Batch metrics across a dataset"
           />
         </section>
+
+        {isStandardMode ? (
+          <ProjectStructureSection projectId={projectId} projectName={project.name} />
+        ) : null}
 
         <section
           aria-label="Category rules"
