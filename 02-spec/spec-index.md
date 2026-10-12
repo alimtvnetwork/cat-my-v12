@@ -596,6 +596,22 @@
 |------|-------|---------|
 | `02-spec/24-app-ui-design-system/01-index.md` | App UI — Design System | 3.2.0 |
 
+## 🔬 Design System Reverse-Engineered (As-Built)
+
+| File | Title | Version |
+|------|-------|---------|
+| `02-spec/26-design-system-reverse-engineered/readme.md` | Design System Reverse-Engineered — Entry Point & Blind-AI Contract | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/01-color-system.md` | Color System (oklch tokens, accent mechanism, traps) | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/02-typography-spacing-radius-elevation.md` | Typography, Spacing, Radius, Elevation | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/03-components-and-interactive-states.md` | Components and Interactive States | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/04-gradient-effects.md` | Gradient Effects Inventory | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/05-animation-and-motion.md` | Animation and Motion (7 keyframes) | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/06-preview-mechanisms.md` | Preview Mechanisms (camera, simulation, trial-run, ROI) | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/07-layout-shells.md` | Layout Shells, Docking, Breadcrumb | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/08-design-intent-history.md` | Design Intent History (V1/V2/V3, Yeasin's pass) | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/09-injecting-into-any-system.md` | Injecting This Design System Into Any System | 1.0.0 |
+| `02-spec/26-design-system-reverse-engineered/97-blind-ai-verification-checklist.md` | Blind-AI Verification Checklist (41 boxes) | 1.0.0 |
+
 ---
 
 - **Generated:** 2026-04-16
