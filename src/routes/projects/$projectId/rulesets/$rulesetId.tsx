@@ -1266,7 +1266,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
                 type="button"
                 onClick={() => {
                   setSearchQuery("");
-                  setSelectedCategory("ALL");
                 }}
                 className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white hover:bg-white/[0.08]"
               >

@@ -29,6 +29,7 @@ import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { WindowMenu } from "@/components/app-shell/WindowMenu";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
   GUIDED_SIMULATION_STATE_EVENT,
@@ -92,6 +93,7 @@ export function StandardAppShell({
   actions,
   children,
 }: StandardAppShellProps): React.JSX.Element {
+  const density = useUiPrefsStore((s) => s.headerDensity);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
 
@@ -177,9 +179,16 @@ export function StandardAppShell({
       {/* Industrial Top HMI Header */}
       <header
         data-app-shell="true"
-        className="flex h-11 items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl"
+        data-density={density}
+        className={cn(
+          "flex items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl",
+          density === "compact" ? "h-[33px]" : "h-[41px]",
+        )}
       >
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+        <div
+          data-app-shell-row="top"
+          className="flex h-full items-center gap-2 sm:gap-2.5 min-w-0"
+        >
           {/* Dropdown Menu Trigger */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -290,7 +299,7 @@ export function StandardAppShell({
         </div>
 
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
+        <div className="flex h-full items-center gap-2 sm:gap-3 shrink-0 ml-2">
           <UiModeSwitch />
           <button
             type="button"

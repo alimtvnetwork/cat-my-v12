@@ -62,7 +62,7 @@ for (const route of VISUAL_ROUTES) {
       await installRuleMixedStatusFixtures(page);
     }
     await page.goto(`${BASE_URL}${route.path}`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 30_000,
     });
     if (route.waitForSelector) {

@@ -61,7 +61,7 @@ async function main(): Promise<void> {
         await page.goto(BASE_URL + "/", { waitUntil: "domcontentloaded", timeout: 30_000 });
         await installRuleMixedStatusFixtures(page);
       }
-      await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
       if (route.waitForSelector) {
         await page.waitForSelector(route.waitForSelector, { timeout: 10_000 });
       }
@@ -84,8 +84,8 @@ async function main(): Promise<void> {
   // Kept out of VISUAL_ROUTES because routes.spec.ts captures full-page
   // screenshots and this surface is asserted per-element instead.
   const RULE_EDITOR_TARGETS = [
-    { slug: "rule-editor-full", selector: ".editor-shell" },
-    { slug: "rule-editor-tools", selector: '[data-testid="editor-canvas-slot"]' },
+    { slug: "rule-editor-full", selector: '[data-testid="standard-rule-editor"]' },
+    { slug: "rule-editor-tools", selector: "main" },
   ] as const;
   for (const target of RULE_EDITOR_TARGETS) {
     const outPath = join(VISUAL_PATHS.baselineDir, `${target.slug}.png`);
@@ -101,11 +101,10 @@ async function main(): Promise<void> {
       await page.goto(BASE_URL + "/", { waitUntil: "domcontentloaded", timeout: 30_000 });
       await installRuleEditorFixtures(page);
       await page.goto(`${BASE_URL}/setup/rules/${FIXTURE_RULE_ID}`, {
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
         timeout: 30_000,
       });
-      await page.waitForSelector(".editor-shell", { timeout: 10_000 });
-      await page.waitForSelector('[data-testid="editor-canvas-slot"]', { timeout: 10_000 });
+      await page.waitForSelector('[data-testid="standard-rule-editor"]', { timeout: 10_000 });
       await settleForVisual(page);
       await page.locator(target.selector).first().screenshot({ path: outPath });
       console.log(`[visual:update] wrote ${outPath} (rule editor: ${target.slug})`);

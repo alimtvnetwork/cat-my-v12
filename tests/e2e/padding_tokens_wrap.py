@@ -282,7 +282,7 @@ async def run() -> None:
         browser = await getattr(playwright, ENGINE).launch(headless=True)
         context = await browser.new_context(viewport={"width": 390, "height": 900})
         page = await context.new_page()
-        await page.goto(BASE_URL, wait_until="networkidle")
+        await page.goto(BASE_URL, wait_until="domcontentloaded")
         # Wait for stylesheet + tokens to apply before we inject.
         await expect(page.get_by_role("heading", name="Pick a workflow")).to_be_visible()
         for label, w, h in VIEWPORTS:

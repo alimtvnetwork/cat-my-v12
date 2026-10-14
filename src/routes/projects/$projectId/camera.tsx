@@ -53,7 +53,10 @@ function ProjectCameraTab() {
   const missingBinding = Boolean(project.cameraSettingId && !bound);
 
   return (
-    <section className="flex-1 flex flex-col p-8 bg-[#06080d] text-ca-ink overflow-y-auto font-mono">
+    <section
+      data-project-id={project.id}
+      className="flex-1 flex flex-col p-8 bg-[#06080d] text-ca-ink overflow-y-auto font-mono"
+    >
       <div className="max-w-5xl">
         <div className="flex items-center justify-between mb-8 border-b border-white/[0.08] pb-5">
           <h2 className="flex items-center gap-3 text-2xl font-bold font-sans uppercase tracking-wider text-white">
@@ -129,7 +132,10 @@ function ProjectCameraTab() {
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/40 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
+          <div
+            data-testid={bound ? "project-camera-telemetry" : "project-camera-empty"}
+            className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/40 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl"
+          >
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/90 mb-5 flex items-center gap-2">
               <Cpu size={16} className="text-emerald-400" /> Sensor Optical Telemetry
             </h3>

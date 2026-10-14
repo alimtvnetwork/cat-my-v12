@@ -167,6 +167,7 @@ function fixtureRule() {
  * scoped correctly, and BEFORE navigating to the rule editor route.
  */
 export async function installRuleEditorFixtures(page: Page): Promise<void> {
+  await waitForRulesAutoseed(page);
   const payload = JSON.stringify([fixtureRule()]);
   await writeRulesPayload(page, payload);
 }
@@ -177,6 +178,7 @@ export async function installRuleEditorFixtures(page: Page): Promise<void> {
  * mixed-state list to render (disabled row + Status filter chip).
  */
 export async function installRuleMixedStatusFixtures(page: Page): Promise<void> {
+  await waitForRulesAutoseed(page);
   const enabled = fixtureRule();
   const disabled = {
     ...fixtureRule(),
@@ -220,4 +222,10 @@ async function writeRulesPayload(page: Page, payload: string): Promise<void> {
     },
     { storeName: "keyval", key: "ca:rules:v1", value: payload },
   );
+}
+
+async function waitForRulesAutoseed(page: Page): Promise<void> {
+  await page.waitForFunction(() => localStorage.getItem("ca:rules-autoseeded:v1") === "1", {
+    timeout: 10_000,
+  });
 }
