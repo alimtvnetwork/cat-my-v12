@@ -5,7 +5,19 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "worker", "BE", ".ci-release"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "worker",
+      "BE",
+      ".ci-release",
+      "new_layout.tsx",
+      "recovered.tsx",
+      "tmp_projects_index.tsx",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

@@ -62,8 +62,6 @@ function AiTestingPage() {
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
   const appendSummary = useAiTestingStore((s) => s.appendSummary);
 
-  if (!project) throw notFound();
-
   const [rulesetId, setRulesetId] = useState<string>(searchRulesetId ?? rulesets[0]?.id ?? "");
   const [dataset, setDataset] = useState<DatasetImage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +119,18 @@ function AiTestingPage() {
     }
     return lastSummary ?? history[history.length - 1] ?? null;
   }, [selectedSummaryId, timelineSummaries, lastSummary, history]);
+
+  if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return (
+      <div className="flex flex-1 items-center justify-center p-hmi-6 text-hmi-body text-ca-ink-muted">
+        Loading AI testing...
+      </div>
+    );
+  }
 
   async function addFiles(files: FileList | File[]) {
     setError(null);

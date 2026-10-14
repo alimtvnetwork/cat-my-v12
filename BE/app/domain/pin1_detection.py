@@ -354,12 +354,15 @@ def _registered_xy(opts: Pin1Options) -> tuple[int, int] | None:
 def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Result:
     registered = _registered_xy(opts)
 
-    if registered is None or opts.search_region is None or opts.package_region is None:
+    if registered is None:
+        primary = holes[0] if holes else None
+        has_primary = primary is not None
+
         return Pin1Result(
-            isPass=False,
-            status="Missing",
-            score=0,
-            activeHole=None,
+            isPass=has_primary,
+            status="Passed" if has_primary else "Missing",
+            score=primary.circularity if primary is not None else 0,
+            activeHole=primary,
             detectedHoles=holes,
             expectedX=0,
             expectedY=0,

@@ -120,12 +120,6 @@ function RulesetsList() {
     });
   }, [currentPathname, project, searchQuery, saveSnapshot]);
 
-  if (!project) {
-    console.warn("[projects/$projectId/rulesets] project not found", { projectId });
-
-    throw notFound();
-  }
-
   const totalRulesAcrossAllRulesets = useMemo(() => {
     return rulesets.reduce((sum, r) => sum + r.rules.length, 0);
   }, [rulesets]);
@@ -295,6 +289,16 @@ function RulesetsList() {
     },
     [createRuleset, navigate, projectId, updateRulesetCategory, updateRulesetRules],
   );
+
+  if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    console.warn("[projects/$projectId/rulesets] project not found", { projectId });
+
+    return <RulesetsNotFound />;
+  }
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[#05070c] p-4 font-sans text-ca-ink antialiased selection:bg-cyan-500/20 lg:p-6">

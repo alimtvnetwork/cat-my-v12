@@ -161,7 +161,7 @@ export function GlobalSitemapBar(): React.JSX.Element {
       searchParams,
       title: currentTitle,
     });
-  }, [pathname, searchText, currentTitle, saveSnapshot]);
+  }, [pathname, searchText, searchParams, currentTitle, saveSnapshot]);
 
   const previousSnapshot = useMemo(() => {
     if (!isSitemapHydrated) {
@@ -169,7 +169,7 @@ export function GlobalSitemapBar(): React.JSX.Element {
     }
 
     return getPreviousSnapshot(pathname);
-  }, [pathname, getPreviousSnapshot, historyTrail, isSitemapHydrated]);
+  }, [pathname, getPreviousSnapshot, isSitemapHydrated]);
 
   const hasPrevious = Boolean(previousSnapshot);
   const hasActiveProject = Boolean(project);
@@ -198,81 +198,131 @@ export function GlobalSitemapBar(): React.JSX.Element {
     });
   };
 
+  const isCollapsed = crumbs.length > 2;
+  const visibleCrumbs = isCollapsed ? crumbs.slice(-2) : crumbs;
+  const hiddenCrumbs = isCollapsed ? crumbs.slice(0, -2) : [];
+  const fullLabel = crumbs.map((c) => c.label).join(" / ");
+
   return (
     <nav
-      aria-label="Application Sitemap and State Cache"
+      aria-label="Breadcrumb"
       data-testid="global-sitemap-bar"
-      className="relative z-30 flex h-9 min-h-9 shrink-0 items-center justify-between border-b border-white/[0.08] bg-gradient-to-r from-[#0d1017] via-[#121620] to-[#0d1017] px-4 font-sans text-xs text-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_-1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl transition-all select-none"
+      className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2 select-none"
     >
-      {/* Tactile Breadcrumbs & Navigation Actions */}
-      <div className="flex w-full items-center justify-between gap-3 min-w-0">
-        {/* Left: Cached Return + Crumb sequence */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* Previous Cached State Return Button */}
-          {hasPrevious && previousSnapshot ? (
-            <button
-              type="button"
-              onClick={handleRestorePrevious}
-              title={`Restore previous view: ${previousSnapshot.title}`}
-              className="group mr-1 inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-orange-500/10 px-2 py-0.5 text-xs font-semibold text-amber-200 transition-all hover:border-amber-400 hover:from-amber-500/25 hover:to-orange-500/20 hover:text-white active:scale-95 shadow-sm"
-            >
-              <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5 text-amber-300" />
-              <span className="text-[10px] uppercase font-mono tracking-wider text-amber-300/90">Back:</span>
-              <span className="max-w-[120px] md:max-w-[160px] truncate text-[11px]">{previousSnapshot.title}</span>
-            </button>
-          ) : null}
+      <span className="sr-only">{fullLabel}</span>
 
-          {/* Breadcrumb Sequence */}
-          <div className="flex items-center gap-1 text-xs">
-            {crumbs.map((crumb, index) => {
-              const isLast = index === crumbs.length - 1;
+      {/* Previous Cached State Return Button */}
+      {hasPrevious && previousSnapshot ? (
+        <button
+          type="button"
+          onClick={handleRestorePrevious}
+          title={`Restore previous view: ${previousSnapshot.title}`}
+          className="group inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-orange-500/10 px-1.5 py-0.5 text-xs font-semibold text-amber-200 transition-all hover:border-amber-400 hover:from-amber-500/25 hover:to-orange-500/20 hover:text-white active:scale-95 shadow-sm cursor-pointer"
+        >
+          <ArrowLeft size={11} className="transition-transform group-hover:-translate-x-0.5 text-amber-300" />
+          <span className="hidden xl:inline text-[9px] uppercase font-mono tracking-wider text-amber-300/90">Back:</span>
+          <span className="max-w-[70px] sm:max-w-[100px] truncate text-[10px] text-amber-100">{previousSnapshot.title}</span>
+        </button>
+      ) : null}
 
-              return (
-                <React.Fragment key={crumb.to}>
-                  {index > 0 ? (
-                    <span className="shrink-0 text-white/30 text-[11px] font-mono" aria-hidden>
-                      /
-                    </span>
-                  ) : null}
-
-                  {isLast ? (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-cyan-400/40 bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-indigo-500/15 px-2.5 py-0.5 text-xs font-bold text-white shadow-[0_0_12px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                      <span className="truncate max-w-[200px] md:max-w-[300px]">{crumb.label}</span>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleNavigateToCrumb(crumb.to)}
-                      className="group inline-flex shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2 py-0.5 text-xs font-medium text-slate-300 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white"
-                    >
-                      {index === 0 ? <Home size={12} className="shrink-0 text-cyan-400/70 group-hover:text-cyan-300" /> : null}
-                      <span className="truncate max-w-[140px] md:max-w-[200px]">{crumb.label}</span>
-                    </button>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right: Sitemap Directory Drawer Trigger */}
-        <div className="flex shrink-0 items-center gap-2 pl-2">
-          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/50 hover:bg-white/[0.08] hover:text-white active:scale-95 shadow-sm"
+      {/* Strict Space Breadcrumb Sequence */}
+      <div className="flex min-w-0 max-w-[160px] xs:max-w-[200px] sm:max-w-[240px] md:max-w-[280px] lg:max-w-[340px] items-center gap-1 text-xs">
+        {isCollapsed ? (
+          <>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  title="Expand intermediate path crumbs"
+                  className="inline-flex shrink-0 items-center justify-center rounded px-1 py-0.5 font-mono text-[11px] font-bold text-slate-400 hover:bg-white/10 hover:text-white transition cursor-pointer"
+                >
+                  …
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                sideOffset={6}
+                className="w-56 p-2 bg-[#0c1017] border border-white/10 rounded-xl shadow-xl z-50 text-xs font-sans text-white"
               >
-                <Compass size={13} className="text-cyan-400 transition-transform group-hover:rotate-45" />
-                <span className="tracking-wide">Sitemap Index</span>
-                {historyTrail.length > 0 ? (
-                  <span className="rounded-full bg-cyan-500/20 border border-cyan-400/30 px-1.5 py-0.2 font-mono text-[9px] text-cyan-300">
-                    {historyTrail.length}
-                  </span>
-                ) : null}
-              </button>
-            </PopoverTrigger>
+                <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 px-2 py-1">
+                  Path Hierarchy
+                </div>
+                <div className="flex flex-col gap-0.5 mt-1">
+                  {hiddenCrumbs.map((c) => (
+                    <button
+                      key={c.to}
+                      type="button"
+                      onClick={() => handleNavigateToCrumb(c.to)}
+                      className="flex items-center gap-2 px-2 py-1 text-xs text-slate-300 hover:text-white hover:bg-white/10 rounded-md text-left truncate cursor-pointer"
+                    >
+                      <ChevronRight size={11} className="text-cyan-400 shrink-0" />
+                      <span className="truncate">{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <span className="shrink-0 text-white/30 text-[11px] font-mono" aria-hidden>
+              /
+            </span>
+          </>
+        ) : null}
+
+        {visibleCrumbs.map((crumb, index) => {
+          const isLast = index === visibleCrumbs.length - 1;
+
+          return (
+            <React.Fragment key={crumb.to}>
+              {index > 0 ? (
+                <span className="shrink-0 text-white/30 text-[11px] font-mono" aria-hidden>
+                  /
+                </span>
+              ) : null}
+
+              {isLast ? (
+                <span
+                  title={crumb.label}
+                  className="inline-flex min-w-0 shrink items-center gap-1 rounded-md border border-cyan-400/40 bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-indigo-500/15 px-2 py-0.5 text-xs font-bold text-white shadow-[0_0_12px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+                  <span className="truncate max-w-[80px] sm:max-w-[120px]">{crumb.label}</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  title={crumb.label}
+                  onClick={() => handleNavigateToCrumb(crumb.to)}
+                  className="group inline-flex min-w-0 shrink items-center gap-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-medium text-slate-300 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white cursor-pointer"
+                >
+                  {!isCollapsed && index === 0 ? (
+                    <Home size={12} className="shrink-0 text-cyan-400/70 group-hover:text-cyan-300" />
+                  ) : null}
+                  <span className="truncate max-w-[70px] sm:max-w-[100px]">{crumb.label}</span>
+                </button>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Concise Sitemap Index Trigger */}
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            title="Sitemap Index & State Cache"
+            className="group inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-2 py-0.5 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/50 hover:bg-white/[0.08] hover:text-white active:scale-95 shadow-sm cursor-pointer"
+          >
+            <Compass size={13} className="text-cyan-400 transition-transform group-hover:rotate-45" />
+            <span className="hidden xl:inline tracking-wide text-[11px]">Sitemap</span>
+            {historyTrail.length > 0 ? (
+              <span className="rounded-full bg-cyan-500/20 border border-cyan-400/30 px-1.5 py-0.2 font-mono text-[9px] text-cyan-300">
+                {historyTrail.length}
+              </span>
+            ) : null}
+          </button>
+        </PopoverTrigger>
 
           <PopoverContent
             align="end"
@@ -530,8 +580,6 @@ export function GlobalSitemapBar(): React.JSX.Element {
             </div>
           </PopoverContent>
         </Popover>
-        </div>
-      </div>
     </nav>
   );
 }

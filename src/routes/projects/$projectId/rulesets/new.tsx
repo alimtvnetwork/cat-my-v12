@@ -18,7 +18,10 @@ function NewRuleset() {
   const project = useProjectStore((s) => selectProject(s, projectId));
   const createRuleset = useProjectStore((s) => s.createRuleset);
   const navigate = useNavigate();
-  const isGuidedSimulation = new URLSearchParams(window.location.search).get("guided") === "1";
+  const isGuidedSimulation =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("guided") === "1"
+      : false;
 
   const [name, setName] = useState(isGuidedSimulation ? "demoset" : "");
   const [category, setCategory] = useState(isGuidedSimulation ? "Inspection category" : "");
@@ -26,8 +29,13 @@ function NewRuleset() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     console.warn("[rulesets/new] project not found", { projectId });
-    throw notFound();
+
+    return <NewRulesetNotFound />;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

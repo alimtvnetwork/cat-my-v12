@@ -20,7 +20,6 @@ import {
 import {
   Activity,
   AlertTriangle,
-  ArrowRight,
   Bug,
   Camera,
   CheckCircle2,
@@ -921,47 +920,6 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
     });
   }, [rules, searchQuery]);
 
-  const addCatalogToolDirectly = useCallback(
-    (toolCode: string) => {
-      const toolDef =
-        VISION_TOOL_CATALOG.find((t) => t.code === toolCode) || VISION_TOOL_CATALOG[0];
-
-      const newRule: EditorRule = {
-        id: newRuleId(),
-        name: toolDef.name,
-        kind: toolDef.kind,
-        family: toolDef.family,
-        isHidden: false,
-        isLocked: false,
-        x: 100,
-        y: 100,
-        width: 180,
-        height: 180,
-        cameraSettings: {
-          exposureUs: Math.round(toolDef.defaultExposureMs * 1000),
-          gainDb: toolDef.defaultGainDb,
-          whiteBalanceKelvin: 5000,
-          gamma: 1.0,
-        },
-        lightSettings: {
-          channel: toolDef.defaultChannels[0] || 1,
-          intensity: toolDef.defaultLightPct,
-          strobeDurationUs: toolDef.defaultStrobeUs,
-          hasStrobe: true,
-        },
-        params: {
-          ...toolDef.defaultParamValues,
-          toolCode: toolDef.code,
-        },
-      };
-
-      commit([...rules, newRule], `add-${toolCode}`);
-      setSelectedIds([newRule.id]);
-      toast.success(`Enrolled ${toolDef.name} (${toolDef.code})`);
-    },
-    [rules, commit],
-  );
-
   const handleMoveUp = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     railHandlers.onReorder(id, "up");
@@ -1047,7 +1005,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
 
             <p className="mt-1 text-xs text-[#94a3b8]">
               {project.name} · {rules.length}{" "}
-              {rules.length === 1 ? "instrument" : "instruments"} enrolled · Optical inspection
+              {rules.length === 1 ? "rule" : "rules"} enrolled · Optical inspection
               pipeline active
             </p>
           </div>
@@ -1069,7 +1027,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
             </button>
 
 
-            {/* Add Tool Primary Button */}
+            {/* Add Rule Primary Button */}
             <button
               type="button"
               onClick={addRule}
@@ -1077,7 +1035,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
               className="inline-flex items-center gap-2 rounded-lg border border-[oklch(0.76_0.145_210/0.6)] bg-[oklch(0.76_0.145_210)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_16px_oklch(0.76_0.145_210/0.4)] transition-all hover:brightness-110 active:scale-95 focus-visible:outline-none"
             >
               <Plus size={15} strokeWidth={2.5} />
-              <span>Add Tool</span>
+              <span>Add Rule</span>
             </button>
           </div>
         </div>
@@ -1091,7 +1049,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </p>
         ) : null}
 
-        {/* Instrument Search Toolbar */}
+        {/* Rule Search Toolbar */}
         <div className="flex items-center rounded-xl border border-[#222938] bg-[#0d1119]/90 p-2 shadow-inner backdrop-blur-md">
           {/* Search Box */}
           <div className="relative w-full">
@@ -1103,7 +1061,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search enrolled tools by name or code (T101, Pin 1, Caliper)..."
+              placeholder="Search enrolled rules by name or code (T101, Pin 1, Caliper)..."
               className="w-full rounded-lg border border-[#222938] bg-[#141924] py-2 pl-9 pr-8 font-mono text-xs text-[#f8fafc] placeholder-[#64748b] transition focus:border-[oklch(0.76_0.145_210/0.6)] focus:bg-[#181f2c] focus:outline-none focus:ring-1 focus:ring-[oklch(0.76_0.145_210/0.4)]"
             />
             {searchQuery ? (
@@ -1126,7 +1084,7 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
                 Inspection Sequence Pipeline
               </h2>
               <p className="text-[11px] text-[#94a3b8]">
-                Instruments evaluate top-to-bottom. Calibrate parameters or reorder execution priority.
+                Rules evaluate top-to-bottom. Calibrate parameters or reorder execution priority.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1140,127 +1098,37 @@ function RulesetEditorBody({ project, ruleset, searchRule }: RulesetEditorBodyPr
           </div>
 
           {rules.length === 0 ? (
-            /* Cybernetic Blueprint Quick-Add Station */
-            <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+            /* Cybernetic Empty State */
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <div className="relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 shadow-[0_0_30px_rgba(6,182,212,0.25)]">
                 <ScanSearch size={32} />
               </div>
+
               <h3 className="text-base font-bold text-white">
-                No Vision Inspection Tools Enrolled
+                No Rules Added
               </h3>
-              <p className="mt-1 max-w-lg text-xs text-white/60">
-                Select an industrial starter instrument template below to initialize this ruleset,
-                or browse the complete vision catalog:
+
+              <p className="mt-1.5 max-w-md text-xs text-white/60">
+                No inspection rules have been enrolled in this ruleset yet. Add a rule to start configuring your optical inspection sequence.
               </p>
 
-              {/* 4 Quick Starter Template Cards */}
-              <div className="mt-6 grid max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2">
-                {/* T105 Pin 1 */}
-                <div className="flex flex-col justify-between rounded-xl border border-cyan-400/30 bg-cyan-500/5 p-4 text-left transition hover:border-cyan-400/60 hover:bg-cyan-500/10">
-                  <div>
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-cyan-300">
-                      <CircleDot size={15} />
-                      <span>T105 · Pin 1 Orientation Config</span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-white/60">
-                      Detects physical IC dimple or notch to lock orientation and establish carrier
-                      tape coordinate alignment.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addCatalogToolDirectly("T105")}
-                    className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-bold text-cyan-200 transition hover:bg-cyan-500/30 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    Quick Enroll T105
-                  </button>
-                </div>
-
-                {/* T102 Pattern Matching */}
-                <div className="flex flex-col justify-between rounded-xl border border-sky-400/30 bg-sky-500/5 p-4 text-left transition hover:border-sky-400/60 hover:bg-sky-500/10">
-                  <div>
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-sky-300">
-                      <ScanSearch size={15} />
-                      <span>T102 · Greyscale Pattern Match</span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-white/60">
-                      2-bit constellation pattern matching for carrier tape pockets, IC marking, and
-                      seated presence verification.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addCatalogToolDirectly("T102")}
-                    className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-sky-400/40 bg-sky-500/20 px-3 py-1.5 text-xs font-bold text-sky-200 transition hover:bg-sky-500/30 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    Quick Enroll T102
-                  </button>
-                </div>
-
-                {/* T110 Lead Pitch Caliper */}
-                <div className="flex flex-col justify-between rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-left transition hover:border-emerald-400/60 hover:bg-emerald-500/10">
-                  <div>
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-emerald-300">
-                      <Ruler size={15} />
-                      <span>T110 · Lead Pitch & Width Caliper</span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-white/60">
-                      Sub-pixel metrology caliper measuring IC pin pitch (e.g. 0.50mm), lead width,
-                      and co-planarity alignment.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addCatalogToolDirectly("T110")}
-                    className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-200 transition hover:bg-emerald-500/30 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    Quick Enroll T110
-                  </button>
-                </div>
-
-                {/* T103 DataMatrix */}
-                <div className="flex flex-col justify-between rounded-xl border border-purple-400/30 bg-purple-500/5 p-4 text-left transition hover:border-purple-400/60 hover:bg-purple-500/10">
-                  <div>
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-purple-300">
-                      <QrCode size={15} />
-                      <span>T103 · 2D DataMatrix & QR Reader</span>
-                    </div>
-                    <p className="mt-1.5 text-xs text-white/60">
-                      Decodes ECC200 DataMatrix laser-etched barcodes to verify silicon lot numbers
-                      and PCB package serials.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addCatalogToolDirectly("T103")}
-                    className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-purple-400/40 bg-purple-500/20 px-3 py-1.5 text-xs font-bold text-purple-200 transition hover:bg-purple-500/30 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    Quick Enroll T103
-                  </button>
-                </div>
-              </div>
-
-              {/* Full Catalog Button */}
               <button
                 type="button"
                 onClick={addRule}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-600 px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-cyan-500/20 transition-all hover:brightness-110 active:scale-95"
+                data-tour="ruleset-empty-add-rule-btn"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg border border-[oklch(0.76_0.145_210/0.6)] bg-[oklch(0.76_0.145_210)] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_20px_oklch(0.76_0.145_210/0.4)] transition-all hover:brightness-110 active:scale-95 focus-visible:outline-none"
               >
-                <span>Browse Complete Vision Catalog (12 Instruments)</span>
-                <ArrowRight size={14} />
+                <Plus size={16} strokeWidth={2.5} />
+                <span>Add Rule</span>
               </button>
             </div>
           ) : filteredRules.length === 0 ? (
             /* Empty Filter Results */
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <Search size={28} className="text-white/30" />
-              <h3 className="mt-3 text-sm font-bold text-white">No Matching Instruments</h3>
+              <h3 className="mt-3 text-sm font-bold text-white">No Matching Rules</h3>
               <p className="mt-1 text-xs text-white/50">
-                No enrolled tools match &ldquo;{searchQuery}&rdquo; in the selected category.
+                No enrolled rules match &ldquo;{searchQuery}&rdquo; in the selected category.
               </p>
               <button
                 type="button"

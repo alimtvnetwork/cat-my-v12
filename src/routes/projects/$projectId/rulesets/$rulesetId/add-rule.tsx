@@ -158,7 +158,7 @@ function AddRuleWizard() {
       pathname: currentPathname,
       search: window.location.search,
       searchParams: {},
-      title: ruleset?.name ? `Add Tool · ${ruleset.name}` : "Add Tool",
+      title: ruleset?.name ? `Add Rule · ${ruleset.name}` : "Add Rule",
       activeTab,
       selectedCategory,
       selectedId: selectedTool?.code,
@@ -359,8 +359,18 @@ function AddRuleWizard() {
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#0a0d14] text-[#f8fafc] font-sans antialiased">
       {/* 1. Industrial Top Navigation Header */}
-      <div role="toolbar" className="flex h-12 shrink-0 items-center justify-end border-b border-[#222938] bg-[#0c1017]/95 px-5 backdrop-blur-xl shadow-lg">
-        {/* View Mode Tabs: Tool Catalog vs Existing Rules */}
+      <div role="toolbar" className="flex h-12 shrink-0 items-center justify-between border-b border-[#222938] bg-[#0c1017]/95 px-5 backdrop-blur-xl shadow-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#f8fafc]">
+            Add Rule
+          </span>
+          <span className="text-xs text-[#64748b]">·</span>
+          <span className="text-xs font-mono text-[#94a3b8]">
+            {ruleset.name}
+          </span>
+        </div>
+
+        {/* View Mode Tabs: Rule Catalog vs Existing Rules */}
         <div className="flex items-center gap-1 rounded-lg border border-[#222938] bg-[#0c1017] p-1">
           <button
             type="button"
@@ -372,7 +382,7 @@ function AddRuleWizard() {
             }`}
           >
             <Cpu size={13} />
-            Tool Catalog
+            Rule Catalog
           </button>
           <button
             type="button"

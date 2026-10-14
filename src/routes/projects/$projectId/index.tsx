@@ -41,9 +41,13 @@ function ProjectOverview() {
   }, [rulesetSearchParam]);
 
   if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     console.warn("[projects/$projectId/index] project not found", { projectId });
 
-    throw notFound();
+    return <OverviewNotFound />;
   }
 
   const activeRuleset =

@@ -24,7 +24,7 @@ class SqliteResultsRepo:
         image_file_path: str | None = None,
         rule_count: int = 1,
         active_count: int = 1,
-        pass_count: int = 0,
+        pass_count: int = 1,
         fail_count: int = 0,
     ) -> int:
         """Create a RunSession record. Returns RunSessionId."""
@@ -45,7 +45,15 @@ class SqliteResultsRepo:
                     fail_count,
                 ),
             )
-            return cur.lastrowid
+
+            if cur.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to create run session: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "run_id": run_id},
+                )
+
+            return int(cur.lastrowid)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -73,13 +81,29 @@ class SqliteResultsRepo:
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (run_id, 1, cap_key, width, height, pixel_format, byte_size, sha256, now),
             )
-            capture_id = cur_cap.lastrowid
+
+            if cur_cap.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to create capture: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "run_id": run_id},
+                )
+
+            capture_id = int(cur_cap.lastrowid)
             cur_frame = self.conn.execute(
                 "INSERT INTO Frame (CaptureId, FrameIndex, FrameKey, Width, Height, PixelFormat, ByteSize, Sha256, DerivedAt) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (capture_id, frame_index, frame_key, width, height, pixel_format, byte_size, sha256, now),
             )
-            return cur_frame.lastrowid
+
+            if cur_frame.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to create frame: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "run_id": run_id},
+                )
+
+            return int(cur_frame.lastrowid)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -104,7 +128,15 @@ class SqliteResultsRepo:
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (run_id, frame_id, bundle_id, bundle_version, decision, score_percent, duration_ms),
             )
-            return cur.lastrowid
+
+            if cur.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to save result: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "run_id": run_id, "frame_id": frame_id},
+                )
+
+            return int(cur.lastrowid)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -196,7 +228,15 @@ class SqliteResultsRepo:
                     message,
                 ),
             )
-            return cur.lastrowid
+
+            if cur.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to save result detail: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "result_id": result_id},
+                )
+
+            return int(cur.lastrowid)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,
@@ -234,7 +274,15 @@ class SqliteResultsRepo:
                     metrics_json,
                 ),
             )
-            return cur.lastrowid
+
+            if cur.lastrowid is None:
+                raise AppError(
+                    ErrorCode.E_BE_INTERNAL,
+                    "Failed to save rule result: no row ID returned",
+                    {"provider": "SqliteResultsRepo", "run_session_id": run_session_id},
+                )
+
+            return int(cur.lastrowid)
         except Exception as e:
             raise AppError(
                 ErrorCode.E_BE_INTERNAL,

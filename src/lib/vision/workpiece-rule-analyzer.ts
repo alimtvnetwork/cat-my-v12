@@ -147,7 +147,7 @@ export function parseBoxesFromParams(
     let bh = b.height ?? b.h ?? 16;
 
     const boxNum = b.boxNumber ?? b.number ?? idx + 1;
-    let label = b.label ?? b.character ?? undefined;
+    const label = b.label ?? b.character ?? undefined;
 
     // Check if box already has absolute canvas coordinates (e.g. >= 10px)
     const hasAbsoluteCoords =
@@ -158,8 +158,8 @@ export function parseBoxesFromParams(
 
     let relX = typeof b.relX === "number" ? b.relX : undefined;
     let relY = typeof b.relY === "number" ? b.relY : undefined;
-    let relW = typeof b.relWidth === "number" ? b.relWidth : undefined;
-    let relH = typeof b.relHeight === "number" ? b.relHeight : undefined;
+    const relW = typeof b.relWidth === "number" ? b.relWidth : undefined;
+    const relH = typeof b.relHeight === "number" ? b.relHeight : undefined;
 
     if (hasAbsoluteCoords) {
       // Preserve exact absolute coordinates directly on the workpiece image
@@ -822,7 +822,7 @@ export function evaluatePatternRule(
     });
 
     let matchedCount = 0;
-    let boxResults: BoxMatchItem[] = ruleBoxes.map((b) => {
+    const boxResults: BoxMatchItem[] = ruleBoxes.map((b) => {
       const positionalBox = positionalMatch.boxResults.find((candidate) => candidate.boxNumber === b.number);
       const measuredX = positionalBox?.matchedX ?? b.x + positionalMatch.offsetX;
       const measuredY = positionalBox?.matchedY ?? b.y + positionalMatch.offsetY;

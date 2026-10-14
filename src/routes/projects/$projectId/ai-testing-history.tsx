@@ -28,12 +28,6 @@ function AiTestingHistoryPage() {
   const [rulesetFilter, setRulesetFilter] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  if (!project) {
-    console.warn("[ai-testing-history] project not found", { projectId });
-
-    throw notFound();
-  }
-
   const rulesetNameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const rs of rulesets) map.set(rs.id, rs.name);
@@ -77,6 +71,16 @@ function AiTestingHistoryPage() {
 
   const compareA = rows.find((r) => r.id === selectedIds[0]);
   const compareB = rows.find((r) => r.id === selectedIds[1]);
+
+  if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    console.warn("[ai-testing-history] project not found", { projectId });
+
+    return <AiTestingHistoryNotFound />;
+  }
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#06080d] text-slate-100 font-sans antialiased">

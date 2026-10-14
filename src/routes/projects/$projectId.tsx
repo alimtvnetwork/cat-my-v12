@@ -42,15 +42,18 @@ function ProjectLayout() {
   const project = useProjectStore((s) => selectProject(s, projectId));
   const { mode } = useUiMode();
 
+  if (typeof window === "undefined" && !project) {
+    return <ProjectLoading />;
+  }
+
   if (!isHydrated && !project) {
     return <ProjectLoading />;
   }
 
   if (!project) {
-    // Surface (not swallow) the miss; TanStack renders notFoundComponent.
     console.warn("[projects/$projectId] project not found in store", { projectId });
 
-    throw notFound();
+    return <ProjectNotFound />;
   }
 
   if (mode === UiModeType.Standard) {
@@ -124,9 +127,7 @@ function getProjectActive(pathname: string): string {
 }
 
 function useProjectStoreHydrated(): boolean {
-  const [isHydrated, setIsHydrated] = useState(
-    () => useProjectStore.persist?.hasHydrated?.() ?? true,
-  );
+  const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
     const persistApi = useProjectStore.persist;
 
