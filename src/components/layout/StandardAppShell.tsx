@@ -187,7 +187,7 @@ export function StandardAppShell({
       >
         <div
           data-app-shell-row="top"
-          className="flex h-full items-center gap-2 sm:gap-2.5 min-w-0"
+          className="flex h-full items-center gap-2 sm:gap-2.5 min-w-0 flex-nowrap overflow-hidden"
         >
           {/* Brand Wordmark */}
           <Link

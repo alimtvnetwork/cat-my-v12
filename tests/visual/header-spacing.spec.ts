@@ -20,6 +20,7 @@
  *   5. Density toggle actually shrinks the header.
  */
 import { test, expect, chromium, type Browser, type Page } from "@playwright/test";
+import { settleForVisual } from "./_settle";
 
 const BASE_URL = process.env.VISUAL_BASE_URL ?? "http://localhost:8080";
 const EXECUTABLE_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
@@ -100,6 +101,7 @@ async function seedDensityAndOpenSetup(
   }, density);
   await page.goto(`${BASE_URL}/setup`, { waitUntil: "domcontentloaded", timeout: 30_000 });
   await applyDensity(page, density);
+  await settleForVisual(page);
 }
 
 async function measureHeader(page: Page) {
