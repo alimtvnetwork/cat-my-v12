@@ -30,6 +30,7 @@ OUT = Path("tests/reports/topnav-underline-sync")
 OUT.mkdir(parents=True, exist_ok=True)
 
 BASE_URL = os.environ.get("TOPNAV_BASE_URL", "http://localhost:8080")
+TARGET_URL = BASE_URL if "?mode=modern" in BASE_URL else f"{BASE_URL.rstrip('/')}/?mode=modern"
 
 # path -> expected active group label. Mirrors GROUPS.activePaths in
 # src/components/nav/TopMenuBar.tsx.
@@ -40,6 +41,24 @@ EXPECTATIONS: list[tuple[str, str]] = [
     ("/settings", "Settings"),
     ("/trial-run", "Test"),
 ]
+
+
+async def ensure_modern_nav(page) -> None:
+    triggers = page.locator('[data-testid="topnav-trigger"]')
+
+    for _ in range(30):
+        if await triggers.count() > 0:
+            return
+
+        switch = page.locator('button[aria-label*="Toggle UI mode"]').first
+
+        if await switch.count() > 0:
+            label = (await switch.get_attribute("aria-label")) or ""
+
+            if "Current mode: Standard" in label:
+                await switch.click()
+
+        await page.wait_for_timeout(300)
 
 
 async def active_label(page) -> str:
@@ -86,10 +105,14 @@ async def main() -> int:
             viewport={"width": 1280, "height": 900},
             reduced_motion="reduce",
         )
+        await context.add_init_script(
+            "window.localStorage.setItem('ui-mode-storage', JSON.stringify({state: {mode: 'modern'}, version: 0}))"
+        )
         page = await context.new_page()
 
         # Start at home so the menubar is visible (lg: breakpoint).
         await page.goto(f"{BASE_URL}/", wait_until="networkidle")
+        await ensure_modern_nav(page)
         await assert_active_for(page, "/", "Home", "initial")
 
         # 1) Programmatic navigation via TanStack router. The router is

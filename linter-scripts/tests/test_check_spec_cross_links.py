@@ -113,6 +113,24 @@ class TestScanEndToEnd(unittest.TestCase):
             self.assertEqual(targets.get("nonexistent.md"), "missing-file")
             self.assertEqual(targets.get("target.md#nonexistent-section"), "missing-section")
 
+    def test_scan_identifies_case_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            target = tmp_path / "UPPERCASE.md"
+            target.write_text("# Uppercase\n", encoding="utf-8")
+
+            source = tmp_path / "source.md"
+            source.write_text("""# Source
+
+- Case mismatch: [Mismatch](uppercase.md)
+- Exact match: [Match](UPPERCASE.md)
+""", encoding="utf-8")
+
+            failures = checker.scan(tmp_path, tmp_path)
+            self.assertEqual(len(failures), 1)
+            self.assertEqual(failures[0]["target"], "uppercase.md")
+            self.assertEqual(failures[0]["kind"], "missing-file")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,19 +21,36 @@ function TrialRunResults() {
   const run = useTrialStore((s) => selectRunById(s, runId));
   const ruleset = useProjectStore((s) => (run ? selectRuleset(s, run.rulesetId) : undefined));
 
+  const okCount = useMemo(
+    () => (run ? run.results.filter((r) => r.verdict === "OK").length : 0),
+    [run],
+  );
+
   if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     console.warn("[trial-run/$runId] project not found", { projectId });
 
-    throw notFound();
+    return <TrialRunResultsNotFound />;
   }
 
   if (!run) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     console.warn("[trial-run/$runId] run not found", { runId });
 
-    throw notFound();
+    return <TrialRunResultsNotFound />;
   }
 
   if (!ruleset || (project && ruleset.projectId !== project.id)) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     console.warn("[trial-run/$runId] ruleset mismatch", {
       runId,
       projectId,
@@ -42,13 +59,8 @@ function TrialRunResults() {
       rulesetId: run.rulesetId,
     });
 
-    throw notFound();
+    return <TrialRunResultsNotFound />;
   }
-
-  const okCount = useMemo(
-    () => run.results.filter((r) => r.verdict === "OK").length,
-    [run.results],
-  );
   const ngCount = run.results.length - okCount;
   const threshold = run.threshold ?? 0.5;
   const StatusIcon = run.verdict === "OK" ? CheckCircle2 : XCircle;

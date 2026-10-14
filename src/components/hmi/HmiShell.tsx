@@ -10,7 +10,6 @@ import { useHotkeys } from "@/hooks/useHotkeys";
 import { emitCommand } from "@/lib/command-bus";
 import { usePaletteStore } from "@/lib/stores/palette-store";
 import { useShortcutsStore } from "@/lib/stores/shortcuts-store";
-import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 
 export interface HmiShellProps {
   program?: TitlebarProps["program"];
@@ -87,8 +86,7 @@ export function HmiShell({
           combo: bindings["open-recent"],
           handler: () => {
             emitCommand(CommandIdType.CmdOpenRecent);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            navigate({ to: "/projects" as any });
+            navigate({ to: "/projects" });
           },
         },
         {
@@ -132,7 +130,6 @@ export function HmiShell({
       className="flex flex-col h-full min-h-0 flex-1 bg-ca-bg text-ca-ink font-hmi antialiased"
     >
       <Titlebar program={program} right={right} showBreadcrumb={!hideNav} />
-      {!hideNav ? <GlobalSitemapBar /> : null}
       {hideHeader ? null : (
         <section
           role="region"

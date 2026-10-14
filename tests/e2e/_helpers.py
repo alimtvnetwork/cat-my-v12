@@ -66,7 +66,9 @@ def attach_console_and_seed_gate(page) -> Tuple[list[str], asyncio.Event]:
     def _on_console(m):
         text = f"{m.type}:{m.text}"
         console_msgs.append(text)
-        if AUTO_SEED_SUMMARY_PREFIX in m.text and "mode: auto" in m.text:
+        if AUTO_SEED_SUMMARY_PREFIX in m.text and (
+            "mode: auto" in m.text or '"mode":"auto"' in m.text or '"mode": "auto"' in m.text
+        ):
             auto_seed_done.set()
 
     page.on("console", _on_console)

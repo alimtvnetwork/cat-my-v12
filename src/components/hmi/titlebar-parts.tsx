@@ -16,7 +16,7 @@
 
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AppBreadcrumb, AppBreadcrumbPropsVariantType } from "@/components/app-shell/AppBreadcrumb";
+import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { HistoryNav } from "@/components/app-shell/HistoryNav";
 import { TopMenuBar } from "@/components/nav/TopMenuBar";
 import { HeaderDensityToggle } from "@/components/hmi/HeaderDensityToggle";
@@ -71,9 +71,9 @@ export function HeaderCrumbs({
   program,
 }: HeaderCrumbsProps): React.JSX.Element | null {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-4 justify-between px-2">
-      <div className="flex items-center gap-4">
-        {showBreadcrumb && <AppBreadcrumb variant={AppBreadcrumbPropsVariantType.Inline} />}
+    <div className="flex min-w-0 flex-1 items-center gap-3 justify-between px-2">
+      <div className="flex min-w-0 items-center gap-2">
+        {showBreadcrumb ? <GlobalSitemapBar /> : null}
         <CommandPaletteTrigger />
       </div>
       <ModernMainNav />

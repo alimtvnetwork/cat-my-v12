@@ -11,9 +11,36 @@ export function useRootBootOrchestrator() {
   useCliHotkeys();
 
   useEffect(() => {
-    // Ensure every time the UI opens, it opens in Standard mode.
-    useUiMode.getState().setMode(UiModeType.Standard);
-    useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+    let isModernMode = false;
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.get("mode") === "modern") {
+        isModernMode = true;
+      } else if (params.get("mode") !== "standard") {
+        const stored = window.localStorage.getItem("ui-mode-storage");
+
+        if (stored) {
+          const parsed = JSON.parse(stored);
+
+          if (parsed?.state?.mode === UiModeType.Modern) {
+            isModernMode = true;
+          }
+        }
+      }
+    } catch {
+      /* ignore storage/url parse errors */
+    }
+
+    if (isModernMode) {
+      useUiMode.getState().setMode(UiModeType.Modern);
+      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Modern);
+    } else {
+      useUiMode.getState().setMode(UiModeType.Standard);
+      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+    }
+
     void import("@/lib/data-source/url-bootstrap").then((m) => m.applyDataSourceFromUrl());
   }, []);
 

@@ -22,6 +22,14 @@ export const useUiMode = create<UiModeState>()(
       if (useUiPrefsStore.getState().uiFlavor !== flavor) {
         useUiPrefsStore.getState().setUiFlavor(flavor);
       }
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("ui-mode-storage", JSON.stringify({ state: { mode } }));
+        } catch {
+          /* ignore */
+        }
+      }
     },
     toggleMode: () => {
       const next = get().mode === UiModeType.Modern ? UiModeType.Standard : UiModeType.Modern;
@@ -30,6 +38,14 @@ export const useUiMode = create<UiModeState>()(
 
       if (useUiPrefsStore.getState().uiFlavor !== flavor) {
         useUiPrefsStore.getState().setUiFlavor(flavor);
+      }
+
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("ui-mode-storage", JSON.stringify({ state: { mode: next } }));
+        } catch {
+          /* ignore */
+        }
       }
     },
   }),

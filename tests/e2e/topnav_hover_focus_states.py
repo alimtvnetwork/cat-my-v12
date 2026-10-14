@@ -41,6 +41,7 @@ OUT = Path("tests/reports/topnav-states")
 OUT.mkdir(parents=True, exist_ok=True)
 
 BASE_URL = os.environ.get("TOPNAV_BASE_URL", "http://localhost:8080/")
+TARGET_URL = BASE_URL if "?mode=modern" in BASE_URL else f"{BASE_URL.rstrip('/')}/?mode=modern"
 
 # Only breakpoints where the desktop menubar is visible (lg = 1024+).
 DESKTOP_VIEWPORTS = {
@@ -57,18 +58,39 @@ GROUPS = ["home", "project", "setup", "settings"]
 SETTLE_MS = 250  # 150ms transition + 100ms slack
 
 
+async def ensure_modern_nav(page) -> None:
+    menubar = page.locator('nav[aria-label="Primary"] [role="menubar"]').first
+    mobile_trigger = page.locator('button[aria-label="Open menu"]').first
+
+    for _ in range(30):
+        if await menubar.is_visible() or await mobile_trigger.is_visible():
+            return
+
+        switch = page.locator('button[aria-label*="Toggle UI mode"]').first
+
+        if await switch.count() > 0:
+            label = (await switch.get_attribute("aria-label")) or ""
+
+            if "Current mode: Standard" in label:
+                await switch.click()
+
+        await page.wait_for_timeout(300)
+
+
 async def capture_desktop(page, vp_name: str, w: int, h: int) -> int:
     await page.set_viewport_size({"width": w, "height": h})
-    await page.goto(BASE_URL, wait_until="networkidle")
+    await page.goto(TARGET_URL, wait_until="domcontentloaded")
     await page.wait_for_timeout(400)
+    await ensure_modern_nav(page)
 
     # Ensure the menubar is mounted before we probe triggers.
     menubar = page.locator('nav[aria-label="Primary"] [role="menubar"]').first
-    await menubar.wait_for(state="visible", timeout=5000)
+    await menubar.wait_for(state="visible", timeout=15000)
 
     count = 0
     for group in GROUPS:
         trigger = page.locator(f'[data-group="{group}"]').first
+
         if await trigger.count() == 0:
             print(f"  skip {vp_name}/{group}: trigger not present")
             continue
@@ -81,6 +103,7 @@ async def capture_desktop(page, vp_name: str, w: int, h: int) -> int:
 
         # hover: move over the trigger center.
         box = await trigger.bounding_box()
+
         if box:
             await page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
             await page.wait_for_timeout(SETTLE_MS)
@@ -110,12 +133,15 @@ async def capture_desktop(page, vp_name: str, w: int, h: int) -> int:
 
 async def capture_mobile(page) -> int:
     await page.set_viewport_size({"width": 375, "height": 800})
-    await page.goto(BASE_URL, wait_until="networkidle")
+    await page.goto(TARGET_URL, wait_until="domcontentloaded")
     await page.wait_for_timeout(400)
+    await ensure_modern_nav(page)
 
     trigger = page.locator('button[aria-label="Open menu"]').first
+
     if await trigger.count() == 0:
         print("  skip mobile: drawer trigger not present")
+
         return 0
 
     prefix = "mobile-375__drawer"
@@ -167,6 +193,9 @@ async def main() -> int:
         context = await browser.new_context(
             reduced_motion="reduce",
             device_scale_factor=1,
+        )
+        await context.add_init_script(
+            "window.localStorage.setItem('ui-mode-storage', JSON.stringify({state: {mode: 'modern'}, version: 0}))"
         )
         page = await context.new_page()
 

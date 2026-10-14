@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { WindowMenu } from "@/components/app-shell/WindowMenu";
+// import { WindowMenu } from "@/components/app-shell/WindowMenu";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import {
@@ -189,6 +189,17 @@ export function StandardAppShell({
           data-app-shell-row="top"
           className="flex h-full items-center gap-2 sm:gap-2.5 min-w-0"
         >
+          {/* Brand Wordmark */}
+          <Link
+            to="/"
+            title="Control Automation Home"
+            className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-bold tracking-tight text-white hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
+          >
+            <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+            <span className="hidden sm:inline">Control Automation</span>
+            <span className="sm:hidden font-mono text-[10px]">CA</span>
+          </Link>
+
           {/* Dropdown Menu Trigger */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -296,6 +307,11 @@ export function StandardAppShell({
             <span>{currentNav.label}</span>
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-pulse ml-0.5" />
           </Link>
+
+          {/* Upper Bar Concise Sitemap */}
+          <div className="hidden lg:flex items-center ml-2">
+            <GlobalSitemapBar />
+          </div>
         </div>
 
 
@@ -315,12 +331,10 @@ export function StandardAppShell({
           </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
-          <WindowMenu />
+          {/* WindowMenu commented out per user request; uncomment below to restore: */}
+          {/* <WindowMenu /> */}
         </div>
       </header>
-
-      {/* Interactive Global Sitemap & State Recovery Bar */}
-      <GlobalSitemapBar />
 
       {/* Action Strip (Rendered only when actions are supplied) */}
       {actions && (

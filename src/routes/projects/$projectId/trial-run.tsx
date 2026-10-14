@@ -42,8 +42,6 @@ function TrialRunPage() {
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
   const appendRun = useTrialStore((s) => s.appendRun);
 
-  if (!project) throw notFound();
-
   const [rulesetId, setRulesetId] = useState<string>(rulesets[0]?.id ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -55,12 +53,17 @@ function TrialRunPage() {
     rulesetId ? selectRuleset(s, rulesetId) : undefined,
   );
   const runs = useTrialStore((s) => selectRunsForRuleset(s, rulesetId));
-  const isNonFile = !file;
 
   useEffect(() => {
-    if (isNonFile) return setPreview(null);
+    if (!file) {
+      setPreview(null);
+
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     setPreview(url);
+
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -68,6 +71,18 @@ function TrialRunPage() {
     () => Boolean(activeRuleset) && (file !== null || Boolean(activeRuleset?.imageRef)),
     [activeRuleset, file],
   );
+
+  if (!project) {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return (
+      <div className="flex flex-1 items-center justify-center p-hmi-6 text-hmi-body text-ca-ink-muted">
+        Loading trial run...
+      </div>
+    );
+  }
 
   function pickFile(f: File | null) {
     setError(null);

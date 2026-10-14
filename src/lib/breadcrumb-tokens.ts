@@ -35,7 +35,7 @@ const STATIC_TOKENS: Readonly<Record<string, string>> = {
   run: "Run",
   new: "New",
   analyze: "Workpiece Analyzer",
-  "add-rule": "Add Tool",
+  "add-rule": "Add Rule",
   tune: "Tune Instrument",
 };
 

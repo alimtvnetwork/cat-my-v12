@@ -16,10 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -187,21 +188,56 @@ def iter_markdown_files(root: Path) -> Iterable[Path]:
         yield path
 
 
+def check_case_sensitive_exists(source: Path, raw: str, repo_root: Path) -> bool:
+    """Verify that each segment of the path exists with exact matching case,
+    preventing silent failures across case-insensitive filesystems."""
+    curr = repo_root if raw.startswith("/") else source.parent
+    norm_path = raw.lstrip("/")
+    parts = Path(norm_path).parts
+
+    for part in parts:
+        if part in (".", ""):
+            continue
+
+        if part == "..":
+            curr = curr.parent
+            continue
+
+        try:
+            entries = os.listdir(curr)
+        except OSError:
+            return False
+
+        if part not in entries:
+            return False
+
+        curr = curr / part
+
+    return True
+
+
 def check_link(source: Path, target: str, repo_root: Path) -> tuple[str, str] | None:
     if "#" in target:
         path_part, anchor = target.split("#", 1)
     else:
         path_part, anchor = target, ""
+
     resolved = resolve_target(source, path_part if path_part else str(source.relative_to(repo_root)), repo_root)
-    if not resolved.exists():
+
+    if not resolved.exists() or (path_part and not check_case_sensitive_exists(source, path_part, repo_root)):
         return ("missing-file", str(resolved))
+
     if not anchor:
         return None
+
     if resolved.is_dir():
         return ("anchor-on-directory", f"{resolved}#{anchor}")
+
     headings = collect_headings(resolved)
+
     if slugify(anchor) not in headings:
         return ("missing-section", f"{resolved}#{anchor}")
+
     return None
 
 
