@@ -4678,7 +4678,8 @@ html {
  * on the reduced row. The 3-column grid in Titlebar uses `justify-self`
  * for each cluster, so density changes never introduce collisions.
  */
-.app-titlebar[data-density="compact"] {
+.app-titlebar[data-density="compact"],
+header[data-app-shell="true"][data-density="compact"] {
   --header-h: 32px;
   --header-crumb-h: 22px;
 }
