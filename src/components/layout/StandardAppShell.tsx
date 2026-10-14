@@ -182,7 +182,9 @@ export function StandardAppShell({
         data-density={density}
         className={cn(
           "flex items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl",
-          density === "compact" ? "h-[33px]" : "h-[41px]",
+          density === "compact"
+            ? "h-[33px] min-h-[33px] max-h-[33px]"
+            : "h-[41px] min-h-[41px] max-h-[41px]",
         )}
       >
         <div
