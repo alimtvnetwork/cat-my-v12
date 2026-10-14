@@ -18,19 +18,51 @@
 import type { Page } from "@playwright/test";
 
 export async function settleForVisual(page: Page): Promise<void> {
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
-            if (fonts?.ready) {
-              fonts.ready.then(() => resolve()).catch(() => resolve());
-            } else {
-              resolve();
-            }
-          });
+  await page.evaluate(async () => {
+    const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'));
+
+    await Promise.all(
+      links.map((link) => {
+        if (link.sheet) {
+          return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve) => {
+          link.addEventListener("load", () => resolve(), { once: true });
+          link.addEventListener("error", () => resolve(), { once: true });
+          setTimeout(resolve, 3000);
         });
       }),
-  );
+    );
+
+    const start = performance.now();
+
+    while (performance.now() - start < 5000) {
+      const headerH = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
+
+      if (headerH && headerH.trim().length > 0) {
+        break;
+      }
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+
+    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+
+    if (fonts?.ready) {
+      try {
+        await fonts.ready;
+      } catch {
+        /* ignore */
+      }
+    }
+
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolve();
+        });
+      });
+    });
+  });
 }
