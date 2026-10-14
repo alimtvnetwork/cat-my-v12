@@ -1,5 +1,4 @@
 """Image preprocessing utilities for the vision evaluation pipeline.
-
 Provides:
 - Downsampling for large images before matchTemplate (Task 222)
 - Structured JSON logging for OpenCV failures (Task 225)

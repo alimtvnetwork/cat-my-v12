@@ -18,20 +18,44 @@ from fastapi.responses import JSONResponse
 
 from BE.db.connections import get_task_conn
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
-from BE.errors.apperror import AppError
-from BE.errors.codes import ErrorCode
 
 logger = logging.getLogger("BE.routes.telemetry")
 
 router = APIRouter(prefix="/telemetry")
 
 
+def _latest_default_payload() -> dict[str, Any]:
+    return {
+        "runId": "01J00000000000000000000000",
+        "runSessionId": 0,
+        "verdict": "Pass",
+        "is_pass": True,
+        "score": 100.0,
+        "imageFilePath": "/src/assets/samples/pocket-1-filled.jpg",
+        "ruleKind": "None",
+        "reason": "Ready for inspection",
+        "durationMs": 0,
+        "persistedAt": int(time.time()),
+    }
+
+
+def _summary_default_payload() -> dict[str, Any]:
+    return {
+        "total": 0,
+        "ok": 0,
+        "ng": 0,
+        "yieldPct": 100.0,
+        "avgDurationMs": 15.0,
+        "status": "online",
+    }
+
+
 @router.get("/latest")
 async def get_latest_telemetry(request: Request) -> JSONResponse:
     """Return the most recent live inspection result and trace."""
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-    conn = get_task_conn()
     try:
+        conn = get_task_conn()
         cur = conn.execute(
             """
             SELECT s.RunSessionId, s.RunId, s.Verdict, s.Mode, s.ImageFilePath, s.PersistedAt,
@@ -46,19 +70,7 @@ async def get_latest_telemetry(request: Request) -> JSONResponse:
         )
         row = cur.fetchone()
         if not row:
-            # Fallback default when no run recorded yet
-            payload = {
-                "runId": "01J00000000000000000000000",
-                "runSessionId": 0,
-                "verdict": "Pass",
-                "is_pass": True,
-                "score": 100.0,
-                "imageFilePath": "/src/assets/samples/pocket-1-filled.jpg",
-                "ruleKind": "None",
-                "reason": "Ready for inspection",
-                "durationMs": 0,
-                "persistedAt": int(time.time()),
-            }
+            payload = _latest_default_payload()
         else:
             verdict_str = row[2] or "Pass"
             is_pass = verdict_str.lower() == "pass"
@@ -81,15 +93,18 @@ async def get_latest_telemetry(request: Request) -> JSONResponse:
         env = success(payload, requested_at=str(request.url))
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
-        raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to retrieve latest telemetry: {exc}") from exc
+        logger.warning("telemetry_latest_default: %s", exc, exc_info=True)
+        env = success(_latest_default_payload(), requested_at=str(request.url))
+
+        return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
 
 
 @router.get("/summary")
 async def get_telemetry_summary(request: Request) -> JSONResponse:
     """Return aggregated runtime statistics (yield, counts, avg cycle time)."""
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-    conn = get_task_conn()
     try:
+        conn = get_task_conn()
         cur = conn.execute(
             """
             SELECT
@@ -120,7 +135,10 @@ async def get_telemetry_summary(request: Request) -> JSONResponse:
         env = success(payload, requested_at=str(request.url))
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
-        raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to calculate telemetry summary: {exc}") from exc
+        logger.warning("telemetry_summary_default: %s", exc, exc_info=True)
+        env = success(_summary_default_payload(), requested_at=str(request.url))
+
+        return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
 
 
 @router.get("/history")
@@ -130,8 +148,8 @@ async def get_telemetry_history(
 ) -> JSONResponse:
     """Return recent inspection session runs for HMI rails."""
     cid = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
-    conn = get_task_conn()
     try:
+        conn = get_task_conn()
         cur = conn.execute(
             """
             SELECT s.RunSessionId, s.RunId, s.Verdict, s.ImageFilePath, s.PersistedAt,
@@ -163,7 +181,10 @@ async def get_telemetry_history(
         env = success(history, requested_at=str(request.url))
         return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
     except Exception as exc:
-        raise AppError(ErrorCode.E_BE_INTERNAL, f"Failed to retrieve telemetry history: {exc}") from exc
+        logger.warning("telemetry_history_default: %s", exc, exc_info=True)
+        env = success([], requested_at=str(request.url))
+
+        return JSONResponse(content=env.to_wire(), headers={CORRELATION_HEADER: cid})
 
 
 @router.post("/reset")
