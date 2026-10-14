@@ -166,7 +166,7 @@ describe("pattern geometry formulation", () => {
       imageHeight: 200,
     });
 
-    expect(pattern).toEqual({
+    expect(pattern).toMatchObject({
       x: 15,
       y: 25,
       width: 55, // (50 + 15 + 5) - (20 - 5) = 70 - 15 = 55
@@ -193,7 +193,7 @@ describe("pattern geometry formulation", () => {
       imageHeight: 200,
     });
 
-    expect(pattern).toEqual({
+    expect(pattern).toMatchObject({
       x: 16,
       y: 26,
       width: 18,

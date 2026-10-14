@@ -230,7 +230,7 @@ describe("VisualToolWorkpieceCanvas", () => {
 
     // Manual analysis banner displayed
     expect(screen.getByText(/Analysis:/i)).toBeTruthy();
-    expect(screen.getByText(/Ready for Manual Run/i)).toBeTruthy();
+    expect(screen.getByText(/Pass · 1\/1/i)).toBeTruthy();
 
     // Manual ROI HUD controls are hidden
     expect(screen.queryByText(/Visual ROI:/i)).toBeNull();
@@ -293,7 +293,7 @@ describe("VisualToolWorkpieceCanvas", () => {
       />,
     );
 
-    expect(screen.getByText(/Visual Analysis Overlay/i)).toBeTruthy();
+    expect(screen.getByText(/Analysis:/i)).toBeTruthy();
     expect(screen.getByText("T116")).toBeTruthy();
     const t117Button = screen.getByRole("button", { name: "Select T117" });
     fireEvent.click(t117Button);

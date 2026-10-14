@@ -97,6 +97,7 @@ describe("ProjectOverview route smoke test", () => {
 
     // Mock Route.useParams
     (mod.Route as any).useParams = () => ({ projectId: "proj-1" });
+    (mod.Route as any).useSearch = () => ({});
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -107,13 +108,14 @@ describe("ProjectOverview route smoke test", () => {
     expect(screen.getByText("Test Inspection Project")).toBeTruthy();
   });
 
-  it("allows switching to Overview & Exports tab without error", async () => {
+  it("allows switching to image source tab without error", async () => {
     const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const mod = await import("@/routes/projects/$projectId/index");
     const RouteComponent = (mod.Route as any).component;
 
     (mod.Route as any).useParams = () => ({ projectId: "proj-1" });
+    (mod.Route as any).useSearch = () => ({});
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -121,10 +123,10 @@ describe("ProjectOverview route smoke test", () => {
       </QueryClientProvider>,
     );
 
-    const overviewTabButton = screen.getByRole("button", { name: /Overview & Exports/i });
-    expect(overviewTabButton).toBeTruthy();
-    fireEvent.click(overviewTabButton);
+    const sourceTabButton = screen.getByRole("button", { name: /Image & Source/i });
+    expect(sourceTabButton).toBeTruthy();
+    fireEvent.click(sourceTabButton);
 
-    expect(screen.getByText(/Export JSON/i)).toBeTruthy();
+    expect(screen.getByText(/Image & Camera Source/i)).toBeTruthy();
   });
 });

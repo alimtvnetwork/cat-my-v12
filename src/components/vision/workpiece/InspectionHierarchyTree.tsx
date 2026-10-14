@@ -129,6 +129,7 @@ export function InspectionHierarchyTree({
   const [expandedRuleIds, setExpandedRuleIds] = useState<Record<string, boolean>>({});
   const [expandedCameraRuleId, setExpandedCameraRuleId] = useState<string | null>(null);
   const [expandedLightRuleId, setExpandedLightRuleId] = useState<string | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const displayRulesets = useMemo<RuleSet[]>(() => {
     if (rulesets && rulesets.length > 0) return rulesets;
@@ -152,6 +153,23 @@ export function InspectionHierarchyTree({
     return merged;
   }, [displayRulesets, validationRuns]);
 
+  if (isCollapsed) {
+    return (
+      <div
+        role="region"
+        aria-label="Inspection hierarchy tree"
+        className="flex h-full min-h-0 w-12 flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-inner backdrop-blur-md"
+      >
+        <IconButton title="Expand inspection hierarchy tree" onClick={() => setIsCollapsed(false)}>
+          <FolderTree size={16} />
+        </IconButton>
+        <span className="rounded bg-white/10 px-1 py-0.5 font-sans text-[9px] font-medium text-white/60">
+          {totalRuleCount}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       role="region"
@@ -170,27 +188,42 @@ export function InspectionHierarchyTree({
           </span>
         </div>
 
-        <div className="relative w-28 shrink-0">
-          <Search size={11} className="pointer-events-none absolute left-2 top-1.5 text-ca-ink-muted" />
-          <input
-            type="text"
-            value={searchFilter}
-            onChange={(event) => setSearchFilter(event.target.value)}
-            placeholder="Search..."
-            className="h-6 w-full rounded border border-white/10 bg-black/50 pl-6 pr-2 font-sans text-[10px] text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
-          />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="relative w-28 shrink-0">
+            <Search size={11} className="pointer-events-none absolute left-2 top-1.5 text-ca-ink-muted" />
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={(event) => setSearchFilter(event.target.value)}
+              placeholder="Search..."
+              className="h-6 w-full rounded border border-white/10 bg-black/50 pl-6 pr-2 font-sans text-[10px] text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
+            />
+          </div>
+          <IconButton title="Collapse tree sidebar" onClick={() => setIsCollapsed(true)}>
+            <ChevronRight size={12} />
+          </IconButton>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 font-sans text-xs [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
         <div className="select-none space-y-0.5">
           <TreeRow
-            isOpen={isDeviceOpen}
-            icon={<Cpu size={14} className="shrink-0 text-cyan-400" />}
-            title={`Device: ${project.deviceId || "Circuit DUT (IC)"}`}
-            meta="IC Loaded"
-            onClick={() => setIsDeviceOpen((value) => !value)}
+            isOpen={true}
+            icon={<FolderTree size={14} className="shrink-0 text-amber-400" />}
+            title={`Project: ${project.name}`}
+            meta="Active"
+            onClick={() => {}}
           />
+
+          <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
+            <TreeRow
+              isOpen={isDeviceOpen}
+              icon={<Cpu size={14} className="shrink-0 text-cyan-400" />}
+              title={`Device: ${project.deviceId || "Circuit DUT (IC)"}`}
+              subtitle="IC Package / Board DUT"
+              meta="IC Loaded"
+              onClick={() => setIsDeviceOpen((value) => !value)}
+            />
 
           {isDeviceOpen ? (
             <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
@@ -413,8 +446,31 @@ export function InspectionHierarchyTree({
               ) : null}
             </div>
           ) : null}
+          </div>
         </div>
       </div>
+      {onAddRulesetClick || onAddRuleClick ? (
+        <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/[0.08] p-2">
+          {onAddRulesetClick ? (
+            <button
+              type="button"
+              onClick={onAddRulesetClick}
+              className="rounded border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-semibold text-white transition hover:border-purple-400/50 hover:bg-purple-500/15"
+            >
+              + Add Ruleset
+            </button>
+          ) : null}
+          {onAddRuleClick ? (
+            <button
+              type="button"
+              onClick={() => onAddRuleClick(ruleset.id)}
+              className="rounded border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-semibold text-white transition hover:border-ca-select/50 hover:bg-ca-select/15"
+            >
+              + Add Rule
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

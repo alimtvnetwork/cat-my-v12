@@ -107,8 +107,8 @@ describe("InspectionHierarchyTree", () => {
     expect(screen.getByText(/PASS/)).toBeTruthy();
 
     // Per-rule Camera and Light subtrees
-    expect(screen.getAllByText("Camera Settings").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Light Settings").length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle(/Camera Settings:/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle(/Light Settings:/i).length).toBeGreaterThan(0);
   });
 
   it("supports hiding, deleting, and reordering rules directly in the tree", () => {
@@ -280,7 +280,7 @@ describe("InspectionHierarchyTree", () => {
     fireEvent.click(headerAddBtn);
     expect(handleAddRuleClick).toHaveBeenCalledTimes(1);
 
-    const footerAddBtn = screen.getByRole("button", { name: /^Add Rule$/i });
+    const footerAddBtn = screen.getByRole("button", { name: /\+ Add Rule/i });
     fireEvent.click(footerAddBtn);
     expect(handleAddRuleClick).toHaveBeenCalledTimes(2);
   });
