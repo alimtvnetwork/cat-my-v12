@@ -15,20 +15,7 @@ export function useRootBootOrchestrator() {
 
     try {
       const params = new URLSearchParams(window.location.search);
-
-      if (params.get("mode") === "modern") {
-        isModernMode = true;
-      } else if (params.get("mode") !== "standard") {
-        const stored = window.localStorage.getItem("ui-mode-storage");
-
-        if (stored) {
-          const parsed = JSON.parse(stored);
-
-          if (parsed?.state?.mode === UiModeType.Modern) {
-            isModernMode = true;
-          }
-        }
-      }
+      isModernMode = params.get("mode") === "modern";
     } catch {
       /* ignore storage/url parse errors */
     }

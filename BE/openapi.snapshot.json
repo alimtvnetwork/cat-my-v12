@@ -75,6 +75,40 @@
         }
       }
     },
+    "/seed": {
+      "get": {
+        "summary": "Get Seed",
+        "description": "Return CatSeedBundle JSON for RemoteUiSeedFacade.",
+        "operationId": "get_seed_seed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seed": {
+      "get": {
+        "summary": "Get Seed",
+        "description": "Return CatSeedBundle JSON for RemoteUiSeedFacade.",
+        "operationId": "get_seed_api_seed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/rules": {
       "get": {
         "summary": "List Rules",
@@ -340,6 +374,276 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/status": {
+      "get": {
+        "summary": "Get Camera Status",
+        "description": "Return camera connection status.",
+        "operationId": "get_camera_status_camera_status_get",
+        "parameters": [
+          {
+            "name": "cameraId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Cameraid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/capture": {
+      "post": {
+        "summary": "Capture Frame",
+        "description": "Simulate frame acquisition and return a ReferenceImage payload.",
+        "operationId": "capture_frame_camera_capture_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/camera/settings": {
+      "put": {
+        "summary": "Update Camera Settings",
+        "description": "Update camera settings and trigger mode.",
+        "operationId": "update_camera_settings_camera_settings_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/reference": {
+      "get": {
+        "summary": "Get Reference Image",
+        "description": "Return active reference image for project.",
+        "operationId": "get_reference_image_images_reference_get",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "default",
+              "title": "Projectid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set Reference Image",
+        "description": "Update active reference image for project.",
+        "operationId": "set_reference_image_images_reference_put",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/processed": {
+      "get": {
+        "summary": "Get Processed Images",
+        "description": "Return recent processed and preset images.",
+        "operationId": "get_processed_images_images_processed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/upload": {
+      "post": {
+        "summary": "Upload Image",
+        "description": "Receive an uploaded image (data URL or raw JSON) and return image metadata.",
+        "operationId": "upload_image_images_upload_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/score": {
+      "post": {
+        "summary": "Evaluate Score",
+        "description": "Evaluate image against deterministic rule criteria (Day 4 Orchestrator).",
+        "operationId": "evaluate_score_score_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/latest": {
+      "get": {
+        "summary": "Get Latest Telemetry",
+        "description": "Return the most recent live inspection result and trace.",
+        "operationId": "get_latest_telemetry_telemetry_latest_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/summary": {
+      "get": {
+        "summary": "Get Telemetry Summary",
+        "description": "Return aggregated runtime statistics (yield, counts, avg cycle time).",
+        "operationId": "get_telemetry_summary_telemetry_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/history": {
+      "get": {
+        "summary": "Get Telemetry History",
+        "description": "Return recent inspection session runs for HMI rails.",
+        "operationId": "get_telemetry_history_telemetry_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/telemetry/reset": {
+      "post": {
+        "summary": "Reset Telemetry",
+        "description": "Acknowledge runtime session reset.",
+        "operationId": "reset_telemetry_telemetry_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -1262,6 +1566,42 @@
           }
         }
       }
+    },
+    "/vision/pin1-detection": {
+      "post": {
+        "summary": "Post Pin1 Detection",
+        "operationId": "post_pin1_detection_vision_pin1_detection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pin1Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1278,6 +1618,100 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "Pin1Request": {
+        "properties": {
+          "Width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "Height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "RgbaBase64": {
+            "type": "string",
+            "title": "Rgbabase64"
+          },
+          "Polarity": {
+            "type": "string",
+            "title": "Polarity",
+            "default": "DarkIndentation"
+          },
+          "ThresholdLuma": {
+            "type": "integer",
+            "maximum": 255.0,
+            "minimum": 0.0,
+            "title": "Thresholdluma",
+            "default": 35
+          },
+          "MinCircularityPercent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Mincircularitypercent",
+            "default": 45
+          },
+          "MinRadiusPx": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Minradiuspx",
+            "default": 3
+          },
+          "MaxRadiusPx": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Maxradiuspx",
+            "default": 60
+          },
+          "TolerancePx": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Tolerancepx",
+            "default": 25
+          },
+          "SearchRegion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchRegionRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "PackageRegion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchRegionRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "RegisteredPin1": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registeredpin1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "Width",
+          "Height",
+          "RgbaBase64"
+        ],
+        "title": "Pin1Request"
       },
       "SearchRegionRequest": {
         "properties": {
