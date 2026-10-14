@@ -8,12 +8,12 @@ description: Autonomously pull, backup, and synchronize canonical prompts, skill
 > **[/goal](slashCommand:goal)** Autonomously synchronize canonical prompts, Antigravity skills, Cursor skills, shared specifications (`02-spec/01-*` through `02-spec/20-*`), and additive AI scripts across all 43 connected repositories using pre-flight safety backups, GitMap atomic commits, SemVer release tagging, and non-negotiable boundary protections.
 > **[/learn](slashCommand:learn)** Enforce the 5 Non-Negotiable Boundaries (Spec 21 Exclusion, Bump Script Protection, Additive-Only AI Scripts with Repo Modification Checks, Memory & Plans Protection, Zero Secrets Mandate), pre-flight backup branch creation, SemVer release ceremonies, and parameter-driven inputs without hardcoding machine-specific absolute filesystem paths.
 
-**Version:** 1.0.0  
-**Updated:** 2026-10-03  
-**Status:** Active  
-**AI Confidence:** Production-Ready  
-**Canonical Prompt:** `01-prompts/24-sync/01-sync.md`  
-**Automation Engine:** `python 03-ai-scripts/38-sync-prompts-skills-scripts.py`  
+**Version:** 1.0.0
+**Updated:** 2026-10-03
+**Status:** Active
+**AI Confidence:** Production-Ready
+**Canonical Prompt:** `01-prompts/24-sync/01-sync.md`
+**Automation Engine:** `gitmap sync` (Go native, primary) | `python 03-ai-scripts/38-sync-prompts-skills-scripts.py` (legacy fallback)
 
 ---
 
@@ -244,9 +244,35 @@ Every synchronization operation MUST strictly safeguard the five boundaries with
 
 ## 5. Automation Tooling & Command Reference
 
-Multi-repository synchronization is driven by the central automation engine `03-ai-scripts/38-sync-prompts-skills-scripts.py`.
+Multi-repository synchronization is driven natively by `gitmap sync` (compiled Go engine, primary) with `03-ai-scripts/38-sync-prompts-skills-scripts.py` as backward-compatible fallback.
 
-### Primary Execution Commands
+### Primary Execution Commands (`gitmap sync` — Go Native)
+
+```bash
+# 1. Batch synchronize all 43 repositories concurrently (<5s execution time)
+gitmap sync --workers 8
+
+# 2. Preview changes across fleet without mutations (Dry-Run mode)
+gitmap sync --dry-run
+
+# 3. Synchronize a specific target repository by name
+gitmap sync --repo <target-repo-name>
+
+# 4. Supply custom projects via JSON file or inline JSON array
+gitmap sync --projects path/to/projects.json
+gitmap sync --projects '[{"folder": "cat-my"}]'
+
+# 5. Synchronize locally without remote git push
+gitmap sync --no-push
+
+# 6. Synchronize without post-sync SemVer release tagging
+gitmap sync --no-release
+
+# 7. List all 43 registered fleet repositories and paths
+gitmap sync --list
+```
+
+### Legacy Python Fallback (`03-ai-scripts/38-sync-prompts-skills-scripts.py`)
 
 ```bash
 # 1. Preview changes across all 43 repositories (Dry-Run mode, zero disk/git mutations)
@@ -264,10 +290,12 @@ python 03-ai-scripts/38-sync-prompts-skills-scripts.py --workers 6
 
 ### Automation Engine Capabilities
 
-1. **Relative Path Resolution:** Dynamically locates target repositories relative to the workspace root without machine-specific absolute path dependencies.
-2. **Dynamic Spec Discovery:** Discovers and synchronizes all `02-spec/01-*` through `02-spec/20-*` directories while strictly skipping `02-spec/21-*` through `02-spec/25-*`.
-3. **Target Modification Detection:** Inspects git commit logs per script to identify and preserve locally modified utilities.
-4. **Git Isolation:** Employs thread-safe worker pools with isolated working trees and atomic commit sequences.
+1. **High-Speed Parallel Go Engine:** `gitmap sync` executes concurrent worker pools (default 8 goroutines), performing SHA-256 asset hashing, branch creation, git commits, and release tagging in seconds.
+2. **Dynamic Project Ingestion:** Accepts default 43-fleet registry, custom JSON file configs, or inline JSON string arrays via `--projects`.
+3. **Relative Path Resolution:** Dynamically locates target repositories relative to the workspace root without machine-specific absolute path dependencies.
+4. **Dynamic Spec Discovery:** Discovers and synchronizes all `02-spec/01-*` through `02-spec/20-*` directories while strictly skipping `02-spec/21-*` through `02-spec/25-*`.
+5. **Target Modification Detection:** Inspects git commit logs per script to identify and preserve locally modified utilities.
+6. **Git Safety & Isolation:** Employs thread-safe worker pools with isolated working trees, safety backup branches (`backup/sync-<timestamp>`), and atomic conventional commits.
 
 ---
 
@@ -284,6 +312,7 @@ Following synchronization, verify compliance before concluding:
 - [ ] **Shared Specs Parity:** Verified `02-spec/01-*` through `02-spec/20-*` are cleanly synchronized.
 - [ ] **Prompts & Skills Parity:** Verified `01-prompts/`, `.agents/skills/`, and `.cursor/skills/` are updated.
 - [ ] **Strict Lowercase Hygiene:** Verified all synced files and directories adhere strictly to lowercase naming.
+- [ ] **Strict Relative Git Paths Only:** Verified all paths, links, and references strictly use relative git paths; only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well.
 - [ ] **Zero Secrets Leakage:** Verified no `.env`, token, or credential file is staged or committed.
 - [ ] **Release Ceremony Completed:** Post-sync release tag `v<next_ver>` and release branch created and pushed to origin.
 - [ ] **Base Branch Clean:** Base branch updated with merged release tag using `[skip ci]`.

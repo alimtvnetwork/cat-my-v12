@@ -124,7 +124,7 @@ If sources conflict, follow stricter one and record under `Conflicts:` in ledger
   - For bug fixes: `gitmap cpb "<module> - <fix summary>"` (e.g. `gitmap cpb "AUM - validate regex without nil fallback"` or `gitmap cpb "aum-validate-regex - prevent nil fallback on malformed patterns"`). GitMap automatically prepends `Bug: ` (which already provides the colon), so mention and format as a hyphen `-`; there is NO need to provide a colon in the GitMap message argument. DO NOT provide a colon; use a hyphen `-` to separate module/scope from summary. NEVER include `fix(...)` or `bug:` in your message.
   GitMap stages, formats, commits, and pushes atomically. TOTAL BAN on raw git commits (`git commit`, `git commit -m "..."`, `git add -A`, raw `git push`), colons inside the GitMap message argument, and conventional prefixes (`docs(...)`, `feat(...)`, `fix(...)`, `chore(...)`). ZERO intermediate commits: never commit during Phase 1 (plans/specs) or Phase 2; all files across the turn MUST be committed together at the final step of Phase 3. Before GitMap, all push gates must pass (targeted checks, secrets gate, and `.gitignore` hygiene; untrack any ignored files: `git rm --cached`). Push rejected: `git pull --rebase`, re-run command. Miss after push: allow one follow-up `gitmap cpb "<module> - <fix summary>"`, logged as `FOLLOW_UP_PUSH: <sha>`. Never amend pushed commits. Workers never run git commands or GitMap commit tools; only lead does.
 - **R10 Zero Unauthorized Releases.** Never bump versions, edit `version.json`, update changelogs, or trigger release scripts unless user explicitly requested release.
-- **R11 Strict Relative Git Paths & Lowercase Hygiene.** Strict ban on absolute paths (`C:\...`, `/home/...`) and `file:///` URIs. Paths relative from git root. All filenames, documentation, and specs strictly lowercase (e.g. `readme.md`, `agents.md`, `skill.md`).
+- **R11 Strict Relative Git Paths & Lowercase Hygiene.** Strict ban on absolute paths (`C:\...`, `/home/...`) and `file:///` URIs. Only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well. Paths relative from git root. All filenames, documentation, and specs strictly lowercase (e.g. `readme.md`, `agents.md`, `skill.md`).
 - **R12 No Polling / Immediate Turn Yielding.** When calling `invoke_subagent`, make it the sole tool action at turn end, print progress line (`Dispatched Worker 01 .. Worker <A> (wave k / WAVES); waiting for their results.`) and **STOP CALLING TOOLS**. Never poll in loop. Check `manage_subagents` once if wave runs long.
 - **R13 Two-Strike Retry Cap & Anti-Looping.** Tool failing twice: worker replies `STATUS: BLOCKED` with exact error and stops. Lead takes over and logs `LEAD_FALLBACK: <reason>`. Subtask failing two remediation rounds is marked `FAILED` with RCA (Section 12).
 - **R14 100% Ambiguity & Decision Boundaries.** Non-blocking: choose conservative option, log in ledger `Assumptions:`, proceed. Blocking: `ask_question` once, log in `.ai-memory/ambiguous-questions/01-new-ambiguity/`, continue unblocked tasks.
@@ -141,7 +141,7 @@ If sources conflict, follow stricter one and record under `Conflicts:` in ledger
 
 ## 3. GitMap High-Speed Command Primacy (Run Everything Faster)
 
-GitMap is your **PRIMARY** acceleration engine. NEVER use generic PowerShell search cmdlets (`Select-String`, `Get-ChildItem`), `git grep`, `grep`, or `findstr`. Execute all searches and operations through GitMap:
+GitMap is your **PRIMARY** acceleration engine. NEVER use `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`. Execute all searches and operations through GitMap:
 
 | Operation | Primary GitMap Command | High-Speed Alias | Purpose & Advantage |
 | :--- | :--- | :--- | :--- |
@@ -157,13 +157,15 @@ GitMap is your **PRIMARY** acceleration engine. NEVER use generic PowerShell sea
 | **Offload Scripts** | `gitmap rc file <file.ps1>` / `text` | `gitmap rc` | Auto-commits reusable scripts into `repo-cache` |
 | **Atomic Commits** | `gitmap cpf "<module> - <msg>"` (Feature) / `cpb` (Bug) | `gitmap cpf` | Stages, formats with prefix, and pushes atomically. Mention as a hyphen `-` (no need to provide a colon in GitMap `cpf`/`cpb`/CVF commit arguments because the colon is already automatically provided by GitMap in `Feature: ` or `Bug: `). |
 | **Pipeline Waiting** | `gitmap pipeline-ai status --json` | `gitmap pl-ai` | Non-polling dynamic ETA CI/CD monitor |
+| **Agent Task Engine** | `gitmap task <init\|add\|claim\|complete\|fail\|status\|schema>` | `gitmap task` | Sub-millisecond compiled Go SQLite task manager for multi-agent workflows |
+| **Fleet Synchronization** | `gitmap sync [--workers 8] [--projects <json>]` | `gitmap sync` | Parallel Go sync engine across 43 repositories in <5s with 6-stage ceremony |
 
-### 🔍 Code & Symbol Search Protocol (TOTAL BAN ON `Select-String` & `git grep`)
+### 🔍 Code & Symbol Search Protocol (TOTAL BAN ON `rg`, `ripgrep`, `Select-String` & `git grep`)
 - **Live Disk Search (Default for discovery, symbol tracking & blast radius):**
   - Search string/symbol: `gitmap aum search "<symbol>" [dir] [-e <.ext>]` (e.g. `gitmap aum search "RunFleetPASCommand" cli -e .go`)
   - Search regex: `gitmap aum search -r "<regex>" [dir] [-e <.ext>]` (e.g. `gitmap aum search -r "(\"pas\"|\"pa\")" cli/cmd -e .go`)
   - Case-insensitive: `gitmap aum search -i "<query>" [dir]`
-- **TOTAL BAN:** NEVER run PowerShell `Select-String`, `Get-ChildItem -Recurse`, `git grep`, `grep`, or `findstr`. Running generic shell searches wastes execution steps, slows turns, and violates GitMap primacy.
+- **TOTAL BAN:** NEVER run `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`. Running raw grep, ripgrep, or slow shell search pipelines wastes execution steps, causes Windows process hangs, and violates GitMap primacy. Search exclusively through `gitmap aum search` or `gitmap find`.
 
 ---
 
@@ -173,8 +175,12 @@ GitMap is your **PRIMARY** acceleration engine. NEVER use generic PowerShell sea
 2. **Commands & Directory:** Confirm `gitmap --version` and `python --version` exit 0. Verify GitMap with harmless call (`gitmap lf readme.md`), not `--help`. `run_command` uses `Cwd` in workspace root, paths relative. Never cd to other drives or tool folders.
 3. **Working Tree Cleanliness:** Run `git status --porcelain`. Record modified files in ledger; never touch them. Confirm root `readme.md` is lowercase. Read `.ai-memory/what-to-read.md`, `strictly-avoid.md`, `coding-guidelines.md`.
 4. **SQLite Task DB & Deterministic Slug Initialization (Check Before Creating):**
-   - Initialize or inspect task state via the Antigravity SQLite task manager:
-     `python 03-ai-scripts/46-agent-sqlite-task-manager.py init --name "<task name>" --budget 300`
+   - Initialize or inspect task state via GitMap SQLite task manager (compiled Go, sub-millisecond; fallback: Python):
+     `gitmap task init --name "<task name>" --budget 300`
+     *(Legacy fallback: `python 03-ai-scripts/46-agent-sqlite-task-manager.py init --name "<task name>" --budget 300`)*
+   - Inspect Task DB Schema & Data Integrity Rules (Mandatory Preflight):
+     `gitmap task schema`
+     Verify tables (`ParentTask`, `Subtask`, `AgentActionLog`), positive boolean flags (`IsActive`, `HasCompleted`, `IsBlocked`), and payload constraints before populating subtasks. (DDL: `gitmap task schema --ddl`; JSON: `gitmap task schema --json`).
    - Output Analysis & Crash Forensics:
      - If `action: "RESUME_FOUND"`: A matching or similar slug exists in `.ai-memory/temp-agents/`! If `diagnostics.hasCrashesDetected: true`, inspect the forensic report (`diagnostics.crashedAgents`) to identify which agent crashed, what file it was touching, and the last logged action. Resume execution from the uncompleted subtask.
      - If `action: "INITIALIZED"`: Created dedicated run directory `.ai-memory/temp-agents/<nn>-<slug>/` and SQLite database `agent-task.db` with WAL mode (`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;`).
@@ -214,7 +220,7 @@ You must use `invoke_subagent` to delegate both planning discovery and spec auth
 > 4. **Worker Git Ban (Index Lock Prevention):** Subagents NEVER run git commands (`git add`, `git commit`, `git push`, `git status`, `git diff`, `git checkout`). In shared workspaces, worker git calls create `.git/index.lock` collisions that immediately crash parallel agents with exit code 128.
 > 5. **Clean Turn-Yielding:** When calling `invoke_subagent`, make it the final tool action of the turn. Emit the status line and IMMEDIATELY STOP CALLING TOOLS to allow platform reactive wakeup. Chaining additional tools or tight polling crashes the message queue.
 
-1. **Planning Step (A = 2 `research` Discovery Subagents):** Lead agent calls `invoke_subagent` to spawn 2 read-only discovery subagents (`TypeName: "research"`, `Role: "Research 01: Architecture & Blast Radius"`, `Role: "Research 02: Specs & Dependency Mapping"`). Their prompt MUST instruct them to research the codebase using GitMap high-speed search (`gitmap aum search "<symbol>" [dir] [-e <.ext>]`, `gitmap find`, `gitmap lf`, `gitmap cat`) — NEVER PowerShell `Select-String` or `git grep` — define symbol boundaries and caller dependencies, and return their structured findings to the lead in their final message.
+1. **Planning Step (A = 2 `research` Discovery Subagents):** Lead agent calls `invoke_subagent` to spawn 2 read-only discovery subagents (`TypeName: "research"`, `Role: "Research 01: Architecture & Blast Radius"`, `Role: "Research 02: Specs & Dependency Mapping"`). Their prompt MUST instruct them to research the codebase using GitMap high-speed search (`gitmap aum search "<symbol>" [dir] [-e <.ext>]`, `gitmap find`, `gitmap lf`, `gitmap cat`) — NEVER `rg`, `ripgrep`, PowerShell `Select-String`, or `git grep` — define symbol boundaries and caller dependencies, and return their structured findings to the lead in their final message.
    - *Master Plan Generation (Lead Agent):* The lead orchestrator receives both discovery reports, synthesizes findings, and writes the unified Execution Plan (`.ai-memory/plans/pending/nn-<slug>.md`) and the Root Task JSON Manifest.
    - *Tool Call:* Lead must execute the `invoke_subagent` tool as the final action in the turn, print `Dispatched Planning Agents`, and then STOP CALLING TOOLS to wait for `<SYSTEM_MESSAGE>` reactive wakeup.
 2. **Spec Step (A = 2 `self` Authoring Subagents):** Once planning is synthesized, the lead agent calls `invoke_subagent` to spawn 2 authoring subagents (`TypeName: "self"`). Their prompt MUST instruct them to author modular, strictly disjoint spec files and subtask plans:
@@ -222,8 +228,9 @@ You must use `invoke_subagent` to delegate both planning discovery and spec auth
    - Subagent 2 writes `02-spec/21-app/nn-<slug>/02-component-spec.md` and subtasks `.ai-memory/plans/subtasks/nn-<slug>/02-<name>.md`.
    - NEVER have both subagents write to the same file path!
    - *Tool Call:* Lead must execute the `invoke_subagent` tool as the final action in the turn, print `Dispatched Spec Agents`, and then STOP CALLING TOOLS to wait for `<SYSTEM_MESSAGE>` reactive wakeup.
-3. **Populate Subtasks in SQLite Task DB:** Once subtasks are decomposed, populate them into the SQLite database for atomic worker claiming:
-   `python 03-ai-scripts/46-agent-sqlite-task-manager.py add-subtasks --db <databasePath> --tasks-json '[{"code": "Task-01", "title": "<title>", "owned_files": ["<paths>"], "agent_role": "Worker 01"}]'`
+3. **Populate Subtasks in SQLite Task DB:** Once subtasks are decomposed, inspect schema constraints (`gitmap task schema`) and populate them into the SQLite database for atomic worker claiming:
+   `gitmap task add --db <databasePath> --code "Task-01" --title "<title>" --files "<paths>" --role "Worker 01"`
+   *(Legacy fallback: `python 03-ai-scripts/46-agent-sqlite-task-manager.py add-subtasks --db <databasePath> --tasks-json '[{"code": "Task-01", "title": "<title>", "owned_files": ["<paths>"], "agent_role": "Worker 01"}]'`)*
 4. **Readiness Gate:** Complete Phase 1 planning and spec authoring within `PHASE_1_BUDGET` steps, then proceed **UNCONDITIONALLY** into Phase 2. ZERO intermediate git commits during Phase 1!
 
 ---
@@ -245,14 +252,14 @@ You must use `invoke_subagent` to delegate both planning discovery and spec auth
       "Role": "Research 01: Architecture & Blast Radius Discovery",
       "Model": "inherit",
       "Workspace": "inherit",
-      "Prompt": "<Discovery Brief: Search codebase via GitMap, map symbol callers, report JSON findings>"
+      "Prompt": "You are Research 01 for task <nn>-<slug>. You have no prior chat context; this brief is your complete specification.\n\n### Core Objective:\nExplore the codebase, map symbol callers, trace dependencies, and discover relevant source files for: <task title and objectives>.\n\n### Tool Capabilities & Strict Read-Only Boundary:\n- You are a READ-ONLY subagent (`TypeName: 'research'`).\n- You have read tools: `run_command`, `view_file`, `search_web`, `read_url_content`.\n- You DO NOT have `write_to_file` or `replace_file_content`. NEVER attempt to create or edit files.\n\n### Mandatory Search Primacy & Total Ban on Raw Grep:\n- Execute ALL searches and symbol discoveries exclusively via GitMap:\n  * Live symbol search: `gitmap aum search \"<symbol>\" [dir] [-e <.ext>]`\n  * Path-scoped search: `gitmap aum search \"<symbol>\" --path <relative-dir>`\n  * Indexed keyword search: `gitmap search \"<query>\"`\n  * File discovery: `gitmap find \"<pattern>\"`\n  * Directory inventory: `gitmap lf [dir]`\n  * View files: `gitmap cat <path>` or native `view_file`\n- TOTAL BAN (AUTO-REJECT FAILURE): NEVER run `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`.\n- TOTAL BAN ON GIT COMMANDS: NEVER run `git` commands (`git add`, `git commit`, `git status`, `git diff`, etc.).\n\n### Required Findings Report (Send via send_message to Parent):\nWhen your research is complete, send a message to the caller containing:\n1. Key symbol definitions, structures, and entry points.\n2. Call sites and blast radius (files that will be affected by modifications).\n3. Recommended modular file ownership boundaries for worker subtasks.\n4. Verification commands to validate changes."
     },
     {
       "TypeName": "research",
       "Role": "Research 02: Specs & Dependency Mapping",
       "Model": "inherit",
       "Workspace": "inherit",
-      "Prompt": "<Discovery Brief: Search existing specs and coding guidelines via GitMap, report JSON findings>"
+      "Prompt": "You are Research 02 for task <nn>-<slug>. You have no prior chat context; this brief is your complete specification.\n\n### Core Objective:\nInspect existing specifications under `02-spec/`, coding guidelines under `02-spec/02-coding-guidelines/`, and prior plan tasks for: <task title and objectives>.\n\n### Tool Capabilities & Strict Read-Only Boundary:\n- You are a READ-ONLY subagent (`TypeName: 'research'`).\n- You DO NOT have file authoring tools. NEVER attempt to create or edit files.\n\n### Mandatory Search Primacy & Total Ban on Raw Grep:\n- Execute ALL searches exclusively via GitMap:\n  * Live search in specs: `gitmap aum search \"<term>\" 02-spec`\n  * Indexed search: `gitmap search \"<term>\"`\n  * File discovery: `gitmap find \"*.md\"`\n  * View files: `gitmap cat <file>` or native `view_file`\n- TOTAL BAN: NEVER run `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem`, or `findstr`.\n- TOTAL BAN ON GIT COMMANDS: NEVER run `git` commands.\n\n### Required Findings Report (Send via send_message to Parent):\nSend a message to the caller detailing existing specs, architectural invariants, acceptance criteria, and positive boolean rules."
     }
   ]
 }
@@ -280,6 +287,41 @@ You must use `invoke_subagent` to delegate both planning discovery and spec auth
 }
 ```
 
+### 7.1.B Self-Contained Research Discovery Brief (TypeName: 'research')
+
+Read-only discovery subagents spawn with zero prior chat context. The prompt envelope MUST inject complete instructions, strictly enforce GitMap search primacy, and impose an absolute ban on raw search tools:
+
+```text
+You are Research <NN> for task nn-<slug>. You have no prior chat context; this brief is your complete specification.
+
+### Boundaries & Crash Prevention:
+- Read-Only Mode: You possess read-only tools (`view_file`, `run_command`, web search). You DO NOT have `write_to_file` or `replace_file_content`. NEVER attempt to create or modify files. Commanding a research agent to write files crashes the subagent.
+- TOTAL BAN ON RAW SEARCH TOOLS: NEVER run `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`. Spawning external search binaries hangs execution, causes OS lock collisions, and wastes steps.
+- GitMap Search Primacy: Execute all code, symbol, and pattern searches exclusively via GitMap commands:
+  - Live streaming code/regex search: `gitmap aum search "<pattern>" [dir] [-e <.ext>] [-r] [-i]`
+  - Fast file finder: `gitmap find "<pattern>" [-ext <ext>]`
+  - High-speed directory inventory: `gitmap lf [pat]`
+  - Stream file content: `gitmap cat <filepath>`
+- TOTAL BAN ON GIT COMMANDS: NEVER run `git add`, `git commit`, `git push`, `git status`, `git diff`, `git checkout`.
+- Strict Relative Git Paths: All paths cited in your report must be relative to the repository root; only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well (TOTAL BAN on absolute filesystem paths and `file:///` URIs).
+
+### Assigned Research Scope:
+- Research Target: <symbol / architectural area / module>
+- Primary Objective: Map callers, define type contracts, identify blast radius, and discover existing specifications.
+
+### Output Contract:
+Return your structured findings via send_message to the Lead Orchestrator with this JSON envelope, then stop:
+{
+  "agent": "Research <NN>",
+  "target": "<symbol or module>",
+  "filesExamined": ["<path1>", "<path2>"],
+  "callers": ["<caller1>", "<caller2>"],
+  "architecturalBoundaries": "<findings>",
+  "existingSpecs": ["<path>"],
+  "risksAndBlastRadius": "<risks>"
+}
+```
+
 ### 7.2 Self-Contained Worker Brief (Eliminate Context Blindness)
 
 Subagents spawn with clean context. The prompt envelope MUST inject complete instructions:
@@ -291,7 +333,7 @@ You are Worker <NN> for task nn-<slug>. You have no prior chat context; this bri
 - Read any file in the workspace; edit ONLY your Owned Files: <relative paths>.
 - TOTAL BAN ON GIT COMMANDS (LOCK COLLISION PREVENTION): NEVER run ANY git commands (`git add`, `git commit`, `git push`, `git status`, `git diff`, `git checkout`). In shared workspaces, worker git calls create `.git/index.lock` collisions that immediately crash parallel agents. Only the lead orchestrator runs git commands after workers complete.
 - TOTAL BAN ON COMMITS: Workers NEVER commit, stage, or push. Committing is exclusively reserved for the Lead Agent at Phase 3 via GitMap (`gitmap cpf "<module> - <summary>"` using hyphen `-`; no colon needed in GitMap cpf as colon is already provided).
-- Code & Symbol Search: Use GitMap exclusively: `gitmap aum search "<pattern>" [dir] [-e <.ext>] [-r] [-i]` or `gitmap search`. TOTAL BAN on PowerShell `Select-String`, `Get-ChildItem -Recurse`, `git grep`, `grep`, or `findstr`.
+- Code & Symbol Search: Use GitMap exclusively: `gitmap aum search "<pattern>" [dir] [-e <.ext>] [-r] [-i]` or `gitmap find`. TOTAL BAN on `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`.
 - After C tool calls, stop and report what you have.
 - A tool failing twice: reply "STATUS: BLOCKED" with exact error and stop. Never guess paths and never troubleshoot machine.
 - Workers that find a secret stop and report "BLOCKED: secret at <file>:<line>". They do not handle it themselves.
@@ -305,23 +347,27 @@ You are Worker <NN> for task nn-<slug>. You have no prior chat context; this bri
 1. Positive booleans ONLY: use `is` and `has` prefixes exclusively. NEVER evaluate explicit `== true`. NEVER combine positive and negative checks in the same condition (`if isA && !isB` is BANNED).
 2. Go Structured Errors: return `*appfault.AppError`, never bare `error`.
 3. Function Sizing: <= 8 lines preferred, hard cap 15 lines. Extract domain structs and raw generics to `types.go`.
-4. Strict Relative Git Paths & Lowercase: zero absolute filesystem paths and zero `file:///` URIs. All new files strictly lowercase.
+4. Strict Relative Git Paths & Lowercase: zero absolute filesystem paths and zero `file:///` URIs. Only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well. All new files strictly lowercase.
 5. Repo Secrets: if any credentials or private tokens are needed, store them in the `repo-secrets` folder in the default work directory (via `gitmap rs`). Never commit secrets.
 6. Zero Builds or Tests: NEVER run `go build`, `npm run build`, `go test`, or `pytest`.
 7. Targeted Verification: Run only fast file-scoped linters (e.g. `python 03-ai-scripts/05-guideline-autofixer.py <folder> --check-only`). A check scanning 0 files is a FAIL.
-8. GitMap Search Primacy (TOTAL BAN on Select-String / git grep): NEVER execute PowerShell `Select-String`, `Get-ChildItem`, `git grep`, `grep`, or `findstr`. Always use `gitmap aum search "<pattern>" [dir] [-e <.ext>] [-r]` for live symbol/regex discovery.
+8. GitMap Search Primacy (TOTAL BAN on rg / ripgrep / Select-String / git grep): NEVER execute `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, or `findstr`. Always use `gitmap aum search "<pattern>" [dir] [-e <.ext>] [-r]` for live symbol/regex discovery.
 
 ### Concurrency-Safe SQLite Action Logging (CRASH FORENSICS MANDATE):
 - Worker subtasks are tracked in the run database: `<databasePath>`.
+- Inspect Database Schema & Constraints:
+  `gitmap task schema`
+  Inspect tables, positive boolean fields, and JSON payload specifications before claiming or logging actions.
 - Claim assigned subtask atomically:
-  `python 03-ai-scripts/46-agent-sqlite-task-manager.py claim --db <databasePath> --agent "Worker <NN>"`
+  `gitmap task claim --db <databasePath> --agent "Worker <NN>"`
 - BEFORE touching or modifying any owned file, you MUST log your in-flight action:
-  `python 03-ai-scripts/46-agent-sqlite-task-manager.py log-action --db <databasePath> --subtask-id <id> --agent "Worker <NN>" --action "write_to_file" --file "<path>" --details "<action description>"`
+  `gitmap task log-action --db <databasePath> --subtask-id <id> --agent "Worker <NN>" --action "write_to_file" --file "<path>" --details "<action description>"`
   *(Note: This guarantees that if a tool execution crashes or the session is interrupted, the database permanently records the exact file you were touching and what caused the crash!)*
 - When your subtask passes targeted checks, mark completion in the database:
-  `python 03-ai-scripts/46-agent-sqlite-task-manager.py complete --db <databasePath> --subtask-id <id> --agent "Worker <NN>" --evidence "PASS exit 0, <files>"`
+  `gitmap task complete --db <databasePath> --subtask-id <id> --evidence "PASS exit 0, <files>"`
 - If blocked or failing, record the failure:
-  `python 03-ai-scripts/46-agent-sqlite-task-manager.py fail --db <databasePath> --subtask-id <id> --agent "Worker <NN>" --reason "<reason>"`
+  `gitmap task fail --db <databasePath> --subtask-id <id> --reason "<reason>"`
+*(Note: Python script `python 03-ai-scripts/46-agent-sqlite-task-manager.py` remains available with identical flags as legacy fallback).*
 
 ### Output Contract:
 Write your subtask output to .ai-memory/plans/subtasks/nn-<slug>/01-<name>.json and reply with this JSON block, once per subtask, then stop:
@@ -340,11 +386,12 @@ Write your subtask output to .ai-memory/plans/subtasks/nn-<slug>/01-<name>.json 
 
 1. **Invoke & Yield:** You must ACTUALLY CALL the `invoke_subagent` tool as the final action in your turn. Print the progress line (`Dispatched Worker 01 .. Worker <A> (wave k / WAVES); waiting for their results.`) and **STOP CALLING TOOLS** to end your turn.
 2. **Automated Crash Forensics & Status Inspection:**
-   - If any worker fails to report, crashes, or times out, lead immediately runs:
-     `python 03-ai-scripts/46-agent-sqlite-task-manager.py diagnose --db <databasePath>`
-     This pinpoints the autopsy: which agent crashed, on which subtask, targeting which file, and the exact action that was executing when it failed.
    - Lead inspects overall completion status at any time:
-     `python 03-ai-scripts/46-agent-sqlite-task-manager.py status --db <databasePath>`
+     `gitmap task status --db <databasePath>`
+     *(Legacy fallback: `python 03-ai-scripts/46-agent-sqlite-task-manager.py status --db <databasePath>`)*
+   - If any worker fails to report, crashes, or times out, inspect status or diagnose:
+     `gitmap task status --db <databasePath>` or `python 03-ai-scripts/46-agent-sqlite-task-manager.py diagnose --db <databasePath>`
+     This pinpoints the autopsy: which agent crashed, on which subtask, targeting which file, and the exact action that was executing when it failed.
 3. **Verify Worker Reports Independently:** Confirm `git diff --stat -- <owned files>` matches `filesChanged`, no files outside owned files modified, re-run targeted checks for `exit 0` on non-zero files.
 4. **Reject Violations:** Send failures via `send_message`. On `BLOCKED`, lead does work and logs `LEAD_FALLBACK: <reason>`. After two failed rounds, mark `FAILED`, write RCA, continue (R13).
 5. **Update Ledger:** Record status, evidence, changed paths in `ledger.md` via `replace_file_content`.
@@ -430,13 +477,14 @@ Confirm scripts exist via harmless workspace call before invoking (R4). Run on c
 - [ ] NO AUTOMATIC RELEASES (TOTAL BAN): Never bump versions, update changelogs, or trigger releases unless explicitly commanded by the user.
 - [ ] NO RAW GIT COMMITS OR CONVENTIONAL COMMIT PREFIXES (TOTAL BAN): Never execute `git commit`, `git commit -m "..."`, `git add -A`, `git add .`, or raw `git push`. Never use conventional commit prefixes (`docs(...):`, `feat(...):`, `fix(...):`, `chore(...):`) in raw git commands. All staging, committing, and pushing MUST be executed exclusively by GitMap: `gitmap cpf "<module> - <summary>"` (features) or `gitmap cpb "<module> - <summary>"` (fixes). GitMap automatically formats, stages, commits, and pushes atomically. Always mention and format as a hyphen (`-`); no need to provide a colon in GitMap commit commands (`gitmap cpf` / `cpb` / CVF) because the colon is already automatically provided by GitMap (`Feature: ` or `Bug: `).
 - [ ] NO INTERMEDIATE COMMITS (TOTAL BAN): Never commit after Phase 1 (e.g. committing plans or specs) or mid-Phase 2 (committing individual files or tests). Committing early pollutes git history, creates race conditions, and breaks atomicity. All changes (specs, plans, code modifications, index updates) MUST be committed together in ONE single atomic GitMap commit at the final step of Phase 3.
-- [ ] NO PER-FILE COMMITTING (TOTAL BAN): Never commit each file individually as you work (e.g. running `git commit` or `gitmap cpf "<module> - <summary>"` after editing File 1, then another commit after File 2). Committing file-by-file pollutes git history, creates subagent lock collisions, and breaks atomic changes. All modified files across the turn must be accumulated and committed together in a single atomic commit at the final step.
+-- [ ] NO PER-FILE COMMITTING (TOTAL BAN): Never commit each file individually as you work (e.g. running `git commit` or `gitmap cpf "<module> - <summary>"` after editing File 1, then another commit after File 2). Committing file-by-file pollutes git log history, creates subagent lock collisions, and breaks atomic changes. All modified files across the turn must be accumulated and committed together in a single atomic commit at the final step.
+- [ ] NO UNCOMMITTED WORK OR UNPUSHED CODE (TOTAL BAN — NO PUSH = NOT DONE): Never conclude a turn, claim success, or mark any task as DONE while leaving changes uncommitted or unpushed. If the code is not committed to Git and pushed upstream to GitHub (main/master/tracking branch), the task is strictly considered INCOMPLETE and NOT DONE. Leaving uncommitted dirty changes, untracked files, or unpushed local commits means the execution is unfinished and has failed. Concluding without a confirmed successful GitMap push to remote is an immediate auto-reject failure.
 - [ ] NO RAPID CI/CD POLLING (TOTAL BAN): Never query or loop rapidly (`gh run view` in tight loops) when inspecting remote CI/CD pipelines. Agents must query pipeline state using GitMap Pipeline-AI (`gitmap pipeline-ai status --json` or `gitmap pl-ai status -t <sec>`) and strictly wait or sleep based on `etaSeconds` to eliminate credit waste.
 - [ ] NO PREMATURE TURN CLOSING BEFORE EXECUTION (TOTAL BAN): Never halt execution, conclude the turn, or ask the user for permission after generating specs or subtasks. Planning constitutes only 50% of the task budget; you must proceed unconditionally to Phase 2 code execution. (Note: When dispatching asynchronous background subagents via `invoke_subagent`, yielding control to allow platform reactive wakeup is mandatory and is exempt from this ban).
 - [ ] NO HORIZONTAL TASK CONCATENATION (TOTAL BAN): Never concatenate tasks horizontally in the Task Completion Summary (e.g. NEVER `✅ #1... ✅ #2...` run-on). Every completed task MUST be rendered on its OWN SEPARATE LINE starting with an individual markdown list bullet (`- ✅`).
 - [ ] INDEPENDENT AI VERIFICATION PROMPT MANDATE: Emitted the self-contained independent AI verification and audit prompt linking to the canonical spec, consolidated plan, and modified files with verbatim score audit criteria.
 - [ ] GITMAP HEAVY USAGE & ROUTINE PULL BAN: Heavily leveraged GitMap commands (`cpf`, `cpb`, `cpr`, `search`, `find`, `pwsh`) for discovery, execution, and commits. Never ran `pull-all` (`gitmap pa` or `gitmap pae`) unconditionally during routine turns; only ran `gitmap pae --json` when explicitly commanded by the user.
-- [ ] NO POWERSHELL OR SHELL SEARCHES (TOTAL BAN): Never run `Select-String`, `Get-ChildItem -Recurse`, `grep`, `git grep`, `findstr`, or slow shell search pipelines to search code. All code searching and symbol discovery MUST use GitMap high-speed search tools: `gitmap aum search "<query>" [dir] [-e <.ext>] [-r]` (streaming multi-core text/regex search) or `gitmap search "<query>"` (indexed symbol search). Running `Select-String` or `git grep` is an immediate auto-reject failure.
+- [ ] NO RG, RIPGREP, OR RAW SHELL SEARCHES (TOTAL BAN): Never run `rg`, `ripgrep`, `grep`, `git grep`, `Select-String`, `Get-ChildItem -Recurse`, `findstr`, or slow shell search pipelines to search code. All code searching, symbol discovery, and regex scans MUST use GitMap high-speed search tools: `gitmap aum search "<query>" [dir] [-e <.ext>] [-r]` (streaming multi-core text/regex search) or `gitmap search "<query>"` (indexed symbol search). Running `rg`, `ripgrep`, `Select-String`, or `git grep` is an immediate auto-reject failure.
 
 ---
 
@@ -452,7 +500,7 @@ Confirm scripts exist via harmless workspace call before invoking (R4). Run on c
 - [ ] Multi-Line Arguments (Rule 9a/9b): Signatures and call sites with >2 arguments formatted one argument per line with trailing commas.
 - [ ] Line Endings & Encoding: Strictly Unix LF (`\n`) and UTF-8 without BOM.
 - [ ] Function Sizing: Functions <= 8 lines preferred (hard cap 15 lines).
-- [ ] Strict Relative Git Paths & Lowercase: Zero absolute paths (`/absolute/path/to/...`) or `file:///` URIs. All new files strictly lowercase.
+- [ ] Strict Relative Git Paths & Lowercase: Zero absolute paths (`/absolute/path/to/...`) or `file:///` URIs anywhere in the diff, ledger, plans, release notes, or release page; strictly relative paths and lowercase filenames.
 
 ---
 
@@ -465,6 +513,7 @@ Confirm scripts exist via harmless workspace call before invoking (R4). Run on c
 - [ ] Blast Radius Acknowledgment: Global search across codebase performed via `gitmap aum search "<symbol>" [dir]` to update all callers of modified symbols (never `Select-String` or `git grep`).
 - [ ] Continuous Loop Maintained: Continuous self-loop executed until 100% complete without running banned test/build commands.
 - [ ] Final Step Commit & Push Verified: Staged and committed all changes atomically via GitMap semantic commit commands using `<module> - <summary>` format: `gitmap cpf "<module> - <summary>"` (features, e.g. `gitmap cpf "CBF - implement user profile dashboard"`) or `gitmap cpb "<module> - <summary>"` (bug fixes, e.g. `gitmap cpb "AUM - validate regex without nil fallback"`). Mentioned and formatted with a hyphen `-` to separate module from summary; no need to provide a colon in GitMap `cpf`/`cpb`/CVF commit arguments because the colon is already automatically provided by GitMap (`Bug: ` or `Feature: `). TOTAL BAN on colons `:` inside the GitMap argument and conventional prefixes (`fix(...)`, `feat(...)`, `docs(...)`). TOTAL BAN on raw `git add -A` and `git commit`. Pushed to remote via GitMap in a single final command.
+- [ ] Strict Completion Invariant ('No Push = Not Done'): Confirmed that all modifications are staged, committed atomically via GitMap, and pushed upstream to GitHub. If the code is not committed to Git and pushed upstream to GitHub (main/master/tracking branch), the task is strictly considered INCOMPLETE and NOT DONE. Verified that `git status --porcelain` is completely clean (zero uncommitted or untracked files) and that the remote tracking branch reflects the pushed commit before declaring task completion.
 
 ---
 
@@ -472,6 +521,7 @@ Confirm scripts exist via harmless workspace call before invoking (R4). Run on c
 
 - [ ] MANDATORY FINAL COMMIT & PUSH VIA GITMAP (ANYHOW): At the final step of the turn, after all targeted files have been refactored, verified with targeted linters, and plans/subtasks consolidated, use GitMap semantic commit commands exclusively: `gitmap cpf "<module> - <summary>"` (features, e.g. `gitmap cpf "CBF - implement user profile dashboard"`) or `gitmap cpb "<module> - <summary>"` (bug fixes, e.g. `gitmap cpb "AUM - validate regex without nil fallback"`), which automatically stage, format commit messages, and push directly to remote. Mention and format as a hyphen `-` to separate module and summary; no need to provide a colon `:` in the GitMap `cpf`/`cpb`/CVF message argument as the colon is already provided automatically by GitMap (`Feature: ` or `Bug: `). TOTAL BAN on raw `git commit`, `git commit -m`, `git add -A`, colons `:` in the message argument, or conventional prefixes inside GitMap arguments (`docs(...)`, `feat(...)`, `fix(...)`). ZERO intermediate commits during Phase 1 or Phase 2; all files across the run are committed together at the final step. Leaving uncommitted changes or unpushed commits on the active branch at the end of a turn is an immediate failure.
 - [ ] TOTAL BAN ON PER-FILE COMMITS (DO NOT COMMIT EACH FILE INDIVIDUALLY): You must not create separate git commits for each individual file as you edit them (e.g. running `git commit` or `gitmap cpf` after editing File 1, then committing again after File 2 is strictly forbidden). Committing file-by-file pollutes git log history, creates subagent lock collisions, and breaks atomic rollback. All modified files, test change caches, and plan records across the turn must be accumulated in the working tree and committed together in a single grouped atomic commit at the final step before pushing.
+- [ ] MANDATORY COMPLETION INVARIANT (NO PUSH = NOT DONE): If the code is not committed to Git and pushed upstream to GitHub (main/master/tracking branch), the task is strictly considered INCOMPLETE and NOT DONE. Leaving uncommitted dirty changes or unpushed commits means the execution is unfinished and has failed. A task cannot be marked completed or successful until all changes are committed and confirmed pushed to GitHub. The orchestrator must verify that `git status --porcelain` returns completely empty and that the remote tracking branch is up to date before rendering the final completion summary.
 
 ## MUST FOLLOW NON-NEGOTIABLE
 

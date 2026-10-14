@@ -185,7 +185,7 @@ At the conclusion of the specification turn, you MUST output the following struc
 ### 🚀 Next Steps: Execution Command
 
 To execute these generated subtasks in continuous sequence with 2-agent concurrency:
-> Run: `06-execute-parent-task-with-n-steps-v2.md` with plan slug `xx-<slug>`
+> Run: `02-execute-parent-task-with-n-steps-v6.md` with plan slug `xx-<slug>`
 ```
 
 ## Variables — check if you are confused only.
@@ -236,6 +236,7 @@ Every file and folder you create or rename obeys all of these, with no exception
 - A violating file is renamed, never duplicated. If a wrongly named file
   already exists, `mv` it and update every reference to it in the same run. Do
   not leave both names on disk.
+- Strict relative Git paths only: only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well (TOTAL BAN on `file:///` URIs and absolute filesystem paths).
 
 Mechanical check, run it and print the output before saving (RULE 11):
 
@@ -862,6 +863,7 @@ in section 2.
 - [ ] No task file contains a commit, push, tag, or release instruction.
 - [ ] Plan task table, `.ai-memory/plans/readme.md`, and the memory index updated.
 - [ ] RULE 0A naming check ran; output printed; zero uppercase/space/underscore paths, every ordered file carries its zero-padded prefix.
+- [ ] Strict Relative Git Paths: Only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well (TOTAL BAN on `file:///` URIs and absolute filesystem paths).
 - [ ] RULE 0C respected: audit slots exist with correct names and empty bodies; no audit was scored during authoring; no task contains an audit step.
 - [ ] RULE 0D footer present verbatim in every task file; plan file states one step per run and self-loop; no task implies batching steps.
 - [ ] RULE 0C ceilings stated: max 2 agents, max 3 threads per agent, nowhere exceeded or contradicted.

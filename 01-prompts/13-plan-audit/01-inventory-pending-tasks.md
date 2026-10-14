@@ -190,7 +190,7 @@ At the very end of the inventory report, the AI must ask the user whether to tri
 Would you like to start the continuous self-loop to execute and resolve these pending tasks in parallel using a maximum of 3 concurrent subagents? (Yes / No)
 ```
 
-*(If the user answers Yes, the next turn will invoke `execute-robust-loop` or `execute-batched-loop` to begin execution).*
+*(If the user answers Yes, the next turn will invoke `execute-parent-task-with-n-steps-v6` to begin execution).*
 
 ---
 
@@ -241,6 +241,7 @@ To survive massive checklists and complex codebases, you MUST operate using thes
 - [ ] Ensure the git repository starts completely clean.
 - [ ] Complete all work on the current branch only.
 - [ ] Ensure `.gitignore` explicitly excludes test reports, artifacts, and compiled binaries.
+- [ ] **Strict Relative Git Paths:** Only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well (TOTAL BAN on `file:///` URIs and absolute filesystem paths).
 - [ ] Group all completed work into a single logical commit.
 - [ ] Push the commit to the remote repository.
 - [ ] **File Change Summary:** Provide a highly detailed summary in the chat listing exactly which files were changed, what specific changes were made inside them, and why they were changed. The summary is VERY important.
