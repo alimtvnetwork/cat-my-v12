@@ -154,6 +154,8 @@ export function StandardHomeView({
       <div className="flex-1 overflow-auto hmi-cad-grid-bg p-4 text-[#f8fafc]">
         <div className="grid min-h-full grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="flex min-w-0 flex-col gap-4">
+            <h1 className="sr-only">Home</h1>
+            <h2 className="sr-only">Pick a workflow</h2>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {WORKFLOWS.map((workflow) => (
                 <WorkflowCard key={workflow.id} workflow={workflow} />
@@ -229,9 +231,10 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
           </div>
           <Link
             to={workflow.to}
-            className="group/enter inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-gradient-to-b from-[#182335] to-[#101724] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_2px_6px_rgba(0,0,0,0.5)] transition-all hover:border-[oklch(0.76_0.145_210/0.8)] hover:text-[oklch(0.76_0.145_210)] hover:shadow-[0_0_12px_rgba(34,211,238,0.25)] active:scale-[0.98]"
+            data-testid="standard-home-workflow-enter"
+            className="group/enter item-pad-cta inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-gradient-to-b from-[#182335] to-[#101724] text-[10px] font-bold uppercase leading-none tracking-wider text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_2px_6px_rgba(0,0,0,0.5)] transition-all hover:border-[oklch(0.76_0.145_210/0.8)] hover:text-[oklch(0.76_0.145_210)] hover:shadow-[0_0_12px_rgba(34,211,238,0.25)] active:scale-[0.98]"
           >
-            <span>Enter</span>
+            <span className="leading-none">Enter</span>
             <ArrowRight size={12} className="transition-transform duration-150 group-hover/enter:translate-x-1" />
           </Link>
         </div>
@@ -241,7 +244,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
             {workflow.label}
           </h2>
           <p className="mt-1 text-xs text-[#94a3b8] leading-relaxed">{workflow.description}</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2" data-testid="standard-home-quick-actions">
             {workflow.quickActions.map((action) => {
               const ActionIcon = action.icon;
 
@@ -249,7 +252,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
                 <Link
                   key={action.label}
                   to={action.to as any}
-                  className="group/qa relative flex items-center justify-between rounded-md border border-white/[0.07] bg-[#131a29]/90 px-3 py-2 text-xs font-semibold text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-[#1a2337] hover:shadow-[0_2px_12px_-2px_oklch(0.76_0.145_210/0.3)]"
+                  className="group/qa item-pad-chip relative flex items-center justify-between rounded-md border border-white/[0.07] bg-[#131a29]/90 text-xs font-semibold leading-none text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-[#1a2337] hover:shadow-[0_2px_12px_-2px_oklch(0.76_0.145_210/0.3)]"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`h-2.5 w-0.5 rounded-full shrink-0 ${tone.pip}`} />

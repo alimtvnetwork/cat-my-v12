@@ -429,7 +429,7 @@ function RuleEditorRoute() {
           </div>
         )}
         {rule && !rule.isCategory ? (
-          <div className="flex flex-1 flex-col min-h-0">
+          <div className="flex flex-1 flex-col min-h-0" data-testid="standard-rule-editor">
             <StandardInspectionToolDispatcher
               ruleName={rule.name}
               toolType={(rule.conditions?.[0] as any)?.toolType || (settings as any)?.toolType}

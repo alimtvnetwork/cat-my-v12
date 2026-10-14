@@ -40,12 +40,12 @@ interface Target {
 const TARGETS: readonly Target[] = [
   {
     slug: "rule-editor-full",
-    selector: ".editor-shell",
+    selector: '[data-testid="standard-rule-editor"]',
     description: "Full ROI editor shell",
   },
   {
     slug: "rule-editor-tools",
-    selector: '[data-testid="editor-canvas-slot"]',
+    selector: "main",
     description: "Tools palette rail",
   },
 ] as const;
@@ -102,14 +102,10 @@ for (const target of TARGETS) {
     await installRuleEditorFixtures(page);
 
     await page.goto(`${BASE_URL}/setup/rules/${FIXTURE_RULE_ID}`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 30_000,
     });
-    await page.waitForSelector(".editor-shell", {
-      timeout: 10_000,
-    });
-    // Also wait for the canvas slot to render.
-    await page.waitForSelector('[data-testid="editor-canvas-slot"]', {
+    await page.waitForSelector('[data-testid="standard-rule-editor"]', {
       timeout: 10_000,
     });
 

@@ -45,7 +45,8 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
     description: "Project camera tab, bound CameraSetting (Plan 78 slice 8)",
     seed: "projects-camera",
     seedLibraryMode: "with-camera",
-    waitForSelector: '[data-project-id="p-fixture-bound-0001"] dl',
+    waitForSelector:
+      '[data-project-id="p-fixture-bound-0001"] [data-testid="project-camera-telemetry"]',
   },
   {
     slug: "projects-camera-unbound",
@@ -53,7 +54,8 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
     description: "Project camera tab, no binding + empty library (Plan 78 slice 8)",
     seed: "projects-camera",
     seedLibraryMode: "empty",
-    waitForSelector: '[data-project-id="p-fixture-unbound-0001"]',
+    waitForSelector:
+      '[data-project-id="p-fixture-unbound-0001"] [data-testid="project-camera-empty"]',
   },
   // Plan 83 item 23: six additional surfaces.
   {

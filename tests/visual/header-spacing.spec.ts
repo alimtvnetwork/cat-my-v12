@@ -33,13 +33,6 @@ const EXECUTABLE_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undef
  * and the store silently falls back to the default `headerDensity: "comfortable"`,
  * which was the root cause of "compact" tests measuring a 40px comfortable row.
  */
-function persistedUiPrefs(density: "comfortable" | "compact"): string {
-  return JSON.stringify({
-    state: { showStatusBar: true, headerDensity: density },
-    version: 0,
-  });
-}
-
 // Ceilings include the 1px bottom border on the top row plus the
 // breadcrumb row. Anything larger means new chrome was added.
 const MAX_TOTAL_H_COMFORTABLE = 80; // 40 top + ~28 crumb + borders + slack
@@ -69,6 +62,20 @@ async function waitForDensity(page: Page, density: "comfortable" | "compact"): P
   });
 }
 
+async function seedDensityAndOpenSetup(
+  page: Page,
+  density: "comfortable" | "compact",
+): Promise<void> {
+  await page.goto(`${BASE_URL}/setup`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await page.waitForSelector('header[data-app-shell="true"]', { timeout: 5_000 });
+  await page.waitForTimeout(1_000);
+  await page.evaluate(async (nextDensity) => {
+    const mod = await import("/src/lib/stores/ui-prefs-store.ts");
+    mod.useUiPrefsStore.getState().setHeaderDensity(nextDensity);
+  }, density);
+  await waitForDensity(page, density);
+}
+
 async function measureHeader(page: Page) {
   const header = page.locator("header[data-app-shell='true']");
   await expect(header, "single app header").toHaveCount(1);
@@ -85,18 +92,7 @@ async function measureHeader(page: Page) {
 test("header spacing @ comfortable density stays tight", async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
-  await page.addInitScript(() => {
-    // Seed the zustand persist envelope shape; see persistedUiPrefs comment.
-    localStorage.setItem(
-      "ca.uiPrefs.v1",
-      JSON.stringify({
-        state: { showStatusBar: true, headerDensity: "comfortable" },
-        version: 0,
-      }),
-    );
-  });
-  await page.goto(`${BASE_URL}/setup`, { waitUntil: "networkidle", timeout: 30_000 });
-  await waitForDensity(page, "comfortable");
+  await seedDensityAndOpenSetup(page, "comfortable");
 
   const { headerBox, topBox, crumbBox } = await measureHeader(page);
 
@@ -121,17 +117,7 @@ test("header spacing @ comfortable density stays tight", async () => {
 test("header spacing @ compact density stays tight", async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "ca.uiPrefs.v1",
-      JSON.stringify({
-        state: { showStatusBar: true, headerDensity: "compact" },
-        version: 0,
-      }),
-    );
-  });
-  await page.goto(`${BASE_URL}/setup`, { waitUntil: "networkidle", timeout: 30_000 });
-  await waitForDensity(page, "compact");
+  await seedDensityAndOpenSetup(page, "compact");
 
   const { headerBox, topBox, crumbBox } = await measureHeader(page);
 
@@ -151,16 +137,7 @@ test("compact density is strictly shorter than comfortable", async () => {
   async function totalHeight(density: "comfortable" | "compact"): Promise<number> {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
-    await page.addInitScript((d) => {
-      localStorage.setItem(
-        "ca.uiPrefs.v1",
-        JSON.stringify({ state: { showStatusBar: true, headerDensity: d }, version: 0 }),
-      );
-    }, density);
-    await page.goto(`${BASE_URL}/setup`, { waitUntil: "networkidle", timeout: 30_000 });
-    await page.waitForSelector(`header[data-app-shell="true"][data-density="${density}"]`, {
-      timeout: 5_000,
-    });
+    await seedDensityAndOpenSetup(page, density);
     const box = await page.locator("header[data-app-shell='true']").boundingBox();
     await context.close();
     return box!.height;

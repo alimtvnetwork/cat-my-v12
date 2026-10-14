@@ -45,8 +45,8 @@ VIEWPORTS = [
 
 # Selectors that opt into the shared padding scale on the home route.
 TIER_SELECTORS = {
-    "item-pad-cta": '[data-testid="home-primary-cta"], [data-testid="home-create-project"]',
-    "item-pad-chip": '[data-testid="home-utility-strip"] > a',
+    "item-pad-cta": '[data-testid="standard-home-workflow-enter"]',
+    "item-pad-chip": '[data-testid="standard-home-quick-actions"] > a',
 }
 
 events: list[dict[str, Any]] = []
@@ -78,9 +78,8 @@ async def read_padding(page, selector: str) -> list[tuple[float, float]]:
 # icons anti-alias to sub-pixel bounding boxes so ~1.5px absorbs that
 # without letting real drift through.
 ALIGNMENT_ROWS = [
-    ('[data-testid="home-primary-cta"]', 1.5),
-    ('[data-testid="home-create-project"]', 1.5),
-    ('[data-testid="home-utility-strip"] > a', 1.5),
+    ('[data-testid="standard-home-workflow-enter"]', 1.5),
+    ('[data-testid="standard-home-quick-actions"] > a', 1.5),
 ]
 
 
@@ -208,7 +207,7 @@ async def measure_viewport(page, label: str, w: int, h: int) -> dict[str, tuple[
     await assert_alignment(page, label)
 
 
-    strip = page.locator('[data-testid="home-utility-strip"]')
+    strip = page.locator('[data-testid="standard-home-quick-actions"]').first
     await expect(strip).to_be_visible()
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     await page.screenshot(path=str(REPORT_DIR / f"home_{label}_{w}x{h}.png"))
@@ -221,7 +220,7 @@ async def run() -> None:
         browser = await getattr(playwright, ENGINE).launch(headless=True)
         context = await browser.new_context(viewport={"width": 390, "height": 900})
         page = await context.new_page()
-        await page.goto(BASE_URL, wait_until="networkidle")
+        await page.goto(BASE_URL, wait_until="domcontentloaded")
 
         per_viewport: dict[str, dict[str, tuple[float, float]]] = {}
         for label, w, h in VIEWPORTS:
