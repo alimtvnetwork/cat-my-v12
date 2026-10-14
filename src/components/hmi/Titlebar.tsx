@@ -49,13 +49,16 @@ export function Titlebar({
       data-app-shell="true"
       data-density={density}
       aria-label="Application"
-      className="app-titlebar sticky top-0 z-40 flex flex-col border-b border-ca-border/80 bg-ca-chrome/90 text-ca-ink font-hmi shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_20px_-4px_rgba(0,0,0,0.6)] backdrop-blur-2xl transition-[height,padding,background-color] duration-200 ease-out"
+      style={{
+        maxHeight: density === "compact" ? "68px" : "80px",
+      }}
+      className="app-titlebar sticky top-0 z-40 flex flex-col border-b border-ca-border/80 bg-ca-chrome/90 text-ca-ink font-hmi shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_20px_-4px_rgba(0,0,0,0.6)] backdrop-blur-2xl transition-[height,padding,background-color] duration-200 ease-out overflow-hidden"
     >
       <SkipToContentLink />
       <div
         data-app-shell-row="top"
-        className="flex items-center gap-hmi-2 px-hmi-2 sm:px-hmi-3 transition-[height] duration-200 ease-out"
-        style={{ height: "var(--header-h)" }}
+        className="flex items-center gap-hmi-2 px-hmi-2 sm:px-hmi-3 transition-[height] duration-200 ease-out flex-nowrap overflow-hidden"
+        style={{ height: "var(--header-h)", maxHeight: "var(--header-h)" }}
       >
         <HeaderBrand />
         <HeaderCrumbs showBreadcrumb={showBreadcrumb} program={program} />
@@ -64,7 +67,7 @@ export function Titlebar({
       {program && !showBreadcrumb ? (
         <div
           data-app-shell-row="breadcrumb"
-          className="flex min-w-0 items-center gap-hmi-2 border-t border-ca-border/60 bg-ca-bg/40 px-hmi-3 py-1 sm:hidden"
+          className="flex min-w-0 items-center gap-hmi-2 border-t border-ca-border/60 bg-ca-bg/40 px-hmi-3 py-1 sm:hidden flex-nowrap overflow-hidden"
         >
           <span aria-hidden className="text-ca-ink-muted">
             /

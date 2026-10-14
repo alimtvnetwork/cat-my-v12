@@ -68,7 +68,13 @@ interface NavigationItem {
 
 const CORE_NAV_ITEMS: NavigationItem[] = [
   { key: "home", label: "Home", href: "/", icon: Home },
-  { key: "projects", label: "Project", href: "/projects", icon: FolderKanban, tour: "standard-project-nav" },
+  {
+    key: "projects",
+    label: "Project",
+    href: "/projects",
+    icon: FolderKanban,
+    tour: "standard-project-nav",
+  },
   { key: "analyze", label: "Analyzer", href: "/analyze", icon: Zap },
   { key: "setup", label: "Setup", href: "/setup", icon: Wrench },
   { key: "rules", label: "Rules", href: "/setup/rules", icon: Sliders },
@@ -135,7 +141,10 @@ export function StandardAppShell({
       return true;
     }
 
-    if (key === "test" && (pathname.startsWith("/trial-run") || pathname.startsWith("/ai-testing"))) {
+    if (
+      key === "test" &&
+      (pathname.startsWith("/trial-run") || pathname.startsWith("/ai-testing"))
+    ) {
       return true;
     }
 
@@ -166,8 +175,7 @@ export function StandardAppShell({
     return false;
   };
 
-  const currentNav =
-    ALL_NAV_ITEMS.find((item) => getNavActive(item.key)) ?? CORE_NAV_ITEMS[0];
+  const currentNav = ALL_NAV_ITEMS.find((item) => getNavActive(item.key)) ?? CORE_NAV_ITEMS[0];
   const CurrentNavIcon = currentNav.icon;
 
   return (
@@ -181,16 +189,23 @@ export function StandardAppShell({
         data-app-shell="true"
         data-density={density}
         className={cn(
-          "flex items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl",
+          "flex items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl flex-nowrap overflow-hidden",
           density === "compact"
             ? "h-[33px] min-h-[33px] max-h-[33px]"
             : "h-[41px] min-h-[41px] max-h-[41px]",
         )}
+        style={{
+          height: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
+          maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
+        }}
       >
         <div
           data-app-shell-row="top"
           className="flex h-full items-center gap-2 sm:gap-2.5 min-w-0 flex-nowrap overflow-hidden"
-          style={{ height: "var(--header-h, 40px)", maxHeight: "var(--header-h, 40px)" }}
+          style={{
+            height: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
+            maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
+          }}
         >
           {/* Brand Wordmark */}
           <Link
@@ -240,11 +255,16 @@ export function StandardAppShell({
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
                             ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
-                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white",
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <ItemIcon className={cn("h-3.5 w-3.5", isCurrentActive ? "text-cyan-300" : "text-slate-400")} />
+                          <ItemIcon
+                            className={cn(
+                              "h-3.5 w-3.5",
+                              isCurrentActive ? "text-cyan-300" : "text-slate-400",
+                            )}
+                          />
                           <span>{item.label}</span>
                         </div>
                         {isCurrentActive && (
@@ -276,11 +296,16 @@ export function StandardAppShell({
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
                             ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
-                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white",
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <ItemIcon className={cn("h-3.5 w-3.5", isCurrentActive ? "text-cyan-300" : "text-slate-400")} />
+                          <ItemIcon
+                            className={cn(
+                              "h-3.5 w-3.5",
+                              isCurrentActive ? "text-cyan-300" : "text-slate-400",
+                            )}
+                          />
                           <span>{item.label}</span>
                         </div>
                         {isCurrentActive && (
@@ -312,13 +337,12 @@ export function StandardAppShell({
           </Link>
 
           {/* Upper Bar Concise Sitemap */}
-          <div className="hidden lg:flex items-center ml-2">
+          <div className="hidden lg:flex items-center ml-2 min-w-0 flex-nowrap overflow-hidden">
             <GlobalSitemapBar />
           </div>
         </div>
 
-
-        <div className="flex h-full items-center gap-2 sm:gap-3 shrink-0 ml-2">
+        <div className="flex h-full items-center gap-2 sm:gap-3 shrink-0 ml-2 flex-nowrap overflow-hidden">
           <UiModeSwitch />
           <button
             type="button"
@@ -347,7 +371,9 @@ export function StandardAppShell({
       )}
 
       {/* Main Content Area */}
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden hmi-cad-grid-bg">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden hmi-cad-grid-bg">
+        {children}
+      </main>
     </div>
   );
 }

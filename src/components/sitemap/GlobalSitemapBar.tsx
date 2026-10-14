@@ -122,7 +122,15 @@ export function GlobalSitemapBar(): React.JSX.Element {
     }
 
     return trail;
-  }, [pathname, activeProjectId, activeRulesetId, activeRuleId, project, activeRuleset, activeRule]);
+  }, [
+    pathname,
+    activeProjectId,
+    activeRulesetId,
+    activeRuleId,
+    project,
+    activeRuleset,
+    activeRule,
+  ]);
 
   const currentTitle = useMemo(() => {
     const lastCrumb = crumbs[crumbs.length - 1];
@@ -207,7 +215,7 @@ export function GlobalSitemapBar(): React.JSX.Element {
     <nav
       aria-label="Breadcrumb"
       data-testid="global-sitemap-bar"
-      className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2 select-none"
+      className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2 select-none flex-nowrap overflow-hidden"
     >
       <span className="sr-only">{fullLabel}</span>
 
@@ -219,9 +227,16 @@ export function GlobalSitemapBar(): React.JSX.Element {
           title={`Restore previous view: ${previousSnapshot.title}`}
           className="group inline-flex shrink-0 items-center gap-1 rounded-md border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-orange-500/10 px-1.5 py-0.5 text-xs font-semibold text-amber-200 transition-all hover:border-amber-400 hover:from-amber-500/25 hover:to-orange-500/20 hover:text-white active:scale-95 shadow-sm cursor-pointer"
         >
-          <ArrowLeft size={11} className="transition-transform group-hover:-translate-x-0.5 text-amber-300" />
-          <span className="hidden xl:inline text-[9px] uppercase font-mono tracking-wider text-amber-300/90">Back:</span>
-          <span className="max-w-[70px] sm:max-w-[100px] truncate text-[10px] text-amber-100">{previousSnapshot.title}</span>
+          <ArrowLeft
+            size={11}
+            className="transition-transform group-hover:-translate-x-0.5 text-amber-300"
+          />
+          <span className="hidden xl:inline text-[9px] uppercase font-mono tracking-wider text-amber-300/90">
+            Back:
+          </span>
+          <span className="max-w-[70px] sm:max-w-[100px] truncate text-[10px] text-amber-100">
+            {previousSnapshot.title}
+          </span>
         </button>
       ) : null}
 
@@ -296,7 +311,10 @@ export function GlobalSitemapBar(): React.JSX.Element {
                   className="group inline-flex min-w-0 shrink items-center gap-1 rounded-md border border-transparent px-1.5 py-0.5 text-xs font-medium text-slate-300 transition-all hover:border-white/10 hover:bg-white/[0.08] hover:text-white cursor-pointer"
                 >
                   {!isCollapsed && index === 0 ? (
-                    <Home size={12} className="shrink-0 text-cyan-400/70 group-hover:text-cyan-300" />
+                    <Home
+                      size={12}
+                      className="shrink-0 text-cyan-400/70 group-hover:text-cyan-300"
+                    />
                   ) : null}
                   <span className="truncate max-w-[70px] sm:max-w-[100px]">{crumb.label}</span>
                 </button>
@@ -314,7 +332,10 @@ export function GlobalSitemapBar(): React.JSX.Element {
             title="Sitemap Index & State Cache"
             className="group inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-2 py-0.5 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-400/50 hover:bg-white/[0.08] hover:text-white active:scale-95 shadow-sm cursor-pointer"
           >
-            <Compass size={13} className="text-cyan-400 transition-transform group-hover:rotate-45" />
+            <Compass
+              size={13}
+              className="text-cyan-400 transition-transform group-hover:rotate-45"
+            />
             <span className="hidden xl:inline tracking-wide text-[11px]">Sitemap</span>
             {historyTrail.length > 0 ? (
               <span className="rounded-full bg-cyan-500/20 border border-cyan-400/30 px-1.5 py-0.2 font-mono text-[9px] text-cyan-300">
@@ -324,262 +345,262 @@ export function GlobalSitemapBar(): React.JSX.Element {
           </button>
         </PopoverTrigger>
 
-          <PopoverContent
-            align="end"
-            sideOffset={8}
-            className="w-[420px] max-w-[95vw] rounded-2xl border border-white/[0.12] bg-[#07090f]/95 p-4 text-xs font-sans text-white shadow-[0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-2xl"
-          >
-            {/* Popover Header */}
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
-                  <Compass size={15} />
-                </span>
-                <div>
-                  <h3 className="font-display text-sm font-bold text-white">Application Sitemap</h3>
-                  <p className="font-mono text-[10px] text-white/50">
-                    Instant topology jump · Cached state restore
-                  </p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                {historyTrail.length} Views Cached
+        <PopoverContent
+          align="end"
+          sideOffset={8}
+          className="w-[420px] max-w-[95vw] rounded-2xl border border-white/[0.12] bg-[#07090f]/95 p-4 text-xs font-sans text-white shadow-[0_16px_48px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-2xl"
+        >
+          {/* Popover Header */}
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
+                <Compass size={15} />
               </span>
+              <div>
+                <h3 className="font-display text-sm font-bold text-white">Application Sitemap</h3>
+                <p className="font-mono text-[10px] text-white/50">
+                  Instant topology jump · Cached state restore
+                </p>
+              </div>
             </div>
 
-            {/* Tree Sections */}
-            <div className="mt-3 max-h-[420px] space-y-4 overflow-y-auto pr-1">
-              {/* Section 1: Main Application Suites */}
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              {historyTrail.length} Views Cached
+            </span>
+          </div>
+
+          {/* Tree Sections */}
+          <div className="mt-3 max-h-[420px] space-y-4 overflow-y-auto pr-1">
+            {/* Section 1: Main Application Suites */}
+            <div>
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Core Workspaces
+              </h4>
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <Link
+                  to="/"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <Home size={14} className="text-cyan-400" />
+                  <span className="font-semibold text-white/90">Home Launcher</span>
+                </Link>
+
+                <Link
+                  to="/projects"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <FolderKanban size={14} className="text-sky-400" />
+                  <span className="font-semibold text-white/90">Projects Hub</span>
+                </Link>
+
+                <Link
+                  to="/analyze"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <Zap size={14} className="text-amber-400" />
+                  <span className="font-semibold text-white/90">Workpiece Analyzer</span>
+                </Link>
+
+                <Link
+                  to="/run"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <Play size={14} className="text-emerald-400" />
+                  <span className="font-semibold text-white/90">Production Run</span>
+                </Link>
+
+                <Link
+                  to="/setup"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <Wrench size={14} className="text-indigo-400" />
+                  <span className="font-semibold text-white/90">Hardware Setup</span>
+                </Link>
+
+                <Link
+                  to="/settings"
+                  onClick={() => setIsPopoverOpen(false)}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+                >
+                  <Settings size={14} className="text-purple-400" />
+                  <span className="font-semibold text-white/90">System Settings</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Section 2: Active Project Views (If Project Bound) */}
+            {hasActiveProject && project ? (
               <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-                  Core Workspaces
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                    Active Project: {project.name}
+                  </h4>
+                  <span className="font-mono text-[9px] text-white/40">
+                    ID: #{project.id.slice(0, 8)}
+                  </span>
+                </div>
+
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                   <Link
-                    to="/"
+                    to="/projects/$projectId"
+                    params={{ projectId: project.id }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <Home size={14} className="text-cyan-400" />
-                    <span className="font-semibold text-white/90">Home Launcher</span>
+                    <Layers size={13} className="text-cyan-400" />
+                    <span>Project Overview</span>
                   </Link>
 
                   <Link
-                    to="/projects"
+                    to="/projects/$projectId/rulesets"
+                    params={{ projectId: project.id }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <FolderKanban size={14} className="text-sky-400" />
-                    <span className="font-semibold text-white/90">Projects Hub</span>
+                    <ScanSearch size={13} className="text-cyan-400" />
+                    <span>Rulesets ({rulesets.length})</span>
                   </Link>
 
                   <Link
-                    to="/analyze"
+                    to="/projects/$projectId/camera"
+                    params={{ projectId: project.id }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <Zap size={14} className="text-amber-400" />
-                    <span className="font-semibold text-white/90">Workpiece Analyzer</span>
+                    <Camera size={13} className="text-sky-400" />
+                    <span>Camera & Optics</span>
                   </Link>
 
                   <Link
-                    to="/run"
+                    to="/projects/$projectId/trial-run"
+                    params={{ projectId: project.id }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <Play size={14} className="text-emerald-400" />
-                    <span className="font-semibold text-white/90">Production Run</span>
+                    <TestTube2 size={13} className="text-emerald-400" />
+                    <span>Trial Testing</span>
                   </Link>
 
                   <Link
-                    to="/setup"
+                    to="/projects/$projectId/runs"
+                    params={{ projectId: project.id }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <Wrench size={14} className="text-indigo-400" />
-                    <span className="font-semibold text-white/90">Hardware Setup</span>
+                    <Activity size={13} className="text-indigo-400" />
+                    <span>Execution Runs</span>
                   </Link>
 
                   <Link
-                    to="/settings"
+                    to="/projects/$projectId/ai-testing"
+                    params={{ projectId: project.id }}
+                    search={{ rulesetId: undefined }}
                     onClick={() => setIsPopoverOpen(false)}
                     className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
                   >
-                    <Settings size={14} className="text-purple-400" />
-                    <span className="font-semibold text-white/90">System Settings</span>
+                    <Sparkles size={13} className="text-fuchsia-400" />
+                    <span>AI Verification</span>
                   </Link>
+                </div>
+
+                {/* Rulesets Deep Links */}
+                {rulesets.length > 0 ? (
+                  <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/40 p-2.5">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-white/50">
+                      Ruleset Pipelines
+                    </div>
+                    <div className="mt-1.5 space-y-1">
+                      {rulesets.map((r) => {
+                        const isSelected = activeRulesetId === r.id;
+
+                        return (
+                          <Link
+                            key={r.id}
+                            to="/projects/$projectId/rulesets/$rulesetId"
+                            params={{
+                              projectId: project.id,
+                              rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
+                            }}
+                            onClick={() => setIsPopoverOpen(false)}
+                            className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition ${
+                              isSelected
+                                ? "border border-cyan-400/40 bg-cyan-500/20 text-cyan-200"
+                                : "text-white/70 hover:bg-white/[0.05] hover:text-white"
+                            }`}
+                          >
+                            <span className="font-semibold">{r.name}</span>
+                            <span className="font-mono text-[10px] text-white/40">
+                              {r.rules.length} tools
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Section 3: Recent Navigation State Cache Trail */}
+            {historyTrail.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-between">
+                  <h4 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                    <History size={11} />
+                    <span>Cached State History Trail</span>
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={clearCache}
+                    className="text-[10px] text-white/40 hover:text-rose-400"
+                  >
+                    Clear Cache
+                  </button>
+                </div>
+
+                <div className="mt-1.5 space-y-1">
+                  {historyTrail.slice(0, 6).map((entry) => {
+                    const isCurrent = entry.pathname === pathname;
+
+                    return (
+                      <button
+                        key={`${entry.pathname}-${entry.timestamp}`}
+                        type="button"
+                        onClick={() => {
+                          setIsPopoverOpen(false);
+                          void navigate({
+                            to: entry.pathname as any,
+                            search: entry.searchParams as any,
+                          });
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
+                          isCurrent
+                            ? "border border-cyan-400/30 bg-cyan-500/10 text-cyan-200"
+                            : "border border-white/5 bg-white/[0.01] text-white/70 hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        <span className="truncate max-w-[240px] font-medium">{entry.title}</span>
+                        <span className="font-mono text-[9px] text-white/40">
+                          {new Date(entry.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Section 2: Active Project Views (If Project Bound) */}
-              {hasActiveProject && project ? (
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
-                      Active Project: {project.name}
-                    </h4>
-                    <span className="font-mono text-[9px] text-white/40">
-                      ID: #{project.id.slice(0, 8)}
-                    </span>
-                  </div>
-
-                  <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-                    <Link
-                      to="/projects/$projectId"
-                      params={{ projectId: project.id }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <Layers size={13} className="text-cyan-400" />
-                      <span>Project Overview</span>
-                    </Link>
-
-                    <Link
-                      to="/projects/$projectId/rulesets"
-                      params={{ projectId: project.id }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <ScanSearch size={13} className="text-cyan-400" />
-                      <span>Rulesets ({rulesets.length})</span>
-                    </Link>
-
-                    <Link
-                      to="/projects/$projectId/camera"
-                      params={{ projectId: project.id }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <Camera size={13} className="text-sky-400" />
-                      <span>Camera & Optics</span>
-                    </Link>
-
-                    <Link
-                      to="/projects/$projectId/trial-run"
-                      params={{ projectId: project.id }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <TestTube2 size={13} className="text-emerald-400" />
-                      <span>Trial Testing</span>
-                    </Link>
-
-                    <Link
-                      to="/projects/$projectId/runs"
-                      params={{ projectId: project.id }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <Activity size={13} className="text-indigo-400" />
-                      <span>Execution Runs</span>
-                    </Link>
-
-                    <Link
-                      to="/projects/$projectId/ai-testing"
-                      params={{ projectId: project.id }}
-                      search={{ rulesetId: undefined }}
-                      onClick={() => setIsPopoverOpen(false)}
-                      className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-                    >
-                      <Sparkles size={13} className="text-fuchsia-400" />
-                      <span>AI Verification</span>
-                    </Link>
-                  </div>
-
-                  {/* Rulesets Deep Links */}
-                  {rulesets.length > 0 ? (
-                    <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/40 p-2.5">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-white/50">
-                        Ruleset Pipelines
-                      </div>
-                      <div className="mt-1.5 space-y-1">
-                        {rulesets.map((r) => {
-                          const isSelected = activeRulesetId === r.id;
-
-                          return (
-                            <Link
-                              key={r.id}
-                              to="/projects/$projectId/rulesets/$rulesetId"
-                              params={{
-                                projectId: project.id,
-                                rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
-                              }}
-                              onClick={() => setIsPopoverOpen(false)}
-                              className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition ${
-                                isSelected
-                                  ? "border border-cyan-400/40 bg-cyan-500/20 text-cyan-200"
-                                  : "text-white/70 hover:bg-white/[0.05] hover:text-white"
-                              }`}
-                            >
-                              <span className="font-semibold">{r.name}</span>
-                              <span className="font-mono text-[10px] text-white/40">
-                                {r.rules.length} tools
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {/* Section 3: Recent Navigation State Cache Trail */}
-              {historyTrail.length > 0 ? (
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h4 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
-                      <History size={11} />
-                      <span>Cached State History Trail</span>
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={clearCache}
-                      className="text-[10px] text-white/40 hover:text-rose-400"
-                    >
-                      Clear Cache
-                    </button>
-                  </div>
-
-                  <div className="mt-1.5 space-y-1">
-                    {historyTrail.slice(0, 6).map((entry) => {
-                      const isCurrent = entry.pathname === pathname;
-
-                      return (
-                        <button
-                          key={`${entry.pathname}-${entry.timestamp}`}
-                          type="button"
-                          onClick={() => {
-                            setIsPopoverOpen(false);
-                            void navigate({
-                              to: entry.pathname as any,
-                              search: entry.searchParams as any,
-                            });
-                          }}
-                          className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
-                            isCurrent
-                              ? "border border-cyan-400/30 bg-cyan-500/10 text-cyan-200"
-                              : "border border-white/5 bg-white/[0.01] text-white/70 hover:bg-white/[0.05] hover:text-white"
-                          }`}
-                        >
-                          <span className="truncate max-w-[240px] font-medium">{entry.title}</span>
-                          <span className="font-mono text-[9px] text-white/40">
-                            {new Date(entry.timestamp).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </PopoverContent>
-        </Popover>
+            ) : null}
+          </div>
+        </PopoverContent>
+      </Popover>
     </nav>
   );
 }
