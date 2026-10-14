@@ -3,13 +3,16 @@ import { defaultSampleUrl } from "@/lib/editor/sample-library";
 import { getReferenceImage, subscribe } from "@/lib/stores/reference-image-store";
 
 export interface MachineFrameProps {
+  isLive?: boolean;
   live?: boolean;
 }
 
 const PANEL_X = [118, 334, 550, 766, 982];
 
-export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Element | null {
+export function MachineFrame({ isLive, live = false }: MachineFrameProps): React.JSX.Element | null {
+  const isRunningLive = isLive ?? live;
   const [src, setSrc] = useState<string>(() => getReferenceImage() ?? defaultSampleUrl);
+
   useEffect(() => subscribe((next) => setSrc(next ?? defaultSampleUrl)), []);
 
   return (
@@ -18,16 +21,19 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
         src={src}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-70"
+        className="absolute inset-0 h-full w-full object-cover opacity-70 filter contrast-[1.05]"
       />
+
+      {/* Cyber-industrial vignette gradient */}
+      <div className="pointer-events-none absolute inset-0 bg-radial from-transparent via-ca-viewport/30 to-ca-viewport/80" />
 
       <svg
         className="relative h-full w-full"
         viewBox="0 0 1200 700"
         preserveAspectRatio="xMidYMid slice"
       >
-        <rect width="1200" height="700" fill="var(--ca-viewport)" opacity="0.35" />
-        <g opacity="0.18" stroke="var(--ca-ink-muted)" strokeWidth="1">
+        <rect width="1200" height="700" fill="var(--ca-viewport)" opacity="0.3" />
+        <g opacity="0.14" stroke="var(--ca-ink-muted)" strokeWidth="1">
           {Array.from({ length: 18 }, (_, i) => (
             <line key={`v-${i}`} x1={i * 72} y1="0" x2={i * 72} y2="700" />
           ))}
@@ -36,6 +42,7 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
           ))}
         </g>
 
+        {/* Carrier rails and PCB stage */}
         <g transform="translate(0 48)">
           <rect x="62" y="174" width="1076" height="272" fill="var(--ca-panel)" opacity="0.86" />
           <rect
@@ -47,8 +54,8 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
             stroke="var(--ca-border)"
             strokeWidth="2"
           />
-          <rect x="78" y="204" width="1044" height="18" fill="var(--ca-ink-muted)" opacity="0.28" />
-          <rect x="78" y="396" width="1044" height="16" fill="var(--ca-ink-muted)" opacity="0.24" />
+          <rect x="78" y="204" width="1044" height="18" fill="var(--ca-ink-muted)" opacity="0.22" />
+          <rect x="78" y="396" width="1044" height="16" fill="var(--ca-ink-muted)" opacity="0.18" />
           <rect x="78" y="236" width="1044" height="2" fill="var(--ca-border)" />
           <rect x="78" y="378" width="1044" height="2" fill="var(--ca-border)" />
 
@@ -61,7 +68,7 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
                 height="104"
                 rx="3"
                 fill="var(--ca-bg)"
-                opacity="0.72"
+                opacity="0.75"
               />
               <rect
                 x={x + 10}
@@ -70,8 +77,10 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
                 height="84"
                 rx="2"
                 fill="none"
-                stroke="var(--ca-border)"
-                strokeWidth="3"
+                stroke={i === 2 ? "var(--ca-primary)" : "var(--ca-border)"}
+                strokeWidth={i === 2 ? "2" : "1.5"}
+                strokeDasharray={i === 2 ? "none" : "4 2"}
+                opacity={i === 2 ? 0.9 : 0.6}
               />
               <circle cx={x - 42} cy="306" r="29" fill="var(--ca-viewport)" opacity="0.92" />
               <circle
@@ -85,14 +94,15 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
             </g>
           ))}
 
-          <g opacity="0.22" stroke="var(--ca-ink-muted)" strokeWidth="1">
+          <g opacity="0.2" stroke="var(--ca-ink-muted)" strokeWidth="1">
             {Array.from({ length: 34 }, (_, i) => (
               <line key={i} x1={86 + i * 30} y1="184" x2={102 + i * 30} y2="444" />
             ))}
           </g>
         </g>
 
-        <g opacity="0.8" stroke="var(--ca-primary)" strokeWidth="2">
+        {/* Optical alignment ticks */}
+        <g opacity="0.85" stroke="var(--ca-primary)" strokeWidth="2">
           <line x1="116" y1="104" x2="246" y2="104" />
           <line x1="332" y1="104" x2="462" y2="104" />
           <line x1="548" y1="104" x2="678" y2="104" />
@@ -105,16 +115,18 @@ export function MachineFrame({ live = false }: MachineFrameProps): React.JSX.Ele
           <line x1="980" y1="596" x2="1110" y2="596" />
         </g>
 
-        {live ? (
-          <rect
-            className="hmi-frame-scanline"
-            x="0"
-            y="132"
-            width="1200"
-            height="3"
-            fill="var(--ca-primary)"
-            opacity="0.55"
-          />
+        {isRunningLive ? (
+          <g>
+            <rect
+              className="hmi-frame-scanline"
+              x="0"
+              y="132"
+              width="1200"
+              height="4"
+              fill="var(--ca-primary)"
+              opacity="0.75"
+            />
+          </g>
         ) : null}
       </svg>
     </div>

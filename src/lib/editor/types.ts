@@ -25,7 +25,7 @@ export interface EditorRect {
   height: number;
 }
 
-export type EditorRuleParams = Record<string, string | number | boolean>;
+export type EditorRuleParams = Record<string, any>;
 
 export interface RuleCameraSettings {
   exposureUs: number;

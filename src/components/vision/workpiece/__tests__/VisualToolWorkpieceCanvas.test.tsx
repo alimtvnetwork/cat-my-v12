@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("VisualToolWorkpieceCanvas", () => {
-  it("renders with default props and shows auto-inspection readout without ROI", () => {
+  it("renders with default props and shows inspection readout without ROI", () => {
     render(
       <VisualToolWorkpieceCanvas
         roi={{ x: 100, y: 120, width: 200, height: 180 }}
@@ -19,7 +19,7 @@ describe("VisualToolWorkpieceCanvas", () => {
       />,
     );
 
-    expect(screen.getByText(/Auto-Inspection:/)).toBeTruthy();
+    expect(screen.getByText(/Inspection:/)).toBeTruthy();
     expect(screen.queryByText(/Visual ROI:/)).toBeNull();
     expect(screen.getByText(/24 Pattern Elements/)).toBeTruthy();
     expect(screen.getAllByText(/Greyscale Pattern Matching/).length).toBeGreaterThanOrEqual(1);
@@ -211,12 +211,12 @@ describe("VisualToolWorkpieceCanvas", () => {
       />,
     );
 
-    expect(screen.getByText(/Auto-Inspection:/)).toBeTruthy();
+    expect(screen.getByText(/Inspection:/)).toBeTruthy();
     expect(screen.getAllByText(/Greyscale Pattern Matching/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/24 Pattern Elements/)).toBeTruthy();
   });
 
-  it("renders auto-analysis mode without ROI controls or HUD inputs", () => {
+  it("renders manual analysis mode without ROI controls or HUD inputs", () => {
     render(
       <VisualToolWorkpieceCanvas
         roi={{ x: 100, y: 100, width: 200, height: 200 }}
@@ -228,9 +228,9 @@ describe("VisualToolWorkpieceCanvas", () => {
       />,
     );
 
-    // Auto-analysis banner displayed
-    expect(screen.getByText(/Auto-Analysis:/i)).toBeTruthy();
-    expect(screen.getByText(/Full Picture Auto-Analyzed/i)).toBeTruthy();
+    // Manual analysis banner displayed
+    expect(screen.getByText(/Analysis:/i)).toBeTruthy();
+    expect(screen.getByText(/Ready for Manual Run/i)).toBeTruthy();
 
     // Manual ROI HUD controls are hidden
     expect(screen.queryByText(/Visual ROI:/i)).toBeNull();

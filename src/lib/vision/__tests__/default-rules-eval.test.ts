@@ -29,8 +29,14 @@ describe("Default Rules Inspection Accuracy", () => {
       params: {
         toolCode: "T117",
         toolType: "Pin 1 Orientation Config",
+        tolerancePx: 60,
+        searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+        packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         pin1Config: {
           registeredPin1: { x: 249, y: 264, radius: 24, confidence: 1.0 },
+          searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+          packageRegion: { x: 200, y: 160, width: 500, height: 300 },
+          tolerancePx: 60,
         } as any,
       },
     };
@@ -42,19 +48,24 @@ describe("Default Rules Inspection Accuracy", () => {
       family: EditorToolFamilyType.Rect,
       isHidden: false,
       isLocked: false,
-      x: 350,
-      y: 220,
-      width: 350,
-      height: 180,
+      x: 100,
+      y: 70,
+      width: 760,
+      height: 400,
       params: {
         toolCode: "T116",
         toolType: "Greyscale Pattern Matching",
         activeBoxCount: 24,
         totalBoxCount: 24,
-        threshold: 170,
-        tolerancePx: 8,
+        threshold: 110,
+        tolerancePx: 12,
         marginPx: 8,
-        constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES),
+        minMatchPercent: 80,
+        lumaTolerance: 255,
+        searchRegion: { x: 100, y: 70, width: 760, height: 400 },
+        patternRegion: { x: 150, y: 100, width: 600, height: 300 },
+        referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
+        constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }))),
       },
     };
 
@@ -81,7 +92,7 @@ describe("Default Rules Inspection Accuracy", () => {
     expect(res1.status).toBe("pass");
 
     const res2 = evaluateWorkpieceRuleReal(r2, img);
-    console.log("Pattern Result:", res2);
+    console.log("Pattern Result debug boxes:", res2.debug?.boxResults?.slice(0, 5));
     expect(res2.status).toBe("pass");
 
     const res3 = evaluateWorkpieceRuleReal(r3, img);

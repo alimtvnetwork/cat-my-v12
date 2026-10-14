@@ -37,17 +37,22 @@ export function HeaderBrand(): React.JSX.Element | null {
         aria-label="Home"
         title="Home"
         preload="intent"
-        className="hmi-focus-ring group flex min-w-0 shrink items-center gap-hmi-2 rounded-md px-1.5 py-1 transition-colors duration-150 hover:bg-ca-select/50 active:bg-ca-select/70"
+        className="hmi-focus-ring group relative flex min-w-0 shrink items-center gap-2.5 rounded-xl border border-ca-border/80 bg-ca-panel/85 px-3 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/60 hover:bg-ca-panel-2 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
       >
-        <span
-          aria-hidden
-          className="inline-block h-2 w-2 rounded-full bg-ca-ok transition-transform duration-200 group-hover:scale-110"
-          style={{ boxShadow: "0 0 10px currentColor" }}
-        />
-        <span className="hidden min-w-0 truncate text-hmi-body font-semibold tracking-tight sm:inline">
+        <span className="relative flex h-3 w-3 items-center justify-center">
+          <span
+            aria-hidden
+            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ca-primary opacity-60 duration-1000"
+          />
+          <span
+            aria-hidden
+            className="relative inline-block h-2 w-2 rounded-full bg-ca-primary shadow-[0_0_10px_var(--ca-primary),0_0_3px_#fff]"
+          />
+        </span>
+        <span className="hidden min-w-0 truncate text-hmi-body font-bold tracking-tight text-ca-ink sm:inline">
           Control Automation
         </span>
-        <span className="text-hmi-body font-semibold tracking-tight sm:hidden" aria-hidden>
+        <span className="text-hmi-body font-bold tracking-tight text-ca-ink sm:hidden" aria-hidden>
           CA
         </span>
       </Link>
@@ -132,11 +137,11 @@ function CommandPaletteTrigger() {
       onClick={() => window.dispatchEvent(new CustomEvent("command-palette:toggle"))}
       title="Command palette"
       aria-label="Open command palette"
-      className="hmi-focus-ring inline-flex h-7 items-center gap-2 rounded-full border border-ca-border bg-ca-panel/70 px-2.5 text-hmi-caption text-ca-ink-muted transition-colors hover:border-[color-mix(in_oklab,var(--ca-primary)_55%,var(--ca-border))] hover:bg-[color-mix(in_oklab,var(--ca-primary)_14%,var(--ca-panel))] hover:text-ca-chrome-ink"
+      className="hmi-focus-ring group relative inline-flex h-7 items-center gap-2 rounded-full border border-ca-border/80 bg-ca-panel/85 px-3 text-hmi-caption text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 hover:text-ca-ink hover:shadow-[0_0_14px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
     >
-      <SearchIcon aria-hidden size={13} />
-      <span className="hidden sm:inline">Search</span>
-      <kbd className="ml-1 hidden rounded border border-ca-border/80 bg-ca-bg/60 px-1 py-[1px] text-[10px] font-mono text-ca-ink-muted sm:inline">
+      <SearchIcon aria-hidden size={13} className="text-ca-ink-muted transition-colors duration-200 group-hover:text-ca-primary" />
+      <span className="hidden sm:inline font-medium tracking-tight">Search</span>
+      <kbd className="ml-1 hidden rounded-md border border-ca-border/80 bg-ca-panel px-1.5 py-[0.5px] text-[10px] font-mono font-semibold text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] transition-colors group-hover:border-ca-primary/40 group-hover:text-ca-primary sm:inline">
         {combo}
       </kbd>
     </button>

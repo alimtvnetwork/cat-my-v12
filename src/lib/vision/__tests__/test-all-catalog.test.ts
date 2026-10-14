@@ -1,6 +1,7 @@
 import { describe, it } from "vitest";
 import { loadWorkpieceImageData, evaluateWorkpieceRuleReal } from "../workpiece-rule-analyzer";
 import { VISION_TOOL_CATALOG } from "../tool-catalog";
+import { DEFAULT_24_PATTERN_BOXES } from "../white-box-marking";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 
 describe("Catalog Rules on filled image", () => {
@@ -46,16 +47,27 @@ describe("Catalog Rules on filled image", () => {
           constellationJson: "[]",
           ...tool.defaultParamValues,
           ...(tool.code === "T102" || tool.code === "T116" || tool.name.toLowerCase().includes("pattern")
-            ? { minMatchPercent: 50 }
+            ? {
+                minMatchPercent: 80,
+                lumaTolerance: 255,
+                searchRegion: { x: 100, y: 70, width: 760, height: 400 },
+                patternRegion: { x: 150, y: 100, width: 600, height: 300 },
+                referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
+                constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }))),
+              }
             : {}),
           ...(tool.code === "T105" || tool.code === "T117"
             ? {
-                tolerancePx: 35,
-                thresholdLuma: 75,
+                tolerancePx: 60,
+                thresholdLuma: 35,
+                searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+                packageRegion: { x: 200, y: 160, width: 500, height: 300 },
                 pin1ConfigJson: JSON.stringify({
-                  registeredPin1: { x: 230, y: 236, radius: 18, confidence: 1.0 },
-                  tolerancePx: 35,
-                  thresholdLuma: 75,
+                  registeredPin1: { x: 249, y: 264, radius: 24, confidence: 1.0 },
+                  tolerancePx: 60,
+                  thresholdLuma: 35,
+                  searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+                  packageRegion: { x: 200, y: 160, width: 500, height: 300 },
                 }),
               }
             : {}),
@@ -111,16 +123,26 @@ describe("Catalog Rules on filled image", () => {
           constellationJson: "[]",
           ...tool.defaultParamValues,
           ...(tool.code === "T102" || tool.code === "T116" || tool.name.toLowerCase().includes("pattern")
-            ? { minMatchPercent: 50 }
+            ? {
+                minMatchPercent: 80,
+                searchRegion: { x: 100, y: 70, width: 760, height: 400 },
+                patternRegion: { x: 150, y: 100, width: 600, height: 300 },
+                referenceBoxes: DEFAULT_24_PATTERN_BOXES,
+                constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES),
+              }
             : {}),
           ...(tool.code === "T105" || tool.code === "T117"
             ? {
-                tolerancePx: 35,
-                thresholdLuma: 75,
+                tolerancePx: 60,
+                thresholdLuma: 35,
+                searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+                packageRegion: { x: 200, y: 160, width: 500, height: 300 },
                 pin1ConfigJson: JSON.stringify({
-                  registeredPin1: { x: 230, y: 236, radius: 18, confidence: 1.0 },
-                  tolerancePx: 35,
-                  thresholdLuma: 75,
+                  registeredPin1: { x: 249, y: 264, radius: 24, confidence: 1.0 },
+                  tolerancePx: 60,
+                  thresholdLuma: 35,
+                  searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+                  packageRegion: { x: 200, y: 160, width: 500, height: 300 },
                 }),
               }
             : {}),

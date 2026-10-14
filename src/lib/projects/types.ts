@@ -20,6 +20,8 @@ export interface Project {
    * hydrate untouched. Cleared via `setProjectCamera(id, null)`.
    */
   cameraSettingId?: string;
+  /** Project-level inspection image used only by the project analysis canvas. */
+  inspectionImageRef?: string;
   categoryNames?: string[];
   /**
    * Plan 79 step 44 (V4 Mics Settings binding): optional reference to a

@@ -54,85 +54,91 @@ function TrialRunResults() {
   const StatusIcon = run.verdict === "OK" ? CheckCircle2 : XCircle;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-6">
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#06080d] text-slate-100 font-sans antialiased p-6">
       <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-hmi-5">
+        <header className="mb-6">
           <Link
             to="/projects/$projectId/trial-run"
             params={{ projectId }}
-            className="inline-flex items-center gap-hmi-1 text-hmi-caption uppercase tracking-wide text-ca-ink-muted hover:text-ca-ink"
+            className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-slate-400 hover:text-cyan-400 transition-colors"
           >
-            <ArrowLeft aria-hidden size={14} /> Trial run
+            <ArrowLeft aria-hidden size={14} /> Back to Trial Run Console
           </Link>
-          <h1 className="mt-2 text-sm font-bold uppercase tracking-widest text-ca-ink">
-            Run results
+          <h1 className="mt-2 text-base font-bold uppercase tracking-widest text-slate-100 font-mono">
+            Execution Results & Telemetry
           </h1>
-          <p className="mt-1 text-xs text-ca-ink-muted">
+          <p className="mt-1 text-xs text-slate-400 font-mono">
             {ruleset.name} · {new Date(run.createdAt).toLocaleString()}
             {typeof run.durationMs === "number" ? ` · ${run.durationMs} ms` : ""}
           </p>
-          <p className="mt-1 text-[10px] text-[#555]">{run.id}</p>
+          <span className="mt-1.5 inline-block text-[10px] font-mono text-slate-400 bg-white/[0.03] px-2 py-0.5 rounded border border-white/[0.06]">
+            RUN // {run.id}
+          </span>
         </header>
 
         <section
           aria-label="Run summary"
-          className={`mb-6 flex items-center gap-4 border p-4 ${
-            run.verdict === "OK" ? "border-ca-ok/40 bg-ca-ok/5" : "border-ca-ng/40 bg-ca-ng/5"
+          className={`mb-6 flex items-center gap-5 rounded-2xl border p-5 backdrop-blur-xl ${
+            run.verdict === "OK"
+              ? "border-emerald-500/30 bg-emerald-950/20 shadow-[0_0_24px_rgba(16,185,129,0.15)]"
+              : "border-rose-500/30 bg-rose-950/20 shadow-[0_0_24px_rgba(244,63,94,0.15)]"
           }`}
         >
           <StatusIcon
             aria-hidden
             size={40}
-            className={run.verdict === "OK" ? "text-ca-ok" : "text-ca-ng"}
+            className={run.verdict === "OK" ? "text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.8)]" : "text-rose-400 drop-shadow-[0_0_12px_rgba(244,63,94,0.8)]"}
           />
           <div className="min-w-0">
             <p
-              className={`text-2xl font-bold uppercase tracking-wider ${
-                run.verdict === "OK" ? "text-ca-ok" : "text-ca-ng"
+              className={`text-2xl font-bold font-mono uppercase tracking-wider ${
+                run.verdict === "OK" ? "text-emerald-400" : "text-rose-400"
               }`}
             >
-              {run.verdict === "OK" ? "Pass" : "Fail"}
+              {run.verdict === "OK" ? "VERDICT: PASS" : "VERDICT: FAIL"}
             </p>
-            <p className="text-hmi-caption text-ca-ink-muted">
+            <p className="text-xs font-mono text-slate-400 mt-0.5">
               {okCount} passed, {ngCount} failed, of {run.results.length} rules · threshold{" "}
               {threshold.toFixed(2)}
             </p>
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-          <section aria-label="Outputs" className="border border-[#22252a] bg-[#111318]">
-            <header className="border-b border-[#22252a] bg-[#15171e] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
-              Outputs
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <section aria-label="Outputs" className="rounded-2xl border border-white/[0.08] bg-[#0a0d14]/85 overflow-hidden backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_12px_32px_-8px_rgba(0,0,0,0.6)]">
+            <header className="border-b border-white/[0.08] bg-white/[0.02] px-4 py-3 text-xs font-mono font-bold uppercase tracking-widest text-slate-400">
+              Evaluation Metrics
             </header>
             {run.results.length === 0 ? (
-              <p className="p-hmi-4 text-hmi-body text-ca-ink-muted">
+              <p className="p-6 text-xs font-mono text-slate-400">
                 No rules ran (all were hidden).
               </p>
             ) : (
-              <table className="w-full text-hmi-body">
+              <table className="w-full text-xs font-mono">
                 <thead>
-                  <tr className="border-b border-[#22252a] text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
-                    <th className="px-4 py-2 text-left">Rule</th>
-                    <th className="px-4 py-2 text-left">Kind</th>
-                    <th className="px-4 py-2 text-right">Score</th>
-                    <th className="px-4 py-2 text-right">Verdict</th>
+                  <tr className="border-b border-white/[0.08] text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white/[0.02]">
+                    <th className="px-4 py-2.5 text-left">Rule</th>
+                    <th className="px-4 py-2.5 text-left">Kind</th>
+                    <th className="px-4 py-2.5 text-right">Score</th>
+                    <th className="px-4 py-2.5 text-right">Verdict</th>
                   </tr>
                 </thead>
                 <tbody>
                   {run.results.map((r) => (
-                    <tr key={r.ruleId} className="border-b border-[#22252a] last:border-0">
-                      <td className="px-4 py-3 text-xs text-ca-ink font-bold">{r.ruleName}</td>
-                      <td className="px-4 py-3 text-xs text-ca-ink-muted">
+                    <tr key={r.ruleId} className="border-b border-white/[0.06] last:border-0 hover:bg-white/[0.02] transition-colors">
+                      <td className="px-4 py-3 text-xs text-slate-200 font-bold">{r.ruleName}</td>
+                      <td className="px-4 py-3 text-xs text-slate-400">
                         {editorKindLabel(r.kind)}
                       </td>
-                      <td className="px-4 py-3 text-xs text-right font-mono text-ca-ink">
+                      <td className="px-4 py-3 text-xs text-right font-mono text-slate-200">
                         {r.score.toFixed(3)}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="px-4 py-2.5 text-right">
                         <span
-                          className={`inline-flex items-center rounded-sm px-hmi-2 py-hmi-1 text-hmi-caption font-semibold ${
-                            r.verdict === "OK" ? "bg-ca-ok/10 text-ca-ok" : "bg-ca-ng/10 text-ca-ng"
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold tracking-wider ${
+                            r.verdict === "OK"
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.25)]"
+                              : "bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-[0_0_8px_rgba(244,63,94,0.25)]"
                           }`}
                         >
                           {r.verdict}
@@ -147,13 +153,15 @@ function TrialRunResults() {
 
           <aside
             aria-label="Logs"
-            className="flex min-h-0 flex-col border border-[#22252a] bg-[#000]"
+            className="rounded-2xl border border-white/[0.08] bg-[#050608] overflow-hidden flex min-h-0 flex-col shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_12px_32px_-8px_rgba(0,0,0,0.6)]"
           >
-            <header className="flex items-center justify-between border-b border-[#22252a] bg-[#111318] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-ca-ink-muted">
-              <span>Logs</span>
-              <span>{run.logs?.length ?? 0}</span>
+            <header className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-4 py-3 text-xs font-mono font-bold uppercase tracking-widest text-slate-400">
+              <span>Telemetry Logs</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                {run.logs?.length ?? 0} events
+              </span>
             </header>
-            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap p-4 font-mono text-xs text-[#0f0]">
+            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap p-4 font-mono text-xs text-emerald-400 leading-relaxed">
               {(run.logs ?? ["No logs captured for this run."]).join("\n")}
             </pre>
           </aside>
@@ -162,15 +170,15 @@ function TrialRunResults() {
         {run.imageRef ? (
           <section
             aria-label="Image"
-            className="mt-hmi-5 rounded-lg border border-ca-border bg-ca-panel p-hmi-3"
+            className="mt-6 rounded-2xl border border-white/[0.08] bg-[#0a0d14]/85 p-4 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_12px_32px_-8px_rgba(0,0,0,0.6)]"
           >
-            <p className="mb-hmi-2 text-hmi-caption uppercase tracking-wide text-ca-ink-muted">
-              Image
+            <p className="mb-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              Captured Workpiece Image
             </p>
             <img
               src={run.imageRef}
               alt="Trial run source"
-              className="mx-auto max-h-[60vh] w-auto rounded-sm border border-ca-border object-contain"
+              className="mx-auto max-h-[60vh] w-auto rounded-xl border border-white/[0.1] object-contain shadow-2xl"
             />
           </section>
         ) : null}

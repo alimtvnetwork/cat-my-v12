@@ -13,7 +13,7 @@ import { fromIntId } from "@/lib/rules/rule-id-alias";
 export const Route = createFileRoute("/projects/$projectId/rulesets/$rulesetId/rules/$ruleId")({
   component: RuleFallback,
   notFoundComponent: () => (
-    <div className="p-6 text-sm text-ca-fg-muted">
+    <div className="flex h-full w-full items-center justify-center p-6 text-xs font-mono text-slate-400 bg-[#06080d]">
       Rule not found. The link may be stale; open the rule from the ruleset page.
     </div>
   ),
@@ -37,7 +37,7 @@ function RuleFallback() {
   }
 
   return (
-    <div className="p-6 text-sm text-ca-fg-muted">
+    <div className="flex h-full w-full items-center justify-center p-6 text-xs font-mono text-slate-400 bg-[#06080d]">
       Rule not found. The link may be stale; open the rule from the ruleset page.
     </div>
   );

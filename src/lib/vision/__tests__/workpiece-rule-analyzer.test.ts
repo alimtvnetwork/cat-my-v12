@@ -16,6 +16,39 @@ import { DEFAULT_24_PATTERN_BOXES } from "../white-box-marking";
 
 const TEST_24_PATTERN_BOXES = DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }));
 
+function createPin1EvidenceImage(): WorkpieceImageData {
+  const width = 220;
+  const height = 160;
+  const rgba = new Uint8ClampedArray(width * height * 4);
+
+  for (let i = 0; i < width * height; i += 1) {
+    const idx = i * 4;
+    rgba[idx] = 112;
+    rgba[idx + 1] = 112;
+    rgba[idx + 2] = 112;
+    rgba[idx + 3] = 255;
+  }
+
+  const centerX = 64;
+  const centerY = 82;
+
+  for (let y = centerY - 7; y <= centerY + 7; y += 1) {
+    for (let x = centerX - 14; x <= centerX + 14; x += 1) {
+      const dx = (x - centerX) / 14;
+      const dy = (y - centerY) / 7;
+
+      if (dx * dx + dy * dy <= 1) {
+        const idx = (y * width + x) * 4;
+        rgba[idx] = 12;
+        rgba[idx + 1] = 12;
+        rgba[idx + 2] = 12;
+      }
+    }
+  }
+
+  return { width, height, rgba };
+}
+
 describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
   it("loads and normalizes reference workpiece image pixels to 960x540", async () => {
     const data = await loadWorkpieceImageData("src/assets/samples/pocket-1-filled.jpg");
@@ -173,6 +206,38 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     expect(res.message).toContain("FAIL");
   });
 
+  it("passes Pin 1 from registered pixel evidence even when the mark is not circular", () => {
+    const imgData = createPin1EvidenceImage();
+    const pin1Rule: any = {
+      id: "rule-pin1-oval-test",
+      name: "Pin 1 Orientation Config",
+      kind: EditorRuleKindType.C,
+      family: EditorToolFamilyType.Rect,
+      isHidden: false,
+      isLocked: false,
+      x: 35,
+      y: 52,
+      width: 60,
+      height: 60,
+      params: {
+        toolCode: "T117",
+        tolerancePx: 10,
+        pin1Config: {
+          thresholdLuma: 35,
+          registeredPin1: { x: 64, y: 82, radius: 8, centerX: 64, centerY: 82 },
+          searchRegion: { x: 35, y: 52, width: 60, height: 60 },
+          packageRegion: { x: 30, y: 40, width: 140, height: 90 },
+        },
+      },
+    };
+
+    const res = evaluatePin1Rule(pin1Rule, imgData, "Optical Test");
+
+    expect(res.status).toBe(ValidationStatusType.Pass);
+    expect(res.stub).toBe(false);
+    expect(res.debug?.hasRegisteredPixelEvidence).toBe(true);
+  });
+
   it("strictly FAILS Defect Matching on Empty Pocket image where component is absent", async () => {
     const imgData = await loadWorkpieceImageData("src/assets/samples/pocket-2-empty-mixed.jpg");
     expect(imgData).not.toBeNull();
@@ -313,6 +378,66 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     expect(res.status).toBe(ValidationStatusType.Pass);
     expect(res.debug?.matchedCount).toBe(2);
     expect(res.message).toContain("2/2 pattern marks matched reference");
+  });
+
+  it("passes bright saved greyscale boxes even when older rules lack expected luma", () => {
+    const width = 160;
+    const height = 100;
+    const rgba = new Uint8ClampedArray(width * height * 4);
+
+    for (let i = 0; i < rgba.length; i += 4) {
+      rgba[i] = 35;
+      rgba[i + 1] = 35;
+      rgba[i + 2] = 35;
+      rgba[i + 3] = 255;
+    }
+
+    const boxes = [
+      { boxNumber: 1, x: 32, y: 24, width: 20, height: 12, area: 240 },
+      { boxNumber: 2, x: 72, y: 24, width: 20, height: 12, area: 240 },
+      { boxNumber: 3, x: 112, y: 24, width: 20, height: 12, area: 240 },
+    ];
+
+    for (const box of boxes) {
+      for (let y = box.y; y < box.y + box.height; y += 1) {
+        for (let x = box.x; x < box.x + box.width; x += 1) {
+          const idx = (y * width + x) * 4;
+          rgba[idx] = 235;
+          rgba[idx + 1] = 235;
+          rgba[idx + 2] = 235;
+        }
+      }
+    }
+
+    const imgData: WorkpieceImageData = { width, height, rgba };
+    const patternRule: any = {
+      id: "rule-pattern-no-luma",
+      name: "Greyscale Pattern Match",
+      kind: EditorRuleKindType.C,
+      family: EditorToolFamilyType.Rect,
+      isHidden: false,
+      isLocked: false,
+      x: 20,
+      y: 15,
+      width: 125,
+      height: 35,
+      params: {
+        toolCode: "T116",
+        threshold: 170,
+        minMatchPercent: 100,
+        minPresenceLuma: 25,
+        searchRegion: { shape: "rectangle", geometry: { x: 20, y: 15, width: 125, height: 35 } },
+        patternRegion: { shape: "rectangle", geometry: { x: 25, y: 20, width: 115, height: 24 } },
+        referenceBoxes: boxes,
+        constellationJson: JSON.stringify(boxes),
+      },
+    };
+
+    const res = evaluatePatternRule(patternRule, imgData, "Bright boxes");
+
+    expect(res.status).toBe(ValidationStatusType.Pass);
+    expect(res.debug?.matchedCount).toBe(3);
+    expect(res.message).toContain("3/3 pattern marks matched reference");
   });
 
   it("dispatches evaluateWorkpieceRuleReal cleanly across all rule categories", async () => {

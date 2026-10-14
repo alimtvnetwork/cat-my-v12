@@ -14,7 +14,6 @@ import {
   ListChecks,
   ScanSearch,
 } from "lucide-react";
-import defaultWorkpieceSample from "@/assets/samples/pocket-1-filled.jpg";
 import {
   markWhiteBoxes,
   type WhiteBoxMark,
@@ -29,6 +28,9 @@ import type { EditorRule } from "@/lib/editor/types";
 import {
   registerWorkpieceImageCache,
   parseBoxesFromParams,
+  getContainedDimensions,
+  type TapeStripEvaluationResult,
+  type PocketEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
 
 export interface WorkpieceRoi {
@@ -64,10 +66,45 @@ export interface VisualToolWorkpieceCanvasProps {
   validationResultsMap?: Record<string, RuleValidationDetail>;
   onRunAnalysis?: () => void;
   isAnalyzing?: boolean;
+  tapeStripResult?: TapeStripEvaluationResult | null;
 }
 
 function clampValue(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val));
+}
+
+function drawNoImagePlaceholder(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  ctx.fillStyle = "#080b0f";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
+  ctx.lineWidth = 1;
+
+  for (let x = 0; x < w; x += 32) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y < h; y += 32) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
+  ctx.fillRect(w / 2 - 190, h / 2 - 34, 380, 68);
+  ctx.strokeStyle = "rgba(100, 116, 139, 0.55)";
+  ctx.strokeRect(w / 2 - 190, h / 2 - 34, 380, 68);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#cbd5e1";
+  ctx.font = "bold 13px sans-serif";
+  ctx.fillText("No project image registered", w / 2, h / 2 - 5);
+  ctx.fillStyle = "#64748b";
+  ctx.font = "11px sans-serif";
+  ctx.fillText("Register or capture an image to run visual analysis.", w / 2, h / 2 + 16);
+  ctx.textAlign = "left";
 }
 
 function drawCompletePatternOverlay(
@@ -684,6 +721,50 @@ function drawRuleResultBadge(
   ctx.fillText(` ${label}`, x + 7 + statusWidth, badgeY + 13);
 }
 
+function drawDeviceRulePassBadges(
+  ctx: CanvasRenderingContext2D,
+  regions: readonly any[],
+  ruleLabel: string,
+  rowIndex: number,
+  status: "pass" | "fail" | "warn" | "pending" | undefined,
+): void {
+  if (status !== "pass") {
+    return;
+  }
+
+  for (const item of regions) {
+    const region = item?.region ?? item?.packageRegion ?? item;
+    const x = Number(region?.x);
+    const y = Number(region?.y);
+    const width = Number(region?.width);
+
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(width)) {
+      continue;
+    }
+
+    const label = `${item?.label ?? "Device"} ${ruleLabel} PASS`;
+    const badgeY = Math.max(4, Math.round(y - 26 + rowIndex * 20));
+
+    ctx.save();
+    ctx.font = "bold 9px monospace";
+    const textWidth = ctx.measureText(label).width;
+    const badgeW = Math.max(92, textWidth + 18);
+    const badgeH = 16;
+    const badgeX = Math.round(x + Math.max(4, (width - badgeW) / 2));
+
+    ctx.fillStyle = "rgba(5, 46, 34, 0.92)";
+    ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+    ctx.strokeStyle = "#10b981";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+    ctx.fillStyle = "#34d399";
+    ctx.fillRect(badgeX, badgeY, 3, badgeH);
+    ctx.fillStyle = "#d1fae5";
+    ctx.fillText(label, badgeX + 7, badgeY + 11);
+    ctx.restore();
+  }
+}
+
 function drawScanningLaser(ctx: CanvasRenderingContext2D, roi: WorkpieceRoi): void {
   const midY = roi.y + roi.height / 2;
 
@@ -708,6 +789,11 @@ function drawFrameInspectionHud(
   failCount: number,
   isAnalyzing: boolean,
 ): void {
+  // If not analyzing and no results to display, do not draw HUD box to maximize workpiece viewing area
+  if (!isAnalyzing && passCount === 0 && failCount === 0) {
+    return;
+  }
+
   const hudW = 280;
   const hudH = 34;
   const hudX = canvasWidth - hudW - 12;
@@ -761,6 +847,118 @@ function drawFrameInspectionHud(
   }
 }
 
+function drawTapeStripInspectionHud(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  stripResult: TapeStripEvaluationResult,
+): void {
+  const hudW = 340;
+  const hudH = 38;
+  const hudX = canvasWidth - hudW - 12;
+  const hudY = 12;
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+  ctx.fillRect(hudX, hudY, hudW, hudH);
+
+  const hasEmpty = stripResult.emptyPockets > 0;
+  const isPass = stripResult.status === "pass";
+  const borderColor = isPass ? "#10b981" : "#ef4444";
+
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(hudX, hudY, hudW, hudH);
+
+  ctx.fillStyle = borderColor;
+  ctx.fillRect(hudX, hudY, 4, hudH);
+
+  ctx.font = "bold 11px monospace";
+
+  if (isPass) {
+    ctx.fillStyle = "#10b981";
+    ctx.fillText(
+      `✔ TAPE STRIP: 100% YIELD (${stripResult.passedPockets}/${stripResult.totalPockets} POCKETS)`,
+      hudX + 12,
+      hudY + 16,
+    );
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(
+      `All ${stripResult.totalPockets} pockets verified. Zero empty cavities.`,
+      hudX + 12,
+      hudY + 30,
+    );
+  } else {
+    ctx.fillStyle = "#ef4444";
+    const header = hasEmpty
+      ? `✖ TAPE STRIP: ${stripResult.emptyPockets} EMPTY CAVITY REJECTED`
+      : `✖ TAPE STRIP: ${stripResult.failedPockets} DEFECTIVE POCKETS`;
+    ctx.fillText(header, hudX + 12, hudY + 16);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(
+      `Yield: ${stripResult.yieldPercent}% (${stripResult.passedPockets}/${stripResult.totalPockets} passed)`,
+      hudX + 12,
+      hudY + 30,
+    );
+  }
+}
+
+function drawPocketOverlay(
+  ctx: CanvasRenderingContext2D,
+  pocket: PocketEvaluationResult,
+): void {
+  const { x, y, width: w, height: h } = pocket.region;
+
+  if (pocket.isEmpty) {
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+    ctx.fillRect(x, y, w, h);
+
+    const badgeW = 140;
+    const badgeH = 20;
+    const badgeX = x + Math.max(4, Math.round((w - badgeW) / 2));
+    const badgeY = y + Math.max(4, Math.round((h - badgeH) / 2));
+
+    ctx.fillStyle = "rgba(239, 68, 68, 0.92)";
+    ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(`⚠ POCKET #${pocket.pocketIndex}: EMPTY`, badgeX + badgeW / 2, badgeY + 14);
+    ctx.textAlign = "left";
+
+    return;
+  }
+
+  const isPass = pocket.status === "pass";
+  const borderColor = isPass ? "#10b981" : "#ef4444";
+
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x, y, w, h);
+
+  const badgeText = isPass
+    ? `POCKET #${pocket.pocketIndex} ✔`
+    : `POCKET #${pocket.pocketIndex} ✖`;
+  ctx.font = "bold 9px monospace";
+  const tw = ctx.measureText(badgeText).width;
+  const badgeW = tw + 10;
+  const badgeH = 16;
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+  ctx.fillRect(x + 2, y + 2, badgeW, badgeH);
+  ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
+  ctx.fillText(badgeText, x + 6, y + 13);
+}
 
 export function VisualToolWorkpieceCanvas({
   imageRef,
@@ -782,6 +980,7 @@ export function VisualToolWorkpieceCanvas({
   validationResultsMap,
   onRunAnalysis,
   isAnalyzing = false,
+  tapeStripResult = null,
 }: VisualToolWorkpieceCanvasProps): React.JSX.Element {
   const roi = useMemo(
     () => propRoi ?? { x: 0, y: 0, width: 960, height: 540 },
@@ -797,10 +996,19 @@ export function VisualToolWorkpieceCanvas({
     Record<string, WhiteBoxMark[]>
   >({});
 
-  const imgSrc = imageRef || defaultWorkpieceSample;
+  const imgSrc = imageRef || null;
 
   useEffect(() => {
     let isMounted = true;
+
+    if (!imgSrc) {
+      setImageElement(null);
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
     const isForeignUrl =
       (imgSrc.startsWith("http://") || imgSrc.startsWith("https://")) &&
       typeof window !== "undefined" &&
@@ -995,7 +1203,13 @@ export function VisualToolWorkpieceCanvas({
         return;
       }
 
-      offCtx.drawImage(imageElement, 0, 0, w, h);
+      const naturalW = imageElement.naturalWidth || imageElement.width || w;
+      const naturalH = imageElement.naturalHeight || imageElement.height || h;
+      const fit = getContainedDimensions(naturalW, naturalH, w, h);
+
+      offCtx.fillStyle = "#000000";
+      offCtx.fillRect(0, 0, w, h);
+      offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
       const imgData = offCtx.getImageData(0, 0, w, h);
 
       const result = markWhiteBoxes({
@@ -1072,7 +1286,13 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
-    offCtx.drawImage(imageElement, 0, 0, w, h);
+    const naturalW = imageElement.naturalWidth || imageElement.width || w;
+    const naturalH = imageElement.naturalHeight || imageElement.height || h;
+    const fit = getContainedDimensions(naturalW, naturalH, w, h);
+
+    offCtx.fillStyle = "#000000";
+    offCtx.fillRect(0, 0, w, h);
+    offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
     const imgData = offCtx.getImageData(0, 0, w, h);
     const updates: Record<string, WhiteBoxMark[]> = {};
 
@@ -1107,7 +1327,7 @@ export function VisualToolWorkpieceCanvas({
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
 
-    if (!canvas || !imageElement) {
+    if (!canvas) {
       return;
     }
 
@@ -1128,8 +1348,26 @@ export function VisualToolWorkpieceCanvas({
       canvas.height = h;
     }
 
-    // Always render natural camera/workpiece image
-    ctx.drawImage(imageElement, 0, 0, w, h);
+    if (!imageElement) {
+      drawNoImagePlaceholder(ctx, w, h);
+
+      return;
+    }
+
+    // Always render natural camera/workpiece image centered with aspect ratio preserved
+    const naturalW = imageElement.naturalWidth || imageElement.width || w;
+    const naturalH = imageElement.naturalHeight || imageElement.height || h;
+    const fit = getContainedDimensions(naturalW, naturalH, w, h);
+
+    ctx.fillStyle = "#06080d";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
+
+    if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+      for (const pocket of tapeStripResult.pockets) {
+        drawPocketOverlay(ctx, pocket);
+      }
+    }
 
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
@@ -1344,6 +1582,11 @@ export function VisualToolWorkpieceCanvas({
           const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
           const boxResults = (ruleResult as any)?.debug?.boxResults;
           const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
+          const multiDevicePassRegions = Array.isArray((ruleResult as any)?.debug?.multiDevicePassRegions)
+            ? (ruleResult as any).debug.multiDevicePassRegions
+            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+              ? (rule.params as any).multiDevicePassRegions
+              : [];
           const ruleBoxes =
             Array.isArray(boxResults) && boxResults.length > 0
                 ? boxResults.map((br: any) => ({
@@ -1370,16 +1613,88 @@ export function VisualToolWorkpieceCanvas({
             isAnalyzeMode,
             isSkipped,
           );
+          drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, status);
         } else if (isRulePin1) {
-          drawPin1Reticle(
-            ctx,
-            ruleRoi,
-            status,
-            score,
-            (rule.params as any)?.pin1Config,
-            ruleResult,
-            isAnalyzeMode,
-          );
+          const pinCfg = (rule.params as any)?.pin1Config;
+          const ruleDebug = (ruleResult as any)?.debug;
+          const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+            ? ruleDebug.multiDevicePin1
+            : Array.isArray((rule.params as any)?.multiDevicePin1)
+              ? (rule.params as any).multiDevicePin1
+              : [];
+          const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
+            ? ruleDebug.multiDevicePassRegions
+            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+              ? (rule.params as any).multiDevicePassRegions
+              : multiDevicePin1.map((marker: any) => ({
+                  label: marker.label,
+                  region: marker.packageRegion,
+                }));
+
+          if (multiDevicePin1.length > 0) {
+            for (const marker of multiDevicePin1) {
+              const markerX = Number(marker.x ?? marker.centerX);
+              const markerY = Number(marker.y ?? marker.centerY);
+              const markerRadius = Number(marker.radius ?? pinCfg?.radius ?? 11);
+
+              if (!Number.isFinite(markerX) || !Number.isFinite(markerY)) {
+                continue;
+              }
+
+              const markerRoi: WorkpieceRoi = {
+                x: Math.max(0, Math.round(markerX - 25)),
+                y: Math.max(0, Math.round(markerY - 25)),
+                width: 50,
+                height: 50,
+              };
+              const markerPinCfg = {
+                ...(pinCfg ?? {}),
+                centerX: markerX,
+                centerY: markerY,
+                radius: markerRadius,
+                registeredPin1: {
+                  x: markerX,
+                  y: markerY,
+                  centerX: markerX,
+                  centerY: markerY,
+                  radius: markerRadius,
+                },
+                ...(marker.packageRegion ? { packageRegion: marker.packageRegion } : {}),
+              };
+              const markerResult = {
+                ...(ruleResult ?? {}),
+                debug: {
+                  ...(ruleDebug ?? {}),
+                  nominalX: markerX,
+                  nominalY: markerY,
+                  detectedHoleX: markerX,
+                  detectedHoleY: markerY,
+                  hasPin1Found: true,
+                },
+              } as any;
+
+              drawPin1Reticle(
+                ctx,
+                markerRoi,
+                status,
+                score,
+                markerPinCfg,
+                markerResult,
+                isAnalyzeMode,
+              );
+            }
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, status);
+          } else {
+            drawPin1Reticle(
+              ctx,
+              ruleRoi,
+              status,
+              score,
+              pinCfg,
+              ruleResult,
+              isAnalyzeMode,
+            );
+          }
         } else if (isRuleCaliper) {
           drawCaliperRuler(ctx, ruleRoi, status);
         } else if (isRuleDefect) {
@@ -1396,14 +1711,18 @@ export function VisualToolWorkpieceCanvas({
         validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)
       ) {
-        drawFrameInspectionHud(
-          ctx,
-          w,
-          rulesToRender.length,
-          totalPassCount,
-          totalFailCount,
-          Boolean(isAnalyzing),
-        );
+        if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+          drawTapeStripInspectionHud(ctx, w, tapeStripResult);
+        } else {
+          drawFrameInspectionHud(
+            ctx,
+            w,
+            rulesToRender.length,
+            totalPassCount,
+            totalFailCount,
+            Boolean(isAnalyzing),
+          );
+        }
       }
     }
   }, [
@@ -1426,6 +1745,7 @@ export function VisualToolWorkpieceCanvas({
     validationResultsMap,
     isAnalyzeMode,
     isAnalyzing,
+    tapeStripResult,
     autoDetectedBoxesByRuleId,
   ]);
 
@@ -1544,23 +1864,21 @@ export function VisualToolWorkpieceCanvas({
 
   return (
     <div className="flex min-h-0 h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
-      {/* Top HUD Controls */}
+      {/* Top HUD Controls (Consolidated Slim Status Bar) */}
       <div className="border-b border-ca-border bg-[#11161b] text-xs">
-        <div className="flex flex-wrap items-center justify-between gap-1.5 px-2 py-1">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
               <ScanSearch size={14} className="text-ca-select" />
-              {isAnalyzeMode ? "Auto-Analysis:" : "Auto-Inspection:"}
+              {isAnalyzeMode ? "Analysis:" : "Inspection:"}
             </span>
-            <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-2 py-0.5 font-mono text-xs text-emerald-400">
+            <span className={`rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}>
               {isAnalyzeMode
-                ? isAnalyzing
-                  ? "Scanning Full Workpiece..."
-                  : "Full Picture Auto-Analyzed"
+                ? `${frameStatusLabel} · ${visualPassCount}/${visualTotalCount}`
                 : (toolName || "Autonomous Tool Inspection")}
             </span>
             {isPatternMatching && (
-              <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-xs text-ca-ink-muted">
+              <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
                 {(() => {
                   const count =
                     activeBoxesToDraw.length > 0
@@ -1574,14 +1892,42 @@ export function VisualToolWorkpieceCanvas({
               </span>
             )}
             {isPin1 && (
-              <span className="rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-xs text-cyan-400">
+              <span className="rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400">
                 Pin 1 Reticle Calibrated
               </span>
             )}
-            {isAnalyzeMode && (
-              <span className={`rounded border px-2 py-0.5 font-mono text-xs font-bold uppercase ${frameStatusClass}`}>
-                {frameStatusLabel} · {visualPassCount}/{visualTotalCount}
-              </span>
+            {isAnalyzeMode && overlayRules.length > 0 && (
+              <div className="flex items-center gap-1 pl-1">
+                {overlayRules.map((r, i) => {
+                  const res = validationResultsMap?.[r.id];
+                  const isSelected = r.id === selectedRuleId;
+                  const isPass =
+                    res?.status === "pass" || (isSelected && validationStatus === "pass");
+                  const isFail = res?.status === "fail";
+
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      aria-label={`Select ${r.params?.toolCode || `Rule ${i + 1}`}`}
+                      title={`Focus rule ${r.name || r.params?.toolCode || `R${i + 1}`}`}
+                      onClick={() => onSelectRule?.(r.id)}
+                      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold transition ${
+                        isSelected
+                          ? "border border-cyan-400 bg-cyan-950/70 text-cyan-200 shadow-xs"
+                          : isPass
+                            ? "border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50"
+                            : isFail
+                              ? "border border-red-500/50 bg-red-950/40 text-red-300"
+                              : "border border-ca-border/80 bg-ca-panel-2 text-ca-ink-muted hover:text-white"
+                      }`}
+                    >
+                      <span>{isPass ? "✔" : isFail ? "✖" : "●"}</span>
+                      <span>{r.params?.toolCode || `R${i + 1}`}</span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 
@@ -1662,53 +2008,6 @@ export function VisualToolWorkpieceCanvas({
         ref={containerRef}
         className="relative flex min-h-[140px] flex-1 items-center justify-center overflow-auto bg-[#050607] p-1.5"
       >
-        {isAnalyzeMode && overlayRules.length > 0 && (
-          <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] flex-wrap items-center gap-2 rounded border border-ca-border/80 bg-[#10161c]/95 px-3 py-1.5 font-mono text-xs shadow-lg backdrop-blur-xs">
-            <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.12em] text-ca-ink">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  isAnalyzing
-                    ? "bg-cyan-400 animate-ping"
-                    : "bg-emerald-400"
-                }`}
-              />
-              {isAnalyzing ? "Scanning Workpiece..." : "Visual Analysis Overlay"}
-            </span>
-            <span className="text-ca-border">|</span>
-            <div className="flex items-center gap-1">
-              {overlayRules.map((r, i) => {
-                const res = validationResultsMap?.[r.id];
-                const isSelected = r.id === selectedRuleId;
-                const isPass =
-                  res?.status === "pass" || (isSelected && validationStatus === "pass");
-                const isFail = res?.status === "fail";
-
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    aria-label={`Select ${r.params?.toolCode || `Rule ${i + 1}`}`}
-                    title={`Focus rule ${r.name || r.params?.toolCode || `R${i + 1}`}`}
-                    onClick={() => onSelectRule?.(r.id)}
-                    className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold transition ${
-                      isSelected
-                        ? "border border-cyan-400 bg-cyan-950/70 text-cyan-200 shadow-xs"
-                        : isPass
-                          ? "border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50"
-                          : isFail
-                            ? "border border-red-500/50 bg-red-950/40 text-red-300"
-                            : "border border-ca-border bg-ca-panel-2 text-ca-ink-muted"
-                    }`}
-                  >
-                    <span>{isPass ? "✔" : isFail ? "✖" : "●"}</span>
-                    <span>{r.params?.toolCode || `R${i + 1}`}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
         <canvas

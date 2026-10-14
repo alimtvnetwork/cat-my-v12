@@ -68,9 +68,9 @@ export function SectionTopBar({ section, active, params }: SectionTopBarProps): 
     <nav
       aria-label={`${section} sub-navigation`}
       data-section={section}
-      className="flex min-w-0 items-center gap-hmi-2 border-b border-ca-border/60 bg-ca-panel px-4"
+      className="flex min-w-0 items-center gap-hmi-2 border-b border-white/[0.08] bg-black/60 px-4 py-1.5 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
     >
-      <div className="flex min-w-0 flex-1 items-center overflow-x-auto">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {options.map((opt) => {
           const isActive = opt.id === active;
 
@@ -82,12 +82,18 @@ export function SectionTopBar({ section, active, params }: SectionTopBarProps): 
               preload="intent"
               data-option={opt.id}
               data-active={isActive ? "true" : "false"}
-              className={`inline-flex shrink-0 items-center justify-center px-4 py-2.5 text-[0.8rem] font-semibold tracking-wide transition-colors border-b-2 ${
+              className={`inline-flex shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all duration-150 ${
                 isActive
-                  ? "border-ca-primary text-ca-ink"
-                  : "border-transparent text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel-2/50"
+                  ? "border border-white/25 bg-gradient-to-b from-white/15 to-white/5 text-white shadow-[0_2px_10px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.3)]"
+                  : "border border-transparent text-white/55 hover:border-white/10 hover:bg-white/[0.05] hover:text-white"
               }`}
             >
+              {isActive ? (
+                <span
+                  className="mr-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+                  aria-hidden
+                />
+              ) : null}
               {opt.label}
             </Link>
           );

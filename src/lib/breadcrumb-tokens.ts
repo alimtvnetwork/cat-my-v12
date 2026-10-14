@@ -34,6 +34,9 @@ const STATIC_TOKENS: Readonly<Record<string, string>> = {
   "ai-testing-history": "AI Testing History",
   run: "Run",
   new: "New",
+  analyze: "Workpiece Analyzer",
+  "add-rule": "Add Tool",
+  tune: "Tune Instrument",
 };
 
 /** Registered dynamic-segment resolvers. Keyed by param name (`projectId`, `rulesetId`, ...). */

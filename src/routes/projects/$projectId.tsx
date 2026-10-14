@@ -22,11 +22,11 @@ import { StandardAppShell } from "@/components/layout/StandardAppShell";
 const PROJECT_STANDARD_TABS = [
   { label: "Overview", to: "/projects/$projectId", key: "overview" },
   { label: "Camera", to: "/projects/$projectId/camera", key: "camera" },
-  { label: "Rule sets", to: "/projects/$projectId/rulesets", key: "rulesets" },
+  { label: "Rulesets", to: "/projects/$projectId/rulesets", key: "rulesets" },
   { label: "Categories", to: "/projects/$projectId/categories", key: "categories" },
   { label: "Runs", to: "/projects/$projectId/runs", key: "runs" },
-  { label: "Trial run", to: "/projects/$projectId/trial-run", key: "trial-run" },
-  { label: "AI testing", to: "/projects/$projectId/ai-testing", key: "ai-testing" },
+  { label: "Trial Run", to: "/projects/$projectId/trial-run", key: "trial-run" },
+  { label: "AI Testing", to: "/projects/$projectId/ai-testing", key: "ai-testing" },
 ] as const;
 
 export const Route = createFileRoute("/projects/$projectId")({
@@ -42,7 +42,7 @@ function ProjectLayout() {
   const project = useProjectStore((s) => selectProject(s, projectId));
   const { mode } = useUiMode();
 
-  if (!isHydrated) {
+  if (!isHydrated && !project) {
     return <ProjectLoading />;
   }
 
@@ -60,10 +60,13 @@ function ProjectLayout() {
         title={project.name}
         subtitle={`Project ID: ${projectId}`}
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-ca-panel">
+        <div
+          data-tour="project-created-page"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden bg-ca-panel"
+        >
           <nav
             aria-label="Project workspace tabs"
-            className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-ca-border bg-ca-panel px-4 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="flex h-8 shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 bg-[#0c1017]/95 px-3 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden backdrop-blur-md"
           >
             {PROJECT_STANDARD_TABS.map((tab) => {
               const isActive = getProjectActive(pathname) === tab.key;
@@ -71,12 +74,13 @@ function ProjectLayout() {
               return (
                 <Link
                   key={tab.key}
+                  data-tour={tab.key === "overview" ? "project-overview-tab" : undefined}
                   to={tab.to}
                   params={{ projectId }}
-                  className={`rounded px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                  className={`inline-flex items-center rounded-md px-2.5 py-0.5 font-sans text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? "bg-ca-ink text-ca-bg shadow-sm"
-                      : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
+                      ? "bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 shadow-sm"
+                      : "text-slate-400 hover:bg-white/[0.06] hover:text-white border border-transparent"
                   }`}
                 >
                   {tab.label}
@@ -120,7 +124,9 @@ function getProjectActive(pathname: string): string {
 }
 
 function useProjectStoreHydrated(): boolean {
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(
+    () => useProjectStore.persist?.hasHydrated?.() ?? true,
+  );
   useEffect(() => {
     const persistApi = useProjectStore.persist;
 
@@ -145,8 +151,11 @@ function useProjectStoreHydrated(): boolean {
 function ProjectLoading() {
   return (
     <HmiShell title="Project">
-      <div className="flex flex-1 items-center justify-center p-hmi-6 text-hmi-body text-ca-ink-muted">
-        Loading project...
+      <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-ca-primary border-t-transparent shadow-[0_0_15px_color-mix(in_oklab,var(--ca-primary)_40%,transparent)]" />
+        <span className="font-mono text-xs uppercase tracking-widest text-ca-ink-muted animate-pulse">
+          Loading project telemetry...
+        </span>
       </div>
     </HmiShell>
   );
@@ -162,27 +171,29 @@ function ProjectError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <HmiShell title="Project">
       <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-        <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-          This project didn't load
-        </h1>
-        <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">{error.message}</p>
-        <div className="mt-hmi-4 flex gap-hmi-2">
-          <button
-            type="button"
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
-          >
-            Try again
-          </button>
-          <Link
-            to="/projects"
-            className="rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-ink hover:border-ca-select"
-          >
-            All projects
-          </Link>
+        <div className="rounded-2xl border border-rose-500/20 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
+          <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-rose-400">
+            This project didn't load
+          </h1>
+          <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">{error.message}</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                router.invalidate();
+                reset();
+              }}
+              className="rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:brightness-110"
+            >
+              Try again
+            </button>
+            <Link
+              to="/projects"
+              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-white/10"
+            >
+              All projects
+            </Link>
+          </div>
         </div>
       </div>
     </HmiShell>
@@ -195,18 +206,20 @@ function ProjectNotFound() {
   return (
     <HmiShell title="Project not found">
       <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-        <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-          Project not found
-        </h1>
-        <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
-          No project matches <span className="font-mono">{projectId}</span> in this browser.
-        </p>
-        <Link
-          to="/projects"
-          className="mt-hmi-4 rounded-sm bg-ca-select px-hmi-4 py-hmi-2 text-hmi-body font-semibold text-ca-bg hover:brightness-110"
-        >
-          All projects
-        </Link>
+        <div className="rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
+          <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
+            Project not found
+          </h1>
+          <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
+            No project matches <span className="font-mono text-ca-primary">{projectId}</span> in this browser.
+          </p>
+          <Link
+            to="/projects"
+            className="mt-6 inline-flex rounded-lg bg-ca-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
+          >
+            All projects
+          </Link>
+        </div>
       </div>
     </HmiShell>
   );

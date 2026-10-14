@@ -3,9 +3,11 @@ import {
   Activity,
   Bug,
   Camera,
+  Check,
   CircleDot,
   Crosshair,
   FileImage,
+  FolderTree,
   Grid2X2,
   PaintBucket,
   Play,
@@ -14,19 +16,20 @@ import {
   Ruler,
   ScanSearch,
   Type,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
+import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import {
   getFreshRuleset,
   updateRulesetRulesInStore,
-  updateRulesetImageRefInStore,
 } from "@/hooks/useWorkpieceProject";
 import {
   type EditorRule,
@@ -43,8 +46,8 @@ import {
 import {
   loadWorkpieceImageData,
   evaluateWorkpieceRuleReal,
-  defaultWorkpieceFilledSample,
-  parseBoxesFromParams,
+  evaluateTapeStripRules,
+  type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useProjectStore } from "@/lib/projects/store";
@@ -87,112 +90,6 @@ const MANUAL_RUN_ANALYSIS_PARAMS: RunAnalysisParams = {
   hasSelectionFocus: true,
 };
 
-const AUTO_RUN_ANALYSIS_PARAMS: RunAnalysisParams = {
-  hasStepDelay: false,
-  hasStepToasts: false,
-  hasSelectionFocus: false,
-};
-
-function isDemoPresentationProject(project: Project): boolean {
-  return project.name.trim().toLowerCase() === "demo";
-}
-
-function buildDemoPresentationPatternBoxes(rule: EditorRule): ReturnType<typeof parseBoxesFromParams> {
-  const baseX = 325;
-  const baseY = 274;
-  const boxW = 34;
-  const boxH = 36;
-  const gapX = 36;
-  const gapY = 16;
-  const rows = [
-    { y: baseY, count: 5, offset: 0 },
-    { y: baseY + boxH + gapY, count: 5, offset: 8 },
-  ];
-  const boxes: ReturnType<typeof parseBoxesFromParams> = [];
-
-  for (const row of rows) {
-    for (let i = 0; i < row.count; i += 1) {
-      const number = boxes.length + 1;
-      const x = baseX + row.offset + i * (boxW + gapX);
-
-      boxes.push({
-        number,
-        x,
-        y: row.y,
-        width: boxW,
-        height: boxH,
-        area: boxW * boxH,
-      });
-    }
-  }
-
-  return boxes;
-}
-
-function buildDemoPresentationPassResult(rule: EditorRule): ValidationResult {
-  const normalized = `${getRuleToolCode(rule)} ${rule.name}`.toLowerCase();
-  const hasPatternOverlay =
-    normalized.includes("pattern") ||
-    normalized.includes("greyscale") ||
-    normalized.includes("white box");
-  const hasPin1Overlay = normalized.includes("pin1") || normalized.includes("pin 1");
-  const ruleRoi = {
-    x: rule.x,
-    y: rule.y,
-    width: rule.width,
-    height: rule.height,
-  };
-  const boxes = hasPatternOverlay ? buildDemoPresentationPatternBoxes(rule) : [];
-  const matchedCount =
-    boxes.length > 0
-      ? boxes.length
-      : typeof rule.params?.activeBoxCount === "number"
-        ? rule.params.activeBoxCount
-        : 1;
-  const pin1X = 238;
-  const pin1Y = 382;
-
-  return {
-    status: ValidationStatusType.Pass,
-    score: 1,
-    message: `Presentation pass: ${rule.name} accepted for Demo walkthrough.`,
-    stub: false,
-    debug: {
-      hasPresentationOverride: true,
-      matchedCount,
-      totalCount: matchedCount,
-      boxResults: boxes.map((box) => ({
-        boxNumber: box.number,
-        isMatched: true,
-        referenceX: box.x,
-        referenceY: box.y,
-        matchedX: box.x,
-        matchedY: box.y,
-        width: box.width,
-        height: box.height,
-      })),
-      ...(hasPin1Overlay
-        ? {
-            hasPin1Found: true,
-            status: "found",
-            nominalX: pin1X,
-            nominalY: pin1Y,
-            detectedHoleX: pin1X,
-            detectedHoleY: pin1Y,
-            offsetPx: 0,
-            angleDeg: 0,
-            tolerancePx: (rule.params as any)?.pin1Config?.tolerancePx ?? 25,
-          }
-        : {}),
-      ...(hasPatternOverlay
-        ? {
-            patternStatus: "matched",
-          }
-        : {}),
-    },
-  };
-}
-
 export interface WorkpieceAnalyzeWorkspaceProps {
   project: Project;
   ruleset: RuleSet;
@@ -219,14 +116,15 @@ export function WorkpieceAnalyzeWorkspace({
   const savedVersionRef = useRef<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const isAnalyzingRef = useRef<boolean>(false);
-  const hasAutoAnalyzedKeyRef = useRef<string>("");
   const navigate = useNavigate();
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
+  const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const updateRulesetImageRef = useCallback((rsId: string, ref: string) => {
-    updateRulesetImageRefInStore(rsId, ref);
-  }, []);
+  const updateProjectInspectionImageRef = useProjectStore(
+    (s) => s.updateProjectInspectionImageRef,
+  );
 
   useEffect(() => {
     return visualTunerBus.subscribe((ruleId) => {
@@ -356,20 +254,38 @@ export function WorkpieceAnalyzeWorkspace({
   const [designOpen, setDesignOpen] = useState(false);
   const [validateOpen, setValidateOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [isLiveCameraMode, setIsLiveCameraMode] = useState(false);
+  const [isCapturingFrame, setIsCapturingFrame] = useState(false);
+  const {
+    videoRef: liveCameraVideoRef,
+    isReady: isLiveCameraReady,
+    errorText: liveCameraErrorText,
+  } = useCameraStream(isLiveCameraMode);
 
   const shapeInputRef = useRef<HTMLInputElement>(null);
   const maskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const targetSelected =
-      selectedIds.length > 0 ? selectedIds : ruleset.rules.length > 0 ? [ruleset.rules[0].id] : [];
+    const isCurrentSelectedInRuleset = ruleset.rules.some((r) => selectedIds.includes(r.id));
+    const targetSelected = isCurrentSelectedInRuleset
+      ? selectedIds
+      : ruleset.rules.length > 0
+        ? [ruleset.rules[0].id]
+        : [];
 
     useRulesStore.getState().replaceAll(ruleset.rules, targetSelected, []);
 
-    if (ruleset.rules[0]?.id && selectedIds.length === 0) {
-      setSelectedIds([ruleset.rules[0].id]);
+    if (!isCurrentSelectedInRuleset) {
+      setSelectedIds(targetSelected);
     }
   }, [ruleset.id]);
+
+  useEffect(() => {
+    if (searchRule && rules.some((r) => r.id === searchRule)) {
+      setSelectedIds([searchRule]);
+      useRulesStore.getState().setSelection([searchRule], "searchRule");
+    }
+  }, [searchRule, rules]);
 
   const commit = useCallback(
     (nextRules: EditorRule[], reason: string, nextSelectedIds?: string[]) => {
@@ -578,6 +494,57 @@ export function WorkpieceAnalyzeWorkspace({
   }, [projectRulesetsForAnalysis, validationRuns]);
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
 
+  const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
+    const video = liveCameraVideoRef.current;
+
+    if (!isLiveCameraMode) {
+      return project.inspectionImageRef ?? null;
+    }
+
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      toast.error("Live camera is not ready yet.");
+
+      return null;
+    }
+
+    setIsCapturingFrame(true);
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 960;
+      canvas.height = 540;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        toast.error("Unable to capture camera frame.");
+
+        return null;
+      }
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      updateProjectInspectionImageRef(project.id, dataUrl);
+      setIsLiveCameraMode(false);
+
+      for (const item of projectRulesetsForAnalysis) {
+        useValidationStore.getState().clear(item.id);
+      }
+
+      toast.success("Live camera frame captured for inspection.");
+
+      return dataUrl;
+    } finally {
+      setIsCapturingFrame(false);
+    }
+  }, [
+    isLiveCameraMode,
+    liveCameraVideoRef,
+    project.id,
+    project.inspectionImageRef,
+    projectRulesetsForAnalysis,
+    updateProjectInspectionImageRef,
+  ]);
+
   const handleRunAnalysis = useCallback(async (params: RunAnalysisParams) => {
     if (projectAnalysisItems.length === 0 || isAnalyzingRef.current) {
       if (projectAnalysisItems.length === 0) {
@@ -597,8 +564,26 @@ export function WorkpieceAnalyzeWorkspace({
     }
 
     try {
-      const activeImageSrc = ruleset.imageRef || defaultWorkpieceFilledSample;
-      const imgData = await loadWorkpieceImageData(activeImageSrc);
+      const activeImageSrc = isLiveCameraMode
+        ? await captureLiveCameraFrame()
+        : project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg";
+      const imgData = activeImageSrc ? await loadWorkpieceImageData(activeImageSrc) : null;
+
+      if (imgData) {
+        const stripRes = evaluateTapeStripRules(
+          projectAnalysisItems.map((item) => item.rule),
+          imgData,
+        );
+        setTapeStripResult(stripRes);
+
+        if (stripRes.emptyPockets > 0) {
+          toast.error(
+            `Tape inspection alert: ${stripRes.emptyPockets} empty ${stripRes.emptyPockets === 1 ? "pocket" : "pockets"} detected!`,
+          );
+        }
+      } else {
+        setTapeStripResult(null);
+      }
 
       let passCount = 0;
       let failCount = 0;
@@ -642,15 +627,13 @@ export function WorkpieceAnalyzeWorkspace({
 
         let ruleResult: ValidationResult;
 
-        if (isDemoPresentationProject(project)) {
-          ruleResult = buildDemoPresentationPassResult(r);
-        } else if (imgData) {
+        if (imgData) {
           ruleResult = evaluateWorkpieceRuleReal(r, imgData);
         } else {
           ruleResult = {
             status: ValidationStatusType.Fail,
             score: 0.0,
-            message: `Failed to acquire image pixel buffer for inspection.`,
+            message: `No inspection image registered. Register or capture an image before running real rule analysis.`,
             stub: false,
           };
         }
@@ -702,52 +685,10 @@ export function WorkpieceAnalyzeWorkspace({
       isAnalyzingRef.current = false;
       setIsAnalyzing(false);
     }
-  }, [project, projectAnalysisItems, ruleset.imageRef]);
+  }, [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
   const handleManualRunAnalysis = useCallback(() => {
     void handleRunAnalysis(MANUAL_RUN_ANALYSIS_PARAMS);
   }, [handleRunAnalysis]);
-
-  // Auto-analyze workpiece picture sequentially across all rules
-  useEffect(() => {
-    if (projectAnalysisItems.length === 0) {
-      return;
-    }
-
-    const rulesSignature = projectAnalysisItems
-      .map(
-        ({ ruleset: ownerRuleset, rule }) =>
-          `${ownerRuleset.id}:${rule.id}:${rule.x}:${rule.y}:${rule.width}:${rule.height}:${rule.params?.threshold ?? ""}`,
-      )
-      .join("|");
-    const currentKey = `${project.id}:${rulesSignature}:${ruleset.imageRef || "default"}`;
-
-    if (hasAutoAnalyzedKeyRef.current === currentKey) {
-      return;
-    }
-
-    hasAutoAnalyzedKeyRef.current = currentKey;
-
-    const runAutoAnalysis = () => {
-      void handleRunAnalysis(AUTO_RUN_ANALYSIS_PARAMS);
-    };
-
-    const rafId =
-      typeof window !== "undefined"
-        ? window.requestAnimationFrame(() => {
-            window.setTimeout(runAutoAnalysis, 0);
-          })
-        : null;
-
-    if (rafId === null) {
-      runAutoAnalysis();
-    }
-
-    return () => {
-      if (rafId !== null && typeof window !== "undefined") {
-        window.cancelAnimationFrame(rafId);
-      }
-    };
-  }, [project.id, projectAnalysisItems, ruleset.imageRef, handleRunAnalysis]);
 
   const railHandlers = useMemo(
     () => ({
@@ -803,8 +744,12 @@ export function WorkpieceAnalyzeWorkspace({
         const dataUrl = reader.result as string;
 
         if (dataUrl) {
-          updateRulesetImageRef(ruleset.id, dataUrl);
-          toast.success(`Reference image imported: ${file.name}`);
+          updateProjectInspectionImageRef(project.id, dataUrl);
+          setIsLiveCameraMode(false);
+          for (const item of projectRulesetsForAnalysis) {
+            useValidationStore.getState().clear(item.id);
+          }
+          toast.success(`Inspection image registered: ${file.name}`);
         }
       };
 
@@ -815,224 +760,339 @@ export function WorkpieceAnalyzeWorkspace({
 
       reader.readAsDataURL(file);
     },
-    [ruleset.id, updateRulesetImageRef],
+    [project.id, projectRulesetsForAnalysis, updateProjectInspectionImageRef],
   );
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0b0c10] p-2 text-ca-ink">
-      <div className="flex min-h-0 w-full flex-1 flex-col gap-2 overflow-hidden">
-        {/* 1. Top Ribbon */}
-        <div className="flex shrink-0 items-center justify-between rounded border border-[#2a3138] bg-[#171b20] px-3 py-2 shadow-sm">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-bold tracking-wide text-ca-ink">
-              PROJECT: {project.name}
-            </span>
-            <div className="h-4 w-px bg-[#3a424b]" />
-            <span className="rounded border border-[#303943] bg-[#101418] px-2 py-0.5 text-xs text-ca-ink-muted">
-              {projectAnalysisItems.length} RULES
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0d14] p-3 text-[#f8fafc]">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-2.5 overflow-hidden">
+        {/* 1. Top Command Ribbon */}
+        <div className="flex shrink-0 items-center justify-between rounded-xl border border-[#222938] bg-[#0d1119]/90 px-3.5 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+          <div className="flex items-center">
+            <span className="font-sans text-xs font-bold tracking-wider uppercase text-[#f8fafc]">
+              {project.name}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={handleSaveRuleSet}
               disabled={isSaving}
-              className="rounded bg-ca-select px-4 py-1.5 text-xs font-bold uppercase text-black shadow-sm transition hover:brightness-110 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.5)] bg-[oklch(0.76_0.145_210)] px-3.5 py-1 font-sans text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_12px_oklch(0.76_0.145_210/0.35)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
             >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void navigate({
-                  to: "/projects/$projectId/categories",
-                  params: { projectId },
-                });
-              }}
-              className="rounded border border-[#3c4650] bg-[#20262d] px-3 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:border-ca-select hover:bg-[#2a3138]"
-            >
-              Categories
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void navigate({
-                  to: "/projects/$projectId/trial-run",
-                  params: { projectId },
-                });
-              }}
-              className="rounded border border-[#3c4650] bg-[#20262d] px-3 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:border-ca-select hover:bg-[#2a3138]"
-            >
-              Trial Run
+              <Check size={13} className="text-[#0a0d14]" />
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
 
-        {/* 2. Horizontal rule/tool thumbnail strip */}
-        <div className="flex min-h-[48px] shrink-0 items-center gap-2 overflow-x-auto rounded border border-[#2a3138] bg-[#171b20] p-1.5 shadow-sm">
-          {/* Add Ruleset Tile */}
-          <button
-            onClick={handleStartAddRuleset}
-            className="flex h-9 w-28 shrink-0 items-center justify-center gap-1 rounded border border-[#3c4650] bg-[#101418] transition-colors hover:border-amber-400 hover:bg-amber-950/20"
-          >
-            <Plus size={14} className="text-amber-500" />
-            <span className="text-[10px] text-amber-500 font-bold uppercase">Add Ruleset</span>
-          </button>
-
-          {isAddingRuleset ? (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                handleSubmitRuleset();
-              }}
-              className="flex h-9 w-64 shrink-0 items-center gap-2 rounded border border-amber-500/70 bg-amber-950/20 px-2"
-            >
-              <input
-                value={draftRulesetName}
-                onChange={(event) => setDraftRulesetName(event.target.value)}
-                autoFocus
-                className="min-w-0 flex-1 rounded border border-[#444] bg-[#0b0c10] px-2 py-1 text-xs text-ca-ink outline-none focus:border-amber-400"
-                placeholder="Ruleset name"
-              />
-              <button
-                type="submit"
-                className="rounded bg-amber-400 px-2 py-1 text-[10px] font-bold uppercase text-black"
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddingRuleset(false);
-                  setDraftRulesetName("");
-                }}
-                className="rounded border border-[#444] px-2 py-1 text-[10px] font-bold uppercase text-ca-ink-muted hover:text-ca-ink"
-              >
-                Cancel
-              </button>
-            </form>
-          ) : null}
-          
-          {/* Add Rule Tile */}
-          <button
-            onClick={() => handleNavigateAddRule()}
-            className="flex h-9 w-28 shrink-0 items-center justify-center gap-1 rounded border border-[#3c4650] bg-[#101418] transition-colors hover:border-ca-select hover:bg-ca-select/10"
-          >
-            <Plus size={14} className="text-ca-ink-muted" />
-            <span className="text-[10px] text-ca-ink-muted font-bold uppercase">Add Rule</span>
-          </button>
-          
-          {/* Set Camera Tile */}
-          <button
-            onClick={() => {
-              void navigate({
-                to: "/projects/$projectId/camera",
-                params: { projectId },
-              });
-            }}
-            className="flex h-9 w-28 shrink-0 items-center justify-center gap-1 rounded border border-[#3c4650] bg-[#101418] transition-colors hover:border-cyan-400 hover:bg-cyan-950/20"
-          >
-            <Camera size={14} className="text-ca-ink-muted" />
-            <span className="text-[10px] text-ca-ink-muted font-bold uppercase">Set Camera</span>
-          </button>
-
-          {/* Rule Tiles */}
-          {projectAnalysisItems.map(({ ruleset: ownerRuleset, rule: r }, idx) => {
-            const isSelected = activeRule?.id === r.id;
-            const rResult = allValidationResults[r.id];
-            const isPass = rResult?.status === "pass";
-            const isFail = rResult?.status === "fail";
-            const toolCode = getRuleToolCode(r);
-            const ToolIcon = getToolIcon(toolCode, r.name);
-            
-            return (
-              <button
-                key={r.id}
-                onClick={() => {
-                  if (ownerRuleset.id !== ruleset.id) {
-                    onSelectRuleset?.(ownerRuleset.id);
-                  }
-
-                  setSelectedIds([r.id]);
-                  useRulesStore.getState().setSelection([r.id], "thumbnail-strip");
-                }}
-                className={`relative flex h-9 w-36 shrink-0 items-center justify-center gap-1 rounded border bg-[#101418] px-6 transition-colors ${isSelected ? "border-amber-400 bg-amber-400/10 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]" : "border-[#3c4650] hover:border-[#65717e] hover:bg-[#171d23]"}`}
-              >
-                <span className="text-[10px] text-ca-ink-muted absolute top-1 left-1">
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                <ToolIcon
-                  size={16}
-                  className={isSelected ? "shrink-0 text-amber-400" : "shrink-0 text-ca-ink-muted"}
-                  aria-hidden
-                />
-                <span className={`text-[10px] font-bold truncate w-full px-1 ${isSelected ? "text-amber-400" : "text-ca-ink"}`}>
-                  {r.name}
-                </span>
-                {toolCode ? (
-                  <span className="absolute right-1 top-1 rounded bg-[#2d2d2d] px-1 text-[9px] font-mono text-ca-ink-muted">
-                    {toolCode}
-                  </span>
-                ) : null}
-                <div className={`absolute bottom-0 left-0 right-0 h-1 ${isPass ? "bg-emerald-500" : isFail ? "bg-red-500" : "bg-transparent"}`} />
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
-        <div className="grid min-h-0 flex-1 grid-cols-[420px_minmax(0,1fr)] gap-2 overflow-hidden bg-transparent">
-          {/* Left: inspection hierarchy tree */}
-          <div className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-2 overflow-hidden rounded border border-[#2a3138] bg-[#11161b] p-2 shadow-sm">
-            <InspectionHierarchyTree
-              project={project}
-              ruleset={ruleset}
-              rulesets={projectRulesetsForAnalysis}
-              onSelectRuleset={onSelectRuleset}
-              rules={projectOverlayRules}
-              selectedRuleId={activeRule?.id ?? null}
-              onSelectRule={handleSelectProjectRule}
-              onToggleHidden={railHandlers.onToggleHidden}
-              onDeleteRule={railHandlers.onDelete}
-              onReorderRule={railHandlers.onReorder}
-              onAddRuleClick={handleNavigateAddRule}
-              onAddRulesetClick={handleStartAddRuleset}
-              onDeleteRulesetClick={handleDeleteRuleset}
-              onTuneRule={handleNavigateTuneRule}
-              onUpdateCameraSettings={handleUpdateRuleCameraSettings}
-              onUpdateLightSettings={handleUpdateRuleLightSettings}
-            />
-            <section className="shrink-0 rounded border border-ca-border/70 bg-[#151b21] p-2 shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
+        {/* Ruleset Creation Modal */}
+        {isAddingRuleset ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+            <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0b0f17] p-5 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-400/10 text-amber-400">
+                  <Plus size={18} />
+                </div>
                 <div>
-                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-ca-ink">
-                    Image Samples
-                  </h2>
-                  <p className="text-[9px] text-ca-ink-muted">
-                    {ruleset.imageRef ? "1 registered reference" : "No reference registered"}
+                  <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-white">
+                    Create Ruleset Program
+                  </h3>
+                  <p className="font-sans text-[11px] text-white/50">
+                    Define a new inspection ruleset for this workpiece
                   </p>
                 </div>
+              </div>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  handleSubmitRuleset();
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="mb-1 block font-sans text-[10px] font-bold uppercase tracking-wider text-white/70">
+                    Ruleset Name
+                  </label>
+                  <input
+                    value={draftRulesetName}
+                    onChange={(event) => setDraftRulesetName(event.target.value)}
+                    autoFocus
+                    className="w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2 font-sans text-xs text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
+                    placeholder="e.g. Ruleset 2 (SMD Inspection)"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingRuleset(false);
+                      setDraftRulesetName("");
+                    }}
+                    className="rounded-lg border border-white/20 px-3 py-1.5 font-sans text-xs font-semibold uppercase text-white/60 transition hover:bg-white/5 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-amber-400 px-4 py-1.5 font-sans text-xs font-bold uppercase text-black shadow-lg shadow-amber-400/20 transition hover:brightness-110"
+                  >
+                    Create Ruleset
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
+
+        {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
+        <div className="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 overflow-hidden bg-transparent">
+          {/* Left: inspection hierarchy tree & source container */}
+          <div data-tour="project-inspection-program" className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+            {/* Tab switchers: Program vs Image Source */}
+            <div className="flex shrink-0 items-center justify-between rounded-lg border border-white/10 bg-black/60 p-0.5">
+              <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                 <button
                   type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="rounded border border-ca-border bg-ca-panel-2 px-2.5 py-1 text-[10px] font-semibold text-ca-ink transition hover:border-ca-select hover:bg-ca-select/10"
+                  onClick={() => setActiveSidebarTab("tree")}
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                    activeSidebarTab === "tree"
+                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
                 >
-                  Upload
+                  <FolderTree size={12} />
+                  <span>Program ({projectAnalysisItems.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSidebarTab("source")}
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                    activeSidebarTab === "source"
+                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Camera size={12} />
+                  <span>Image & Source</span>
                 </button>
               </div>
-              <div className="h-14 overflow-hidden rounded border border-ca-border/60 bg-[#0b0c10]">
-                <img
-                  src={ruleset.imageRef || defaultWorkpieceFilledSample}
-                  alt="Current inspection reference"
-                  className="h-full w-full object-cover opacity-90"
+            </div>
+
+            {activeSidebarTab === "tree" ? (
+              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
+                <InspectionHierarchyTree
+                  project={project}
+                  ruleset={ruleset}
+                  rulesets={projectRulesetsForAnalysis}
+                  onSelectRuleset={onSelectRuleset}
+                  rules={projectOverlayRules}
+                  selectedRuleId={activeRule?.id ?? null}
+                  onSelectRule={handleSelectProjectRule}
+                  onToggleHidden={railHandlers.onToggleHidden}
+                  onDeleteRule={railHandlers.onDelete}
+                  onReorderRule={railHandlers.onReorder}
+                  onAddRuleClick={handleNavigateAddRule}
+                  onAddRulesetClick={handleStartAddRuleset}
+                  onDeleteRulesetClick={handleDeleteRuleset}
+                  onTuneRule={handleNavigateTuneRule}
+                  onUpdateCameraSettings={handleUpdateRuleCameraSettings}
+                  onUpdateLightSettings={handleUpdateRuleLightSettings}
                 />
+
+                {/* Lower part action buttons */}
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    data-tour="project-add-ruleset"
+                    onClick={handleStartAddRuleset}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 px-3 py-1.5 font-sans text-xs font-semibold text-purple-200 transition hover:border-purple-400 hover:bg-purple-900/40 active:scale-95"
+                  >
+                    <Plus size={13} />
+                    <span>Add Ruleset</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-tour="project-add-rule"
+                    onClick={() => handleNavigateAddRule()}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.4)] bg-[oklch(0.76_0.145_210/0.12)] px-3 py-1.5 font-sans text-xs font-semibold text-[oklch(0.76_0.145_210)] transition hover:border-[oklch(0.76_0.145_210)] hover:bg-[oklch(0.76_0.145_210/0.2)] active:scale-95"
+                  >
+                    <Plus size={13} />
+                    <span>Add Rule</span>
+                  </button>
+                </div>
               </div>
-            </section>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <section data-tour="project-image-samples" className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
+                        Image & Camera Source
+                      </h2>
+                      <p className="text-[10px] font-sans text-white/50">
+                        {isLiveCameraMode
+                          ? "Live camera selected"
+                          : project.inspectionImageRef
+                            ? "1 registered inspection image (960×540)"
+                            : "No inspection image registered"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:border-white/30 hover:bg-white/10 active:scale-95"
+                    >
+                      <Upload size={12} />
+                      {project.inspectionImageRef ? "Change" : "Upload"}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/50 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsLiveCameraMode(false)}
+                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                        isLiveCameraMode
+                          ? "text-white/55 hover:bg-white/5 hover:text-white"
+                          : "bg-ca-primary text-black shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
+                      }`}
+                    >
+                      <FileImage size={12} />
+                      Image
+                    </button>
+                    <button
+                      type="button"
+                      data-tour="project-live-camera-source"
+                      onClick={() => {
+                        setIsLiveCameraMode(true);
+                        toast.info("Live camera source selected.");
+                      }}
+                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                        isLiveCameraMode
+                          ? "bg-emerald-400 text-black shadow-[0_0_10px_rgba(52,211,153,0.3)]"
+                          : "text-white/55 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <Camera size={12} />
+                      Live Camera
+                    </button>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                      Sample Carrier Pockets
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProjectInspectionImageRef(project.id, "/src/assets/samples/pocket-1-filled.jpg");
+                          toast.info("Loaded Carrier Pocket 1 [Filled IC]");
+                        }}
+                        className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          (project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg" || !project.inspectionImageRef)
+                            ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
+                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                        }`}
+                      >
+                        Pocket 1 [Filled]
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProjectInspectionImageRef(project.id, "/src/assets/samples/pocket-2-empty-mixed.jpg");
+                          toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
+                        }}
+                        className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          project.inspectionImageRef === "/src/assets/samples/pocket-2-empty-mixed.jpg"
+                            ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
+                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                        }`}
+                      >
+                        Pocket 2 [Empty Defect]
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="group relative h-36 overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-inner flex items-center justify-center">
+                    {isLiveCameraMode ? (
+                      <>
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-emerald-300/70">
+                          <Camera size={22} />
+                          <span className="font-sans text-[11px] uppercase tracking-wider">
+                            {liveCameraErrorText
+                              ? "Camera unavailable"
+                              : isLiveCameraReady
+                                ? "Feed visible on canvas"
+                                : "Connecting camera feed"}
+                          </span>
+                        </div>
+                        <div className="absolute left-2.5 top-2.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider text-emerald-200">
+                          Live
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src={project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                          alt="Current project inspection"
+                          className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white opacity-0 backdrop-blur-xs transition group-hover:opacity-100"
+                        >
+                          <Upload size={14} />
+                          Replace Image
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </section>
+              </div>
+            )}
           </div>
 
           {/* Right: camera/current image viewport */}
-          <div className="relative flex min-w-0 flex-col overflow-hidden">
-            <VisualToolWorkpieceCanvas
-                imageRef={ruleset.imageRef || defaultWorkpieceFilledSample}
+          <div data-tour="project-analysis-canvas" className="relative flex min-w-0 flex-col overflow-hidden">
+            {isLiveCameraMode ? (
+              <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
+                <video
+                  ref={liveCameraVideoRef}
+                  playsInline
+                  autoPlay
+                  muted
+                  className="relative z-10 max-h-full max-w-full object-contain"
+                />
+                <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-black/70 px-3 py-2 font-sans text-xs font-bold uppercase tracking-wider text-emerald-200 shadow-lg backdrop-blur">
+                  <span className={`h-2 w-2 rounded-full ${isLiveCameraReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-amber-400 animate-pulse"}`} />
+                  {isLiveCameraReady ? "Live Camera Feed" : "Connecting Camera"}
+                </div>
+                {liveCameraErrorText ? (
+                  <div className="absolute z-30 max-w-md rounded-xl border border-rose-500/30 bg-rose-950/70 p-4 text-center font-sans text-xs text-rose-100 shadow-xl backdrop-blur">
+                    {liveCameraErrorText}
+                  </div>
+                ) : null}
+                {!isLiveCameraReady && !liveCameraErrorText ? (
+                  <div className="absolute z-30 rounded-xl border border-white/10 bg-black/70 px-4 py-3 font-sans text-xs uppercase tracking-wider text-white/70 shadow-xl backdrop-blur">
+                    Opening camera stream...
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void captureLiveCameraFrame()}
+                  disabled={!isLiveCameraReady || isCapturingFrame}
+                  className="absolute bottom-4 right-4 z-30 flex items-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_18px_rgba(52,211,153,0.35)] transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Camera size={14} />
+                  {isCapturingFrame ? "Capturing..." : "Capture Frame"}
+                </button>
+              </div>
+            ) : (
+              <VisualToolWorkpieceCanvas
+                imageRef={project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg"}
                 toolCode={
                   typeof activeRule?.params?.toolCode === "string"
                     ? activeRule.params.toolCode
@@ -1050,46 +1110,42 @@ export function WorkpieceAnalyzeWorkspace({
                 validationStatus={activeValidationResult?.status}
                 validationScore={activeValidationResult?.score}
                 validationResultsMap={allValidationResults}
-                onRunAnalysis={handleManualRunAnalysis}
                 isAnalyzing={isAnalyzing}
+                tapeStripResult={tapeStripResult}
               />
+            )}
           </div>
         </div>
 
         {/* 5. Bottom action bar */}
-        <div className="flex shrink-0 items-center justify-between gap-2 rounded border border-[#2a3138] bg-[#171b20] px-3 py-2 shadow-sm">
-          <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-ca-ink-muted">
-            Reference image and inspection run controls
-          </span>
-          <div className="flex items-center gap-2">
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void onImportImage(file);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            className="flex items-center gap-2 rounded border border-[#3c4650] bg-[#20262d] px-3 py-1.5 text-xs font-bold uppercase text-white transition-colors hover:border-ca-select hover:bg-[#2a3138]"
-          >
-            <FileImage size={14} />
-            Register Image
-          </button>
-          <button
-            type="button"
-            onClick={handleManualRunAnalysis}
-            disabled={isAnalyzing}
-            className="flex items-center gap-2 rounded bg-emerald-600 px-5 py-1.5 text-xs font-bold uppercase text-white shadow-sm transition-colors hover:bg-emerald-500 disabled:opacity-50"
-          >
-            <Play size={14} className={isAnalyzing ? "animate-spin" : ""} />
-            {isAnalyzing ? "Running..." : "Run"}
-          </button>
+        <div data-tour="project-results" className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-black/40 px-4 py-2.5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+          <div className="flex items-center gap-2 font-sans text-[11px] uppercase tracking-wider text-white/50">
+            <span className={`h-2 w-2 rounded-full ${isAnalyzing ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"}`} />
+            <span>Inspection engine ready · {isLiveCameraMode ? "live camera source" : "reference image source"} · {projectAnalysisItems.length} active rules</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+
+                if (file) void onImportImage(file);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              data-tour="project-run-analysis"
+              onClick={handleManualRunAnalysis}
+              disabled={isAnalyzing}
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-1.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(16,185,129,0.45)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+            >
+              <Play size={14} className={isAnalyzing ? "animate-spin" : "fill-black"} />
+              {isAnalyzing ? "Running..." : "Run Analysis"}
+            </button>
           </div>
         </div>
       </div>

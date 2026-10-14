@@ -7,7 +7,7 @@ export interface CanvasPoint {
 }
 
 export type RegionHandle = "move" | "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
-export type PatternRegionEditMode = "search" | "mask";
+export type PatternRegionEditMode = "search" | "pattern" | "mask";
 
 export interface RegionDrag {
   handle: RegionHandle | "new";
@@ -65,6 +65,7 @@ export interface BoxReviewPanelProps {
   excludedNumbers: ReadonlySet<number>;
   formulatedPattern: FormulatedPatternGeometry | null;
   searchRegion: SearchRegion | null;
+  patternRegion: SearchRegion | null;
   maskRegions: readonly SearchRegion[];
   regionEditMode: PatternRegionEditMode;
   selectedMaskIndex: number | null;
@@ -75,6 +76,7 @@ export interface BoxReviewPanelProps {
   onMarginChange: (val: number) => void;
   onRegionEditModeChange: (mode: PatternRegionEditMode) => void;
   onAddMaskRegion: () => void;
+  onAddPatternRegion: () => void;
   onSelectMaskRegion: (index: number) => void;
   onDeleteMaskRegion: (index: number) => void;
   onRemoveBox: (num: number) => void;

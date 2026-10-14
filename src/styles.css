@@ -113,9 +113,10 @@
   --shadow-hmi-glow: 0 0 0 1px var(--ca-primary), 0 0 24px -4px oklch(0.65 0.18 250 / 0.35);
 
   /* HMI typography size tokens (canonical app UI scale) */
-  --font-display: "Inter", "Geist", "IBM Plex Sans", system-ui, sans-serif;
-  --font-sans: "Inter", "Geist", "IBM Plex Sans", system-ui, sans-serif;
-  --font-hmi: "Inter", "Geist", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Ubuntu", "Poppins", system-ui, sans-serif;
+  --font-hmi-display: "Ubuntu", "Poppins", system-ui, sans-serif;
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-hmi: "Poppins", system-ui, -apple-system, sans-serif;
   --font-hmi-mono: "JetBrains Mono", "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
   --text-hmi-title: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
   --text-hmi-header: clamp(1.125rem, 1rem + 0.55vw, 1.4rem);
@@ -273,26 +274,26 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
-  /* Control Automation HMI palette - Dark Slate (SS-01 accepted variant, 2026) */
-  --ca-bg: oklch(0.145 0.012 248);
-  --ca-panel: oklch(0.205 0.014 248);
-  --ca-panel-2: oklch(0.255 0.017 248);
-  --ca-border: oklch(0.36 0.018 248);
-  --ca-chrome: oklch(0.18 0.015 248);
+  /* Control Automation HMI palette - Apex Cyber-Industrial (Tactical Mission Control) */
+  --ca-bg: oklch(0.12 0.022 245);
+  --ca-panel: oklch(0.165 0.025 242);
+  --ca-panel-2: oklch(0.21 0.03 240);
+  --ca-border: oklch(0.28 0.032 235);
+  --ca-chrome: oklch(0.14 0.022 245);
   --ca-chrome-ink: oklch(0.98 0.004 248);
-  --ca-ink: oklch(0.965 0.005 248);
-  --ca-ink-muted: oklch(0.735 0.018 248);
-  --ca-viewport: oklch(0.105 0.011 248);
-  --ca-primary: oklch(0.62 0.24 300); /* accent switch: see top of file */
+  --ca-ink: oklch(0.97 0.005 240);
+  --ca-ink-muted: oklch(0.72 0.02 240);
+  --ca-viewport: oklch(0.08 0.015 245);
+  --ca-primary: oklch(0.76 0.175 215); /* Electric Cyber Cyan */
   --ca-on-primary: oklch(
-    0.985 0.005 300
-  ); /* near-white ink for use on --ca-primary fills; WCAG AA on the accent purple */
-  --ca-select: oklch(0.62 0.24 300);
-  --ca-ok: oklch(0.76 0.17 154);
-  --ca-ng: oklch(0.68 0.22 25);
-  --ca-warn: oklch(0.82 0.16 82);
-  --ca-focus-ring: oklch(0.76 0.145 210);
-  --ca-scrim: oklch(0.08 0.006 248 / 0.72);
+    0.1 0.03 220
+  ); /* dark high-contrast ink for use on bright --ca-primary fills */
+  --ca-select: oklch(0.76 0.175 215);
+  --ca-ok: oklch(0.78 0.22 145); /* Neon Green PASS */
+  --ca-ng: oklch(0.68 0.24 25); /* Laser Ruby FAIL */
+  --ca-warn: oklch(0.82 0.18 82); /* Tactical Amber WARN */
+  --ca-focus-ring: oklch(0.76 0.175 215);
+  --ca-scrim: oklch(0.06 0.015 245 / 0.8);
 
   /* Plan 90 Step 130 - CLI log tokens, dark theme.
    * Contrast against --ca-bg (L=0.145) is >= 4.5:1 for all four
@@ -372,38 +373,38 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: oklch(0.12 0.022 245);
+  --foreground: oklch(0.97 0.005 240);
+  --card: oklch(0.165 0.025 242);
+  --card-foreground: oklch(0.97 0.005 240);
+  --popover: oklch(0.165 0.025 242);
+  --popover-foreground: oklch(0.97 0.005 240);
+  --primary: oklch(0.76 0.175 215);
+  --primary-foreground: oklch(0.1 0.03 220);
+  --secondary: oklch(0.21 0.03 240);
+  --secondary-foreground: oklch(0.97 0.005 240);
+  --muted: oklch(0.21 0.03 240);
+  --muted-foreground: oklch(0.72 0.02 240);
+  --accent: oklch(0.21 0.03 240);
+  --accent-foreground: oklch(0.76 0.175 215);
+  --destructive: oklch(0.68 0.24 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.032 235);
+  --input: oklch(0.28 0.032 235);
+  --ring: oklch(0.76 0.175 215);
+  --chart-1: oklch(0.76 0.175 215);
+  --chart-2: oklch(0.78 0.22 145);
+  --chart-3: oklch(0.82 0.18 82);
+  --chart-4: oklch(0.68 0.24 25);
+  --chart-5: oklch(0.65 0.2 300);
+  --sidebar: oklch(0.14 0.022 245);
+  --sidebar-foreground: oklch(0.97 0.005 240);
+  --sidebar-primary: oklch(0.76 0.175 215);
+  --sidebar-primary-foreground: oklch(0.1 0.03 220);
+  --sidebar-accent: oklch(0.21 0.03 240);
+  --sidebar-accent-foreground: oklch(0.76 0.175 215);
+  --sidebar-border: oklch(0.28 0.032 235);
+  --sidebar-ring: oklch(0.76 0.175 215);
 
   /* Dark-mode toast tokens (see :root above for the source of truth). */
   --toast-bg: 220 13% 14%;
@@ -423,37 +424,45 @@
   --toast-info-border: 217 91% 26%;
   --toast-info-fg: 217 91% 80%;
 
-  --std-chrome: oklch(0.2 0 0);
-  --std-panel: oklch(0.15 0 0);
-  --std-panel-header: oklch(0.25 0 0);
-  --std-accent-active: oklch(0.9 0 0);
-  --std-primary-action: oklch(0.85 0 0);
-  --std-primary-action-text: oklch(0.1 0 0);
-  --std-secondary-action: oklch(0.28 0 0);
-  --std-text: oklch(0.9 0 0);
-  --std-text-muted: oklch(0.6 0 0);
-  --std-readout-bg: oklch(0.1 0 0);
-  --std-readout-text: oklch(0.9 0 0);
-  --std-border: oklch(0.35 0 0);
-  --std-border-light: oklch(0.45 0 0);
-  --std-border-dark: oklch(0.1 0 0);
+  /* Elevated Standard Mode Design Tokens - Apex Cyber-Industrial (Tactical Precision) */
+  --std-bg: oklch(0.11 0.022 245);
+  --std-chrome: oklch(0.135 0.025 242);
+  --std-panel: oklch(0.155 0.025 242);
+  --std-panel-header: oklch(0.185 0.028 240);
+  --std-accent-active: oklch(0.76 0.175 215);
+  --std-primary-action: oklch(0.76 0.175 215);
+  --std-primary-action-text: oklch(0.1 0.03 220);
+  --std-secondary-action: oklch(0.24 0.032 238);
+  --std-text: oklch(0.97 0.005 240);
+  --std-text-muted: oklch(0.72 0.02 240);
+  --std-readout-bg: oklch(0.08 0.015 245);
+  --std-readout-text: oklch(0.95 0.02 215);
+  --std-border: oklch(0.26 0.032 235);
+  --std-border-light: oklch(0.34 0.038 230);
+  --std-border-dark: oklch(0.18 0.025 242);
 }
 
 /*
  * ---------------------------------------------------------------------
- * Standard Mode Grayscale Enforcement
+ * Standard Mode Elevated Visual Presentation
  * ---------------------------------------------------------------------
- * When Standard mode is active, remap interactive accent & selection tokens
- * to neutral industrial grayscale tokens (--std-*).
- * Protects Modern mode while guaranteeing that all Standard surfaces, menus,
- * buttons, and tool controls use the approved grayscale visual language.
+ * Remaps Standard mode surfaces to the elevated Cyber-Industrial palette:
+ * obsidian backgrounds, machined panel surfaces, electric cyan actions,
+ * neon green PASS indicators, and high-legibility crisp text.
  */
 html[data-ui-flavor="standard"],
 [data-standard-shell="true"] {
+  --ca-bg: var(--std-bg);
+  --ca-panel: var(--std-panel);
+  --ca-panel-2: var(--std-panel-header);
+  --ca-border: var(--std-border);
+  --ca-chrome: var(--std-chrome);
   --ca-primary: var(--std-primary-action);
   --ca-on-primary: var(--std-primary-action-text);
   --ca-select: var(--std-accent-active);
-  --ca-focus-ring: var(--std-border-dark);
+  --ca-ink: var(--std-text);
+  --ca-ink-muted: var(--std-text-muted);
+  --ca-focus-ring: var(--std-primary-action);
 }
 
 @layer base {
@@ -726,6 +735,100 @@ html {
   border: 1px solid var(--ca-border);
   border-radius: 0.5rem;
 }
+
+@utility hmi-glass {
+  background: linear-gradient(135deg, color-mix(in oklab, var(--ca-panel) 88%, transparent), color-mix(in oklab, var(--ca-panel-2) 75%, transparent));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 4px 20px -4px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--ca-border);
+}
+
+@utility hmi-glass-card {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 94%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 96%, transparent) 100%);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 75%, transparent);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+@utility hmi-telemetry-card {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 95%, transparent), color-mix(in oklab, var(--ca-bg) 98%, transparent));
+  border: 1px solid color-mix(in oklab, var(--ca-border) 80%, transparent);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+}
+
+@utility hmi-specular-border {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px color-mix(in oklab, var(--ca-border) 70%, transparent);
+}
+
+@utility hmi-glow-ok {
+  box-shadow: 0 0 16px -2px color-mix(in oklab, var(--ca-ok) 45%, transparent);
+}
+
+@utility hmi-glow-ng {
+  box-shadow: 0 0 16px -2px color-mix(in oklab, var(--ca-ng) 45%, transparent);
+}
+
+@utility hmi-glow-primary {
+  box-shadow: 0 0 20px -4px color-mix(in oklab, var(--ca-primary) 50%, transparent);
+}
+
+/* Project Obsidian - Haute Cyber-Industrial Luxury Primitives */
+@utility hmi-obsidian-vault {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 96%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 98%, transparent) 100%);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 85%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
+    0 16px 36px -10px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@utility hmi-machined-button {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel-2) 90%, white 10%) 0%, var(--ca-panel) 100%);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 90%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+    0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    border-color: color-mix(in oklab, var(--ca-primary) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.25),
+      0 6px 20px -4px color-mix(in oklab, var(--ca-primary) 35%, transparent);
+  }
+  &:active {
+    transform: scale(0.985);
+  }
+}
+
+@utility hmi-oled-well {
+  background: color-mix(in oklab, var(--ca-bg) 95%, black 5%);
+  border: 1px solid color-mix(in oklab, var(--ca-border) 70%, transparent);
+  box-shadow:
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.6),
+    inset 0 0 12px 0 rgba(0, 0, 0, 0.5),
+    0 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+@utility hmi-laser-glow-cyan {
+  box-shadow: 0 0 18px -2px rgba(34, 211, 238, 0.35);
+}
+
+@utility hmi-laser-glow-amber {
+  box-shadow: 0 0 18px -2px rgba(245, 158, 11, 0.35);
+}
+
+@utility hmi-cad-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
+}
+
 
 /*
  * Plan 87 Step 25: motion polish primitives.
@@ -4750,8 +4853,9 @@ body:has([data-app-shell="true"]) .global-home-affordance {
  * top-left rectangle and produce a visible double-brand overlap on every
  * HmiShell route. Mirrors the Plan 75 hide-when-titlebar pattern above.
  * Rollback: delete this rule block. */
-body:has([data-app-shell="true"]) .agent-logo-fixed {
-  display: none;
+body:has([data-app-shell="true"]) .agent-logo-fixed,
+body:has([data-create-project-page="true"]) .agent-logo-fixed {
+  display: none !important;
 }
 
 /* Plan 63: hide global app-shell nav slot on routes that mount an HmiShell
@@ -4972,3 +5076,26 @@ html[data-alt-mnemonic="on"] [data-mnemonic] > u {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------
+ * HMI Precision Machined Surfaces & Optronics
+ * ---------------------------------------------------------------------
+ * 1. Top-edge specular chamfer with layered inner shadow
+ * 2. Orthographic CAD blueprint dot grid
+ * 3. Fiber-optic jewel LED status lights
+ */
+.hmi-machined-card {
+  border: 1px solid var(--std-border);
+  border-top: 1px solid color-mix(in oklab, var(--std-text) 18%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.4),
+    0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+.hmi-cad-grid-bg {
+  background-color: var(--std-bg);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+

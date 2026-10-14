@@ -116,26 +116,26 @@ function TrialRunPage() {
   }
 
   return (
-    <section className="flex flex-col h-full bg-[#0b0c10] text-ca-ink p-6 overflow-y-auto">
+    <section className="flex flex-col h-full bg-[#06080d] text-ca-ink p-8 overflow-y-auto font-sans">
       <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         
         {/* Left Column - Main Interface */}
         <div className="flex flex-col space-y-6">
-          <div className="flex items-center justify-between border-b border-ca-border pb-4">
-            <h2 className="flex items-center gap-3 text-2xl font-bold font-sans uppercase tracking-wider">
-              <Play className="h-6 w-6 text-ca-primary" fill="currentColor" /> 
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-5">
+            <h2 className="flex items-center gap-3 text-2xl font-bold font-sans uppercase tracking-wider text-white">
+              <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse" />
               Trial Run Console
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-ca-panel border border-ca-border rounded p-4 flex flex-col justify-between">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/40 p-5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl flex flex-col justify-between">
               <div>
-                <label className="text-xs font-mono text-ca-ink-muted uppercase block mb-2">
+                <label className="text-xs font-mono text-white/50 uppercase block mb-2">
                   Active Ruleset / Target
                 </label>
                 <select
-                  className="w-full rounded-sm border border-ca-border bg-[#0b0c10] p-2 text-sm font-bold font-sans uppercase focus:border-ca-primary focus:ring-1 focus:ring-ca-primary outline-none transition"
+                  className="w-full rounded-lg border border-white/15 bg-black/60 p-2.5 text-xs font-mono font-bold uppercase text-white focus:border-ca-primary focus:ring-1 focus:ring-ca-primary outline-none transition shadow-inner"
                   value={rulesetId}
                   onChange={(e) => {
                     setRulesetId(e.target.value);
@@ -152,22 +152,22 @@ function TrialRunPage() {
               </div>
             </div>
 
-            <div className="bg-ca-panel border border-ca-border rounded p-4 flex flex-col justify-between">
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/40 p-5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl flex flex-col justify-between">
               <div>
-                <label className="text-xs font-mono text-ca-ink-muted uppercase block mb-2">
+                <label className="text-xs font-mono text-white/50 uppercase block mb-2">
                   Input Source Image
                 </label>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => fileInput.current?.click()}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#0b0c10] hover:bg-ca-panel-2 border border-ca-border rounded-sm text-xs font-bold uppercase transition"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-black/60 hover:bg-white/10 border border-white/15 rounded-lg text-xs font-bold uppercase tracking-wider text-white transition shadow-sm"
                   >
                     <Upload size={14} /> {file ? "Change Image" : "Upload Override"}
                   </button>
                   {file && (
                     <button
                       onClick={() => setFile(null)}
-                      className="px-3 py-2 bg-[#0b0c10] hover:bg-red-900/50 border border-ca-border hover:border-red-500 rounded-sm text-red-500 transition"
+                      className="px-3 py-2 bg-black/60 hover:bg-rose-900/50 border border-white/15 hover:border-rose-500 rounded-lg text-rose-400 transition"
                       title="Clear Override"
                     >
                       <X size={14} />
@@ -182,14 +182,14 @@ function TrialRunPage() {
                   />
                 </div>
               </div>
-              <p className="text-[10px] font-mono text-ca-ink-muted mt-2">
+              <p className="text-[10px] font-mono text-white/40 mt-2">
                 {file ? file.name : (activeRuleset?.imageRef ? "Using original reference image." : "No reference image available.")}
               </p>
             </div>
           </div>
 
           {error && (
-            <div className="flex items-start gap-3 bg-red-950/30 border border-red-500/50 rounded p-4 text-red-400">
+            <div className="flex items-start gap-3 bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 text-rose-300">
               <AlertCircle className="shrink-0 mt-0.5" size={18} />
               <div>
                 <p className="text-sm font-bold uppercase">Run Error</p>
@@ -199,15 +199,15 @@ function TrialRunPage() {
           )}
 
           {/* Live Preview Area */}
-          <div className="flex-1 min-h-[400px] border border-ca-border rounded bg-[#0b0c10] relative flex items-center justify-center overflow-hidden">
+          <div className="flex-1 min-h-[420px] rounded-2xl border border-white/10 bg-black/60 relative flex items-center justify-center overflow-hidden shadow-inner">
             {preview || activeRuleset?.imageRef ? (
               <img
                 src={preview || activeRuleset?.imageRef}
                 alt="Input Preview"
-                className="max-w-full max-h-full object-contain opacity-80"
+                className="max-w-full max-h-full object-contain opacity-85"
               />
             ) : (
-              <div className="text-center text-ca-ink-muted flex flex-col items-center">
+              <div className="text-center text-white/40 flex flex-col items-center">
                 <ImageIcon size={48} className="opacity-20 mb-4" />
                 <p className="text-sm font-mono uppercase">Awaiting Image Source</p>
               </div>
@@ -218,13 +218,13 @@ function TrialRunPage() {
               <button
                 onClick={handleRun}
                 disabled={!canRun || running}
-                className="flex items-center gap-3 px-8 py-4 rounded font-bold uppercase tracking-widest text-sm transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed
-                  bg-ca-primary text-ca-bg hover:bg-ca-primary/90 hover:scale-105 active:scale-95"
+                className="flex items-center gap-3 px-8 py-3.5 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-[0_0_24px_rgba(16,185,129,0.4)] disabled:opacity-40 disabled:cursor-not-allowed
+                  bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:brightness-110 hover:scale-105 active:scale-95"
               >
                 {running ? (
-                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-ca-bg border-t-transparent rounded-full animate-spin"/> Executing</span>
+                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"/> Executing</span>
                 ) : (
-                  <><Play size={18} fill="currentColor"/> Execute Trial Run</>
+                  <><Play size={16} fill="currentColor"/> Execute Trial Run</>
                 )}
               </button>
             </div>
@@ -232,18 +232,18 @@ function TrialRunPage() {
         </div>
 
         {/* Right Column - Trial History */}
-        <div className="flex flex-col bg-ca-panel border border-ca-border rounded overflow-hidden">
-          <div className="flex items-center gap-2 p-3 bg-ca-panel-2 border-b border-ca-border">
-            <History size={16} className="text-ca-ink-muted" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-ca-ink">Trial History</h3>
-            <span className="ml-auto text-[10px] font-mono bg-[#0b0c10] px-2 py-0.5 rounded text-ca-ink-muted border border-ca-border">
+        <div className="flex flex-col rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/40 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl overflow-hidden">
+          <div className="flex items-center gap-2 p-4 bg-black/50 border-b border-white/[0.08]">
+            <History size={16} className="text-white/60" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Trial History</h3>
+            <span className="ml-auto text-[10px] font-mono bg-white/[0.04] px-2.5 py-0.5 rounded-full text-white/60 border border-white/10 shadow-inner">
               {runs.length} RUNS
             </span>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
             {runs.length === 0 ? (
-              <p className="text-xs font-mono text-ca-ink-muted text-center p-4">No trial runs recorded for this ruleset.</p>
+              <p className="text-xs font-mono text-white/40 text-center p-6">No trial runs recorded for this ruleset.</p>
             ) : (
               runs.map((r, i) => {
                 const isPass = r.verdict === "OK";
@@ -252,21 +252,21 @@ function TrialRunPage() {
                     key={r.id}
                     to={`/projects/$projectId/trial-run/$runId`}
                     params={{ projectId, runId: r.id }}
-                    className={`block border rounded p-3 transition hover:bg-ca-panel-2 ${
-                      isPass ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"
+                    className={`block rounded-xl border p-3.5 transition-all hover:scale-[1.01] ${
+                      isPass ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50" : "border-rose-500/30 bg-rose-500/5 hover:border-rose-500/50"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
-                        isPass ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                      <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
+                        isPass ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
                       }`}>
                         {isPass ? "PASS" : "FAIL"}
                       </span>
-                      <span className="text-[10px] font-mono text-ca-ink-muted">
+                      <span className="text-[10px] font-mono text-white/50">
                         {new Date(r.createdAt).toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] font-mono text-ca-ink-muted mt-2 pt-2 border-t border-ca-border/50">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-white/40 mt-2 pt-2 border-t border-white/[0.06]">
                       <span>{r.results?.length ?? 0} tools</span>
                       <span>{r.durationMs?.toFixed(1) ?? 0}ms</span>
                     </div>

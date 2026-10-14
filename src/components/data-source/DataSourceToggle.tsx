@@ -107,13 +107,13 @@ export function DataSourceToggle({
     <>
       <div
         className={
-          "inline-flex items-center gap-2 rounded-md border border-ca-border bg-ca-panel/60 px-2 py-1 text-[12px] tabular-nums " +
+          "inline-flex items-center gap-2 rounded-full border border-ca-border/80 bg-ca-panel/85 px-2.5 py-1 text-[12px] tabular-nums shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md " +
           (className ?? "")
         }
         data-testid="data-source-toggle"
         aria-label="Data source"
       >
-        <span className="text-ca-ink-muted">Data:</span>
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ca-ink-muted">Data:</span>
         <ToggleGroup
           type="single"
           size="sm"
@@ -121,11 +121,12 @@ export function DataSourceToggle({
           onValueChange={handleValueChange}
           disabled={pending}
           aria-label="Choose data source"
+          className="gap-1"
         >
           <ToggleGroupItem
             value="seed"
             aria-label="Use seed sample data"
-            className="h-6 gap-1 px-2 text-[12px]"
+            className="h-6 gap-1 rounded-full px-2.5 text-[11px] font-semibold data-[state=on]:bg-ca-primary/20 data-[state=on]:text-ca-primary data-[state=on]:border-ca-primary/40 data-[state=on]:shadow-[0_0_10px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
           >
             <Database className="h-3 w-3" aria-hidden />
             Seed
@@ -133,7 +134,7 @@ export function DataSourceToggle({
           <ToggleGroupItem
             value="backend"
             aria-label="Use live backend"
-            className="h-6 gap-1 px-2 text-[12px]"
+            className="h-6 gap-1 rounded-full px-2.5 text-[11px] font-semibold data-[state=on]:bg-ca-primary/20 data-[state=on]:text-ca-primary data-[state=on]:border-ca-primary/40 data-[state=on]:shadow-[0_0_10px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
           >
             {pending ? (
               <Loader2 className="h-3 w-3 animate-spin" aria-hidden />

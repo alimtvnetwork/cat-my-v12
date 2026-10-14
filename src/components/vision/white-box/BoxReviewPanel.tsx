@@ -30,7 +30,7 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-1">
+          <div className="grid grid-cols-3 gap-1">
             <button
               type="button"
               onClick={() => props.onRegionEditModeChange("search")}
@@ -41,6 +41,17 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
               }`}
             >
               Search Region
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("pattern")}
+              className={`rounded border px-2 py-1 text-[11px] font-semibold transition ${
+                props.regionEditMode === "pattern"
+                  ? "border-rose-400 bg-rose-400/15 text-rose-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
+              }`}
+            >
+              Pattern Region
             </button>
             <button
               type="button"
@@ -68,8 +79,8 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
               Pattern
               <div className="mt-0.5 text-ca-ink-muted">
                 {props.formulatedPattern
-                  ? `${Math.round(props.formulatedPattern.patternRegion.width)}x${Math.round(
-                      props.formulatedPattern.patternRegion.height,
+                  ? `${Math.round(props.patternRegion?.width ?? props.formulatedPattern.patternRegion.width)}x${Math.round(
+                      props.patternRegion?.height ?? props.formulatedPattern.patternRegion.height,
                     )}`
                   : "none"}
               </div>
@@ -79,6 +90,15 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
               <div className="mt-0.5 text-ca-ink-muted">{props.maskRegions.length}</div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={props.onAddPatternRegion}
+            className="flex w-full items-center justify-center gap-1.5 rounded border border-rose-500/50 bg-rose-950/30 px-2 py-2 text-[11px] font-semibold text-rose-200 transition hover:bg-rose-900/40"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Pattern Region
+          </button>
 
           <button
             type="button"

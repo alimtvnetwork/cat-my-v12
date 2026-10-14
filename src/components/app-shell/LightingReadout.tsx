@@ -87,46 +87,75 @@ export function LightingReadout(): React.JSX.Element | null {
     <section
       aria-label="Lighting readout"
       data-testid="lighting-readout"
-      className="mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-xl border border-ca-border bg-ca-panel-2/60 p-4 sm:flex-row sm:items-center sm:justify-between"
+      className="mx-auto flex w-full max-w-6xl flex-col gap-4 rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5">
         <span
           aria-hidden
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-ca-primary/10 text-ca-primary"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.25)]"
         >
-          <Lightbulb className="h-4 w-4" aria-hidden />
+          <Lightbulb className="h-5 w-5" aria-hidden />
         </span>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold tracking-tight text-ca-ink">Lighting profile</h3>
-          <p className="text-xs text-ca-ink-muted">
-            {hasTunedValues ? "Tuned values apply to every capture." : "Using built-in defaults."}
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold tracking-tight text-ca-ink font-display">Lighting Profile</h3>
+            <span className="rounded-full border border-ca-border/80 bg-ca-panel/90 px-2.5 py-0.5 text-[10px] font-mono font-bold tracking-wider text-ca-ink-muted">
+              {hasTunedValues ? "TUNED" : "DEFAULT"}
+            </span>
+          </div>
+          <p className="text-xs text-ca-ink-muted mt-0.5 font-medium">
+            {hasTunedValues ? "Active optic adjustments apply to every frame." : "Using hardware calibration baseline."}
           </p>
         </div>
       </div>
       <dl
-        className="grid grid-cols-4 gap-2 text-center text-xs"
+        className="grid grid-cols-4 gap-2.5 text-center text-xs"
         data-testid="lighting-readout-values"
       >
-        {FIELDS.map(({ key, label }) => (
-          <div
-            key={key}
-            className="rounded-md border border-ca-border bg-ca-panel px-2 py-1"
-            data-testid={`lighting-readout-${key}`}
-          >
-            <dt className="text-[10px] uppercase tracking-wide text-ca-ink-muted">{label}</dt>
-            <dd className="font-hmi-mono text-ca-ink">
-              {controls[key] > 0 ? `+${controls[key]}` : controls[key]}
-            </dd>
-          </div>
-        ))}
+        {FIELDS.map(({ key, label }) => {
+          const isTuned = controls[key] !== 0;
+
+          return (
+            <div
+              key={key}
+              className={`rounded-xl border px-3 py-2 transition-all ${
+                isTuned
+                  ? "border-ca-primary/50 bg-ca-primary/10 shadow-[0_0_12px_rgba(30,190,230,0.15)]"
+                  : "border-ca-border/70 bg-ca-panel/70 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]"
+              }`}
+              data-testid={`lighting-readout-${key}`}
+            >
+              <dt className="text-[10px] uppercase font-bold tracking-wider text-ca-ink-muted font-mono">{label}</dt>
+              <dd className={`font-mono text-sm font-bold tabular-nums mt-0.5 ${isTuned ? "text-ca-primary drop-shadow-[0_0_6px_var(--ca-primary)]" : "text-ca-ink"}`}>
+                {controls[key] > 0 ? `+${controls[key]}` : controls[key]}
+              </dd>
+              <div className="mt-1 flex items-center justify-center gap-0.5" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((seg) => {
+                  const isSegmentActive = isTuned && Math.abs(controls[key]) > seg * 15;
+
+                  return (
+                    <span
+                      key={seg}
+                      className={`h-1 w-2 rounded-xs transition-colors ${
+                        isSegmentActive
+                          ? "bg-ca-primary shadow-[0_0_4px_var(--ca-primary)]"
+                          : "bg-ca-border/60"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </dl>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <Link
           to="/settings/lighting"
-          className="hmi-focus-ring inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-3 py-1.5 text-xs text-ca-ink transition-colors hover:border-ca-primary/60 hover:bg-ca-panel-2"
+          className="hmi-focus-ring inline-flex items-center gap-1.5 rounded-xl border border-ca-border/80 bg-ca-surface/80 px-3.5 py-2 text-xs font-semibold text-ca-ink transition-all hover:border-ca-primary/60 hover:bg-ca-surface hover:text-white shadow-sm"
           data-testid="lighting-readout-tune"
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-ca-primary" aria-hidden />
           Tune
         </Link>
         <button
@@ -137,9 +166,9 @@ export function LightingReadout(): React.JSX.Element | null {
           }}
           disabled={isDefault}
           data-testid="lighting-readout-reset"
-          className="hmi-focus-ring inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-3 py-1.5 text-xs text-ca-ink transition-colors hover:border-ca-primary/60 hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="hmi-focus-ring inline-flex items-center gap-1.5 rounded-xl border border-ca-border/80 bg-ca-surface/80 px-3.5 py-2 text-xs font-semibold text-ca-ink transition-all hover:border-ca-primary/60 hover:bg-ca-surface hover:text-white disabled:cursor-not-allowed disabled:opacity-40 shadow-sm"
         >
-          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+          <RotateCcw className="h-3.5 w-3.5 text-ca-ink-muted" aria-hidden />
           Reset
         </button>
       </div>

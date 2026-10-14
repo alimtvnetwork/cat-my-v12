@@ -65,9 +65,9 @@ describe("VisualToolTuningModal", () => {
       />,
     );
 
-    expect(screen.getByText(/Visual Tool Tuning Workbench:/)).toBeTruthy();
-    expect(screen.getAllByText(/Greyscale Pattern Match/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/\[T102\]/)).toBeTruthy();
+    expect(screen.getByText(/Pattern Configuration/)).toBeTruthy();
+    expect(screen.getByText(/Pattern Image/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /OK/i })).toBeTruthy();
   });
 
   it("renders standard inspection tool dispatcher and apply button for area rule", () => {
@@ -81,8 +81,9 @@ describe("VisualToolTuningModal", () => {
       />,
     );
 
-    expect(screen.getByText(/Apply to Rule/)).toBeTruthy();
-    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    const okButtons = screen.getAllByRole("button", { name: /OK/i });
+    expect(okButtons.length).toBeGreaterThan(0);
+    const applyBtn = okButtons[okButtons.length - 1];
     fireEvent.click(applyBtn);
 
     expect(handleApply).toHaveBeenCalledTimes(1);
@@ -129,7 +130,7 @@ describe("VisualToolTuningModal", () => {
       />,
     );
 
-    expect(screen.getByText(/Pin 1 Orientation Config/)).toBeTruthy();
-    expect(screen.getByText(/\[T105\]/)).toBeTruthy();
+    expect(screen.getByText(/Pin 1 Configuration/)).toBeTruthy();
+    expect(screen.getByText(/Pin Point/)).toBeTruthy();
   });
 });

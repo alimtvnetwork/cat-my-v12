@@ -27,6 +27,7 @@ export interface PatternCanvasProps {
   formulatedPattern: FormulatedPatternGeometry | null;
   searchRegion?: SearchRegion | null;
   activeRegion?: SearchRegion | null;
+  patternRegion?: SearchRegion | null;
   maskRegions?: readonly SearchRegion[];
   regionEditMode?: PatternRegionEditMode;
   selectedMaskIndex?: number | null;
@@ -108,11 +109,20 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       drawPatternBoxes(ctx, props.detectedBoxes, props.excludedNumbers);
     }
 
-    if (props.formulatedPattern) {
-      drawReadOnlyRegion(ctx, props.formulatedPattern.patternRegion, "PATTERN REGION", {
-        stroke: "rgba(239, 68, 68, 0.92)",
-        fill: "rgba(239, 68, 68, 0.08)",
+    const activePatternRegion = props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
+
+    if (activePatternRegion) {
+      drawEditableRegion(ctx, activePatternRegion, "PATTERN REGION", {
+        stroke:
+          regionEditMode === "pattern"
+            ? "rgba(239, 68, 68, 0.98)"
+            : "rgba(239, 68, 68, 0.62)",
+        fill:
+          regionEditMode === "pattern"
+            ? "rgba(239, 68, 68, 0.14)"
+            : "rgba(239, 68, 68, 0.07)",
         text: "#fecaca",
+        hasHandles: regionEditMode === "pattern",
       });
     }
 
@@ -150,6 +160,7 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     props.formulatedPattern,
     props.searchRegion,
     props.activeRegion,
+    props.patternRegion,
     props.maskRegions,
     props.regionEditMode,
     props.selectedMaskIndex,

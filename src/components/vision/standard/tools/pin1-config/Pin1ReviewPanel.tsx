@@ -63,10 +63,10 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
           <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
             <span>Regions</span>
-            <span className="font-mono text-[11px] text-ca-ink-muted">Search / Package</span>
+            <span className="font-mono text-[11px] text-ca-ink-muted">Search / Package / Pin</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"
               onClick={() => props.onRegionEditModeChange("search")}
@@ -88,6 +88,17 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
               }`}
             >
               Package Region
+            </button>
+            <button
+              type="button"
+              onClick={() => props.onRegionEditModeChange("pin")}
+              className={`rounded border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                props.regionEditMode === "pin"
+                  ? "border-emerald-400 bg-emerald-400/15 text-emerald-200"
+                  : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-bg"
+              }`}
+            >
+              Pin Point
             </button>
           </div>
 

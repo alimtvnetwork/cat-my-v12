@@ -21,6 +21,10 @@ import {
   Keyboard,
   SlidersHorizontal,
   BookOpen,
+  Activity,
+  Cpu,
+  Radio,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { HmiShell } from "@/components/hmi";
@@ -33,6 +37,7 @@ import { useRecentProjects } from "@/lib/stores/recent-projects-store";
 import { ArrowRight, FolderPlus as FolderPlusIcon } from "lucide-react";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardHomeView } from "@/components/home/StandardHomeView";
+import { MissionControlDashboard } from "@/components/cyber/MissionControlDashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -389,6 +394,8 @@ function Index() {
                 <DataSourceToggle />
               </div>
 
+              <ExecutiveTelemetryHero />
+
               <PrimaryCta />
 
               <div className="mt-hmi-6 grid grid-cols-1 gap-hmi-3 sm:mt-hmi-8 sm:gap-hmi-4 md:grid-cols-2">
@@ -410,6 +417,68 @@ function Index() {
   );
 }
 
+function ExecutiveTelemetryHero(): React.JSX.Element {
+  return (
+    <div className="relative mt-hmi-4 overflow-hidden rounded-2xl border border-ca-border/80 bg-gradient-to-br from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 p-5 shadow-[0_12px_36px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-ca-primary/15 blur-3xl"
+      />
+
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-ca-primary/50 bg-ca-primary/10 text-ca-primary shadow-[0_0_20px_color-mix(in_oklab,var(--ca-primary)_35%,transparent),inset_0_1px_0_0_rgba(255,255,255,0.2)]">
+            <Activity size={24} strokeWidth={2} />
+            <span className="absolute -right-1 -top-1 flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ca-ok opacity-75" />
+              <span className="relative inline-block h-3 w-3 rounded-full bg-ca-ok shadow-[0_0_8px_var(--ca-ok)]" />
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border border-ca-ok/40 bg-ca-ok/10 px-1.5 py-[1px] text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ok shadow-[0_0_8px_color-mix(in_oklab,var(--ca-ok)_25%,transparent)]">
+                SYSTEM OK
+              </span>
+              <span className="text-ca-border/80">·</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-ca-ink-muted">
+                STATION-A1 // LINE 04 // SMT VISION
+              </span>
+            </div>
+
+            <h2 className="mt-1 font-display text-lg font-black uppercase tracking-tight text-ca-ink">
+              Optical Vision Inspection System
+            </h2>
+
+            <p className="mt-0.5 text-xs text-ca-ink-muted font-medium">
+              Continuous multi-spectral defect classification & micron-scale tolerance verification
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 pt-2 lg:pt-0">
+          <div className="flex items-center gap-2 rounded-lg border border-ca-border/80 bg-ca-bg/90 px-3 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <Radio size={13} className="text-ca-primary" />
+            <span className="text-[11px] font-mono font-semibold text-ca-ink-muted">FPS</span>
+            <span className="font-mono text-xs font-bold text-ca-ink">59.9</span>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-ca-border/80 bg-ca-bg/90 px-3 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+            <Cpu size={13} className="text-ca-primary" />
+            <span className="text-[11px] font-mono font-semibold text-ca-ink-muted">LATENCY</span>
+            <span className="font-mono text-xs font-bold text-ca-ok">14.2ms</span>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-ca-ok/40 bg-ca-ok/15 px-3 py-1.5 shadow-[0_0_14px_color-mix(in_oklab,var(--ca-ok)_25%,transparent)]">
+            <ShieldCheck size={14} className="text-ca-ok" />
+            <span className="text-[11px] font-mono font-bold text-ca-ok">PASS 99.8%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PrimaryCta() {
   const recent = useRecentProjects(1);
   const navigate = useNavigate();
@@ -424,24 +493,25 @@ function PrimaryCta() {
   };
 
   return (
-    <div className="mt-hmi-3 flex flex-wrap items-center item-row-gap sm:mt-hmi-4">
+    <div className="mt-hmi-4 flex flex-wrap items-center gap-3">
       <button
         type="button"
         onClick={onClick}
         data-testid="home-primary-cta"
-        className="hmi-focus-ring item-inline gap-hmi-2 rounded-lg bg-ca-primary item-pad-btn text-hmi-body font-semibold text-ca-on-primary shadow-hmi-panel transition hover:bg-ca-primary/90"
+        className="hmi-focus-ring group relative inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-ca-primary via-ca-primary to-ca-primary/90 px-5 py-2.5 text-hmi-body font-bold text-ca-on-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4),0_0_24px_-2px_color-mix(in_oklab,var(--ca-primary)_45%,transparent)] transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_32px_color-mix(in_oklab,var(--ca-primary)_60%,transparent)] active:scale-[0.99]"
       >
         <span>{label}</span>
-        <ArrowRight size={16} aria-hidden strokeWidth={2} className="shrink-0" />
+        <ArrowRight size={16} aria-hidden strokeWidth={2.5} className="shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
       </button>
+
       {top ? (
         <button
           type="button"
           data-testid="home-create-project"
           onClick={() => navigate({ to: "/projects?new=1" as any })}
-          className="hmi-focus-ring item-inline gap-hmi-2 rounded-lg border border-ca-border bg-ca-panel item-pad-btn text-hmi-body font-medium text-ca-ink transition hover:border-ca-primary/60 hover:bg-ca-panel-2"
+          className="hmi-focus-ring group inline-flex items-center gap-2 rounded-xl border border-ca-border/80 bg-ca-panel/80 px-4 py-2.5 text-hmi-body font-semibold text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 active:scale-[0.99]"
         >
-          <FolderPlusIcon size={16} aria-hidden strokeWidth={1.75} className="shrink-0" />
+          <FolderPlusIcon size={16} aria-hidden strokeWidth={2} className="shrink-0 text-ca-ink-muted transition-colors group-hover:text-ca-primary" />
           <span>Create project</span>
         </button>
       ) : null}
@@ -449,14 +519,15 @@ function PrimaryCta() {
       {top ? (
         <>
           <h2 className="sr-only">Pick a workflow</h2>
-          <span className="item-inline text-hmi-caption text-ca-ink-muted">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-ca-border/50 bg-ca-panel/40 px-2.5 py-1 font-mono text-[11px] text-ca-ink-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-ca-ink-muted/50" />
             Last opened {new Date(top.openedAt).toLocaleDateString()}
           </span>
         </>
       ) : (
         <>
           <h2 className="sr-only">Pick a workflow</h2>
-          <span className="item-inline text-hmi-caption text-ca-ink-muted">
+          <span className="text-hmi-caption text-ca-ink-muted font-medium">
             Or pick a workflow below to jump straight to a screen.
           </span>
         </>
@@ -464,6 +535,13 @@ function PrimaryCta() {
     </div>
   );
 }
+
+const WORKFLOW_STATUS_BADGES: Record<string, string> = {
+  setup: "HARDWARE READY",
+  projects: "14 ACTIVE",
+  trial: "LIVE ENGINE",
+  ai: "AI INFERENCE",
+};
 
 function HeroUtilityStrip() {
   const items: readonly { to: string; label: string; hint: string; icon: LucideIcon }[] = [
@@ -490,13 +568,13 @@ function HeroUtilityStrip() {
             key={it.to}
             to={it.to as any}
             preload="intent"
-            className="hmi-focus-ring hmi-chip-hover group item-inline gap-hmi-2 rounded-lg border border-ca-border bg-ca-panel item-pad-chip text-hmi-caption text-ca-ink hover:bg-ca-panel-2"
+            className="hmi-focus-ring hmi-chip-hover group item-inline gap-hmi-2 rounded-xl border border-ca-border/80 bg-ca-panel/85 item-pad-chip text-hmi-caption text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-md hover:border-ca-primary/40 hover:bg-ca-panel-2 hover:shadow-[0_0_12px_color-mix(in_oklab,var(--ca-primary)_20%,transparent)]"
           >
             <Icon
               size={14}
               strokeWidth={1.75}
               aria-hidden
-              className="shrink-0 text-ca-ink-muted transition group-hover:text-ca-ink"
+              className="shrink-0 text-ca-ink-muted transition group-hover:text-ca-primary"
             />
             <span className="font-medium">{it.label}</span>
             <span aria-hidden className="hidden sm:inline text-ca-ink-muted/60">
@@ -513,55 +591,65 @@ function HeroUtilityStrip() {
 function WorkflowCard({ workflow }: { workflow: Workflow }) {
   const { icon: Icon, tone } = workflow;
   const t = TONE[tone];
+  const statusBadge = WORKFLOW_STATUS_BADGES[workflow.id] ?? "READY";
 
   return (
     <div
       role="group"
       aria-label={workflow.label}
-      className="group relative flex cursor-default flex-col justify-between overflow-hidden bg-ca-panel p-hmi-4 sm:p-hmi-5 transition duration-300 hover:bg-ca-panel-2"
+      data-tour={workflow.id === "projects" ? "home-project-workflow" : undefined}
+      className="group relative flex cursor-default flex-col justify-between overflow-hidden rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 p-5 sm:p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_8px_32px_-8px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all duration-300 hover:border-ca-primary/50 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_16px_48px_-8px_rgba(0,0,0,0.8),0_0_24px_-4px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
       style={{
         minHeight: "var(--home-card-min-h)",
-        borderRadius: "var(--home-card-radius)",
-        border: "1px solid var(--home-card-border)",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--home-card-border-hover)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--home-card-border)")}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-40 blur-3xl transition-opacity duration-500 group-hover:opacity-80"
+        className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-60"
         style={{ background: `radial-gradient(circle at center, ${t.glow} 0%, transparent 70%)` }}
       />
+
       <div className="relative flex items-start justify-between">
         <span
-          className="flex h-10 w-10 items-center justify-center bg-ca-panel-2 ring-1"
+          className="flex h-12 w-12 items-center justify-center rounded-xl bg-ca-panel/90 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_2px_8px_-2px_rgba(0,0,0,0.4)] ring-1 transition-all duration-200 group-hover:scale-105"
           style={
             {
-              borderRadius: "var(--home-icon-radius)",
               color: t.ink,
               "--tw-ring-color": t.ring,
             } as CSSProperties
           }
         >
-          <Icon size={20} aria-hidden strokeWidth={1.75} />
+          <Icon size={22} aria-hidden strokeWidth={2} />
         </span>
-        <ArrowUpRight
-          size={18}
-          className="text-ca-ink-muted opacity-40 transition duration-300"
-          aria-hidden
-        />
+
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-ca-border/80 bg-ca-panel/90 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted transition-colors group-hover:border-ca-primary/40 group-hover:text-ca-primary">
+            {statusBadge}
+          </span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ca-border/60 bg-ca-panel/60 text-ca-ink-muted/70 opacity-60 transition-all duration-300 group-hover:border-ca-primary/50 group-hover:text-ca-ink group-hover:opacity-100 group-hover:shadow-[0_0_12px_color-mix(in_oklab,var(--ca-primary)_30%,transparent)]">
+            <ArrowUpRight
+              size={16}
+              aria-hidden
+              className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            />
+          </span>
+        </div>
       </div>
 
-      <div className="relative mt-hmi-3">
+      <div className="relative mt-5">
         <h2
-          className="font-display font-black uppercase tracking-tight leading-none text-ca-ink"
+          className="font-display font-black uppercase tracking-wider leading-none text-ca-ink"
           style={{ fontSize: "var(--home-title-size)" }}
         >
           {workflow.label}
         </h2>
-        <p className="mt-hmi-1 text-hmi-caption text-ca-ink-muted">{workflow.description}</p>
+
+        <p className="mt-2 text-hmi-caption text-ca-ink-muted font-medium leading-relaxed">
+          {workflow.description}
+        </p>
+
         {workflow.quickActions.length > 0 ? (
-          <div className="mt-hmi-3 flex flex-wrap gap-hmi-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {workflow.quickActions.map((qa) => (
               <QuickActionButton key={qa.label} action={qa} tone={t} />
             ))}
@@ -587,7 +675,7 @@ function QuickActionButton({
       preload="intent"
       aria-label={action.label}
       onClick={(e) => e.stopPropagation()}
-      className="hmi-focus-ring hmi-chip-hover group/qa relative inline-flex cursor-pointer items-center gap-hmi-2 overflow-hidden rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-1.5 text-hmi-caption font-medium text-ca-ink shadow-sm hover:bg-ca-panel"
+      className="hmi-focus-ring group/qa relative inline-flex cursor-pointer items-center gap-hmi-2 overflow-hidden rounded-lg border border-ca-border/80 bg-ca-panel/90 px-3 py-1.5 text-hmi-caption font-semibold text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-sm transition-all duration-150 hover:border-ca-primary/60 hover:bg-ca-panel-2 hover:shadow-[0_4px_16px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)] active:scale-[0.98]"
       style={{ color: tone.ink, ["--chip-glow-tone" as string]: tone.glow } as CSSProperties}
     >
       <span
@@ -603,7 +691,7 @@ function QuickActionButton({
         aria-hidden
         className="relative transition-transform duration-200 group-hover/qa:scale-110 group-hover/qa:-rotate-3"
       />
-      <span className="relative text-ca-ink">{action.label}</span>
+      <span className="relative text-ca-ink font-medium">{action.label}</span>
       <ArrowUpRight
         size={12}
         aria-hidden

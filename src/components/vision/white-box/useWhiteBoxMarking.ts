@@ -44,6 +44,18 @@ import type {
   WhiteBoxToolProps,
 } from "./types";
 
+function isBoxInsideRegion(box: WhiteBoxMark, region: SearchRegion): boolean {
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+
+  return (
+    centerX >= region.x &&
+    centerY >= region.y &&
+    centerX <= region.x + region.width &&
+    centerY <= region.y + region.height
+  );
+}
+
 export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const requestIdRef = useRef(0);
   const [source, setSource] = useState<WhiteBoxMarkingInput | null>(null);
@@ -71,6 +83,27 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         y: sr.y,
         width: sr.width,
         height: sr.height,
+      };
+    }
+    return null;
+  });
+  const [patternRegion, setPatternRegion] = useState<SearchRegion | null>(() => {
+    const pr = initialSettings?.patternRegion;
+    if (!pr) return null;
+    if (pr.geometry && typeof pr.geometry.x === "number") {
+      return {
+        x: pr.geometry.x,
+        y: pr.geometry.y,
+        width: pr.geometry.width,
+        height: pr.geometry.height,
+      };
+    }
+    if (typeof pr.x === "number") {
+      return {
+        x: pr.x,
+        y: pr.y,
+        width: pr.width,
+        height: pr.height,
       };
     }
     return null;
@@ -165,16 +198,21 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       return null;
     }
 
+    const boxesForPattern = patternRegion
+      ? detectedBoxes.filter((box) => isBoxInsideRegion(box, patternRegion))
+      : detectedBoxes;
+
     return computePatternGeometry({
-      boxes: detectedBoxes,
+      boxes: boxesForPattern,
       excludedNumbers,
       marginPx,
       searchRegion,
+      patternRegion,
       maskRegions,
       imageWidth: source.width,
       imageHeight: source.height,
     });
-  }, [detectedBoxes, excludedNumbers, marginPx, maskRegions, searchRegion, source]);
+  }, [detectedBoxes, excludedNumbers, marginPx, maskRegions, patternRegion, searchRegion, source]);
 
   useEffect(() => {
     if (!props?.onSettingsChange || !formulatedPattern) {
@@ -207,6 +245,21 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     if (mode === "mask" && selectedMaskIndex === null && maskRegions.length > 0) {
       setSelectedMaskIndex(0);
     }
+  }
+
+  function addPatternRegion(): void {
+    const width = source?.width ?? 960;
+    const height = source?.height ?? 540;
+    const base = formulatedPattern?.patternRegion;
+    const nextRegion: SearchRegion = base ?? {
+      x: Math.round(width * 0.35),
+      y: Math.round(height * 0.34),
+      width: Math.round(width * 0.3),
+      height: Math.round(height * 0.16),
+    };
+
+    setPatternRegion(nextRegion);
+    setRegionEditMode("pattern");
   }
 
   function addMaskRegion(): void {
@@ -255,6 +308,12 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       return;
     }
 
+    if (regionEditMode === "pattern") {
+      setPatternRegion(region);
+
+      return;
+    }
+
     if (selectedMaskIndex === null) {
       return;
     }
@@ -285,6 +344,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMaskRegions([]);
+    setPatternRegion(null);
     setSelectedMaskIndex(null);
     setRegionEditMode("search");
     const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
@@ -301,6 +361,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMaskRegions([]);
+    setPatternRegion(null);
     setSelectedMaskIndex(null);
     setRegionEditMode("search");
     const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
@@ -769,6 +830,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     greyscaleLevel,
     searchRegion,
     maskRegions,
+    patternRegion,
     regionEditMode,
     selectedMaskIndex,
     dragState,
@@ -781,6 +843,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setMaskRegions,
     changeRegionEditMode,
     addMaskRegion,
+    addPatternRegion,
     selectMaskRegion,
     deleteMaskRegion,
     changeActiveCanvasRegion,

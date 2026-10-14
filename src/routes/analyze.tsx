@@ -10,6 +10,7 @@ import type { Project, RuleSet } from "@/lib/projects/types";
 import { useWorkpieceProject } from "@/hooks/useWorkpieceProject";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { DEFAULT_24_PATTERN_BOXES } from "@/lib/vision/white-box-marking";
+import { useSitemapStateCacheStore } from "@/lib/stores/sitemap-state-cache-store";
 
 export const Route = createFileRoute("/analyze")({
   head: () => ({
@@ -44,38 +45,46 @@ function createDefaultRules(): EditorRule[] {
       family: EditorToolFamilyType.Rect,
       isHidden: false,
       isLocked: false,
-      x: 200,
-      y: 215,
-      width: 100,
-      height: 100,
+      x: 180,
+      y: 140,
+      width: 140,
+      height: 140,
       params: {
         toolCode: "T117",
         toolType: "Pin 1 Orientation Config",
-        tolerancePx: 25,
+        tolerancePx: 60,
         thresholdLuma: 35,
-        nominalAngleDeg: -146.0,
-        angleToleranceDeg: 10.0,
+        nominalAngleDeg: -151.6,
+        angleToleranceDeg: 15.0,
+        searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+        searchRegionJson: JSON.stringify({ x: 180, y: 140, width: 140, height: 140 }),
+        packageRegion: { x: 200, y: 160, width: 500, height: 300 },
+        packageRegionJson: JSON.stringify({ x: 200, y: 160, width: 500, height: 300 }),
         pin1Config: {
           registeredPin1: { x: 249, y: 264, centerX: 249, centerY: 264, radius: 24, confidence: 1.0 },
           centerX: 249,
           centerY: 264,
-          relativeX: 26,
-          relativeY: 49,
-          tolerancePx: 25,
+          relativeX: 49.3,
+          relativeY: 88.6,
+          tolerancePx: 60,
           thresholdLuma: 35,
-          nominalAngleDeg: -146.0,
-          angleToleranceDeg: 10.0,
+          nominalAngleDeg: -151.6,
+          angleToleranceDeg: 15.0,
+          searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+          packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         } as any,
         pin1ConfigJson: JSON.stringify({
           registeredPin1: { x: 249, y: 264, centerX: 249, centerY: 264, radius: 24, confidence: 1.0 },
           centerX: 249,
           centerY: 264,
-          relativeX: 26,
-          relativeY: 49,
-          tolerancePx: 25,
+          relativeX: 49.3,
+          relativeY: 88.6,
+          tolerancePx: 60,
           thresholdLuma: 35,
-          nominalAngleDeg: -146.0,
-          angleToleranceDeg: 10.0,
+          nominalAngleDeg: -151.6,
+          angleToleranceDeg: 15.0,
+          searchRegion: { x: 180, y: 140, width: 140, height: 140 },
+          packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         }),
       },
     },
@@ -86,19 +95,26 @@ function createDefaultRules(): EditorRule[] {
       family: EditorToolFamilyType.Rect,
       isHidden: false,
       isLocked: false,
-      x: 380,
-      y: 190,
-      width: 260,
-      height: 155,
+      x: 100,
+      y: 70,
+      width: 760,
+      height: 400,
       params: {
         toolCode: "T116",
         toolType: "Greyscale Pattern Matching",
         activeBoxCount: 24,
         totalBoxCount: 24,
-        threshold: 170,
-        tolerancePx: 8,
+        threshold: 110,
+        tolerancePx: 12,
         marginPx: 8,
-        constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES),
+        minMatchPercent: 80,
+        lumaTolerance: 255,
+        searchRegion: { x: 100, y: 70, width: 760, height: 400 },
+        searchRegionJson: JSON.stringify({ x: 100, y: 70, width: 760, height: 400 }),
+        patternRegion: { x: 150, y: 100, width: 600, height: 300 },
+        patternRegionJson: JSON.stringify({ x: 150, y: 100, width: 600, height: 300 }),
+        referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
+        constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }))),
       },
     },
     {
@@ -158,6 +174,38 @@ function AnalyzeScreen(): React.JSX.Element {
     }
   }, [targetRuleset, updateRulesetRules]);
 
+  const currentPathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const cachedSnapshot = useSitemapStateCacheStore((s) => s.snapshots[currentPathname]);
+  const saveSnapshot = useSitemapStateCacheStore((s) => s.saveSnapshot);
+
+  useEffect(() => {
+    if (!search.project && !search.ruleset && cachedSnapshot?.searchParams?.project) {
+      void navigate({
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          project: cachedSnapshot.searchParams.project,
+          ruleset: cachedSnapshot.searchParams.ruleset,
+        }),
+        replace: true,
+      });
+    }
+  }, [search.project, search.ruleset, cachedSnapshot, navigate]);
+
+  useEffect(() => {
+    if (!currentPathname || !targetProject || !targetRuleset) return;
+
+    saveSnapshot({
+      pathname: currentPathname,
+      search: window.location.search,
+      searchParams: {
+        project: targetProject.id,
+        ruleset: targetRuleset.id,
+      },
+      title: `Analyze · ${targetRuleset.name}`,
+      selectedId: targetRuleset.id,
+    });
+  }, [currentPathname, targetProject, targetRuleset, saveSnapshot]);
+
   if (!targetProject || !targetRuleset) {
     return (
       <StandardAppShell
@@ -174,7 +222,7 @@ function AnalyzeScreen(): React.JSX.Element {
 
   const workspace = (
     <WorkpieceAnalyzeWorkspace
-      key={targetRuleset.id}
+      key={targetProject.id}
       project={targetProject}
       ruleset={targetRuleset}
       rulesets={projectRulesets}

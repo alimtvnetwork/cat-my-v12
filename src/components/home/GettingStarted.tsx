@@ -34,7 +34,7 @@ interface Step {
   readonly title: string;
   readonly description: string;
   readonly to: string;
-  readonly done: boolean;
+  readonly isDone: boolean;
 }
 
 export function GettingStarted(): React.JSX.Element | null {
@@ -52,14 +52,14 @@ export function GettingStarted(): React.JSX.Element | null {
       title: "Create a project",
       description: "Name the line and pick a camera.",
       to: "/projects?new=1",
-      done: projectList.length > 0,
+      isDone: projectList.length > 0,
     },
     {
       n: 2,
       title: "Add a ruleset",
       description: "Group the rules you want to run together.",
       to: firstProject ? `/projects/${firstProject.id}/rulesets` : "/projects",
-      done: rulesetList.length > 0,
+      isDone: rulesetList.length > 0,
     },
     {
       n: 3,
@@ -69,32 +69,34 @@ export function GettingStarted(): React.JSX.Element | null {
         firstProject && firstRuleset
           ? `/projects/${firstProject.id}/rulesets/${firstRuleset.id}`
           : "/setup",
-      done: rulesetList.some((r) => r.rules.length > 0),
+      isDone: rulesetList.some((r) => r.rules.length > 0),
     },
     {
       n: 4,
       title: "Run a trial",
       description: "Score the ruleset against a reference image.",
       to: "/run",
-      done: rulesetList.some((r) => !!r.imageRef && r.rules.length > 0),
+      isDone: rulesetList.some((r) => Boolean(r.imageRef) && r.rules.length > 0),
     },
   ] as const;
 
-  // Plan 65 step 16: derive per-step status. The first not-done step is
-  // "next" (the operator's actual next action); every later not-done step
-  // is "todo". This turns a flat checklist into a workflow with a clear
-  // pointer to what to do next.
-  const firstTodoIdx = rawSteps.findIndex((s) => !s.done);
+  const firstTodoIdx = rawSteps.findIndex((s) => !s.isDone);
   const steps = rawSteps.map((s, i) => {
     let status: StepStatus;
 
-    if (s.done) status = StepStatusType.Done;
-    else if (i === firstTodoIdx) status = StepStatusType.Next;
-    else status = StepStatusType.Todo;
+    if (s.isDone) {
+      status = StepStatusType.Done;
+    } else if (i === firstTodoIdx) {
+      status = StepStatusType.Next;
+    } else {
+      status = StepStatusType.Todo;
+    }
 
     return { ...s, status } as Step & { status: StepStatus };
   });
-  const completed = steps.filter((s) => s.done).length;
+
+  const completedCount = steps.filter((s) => s.isDone).length;
+  const progressPercent = Math.round((completedCount / steps.length) * 100);
 
   return (
     <Section
@@ -108,9 +110,17 @@ export function GettingStarted(): React.JSX.Element | null {
         </span>
       }
       headerAside={
-        <span className="pl-hmi-3">
-          {completed} of {steps.length} complete
-        </span>
+        <div className="flex items-center gap-3 pl-hmi-3 font-mono text-xs">
+          <div className="h-2 w-28 overflow-hidden rounded-full border border-ca-border/80 bg-ca-bg/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-ca-primary to-ca-ok shadow-[0_0_10px_var(--ca-ok)] transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <span className="text-ca-ink-muted">
+            <strong className="text-ca-ink font-semibold">{completedCount}</strong> of {steps.length} complete
+          </span>
+        </div>
       }
     >
       <ol className="flex flex-col gap-hmi-2">
@@ -120,33 +130,35 @@ export function GettingStarted(): React.JSX.Element | null {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               to={s.to as any}
               data-testid={`getting-started-step-${s.n}`}
-              data-done={s.done ? "true" : "false"}
+              data-done={s.isDone ? "true" : "false"}
               data-status={s.status}
-              className="group flex items-center gap-hmi-3 rounded-md border border-ca-border bg-ca-panel-2/40 px-hmi-3 py-hmi-3 hover:border-ca-primary/60 hover:bg-ca-panel-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-focus"
+              className="group relative flex items-center gap-4 rounded-xl border border-ca-border/80 bg-ca-panel/85 px-4 py-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 hover:shadow-[0_6px_24px_-4px_rgba(0,0,0,0.6),0_0_16px_-4px_color-mix(in_oklab,var(--ca-primary)_20%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ca-focus"
             >
               <span
                 aria-hidden
                 className={
-                  s.done
-                    ? "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ca-ok/20 text-ca-ok ring-1 ring-ca-ok/40"
-                    : "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ca-panel text-ca-ink-muted ring-1 ring-ca-border"
+                  s.isDone
+                    ? "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-ca-ok/50 bg-ca-ok/15 text-ca-ok shadow-[0_0_14px_color-mix(in_oklab,var(--ca-ok)_35%,transparent),inset_0_1px_0_0_rgba(255,255,255,0.15)]"
+                    : s.status === StepStatusType.Next
+                      ? "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-ca-primary/50 bg-ca-primary/15 text-ca-primary shadow-[0_0_14px_color-mix(in_oklab,var(--ca-primary)_35%,transparent),inset_0_1px_0_0_rgba(255,255,255,0.15)]"
+                      : "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-ca-border/80 bg-ca-panel text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]"
                 }
               >
-                {s.done ? (
-                  <Check size={16} />
+                {s.isDone ? (
+                  <Check size={16} strokeWidth={2.5} />
                 ) : (
-                  <span className="text-hmi-body font-semibold">{s.n}</span>
+                  <span className="text-hmi-body font-bold font-mono">{s.n}</span>
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-hmi-body font-medium text-ca-ink">{s.title}</p>
-                <p className="truncate text-hmi-caption text-ca-ink-muted">{s.description}</p>
+                <p className="truncate text-hmi-body font-semibold text-ca-ink">{s.title}</p>
+                <p className="truncate text-hmi-caption text-ca-ink-muted font-medium">{s.description}</p>
               </div>
               <StatusPill status={s.status} />
               <ArrowRight
                 size={16}
                 aria-hidden
-                className="shrink-0 text-ca-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ca-ink"
+                className="shrink-0 text-ca-ink-muted transition-transform group-hover:translate-x-1 group-hover:text-ca-ink"
               />
             </Link>
           </li>
@@ -160,22 +172,22 @@ function StatusPill({ status }: { status: StepStatus }) {
   const map: Record<StepStatus, { label: string; cls: string }> = {
     done: {
       label: "Done",
-      cls: "border-ca-ok/40 bg-ca-ok/15 text-ca-ok",
+      cls: "border-ca-ok/50 bg-ca-ok/15 text-ca-ok shadow-[0_0_10px_color-mix(in_oklab,var(--ca-ok)_30%,transparent)]",
     },
     next: {
       label: "Next up",
-      cls: "border-ca-primary/60 bg-ca-primary/15 text-ca-ink",
+      cls: "border-ca-primary/60 bg-ca-primary/20 text-ca-primary font-bold shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]",
     },
     todo: {
       label: "Todo",
-      cls: "border-ca-border bg-ca-panel text-ca-ink-muted",
+      cls: "border-ca-border/80 bg-ca-panel/80 text-ca-ink-muted",
     },
   };
   const { label, cls } = map[status];
 
   return (
     <span
-      className={`shrink-0 rounded-full border px-hmi-2 py-0.5 text-hmi-caption font-medium uppercase tracking-wide ${cls}`}
+      className={`shrink-0 rounded-full border px-3 py-0.5 text-hmi-caption font-semibold uppercase tracking-wider ${cls}`}
       data-status={status}
     >
       {label}

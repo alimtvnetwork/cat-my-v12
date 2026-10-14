@@ -14,6 +14,7 @@ export interface PatternComputeParams {
   marginPx: number;
   tolerancePx?: number;
   searchRegion?: SearchRegion | null;
+  patternRegion?: SearchRegion | null;
   maskRegions?: readonly SearchRegion[];
   imageWidth: number;
   imageHeight: number;
@@ -60,6 +61,13 @@ export function computePatternGeometry(params: PatternComputeParams): Formulated
     };
   });
 
+  const computedPatternRegion = {
+    x: Math.max(0, minX),
+    y: Math.max(0, minY),
+    width: Math.max(1, Math.min(params.imageWidth, maxX) - Math.max(0, minX)),
+    height: Math.max(1, Math.min(params.imageHeight, maxY) - Math.max(0, minY)),
+  };
+
   return {
     x: clampedX,
     y: clampedY,
@@ -71,12 +79,7 @@ export function computePatternGeometry(params: PatternComputeParams): Formulated
       width: Math.max(1, boundedMaxX - clampedX),
       height: Math.max(1, boundedMaxY - clampedY),
     },
-    patternRegion: {
-      x: Math.max(0, minX),
-      y: Math.max(0, minY),
-      width: Math.max(1, Math.min(params.imageWidth, maxX) - Math.max(0, minX)),
-      height: Math.max(1, Math.min(params.imageHeight, maxY) - Math.max(0, minY)),
-    },
+    patternRegion: params.patternRegion ?? computedPatternRegion,
     maskRegions: [...(params.maskRegions ?? [])],
     marginPx: params.marginPx,
     tolerancePx: tolerance,

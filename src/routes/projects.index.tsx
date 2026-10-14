@@ -378,24 +378,33 @@ function ProjectsIndex() {
   const { mode } = useUiMode();
 
   const mainContent = (
-    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-[#0b0c10] text-ca-ink font-mono antialiased p-6">
-      <div className="mx-auto w-full max-w-7xl">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#333] pb-4">
-          <div className="min-w-0 flex items-baseline gap-4">
-            <h1 className="text-xl font-bold uppercase tracking-wider text-ca-ink flex items-center gap-2">
-              <Cpu className="text-ca-primary" size={20} />
-              Project Database
-            </h1>
-            <span className="text-xs tracking-widest tabular-nums text-ca-ink-muted">
-              {hydrated ? `TOTAL: ${list.length}` : "LOADING..."}
-            </span>
+    <div className="flex min-w-0 flex-1 flex-col overflow-auto bg-ca-bg text-ca-ink font-sans antialiased p-6 sm:p-8">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ca-border/70 pb-5">
+          <div className="min-w-0 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ca-primary/10 border border-ca-primary/30 text-ca-primary shadow-sm">
+              <Cpu size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold uppercase tracking-wider text-ca-ink font-display">
+                  Project Database
+                </h1>
+                <span className="rounded-full border border-ca-border/80 bg-ca-panel/80 px-2.5 py-0.5 text-[11px] font-mono font-semibold tracking-wider text-ca-ink-muted">
+                  {hydrated ? `${list.length} active` : "LOADING..."}
+                </span>
+              </div>
+              <p className="text-xs text-ca-ink-muted mt-0.5">
+                Centralized recipe repository, inspection criteria & linked vision hardware
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label
-              className="inline-flex cursor-pointer items-center gap-2 border border-[#333] bg-[#1a1c23] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:border-ca-primary transition-colors focus-within:border-ca-primary"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ca-border/80 bg-ca-panel/80 hover:bg-ca-panel px-4 py-2 text-xs font-semibold uppercase tracking-wider text-ca-ink hover:border-ca-border transition-all shadow-sm focus-within:border-ca-primary"
               aria-label="Import project from JSON or YAML"
             >
-              <Upload aria-hidden size={14} />
+              <Upload aria-hidden size={14} className="text-ca-ink-muted" />
               Import
               <input
                 type="file"
@@ -410,51 +419,64 @@ function ProjectsIndex() {
             </label>
             <button
               type="button"
+              data-tour="projects-create-button"
               onClick={openDialog}
-              className="inline-flex items-center gap-2 bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover transition-colors focus-visible:outline-none"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-950 shadow-md shadow-teal-950/40 border border-teal-300/30 transition-all active:scale-[0.98]"
             >
               <Plus aria-hidden size={16} />
               New Project
             </button>
           </div>
-        </header>
+        </div>
+
+        <FleetKpiStrip
+          projectCount={list.length}
+          linkedCameraCount={list.filter((p) => Boolean(p.deviceId)).length}
+        />
 
         {importErr ? (
-          <div className="mb-4 rounded-sm border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-500">
-            ERR: {importErr}
+          <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3.5 text-xs text-rose-400 flex items-center justify-between">
+            <span>ERR: {importErr}</span>
+            <button
+              type="button"
+              onClick={() => setImportErr(null)}
+              className="text-rose-400 hover:text-rose-200"
+            >
+              <X size={14} />
+            </button>
           </div>
         ) : null}
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-[#1a1c23] p-3 border border-[#333]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-ca-border/70 bg-ca-panel/85 p-3.5 shadow-sm backdrop-blur-md">
           <div className="relative flex-1 sm:max-w-md flex items-center">
             <Search
               aria-hidden
-              size={14}
-              className="absolute left-3 text-ca-ink-muted pointer-events-none"
+              size={15}
+              className="absolute left-3.5 text-ca-ink-muted pointer-events-none"
             />
             <input
               type="search"
               value={prefs.query}
               onChange={(e) => setPrefs((p) => ({ ...p, query: e.target.value }))}
-              placeholder="SEARCH PROJECTS..."
+              placeholder="Filter projects by title..."
               aria-label="Filter projects by name"
               disabled={!hydrated || totalCount === 0}
-              className="w-full bg-[#0b0c10] border border-[#333] py-2 pl-9 pr-3 text-xs text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-primary focus:outline-none disabled:opacity-50 uppercase"
+              className="w-full rounded-lg bg-ca-surface/80 border border-ca-border/80 py-2 pl-9 pr-3 text-xs text-ca-ink placeholder:text-ca-ink-muted focus:border-ca-primary focus:ring-1 focus:ring-ca-primary/40 focus:outline-none disabled:opacity-50 transition-all"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-ca-ink-muted uppercase">Sort:</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-medium text-ca-ink-muted uppercase tracking-wider">Sort:</span>
             <select
               value={prefs.sort}
               onChange={(e) => setPrefs((p) => ({ ...p, sort: e.target.value as SortKey }))}
               aria-label="Sort projects"
               disabled={!hydrated || totalCount === 0}
-              className="bg-[#0b0c10] border border-[#333] px-3 py-2 text-xs text-ca-ink focus:border-ca-primary focus:outline-none disabled:opacity-50 uppercase appearance-none cursor-pointer"
+              className="rounded-lg bg-ca-surface/80 border border-ca-border/80 px-3 py-2 text-xs text-ca-ink focus:border-ca-primary focus:outline-none disabled:opacity-50 tracking-wider cursor-pointer transition-all"
             >
-              <option value="createdDesc">DESC (NEWEST)</option>
-              <option value="createdAsc">ASC (OLDEST)</option>
-              <option value="nameAsc">ALPHA (A-Z)</option>
-              <option value="nameDesc">ALPHA (Z-A)</option>
+              <option value="createdDesc">Newest First</option>
+              <option value="createdAsc">Oldest First</option>
+              <option value="nameAsc">Alphabetical (A–Z)</option>
+              <option value="nameDesc">Alphabetical (Z–A)</option>
             </select>
           </div>
         </div>
@@ -462,34 +484,37 @@ function ProjectsIndex() {
         {!hydrated ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="border border-[#333] bg-[#1a1c23] p-5 h-32 animate-pulse flex flex-col justify-between">
-                 <div className="h-4 bg-[#333] w-2/3"></div>
-                 <div className="h-3 bg-[#333] w-1/3"></div>
+              <div key={i} className="rounded-xl border border-ca-border/60 bg-ca-panel/60 p-5 h-36 animate-pulse flex flex-col justify-between">
+                <div className="h-4 bg-ca-border/50 rounded w-2/3" />
+                <div className="h-3 bg-ca-border/30 rounded w-1/3" />
               </div>
             ))}
           </div>
         ) : showEmpty ? (
-          <div className="flex flex-col items-center justify-center p-12 border border-dashed border-[#444] bg-[#1a1c23]">
-            <FolderOpen size={48} className="text-ca-ink-muted mb-4 opacity-50" />
-            <h2 className="text-lg font-bold text-ca-ink uppercase tracking-widest mb-2">DB EMPTY</h2>
-            <p className="text-sm text-ca-ink-muted text-center max-w-sm mb-6">
-              No inspection projects exist in the current configuration matrix.
+          <div className="flex flex-col items-center justify-center p-14 rounded-2xl border border-dashed border-ca-border/80 bg-ca-panel/40 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-ca-primary/10 border border-ca-primary/20 text-ca-primary">
+              <FolderOpen size={28} />
+            </div>
+            <h2 className="text-base font-bold text-ca-ink uppercase tracking-wider mb-1 font-display">No Projects in Database</h2>
+            <p className="text-xs text-ca-ink-muted max-w-sm mb-6 leading-relaxed">
+              No vision inspection projects have been initialized yet. Create your first recipe to get started.
             </p>
             <button
               onClick={openDialog}
-              className="border border-[#444] bg-transparent px-6 py-2 text-sm font-bold uppercase tracking-wider text-ca-ink hover:border-ca-primary transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-ca-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover transition-all shadow-md active:scale-[0.98]"
             >
-              INITIALIZE PROJECT
+              <Plus size={15} />
+              Initialize Project
             </button>
           </div>
         ) : showNoMatch ? (
-           <div className="flex flex-col items-center justify-center p-12 border border-[#333] bg-[#1a1c23]">
-             <span className="text-sm font-bold text-ca-ink-muted uppercase">QUERY_RESULT: 0 MATCHES</span>
-           </div>
+          <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-ca-border/70 bg-ca-panel/50 text-center">
+            <span className="text-xs font-semibold text-ca-ink-muted uppercase tracking-wider">No matching projects found</span>
+          </div>
         ) : (
           <>
             {rowError ? (
-              <div className="mb-4 rounded-sm border border-red-500/50 bg-red-500/10 p-3 text-xs text-red-500">
+              <div className="mb-4 rounded-xl border border-rose-500/50 bg-rose-500/10 p-3 text-xs text-rose-400">
                 {rowError}
               </div>
             ) : null}
@@ -501,72 +526,73 @@ function ProjectsIndex() {
                 return (
                   <div
                     key={p.id}
-                    className="group relative flex flex-col border border-[#333] bg-[#1a1c23] transition-colors hover:border-ca-primary"
+                    className="group relative flex flex-col justify-between rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_8px_24px_-6px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-ca-primary/50 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.15)] overflow-hidden"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#333] transition-colors group-hover:bg-ca-primary" />
-                    
-                    <div className="p-4 flex-1">
-                      <div className="flex items-start justify-between mb-2">
+                    <div className="p-5 flex-1">
+                      <div className="flex items-start justify-between gap-3 mb-2.5">
                         <Link
                           to="/projects/$projectId"
                           params={{ projectId: toIntParam(IntAliasNamespaceType.Project, p.id) }}
-                          className="flex-1 min-w-0 pr-4 hover:opacity-80"
+                          className="flex-1 min-w-0 group/link"
                         >
-                          <h2 className="truncate text-base font-bold uppercase tracking-wider text-ca-ink">
+                          <h2 className="truncate text-base font-bold uppercase tracking-wider text-ca-ink font-display group-hover/link:text-ca-primary transition-colors">
                             {p.name}
                           </h2>
                           <div className="mt-1 flex items-center gap-2">
-                            <span className="text-[10px] text-ca-ink-muted">ID: {p.id.slice(0, 8)}</span>
+                            <span className="font-mono text-[10px] text-ca-ink-muted">ID: {p.id.slice(0, 8)}</span>
+                            <span className="text-ca-border/60">·</span>
+                            <span className="font-mono text-[10px] text-ca-ink-muted">{new Date(p.createdAt).toLocaleDateString()}</span>
                           </div>
                         </Link>
-                        {p.deviceId && (
-                           <div className="shrink-0 flex items-center justify-center border border-ca-primary/50 bg-ca-primary/10 px-2 py-0.5 text-[10px] text-ca-primary tracking-wider">
-                              CAM_LINK
-                           </div>
-                        )}
+                        {p.deviceId ? (
+                          <div className="shrink-0 flex items-center gap-1.5 rounded-full border border-ca-ok/40 bg-ca-ok/10 px-2.5 py-0.5 text-[10px] font-mono font-semibold text-ca-ok tracking-wider shadow-[0_0_8px_color-mix(in_oklab,var(--ca-ok)_25%,transparent)]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-ca-ok animate-pulse" />
+                            <span>CAM_LINK</span>
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2 text-[10px] uppercase font-bold tracking-wider">
-                        <div className="border border-[#444] bg-[#0b0c10] px-2 py-1 text-ca-ink-muted">
+                        <span className="rounded-lg border border-ca-primary/40 bg-ca-primary/10 px-2.5 py-1 text-ca-primary font-mono font-semibold">
                           {p.rulesetIds.length} {p.rulesetIds.length === 1 ? "RULESET" : "RULESETS"}
-                        </div>
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-[#333] bg-[#0b0c10] px-4 py-2">
-                      <div className="flex gap-2">
-                         <button
-                           title="Rename"
-                           onClick={() => { setRowError(null); setRenameFor({ id: p.id, name: p.name }); }}
-                           disabled={busy}
-                           className="text-ca-ink-muted hover:text-ca-ink transition-colors disabled:opacity-50"
-                         >
-                           <Pencil size={14} />
-                         </button>
-                         <button
-                           title="Duplicate"
-                           onClick={() => void handleDuplicate(p.id)}
-                           disabled={busy}
-                           className="text-ca-ink-muted hover:text-ca-ink transition-colors disabled:opacity-50"
-                         >
-                           <Copy size={14} />
-                         </button>
-                         <button
-                           title="Delete"
-                           onClick={() => { setRowError(null); setDeleteFor({ id: p.id, name: p.name }); }}
-                           disabled={busy}
-                           className="text-ca-ink-muted hover:text-red-500 transition-colors disabled:opacity-50"
-                         >
-                           <Trash2 size={14} />
-                         </button>
+                    <div className="flex items-center justify-between border-t border-ca-border/70 bg-ca-panel/40 px-4 py-2.5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          title="Rename"
+                          onClick={() => { setRowError(null); setRenameFor({ id: p.id, name: p.name }); }}
+                          disabled={busy}
+                          className="rounded-lg p-1.5 text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel-2 transition-colors disabled:opacity-40"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          title="Duplicate"
+                          onClick={() => void handleDuplicate(p.id)}
+                          disabled={busy}
+                          className="rounded-lg p-1.5 text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel-2 transition-colors disabled:opacity-40"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button
+                          title="Delete"
+                          onClick={() => { setRowError(null); setDeleteFor({ id: p.id, name: p.name }); }}
+                          disabled={busy}
+                          className="rounded-lg p-1.5 text-ca-ink-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-40"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                       <button
                         onClick={() => void handleRun(p.id)}
                         disabled={!canRun}
-                        className="flex items-center gap-2 border border-ca-primary bg-ca-primary/10 px-3 py-1 text-[10px] font-bold text-ca-primary hover:bg-ca-primary hover:text-black transition-colors disabled:opacity-30 disabled:border-[#444] disabled:text-[#444] disabled:bg-transparent"
+                        className="flex items-center gap-1.5 rounded-xl border border-ca-primary/40 bg-ca-primary/15 hover:bg-ca-primary hover:text-ca-on-primary px-3.5 py-1 text-[11px] font-bold text-ca-primary transition-all disabled:opacity-30 disabled:pointer-events-none shadow-sm"
                       >
                         <Play size={12} className={canRun ? "fill-current" : ""} />
-                        EXECUTE
+                        <span>RUN</span>
                       </button>
                     </div>
                   </div>
@@ -584,38 +610,38 @@ function ProjectsIndex() {
       />
 
       {renameFor ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <form
             onSubmit={(e) => { e.preventDefault(); commitRename(); }}
-            className="w-full max-w-sm border border-[#444] bg-[#0b0c10] shadow-2xl"
+            className="w-full max-w-sm rounded-2xl border border-ca-border/80 bg-ca-panel/95 p-6 shadow-2xl space-y-4"
           >
-            <div className="border-b border-[#333] bg-[#1a1c23] px-4 py-3">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-ca-ink">RENAME PROJECT</h2>
+            <div className="border-b border-ca-border/60 pb-3">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-ca-ink font-display">Rename Project</h2>
             </div>
-            <div className="p-4">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted mb-2 block">
-                NEW NAME
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted mb-1.5 block">
+                New Project Name
               </label>
               <input
                 autoFocus
                 value={renameFor.name}
                 onChange={(e) => setRenameFor((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
-                className="w-full border border-[#444] bg-[#1a1c23] px-3 py-2 text-sm text-ca-ink focus:border-ca-primary focus:outline-none"
+                className="w-full rounded-lg border border-ca-border/80 bg-ca-surface/80 px-3 py-2 text-sm text-ca-ink focus:border-ca-primary focus:ring-1 focus:ring-ca-primary/40 focus:outline-none"
               />
             </div>
-            <div className="flex gap-2 border-t border-[#333] bg-[#1a1c23] p-4">
+            <div className="flex gap-2.5 pt-2 border-t border-ca-border/60">
               <button
                 type="button"
                 onClick={() => setRenameFor(null)}
-                className="flex-1 border border-[#444] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-[#333]"
+                className="flex-1 rounded-lg border border-ca-border/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-ca-surface transition-colors"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover"
+                className="flex-1 rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:bg-ca-primary-hover transition-colors shadow-sm"
               >
-                APPLY
+                Apply
               </button>
             </div>
           </form>
@@ -623,30 +649,28 @@ function ProjectsIndex() {
       ) : null}
 
       {deleteFor ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm border border-red-500/50 bg-[#0b0c10] shadow-2xl">
-            <div className="border-b border-red-500/20 bg-red-500/10 px-4 py-3">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-red-500">DELETE PROJECT?</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-2xl border border-rose-500/40 bg-ca-panel/95 p-6 shadow-2xl space-y-4">
+            <div className="border-b border-rose-500/20 pb-3">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-rose-400 font-display">Delete Project?</h2>
             </div>
-            <div className="p-4">
-              <p className="text-xs text-ca-ink leading-relaxed">
-                <span className="font-bold text-red-400">WARNING:</span> This removes "{deleteFor.name}" and every ruleset it owns from this browser. This cannot be undone.
-              </p>
-            </div>
-            <div className="flex gap-2 border-t border-[#333] bg-[#1a1c23] p-4">
+            <p className="text-xs text-ca-ink leading-relaxed">
+              <span className="font-bold text-rose-400">Warning:</span> This removes "{deleteFor.name}" and every ruleset it owns from this browser. This cannot be undone.
+            </p>
+            <div className="flex gap-2.5 pt-2 border-t border-ca-border/60">
               <button
                 type="button"
                 onClick={() => setDeleteFor(null)}
-                className="flex-1 border border-[#444] px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-[#333]"
+                className="flex-1 rounded-lg border border-ca-border/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-ca-surface transition-colors"
               >
-                CANCEL
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={commitDelete}
-                className="flex-1 bg-red-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-red-600"
+                className="flex-1 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:from-rose-500 hover:to-red-500 transition-all shadow-md shadow-rose-950/40"
               >
-                PURGE
+                Purge
               </button>
             </div>
           </div>
@@ -668,5 +692,59 @@ function ProjectsIndex() {
       <SectionTopBar section={SectionIdType.Home} active="projects" />
       {mainContent}
     </HmiShell>
+  );
+}
+
+function FleetKpiStrip({
+  projectCount,
+  linkedCameraCount,
+}: {
+  projectCount: number;
+  linkedCameraCount: number;
+}): React.JSX.Element {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="flex flex-col rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 to-ca-panel/60 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+          Active Recipes
+        </span>
+        <span className="mt-1 font-mono text-2xl font-black text-ca-ink tracking-tight">
+          {projectCount}
+        </span>
+      </div>
+
+      <div className="flex flex-col rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 to-ca-panel/60 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+          Linked Cameras
+        </span>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="font-mono text-2xl font-black text-ca-ok tracking-tight drop-shadow-[0_0_8px_var(--ca-ok)]">
+            {linkedCameraCount}
+          </span>
+          <span className="text-[10px] font-mono font-semibold text-ca-ok uppercase tracking-wider">ONLINE</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 to-ca-panel/60 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+          Sensor Bandwidth
+        </span>
+        <span className="mt-1 font-mono text-2xl font-black text-ca-primary tracking-tight">
+          4K @ 60 FPS
+        </span>
+      </div>
+
+      <div className="flex flex-col rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 to-ca-panel/60 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+          Yield Baseline
+        </span>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="font-mono text-2xl font-black text-ca-ink tracking-tight">
+            99.5%
+          </span>
+          <span className="text-[10px] font-mono text-ca-ink-muted">TARGET</span>
+        </div>
+      </div>
+    </div>
   );
 }
