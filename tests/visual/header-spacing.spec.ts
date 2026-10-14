@@ -62,18 +62,44 @@ async function waitForDensity(page: Page, density: "comfortable" | "compact"): P
   });
 }
 
+async function applyDensity(page: Page, density: "comfortable" | "compact"): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
+      await page.waitForSelector('header[data-app-shell="true"]', { timeout: 10_000 });
+      await page.evaluate(async (nextDensity) => {
+        const mod = await import("/src/lib/stores/ui-prefs-store.ts");
+        mod.useUiPrefsStore.getState().setHeaderDensity(nextDensity);
+      }, density);
+      await waitForDensity(page, density);
+
+      return;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 async function seedDensityAndOpenSetup(
   page: Page,
   density: "comfortable" | "compact",
 ): Promise<void> {
-  await page.goto(`${BASE_URL}/setup`, { waitUntil: "domcontentloaded", timeout: 30_000 });
-  await page.waitForSelector('header[data-app-shell="true"]', { timeout: 5_000 });
-  await page.waitForTimeout(1_000);
-  await page.evaluate(async (nextDensity) => {
-    const mod = await import("/src/lib/stores/ui-prefs-store.ts");
-    mod.useUiPrefsStore.getState().setHeaderDensity(nextDensity);
+  await page.addInitScript((nextDensity) => {
+    window.localStorage.setItem(
+      "ca.uiPrefs.v1",
+      JSON.stringify({
+        state: {
+          showStatusBar: true,
+          headerDensity: nextDensity,
+          uiFlavor: "standard",
+        },
+        version: 0,
+      }),
+    );
   }, density);
-  await waitForDensity(page, density);
+  await page.goto(`${BASE_URL}/setup`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+  await applyDensity(page, density);
 }
 
 async function measureHeader(page: Page) {
