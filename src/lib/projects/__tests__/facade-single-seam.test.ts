@@ -101,7 +101,6 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "lib/workspace/layout-presets.ts",
   "lib/workspace/layout-slice.ts",
   // Routes still reading legacy keys for one-off migrations / debug.
-  "routes/useRootBootOrchestrator.ts",
   "routes/settings/index.tsx",
   // Comment-only mention of localStorage in an SSR-hydration note.
   "routes/setup/camera.tsx",
