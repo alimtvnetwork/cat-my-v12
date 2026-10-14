@@ -79,6 +79,7 @@ export const VISUAL_ROUTES: readonly VisualRoute[] = [
     slug: "settings-index",
     path: "/settings",
     description: "Settings shell landing (Plan 83 item 23)",
+    waitForSelector: '[data-testid="settings-search"]',
   },
   {
     slug: "errors-page",
