@@ -57,7 +57,7 @@ export function useWorkpieceProject(
         id: "ruleset-sample-01",
         projectId: project.id,
         name: "Default Workpiece Ruleset",
-        imageRef: "/src/assets/samples/pocket-1-filled.jpg",
+        imageRef: undefined,
         rules: [],
       }
     );

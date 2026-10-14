@@ -13,6 +13,7 @@ import { RootProviders } from "../lib/boot/root-providers";
 import { RootShellLayout } from "../lib/boot/root-shell-layout";
 import { useRootBootOrchestrator } from "./useRootBootOrchestrator";
 import { RootErrorBoundary } from "./RootErrorBoundary";
+import { ProjectCreationAnalysisTour } from "@/components/guided-simulation/ProjectCreationAnalysisTour";
 
 function NotFoundComponent() {
   return (
@@ -78,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Ubuntu:wght@400;500;700&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
@@ -111,7 +112,10 @@ function RootComponent() {
   return (
     <RootProviders queryClient={queryClient}>
       <RootShellLayout>
-        <Outlet />
+        <div className="flex h-screen min-h-0 w-full flex-col overflow-hidden">
+          <Outlet />
+        </div>
+        <ProjectCreationAnalysisTour />
       </RootShellLayout>
     </RootProviders>
   );

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { X, Sliders, Check } from "lucide-react";
+import { toast } from "sonner";
 import type { EditorRule } from "@/lib/editor/types";
 import {
   createDefaultPatternSearchSettings,
@@ -10,7 +11,6 @@ import { WhiteBoxMarkingTool } from "../WhiteBoxMarkingTool";
 import { Pin1MarkingTool } from "../standard/tools/pin1-config/Pin1MarkingTool";
 import { StandardInspectionToolDispatcher } from "../standard/tools/StandardInspectionToolDispatcher";
 import type { FormulatedPatternGeometry } from "../white-box/types";
-import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
 
 export interface VisualToolTuningModalProps {
   isOpen: boolean;
@@ -151,13 +151,16 @@ export function VisualToolTuningModal({
     normalizedName.includes("white box");
 
   const isPin1 =
+    toolCode === "T103" ||
     toolCode === "T105" ||
     toolCode === "T117" ||
     toolCode === "pin1_config" ||
+    toolCode === "pin1_orientation" ||
+    normalizedName.includes("orientation") ||
     normalizedName.includes("pin 1") ||
     normalizedName.includes("pin1");
 
-  const effectiveImageRef = registeredImageRef || imageRef || defaultWorkpieceFilledSample;
+  const effectiveImageRef = registeredImageRef || imageRef;
   const handleImageRegistered = useCallback(
     (nextImageRef: string) => {
       setRegisteredImageRef(nextImageRef);
@@ -214,6 +217,7 @@ export function VisualToolTuningModal({
       patternRegionJson: JSON.stringify(patternRegion),
       maskRegionsJson: JSON.stringify(maskRegions),
       referenceBoxesJson: JSON.stringify(pattern.referenceBoxes),
+      ...(effectiveImageRef ? { imageRef: effectiveImageRef } : {}),
       x: pattern.x,
       y: pattern.y,
       width: pattern.width,
@@ -237,29 +241,20 @@ export function VisualToolTuningModal({
     const pin1Config =
       configPayload?.pin1Config ??
       (settings as any)?.pin1Config ??
-      (rule.params as any)?.pin1Config ?? {
-        registeredPin1: {
-          x: 249,
-          y: 264,
-          centerX: 249,
-          centerY: 264,
-          radius: 24,
-          confidence: 1.0,
-        },
-        centerX: 249,
-        centerY: 264,
-        radius: 24,
-        relativeX: 26,
-        relativeY: 49,
-        tolerancePx: 25,
-        nominalAngleDeg: -146.0,
-        angleToleranceDeg: 10.0,
-        thresholdLuma: 35,
-      };
+      (rule.params as any)?.pin1Config;
 
-    const pinReg = pin1Config.registeredPin1;
-    const holeX = Number(pinReg?.x ?? pinReg?.centerX ?? pin1Config?.centerX ?? 249);
-    const holeY = Number(pinReg?.y ?? pinReg?.centerY ?? pin1Config?.centerY ?? 264);
+    const pinReg = pin1Config?.registeredPin1;
+    const rawHoleX = pinReg?.x ?? pinReg?.centerX ?? pin1Config?.centerX;
+    const rawHoleY = pinReg?.y ?? pinReg?.centerY ?? pin1Config?.centerY;
+
+    if (!pin1Config || typeof rawHoleX !== "number" || typeof rawHoleY !== "number") {
+      toast.error("Register the Pin 1 point before applying this rule.");
+
+      return;
+    }
+
+    const holeX = Number(rawHoleX);
+    const holeY = Number(rawHoleY);
     const searchRegion =
       readSavedRegion(configPayload?.searchRegion) ??
       readSavedRegion(pin1Config?.searchRegion) ??
@@ -287,6 +282,7 @@ export function VisualToolTuningModal({
       ...(configPayload?.params ?? {}),
       ...(searchRegion ? { searchRegion, searchRegionJson: JSON.stringify(searchRegion) } : {}),
       ...(packageRegion ? { packageRegion, packageRegionJson: JSON.stringify(packageRegion) } : {}),
+      ...(effectiveImageRef ? { imageRef: effectiveImageRef } : {}),
       pin1Config: enrichedPin1Config,
       pin1ConfigJson: JSON.stringify(enrichedPin1Config),
       x: ruleX,
@@ -328,6 +324,7 @@ export function VisualToolTuningModal({
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
+      ...(effectiveImageRef ? { imageRef: effectiveImageRef } : {}),
       x: ruleX,
       y: ruleY,
       width: ruleW,

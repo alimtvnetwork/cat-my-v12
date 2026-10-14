@@ -50,6 +50,49 @@ function readRegion(rawRegion: any): SearchRegion | null {
   return null;
 }
 
+function createRegisteredPin1Item(params: {
+  x: number;
+  y: number;
+  radius: number;
+  searchRegion: SearchRegion | null;
+}): Pin1HoleItem {
+  const region = params.searchRegion;
+  const regionW = Math.max(1, region?.width ?? 1);
+  const regionH = Math.max(1, region?.height ?? 1);
+  const regionX = region?.x ?? 0;
+  const regionY = region?.y ?? 0;
+  const relativeX = Math.round(((params.x - regionX) / regionW) * 1000) / 10;
+  const relativeY = Math.round(((params.y - regionY) / regionH) * 1000) / 10;
+  const radius = Math.max(3, Math.round(params.radius));
+
+  return {
+    id: 9999,
+    centerX: Math.round(params.x),
+    centerY: Math.round(params.y),
+    radius,
+    diameter: radius * 2,
+    circularity: 100,
+    areaPx: Math.round(Math.PI * radius * radius),
+    meanLuma: 0,
+    isKept: true,
+    isPrimaryPin1: true,
+    relativeX,
+    relativeY,
+  };
+}
+
+function calculatePin1Angle(point: Pin1HoleItem, region: SearchRegion | null): number {
+  if (!region) {
+    return 0;
+  }
+
+  const centerX = region.x + region.width / 2;
+  const centerY = region.y + region.height / 2;
+  const angle = (Math.atan2(point.centerY - centerY, point.centerX - centerX) * 180) / Math.PI;
+
+  return Math.round(angle * 10) / 10;
+}
+
 export function usePin1Rule(props?: Pin1ToolProps) {
   const navigate = useNavigate();
   const settings = props?.settings as any;
@@ -88,11 +131,23 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [registeredPin1, setRegisteredPin1] = useState<Pin1HoleItem | null>(() => {
     if (pin1Conf.registeredPin1) {
       const reg = pin1Conf.registeredPin1;
+      const centerX = reg.centerX ?? reg.x;
+      const centerY = reg.centerY ?? reg.y;
 
       return {
         ...reg,
-        centerX: reg.centerX ?? reg.x,
-        centerY: reg.centerY ?? reg.y,
+        id: reg.id ?? 9999,
+        centerX,
+        centerY,
+        radius: reg.radius ?? Math.max(3, Math.round((reg.diameter ?? 20) / 2)),
+        diameter: reg.diameter ?? Math.max(6, Math.round((reg.radius ?? 10) * 2)),
+        circularity: reg.circularity ?? 100,
+        areaPx: reg.areaPx ?? Math.round(Math.PI * Math.max(3, reg.radius ?? 10) ** 2),
+        meanLuma: reg.meanLuma ?? 0,
+        isKept: true,
+        isPrimaryPin1: true,
+        relativeX: reg.relativeX ?? pin1Conf.relativeX ?? 0,
+        relativeY: reg.relativeY ?? pin1Conf.relativeY ?? 0,
       };
     }
 
@@ -323,11 +378,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        angleToleranceDeg: 1.0,
+        nominalAngleDeg: calculatePin1Angle(registeredPin1, packageRegion ?? searchRegion),
         registeredPin1,
         searchRegion,
         packageRegion,
         centerX: registeredPin1.centerX,
         centerY: registeredPin1.centerY,
+        radius: registeredPin1.radius,
+        relativeX: registeredPin1.relativeX,
+        relativeY: registeredPin1.relativeY,
       },
     }));
   }, [
@@ -399,6 +459,39 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
     if (source) void executeDetection(source, searchRegion, { polarity: val });
   };
+
+  const registerPin1AtPoint = useCallback(
+    (point: { x: number; y: number }) => {
+      const radius = registeredPin1?.radius ?? Math.max(6, Math.round((minRadiusPx + maxRadiusPx) / 2));
+      const nextPin1 = createRegisteredPin1Item({
+        x: point.x,
+        y: point.y,
+        radius,
+        searchRegion,
+      });
+      const nextHoles = [
+        nextPin1,
+        ...detectedHoles
+          .filter((hole) => hole.id !== nextPin1.id)
+          .map((hole) => ({ ...hole, isPrimaryPin1: false })),
+      ];
+      const res = evaluatePin1AgainstReference({
+        detectedHoles: nextHoles,
+        registeredPin1: nextPin1,
+        searchRegion,
+        packageRegion,
+        tolerancePx,
+      });
+
+      setRegisteredPin1(nextPin1);
+      setDetectedHoles(nextHoles);
+      setMatchResult(res);
+      setRegionEditMode("search");
+      setMessage(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}.`);
+      toast.success(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}`);
+    },
+    [detectedHoles, maxRadiusPx, minRadiusPx, packageRegion, registeredPin1, searchRegion, tolerancePx],
+  );
 
   const runDetection = useCallback(async () => {
     if (!source) {
@@ -514,22 +607,22 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   };
 
   const setPrimaryPin1Hole = (holeId: number) => {
-    setDetectedHoles((prev) =>
-      prev.map((h) => ({
-        ...h,
-        isPrimaryPin1: h.id === holeId,
-      })),
-    );
+    const nextHoles = detectedHoles.map((h) => ({
+      ...h,
+      isPrimaryPin1: h.id === holeId,
+    }));
+    setDetectedHoles(nextHoles);
 
     const targetHole = detectedHoles.find((h) => h.id === holeId);
 
     if (targetHole) {
-      setRegisteredPin1(targetHole);
+      const nextPin1 = { ...targetHole, isKept: true, isPrimaryPin1: true };
+      setRegisteredPin1(nextPin1);
 
       if (source) {
         const res = evaluatePin1AgainstReference({
-          detectedHoles,
-          registeredPin1: targetHole,
+          detectedHoles: nextHoles,
+          registeredPin1: nextPin1,
           searchRegion,
           packageRegion,
           tolerancePx,
@@ -538,7 +631,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         setMatchResult(res);
       }
 
-      toast.success(`Hole #${targetHole.id} registered as primary Pin 1 origin mark`);
+      toast.success(`Hole #${targetHole.id} registered as primary Pin 1 mark`);
     }
   };
 
@@ -547,7 +640,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     const primary = detectedHoles.find((h) => h.isPrimaryPin1 && h.isKept) ?? registeredPin1;
 
     if (!primary) {
-      toast.error("Please detect and select a round hole to register as Pin 1 first.");
+      toast.error("Please click Pin Point or select a detected mark to register Pin 1 first.");
 
       return;
     }
@@ -572,11 +665,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        angleToleranceDeg: 1.0,
+        nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
         registeredPin1: primary,
         searchRegion,
         packageRegion,
         centerX: primary.centerX,
         centerY: primary.centerY,
+        radius: primary.radius,
+        relativeX: primary.relativeX,
+        relativeY: primary.relativeY,
       },
       pin1ConfigJson: JSON.stringify({
         polarity,
@@ -585,11 +683,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        angleToleranceDeg: 1.0,
+        nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
         registeredPin1: primary,
         searchRegion,
         packageRegion,
         centerX: primary.centerX,
         centerY: primary.centerY,
+        radius: primary.radius,
+        relativeX: primary.relativeX,
+        relativeY: primary.relativeY,
       }),
     };
 
@@ -740,6 +843,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     includeAllHoles,
     excludeAllHoles,
     setPrimaryPin1Hole,
+    registerPin1AtPoint,
     savePin1Rule,
   };
 }

@@ -372,7 +372,7 @@ function RunPage() {
         <RunSkeleton />
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex flex-wrap items-center gap-hmi-3 p-hmi-3 bg-[#111318]">
+          <div className="flex flex-wrap items-center gap-3 p-3.5 border-b border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/80 to-ca-bg/95 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_-4px_rgba(0,0,0,0.4)]">
             <Counter variant={CounterVariantType.Total} value={counters.total} />
             <Counter variant={CounterVariantType.Ok} value={counters.ok} />
             <Counter
@@ -381,42 +381,54 @@ function RunPage() {
               data-testid="counter-ng"
               aria-live="polite"
             />
-            <div className="ml-auto flex items-center gap-hmi-4 text-xs text-ca-ink-muted">
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase tracking-wider uppercase tracking-wide">Pass rate</span>
-                <span className="font-mono tabular-nums text-ca-ink">{passRate.toFixed(1)}%</span>
+            <div className="ml-auto flex items-center gap-3">
+              <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-32">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">Yield Rate</span>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
+                  <span className={`font-mono text-xl font-black tabular-nums drop-shadow-[0_0_10px_currentColor] ${passRate >= 95 ? "text-ca-ok" : passRate >= 80 ? "text-ca-warn" : "text-ca-ng"}`}>
+                    {passRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ca-border/70 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 shadow-[0_0_8px_currentColor] ${passRate >= 95 ? "bg-ca-ok" : passRate >= 80 ? "bg-ca-warn" : "bg-ca-ng"}`}
+                    style={{ width: `${passRate}%` }}
+                  />
+                </div>
               </div>
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase tracking-wider uppercase tracking-wide">Frames / s</span>
-                <span className="font-mono tabular-nums text-ca-ink">{fps}</span>
+              <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-28">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">Throughput</span>
+                <span className="font-mono text-xl font-black tabular-nums text-ca-ink mt-0.5">
+                  {fps} <span className="text-[11px] text-ca-ink-muted font-normal">FPS</span>
+                </span>
               </div>
             </div>
           </div>
           <Viewport>
-            <MachineFrame live={RunStatusType.isRunning(status)} />
+            <MachineFrame isLive={RunStatusType.isRunning(status)} />
             <ViewportImageControls />
             {pickedRulesets.length > 0 ? (
-              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-sm border border-[#22252a] bg-ca-panel/90 p-hmi-3 shadow-hmi-panel backdrop-blur">
-                <div className="flex items-center justify-between gap-hmi-2">
-                  <p className="font-display text-[10px] uppercase tracking-wider font-semibold uppercase tracking-wide text-ca-ink">
+              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-xl border border-ca-border/80 bg-ca-panel/90 p-hmi-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-md">
+                <div className="flex items-center justify-between gap-hmi-2 border-b border-ca-border/50 pb-2 mb-2">
+                  <p className="font-display text-[11px] font-bold uppercase tracking-wider text-ca-ink">
                     {project?.name ?? "Selected rule sets"}
                   </p>
-                  <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-ca-ink-muted">
                     {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
                   </span>
                 </div>
-                <ul className="mt-hmi-2 space-y-hmi-1">
+                <ul className="space-y-1.5">
                   {pickedRulesets.map((r) => {
                     const summary = summarizeOverrideChain(resolveOverrideChain(r, rulesetsById));
 
                     return (
                       <li
                         key={r.id}
-                        className="flex items-center gap-hmi-2 rounded-sm bg-[#1a1c23] px-hmi-2 py-hmi-1"
+                        className="flex items-center gap-hmi-2 rounded-lg border border-ca-border/60 bg-ca-panel-2/60 px-2.5 py-1.5"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs text-ca-ink">{r.name}</p>
-                          <p className="truncate text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                          <p className="truncate text-xs font-semibold text-ca-ink">{r.name}</p>
+                          <p className="truncate font-mono text-[10px] text-ca-ink-muted">
                             {r.rules.length} rules, {summary}
                           </p>
                         </div>
@@ -427,10 +439,10 @@ function RunPage() {
                               projectId,
                               rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
                             }}
-                            className="inline-flex items-center gap-hmi-1 rounded-sm border border-[#22252a] px-hmi-1 text-[10px] uppercase tracking-wider text-ca-ink hover:border-ca-select"
+                            className="inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink hover:border-ca-select hover:bg-ca-panel-2 transition-colors"
                             aria-label={`Edit ${r.name}`}
                           >
-                            <Pencil aria-hidden size={12} /> Edit
+                            <Pencil aria-hidden size={11} /> Edit
                           </Link>
                         ) : null}
                       </li>
@@ -441,13 +453,16 @@ function RunPage() {
             ) : null}
             {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="rounded-sm border border-[#22252a] bg-ca-panel/85 px-hmi-5 py-hmi-4 text-center shadow-hmi-panel backdrop-blur">
-                  <p className="font-display text-xs font-bold uppercase tracking-widest uppercase tracking-wide text-ca-ink">
-                    Ready to run
+                <div className="rounded-xl border border-ca-border/80 bg-ca-panel/90 px-hmi-6 py-hmi-5 text-center shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-ca-primary/15 text-ca-primary border border-ca-primary/30">
+                    <span className="h-2 w-2 rounded-full bg-ca-primary animate-ping" />
+                  </div>
+                  <p className="font-display text-xs font-bold uppercase tracking-widest text-ca-ink">
+                    Ready to Inspect
                   </p>
                   <p className="mt-hmi-1 text-xs text-ca-ink-muted">
                     Press{" "}
-                    <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
+                    <kbd className="rounded border border-ca-border/80 bg-ca-surface px-1.5 py-0.5 font-mono text-[11px] text-ca-ink">
                       Space
                     </kbd>{" "}
                     or the Start button to begin.
@@ -485,7 +500,7 @@ function RunPage() {
           id="run-settings-popover"
           role="dialog"
           aria-label="Run options"
-          className="fixed right-4 top-24 z-40 w-80 rounded-sm border border-[#22252a] bg-[#111318] p-hmi-4 shadow-hmi-panel space-y-hmi-3"
+          className="fixed right-4 top-24 z-40 w-80 rounded-2xl border border-ca-border/80 bg-ca-panel/95 p-5 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl space-y-3"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-hmi-title font-semibold uppercase tracking-wide text-ca-ink">
@@ -538,7 +553,7 @@ function RunPage() {
         <div
           role="dialog"
           aria-label="Keyboard shortcuts"
-          className="fixed bottom-24 right-4 z-40 w-72 rounded-sm border border-[#22252a] bg-[#111318] p-hmi-4 shadow-hmi-panel"
+          className="fixed bottom-24 right-4 z-40 w-80 rounded-2xl border border-ca-border/80 bg-ca-panel/95 p-5 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl"
         >
           <div className="flex items-center justify-between">
             <h3 className="text-hmi-title font-semibold uppercase tracking-wide text-ca-ink">
@@ -548,32 +563,32 @@ function RunPage() {
               type="button"
               onClick={() => setShortcutsOpen(false)}
               aria-label="Close shortcuts"
-              className="text-ca-ink-muted hover:text-ca-ink px-hmi-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus rounded"
+              className="text-ca-ink-muted hover:text-ca-ink px-2 py-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus rounded-lg"
             >
               ×
             </button>
           </div>
-          <dl className="mt-hmi-2 space-y-hmi-1 text-xs text-ca-ink">
+          <dl className="mt-3 space-y-2 text-xs text-ca-ink">
             <div className="flex items-center justify-between">
-              <dt>Start / Stop run</dt>
+              <dt className="text-ca-ink-muted font-medium">Start / Stop run</dt>
               <dd>
-                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
+                <kbd className="rounded-md border border-ca-border/80 bg-ca-panel px-2 py-0.5 font-mono text-[11px] font-semibold text-ca-ink shadow-sm">
                   Space
                 </kbd>
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt>Toggle this help</dt>
+              <dt className="text-ca-ink-muted font-medium">Toggle this help</dt>
               <dd>
-                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
+                <kbd className="rounded-md border border-ca-border/80 bg-ca-panel px-2 py-0.5 font-mono text-[11px] font-semibold text-ca-ink shadow-sm">
                   ?
                 </kbd>
               </dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt>Close dialogs</dt>
+              <dt className="text-ca-ink-muted font-medium">Close dialogs</dt>
               <dd>
-                <kbd className="rounded border border-[#22252a] bg-[#1a1c23] px-hmi-1 font-mono">
+                <kbd className="rounded-md border border-ca-border/80 bg-ca-panel px-2 py-0.5 font-mono text-[11px] font-semibold text-ca-ink shadow-sm">
                   Esc
                 </kbd>
               </dd>
@@ -587,14 +602,14 @@ function RunPage() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-stop-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ca-viewport/70"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ca-viewport/70 backdrop-blur-sm"
           onClick={cancelStop}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#111318] border border-[#22252a] shadow-hmi-panel min-w-80 max-w-md"
+            className="bg-ca-panel/95 border border-ca-border/80 rounded-2xl shadow-[0_16px_48px_-8px_rgba(0,0,0,0.8),inset_0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-2xl min-w-80 max-w-md overflow-hidden"
           >
-            <div className="px-hmi-4 py-hmi-2 bg-ca-chrome text-ca-chrome-ink text-hmi-title uppercase tracking-wide">
+            <div className="px-5 py-3 border-b border-ca-border/70 bg-ca-chrome/90 text-ca-chrome-ink text-hmi-title uppercase tracking-wide font-bold">
               <span id="confirm-stop-title">Stop run?</span>
             </div>
             <div className="p-hmi-4 space-y-hmi-2 text-xs text-ca-ink">
@@ -604,19 +619,19 @@ function RunPage() {
                 <span className="hmi-tabular">{counters.ng}</span> NG) remain until reset.
               </p>
             </div>
-            <div className="flex justify-end gap-hmi-2 px-hmi-4 py-hmi-2 border-t border-[#22252a]">
+            <div className="flex justify-end gap-2.5 px-5 py-3 border-t border-ca-border/70 bg-ca-panel/60">
               <button
                 type="button"
                 onClick={cancelStop}
                 autoFocus
-                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm"
+                className="inline-flex items-center min-h-9 px-4 py-1.5 border border-ca-border/80 bg-ca-panel text-xs font-semibold text-ca-ink rounded-xl shadow-sm hover:border-ca-border hover:bg-ca-panel-2 transition-all"
               >
                 Keep running
               </button>
               <button
                 type="button"
                 onClick={confirmStopRun}
-                className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 bg-ca-ng text-ca-bg text-xs font-medium rounded-sm"
+                className="inline-flex items-center min-h-9 px-4 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-[0_0_16px_rgba(239,68,68,0.4)] transition-all"
               >
                 Stop run
               </button>
@@ -628,38 +643,40 @@ function RunPage() {
   );
 
   const actionControls = (
-    <div className="flex items-center gap-hmi-3">
+    <div className="flex items-center gap-2.5">
       {RunStatusType.isRunning(status) ? (
         <button
           type="button"
           onClick={requestStop}
           aria-label="Stop run (Space)"
-          className="inline-flex items-center px-4 py-1 bg-rose-600 text-white text-xs font-semibold rounded shadow-sm hover:bg-rose-700"
+          className="inline-flex items-center gap-2 rounded-xl border border-rose-400/50 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(239,68,68,0.5),inset_0_1px_0_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
         >
-          Stop
+          <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]" aria-hidden="true" />
+          <span>Stop</span>
         </button>
       ) : (
         <button
           type="button"
           onClick={start}
           aria-label="Start run (Space)"
-          className="inline-flex items-center px-4 py-1 bg-emerald-600 text-white text-xs font-semibold rounded shadow-sm hover:bg-emerald-700"
+          className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/50 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(16,185,129,0.5),inset_0_1px_0_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
         >
-          Start
+          <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]" aria-hidden="true" />
+          <span>Start</span>
         </button>
       )}
       <button
         type="button"
         onClick={doReset}
         disabled={RunStatusType.isRunning(status) || counters.total === 0}
-        className="px-2.5 py-1 bg-[#111318] border border-[#22252a] rounded text-xs text-ca-ink hover:bg-[#1a1c23] shadow-sm font-medium disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-ca-border/80 bg-ca-panel/90 px-4 py-2 text-xs font-semibold text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-150 hover:border-ca-primary/50 hover:bg-ca-panel-2 disabled:opacity-40"
       >
         Reset
       </button>
       <button
         type="button"
         onClick={() => setShowHistory((v) => !v)}
-        className="px-2.5 py-1 bg-[#111318] border border-[#22252a] rounded text-xs text-ca-ink hover:bg-[#1a1c23] shadow-sm font-medium"
+        className="inline-flex items-center gap-1.5 rounded-xl border border-ca-border/80 bg-ca-panel/90 px-4 py-2 text-xs font-semibold text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-150 hover:border-ca-primary/50 hover:bg-ca-panel-2"
       >
         History
       </button>
@@ -694,24 +711,24 @@ function RunPage() {
           <span
             role="status"
             aria-live="polite"
-            className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-3 py-[2px] text-[10px] uppercase tracking-wider font-semibold uppercase tracking-wide ${statusTone}`}
+            className={`inline-flex items-center gap-hmi-2 rounded-full border px-3 py-[2px] text-[10px] uppercase tracking-wider font-bold shadow-sm ${statusTone}`}
           >
             <span
               aria-hidden
-              className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse" : "bg-ca-ink-muted"}`}
+              className={`h-2 w-2 rounded-full ${RunStatusType.isRunning(status) ? "bg-ca-ok animate-pulse shadow-[0_0_8px_var(--ca-ok)]" : "bg-ca-ink-muted"}`}
             />
             {formatIdentifierLabel(status)}
           </span>
         </div>
       }
       actionBarLeft={
-        <div className="flex items-center gap-hmi-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowHistory((v) => !v)}
             aria-pressed={showHistory}
             aria-label={showHistory ? "Hide run history" : "Show run history"}
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-9 px-3.5 py-1.5 border border-ca-border/80 bg-ca-panel/85 text-xs font-semibold text-ca-ink rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md hover:border-ca-primary/50 hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus transition-all"
           >
             History
           </button>
@@ -720,13 +737,13 @@ function RunPage() {
             onClick={() => setShowSettings((v) => !v)}
             aria-expanded={showSettings}
             aria-controls="run-settings-popover"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-9 px-3.5 py-1.5 border border-ca-border/80 bg-ca-panel/85 text-xs font-semibold text-ca-ink rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md hover:border-ca-primary/50 hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus transition-all"
           >
             Options
           </button>
           <Link
             to="/setup"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-9 px-3.5 py-1.5 border border-ca-border/80 bg-ca-panel/85 text-xs font-semibold text-ca-ink rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md hover:border-ca-primary/50 hover:bg-ca-panel-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus transition-all"
           >
             Back to Setup
           </Link>
@@ -735,7 +752,7 @@ function RunPage() {
             onClick={doReset}
             disabled={RunStatusType.isRunning(status) || counters.total === 0}
             aria-label="Reset counters and event log"
-            className="inline-flex items-center min-h-10 px-hmi-4 py-hmi-2 border border-[#22252a] text-xs text-ca-ink rounded-sm hover:bg-[#1a1c23] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus"
+            className="inline-flex items-center min-h-9 px-3.5 py-1.5 border border-ca-border/80 bg-ca-panel/85 text-xs font-semibold text-ca-ink rounded-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md hover:border-ca-primary/50 hover:bg-ca-panel-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ca-focus transition-all"
             title="Clear counters and event log"
           >
             Reset

@@ -13,7 +13,9 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
   const activeRegion =
     model.regionEditMode === "mask" && model.selectedMaskIndex !== null
       ? model.maskRegions[model.selectedMaskIndex] ?? null
-      : model.searchRegion;
+      : model.regionEditMode === "pattern"
+        ? model.patternRegion
+        : model.searchRegion;
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#080b0f] text-white font-sans select-none">
@@ -26,6 +28,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               source={model.source}
               result={model.result}
               searchRegion={model.searchRegion}
+              patternRegion={model.patternRegion}
               greyscaleLevel={model.greyscaleLevel}
               detectedBoxes={model.detectedBoxes}
               excludedNumbers={model.excludedNumbers}
@@ -49,6 +52,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               excludedNumbers={model.excludedNumbers}
               formulatedPattern={model.formulatedPattern}
               searchRegion={model.searchRegion}
+              patternRegion={model.patternRegion}
               maskRegions={model.maskRegions}
               regionEditMode={model.regionEditMode}
               selectedMaskIndex={model.selectedMaskIndex}
@@ -58,6 +62,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               onMarginChange={model.changeMarginPx}
               onRegionEditModeChange={model.changeRegionEditMode}
               onAddMaskRegion={model.addMaskRegion}
+              onAddPatternRegion={model.addPatternRegion}
               onSelectMaskRegion={model.selectMaskRegion}
               onDeleteMaskRegion={model.deleteMaskRegion}
               onRemoveBox={model.removeBox}

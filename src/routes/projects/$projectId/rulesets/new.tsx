@@ -18,9 +18,10 @@ function NewRuleset() {
   const project = useProjectStore((s) => selectProject(s, projectId));
   const createRuleset = useProjectStore((s) => s.createRuleset);
   const navigate = useNavigate();
+  const isGuidedSimulation = new URLSearchParams(window.location.search).get("guided") === "1";
 
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
+  const [name, setName] = useState(isGuidedSimulation ? "demoset" : "");
+  const [category, setCategory] = useState(isGuidedSimulation ? "Inspection category" : "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -61,6 +62,7 @@ function NewRuleset() {
       await navigate({
         to: "/projects/$projectId",
         params: { projectId },
+        search: { ruleset: rulesetId },
       });
     } catch (err) {
       console.error("[rulesets/new] create failed", err);
@@ -71,37 +73,42 @@ function NewRuleset() {
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#0b0c10] text-ca-ink font-hmi antialiased">
+    <div className="flex h-full w-full flex-col bg-[#06080d] text-slate-100 font-sans antialiased">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center border-b border-[#22252a] bg-[#111318] px-4">
+      <header className="flex h-14 shrink-0 items-center border-b border-white/[0.08] bg-[#0a0d14]/80 backdrop-blur-xl px-6">
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-ca-ink-muted uppercase tracking-wider">{project.name}</span>
-          <h1 className="text-sm font-bold text-ca-ink tracking-wide">INITIALIZE NEW RULESET</h1>
+          <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">{project.name} // RECIPES</span>
+          <h1 className="text-sm font-mono font-bold text-slate-100 tracking-wider flex items-center gap-2">
+            <Sparkles size={14} className="text-cyan-400" /> INITIALIZE INSPECTION RULESET
+          </h1>
         </div>
       </header>
 
       {/* Main Panel */}
-      <div className="flex flex-1 items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded border border-[#22252a] bg-[#111318] p-6">
-          <p className="mb-6 text-xs text-ca-ink-muted leading-relaxed">
-            Configure a new inspection ruleset group. Images and tools are assigned after creation.
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div
+          data-tour="simulation-ruleset-create-panel"
+          className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#0a0d14]/90 backdrop-blur-2xl p-7 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_20px_50px_-12px_rgba(0,0,0,0.8)]"
+        >
+          <p className="mb-6 text-xs text-slate-400 leading-relaxed font-sans">
+            Configure a new inspection ruleset group. Sample workpieces, optical lighting parameters, and vision tools can be assigned after creation.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-ca-ink">Rule Set Name</span>
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Rule Set Name</span>
               <input
                 autoFocus
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. QFN ALIGNMENT"
-                className="rounded border border-[#333] bg-[#0b0c10] px-3 py-2 text-sm text-ca-ink placeholder:text-[#444] focus:border-ca-primary focus:outline-none"
+                className="rounded-xl border border-white/[0.1] bg-[#07090e] px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] font-mono"
               />
             </label>
 
             <label className="flex flex-col gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-ca-ink-muted">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
                 Category (Optional)
               </span>
               <input
@@ -109,29 +116,30 @@ function NewRuleset() {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="e.g. TOP-SIDE-INSPECT"
-                className="rounded border border-[#333] bg-[#0b0c10] px-3 py-2 text-sm text-ca-ink placeholder:text-[#444] focus:border-ca-primary focus:outline-none"
+                className="rounded-xl border border-white/[0.1] bg-[#07090e] px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)] font-mono"
               />
             </label>
 
             {error && (
-              <div className="flex items-center gap-2 rounded border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+              <div className="flex items-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-400 font-mono">
                 <X size={14} />
                 {error}
               </div>
             )}
 
-            <div className="mt-4 flex items-center justify-end gap-3 border-t border-[#22252a] pt-5">
+            <div className="mt-4 flex items-center justify-end gap-3 border-t border-white/[0.08] pt-5">
               <Link
                 to="/projects/$projectId"
                 params={{ projectId }}
-                className="px-4 py-2 text-xs font-bold uppercase text-ca-ink-muted hover:text-ca-ink transition-colors"
+                className="px-4 py-2 text-xs font-mono font-bold uppercase text-slate-400 hover:text-white transition-colors"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
+                data-tour="simulation-ruleset-create-submit"
                 disabled={submitting || name.trim().length === 0}
-                className="flex items-center gap-2 rounded bg-ca-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-[#000] hover:brightness-110 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 px-6 py-2.5 text-xs font-black uppercase tracking-wider text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4),inset_0_1px_0_0_rgba(255,255,255,0.4)] hover:brightness-110 active:scale-[0.98] disabled:opacity-40 transition-all cursor-pointer"
               >
                 <Sparkles size={14} className="fill-current" />
                 {submitting ? "Creating..." : "Create Ruleset"}

@@ -1,17 +1,41 @@
-import React, { type ReactNode } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  Menu,
+  ChevronDown,
   Home,
   FolderKanban,
   Play,
+  PlayCircle,
   Settings,
   Sliders,
   TestTube2,
   Wrench,
+  Zap,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { WindowMenu } from "@/components/app-shell/WindowMenu";
+import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
+import {
+  GUIDED_SIMULATION_COMMAND_EVENT,
+  GUIDED_SIMULATION_STATE_EVENT,
+  type GuidedSimulationCommandDetail,
+  type GuidedSimulationStateDetail,
+} from "@/components/guided-simulation/events";
+import { cn } from "@/lib/utils";
 
 export interface StandardAppShellProps {
   title?: string;
@@ -33,6 +57,34 @@ export interface StandardAppShellProps {
   children: ReactNode;
 }
 
+interface NavigationItem {
+  key: string;
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tour?: string;
+}
+
+const CORE_NAV_ITEMS: NavigationItem[] = [
+  { key: "home", label: "Home", href: "/", icon: Home },
+  { key: "projects", label: "Project", href: "/projects", icon: FolderKanban, tour: "standard-project-nav" },
+  { key: "analyze", label: "Analyzer", href: "/analyze", icon: Zap },
+  { key: "setup", label: "Setup", href: "/setup", icon: Wrench },
+  { key: "rules", label: "Rules", href: "/setup/rules", icon: Sliders },
+  { key: "test", label: "Test", href: "/trial-run", icon: TestTube2 },
+  { key: "run", label: "Run", href: "/run", icon: Play },
+  { key: "settings", label: "Settings", href: "/settings", icon: Settings },
+];
+
+const AUX_NAV_ITEMS: NavigationItem[] = [
+  { key: "diagnostics", label: "Diagnostics", href: "/diagnostics", icon: Activity },
+  { key: "results", label: "Results", href: "/results", icon: CheckCircle2 },
+  { key: "errors", label: "Errors", href: "/errors", icon: AlertTriangle },
+  { key: "ops", label: "Operations", href: "/ops", icon: Layers },
+];
+
+const ALL_NAV_ITEMS: NavigationItem[] = [...CORE_NAV_ITEMS, ...AUX_NAV_ITEMS];
+
 export function StandardAppShell({
   title,
   subtitle,
@@ -41,98 +93,235 @@ export function StandardAppShell({
   children,
 }: StandardAppShellProps): React.JSX.Element {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [isSimulationRunning, setIsSimulationRunning] = useState(false);
+
+  useEffect(() => {
+    const onSimulationState = (event: Event) => {
+      const detail = (event as CustomEvent<GuidedSimulationStateDetail>).detail;
+      setIsSimulationRunning(Boolean(detail?.isRunning));
+    };
+
+    window.addEventListener(GUIDED_SIMULATION_STATE_EVENT, onSimulationState);
+
+    return () => {
+      window.removeEventListener(GUIDED_SIMULATION_STATE_EVENT, onSimulationState);
+    };
+  }, []);
 
   const getNavActive = (key: string) => {
-    if (activeNav) return activeNav === key;
-    if (key === "home" && pathname === "/") return true;
-    if (key === "projects" && pathname.startsWith("/projects")) return true;
-    if (key === "setup" && pathname.startsWith("/setup") && !pathname.startsWith("/setup/rules")) return true;
-    if (key === "rules" && pathname.startsWith("/setup/rules")) return true;
-    if (key === "test" && (pathname.startsWith("/trial-run") || pathname.startsWith("/ai-testing"))) return true;
-    if (key === "run" && pathname.startsWith("/run")) return true;
-    if (key === "settings" && pathname.startsWith("/settings")) return true;
+    if (activeNav) {
+      return activeNav === key;
+    }
+
+    if (key === "home" && pathname === "/") {
+      return true;
+    }
+
+    if (key === "projects" && pathname.startsWith("/projects")) {
+      return true;
+    }
+
+    if (key === "analyze" && pathname.startsWith("/analyze")) {
+      return true;
+    }
+
+    if (key === "setup" && pathname.startsWith("/setup") && !pathname.startsWith("/setup/rules")) {
+      return true;
+    }
+
+    if (key === "rules" && pathname.startsWith("/setup/rules")) {
+      return true;
+    }
+
+    if (key === "test" && (pathname.startsWith("/trial-run") || pathname.startsWith("/ai-testing"))) {
+      return true;
+    }
+
+    if (key === "run" && pathname.startsWith("/run")) {
+      return true;
+    }
+
+    if (key === "settings" && pathname.startsWith("/settings")) {
+      return true;
+    }
+
+    if (key === "diagnostics" && pathname.startsWith("/diagnostics")) {
+      return true;
+    }
+
+    if (key === "results" && pathname.startsWith("/results")) {
+      return true;
+    }
+
+    if (key === "errors" && pathname.startsWith("/errors")) {
+      return true;
+    }
+
+    if (key === "ops" && pathname.startsWith("/ops")) {
+      return true;
+    }
+
     return false;
   };
 
-  const navLinkClass = (isActive: boolean) =>
-    `flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded transition-colors whitespace-nowrap shrink-0 ${
-      isActive
-        ? "bg-ca-ink text-ca-bg shadow-sm"
-        : "text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ca-border"
-    }`;
+  const currentNav =
+    ALL_NAV_ITEMS.find((item) => getNavActive(item.key)) ?? CORE_NAV_ITEMS[0];
+  const CurrentNavIcon = currentNav.icon;
 
   return (
     <div
-      data-app-shell="true"
       data-standard-shell="true"
       data-testid="standard-app-shell"
-      className="flex h-screen min-h-0 flex-col overflow-hidden bg-ca-bg text-ca-ink font-sans"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-ca-bg text-ca-ink font-sans"
     >
       {/* Industrial Top HMI Header */}
-      <header className="flex h-11 items-center justify-between border-b border-ca-border bg-ca-panel px-3 shrink-0 select-none z-30 min-w-0">
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0 overflow-hidden">
-          <div className="flex items-center gap-2 border-r border-ca-border pr-3 sm:pr-4 shrink-0">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-xs font-bold tracking-wider text-ca-ink whitespace-nowrap">
-              CAT iVision HMI
-            </span>
-          </div>
+      <header
+        data-app-shell="true"
+        className="flex h-11 items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl"
+      >
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          {/* Dropdown Menu Trigger */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="group flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
+              >
+                <Menu className="h-3.5 w-3.5 text-cyan-400 transition-transform group-hover:scale-110" />
+                <span>Menu</span>
+                <ChevronDown className="h-3 w-3 text-slate-400 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </button>
+            </DropdownMenuTrigger>
 
-          <nav className="flex items-center gap-1 overflow-x-auto min-w-0 py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <Link to="/" className={navLinkClass(getNavActive("home"))}>
-              <Home className="h-3.5 w-3.5" />
-              <span>Home</span>
-            </Link>
-            <Link to="/projects" className={navLinkClass(getNavActive("projects"))}>
-              <FolderKanban className="h-3.5 w-3.5" />
-              <span>Project</span>
-            </Link>
-            <Link to="/setup" className={navLinkClass(getNavActive("setup"))}>
-              <Wrench className="h-3.5 w-3.5" />
-              <span>Setup</span>
-            </Link>
-            <Link to="/setup/rules" className={navLinkClass(getNavActive("rules"))}>
-              <Sliders className="h-3.5 w-3.5" />
-              <span>Rules</span>
-            </Link>
-            <Link to="/trial-run" className={navLinkClass(getNavActive("test"))}>
-              <TestTube2 className="h-3.5 w-3.5" />
-              <span>Test</span>
-            </Link>
-            <Link to="/run" className={navLinkClass(getNavActive("run"))}>
-              <Play className="h-3.5 w-3.5" />
-              <span>Run</span>
-            </Link>
-            <Link to="/settings" className={navLinkClass(getNavActive("settings"))}>
-              <Settings className="h-3.5 w-3.5" />
-              <span>Settings</span>
-            </Link>
-          </nav>
+            <DropdownMenuContent
+              align="start"
+              className="w-56 rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl backdrop-blur-xl z-50 text-slate-200"
+            >
+              <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between">
+                <span>Navigation</span>
+                <span className="text-[9px] text-cyan-400/80 font-mono">Workflows</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="my-1 bg-white/10" />
+
+              <div className="flex flex-col gap-0.5">
+                {CORE_NAV_ITEMS.map((item) => {
+                  const isCurrentActive = getNavActive(item.key);
+                  const ItemIcon = item.icon;
+
+                  return (
+                    <DropdownMenuItem asChild key={item.key}>
+                      <Link
+                        to={item.href}
+                        data-tour={item.tour}
+                        className={cn(
+                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
+                          isCurrentActive
+                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ItemIcon className={cn("h-3.5 w-3.5", isCurrentActive ? "text-cyan-300" : "text-slate-400")} />
+                          <span>{item.label}</span>
+                        </div>
+                        {isCurrentActive && (
+                          <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                            Active
+                          </span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+
+              <DropdownMenuSeparator className="my-1 bg-white/10" />
+              <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400">
+                System & Logs
+              </DropdownMenuLabel>
+              <div className="flex flex-col gap-0.5">
+                {AUX_NAV_ITEMS.map((item) => {
+                  const isCurrentActive = getNavActive(item.key);
+                  const ItemIcon = item.icon;
+
+                  return (
+                    <DropdownMenuItem asChild key={item.key}>
+                      <Link
+                        to={item.href}
+                        className={cn(
+                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
+                          isCurrentActive
+                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ItemIcon className={cn("h-3.5 w-3.5", isCurrentActive ? "text-cyan-300" : "text-slate-400")} />
+                          <span>{item.label}</span>
+                        </div>
+                        {isCurrentActive && (
+                          <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                            Active
+                          </span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Divider */}
+          <div className="h-4 w-px bg-white/15 shrink-0" />
+
+          {/* Current Page Highlight Badge */}
+          <Link
+            to={currentNav.href}
+            title={`Current location: ${currentNav.label}`}
+            className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md bg-cyan-500/15 border border-cyan-400/50 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.25)] shrink-0 select-none hover:bg-cyan-500/25 transition-colors"
+          >
+            <CurrentNavIcon className="h-3.5 w-3.5 text-cyan-300" />
+            <span>{currentNav.label}</span>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-pulse ml-0.5" />
+          </Link>
         </div>
+
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
           <UiModeSwitch />
+          <button
+            type="button"
+            data-tour="simulation-launcher"
+            onClick={() => {
+              const detail: GuidedSimulationCommandDetail = { command: "start" };
+              window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }));
+            }}
+            className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400"
+          >
+            <PlayCircle className="h-3.5 w-3.5" />
+            <span>Start Simulation</span>
+          </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
           <WindowMenu />
         </div>
       </header>
 
-      {/* Optional Breadcrumb / Page Header Bar */}
-      {(title || subtitle || actions) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ca-border bg-ca-panel-2 px-4 py-2 shrink-0">
-          <div className="min-w-0">
-            {title && (
-              <h1 className="text-sm font-bold tracking-wide text-ca-ink uppercase">{title}</h1>
-            )}
-            {subtitle && <p className="text-xs text-ca-ink-muted">{subtitle}</p>}
-          </div>
-          {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {/* Interactive Global Sitemap & State Recovery Bar */}
+      <GlobalSitemapBar />
+
+      {/* Action Strip (Rendered only when actions are supplied) */}
+      {actions && (
+        <div className="flex flex-wrap items-center justify-end gap-3 border-b border-ca-border/40 bg-ca-panel-2/40 px-4 py-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">{actions}</div>
         </div>
       )}
 
       {/* Main Content Area */}
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden hmi-cad-grid-bg">{children}</main>
     </div>
   );
 }

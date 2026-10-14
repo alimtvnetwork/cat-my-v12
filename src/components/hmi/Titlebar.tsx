@@ -49,7 +49,7 @@ export function Titlebar({
       data-app-shell="true"
       data-density={density}
       aria-label="Application"
-      className="app-titlebar sticky top-0 z-40 flex flex-col border-b border-ca-border/80 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ca-chrome)_92%,transparent),color-mix(in_oklab,var(--ca-chrome)_78%,transparent))] text-ca-chrome-ink font-hmi shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_1px_2px_-1px_rgba(0,0,0,0.35)] backdrop-blur-md supports-[backdrop-filter]:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--ca-chrome)_72%,transparent),color-mix(in_oklab,var(--ca-chrome)_58%,transparent))] transition-[height,padding,background-color] duration-200 ease-out"
+      className="app-titlebar sticky top-0 z-40 flex flex-col border-b border-ca-border/80 bg-ca-chrome/90 text-ca-ink font-hmi shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_20px_-4px_rgba(0,0,0,0.6)] backdrop-blur-2xl transition-[height,padding,background-color] duration-200 ease-out"
     >
       <SkipToContentLink />
       <div

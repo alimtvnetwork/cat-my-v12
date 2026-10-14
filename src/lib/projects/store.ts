@@ -14,6 +14,7 @@ const rid = (id: string): string => _resolveIdParam(IntAliasNamespaceType.Rulese
 const pid = (id: string): string => _resolveIdParam(IntAliasNamespaceType.Project, id) || id;
 
 import type { Project, RuleSet } from "./types";
+import { DEFAULT_INITIAL_PROJECTS, DEFAULT_INITIAL_RULESETS } from "./default-smt-seed";
 export type { Project, RuleSet };
 
 export interface ProjectStoreState {
@@ -50,6 +51,7 @@ export interface ProjectStoreState {
   updateRulesetCategory: (id: string, categoryName?: string) => void;
   updateRulesetRules: (id: string, rules: EditorRule[]) => void;
   updateRulesetImageRef: (id: string, imageRef: string) => void;
+  updateProjectInspectionImageRef: (id: string, imageRef: string) => void;
   deleteRuleset: (id: string) => void;
   /**
    * Reinsert a ruleset previously removed by `deleteRuleset`. Used by the
@@ -119,8 +121,8 @@ function newId(): string {
 export const useProjectStore = create<ProjectStoreState>()(
   persist(
     (set, get) => ({
-      projects: {},
-      rulesets: {},
+      projects: DEFAULT_INITIAL_PROJECTS,
+      rulesets: DEFAULT_INITIAL_RULESETS,
 
       createProject: (name, opts) => {
         const id = newId();
@@ -152,6 +154,8 @@ export const useProjectStore = create<ProjectStoreState>()(
                 name,
                 createdAt: Date.now(),
                 rulesetIds,
+                projectCode: opts?.projectCode?.trim() || undefined,
+                description: opts?.description?.trim() || undefined,
                 deviceId: opts?.deviceId?.trim() || undefined,
                 cameraName: opts?.cameraName?.trim() || undefined,
                 categoryNames: categoryNames.length > 0 ? categoryNames : undefined,
@@ -435,6 +439,39 @@ export const useProjectStore = create<ProjectStoreState>()(
           const existing = state.rulesets[targetKey];
 
           return { rulesets: { ...state.rulesets, [targetKey]: { ...existing, imageRef } } };
+        });
+      },
+
+      updateProjectInspectionImageRef: (id, imageRef) => {
+        const real = pid(id);
+        set((state) => {
+          const targetKey =
+            state.projects[real]
+              ? real
+              : state.projects[id]
+                ? id
+                : Object.keys(state.projects).find(
+                    (k) =>
+                      k === id ||
+                      k === real ||
+                      state.projects[k]?.id === id ||
+                      state.projects[k]?.id === real,
+                  );
+
+          if (!targetKey || !state.projects[targetKey]) {
+            ClientLogger.warn("[projects/store] updateProjectInspectionImageRef: unknown id", id);
+
+            return state;
+          }
+
+          const existing = state.projects[targetKey];
+
+          return {
+            projects: {
+              ...state.projects,
+              [targetKey]: { ...existing, inspectionImageRef: imageRef },
+            },
+          };
         });
       },
 
@@ -801,6 +838,18 @@ export const useProjectStore = create<ProjectStoreState>()(
         }
 
         if (!state) return;
+
+        if (Object.keys(state.projects ?? {}).length === 0) {
+          useProjectStore.setState({
+            projects: DEFAULT_INITIAL_PROJECTS,
+            rulesets: DEFAULT_INITIAL_RULESETS,
+          });
+          seedIntParams(IntAliasNamespaceType.Project, Object.keys(DEFAULT_INITIAL_PROJECTS));
+          seedIntParams(IntAliasNamespaceType.Ruleset, Object.keys(DEFAULT_INITIAL_RULESETS));
+
+          return;
+        }
+
         seedIntParams(IntAliasNamespaceType.Project, Object.keys(state.projects ?? {}));
         seedIntParams(IntAliasNamespaceType.Ruleset, Object.keys(state.rulesets ?? {}));
       },

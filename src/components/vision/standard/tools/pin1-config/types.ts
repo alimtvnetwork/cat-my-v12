@@ -58,7 +58,7 @@ export interface Pin1MatchResult {
   executionTimeMs: number;
 }
 
-export type Pin1RegionEditMode = "search" | "package";
+export type Pin1RegionEditMode = "search" | "package" | "pin";
 
 export interface Pin1ToolProps {
   toolType?: string;

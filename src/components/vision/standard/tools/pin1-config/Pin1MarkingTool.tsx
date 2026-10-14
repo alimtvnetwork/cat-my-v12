@@ -11,15 +11,19 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const buttonLabel = props.actionButtonLabel ?? "Save as Pin 1 Rule";
   const activeRegion =
-    model.regionEditMode === "package" ? model.packageRegion : model.searchRegion;
+    model.regionEditMode === "package"
+      ? model.packageRegion
+      : model.regionEditMode === "pin"
+        ? null
+        : model.searchRegion;
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white font-sans select-none">
-      <div className="flex h-full min-h-[720px] min-w-[1024px] flex-col">
+      <div className="flex h-full min-h-0 min-w-[1024px] flex-col">
         {/* Main Workspace */}
         <div className="flex min-h-0 flex-1">
           {/* Left: Canvas */}
-          <div className="flex min-h-0 flex-1 flex-col relative border-r border-[#333]">
+          <div className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]">
             {/* Top-left absolute toolbar (Old HMI style over canvas) */}
             <div className="absolute top-2 left-2 z-10 flex gap-2">
               <button
@@ -59,8 +63,12 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}
+            onRegisterPoint={model.registerPin1AtPoint}
           />
-
+          </div>
+          
+          {/* Right: Settings Panel */}
+          <div className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]">
           <Pin1ReviewPanel
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}

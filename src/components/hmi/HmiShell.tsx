@@ -10,6 +10,7 @@ import { useHotkeys } from "@/hooks/useHotkeys";
 import { emitCommand } from "@/lib/command-bus";
 import { usePaletteStore } from "@/lib/stores/palette-store";
 import { useShortcutsStore } from "@/lib/stores/shortcuts-store";
+import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 
 export interface HmiShellProps {
   program?: TitlebarProps["program"];
@@ -128,16 +129,18 @@ export function HmiShell({
     <div
       data-testid="hmi-shell"
       style={shellStyle}
-      className="flex flex-col h-screen bg-ca-bg text-ca-ink font-hmi antialiased"
+      className="flex flex-col h-full min-h-0 flex-1 bg-ca-bg text-ca-ink font-hmi antialiased"
     >
       <Titlebar program={program} right={right} showBreadcrumb={!hideNav} />
+      {!hideNav ? <GlobalSitemapBar /> : null}
       {hideHeader ? null : (
         <section
           role="region"
           aria-label={title}
-          className="flex h-9 items-center gap-4 bg-gradient-to-b from-ca-panel/40 to-ca-bg px-4 text-ca-ink font-hmi border-b border-ca-border/60"
+          className="flex h-9 items-center gap-4 border-b border-ca-border/80 bg-ca-panel/60 px-4 text-ca-ink font-hmi shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-md"
         >
-          <h1 className="text-[0.82rem] font-semibold uppercase tracking-[0.14em] text-ca-ink/90">
+          <h1 className="flex items-center gap-2 text-[0.82rem] font-bold uppercase tracking-[0.14em] text-ca-ink">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-ca-primary shadow-[0_0_6px_var(--ca-primary)]" aria-hidden />
             {title}
           </h1>
           {!hideNav && (

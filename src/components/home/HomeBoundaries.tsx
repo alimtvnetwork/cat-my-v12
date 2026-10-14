@@ -28,7 +28,7 @@ function HomeFallback({
     <HmiShell title="Home">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-hmi-3 px-hmi-6 py-hmi-8">
         <div
-          className={`flex flex-col gap-hmi-2 border ${border} bg-ca-panel p-hmi-6`}
+          className={`flex flex-col gap-hmi-2 rounded-2xl border ${border} bg-ca-panel/90 p-hmi-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_8px_32px_-8px_rgba(0,0,0,0.6)] backdrop-blur-xl`}
           role={tone === HomeBoundariesToneType.Error ? "alert" : undefined}
         >
           <h1 className="font-display text-hmi-header font-black uppercase tracking-tight text-ca-ink">

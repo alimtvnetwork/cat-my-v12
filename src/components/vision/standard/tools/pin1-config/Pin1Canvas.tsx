@@ -26,6 +26,7 @@ export interface Pin1CanvasProps {
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
   onSelectHole?: (id: number) => void;
+  onRegisterPoint?: (point: { x: number; y: number }) => void;
 }
 
 function createThresholdPreview(
@@ -286,6 +287,10 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
             return;
           }
 
+          if (props.regionEditMode === "pin" && registerPointAtEvent(event, props, canvasRef.current)) {
+            return;
+          }
+
           drag.handlePointerDown(event);
         }}
         onPointerMove={drag.handlePointerMove}
@@ -295,6 +300,31 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       />
     </div>
   );
+}
+
+function registerPointAtEvent(
+  event: React.PointerEvent<HTMLCanvasElement>,
+  props: Pin1CanvasProps,
+  canvas: HTMLCanvasElement | null,
+): boolean {
+  if (!props.onRegisterPoint || canvas === null) {
+    return false;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    return false;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = Math.round((event.clientX - rect.left) * scaleX);
+  const y = Math.round((event.clientY - rect.top) * scaleY);
+
+  props.onRegisterPoint({ x, y });
+
+  return true;
 }
 
 function selectHoleAtPoint(

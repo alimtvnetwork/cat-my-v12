@@ -19,8 +19,6 @@ import {
   Grid2X2,
   ListChecks,
   PaintBucket,
-  PanelLeftClose,
-  PanelLeftOpen,
   Play,
   Plus,
   QrCode,
@@ -123,12 +121,11 @@ export function InspectionHierarchyTree({
   onUpdateCameraSettings,
   onUpdateLightSettings,
 }: InspectionHierarchyTreeProps) {
-  const [isProjectOpen, setIsProjectOpen] = useState(true);
   const [isDeviceOpen, setIsDeviceOpen] = useState(true);
   const [isRuleSetsOpen, setIsRuleSetsOpen] = useState(true);
-  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);
   const [searchFilter, setSearchFilter] = useState("");
   const [openRulesetIds, setOpenRulesetIds] = useState<Record<string, boolean>>({});
+  const [openRulesMap, setOpenRulesMap] = useState<Record<string, boolean>>({});
   const [expandedRuleIds, setExpandedRuleIds] = useState<Record<string, boolean>>({});
   const [expandedCameraRuleId, setExpandedCameraRuleId] = useState<string | null>(null);
   const [expandedLightRuleId, setExpandedLightRuleId] = useState<string | null>(null);
@@ -155,226 +152,194 @@ export function InspectionHierarchyTree({
     return merged;
   }, [displayRulesets, validationRuns]);
 
-  const handleToggleAll = useCallback(() => {
-    const isNextOpen = !isRuleSetsOpen;
-    setIsProjectOpen(isNextOpen);
-    setIsDeviceOpen(isNextOpen);
-    setIsRuleSetsOpen(isNextOpen);
-
-    if (isNextOpen) {
-      const nextOpen: Record<string, boolean> = {};
-
-      for (const rs of displayRulesets) {
-        nextOpen[rs.id] = true;
-      }
-
-      setOpenRulesetIds(nextOpen);
-    }
-  }, [displayRulesets, isRuleSetsOpen]);
-
-  if (isTreeCollapsed) {
-    return (
-      <div className="flex w-12 shrink-0 flex-col items-center rounded border border-ca-border/70 bg-ca-panel p-2 shadow-sm">
-        <button
-          type="button"
-          onClick={() => setIsTreeCollapsed(false)}
-          aria-label="Expand hierarchy tree"
-          title="Expand inspection hierarchy tree"
-          className="rounded p-1.5 text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
-        >
-          <PanelLeftOpen size={16} />
-        </button>
-        <div className="mt-4 flex flex-col items-center gap-3">
-          <span title="Project">
-            <FolderTree size={16} className="text-amber-500" />
-          </span>
-          <span title="Device (Circuit / IC)">
-            <Cpu size={16} className="text-cyan-400" />
-          </span>
-          <span title="Rule Set">
-            <FileCode2 size={16} className="text-purple-400" />
-          </span>
-          <span title="Rules">
-            <ListChecks size={16} className="text-emerald-400" />
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       role="region"
       aria-label="Inspection hierarchy tree"
-      className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded border border-ca-border/70 bg-[#15191d] shadow-sm"
+      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 font-sans shadow-inner backdrop-blur-md"
     >
-      <div className="border-b border-ca-border bg-[#101316] px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <FolderTree size={16} className="shrink-0 text-amber-400" />
-            <div className="min-w-0">
-              <div className="truncate text-xs font-bold uppercase tracking-[0.14em] text-ca-ink">
-                Inspection Program
-              </div>
-              <div className="truncate text-[10px] text-ca-ink-muted">
-                {displayRulesets.length} rule sets · {totalRuleCount} rules
-              </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              onClick={handleToggleAll}
-              title={isRuleSetsOpen ? "Collapse all folders" : "Expand all folders"}
-              className="rounded border border-ca-border/70 px-1.5 py-0.5 text-[10px] text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
-            >
-              {isRuleSetsOpen ? "Collapse" : "Expand"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsTreeCollapsed(true)}
-              aria-label="Collapse sidebar"
-              title="Collapse tree sidebar"
-              className="rounded p-1 text-ca-ink-muted hover:bg-ca-panel-2 hover:text-ca-ink"
-            >
-              <PanelLeftClose size={14} />
-            </button>
-          </div>
+      {/* Compact Header & Integrated Search Filter */}
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <FolderTree size={14} className="shrink-0 text-amber-400" />
+          <span className="truncate text-[11px] font-bold uppercase tracking-wider text-white/90">
+            Inspection Program
+          </span>
+          <span className="rounded bg-white/10 px-1 py-0.2 font-sans text-[9px] font-medium text-white/60">
+            {totalRuleCount}
+          </span>
+        </div>
+
+        <div className="relative w-28 shrink-0">
+          <Search size={11} className="pointer-events-none absolute left-2 top-1.5 text-ca-ink-muted" />
+          <input
+            type="text"
+            value={searchFilter}
+            onChange={(event) => setSearchFilter(event.target.value)}
+            placeholder="Search..."
+            className="h-6 w-full rounded border border-white/10 bg-black/50 pl-6 pr-2 font-sans text-[10px] text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
+          />
         </div>
       </div>
 
-      {totalRuleCount > 3 ? (
-        <div className="border-b border-ca-border/50 bg-[#12161a] p-2">
-          <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-2 text-ca-ink-muted" />
-            <input
-              type="text"
-              value={searchFilter}
-              onChange={(event) => setSearchFilter(event.target.value)}
-              placeholder="Filter program rules..."
-              className="w-full rounded border border-ca-border/70 bg-ca-bg/70 py-1 pl-7 pr-2 text-xs text-ca-ink placeholder:text-ca-ink-muted/60 focus:border-ca-select focus:outline-none"
-            />
-          </div>
-        </div>
-      ) : null}
-
-      <div className="min-h-0 flex-1 overflow-y-auto p-2 font-mono text-xs">
-        <div className="select-none space-y-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 font-sans text-xs [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
+        <div className="select-none space-y-0.5">
           <TreeRow
-            isOpen={isProjectOpen}
-            icon={<FolderTree size={15} className="shrink-0 text-amber-400" />}
-            title={`Project: ${project.name}`}
-            meta="Active"
-            onClick={() => setIsProjectOpen((value) => !value)}
+            isOpen={isDeviceOpen}
+            icon={<Cpu size={14} className="shrink-0 text-cyan-400" />}
+            title={`Device: ${project.deviceId || "Circuit DUT (IC)"}`}
+            meta="IC Loaded"
+            onClick={() => setIsDeviceOpen((value) => !value)}
           />
 
-          {isProjectOpen ? (
-            <div className="ml-3 space-y-1 border-l border-ca-border/50 pl-2.5">
+          {isDeviceOpen ? (
+            <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
               <TreeRow
-                isOpen={isDeviceOpen}
-                icon={<Cpu size={15} className="shrink-0 text-cyan-400" />}
-                title={`Device: ${project.deviceId || "Circuit DUT (IC)"}`}
-                subtitle="IC Package / Board DUT"
-                meta="IC Loaded"
-                onClick={() => setIsDeviceOpen((value) => !value)}
+                isOpen={isRuleSetsOpen}
+                icon={<FileCode2 size={14} className="shrink-0 text-purple-400" />}
+                title="Rule Sets"
+                meta={`${displayRulesets.length}`}
+                onClick={() => setIsRuleSetsOpen((value) => !value)}
+                action={
+                  onAddRulesetClick ? (
+                    <IconButton
+                      data-tour="project-add-ruleset"
+                      title="Add ruleset"
+                      onClick={onAddRulesetClick}
+                      className="hover:text-purple-300"
+                    >
+                      <Plus size={11} />
+                    </IconButton>
+                  ) : null
+                }
               />
 
-              {isDeviceOpen ? (
-                <div className="ml-3 space-y-1 border-l border-ca-border/50 pl-2.5">
-                  <TreeRow
-                    isOpen={isRuleSetsOpen}
-                    icon={<FileCode2 size={15} className="shrink-0 text-purple-400" />}
-                    title="Rule Sets"
-                    meta={`${displayRulesets.length}`}
-                    onClick={() => setIsRuleSetsOpen((value) => !value)}
-                    action={
-                      onAddRulesetClick ? (
-                        <IconButton
-                          title="Add ruleset"
-                          onClick={onAddRulesetClick}
-                          className="hover:text-purple-300"
+              {isRuleSetsOpen ? (
+                <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
+                  {displayRulesets.map((rs) => {
+                    const isActiveRuleset = rs.id === ruleset.id;
+                    const isRulesetOpen = openRulesetIds[rs.id] ?? true;
+                    const isRulesListOpen = openRulesMap[rs.id] ?? true;
+                    const rulesetRules = (rs.rules ?? []).filter((rule) =>
+                      getRuleMatchesFilter(rule, searchFilter),
+                    );
+
+                    return (
+                      <div key={rs.id} className="space-y-0.5">
+                        <div
+                          className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
+                            isActiveRuleset
+                              ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
+                              : "border-transparent text-white/85 hover:border-white/10 hover:bg-white/[0.04]"
+                          }`}
+                          onClick={() => {
+                            if (isActiveRuleset) {
+                              setOpenRulesetIds((current) => ({
+                                ...current,
+                                [rs.id]: !isRulesetOpen,
+                              }));
+                            } else {
+                              onSelectRuleset?.(rs.id);
+                              setOpenRulesetIds((current) => ({
+                                ...current,
+                                [rs.id]: true,
+                              }));
+                            }
+                          }}
                         >
-                          <Plus size={12} />
-                        </IconButton>
-                      ) : null
-                    }
-                  />
+                          <IconButton
+                            title={isRulesetOpen ? "Collapse ruleset" : "Expand ruleset"}
+                            onClick={() => {
+                              setOpenRulesetIds((current) => ({
+                                ...current,
+                                [rs.id]: !isRulesetOpen,
+                              }));
+                            }}
+                          >
+                            {isRulesetOpen ? (
+                              <ChevronDown size={12} className="shrink-0 text-ca-ink-muted" />
+                            ) : (
+                              <ChevronRight size={12} className="shrink-0 text-ca-ink-muted" />
+                            )}
+                          </IconButton>
+                          <FileCode2 size={13} className="shrink-0 text-purple-400" />
+                          <div className="min-w-0 flex-1 truncate text-xs font-semibold">
+                            <span>RuleSet: {rs.name}</span>
+                            {rs.categoryName ? (
+                              <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
+                                ({rs.categoryName})
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
+                              {rs.rules?.length ?? 0}
+                            </span>
+                            {onAddRuleClick ? (
+                              <IconButton
+                                title="Add rule from tools"
+                                onClick={() => onAddRuleClick(rs.id)}
+                                className="hover:text-purple-300"
+                              >
+                                <Plus size={11} />
+                              </IconButton>
+                            ) : null}
+                            {onDeleteRulesetClick && isActiveRuleset && displayRulesets.length > 1 ? (
+                              <IconButton
+                                title="Delete ruleset"
+                                onClick={() => onDeleteRulesetClick(rs.id)}
+                                className="hover:text-rose-300"
+                              >
+                                <Trash2 size={11} />
+                              </IconButton>
+                            ) : null}
+                          </div>
+                        </div>
 
-                  {isRuleSetsOpen ? (
-                    <div className="ml-3 space-y-1 border-l border-ca-border/40 pl-2.5">
-                      {displayRulesets.map((rs) => {
-                        const isActiveRuleset = rs.id === ruleset.id;
-                        const isRulesetOpen = openRulesetIds[rs.id] ?? true;
-                        const rulesetRules = (rs.rules ?? []).filter((rule) =>
-                          getRuleMatchesFilter(rule, searchFilter),
-                        );
-
-                        return (
-                          <div key={rs.id} className="space-y-1">
+                        {isRulesetOpen ? (
+                          <div className="ml-2.5 space-y-0.5 border-l border-ca-border/30 pl-2">
                             <div
-                              className={`group flex cursor-pointer items-center gap-1.5 rounded border px-2 py-1 transition-colors ${
-                                isActiveRuleset
-                                  ? "border-purple-500/40 bg-purple-950/30 text-purple-100"
-                                  : "border-transparent text-ca-ink hover:border-ca-border/50 hover:bg-ca-panel-2"
-                              }`}
                               onClick={() => {
-                                onSelectRuleset?.(rs.id);
-                                setOpenRulesetIds((current) => ({
+                                setOpenRulesMap((current) => ({
                                   ...current,
-                                  [rs.id]: !isRulesetOpen,
+                                  [rs.id]: !isRulesListOpen,
                                 }));
                               }}
+                              className="flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink-muted transition hover:bg-white/[0.04] hover:text-white"
                             >
-                              {isRulesetOpen ? (
-                                <ChevronDown size={13} className="shrink-0 text-ca-ink-muted" />
-                              ) : (
-                                <ChevronRight size={13} className="shrink-0 text-ca-ink-muted" />
-                              )}
-                              <FileCode2 size={14} className="shrink-0 text-purple-400" />
-                              <div className="min-w-0 flex-1">
-                                <div className="truncate font-semibold">RuleSet: {rs.name}</div>
-                                <div className="truncate text-[10px] text-ca-ink-muted">
-                                  {rs.categoryName || "Inspection category"} · {rs.rules?.length ?? 0} rules
-                                </div>
-                              </div>
-                              <div className="flex shrink-0 items-center gap-1">
-                                <span className="rounded border border-ca-border/70 bg-ca-bg px-1 text-[10px] text-ca-ink-muted">
-                                  {rs.rules?.length ?? 0}
-                                </span>
-                                {onAddRuleClick ? (
-                                  <IconButton
-                                    title="Add rule from tools"
-                                    onClick={() => onAddRuleClick(rs.id)}
-                                    className="hover:text-purple-300"
-                                  >
-                                    <Plus size={11} />
-                                  </IconButton>
-                                ) : null}
-                                {onDeleteRulesetClick && isActiveRuleset ? (
-                                  <IconButton
-                                    title="Delete ruleset"
-                                    onClick={() => onDeleteRulesetClick(rs.id)}
-                                    className="hover:text-rose-300"
-                                  >
-                                    <Trash2 size={11} />
-                                  </IconButton>
-                                ) : null}
-                              </div>
+                              <IconButton
+                                title={isRulesListOpen ? "Collapse rules list" : "Expand rules list"}
+                                onClick={() => {
+                                  setOpenRulesMap((current) => ({
+                                    ...current,
+                                    [rs.id]: !isRulesListOpen,
+                                  }));
+                                }}
+                              >
+                                {isRulesListOpen ? (
+                                  <ChevronDown size={11} className="shrink-0 text-ca-ink-muted" />
+                                ) : (
+                                  <ChevronRight size={11} className="shrink-0 text-ca-ink-muted" />
+                                )}
+                              </IconButton>
+                              <ListChecks size={12} className="text-emerald-400" />
+                              <span>Rules ({rulesetRules.length})</span>
                             </div>
 
-                            {isRulesetOpen ? (
-                              <div className="ml-3 space-y-1 border-l border-ca-border/30 pl-2.5">
-                                <div className="flex items-center gap-1.5 rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ca-ink-muted">
-                                  <ListChecks size={13} className="text-emerald-400" />
-                                  <span>Rules ({rulesetRules.length})</span>
+                            {isRulesListOpen ? (
+                              rulesetRules.length === 0 ? (
+                                <div className="rounded border border-dashed border-ca-border/60 px-2 py-1.5 text-center text-[11px] text-ca-ink-muted/70">
+                                  No rules defined
                                 </div>
+                              ) : (
+                                rulesetRules.map((rule, index) => {
+                                  const isRuleOpen = Boolean(
+                                    expandedRuleIds[rule.id] ||
+                                    expandedCameraRuleId === rule.id ||
+                                    expandedLightRuleId === rule.id,
+                                  );
 
-                                {rulesetRules.length === 0 ? (
-                                  <div className="rounded border border-dashed border-ca-border/60 px-2 py-2 text-center text-[11px] text-ca-ink-muted/70">
-                                    No rules defined
-                                  </div>
-                                ) : (
-                                  rulesetRules.map((rule, index) => (
+                                  return (
                                     <RuleNode
                                       key={rule.id}
                                       rule={rule}
@@ -382,29 +347,52 @@ export function InspectionHierarchyTree({
                                       total={rulesetRules.length}
                                       isSelected={selectedRuleId === rule.id}
                                       validationResult={validationResults[rule.id]}
-                                      isExpanded={expandedRuleIds[rule.id] !== false}
+                                      isExpanded={isRuleOpen}
                                       isCameraOpen={expandedCameraRuleId === rule.id}
                                       isLightOpen={expandedLightRuleId === rule.id}
                                       onSelect={() => {
                                         onSelectRuleset?.(rs.id);
                                         onSelectRule(rule.id);
                                       }}
-                                      onToggleExpanded={() =>
-                                        setExpandedRuleIds((current) => ({
-                                          ...current,
-                                          [rule.id]: !(current[rule.id] !== false),
-                                        }))
-                                      }
-                                      onToggleCamera={() =>
-                                        setExpandedCameraRuleId((current) =>
-                                          current === rule.id ? null : rule.id,
-                                        )
-                                      }
-                                      onToggleLight={() =>
-                                        setExpandedLightRuleId((current) =>
-                                          current === rule.id ? null : rule.id,
-                                        )
-                                      }
+                                      onToggleExpanded={() => {
+                                        if (isRuleOpen) {
+                                          setExpandedRuleIds((current) => ({
+                                            ...current,
+                                            [rule.id]: false,
+                                          }));
+                                          if (expandedCameraRuleId === rule.id) {
+                                            setExpandedCameraRuleId(null);
+                                          }
+                                          if (expandedLightRuleId === rule.id) {
+                                            setExpandedLightRuleId(null);
+                                          }
+                                        } else {
+                                          setExpandedRuleIds((current) => ({
+                                            ...current,
+                                            [rule.id]: true,
+                                          }));
+                                        }
+                                      }}
+                                      onToggleCamera={() => {
+                                        const isCameraActive = expandedCameraRuleId === rule.id;
+                                        setExpandedCameraRuleId(isCameraActive ? null : rule.id);
+                                        if (!isCameraActive) {
+                                          setExpandedRuleIds((current) => ({
+                                            ...current,
+                                            [rule.id]: true,
+                                          }));
+                                        }
+                                      }}
+                                      onToggleLight={() => {
+                                        const isLightActive = expandedLightRuleId === rule.id;
+                                        setExpandedLightRuleId(isLightActive ? null : rule.id);
+                                        if (!isLightActive) {
+                                          setExpandedRuleIds((current) => ({
+                                            ...current,
+                                            [rule.id]: true,
+                                          }));
+                                        }
+                                      }}
                                       onToggleHidden={onToggleHidden}
                                       onDeleteRule={onDeleteRule}
                                       onReorderRule={onReorderRule}
@@ -412,57 +400,21 @@ export function InspectionHierarchyTree({
                                       onUpdateCameraSettings={onUpdateCameraSettings}
                                       onUpdateLightSettings={onUpdateLightSettings}
                                     />
-                                  ))
-                                )}
-                              </div>
+                                  );
+                                })
+                              )
                             ) : null}
                           </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
             </div>
           ) : null}
         </div>
       </div>
-
-      {onAddRulesetClick || onAddRuleClick || onRunAnalysis ? (
-        <div className="flex items-center gap-1.5 border-t border-ca-border bg-[#101316] p-2">
-          {onAddRulesetClick ? (
-            <button
-              type="button"
-              onClick={onAddRulesetClick}
-              className="flex flex-1 items-center justify-center gap-1 rounded border border-ca-border bg-ca-panel-2 px-2 py-1.5 text-xs font-semibold text-ca-ink hover:border-purple-400"
-            >
-              <Plus size={13} />
-              <span>Add Ruleset</span>
-            </button>
-          ) : null}
-          {onAddRuleClick ? (
-            <button
-              type="button"
-              onClick={() => onAddRuleClick(ruleset.id)}
-              className="flex flex-1 items-center justify-center gap-1 rounded border border-ca-border bg-ca-panel-2 px-2 py-1.5 text-xs font-semibold text-ca-ink hover:border-ca-select"
-            >
-              <Plus size={13} />
-              <span>Add Rule</span>
-            </button>
-          ) : null}
-          {onRunAnalysis ? (
-            <button
-              type="button"
-              onClick={onRunAnalysis}
-              disabled={isAnalyzing}
-              className="flex flex-1 items-center justify-center gap-1 rounded bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              <Play size={13} className="fill-white" />
-              <span>{isAnalyzing ? "Analyzing..." : "Analyze"}</span>
-            </button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -481,20 +433,20 @@ function TreeRow({ isOpen, icon, title, subtitle, meta, action, onClick }: TreeR
   return (
     <div
       onClick={onClick}
-      className="group flex cursor-pointer items-center gap-1.5 rounded border border-transparent px-2 py-1 text-ca-ink transition-colors hover:border-ca-border/50 hover:bg-ca-panel-2"
+      className="group flex cursor-pointer items-center gap-1.5 rounded-lg border border-transparent px-2 py-1 text-white/90 transition-all hover:border-white/10 hover:bg-white/[0.04]"
     >
       {isOpen ? (
-        <ChevronDown size={13} className="shrink-0 text-ca-ink-muted" />
+        <ChevronDown size={12} className="shrink-0 text-white/50" />
       ) : (
-        <ChevronRight size={13} className="shrink-0 text-ca-ink-muted" />
+        <ChevronRight size={12} className="shrink-0 text-white/50" />
       )}
       {icon}
       <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold">{title}</div>
-        {subtitle ? <div className="truncate text-[10px] text-ca-ink-muted">{subtitle}</div> : null}
+        <div className="truncate text-xs font-semibold text-white/90">{title}</div>
+        {subtitle ? <div className="truncate text-[10px] text-white/50">{subtitle}</div> : null}
       </div>
       {meta ? (
-        <span className="rounded border border-ca-border/70 bg-ca-bg px-1 text-[10px] text-ca-ink-muted">
+        <span className="rounded border border-white/10 bg-white/[0.04] px-1 py-0.2 font-sans text-[9px] font-medium text-white/60">
           {meta}
         </span>
       ) : null}
@@ -554,25 +506,25 @@ function RuleNode({
     rule.lightSettings ?? (rule.params as any)?.lightSettings ?? DEFAULT_RULE_LIGHT_SETTINGS;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div
         onClick={onSelect}
-        className={`group flex cursor-pointer items-center justify-between gap-1 rounded border px-2 py-1.5 transition-colors ${
+        className={`group flex cursor-pointer items-center justify-between gap-1 rounded-lg border px-1.5 py-1 transition-all ${
           isSelected
-            ? "border-ca-select/60 bg-ca-select/20 text-white"
-            : "border-transparent text-ca-ink/85 hover:border-ca-border/50 hover:bg-ca-panel-2"
+            ? "border-ca-select/80 bg-gradient-to-r from-ca-select/25 to-ca-select/10 text-white shadow-[0_0_12px_color-mix(in_oklab,var(--ca-select)_30%,transparent),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            : "border-transparent text-white/80 hover:border-white/10 hover:bg-white/[0.04]"
         }`}
       >
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1">
           <IconButton
             title={isExpanded ? "Collapse optical subtree" : "Expand optical subtree"}
             onClick={onToggleExpanded}
           >
-            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </IconButton>
-          <span className="shrink-0 text-[10px] text-ca-ink-muted">[{index + 1}]</span>
+          <span className="shrink-0 font-sans text-[10px] font-medium text-ca-ink-muted">[{index + 1}]</span>
           <ToolIcon
-            size={13}
+            size={12}
             className={isSelected ? "shrink-0 text-ca-select" : "shrink-0 text-ca-ink-muted"}
           />
           <IconButton
@@ -580,14 +532,14 @@ function RuleNode({
             onClick={() => onToggleHidden?.(rule.id)}
             className="text-ca-ink-muted/70 hover:text-ca-ink"
           >
-            {rule.isHidden ? <EyeOff size={12} className="text-rose-400" /> : <Eye size={12} />}
+            {rule.isHidden ? <EyeOff size={11} className="text-rose-400" /> : <Eye size={11} />}
           </IconButton>
           <span className="truncate text-xs">{rule.name}</span>
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
           {toolCode ? (
-            <span className="rounded bg-ca-panel-2 px-1 py-0.2 text-[9px] font-mono text-ca-ink-muted">
+            <span className="rounded bg-ca-panel-2 px-1 py-0.2 font-sans text-[9px] font-medium text-ca-ink-muted">
               {toolCode}
             </span>
           ) : null}
@@ -708,7 +660,7 @@ function StatusBadge({
   }
 
   return (
-    <span className="flex items-center gap-0.5 text-[9px] font-mono text-amber-400/80">
+    <span className="flex items-center gap-0.5 text-[9px] font-sans font-medium text-amber-400/80">
       <Clock size={10} />
       READY
     </span>
@@ -858,7 +810,7 @@ function LightSettingsPanel({
           <div className="rounded border border-ca-border/40 bg-ca-panel-2/50 p-1.5">
             <div className="mb-1 flex items-center justify-between text-ca-ink">
               <span className="text-[10px] font-medium text-ca-ink-muted">Channel</span>
-              <span className="font-mono text-[10px] text-amber-300">CH {settings.channel ?? 1}</span>
+              <span className="font-sans text-[10px] font-medium text-amber-300">CH {settings.channel ?? 1}</span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               {[1, 2, 3, 4].map((channel) => {
@@ -949,7 +901,7 @@ function SubtreeHeader({
         {icon}
         <span className="truncate text-[11px] font-medium">{title}</span>
       </div>
-      <span className={`rounded border px-1 py-0.2 font-mono text-[9px] ${metaClass}`}>
+      <span className={`rounded border px-1 py-0.2 font-sans font-medium text-[9px] ${metaClass}`}>
         {meta}
       </span>
     </div>
@@ -996,7 +948,7 @@ function SliderRow({
     <div className="rounded border border-ca-border/40 bg-ca-panel-2/50 p-1.5">
       <div className="mb-1 flex items-center justify-between text-ca-ink">
         <span className="text-[10px] font-medium text-ca-ink-muted">{label}</span>
-        <span className={`font-mono text-[10px] ${valueClass}`}>{display}</span>
+        <span className={`font-sans text-[10px] font-medium ${valueClass}`}>{display}</span>
       </div>
       <input
         type="range"
@@ -1031,7 +983,7 @@ function IconButton({
         event.stopPropagation();
         onClick?.();
       }}
-      className={`rounded p-1 text-ca-ink-muted transition-colors hover:bg-ca-panel hover:text-ca-ink ${className}`}
+      className={`rounded p-0.5 text-ca-ink-muted transition-colors hover:bg-white/10 hover:text-white ${className}`}
     >
       {children}
     </button>
