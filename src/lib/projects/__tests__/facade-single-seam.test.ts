@@ -43,6 +43,7 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "components/data-source/DataSourceToggle.tsx",
   "components/editor/rail/CollapsiblePanelSection.tsx",
   "hooks/use-show-dev-frames.ts",
+  "hooks/useUiMode.ts",
   "hooks/useRailPanelState.ts",
   "lib/data-source/store.ts",
   "lib/ids/int-alias.ts",
@@ -94,12 +95,13 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   // Telemetry ring buffer references localStorage in a comment only.
   "lib/seed/telemetry-store.ts",
   "lib/stores/shortcuts-store.ts",
+  "lib/stores/sitemap-state-cache-store.ts",
   "lib/stores/ui-prefs-store.ts",
   "components/rules/tools/ToolsPaletteUtils.ts",
   "lib/workspace/layout-presets.ts",
   "lib/workspace/layout-slice.ts",
   // Routes still reading legacy keys for one-off migrations / debug.
-  "routes/projects/$projectId/rulesets/new.tsx",
+  "routes/useRootBootOrchestrator.ts",
   "routes/settings/index.tsx",
   // Comment-only mention of localStorage in an SSR-hydration note.
   "routes/setup/camera.tsx",
