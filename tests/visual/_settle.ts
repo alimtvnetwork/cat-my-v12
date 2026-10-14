@@ -18,51 +18,74 @@
 import type { Page } from "@playwright/test";
 
 export async function settleForVisual(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'));
+  const maxAttempts = 3;
 
-    await Promise.all(
-      links.map((link) => {
-        if (link.sheet) {
-          return Promise.resolve();
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      await page.evaluate(async () => {
+        const links = Array.from(
+          document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+        );
+
+        await Promise.all(
+          links.map((link) => {
+            if (link.sheet) {
+              return Promise.resolve();
+            }
+
+            return new Promise<void>((resolve) => {
+              link.addEventListener("load", () => resolve(), { once: true });
+              link.addEventListener("error", () => resolve(), { once: true });
+              setTimeout(resolve, 3000);
+            });
+          }),
+        );
+
+        const start = performance.now();
+
+        while (performance.now() - start < 5000) {
+          const headerH = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
+
+          if (headerH && headerH.trim().length > 0) {
+            break;
+          }
+
+          await new Promise((resolve) => requestAnimationFrame(resolve));
         }
 
-        return new Promise<void>((resolve) => {
-          link.addEventListener("load", () => resolve(), { once: true });
-          link.addEventListener("error", () => resolve(), { once: true });
-          setTimeout(resolve, 3000);
-        });
-      }),
-    );
+        const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
 
-    const start = performance.now();
+        if (fonts?.ready) {
+          try {
+            await fonts.ready;
+          } catch {
+            /* ignore */
+          }
+        }
 
-    while (performance.now() - start < 5000) {
-      const headerH = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
-
-      if (headerH && headerH.trim().length > 0) {
-        break;
-      }
-
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-    }
-
-    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
-
-    if (fonts?.ready) {
-      try {
-        await fonts.ready;
-      } catch {
-        /* ignore */
-      }
-    }
-
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          resolve();
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              resolve();
+            });
+          });
         });
       });
-    });
-  });
+
+      return;
+    } catch (error) {
+      const isContextDestroyed =
+        error instanceof Error &&
+        (error.message.includes("Execution context was destroyed") ||
+          error.message.includes("navigating") ||
+          error.message.includes("Target closed"));
+
+      if (attempt === maxAttempts - 1 || !isContextDestroyed) {
+        throw error;
+      }
+
+      await page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
+      await page.waitForTimeout(250);
+    }
+  }
 }
