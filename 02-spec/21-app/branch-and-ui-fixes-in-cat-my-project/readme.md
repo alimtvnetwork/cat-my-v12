@@ -79,14 +79,14 @@ Commits 2–10 are installer/release-workflow fixes. Commits 11–12 are UI fixe
 | Optional code signing restored | **FIXED** | 37f83c67 — release.yml |
 | Desktop release workflow (zip + install scripts) | **FIXED** | 15b476cd — packaging/desktop/install.ps1, install.sh, start.ps1, start.sh |
 | Windows Start menu **pinning** | **FIXED (this session)** | Added best-effort `Pin to Start` Shell verb to packaging/desktop/install.ps1 (previously only a Programs-folder shortcut existed; true pinning was MISSING — zero hits for `Pin to Start`/`Shell.Application` verbs across the repo) |
-| Installer via **area2C** | **CANNOT CONFIRM** | Zero hits for "area2C" across the repo (code, config, specs) — the term appears only in this session's spec/plan docs quoting the user's instruction. Needs the user's definition of what area2C is |
+| Installer via **aria2c** (Gitmap/AGM parity) | **FIXED (this session)** | `packaging/desktop/install.ps1` now prefers aria2c (16 connections, 80 splits, 1MB chunks; PATH + chocolatey/scoop/ProgramFiles lookup) and falls back to Invoke-WebRequest; `packaging/desktop/install.sh` prefers aria2c (16 connections, 1MB chunks) and falls back to curl. Mirrors the Antigravity Manager installer pattern (Get-Aria2cPath + Invoke-FastDownload in AGM install.ps1) |
 | Gitmap / AGM package installer parity | **NOT EVIDENCED** | Zero references to Antigravity/AGM or gitmap installer packages in packaging/, release.yml, 02-spec/, docs/; no NSIS/WiX/MSIX configs. The installer is a custom GitHub-release-zip + script design, unrelated to Gitmap/AGM packages |
 | Installer spec gaps (77-cli-powershell-and-release, 79-installer-retention-timing — both draft v0.1) | PENDING | Describe a different CLI-centric architecture (PATH junction, install.json manifest, doctor, -Uninstall, retention task registration) that packaging/desktop/* does not implement: no uninstall path, no SHA256 verification at install time, no PATH entry, no install.json manifest |
 
 ## Follow-ups needing the user
 
-1. **Define "area2C"** — nothing in the repo matches this name; cannot confirm any installer improvement using it without a definition.
-2. **Gitmap/AGM package parity** — not implemented anywhere in the repo; if there is a reference implementation, point to it.
+1. ~~Define "area2C"~~ — RESOLVED 2026-10-16: the user meant **aria2c** (the aria2 download utility); acceleration added to both desktop installers this session.
+2. **Gitmap installer parity detail** — no code references exist in the repo to a Gitmap installer package; if there is a specific Gitmap installer reference to mirror, point to it.
 
 ## Acceptance Criteria
 
