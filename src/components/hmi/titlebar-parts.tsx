@@ -27,7 +27,6 @@ import { AddressBar } from "@/components/shell/AddressBar";
 import { Search as SearchIcon } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
-import { ModernMainNav } from "@/components/hmi/ModernMainNav";
 
 export function HeaderBrand(): React.JSX.Element | null {
   return (
@@ -71,12 +70,9 @@ export function HeaderCrumbs({
   program,
 }: HeaderCrumbsProps): React.JSX.Element | null {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-3 justify-between px-2">
-      <div className="flex min-w-0 items-center gap-2">
-        {showBreadcrumb ? <GlobalSitemapBar /> : null}
-        <CommandPaletteTrigger />
-      </div>
-      <ModernMainNav />
+    <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
+      {showBreadcrumb ? <GlobalSitemapBar /> : null}
+      <CommandPaletteTrigger />
     </div>
   );
 }
