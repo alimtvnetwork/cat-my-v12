@@ -195,7 +195,7 @@ jobs:
           echo '${{ steps.inventory.outputs.binaries }}' | python -c '
           import json, subprocess, sys
           for b in json.load(sys.stdin):
-              print(f"::group::pyinstaller {b[\"SpecPath\"]}")
+              print("::group::pyinstaller " + b["SpecPath"])
               subprocess.check_call([
                   "pyinstaller", b["SpecPath"],
                   "--clean", "--noconfirm",
