@@ -114,6 +114,12 @@ jobs:
         run: python3 -m pytest BE/tests -x --tb=short
       - name: bun install
         run: bun install --frozen-lockfile
+      - name: Generate route tree
+        run: >-
+          bun -e "import { Generator, getConfig } from '@tanstack/router-generator';
+          const root = process.cwd();
+          const config = getConfig({}, root);
+          await new Generator({ config, root }).run();"
       - name: tsc typecheck
         run: bunx tsc --noEmit
       - name: vitest
