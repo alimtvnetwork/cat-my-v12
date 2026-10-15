@@ -37,6 +37,33 @@ foreach ($shortcutPath in @(
 }
 
 Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
+
+# Pin CAT iVISION to the Windows Start menu (best effort - never fails the install).
+# The Programs-folder shortcut above makes the app appear under Start; the
+# "Pin to Start" shell verb pins it to the Start menu tiles. Failure is
+# non-fatal because the shortcut in Programs is already a working entry point.
+try {
+    $startMenuShortcut = Join-Path $startMenuDir 'CAT iVISION.lnk'
+
+    if (Test-Path -LiteralPath $startMenuShortcut) {
+        $shellApp = New-Object -ComObject Shell.Application
+        $programsFolder = $shellApp.NameSpace($startMenuDir)
+        $menuItem = $programsFolder.ParseName('CAT iVISION.lnk')
+
+        if ($null -ne $menuItem) {
+            foreach ($verb in @($menuItem.Verbs())) {
+                if (($verb.Name -replace '&', '').Trim() -ieq 'Pin to Start') {
+                    $verb.DoIt()
+                    Write-Host 'Pinned CAT iVISION to the Start menu.'
+                    break
+                }
+            }
+        }
+    }
+} catch {
+    Write-Host "Note: automatic 'Pin to Start' is unavailable on this system. CAT iVISION is available in the Start menu Programs folder and on the desktop."
+}
+
 Write-Host 'Installation complete. CAT iVISION is available from Start and the desktop.'
 $launchArguments = '-NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'start.ps1') + '"'
 Start-Process -FilePath 'powershell.exe' -ArgumentList $launchArguments -WorkingDirectory $installDir
