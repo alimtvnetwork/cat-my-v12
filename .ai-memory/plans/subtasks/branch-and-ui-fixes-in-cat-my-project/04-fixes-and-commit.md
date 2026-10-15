@@ -8,4 +8,4 @@ Apply the addressable fixes/improvements identified in subtasks 01–02 (bounded
 
 ## Status
 
-IN PROGRESS — committing now.
+COMPLETE — committed 0073ac94, pushed to origin.
