@@ -244,7 +244,7 @@ jobs:
           if frontend_exe.is_file():
               digest = hashlib.sha256(frontend_exe.read_bytes()).hexdigest()
               lines.append(f"{digest}  {frontend_exe.name}")
-          out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          out.write_bytes(("\n".join(lines) + "\n").encode("utf-8"))
           print(out.read_text())
           PY
         env:
@@ -283,6 +283,7 @@ jobs:
           for d in dist-all/release-*; do
             plat=$(basename "$d" | sed 's/^release-//')
             echo "::group::verify $plat"
+            sed -i 's/\r$//' "$d/SHA256SUMS.txt"
             (cd "$d" && sha256sum -c SHA256SUMS.txt)
             echo "::endgroup::"
           done
