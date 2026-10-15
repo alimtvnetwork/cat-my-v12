@@ -34,6 +34,7 @@ export interface PatternCanvasProps {
   dragState?: RegionDrag | null;
   onSearchRegionChange?: (region: SearchRegion | null) => void;
   onDragStateChange?: (drag: RegionDrag | null) => void;
+  hasOverlays?: boolean;
 }
 
 export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
@@ -56,7 +57,10 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       ? {
           width: source.width,
           height: source.height,
-          rgba: toThresholdPreviewRgba(source, props.greyscaleLevel),
+          rgba:
+            props.hasOverlays === false
+              ? source.rgba
+              : toThresholdPreviewRgba(source, props.greyscaleLevel),
         }
       : props.result;
 
@@ -96,6 +100,10 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     }
 
     drawRgbaToCanvas(canvas, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT, image.rgba);
+
+    if (props.hasOverlays === false) {
+      return;
+    }
 
     if (
       props.formulatedPattern &&
@@ -164,6 +172,8 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     props.maskRegions,
     props.regionEditMode,
     props.selectedMaskIndex,
+    props.hasOverlays,
+    regionEditMode,
   ]);
 
   return (

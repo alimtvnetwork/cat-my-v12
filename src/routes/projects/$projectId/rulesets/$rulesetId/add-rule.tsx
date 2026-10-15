@@ -1,11 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Settings,
-  Search,
-  CopyPlus,
-  Cpu,
-} from "lucide-react";
+import { Settings, Search, CopyPlus, Cpu } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
 import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import {
@@ -32,7 +27,6 @@ function generateRuleId(): string {
 
   return `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
-
 
 function getCategoryColor(category: string): {
   badgeBg: string;
@@ -114,19 +108,16 @@ function AddRuleWizard() {
     () => resolveIdParam(IntAliasNamespaceType.Ruleset, rulesetId) || rulesetId,
     [rulesetId],
   );
-  const ruleset = useMemo(
-    () => {
-      const matchedRuleset = rulesets.find(
-        (r: any) =>
-          r.id === rulesetId ||
-          r.id === resolvedRulesetId ||
-          resolveIdParam(IntAliasNamespaceType.Ruleset, r.id) === rulesetId,
-      );
+  const ruleset = useMemo(() => {
+    const matchedRuleset = rulesets.find(
+      (r: any) =>
+        r.id === rulesetId ||
+        r.id === resolvedRulesetId ||
+        resolveIdParam(IntAliasNamespaceType.Ruleset, r.id) === rulesetId,
+    );
 
-      return matchedRuleset ?? rulesets[0];
-    },
-    [rulesets, rulesetId, resolvedRulesetId],
-  );
+    return matchedRuleset ?? rulesets[0];
+  }, [rulesets, rulesetId, resolvedRulesetId]);
 
   const currentPathname = typeof window !== "undefined" ? window.location.pathname : "";
   const cachedSnapshot = useSitemapStateCacheStore((s) => s.snapshots[currentPathname]);
@@ -252,15 +243,13 @@ function AddRuleWizard() {
     const defaultChannels = selectedTool.defaultChannels ?? [];
     const defaultExposureMs =
       typeof selectedTool.defaultExposureMs === "number" ? selectedTool.defaultExposureMs : 20;
-    const defaultGainDb = typeof selectedTool.defaultGainDb === "number" ? selectedTool.defaultGainDb : 0;
+    const defaultGainDb =
+      typeof selectedTool.defaultGainDb === "number" ? selectedTool.defaultGainDb : 0;
     const defaultLightPct =
       typeof selectedTool.defaultLightPct === "number" ? selectedTool.defaultLightPct : 80;
     const defaultStrobeUs =
       typeof selectedTool.defaultStrobeUs === "number" ? selectedTool.defaultStrobeUs : 200;
-    const defaultThresh =
-      defaultParamValues.threshold ??
-      defaultParamValues.greyscaleLevel ??
-      170;
+    const defaultThresh = defaultParamValues.threshold ?? defaultParamValues.greyscaleLevel ?? 170;
     const defaultTol = defaultParamValues.tolerancePx ?? 8;
 
     const newRule: EditorRule = {
@@ -340,7 +329,9 @@ function AddRuleWizard() {
       lightSettings: sourceRule.lightSettings ? { ...sourceRule.lightSettings } : undefined,
     };
 
-    useProjectStore.getState().updateRulesetRules(ruleset.id, [...(ruleset.rules ?? []), clonedRule]);
+    useProjectStore
+      .getState()
+      .updateRulesetRules(ruleset.id, [...(ruleset.rules ?? []), clonedRule]);
 
     await navigate({
       to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
@@ -359,15 +350,16 @@ function AddRuleWizard() {
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#0a0d14] text-[#f8fafc] font-sans antialiased">
       {/* 1. Industrial Top Navigation Header */}
-      <div role="toolbar" className="flex h-12 shrink-0 items-center justify-between border-b border-[#222938] bg-[#0c1017]/95 px-5 backdrop-blur-xl shadow-lg">
+      <div
+        role="toolbar"
+        className="flex h-12 shrink-0 items-center justify-between border-b border-[#222938] bg-[#0c1017]/95 px-5 backdrop-blur-xl shadow-lg"
+      >
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[#f8fafc]">
             Add Rule
           </span>
           <span className="text-xs text-[#64748b]">·</span>
-          <span className="text-xs font-mono text-[#94a3b8]">
-            {ruleset.name}
-          </span>
+          <span className="text-xs font-mono text-[#94a3b8]">{ruleset.name}</span>
         </div>
 
         {/* View Mode Tabs: Rule Catalog vs Existing Rules */}
@@ -416,7 +408,12 @@ function AddRuleWizard() {
             </div>
 
             <nav className="flex-1 space-y-0.5 overflow-y-auto p-1.5">
-              {(["All", ...Object.values(InspectionCategoryType)] as (InspectionCategoryType | "All")[]).map((cat) => {
+              {(
+                ["All", ...Object.values(InspectionCategoryType)] as (
+                  | InspectionCategoryType
+                  | "All"
+                )[]
+              ).map((cat) => {
                 const count =
                   cat === "All"
                     ? VISION_TOOL_CATALOG.length
@@ -468,7 +465,10 @@ function AddRuleWizard() {
             className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0d14]"
           >
             {/* Search and Filter Strip */}
-            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[#222938] bg-[#0c1017]/95 px-5 py-3 backdrop-blur">
+            <div
+              data-tour="rule-add-catalog-header"
+              className="flex shrink-0 items-center justify-between gap-4 border-b border-[#222938] bg-[#0c1017]/95 px-5 py-3 backdrop-blur"
+            >
               <div className="relative flex-1 max-w-md">
                 <Search size={14} className="absolute left-3 top-2.5 text-[#64748b]" />
                 <input
@@ -482,7 +482,8 @@ function AddRuleWizard() {
 
               <div className="flex items-center gap-2">
                 <span className="font-sans text-[11px] uppercase tracking-wider text-[#64748b]">
-                  Showing <span className="font-bold text-[#f8fafc]">{filteredTools.length}</span> tools
+                  Showing <span className="font-bold text-[#f8fafc]">{filteredTools.length}</span>{" "}
+                  tools
                 </span>
               </div>
             </div>
@@ -586,9 +587,7 @@ function AddRuleWizard() {
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center p-6 text-center text-slate-500">
                 <Settings size={28} className="mb-2.5 text-cyan-400/40" />
-                <p className="font-sans text-xs font-semibold text-slate-400">
-                  No Tool Selected
-                </p>
+                <p className="font-sans text-xs font-semibold text-slate-400">No Tool Selected</p>
                 <p className="mt-1 font-sans text-xs text-slate-500">
                   Select a tool from the catalog to configure.
                 </p>
@@ -606,7 +605,8 @@ function AddRuleWizard() {
                   Calibrated Rule Library
                 </h2>
                 <p className="font-sans text-xs text-slate-400">
-                  Clone configured parameters, tolerances, and camera settings from any existing rule in your projects.
+                  Clone configured parameters, tolerances, and camera settings from any existing
+                  rule in your projects.
                 </p>
               </div>
               <div className="relative w-80">

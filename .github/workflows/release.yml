@@ -345,46 +345,18 @@ jobs:
             cp -R "$d" "release/$plat"
           done
 
-          python - <<'PY'
-          from pathlib import Path
+          cp packaging/desktop/start.ps1 release/windows/start.ps1
+          cp packaging/desktop/start.sh release/linux/start.sh
+          chmod +x release/linux/start.sh release/linux/runtime/bun release/linux/* || true
 
-          launcher = r'''$ErrorActionPreference = 'Stop'
-          $AppRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-          $BackendUrl = 'http://127.0.0.1:8787/healthz'
-          $FrontendUrl = 'http://127.0.0.1:3000/?ds=backend&backend=http://127.0.0.1:8787'
-          $env:BE_HOST = '127.0.0.1'
-          $env:BE_PORT = '8787'
-          $env:BE_CORS_ORIGINS = '["http://localhost:3000","http://127.0.0.1:3000"]'
-          $env:HOST = '127.0.0.1'
-          $env:PORT = '3000'
-
-          function Wait-AppUrl([string]$Url, [int]$Seconds) {
-            $deadline = (Get-Date).AddSeconds($Seconds)
-
-            while ((Get-Date) -lt $deadline) {
-              try {
-                $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
-
-                if ($response.StatusCode -eq 200) {
-                  return
-                }
-              } catch {
-                Start-Sleep -Milliseconds 500
-              }
-            }
-
-            throw "CAT iVISION did not become ready: $Url"
-          }
-
-          Start-Process -FilePath (Join-Path $AppRoot 'db-bootstrap.exe') -ArgumentList '--db-root', (Join-Path $AppRoot 'data') -Wait -WindowStyle Hidden
-          Start-Process -FilePath (Join-Path $AppRoot 'backend-server.exe') -WorkingDirectory $AppRoot -WindowStyle Hidden
-          Wait-AppUrl -Url $BackendUrl -Seconds 60
-          Start-Process -FilePath (Join-Path $AppRoot 'runtime\bun.exe') -ArgumentList 'server\index.mjs' -WorkingDirectory (Join-Path $AppRoot 'frontend') -WindowStyle Hidden
-          Wait-AppUrl -Url 'http://127.0.0.1:3000/' -Seconds 60
-          Start-Process $FrontendUrl
-          '''
-          Path("release/windows/start.ps1").write_bytes(launcher.encode("utf-8"))
-          PY
+          test -s release/windows/frontend/public/favicon.ico
+          test -s release/linux/frontend/public/favicon.ico
+          test -d release/windows/frontend/public/assets
+          test -d release/linux/frontend/public/assets
+          grep -q -- '--app=' release/windows/start.ps1
+          grep -q -- '--app=' release/linux/start.sh
+          grep -q 'CAT iVISION\.lnk' packaging/desktop/install.ps1
+          grep -q 'cat-ivision\.desktop' packaging/desktop/install.sh
 
           find release/windows release/linux -type f -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS.txt
           (cd release/windows && zip -r ../control-automation-windows.zip .)
@@ -518,7 +490,7 @@ jobs:
           ls -la release
           cat release/SHA256SUMS.txt
 
-      - name: Generate install.ps1
+      - name: Generate Windows and Linux installers
         env:
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
@@ -529,23 +501,23 @@ jobs:
 
           repo = os.environ["RELEASE_REPO"]
           tag = os.environ["RELEASE_TAG"]
-          script = f"""Write-Host 'Downloading CAT iVISION...'
-          $archive = Join-Path $env:TEMP 'control-automation.zip'
-          $installDir = Join-Path $env:LOCALAPPDATA 'CAT-iVISION'
-          Invoke-WebRequest -Uri 'https://github.com/{repo}/releases/download/{tag}/control-automation-windows.zip' -OutFile $archive -UseBasicParsing
-          Expand-Archive -LiteralPath $archive -DestinationPath $installDir -Force
-          $WshShell = New-Object -ComObject WScript.Shell
-          $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'CAT iVISION.lnk'
-          $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-          $Shortcut.TargetPath = 'powershell.exe'
-          $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'start.ps1') + '"'
-          $Shortcut.WorkingDirectory = $installDir
-          $Shortcut.Save()
-          Write-Host 'Installation complete. Starting CAT iVISION...'
-          Start-Process -FilePath $Shortcut.TargetPath -ArgumentList $Shortcut.Arguments -WorkingDirectory $installDir
-          """
-          Path("release/install.ps1").write_bytes(script.encode("utf-8"))
+          replacements = {
+              "__RELEASE_REPO__": repo,
+              "__RELEASE_TAG__": tag,
+          }
+
+          for source_name, output_name in (
+              ("packaging/desktop/install.ps1", "release/install.ps1"),
+              ("packaging/desktop/install.sh", "release/install.sh"),
+          ):
+              content = Path(source_name).read_text(encoding="utf-8")
+
+              for needle, value in replacements.items():
+                  content = content.replace(needle, value)
+
+              Path(output_name).write_text(content, encoding="utf-8", newline="\n")
           PY
+          chmod +x release/install.sh
 
       - name: Validate install.ps1 syntax
         shell: pwsh
@@ -564,6 +536,9 @@ jobs:
 
             throw 'Generated install.ps1 failed PowerShell syntax validation.'
           }
+
+      - name: Validate install.sh syntax
+        run: bash -n release/install.sh
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
