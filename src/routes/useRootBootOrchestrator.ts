@@ -21,11 +21,21 @@ export function useRootBootOrchestrator() {
     }
 
     if (isModernMode) {
-      useUiMode.getState().setMode(UiModeType.Modern);
-      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Modern);
+      if (useUiMode.getState().mode !== UiModeType.Modern) {
+        useUiMode.getState().setMode(UiModeType.Modern);
+      }
+
+      if (useUiPrefsStore.getState().uiFlavor !== UiFlavorType.Modern) {
+        useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Modern);
+      }
     } else {
-      useUiMode.getState().setMode(UiModeType.Standard);
-      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+      if (useUiMode.getState().mode !== UiModeType.Standard) {
+        useUiMode.getState().setMode(UiModeType.Standard);
+      }
+
+      if (useUiPrefsStore.getState().uiFlavor !== UiFlavorType.Standard) {
+        useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+      }
     }
 
     void import("@/lib/data-source/url-bootstrap").then((m) => m.applyDataSourceFromUrl());

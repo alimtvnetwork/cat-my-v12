@@ -333,6 +333,10 @@ export const useUiPrefsStore = create<UiPrefsState>()(
         ClientLogger.info("[ui-prefs] theme cycled", { theme: next });
       },
       setUiFlavor: (next) => {
+        if (get().uiFlavor === next) {
+          return;
+        }
+
         set({ uiFlavor: next });
         ClientLogger.info("[ui-prefs] ui flavor set", { flavor: next });
       },
@@ -468,8 +472,14 @@ export const useUiPrefsStore = create<UiPrefsState>()(
 // from the facade so the two tabs converge on the same status-bar,
 // density, and tooltip-mode settings.
 if (typeof window !== "undefined") {
+  (window as unknown as { __useUiPrefsStore?: typeof useUiPrefsStore }).__useUiPrefsStore =
+    useUiPrefsStore;
+
   subscribeFacadeWrites((msg) => {
-    if (msg.name !== StorageKey.UiPrefs) return;
+    if (msg.name !== StorageKey.UiPrefs) {
+      return;
+    }
+
     ClientLogger.info("[ui-prefs] cross-tab facade write, rehydrating", msg);
     void useUiPrefsStore.persist.rehydrate();
   });

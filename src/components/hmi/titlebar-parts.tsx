@@ -16,14 +16,12 @@
 
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { HistoryNav } from "@/components/app-shell/HistoryNav";
 import { TopMenuBar } from "@/components/nav/TopMenuBar";
 import { HeaderDensityToggle } from "@/components/hmi/HeaderDensityToggle";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { FlavorToggle } from "@/components/theme/FlavorToggle";
 import { KeyboardModeIndicator } from "@/components/hmi/KeyboardModeIndicator";
-import { AddressBar } from "@/components/shell/AddressBar";
 import { Search as SearchIcon } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
@@ -71,7 +69,6 @@ export function HeaderCrumbs({
 }: HeaderCrumbsProps): React.JSX.Element | null {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
-      {showBreadcrumb ? <GlobalSitemapBar /> : null}
       <CommandPaletteTrigger />
     </div>
   );
