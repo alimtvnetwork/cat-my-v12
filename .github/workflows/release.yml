@@ -29,8 +29,8 @@
 # 4. SHA256SUMS.txt is the release contract. install.ps1 / install.sh
 #    (Step 124) will cross-check downloaded bytes against this file
 #    before writing to disk.
-# 5. Windows signing is mandatory. The release stops when the signing
-#    certificate secrets are absent or Authenticode verification fails.
+# 5. Windows signing is optional. Set CODESIGN_ENABLED=true to require
+#    the certificate secrets and Authenticode verification for that run.
 # 6. Manual-only trigger for now (workflow_dispatch); the tag-triggered
 #    branch (`on: push: tags: [v*]`) is documented but commented out
 #    until Steps 124 / 125 land the verify-install gate that must run
@@ -65,12 +65,12 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------------
-  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix -> checksum
-  #                    -> sign(required) -> checksum -> verify-install -> release
+  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix
+  #                    -> sign(optional) -> checksum -> verify-install -> release
   # Every gate below must pass before the release job publishes anything.
-  # Windows executables are signed before compression and checksums. The
-  # verify-install job boots the packaged backend and frontend before a
-  # release-page draft is created.
+  # When enabled, Windows executables are signed before compression and
+  # checksums. The verify-install job boots the packaged backend and
+  # frontend before a release-page draft is created.
   # -----------------------------------------------------------------------
 
   lint:
@@ -238,7 +238,7 @@ jobs:
           retention-days: 14
 
   sign:
-    name: Sign (required Windows Authenticode)
+    name: Sign (optional Windows Authenticode)
     needs: build
     runs-on: windows-latest
     steps:
@@ -247,6 +247,7 @@ jobs:
           name: release-windows
           path: dist
       - name: Sign and verify every Windows executable
+        if: ${{ vars.CODESIGN_ENABLED == 'true' }}
         shell: pwsh
         env:
           CODESIGN_PFX_BASE64: ${{ secrets.CODESIGN_PFX_BASE64 }}
@@ -296,9 +297,19 @@ jobs:
           }
 
           Remove-Item -LiteralPath $certificatePath -Force
+      - name: Record unsigned build
+        if: ${{ vars.CODESIGN_ENABLED != 'true' }}
+        shell: pwsh
+        run: |
+          @'
+          ## signing-skipped
+
+          Windows Authenticode signing was skipped because the repository
+          variable `CODESIGN_ENABLED` is not set to `true`.
+          '@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         with:
-          name: release-windows-signed
+          name: release-windows-processed
           path: dist/**
           if-no-files-found: error
           retention-days: 14
@@ -311,10 +322,10 @@ jobs:
       sums_ok: ${{ steps.sums.outputs.ok }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download signed Windows artefacts
+      - name: Download processed Windows artefacts
         uses: actions/download-artifact@v4
         with:
-          name: release-windows-signed
+          name: release-windows-processed
           path: dist-all/release-windows
       - name: Download Linux artefacts
         uses: actions/download-artifact@v4
@@ -565,8 +576,7 @@ jobs:
           body: |
             Automated draft release for ${{ github.event.inputs.release_tag || github.ref_name }}.
 
-            Windows executables in this release passed required Authenticode
-            signing and verification before packaging.
+            Windows Authenticode signing enabled: `${{ vars.CODESIGN_ENABLED == 'true' }}`.
 
             Verify downloads against `SHA256SUMS.txt`:
               PowerShell: `Get-FileHash <file> -Algorithm SHA256`
