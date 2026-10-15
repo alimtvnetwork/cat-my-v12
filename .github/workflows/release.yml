@@ -395,15 +395,48 @@ jobs:
           cat release/SHA256SUMS.txt
 
       - name: Generate install.ps1
+        env:
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
         run: |
-          echo "Write-Host 'Downloading CAT iVISION...'" > release/install.ps1
-          echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag || github.ref_name }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
-          echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\CAT-iVISION -Force" >> release/install.ps1
-          echo "\$WshShell = New-Object -comObject WScript.Shell" >> release/install.ps1
-          echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\CAT iVISION.lnk\\")" >> release/install.ps1
-          echo "\$Shortcut.TargetPath = \\"\$env:LOCALAPPDATA\CAT-iVISION\windows-control-automation-frontend.exe\\"" >> release/install.ps1
-          echo "\$Shortcut.Save()" >> release/install.ps1
-          echo "Write-Host 'Installation Complete! Desktop shortcut created.'" >> release/install.ps1
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          repo = os.environ["RELEASE_REPO"]
+          tag = os.environ["RELEASE_TAG"]
+          script = f"""Write-Host 'Downloading CAT iVISION...'
+          $archive = Join-Path $env:TEMP 'control-automation.zip'
+          $installDir = Join-Path $env:LOCALAPPDATA 'CAT-iVISION'
+          Invoke-WebRequest -Uri 'https://github.com/{repo}/releases/download/{tag}/control-automation-windows.zip' -OutFile $archive -UseBasicParsing
+          Expand-Archive -LiteralPath $archive -DestinationPath $installDir -Force
+          $WshShell = New-Object -ComObject WScript.Shell
+          $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'CAT iVISION.lnk'
+          $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+          $Shortcut.TargetPath = Join-Path $installDir 'windows-control-automation-frontend.exe'
+          $Shortcut.Save()
+          Write-Host 'Installation Complete! Desktop shortcut created.'
+          """
+          Path("release/install.ps1").write_bytes(script.encode("utf-8"))
+          PY
+
+      - name: Validate install.ps1 syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'release/install.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+
+            throw 'Generated install.ps1 failed PowerShell syntax validation.'
+          }
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
