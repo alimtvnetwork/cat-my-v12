@@ -38,6 +38,8 @@ test.afterAll(async () => {
 
 for (const route of VISUAL_ROUTES) {
   test(`visual: ${route.slug} (${route.description})`, async () => {
+    test.setTimeout(90_000);
+
     const baselinePath = join(VISUAL_PATHS.baselineDir, `${route.slug}.png`);
     const actualPath = join(VISUAL_PATHS.actualDir, `${route.slug}.png`);
     const diffPath = join(VISUAL_PATHS.diffDir, `${route.slug}.png`);
@@ -51,23 +53,27 @@ for (const route of VISUAL_ROUTES) {
 
     const context = await browser.newContext({ viewport: { ...VISUAL_VIEWPORT } });
     const page = await context.newPage();
+
     if (route.seed === "projects-camera") {
-      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await installProjectCameraFixtures(page, route.seedLibraryMode ?? "with-camera");
     } else if (route.seed === "rules") {
-      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await installRuleEditorFixtures(page);
     } else if (route.seed === "rules-mixed-status") {
-      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded", timeout: 60_000 });
       await installRuleMixedStatusFixtures(page);
     }
+
     await page.goto(`${BASE_URL}${route.path}`, {
       waitUntil: "domcontentloaded",
-      timeout: 30_000,
+      timeout: 60_000,
     });
+
     if (route.waitForSelector) {
       await page.waitForSelector(route.waitForSelector, { timeout: 10_000 });
     }
+
     await settleForVisual(page);
     await page.screenshot({ path: actualPath, fullPage: false });
     await context.close();

@@ -11,30 +11,31 @@ export function useRootBootOrchestrator() {
   useCliHotkeys();
 
   useEffect(() => {
-    let isModernMode = false;
+    let urlMode: UiModeType | null = null;
 
     try {
       const params = new URLSearchParams(window.location.search);
-      isModernMode = params.get("mode") === "modern";
+      const modeParam = params.get("mode");
+
+      if (modeParam === "modern") {
+        urlMode = UiModeType.Modern;
+      } else if (modeParam === "standard") {
+        urlMode = UiModeType.Standard;
+      }
     } catch {
       /* ignore storage/url parse errors */
     }
 
-    if (isModernMode) {
-      if (useUiMode.getState().mode !== UiModeType.Modern) {
-        useUiMode.getState().setMode(UiModeType.Modern);
+    if (urlMode !== null) {
+      if (useUiMode.getState().mode !== urlMode) {
+        useUiMode.getState().setMode(urlMode);
       }
 
-      if (useUiPrefsStore.getState().uiFlavor !== UiFlavorType.Modern) {
-        useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Modern);
-      }
-    } else {
-      if (useUiMode.getState().mode !== UiModeType.Standard) {
-        useUiMode.getState().setMode(UiModeType.Standard);
-      }
+      const targetFlavor =
+        urlMode === UiModeType.Standard ? UiFlavorType.Standard : UiFlavorType.Modern;
 
-      if (useUiPrefsStore.getState().uiFlavor !== UiFlavorType.Standard) {
-        useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+      if (useUiPrefsStore.getState().uiFlavor !== targetFlavor) {
+        useUiPrefsStore.getState().setUiFlavor(targetFlavor);
       }
     }
 
