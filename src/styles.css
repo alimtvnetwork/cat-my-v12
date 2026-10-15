@@ -83,6 +83,12 @@
   --color-ca-primary: var(--ca-primary);
   --color-ca-on-primary: var(--ca-on-primary);
   --color-ca-select: var(--ca-select);
+  /* Orphan --ca-accent fix: theme token was never defined, so Tailwind
+     classes like bg-ca-accent / text-ca-accent / ring-ca-accent /
+     accent-ca-accent emitted no CSS (dead progress bars, unstyled CTA
+     buttons, dead focus rings). Wires to the documented #2563eb fallback
+     already used in var(--ca-accent, #2563eb) throughout this file. */
+  --color-ca-accent: var(--ca-accent, #2563eb);
   --color-ca-ok: var(--ca-ok);
   --color-ca-ng: var(--ca-ng);
   --color-ca-warn: var(--ca-warn);
@@ -119,6 +125,11 @@
   --font-hmi: "Poppins", system-ui, -apple-system, sans-serif;
   --font-hmi-mono: "JetBrains Mono", "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
   --text-hmi-title: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
+  /* Orphan text-hmi-h3 fix: the class is used on h2/h3 elements
+     (EmptyState, RuleEditor, RuleMetadataBar) but was never defined,
+     so those headings got no size styling. Aliases to the canonical
+     h2/h3 token text-hmi-title already used on h3 elements elsewhere. */
+  --text-hmi-h3: var(--text-hmi-title);
   --text-hmi-header: clamp(1.125rem, 1rem + 0.55vw, 1.4rem);
   --text-hmi-body: clamp(0.9375rem, 0.88rem + 0.28vw, 1.0625rem);
   --text-hmi-tile: clamp(0.875rem, 0.82rem + 0.25vw, 1rem);
