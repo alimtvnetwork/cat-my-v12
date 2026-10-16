@@ -9,4 +9,4 @@
 
 ## Status
 
-QUEUED — runs after CI audit agent report lands.
+IN PROGRESS — merge done, prettier fixed, fresh CI runs triggered.
