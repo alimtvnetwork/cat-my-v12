@@ -8,4 +8,4 @@ Locate the pattern-matching UI path (PatternCanvas.tsx and related), diagnose th
 
 ## Status
 
-RUNNING — awaiting agent report.
+COMPLETE — report folded into spec; fixes implemented.

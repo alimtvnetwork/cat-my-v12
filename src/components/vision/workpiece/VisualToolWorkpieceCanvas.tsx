@@ -1013,7 +1013,14 @@ export function VisualToolWorkpieceCanvas({
         const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
 
         if (offCtx) {
-          offCtx.drawImage(loadedImg, 0, 0, w, h);
+          // Letterbox (aspect preserved, black bars) so the cached pixels
+          // match what renderCanvas/handleDetectElements display. Stretching
+          // here misaligned detection overlays with the shown image.
+          const fit = getContainedDimensions(loadedImg.naturalWidth, loadedImg.naturalHeight, w, h);
+
+          offCtx.fillStyle = "#000000";
+          offCtx.fillRect(0, 0, w, h);
+          offCtx.drawImage(loadedImg, fit.x, fit.y, fit.width, fit.height);
           const imgData = offCtx.getImageData(0, 0, w, h);
           registerWorkpieceImageCache(imgSrc, { width: w, height: h, rgba: imgData.data });
         }

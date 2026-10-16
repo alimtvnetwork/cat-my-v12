@@ -28,5 +28,16 @@ Make sure the CI/CD is green and all the UI issues that is in the spec and the o
 ## Notes
 
 - aria2c acceleration was already added to packaging/desktop/install.ps1 and install.sh in the prior session (commit cd20af53). This spec's install-time target (≤1 min) rides on that + zip size.
-- Uninstall: currently no uninstall path exists in packaging/desktop/* (spec gap noted in prior session vs 02-spec/21-app/77-cli-powershell-and-release.md). To be added.
-- Pattern glitch: area under investigation — candidate is src/components/vision/white-box/PatternCanvas.tsx and the pattern-search preview path.
+- Uninstall: added this session (packaging/desktop/uninstall.ps1, uninstall.sh, install.ps1 -Uninstall switch; release.yml ships + validates both).
+- PR #10 ("Fix/15 oct 26 joy release workflow") already exists and is OPEN for this branch — the "create a PR" requirement is satisfied by it; no duplicate PR needed.
+- `gitmap pa` (2026-10-17) pulled remote changes; merged origin/main into the branch conflict-free (6cb433bb) — now 0 behind.
+
+## Pattern-finding image glitches — diagnosed and fixed
+
+| Cause | Status | Fix |
+|---|---|---|
+| Uploaded/captured images stretched to 16:9 (`readImageFile`/`readImageUrl` forced `drawImage(bitmap, 0, 0, 960, 540)`) | **FIXED** | New `drawImageLetterboxed` helper in src/lib/vision/white-box-marking.ts (black fill + centered contained draw); both ingest paths use it |
+| Workpiece path: stretched cached pixels vs letterboxed display → misaligned overlays | **FIXED** | `cacheLoadedPixels` (VisualToolWorkpieceCanvas.tsx) and the PNG file-decode path (workpiece-rule-analyzer.ts) now letterbox via `getContainedDimensions`, matching `renderCanvas`/`handleDetectElements` |
+| `hasOverlays` flipped base image raw↔thresholded (regression from 15b476cd) | **FIXED** | PatternCanvas.tsx: base image always `toThresholdPreviewRgba`; `hasOverlays === false` only skips overlay drawing |
+| Canvas backing store reset on every redraw (flicker) | **FIXED** | `drawRgbaToCanvas` only reassigns `canvas.width`/`height` when they changed |
+| Backend `result.rgba` silently discarded | LEFT AS-IS | Client-side threshold + `detectedBoxes` overlays are the intended display; the `props.result` fallback only applies pre-load |

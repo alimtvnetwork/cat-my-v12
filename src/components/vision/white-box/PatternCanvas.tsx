@@ -57,10 +57,11 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       ? {
           width: source.width,
           height: source.height,
-          rgba:
-            props.hasOverlays === false
-              ? source.rgba
-              : toThresholdPreviewRgba(source, props.greyscaleLevel),
+          // The base image is always the threshold preview: hasOverlays only
+          // gates the overlay drawing below. Switching the base to raw RGBA
+          // when overlays are off made the "Pattern Image" flip between raw
+          // and thresholded, and broke the greyscale slider's visible effect.
+          rgba: toThresholdPreviewRgba(source, props.greyscaleLevel),
         }
       : props.result;
 
@@ -117,18 +118,14 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       drawPatternBoxes(ctx, props.detectedBoxes, props.excludedNumbers);
     }
 
-    const activePatternRegion = props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
+    const activePatternRegion =
+      props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
 
     if (activePatternRegion) {
       drawEditableRegion(ctx, activePatternRegion, "PATTERN REGION", {
         stroke:
-          regionEditMode === "pattern"
-            ? "rgba(239, 68, 68, 0.98)"
-            : "rgba(239, 68, 68, 0.62)",
-        fill:
-          regionEditMode === "pattern"
-            ? "rgba(239, 68, 68, 0.14)"
-            : "rgba(239, 68, 68, 0.07)",
+          regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.98)" : "rgba(239, 68, 68, 0.62)",
+        fill: regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.14)" : "rgba(239, 68, 68, 0.07)",
         text: "#fecaca",
         hasHandles: regionEditMode === "pattern",
       });
@@ -148,13 +145,8 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     if (props.searchRegion) {
       drawEditableRegion(ctx, props.searchRegion, "SEARCH REGION", {
         stroke:
-          regionEditMode === "search"
-            ? "rgba(250, 204, 21, 0.96)"
-            : "rgba(250, 204, 21, 0.58)",
-        fill:
-          regionEditMode === "search"
-            ? "rgba(250, 204, 21, 0.12)"
-            : "rgba(250, 204, 21, 0.06)",
+          regionEditMode === "search" ? "rgba(250, 204, 21, 0.96)" : "rgba(250, 204, 21, 0.58)",
+        fill: regionEditMode === "search" ? "rgba(250, 204, 21, 0.12)" : "rgba(250, 204, 21, 0.06)",
         text: "#fef08a",
         hasHandles: regionEditMode === "search",
       });

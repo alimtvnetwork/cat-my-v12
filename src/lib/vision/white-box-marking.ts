@@ -141,7 +141,14 @@ export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResu
   assertRgba(input);
   const hasThreshold = input.whiteThreshold !== undefined && input.whiteThreshold !== null;
   const gray = hasThreshold ? toContinuousGray(input.rgba) : toTwoBitGray(input.rgba);
-  const boxes = findWhiteBoxes(gray, input.width, input.height, input.whiteThreshold, input.minAreaPx, input.searchRegion);
+  const boxes = findWhiteBoxes(
+    gray,
+    input.width,
+    input.height,
+    input.whiteThreshold,
+    input.minAreaPx,
+    input.searchRegion,
+  );
 
   return renderWhiteBoxMarks(input.width, input.height, gray, boxes);
 }
@@ -164,7 +171,10 @@ export function toTwoBitGrayRgba(input: WhiteBoxMarkingInput): Uint8ClampedArray
   return grayToRgba(toTwoBitGray(input.rgba));
 }
 
-export function toThresholdPreviewRgba(input: WhiteBoxMarkingInput, whiteThreshold: number): Uint8ClampedArray {
+export function toThresholdPreviewRgba(
+  input: WhiteBoxMarkingInput,
+  whiteThreshold: number,
+): Uint8ClampedArray {
   assertRgba(input);
   const gray = toContinuousGray(input.rgba);
   const threshold = clampByte(whiteThreshold);
@@ -215,11 +225,51 @@ export function drawRgbaToCanvas(
   height: number,
   rgba: Uint8ClampedArray,
 ): void {
-  canvas.width = width;
-  canvas.height = height;
+  // Assigning width/height reallocates the backing store and clears the
+  // canvas, which causes flicker when redraws happen in quick succession.
+  // Only resize when the target size actually changed.
+  if (canvas.width !== width) {
+    canvas.width = width;
+  }
+
+  if (canvas.height !== height) {
+    canvas.height = height;
+  }
+
   const context = canvas.getContext("2d");
   if (context === null) throw new Error("2d canvas context unavailable");
   context.putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
+}
+
+/**
+ * Draws a source image into a fixed-size canvas preserving aspect ratio
+ * (letterbox: black fill + centered contained draw). Forcing every image
+ * into 960x540 with a plain drawImage squishes non-16:9 frames - a visible
+ * glitch on the Pattern Image canvas.
+ */
+function drawImageLetterboxed(
+  context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  source: ImageBitmap | HTMLImageElement,
+  targetWidth: number,
+  targetHeight: number,
+): void {
+  const srcWidth = source.width;
+  const srcHeight = source.height;
+
+  context.fillStyle = "#000000";
+  context.fillRect(0, 0, targetWidth, targetHeight);
+
+  if (srcWidth <= 0 || srcHeight <= 0) {
+    return;
+  }
+
+  const scale = Math.min(targetWidth / srcWidth, targetHeight / srcHeight);
+  const drawWidth = Math.round(srcWidth * scale);
+  const drawHeight = Math.round(srcHeight * scale);
+  const dx = Math.round((targetWidth - drawWidth) / 2);
+  const dy = Math.round((targetHeight - drawHeight) / 2);
+
+  context.drawImage(source, dx, dy, drawWidth, drawHeight);
 }
 
 export const STANDARD_CANVAS_WIDTH = 960;
@@ -261,7 +311,7 @@ export async function readImageFile(
     throw new Error("2d canvas context unavailable");
   }
 
-  context.drawImage(bitmap, 0, 0, width, height);
+  drawImageLetterboxed(context, bitmap, width, height);
   const image = context.getImageData(0, 0, width, height);
 
   return { width, height, rgba: image.data };
@@ -341,7 +391,7 @@ export async function readImageUrl(
           return;
         }
 
-        context.drawImage(img, 0, 0, width, height);
+        drawImageLetterboxed(context, img, width, height);
         const image = context.getImageData(0, 0, width, height);
         resolve({ width, height, rgba: image.data });
       } catch (err) {
@@ -430,12 +480,20 @@ function findWhiteBoxes(
 }
 
 function autoThreshold(gray: Uint8ClampedArray, width: number, region: SearchRegion): number {
-  const counts: Record<number, number> = Object.fromEntries(TWO_BIT_GRAY_LEVELS.map((level) => [level, 0]));
+  const counts: Record<number, number> = Object.fromEntries(
+    TWO_BIT_GRAY_LEVELS.map((level) => [level, 0]),
+  );
   for (let y = region.y; y < region.y + region.height; y += 1) {
     for (let x = region.x; x < region.x + region.width; x += 1) counts[gray[y * width + x]] += 1;
   }
-  const background = TWO_BIT_GRAY_LEVELS.reduce((best, level) => (counts[level] > counts[best] ? level : best), 0);
-  return TWO_BIT_GRAY_LEVELS.find((level) => level > background && counts[level] > 0) ?? AUTO_THRESHOLD_NO_MATCH;
+  const background = TWO_BIT_GRAY_LEVELS.reduce(
+    (best, level) => (counts[level] > counts[best] ? level : best),
+    0,
+  );
+  return (
+    TWO_BIT_GRAY_LEVELS.find((level) => level > background && counts[level] > 0) ??
+    AUTO_THRESHOLD_NO_MATCH
+  );
 }
 
 function autoMinArea(region: SearchRegion): number {
@@ -446,10 +504,17 @@ function looksLikeMarking(component: Component, region: SearchRegion): boolean {
   if (component.x1 <= component.x0 || component.y1 <= component.y0) return false;
   const componentWidth = component.x1 - component.x0 + 1;
   const componentHeight = component.y1 - component.y0 + 1;
-  return componentWidth < region.width * MAX_MARKING_SIZE_RATIO && componentHeight < region.height * MAX_MARKING_SIZE_RATIO;
+  return (
+    componentWidth < region.width * MAX_MARKING_SIZE_RATIO &&
+    componentHeight < region.height * MAX_MARKING_SIZE_RATIO
+  );
 }
 
-function clampRegion(width: number, height: number, region: SearchRegion | undefined): SearchRegion {
+function clampRegion(
+  width: number,
+  height: number,
+  region: SearchRegion | undefined,
+): SearchRegion {
   if (region === undefined) return { x: 0, y: 0, width, height };
   const x = Math.max(0, Math.min(width, Math.floor(region.x)));
   const y = Math.max(0, Math.min(height, Math.floor(region.y)));
@@ -503,7 +568,13 @@ function pushNeighbors(
   for (let nx = x - 1; nx <= x + 1; nx += 1) {
     for (let ny = y - 1; ny <= y + 1; ny += 1) {
       if (nx === x && ny === y) continue;
-      if (nx < region.x || ny < region.y || nx >= region.x + region.width || ny >= region.y + region.height) continue;
+      if (
+        nx < region.x ||
+        ny < region.y ||
+        nx >= region.x + region.width ||
+        ny >= region.y + region.height
+      )
+        continue;
       const ni = ny * width + nx;
       if (seen[ni] === 0 && gray[ni] >= threshold) {
         seen[ni] = 1;
@@ -546,22 +617,22 @@ function toBox(
 
   const relX =
     searchRegion && searchRegion.width > 0
-      ? Math.round((((component.x0 - searchRegion.x) / searchRegion.width) * 100) * 10) / 10
+      ? Math.round(((component.x0 - searchRegion.x) / searchRegion.width) * 100 * 10) / 10
       : undefined;
 
   const relY =
     searchRegion && searchRegion.height > 0
-      ? Math.round((((component.y0 - searchRegion.y) / searchRegion.height) * 100) * 10) / 10
+      ? Math.round(((component.y0 - searchRegion.y) / searchRegion.height) * 100 * 10) / 10
       : undefined;
 
   const relWidth =
     searchRegion && searchRegion.width > 0
-      ? Math.round(((boxW / searchRegion.width) * 100) * 10) / 10
+      ? Math.round((boxW / searchRegion.width) * 100 * 10) / 10
       : undefined;
 
   const relHeight =
     searchRegion && searchRegion.height > 0
-      ? Math.round(((boxH / searchRegion.height) * 100) * 10) / 10
+      ? Math.round((boxH / searchRegion.height) * 100 * 10) / 10
       : undefined;
 
   return {
@@ -595,7 +666,12 @@ function grayToRgba(gray: Uint8ClampedArray): Uint8ClampedArray {
   return out;
 }
 
-function drawBoxes(rgba: Uint8ClampedArray, width: number, height: number, boxes: WhiteBoxMark[]): void {
+function drawBoxes(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  boxes: WhiteBoxMark[],
+): void {
   for (const box of boxes) {
     drawRect(rgba, width, height, box);
     drawLabel(rgba, width, height, box);
@@ -615,7 +691,12 @@ function drawRect(rgba: Uint8ClampedArray, width: number, height: number, box: W
   }
 }
 
-function drawLabel(rgba: Uint8ClampedArray, width: number, height: number, box: WhiteBoxMark): void {
+function drawLabel(
+  rgba: Uint8ClampedArray,
+  width: number,
+  height: number,
+  box: WhiteBoxMark,
+): void {
   const text = String(box.number);
   const labelWidth = text.length * (DIGIT_WIDTH_PX + DIGIT_GAP_PX) + LABEL_PADDING_PX * 2;
   const labelHeight = DIGIT_HEIGHT_PX + LABEL_PADDING_PX * 2;

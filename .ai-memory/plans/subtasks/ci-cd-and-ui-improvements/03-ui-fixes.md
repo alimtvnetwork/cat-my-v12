@@ -8,4 +8,4 @@ Apply remaining addressable UI issues from 02-spec/24-app-ui-design-system (open
 
 ## Status
 
-QUEUED — runs after pattern-glitch report + CI audit land.
+COMPLETE — pattern fixes + prettier fixes applied.
