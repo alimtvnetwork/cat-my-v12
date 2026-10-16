@@ -491,36 +491,24 @@ export async function loadWorkpieceImageData(imageSrc: string): Promise<Workpiec
           srcData = png.data;
         }
 
-        const fit = getContainedDimensions(srcWidth, srcHeight, 960, 540);
         const scaledData = new Uint8ClampedArray(960 * 540 * 4);
 
-        // Letterbox (aspect preserved, black bars) so the cached pixels match
-        // what renderCanvas/handleDetectElements display. The old code
-        // stretched non-16:9 sources, misaligning overlays with the image.
+        // NOTE: kept as a full-frame stretch (not letterbox). The rule set is
+        // calibrated against these stretched pixels (see the
+        // workpiece-rule-analyzer fixtures) - letterboxing here flips
+        // pass/fail outcomes. Unifying display/eval geometry needs a rule
+        // re-tuning pass, not a drive-by change.
         for (let y = 0; y < 540; y += 1) {
           for (let x = 0; x < 960; x += 1) {
+            const sx = Math.floor((x * srcWidth) / 960);
+            const sy = Math.floor((y * srcHeight) / 540);
+            const si = (sy * srcWidth + sx) * 4;
             const di = (y * 960 + x) * 4;
-            const inside =
-              x >= fit.x && x < fit.x + fit.width && y >= fit.y && y < fit.y + fit.height;
 
-            if (inside && fit.width > 0 && fit.height > 0) {
-              const sx = Math.min(srcWidth - 1, Math.floor(((x - fit.x) * srcWidth) / fit.width));
-              const sy = Math.min(
-                srcHeight - 1,
-                Math.floor(((y - fit.y) * srcHeight) / fit.height),
-              );
-              const si = (sy * srcWidth + sx) * 4;
-
-              scaledData[di] = srcData[si];
-              scaledData[di + 1] = srcData[si + 1];
-              scaledData[di + 2] = srcData[si + 2];
-              scaledData[di + 3] = srcData[si + 3];
-            } else {
-              scaledData[di] = 0;
-              scaledData[di + 1] = 0;
-              scaledData[di + 2] = 0;
-              scaledData[di + 3] = 255;
-            }
+            scaledData[di] = srcData[si];
+            scaledData[di + 1] = srcData[si + 1];
+            scaledData[di + 2] = srcData[si + 2];
+            scaledData[di + 3] = srcData[si + 3];
           }
         }
 
