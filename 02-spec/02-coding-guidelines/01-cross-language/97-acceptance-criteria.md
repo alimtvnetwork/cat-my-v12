@@ -95,14 +95,14 @@
 
 | ID | Title | Authoritative Specification | Verification Command |
 |:---|:---|:---|:---|
-| `AC-CG-LOG-CROSS` | Cross-Language Changelog Conformance | [`CHANGELOG.md`](../../../CHANGELOG.md) | `python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language --check-only` |
+| `AC-CG-LOG-CROSS` | Cross-Language Changelog Conformance | [`changelog.md`](../../../changelog.md) | `python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/01-cross-language --check-only` |
 
 ---
 
 ## Cross-References
 
 - [Cross-Language Overview](./readme.md)
-- [Repository Changelog](../../../CHANGELOG.md)
+- [Repository Changelog](../../../changelog.md)
 - [Parent Coding Guidelines Acceptance Criteria](../97-acceptance-criteria.md)
 - [Canonical Architecture Specification](../../21-app/07-coding-guideline-actionable-checklist-and-acceptance/01-architecture-spec.md)
 
