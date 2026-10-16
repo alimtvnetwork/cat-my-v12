@@ -24,7 +24,9 @@ function NewProjectPage() {
   const [deviceId, setDeviceId] = useState<string>(() => deviceList[0]?.id || "");
   const [code, setCode] = useState(isGuidedSimulation ? "DEMO" : "");
   const [description, setDescription] = useState(
-    isGuidedSimulation ? "Presentation simulation for project creation, ruleset setup, and visual analysis." : "",
+    isGuidedSimulation
+      ? "Presentation simulation for project creation, ruleset setup, and visual analysis."
+      : "",
   );
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +100,7 @@ function NewProjectPage() {
               <input
                 autoFocus
                 type="text"
+                data-tour="simulation-project-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-xl border border-white/[0.1] bg-[#07090e] px-4 py-3 font-mono text-sm text-slate-100 placeholder:text-slate-600 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]"
@@ -138,9 +141,13 @@ function NewProjectPage() {
               </div>
               {selectedDevice ? (
                 <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-950/30 px-3 py-1.5 text-[11px] font-mono text-cyan-300">
-                  <span className="font-semibold text-slate-200">{selectedDevice.packageType || "Standard DUT"}</span>
+                  <span className="font-semibold text-slate-200">
+                    {selectedDevice.packageType || "Standard DUT"}
+                  </span>
                   <span className="text-cyan-600">•</span>
-                  <span className="truncate text-slate-400">{selectedDevice.description || "Active inspection profile"}</span>
+                  <span className="truncate text-slate-400">
+                    {selectedDevice.description || "Active inspection profile"}
+                  </span>
                 </div>
               ) : null}
             </div>
@@ -198,7 +205,13 @@ function NewProjectPage() {
                   size={15}
                   className={isSubmitDisabled ? "text-slate-600" : "text-slate-950"}
                 />
-                <span className={isSubmitDisabled ? "text-slate-500 tracking-wider" : "text-slate-950 tracking-wider font-extrabold"}>
+                <span
+                  className={
+                    isSubmitDisabled
+                      ? "text-slate-500 tracking-wider"
+                      : "text-slate-950 tracking-wider font-extrabold"
+                  }
+                >
                   Create Project
                 </span>
               </button>

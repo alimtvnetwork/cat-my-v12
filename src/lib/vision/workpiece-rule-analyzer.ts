@@ -10,11 +10,7 @@ import {
   type ReferenceBoxItem,
   type BoxMatchItem,
 } from "./pattern-matcher";
-import {
-  markWhiteBoxes,
-  type SearchRegion,
-  type WhiteBoxMark,
-} from "./white-box-marking";
+import { markWhiteBoxes, type SearchRegion, type WhiteBoxMark } from "./white-box-marking";
 import {
   detectRoundHolesInRegion,
   evaluatePin1AgainstReference,
@@ -114,7 +110,11 @@ export function parseBoxesFromParams(
     }
   }
 
-  if (list.length === 0 && Array.isArray(toolParams?.referenceBoxes) && toolParams.referenceBoxes.length > 0) {
+  if (
+    list.length === 0 &&
+    Array.isArray(toolParams?.referenceBoxes) &&
+    toolParams.referenceBoxes.length > 0
+  ) {
     list = toolParams.referenceBoxes as any[];
   }
 
@@ -151,10 +151,7 @@ export function parseBoxesFromParams(
 
     // Check if box already has absolute canvas coordinates (e.g. >= 10px)
     const hasAbsoluteCoords =
-      typeof bx === "number" &&
-      typeof by === "number" &&
-      bx >= 10 &&
-      by >= 10;
+      typeof bx === "number" && typeof by === "number" && bx >= 10 && by >= 10;
 
     let relX = typeof b.relX === "number" ? b.relX : undefined;
     let relY = typeof b.relY === "number" ? b.relY : undefined;
@@ -282,7 +279,10 @@ export function registerWorkpieceImageCache(key: string, data: WorkpieceImageDat
   }
 }
 
-function meanLumaInRegion(imageData: WorkpieceImageData, region: SearchRegion): {
+function meanLumaInRegion(
+  imageData: WorkpieceImageData,
+  region: SearchRegion,
+): {
   mean: number;
   count: number;
 } {
@@ -320,10 +320,7 @@ function clampRegionToImage(region: SearchRegion, imageData: WorkpieceImageData)
   return { x, y, width, height };
 }
 
-function parseStoredRegion(
-  params: EditorRuleParams | undefined,
-  key: string,
-): SearchRegion | null {
+function parseStoredRegion(params: EditorRuleParams | undefined, key: string): SearchRegion | null {
   const direct = readRegionLike(params?.[key]);
 
   if (direct) {
@@ -365,10 +362,7 @@ function readRegionLike(value: unknown): SearchRegion | null {
   return null;
 }
 
-function parseStoredRegionList(
-  params: EditorRuleParams | undefined,
-  key: string,
-): SearchRegion[] {
+function parseStoredRegionList(params: EditorRuleParams | undefined, key: string): SearchRegion[] {
   const direct = params?.[key];
   let list: unknown = direct;
 
@@ -439,23 +433,23 @@ function hasPin1PixelEvidence(
   });
   const ringCount = Math.max(0, outer.count - center.count);
   const ringMean =
-    ringCount > 0 ? (outer.mean * outer.count - center.mean * center.count) / ringCount : outer.mean;
+    ringCount > 0
+      ? (outer.mean * outer.count - center.mean * center.count) / ringCount
+      : outer.mean;
   const isDarkDimple = center.mean <= thresholdLuma || ringMean - center.mean >= 12;
   const isLightMark = center.mean >= 160 && center.mean - ringMean >= 10;
 
   return center.count > 0 && (isDarkDimple || isLightMark);
 }
 
-export async function loadWorkpieceImageData(
-  imageSrc: string,
-): Promise<WorkpieceImageData | null> {
+export async function loadWorkpieceImageData(imageSrc: string): Promise<WorkpieceImageData | null> {
   const cached =
     memoryImageCache.get(imageSrc) ??
     (imageSrc.includes("pocket-1") || imageSrc.includes("filled")
-      ? memoryImageCache.get("pocket-1-filled") ?? memoryImageCache.get("default-filled")
+      ? (memoryImageCache.get("pocket-1-filled") ?? memoryImageCache.get("default-filled"))
       : undefined) ??
     (imageSrc.includes("pocket-2") || imageSrc.includes("empty")
-      ? memoryImageCache.get("pocket-2-empty") ?? memoryImageCache.get("default-empty")
+      ? (memoryImageCache.get("pocket-2-empty") ?? memoryImageCache.get("default-empty"))
       : undefined);
 
   if (cached) {
@@ -499,6 +493,11 @@ export async function loadWorkpieceImageData(
 
         const scaledData = new Uint8ClampedArray(960 * 540 * 4);
 
+        // NOTE: kept as a full-frame stretch (not letterbox). The rule set is
+        // calibrated against these stretched pixels (see the
+        // workpiece-rule-analyzer fixtures) - letterboxing here flips
+        // pass/fail outcomes. Unifying display/eval geometry needs a rule
+        // re-tuning pass, not a drive-by change.
         for (let y = 0; y < 540; y += 1) {
           for (let x = 0; x < 960; x += 1) {
             const sx = Math.floor((x * srcWidth) / 960);
@@ -530,7 +529,11 @@ export async function loadWorkpieceImageData(
     return null;
   }
 
-  if (typeof window !== "undefined" && typeof fetch === "function" && !imageSrc.startsWith("data:")) {
+  if (
+    typeof window !== "undefined" &&
+    typeof fetch === "function" &&
+    !imageSrc.startsWith("data:")
+  ) {
     try {
       const resp = await fetch(imageSrc);
 
@@ -671,8 +674,7 @@ export function evaluatePatternRule(
   };
   const hasValidRuleRoi = ruleRoi.width > 0 && ruleRoi.height > 0;
   const savedSearchRegion =
-    parseStoredRegion(rule.params, "searchRegion") ??
-    (hasValidRuleRoi ? ruleRoi : null);
+    parseStoredRegion(rule.params, "searchRegion") ?? (hasValidRuleRoi ? ruleRoi : null);
   const savedPatternRegion =
     parseStoredRegion(rule.params, "patternRegion") ??
     parseStoredRegion(rule.params, "patternBounds") ??
@@ -699,7 +701,10 @@ export function evaluatePatternRule(
   }
 
   const effectiveRegion = clampRegionToImage(savedSearchRegion, imageData);
-  const measuredPatternRegion = clampRegionToImage(savedPatternRegion ?? savedSearchRegion, imageData);
+  const measuredPatternRegion = clampRegionToImage(
+    savedPatternRegion ?? savedSearchRegion,
+    imageData,
+  );
   const ruleBoxes = parseBoxesFromParams(rule.params, effectiveRegion);
   const hasAnyExpectedLuma = ruleBoxes.some((b) => typeof b.expectedLuma === "number");
 
@@ -823,7 +828,9 @@ export function evaluatePatternRule(
 
     let matchedCount = 0;
     const boxResults: BoxMatchItem[] = ruleBoxes.map((b) => {
-      const positionalBox = positionalMatch.boxResults.find((candidate) => candidate.boxNumber === b.number);
+      const positionalBox = positionalMatch.boxResults.find(
+        (candidate) => candidate.boxNumber === b.number,
+      );
       const measuredX = positionalBox?.matchedX ?? b.x + positionalMatch.offsetX;
       const measuredY = positionalBox?.matchedY ?? b.y + positionalMatch.offsetY;
       const measuredLuma = measureBoxLumaAt(imageData, {
@@ -844,8 +851,7 @@ export function evaluatePatternRule(
       const referenceDiff = Math.abs(referenceLuma - expectedLuma);
       const hasPositionMatch = positionalBox?.isMatched === true;
       const hasLumaMatch =
-        hasExpectedLuma &&
-        (diff <= lumaTolerance || referenceDiff <= lumaTolerance);
+        hasExpectedLuma && (diff <= lumaTolerance || referenceDiff <= lumaTolerance);
       const hasPresenceMatch = measuredLuma >= thresholdValue || referenceLuma >= thresholdValue;
       const hasMaskHit = maskRegions.some(
         (region) =>
@@ -854,9 +860,7 @@ export function evaluatePatternRule(
           measuredX + b.width <= region.x + region.width &&
           measuredY + b.height <= region.y + region.height,
       );
-      const isMatched = hasMaskHit
-        ? false
-        : hasLumaMatch || hasPositionMatch || hasPresenceMatch;
+      const isMatched = hasMaskHit ? false : hasLumaMatch || hasPositionMatch || hasPresenceMatch;
 
       if (isMatched) {
         matchedCount += 1;
@@ -979,11 +983,11 @@ export function evaluatePin1Rule(
   const rawNomX =
     typeof pin1Config.centerX === "number"
       ? pin1Config.centerX
-      : registeredPin1Raw?.centerX ?? registeredPin1Raw?.x;
+      : (registeredPin1Raw?.centerX ?? registeredPin1Raw?.x);
   const rawNomY =
     typeof pin1Config.centerY === "number"
       ? pin1Config.centerY
-      : registeredPin1Raw?.centerY ?? registeredPin1Raw?.y;
+      : (registeredPin1Raw?.centerY ?? registeredPin1Raw?.y);
 
   if (typeof rawNomX !== "number" || typeof rawNomY !== "number") {
     return {
@@ -1136,7 +1140,8 @@ export function evaluatePin1Rule(
   const packageCenterY = Math.round(packageRegion.y + packageRegion.height / 2);
   const nominalAngleDeg =
     configuredNominalAngleDeg ??
-    Math.round(((Math.atan2(regY - packageCenterY, regX - packageCenterX) * 180) / Math.PI) * 10) / 10;
+    Math.round(((Math.atan2(regY - packageCenterY, regX - packageCenterX) * 180) / Math.PI) * 10) /
+      10;
 
   if (!hasDevice) {
     return {
@@ -1310,7 +1315,6 @@ export function evaluatePin1Rule(
       isAnglePass,
     },
   };
-
 }
 
 export function evaluateDefectRule(
@@ -1725,8 +1729,7 @@ export function evaluateTapeStripRules(
     };
   }
 
-  const effectiveOpticalContext =
-    opticalContext ?? "Camera: 20.0ms, 0.0dB | Light: CH1 @ 80%";
+  const effectiveOpticalContext = opticalContext ?? "Camera: 20.0ms, 0.0dB | Light: CH1 @ 80%";
 
   if (pockets.length === 1) {
     const single = pockets[0];

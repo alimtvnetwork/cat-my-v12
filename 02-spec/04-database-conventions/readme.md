@@ -28,13 +28,13 @@
 
 ## Scoring
 
-| Criterion | Status |
-|-----------|--------|
-| `readme.md` present | ✅ |
-| AI Confidence assigned | ✅ |
-| Ambiguity assigned | ✅ |
-| Keywords present | ✅ |
-| Scoring table present | ✅ |
+| Criterion              | Status |
+| ---------------------- | ------ |
+| `readme.md` present    | ✅     |
+| AI Confidence assigned | ✅     |
+| Ambiguity assigned     | ✅     |
+| Keywords present       | ✅     |
+| Scoring table present  | ✅     |
 
 ---
 
@@ -73,45 +73,45 @@ Comprehensive database design and implementation conventions covering naming, sc
 
 ## Document Index
 
-| # | File | Description |
-|---|------|-------------|
-| 01 | [02-naming-conventions.md](./02-naming-conventions.md) | PascalCase rules for tables, columns, indexes — singular table names |
-| 02 | [03-schema-design.md](./03-schema-design.md) | Key sizing, primary keys, foreign keys, normalization rules |
-| 03 | [04-orm-and-views.md](./04-orm-and-views.md) | ORM-first approach, view patterns, no raw SQL in business logic |
-| 04 | [05-testing-strategy.md](./05-testing-strategy.md) | Unit tests for schemas, integration tests with in-memory DB |
-| 05 | [06-relationship-diagrams.md](./06-relationship-diagrams.md) | Visual relationship patterns and AI-readable schema diagrams |
-| 06 | [07-rest-api-format.md](./07-rest-api-format.md) | PascalCase REST API response format, full CRUD sample, response envelope |
-| 07 | [08-split-db-pattern.md](./08-split-db-pattern.md) | Split DB pattern — one SQLite file per bounded context |
-| 99 | [99-consistency-report.md](./99-consistency-report.md) | Module health and validation |
+| #   | File                                                         | Description                                                              |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| 01  | [02-naming-conventions.md](./02-naming-conventions.md)       | PascalCase rules for tables, columns, indexes — singular table names     |
+| 02  | [03-schema-design.md](./03-schema-design.md)                 | Key sizing, primary keys, foreign keys, normalization rules              |
+| 03  | [04-orm-and-views.md](./04-orm-and-views.md)                 | ORM-first approach, view patterns, no raw SQL in business logic          |
+| 04  | [05-testing-strategy.md](./05-testing-strategy.md)           | Unit tests for schemas, integration tests with in-memory DB              |
+| 05  | [06-relationship-diagrams.md](./06-relationship-diagrams.md) | Visual relationship patterns and AI-readable schema diagrams             |
+| 06  | [07-rest-api-format.md](./07-rest-api-format.md)             | PascalCase REST API response format, full CRUD sample, response envelope |
+| 07  | [08-split-db-pattern.md](./08-split-db-pattern.md)           | Split DB pattern — one SQLite file per bounded context                   |
+| 99  | [99-consistency-report.md](./readme.md)                      | Module health and validation                                             |
 
 ---
 
 ## Quick Reference
 
-| Topic | Rule |
-|-------|------|
-| Table names | **Singular** PascalCase: `User`, `Transaction`, `Project` |
-| Column names | PascalCase: `PluginSlug`, `CreatedAt` |
-| Primary key format | `{TableName}Id` (e.g., `UserId`, `ProjectId`) |
-| Primary key type | `INTEGER PRIMARY KEY AUTOINCREMENT` |
-| Foreign key format | Exact PK name from referenced table (e.g., `UserId` in child table) |
-| UUID/GUID | ❌ Avoid unless explicitly required |
-| Booleans | `Is`/`Has` prefix, positive-only (`IsActive`, not `IsDisabled`) |
-| Repeated values | Normalize into separate table with FK |
-| Joins in code | ❌ Use DB views instead |
-| Raw SQL in business logic | ❌ Use ORM |
-| Default database | SQLite (Split DB pattern) |
-| Fallback database | MySQL |
-| Schema testing | Unit test + integration test with in-memory DB |
+| Topic                     | Rule                                                                |
+| ------------------------- | ------------------------------------------------------------------- |
+| Table names               | **Singular** PascalCase: `User`, `Transaction`, `Project`           |
+| Column names              | PascalCase: `PluginSlug`, `CreatedAt`                               |
+| Primary key format        | `{TableName}Id` (e.g., `UserId`, `ProjectId`)                       |
+| Primary key type          | `INTEGER PRIMARY KEY AUTOINCREMENT`                                 |
+| Foreign key format        | Exact PK name from referenced table (e.g., `UserId` in child table) |
+| UUID/GUID                 | ❌ Avoid unless explicitly required                                 |
+| Booleans                  | `Is`/`Has` prefix, positive-only (`IsActive`, not `IsDisabled`)     |
+| Repeated values           | Normalize into separate table with FK                               |
+| Joins in code             | ❌ Use DB views instead                                             |
+| Raw SQL in business logic | ❌ Use ORM                                                          |
+| Default database          | SQLite (Split DB pattern)                                           |
+| Fallback database         | MySQL                                                               |
+| Schema testing            | Unit test + integration test with in-memory DB                      |
 
 ---
 
 ## Database Engine Priority
 
-| Priority | Engine | When to Use |
-|----------|--------|-------------|
-| 1st | **SQLite** (Split DB) | Default for all projects — embedded, zero-config, portable |
-| 2nd | **MySQL** | When concurrent write-heavy loads or multi-server access is needed |
+| Priority | Engine                | When to Use                                                        |
+| -------- | --------------------- | ------------------------------------------------------------------ |
+| 1st      | **SQLite** (Split DB) | Default for all projects — embedded, zero-config, portable         |
+| 2nd      | **MySQL**             | When concurrent write-heavy loads or multi-server access is needed |
 
 > The **Split DB** pattern uses multiple small SQLite databases per domain concern rather than one monolithic database. See [08-split-db-pattern.md](./08-split-db-pattern.md) for the full specification.
 
@@ -119,17 +119,17 @@ Comprehensive database design and implementation conventions covering naming, sc
 
 ## Cross-References
 
-| Reference | Location |
-|-----------|----------|
-| Spec Root | [../readme.md](../readme.md) |
-| Coding Guidelines | [../02-coding-guidelines/readme.md](../02-coding-guidelines/readme.md) |
-| Cross-Language DB Naming | [../02-coding-guidelines/01-cross-language/07-database-naming.md](../02-coding-guidelines/01-cross-language/07-database-naming.md) |
-| Split DB Architecture | [../05-split-db-architecture/readme.md](../05-split-db-architecture/readme.md) |
-| Consolidated DB Conventions | [../17-consolidated-guidelines/21-database-conventions.md](../17-consolidated-guidelines/21-database-conventions.md) |
+| Reference                   | Location                                                                                                                           |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Spec Root                   | [../readme.md](../readme.md)                                                                                                       |
+| Coding Guidelines           | [../02-coding-guidelines/readme.md](../02-coding-guidelines/readme.md)                                                             |
+| Cross-Language DB Naming    | [../02-coding-guidelines/01-cross-language/07-database-naming.md](../02-coding-guidelines/01-cross-language/07-database-naming.md) |
+| Split DB Architecture       | [../05-split-db-architecture/readme.md](../05-split-db-architecture/readme.md)                                                     |
+| Consolidated DB Conventions | [../17-consolidated-guidelines/21-database-conventions.md](../17-consolidated-guidelines/21-database-conventions.md)               |
 
 ---
 
-*Single source of truth for database design and conventions across all languages.*
+_Single source of truth for database design and conventions across all languages._
 
 ---
 

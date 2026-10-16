@@ -72,7 +72,14 @@ async def ensure_modern_nav(page) -> None:
             label = (await switch.get_attribute("aria-label")) or ""
 
             if "Current mode: Standard" in label:
-                await switch.click()
+                try:
+                    await page.evaluate(
+                        "() => document.querySelectorAll('vite-error-overlay').forEach(e => e.remove())"
+                    )
+                except Exception:
+                    pass
+
+                await switch.click(force=True)
 
         await page.wait_for_timeout(300)
 

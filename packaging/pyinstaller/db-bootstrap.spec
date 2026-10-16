@@ -34,16 +34,17 @@
 from pathlib import Path
 
 
-ENTRY_SCRIPT = str(Path("bin") / "db-bootstrap.py")
+REPO_ROOT = Path(SPECPATH).resolve().parents[1]
+ENTRY_SCRIPT = str(REPO_ROOT / "bin" / "db-bootstrap.py")
 
 a = Analysis(
     [ENTRY_SCRIPT],
-    pathex=[str(Path(".").resolve())],
+    pathex=[str(REPO_ROOT)],
     binaries=[],
     datas=[
         # Migrations are read at runtime from BE/db/migrations; bundle them
         # so the frozen exe does not require a checkout on the host.
-        ("BE/db/migrations", "BE/db/migrations"),
+        (str(REPO_ROOT / "BE" / "db" / "migrations"), "BE/db/migrations"),
     ],
     hiddenimports=[],
     hookspath=[],

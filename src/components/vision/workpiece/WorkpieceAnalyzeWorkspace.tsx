@@ -27,10 +27,7 @@ import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
 import type { Project, RuleSet } from "@/lib/projects/types";
-import {
-  getFreshRuleset,
-  updateRulesetRulesInStore,
-} from "@/hooks/useWorkpieceProject";
+import { getFreshRuleset, updateRulesetRulesInStore } from "@/hooks/useWorkpieceProject";
 import {
   type EditorRule,
   type RuleCameraSettings,
@@ -54,6 +51,10 @@ import { useProjectStore } from "@/lib/projects/store";
 import { markSaved } from "@/lib/editor/store/save-status";
 import { projectRulesetToEnvelope, envelopeToProjectRuleset } from "@/lib/rules/envelopeAdapter";
 import type { RuleSetEnvelope } from "@/lib/rules/draftStore";
+import {
+  GUIDED_SIMULATION_ANALYSIS_EVENT,
+  type GuidedSimulationAnalysisDetail,
+} from "@/components/guided-simulation/events";
 
 const EMPTY_VALIDATION_RESULTS: Record<string, ValidationResult> = {};
 
@@ -69,11 +70,15 @@ function getToolIcon(code: string, name: string): LucideIcon {
   if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
   if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
   if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
-  if (normalized.includes("void") || normalized.includes("circle") || code === "T111") return Crosshair;
-  if (normalized.includes("caliper") || normalized.includes("gauge") || code === "T110") return Ruler;
-  if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103") return QrCode;
+  if (normalized.includes("void") || normalized.includes("circle") || code === "T111")
+    return Crosshair;
+  if (normalized.includes("caliper") || normalized.includes("gauge") || code === "T110")
+    return Ruler;
+  if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103")
+    return QrCode;
   if (normalized.includes("ocr") || normalized.includes("marking") || code === "T106") return Type;
-  if (normalized.includes("coating") || normalized.includes("color") || code === "T112") return PaintBucket;
+  if (normalized.includes("coating") || normalized.includes("color") || code === "T112")
+    return PaintBucket;
 
   return ScanSearch;
 }
@@ -122,9 +127,7 @@ export function WorkpieceAnalyzeWorkspace({
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const updateProjectInspectionImageRef = useProjectStore(
-    (s) => s.updateProjectInspectionImageRef,
-  );
+  const updateProjectInspectionImageRef = useProjectStore((s) => s.updateProjectInspectionImageRef);
 
   useEffect(() => {
     return visualTunerBus.subscribe((ruleId) => {
@@ -250,6 +253,21 @@ export function WorkpieceAnalyzeWorkspace({
   });
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGuidedAnalyzing, setIsGuidedAnalyzing] = useState(false);
+  const isAnalysisBusy = isAnalyzing || isGuidedAnalyzing;
+
+  useEffect(() => {
+    const onGuidedAnalysis = (event: Event) => {
+      const detail = (event as CustomEvent<GuidedSimulationAnalysisDetail>).detail;
+      setIsGuidedAnalyzing(Boolean(detail?.isLoading));
+    };
+
+    window.addEventListener(GUIDED_SIMULATION_ANALYSIS_EVENT, onGuidedAnalysis);
+
+    return () => {
+      window.removeEventListener(GUIDED_SIMULATION_ANALYSIS_EVENT, onGuidedAnalysis);
+    };
+  }, []);
 
   const [designOpen, setDesignOpen] = useState(false);
   const [validateOpen, setValidateOpen] = useState(false);
@@ -298,22 +316,25 @@ export function WorkpieceAnalyzeWorkspace({
     [ruleset.id, updateRulesetRules, selectedIds],
   );
 
-  const handleNavigateAddRule = useCallback((targetRulesetId?: string) => {
-    void navigate({
-      to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-      params: { projectId, rulesetId: targetRulesetId ?? ruleset.id },
-    });
-  }, [navigate, projectId, ruleset.id]);
+  const handleNavigateAddRule = useCallback(
+    (targetRulesetId?: string) => {
+      void navigate({
+        to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
+        params: { projectId, rulesetId: targetRulesetId ?? ruleset.id },
+      });
+    },
+    [navigate, projectId, ruleset.id],
+  );
 
-  const handleAddRuleset = useCallback((name: string) => {
-    const newRulesetId = createRuleset(
-      projectId,
-      name,
-    );
+  const handleAddRuleset = useCallback(
+    (name: string) => {
+      const newRulesetId = createRuleset(projectId, name);
 
-    onSelectRuleset?.(newRulesetId);
-    toast.success(`Rule set "${name}" added.`);
-  }, [createRuleset, onSelectRuleset, projectId]);
+      onSelectRuleset?.(newRulesetId);
+      toast.success(`Rule set "${name}" added.`);
+    },
+    [createRuleset, onSelectRuleset, projectId],
+  );
 
   const handleStartAddRuleset = useCallback(() => {
     setDraftRulesetName(`Ruleset ${(rulesets?.length ?? 0) + 1}`);
@@ -332,24 +353,29 @@ export function WorkpieceAnalyzeWorkspace({
     setIsAddingRuleset(false);
   }, [draftRulesetName, handleAddRuleset]);
 
-  const handleDeleteRuleset = useCallback((targetRulesetId?: string) => {
-    const targetRuleset =
-      (rulesets ?? []).find((rs) => rs.id === (targetRulesetId ?? ruleset.id)) ?? ruleset;
-    const isConfirmed = window.confirm(`Delete rule set "${targetRuleset.name}"? This removes its rules from this project.`);
+  const handleDeleteRuleset = useCallback(
+    (targetRulesetId?: string) => {
+      const targetRuleset =
+        (rulesets ?? []).find((rs) => rs.id === (targetRulesetId ?? ruleset.id)) ?? ruleset;
+      const isConfirmed = window.confirm(
+        `Delete rule set "${targetRuleset.name}"? This removes its rules from this project.`,
+      );
 
-    if (!isConfirmed) {
-      return;
-    }
+      if (!isConfirmed) {
+        return;
+      }
 
-    const nextRuleset = (rulesets ?? []).find((rs) => rs.id !== targetRuleset.id) ?? null;
-    deleteRuleset(targetRuleset.id);
+      const nextRuleset = (rulesets ?? []).find((rs) => rs.id !== targetRuleset.id) ?? null;
+      deleteRuleset(targetRuleset.id);
 
-    if (nextRuleset) {
-      onSelectRuleset?.(nextRuleset.id);
-    }
+      if (nextRuleset) {
+        onSelectRuleset?.(nextRuleset.id);
+      }
 
-    toast.success(`Rule set "${targetRuleset.name}" deleted.`);
-  }, [deleteRuleset, onSelectRuleset, ruleset.id, ruleset.name, rulesets]);
+      toast.success(`Rule set "${targetRuleset.name}" deleted.`);
+    },
+    [deleteRuleset, onSelectRuleset, ruleset.id, ruleset.name, rulesets],
+  );
 
   const activeRule = useMemo(() => {
     const primaryId = selectedIds[0];
@@ -431,7 +457,7 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleCameraSettings = useCallback(
     (ruleId: string, cameraSettings: RuleCameraSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : ownerRuleset.rules ?? [];
+      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -458,7 +484,7 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleLightSettings = useCallback(
     (ruleId: string, lightSettings: RuleLightSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : ownerRuleset.rules ?? [];
+      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -545,147 +571,150 @@ export function WorkpieceAnalyzeWorkspace({
     updateProjectInspectionImageRef,
   ]);
 
-  const handleRunAnalysis = useCallback(async (params: RunAnalysisParams) => {
-    if (projectAnalysisItems.length === 0 || isAnalyzingRef.current) {
-      if (projectAnalysisItems.length === 0) {
-        toast.warning("No rules in project to analyze. Please add rules first.");
+  const handleRunAnalysis = useCallback(
+    async (params: RunAnalysisParams) => {
+      if (projectAnalysisItems.length === 0 || isAnalyzingRef.current) {
+        if (projectAnalysisItems.length === 0) {
+          toast.warning("No rules in project to analyze. Please add rules first.");
+        }
+
+        return;
       }
 
-      return;
-    }
-
-    isAnalyzingRef.current = true;
-    setIsAnalyzing(true);
-
-    if (params.hasStepToasts) {
-      toast.info(
-        `Starting sequential optical inspection across ${projectAnalysisItems.length} ${projectAnalysisItems.length === 1 ? "rule" : "rules"} in all rule sets...`,
-      );
-    }
-
-    try {
-      const activeImageSrc = isLiveCameraMode
-        ? await captureLiveCameraFrame()
-        : project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg";
-      const imgData = activeImageSrc ? await loadWorkpieceImageData(activeImageSrc) : null;
-
-      if (imgData) {
-        const stripRes = evaluateTapeStripRules(
-          projectAnalysisItems.map((item) => item.rule),
-          imgData,
-        );
-        setTapeStripResult(stripRes);
-
-        if (stripRes.emptyPockets > 0) {
-          toast.error(
-            `Tape inspection alert: ${stripRes.emptyPockets} empty ${stripRes.emptyPockets === 1 ? "pocket" : "pockets"} detected!`,
-          );
-        }
-      } else {
-        setTapeStripResult(null);
-      }
-
-      let passCount = 0;
-      let failCount = 0;
-      const batchedResults: Record<
-        string,
-        { rulesetName: string; results: Record<string, ValidationResult> }
-      > = {};
-
-      for (let i = 0; i < projectAnalysisItems.length; i++) {
-        const item = projectAnalysisItems[i];
-        const r = item.rule;
-        const ownerRuleset = item.ruleset;
-
-        if (params.hasSelectionFocus) {
-          setSelectedIds([r.id]);
-          useRulesStore.getState().setSelection([r.id], "sequential-analysis");
-        }
-
-        const cam =
-          r.cameraSettings ?? (r.params as any)?.cameraSettings ?? DEFAULT_RULE_CAMERA_SETTINGS;
-        const light =
-          r.lightSettings ?? (r.params as any)?.lightSettings ?? DEFAULT_RULE_LIGHT_SETTINGS;
-        const exposureMs = ((cam.exposureUs ?? 20000) / 1000).toFixed(1);
-        const gainDb = (cam.gainDb ?? 0).toFixed(1);
-        const lightIntensity = light.intensity ?? 80;
-        const lightChannel = light.channel ?? 1;
-        const opticalContext = `Camera: ${exposureMs}ms, ${gainDb}dB | Light: CH${lightChannel} @ ${lightIntensity}%`;
-
-        if (params.hasStepToasts) {
-          toast.info(
-            `[Step ${i + 1}/${projectAnalysisItems.length}] ${ownerRuleset.name}: "${r.name}" (${opticalContext})...`,
-          );
-        }
-
-        if (params.hasStepDelay) {
-          // Manual runs keep a short acquisition pause so the sequential visual focus is readable.
-          const delayMs =
-            typeof process !== "undefined" && process.env.NODE_ENV === "test" ? 10 : 350;
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
-
-        let ruleResult: ValidationResult;
-
-        if (imgData) {
-          ruleResult = evaluateWorkpieceRuleReal(r, imgData);
-        } else {
-          ruleResult = {
-            status: ValidationStatusType.Fail,
-            score: 0.0,
-            message: `No inspection image registered. Register or capture an image before running real rule analysis.`,
-            stub: false,
-          };
-        }
-
-        if (ruleResult.status === ValidationStatusType.Pass) {
-          passCount += 1;
-        } else {
-          failCount += 1;
-        }
-
-        if (params.hasSelectionFocus) {
-          // Manual runs update rule-by-rule for readable live feedback.
-          useValidationStore
-            .getState()
-            .mergeResults(ownerRuleset.id, { [r.id]: ruleResult }, ownerRuleset.name);
-        } else {
-          const bucket = batchedResults[ownerRuleset.id] ?? {
-            rulesetName: ownerRuleset.name,
-            results: {},
-          };
-          bucket.results[r.id] = ruleResult;
-          batchedResults[ownerRuleset.id] = bucket;
-        }
-      }
-
-      if (!params.hasSelectionFocus) {
-        for (const [ownerRulesetId, bucket] of Object.entries(batchedResults)) {
-          useValidationStore
-            .getState()
-            .mergeResults(ownerRulesetId, bucket.results, bucket.rulesetName);
-        }
-      }
+      isAnalyzingRef.current = true;
+      setIsAnalyzing(true);
 
       if (params.hasStepToasts) {
-        if (failCount === 0) {
-          toast.success(
-            `Sequential inspection complete: All ${projectAnalysisItems.length} rules PASSED (${passCount}/${projectAnalysisItems.length}). Workpiece OK.`,
-          );
-        } else {
-          toast.error(
-            `Sequential inspection complete: ${failCount}/${projectAnalysisItems.length} rules FAILED (${passCount} passed). Workpiece REJECTED.`,
-          );
-        }
+        toast.info(
+          `Starting sequential optical inspection across ${projectAnalysisItems.length} ${projectAnalysisItems.length === 1 ? "rule" : "rules"} in all rule sets...`,
+        );
       }
-    } catch (err) {
-      console.error("[WorkpieceAnalyzeWorkspace] Analysis error:", err);
-      toast.error("Analysis failed to complete.");
-    } finally {
-      isAnalyzingRef.current = false;
-      setIsAnalyzing(false);
-    }
-  }, [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
+
+      try {
+        const activeImageSrc = isLiveCameraMode
+          ? await captureLiveCameraFrame()
+          : project.inspectionImageRef;
+        const imgData = activeImageSrc ? await loadWorkpieceImageData(activeImageSrc) : null;
+
+        if (imgData) {
+          const stripRes = evaluateTapeStripRules(
+            projectAnalysisItems.map((item) => item.rule),
+            imgData,
+          );
+          setTapeStripResult(stripRes);
+
+          if (stripRes.emptyPockets > 0) {
+            toast.error(
+              `Tape inspection alert: ${stripRes.emptyPockets} empty ${stripRes.emptyPockets === 1 ? "pocket" : "pockets"} detected!`,
+            );
+          }
+        } else {
+          setTapeStripResult(null);
+        }
+
+        let passCount = 0;
+        let failCount = 0;
+        const batchedResults: Record<
+          string,
+          { rulesetName: string; results: Record<string, ValidationResult> }
+        > = {};
+
+        for (let i = 0; i < projectAnalysisItems.length; i++) {
+          const item = projectAnalysisItems[i];
+          const r = item.rule;
+          const ownerRuleset = item.ruleset;
+
+          if (params.hasSelectionFocus) {
+            setSelectedIds([r.id]);
+            useRulesStore.getState().setSelection([r.id], "sequential-analysis");
+          }
+
+          const cam =
+            r.cameraSettings ?? (r.params as any)?.cameraSettings ?? DEFAULT_RULE_CAMERA_SETTINGS;
+          const light =
+            r.lightSettings ?? (r.params as any)?.lightSettings ?? DEFAULT_RULE_LIGHT_SETTINGS;
+          const exposureMs = ((cam.exposureUs ?? 20000) / 1000).toFixed(1);
+          const gainDb = (cam.gainDb ?? 0).toFixed(1);
+          const lightIntensity = light.intensity ?? 80;
+          const lightChannel = light.channel ?? 1;
+          const opticalContext = `Camera: ${exposureMs}ms, ${gainDb}dB | Light: CH${lightChannel} @ ${lightIntensity}%`;
+
+          if (params.hasStepToasts) {
+            toast.info(
+              `[Step ${i + 1}/${projectAnalysisItems.length}] ${ownerRuleset.name}: "${r.name}" (${opticalContext})...`,
+            );
+          }
+
+          if (params.hasStepDelay) {
+            // Manual runs keep a short acquisition pause so the sequential visual focus is readable.
+            const delayMs =
+              typeof process !== "undefined" && process.env.NODE_ENV === "test" ? 10 : 350;
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          }
+
+          let ruleResult: ValidationResult;
+
+          if (imgData) {
+            ruleResult = evaluateWorkpieceRuleReal(r, imgData);
+          } else {
+            ruleResult = {
+              status: ValidationStatusType.Fail,
+              score: 0.0,
+              message: `No inspection image registered. Register or capture an image before running real rule analysis.`,
+              stub: false,
+            };
+          }
+
+          if (ruleResult.status === ValidationStatusType.Pass) {
+            passCount += 1;
+          } else {
+            failCount += 1;
+          }
+
+          if (params.hasSelectionFocus) {
+            // Manual runs update rule-by-rule for readable live feedback.
+            useValidationStore
+              .getState()
+              .mergeResults(ownerRuleset.id, { [r.id]: ruleResult }, ownerRuleset.name);
+          } else {
+            const bucket = batchedResults[ownerRuleset.id] ?? {
+              rulesetName: ownerRuleset.name,
+              results: {},
+            };
+            bucket.results[r.id] = ruleResult;
+            batchedResults[ownerRuleset.id] = bucket;
+          }
+        }
+
+        if (!params.hasSelectionFocus) {
+          for (const [ownerRulesetId, bucket] of Object.entries(batchedResults)) {
+            useValidationStore
+              .getState()
+              .mergeResults(ownerRulesetId, bucket.results, bucket.rulesetName);
+          }
+        }
+
+        if (params.hasStepToasts) {
+          if (failCount === 0) {
+            toast.success(
+              `Sequential inspection complete: All ${projectAnalysisItems.length} rules PASSED (${passCount}/${projectAnalysisItems.length}). Workpiece OK.`,
+            );
+          } else {
+            toast.error(
+              `Sequential inspection complete: ${failCount}/${projectAnalysisItems.length} rules FAILED (${passCount} passed). Workpiece REJECTED.`,
+            );
+          }
+        }
+      } catch (err) {
+        console.error("[WorkpieceAnalyzeWorkspace] Analysis error:", err);
+        toast.error("Analysis failed to complete.");
+      } finally {
+        isAnalyzingRef.current = false;
+        setIsAnalyzing(false);
+      }
+    },
+    [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems],
+  );
   const handleManualRunAnalysis = useCallback(() => {
     void handleRunAnalysis(MANUAL_RUN_ANALYSIS_PARAMS);
   }, [handleRunAnalysis]);
@@ -694,7 +723,7 @@ export function WorkpieceAnalyzeWorkspace({
     () => ({
       onToggleHidden: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : ownerRuleset.rules ?? [];
+        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
         const next = ownerRules.map((r) => (r.id === id ? { ...r, isHidden: !r.isHidden } : r));
         updateRulesetRules(ownerRuleset.id, next);
 
@@ -704,7 +733,7 @@ export function WorkpieceAnalyzeWorkspace({
       },
       onDelete: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : ownerRuleset.rules ?? [];
+        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
         const target = ownerRules.find((r) => r.id === id);
         const next = ownerRules.filter((r) => r.id !== id);
         updateRulesetRules(ownerRuleset.id, next);
@@ -717,7 +746,7 @@ export function WorkpieceAnalyzeWorkspace({
       },
       onReorder: (id: string, dir: "up" | "down") => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : ownerRuleset.rules ?? [];
+        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
         const idx = ownerRules.findIndex((r) => r.id === id);
         if (idx === -1) return;
         const targetIdx = dir === "up" ? idx - 1 : idx + 1;
@@ -847,12 +876,16 @@ export function WorkpieceAnalyzeWorkspace({
         {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
         <div className="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 overflow-hidden bg-transparent">
           {/* Left: inspection hierarchy tree & source container */}
-          <div data-tour="project-inspection-program" className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+          <div
+            data-tour="project-inspection-program"
+            className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
+          >
             {/* Tab switchers: Program vs Image Source */}
             <div className="flex shrink-0 items-center justify-between rounded-lg border border-white/10 bg-black/60 p-0.5">
               <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                 <button
                   type="button"
+                  data-tour="project-program-tab"
                   onClick={() => setActiveSidebarTab("tree")}
                   className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
                     activeSidebarTab === "tree"
@@ -865,6 +898,7 @@ export function WorkpieceAnalyzeWorkspace({
                 </button>
                 <button
                   type="button"
+                  data-tour="project-image-source-tab"
                   onClick={() => setActiveSidebarTab("source")}
                   className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
                     activeSidebarTab === "source"
@@ -923,7 +957,10 @@ export function WorkpieceAnalyzeWorkspace({
               </div>
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto">
-                <section data-tour="project-image-samples" className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner">
+                <section
+                  data-tour="project-image-samples"
+                  className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
@@ -986,11 +1023,14 @@ export function WorkpieceAnalyzeWorkspace({
                       <button
                         type="button"
                         onClick={() => {
-                          updateProjectInspectionImageRef(project.id, "/src/assets/samples/pocket-1-filled.jpg");
+                          updateProjectInspectionImageRef(
+                            project.id,
+                            "/src/assets/samples/pocket-1-filled.jpg",
+                          );
                           toast.info("Loaded Carrier Pocket 1 [Filled IC]");
                         }}
                         className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          (project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg" || !project.inspectionImageRef)
+                          project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
                             ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
                             : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                         }`}
@@ -1000,11 +1040,15 @@ export function WorkpieceAnalyzeWorkspace({
                       <button
                         type="button"
                         onClick={() => {
-                          updateProjectInspectionImageRef(project.id, "/src/assets/samples/pocket-2-empty-mixed.jpg");
+                          updateProjectInspectionImageRef(
+                            project.id,
+                            "/src/assets/samples/pocket-2-empty-mixed.jpg",
+                          );
                           toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
                         }}
                         className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef === "/src/assets/samples/pocket-2-empty-mixed.jpg"
+                          project.inspectionImageRef ===
+                          "/src/assets/samples/pocket-2-empty-mixed.jpg"
                             ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
                             : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                         }`}
@@ -1031,10 +1075,10 @@ export function WorkpieceAnalyzeWorkspace({
                           Live
                         </div>
                       </>
-                    ) : (
+                    ) : project.inspectionImageRef ? (
                       <>
                         <img
-                          src={project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                          src={project.inspectionImageRef}
                           alt="Current project inspection"
                           className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
                         />
@@ -1047,6 +1091,15 @@ export function WorkpieceAnalyzeWorkspace({
                           Replace Image
                         </button>
                       </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white/70 transition hover:bg-black/50 hover:text-white"
+                      >
+                        <Upload size={14} />
+                        Upload Inspection Image
+                      </button>
                     )}
                   </div>
                 </section>
@@ -1055,7 +1108,10 @@ export function WorkpieceAnalyzeWorkspace({
           </div>
 
           {/* Right: camera/current image viewport */}
-          <div data-tour="project-analysis-canvas" className="relative flex min-w-0 flex-col overflow-hidden">
+          <div
+            data-tour="project-analysis-canvas"
+            className="relative flex min-w-0 flex-col overflow-hidden"
+          >
             {isLiveCameraMode ? (
               <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
@@ -1067,7 +1123,9 @@ export function WorkpieceAnalyzeWorkspace({
                   className="relative z-10 max-h-full max-w-full object-contain"
                 />
                 <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-black/70 px-3 py-2 font-sans text-xs font-bold uppercase tracking-wider text-emerald-200 shadow-lg backdrop-blur">
-                  <span className={`h-2 w-2 rounded-full ${isLiveCameraReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-amber-400 animate-pulse"}`} />
+                  <span
+                    className={`h-2 w-2 rounded-full ${isLiveCameraReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-amber-400 animate-pulse"}`}
+                  />
                   {isLiveCameraReady ? "Live Camera Feed" : "Connecting Camera"}
                 </div>
                 {liveCameraErrorText ? (
@@ -1092,7 +1150,7 @@ export function WorkpieceAnalyzeWorkspace({
               </div>
             ) : (
               <VisualToolWorkpieceCanvas
-                imageRef={project.inspectionImageRef || "/src/assets/samples/pocket-1-filled.jpg"}
+                imageRef={project.inspectionImageRef}
                 toolCode={
                   typeof activeRule?.params?.toolCode === "string"
                     ? activeRule.params.toolCode
@@ -1110,7 +1168,7 @@ export function WorkpieceAnalyzeWorkspace({
                 validationStatus={activeValidationResult?.status}
                 validationScore={activeValidationResult?.score}
                 validationResultsMap={allValidationResults}
-                isAnalyzing={isAnalyzing}
+                isAnalyzing={isAnalysisBusy}
                 tapeStripResult={tapeStripResult}
               />
             )}
@@ -1118,10 +1176,19 @@ export function WorkpieceAnalyzeWorkspace({
         </div>
 
         {/* 5. Bottom action bar */}
-        <div data-tour="project-results" className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-black/40 px-4 py-2.5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+        <div
+          data-tour="project-results"
+          className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-black/40 px-4 py-2.5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl"
+        >
           <div className="flex items-center gap-2 font-sans text-[11px] uppercase tracking-wider text-white/50">
-            <span className={`h-2 w-2 rounded-full ${isAnalyzing ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"}`} />
-            <span>Inspection engine ready · {isLiveCameraMode ? "live camera source" : "reference image source"} · {projectAnalysisItems.length} active rules</span>
+            <span
+              className={`h-2 w-2 rounded-full ${isAnalysisBusy ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"}`}
+            />
+            <span>
+              {isAnalysisBusy ? "Inspection engine analyzing" : "Inspection engine ready"} ·{" "}
+              {isLiveCameraMode ? "live camera source" : "reference image source"} ·{" "}
+              {projectAnalysisItems.length} active rules
+            </span>
           </div>
           <div className="flex items-center gap-2.5">
             <input
@@ -1140,11 +1207,11 @@ export function WorkpieceAnalyzeWorkspace({
               type="button"
               data-tour="project-run-analysis"
               onClick={handleManualRunAnalysis}
-              disabled={isAnalyzing}
+              disabled={isAnalysisBusy}
               className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-1.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(16,185,129,0.45)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
             >
-              <Play size={14} className={isAnalyzing ? "animate-spin" : "fill-black"} />
-              {isAnalyzing ? "Running..." : "Run Analysis"}
+              <Play size={14} className={isAnalysisBusy ? "animate-spin" : "fill-black"} />
+              {isAnalysisBusy ? "Running..." : "Run Analysis"}
             </button>
           </div>
         </div>

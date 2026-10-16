@@ -28,13 +28,13 @@
 
 ## Scoring
 
-| Criterion | Status |
-|-----------|--------|
-| `readme.md` present | ✅ |
-| AI Confidence assigned | ✅ |
-| Ambiguity assigned | ✅ |
-| Keywords present | ✅ |
-| Scoring table present | ✅ |
+| Criterion              | Status |
+| ---------------------- | ------ |
+| `readme.md` present    | ✅     |
+| AI Confidence assigned | ✅     |
+| Ambiguity assigned     | ✅     |
+| Keywords present       | ✅     |
+| Scoring table present  | ✅     |
 
 ---
 
@@ -46,18 +46,18 @@ Go-specific coding standards and patterns.
 
 ## Document Inventory
 
-| File | Description |
-|------|-------------|
-| [`02-boolean-standards.md`](./02-boolean-standards.md) | Positive boolean naming, negation elimination, and guard clauses |
-| [`03-httpmethod-enum.md`](./03-httpmethod-enum.md) | HttpMethod enum standard and magic string elimination |
-| [`04-golang-standards-reference.md`](./04-golang-standards-reference.md) | Comprehensive Golang standards and conventions reference |
-| [`05-defer-rules.md`](./05-defer-rules.md) | Resource defer rules and loop safety standards |
-| [`06-string-slice-internals.md`](./06-string-slice-internals.md) | Go string and slice memory representation and preallocation |
-| [`07-code-severity-taxonomy.md`](./07-code-severity-taxonomy.md) | Code severity taxonomy, error classification, and fault logging |
-| [`08-pathutil-fileutil-spec.md`](./08-pathutil-fileutil-spec.md) | Unified PathUtil & FileUtil cross-platform filesystem specification |
-| [`97-acceptance-criteria.md`](./97-acceptance-criteria.md) | Golang acceptance criteria registry |
-| [`98-changelog.md`](./98-changelog.md) | Version history and specification changelog |
-| [`99-consistency-report.md`](./99-consistency-report.md) | Guideline consistency and audit report |
+| File                                                                     | Description                                                         |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| [`02-boolean-standards.md`](./02-boolean-standards.md)                   | Positive boolean naming, negation elimination, and guard clauses    |
+| [`03-httpmethod-enum.md`](./03-httpmethod-enum.md)                       | HttpMethod enum standard and magic string elimination               |
+| [`04-golang-standards-reference.md`](./04-golang-standards-reference.md) | Comprehensive Golang standards and conventions reference            |
+| [`05-defer-rules.md`](./05-defer-rules.md)                               | Resource defer rules and loop safety standards                      |
+| [`06-string-slice-internals.md`](./06-string-slice-internals.md)         | Go string and slice memory representation and preallocation         |
+| [`07-code-severity-taxonomy.md`](./07-code-severity-taxonomy.md)         | Code severity taxonomy, error classification, and fault logging     |
+| [`08-pathutil-fileutil-spec.md`](./08-pathutil-fileutil-spec.md)         | Unified PathUtil & FileUtil cross-platform filesystem specification |
+| [`97-acceptance-criteria.md`](./97-acceptance-criteria.md)               | Golang acceptance criteria registry                                 |
+| [`98-changelog.md`](./readme.md)                                         | Version history and specification changelog                         |
+| [`99-consistency-report.md`](./readme.md)                                | Guideline consistency and audit report                              |
 
 ---
 
@@ -78,7 +78,9 @@ _Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-crit
 **Then** All Go specifications and source files adhere to affirmative boolean conventions, single-defer rules, typed enums, and structured error management with zero violations detected.
 
 **Verification command:**
+
 ```bash
 python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines/03-golang --check-only
 ```
+
 **Expected:** exit 0. Zero violations detected.

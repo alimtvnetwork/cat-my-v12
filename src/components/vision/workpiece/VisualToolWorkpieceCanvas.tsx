@@ -12,12 +12,10 @@ import {
   AlertCircle,
   XCircle,
   ListChecks,
+  Loader2,
   ScanSearch,
 } from "lucide-react";
-import {
-  markWhiteBoxes,
-  type WhiteBoxMark,
-} from "@/lib/vision/white-box-marking";
+import { markWhiteBoxes, type WhiteBoxMark } from "@/lib/vision/white-box-marking";
 import {
   drawPatternBoxes,
   drawFormulatedEnvelope,
@@ -224,10 +222,9 @@ function drawGreyscaleSimulationPatternOverlay(
   const totalCount = boxes.length;
 
   for (const b of boxes) {
-    const isMatched =
-      matchedBoxesMap.has(b.number)
-        ? Boolean(matchedBoxesMap.get(b.number))
-        : isPass || status === undefined;
+    const isMatched = matchedBoxesMap.has(b.number)
+      ? Boolean(matchedBoxesMap.get(b.number))
+      : isPass || status === undefined;
 
     if (isMatched) {
       matchedCount += 1;
@@ -269,10 +266,9 @@ function drawGreyscaleSimulationPatternOverlay(
 
   // 2. Draw all individual character boxes with color-coded results
   for (const b of boxes) {
-    const isMatched =
-      matchedBoxesMap.has(b.number)
-        ? Boolean(matchedBoxesMap.get(b.number))
-        : isPass || status === undefined;
+    const isMatched = matchedBoxesMap.has(b.number)
+      ? Boolean(matchedBoxesMap.get(b.number))
+      : isPass || status === undefined;
 
     if (isMatched) {
       ctx.strokeStyle = "#10b981";
@@ -352,15 +348,7 @@ function drawConstellationPattern(
     }
   }
 
-  drawCompletePatternOverlay(
-    ctx,
-    synthBoxes,
-    new Set(),
-    status,
-    8,
-    imageWidth,
-    imageHeight,
-  );
+  drawCompletePatternOverlay(ctx, synthBoxes, new Set(), status, 8, imageWidth, imageHeight);
 }
 
 function drawCornerBrackets(
@@ -439,26 +427,25 @@ function drawPin1Reticle(
           ? regPin1Raw.y
           : undefined;
 
-  if (
-    typeof debugNomX === "number" &&
-    typeof debugNomY === "number"
-  ) {
+  if (typeof debugNomX === "number" && typeof debugNomY === "number") {
     nomX = debugNomX;
     nomY = debugNomY;
-  } else if (
-    typeof rawNomX === "number" &&
-    typeof rawNomY === "number"
-  ) {
+  } else if (typeof rawNomX === "number" && typeof rawNomY === "number") {
     nomX = rawNomX;
     nomY = rawNomY;
-  } else if (typeof pin1Config?.relativeX === "number" && typeof pin1Config?.relativeY === "number") {
+  } else if (
+    typeof pin1Config?.relativeX === "number" &&
+    typeof pin1Config?.relativeY === "number"
+  ) {
     nomX = Math.round(roi.x + (pin1Config.relativeX / 100) * roi.width);
     nomY = Math.round(roi.y + (pin1Config.relativeY / 100) * roi.height);
-  } else if (typeof regPin1Raw?.relativeX === "number" && typeof regPin1Raw?.relativeY === "number") {
+  } else if (
+    typeof regPin1Raw?.relativeX === "number" &&
+    typeof regPin1Raw?.relativeY === "number"
+  ) {
     nomX = Math.round(roi.x + (regPin1Raw.relativeX / 100) * roi.width);
     nomY = Math.round(roi.y + (regPin1Raw.relativeY / 100) * roi.height);
   }
-
 
   const debugHoleX = ruleResult?.debug?.detectedHoleX;
   const debugHoleY = ruleResult?.debug?.detectedHoleY;
@@ -571,7 +558,8 @@ function drawPin1Reticle(
 
   // Offset & Angle telemetry badge
   const sign = angleDeg >= 0 ? "+" : "";
-  const tolStr = ruleResult?.debug?.tolerancePx !== undefined ? ` (±${ruleResult.debug.tolerancePx}px)` : "";
+  const tolStr =
+    ruleResult?.debug?.tolerancePx !== undefined ? ` (±${ruleResult.debug.tolerancePx}px)` : "";
   const teleText = `Δ ${offsetPx.toFixed(1)}px | θ ${sign}${angleDeg.toFixed(1)}°${tolStr}`;
   ctx.font = "bold 7.5px monospace";
   const teleW = ctx.measureText(teleText).width + 8;
@@ -625,8 +613,7 @@ function drawDefectScanGrid(
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
 
-  ctx.strokeStyle =
-    status === "fail" ? "rgba(239, 68, 68, 0.35)" : "rgba(16, 185, 129, 0.30)";
+  ctx.strokeStyle = status === "fail" ? "rgba(239, 68, 68, 0.35)" : "rgba(16, 185, 129, 0.30)";
   ctx.lineWidth = 1;
   ctx.setLineDash([2, 4]);
 
@@ -837,7 +824,11 @@ function drawFrameInspectionHud(
     ctx.fillText(`✖ FRAME RESULTS: FAIL (${failCount} REJECTED)`, hudX + 12, hudY + 15);
     ctx.fillStyle = "#94a3b8";
     ctx.font = "10px sans-serif";
-    ctx.fillText(`${passCount}/${totalRules} rules passed inspection limits.`, hudX + 12, hudY + 28);
+    ctx.fillText(
+      `${passCount}/${totalRules} rules passed inspection limits.`,
+      hudX + 12,
+      hudY + 28,
+    );
   } else {
     ctx.fillStyle = "#38bdf8";
     ctx.fillText(`FRAME READY (${totalRules} RULES)`, hudX + 12, hudY + 15);
@@ -903,10 +894,7 @@ function drawTapeStripInspectionHud(
   }
 }
 
-function drawPocketOverlay(
-  ctx: CanvasRenderingContext2D,
-  pocket: PocketEvaluationResult,
-): void {
+function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluationResult): void {
   const { x, y, width: w, height: h } = pocket.region;
 
   if (pocket.isEmpty) {
@@ -946,9 +934,7 @@ function drawPocketOverlay(
   ctx.lineWidth = 1.5;
   ctx.strokeRect(x, y, w, h);
 
-  const badgeText = isPass
-    ? `POCKET #${pocket.pocketIndex} ✔`
-    : `POCKET #${pocket.pocketIndex} ✖`;
+  const badgeText = isPass ? `POCKET #${pocket.pocketIndex} ✔` : `POCKET #${pocket.pocketIndex} ✖`;
   ctx.font = "bold 9px monospace";
   const tw = ctx.measureText(badgeText).width;
   const badgeW = tw + 10;
@@ -982,10 +968,7 @@ export function VisualToolWorkpieceCanvas({
   isAnalyzing = false,
   tapeStripResult = null,
 }: VisualToolWorkpieceCanvasProps): React.JSX.Element {
-  const roi = useMemo(
-    () => propRoi ?? { x: 0, y: 0, width: 960, height: 540 },
-    [propRoi],
-  );
+  const roi = useMemo(() => propRoi ?? { x: 0, y: 0, width: 960, height: 540 }, [propRoi]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
@@ -1030,6 +1013,10 @@ export function VisualToolWorkpieceCanvas({
         const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
 
         if (offCtx) {
+          // NOTE: kept as a full-frame stretch. The rule set is calibrated
+          // against these stretched cached pixels - letterboxing here flips
+          // pass/fail outcomes (see workpiece-rule-analyzer fixtures).
+          // Unifying display/eval geometry needs a rule re-tuning pass.
           offCtx.drawImage(loadedImg, 0, 0, w, h);
           const imgData = offCtx.getImageData(0, 0, w, h);
           registerWorkpieceImageCache(imgSrc, { width: w, height: h, rgba: imgData.data });
@@ -1159,7 +1146,7 @@ export function VisualToolWorkpieceCanvas({
   const activeBoxCount =
     typeof toolParams?.activeBoxCount === "number"
       ? toolParams.activeBoxCount
-    : parsedToolBoxes.length;
+      : parsedToolBoxes.length;
 
   const isPatternMatching =
     Boolean(toolName?.toLowerCase().includes("pattern")) ||
@@ -1381,7 +1368,11 @@ export function VisualToolWorkpieceCanvas({
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 13px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("No rules defined. Click 'Add rule from tools' to start inspection.", w / 2, h / 2 + 5);
+        ctx.fillText(
+          "No rules defined. Click 'Add rule from tools' to start inspection.",
+          w / 2,
+          h / 2 + 5,
+        );
         ctx.textAlign = "left";
 
         return;
@@ -1451,18 +1442,17 @@ export function VisualToolWorkpieceCanvas({
         validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)
       ) {
-        drawFrameInspectionHud(
-          ctx,
-          w,
-          1,
-          isPass ? 1 : 0,
-          isFailed ? 1 : 0,
-          Boolean(isAnalyzing),
-        );
+        drawFrameInspectionHud(ctx, w, 1, isPass ? 1 : 0, isFailed ? 1 : 0, Boolean(isAnalyzing));
       }
     } else {
       let totalPassCount = 0;
       let totalFailCount = 0;
+      const sourceScaleX = fit.width / naturalW;
+      const sourceScaleY = fit.height / naturalH;
+
+      ctx.save();
+      ctx.translate(fit.x, fit.y);
+      ctx.scale(sourceScaleX, sourceScaleY);
 
       for (let idx = 0; idx < rulesToRender.length; idx += 1) {
         const rule = rulesToRender[idx];
@@ -1475,6 +1465,10 @@ export function VisualToolWorkpieceCanvas({
         const ruleResult = validationResultsMap?.[rule.id];
         const status = ruleResult?.status ?? (isSelected ? validationStatus : undefined);
         const score = ruleResult?.score ?? (isSelected ? validationScore : undefined);
+
+        if (isAnalyzeMode && !status) {
+          continue;
+        }
 
         if (status === "pass") {
           totalPassCount += 1;
@@ -1552,8 +1546,16 @@ export function VisualToolWorkpieceCanvas({
           const ruleDebug = (ruleResult as any)?.debug;
           const debugHoleX = ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
           const debugHoleY = ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
-          const hX = debugHoleX ?? pinCfg?.centerX ?? pinCfg?.registeredPin1?.centerX ?? pinCfg?.registeredPin1?.x;
-          const hY = debugHoleY ?? pinCfg?.centerY ?? pinCfg?.registeredPin1?.centerY ?? pinCfg?.registeredPin1?.y;
+          const hX =
+            debugHoleX ??
+            pinCfg?.centerX ??
+            pinCfg?.registeredPin1?.centerX ??
+            pinCfg?.registeredPin1?.x;
+          const hY =
+            debugHoleY ??
+            pinCfg?.centerY ??
+            pinCfg?.registeredPin1?.centerY ??
+            pinCfg?.registeredPin1?.y;
 
           if (typeof hX === "number" && typeof hY === "number") {
             badgeX = Math.max(10, Math.round(hX - 60));
@@ -1582,21 +1584,23 @@ export function VisualToolWorkpieceCanvas({
           const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
           const boxResults = (ruleResult as any)?.debug?.boxResults;
           const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
-          const multiDevicePassRegions = Array.isArray((ruleResult as any)?.debug?.multiDevicePassRegions)
+          const multiDevicePassRegions = Array.isArray(
+            (ruleResult as any)?.debug?.multiDevicePassRegions,
+          )
             ? (ruleResult as any).debug.multiDevicePassRegions
             : Array.isArray((rule.params as any)?.multiDevicePassRegions)
               ? (rule.params as any).multiDevicePassRegions
               : [];
           const ruleBoxes =
             Array.isArray(boxResults) && boxResults.length > 0
-                ? boxResults.map((br: any) => ({
-                    number: br.boxNumber,
-                    x: br.matchedX ?? br.referenceX,
-                    y: br.matchedY ?? br.referenceY,
-                    width: br.width,
-                    height: br.height,
-                    area: br.width * br.height,
-                  }))
+              ? boxResults.map((br: any) => ({
+                  number: br.boxNumber,
+                  x: br.matchedX ?? br.referenceX,
+                  y: br.matchedY ?? br.referenceY,
+                  width: br.width,
+                  height: br.height,
+                  area: br.width * br.height,
+                }))
               : ruleBoxesFromParams.length > 0
                 ? ruleBoxesFromParams
                 : isSelected && activeBoxesToDraw.length > 0
@@ -1685,15 +1689,7 @@ export function VisualToolWorkpieceCanvas({
             }
             drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, status);
           } else {
-            drawPin1Reticle(
-              ctx,
-              ruleRoi,
-              status,
-              score,
-              pinCfg,
-              ruleResult,
-              isAnalyzeMode,
-            );
+            drawPin1Reticle(ctx, ruleRoi, status, score, pinCfg, ruleResult, isAnalyzeMode);
           }
         } else if (isRuleCaliper) {
           drawCaliperRuler(ctx, ruleRoi, status);
@@ -1705,6 +1701,8 @@ export function VisualToolWorkpieceCanvas({
           drawScanningLaser(ctx, ruleRoi);
         }
       }
+
+      ctx.restore();
 
       if (
         isAnalyzeMode ||
@@ -1735,6 +1733,7 @@ export function VisualToolWorkpieceCanvas({
     isPatternMatching,
     isPin1,
     isCaliper,
+    toolParams,
     isEditable,
     overlayRules,
     selectedRuleId,
@@ -1799,9 +1798,11 @@ export function VisualToolWorkpieceCanvas({
 
     // 2. Second priority: Check if user clicked on another rule to select it
     if (onSelectRule && overlayRules.length > 0) {
-      const clickedRule = [...overlayRules].reverse().find(
-        (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
-      );
+      const clickedRule = [...overlayRules]
+        .reverse()
+        .find(
+          (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
+        );
 
       if (clickedRule) {
         onSelectRule(clickedRule.id);
@@ -1872,10 +1873,13 @@ export function VisualToolWorkpieceCanvas({
               <ScanSearch size={14} className="text-ca-select" />
               {isAnalyzeMode ? "Analysis:" : "Inspection:"}
             </span>
-            <span className={`rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}>
+            <span
+              data-tour="project-analysis-canvas-status"
+              className={`rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}
+            >
               {isAnalyzeMode
                 ? `${frameStatusLabel} · ${visualPassCount}/${visualTotalCount}`
-                : (toolName || "Autonomous Tool Inspection")}
+                : toolName || "Autonomous Tool Inspection"}
             </span>
             {isPatternMatching && (
               <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
@@ -2029,14 +2033,26 @@ export function VisualToolWorkpieceCanvas({
           }}
           className="relative aspect-video max-h-full max-w-full rounded-sm border border-ca-border/80 object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.55)] outline-none transition-transform duration-75 focus:ring-1 focus:ring-ca-select"
         />
+        {isAnalyzing ? (
+          <div
+            data-testid="visual-analysis-loading"
+            className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45 backdrop-blur-[1px]"
+          >
+            <div className="flex items-center gap-3 rounded-lg border border-cyan-400/40 bg-[#07131a]/95 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider text-cyan-200 shadow-[0_16px_50px_rgba(0,0,0,0.55),0_0_24px_rgba(34,211,238,0.18)]">
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+              Analyzing image…
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Dedicated Visual Analysis Results Area (Separated from image, NOT on the image) */}
       {(validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)) && (
         <section
+          data-tour="project-analysis-results"
           aria-label="Visual Analysis Results"
-          className="flex max-h-24 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-1.5 font-mono text-xs shadow-inner"
+          className="flex max-h-32 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-2 font-mono text-xs shadow-inner"
         >
           {(() => {
             const rulesList = visualRulesList;
@@ -2164,9 +2180,7 @@ export function VisualToolWorkpieceCanvas({
                   );
 
                   const ruleBoxes =
-                    parsedActiveRuleBoxes.length > 0
-                      ? parsedActiveRuleBoxes
-                      : activeBoxesToDraw;
+                    parsedActiveRuleBoxes.length > 0 ? parsedActiveRuleBoxes : activeBoxesToDraw;
 
                   const totalCount =
                     ruleBoxes.length > 0
@@ -2188,7 +2202,8 @@ export function VisualToolWorkpieceCanvas({
                   const matchedCount =
                     typeof debugMatched === "number"
                       ? debugMatched
-                      : activeResult?.status === "pass" || (!activeResult && validationStatus !== "fail")
+                      : activeResult?.status === "pass" ||
+                          (!activeResult && validationStatus !== "fail")
                         ? Math.max(0, totalCount - excludedNumbers.size)
                         : Math.round(totalCount * scoreFraction);
 
@@ -2202,14 +2217,18 @@ export function VisualToolWorkpieceCanvas({
                       } gap-2 border-t border-ca-border/40 pt-2 text-[11px] text-ca-ink`}
                     >
                       <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Feature Rule</span>
+                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                          Feature Rule
+                        </span>
                         <span className="truncate">
                           <strong>{displayRuleName}</strong> [{displayToolCode}]
                         </span>
                       </div>
 
                       <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Match Score</span>
+                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                          Match Score
+                        </span>
                         <strong>
                           {typeof displayScore === "number"
                             ? `${(displayScore * 100).toFixed(1)}%`
@@ -2219,7 +2238,9 @@ export function VisualToolWorkpieceCanvas({
 
                       {isPatternMatch && (
                         <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                          <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">Pattern Elements</span>
+                          <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                            Pattern Elements
+                          </span>
                           <strong>
                             {matchedCount} / {totalCount} matched ({percent}%)
                           </strong>

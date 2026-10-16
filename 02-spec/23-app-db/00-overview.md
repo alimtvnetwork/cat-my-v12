@@ -58,8 +58,8 @@ Rule of thumb: readers resolve a Project's active rules by walking `ProjectRuleS
 
 ## Cross-References
 
-- [Database Conventions (Core)](../04-database-conventions/01-index.md) — General naming, PK/FK, ORM conventions
-- [Split DB Architecture](../05-split-db-architecture/01-index.md) — SQLite partitioning and migration patterns
+- [Database Conventions (Core)](../04-database-conventions/readme.md) — General naming, PK/FK, ORM conventions
+- [Split DB Architecture](../05-split-db-architecture/readme.md) — SQLite partitioning and migration patterns
 - [App](../21-app/04-overview.md) — App-specific features and workflows
 - [Consolidated Database Conventions](../17-consolidated-guidelines/21-database-conventions.md) — Consolidated summary
 

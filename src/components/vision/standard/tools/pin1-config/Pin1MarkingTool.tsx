@@ -55,7 +55,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             detectedHoles={model.detectedHoles}
             registeredPin1={model.registeredPin1}
             matchResult={model.matchResult}
-            hasOverlays={true}
+            hasOverlays={props.hasCanvasOverlays ?? true}
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
@@ -68,7 +68,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
           </div>
           
           {/* Right: Settings Panel */}
-          <div className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]">
+          <div
+            data-tour="rule-config-controls"
+            className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]"
+          >
           <Pin1ReviewPanel
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}

@@ -83,6 +83,12 @@
   --color-ca-primary: var(--ca-primary);
   --color-ca-on-primary: var(--ca-on-primary);
   --color-ca-select: var(--ca-select);
+  /* Orphan --ca-accent fix: theme token was never defined, so Tailwind
+     classes like bg-ca-accent / text-ca-accent / ring-ca-accent /
+     accent-ca-accent emitted no CSS (dead progress bars, unstyled CTA
+     buttons, dead focus rings). Wires to the documented #2563eb fallback
+     already used in var(--ca-accent, #2563eb) throughout this file. */
+  --color-ca-accent: var(--ca-accent, #2563eb);
   --color-ca-ok: var(--ca-ok);
   --color-ca-ng: var(--ca-ng);
   --color-ca-warn: var(--ca-warn);
@@ -119,6 +125,11 @@
   --font-hmi: "Poppins", system-ui, -apple-system, sans-serif;
   --font-hmi-mono: "JetBrains Mono", "IBM Plex Mono", "Geist Mono", ui-monospace, monospace;
   --text-hmi-title: clamp(0.9375rem, 0.85rem + 0.35vw, 1.125rem);
+  /* Orphan text-hmi-h3 fix: the class is used on h2/h3 elements
+     (EmptyState, RuleEditor, RuleMetadataBar) but was never defined,
+     so those headings got no size styling. Aliases to the canonical
+     h2/h3 token text-hmi-title already used on h3 elements elsewhere. */
+  --text-hmi-h3: var(--text-hmi-title);
   --text-hmi-header: clamp(1.125rem, 1rem + 0.55vw, 1.4rem);
   --text-hmi-body: clamp(0.9375rem, 0.88rem + 0.28vw, 1.0625rem);
   --text-hmi-tile: clamp(0.875rem, 0.82rem + 0.25vw, 1rem);
@@ -737,27 +748,47 @@ html {
 }
 
 @utility hmi-glass {
-  background: linear-gradient(135deg, color-mix(in oklab, var(--ca-panel) 88%, transparent), color-mix(in oklab, var(--ca-panel-2) 75%, transparent));
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--ca-panel) 88%, transparent),
+    color-mix(in oklab, var(--ca-panel-2) 75%, transparent)
+  );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 4px 20px -4px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 4px 20px -4px rgba(0, 0, 0, 0.45);
   border: 1px solid var(--ca-border);
 }
 
 @utility hmi-glass-card {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 94%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 96%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 94%, transparent) 0%,
+    color-mix(in oklab, var(--ca-bg) 96%, transparent) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 75%, transparent);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
+    0 8px 24px -8px rgba(0, 0, 0, 0.5);
 }
 
 @utility hmi-telemetry-card {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 95%, transparent), color-mix(in oklab, var(--ca-bg) 98%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 95%, transparent),
+    color-mix(in oklab, var(--ca-bg) 98%, transparent)
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 80%, transparent);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 2px 8px -2px rgba(0, 0, 0, 0.5);
 }
 
 @utility hmi-specular-border {
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px color-mix(in oklab, var(--ca-border) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px color-mix(in oklab, var(--ca-border) 70%, transparent);
 }
 
 @utility hmi-glow-ok {
@@ -774,7 +805,11 @@ html {
 
 /* Project Obsidian - Haute Cyber-Industrial Luxury Primitives */
 @utility hmi-obsidian-vault {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 96%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 98%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 96%, transparent) 0%,
+    color-mix(in oklab, var(--ca-bg) 98%, transparent) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 85%, transparent);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
@@ -786,7 +821,11 @@ html {
 }
 
 @utility hmi-machined-button {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel-2) 90%, white 10%) 0%, var(--ca-panel) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel-2) 90%, white 10%) 0%,
+    var(--ca-panel) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 90%, transparent);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
@@ -826,9 +865,12 @@ html {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
-  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 0) 80%
+  );
 }
-
 
 /*
  * Plan 87 Step 25: motion polish primitives.
@@ -5099,4 +5141,3 @@ html[data-alt-mnemonic="on"] [data-mnemonic] > u {
   background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 24px 24px;
 }
-

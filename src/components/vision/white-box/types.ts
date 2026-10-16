@@ -49,6 +49,7 @@ export interface WhiteBoxToolProps {
   actionButtonLabel?: string;
   imageRef?: string;
   onImageRegistered?: (imageRef: string) => void;
+  hasCanvasOverlays?: boolean;
 }
 
 export interface BackendResult {
