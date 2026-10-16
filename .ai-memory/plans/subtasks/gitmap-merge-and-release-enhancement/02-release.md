@@ -8,4 +8,4 @@ Cut the v4.112.19 release in cat-my-v12 (Release workflow, workflow_dispatch on 
 
 ## Status
 
-IN PROGRESS — workflow run 38958888242 dispatched; Lint + Test jobs green; onefile builds running.
+COMPLETE — v4.112.19 draft release published (run 38960396891, all 9 jobs green). CI on main green. Install speed: 146MB in 88s single-conn; aria2c 16-conn path is the fast path.
