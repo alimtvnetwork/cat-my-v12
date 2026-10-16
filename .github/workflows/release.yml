@@ -212,12 +212,11 @@ jobs:
           --clean --noconfirm --distpath dist --workpath build
         shell: bash
 
-
       - name: Install Bun & Build Frontend
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      
+
       - name: Compile Frontend
         run: |
           bun install --frozen-lockfile
@@ -347,7 +346,9 @@ jobs:
 
           cp packaging/desktop/start.ps1 release/windows/start.ps1
           cp packaging/desktop/start.sh release/linux/start.sh
-          chmod +x release/linux/start.sh release/linux/runtime/bun release/linux/* || true
+          cp packaging/desktop/uninstall.ps1 release/uninstall.ps1
+          cp packaging/desktop/uninstall.sh release/uninstall.sh
+          chmod +x release/uninstall.sh release/linux/start.sh release/linux/runtime/bun release/linux/* || true
 
           test -s release/windows/frontend/public/favicon.ico
           test -s release/linux/frontend/public/favicon.ico
@@ -537,8 +538,29 @@ jobs:
             throw 'Generated install.ps1 failed PowerShell syntax validation.'
           }
 
+      - name: Validate uninstall.ps1 syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'release/uninstall.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+
+            throw 'uninstall.ps1 failed PowerShell syntax validation.'
+          }
+
       - name: Validate install.sh syntax
         run: bash -n release/install.sh
+
+      - name: Validate uninstall.sh syntax
+        run: bash -n release/uninstall.sh
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2

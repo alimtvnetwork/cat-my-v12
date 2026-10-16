@@ -748,27 +748,47 @@ html {
 }
 
 @utility hmi-glass {
-  background: linear-gradient(135deg, color-mix(in oklab, var(--ca-panel) 88%, transparent), color-mix(in oklab, var(--ca-panel-2) 75%, transparent));
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--ca-panel) 88%, transparent),
+    color-mix(in oklab, var(--ca-panel-2) 75%, transparent)
+  );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 4px 20px -4px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 4px 20px -4px rgba(0, 0, 0, 0.45);
   border: 1px solid var(--ca-border);
 }
 
 @utility hmi-glass-card {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 94%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 96%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 94%, transparent) 0%,
+    color-mix(in oklab, var(--ca-bg) 96%, transparent) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 75%, transparent);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
+    0 8px 24px -8px rgba(0, 0, 0, 0.5);
 }
 
 @utility hmi-telemetry-card {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 95%, transparent), color-mix(in oklab, var(--ca-bg) 98%, transparent));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 95%, transparent),
+    color-mix(in oklab, var(--ca-bg) 98%, transparent)
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 80%, transparent);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 2px 8px -2px rgba(0, 0, 0, 0.5);
 }
 
 @utility hmi-specular-border {
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px color-mix(in oklab, var(--ca-border) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px color-mix(in oklab, var(--ca-border) 70%, transparent);
 }
 
 @utility hmi-glow-ok {
@@ -785,7 +805,11 @@ html {
 
 /* Project Obsidian - Haute Cyber-Industrial Luxury Primitives */
 @utility hmi-obsidian-vault {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel) 96%, transparent) 0%, color-mix(in oklab, var(--ca-bg) 98%, transparent) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel) 96%, transparent) 0%,
+    color-mix(in oklab, var(--ca-bg) 98%, transparent) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 85%, transparent);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
@@ -797,7 +821,11 @@ html {
 }
 
 @utility hmi-machined-button {
-  background: linear-gradient(180deg, color-mix(in oklab, var(--ca-panel-2) 90%, white 10%) 0%, var(--ca-panel) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--ca-panel-2) 90%, white 10%) 0%,
+    var(--ca-panel) 100%
+  );
   border: 1px solid color-mix(in oklab, var(--ca-border) 90%, transparent);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
@@ -837,9 +865,12 @@ html {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
-  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 40%, rgba(0, 0, 0, 0) 80%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 1) 40%,
+    rgba(0, 0, 0, 0) 80%
+  );
 }
-
 
 /*
  * Plan 87 Step 25: motion polish primitives.
@@ -5110,4 +5141,3 @@ html[data-alt-mnemonic="on"] [data-mnemonic] > u {
   background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 24px 24px;
 }
-
