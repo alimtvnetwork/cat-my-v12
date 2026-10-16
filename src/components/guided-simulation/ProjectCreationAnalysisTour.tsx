@@ -915,10 +915,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     [],
   );
 
-  const joyrideSteps = useMemo(
-    () => steps.map((step) => ({ ...step, skipBeacon: true })),
-    [steps],
-  );
+  const joyrideSteps = useMemo(() => steps.map((step) => ({ ...step, skipBeacon: true })), [steps]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
