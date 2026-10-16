@@ -5,8 +5,8 @@ import { Square } from "lucide-react";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
 import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
-import pin1SetupImage from "../../../assets/ui/13-pin1-search-region.png";
-import greyscaleSetupImage from "../../../assets/ui/14-greyscale-pattern-region.png";
+import pin1SetupImage from "../../../assets/ui/13-session-screenshot-file13.png";
+import greyscaleSetupImage from "../../../assets/ui/14-session-screenshot-file14.png";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
   GUIDED_SIMULATION_ANALYSIS_EVENT,
