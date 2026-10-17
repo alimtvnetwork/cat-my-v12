@@ -21,6 +21,7 @@ describe("Toaster", () => {
     expect(captured.props?.closeButton).toBe(true);
     expect(captured.props?.visibleToasts).toBe(5);
     expect(captured.props?.position).toBe("bottom-right");
+    expect(captured.props?.expand).toBe(false);
     const classNames = (
       captured.props?.toastOptions as {
         classNames: { toast: string; closeButton: string };

@@ -58,11 +58,15 @@ function getToolIcon(code: string, name: string): LucideIcon {
   if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
   if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
   if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
-  if (normalized.includes("void") || normalized.includes("circle") || code === "T111") return Crosshair;
-  if (normalized.includes("caliper") || normalized.includes("gauge") || code === "T110") return Ruler;
-  if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103") return QrCode;
+  if (normalized.includes("void") || normalized.includes("circle") || code === "T111")
+    return Crosshair;
+  if (normalized.includes("caliper") || normalized.includes("gauge") || code === "T110")
+    return Ruler;
+  if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103")
+    return QrCode;
   if (normalized.includes("ocr") || normalized.includes("marking") || code === "T106") return Type;
-  if (normalized.includes("coating") || normalized.includes("color") || code === "T112") return PaintBucket;
+  if (normalized.includes("coating") || normalized.includes("color") || code === "T112")
+    return PaintBucket;
 
   return ScanSearch;
 }
@@ -190,7 +194,10 @@ export function InspectionHierarchyTree({
 
         <div className="flex shrink-0 items-center gap-1.5">
           <div className="relative w-28 shrink-0">
-            <Search size={11} className="pointer-events-none absolute left-2 top-1.5 text-ca-ink-muted" />
+            <Search
+              size={11}
+              className="pointer-events-none absolute left-2 top-1.5 text-ca-ink-muted"
+            />
             <input
               type="text"
               value={searchFilter}
@@ -225,227 +232,235 @@ export function InspectionHierarchyTree({
               onClick={() => setIsDeviceOpen((value) => !value)}
             />
 
-          {isDeviceOpen ? (
-            <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
-              <TreeRow
-                isOpen={isRuleSetsOpen}
-                icon={<FileCode2 size={14} className="shrink-0 text-purple-400" />}
-                title="Rule Sets"
-                meta={`${displayRulesets.length}`}
-                onClick={() => setIsRuleSetsOpen((value) => !value)}
-                action={
-                  onAddRulesetClick ? (
-                    <IconButton
-                      data-tour="project-add-ruleset"
-                      title="Add ruleset"
-                      onClick={onAddRulesetClick}
-                      className="hover:text-purple-300"
-                    >
-                      <Plus size={11} />
-                    </IconButton>
-                  ) : null
-                }
-              />
+            {isDeviceOpen ? (
+              <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
+                <TreeRow
+                  isOpen={isRuleSetsOpen}
+                  icon={<FileCode2 size={14} className="shrink-0 text-purple-400" />}
+                  title="Rule Sets"
+                  meta={`${displayRulesets.length}`}
+                  onClick={() => setIsRuleSetsOpen((value) => !value)}
+                  action={
+                    onAddRulesetClick ? (
+                      <IconButton
+                        data-tour="project-add-ruleset"
+                        title="Add ruleset"
+                        onClick={onAddRulesetClick}
+                        className="hover:text-purple-300"
+                      >
+                        <Plus size={11} />
+                      </IconButton>
+                    ) : null
+                  }
+                />
 
-              {isRuleSetsOpen ? (
-                <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
-                  {displayRulesets.map((rs) => {
-                    const isActiveRuleset = rs.id === ruleset.id;
-                    const isRulesetOpen = openRulesetIds[rs.id] ?? true;
-                    const isRulesListOpen = openRulesMap[rs.id] ?? true;
-                    const rulesetRules = (rs.rules ?? []).filter((rule) =>
-                      getRuleMatchesFilter(rule, searchFilter),
-                    );
+                {isRuleSetsOpen ? (
+                  <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
+                    {displayRulesets.map((rs) => {
+                      const isActiveRuleset = rs.id === ruleset.id;
+                      const isRulesetOpen = openRulesetIds[rs.id] ?? true;
+                      const isRulesListOpen = openRulesMap[rs.id] ?? true;
+                      const rulesetRules = (rs.rules ?? []).filter((rule) =>
+                        getRuleMatchesFilter(rule, searchFilter),
+                      );
 
-                    return (
-                      <div key={rs.id} className="space-y-0.5">
-                        <div
-                          className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
-                            isActiveRuleset
-                              ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
-                              : "border-transparent text-white/85 hover:border-white/10 hover:bg-white/[0.04]"
-                          }`}
-                          onClick={() => {
-                            if (isActiveRuleset) {
-                              setOpenRulesetIds((current) => ({
-                                ...current,
-                                [rs.id]: !isRulesetOpen,
-                              }));
-                            } else {
-                              onSelectRuleset?.(rs.id);
-                              setOpenRulesetIds((current) => ({
-                                ...current,
-                                [rs.id]: true,
-                              }));
-                            }
-                          }}
-                        >
-                          <IconButton
-                            title={isRulesetOpen ? "Collapse ruleset" : "Expand ruleset"}
+                      return (
+                        <div key={rs.id} className="space-y-0.5">
+                          <div
+                            className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
+                              isActiveRuleset
+                                ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
+                                : "border-transparent text-white/85 hover:border-white/10 hover:bg-white/[0.04]"
+                            }`}
                             onClick={() => {
-                              setOpenRulesetIds((current) => ({
-                                ...current,
-                                [rs.id]: !isRulesetOpen,
-                              }));
+                              if (isActiveRuleset) {
+                                setOpenRulesetIds((current) => ({
+                                  ...current,
+                                  [rs.id]: !isRulesetOpen,
+                                }));
+                              } else {
+                                onSelectRuleset?.(rs.id);
+                                setOpenRulesetIds((current) => ({
+                                  ...current,
+                                  [rs.id]: true,
+                                }));
+                              }
                             }}
                           >
-                            {isRulesetOpen ? (
-                              <ChevronDown size={12} className="shrink-0 text-ca-ink-muted" />
-                            ) : (
-                              <ChevronRight size={12} className="shrink-0 text-ca-ink-muted" />
-                            )}
-                          </IconButton>
-                          <FileCode2 size={13} className="shrink-0 text-purple-400" />
-                          <div className="min-w-0 flex-1 truncate text-xs font-semibold">
-                            <span>RuleSet: {rs.name}</span>
-                            {rs.categoryName ? (
-                              <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
-                                ({rs.categoryName})
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
-                              {rs.rules?.length ?? 0}
-                            </span>
-                            {onAddRuleClick ? (
-                              <IconButton
-                                title="Add rule from tools"
-                                onClick={() => onAddRuleClick(rs.id)}
-                                className="hover:text-purple-300"
-                              >
-                                <Plus size={11} />
-                              </IconButton>
-                            ) : null}
-                            {onDeleteRulesetClick && isActiveRuleset && displayRulesets.length > 1 ? (
-                              <IconButton
-                                title="Delete ruleset"
-                                onClick={() => onDeleteRulesetClick(rs.id)}
-                                className="hover:text-rose-300"
-                              >
-                                <Trash2 size={11} />
-                              </IconButton>
-                            ) : null}
-                          </div>
-                        </div>
-
-                        {isRulesetOpen ? (
-                          <div className="ml-2.5 space-y-0.5 border-l border-ca-border/30 pl-2">
-                            <div
+                            <IconButton
+                              title={isRulesetOpen ? "Collapse ruleset" : "Expand ruleset"}
                               onClick={() => {
-                                setOpenRulesMap((current) => ({
+                                setOpenRulesetIds((current) => ({
                                   ...current,
-                                  [rs.id]: !isRulesListOpen,
+                                  [rs.id]: !isRulesetOpen,
                                 }));
                               }}
-                              className="flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink-muted transition hover:bg-white/[0.04] hover:text-white"
                             >
-                              <IconButton
-                                title={isRulesListOpen ? "Collapse rules list" : "Expand rules list"}
+                              {isRulesetOpen ? (
+                                <ChevronDown size={12} className="shrink-0 text-ca-ink-muted" />
+                              ) : (
+                                <ChevronRight size={12} className="shrink-0 text-ca-ink-muted" />
+                              )}
+                            </IconButton>
+                            <FileCode2 size={13} className="shrink-0 text-purple-400" />
+                            <div className="min-w-0 flex-1 truncate text-xs font-semibold">
+                              <span>RuleSet: {rs.name}</span>
+                              {rs.categoryName ? (
+                                <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
+                                  ({rs.categoryName})
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
+                                {rs.rules?.length ?? 0}
+                              </span>
+                              {onAddRuleClick ? (
+                                <IconButton
+                                  data-tour="project-add-rule-tree"
+                                  title="Add rule from tools"
+                                  onClick={() => onAddRuleClick(rs.id)}
+                                  className="hover:text-purple-300"
+                                >
+                                  <Plus size={11} />
+                                </IconButton>
+                              ) : null}
+                              {onDeleteRulesetClick &&
+                              isActiveRuleset &&
+                              displayRulesets.length > 1 ? (
+                                <IconButton
+                                  title="Delete ruleset"
+                                  onClick={() => onDeleteRulesetClick(rs.id)}
+                                  className="hover:text-rose-300"
+                                >
+                                  <Trash2 size={11} />
+                                </IconButton>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {isRulesetOpen ? (
+                            <div className="ml-2.5 space-y-0.5 border-l border-ca-border/30 pl-2">
+                              <div
                                 onClick={() => {
                                   setOpenRulesMap((current) => ({
                                     ...current,
                                     [rs.id]: !isRulesListOpen,
                                   }));
                                 }}
+                                className="flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink-muted transition hover:bg-white/[0.04] hover:text-white"
                               >
-                                {isRulesListOpen ? (
-                                  <ChevronDown size={11} className="shrink-0 text-ca-ink-muted" />
-                                ) : (
-                                  <ChevronRight size={11} className="shrink-0 text-ca-ink-muted" />
-                                )}
-                              </IconButton>
-                              <ListChecks size={12} className="text-emerald-400" />
-                              <span>Rules ({rulesetRules.length})</span>
-                            </div>
-
-                            {isRulesListOpen ? (
-                              rulesetRules.length === 0 ? (
-                                <div className="rounded border border-dashed border-ca-border/60 px-2 py-1.5 text-center text-[11px] text-ca-ink-muted/70">
-                                  No rules defined
-                                </div>
-                              ) : (
-                                rulesetRules.map((rule, index) => {
-                                  const isRuleOpen = Boolean(
-                                    expandedRuleIds[rule.id] ||
-                                    expandedCameraRuleId === rule.id ||
-                                    expandedLightRuleId === rule.id,
-                                  );
-
-                                  return (
-                                    <RuleNode
-                                      key={rule.id}
-                                      rule={rule}
-                                      index={index}
-                                      total={rulesetRules.length}
-                                      isSelected={selectedRuleId === rule.id}
-                                      validationResult={validationResults[rule.id]}
-                                      isExpanded={isRuleOpen}
-                                      isCameraOpen={expandedCameraRuleId === rule.id}
-                                      isLightOpen={expandedLightRuleId === rule.id}
-                                      onSelect={() => {
-                                        onSelectRuleset?.(rs.id);
-                                        onSelectRule(rule.id);
-                                      }}
-                                      onToggleExpanded={() => {
-                                        if (isRuleOpen) {
-                                          setExpandedRuleIds((current) => ({
-                                            ...current,
-                                            [rule.id]: false,
-                                          }));
-                                          if (expandedCameraRuleId === rule.id) {
-                                            setExpandedCameraRuleId(null);
-                                          }
-                                          if (expandedLightRuleId === rule.id) {
-                                            setExpandedLightRuleId(null);
-                                          }
-                                        } else {
-                                          setExpandedRuleIds((current) => ({
-                                            ...current,
-                                            [rule.id]: true,
-                                          }));
-                                        }
-                                      }}
-                                      onToggleCamera={() => {
-                                        const isCameraActive = expandedCameraRuleId === rule.id;
-                                        setExpandedCameraRuleId(isCameraActive ? null : rule.id);
-                                        if (!isCameraActive) {
-                                          setExpandedRuleIds((current) => ({
-                                            ...current,
-                                            [rule.id]: true,
-                                          }));
-                                        }
-                                      }}
-                                      onToggleLight={() => {
-                                        const isLightActive = expandedLightRuleId === rule.id;
-                                        setExpandedLightRuleId(isLightActive ? null : rule.id);
-                                        if (!isLightActive) {
-                                          setExpandedRuleIds((current) => ({
-                                            ...current,
-                                            [rule.id]: true,
-                                          }));
-                                        }
-                                      }}
-                                      onToggleHidden={onToggleHidden}
-                                      onDeleteRule={onDeleteRule}
-                                      onReorderRule={onReorderRule}
-                                      onTuneRule={onTuneRule}
-                                      onUpdateCameraSettings={onUpdateCameraSettings}
-                                      onUpdateLightSettings={onUpdateLightSettings}
+                                <IconButton
+                                  title={
+                                    isRulesListOpen ? "Collapse rules list" : "Expand rules list"
+                                  }
+                                  onClick={() => {
+                                    setOpenRulesMap((current) => ({
+                                      ...current,
+                                      [rs.id]: !isRulesListOpen,
+                                    }));
+                                  }}
+                                >
+                                  {isRulesListOpen ? (
+                                    <ChevronDown size={11} className="shrink-0 text-ca-ink-muted" />
+                                  ) : (
+                                    <ChevronRight
+                                      size={11}
+                                      className="shrink-0 text-ca-ink-muted"
                                     />
-                                  );
-                                })
-                              )
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+                                  )}
+                                </IconButton>
+                                <ListChecks size={12} className="text-emerald-400" />
+                                <span>Rules ({rulesetRules.length})</span>
+                              </div>
+
+                              {isRulesListOpen ? (
+                                rulesetRules.length === 0 ? (
+                                  <div className="rounded border border-dashed border-ca-border/60 px-2 py-1.5 text-center text-[11px] text-ca-ink-muted/70">
+                                    No rules defined
+                                  </div>
+                                ) : (
+                                  rulesetRules.map((rule, index) => {
+                                    const isRuleOpen = Boolean(
+                                      expandedRuleIds[rule.id] ||
+                                      expandedCameraRuleId === rule.id ||
+                                      expandedLightRuleId === rule.id,
+                                    );
+
+                                    return (
+                                      <RuleNode
+                                        key={rule.id}
+                                        rule={rule}
+                                        index={index}
+                                        total={rulesetRules.length}
+                                        isSelected={selectedRuleId === rule.id}
+                                        validationResult={validationResults[rule.id]}
+                                        isExpanded={isRuleOpen}
+                                        isCameraOpen={expandedCameraRuleId === rule.id}
+                                        isLightOpen={expandedLightRuleId === rule.id}
+                                        onSelect={() => {
+                                          onSelectRuleset?.(rs.id);
+                                          onSelectRule(rule.id);
+                                        }}
+                                        onToggleExpanded={() => {
+                                          if (isRuleOpen) {
+                                            setExpandedRuleIds((current) => ({
+                                              ...current,
+                                              [rule.id]: false,
+                                            }));
+                                            if (expandedCameraRuleId === rule.id) {
+                                              setExpandedCameraRuleId(null);
+                                            }
+                                            if (expandedLightRuleId === rule.id) {
+                                              setExpandedLightRuleId(null);
+                                            }
+                                          } else {
+                                            setExpandedRuleIds((current) => ({
+                                              ...current,
+                                              [rule.id]: true,
+                                            }));
+                                          }
+                                        }}
+                                        onToggleCamera={() => {
+                                          const isCameraActive = expandedCameraRuleId === rule.id;
+                                          setExpandedCameraRuleId(isCameraActive ? null : rule.id);
+                                          if (!isCameraActive) {
+                                            setExpandedRuleIds((current) => ({
+                                              ...current,
+                                              [rule.id]: true,
+                                            }));
+                                          }
+                                        }}
+                                        onToggleLight={() => {
+                                          const isLightActive = expandedLightRuleId === rule.id;
+                                          setExpandedLightRuleId(isLightActive ? null : rule.id);
+                                          if (!isLightActive) {
+                                            setExpandedRuleIds((current) => ({
+                                              ...current,
+                                              [rule.id]: true,
+                                            }));
+                                          }
+                                        }}
+                                        onToggleHidden={onToggleHidden}
+                                        onDeleteRule={onDeleteRule}
+                                        onReorderRule={onReorderRule}
+                                        onTuneRule={onTuneRule}
+                                        onUpdateCameraSettings={onUpdateCameraSettings}
+                                        onUpdateLightSettings={onUpdateLightSettings}
+                                      />
+                                    );
+                                  })
+                                )
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -578,7 +593,9 @@ function RuleNode({
           >
             {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </IconButton>
-          <span className="shrink-0 font-sans text-[10px] font-medium text-ca-ink-muted">[{index + 1}]</span>
+          <span className="shrink-0 font-sans text-[10px] font-medium text-ca-ink-muted">
+            [{index + 1}]
+          </span>
           <ToolIcon
             size={12}
             className={isSelected ? "shrink-0 text-ca-select" : "shrink-0 text-ca-ink-muted"}
@@ -830,7 +847,7 @@ function LightSettingsPanel({
         icon={<Sun size={12} className="shrink-0 text-amber-400" />}
         title="Light Settings"
         meta={`CH${settings.channel ?? 1} · ${settings.intensity ?? 80}%${
-          settings.hasStrobe ?? true ? " · Strobe" : ""
+          (settings.hasStrobe ?? true) ? " · Strobe" : ""
         }`}
         tone="amber"
         onClick={onToggle}
@@ -866,7 +883,9 @@ function LightSettingsPanel({
           <div className="rounded border border-ca-border/40 bg-ca-panel-2/50 p-1.5">
             <div className="mb-1 flex items-center justify-between text-ca-ink">
               <span className="text-[10px] font-medium text-ca-ink-muted">Channel</span>
-              <span className="font-sans text-[10px] font-medium text-amber-300">CH {settings.channel ?? 1}</span>
+              <span className="font-sans text-[10px] font-medium text-amber-300">
+                CH {settings.channel ?? 1}
+              </span>
             </div>
             <div className="grid grid-cols-4 gap-1">
               {[1, 2, 3, 4].map((channel) => {
@@ -901,7 +920,7 @@ function LightSettingsPanel({
                 className="rounded accent-amber-400"
               />
             </label>
-            {settings.hasStrobe ?? true ? (
+            {(settings.hasStrobe ?? true) ? (
               <SliderRow
                 label="Pulse Duration"
                 value={settings.strobeDurationUs ?? 1000}

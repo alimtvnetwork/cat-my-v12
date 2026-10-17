@@ -9,14 +9,14 @@
 
 ## TL;DR — The Honest Answer
 
-| Capability | Score | Verdict |
-|------------|-------|---------|
-| **Understand the rules conceptually** | 95/100 | Excellent — the consolidated docs explain the *what* and *why* clearly |
-| **Reproduce the rules from scratch in a new project** | 78/100 | Good but lossy — most patterns have code examples; some require interpretation |
-| **Modify or extend the existing live system** | 52/100 | **Risky** — the consolidated docs lack live file paths, line numbers, exact identifiers, and runtime contracts |
-| **Pass the project's own validators** | 41/100 | **Likely to fail** — only 3 of 16 linter scripts are mentioned by name; waiver syntax, allowlist formats, and exit-code contracts are absent |
+| Capability                                            | Score  | Verdict                                                                                                                                      |
+| ----------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Understand the rules conceptually**                 | 95/100 | Excellent — the consolidated docs explain the _what_ and _why_ clearly                                                                       |
+| **Reproduce the rules from scratch in a new project** | 78/100 | Good but lossy — most patterns have code examples; some require interpretation                                                               |
+| **Modify or extend the existing live system**         | 52/100 | **Risky** — the consolidated docs lack live file paths, line numbers, exact identifiers, and runtime contracts                               |
+| **Pass the project's own validators**                 | 41/100 | **Likely to fail** — only 3 of 16 linter scripts are mentioned by name; waiver syntax, allowlist formats, and exit-code contracts are absent |
 
-**Bottom line:** A blind AI handed only `17-consolidated-guidelines/` + `06-error-management.md` can **build a fresh, spec-compliant project** with reasonable fidelity, but **cannot safely modify this repo** without reading source folders. The biggest single failure mode is **silent linter divergence** — the AI will write code that *looks* right but trips validators it has never heard of.
+**Bottom line:** A blind AI handed only `17-consolidated-guidelines/` + `06-error-management.md` can **build a fresh, spec-compliant project** with reasonable fidelity, but **cannot safely modify this repo** without reading source folders. The biggest single failure mode is **silent linter divergence** — the AI will write code that _looks_ right but trips validators it has never heard of.
 
 ---
 
@@ -41,22 +41,22 @@
 
 The repo actually ships **16 linter assets**:
 
-| Script | Purpose | Mentioned in consolidated? |
-|--------|---------|----------------------------|
-| `validate-guidelines.py` | Code-Red metrics | ✅ |
-| `validate-guidelines.go` | Go port of validator | ❌ |
-| `check-spec-cross-links.py` | Markdown link integrity | ✅ |
-| `check-spec-folder-refs.py` | Folder-reference allowlist enforcement | ❌ |
-| `check-axios-version.sh` | Axios pinning enforcement | ❌ |
-| `check-forbidden-strings.py` | Forbidden-token scanner | ❌ |
-| `check-forbidden-spec-paths.sh` | Forbidden spec-path guard | ❌ |
-| `forbidden-strings.toml` | Forbidden-token config | ❌ |
-| `spec-cross-links.allowlist` | Allowlist syntax | ❌ |
-| `spec-folder-refs.allowlist` | `[external]` / `[doc-only]` syntax | ❌ |
-| `suggest-spec-cross-link-fixes.py` | Auto-fix helper | ❌ |
-| `generate-dashboard-data.cjs` | Dashboard JSON producer | ❌ |
-| `installer-templates/` | Versioned installer templates | ❌ |
-| `run.ps1` / `run.sh` | Linter orchestrators | ❌ |
+| Script                             | Purpose                                | Mentioned in consolidated? |
+| ---------------------------------- | -------------------------------------- | -------------------------- |
+| `validate-guidelines.py`           | Code-Red metrics                       | ✅                         |
+| `validate-guidelines.go`           | Go port of validator                   | ❌                         |
+| `check-spec-cross-links.py`        | Markdown link integrity                | ✅                         |
+| `check-spec-folder-refs.py`        | Folder-reference allowlist enforcement | ❌                         |
+| `check-axios-version.sh`           | Axios pinning enforcement              | ❌                         |
+| `check-forbidden-strings.py`       | Forbidden-token scanner                | ❌                         |
+| `check-forbidden-spec-paths.sh`    | Forbidden spec-path guard              | ❌                         |
+| `forbidden-strings.toml`           | Forbidden-token config                 | ❌                         |
+| `spec-cross-links.allowlist`       | Allowlist syntax                       | ❌                         |
+| `spec-folder-refs.allowlist`       | `[external]` / `[doc-only]` syntax     | ❌                         |
+| `suggest-spec-cross-link-fixes.py` | Auto-fix helper                        | ❌                         |
+| `generate-dashboard-data.cjs`      | Dashboard JSON producer                | ❌                         |
+| `installer-templates/`             | Versioned installer templates          | ❌                         |
+| `run.ps1` / `run.sh`               | Linter orchestrators                   | ❌                         |
 
 **Failure mode:** A blind AI will commit code that looks pristine but fails CI on the first push because:
 
@@ -165,16 +165,16 @@ The user's `mem://` files contain critical operational rules (axios pinning, git
 
 ## Stress-Test Matrix — 8 Common AI Tasks
 
-| Task | Pass / Fail | Why |
-|------|-------------|-----|
-| Build a new React component using design tokens | ✅ Pass | `10-design-system.md` is comprehensive; 16-app overlay covers app rules |
-| Add a new SQL table following naming rules | ✅ Pass | `21-database-conventions.md` covers naming, PK, FK, booleans, free-text |
-| Add a new error code | 🟡 Partial | Pattern is clear but registry inventory and generator command missing |
-| Write a new linter rule | 🔴 Fail | Linter framework, exit-code contract, allowlist syntax all absent |
-| Modify the install script's probe behavior | 🟡 Partial | Conceptual flow is documented; exact env var names and constants are paraphrased |
-| Bump a dependency | 🔴 Fail | Axios pinning rule lives only in memory; no consolidated reference |
-| Ship a release | 🟡 Partial | CI/CD flow documented; sync-script ordering and version.json drift consequences not |
-| Add a sibling-repo cross-reference | 🔴 Fail | `spec-folder-refs.allowlist` `[external]` syntax never shown |
+| Task                                            | Pass / Fail | Why                                                                                 |
+| ----------------------------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| Build a new React component using design tokens | ✅ Pass     | `10-design-system.md` is comprehensive; 16-app overlay covers app rules             |
+| Add a new SQL table following naming rules      | ✅ Pass     | `21-database-conventions.md` covers naming, PK, FK, booleans, free-text             |
+| Add a new error code                            | 🟡 Partial  | Pattern is clear but registry inventory and generator command missing               |
+| Write a new linter rule                         | 🔴 Fail     | Linter framework, exit-code contract, allowlist syntax all absent                   |
+| Modify the install script's probe behavior      | 🟡 Partial  | Conceptual flow is documented; exact env var names and constants are paraphrased    |
+| Bump a dependency                               | 🔴 Fail     | Axios pinning rule lives only in memory; no consolidated reference                  |
+| Ship a release                                  | 🟡 Partial  | CI/CD flow documented; sync-script ordering and version.json drift consequences not |
+| Add a sibling-repo cross-reference              | 🔴 Fail     | `spec-folder-refs.allowlist` `[external]` syntax never shown                        |
 
 **Pass rate: 2/8 fully · 3/8 partial · 3/8 fail** = 43.75% net implementability for live-repo modifications.
 
@@ -182,16 +182,16 @@ The user's `mem://` files contain critical operational rules (axios pinning, git
 
 ## Recommended Fixes — Priority Ordered
 
-| # | Fix | File | Impact |
-|---|-----|------|--------|
-| 1 | Add "Validator Inventory" with all 16 scripts, exit codes, configs | `05-coding-guidelines.md` | +20 implementability |
-| 2 | Embed `forbidden-strings.toml` + allowlist syntax verbatim | `04-spec-authoring.md` | +10 |
-| 3 | Add error-code registry snapshot + generator command | `06-error-management.md` | +10 |
-| 4 | Add migration framework section (tool, path, naming) | `21-database-conventions.md` | +8 |
-| 5 | Add "Version & Sync Workflow" with command sequence | `04-spec-authoring.md` | +6 |
-| 6 | Pull verbatim env var names + regex into probe section | `20-self-update-app-update.md` | +5 |
-| 7 | Mirror `mem://index.md` Core rules as appendix | `24-lovable-folder-03-structure.md` | +4 |
-| 8 | Document enum cross-language generator | `07-enum-standards.md` | +3 |
+| #   | Fix                                                                | File                                | Impact               |
+| --- | ------------------------------------------------------------------ | ----------------------------------- | -------------------- |
+| 1   | Add "Validator Inventory" with all 16 scripts, exit codes, configs | `05-coding-guidelines.md`           | +20 implementability |
+| 2   | Embed `forbidden-strings.toml` + allowlist syntax verbatim         | `04-spec-authoring.md`              | +10                  |
+| 3   | Add error-code registry snapshot + generator command               | `06-error-management.md`            | +10                  |
+| 4   | Add migration framework section (tool, path, naming)               | `21-database-conventions.md`        | +8                   |
+| 5   | Add "Version & Sync Workflow" with command sequence                | `04-spec-authoring.md`              | +6                   |
+| 6   | Pull verbatim env var names + regex into probe section             | `20-self-update-app-update.md`      | +5                   |
+| 7   | Mirror `mem://index.md` Core rules as appendix                     | `24-lovable-folder-03-structure.md` | +4                   |
+| 8   | Document enum cross-language generator                             | `07-enum-standards.md`              | +3                   |
 
 **Projected score after all 8 fixes:** Live-modification implementability rises from **52 → 95**, validator-pass rate from **41 → 90**.
 
@@ -199,12 +199,12 @@ The user's `mem://` files contain critical operational rules (axios pinning, git
 
 ## Verdict
 
-| Question | Answer |
-|----------|--------|
-| Can a blind AI build a similar project from scratch using only this folder? | **Yes — at ~80% fidelity.** |
-| Can a blind AI safely modify *this* repo using only this folder? | **No — without source-folder access, it will fail CI on the first push.** |
-| What is the single highest-leverage fix? | **CRITICAL-1: Validator Inventory.** One section unlocks 20+ points. |
-| Is `06-error-management.md` self-sufficient if shipped alongside? | **Mostly.** The architecture, response envelope, modal, and `apperror` package are well-covered. The remaining gap is the live error-code registry + generator command. |
+| Question                                                                    | Answer                                                                                                                                                                  |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Can a blind AI build a similar project from scratch using only this folder? | **Yes — at ~80% fidelity.**                                                                                                                                             |
+| Can a blind AI safely modify _this_ repo using only this folder?            | **No — without source-folder access, it will fail CI on the first push.**                                                                                               |
+| What is the single highest-leverage fix?                                    | **CRITICAL-1: Validator Inventory.** One section unlocks 20+ points.                                                                                                    |
+| Is `06-error-management.md` self-sufficient if shipped alongside?           | **Mostly.** The architecture, response envelope, modal, and `apperror` package are well-covered. The remaining gap is the live error-code registry + generator command. |
 
 ---
 
@@ -212,16 +212,16 @@ The user's `mem://` files contain critical operational rules (axios pinning, git
 
 - [`22-gap-analysis.md`](./22-gap-analysis.md) — formal coverage scoring (97.6/100 build-fresh; this audit reframes for live-modify scenario)
 - [`27-folder-mapping.md`](./27-folder-mapping.md) — bidirectional source-folder index
-- [`99-consistency-report.md`](./99-consistency-report.md) — file inventory and validation history
+- [`99-consistency-report.md`](./readme.md) — file inventory and validation history
 
 ---
 
 ## Validation History
 
-| Date | Version | Action |
-|------|---------|--------|
-| 2026-04-22 | 1.0.0 | Initial blind-AI implementability audit; identified 3 critical, 3 high, 3 medium gaps; stress-tested 8 common tasks |
+| Date       | Version | Action                                                                                                              |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-22 | 1.0.0   | Initial blind-AI implementability audit; identified 3 critical, 3 high, 3 medium gaps; stress-tested 8 common tasks |
 
 ---
 
-*Blind-AI Implementability Audit — v1.0.0 — 2026-04-22*
+_Blind-AI Implementability Audit — v1.0.0 — 2026-04-22_

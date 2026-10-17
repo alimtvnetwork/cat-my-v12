@@ -32,8 +32,10 @@ import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
+  GUIDED_SIMULATION_MENU_EVENT,
   GUIDED_SIMULATION_STATE_EVENT,
   type GuidedSimulationCommandDetail,
+  type GuidedSimulationMenuDetail,
   type GuidedSimulationStateDetail,
 } from "@/components/guided-simulation/events";
 import { cn } from "@/lib/utils";
@@ -70,7 +72,7 @@ const CORE_NAV_ITEMS: NavigationItem[] = [
   { key: "home", label: "Home", href: "/", icon: Home },
   {
     key: "projects",
-    label: "Project",
+    label: "Projects",
     href: "/projects",
     icon: FolderKanban,
     tour: "standard-project-nav",
@@ -90,8 +92,6 @@ const AUX_NAV_ITEMS: NavigationItem[] = [
   { key: "ops", label: "Operations", href: "/ops", icon: Layers },
 ];
 
-const ALL_NAV_ITEMS: NavigationItem[] = [...CORE_NAV_ITEMS, ...AUX_NAV_ITEMS];
-
 export function StandardAppShell({
   title,
   subtitle,
@@ -101,18 +101,40 @@ export function StandardAppShell({
 }: StandardAppShellProps): React.JSX.Element {
   const density = useUiPrefsStore((s) => s.headerDensity);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [isSimulationRunning, setIsSimulationRunning] = useState(false);
+  const [isSimulationRunning, setIsSimulationRunning] = useState(
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.dataset.guidedSimulationRunning === "true",
+  );
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const onSimulationState = (event: Event) => {
       const detail = (event as CustomEvent<GuidedSimulationStateDetail>).detail;
       setIsSimulationRunning(Boolean(detail?.isRunning));
+
+      if (detail?.isRunning && window.location.pathname === "/") {
+        setIsMenuOpen(true);
+      }
     };
 
     window.addEventListener(GUIDED_SIMULATION_STATE_EVENT, onSimulationState);
 
     return () => {
       window.removeEventListener(GUIDED_SIMULATION_STATE_EVENT, onSimulationState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onSimulationMenu = (event: Event) => {
+      const detail = (event as CustomEvent<GuidedSimulationMenuDetail>).detail;
+      setIsMenuOpen(Boolean(detail?.isOpen));
+    };
+
+    window.addEventListener(GUIDED_SIMULATION_MENU_EVENT, onSimulationMenu);
+
+    return () => {
+      window.removeEventListener(GUIDED_SIMULATION_MENU_EVENT, onSimulationMenu);
     };
   }, []);
 
@@ -175,9 +197,6 @@ export function StandardAppShell({
     return false;
   };
 
-  const currentNav = ALL_NAV_ITEMS.find((item) => getNavActive(item.key)) ?? CORE_NAV_ITEMS[0];
-  const CurrentNavIcon = currentNav.icon;
-
   return (
     <div
       data-standard-shell="true"
@@ -219,10 +238,20 @@ export function StandardAppShell({
           </Link>
 
           {/* Dropdown Menu Trigger */}
-          <DropdownMenu>
+          <DropdownMenu
+            open={isMenuOpen}
+            onOpenChange={(isOpen) => {
+              if (!isOpen && isSimulationRunning && pathname === "/") {
+                return;
+              }
+
+              setIsMenuOpen(isOpen);
+            }}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                data-tour="standard-menu-trigger"
                 className="group flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
               >
                 <Menu className="h-3.5 w-3.5 text-cyan-400 transition-transform group-hover:scale-110" />
@@ -244,6 +273,8 @@ export function StandardAppShell({
               <div className="flex flex-col gap-0.5">
                 {CORE_NAV_ITEMS.map((item) => {
                   const isCurrentActive = getNavActive(item.key);
+                  const isSimulationProjectTarget =
+                    isSimulationRunning && pathname === "/" && item.key === "projects";
                   const ItemIcon = item.icon;
 
                   return (
@@ -251,11 +282,14 @@ export function StandardAppShell({
                       <Link
                         to={item.href}
                         data-tour={item.tour}
+                        onClick={() => setIsMenuOpen(false)}
                         className={cn(
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
                             ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
                             : "text-slate-300 hover:bg-white/10 hover:text-white",
+                          isSimulationProjectTarget &&
+                            "border border-amber-300 bg-amber-400/20 text-amber-100 ring-2 ring-amber-300/80 shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-pulse",
                         )}
                       >
                         <div className="flex items-center gap-2">
@@ -292,6 +326,7 @@ export function StandardAppShell({
                     <DropdownMenuItem asChild key={item.key}>
                       <Link
                         to={item.href}
+                        onClick={() => setIsMenuOpen(false)}
                         className={cn(
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
@@ -322,20 +357,6 @@ export function StandardAppShell({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Divider */}
-          <div className="h-4 w-px bg-white/15 shrink-0" />
-
-          {/* Current Page Highlight Badge */}
-          <Link
-            to={currentNav.href}
-            title={`Current location: ${currentNav.label}`}
-            className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-md bg-cyan-500/15 border border-cyan-400/50 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.25)] shrink-0 select-none hover:bg-cyan-500/25 transition-colors"
-          >
-            <CurrentNavIcon className="h-3.5 w-3.5 text-cyan-300" />
-            <span>{currentNav.label}</span>
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee] animate-pulse ml-0.5" />
-          </Link>
-
           {/* Upper Bar Concise Sitemap */}
           <div className="hidden lg:flex items-center ml-2 min-w-0 flex-nowrap overflow-hidden">
             <GlobalSitemapBar />
@@ -348,13 +369,19 @@ export function StandardAppShell({
             type="button"
             data-tour="simulation-launcher"
             onClick={() => {
+              if (isSimulationRunning) {
+                return;
+              }
+
+              setIsMenuOpen(false);
               const detail: GuidedSimulationCommandDetail = { command: "start" };
               window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }));
             }}
-            className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400"
+            disabled={isSimulationRunning}
+            className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PlayCircle className="h-3.5 w-3.5" />
-            <span>Start Simulation</span>
+            <span>{isSimulationRunning ? "Simulation Running" : "Start Simulation"}</span>
           </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />

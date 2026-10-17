@@ -159,7 +159,9 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [message, setMessage] = useState("Load image to start.");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [hasGreyscalePreview, setHasGreyscalePreview] = useState(true);
+  const [hasGreyscalePreview, setHasGreyscalePreview] = useState(
+    props?.hasCanvasOverlays ?? true,
+  );
 
   const getVisibleHoles = useCallback(
     (holes: Pin1HoleItem[]): Pin1HoleItem[] => {

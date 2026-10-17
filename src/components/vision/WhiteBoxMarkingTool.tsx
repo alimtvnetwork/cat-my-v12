@@ -40,11 +40,15 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               selectedMaskIndex={model.selectedMaskIndex}
               onSearchRegionChange={model.changeActiveCanvasRegion}
               onDragStateChange={model.setDragState}
+              hasOverlays={props.hasCanvasOverlays ?? true}
             />
           </div>
           
           {/* Right: Settings Panel */}
-          <div className="flex w-[400px] shrink-0 flex-col overflow-hidden rounded border border-[#2a3138] bg-[#11161b] shadow-sm">
+          <div
+            data-tour="rule-config-controls"
+            className="flex w-[400px] shrink-0 flex-col overflow-hidden rounded border border-[#2a3138] bg-[#11161b] shadow-sm"
+          >
             <BoxReviewPanel
               greyscaleLevel={model.greyscaleLevel}
               marginPx={model.marginPx}

@@ -69,6 +69,18 @@ async function applyDensity(page: Page, density: "comfortable" | "compact"): Pro
       await page.waitForLoadState("domcontentloaded", { timeout: 10_000 }).catch(() => {});
       await page.waitForSelector('header[data-app-shell="true"]', { timeout: 10_000 });
       await page.evaluate(async (nextDensity) => {
+        const win = window as unknown as {
+          __useUiPrefsStore?: {
+            getState: () => { setHeaderDensity: (d: string) => void };
+          };
+        };
+
+        if (win.__useUiPrefsStore) {
+          win.__useUiPrefsStore.getState().setHeaderDensity(nextDensity);
+
+          return;
+        }
+
         const mod = await import("/src/lib/stores/ui-prefs-store.ts");
         mod.useUiPrefsStore.getState().setHeaderDensity(nextDensity);
       }, density);
@@ -76,7 +88,10 @@ async function applyDensity(page: Page, density: "comfortable" | "compact"): Pro
 
       return;
     } catch (error) {
-      if (attempt === 2) throw error;
+      if (attempt === 2) {
+        throw error;
+      }
+
       await page.waitForTimeout(500);
     }
   }

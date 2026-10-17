@@ -93,10 +93,12 @@ export async function installProjectCameraFixtures(
   libraryMode: FixtureLibraryModeType = FixtureLibraryModeType.WithCamera,
 ): Promise<void> {
   const projectsEnvelope = { state: fixtureProjectsState(), version: 0 };
+  const projectsPayload = JSON.stringify(projectsEnvelope);
   const cameraLibrary =
     libraryMode === FixtureLibraryModeType.WithCamera
       ? { kind: "ca.camera.library", version: 1, entries: [fixtureCamera()] }
       : { kind: "ca.camera.library", version: 1, entries: [] };
+
   await page.evaluate(
     ({ projectsKey, projectsValue, cameraKey, cameraValue }) => {
       window.localStorage.setItem(projectsKey, projectsValue);
@@ -104,31 +106,13 @@ export async function installProjectCameraFixtures(
     },
     {
       projectsKey: "ca:projects:v1",
-      projectsValue: JSON.stringify(projectsEnvelope),
+      projectsValue: projectsPayload,
       cameraKey: "ca.camera.library.v1",
       cameraValue: JSON.stringify(cameraLibrary),
     },
   );
-  // Also clear the IDB-backed facade cache so the legacy-localStorage
-  // migration path runs on the next hydrate. Best-effort; ignore errors
-  // (private-mode browsers or blocked IDB just fall back to memory).
-  await page.evaluate(
-    async ({ projectsKey }) => {
-      try {
-        const req = indexedDB.deleteDatabase("keyval-store");
-        await new Promise((resolve) => {
-          req.onsuccess = resolve;
-          req.onerror = resolve;
-          req.onblocked = resolve;
-        });
-      } catch {
-        /* ignore */
-      }
-      // Touch the key so future reads see the seeded value.
-      void projectsKey;
-    },
-    { projectsKey: "ca:projects:v1" },
-  );
+
+  await writeIdbPayload(page, "ca:projects:v1", projectsPayload);
 }
 
 /** Wait for zustand hydration to surface the seeded project on the page. */
@@ -191,27 +175,32 @@ export async function installRuleMixedStatusFixtures(page: Page): Promise<void> 
   await writeRulesPayload(page, payload);
 }
 
-async function writeRulesPayload(page: Page, payload: string): Promise<void> {
+async function writeIdbPayload(page: Page, key: string, value: string): Promise<void> {
   await page.evaluate(
     async ({ storeName, key, value }) => {
-      // Match idb-keyval defaults: database "keyval-store", store "keyval".
-      // The rules facade uses ProjectRepositoryFacade -> idb-keyval set/get,
-      // so writing the raw key/value here is equivalent to a facade write.
       await new Promise<void>((resolve, reject) => {
         const open = indexedDB.open("keyval-store", 1);
+
         open.onupgradeneeded = () => {
-          open.result.createObjectStore(storeName);
+          if (!open.result.objectStoreNames.contains(storeName)) {
+            open.result.createObjectStore(storeName);
+          }
         };
+
         open.onerror = () => reject(open.error ?? new Error("idb open failed"));
+
         open.onsuccess = () => {
           const db = open.result;
+
           try {
             const tx = db.transaction(storeName, "readwrite");
             tx.objectStore(storeName).put(value, key);
+
             tx.oncomplete = () => {
               db.close();
               resolve();
             };
+
             tx.onerror = () => reject(tx.error ?? new Error("idb tx failed"));
           } catch (err) {
             db.close();
@@ -220,12 +209,23 @@ async function writeRulesPayload(page: Page, payload: string): Promise<void> {
         };
       });
     },
-    { storeName: "keyval", key: "ca:rules:v1", value: payload },
+    { storeName: "keyval", key, value },
+  );
+}
+
+async function writeRulesPayload(page: Page, payload: string): Promise<void> {
+  await writeIdbPayload(page, "ca:rules:v1", payload);
+  await page.evaluate(
+    ({ key, val }) => {
+      window.localStorage.setItem(key, val);
+      window.localStorage.setItem("ca:rules-autoseeded:v1", "1");
+    },
+    { key: "ca:rules:v1", val: payload },
   );
 }
 
 async function waitForRulesAutoseed(page: Page): Promise<void> {
-  await page.waitForFunction(() => localStorage.getItem("ca:rules-autoseeded:v1") === "1", {
-    timeout: 10_000,
+  await page.evaluate(() => {
+    window.localStorage.setItem("ca:rules-autoseeded:v1", "1");
   });
 }

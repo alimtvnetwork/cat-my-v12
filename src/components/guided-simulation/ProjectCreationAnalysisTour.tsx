@@ -5,10 +5,16 @@ import { Square } from "lucide-react";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
 import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
+import pin1SetupImage from "../../../assets/ui/13-session-screenshot-file13.png";
+import greyscaleSetupImage from "../../../assets/ui/14-session-screenshot-file14.png";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
+  GUIDED_SIMULATION_ANALYSIS_EVENT,
+  GUIDED_SIMULATION_MENU_EVENT,
   GUIDED_SIMULATION_STATE_EVENT,
+  type GuidedSimulationAnalysisDetail,
   type GuidedSimulationCommandDetail,
+  type GuidedSimulationMenuDetail,
   type GuidedSimulationStateDetail,
 } from "./events";
 import {
@@ -32,11 +38,186 @@ const TOUR_PIN1_RULE_ID = "guided-demo-pin1-rule-d1";
 const TOUR_PATTERN_RULE_ID = "guided-demo-greyscale-rule-d1";
 const TOUR_VIEWPORT_PADDING = 96;
 const TOUR_MIN_STEP_MS = 6500;
-const DEVICE_LAYOUTS = [
-  { id: "d1", label: "Device 1", x: 70, y: 145, w: 172, h: 170, pinX: 98, pinY: 281 },
-  { id: "d2", label: "Device 2", x: 309, y: 145, w: 172, h: 170, pinX: 331, pinY: 282 },
-  { id: "d3", label: "Device 3", x: 546, y: 145, w: 172, h: 170, pinX: 568, pinY: 282 },
-  { id: "d4", label: "Device 4", x: 782, y: 145, w: 172, h: 170, pinX: 802, pinY: 282 },
+
+interface GuidedDeviceLayout {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  pinX: number;
+  pinY: number;
+  pinTopY: number;
+  pinBottomY: number;
+  searchX: number;
+  searchY: number;
+  searchWidth: number;
+  searchHeight: number;
+  textX: number;
+  textTopY: number;
+  textBottomY: number;
+  textStep: number;
+  textWidth: number;
+  textHeight: number;
+  imageWidth: number;
+  imageHeight: number;
+  pinSearchRegion?: { x: number; y: number; width: number; height: number };
+  greyscalePatternRegion?: { x: number; y: number; width: number; height: number };
+  isEmbeddedGuidanceImage?: boolean;
+}
+
+const PIN1_SETUP_DEVICE_LAYOUT: GuidedDeviceLayout = {
+  id: "d1",
+  label: "Device 1",
+  x: 171,
+  y: 271,
+  w: 802,
+  h: 211,
+  pinX: 288,
+  pinY: 437,
+  pinTopY: 224,
+  pinBottomY: 481,
+  searchX: 171,
+  searchY: 271,
+  searchWidth: 802,
+  searchHeight: 211,
+  textX: 379,
+  textTopY: 309,
+  textBottomY: 363,
+  textStep: 77,
+  textWidth: 60,
+  textHeight: 47,
+  imageWidth: 1072,
+  imageHeight: 605,
+  pinSearchRegion: { x: 218, y: 361, width: 138, height: 116 },
+  isEmbeddedGuidanceImage: true,
+};
+
+const GREYSCALE_SETUP_DEVICE_LAYOUT: GuidedDeviceLayout = {
+  id: "d1",
+  label: "Device 1",
+  x: 177,
+  y: 274,
+  w: 798,
+  h: 209,
+  pinX: 286,
+  pinY: 429,
+  pinTopY: 224,
+  pinBottomY: 482,
+  searchX: 345,
+  searchY: 285,
+  searchWidth: 456,
+  searchHeight: 137,
+  textX: 382,
+  textTopY: 309,
+  textBottomY: 358,
+  textStep: 79,
+  textWidth: 69,
+  textHeight: 41,
+  imageWidth: 1077,
+  imageHeight: 607,
+  greyscalePatternRegion: { x: 373, y: 291, width: 400, height: 116 },
+  isEmbeddedGuidanceImage: true,
+};
+
+const DEVICE_LAYOUTS: readonly GuidedDeviceLayout[] = [
+  {
+    id: "d1",
+    label: "Device 1",
+    x: 70,
+    y: 143,
+    w: 180,
+    h: 202,
+    pinX: 97,
+    pinY: 281,
+    pinTopY: 143,
+    pinBottomY: 313,
+    searchX: 69,
+    searchY: 173,
+    searchWidth: 182,
+    searchHeight: 141,
+    textX: 114,
+    textTopY: 195,
+    textBottomY: 229,
+    textStep: 19,
+    textWidth: 16,
+    textHeight: 29,
+    imageWidth: 1042,
+    imageHeight: 403,
+  },
+  {
+    id: "d2",
+    label: "Device 2",
+    x: 305,
+    y: 143,
+    w: 180,
+    h: 202,
+    pinX: 332,
+    pinY: 282,
+    pinTopY: 143,
+    pinBottomY: 313,
+    searchX: 305,
+    searchY: 173,
+    searchWidth: 182,
+    searchHeight: 141,
+    textX: 350,
+    textTopY: 195,
+    textBottomY: 229,
+    textStep: 19,
+    textWidth: 16,
+    textHeight: 29,
+    imageWidth: 1042,
+    imageHeight: 403,
+  },
+  {
+    id: "d3",
+    label: "Device 3",
+    x: 542,
+    y: 143,
+    w: 180,
+    h: 202,
+    pinX: 568,
+    pinY: 282,
+    pinTopY: 143,
+    pinBottomY: 313,
+    searchX: 542,
+    searchY: 173,
+    searchWidth: 182,
+    searchHeight: 141,
+    textX: 587,
+    textTopY: 195,
+    textBottomY: 229,
+    textStep: 19,
+    textWidth: 16,
+    textHeight: 29,
+    imageWidth: 1042,
+    imageHeight: 403,
+  },
+  {
+    id: "d4",
+    label: "Device 4",
+    x: 779,
+    y: 143,
+    w: 180,
+    h: 202,
+    pinX: 802,
+    pinY: 282,
+    pinTopY: 143,
+    pinBottomY: 313,
+    searchX: 778,
+    searchY: 173,
+    searchWidth: 182,
+    searchHeight: 141,
+    textX: 823,
+    textTopY: 195,
+    textBottomY: 229,
+    textStep: 19,
+    textWidth: 16,
+    textHeight: 29,
+    imageWidth: 1042,
+    imageHeight: 403,
+  },
 ] as const;
 
 function getDevicePassRegions() {
@@ -60,8 +241,10 @@ interface TourStep extends Step {
     | "go-ruleset-create"
     | "create-ruleset"
     | "go-add-rule"
+    | "select-pin1-tool"
     | "add-pin1-rule"
     | "finish-pin1-config"
+    | "select-greyscale-tool"
     | "add-greyscale-rule"
     | "finish-greyscale-config"
     | "focus-tree"
@@ -92,7 +275,7 @@ function scrollTourTargetIntoView(step: TourStep): void {
   }
 
   target.scrollIntoView({
-    behavior: "smooth",
+    behavior: "auto",
     block: "center",
     inline: "center",
   });
@@ -128,7 +311,7 @@ function scrollTourTargetIntoView(step: TourStep): void {
     parent = parent.parentElement;
   }
 
-  window.setTimeout(() => {
+  window.requestAnimationFrame(() => {
     const rect = target.getBoundingClientRect();
     let deltaY = 0;
     let deltaX = 0;
@@ -146,17 +329,17 @@ function scrollTourTargetIntoView(step: TourStep): void {
     }
 
     if (Math.abs(deltaY) > 1 || Math.abs(deltaX) > 1) {
-      window.scrollBy({ top: deltaY, left: deltaX, behavior: "smooth" });
+      window.scrollBy({ top: deltaY, left: deltaX, behavior: "auto" });
     }
 
     window.dispatchEvent(new Event("resize"));
-  }, 180);
+  });
 }
 
 function makeDemoRules(): EditorRule[] {
   return [
-    makePin1Rule(DEVICE_LAYOUTS[0], 1, ruleSetupImage),
-    makeGreyscaleRule(DEVICE_LAYOUTS[0], 2, ruleSetupImage),
+    makePin1Rule(PIN1_SETUP_DEVICE_LAYOUT, 1, pin1SetupImage),
+    makeGreyscaleRule(GREYSCALE_SETUP_DEVICE_LAYOUT, 2, greyscaleSetupImage),
   ];
 }
 
@@ -168,8 +351,8 @@ function makeAnalysisRules(): EditorRule[] {
       name: "Rule 1: Pin 1 Orientation",
       x: 0,
       y: 0,
-      width: 1035,
-      height: 395,
+      width: 1042,
+      height: 403,
       params: {
         ...makePin1Rule(DEVICE_LAYOUTS[0], 1, analysisImage).params,
         imageRef: analysisImage,
@@ -188,12 +371,8 @@ function makeAnalysisRules(): EditorRule[] {
   ];
 }
 
-function makePin1Rule(
-  device: (typeof DEVICE_LAYOUTS)[number],
-  number: number,
-  imageRef: string,
-): EditorRule {
-  const searchRegion = {
+function makePin1Rule(device: GuidedDeviceLayout, number: number, imageRef: string): EditorRule {
+  const searchRegion = device.pinSearchRegion ?? {
     x: Math.max(0, device.pinX - 32),
     y: Math.max(0, device.pinY - 32),
     width: 64,
@@ -217,14 +396,29 @@ function makePin1Rule(
       toolCode: "T117",
       toolType: "Pin 1 Orientation Config",
       imageRef,
+      imageWidth: device.imageWidth,
+      imageHeight: device.imageHeight,
+      isEmbeddedGuidanceImage: Boolean(device.isEmbeddedGuidanceImage),
       tolerancePx: 25,
+      searchRegion,
+      ...(device.isEmbeddedGuidanceImage ? {} : { region: searchRegion }),
       pin1Config: {
         thresholdLuma: 35,
         tolerancePx: 25,
         angleToleranceDeg: 1,
-        registeredPin1: { x: device.pinX, y: device.pinY, radius: 11, centerX: device.pinX, centerY: device.pinY },
-        searchRegion,
-        packageRegion: { x: device.x, y: device.y, width: device.w, height: device.h },
+        registeredPin1: {
+          x: device.pinX,
+          y: device.pinY,
+          radius: 11,
+          centerX: device.pinX,
+          centerY: device.pinY,
+        },
+        ...(device.isEmbeddedGuidanceImage
+          ? {}
+          : {
+              searchRegion,
+              packageRegion: { x: device.x, y: device.y, width: device.w, height: device.h },
+            }),
         centerX: device.pinX,
         centerY: device.pinY,
         radius: 11,
@@ -234,27 +428,38 @@ function makePin1Rule(
 }
 
 function makeGreyscaleRule(
-  device: (typeof DEVICE_LAYOUTS)[number],
+  device: GuidedDeviceLayout,
   number: number,
   imageRef: string,
 ): EditorRule {
-  const searchRegion = { x: device.x, y: device.y, width: device.w, height: device.h };
-  const patternRegion = {
-    x: device.x + 42,
-    y: device.y + 50,
-    width: Math.max(80, device.w - 68),
-    height: 70,
+  const searchRegion = {
+    x: device.searchX,
+    y: device.searchY,
+    width: device.searchWidth,
+    height: device.searchHeight,
   };
-  const referenceBoxes = [
-    { number: 1, x: device.x + 40, y: device.y + 5, width: 18, height: 24, area: 432, expectedLuma: 205 },
-    { number: 2, x: device.x + 75, y: device.y + 5, width: 18, height: 24, area: 432, expectedLuma: 205 },
-    { number: 3, x: device.x + 110, y: device.y + 5, width: 18, height: 24, area: 432, expectedLuma: 205 },
-    { number: 4, x: device.x + 145, y: device.y + 5, width: 18, height: 24, area: 432, expectedLuma: 205 },
-    { number: 5, x: device.x + 40, y: device.y + 150, width: 18, height: 18, area: 324, expectedLuma: 205 },
-    { number: 6, x: device.x + 75, y: device.y + 150, width: 18, height: 18, area: 324, expectedLuma: 205 },
-    { number: 7, x: device.x + 110, y: device.y + 150, width: 18, height: 18, area: 324, expectedLuma: 205 },
-    { number: 8, x: device.x + 145, y: device.y + 150, width: 18, height: 18, area: 324, expectedLuma: 205 },
+  const patternRegion = device.greyscalePatternRegion ?? {
+    x: device.textX - 5,
+    y: device.textTopY - 5,
+    width: device.textStep * 4 + device.textWidth + 10,
+    height: device.textBottomY - device.textTopY + device.textHeight + 10,
+  };
+  const characterRows = [
+    { y: device.textTopY, characters: "A1234" },
+    { y: device.textBottomY, characters: "B5678" },
   ];
+  const referenceBoxes = characterRows.flatMap((row, rowIndex) =>
+    Array.from(row.characters).map((character, characterIndex) => ({
+      number: rowIndex * row.characters.length + characterIndex + 1,
+      x: device.textX + device.textStep * characterIndex,
+      y: row.y,
+      width: device.textWidth,
+      height: device.textHeight,
+      area: device.textWidth * device.textHeight,
+      expectedCharacter: character,
+      expectedLuma: 205,
+    })),
+  );
 
   return {
     id: `guided-demo-greyscale-rule-${device.id}`,
@@ -273,11 +478,15 @@ function makeGreyscaleRule(
       toolCode: "T116",
       toolType: "Greyscale Pattern Matching",
       imageRef,
-      threshold: 170,
-      greyscaleLevel: 170,
+      imageWidth: device.imageWidth,
+      imageHeight: device.imageHeight,
+      isEmbeddedGuidanceImage: Boolean(device.isEmbeddedGuidanceImage),
+      threshold: 62,
+      greyscaleLevel: 62,
       minMatchPercent: 80,
       lumaTolerance: 255,
       searchRegion,
+      ...(device.isEmbeddedGuidanceImage ? {} : { region: searchRegion }),
       patternRegion,
       referenceBoxes,
       constellation: referenceBoxes,
@@ -303,15 +512,16 @@ function makeMultiDeviceGreyscaleRule(): EditorRule {
     ...makeGreyscaleRule(DEVICE_LAYOUTS[0], 2, analysisImage),
     id: TOUR_PATTERN_RULE_ID,
     name: "Rule 2: Greyscale Pattern Matching",
-    x: 0,
-    y: 0,
-    width: 1035,
-    height: 395,
+    x: 60,
+    y: 168,
+    width: 910,
+    height: 151,
     params: {
       ...makeGreyscaleRule(DEVICE_LAYOUTS[0], 2, analysisImage).params,
       imageRef: analysisImage,
-      searchRegion: { x: 0, y: 0, width: 1035, height: 395 },
-      patternRegion: { x: 60, y: 130, width: 900, height: 210 },
+      searchRegion: { x: 60, y: 168, width: 910, height: 151 },
+      region: { x: 60, y: 168, width: 910, height: 151 },
+      patternRegion: { x: 109, y: 190, width: 811, height: 73 },
       referenceBoxes,
       constellation: referenceBoxes,
       constellationJson: JSON.stringify(referenceBoxes),
@@ -392,8 +602,7 @@ function ensureDemoRuleset(projectId: string): DemoContext {
   let rulesetId =
     project?.rulesetIds
       .map((id) => store.rulesets[id])
-      .find((ruleset) => ruleset?.name === TOUR_RULESET_NAME)?.id ??
-    project?.rulesetIds[0];
+      .find((ruleset) => ruleset?.name === TOUR_RULESET_NAME)?.id ?? project?.rulesetIds[0];
 
   if (!rulesetId) {
     rulesetId = store.createRuleset(projectId, TOUR_RULESET_NAME);
@@ -409,7 +618,11 @@ function ensureDemoRuleset(projectId: string): DemoContext {
   return { projectId, rulesetId };
 }
 
-function upsertDemoRule(params: { projectId: string; rulesetId: string; ruleId: string }): DemoContext {
+function upsertDemoRule(params: {
+  projectId: string;
+  rulesetId: string;
+  ruleId: string;
+}): DemoContext {
   const { projectId, rulesetId, ruleId } = params;
   const store = useProjectStore.getState();
   const ruleset = store.rulesets[rulesetId];
@@ -453,18 +666,60 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const navigate = useNavigate();
   const [isRunning, setIsRunning] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const isRunningRef = useRef(false);
+  const isStepAdvancingRef = useRef(false);
   const demoRef = useRef<DemoContext | null>(null);
   const actionKeysRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<number | null>(null);
   const targetWaitTimerRef = useRef<number | null>(null);
+  const analysisTimersRef = useRef<number[]>([]);
+
+  const setAnalysisLoading = useCallback((isLoading: boolean) => {
+    const detail: GuidedSimulationAnalysisDetail = { isLoading };
+    window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_ANALYSIS_EVENT, { detail }));
+  }, []);
+
+  const setSimulationMenuOpen = useCallback((isOpen: boolean) => {
+    const detail: GuidedSimulationMenuDetail = { isOpen };
+    window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_MENU_EVENT, { detail }));
+  }, []);
+
+  const clearAnalysisTimers = useCallback(() => {
+    for (const timerId of analysisTimersRef.current) {
+      window.clearTimeout(timerId);
+    }
+
+    analysisTimersRef.current = [];
+    setAnalysisLoading(false);
+  }, [setAnalysisLoading]);
+
+  const deleteDemoProject = useCallback(() => {
+    const demo = demoRef.current;
+    demoRef.current = null;
+
+    if (!demo) {
+      return;
+    }
+
+    if (demo.rulesetId) {
+      useValidationStore.getState().clear(demo.rulesetId);
+    }
+
+    useValidationStore.getState().setActiveRuleset(null);
+    useRulesStore.getState().replaceAll([], [], []);
+    useProjectStore.getState().deleteProject(demo.projectId);
+    void navigate({ to: "/projects" });
+    toast.info("Simulation complete. Demo project removed.");
+  }, [navigate]);
 
   const steps = useMemo<readonly TourStep[]>(
     () => [
       {
-        target: "[data-tour='standard-project-nav']",
+        target: "[data-tour='standard-menu-trigger']",
         placement: "bottom",
-        title: "Go to projects",
-        content: "First open the Project area where inspection projects are created and managed.",
+        title: "Click Projects",
+        content:
+          "The menu is open from the Home page. Choose the highlighted Projects row to begin the inspection workflow.",
         actionKey: "go-project-list",
         actionPhase: "exit",
         autoMs: 6500,
@@ -473,16 +728,18 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         target: "[data-tour='projects-create-button']",
         placement: "bottom",
         title: "Open project creation",
-        content: "Start from the Projects page, then choose New Project to create the demo inspection project.",
+        content:
+          "Start from the Projects page, then choose New Project to create the demo inspection project.",
         actionKey: "go-project-create",
         actionPhase: "exit",
         autoMs: 5500,
       },
       {
-        target: "[data-tour='simulation-project-create-panel']",
-        title: "Create project",
-        content: "Create a new inspection project named demo. This is the first operator step.",
-        autoMs: 5500,
+        target: "[data-tour='simulation-project-name']",
+        placement: "bottom",
+        title: "Name the project",
+        content: "Set the project name to demo before creating the inspection project.",
+        autoMs: 7000,
       },
       {
         target: "[data-tour='simulation-project-create-submit']",
@@ -490,13 +747,14 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         content: "The demo project is saved, then the app lands on the project overview page.",
         actionKey: "create-project",
         actionPhase: "exit",
-        autoMs: 4500,
+        autoMs: 12000,
       },
       {
         target: "[data-tour='project-overview-tab']",
         placement: "bottom",
         title: "Project demo opened",
-        content: "The app has landed on the newly-created demo project. This is the overview workspace before any ruleset exists.",
+        content:
+          "The app has landed on the newly-created demo project. This is the overview workspace before any ruleset exists.",
         autoMs: 7000,
       },
       {
@@ -512,12 +770,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         content: "Now create the demoset ruleset category for the inspection rules.",
         actionKey: "go-ruleset-create",
         actionPhase: "exit",
-        autoMs: 6000,
+        autoMs: 12000,
       },
       {
         target: "[data-tour='simulation-ruleset-create-panel']",
         title: "Configure ruleset",
-        content: "Name the ruleset demoset. This is only a rule category, not an image registration step.",
+        content:
+          "Name the ruleset demoset. This is only a rule category, not an image registration step.",
         autoMs: 5500,
       },
       {
@@ -529,107 +788,134 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 4500,
       },
       {
-        target: "[data-tour='project-inspection-program']",
-        title: "Inspection program",
-        content: "The left tree shows demo, the device, demoset, and the rules that will execute in order.",
+        target: "[data-tour='project-program-tab']",
+        placement: "right",
+        title: "Empty inspection program",
+        content: "The program now contains demo and demoset, but no rules have been added yet.",
         actionKey: "focus-tree",
-        autoMs: 5500,
+        autoMs: 7000,
       },
       {
         target: "[data-tour='project-add-rule']",
-        title: "Add rule",
+        placement: "top",
+        title: "Add the first rule",
         content: "Open the rule catalog to add the first tool into demoset.",
         actionKey: "go-add-rule",
         actionPhase: "exit",
-        autoMs: 4500,
+        autoMs: 7000,
       },
       {
-        target: "[data-tour='rule-add-tool-catalog']",
+        target: "[data-tour='rule-add-catalog-header']",
+        placement: "bottom",
         title: "Tool catalog",
-        content: "This catalog lists the available inspection tools and any existing calibrated rules.",
+        content:
+          "This catalog lists the available inspection tools and any existing calibrated rules.",
         autoMs: 5500,
       },
       {
         target: "[data-tour='rule-add-pin1-tool']",
-        placement: "right",
-        title: "Add PIN1 rule",
-        content: "The PIN1 orientation rule is added using the single-device setup image.",
-        actionKey: "add-pin1-rule",
-        actionPhase: "exit",
-        autoMs: 5000,
+        placement: "auto",
+        title: "Select PIN1 tool",
+        content:
+          "Select PIN1 Orientation from the catalog. The rule is not added until Configure is chosen.",
+        actionKey: "select-pin1-tool",
+        autoMs: 6500,
       },
       {
-        target: "[data-tour='rule-config-summary-panel']",
+        target: "[data-tour='rule-add-configure-selected']",
         placement: "left",
         title: "Configure PIN1",
-        content: "The visual configuration screen shows the registered PIN1 region for the rule.",
+        content: "Choose Configure to add the PIN1 rule and set its inspection region.",
+        actionKey: "add-pin1-rule",
+        actionPhase: "exit",
+        autoMs: 7000,
+      },
+      {
+        target: "[data-tour='rule-config-controls']",
+        placement: "left",
+        title: "Set PIN1 region",
+        content:
+          "The supplied PIN1 configuration image shows the search region and registered Pin 1 result.",
         actionKey: "finish-pin1-config",
         actionPhase: "exit",
-        autoMs: 6000,
+        autoMs: 7500,
       },
       {
         target: "[data-tour='rule-add-greyscale-tool']",
-        placement: "right",
-        title: "Add Greyscale rule",
-        content: "The Greyscale Pattern Matching rule is added using the same single-device setup image.",
-        actionKey: "add-greyscale-rule",
-        actionPhase: "exit",
-        autoMs: 5000,
+        placement: "auto",
+        title: "Select Greyscale tool",
+        content:
+          "Select Greyscale Pattern Matching. Configure will add it after the tool is selected.",
+        actionKey: "select-greyscale-tool",
+        autoMs: 6500,
       },
       {
-        target: "[data-tour='rule-config-summary-panel']",
+        target: "[data-tour='rule-add-configure-selected']",
         placement: "left",
         title: "Configure Greyscale",
-        content: "The visual configuration screen shows the pattern region and feature boxes before returning to Overview.",
-        actionKey: "finish-greyscale-config",
+        content: "Choose Configure to add the Greyscale rule and set the pattern region.",
+        actionKey: "add-greyscale-rule",
         actionPhase: "exit",
-        autoMs: 6000,
+        autoMs: 7000,
       },
       {
-        target: "[data-tour='project-rule-strip']",
+        target: "[data-tour='rule-config-controls']",
+        placement: "left",
+        title: "Set Greyscale region",
+        content:
+          "The supplied Greyscale configuration image shows its search region, pattern region, and character boxes.",
+        actionKey: "finish-greyscale-config",
+        actionPhase: "exit",
+        autoMs: 8000,
+      },
+      {
+        target: "[data-tour='project-inspection-program']",
         title: "Configured rules",
-        content: "The project contains exactly two rules: PIN1 Orientation and Greyscale Pattern Matching.",
+        content:
+          "The project contains exactly two rules: PIN1 Orientation and Greyscale Pattern Matching.",
         actionKey: "focus-rules",
         autoMs: 6500,
       },
       {
-        target: "[data-tour='project-image-samples']",
-        placement: "right",
+        target: "[data-tour='project-image-source-tab']",
+        placement: "auto",
         title: "Inspection image registered",
-        content: "The project has its own inspection image. Rule registration images stay separate from the project canvas.",
+        content:
+          "The project has its own inspection image. Rule registration images stay separate from the project canvas.",
         actionKey: "register-image",
         autoMs: 5000,
       },
       {
-        target: "[data-tour='project-analysis-canvas']",
+        target: "[data-tour='project-analysis-canvas-status']",
+        placement: "bottom",
         title: "Visual analysis canvas",
-        content: "This is where the final inspection result is presented with rule overlays on the workpiece image.",
+        content:
+          "This is where the final inspection result is presented with rule overlays on the workpiece image.",
         autoMs: 5500,
       },
       {
         target: "[data-tour='project-run-analysis']",
         placement: "top",
         title: "Run analysis",
-        content: "The simulation triggers the project Run action, then presents the two-rule visual result across all devices.",
+        content:
+          "The simulation triggers the project Run action, then presents the two-rule visual result across all devices.",
         actionKey: "run-analysis",
         actionPhase: "exit",
         autoMs: 5000,
       },
       {
-        target: "[data-tour='project-results']",
+        target: "[data-tour='project-analysis-results']",
         placement: "top",
         title: "Results",
-        content: "All devices are shown as passed with two rules only: one PIN1 rule and one Greyscale Pattern Matching rule.",
+        content:
+          "All devices are shown as passed with two rules only: one PIN1 rule and one Greyscale Pattern Matching rule.",
         autoMs: 7500,
       },
     ],
     [],
   );
 
-  const joyrideSteps = useMemo(
-    () => steps.map((step) => ({ ...step, disableBeacon: true })),
-    [steps],
-  );
+  const joyrideSteps = useMemo(() => steps.map((step) => ({ ...step, skipBeacon: true })), [steps]);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -645,10 +931,15 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
   const finishTour = useCallback(() => {
     clearTimer();
+    clearAnalysisTimers();
+    setSimulationMenuOpen(false);
+    deleteDemoProject();
+    isRunningRef.current = false;
     setIsRunning(false);
     setStepIndex(0);
     actionKeysRef.current.clear();
-  }, [clearTimer]);
+    isStepAdvancingRef.current = false;
+  }, [clearAnalysisTimers, clearTimer, deleteDemoProject, setSimulationMenuOpen]);
 
   const runStepAction = useCallback(
     (step: TourStep): void => {
@@ -671,6 +962,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (step.actionKey === "go-project-list") {
+        setSimulationMenuOpen(false);
         void navigate({ to: "/projects" });
 
         return;
@@ -713,6 +1005,12 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         return;
       }
 
+      if (step.actionKey === "select-pin1-tool") {
+        document.querySelector<HTMLButtonElement>("[data-tour='rule-add-pin1-tool']")?.click();
+
+        return;
+      }
+
       if (step.actionKey === "add-pin1-rule" && demoRef.current?.rulesetId) {
         const demo = upsertDemoRule({
           projectId: demoRef.current.projectId,
@@ -740,6 +1038,12 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           params: { projectId: demoRef.current.projectId, rulesetId: demoRef.current.rulesetId },
         });
         toast.success("PIN1 configuration preview complete.");
+
+        return;
+      }
+
+      if (step.actionKey === "select-greyscale-tool") {
+        document.querySelector<HTMLButtonElement>("[data-tour='rule-add-greyscale-tool']")?.click();
 
         return;
       }
@@ -781,15 +1085,22 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (step.actionKey === "focus-tree" || step.actionKey === "focus-rules") {
+        if (step.actionKey === "focus-tree") {
+          document.querySelector<HTMLButtonElement>("[data-tour='project-program-tab']")?.click();
+        }
+
         const rulesetId = demoRef.current?.rulesetId;
         const ruleset = rulesetId ? useProjectStore.getState().rulesets[rulesetId] : null;
-        const rules = ruleset?.rules?.length ? ruleset.rules : makeDemoRules();
+        const rules = ruleset?.rules ?? [];
         useRulesStore.getState().replaceAll(rules, rules.length > 0 ? [rules[0].id] : [], []);
 
         return;
       }
 
       if (step.actionKey === "register-image" && demoRef.current) {
+        document
+          .querySelector<HTMLButtonElement>("[data-tour='project-image-source-tab']")
+          ?.click();
         useProjectStore
           .getState()
           .updateProjectInspectionImageRef(demoRef.current.projectId, analysisImage);
@@ -807,28 +1118,29 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           return;
         }
 
-        const runButton = document.querySelector<HTMLButtonElement>("[data-tour='project-run-analysis']");
-        runButton?.click();
+        setAnalysisLoading(true);
 
-        const applyPresentationPass = () => {
+        const passTimer = window.setTimeout(() => {
+          setAnalysisLoading(false);
           useValidationStore
             .getState()
-            .setResults(rulesetId, makePassResults(), "Guided simulation inspection");
+            .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
-        };
-
-        window.setTimeout(applyPresentationPass, 900);
-        window.setTimeout(applyPresentationPass, 2400);
-        window.setTimeout(() => {
-          applyPresentationPass();
           toast.success("Guided simulation analysis complete: 4 devices passed.");
-        }, 4200);
+        }, 2800);
+
+        analysisTimersRef.current = [passTimer];
       }
     },
-    [navigate],
+    [navigate, setAnalysisLoading, setSimulationMenuOpen],
   );
 
   const advance = useCallback(() => {
+    if (isStepAdvancingRef.current) {
+      return;
+    }
+
+    isStepAdvancingRef.current = true;
     clearTimer();
     const step = steps[stepIndex];
 
@@ -855,8 +1167,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     }
 
     const step = steps[stepIndex];
-    const waitStartedAt = Date.now();
     let isCancelled = false;
+    isStepAdvancingRef.current = false;
     clearTimer();
 
     const beginStep = () => {
@@ -865,16 +1177,6 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (!hasTourTarget(step)) {
-        if (Date.now() - waitStartedAt > 10_000) {
-          console.warn("[guided-simulation] highlight target not visible", {
-            stepIndex,
-            target: step.target,
-          });
-          advance();
-
-          return;
-        }
-
         targetWaitTimerRef.current = window.setTimeout(beginStep, 150);
 
         return;
@@ -886,9 +1188,12 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      timerRef.current = window.setTimeout(() => {
-        advance();
-      }, Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS));
+      timerRef.current = window.setTimeout(
+        () => {
+          advance();
+        },
+        Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS),
+      );
     };
 
     beginStep();
@@ -900,14 +1205,39 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   }, [advance, clearTimer, isRunning, runStepAction, stepIndex, steps]);
 
   const handleStart = useCallback(() => {
+    if (isRunningRef.current) {
+      return;
+    }
+
+    isRunningRef.current = true;
     clearTimer();
+    clearAnalysisTimers();
     demoRef.current = null;
     actionKeysRef.current.clear();
+    isStepAdvancingRef.current = false;
     setStepIndex(0);
-    setIsRunning(true);
-  }, [clearTimer, navigate]);
+
+    const startFromHome = async () => {
+      try {
+        await navigate({ to: "/" });
+        setIsRunning(true);
+
+        window.setTimeout(() => {
+          setSimulationMenuOpen(true);
+        }, 200);
+      } catch (error) {
+        isRunningRef.current = false;
+        setSimulationMenuOpen(false);
+        console.error("[guided-simulation] failed to start from Home", error);
+        toast.error("Simulation could not open the Home page.");
+      }
+    };
+
+    void startFromHome();
+  }, [clearAnalysisTimers, clearTimer, navigate, setSimulationMenuOpen]);
 
   useEffect(() => {
+    document.documentElement.dataset.guidedSimulationRunning = isRunning ? "true" : "false";
     const detail: GuidedSimulationStateDetail = { isRunning };
     window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_STATE_EVENT, { detail }));
   }, [isRunning]);
@@ -922,7 +1252,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         return;
       }
 
-      if (command !== "start" || isRunning) {
+      if (command !== "start" || isRunningRef.current) {
         return;
       }
 
@@ -938,7 +1268,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
   const handleJoyride = useCallback(
     (data: EventData) => {
-      const isFinished = data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED;
+      const isFinished =
+        data.type === EVENTS.TOUR_END ||
+        data.status === STATUS.FINISHED ||
+        data.status === STATUS.SKIPPED;
 
       if (isFinished) {
         finishTour();
@@ -948,11 +1281,11 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       const isStepAdvance = data.type === EVENTS.STEP_AFTER;
 
-      if (isStepAdvance) {
+      if (isStepAdvance && data.index === stepIndex) {
         advance();
       }
     },
-    [advance, finishTour],
+    [advance, finishTour, stepIndex],
   );
 
   return (

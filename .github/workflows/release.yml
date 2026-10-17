@@ -29,9 +29,8 @@
 # 4. SHA256SUMS.txt is the release contract. install.ps1 / install.sh
 #    (Step 124) will cross-check downloaded bytes against this file
 #    before writing to disk.
-# 5. No signing yet. Signing lands in Step 141 on a signed Windows
-#    runner. This workflow emits `Signed=false` rows so the doctor
-#    keeps a truthful manifest.
+# 5. Windows signing is optional. Set CODESIGN_ENABLED=true to require
+#    the certificate secrets and Authenticode verification for that run.
 # 6. Manual-only trigger for now (workflow_dispatch); the tag-triggered
 #    branch (`on: push: tags: [v*]`) is documented but commented out
 #    until Steps 124 / 125 land the verify-install gate that must run
@@ -66,12 +65,12 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------------
-  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix -> checksum
-  #                    -> sign(optional) -> release -> verify-install
+  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix
+  #                    -> sign(optional) -> checksum -> verify-install -> release
   # Every gate below must pass before the release job publishes anything.
-  # Sign is optional (skipped until Step 141 lands a signed runner); the
-  # verify-install job re-runs packaging/installers/tests on the built
-  # artefacts before the release-page draft is created.
+  # When enabled, Windows executables are signed before compression and
+  # checksums. The verify-install job boots the packaged backend and
+  # frontend before a release-page draft is created.
   # -----------------------------------------------------------------------
 
   lint:
@@ -114,6 +113,12 @@ jobs:
         run: python3 -m pytest BE/tests -x --tb=short
       - name: bun install
         run: bun install --frozen-lockfile
+      - name: Generate route tree
+        run: >-
+          bun -e "import { Generator, getConfig } from '@tanstack/router-generator';
+          const root = process.cwd();
+          const config = getConfig({}, root);
+          await new Generator({ config, root }).run();"
       - name: tsc typecheck
         run: bunx tsc --noEmit
       - name: vitest
@@ -160,8 +165,9 @@ jobs:
         # imports (pydantic, fastapi transitive) resolve at freeze time.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "pyinstaller==6.11.1"
+          python -m pip install "pyinstaller==6.11.1" "backports.tarfile>=1.2"
           python -m pip install -e BE
+          python -m pip install --force-reinstall "numpy==1.26.4" "opencv-python-headless==4.10.0.84"
         shell: bash
 
       - name: Emit BINARIES inventory
@@ -189,7 +195,7 @@ jobs:
           echo '${{ steps.inventory.outputs.binaries }}' | python -c '
           import json, subprocess, sys
           for b in json.load(sys.stdin):
-              print(f"::group::pyinstaller {b[\"SpecPath\"]}")
+              print("::group::pyinstaller " + b["SpecPath"])
               subprocess.check_call([
                   "pyinstaller", b["SpecPath"],
                   "--clean", "--noconfirm",
@@ -200,50 +206,25 @@ jobs:
           '
         shell: bash
 
+      - name: Build packaged backend server
+        run: >-
+          pyinstaller packaging/pyinstaller/backend-server.spec
+          --clean --noconfirm --distpath dist --workpath build
+        shell: bash
 
       - name: Install Bun & Build Frontend
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      
+
       - name: Compile Frontend
         run: |
           bun install --frozen-lockfile
-          bun run build
-          # Compile to executable (assumes nitro server output)
-          bun build --compile .output/server/index.mjs --outfile dist/control-automation-frontend${{ matrix.exe_suffix }}
-        shell: bash
-
-      - name: Compute SHA256SUMS.txt
-        # Emits `<hex>  <filename>` per binary (two-space GNU coreutils
-        # format so `sha256sum -c` on Linux and PowerShell's
-        # Get-FileHash comparison in install.ps1 both parse it).
-        run: |
-          python - <<'PY'
-          import hashlib, json, os
-          from pathlib import Path
-          suffix = os.environ["EXE_SUFFIX"]
-          rows = json.loads(os.environ["BINARIES_JSON"])
-          out = Path("dist") / "SHA256SUMS.txt"
-          lines = []
-          for b in rows:
-              exe = Path("dist") / f"{b['ExeName']}{suffix}"
-              if not exe.is_file():
-                  raise SystemExit(f"[release] missing build artefact: {exe}")
-              digest = hashlib.sha256(exe.read_bytes()).hexdigest()
-              lines.append(f"{digest}  {exe.name}")
-          
-          # Add frontend executable
-          frontend_exe = Path("dist") / f"control-automation-frontend{suffix}"
-          if frontend_exe.is_file():
-              digest = hashlib.sha256(frontend_exe.read_bytes()).hexdigest()
-              lines.append(f"{digest}  {frontend_exe.name}")
-          out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-          print(out.read_text())
-          PY
-        env:
-          EXE_SUFFIX: ${{ matrix.exe_suffix }}
-          BINARIES_JSON: ${{ steps.inventory.outputs.binaries }}
+          NITRO_PRESET=node-server bun run build
+          mkdir -p dist/runtime dist/frontend
+          cp "$(command -v bun)" "dist/runtime/bun${{ matrix.exe_suffix }}"
+          cp -R .output/server dist/frontend/server
+          cp -R .output/public dist/frontend/public
         shell: bash
 
       - name: Upload artefact bundle
@@ -251,22 +232,105 @@ jobs:
         with:
           name: release-${{ matrix.platform }}
           path: |
-            dist/*
+            dist/**
+          if-no-files-found: error
+          retention-days: 14
+
+  sign:
+    name: Sign (optional Windows Authenticode)
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: dist
+      - name: Sign and verify every Windows executable
+        if: ${{ vars.CODESIGN_ENABLED == 'true' }}
+        shell: pwsh
+        env:
+          CODESIGN_PFX_BASE64: ${{ secrets.CODESIGN_PFX_BASE64 }}
+          CODESIGN_PFX_PASSWORD: ${{ secrets.CODESIGN_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CODESIGN_PFX_BASE64)) {
+            throw 'Required secret CODESIGN_PFX_BASE64 is not configured.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:CODESIGN_PFX_PASSWORD)) {
+            throw 'Required secret CODESIGN_PFX_PASSWORD is not configured.'
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
+          [IO.File]::WriteAllBytes(
+            $certificatePath,
+            [Convert]::FromBase64String($env:CODESIGN_PFX_BASE64)
+          )
+
+          $signTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter signtool.exe -Recurse |
+            Where-Object FullName -Match '\\x64\\signtool\.exe$' |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+
+          if (-not $signTool) {
+            throw 'signtool.exe was not found on the Windows runner.'
+          }
+
+          $executables = @(Get-ChildItem dist -Filter *.exe -Recurse)
+
+          if ($executables.Count -eq 0) {
+            throw 'No Windows executables were found to sign.'
+          }
+
+          foreach ($executable in $executables) {
+            & $signTool sign /fd SHA256 /f $certificatePath /p $env:CODESIGN_PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 $executable.FullName
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Signing failed: $($executable.FullName)"
+            }
+
+            & $signTool verify /pa /all $executable.FullName
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Authenticode verification failed: $($executable.FullName)"
+            }
+          }
+
+          Remove-Item -LiteralPath $certificatePath -Force
+      - name: Record unsigned build
+        if: ${{ vars.CODESIGN_ENABLED != 'true' }}
+        shell: pwsh
+        run: |
+          @'
+          ## signing-skipped
+
+          Windows Authenticode signing was skipped because the repository
+          variable `CODESIGN_ENABLED` is not set to `true`.
+          '@ | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-processed
+          path: dist/**
           if-no-files-found: error
           retention-days: 14
 
   checksum:
     name: Checksum (combined SHA256SUMS.txt)
-    needs: build
+    needs: [build, sign]
     runs-on: ubuntu-22.04
     outputs:
       sums_ok: ${{ steps.sums.outputs.ok }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download all artefacts
+      - name: Download processed Windows artefacts
         uses: actions/download-artifact@v4
         with:
-          path: dist-all
+          name: release-windows-processed
+          path: dist-all/release-windows
+      - name: Download Linux artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-linux
+          path: dist-all/release-linux
       - id: sums
         name: Combined SHA256SUMS + per-platform cross-check
         # Independent gate so a bad checksum never reaches sign/release.
@@ -274,25 +338,31 @@ jobs:
         # bytes, then emits a combined file the release job consumes.
         run: |
           set -euo pipefail
-          for d in dist-all/release-*; do
-            plat=$(basename "$d" | sed 's/^release-//')
-            echo "::group::verify $plat"
-            (cd "$d" && sha256sum -c SHA256SUMS.txt)
-            echo "::endgroup::"
-          done
           mkdir -p release
           for d in dist-all/release-*; do
             plat=$(basename "$d" | sed 's/^release-//')
-            for f in "$d"/*; do
-              cp "$f" "release/${plat}-$(basename "$f")"
-            done
+            cp -R "$d" "release/$plat"
           done
-          (cd release && sha256sum *-* > SHA256SUMS.txt)
-          
-          # Zip all binaries into OS-specific packages
-          (cd release && zip control-automation-windows.zip windows-*)
-          (cd release && zip control-automation-linux.zip linux-*)
-          
+
+          cp packaging/desktop/start.ps1 release/windows/start.ps1
+          cp packaging/desktop/start.sh release/linux/start.sh
+          cp packaging/desktop/uninstall.ps1 release/uninstall.ps1
+          cp packaging/desktop/uninstall.sh release/uninstall.sh
+          chmod +x release/uninstall.sh release/linux/start.sh release/linux/runtime/bun release/linux/* || true
+
+          test -s release/windows/frontend/public/favicon.ico
+          test -s release/linux/frontend/public/favicon.ico
+          test -d release/windows/frontend/public/assets
+          test -d release/linux/frontend/public/assets
+          grep -q -- '--app=' release/windows/start.ps1
+          grep -q -- '--app=' release/linux/start.sh
+          grep -q 'CAT iVISION\.lnk' packaging/desktop/install.ps1
+          grep -q 'cat-ivision\.desktop' packaging/desktop/install.sh
+
+          find release/windows release/linux -type f -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS.txt
+          (cd release/windows && zip -r ../control-automation-windows.zip .)
+          (cd release/linux && zip -r ../control-automation-linux.zip .)
+
           cat release/SHA256SUMS.txt
           echo "ok=true" >> "$GITHUB_OUTPUT"
       - name: Upload combined release payload
@@ -302,26 +372,6 @@ jobs:
           path: release/*
           if-no-files-found: error
           retention-days: 14
-
-  sign:
-    name: Sign (optional; Windows Authenticode)
-    needs: checksum
-    # Sign runs only when CODESIGN_PFX_BASE64 is present (Step 141 lands
-    # this on a signed runner). Until then the job short-circuits so the
-    # release job proceeds against unsigned bytes with Signed=false.
-    if: ${{ vars.CODESIGN_ENABLED == 'true' }}
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-combined
-          path: release
-      - name: Placeholder sign step (Step 141 owns the real signtool call)
-        shell: pwsh
-        run: |
-          Write-Host "sign job invoked; real signtool call lands in Plan 90 Step 141."
-          Get-ChildItem release | Format-Table -AutoSize
 
   verify-install:
     name: Verify install (bats + pester against combined artefacts)
@@ -365,10 +415,64 @@ jobs:
           done
           chmod +x dist/* || true
           bash packaging/tests/test_built_binary.sh || echo "(smoke non-fatal at Step 93; Step 100 tightens)"
+      - name: Smoke test installed Windows app
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $appRoot = Join-Path $env:RUNNER_TEMP 'cat-ivision-smoke'
+          Expand-Archive -LiteralPath release/control-automation-windows.zip -DestinationPath $appRoot -Force
+          $processes = @()
+
+          try {
+            $env:BE_HOST = '127.0.0.1'
+            $env:BE_PORT = '8787'
+            $env:BE_CORS_ORIGINS = '["http://localhost:3000","http://127.0.0.1:3000"]'
+            $env:HOST = '127.0.0.1'
+            $env:PORT = '3000'
+            & (Join-Path $appRoot 'db-bootstrap.exe') --db-root (Join-Path $appRoot 'data')
+
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Packaged database bootstrap failed.'
+            }
+
+            $processes += Start-Process -PassThru -WindowStyle Hidden -WorkingDirectory $appRoot -FilePath (Join-Path $appRoot 'backend-server.exe')
+            $processes += Start-Process -PassThru -WindowStyle Hidden -WorkingDirectory (Join-Path $appRoot 'frontend') -FilePath (Join-Path $appRoot 'runtime/bun.exe') -ArgumentList 'server/index.mjs'
+
+            $deadline = (Get-Date).AddSeconds(90)
+            $backend = $null
+            $frontend = $null
+
+            while ((Get-Date) -lt $deadline -and (-not $backend -or -not $frontend)) {
+              try { $backend = Invoke-WebRequest 'http://127.0.0.1:8787/healthz' -UseBasicParsing -TimeoutSec 2 } catch {}
+              try { $frontend = Invoke-WebRequest 'http://127.0.0.1:3000/' -UseBasicParsing -TimeoutSec 2 } catch {}
+              Start-Sleep -Milliseconds 500
+            }
+
+            if ($backend.StatusCode -ne 200 -or $frontend.StatusCode -ne 200) {
+              throw 'Packaged backend or frontend did not become healthy.'
+            }
+
+            $assetMatches = [regex]::Matches($frontend.Content, '(?:src|href)="([^"]+\.(?:js|css))"')
+
+            if ($assetMatches.Count -eq 0) {
+              throw 'Frontend HTML contains no JavaScript or CSS assets.'
+            }
+
+            foreach ($match in $assetMatches) {
+              $assetUrl = [Uri]::new([Uri]'http://127.0.0.1:3000/', $match.Groups[1].Value)
+              $asset = Invoke-WebRequest $assetUrl -UseBasicParsing -TimeoutSec 10
+
+              if ($asset.StatusCode -ne 200 -or $asset.RawContentLength -eq 0) {
+                throw "Frontend asset failed: $assetUrl"
+              }
+            }
+          } finally {
+            $processes | Where-Object { $_ -and -not $_.HasExited } | Stop-Process -Force -ErrorAction SilentlyContinue
+          }
 
   publish:
     name: Publish draft release
-    needs: [checksum, verify-install]
+    needs: [checksum, sign, verify-install]
     if: ${{ (github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '') || github.event_name == 'push' }}
     runs-on: ubuntu-22.04
     steps:
@@ -387,16 +491,76 @@ jobs:
           ls -la release
           cat release/SHA256SUMS.txt
 
-      - name: Generate install.ps1
+      - name: Generate Windows and Linux installers
+        env:
+          RELEASE_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
         run: |
-          echo "Write-Host 'Downloading CAT iVISION...'" > release/install.ps1
-          echo "Invoke-WebRequest -Uri https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.release_tag || github.ref_name }}/control-automation-windows.zip -OutFile control-automation.zip" >> release/install.ps1
-          echo "Expand-Archive -Path control-automation.zip -DestinationPath \$env:LOCALAPPDATA\CAT-iVISION -Force" >> release/install.ps1
-          echo "\$WshShell = New-Object -comObject WScript.Shell" >> release/install.ps1
-          echo "\$Shortcut = \$WshShell.CreateShortcut(\\"\$Home\Desktop\CAT iVISION.lnk\\")" >> release/install.ps1
-          echo "\$Shortcut.TargetPath = \\"\$env:LOCALAPPDATA\CAT-iVISION\windows-control-automation-frontend.exe\\"" >> release/install.ps1
-          echo "\$Shortcut.Save()" >> release/install.ps1
-          echo "Write-Host 'Installation Complete! Desktop shortcut created.'" >> release/install.ps1
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          repo = os.environ["RELEASE_REPO"]
+          tag = os.environ["RELEASE_TAG"]
+          replacements = {
+              "__RELEASE_REPO__": repo,
+              "__RELEASE_TAG__": tag,
+          }
+
+          for source_name, output_name in (
+              ("packaging/desktop/install.ps1", "release/install.ps1"),
+              ("packaging/desktop/install.sh", "release/install.sh"),
+          ):
+              content = Path(source_name).read_text(encoding="utf-8")
+
+              for needle, value in replacements.items():
+                  content = content.replace(needle, value)
+
+              Path(output_name).write_text(content, encoding="utf-8", newline="\n")
+          PY
+          chmod +x release/install.sh
+
+      - name: Validate install.ps1 syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'release/install.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+
+            throw 'Generated install.ps1 failed PowerShell syntax validation.'
+          }
+
+      - name: Validate uninstall.ps1 syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'release/uninstall.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+
+            throw 'uninstall.ps1 failed PowerShell syntax validation.'
+          }
+
+      - name: Validate install.sh syntax
+        run: bash -n release/install.sh
+
+      - name: Validate uninstall.sh syntax
+        run: bash -n release/uninstall.sh
 
       - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
@@ -409,9 +573,7 @@ jobs:
           body: |
             Automated draft release for ${{ github.event.inputs.release_tag || github.ref_name }}.
 
-            **Note:** binaries in this release are NOT Authenticode-signed
-            (signing lands in Plan 90 Step 141). `install.json` will record
-            `Signed=false` for every row from this build.
+            Windows Authenticode signing enabled: `${{ vars.CODESIGN_ENABLED == 'true' }}`.
 
             Verify downloads against `SHA256SUMS.txt`:
               PowerShell: `Get-FileHash <file> -Algorithm SHA256`

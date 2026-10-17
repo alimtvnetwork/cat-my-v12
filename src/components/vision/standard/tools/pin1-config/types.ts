@@ -70,6 +70,7 @@ export interface Pin1ToolProps {
   onOk?: (payload?: any) => void;
   onApply?: (payload?: any) => void;
   imageRef?: string;
+  hasCanvasOverlays?: boolean;
 }
 
 export interface Pin1MarkingToolProps {
@@ -82,5 +83,6 @@ export interface Pin1MarkingToolProps {
   onCancel?: () => void;
   imageRef?: string;
   onImageRegistered?: (imageRef: string) => void;
+  hasCanvasOverlays?: boolean;
 }
 
