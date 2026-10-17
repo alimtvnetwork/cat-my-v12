@@ -26,11 +26,11 @@ This module outlines modern C++ conventions (C++20 baseline) to ensure memory sa
 
 ## Scoring
 
-| Metric        | Value            |
-| ------------- | ---------------- |
+| Metric | Value |
+|--------|-------|
 | AI Confidence | Production-Ready |
-| Ambiguity     | None             |
-| Health Score  | 100/100 (A+)     |
+| Ambiguity | None |
+| Health Score | 100/100 (A+) |
 
 ## Keywords
 
@@ -38,11 +38,11 @@ This module outlines modern C++ conventions (C++20 baseline) to ensure memory sa
 
 ## Files
 
-| #   | File                                                     | Category                     | Description                                  |
-| --- | -------------------------------------------------------- | ---------------------------- | -------------------------------------------- |
-| 01  | [01-standards.md](./02-standards.md)                     | Logic / Rules                | Modern C++ coding standards                  |
-| 97  | [97-acceptance-criteria.md](./97-acceptance-criteria.md) | Acceptance Criteria Registry | Complete testable Gherkin criteria inventory |
-| 99  | [99-consistency-report.md](./readme.md)                  | Meta                         | Consistency and compliance report            |
+| # | File | Category | Description |
+|---|------|----------|-------------|
+| 01 | [01-standards.md](./02-standards.md) | Logic / Rules | Modern C++ coding standards |
+| 97 | [97-acceptance-criteria.md](./97-acceptance-criteria.md) | Acceptance Criteria Registry | Complete testable Gherkin criteria inventory |
+| 99 | [99-consistency-report.md](./99-consistency-report.md) | Meta | Consistency and compliance report |
 
 ## Cross-References
 
@@ -61,9 +61,7 @@ _Auto-generated section — see `02-spec/02-coding-guidelines/97-acceptance-crit
 **Then** Zero non-compliant conventions or syntax patterns are detected and exit code is 0.
 
 **Verification command:**
-
 ```bash
 python 03-ai-scripts/05-guideline-autofixer.py 02-spec/02-coding-guidelines --check-only
 ```
-
 **Expected:** exit 0. Zero violations.

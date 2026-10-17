@@ -36,8 +36,8 @@ A unified response contract was needed to eliminate these problems without break
 
 **Alternatives considered:**
 
-- _camelCase_ — natural for JavaScript but would require `json:"camelKey"` tags on every Go struct field.
-- _snake_case_ — conventional in PHP/Ruby ecosystems but alien to both Go and TypeScript interfaces.
+- *camelCase* — natural for JavaScript but would require `json:"camelKey"` tags on every Go struct field.
+- *snake_case* — conventional in PHP/Ruby ecosystems but alien to both Go and TypeScript interfaces.
 
 ---
 
@@ -54,8 +54,8 @@ A unified response contract was needed to eliminate these problems without break
 
 **Alternatives considered:**
 
-- _Bare object for singles, array for lists_ — requires runtime type-checking, doubles parsing logic, and makes OpenAPI schemas inconsistent.
-- _Wrapper with `result` (singular) and `results` (plural)_ — adds naming ambiguity and doubles the number of response schemas.
+- *Bare object for singles, array for lists* — requires runtime type-checking, doubles parsing logic, and makes OpenAPI schemas inconsistent.
+- *Wrapper with `result` (singular) and `results` (plural)* — adds naming ambiguity and doubles the number of response schemas.
 
 ---
 
@@ -71,8 +71,8 @@ A unified response contract was needed to eliminate these problems without break
 
 **Alternatives considered:**
 
-- _Page numbers only_ — forces the client to reconstruct URLs and know endpoint paths, creating tight coupling.
-- _Relative URLs_ — ambiguous when responses pass through a proxy layer; the client must resolve them against an assumed base.
+- *Page numbers only* — forces the client to reconstruct URLs and know endpoint paths, creating tight coupling.
+- *Relative URLs* — ambiguous when responses pass through a proxy layer; the client must resolve them against an assumed base.
 
 ---
 
@@ -82,7 +82,7 @@ A unified response contract was needed to eliminate these problems without break
 
 **Rationale:**
 
-- **Separation of concerns:** Status tells _what happened_ (success/failure); Errors tells _why_ it failed; MethodsStack tells _where_ in the code it failed. Mixing these conflates metadata with diagnostics.
+- **Separation of concerns:** Status tells *what happened* (success/failure); Errors tells *why* it failed; MethodsStack tells *where* in the code it failed. Mixing these conflates metadata with diagnostics.
 - **Conditional inclusion:** The backend can omit `Errors` and `MethodsStack` entirely in production by toggling `includeErrors` / `includeMethodsStack` in the developer settings — without affecting the shape of `Status` or `Results`.
 - **Cross-stack tracing:** The `Errors.DelegatedServiceErrorStack` carries the remote PHP stack, while `MethodsStack` carries the Go-side call chain. Keeping them at the top level lets the frontend's Traversal tab render both without deep-nesting traversal.
 
@@ -125,9 +125,9 @@ A unified response contract was needed to eliminate these problems without break
 
 **Alternatives considered:**
 
-- _Protobuf / OpenAPI shared components_ — heavier tooling, forced code generation, and awkward fit for the PascalCase JSON convention.
-- _TypeScript as source, generate others_ — would privilege one stack and require build-time codegen for Go/PHP.
-- _No formal schema, rely on spec README_ — prose specifications cannot be machine-validated and are prone to interpretation drift.
+- *Protobuf / OpenAPI shared components* — heavier tooling, forced code generation, and awkward fit for the PascalCase JSON convention.
+- *TypeScript as source, generate others* — would privilege one stack and require build-time codegen for Go/PHP.
+- *No formal schema, rely on spec README* — prose specifications cannot be machine-validated and are prone to interpretation drift.
 
 **Schema location:** `02-spec/03-error-manage/02-error-architecture/05-response-envelope/envelope.schema.json`
 **Version:** v2.0.0
@@ -139,19 +139,19 @@ A unified response contract was needed to eliminate these problems without break
 
 ---
 
-| Positive                                              | Trade-off                                                                                   |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| One parsing path across all endpoints and stacks      | PascalCase is unconventional for JavaScript consumers (mitigated by direct property access) |
-| Diagnostics travel end-to-end without custom plumbing | Envelope adds ~120 bytes of overhead to minimal responses                                   |
-| Pagination "just works" via URL following             | Absolute URLs are longer than page-number integers                                          |
-| OpenAPI schemas are self-documenting with examples    | Initial migration required touching 31+ endpoint schemas                                    |
+| Positive | Trade-off |
+|---|---|
+| One parsing path across all endpoints and stacks | PascalCase is unconventional for JavaScript consumers (mitigated by direct property access) |
+| Diagnostics travel end-to-end without custom plumbing | Envelope adds ~120 bytes of overhead to minimal responses |
+| Pagination "just works" via URL following | Absolute URLs are longer than page-number integers |
+| OpenAPI schemas are self-documenting with examples | Initial migration required touching 31+ endpoint schemas |
 
 ---
 
 ## References
 
 - [02-spec/03-error-manage/02-error-architecture/05-response-envelope/04-response-envelope-reference.md](./05-response-envelope-reference.md) — Canonical specification
-- [02-spec/response-envelope/changelog.md](./readme.md) — Migration timeline
+- [02-spec/response-envelope/changelog.md](./03-changelog.md) — Migration timeline
 - [02-spec/response-envelope/envelope.schema.json](./envelope.schema.json) — JSON Schema (Draft 2020-12) source of truth
 - [02-spec/response-envelope/configurability.md](./02-adr.md) — Debug toggle rules
 - RFC 8288 — Web Linking (absolute URL convention)

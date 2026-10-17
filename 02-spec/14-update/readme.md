@@ -47,11 +47,11 @@ subcommand MUST follow the contracts in this folder.
 
 ## Scoring
 
-| Metric        | Value            |
-| ------------- | ---------------- |
+| Metric | Value |
+|--------|-------|
 | AI Confidence | Production-Ready |
-| Ambiguity     | None             |
-| Health Score  | 100/100 (A+)     |
+| Ambiguity | None |
+| Health Score | 100/100 (A+) |
 
 ---
 
@@ -76,59 +76,59 @@ file-lock errors and guarantees rollback is always one rename away.
 
 ### Core mechanism (01–08)
 
-| #   | File                                                           | Description                                                                                           | Status    |
-| --- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------- |
-| 01  | [02-self-update-overview.md](./02-self-update-overview.md)     | Self-update contract: triggers, version comparison, **skip-if-current fast-path**, latest.json schema | ✅ Active |
-| 02  | [03-deploy-path-resolution.md](./03-deploy-path-resolution.md) | Canonical deploy path resolution per OS, env-var overrides, PATH registration                         | ✅ Active |
-| 03  | [04-rename-first-deploy.md](./04-rename-first-deploy.md)       | Rename-first algorithm, atomicity, Windows file-lock handling                                         | ✅ Active |
-| 04  | [05-build-scripts.md](./05-build-scripts.md)                   | `run.ps1` / `run.sh` build/release scripts (LDFLAGS, asset naming)                                    | ✅ Active |
-| 05  | [06-handoff-mechanism.md](./06-handoff-mechanism.md)           | Old → new binary handoff: **two-phase summary**, `cmd.Run()` blocking                                 | ✅ Active |
-| 06  | [07-cleanup.md](./07-cleanup.md)                               | Post-handoff cleanup: **mandatory auto-cleanup**, retry on Windows lock                               | ✅ Active |
-| 07  | [08-console-safe-handoff.md](./08-console-safe-handoff.md)     | Windows console safety: detached vs attached, stdout/stderr inheritance                               | ✅ Active |
-| 08  | [09-repo-path-sync.md](./09-repo-path-sync.md)                 | Cross-repo path sync: keeping deploy paths consistent across tools                                    | ✅ Active |
+| # | File | Description | Status |
+|---|------|-------------|--------|
+| 01 | [02-self-update-overview.md](./02-self-update-overview.md) | Self-update contract: triggers, version comparison, **skip-if-current fast-path**, latest.json schema | ✅ Active |
+| 02 | [03-deploy-path-resolution.md](./03-deploy-path-resolution.md) | Canonical deploy path resolution per OS, env-var overrides, PATH registration | ✅ Active |
+| 03 | [04-rename-first-deploy.md](./04-rename-first-deploy.md) | Rename-first algorithm, atomicity, Windows file-lock handling | ✅ Active |
+| 04 | [05-build-scripts.md](./05-build-scripts.md) | `run.ps1` / `run.sh` build/release scripts (LDFLAGS, asset naming) | ✅ Active |
+| 05 | [06-handoff-mechanism.md](./06-handoff-mechanism.md) | Old → new binary handoff: **two-phase summary**, `cmd.Run()` blocking | ✅ Active |
+| 06 | [07-cleanup.md](./07-cleanup.md) | Post-handoff cleanup: **mandatory auto-cleanup**, retry on Windows lock | ✅ Active |
+| 07 | [08-console-safe-handoff.md](./08-console-safe-handoff.md) | Windows console safety: detached vs attached, stdout/stderr inheritance | ✅ Active |
+| 08 | [09-repo-path-sync.md](./09-repo-path-sync.md) | Cross-repo path sync: keeping deploy paths consistent across tools | ✅ Active |
 
 ### Verification & metadata (09–12)
 
-| #   | File                                                           | Description                                                                    | Status    |
-| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------- |
-| 09  | [10-version-verification.md](./10-version-verification.md)     | Three-branch active-vs-deployed verification, required TRACE/HINT diagnostics  | ✅ Active |
-| 10  | [11-last-release-detection.md](./11-last-release-detection.md) | Standalone `Get-LastRelease.ps1` / `get-last-release.sh` with tiered fallback  | ✅ Active |
-| 11  | [12-windows-icon-embedding.md](./12-windows-icon-embedding.md) | `go-winres` + `winres.json` + committed `.syso` strategy                       | ✅ Active |
-| 12  | [13-code-signing.md](./13-code-signing.md)                     | Authenticode (Win), `codesign` + notarization (macOS), detached GPG signatures | ✅ Active |
+| # | File | Description | Status |
+|---|------|-------------|--------|
+| 09 | [10-version-verification.md](./10-version-verification.md) | Three-branch active-vs-deployed verification, required TRACE/HINT diagnostics | ✅ Active |
+| 10 | [11-last-release-detection.md](./11-last-release-detection.md) | Standalone `Get-LastRelease.ps1` / `get-last-release.sh` with tiered fallback | ✅ Active |
+| 11 | [12-windows-icon-embedding.md](./12-windows-icon-embedding.md) | `go-winres` + `winres.json` + committed `.syso` strategy | ✅ Active |
+| 12 | [13-code-signing.md](./13-code-signing.md) | Authenticode (Win), `codesign` + notarization (macOS), detached GPG signatures | ✅ Active |
 
 ### Release & install (13–23)
 
-| #   | File                                                                       | Description                                                             | Status    |
-| --- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------- | --------- |
-| 13  | [14-release-assets.md](./14-release-assets.md)                             | Asset naming, layout, manifest fields per release                       | ✅ Active |
-| 14  | [15-checksums-verification.md](./15-checksums-verification.md)             | SHA-256 generation, `.sha256` files, post-download verification         | ✅ Active |
-| 15  | [16-release-versioning.md](./16-release-versioning.md)                     | SemVer rules, tagging, version-bump cadence                             | ✅ Active |
-| 16  | [17-cross-compilation.md](./17-cross-compilation.md)                       | `GOOS`/`GOARCH` matrix, build host requirements                         | ✅ Active |
-| 17  | [18-release-pipeline.md](./18-release-pipeline.md)                         | End-to-end release pipeline (build → sign → upload → publish)           | ✅ Active |
-| 18  | [19-install-scripts.md](./19-install-scripts.md)                           | `install.ps1` / `install.sh` contract, idempotency, PATH registration   | ✅ Active |
-| 19  | [20-updater-binary.md](./20-updater-binary.md)                             | Standalone updater binary architecture (binary-based update path)       | ✅ Active |
-| 20  | [21-network-requirements.md](./21-network-requirements.md)                 | HTTP client, retry, proxy support, timeout policy                       | ✅ Active |
-| 21  | [22-config-file.md](./22-config-file.md)                                   | `powershell.json` config schema, defaults, override rules               | ✅ Active |
-| 22  | [23-update-command-workflow.md](./23-update-command-workflow.md)           | End-to-end `<binary> update` workflow (source-based + binary-based)     | ✅ Active |
-| 23  | [24-install-script-version-probe.md](./24-install-script-version-probe.md) | Latest-version probe in `install.{ps1,sh}` (current+1 .. +20, parallel) | ✅ Active |
+| # | File | Description | Status |
+|---|------|-------------|--------|
+| 13 | [14-release-assets.md](./14-release-assets.md) | Asset naming, layout, manifest fields per release | ✅ Active |
+| 14 | [15-checksums-verification.md](./15-checksums-verification.md) | SHA-256 generation, `.sha256` files, post-download verification | ✅ Active |
+| 15 | [16-release-versioning.md](./16-release-versioning.md) | SemVer rules, tagging, version-bump cadence | ✅ Active |
+| 16 | [17-cross-compilation.md](./17-cross-compilation.md) | `GOOS`/`GOARCH` matrix, build host requirements | ✅ Active |
+| 17 | [18-release-pipeline.md](./18-release-pipeline.md) | End-to-end release pipeline (build → sign → upload → publish) | ✅ Active |
+| 18 | [19-install-scripts.md](./19-install-scripts.md) | `install.ps1` / `install.sh` contract, idempotency, PATH registration | ✅ Active |
+| 19 | [20-updater-binary.md](./20-updater-binary.md) | Standalone updater binary architecture (binary-based update path) | ✅ Active |
+| 20 | [21-network-requirements.md](./21-network-requirements.md) | HTTP client, retry, proxy support, timeout policy | ✅ Active |
+| 21 | [22-config-file.md](./22-config-file.md) | `powershell.json` config schema, defaults, override rules | ✅ Active |
+| 22 | [23-update-command-workflow.md](./23-update-command-workflow.md) | End-to-end `<binary> update` workflow (source-based + binary-based) | ✅ Active |
+| 23 | [24-install-script-version-probe.md](./24-install-script-version-probe.md) | Latest-version probe in `install.{ps1,sh}` (current+1 .. +20, parallel) | ✅ Active |
 
 ### Auxiliary
 
-| File                                    | Description                                      |
-| --------------------------------------- | ------------------------------------------------ |
-| [99-consistency-report.md](./readme.md) | Per-folder consistency audit                     |
-| [diagrams/](./diagrams/)                | Mermaid flow diagrams (handoff, cleanup, deploy) |
+| File | Description |
+|------|-------------|
+| [99-consistency-report.md](./99-consistency-report.md) | Per-folder consistency audit |
+| [diagrams/](./diagrams/) | Mermaid flow diagrams (handoff, cleanup, deploy) |
 
 ---
 
 ## Cross-References
 
-| Reference                                   | Location                                                     |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| CI/CD self-update mechanism (pipeline side) | `../12-cicd-pipeline-workflows/11-self-update-mechanism.md`  |
-| Generic CLI blueprint                       | `../13-generic-cli/readme.md`                                |
-| Release pipeline (asset production)         | `../16-generic-release/05-release-pipeline.md`               |
-| Consolidated summary                        | `../17-consolidated-guidelines/20-self-update-app-update.md` |
+| Reference | Location |
+|-----------|----------|
+| CI/CD self-update mechanism (pipeline side) | `../12-cicd-pipeline-workflows/11-self-update-mechanism.md` |
+| Generic CLI blueprint | `../13-generic-cli/readme.md` |
+| Release pipeline (asset production) | `../16-generic-release/05-release-pipeline.md` |
+| Consolidated summary | `../17-consolidated-guidelines/20-self-update-app-update.md` |
 
 ---
 
@@ -155,7 +155,7 @@ AI INSTRUCTION:
 
 ---
 
-_Overview — v2.0.0 — 2026-04-17 (post-merge)_
+*Overview — v2.0.0 — 2026-04-17 (post-merge)*
 
 ---
 

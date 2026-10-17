@@ -29,12 +29,12 @@ Central location for all CI/CD pipeline specifications, deployment automation, a
 
 This module covers two distinct pipeline archetypes, shared conventions, reusable quality guards, and cross-cutting concerns:
 
-| Archetype                | Subfolder                      | Description                                                           |
-| ------------------------ | ------------------------------ | --------------------------------------------------------------------- |
-| Browser Extension Deploy | `01-browser-extension-deploy/` | Node.js/pnpm multi-component builds, zip packaging, Chrome Web Store  |
-| Go Binary Deploy         | `02-go-binary-deploy/`         | Cross-compiled Go binaries, tar.gz/zip, install scripts, code signing |
-| Reusable CI Guards       | `03-reusable-ci-guards/`       | 13 language-agnostic baseline diff gating and quality guards          |
-| Shared Conventions       | Root files                     | Common patterns used across all pipeline types                        |
+| Archetype | Subfolder | Description |
+|-----------|-----------|-------------|
+| Browser Extension Deploy | `01-browser-extension-deploy/` | Node.js/pnpm multi-component builds, zip packaging, Chrome Web Store |
+| Go Binary Deploy | `02-go-binary-deploy/` | Cross-compiled Go binaries, tar.gz/zip, install scripts, code signing |
+| Reusable CI Guards | `03-reusable-ci-guards/` | 13 language-agnostic baseline diff gating and quality guards |
+| Shared Conventions | Root files | Common patterns used across all pipeline types |
 
 ---
 
@@ -42,30 +42,30 @@ This module covers two distinct pipeline archetypes, shared conventions, reusabl
 
 ### Root (Shared Conventions & Workflows)
 
-| #   | File                                                                     | Description                                                                               | Status    |
-| --- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------- |
-| 02  | [02-ci-pipeline.md](./02-ci-pipeline.md)                                 | Core CI pipeline execution matrix and stages                                              | ✅ Active |
-| 03  | [03-shared-conventions.md](./03-shared-conventions.md)                   | Platform, triggers, concurrency, version resolution, checksums                            | ✅ Active |
-| 04  | [04-github-release-standard.md](./04-github-release-standard.md)         | Release body assembly, pre-release detection, asset matrix                                | ✅ Active |
-| 05  | [05-release-pipeline.md](./05-release-pipeline.md)                       | Release workflow, deployment triggers, and AI release sync protocol                       | ✅ Active |
-| 06  | [06-vulnerability-scanning.md](./06-vulnerability-scanning.md)           | Standalone and in-CI vulnerability scanning patterns                                      | ✅ Active |
-| 07  | [07-install-script-generation.md](./07-install-script-generation.md)     | Reusable PS1+Bash installer pattern, placeholder strategy, checksum verification          | ✅ Active |
-| 08  | [08-installation-flow.md](./08-installation-flow.md)                     | End-to-end install: one-liners, terminal output, upgrade, uninstall                       | ✅ Active |
-| 09  | [09-changelog-integration.md](./09-changelog-integration.md)             | Changelog format, CI extraction, release body assembly, terminal display                  | ✅ Active |
-| 10  | [10-code-signing.md](./10-code-signing.md)                               | SignPath integration, feature-flag gating, signature verification                         | ✅ Active |
-| 11  | [11-self-update-mechanism.md](./11-self-update-mechanism.md)             | Generic CLI self-update blueprint: deploy path, rename-first, handoff, cleanup            | ✅ Active |
-| 12  | [12-version-and-help.md](./12-version-and-help.md)                       | Version display, help system, command-level docs, CI verification                         | ✅ Active |
-| 13  | [13-environment-variable-setup.md](./13-environment-variable-setup.md)   | `env` command: persistent variables, PATH registration, auto-home                         | ✅ Active |
-| 14  | [14-release-body-and-changelog.md](./14-release-body-and-changelog.md)   | Changelog extraction, release body template, asset matrix assembly                        | ✅ Active |
-| 15  | [15-terminal-output-standards.md](./15-terminal-output-standards.md)     | Output formatting: icons, tables, progress, errors, CI summaries                          | ✅ Active |
-| 16  | [16-binary-icon-branding.md](./16-binary-icon-branding.md)               | Windows binary icon embedding via `go-winres`: icon, manifest, version info               | ✅ Active |
-| 17  | [17-release-pipeline-issues-rca.md](./17-release-pipeline-issues-rca.md) | 🔴 Unified Root-Cause Analysis ledger of 13 CI/CD failure post-mortems and standing rules | ✅ Active |
-| 18  | [18-lint-gating-rules.md](./18-lint-gating-rules.md)                     | Strict lint gating strategies, baseline diff rules, and CI guards master index            | ✅ Active |
-| 19  | [19-blue-green-deployment.md](./19-blue-green-deployment.md)             | Zero-downtime blue/green deployment strategy                                              | ✅ Active |
-| 20  | [20-flaky-test-quarantine.md](./20-flaky-test-quarantine.md)             | Flaky test detection and automated quarantine pattern                                     | ✅ Active |
-| 21  | [21-contract-testing.md](./21-contract-testing.md)                       | Microservice and API consumer contract testing                                            | ✅ Active |
-| 22  | [22-e2e-testing-pattern.md](./22-e2e-testing-pattern.md)                 | End-to-end integration and smoke test runner patterns                                     | ✅ Active |
-| 99  | [99-consistency-report.md](./readme.md)                                  | Consistency validation report for CI/CD workflows                                         | ✅ Active |
+| # | File | Description | Status |
+|---|------|-------------|--------|
+| 02 | [02-ci-pipeline.md](./02-ci-pipeline.md) | Core CI pipeline execution matrix and stages | ✅ Active |
+| 03 | [03-shared-conventions.md](./03-shared-conventions.md) | Platform, triggers, concurrency, version resolution, checksums | ✅ Active |
+| 04 | [04-github-release-standard.md](./04-github-release-standard.md) | Release body assembly, pre-release detection, asset matrix | ✅ Active |
+| 05 | [05-release-pipeline.md](./05-release-pipeline.md) | Release workflow, deployment triggers, and AI release sync protocol | ✅ Active |
+| 06 | [06-vulnerability-scanning.md](./06-vulnerability-scanning.md) | Standalone and in-CI vulnerability scanning patterns | ✅ Active |
+| 07 | [07-install-script-generation.md](./07-install-script-generation.md) | Reusable PS1+Bash installer pattern, placeholder strategy, checksum verification | ✅ Active |
+| 08 | [08-installation-flow.md](./08-installation-flow.md) | End-to-end install: one-liners, terminal output, upgrade, uninstall | ✅ Active |
+| 09 | [09-changelog-integration.md](./09-changelog-integration.md) | Changelog format, CI extraction, release body assembly, terminal display | ✅ Active |
+| 10 | [10-code-signing.md](./10-code-signing.md) | SignPath integration, feature-flag gating, signature verification | ✅ Active |
+| 11 | [11-self-update-mechanism.md](./11-self-update-mechanism.md) | Generic CLI self-update blueprint: deploy path, rename-first, handoff, cleanup | ✅ Active |
+| 12 | [12-version-and-help.md](./12-version-and-help.md) | Version display, help system, command-level docs, CI verification | ✅ Active |
+| 13 | [13-environment-variable-setup.md](./13-environment-variable-setup.md) | `env` command: persistent variables, PATH registration, auto-home | ✅ Active |
+| 14 | [14-release-body-and-changelog.md](./14-release-body-and-changelog.md) | Changelog extraction, release body template, asset matrix assembly | ✅ Active |
+| 15 | [15-terminal-output-standards.md](./15-terminal-output-standards.md) | Output formatting: icons, tables, progress, errors, CI summaries | ✅ Active |
+| 16 | [16-binary-icon-branding.md](./16-binary-icon-branding.md) | Windows binary icon embedding via `go-winres`: icon, manifest, version info | ✅ Active |
+| 17 | [17-release-pipeline-issues-rca.md](./17-release-pipeline-issues-rca.md) | 🔴 Unified Root-Cause Analysis ledger of 13 CI/CD failure post-mortems and standing rules | ✅ Active |
+| 18 | [18-lint-gating-rules.md](./18-lint-gating-rules.md) | Strict lint gating strategies, baseline diff rules, and CI guards master index | ✅ Active |
+| 19 | [19-blue-green-deployment.md](./19-blue-green-deployment.md) | Zero-downtime blue/green deployment strategy | ✅ Active |
+| 20 | [20-flaky-test-quarantine.md](./20-flaky-test-quarantine.md) | Flaky test detection and automated quarantine pattern | ✅ Active |
+| 21 | [21-contract-testing.md](./21-contract-testing.md) | Microservice and API consumer contract testing | ✅ Active |
+| 22 | [22-e2e-testing-pattern.md](./22-e2e-testing-pattern.md) | End-to-end integration and smoke test runner patterns | ✅ Active |
+| 99 | [99-consistency-report.md](./99-consistency-report.md) | Consistency validation report for CI/CD workflows | ✅ Active |
 
 ---
 
