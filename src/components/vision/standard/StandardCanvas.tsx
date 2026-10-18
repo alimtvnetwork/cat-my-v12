@@ -19,7 +19,9 @@ export function StandardCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
-  const [renderImageRef, setRenderImageRef] = useState(settings.imageRef || defaultWorkpieceFilledSample);
+  const [renderImageRef, setRenderImageRef] = useState(
+    settings.imageRef || defaultWorkpieceFilledSample,
+  );
 
   const zoomFactor = settings.view.zoom / 100;
   const viewport: Viewport = { panX, panY, zoom: zoomFactor };
@@ -101,7 +103,12 @@ export function StandardCanvas({
 
   useEffect(() => {
     // eslint-disable-next-line no-console
-    console.log("[CANVAS DEBUG] imageRef changed:", imageRef ? imageRef.substring(0, 50) : "empty", "length:", imageRef?.length);
+    console.log(
+      "[CANVAS DEBUG] imageRef changed:",
+      imageRef ? imageRef.substring(0, 50) : "empty",
+      "length:",
+      imageRef?.length,
+    );
     setRenderImageRef(imageRef);
   }, [imageRef]);
 
@@ -130,7 +137,21 @@ export function StandardCanvas({
           src={renderImageRef}
           alt="Registered reference"
           draggable={false}
-          onError={() => setRenderImageRef(defaultWorkpieceFilledSample)}
+          onError={() => {
+            // eslint-disable-next-line no-console
+            console.log(
+              "[CANVAS DEBUG] Image failed to load, falling back to default. Failed src length:",
+              renderImageRef?.length,
+            );
+            setRenderImageRef(defaultWorkpieceFilledSample);
+          }}
+          onLoad={() => {
+            // eslint-disable-next-line no-console
+            console.log(
+              "[CANVAS DEBUG] Image loaded successfully, src length:",
+              renderImageRef?.length,
+            );
+          }}
           className="h-full w-full select-none object-fill opacity-100"
         />
         {hasGrid ? (
