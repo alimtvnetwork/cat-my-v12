@@ -716,8 +716,13 @@ export function measureDeviceEdges(
 
   const gradientThreshold = 10;
   const scanBandRatio = 0.5;
+  const centerX = Math.floor(width / 2);
+  const centerY = Math.floor(height / 2);
 
-  // --- Horizontal edge detection (left/right device edges) ---
+  // --- Horizontal edge detection (left/right chip body edges) ---
+  // Scan from the image center outward. The chip body is the central dark
+  // rectangle, so the first strong gradient outward is the body edge —
+  // not the pocket cavity wall, which sits farther out.
   const hCenterStart = Math.floor(height * (0.5 - scanBandRatio / 2));
   const hCenterEnd = Math.floor(height * (0.5 + scanBandRatio / 2));
   const leftEdges: number[] = [];
@@ -726,13 +731,14 @@ export function measureDeviceEdges(
   for (let row = hCenterStart; row < hCenterEnd; row += 1) {
     const rowOffset = row * width * 4;
 
-    // Scan left → right for first strong gradient (left edge)
-    for (let x = 1; x < width - 1; x += 1) {
+    // Scan center → left for the body's left edge
+    for (let x = centerX; x > 0; x -= 1) {
       const idx = rowOffset + x * 4;
-      const prevIdx = rowOffset + (x - 1) * 4;
+      const outerIdx = rowOffset + (x - 1) * 4;
       const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const prevLuma = rgba[prevIdx] * 0.299 + rgba[prevIdx + 1] * 0.587 + rgba[prevIdx + 2] * 0.114;
-      const grad = Math.abs(luma - prevLuma);
+      const outerLuma =
+        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
+      const grad = Math.abs(luma - outerLuma);
 
       if (grad >= gradientThreshold) {
         leftEdges.push(x);
@@ -741,13 +747,14 @@ export function measureDeviceEdges(
       }
     }
 
-    // Scan right → left for first strong gradient (right edge)
-    for (let x = width - 2; x > 0; x -= 1) {
+    // Scan center → right for the body's right edge
+    for (let x = centerX; x < width - 1; x += 1) {
       const idx = rowOffset + x * 4;
-      const nextIdx = rowOffset + (x + 1) * 4;
+      const outerIdx = rowOffset + (x + 1) * 4;
       const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const nextLuma = rgba[nextIdx] * 0.299 + rgba[nextIdx + 1] * 0.587 + rgba[nextIdx + 2] * 0.114;
-      const grad = Math.abs(luma - nextLuma);
+      const outerLuma =
+        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
+      const grad = Math.abs(luma - outerLuma);
 
       if (grad >= gradientThreshold) {
         rightEdges.push(x);
@@ -757,20 +764,21 @@ export function measureDeviceEdges(
     }
   }
 
-  // --- Vertical edge detection (top/bottom device edges) ---
+  // --- Vertical edge detection (top/bottom chip body edges) ---
   const vCenterStart = Math.floor(width * (0.5 - scanBandRatio / 2));
   const vCenterEnd = Math.floor(width * (0.5 + scanBandRatio / 2));
   const topEdges: number[] = [];
   const bottomEdges: number[] = [];
 
   for (let col = vCenterStart; col < vCenterEnd; col += 1) {
-    // Scan top → bottom for first strong gradient (top edge)
-    for (let y = 1; y < height - 1; y += 1) {
+    // Scan center → up for the body's top edge
+    for (let y = centerY; y > 0; y -= 1) {
       const idx = (y * width + col) * 4;
-      const prevIdx = ((y - 1) * width + col) * 4;
+      const outerIdx = ((y - 1) * width + col) * 4;
       const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const prevLuma = rgba[prevIdx] * 0.299 + rgba[prevIdx + 1] * 0.587 + rgba[prevIdx + 2] * 0.114;
-      const grad = Math.abs(luma - prevLuma);
+      const outerLuma =
+        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
+      const grad = Math.abs(luma - outerLuma);
 
       if (grad >= gradientThreshold) {
         topEdges.push(y);
@@ -779,13 +787,14 @@ export function measureDeviceEdges(
       }
     }
 
-    // Scan bottom → top for first strong gradient (bottom edge)
-    for (let y = height - 2; y > 0; y -= 1) {
+    // Scan center → down for the body's bottom edge
+    for (let y = centerY; y < height - 1; y += 1) {
       const idx = (y * width + col) * 4;
-      const nextIdx = ((y + 1) * width + col) * 4;
+      const outerIdx = ((y + 1) * width + col) * 4;
       const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const nextLuma = rgba[nextIdx] * 0.299 + rgba[nextIdx + 1] * 0.587 + rgba[nextIdx + 2] * 0.114;
-      const grad = Math.abs(luma - nextLuma);
+      const outerLuma =
+        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
+      const grad = Math.abs(luma - outerLuma);
 
       if (grad >= gradientThreshold) {
         bottomEdges.push(y);
