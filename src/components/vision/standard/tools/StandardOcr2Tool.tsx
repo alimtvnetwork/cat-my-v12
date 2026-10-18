@@ -51,6 +51,28 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
   const [registeredImage, setRegisteredImage] = useState<HTMLImageElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  // Clear any invalid persisted imageRef (e.g. "registered-image-1" from the
+  // old no-op register button) so the canvas falls back to the default sample.
+  useEffect(() => {
+    const ref = props.settings.imageRef;
+
+    if (
+      typeof ref === "string" &&
+      ref.length > 0 &&
+      !ref.startsWith("data:") &&
+      !ref.startsWith("blob:") &&
+      !ref.startsWith("http") &&
+      !ref.startsWith("/")
+    ) {
+      props.onChange((s) => ({
+        ...s,
+        imageRef: undefined,
+      }));
+    }
+    // Run once on mount only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Preload the registered image so its pixels are available for recognition.
   useEffect(() => {
     const ref = props.settings.imageRef;
@@ -110,6 +132,9 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
             source: ImageSourceType.File,
           },
         }));
+      };
+      reader.onerror = () => {
+        // Keep the previous image; do not clear settings on read failure.
       };
       reader.readAsDataURL(file);
     },
