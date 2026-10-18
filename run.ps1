@@ -54,6 +54,12 @@ try {
     Write-Host "Waiting for backend..."
     .\scripts\dev\wait-for-http.ps1 -Url "http://$HostIp`:$BePort/healthz" -TimeoutSec 60
 
+    Write-Host "Installing frontend dependencies (bun install)..."
+    & bun install
+    if ($LASTEXITCODE -ne 0) {
+        throw "bun install failed with exit code $LASTEXITCODE"
+    }
+
     Write-Host "Starting frontend on port $FePort..."
     $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --host $FrontendHostIp --port $FePort"
     $jobs += $frontendProcess
