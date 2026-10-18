@@ -525,45 +525,13 @@ export function WorkpieceAnalyzeWorkspace({
   }, [projectRulesetsForAnalysis, validationRuns]);
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
 
+  // No auto analysis: the user runs it explicitly via the Analyze button.
+  // Only clear a stale result when there is no image to analyze.
   useEffect(() => {
-    let isCancelled = false;
-
-    async function evaluateInitialTapeStrip() {
-      if (!project.inspectionImageRef || isLiveCameraMode) {
-        setTapeStripResult(null);
-
-        return;
-      }
-
-      try {
-        const imgData = await loadWorkpieceImageData(project.inspectionImageRef);
-
-        if (isCancelled || !imgData) {
-          return;
-        }
-
-        const rulesToEvaluate = projectAnalysisItems.map((item) => item.rule);
-
-        if (rulesToEvaluate.length === 0) {
-          return;
-        }
-
-        const res = evaluateTapeStripRules(rulesToEvaluate, imgData, undefined, calibrationUmPerPx);
-
-        if (!isCancelled) {
-          setTapeStripResult(res);
-        }
-      } catch (err) {
-        console.error("[WorkpieceAnalyzeWorkspace] Initial tape strip eval failed:", err);
-      }
+    if (!project.inspectionImageRef || isLiveCameraMode) {
+      setTapeStripResult(null);
     }
-
-    void evaluateInitialTapeStrip();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems, calibrationUmPerPx]);
+  }, [isLiveCameraMode, project.inspectionImageRef]);
 
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
     const video = liveCameraVideoRef.current;
