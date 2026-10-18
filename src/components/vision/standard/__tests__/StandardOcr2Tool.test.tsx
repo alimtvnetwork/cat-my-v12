@@ -33,7 +33,7 @@ describe("StandardOcr2Tool", () => {
 
     render(<StandardOcr2Tool settings={settings} onChange={onChange} />);
 
-    expect(screen.getByText("OCR2 Optical Character Recognition Tool")).toBeDefined();
+    expect(screen.getByText("OCR2 OPTICAL CHARACTER RECOGNITION TOOL")).toBeDefined();
     expect(screen.getByText("T13-OCR2")).toBeDefined();
   });
 
