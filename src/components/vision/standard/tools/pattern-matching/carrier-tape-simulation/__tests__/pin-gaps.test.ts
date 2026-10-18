@@ -16,15 +16,22 @@ function makeBuffer(width: number, height: number): PixelBufferInput {
   return { rgba, width, height };
 }
 
-function paintRect(buffer: PixelBufferInput, x0: number, y0: number, x1: number, y1: number): void {
+function paintRect(
+  buffer: PixelBufferInput,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  value = 200,
+): void {
   const { rgba, width } = buffer;
 
   for (let y = y0; y <= y1; y += 1) {
     for (let x = x0; x <= x1; x += 1) {
       const idx = (y * width + x) * 4;
-      rgba[idx] = 200;
-      rgba[idx + 1] = 200;
-      rgba[idx + 2] = 200;
+      rgba[idx] = value;
+      rgba[idx + 1] = value;
+      rgba[idx + 2] = value;
     }
   }
 }
@@ -60,6 +67,43 @@ describe("measurePinPitchHorizontal gaps", () => {
 
     paintRect(buffer, 20, 20, 119, 79);
     paintRect(buffer, 30, 80, 37, 87);
+
+    const result = measurePinPitchHorizontal(buffer, 20, 119, 79, "bottom", 100);
+
+    expect(result).toBeNull();
+  });
+
+  it("merges a pin split by a reflection instead of reporting a phantom gap", () => {
+    const buffer = makeBuffer(140, 100);
+
+    // Chip body
+    paintRect(buffer, 20, 20, 119, 79);
+    // Three pins below the bottom edge: 8px wide, 12px gaps
+    paintRect(buffer, 30, 80, 37, 87);
+    paintRect(buffer, 50, 80, 57, 87);
+    paintRect(buffer, 70, 80, 77, 87);
+    // Dark reflection line splitting the middle pin in two
+    paintRect(buffer, 53, 80, 54, 87, 40);
+
+    const result = measurePinPitchHorizontal(buffer, 20, 119, 79, "bottom", 100);
+
+    expect(result).not.toBeNull();
+    expect(result!.detectedPinCount).toBe(3);
+    expect(result!.gaps).toHaveLength(2);
+    expect(result!.gaps[0].gapPx).toBe(12);
+    expect(result!.gaps[1].gapPx).toBe(12);
+    expect(result!.gaps[0].gapMm).toBeCloseTo(1.2, 5);
+    expect(result!.gaps[1].gapMm).toBeCloseTo(1.2, 5);
+  });
+
+  it("returns null when pins do not stand out from the background", () => {
+    const buffer = makeBuffer(140, 100);
+
+    paintRect(buffer, 20, 20, 119, 79);
+    // Barely brighter than the background — below the contrast gate
+    paintRect(buffer, 30, 80, 37, 87, 45);
+    paintRect(buffer, 50, 80, 57, 87, 45);
+    paintRect(buffer, 70, 80, 77, 87, 45);
 
     const result = measurePinPitchHorizontal(buffer, 20, 119, 79, "bottom", 100);
 

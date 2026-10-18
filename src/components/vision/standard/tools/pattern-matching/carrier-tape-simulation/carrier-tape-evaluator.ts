@@ -874,6 +874,92 @@ export function measureDeviceEdges(
  *   5. Compute center-to-center distances between consecutive pins.
  *   6. Median-filter the pitch values and convert to mm.
  */
+interface PinSpan {
+  start: number;
+  end: number;
+}
+
+/** Minimum brightness range across the scan band for pins to be distinguishable. */
+const MIN_PIN_CONTRAST_LUMA = 20;
+
+/** A gap smaller than this fraction of the median gap means a split pin. */
+const SPLIT_PIN_GAP_FRACTION = 0.45;
+
+/** A pin narrower than this fraction of the median pin width is noise. */
+const NOISE_PIN_WIDTH_FRACTION = 0.4;
+
+interface HardenPinSpansOptions {
+  minSpanWidthPx: number;
+  clipStart: number;
+  clipEnd: number;
+}
+
+/**
+ * Hardens raw pin-span detections: drops spans clipped by the scan
+ * boundaries and narrow noise spans, and merges spans that are really one
+ * pin split by a reflection or shadow (revealed by a gap far smaller than
+ * the typical inter-pin gap).
+ */
+function hardenPinSpans(spans: PinSpan[], options: HardenPinSpansOptions): PinSpan[] {
+  const { minSpanWidthPx, clipStart, clipEnd } = options;
+
+  let current = spans.filter(
+    (s) => s.end - s.start >= minSpanWidthPx && s.start > clipStart + 1 && s.end < clipEnd - 1,
+  );
+
+  if (current.length < 2) {
+    return current;
+  }
+
+  // Merge split pins: repeat until no gap looks like an intra-pin split.
+  let merged = true;
+
+  while (merged && current.length > 2) {
+    merged = false;
+    const gaps: number[] = [];
+
+    for (let i = 1; i < current.length; i += 1) {
+      gaps.push(Math.max(0, current[i].start - current[i - 1].end));
+    }
+
+    const sorted = [...gaps].sort((a, b) => a - b);
+    const medianGap = sorted[Math.floor(sorted.length / 2)];
+
+    if (medianGap <= 0) {
+      break;
+    }
+
+    const splitIndex = gaps.findIndex((g) => g < medianGap * SPLIT_PIN_GAP_FRACTION);
+
+    if (splitIndex !== -1) {
+      const mergedSpan = {
+        start: current[splitIndex].start,
+        end: current[splitIndex + 1].end,
+      };
+
+      current = [
+        ...current.slice(0, splitIndex),
+        mergedSpan,
+        ...current.slice(splitIndex + 2),
+      ];
+      merged = true;
+    }
+  }
+
+  // Drop narrow noise spans — a real pin array has near-uniform pin widths.
+  if (current.length >= 3) {
+    const widths = current.map((s) => s.end - s.start).sort((a, b) => a - b);
+    const medianWidth = widths[Math.floor(widths.length / 2)];
+    const filtered = current.filter((s) => s.end - s.start >= medianWidth * NOISE_PIN_WIDTH_FRACTION);
+
+    if (filtered.length >= 2) {
+      current = filtered;
+    }
+  }
+
+  return current;
+}
+
 export function measurePinPitchHorizontal(
   pixelBuffer: PixelBufferInput,
   leftEdgePx: number,
@@ -926,13 +1012,16 @@ export function measurePinPitchHorizontal(
   const meanLuma = totalLuma / colLuma.length;
   const isPin: boolean[] = colLuma.map((l) => l > meanLuma);
 
-  // Step 3: Find pin spans (in crop coordinates) by detecting gap→pin transitions
-  interface PinSpan {
-    start: number;
-    end: number;
+  // Contrast gate: pins must stand out from the background, otherwise the
+  // adaptive threshold invents phantom pins from noise.
+  const lumaRange = Math.max(...colLuma) - Math.min(...colLuma);
+
+  if (lumaRange < MIN_PIN_CONTRAST_LUMA) {
+    return null;
   }
 
-  const pinSpans: PinSpan[] = [];
+  // Step 3: Find raw pin spans (in crop coordinates) by detecting gap→pin transitions
+  const rawSpans: PinSpan[] = [];
   let spanStart = -1;
 
   const closeSpan = (endExclusive: number): void => {
@@ -944,7 +1033,7 @@ export function measurePinPitchHorizontal(
 
     // Filter out noise — real pins are at least 2px wide
     if (spanWidth >= 2) {
-      pinSpans.push({ start: scanXStart + spanStart, end: scanXStart + endExclusive });
+      rawSpans.push({ start: scanXStart + spanStart, end: scanXStart + endExclusive });
     }
 
     spanStart = -1;
@@ -962,6 +1051,13 @@ export function measurePinPitchHorizontal(
   if (spanStart !== -1) {
     closeSpan(isPin.length);
   }
+
+  // Hardening: drop clipped/noise spans, merge pins split by reflections.
+  const pinSpans = hardenPinSpans(rawSpans, {
+    minSpanWidthPx: 2,
+    clipStart: scanXStart,
+    clipEnd: scanXEnd,
+  });
 
   // Need at least 2 pins for pitch measurement
   if (pinSpans.length < 2) {
@@ -1066,12 +1162,15 @@ export function measurePinPitchVertical(
   const meanLuma = totalLuma / rowLuma.length;
   const isPin: boolean[] = rowLuma.map((l) => l > meanLuma);
 
-  interface PinSpan {
-    start: number;
-    end: number;
+  // Contrast gate: pins must stand out from the background, otherwise the
+  // adaptive threshold invents phantom pins from noise.
+  const lumaRange = Math.max(...rowLuma) - Math.min(...rowLuma);
+
+  if (lumaRange < MIN_PIN_CONTRAST_LUMA) {
+    return null;
   }
 
-  const pinSpans: PinSpan[] = [];
+  const rawSpans: PinSpan[] = [];
   let spanStart = -1;
 
   const closeSpan = (endExclusive: number): void => {
@@ -1082,7 +1181,7 @@ export function measurePinPitchVertical(
     const spanHeight = endExclusive - spanStart;
 
     if (spanHeight >= 1) {
-      pinSpans.push({ start: scanYStart + spanStart, end: scanYStart + endExclusive });
+      rawSpans.push({ start: scanYStart + spanStart, end: scanYStart + endExclusive });
     }
 
     spanStart = -1;
@@ -1099,6 +1198,13 @@ export function measurePinPitchVertical(
   if (spanStart !== -1) {
     closeSpan(isPin.length);
   }
+
+  // Hardening: drop clipped/noise spans, merge pins split by reflections.
+  const pinSpans = hardenPinSpans(rawSpans, {
+    minSpanWidthPx: 1,
+    clipStart: scanYStart,
+    clipEnd: scanYEnd,
+  });
 
   if (pinSpans.length < 2) {
     return null;
