@@ -610,7 +610,7 @@ export function WorkpieceAnalyzeWorkspace({
         let stripRes: TapeStripEvaluationResult | null = null;
 
         if (imgData) {
-          stripRes = evaluateTapeStripRules(
+          stripRes = await evaluateTapeStripRules(
             projectAnalysisItems.map((item) => item.rule),
             imgData,
             undefined,

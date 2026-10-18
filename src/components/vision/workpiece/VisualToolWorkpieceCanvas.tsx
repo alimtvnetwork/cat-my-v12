@@ -944,6 +944,26 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
 
+  // OCR markings: recognized text per OCR rule, with confidence and verdict.
+  if (pocket.ocrMarkings && pocket.ocrMarkings.length > 0) {
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "left";
+
+    let ocrY = y + 22;
+
+    for (const marking of pocket.ocrMarkings) {
+      const label = `${marking.text || "(no text)"} ${marking.meanConfidence.toFixed(0)}% ${marking.passed ? "✓" : "✗"}`;
+      const labelW = ctx.measureText(label).width + 8;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(x + 2, ocrY, labelW, 12);
+      ctx.fillStyle = marking.passed ? "#a78bfa" : "#ef4444";
+      ctx.fillText(label, x + 6, ocrY + 9);
+
+      ocrY += 14;
+    }
+  }
+
   // Per-gap distances: a small dimension mark on each inter-pin gap, labeled in mm.
   if (pocket.pinPitch && pocket.pinPitch.gaps.length > 0) {
     const gaps = pocket.pinPitch.gaps;

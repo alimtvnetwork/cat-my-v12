@@ -1966,6 +1966,189 @@ export interface PocketEvaluationResult {
   pinPitch?: PinPitchMeasurement | null;
   /** Full device measurement (chip body size, pin pitch) for this pocket, if detectable. */
   deviceMeasurement?: DeviceMeasurement | null;
+  /** OCR marking recognitions for this pocket (one per OCR rule), if run. */
+  ocrMarkings?: PocketOcrMarking[];
+}
+
+/** Recognized marking text for one OCR rule on one pocket. */
+export interface PocketOcrMarking {
+  ruleId: string;
+  ruleName: string;
+  text: string;
+  meanConfidence: number;
+  passed: boolean;
+}
+
+/** True for OCR rules (tool T114 "OCR2 Character Recognition"). */
+export function isOcrRule(rule: EditorRule): boolean {
+  const toolCode = String(rule.params?.toolCode || "").toUpperCase();
+  const ruleNameLower = (rule.name || "").toLowerCase();
+
+  return toolCode === "T114" || ruleNameLower.includes("ocr");
+}
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Map an OCR rule's params to the recognition engine's judgment criteria.
+ * Reads both the rail OcrRuleEditor schema (expectedText/matchMode/passThreshold)
+ * and the StandardOcr2Tool schema (expectedFormat/minConfidence/characterCount).
+ */
+function ocrJudgmentCriteria(rule: EditorRule): {
+  expectedFormat?: string;
+  minConfidence?: number;
+  expectedCharacterCount?: number;
+} {
+  const p = (rule.params ?? {}) as Record<string, unknown>;
+  const paramString = (key: string): string | undefined => {
+    const value = p[key];
+
+    return typeof value === "string" && value.length > 0 ? value : undefined;
+  };
+  const paramNumber = (key: string): number | undefined => {
+    const value = p[key];
+
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  };
+
+  let expectedFormat = paramString("expectedFormat");
+  const expectedText = paramString("expectedText");
+  const matchMode = String(p.matchMode ?? "");
+
+  if (!expectedFormat && expectedText) {
+    expectedFormat = matchMode === "regex" ? expectedText : `^${escapeRegExp(expectedText)}$`;
+  }
+
+  const minConfidence =
+    paramNumber("minConfidence") ??
+    (paramNumber("passThreshold") !== undefined
+      ? (paramNumber("passThreshold") as number) * 100
+      : undefined);
+
+  const expectedCharacterCount =
+    paramNumber("expectedCharacterCount") ?? paramNumber("characterCount");
+
+  return { expectedFormat, minConfidence, expectedCharacterCount };
+}
+
+/**
+ * Crop the device body (from the pocket's device measurement) out of the
+ * full image, as a pixel buffer for the OCR engine.
+ */
+function cropPocketBodyPixels(
+  imageData: WorkpieceImageData,
+  pocketRegion: { x: number; y: number; width: number; height: number },
+  deviceMeasurement: DeviceMeasurement,
+): { data: Uint8ClampedArray; width: number; height: number } | null {
+  const bodyX = Math.max(
+    0,
+    Math.min(imageData.width - 1, Math.round(pocketRegion.x + deviceMeasurement.leftEdgePx)),
+  );
+  const bodyY = Math.max(
+    0,
+    Math.min(imageData.height - 1, Math.round(pocketRegion.y + deviceMeasurement.topEdgePx)),
+  );
+  const bodyW = Math.max(
+    1,
+    Math.min(imageData.width - bodyX, Math.round(deviceMeasurement.widthPx)),
+  );
+  const bodyH = Math.max(
+    1,
+    Math.min(imageData.height - bodyY, Math.round(deviceMeasurement.heightPx)),
+  );
+
+  if (bodyW < 8 || bodyH < 8) {
+    return null;
+  }
+
+  const data = new Uint8ClampedArray(bodyW * bodyH * 4);
+
+  for (let row = 0; row < bodyH; row += 1) {
+    const srcOffset = ((bodyY + row) * imageData.width + bodyX) * 4;
+    const dstOffset = row * bodyW * 4;
+    data.set(imageData.rgba.subarray(srcOffset, srcOffset + bodyW * 4), dstOffset);
+  }
+
+  return { data, width: bodyW, height: bodyH };
+}
+
+/**
+ * Run marking recognition for every OCR rule on every occupied pocket that
+ * has a device measurement. Merges the results into the pockets'
+ * ruleResults + ocrMarkings and recomputes pocket pass/fail.
+ */
+async function recognizePocketMarkings(
+  pocketEvalResults: PocketEvaluationResult[],
+  imageData: WorkpieceImageData,
+  ocrRules: EditorRule[],
+): Promise<void> {
+  // Dynamic import keeps the tesseract WASM bundle out of the initial chunk.
+  const { recognizeMarking, judgeMarkingRecognition } = await import("@/lib/vision/ocr");
+
+  for (const pocket of pocketEvalResults) {
+    if (pocket.isEmpty || !pocket.deviceMeasurement) {
+      continue;
+    }
+
+    const bodyPixels = cropPocketBodyPixels(imageData, pocket.region, pocket.deviceMeasurement);
+
+    if (!bodyPixels) {
+      continue;
+    }
+
+    for (const rule of ocrRules) {
+      try {
+        const recognition = await recognizeMarking(bodyPixels);
+        const judgment = judgeMarkingRecognition(recognition, ocrJudgmentCriteria(rule));
+        const passed = judgment.passed;
+        const text = recognition.text || "";
+        const confidence = Math.round(recognition.meanConfidence * 10) / 10;
+
+        pocket.ocrMarkings = pocket.ocrMarkings ?? [];
+        pocket.ocrMarkings.push({
+          ruleId: rule.id,
+          ruleName: rule.name,
+          text,
+          meanConfidence: confidence,
+          passed,
+        });
+
+        const criteriaSummary = judgment.criteria
+          .map((c) => `${c.key}: ${c.passed ? "PASS" : "FAIL"}`)
+          .join(", ");
+
+        pocket.ruleResults[rule.id] = {
+          status: passed ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+          score: recognition.meanConfidence / 100,
+          message: `OCR "${text || "(no text)"}" @ ${confidence}% — ${passed ? "PASS" : "FAIL"} (${criteriaSummary}).`,
+          stub: false,
+          debug: {
+            recognizedText: text,
+            meanConfidence: confidence,
+            criteria: judgment.criteria,
+          },
+        };
+      } catch (err) {
+        pocket.ruleResults[rule.id] = {
+          status: ValidationStatusType.Fail,
+          score: 0,
+          message: `OCR recognition failed: ${err instanceof Error ? err.message : "unknown error"}.`,
+          stub: false,
+        };
+      }
+    }
+
+    // Recompute pocket verdict from the final rule results (OCR overwrites
+    // the sync placeholder, which can flip the outcome either way).
+    const finalResults = Object.values(pocket.ruleResults);
+    const finalPass = finalResults.every((r) => r.status === ValidationStatusType.Pass);
+
+    pocket.status = finalPass ? ValidationStatusType.Pass : ValidationStatusType.Fail;
+    pocket.score = finalResults.reduce((min, r) => Math.min(min, r.score ?? 0), 1.0);
+    pocket.message = finalPass
+      ? `Pocket #${pocket.pocketIndex} passed inspection.`
+      : `Pocket #${pocket.pocketIndex} failed inspection.`;
+  }
 }
 
 export interface TapeStripEvaluationResult {
@@ -2386,12 +2569,12 @@ function measurePocketDevice(
   return measureDeviceEdges(pocketCrop, umPerPx);
 }
 
-export function evaluateTapeStripRules(
+export async function evaluateTapeStripRules(
   rules: EditorRule[],
   imageData: WorkpieceImageData,
   opticalContext?: string,
   umPerPx: number = LEGACY_DEFAULT_UM_PER_PX,
-): TapeStripEvaluationResult {
+): Promise<TapeStripEvaluationResult> {
   const segmentation = segmentCarrierTapePockets(imageData);
   const pockets = segmentation.pockets;
 
@@ -2476,36 +2659,44 @@ export function evaluateTapeStripRules(
       umPerPx,
     );
 
+    const singlePocket: PocketEvaluationResult = {
+      pocketIndex: 1,
+      region: { x: single.x, y: single.y, width: single.width, height: single.height },
+      isEmpty: false,
+      presenceConfidence: single.presenceConfidence,
+      status: pocketStatus,
+      score: minScore,
+      message: isAllPass ? "Pocket #1 passed all checks." : "Pocket #1 failed checks.",
+      ruleResults,
+      pinPitch: pocketDevice?.pinPitch ?? null,
+      deviceMeasurement: pocketDevice,
+    };
+
+    // OCR rules also run recognition on the device marking.
+    const ocrRules = rules.filter(isOcrRule);
+
+    if (ocrRules.length > 0) {
+      await recognizePocketMarkings([singlePocket], imageData, ocrRules);
+    }
+
+    const finalIsAllPass = singlePocket.status === ValidationStatusType.Pass;
+
     return {
       totalPockets: 1,
       emptyPockets: 0,
-      passedPockets: isAllPass ? 1 : 0,
-      failedPockets: isAllPass ? 0 : 1,
-      yieldPercent: isAllPass ? 100 : 0,
-      status: pocketStatus,
-      message: isAllPass
+      passedPockets: finalIsAllPass ? 1 : 0,
+      failedPockets: finalIsAllPass ? 0 : 1,
+      yieldPercent: finalIsAllPass ? 100 : 0,
+      status: singlePocket.status,
+      message: finalIsAllPass
         ? `Pocket #1 PASSED (${rules.length}/${rules.length} rules verified).`
         : `Pocket #1 FAILED inspection checks.`,
-      pockets: [
-        {
-          pocketIndex: 1,
-          region: { x: single.x, y: single.y, width: single.width, height: single.height },
-          isEmpty: false,
-          presenceConfidence: single.presenceConfidence,
-          status: pocketStatus,
-          score: minScore,
-          message: isAllPass ? "Pocket #1 passed all checks." : "Pocket #1 failed checks.",
-          ruleResults,
-          pinPitch: pocketDevice?.pinPitch ?? null,
-          deviceMeasurement: pocketDevice,
-        },
-      ],
+      pockets: [singlePocket],
     };
   }
 
   // Multi-pocket strip (2, 3, 4, ... arbitrary N pockets)
   const pocketEvalResults: PocketEvaluationResult[] = [];
-  let passedOccupiedCount = 0;
   let emptyCount = 0;
 
   for (const pocket of pockets) {
@@ -2565,10 +2756,6 @@ export function evaluateTapeStripRules(
       }
     }
 
-    if (isPocketPass) {
-      passedOccupiedCount += 1;
-    }
-
     const pocketDevice = measurePocketDevice(
       imageData,
       { x: pocket.x, y: pocket.y, width: pocket.width, height: pocket.height },
@@ -2591,24 +2778,35 @@ export function evaluateTapeStripRules(
     });
   }
 
+  // OCR rules also run recognition on each occupied pocket's device marking.
+  const ocrRules = rules.filter(isOcrRule);
+
+  if (ocrRules.length > 0) {
+    await recognizePocketMarkings(pocketEvalResults, imageData, ocrRules);
+  }
+
   const occupiedPockets = pockets.filter((p) => !p.isEmpty);
   const totalOccupied = occupiedPockets.length;
-  const failedOccupied = totalOccupied - passedOccupiedCount;
+  // Recompute: OCR recognition can flip a pocket from pass to fail.
+  const finalPassedOccupiedCount = pocketEvalResults.filter(
+    (p) => !p.isEmpty && p.status === ValidationStatusType.Pass,
+  ).length;
+  const failedOccupied = totalOccupied - finalPassedOccupiedCount;
   const yieldPct =
-    totalOccupied > 0 ? Math.round((passedOccupiedCount / totalOccupied) * 1000) / 10 : 100;
+    totalOccupied > 0 ? Math.round((finalPassedOccupiedCount / totalOccupied) * 1000) / 10 : 100;
   const overallStatus =
     failedOccupied === 0 ? ValidationStatusType.Pass : ValidationStatusType.Fail;
 
-  let summaryMsg = `Tape Strip: ${passedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
+  let summaryMsg = `Tape Strip: ${finalPassedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
 
   if (emptyCount > 0) {
-    summaryMsg = `Tape Strip: ${emptyCount} empty ${emptyCount === 1 ? "cavity" : "cavities"} detected · ${passedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
+    summaryMsg = `Tape Strip: ${emptyCount} empty ${emptyCount === 1 ? "cavity" : "cavities"} detected · ${finalPassedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
   }
 
   return {
     totalPockets: pockets.length,
     emptyPockets: emptyCount,
-    passedPockets: passedOccupiedCount,
+    passedPockets: finalPassedOccupiedCount,
     failedPockets: failedOccupied,
     yieldPercent: yieldPct,
     status: overallStatus,

@@ -78,7 +78,7 @@ describe("Carrier Tape Automated Pocket Segmenter & Empty Pocket Detection", () 
     }
   });
 
-  it("evaluates tape strip rules on pocket-2-empty-mixed and detects the empty pocket without failing the present device yield", () => {
+  it("evaluates tape strip rules on pocket-2-empty-mixed and detects the empty pocket without failing the present device yield", async () => {
     const imgData = loadPngSync("src/assets/samples/pocket-2-empty-mixed.jpg");
     const testRule: EditorRule = {
       id: "rule-defect-01",
@@ -97,7 +97,7 @@ describe("Carrier Tape Automated Pocket Segmenter & Empty Pocket Detection", () 
       },
     };
 
-    const stripResult = evaluateTapeStripRules([testRule], imgData);
+    const stripResult = await evaluateTapeStripRules([testRule], imgData);
 
     expect(stripResult.totalPockets).toBe(2);
     expect(stripResult.emptyPockets).toBe(1);
