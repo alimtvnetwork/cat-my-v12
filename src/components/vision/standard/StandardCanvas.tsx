@@ -100,6 +100,8 @@ export function StandardCanvas({
   const hasGrid = viewModes?.grid ?? false;
 
   useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[CANVAS DEBUG] imageRef changed:", imageRef ? imageRef.substring(0, 50) : "empty", "length:", imageRef?.length);
     setRenderImageRef(imageRef);
   }, [imageRef]);
 
