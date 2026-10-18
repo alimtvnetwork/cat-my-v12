@@ -1057,28 +1057,6 @@ export function WorkpieceAnalyzeWorkspace({
                   onUpdateCameraSettings={handleUpdateRuleCameraSettings}
                   onUpdateLightSettings={handleUpdateRuleLightSettings}
                 />
-
-                {/* Lower part action buttons */}
-                <div className="flex shrink-0 items-center gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    data-tour="project-add-ruleset"
-                    onClick={handleStartAddRuleset}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 px-3 py-1.5 font-sans text-xs font-semibold text-purple-200 transition hover:border-purple-400 hover:bg-purple-900/40 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    <span>Add Ruleset</span>
-                  </button>
-                  <button
-                    type="button"
-                    data-tour="project-add-rule"
-                    onClick={() => handleNavigateAddRule()}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.4)] bg-[oklch(0.76_0.145_210/0.12)] px-3 py-1.5 font-sans text-xs font-semibold text-[oklch(0.76_0.145_210)] transition hover:border-[oklch(0.76_0.145_210)] hover:bg-[oklch(0.76_0.145_210/0.2)] active:scale-95"
-                  >
-                    <Plus size={13} />
-                    <span>Add Rule</span>
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto">
