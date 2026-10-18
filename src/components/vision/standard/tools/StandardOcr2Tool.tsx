@@ -115,28 +115,21 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
         return;
       }
 
-      const reader = new FileReader();
+      // Use an object URL instead of a data URL: lighter, no base64 bloat,
+      // and avoids data-URL length limits in some browsers.
+      const imageRef = URL.createObjectURL(file);
 
-      reader.onload = () => {
-        const imageRef = typeof reader.result === "string" ? reader.result : "";
+      // eslint-disable-next-line no-console
+      console.log("[OCR DEBUG] Created object URL for:", file.name);
 
-        if (!imageRef) {
-          return;
-        }
-
-        props.onChange((s) => ({
-          ...s,
-          imageRef,
-          view: {
-            ...s.view,
-            source: ImageSourceType.File,
-          },
-        }));
-      };
-      reader.onerror = () => {
-        // Keep the previous image; do not clear settings on read failure.
-      };
-      reader.readAsDataURL(file);
+      props.onChange((s) => ({
+        ...s,
+        imageRef,
+        view: {
+          ...s.view,
+          source: ImageSourceType.File,
+        },
+      }));
     },
     [props.onChange],
   );
@@ -380,11 +373,13 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
   ];
 
   // DEBUG: Show imageRef status (temporary)
-  const imageRefStatus = !props.settings.imageRef
+  const imageRefValue = props.settings.imageRef;
+  const imageRefStatus = !imageRefValue
     ? "NO IMAGE"
-    : typeof props.settings.imageRef === "string" && props.settings.imageRef.startsWith("data:")
-      ? `DATA URL (${Math.round(props.settings.imageRef.length / 1024)}KB)`
-      : `INVALID: ${String(props.settings.imageRef).substring(0, 50)}`;
+    : typeof imageRefValue === "string" &&
+        (imageRefValue.startsWith("data:") || imageRefValue.startsWith("blob:"))
+      ? `IMAGE SET (${imageRefValue.substring(0, 20)}...)`
+      : `INVALID: ${String(imageRefValue).substring(0, 50)}`;
 
   return (
     <>
