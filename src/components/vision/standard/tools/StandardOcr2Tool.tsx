@@ -17,6 +17,7 @@ import {
   OCR_MIN_CONFIDENCE_PERCENT,
   OCR_MAX_CONFIDENCE_PERCENT,
 } from "../constants";
+import type { OcrJudgment, OcrPixelBuffer } from "@/lib/vision/ocr/types";
 
 export interface StandardOcr2ToolProps {
   settings: PatternSearchSettings;
@@ -29,6 +30,12 @@ export interface StandardOcr2ToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  /**
+   * Optional source of the marking ROI pixels. When provided, the
+   * recognition tab offers a "Run recognition" button backed by the real
+   * OCR engine (@/lib/vision/ocr).
+   */
+  imageSource?: () => OcrPixelBuffer | null;
 }
 
 export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Element {
@@ -36,6 +43,39 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
   const [characterCount, setCharacterCount] = useState<number>(OCR_DEFAULT_CHARACTER_COUNT);
   const [expectedFormat, setExpectedFormat] = useState<string>(OCR_DEFAULT_EXPECTED_FORMAT);
   const [minConfidence, setMinConfidence] = useState<number>(OCR_DEFAULT_MIN_CONFIDENCE);
+  const [ocrRunning, setOcrRunning] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [ocrJudgment, setOcrJudgment] = useState<OcrJudgment | null>(null);
+
+  const runRecognition = async (): Promise<void> => {
+    const source = props.imageSource?.() ?? null;
+
+    if (!source) {
+      setOcrError("No image available for recognition");
+      return;
+    }
+
+    setOcrRunning(true);
+    setOcrError(null);
+    setOcrJudgment(null);
+
+    try {
+      // Dynamic import keeps the tesseract WASM bundle out of the initial chunk.
+      const { recognizeMarking, judgeMarkingRecognition } = await import("@/lib/vision/ocr");
+      const recognition = await recognizeMarking(source);
+      setOcrJudgment(
+        judgeMarkingRecognition(recognition, {
+          expectedFormat,
+          minConfidence,
+          expectedCharacterCount: characterCount,
+        }),
+      );
+    } catch (err) {
+      setOcrError(err instanceof Error ? err.message : "Recognition failed");
+    } finally {
+      setOcrRunning(false);
+    }
+  };
 
   const tabs: ToolTabItem[] = [
     {
@@ -98,6 +138,49 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
                 className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
               />
             </div>
+
+            {props.imageSource && (
+              <div className="pt-1 space-y-2">
+                <button
+                  type="button"
+                  onClick={runRecognition}
+                  disabled={ocrRunning}
+                  className="px-3 py-1.5 rounded bg-ca-accent text-white text-xs font-semibold disabled:opacity-50"
+                >
+                  {ocrRunning ? "Recognizing…" : "Run recognition"}
+                </button>
+
+                {ocrError && <div className="text-xs text-red-400 font-mono">{ocrError}</div>}
+
+                {ocrJudgment && (
+                  <div className="p-2 bg-ca-bg border border-ca-border rounded space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm text-ca-ink">
+                        {ocrJudgment.recognition.text || "(no text)"}
+                      </span>
+                      <span
+                        className={`text-xs font-bold ${ocrJudgment.passed ? "text-emerald-400" : "text-red-400"}`}
+                      >
+                        {ocrJudgment.passed ? "PASS" : "FAIL"}
+                      </span>
+                    </div>
+                    <div className="text-ca-ink-muted font-mono">
+                      Mean confidence: {ocrJudgment.recognition.meanConfidence}%
+                    </div>
+                    <ul className="space-y-0.5">
+                      {ocrJudgment.criteria.map((criterion) => (
+                        <li
+                          key={criterion.key}
+                          className={`font-mono ${criterion.passed ? "text-emerald-400" : "text-red-400"}`}
+                        >
+                          {criterion.passed ? "✓" : "✗"} {criterion.key}: {criterion.detail}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ),
