@@ -379,6 +379,13 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
     },
   ];
 
+  // DEBUG: Show imageRef status (temporary)
+  const imageRefStatus = !props.settings.imageRef
+    ? "NO IMAGE"
+    : typeof props.settings.imageRef === "string" && props.settings.imageRef.startsWith("data:")
+      ? `DATA URL (${Math.round(props.settings.imageRef.length / 1024)}KB)`
+      : `INVALID: ${String(props.settings.imageRef).substring(0, 50)}`;
+
   return (
     <>
       <input
@@ -387,10 +394,28 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
         accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
         className="sr-only"
         onChange={(event) => {
+          // eslint-disable-next-line no-console
+          console.log("[OCR DEBUG] File selected:", event.target.files?.[0]?.name);
           handleImageFileChange(event.target.files?.[0]);
           event.target.value = "";
         }}
       />
+      {/* DEBUG: Temporary status indicator */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          zIndex: 9999,
+          background: "red",
+          color: "white",
+          padding: "4px 8px",
+          fontSize: "12px",
+          fontFamily: "monospace",
+        }}
+      >
+        IMG: {imageRefStatus}
+      </div>
       <StandardToolShell
         toolName="OCR2 Optical Character Recognition Tool"
         toolKindId="T13-OCR2"
