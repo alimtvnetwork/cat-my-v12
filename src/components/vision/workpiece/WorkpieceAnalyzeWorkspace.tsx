@@ -526,12 +526,11 @@ export function WorkpieceAnalyzeWorkspace({
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
 
   // No auto analysis: the user runs it explicitly via the Analyze button.
-  // Only clear a stale result when there is no image to analyze.
+  // Clear the result when the image, the rules, or the camera mode change,
+  // so the canvas never shows stale markings.
   useEffect(() => {
-    if (!project.inspectionImageRef || isLiveCameraMode) {
-      setTapeStripResult(null);
-    }
-  }, [isLiveCameraMode, project.inspectionImageRef]);
+    setTapeStripResult(null);
+  }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
 
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
     const video = liveCameraVideoRef.current;

@@ -1429,6 +1429,12 @@ export function VisualToolWorkpieceCanvas({
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
 
+    // Analyze mode keeps the image clean until the user clicks Analyze:
+    // tapeStripResult is only set by an explicit analysis run.
+    if (isAnalyzeMode && !tapeStripResult && rulesToRender.length > 0) {
+      return;
+    }
+
     if (rulesToRender.length === 0) {
       if (tapeStripResult && tapeStripResult.totalPockets > 1) {
         ctx.save();
