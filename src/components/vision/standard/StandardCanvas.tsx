@@ -101,6 +101,14 @@ export function StandardCanvas({
   const imageRef = settings.imageRef || defaultWorkpieceFilledSample;
   const hasGrid = viewModes?.grid ?? false;
 
+  // eslint-disable-next-line no-console
+  console.log(
+    "[CANVAS DEBUG] render - imageRef:",
+    imageRef ? imageRef.substring(0, 40) : "empty",
+    "renderImageRef:",
+    renderImageRef ? String(renderImageRef).substring(0, 40) : "empty",
+  );
+
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.log(
