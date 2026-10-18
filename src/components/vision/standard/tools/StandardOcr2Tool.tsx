@@ -115,21 +115,32 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
         return;
       }
 
-      // Use an object URL instead of a data URL: lighter, no base64 bloat,
-      // and avoids data-URL length limits in some browsers.
-      const imageRef = URL.createObjectURL(file);
+      const reader = new FileReader();
 
-      // eslint-disable-next-line no-console
-      console.log("[OCR DEBUG] Created object URL for:", file.name);
+      reader.onload = () => {
+        const imageRef = typeof reader.result === "string" ? reader.result : "";
 
-      props.onChange((s) => ({
-        ...s,
-        imageRef,
-        view: {
-          ...s.view,
-          source: ImageSourceType.File,
-        },
-      }));
+        if (!imageRef) {
+          return;
+        }
+
+        // eslint-disable-next-line no-console
+        console.log("[OCR DEBUG] File read complete:", file.name, "size:", imageRef.length);
+
+        props.onChange((s) => ({
+          ...s,
+          imageRef,
+          view: {
+            ...s.view,
+            source: ImageSourceType.File,
+          },
+        }));
+      };
+      reader.onerror = () => {
+        // eslint-disable-next-line no-console
+        console.log("[OCR DEBUG] File read failed:", file.name);
+      };
+      reader.readAsDataURL(file);
     },
     [props.onChange],
   );

@@ -141,7 +141,6 @@ export function StandardCanvas({
         }}
       >
         <img
-          key={renderImageRef}
           src={renderImageRef}
           alt="Registered reference"
           draggable={false}
