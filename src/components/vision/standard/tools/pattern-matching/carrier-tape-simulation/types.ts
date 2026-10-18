@@ -72,6 +72,8 @@ export interface PixelBufferInput {
 export interface PinPitchMeasurement {
   pitchPx: number;
   pitchMm: number;
+  /** Center-to-center pin distance in microns (pitchPx * active um/px). */
+  pitchUm: number;
   gapPx: number;
   gapMm: number;
   pinWidthPx: number;
@@ -85,6 +87,10 @@ export interface DeviceMeasurement {
   heightPx: number;
   widthMm: number;
   heightMm: number;
+  /** Chip body width in microns (widthPx * active um/px). */
+  widthUm: number;
+  /** Chip body height in microns (heightPx * active um/px). */
+  heightUm: number;
   leftEdgePx: number;
   rightEdgePx: number;
   topEdgePx: number;

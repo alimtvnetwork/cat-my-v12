@@ -1,4 +1,5 @@
 import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxes";
+import { LEGACY_DEFAULT_UM_PER_PX } from "@/lib/vision/calibration/types";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
@@ -686,10 +687,10 @@ function evaluateRule2PatternSynthetic(
 // ---------------------------------------------------------
 // Calibration: Micron Per Pixel
 // ---------------------------------------------------------
-// QFP-44 Atmel MEGA32U4: 10mm × 10mm real-world body size.
-// At the camera's working distance, this maps to ~92px in our images.
-// Calibration: 10000 μm / 92 px ≈ 108.7 μm/px
-const MICRONS_PER_PIXEL = 108.7;
+// The active calibration (from the Vision Calibration panel) supplies um/px.
+// LEGACY_DEFAULT_UM_PER_PX is the old hardcoded value (QFP-44 Atmel MEGA32U4:
+// 10mm x 10mm body ≈ 92px → 10000 um / 92 px ≈ 108.7 um/px), kept only as a
+// fallback when no calibration record exists yet.
 
 /**
  * Real edge-detection device measurement from actual pixel data.
@@ -704,6 +705,7 @@ const MICRONS_PER_PIXEL = 108.7;
  */
 export function measureDeviceEdges(
   pixelBuffer: PixelBufferInput,
+  umPerPx: number = LEGACY_DEFAULT_UM_PER_PX,
 ): DeviceMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -817,14 +819,28 @@ export function measureDeviceEdges(
     return null;
   }
 
-  const widthMm = (widthPx * MICRONS_PER_PIXEL) / 1000;
-  const heightMm = (heightPx * MICRONS_PER_PIXEL) / 1000;
+  const widthMm = (widthPx * umPerPx) / 1000;
+  const heightMm = (heightPx * umPerPx) / 1000;
 
   // Measure edge pitch — try bottom edge first, fallback to right edge
-  let pinPitch = measurePinPitchHorizontal(pixelBuffer, leftEdgePx, rightEdgePx, bottomEdgePx, "bottom");
+  let pinPitch = measurePinPitchHorizontal(
+    pixelBuffer,
+    leftEdgePx,
+    rightEdgePx,
+    bottomEdgePx,
+    "bottom",
+    umPerPx,
+  );
 
   if (!pinPitch) {
-    pinPitch = measurePinPitchVertical(pixelBuffer, topEdgePx, bottomEdgePx, rightEdgePx, "right");
+    pinPitch = measurePinPitchVertical(
+      pixelBuffer,
+      topEdgePx,
+      bottomEdgePx,
+      rightEdgePx,
+      "right",
+      umPerPx,
+    );
   }
 
   return {
@@ -832,11 +848,13 @@ export function measureDeviceEdges(
     heightPx,
     widthMm,
     heightMm,
+    widthUm: Math.round(widthPx * umPerPx * 10) / 10,
+    heightUm: Math.round(heightPx * umPerPx * 10) / 10,
     leftEdgePx,
     rightEdgePx,
     topEdgePx,
     bottomEdgePx,
-    micronsPerPixel: MICRONS_PER_PIXEL,
+    micronsPerPixel: umPerPx,
     pinPitch,
   };
 }
@@ -861,6 +879,7 @@ function measurePinPitchHorizontal(
   rightEdgePx: number,
   bottomEdgePx: number,
   side: "bottom" | "top",
+  umPerPx: number,
 ): PinPitchMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -977,11 +996,12 @@ function measurePinPitchHorizontal(
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
-    pitchMm: Math.round((medianPitch * MICRONS_PER_PIXEL) / 10) / 100,
+    pitchMm: Math.round((medianPitch * umPerPx) / 10) / 100,
+    pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
-    gapMm: Math.round((gapPx * MICRONS_PER_PIXEL) / 10) / 100,
+    gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
-    pinWidthMm: Math.round((avgPinWidthPx * MICRONS_PER_PIXEL) / 10) / 100,
+    pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
     detectedPinCount: pinCenters.length,
     measuredSide: side,
   };
@@ -993,6 +1013,7 @@ function measurePinPitchVertical(
   bottomEdgePx: number,
   rightEdgePx: number,
   side: "right" | "left",
+  umPerPx: number,
 ): PinPitchMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -1098,11 +1119,12 @@ function measurePinPitchVertical(
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
-    pitchMm: Math.round((medianPitch * MICRONS_PER_PIXEL) / 10) / 100,
+    pitchMm: Math.round((medianPitch * umPerPx) / 10) / 100,
+    pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
-    gapMm: Math.round((gapPx * MICRONS_PER_PIXEL) / 10) / 100,
+    gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
-    pinWidthMm: Math.round((avgPinWidthPx * MICRONS_PER_PIXEL) / 10) / 100,
+    pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
     detectedPinCount: pinCenters.length,
     measuredSide: side,
   };

@@ -23,6 +23,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
+import { CalibrationPanel } from "./CalibrationPanel";
+import {
+  findActiveCalibration,
+  useVisionCalibrationStore,
+} from "@/lib/vision/calibration";
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
@@ -125,7 +130,17 @@ export function WorkpieceAnalyzeWorkspace({
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source" | "calibration">(
+    "tree",
+  );
+  const visionCalibrations = useVisionCalibrationStore((s) => s.calibrations);
+  const calibrationCameraId = useVisionCalibrationStore((s) => s.selectedCameraId);
+  const activeCalibration = useMemo(
+    () => findActiveCalibration(visionCalibrations, calibrationCameraId, project.id),
+    [visionCalibrations, calibrationCameraId, project.id],
+  );
+  /** Microns-per-pixel driving pin pitch + device measurements (X axis). */
+  const calibrationUmPerPx = activeCalibration?.umPerPxX;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const updateProjectInspectionImageRef = useProjectStore((s) => s.updateProjectInspectionImageRef);
 
@@ -545,7 +560,7 @@ export function WorkpieceAnalyzeWorkspace({
           return;
         }
 
-        const res = evaluateTapeStripRules(rulesToEvaluate, imgData);
+        const res = evaluateTapeStripRules(rulesToEvaluate, imgData, undefined, calibrationUmPerPx);
 
         if (!isCancelled) {
           setTapeStripResult(res);
@@ -560,7 +575,7 @@ export function WorkpieceAnalyzeWorkspace({
     return () => {
       isCancelled = true;
     };
-  }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
+  }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems, calibrationUmPerPx]);
 
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
     const video = liveCameraVideoRef.current;
@@ -643,6 +658,8 @@ export function WorkpieceAnalyzeWorkspace({
           stripRes = evaluateTapeStripRules(
             projectAnalysisItems.map((item) => item.rule),
             imgData,
+            undefined,
+            calibrationUmPerPx,
           );
           setTapeStripResult(stripRes);
 
@@ -829,7 +846,7 @@ export function WorkpieceAnalyzeWorkspace({
         setIsAnalyzing(false);
       }
     },
-    [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems],
+    [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems, calibrationUmPerPx],
   );
   const handleManualRunAnalysis = useCallback(() => {
     void handleRunAnalysis(MANUAL_RUN_ANALYSIS_PARAMS);
@@ -996,9 +1013,9 @@ export function WorkpieceAnalyzeWorkspace({
             data-tour="project-inspection-program"
             className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
           >
-            {/* Tab switchers: Program vs Image Source */}
+            {/* Tab switchers: Program vs Image Source vs Calibration */}
             <div className="flex shrink-0 items-center justify-between rounded-lg border border-white/10 bg-black/60 p-0.5">
-              <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
+              <div className="grid w-full grid-cols-3 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                 <button
                   type="button"
                   data-tour="project-program-tab"
@@ -1024,6 +1041,18 @@ export function WorkpieceAnalyzeWorkspace({
                 >
                   <Camera size={12} />
                   <span>Image & Source</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveSidebarTab("calibration")}
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                    activeSidebarTab === "calibration"
+                      ? "bg-amber-400 text-[#0a0d14] shadow-sm font-bold"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Ruler size={12} />
+                  <span>Calibration</span>
                 </button>
               </div>
             </div>
@@ -1071,6 +1100,11 @@ export function WorkpieceAnalyzeWorkspace({
                   </button>
                 </div>
               </div>
+            ) : activeSidebarTab === "calibration" ? (
+              <CalibrationPanel
+                projectId={project.id}
+                inspectionImageRef={project.inspectionImageRef}
+              />
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <section

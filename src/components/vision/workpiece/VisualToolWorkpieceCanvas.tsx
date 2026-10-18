@@ -943,6 +943,42 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   ctx.fillRect(x + 2, y + 2, badgeW, badgeH);
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
+
+  if (pocket.pinPitch) {
+    const pp = pocket.pinPitch;
+    const pitchText =
+      `PIN PITCH: ${pp.pitchUm.toFixed(1)}µm ` +
+      `(${pp.pitchPx.toFixed(1)}px · ${pp.detectedPinCount} pins)`;
+    ctx.font = "bold 8.5px monospace";
+    const pitchBadgeW = ctx.measureText(pitchText).width + 10;
+    const pitchBadgeH = 15;
+    const pitchBadgeY = y + 2 + badgeH + 3;
+
+    ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+    ctx.fillRect(x + 2, pitchBadgeY, pitchBadgeW, pitchBadgeH);
+    ctx.strokeStyle = "rgba(34, 211, 238, 0.6)";
+    ctx.lineWidth = 0.75;
+    ctx.strokeRect(x + 2, pitchBadgeY, pitchBadgeW, pitchBadgeH);
+    ctx.fillStyle = "#22d3ee";
+    ctx.fillText(pitchText, x + 6, pitchBadgeY + 11);
+  }
+
+  if (pocket.deviceMeasurement) {
+    const dm = pocket.deviceMeasurement;
+    const widthText = `CHIP WIDTH: ${dm.widthUm.toFixed(1)}µm (${dm.widthPx.toFixed(1)}px)`;
+    ctx.font = "bold 8.5px monospace";
+    const widthBadgeW = ctx.measureText(widthText).width + 10;
+    const widthBadgeH = 15;
+    const widthBadgeY = y + 2 + badgeH + 3 + (pocket.pinPitch ? 18 : 0);
+
+    ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+    ctx.fillRect(x + 2, widthBadgeY, widthBadgeW, widthBadgeH);
+    ctx.strokeStyle = "rgba(34, 211, 238, 0.6)";
+    ctx.lineWidth = 0.75;
+    ctx.strokeRect(x + 2, widthBadgeY, widthBadgeW, widthBadgeH);
+    ctx.fillStyle = "#22d3ee";
+    ctx.fillText(widthText, x + 6, widthBadgeY + 11);
+  }
 }
 
 export function VisualToolWorkpieceCanvas({

@@ -25,6 +25,12 @@ import {
   Pin1JudgmentStatusType,
   type Pin1HoleItem,
 } from "@/components/vision/standard/tools/pin1-config/types";
+import { measureDeviceEdges } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
+import type {
+  DeviceMeasurement,
+  PinPitchMeasurement,
+} from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/types";
+import { LEGACY_DEFAULT_UM_PER_PX } from "./calibration/types";
 import defaultWorkpieceFilledSample from "@/assets/samples/pocket-1-filled.jpg";
 import defaultWorkpieceEmptySample from "@/assets/samples/pocket-2-empty-mixed.jpg";
 import {
@@ -1949,6 +1955,10 @@ export interface PocketEvaluationResult {
   score: number;
   message: string;
   ruleResults: Record<string, ValidationResult>;
+  /** Measured pin-to-pin distance for the device in this pocket, if detectable. */
+  pinPitch?: PinPitchMeasurement | null;
+  /** Full device measurement (chip body size, pin pitch) for this pocket, if detectable. */
+  deviceMeasurement?: DeviceMeasurement | null;
 }
 
 export interface TapeStripEvaluationResult {
@@ -2320,10 +2330,60 @@ export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
   };
 }
 
+/**
+ * Crop a rectangular region out of full-frame image data.
+ * Used to run device measurement on a single carrier-tape pocket.
+ */
+function cropWorkpieceRegion(
+  imageData: WorkpieceImageData,
+  region: { x: number; y: number; width: number; height: number },
+): WorkpieceImageData | null {
+  const { width, height, rgba } = imageData;
+  const x0 = Math.max(0, Math.round(region.x));
+  const y0 = Math.max(0, Math.round(region.y));
+  const x1 = Math.min(width, Math.round(region.x + region.width));
+  const y1 = Math.min(height, Math.round(region.y + region.height));
+  const cropW = x1 - x0;
+  const cropH = y1 - y0;
+
+  if (cropW < 10 || cropH < 10) {
+    return null;
+  }
+
+  const cropped = new Uint8ClampedArray(cropW * cropH * 4);
+
+  for (let y = 0; y < cropH; y += 1) {
+    const srcOffset = ((y0 + y) * width + x0) * 4;
+
+    cropped.set(rgba.subarray(srcOffset, srcOffset + cropW * 4), y * cropW * 4);
+  }
+
+  return { width: cropW, height: cropH, rgba: cropped };
+}
+
+/**
+ * Measure the device inside a pocket region (chip body size + pin pitch).
+ * Returns null when no device edges are detectable.
+ */
+function measurePocketDevice(
+  imageData: WorkpieceImageData,
+  region: { x: number; y: number; width: number; height: number },
+  umPerPx: number,
+): DeviceMeasurement | null {
+  const pocketCrop = cropWorkpieceRegion(imageData, region);
+
+  if (!pocketCrop) {
+    return null;
+  }
+
+  return measureDeviceEdges(pocketCrop, umPerPx);
+}
+
 export function evaluateTapeStripRules(
   rules: EditorRule[],
   imageData: WorkpieceImageData,
   opticalContext?: string,
+  umPerPx: number = LEGACY_DEFAULT_UM_PER_PX,
 ): TapeStripEvaluationResult {
   const segmentation = segmentCarrierTapePockets(imageData);
   const pockets = segmentation.pockets;
@@ -2376,6 +2436,8 @@ export function evaluateTapeStripRules(
             score: 0.0,
             message: "Pocket #1 is EMPTY: workpiece missing in carrier tape cavity.",
             ruleResults: emptyRuleResults,
+            pinPitch: null,
+            deviceMeasurement: null,
           },
         ],
       };
@@ -2401,6 +2463,11 @@ export function evaluateTapeStripRules(
     }
 
     const pocketStatus = isAllPass ? ValidationStatusType.Pass : ValidationStatusType.Fail;
+    const pocketDevice = measurePocketDevice(
+      imageData,
+      { x: single.x, y: single.y, width: single.width, height: single.height },
+      umPerPx,
+    );
 
     return {
       totalPockets: 1,
@@ -2422,6 +2489,8 @@ export function evaluateTapeStripRules(
           score: minScore,
           message: isAllPass ? "Pocket #1 passed all checks." : "Pocket #1 failed checks.",
           ruleResults,
+          pinPitch: pocketDevice?.pinPitch ?? null,
+          deviceMeasurement: pocketDevice,
         },
       ],
     };
@@ -2455,6 +2524,8 @@ export function evaluateTapeStripRules(
         score: 1.0,
         message: `Pocket #${pocket.index} is EMPTY: carrier tape cavity without device (skipped).`,
         ruleResults: emptyRuleResults,
+        pinPitch: null,
+        deviceMeasurement: null,
       });
 
       continue;
@@ -2491,6 +2562,12 @@ export function evaluateTapeStripRules(
       passedOccupiedCount += 1;
     }
 
+    const pocketDevice = measurePocketDevice(
+      imageData,
+      { x: pocket.x, y: pocket.y, width: pocket.width, height: pocket.height },
+      umPerPx,
+    );
+
     pocketEvalResults.push({
       pocketIndex: pocket.index,
       region: { x: pocket.x, y: pocket.y, width: pocket.width, height: pocket.height },
@@ -2502,6 +2579,8 @@ export function evaluateTapeStripRules(
         ? `Pocket #${pocket.index} passed inspection.`
         : `Pocket #${pocket.index} failed inspection.`,
       ruleResults: pocketRuleResults,
+      pinPitch: pocketDevice?.pinPitch ?? null,
+      deviceMeasurement: pocketDevice,
     });
   }
 
