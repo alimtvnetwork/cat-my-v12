@@ -5,7 +5,6 @@
  * lazily on first recognition and reused. Marking ROIs are preprocessed
  * (grayscale → upscale → polarity → Otsu) before recognition.
  */
-import { createWorker, OEM, PSM } from "tesseract.js";
 import type { ImageLike, Worker, WorkerOptions } from "tesseract.js";
 import { encodeBmpGray } from "./bmp";
 import { preprocessForOcr, type GrayImage } from "./preprocess";
@@ -17,6 +16,20 @@ import {
   type OcrPixelBuffer,
   type OcrRecognitionResult,
 } from "./types";
+
+// tesseract.js is imported lazily (dynamic import) so the OCR module can be
+// loaded without the WASM bundle, and a missing install produces a clear
+// error at recognition time instead of breaking the module import.
+type TesseractModule = typeof import("tesseract.js");
+let tesseractModule: TesseractModule | null = null;
+
+async function getTesseract(): Promise<TesseractModule> {
+  if (!tesseractModule) {
+    tesseractModule = await import("tesseract.js");
+  }
+
+  return tesseractModule;
+}
 
 let workerPromise: Promise<Worker> | null = null;
 let workerLanguage = "";
@@ -80,9 +93,10 @@ async function getWorker(options: OcrEngineOptions): Promise<Worker> {
         workerOptions.workerPath = options.workerPath;
       }
 
+      const { createWorker, OEM, PSM } = await getTesseract();
       const worker = await createWorker(language, OEM.LSTM_ONLY, workerOptions);
       await worker.setParameters({
-        tessedit_pageseg_mode: (options.pageSegMode ?? PSM.SINGLE_BLOCK) as PSM,
+        tessedit_pageseg_mode: (options.pageSegMode ?? PSM.SINGLE_BLOCK) as typeof PSM.SINGLE_BLOCK,
       });
       return worker;
     })();
