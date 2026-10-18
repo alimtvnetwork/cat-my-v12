@@ -944,40 +944,85 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
 
-  if (pocket.pinPitch) {
-    const pp = pocket.pinPitch;
-    const pitchText =
-      `PIN PITCH: ${pp.pitchUm.toFixed(1)}µm ` +
-      `(${pp.pitchPx.toFixed(1)}px · ${pp.detectedPinCount} pins)`;
-    ctx.font = "bold 8.5px monospace";
-    const pitchBadgeW = ctx.measureText(pitchText).width + 10;
-    const pitchBadgeH = 15;
-    const pitchBadgeY = y + 2 + badgeH + 3;
+  // Per-gap distances: a small dimension mark on each inter-pin gap, labeled in mm.
+  if (pocket.pinPitch && pocket.pinPitch.gaps.length > 0) {
+    const gaps = pocket.pinPitch.gaps;
 
-    ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-    ctx.fillRect(x + 2, pitchBadgeY, pitchBadgeW, pitchBadgeH);
-    ctx.strokeStyle = "rgba(34, 211, 238, 0.6)";
-    ctx.lineWidth = 0.75;
-    ctx.strokeRect(x + 2, pitchBadgeY, pitchBadgeW, pitchBadgeH);
-    ctx.fillStyle = "#22d3ee";
-    ctx.fillText(pitchText, x + 6, pitchBadgeY + 11);
+    ctx.font = "bold 7px monospace";
+    ctx.textAlign = "center";
+
+    gaps.forEach((gap, gapIndex) => {
+      const gx1 = x + gap.x1;
+      const gy1 = y + gap.y1;
+      const gx2 = x + gap.x2;
+      const gy2 = y + gap.y2;
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.95)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx1, gy1);
+      ctx.lineTo(gx2, gy2);
+      ctx.stroke();
+
+      const label = `${gap.gapMm.toFixed(2)}mm`;
+      const labelW = ctx.measureText(label).width + 6;
+      const midX = (gx1 + gx2) / 2;
+      const midY = (gy1 + gy2) / 2;
+      // Alternate above / below the gap line so dense pins don't collide.
+      const labelY = gapIndex % 2 === 0 ? midY + 2 : midY - 13;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(midX - labelW / 2, labelY, labelW, 11);
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillText(label, midX, labelY + 8.5);
+    });
+
+    ctx.textAlign = "left";
   }
 
+  // Chip width: dimension line below the device, width in mm underneath it.
   if (pocket.deviceMeasurement) {
     const dm = pocket.deviceMeasurement;
-    const widthText = `CHIP WIDTH: ${dm.widthUm.toFixed(1)}µm (${dm.widthPx.toFixed(1)}px)`;
-    ctx.font = "bold 8.5px monospace";
-    const widthBadgeW = ctx.measureText(widthText).width + 10;
-    const widthBadgeH = 15;
-    const widthBadgeY = y + 2 + badgeH + 3 + (pocket.pinPitch ? 18 : 0);
+    const dimX1 = x + dm.leftEdgePx;
+    const dimX2 = x + dm.rightEdgePx;
+    const dimY = y + dm.bottomEdgePx + 12;
 
-    ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-    ctx.fillRect(x + 2, widthBadgeY, widthBadgeW, widthBadgeH);
-    ctx.strokeStyle = "rgba(34, 211, 238, 0.6)";
-    ctx.lineWidth = 0.75;
-    ctx.strokeRect(x + 2, widthBadgeY, widthBadgeW, widthBadgeH);
-    ctx.fillStyle = "#22d3ee";
-    ctx.fillText(widthText, x + 6, widthBadgeY + 11);
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX2, dimY);
+    ctx.stroke();
+
+    const arrowLen = 5;
+
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX1 + arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX1 + arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(dimX2, dimY);
+    ctx.lineTo(dimX2 - arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX2 - arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+
+    const widthLabel = `${dm.widthMm.toFixed(2)}mm`;
+
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+
+    const labelW = ctx.measureText(widthLabel).width + 8;
+    const labelX = (dimX1 + dimX2) / 2;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(labelX - labelW / 2, dimY + 3, labelW, 12);
+    ctx.fillStyle = "#facc15";
+    ctx.fillText(widthLabel, labelX, dimY + 12);
+    ctx.textAlign = "left";
   }
 }
 

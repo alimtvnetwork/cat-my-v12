@@ -69,6 +69,16 @@ export interface PixelBufferInput {
  * Real edge-detected device measurement from actual pixel data.
  * Uses horizontal/vertical gradient scans to locate chip boundaries.
  */
+/** Distance of the empty space between two adjacent pins, in pocket-crop coordinates. */
+export interface PinGapMeasurement {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  gapPx: number;
+  gapMm: number;
+}
+
 export interface PinPitchMeasurement {
   pitchPx: number;
   pitchMm: number;
@@ -76,6 +86,8 @@ export interface PinPitchMeasurement {
   pitchUm: number;
   gapPx: number;
   gapMm: number;
+  /** Per-gap distances between consecutive pins (crop coordinates). */
+  gaps: PinGapMeasurement[];
   pinWidthPx: number;
   pinWidthMm: number;
   detectedPinCount: number;

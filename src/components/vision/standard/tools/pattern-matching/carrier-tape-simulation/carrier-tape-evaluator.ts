@@ -3,6 +3,7 @@ import { LEGACY_DEFAULT_UM_PER_PX } from "@/lib/vision/calibration/types";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
+  PinGapMeasurement,
   PinPitchMeasurement,
   PixelBufferInput,
   PocketDef,
@@ -873,7 +874,7 @@ export function measureDeviceEdges(
  *   5. Compute center-to-center distances between consecutive pins.
  *   6. Median-filter the pitch values and convert to mm.
  */
-function measurePinPitchHorizontal(
+export function measurePinPitchHorizontal(
   pixelBuffer: PixelBufferInput,
   leftEdgePx: number,
   rightEdgePx: number,
@@ -925,40 +926,50 @@ function measurePinPitchHorizontal(
   const meanLuma = totalLuma / colLuma.length;
   const isPin: boolean[] = colLuma.map((l) => l > meanLuma);
 
-  // Step 3: Find pin centers by detecting gap→pin transitions
-  const pinCenters: number[] = [];
-  let pinStart = -1;
+  // Step 3: Find pin spans (in crop coordinates) by detecting gap→pin transitions
+  interface PinSpan {
+    start: number;
+    end: number;
+  }
+
+  const pinSpans: PinSpan[] = [];
+  let spanStart = -1;
+
+  const closeSpan = (endExclusive: number): void => {
+    if (spanStart === -1) {
+      return;
+    }
+
+    const spanWidth = endExclusive - spanStart;
+
+    // Filter out noise — real pins are at least 2px wide
+    if (spanWidth >= 2) {
+      pinSpans.push({ start: scanXStart + spanStart, end: scanXStart + endExclusive });
+    }
+
+    spanStart = -1;
+  };
 
   for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinCenter = (pinStart + i - 1) / 2;
-      const pinW = i - pinStart;
-
-      // Filter out noise — real pins are at least 2px wide
-      if (pinW >= 2) {
-        pinCenters.push(pinCenter);
-      }
-
-      pinStart = -1;
+    if (isPin[i] && spanStart === -1) {
+      spanStart = i;
+    } else if (!isPin[i] && spanStart !== -1) {
+      closeSpan(i);
     }
   }
 
   // Handle pin at end of scan
-  if (pinStart !== -1) {
-    const pinCenter = (pinStart + isPin.length - 1) / 2;
-    const pinW = isPin.length - pinStart;
-
-    if (pinW >= 2) {
-      pinCenters.push(pinCenter);
-    }
+  if (spanStart !== -1) {
+    closeSpan(isPin.length);
   }
 
   // Need at least 2 pins for pitch measurement
-  if (pinCenters.length < 2) {
+  if (pinSpans.length < 2) {
     return null;
   }
+
+  const pinCenters = pinSpans.map((s) => (s.start + s.end) / 2);
+  const pinWidths = pinSpans.map((s) => s.end - s.start);
 
   // Step 4: Compute center-to-center pitch between consecutive pins
   const pitches: number[] = [];
@@ -971,28 +982,27 @@ function measurePinPitchHorizontal(
   const sorted = [...pitches].sort((a, b) => a - b);
   const medianPitch = sorted[Math.floor(sorted.length / 2)];
 
-  // Compute average pin width and gap
-  let totalPinWidth = 0;
-  let pinCount = 0;
-  pinStart = -1;
-
-  for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinW = i - pinStart;
-
-      if (pinW >= 2) {
-        totalPinWidth += pinW;
-        pinCount += 1;
-      }
-
-      pinStart = -1;
-    }
-  }
-
-  const avgPinWidthPx = pinCount > 0 ? totalPinWidth / pinCount : 3;
+  const avgPinWidthPx = pinWidths.reduce((sum, w) => sum + w, 0) / pinWidths.length;
   const gapPx = Math.max(0, medianPitch - avgPinWidthPx);
+
+  // Step 5: Per-gap distances — the empty space between consecutive pins
+  const bandCenterY = (scanYStart + scanYEnd) / 2;
+  const gaps: PinGapMeasurement[] = [];
+
+  for (let i = 1; i < pinSpans.length; i += 1) {
+    const gapStartPx = pinSpans[i - 1].end;
+    const gapEndPx = pinSpans[i].start;
+    const gapWidthPx = Math.max(0, gapEndPx - gapStartPx);
+
+    gaps.push({
+      x1: gapStartPx,
+      y1: bandCenterY,
+      x2: gapEndPx,
+      y2: bandCenterY,
+      gapPx: Math.round(gapWidthPx * 10) / 10,
+      gapMm: Math.round(((gapWidthPx * umPerPx) / 1000) * 100) / 100,
+    });
+  }
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
@@ -1000,14 +1010,15 @@ function measurePinPitchHorizontal(
     pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
     gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
+    gaps,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
     pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
-    detectedPinCount: pinCenters.length,
+    detectedPinCount: pinSpans.length,
     measuredSide: side,
   };
 }
 
-function measurePinPitchVertical(
+export function measurePinPitchVertical(
   pixelBuffer: PixelBufferInput,
   topEdgePx: number,
   bottomEdgePx: number,
@@ -1055,36 +1066,46 @@ function measurePinPitchVertical(
   const meanLuma = totalLuma / rowLuma.length;
   const isPin: boolean[] = rowLuma.map((l) => l > meanLuma);
 
-  const pinCenters: number[] = [];
-  let pinStart = -1;
+  interface PinSpan {
+    start: number;
+    end: number;
+  }
+
+  const pinSpans: PinSpan[] = [];
+  let spanStart = -1;
+
+  const closeSpan = (endExclusive: number): void => {
+    if (spanStart === -1) {
+      return;
+    }
+
+    const spanHeight = endExclusive - spanStart;
+
+    if (spanHeight >= 1) {
+      pinSpans.push({ start: scanYStart + spanStart, end: scanYStart + endExclusive });
+    }
+
+    spanStart = -1;
+  };
 
   for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinCenter = (pinStart + i - 1) / 2;
-      const pinW = i - pinStart;
-
-      if (pinW >= 1) {
-        pinCenters.push(pinCenter);
-      }
-
-      pinStart = -1;
+    if (isPin[i] && spanStart === -1) {
+      spanStart = i;
+    } else if (!isPin[i] && spanStart !== -1) {
+      closeSpan(i);
     }
   }
 
-  if (pinStart !== -1) {
-    const pinCenter = (pinStart + isPin.length - 1) / 2;
-    const pinW = isPin.length - pinStart;
-
-    if (pinW >= 1) {
-      pinCenters.push(pinCenter);
-    }
+  if (spanStart !== -1) {
+    closeSpan(isPin.length);
   }
 
-  if (pinCenters.length < 2) {
+  if (pinSpans.length < 2) {
     return null;
   }
+
+  const pinCenters = pinSpans.map((s) => (s.start + s.end) / 2);
+  const pinWidths = pinSpans.map((s) => s.end - s.start);
 
   const pitches: number[] = [];
 
@@ -1095,27 +1116,26 @@ function measurePinPitchVertical(
   const sorted = [...pitches].sort((a, b) => a - b);
   const medianPitch = sorted[Math.floor(sorted.length / 2)];
 
-  let totalPinWidth = 0;
-  let pinCount = 0;
-  pinStart = -1;
-
-  for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinW = i - pinStart;
-
-      if (pinW >= 1) {
-        totalPinWidth += pinW;
-        pinCount += 1;
-      }
-
-      pinStart = -1;
-    }
-  }
-
-  const avgPinWidthPx = pinCount > 0 ? totalPinWidth / pinCount : 3;
+  const avgPinWidthPx = pinWidths.reduce((sum, w) => sum + w, 0) / pinWidths.length;
   const gapPx = Math.max(0, medianPitch - avgPinWidthPx);
+
+  const bandCenterX = (scanXStart + scanXEnd) / 2;
+  const gaps: PinGapMeasurement[] = [];
+
+  for (let i = 1; i < pinSpans.length; i += 1) {
+    const gapStartPx = pinSpans[i - 1].end;
+    const gapEndPx = pinSpans[i].start;
+    const gapWidthPx = Math.max(0, gapEndPx - gapStartPx);
+
+    gaps.push({
+      x1: bandCenterX,
+      y1: gapStartPx,
+      x2: bandCenterX,
+      y2: gapEndPx,
+      gapPx: Math.round(gapWidthPx * 10) / 10,
+      gapMm: Math.round(((gapWidthPx * umPerPx) / 1000) * 100) / 100,
+    });
+  }
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
@@ -1123,9 +1143,10 @@ function measurePinPitchVertical(
     pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
     gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
+    gaps,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
     pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
-    detectedPinCount: pinCenters.length,
+    detectedPinCount: pinSpans.length,
     measuredSide: side,
   };
 }
