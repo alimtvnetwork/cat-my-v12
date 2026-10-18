@@ -54,10 +54,24 @@ try {
     Write-Host "Waiting for backend..."
     .\scripts\dev\wait-for-http.ps1 -Url "http://$HostIp`:$BePort/healthz" -TimeoutSec 60
 
-    Write-Host "Installing frontend dependencies (bun install)..."
-    & bun install
-    if ($LASTEXITCODE -ne 0) {
-        throw "bun install failed with exit code $LASTEXITCODE"
+    # Install frontend dependencies only when node_modules is missing or stale.
+    $needsInstall = $false
+    if (-not (Test-Path "node_modules")) {
+        $needsInstall = $true
+    } elseif ((Get-Item "package.json").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime) {
+        $needsInstall = $true
+    } elseif ((Test-Path "bun.lock") -and ((Get-Item "bun.lock").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime)) {
+        $needsInstall = $true
+    }
+
+    if ($needsInstall) {
+        Write-Host "Installing frontend dependencies (bun install)..."
+        & bun install
+        if ($LASTEXITCODE -ne 0) {
+            throw "bun install failed with exit code $LASTEXITCODE"
+        }
+    } else {
+        Write-Host "Frontend dependencies are up to date, skipping bun install."
     }
 
     Write-Host "Starting frontend on port $FePort..."
