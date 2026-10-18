@@ -1979,12 +1979,12 @@ export interface PocketOcrMarking {
   passed: boolean;
 }
 
-/** True for OCR rules (tool T114 "OCR2 Character Recognition"). */
+/** True for OCR rules (tool T114 "OCR2 Character Recognition" / T106 "Laser Marking OCR"). */
 export function isOcrRule(rule: EditorRule): boolean {
   const toolCode = String(rule.params?.toolCode || "").toUpperCase();
   const ruleNameLower = (rule.name || "").toLowerCase();
 
-  return toolCode === "T114" || ruleNameLower.includes("ocr");
+  return toolCode === "T114" || toolCode === "T106" || ruleNameLower.includes("ocr");
 }
 
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
