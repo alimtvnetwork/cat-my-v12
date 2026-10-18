@@ -33,6 +33,7 @@ from BE.app.domain.vision_eval import (
     evaluate_grayscale_tolerance,
     evaluate_pattern_match,
 )
+from BE.app.domain.carrier_segmenter import segment_carrier_belt
 from BE.app.domain.vision_preprocess import apply_optical_settings, maybe_downsample
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
@@ -114,12 +115,14 @@ async def evaluate_score(request: Request) -> JSONResponse:
     calibration_factor = float(body.get("calibrationFactor", 0.05))
     calibration_unit = str(body.get("calibrationUnit", "mm"))
     roi = _parse_roi(body.get("roi"))
+    search_padding = int(body.get("searchPadding") or body.get("tolerancePx") or 30)
 
     sample_param = body.get("sampleImageUrl") or body.get("referenceImageUrl")
     ref_bytes = _load_image_bytes(body.get("referenceImageUrl"))
     smp_bytes = _load_image_bytes(sample_param)
 
     rule_obj = body.get("rule") or body.get("Rule")
+
     if not isinstance(rule_obj, dict):
         rule_obj = {}
 
@@ -137,6 +140,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
     )
 
     smp_img: np.ndarray | None = None
+
     if smp_bytes and cv2 is not None:
         smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
         smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
@@ -189,11 +193,13 @@ async def evaluate_score(request: Request) -> JSONResponse:
             )
         else:
             tmpl_img = _clip_to_roi(ref_img, roi)
+            pad_x = min(search_padding, roi.x)
+            pad_y = min(search_padding, roi.y)
             search_roi = BoundingBox(
-                x=max(0, roi.x - 20),
-                y=max(0, roi.y - 20),
-                width=min(smp_img.shape[1] - max(0, roi.x - 20), roi.width + 40),
-                height=min(smp_img.shape[0] - max(0, roi.y - 20), roi.height + 40),
+                x=max(0, roi.x - pad_x),
+                y=max(0, roi.y - pad_y),
+                width=min(smp_img.shape[1] - max(0, roi.x - pad_x), roi.width + pad_x * 2),
+                height=min(smp_img.shape[0] - max(0, roi.y - pad_y), roi.height + pad_y * 2),
             )
             search_area = _clip_to_roi(smp_img, search_roi)
             result = _match_pattern(search_area, tmpl_img, threshold=threshold)
@@ -265,13 +271,48 @@ async def evaluate_score(request: Request) -> JSONResponse:
 
     duration_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
+    # Multi-slot carrier belt segmentation & occupancy detection
+    slots_payload: list[dict[str, Any]] = []
+    has_multi_slot = False
+    overall_pass = bool(result.is_pass)
+
+    if smp_img is not None:
+        seg_res = segment_carrier_belt(
+            smp_img,
+            expected_slot_width=roi.width if roi is not None else None,
+        )
+
+        if seg_res.totalSlots > 1:
+            has_multi_slot = True
+
+            for s_item in seg_res.slots:
+                slot_pass = s_item.isOccupied and bool(result.is_pass)
+                slot_verdict = "PASS" if slot_pass else ("EMPTY" if not s_item.isOccupied else "FAIL")
+
+                if not slot_pass:
+                    overall_pass = False
+
+                slots_payload.append({
+                    "slotIndex": s_item.slotIndex,
+                    "state": s_item.state,
+                    "isOccupied": s_item.isOccupied,
+                    "isPass": slot_pass,
+                    "verdict": slot_verdict,
+                    "score": round(float(result.score if s_item.isOccupied else 0.0), 1),
+                    "reason": s_item.reason if not s_item.isOccupied else getattr(result, "reason", ""),
+                    "defect": "EMPTY_POCKET" if not s_item.isOccupied else (None if slot_pass else "DEVICE_DEFECT"),
+                })
+
     score_payload = {
-        "is_pass": bool(result.is_pass),
+        "is_pass": overall_pass,
         "confidence": round(float(result.score), 1),
         "label": str(result.label),
-        "verdict": getattr(result, "verdict", "PASS" if result.is_pass else "FAIL"),
+        "verdict": "PASS" if overall_pass else "FAIL",
         "reason": getattr(result, "reason", ""),
         "trace": getattr(result, "trace", None) or {},
+        "hasMultiSlot": has_multi_slot,
+        "totalSlots": len(slots_payload) if has_multi_slot else 1,
+        "slots": slots_payload,
         "calibration": {
             "factor": calibration_factor,
             "unit": calibration_unit,
@@ -343,6 +384,8 @@ async def evaluate_score(request: Request) -> JSONResponse:
             "is_pass": score_payload["is_pass"],
             "confidence": score_payload["confidence"],
             "hasOptical": bool(cam_settings or light_settings),
+            "hasMultiSlot": has_multi_slot,
+            "totalSlots": len(slots_payload) if has_multi_slot else 1,
             "runId": score_payload.get("runId"),
         },
     )
@@ -355,11 +398,15 @@ async def evaluate_score(request: Request) -> JSONResponse:
     wire["verdict"] = score_payload["verdict"]
     wire["reason"] = score_payload["reason"]
     wire["trace"] = score_payload["trace"]
+    wire["hasMultiSlot"] = score_payload["hasMultiSlot"]
+    wire["totalSlots"] = score_payload["totalSlots"]
+    wire["slots"] = score_payload["slots"]
     wire["calibration"] = score_payload["calibration"]
     wire["optical"] = score_payload["optical"]
     wire["runId"] = score_payload.get("runId")
 
     return JSONResponse(content=wire, headers={CORRELATION_HEADER: cid})
+
 
 
 __all__ = ["router"]

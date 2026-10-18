@@ -203,10 +203,10 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     params.searchRegion.height === 200;
 
   const targetRegion = isDefaultPlaceholder ? undefined : params.searchRegion;
-  const minCandidateArea = 2;
   const rawThreshold = params.threshold ?? 170;
   const effectiveThreshold =
-    rawThreshold >= 120 && rawThreshold <= 220 ? rawThreshold : 170;
+    rawThreshold >= 30 && rawThreshold <= 245 ? Math.round(rawThreshold) : 170;
+  const minCandidateArea = 4;
 
   let markingResult = markWhiteBoxes({
     width: params.targetWidth,

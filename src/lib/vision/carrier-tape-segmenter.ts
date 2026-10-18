@@ -14,6 +14,12 @@ export interface CarrierTapePocket {
     width: number;
     height: number;
   };
+  markingRegion?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   leadsTopRegion: {
     x: number;
     y: number;
@@ -44,6 +50,16 @@ interface PocketPresenceCheck {
   highLeadPixels: number;
 }
 
+export interface EvaluatePocketPresenceParams {
+  imageData: WorkpieceImageData;
+  pocket: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
 function evaluatePocketPresence(
   imageData: WorkpieceImageData,
   pocket: { x: number; y: number; width: number; height: number },
@@ -59,13 +75,22 @@ function evaluatePocketPresence(
 
   const leadXStart = pocket.x + Math.floor(pocket.width * 0.12);
   const leadXEnd = pocket.x + Math.floor(pocket.width * 0.88);
+  const leadSpan = Math.max(1, leadXEnd - leadXStart);
 
   let leadMaxLuma1 = 0;
   let leadMaxLuma2 = 0;
   let highLeadPixels = 0;
 
-  for (let y = leadY1; y < leadY1 + leadH1 && y < h; y += 1) {
-    for (let x = leadXStart; x < leadXEnd && x < w; x += 1) {
+  // Track 1D horizontal luminance profiles in lead rows to evaluate pin periodicity
+  const topLeadProfile = new Float64Array(leadSpan);
+  const botLeadProfile = new Float64Array(leadSpan);
+
+  for (let x = leadXStart; x < leadXEnd && x < w; x += 1) {
+    const colIdx = x - leadXStart;
+    let sumTop = 0;
+    let sumBot = 0;
+
+    for (let y = leadY1; y < leadY1 + leadH1 && y < h; y += 1) {
       const idx = (y * w + x) * 4;
       const luma =
         0.299 * imageData.rgba[idx] +
@@ -79,11 +104,11 @@ function evaluatePocketPresence(
       if (luma > 105) {
         highLeadPixels += 1;
       }
-    }
-  }
 
-  for (let y = leadY2; y < leadY2 + leadH2 && y < h; y += 1) {
-    for (let x = leadXStart; x < leadXEnd && x < w; x += 1) {
+      sumTop += luma;
+    }
+
+    for (let y = leadY2; y < leadY2 + leadH2 && y < h; y += 1) {
       const idx = (y * w + x) * 4;
       const luma =
         0.299 * imageData.rgba[idx] +
@@ -97,6 +122,27 @@ function evaluatePocketPresence(
       if (luma > 105) {
         highLeadPixels += 1;
       }
+
+      sumBot += luma;
+    }
+
+    topLeadProfile[colIdx] = sumTop / Math.max(1, leadH1);
+    botLeadProfile[colIdx] = sumBot / Math.max(1, leadH2);
+  }
+
+  // Count discrete pin transitions (periodic rising edges) in lead rows
+  let leadTransitions = 0;
+
+  for (let c = 1; c < leadSpan - 1; c += 1) {
+    const hasTopRise = topLeadProfile[c] > 90 && topLeadProfile[c] - topLeadProfile[c - 1] > 18;
+    const hasBotRise = botLeadProfile[c] > 90 && botLeadProfile[c] - botLeadProfile[c - 1] > 18;
+
+    if (hasTopRise) {
+      leadTransitions += 1;
+    }
+
+    if (hasBotRise) {
+      leadTransitions += 1;
     }
   }
 
@@ -109,6 +155,7 @@ function evaluatePocketPresence(
   let bodySum = 0;
   let bodySumSq = 0;
   let bodyCount = 0;
+  let highEdgePixels = 0;
 
   for (let y = bodyY; y < bodyY + bodyH && y < h; y += 1) {
     for (let x = bodyXStart; x < bodyXEnd && x < w; x += 1) {
@@ -121,30 +168,65 @@ function evaluatePocketPresence(
       bodySum += luma;
       bodySumSq += luma * luma;
       bodyCount += 1;
+
+      // 2D discrete difference gradient for marking and chip edge density
+      if (x > 0 && x < w - 1 && y > 0 && y < h - 1) {
+        const rightIdx = (y * w + (x + 1)) * 4;
+        const leftIdx = (y * w + (x - 1)) * 4;
+        const downIdx = ((y + 1) * w + x) * 4;
+        const upIdx = ((y - 1) * w + x) * 4;
+
+        const rightLuma =
+          0.299 * imageData.rgba[rightIdx] +
+          0.587 * imageData.rgba[rightIdx + 1] +
+          0.114 * imageData.rgba[rightIdx + 2];
+        const leftLuma =
+          0.299 * imageData.rgba[leftIdx] +
+          0.587 * imageData.rgba[leftIdx + 1] +
+          0.114 * imageData.rgba[leftIdx + 2];
+        const downLuma =
+          0.299 * imageData.rgba[downIdx] +
+          0.587 * imageData.rgba[downIdx + 1] +
+          0.114 * imageData.rgba[downIdx + 2];
+        const upLuma =
+          0.299 * imageData.rgba[upIdx] +
+          0.587 * imageData.rgba[upIdx + 1] +
+          0.114 * imageData.rgba[upIdx + 2];
+
+        const grad = Math.abs(rightLuma - leftLuma) + Math.abs(downLuma - upLuma);
+
+        if (grad >= 32) {
+          highEdgePixels += 1;
+        }
+      }
     }
   }
 
   const bodyMean = bodyCount > 0 ? bodySum / bodyCount : 0;
   const variance = bodyCount > 0 ? Math.max(0, bodySumSq / bodyCount - bodyMean * bodyMean) : 0;
   const bodyStdDev = Math.sqrt(variance);
+  const edgeDensity = bodyCount > 0 ? highEdgePixels / bodyCount : 0;
 
-  // In an IC package, metallic pins reflect luma > 110 on both top and bottom rows
-  const hasLeadReflections = leadMaxLuma1 > 110 && leadMaxLuma2 > 110;
-  const hasStrongTexture = bodyStdDev >= 18.0;
-  const hasLeadCount = highLeadPixels >= 120;
+  // In an IC package:
+  // 1) Metallic pins create periodic transitions along lead rows (>= 4 transitions)
+  // 2) Package marking text and straight IC body boundaries create high edge density (>= 0.024)
+  const hasLeadPeriodicity = leadTransitions >= 4;
+  const hasStrongPackageEdges = edgeDensity >= 0.024 && bodyStdDev >= 16.0;
+  const hasLeadReflections = leadMaxLuma1 > 115 && leadMaxLuma2 > 115 && highLeadPixels >= 140;
 
-  // If the pocket floor is uniform (low stdDev) and lacks dual-row lead reflections, it is EMPTY
-  const isEmpty =
-    (bodyStdDev < 14.5 && !hasLeadCount) ||
-    (!hasLeadReflections && highLeadPixels < 80) ||
-    bodyStdDev < 11.0;
+  // Empty pocket cavity: smooth plastic floor, plastic mold ejector marks, or lacking dual-row pins
+  const isOccupied =
+    (hasLeadPeriodicity && (hasStrongPackageEdges || hasLeadReflections)) ||
+    (edgeDensity >= 0.038 && bodyStdDev >= 18.0);
+
+  const isEmpty = !isOccupied;
 
   let presenceConfidence = 1.0;
 
   if (isEmpty) {
-    presenceConfidence = Math.max(0.0, Math.min(0.4, bodyStdDev / 30));
+    presenceConfidence = Math.max(0.0, Math.min(0.35, edgeDensity * 10));
   } else {
-    presenceConfidence = Math.min(1.0, Math.max(0.65, (bodyStdDev / 35) * (hasLeadReflections ? 1.0 : 0.8)));
+    presenceConfidence = Math.min(1.0, Math.max(0.70, (bodyStdDev / 32) * (hasLeadPeriodicity ? 1.0 : 0.85)));
   }
 
   return {
@@ -189,6 +271,12 @@ export function segmentCarrierTapePockets(
         y: Math.round(h * 0.28),
         width: Math.round(w * 0.64),
         height: Math.round(h * 0.44),
+      },
+      markingRegion: {
+        x: Math.round(w * 0.25),
+        y: Math.round(h * 0.30),
+        width: Math.round(w * 0.50),
+        height: Math.round(h * 0.38),
       },
       leadsTopRegion: {
         x: Math.round(w * 0.15),
@@ -328,9 +416,15 @@ export function segmentCarrierTapePockets(
       presenceConfidence: presence.presenceConfidence,
       bodyRegion: {
         x: px + Math.round(pw * 0.18),
-        y: pocketTop + Math.round(pocketHeight * 0.28),
+        y: pocketTop + Math.round(pocketHeight * 0.40),
         width: Math.round(pw * 0.64),
-        height: Math.round(pocketHeight * 0.44),
+        height: Math.round(pocketHeight * 0.38),
+      },
+      markingRegion: {
+        x: px + Math.round(pw * 0.20),
+        y: pocketTop + Math.round(pocketHeight * 0.45),
+        width: Math.round(pw * 0.60),
+        height: Math.round(pocketHeight * 0.28),
       },
       leadsTopRegion: {
         x: px + Math.round(pw * 0.12),

@@ -313,7 +313,20 @@ function RunPage() {
           const tick = useRunStore.getState().tick;
           tick(isOk ? "ok" : "ng", { tool, reason, score });
 
-          if (!isOk) {
+          if (payload?.hasMultiSlot && payload?.slots && payload.slots.length > 0) {
+            payload.slots.forEach((s) => {
+              const slotSeverity = s.isPass
+                ? StatusSeverityType.Ok
+                : s.state === "EMPTY"
+                  ? StatusSeverityType.Warn
+                  : StatusSeverityType.Ng;
+              const slotMsg = `Slot ${s.slotIndex + 1} [${s.state}]: ${s.verdict} (${s.score}%) - ${s.reason || s.defect || ""}`;
+              push({
+                severity: slotSeverity,
+                message: slotMsg,
+              });
+            });
+          } else if (!isOk) {
             push({
               severity: StatusSeverityType.Ng,
               message: `NG [${sample.name}] - ${tool}: ${reason}`,
