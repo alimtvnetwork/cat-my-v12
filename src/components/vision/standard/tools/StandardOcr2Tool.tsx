@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
 import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
 import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import { ShapeType } from "@/domain/vision/shapes";
 
 import {
   OcrFontFamilyType,
@@ -46,12 +47,120 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
   const [ocrRunning, setOcrRunning] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrJudgment, setOcrJudgment] = useState<OcrJudgment | null>(null);
+  const [textRegion, setTextRegion] = useState({ x: 50, y: 50, width: 200, height: 150 });
+  const [registeredImage, setRegisteredImage] = useState<HTMLImageElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Preload the registered image so its pixels are available for recognition.
+  useEffect(() => {
+    const ref = props.settings.imageRef;
+
+    if (!ref) {
+      setRegisteredImage(null);
+
+      return;
+    }
+
+    let cancelled = false;
+    const img = new Image();
+
+    img.onload = () => {
+      if (!cancelled) {
+        setRegisteredImage(img);
+      }
+    };
+    img.src = ref;
+
+    return () => {
+      cancelled = true;
+      img.onload = null;
+    };
+  }, [props.settings.imageRef]);
+
+  const handleRegisterImage = useCallback(() => {
+    if (props.onRegisterImage) {
+      props.onRegisterImage();
+
+      return;
+    }
+
+    imageInputRef.current?.click();
+  }, [props.onRegisterImage]);
+
+  const handleImageFileChange = useCallback(
+    (file: File | undefined) => {
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const imageRef = typeof reader.result === "string" ? reader.result : "";
+
+        if (!imageRef) {
+          return;
+        }
+
+        props.onChange((s) => ({
+          ...s,
+          imageRef,
+        }));
+      };
+      reader.readAsDataURL(file);
+    },
+    [props.onChange],
+  );
+
+  /**
+   * Pixel source for the Run recognition button: crops the configured text
+   * region out of the registered image. Region coordinates are in the
+   * 1280x720 logical image space used by the tool canvas.
+   */
+  const internalImageSource = useCallback((): OcrPixelBuffer | null => {
+    if (!registeredImage || registeredImage.naturalWidth === 0) {
+      return null;
+    }
+
+    const scaleX = registeredImage.naturalWidth / 1280;
+    const scaleY = registeredImage.naturalHeight / 720;
+    const sx = Math.max(
+      0,
+      Math.min(registeredImage.naturalWidth - 1, Math.round(textRegion.x * scaleX)),
+    );
+    const sy = Math.max(
+      0,
+      Math.min(registeredImage.naturalHeight - 1, Math.round(textRegion.y * scaleY)),
+    );
+    const sw = Math.max(
+      1,
+      Math.min(registeredImage.naturalWidth - sx, Math.round(textRegion.width * scaleX)),
+    );
+    const sh = Math.max(
+      1,
+      Math.min(registeredImage.naturalHeight - sy, Math.round(textRegion.height * scaleY)),
+    );
+
+    const canvas = document.createElement("canvas");
+    canvas.width = sw;
+    canvas.height = sh;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      return null;
+    }
+
+    ctx.drawImage(registeredImage, sx, sy, sw, sh, 0, 0, sw, sh);
+    const imgData = ctx.getImageData(0, 0, sw, sh);
+
+    return { data: imgData.data, width: sw, height: sh };
+  }, [registeredImage, textRegion]);
 
   const runRecognition = async (): Promise<void> => {
-    const source = props.imageSource?.() ?? null;
+    const source = props.imageSource?.() ?? internalImageSource();
 
     if (!source) {
-      setOcrError("No image available for recognition");
+      setOcrError("No image available for recognition — register an image first");
       return;
     }
 
@@ -81,7 +190,23 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
     {
       id: "region",
       label: "Text Reading Region",
-      content: <InspectionRegionTab />,
+      content: (
+        <InspectionRegionTab
+          inspectionRegion={{ shape: ShapeType.Rectangle, geometry: textRegion }}
+          onChangeInspectionRegion={(region) => {
+            const geometry = region.geometry;
+
+            if (geometry) {
+              setTextRegion({
+                x: Math.round(geometry.x ?? 50),
+                y: Math.round(geometry.y ?? 50),
+                width: Math.max(1, Math.round(geometry.width ?? 200)),
+                height: Math.max(1, Math.round(geometry.height ?? 150)),
+              });
+            }
+          }}
+        />
+      ),
     },
     {
       id: "detection",
@@ -139,7 +264,7 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
               />
             </div>
 
-            {props.imageSource && (
+            {(props.imageSource || registeredImage) && (
               <div className="pt-1 space-y-2">
                 <button
                   type="button"
@@ -226,20 +351,32 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
   ];
 
   return (
-    <StandardToolShell
-      toolName="OCR2 Optical Character Recognition Tool"
-      toolKindId="T13-OCR2"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
-      onRefresh={props.onRefresh}
-    />
+    <>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
+        className="sr-only"
+        onChange={(event) => {
+          handleImageFileChange(event.target.files?.[0]);
+          event.target.value = "";
+        }}
+      />
+      <StandardToolShell
+        toolName="OCR2 Optical Character Recognition Tool"
+        toolKindId="T13-OCR2"
+        tabs={tabs}
+        settings={props.settings}
+        onChangeSettings={props.onChange}
+        onEvaluate={props.onEvaluate}
+        onCancel={props.onCancel}
+        onOk={props.onOk}
+        onSettings={props.onSettings}
+        onRegisterImage={handleRegisterImage}
+        onOriginPoint={props.onOriginPoint}
+        onDisplay={props.onDisplay}
+        onRefresh={props.onRefresh}
+      />
+    </>
   );
 }
