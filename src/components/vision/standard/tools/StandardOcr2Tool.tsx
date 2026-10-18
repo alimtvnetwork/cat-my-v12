@@ -49,7 +49,7 @@ export interface StandardOcr2ToolProps {
  */
 export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Element {
   const [fontFamily, setFontFamily] = useState<OcrFontFamilyType>(OcrFontFamilyType.StandardSans);
-  const [characterCount, setCharacterCount] = useState<number>(OCR_DEFAULT_CHARACTER_COUNT);
+  const [characterCount, setCharacterCount] = useState<number | null>(OCR_DEFAULT_CHARACTER_COUNT);
   const [expectedFormat, setExpectedFormat] = useState<string>(OCR_DEFAULT_EXPECTED_FORMAT);
   const [minConfidence, setMinConfidence] = useState<number>(OCR_DEFAULT_MIN_CONFIDENCE);
   const [ocrRunning, setOcrRunning] = useState(false);
@@ -234,15 +234,20 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
                 </div>
                 <div>
                   <label htmlFor="ocr-char-count" className="text-ca-ink-muted block mb-1">
-                    Expected Character Count
+                    Expected Character Count <span className="opacity-60">(optional)</span>
                   </label>
                   <input
                     id="ocr-char-count"
                     type="number"
                     min={OCR_MIN_CHARACTER_COUNT}
                     max={OCR_MAX_CHARACTER_COUNT}
-                    value={characterCount}
-                    onChange={(e) => setCharacterCount(Number(e.target.value))}
+                    value={characterCount ?? ""}
+                    placeholder="Any"
+                    onChange={(e) => {
+                      const v = e.target.value;
+
+                      setCharacterCount(v === "" ? null : Number(v));
+                    }}
                     className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                   />
                 </div>
@@ -250,12 +255,13 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
 
               <div>
                 <label htmlFor="ocr-expected-format" className="text-ca-ink-muted block mb-1">
-                  Lexicon / Regex Format Filter
+                  Lexicon / Regex Format Filter <span className="opacity-60">(optional)</span>
                 </label>
                 <input
                   id="ocr-expected-format"
                   type="text"
                   value={expectedFormat}
+                  placeholder="Any text accepted"
                   onChange={(e) => setExpectedFormat(e.target.value)}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />

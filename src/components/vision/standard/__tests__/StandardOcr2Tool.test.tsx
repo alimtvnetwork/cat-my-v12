@@ -59,15 +59,15 @@ describe("StandardOcr2Tool", () => {
     });
     expect(select.value).toBe(OcrFontFamilyType.DotMatrix);
 
-    // Change character count
-    const charCountInput = screen.getByDisplayValue(
-      String(OCR_DEFAULT_CHARACTER_COUNT),
-    ) as HTMLInputElement;
+    // Change character count (default is empty = no limit)
+    const charCountInput = screen.getByPlaceholderText("Any") as HTMLInputElement;
+    expect(charCountInput.value).toBe("");
     fireEvent.change(charCountInput, { target: { value: "12" } });
     expect(charCountInput.value).toBe("12");
 
-    // Change regex filter
-    const regexInput = screen.getByDisplayValue(OCR_DEFAULT_EXPECTED_FORMAT) as HTMLInputElement;
+    // Change regex filter (default is empty = no filter)
+    const regexInput = screen.getByPlaceholderText("Any text accepted") as HTMLInputElement;
+    expect(regexInput.value).toBe("");
     fireEvent.change(regexInput, { target: { value: "^[0-9]{12}$" } });
     expect(regexInput.value).toBe("^[0-9]{12}$");
   });
