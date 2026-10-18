@@ -4,7 +4,7 @@ import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
 import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import { ImageSourceType, PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { ShapeType } from "@/domain/vision/shapes";
 
 import {
@@ -105,6 +105,10 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
         props.onChange((s) => ({
           ...s,
           imageRef,
+          view: {
+            ...s.view,
+            source: ImageSourceType.File,
+          },
         }));
       };
       reader.readAsDataURL(file);
