@@ -66,4 +66,26 @@ describe("measureDeviceEdges in a pocket crop", () => {
     expect(result!.pinPitch!.gaps[0].gapMm).toBeCloseTo(1.2, 5);
     expect(result!.pinPitch!.gaps[1].gapMm).toBeCloseTo(1.2, 5);
   });
+
+  it("ignores white silkscreen markings on the body", () => {
+    const crop = makePocketCrop();
+    const { rgba, width } = crop;
+
+    // White marking box over the body's center (like silkscreen text)
+    for (let y = 50; y <= 65; y += 1) {
+      for (let x = 85; x <= 115; x += 1) {
+        const idx = (y * width + x) * 4;
+        rgba[idx] = 210;
+        rgba[idx + 1] = 210;
+        rgba[idx + 2] = 210;
+      }
+    }
+
+    const result = measureDeviceEdges(crop, 100);
+
+    expect(result).not.toBeNull();
+    expect(Math.abs(result!.leftEdgePx - 60)).toBeLessThanOrEqual(2);
+    expect(Math.abs(result!.rightEdgePx - 140)).toBeLessThanOrEqual(2);
+    expect(result!.widthPx).toBeLessThan(100);
+  });
 });

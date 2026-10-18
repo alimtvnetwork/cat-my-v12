@@ -1,5 +1,4 @@
 import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxes";
-import { LEGACY_DEFAULT_UM_PER_PX } from "@/lib/vision/calibration/types";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
@@ -17,6 +16,9 @@ import type {
 export const RULE_1_NAME = "Rule 1: Pin 1 Orientation Rule";
 export const RULE_2_NAME = "Rule 2: greyscale-pattern-match-24-box";
 
+/** Default microns-per-pixel used for measurements (no calibration step). */
+export const LEGACY_DEFAULT_UM_PER_PX = 108.7;
+
 const FALLBACK_CHIP_CENTER_X = 68.0;
 const FALLBACK_CHIP_CENTER_Y = 76.0;
 const FALLBACK_MARKING_WIDTH = 58.0;
@@ -26,26 +28,26 @@ const FALLBACK_MARKING_HEIGHT = 44.0;
 const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedLuma: number }[] = [
   // Row 1: "MEGA32U4"
   { relX: -0.42, relY: -0.28, expectedLuma: 87 },
-  { relX: -0.30, relY: -0.28, expectedLuma: 97 },
+  { relX: -0.3, relY: -0.28, expectedLuma: 97 },
   { relX: -0.18, relY: -0.28, expectedLuma: 82 },
   { relX: -0.06, relY: -0.28, expectedLuma: 52 },
   { relX: 0.06, relY: -0.28, expectedLuma: 40 },
   { relX: 0.18, relY: -0.28, expectedLuma: 41 },
-  { relX: 0.30, relY: -0.28, expectedLuma: 55 },
+  { relX: 0.3, relY: -0.28, expectedLuma: 55 },
   { relX: 0.42, relY: -0.28, expectedLuma: 50 },
 
   // Row 2: "-AU"
   { relX: -0.35, relY: -0.08, expectedLuma: 79 },
-  { relX: -0.20, relY: -0.08, expectedLuma: 101 },
+  { relX: -0.2, relY: -0.08, expectedLuma: 101 },
   { relX: -0.05, relY: -0.08, expectedLuma: 89 },
-  { relX: 0.10, relY: -0.08, expectedLuma: 32 },
+  { relX: 0.1, relY: -0.08, expectedLuma: 32 },
 
   // Row 3: "1035E KR"
   { relX: -0.38, relY: 0.12, expectedLuma: 50 },
   { relX: -0.26, relY: 0.12, expectedLuma: 35 },
   { relX: -0.14, relY: 0.12, expectedLuma: 31 },
   { relX: -0.02, relY: 0.12, expectedLuma: 34 },
-  { relX: 0.10, relY: 0.12, expectedLuma: 36 },
+  { relX: 0.1, relY: 0.12, expectedLuma: 36 },
   { relX: 0.22, relY: 0.12, expectedLuma: 45 },
   { relX: 0.34, relY: 0.12, expectedLuma: 28 },
 
@@ -54,7 +56,7 @@ const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedL
   { relX: -0.22, relY: 0.32, expectedLuma: 48 },
   { relX: -0.08, relY: 0.32, expectedLuma: 27 },
   { relX: 0.06, relY: 0.32, expectedLuma: 37 },
-  { relX: 0.20, relY: 0.32, expectedLuma: 39 },
+  { relX: 0.2, relY: 0.32, expectedLuma: 39 },
 ];
 
 export function evaluatePocket(
@@ -84,9 +86,10 @@ export function evaluatePocket(
   }
 
   // Step 2: Occupied Pocket -> Evaluate Rule 1: Pin 1 Orientation Rule
-  const rule1 = isRealPixelActive && pixelBuffer
-    ? analyzeRule1Pin1Real(pixelBuffer, tolerances)
-    : evaluateRule1Pin1Synthetic(pocket, tolerances);
+  const rule1 =
+    isRealPixelActive && pixelBuffer
+      ? analyzeRule1Pin1Real(pixelBuffer, tolerances)
+      : evaluateRule1Pin1Synthetic(pocket, tolerances);
 
   // Short-circuiting: If Rule 1 fails, do NOT evaluate Rule 2 (greyscale-pattern-match-24-box)!
   if (!rule1.isPass) {
@@ -116,9 +119,10 @@ export function evaluatePocket(
   }
 
   // Step 3: Rule 1 passed -> Evaluate Rule 2: greyscale-pattern-match-24-box
-  const rule2 = isRealPixelActive && pixelBuffer
-    ? analyzeRule2PatternReal(pixelBuffer, tolerances)
-    : evaluateRule2PatternSynthetic(pocket, tolerances);
+  const rule2 =
+    isRealPixelActive && pixelBuffer
+      ? analyzeRule2PatternReal(pixelBuffer, tolerances)
+      : evaluateRule2PatternSynthetic(pocket, tolerances);
 
   if (!rule2.isPass) {
     return {
@@ -213,7 +217,13 @@ export function analyzeRule1Pin1Real(
     { name: "bottom-right", targetX: 95.0, targetY: 104.0, expectedAngle: 46.0 },
   ];
 
-  let bestHole: { x: number; y: number; quadrant: string; depthContrast: number; luma: number } | null = null;
+  let bestHole: {
+    x: number;
+    y: number;
+    quadrant: string;
+    depthContrast: number;
+    luma: number;
+  } | null = null;
   let minCoreLuma = Number.POSITIVE_INFINITY;
 
   for (const q of quadrantCenters) {
@@ -312,7 +322,7 @@ export function analyzeRule1Pin1Real(
   const deltaY = bestHole.y - centerY;
   const rawAngleDeg = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
 
-  let angleDevDeg = rawAngleDeg - (-134.0);
+  let angleDevDeg = rawAngleDeg - -134.0;
 
   while (angleDevDeg > 180) {
     angleDevDeg -= 360;
@@ -407,24 +417,28 @@ export function analyzeRule2PatternReal(
   const measuredDevice = measureDeviceEdges(buffer);
   const isMeasuredDeviceUsable = Boolean(
     measuredDevice &&
-      measuredDevice.widthPx >= width * 0.55 &&
-      measuredDevice.widthPx <= width * 0.95 &&
-      measuredDevice.heightPx >= height * 0.45 &&
-      measuredDevice.heightPx <= height * 0.95 &&
-      measuredDevice.leftEdgePx <= width * 0.25,
+    measuredDevice.widthPx >= width * 0.55 &&
+    measuredDevice.widthPx <= width * 0.95 &&
+    measuredDevice.heightPx >= height * 0.45 &&
+    measuredDevice.heightPx <= height * 0.95 &&
+    measuredDevice.leftEdgePx <= width * 0.25,
   );
-  const chipCenterX = isMeasuredDeviceUsable && measuredDevice
-    ? measuredDevice.leftEdgePx + measuredDevice.widthPx / 2
-    : FALLBACK_CHIP_CENTER_X;
-  const chipCenterY = isMeasuredDeviceUsable && measuredDevice
-    ? measuredDevice.topEdgePx + measuredDevice.heightPx / 2
-    : FALLBACK_CHIP_CENTER_Y;
-  const markingWidth = isMeasuredDeviceUsable && measuredDevice
-    ? Math.max(48, Math.min(64, measuredDevice.widthPx * 0.52))
-    : FALLBACK_MARKING_WIDTH;
-  const markingHeight = isMeasuredDeviceUsable && measuredDevice
-    ? Math.max(34, Math.min(48, measuredDevice.heightPx * 0.44))
-    : FALLBACK_MARKING_HEIGHT;
+  const chipCenterX =
+    isMeasuredDeviceUsable && measuredDevice
+      ? measuredDevice.leftEdgePx + measuredDevice.widthPx / 2
+      : FALLBACK_CHIP_CENTER_X;
+  const chipCenterY =
+    isMeasuredDeviceUsable && measuredDevice
+      ? measuredDevice.topEdgePx + measuredDevice.heightPx / 2
+      : FALLBACK_CHIP_CENTER_Y;
+  const markingWidth =
+    isMeasuredDeviceUsable && measuredDevice
+      ? Math.max(48, Math.min(64, measuredDevice.widthPx * 0.52))
+      : FALLBACK_MARKING_WIDTH;
+  const markingHeight =
+    isMeasuredDeviceUsable && measuredDevice
+      ? Math.max(34, Math.min(48, measuredDevice.heightPx * 0.44))
+      : FALLBACK_MARKING_HEIGHT;
   const boxOriginX = chipCenterX - markingWidth / 2;
   const boxOriginY = chipCenterY - markingHeight / 2;
   const chipScaleX = markingWidth / 100.0;
@@ -459,7 +473,8 @@ export function analyzeRule2PatternReal(
     const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
     const diff = Math.abs(measuredLuma - expectedLuma);
     const localContrast = measureLocalContrast(buffer, boxX, boxY, boxW, boxH);
-    const isMatched = (diff <= toleranceLuma || Math.abs(localContrast) >= minContrast) && measuredLuma > 18;
+    const isMatched =
+      (diff <= toleranceLuma || Math.abs(localContrast) >= minContrast) && measuredLuma > 18;
 
     if (isMatched) {
       matchedCount += 1;
@@ -714,112 +729,117 @@ export function measureDeviceEdges(
     return null;
   }
 
-  const gradientThreshold = 10;
-  const scanBandRatio = 0.5;
-  const centerX = Math.floor(width / 2);
-  const centerY = Math.floor(height / 2);
+  const lumaAt = (x: number, y: number): number => {
+    const idx = (y * width + x) * 4;
 
-  // --- Horizontal edge detection (left/right chip body edges) ---
-  // Scan from the image center outward. The chip body is the central dark
-  // rectangle, so the first strong gradient outward is the body edge —
-  // not the pocket cavity wall, which sits farther out.
-  const hCenterStart = Math.floor(height * (0.5 - scanBandRatio / 2));
-  const hCenterEnd = Math.floor(height * (0.5 + scanBandRatio / 2));
-  const leftEdges: number[] = [];
-  const rightEdges: number[] = [];
+    return rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
+  };
 
-  for (let row = hCenterStart; row < hCenterEnd; row += 1) {
-    const rowOffset = row * width * 4;
+  // --- Chip body detection via dark-region flood fill ---
+  // The body is the large central dark rectangle. White silkscreen markings
+  // sit on top of it, so gradient scans hit the markings first. Instead,
+  // flood-fill the dark region containing the body's darkest central pixel:
+  // markings are just holes inside the region and cannot break the fill,
+  // while the brighter pocket floor, walls and pins stay outside it.
+  const cx0 = Math.floor(width * 0.3);
+  const cx1 = Math.floor(width * 0.7);
+  const cy0 = Math.floor(height * 0.3);
+  const cy1 = Math.floor(height * 0.7);
+  const centerSamples: number[] = [];
 
-    // Scan center → left for the body's left edge
-    for (let x = centerX; x > 0; x -= 1) {
-      const idx = rowOffset + x * 4;
-      const outerIdx = rowOffset + (x - 1) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const outerLuma =
-        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
-      const grad = Math.abs(luma - outerLuma);
-
-      if (grad >= gradientThreshold) {
-        leftEdges.push(x);
-
-        break;
-      }
+  for (let y = cy0; y < cy1; y += 2) {
+    for (let x = cx0; x < cx1; x += 2) {
+      centerSamples.push(lumaAt(x, y));
     }
+  }
 
-    // Scan center → right for the body's right edge
-    for (let x = centerX; x < width - 1; x += 1) {
-      const idx = rowOffset + x * 4;
-      const outerIdx = rowOffset + (x + 1) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const outerLuma =
-        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
-      const grad = Math.abs(luma - outerLuma);
+  centerSamples.sort((a, b) => a - b);
+  // 30th percentile resists white markings covering much of the center
+  const bodyLuma = centerSamples[Math.floor(centerSamples.length * 0.3)] ?? 40;
+  const darkLimit = bodyLuma + 20;
 
-      if (grad >= gradientThreshold) {
-        rightEdges.push(x);
+  // Darkest pixel in the central window as the flood seed
+  let seedX = Math.floor(width / 2);
+  let seedY = Math.floor(height / 2);
+  let seedLuma = Infinity;
 
-        break;
+  for (let y = cy0; y < cy1; y += 3) {
+    for (let x = cx0; x < cx1; x += 3) {
+      const luma = lumaAt(x, y);
+
+      if (luma < seedLuma) {
+        seedLuma = luma;
+        seedX = x;
+        seedY = y;
       }
     }
   }
 
-  // --- Vertical edge detection (top/bottom chip body edges) ---
-  const vCenterStart = Math.floor(width * (0.5 - scanBandRatio / 2));
-  const vCenterEnd = Math.floor(width * (0.5 + scanBandRatio / 2));
-  const topEdges: number[] = [];
-  const bottomEdges: number[] = [];
-
-  for (let col = vCenterStart; col < vCenterEnd; col += 1) {
-    // Scan center → up for the body's top edge
-    for (let y = centerY; y > 0; y -= 1) {
-      const idx = (y * width + col) * 4;
-      const outerIdx = ((y - 1) * width + col) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const outerLuma =
-        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
-      const grad = Math.abs(luma - outerLuma);
-
-      if (grad >= gradientThreshold) {
-        topEdges.push(y);
-
-        break;
-      }
-    }
-
-    // Scan center → down for the body's bottom edge
-    for (let y = centerY; y < height - 1; y += 1) {
-      const idx = (y * width + col) * 4;
-      const outerIdx = ((y + 1) * width + col) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const outerLuma =
-        rgba[outerIdx] * 0.299 + rgba[outerIdx + 1] * 0.587 + rgba[outerIdx + 2] * 0.114;
-      const grad = Math.abs(luma - outerLuma);
-
-      if (grad >= gradientThreshold) {
-        bottomEdges.push(y);
-
-        break;
-      }
-    }
-  }
-
-  // Need enough edge samples for a reliable median
-  if (leftEdges.length < 2 || rightEdges.length < 2 || topEdges.length < 2 || bottomEdges.length < 2) {
+  if (seedLuma > darkLimit) {
     return null;
   }
 
-  // Median filter for noise robustness
-  const median = (arr: number[]): number => {
-    const sorted = [...arr].sort((a, b) => a - b);
+  const visited = new Uint8Array(width * height);
+  const stack: number[] = [seedY * width + seedX];
+  visited[seedY * width + seedX] = 1;
+  let minX = seedX;
+  let maxX = seedX;
+  let minY = seedY;
+  let maxY = seedY;
 
-    return sorted[Math.floor(sorted.length / 2)];
+  const tryVisit = (x: number, y: number): void => {
+    const idx = y * width + x;
+
+    if (visited[idx] === 1 || lumaAt(x, y) > darkLimit) {
+      return;
+    }
+
+    visited[idx] = 1;
+    stack.push(idx);
+
+    if (x < minX) {
+      minX = x;
+    }
+
+    if (x > maxX) {
+      maxX = x;
+    }
+
+    if (y < minY) {
+      minY = y;
+    }
+
+    if (y > maxY) {
+      maxY = y;
+    }
   };
 
-  const leftEdgePx = median(leftEdges);
-  const rightEdgePx = median(rightEdges);
-  const topEdgePx = median(topEdges);
-  const bottomEdgePx = median(bottomEdges);
+  while (stack.length > 0) {
+    const idx = stack.pop() as number;
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+
+    if (x > 0) {
+      tryVisit(x - 1, y);
+    }
+
+    if (x < width - 1) {
+      tryVisit(x + 1, y);
+    }
+
+    if (y > 0) {
+      tryVisit(x, y - 1);
+    }
+
+    if (y < height - 1) {
+      tryVisit(x, y + 1);
+    }
+  }
+
+  const leftEdgePx = minX;
+  const rightEdgePx = maxX;
+  const topEdgePx = minY;
+  const bottomEdgePx = maxY;
 
   const widthPx = Math.max(0, rightEdgePx - leftEdgePx);
   const heightPx = Math.max(0, bottomEdgePx - topEdgePx);
@@ -946,11 +966,7 @@ function hardenPinSpans(spans: PinSpan[], options: HardenPinSpansOptions): PinSp
         end: current[splitIndex + 1].end,
       };
 
-      current = [
-        ...current.slice(0, splitIndex),
-        mergedSpan,
-        ...current.slice(splitIndex + 2),
-      ];
+      current = [...current.slice(0, splitIndex), mergedSpan, ...current.slice(splitIndex + 2)];
       merged = true;
     }
   }
@@ -959,7 +975,9 @@ function hardenPinSpans(spans: PinSpan[], options: HardenPinSpansOptions): PinSp
   if (current.length >= 3) {
     const widths = current.map((s) => s.end - s.start).sort((a, b) => a - b);
     const medianWidth = widths[Math.floor(widths.length / 2)];
-    const filtered = current.filter((s) => s.end - s.start >= medianWidth * NOISE_PIN_WIDTH_FRACTION);
+    const filtered = current.filter(
+      (s) => s.end - s.start >= medianWidth * NOISE_PIN_WIDTH_FRACTION,
+    );
 
     if (filtered.length >= 2) {
       current = filtered;

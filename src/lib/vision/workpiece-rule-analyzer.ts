@@ -25,12 +25,14 @@ import {
   Pin1JudgmentStatusType,
   type Pin1HoleItem,
 } from "@/components/vision/standard/tools/pin1-config/types";
-import { measureDeviceEdges } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
+import {
+  LEGACY_DEFAULT_UM_PER_PX,
+  measureDeviceEdges,
+} from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
 import type {
   DeviceMeasurement,
   PinPitchMeasurement,
 } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/types";
-import { LEGACY_DEFAULT_UM_PER_PX } from "./calibration/types";
 import defaultWorkpieceFilledSample from "@/assets/samples/pocket-1-filled.jpg";
 import defaultWorkpieceEmptySample from "@/assets/samples/pocket-2-empty-mixed.jpg";
 import {
@@ -169,11 +171,7 @@ export function parseBoxesFromParams(
     }
   }
 
-  if (
-    list.length === 0 &&
-    Array.isArray(toolParams?.boxes) &&
-    toolParams.boxes.length > 0
-  ) {
+  if (list.length === 0 && Array.isArray(toolParams?.boxes) && toolParams.boxes.length > 0) {
     list = toolParams.boxes as any[];
   }
 
@@ -862,7 +860,13 @@ export function extractWorkpieceMarkings(params: ExtractWorkpieceMarkingsParams)
       const bw = maxX - minX + 1;
       const bh = maxY - minY + 1;
 
-      if (area >= minArea && bw >= 4 && bh >= 8 && bw < region.width * 0.5 && bh < region.height * 0.7) {
+      if (
+        area >= minArea &&
+        bw >= 4 &&
+        bh >= 8 &&
+        bw < region.width * 0.5 &&
+        bh < region.height * 0.7
+      ) {
         rawBoxes.push({ x: minX, y: minY, width: bw, height: bh, area });
       }
     }
@@ -1017,7 +1021,8 @@ export function evaluatePatternRule(
   const meanLuma = pixelCount > 0 ? sumL / pixelCount : 0;
   const variance = pixelCount > 0 ? Math.max(0, sumL2 / pixelCount - meanLuma * meanLuma) : 0;
   const stdDev = Math.sqrt(variance);
-  const hasDevice = pixelCount > 0 && (meanLuma >= minPresenceLuma || (meanLuma >= 15 && stdDev >= 6.0));
+  const hasDevice =
+    pixelCount > 0 && (meanLuma >= minPresenceLuma || (meanLuma >= 15 && stdDev >= 6.0));
 
   if (!hasDevice) {
     const totalCount = ruleBoxes.length > 0 ? ruleBoxes.length : 24;
@@ -1109,7 +1114,7 @@ export function evaluatePatternRule(
         (hasDevice &&
           (measuredLuma >= thresholdValue ||
             referenceLuma >= thresholdValue ||
-            measuredLuma >= localLuma.mean * 0.90));
+            measuredLuma >= localLuma.mean * 0.9));
       const hasMaskHit = maskRegions.some(
         (region) =>
           measuredX >= region.x &&
@@ -1751,7 +1756,9 @@ export function evaluateAreaGateRule(
   const thresh = Number(rule.params?.intensityThreshold ?? 128);
   const minArea = Number(rule.params?.minAreaPx ?? rule.params?.minPixelCount ?? 3500);
   const maxArea = Number(
-    rule.params?.maxAreaPx ?? rule.params?.maxPixelCount ?? Math.max(30000, rule.width * rule.height * 0.9),
+    rule.params?.maxAreaPx ??
+      rule.params?.maxPixelCount ??
+      Math.max(30000, rule.width * rule.height * 0.9),
   );
   const isBrightOnDark = rule.params?.presencePolarity !== "darkOnBright";
 
@@ -2009,9 +2016,7 @@ export function findAuthoringPocket(
   const centerX = rule.x + rule.width / 2;
 
   // 1. Horizontal containment in an occupied pocket
-  const containing = pockets.find(
-    (p) => !p.isEmpty && centerX >= p.x && centerX < p.x + p.width,
-  );
+  const containing = pockets.find((p) => !p.isEmpty && centerX >= p.x && centerX < p.x + p.width);
 
   if (containing) {
     return containing;
@@ -2112,9 +2117,7 @@ export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
     const nomPin1Y = matchedPin1Marker
       ? Number(matchedPin1Marker.y ?? matchedPin1Marker.centerY)
       : targetPocket.y + Math.round(targetPocket.height * 0.74);
-    const pinRadius = Number(
-      matchedPin1Marker?.radius ?? pin1Config?.radius ?? 10,
-    );
+    const pinRadius = Number(matchedPin1Marker?.radius ?? pin1Config?.radius ?? 10);
 
     const pinSearchRegion: SearchRegion = {
       x: targetPocket.x + Math.max(0, Math.round(targetPocket.width * 0.02)),
@@ -2309,7 +2312,11 @@ export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
       newParams.maxPixelCount = newParams.maxAreaPx;
     }
 
-    if (toolCode === "T110" || ruleNameLower.includes("caliper") || ruleNameLower.includes("pitch")) {
+    if (
+      toolCode === "T110" ||
+      ruleNameLower.includes("caliper") ||
+      ruleNameLower.includes("pitch")
+    ) {
       if (typeof rule.params?.nominalWidthPx === "number") {
         newParams.nominalWidthPx = Math.round(rule.params.nominalWidthPx * scaleX);
       }
