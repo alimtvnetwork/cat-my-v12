@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Square } from "lucide-react";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
-import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
+import analysisImage from "../../../assets/ui/simulation-pin1-device.png";
 import pin1SetupImage from "../../../assets/ui/13-session-screenshot-file13.png";
 import greyscaleSetupImage from "../../../assets/ui/14-session-screenshot-file14.png";
 import {
@@ -129,77 +129,29 @@ const GREYSCALE_SETUP_DEVICE_LAYOUT: GuidedDeviceLayout = {
 const DEVICE_LAYOUTS: readonly GuidedDeviceLayout[] = [
   {
     id: "d1",
-    label: "Device 1 (Pocket 3)",
-    x: 430,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 460,
-    pinY: 317,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 430,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
+    label: "Device 1",
+    x: 380,
+    y: 200,
+    w: 280,
+    h: 230,
+    pinX: 380,
+    pinY: 380,
+    pinTopY: 200,
+    pinBottomY: 430,
+    searchX: 335,
+    searchY: 315,
+    searchWidth: 230,
+    searchHeight: 110,
     textX: 450,
-    textTopY: 195,
-    textBottomY: 229,
+    textTopY: 270,
+    textBottomY: 310,
     textStep: 19,
     textWidth: 16,
     textHeight: 29,
-    imageWidth: 1042,
-    imageHeight: 403,
+    imageWidth: 1037,
+    imageHeight: 582,
   },
-  {
-    id: "d2",
-    label: "Device 2 (Pocket 4)",
-    x: 630,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 659,
-    pinY: 322,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 630,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
-    textX: 650,
-    textTopY: 195,
-    textBottomY: 229,
-    textStep: 19,
-    textWidth: 16,
-    textHeight: 29,
-    imageWidth: 1042,
-    imageHeight: 403,
-  },
-  {
-    id: "d3",
-    label: "Device 3 (Pocket 5)",
-    x: 835,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 868,
-    pinY: 318,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 835,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
-    textX: 855,
-    textTopY: 195,
-    textBottomY: 229,
-    textStep: 19,
-    textWidth: 16,
-    textHeight: 29,
-    imageWidth: 1042,
-    imageHeight: 403,
-  },
-] as const;
+];
 
 function getDevicePassRegions() {
   return DEVICE_LAYOUTS.map((device) => ({
@@ -384,7 +336,7 @@ function makePin1Rule(device: GuidedDeviceLayout, number: number, imageRef: stri
       searchRegion,
       ...(device.isEmbeddedGuidanceImage ? {} : { region: searchRegion }),
       pin1Config: {
-        thresholdLuma: 35,
+        thresholdLuma: 32,
         tolerancePx: 25,
         angleToleranceDeg: 1,
         registeredPin1: {
@@ -568,47 +520,33 @@ function makePassResults(): Record<string, ValidationResult> {
 
 /**
  * Scripted tape-strip result for the guided simulation's final step.
- * Mirrors the demo narrative: 5 pockets, the first two empty cavities,
- * the last three holding devices that pass both rules.
+ * Mirrors the demo narrative: a single present device passing both rules.
  */
 function makePassTapeStripResult(): TapeStripEvaluationResult {
   const passResults = makePassResults();
-  const pockets = DEVICE_LAYOUTS.map((device, index) => ({
-    pocketIndex: index + 3,
-    region: { x: device.x, y: device.y, width: device.w, height: device.h },
-    isEmpty: false,
-    presenceConfidence: 1,
-    status: ValidationStatusType.Pass,
-    score: 1,
-    message: "Guided simulation: device passed.",
-    ruleResults: passResults,
-  }));
-
-  const emptyPockets = [1, 2].map((pocketIndex) => ({
-    pocketIndex,
-    region: {
-      x: 30 + (pocketIndex - 1) * 200,
-      y: 143,
-      width: 180,
-      height: 202,
+  const device = DEVICE_LAYOUTS[0];
+  const pockets = [
+    {
+      pocketIndex: 1,
+      region: { x: device.x, y: device.y, width: device.w, height: device.h },
+      isEmpty: false,
+      presenceConfidence: 1,
+      status: ValidationStatusType.Pass,
+      score: 1,
+      message: "Guided simulation: device passed.",
+      ruleResults: passResults,
     },
-    isEmpty: true,
-    presenceConfidence: 1,
-    status: ValidationStatusType.Warn,
-    score: 0,
-    message: "Guided simulation: empty cavity.",
-    ruleResults: {},
-  }));
+  ];
 
   return {
-    totalPockets: 5,
-    emptyPockets: 2,
-    passedPockets: 3,
+    totalPockets: 1,
+    emptyPockets: 0,
+    passedPockets: 1,
     failedPockets: 0,
     yieldPercent: 100,
     status: ValidationStatusType.Pass,
-    message: "Guided simulation: 3 present devices passed (100% yield).",
-    pockets: [...emptyPockets, ...pockets],
+    message: "Guided simulation: device passed (100% yield).",
+    pockets,
   };
 }
 
@@ -935,7 +873,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         placement: "top",
         title: "Results",
         content:
-          "All present devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching across occupied pockets (Pockets 1 & 2 detected as empty cavities).",
+          "The device is shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching.",
         autoMs: 7500,
       },
     ],
@@ -1137,9 +1075,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           // like a real Analyze run.
           sessionAnalysisBus.emit(makePassTapeStripResult());
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
-          toast.success(
-            "Guided simulation analysis complete: 3 present devices passed (100% yield).",
-          );
+          toast.success("Guided simulation analysis complete: device passed (100% yield).");
         }, 2800);
 
         analysisTimersRef.current = [passTimer];
