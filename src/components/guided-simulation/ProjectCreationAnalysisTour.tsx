@@ -30,6 +30,7 @@ import {
   ValidationStatusType,
   type ValidationResult,
 } from "@/lib/editor/validation-store";
+import type { TapeStripEvaluationResult } from "@/lib/vision/workpiece-rule-analyzer";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
@@ -233,6 +234,8 @@ interface TourStep extends Step {
     | "run-analysis";
   actionPhase?: "enter" | "exit";
   autoMs?: number;
+  /** When true, the step never auto-advances; the user dismisses it manually. */
+  sticky?: boolean;
 }
 
 function hasTourTarget(step: TourStep): boolean {
@@ -565,6 +568,52 @@ function makePassResults(): Record<string, ValidationResult> {
   ) as Record<string, ValidationResult>;
 }
 
+/**
+ * Scripted tape-strip result for the guided simulation's final step.
+ * Mirrors the demo narrative: 5 pockets, the first two empty cavities,
+ * the last three holding devices that pass both rules.
+ */
+function makePassTapeStripResult(): TapeStripEvaluationResult {
+  const passResults = makePassResults();
+  const pockets = DEVICE_LAYOUTS.map((device, index) => ({
+    pocketIndex: index + 3,
+    region: { x: device.x, y: device.y, width: device.w, height: device.h },
+    isEmpty: false,
+    presenceConfidence: 1,
+    status: ValidationStatusType.Pass,
+    score: 1,
+    message: "Guided simulation: device passed.",
+    ruleResults: passResults,
+  }));
+
+  const emptyPockets = [1, 2].map((pocketIndex) => ({
+    pocketIndex,
+    region: {
+      x: 30 + (pocketIndex - 1) * 200,
+      y: 143,
+      width: 180,
+      height: 202,
+    },
+    isEmpty: true,
+    presenceConfidence: 1,
+    status: ValidationStatusType.Warn,
+    score: 0,
+    message: "Guided simulation: empty cavity.",
+    ruleResults: {},
+  }));
+
+  return {
+    totalPockets: 5,
+    emptyPockets: 2,
+    passedPockets: 3,
+    failedPockets: 0,
+    yieldPercent: 100,
+    status: ValidationStatusType.Pass,
+    message: "Guided simulation: 3 present devices passed (100% yield).",
+    pockets: [...emptyPockets, ...pockets],
+  };
+}
+
 function ensureDemoProject(): DemoContext {
   const store = useProjectStore.getState();
   const projectId = store.createProject(TOUR_PROJECT_NAME, {
@@ -889,7 +938,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         title: "Results",
         content:
           "All present devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching across occupied pockets (Pockets 1 & 2 detected as empty cavities).",
-        autoMs: 7500,
+        sticky: true,
       },
     ],
     [],
@@ -1085,9 +1134,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           useValidationStore
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
-          // Lift the workspace's stale-result gate so the scripted results
-          // show like a real Analyze run.
-          sessionAnalysisBus.emit();
+          // Lift the workspace's stale-result gate and provide the
+          // tape-strip result so the canvas draws the visual markers,
+          // like a real Analyze run.
+          sessionAnalysisBus.emit(makePassTapeStripResult());
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
           toast.success(
             "Guided simulation analysis complete: 3 present devices passed (100% yield).",
@@ -1153,10 +1203,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
-      timerRef.current = window.setTimeout(() => {
-        advance();
-      }, delayMs);
+      // Sticky steps (e.g. the final Results) stay until the user dismisses them.
+      if (!step.sticky) {
+        const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
+        timerRef.current = window.setTimeout(() => {
+          advance();
+        }, delayMs);
+      }
     };
 
     beginStep();

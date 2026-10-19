@@ -544,8 +544,12 @@ export function WorkpieceAnalyzeWorkspace({
   // going through the Analyze button; this lifts the stale-result gate so
   // the canvas shows them like a real session run.
   useEffect(() => {
-    return sessionAnalysisBus.subscribe(() => {
+    return sessionAnalysisBus.subscribe((tapeStripResult) => {
       setHasSessionAnalysis(true);
+
+      if (tapeStripResult) {
+        setTapeStripResult(tapeStripResult);
+      }
     });
   }, []);
 
