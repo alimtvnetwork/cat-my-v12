@@ -593,20 +593,57 @@ function makePassResults(): Record<string, ValidationResult> {
 /**
  * Scripted tape-strip result for the guided simulation's final step.
  * Mirrors the actual analyzer image: 4 pockets, all holding devices
- * that pass both rules.
+ * that pass both rules. Each pocket carries only its own 10 character
+ * boxes (5 for A1234, 5 for B5678) at absolute image coordinates.
  */
 function makePassTapeStripResult(): TapeStripEvaluationResult {
-  const passResults = makePassResults();
-  const pockets = DEVICE_LAYOUTS.map((device, index) => ({
-    pocketIndex: index + 1,
-    region: { x: device.x, y: device.y, width: device.w, height: device.h },
-    isEmpty: false,
-    presenceConfidence: 1,
-    status: ValidationStatusType.Pass,
-    score: 1,
-    message: "Guided simulation: device passed.",
-    ruleResults: passResults,
-  }));
+  const baseResults = makePassResults();
+  const pockets = DEVICE_LAYOUTS.map((device, index) => {
+    // Build per-pocket greyscale boxes from this device's text position
+    const deviceBoxes: any[] = [];
+    const rows = [
+      { y: device.textTopY, chars: "A1234" },
+      { y: device.textBottomY, chars: "B5678" },
+    ];
+    rows.forEach((row, rowIdx) => {
+      Array.from(row.chars).forEach((ch, charIdx) => {
+        deviceBoxes.push({
+          boxNumber: rowIdx * 5 + charIdx + 1,
+          referenceX: device.textX + device.textStep * charIdx,
+          referenceY: row.y,
+          matchedX: device.textX + device.textStep * charIdx,
+          matchedY: row.y,
+          width: device.textWidth,
+          height: device.textHeight,
+          isMatched: true,
+        });
+      });
+    });
+
+    const pocketResults: Record<string, ValidationResult> = {};
+    for (const [ruleId, result] of Object.entries(baseResults)) {
+      const isGreyscale = String((result as any)?.message ?? "").includes("Greyscale");
+      pocketResults[ruleId] = {
+        ...result,
+        debug: {
+          ...((result as any)?.debug ?? {}),
+          // Put boxes in debug so canvas finds them directly
+          boxResults: isGreyscale ? deviceBoxes : ((result as any)?.debug?.boxResults ?? []),
+        },
+      } as ValidationResult;
+    }
+
+    return {
+      pocketIndex: index + 1,
+      region: { x: device.x, y: device.y, width: device.w, height: device.h },
+      isEmpty: false,
+      presenceConfidence: 1,
+      status: ValidationStatusType.Pass,
+      score: 1,
+      message: "Guided simulation: device passed.",
+      ruleResults: pocketResults,
+    };
+  });
 
   return {
     totalPockets: 4,
