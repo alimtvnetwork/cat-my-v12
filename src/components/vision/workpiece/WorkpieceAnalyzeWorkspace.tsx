@@ -27,7 +27,9 @@ import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 import { AddRulePanel } from "./AddRulePanel";
+import { AddRulesetPanel } from "./AddRulesetPanel";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
+import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
 import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
@@ -129,7 +131,6 @@ export function WorkpieceAnalyzeWorkspace({
   const projectId = project.id;
   const rulesetId = ruleset?.id ?? null;
   const updateRulesetRules = updateRulesetRulesInStore;
-  const createRuleset = useProjectStore((s) => s.createRuleset);
   const deleteRuleset = useProjectStore((s) => s.deleteRuleset);
   /** Target ruleset for the inline Add Rule panel (right viewport). Null = closed. */
   const [addRuleRulesetId, setAddRuleRulesetId] = useState<string | null>(null);
@@ -338,6 +339,7 @@ export function WorkpieceAnalyzeWorkspace({
 
     setConfigRuleId(null);
     setAddRuleRulesetId(null);
+    setIsAddingRuleset(false);
   }, [ruleset?.id]);
 
   useEffect(() => {
@@ -371,37 +373,33 @@ export function WorkpieceAnalyzeWorkspace({
       if (!target) return;
 
       setConfigRuleId(null);
+      setIsAddingRuleset(false);
       setAddRuleRulesetId(target);
     },
     [ruleset],
   );
 
-  const handleAddRuleset = useCallback(
-    (name: string) => {
-      const newRulesetId = createRuleset(projectId, name);
-
-      onSelectRuleset?.(newRulesetId);
-      toast.success(`Rule set "${name}" added.`);
-    },
-    [createRuleset, onSelectRuleset, projectId],
-  );
-
   const handleStartAddRuleset = useCallback(() => {
     setDraftRulesetName(`Ruleset ${(rulesets?.length ?? 0) + 1}`);
+    setConfigRuleId(null);
+    setAddRuleRulesetId(null);
     setIsAddingRuleset(true);
   }, [rulesets?.length]);
 
-  const handleSubmitRuleset = useCallback(() => {
-    const name = draftRulesetName.trim();
+  const handleInlineRulesetCreated = useCallback(
+    (newRulesetId: string, name: string) => {
+      setIsAddingRuleset(false);
+      setDraftRulesetName("");
+      onSelectRuleset?.(newRulesetId);
+      toast.success(`Rule set "${name}" added.`);
+    },
+    [onSelectRuleset],
+  );
 
-    if (!name) {
-      return;
-    }
-
-    handleAddRuleset(name);
-    setDraftRulesetName("");
+  const handleExitAddRuleset = useCallback(() => {
     setIsAddingRuleset(false);
-  }, [draftRulesetName, handleAddRuleset]);
+    setDraftRulesetName("");
+  }, []);
 
   const handleDeleteRuleset = useCallback(
     (targetRulesetId?: string) => {
@@ -461,6 +459,7 @@ export function WorkpieceAnalyzeWorkspace({
       useRulesStore.getState().setSelection([ruleId], "tree.configure");
       setConfigRuleId(ruleId);
       setAddRuleRulesetId(null);
+      setIsAddingRuleset(false);
     },
     [onSelectRuleset, ruleOwnerById, ruleset],
   );
@@ -524,6 +523,18 @@ export function WorkpieceAnalyzeWorkspace({
       }
     });
   }, [handleOpenAddRule]);
+
+  // The guided simulation drives the inline Add Ruleset panel through this
+  // bus so ruleset creation also stays inside the overview workspace.
+  useEffect(() => {
+    return addRulesetPanelBus.subscribe((message) => {
+      if (message.type === "open") {
+        handleStartAddRuleset();
+      } else {
+        setIsAddingRuleset(false);
+      }
+    });
+  }, [handleStartAddRuleset]);
 
   const handleSelectProjectRule = useCallback(
     (id: string) => {
@@ -1041,65 +1052,6 @@ export function WorkpieceAnalyzeWorkspace({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0d14] p-3 text-[#f8fafc]">
       <div className="flex min-h-0 w-full flex-1 flex-col gap-2.5 overflow-hidden">
-        {/* Ruleset Creation Modal */}
-        {isAddingRuleset ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-            <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0b0f17] p-5 shadow-2xl">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-400/10 text-amber-400">
-                  <Plus size={18} />
-                </div>
-                <div>
-                  <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-white">
-                    Create Ruleset Program
-                  </h3>
-                  <p className="font-sans text-[11px] text-white/50">
-                    Define a new inspection ruleset for this workpiece
-                  </p>
-                </div>
-              </div>
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSubmitRuleset();
-                }}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="mb-1 block font-sans text-[10px] font-bold uppercase tracking-wider text-white/70">
-                    Ruleset Name
-                  </label>
-                  <input
-                    value={draftRulesetName}
-                    onChange={(event) => setDraftRulesetName(event.target.value)}
-                    autoFocus
-                    className="w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2 font-sans text-xs text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
-                    placeholder="e.g. Ruleset 2 (SMD Inspection)"
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingRuleset(false);
-                      setDraftRulesetName("");
-                    }}
-                    className="rounded-lg border border-white/20 px-3 py-1.5 font-sans text-xs font-semibold uppercase text-white/60 transition hover:bg-white/5 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-amber-400 px-4 py-1.5 font-sans text-xs font-bold uppercase text-black shadow-lg shadow-amber-400/20 transition hover:brightness-110"
-                  >
-                    Create Ruleset
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        ) : null}
-
         {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
         <div
           className={`grid min-h-0 flex-1 gap-2.5 overflow-hidden bg-transparent ${
@@ -1448,7 +1400,17 @@ export function WorkpieceAnalyzeWorkspace({
             data-tour="project-analysis-canvas"
             className="relative flex min-w-0 flex-col overflow-hidden"
           >
-            {!ruleset ? (
+            {isAddingRuleset ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <AddRulesetPanel
+                  projectId={projectId}
+                  projectName={project.name}
+                  defaultName={draftRulesetName}
+                  onCreated={handleInlineRulesetCreated}
+                  onExit={handleExitAddRuleset}
+                />
+              </div>
+            ) : !ruleset ? (
               <div className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black p-8">
                 <div
                   data-tour="project-overview-empty"

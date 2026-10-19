@@ -33,6 +33,7 @@ import {
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
+import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
 
 const TOUR_PROJECT_NAME = "demo";
 const TOUR_RULESET_NAME = "demoset";
@@ -760,7 +761,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       {
         target: "[data-tour='simulation-ruleset-create-submit']",
         title: "Create ruleset",
-        content: "Save demoset, then return to the project workspace so rules can be added.",
+        content: "Save demoset, then continue in the project workspace so rules can be added.",
         actionKey: "create-ruleset",
         actionPhase: "exit",
         autoMs: 4500,
@@ -953,11 +954,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (step.actionKey === "go-ruleset-create" && demoRef.current) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/new",
-          params: { projectId: demoRef.current.projectId },
-          search: { guided: "1" } as any,
-        });
+        // The tour is on the project overview: open ruleset creation inline
+        // in the workspace viewport instead of navigating to a page.
+        addRulesetPanelBus.emit({ type: "open" });
 
         return;
       }
@@ -965,10 +964,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       if (step.actionKey === "create-ruleset" && demoRef.current) {
         const demo = ensureDemoRuleset(demoRef.current.projectId);
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId",
-          params: { projectId: demo.projectId },
-        });
+        // Close the inline panel; the tour is already on the overview and
+        // the new ruleset becomes the active one.
+        addRulesetPanelBus.emit({ type: "close" });
         toast.success("Ruleset demoset created.");
 
         return;
