@@ -70,7 +70,8 @@ function resolveRuleToolCode(rule: EditorRule): string {
 
 export interface InspectionHierarchyTreeProps {
   project: Project;
-  ruleset: RuleSet;
+  /** Null when the project has no rulesets yet. */
+  ruleset: RuleSet | null;
   rulesets?: RuleSet[];
   onSelectRuleset?: (rulesetId: string) => void;
   rules: EditorRule[];
@@ -120,7 +121,9 @@ export function InspectionHierarchyTree({
   const displayRulesets = useMemo<RuleSet[]>(() => {
     if (rulesets && rulesets.length > 0) return rulesets;
 
-    return [{ ...ruleset, rules }];
+    if (ruleset) return [{ ...ruleset, rules }];
+
+    return [];
   }, [rules, ruleset, rulesets]);
 
   const totalRuleCount = useMemo(
@@ -227,7 +230,7 @@ export function InspectionHierarchyTree({
               {isRuleSetsOpen ? (
                 <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
                   {displayRulesets.map((rs) => {
-                    const isActiveRuleset = rs.id === ruleset.id;
+                    const isActiveRuleset = rs.id === ruleset?.id;
                     const isRulesetOpen = openRulesetIds[rs.id] ?? true;
                     const isRulesListOpen = openRulesMap[rs.id] ?? true;
                     const rulesetRules = rs.rules ?? [];
@@ -390,7 +393,7 @@ export function InspectionHierarchyTree({
               + Add Ruleset
             </button>
           ) : null}
-          {onAddRuleClick ? (
+          {onAddRuleClick && ruleset ? (
             <button
               type="button"
               onClick={() => onAddRuleClick(ruleset.id)}

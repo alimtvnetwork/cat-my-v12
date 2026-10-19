@@ -7,6 +7,7 @@ import {
   Crosshair,
   FileImage,
   FolderTree,
+  Layers,
   Grid2X2,
   PaintBucket,
   Play,
@@ -22,10 +23,10 @@ import {
   PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
+import { AddRulePanel } from "./AddRulePanel";
 import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
@@ -109,7 +110,8 @@ const MANUAL_RUN_ANALYSIS_PARAMS: RunAnalysisParams = {
 
 export interface WorkpieceAnalyzeWorkspaceProps {
   project: Project;
-  ruleset: RuleSet;
+  /** Null when the project has no rulesets yet - the workspace renders its empty state. */
+  ruleset: RuleSet | null;
   rulesets?: RuleSet[];
   onSelectRuleset?: (rulesetId: string) => void;
   searchRule?: string;
@@ -124,17 +126,18 @@ export function WorkpieceAnalyzeWorkspace({
   searchRule,
 }: WorkpieceAnalyzeWorkspaceProps): React.JSX.Element {
   const projectId = project.id;
-  const rulesetId = ruleset.id;
+  const rulesetId = ruleset?.id ?? null;
   const updateRulesetRules = updateRulesetRulesInStore;
   const createRuleset = useProjectStore((s) => s.createRuleset);
   const deleteRuleset = useProjectStore((s) => s.deleteRuleset);
+  /** Target ruleset for the inline Add Rule panel (right viewport). Null = closed. */
+  const [addRuleRulesetId, setAddRuleRulesetId] = useState<string | null>(null);
 
   const [savedVersion, setSavedVersion] = useState<number>(0);
   const savedVersionRef = useRef<number>(0);
   const setSaving = useWorkspaceSaveStore((s) => s.setSaving);
   const registerSave = useWorkspaceSaveStore((s) => s.registerSave);
   const isAnalyzingRef = useRef<boolean>(false);
-  const navigate = useNavigate();
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
@@ -164,6 +167,10 @@ export function WorkpieceAnalyzeWorkspace({
   }, []);
 
   const getEnvelope = useCallback((): RuleSetEnvelope => {
+    if (!rulesetId) {
+      throw new Error("[WorkpieceAnalyzeWorkspace] no ruleset to save");
+    }
+
     const fresh = getFreshRuleset(rulesetId);
 
     if (!fresh) {
@@ -199,6 +206,8 @@ export function WorkpieceAnalyzeWorkspace({
 
   const onServerReloaded = useCallback(
     (env: RuleSetEnvelope) => {
+      if (!ruleset) return;
+
       const back = envelopeToProjectRuleset(env, {
         projectId: project.id,
         categoryName: ruleset.categoryName,
@@ -211,7 +220,7 @@ export function WorkpieceAnalyzeWorkspace({
       updateSavedVersion(env.Version);
       toast.info("Rule set reloaded from server.");
     },
-    [project.id, ruleset.categoryName, ruleset.id, updateRulesetRules, updateSavedVersion],
+    [project.id, ruleset, updateRulesetRules, updateSavedVersion],
   );
 
   const handleSaveRuleSet = useCallback(async () => {
@@ -230,24 +239,25 @@ export function WorkpieceAnalyzeWorkspace({
 
   // The Save button lives on the upper bar; register this workspace's save
   // handler so the button can trigger it from outside this component.
+  // With no ruleset there is nothing to save - the button stays inert.
   useEffect(() => {
-    registerSave(handleSaveRuleSet);
+    registerSave(ruleset ? handleSaveRuleSet : null);
 
     return () => registerSave(null);
-  }, [handleSaveRuleSet, registerSave]);
+  }, [handleSaveRuleSet, registerSave, ruleset]);
 
   const liveStoreRules = useRulesStore((s) => s.rules);
   const rules = useMemo(() => {
     if (liveStoreRules.length > 0) {
       return liveStoreRules;
     }
-    return ruleset.rules ?? [];
-  }, [ruleset.rules, liveStoreRules]);
+    return ruleset?.rules ?? [];
+  }, [ruleset?.rules, liveStoreRules]);
   const projectRulesetsForAnalysis = useMemo(() => {
-    const source = rulesets && rulesets.length > 0 ? rulesets : [ruleset];
+    const source = rulesets && rulesets.length > 0 ? rulesets : ruleset ? [ruleset] : [];
 
-    return source.map((rs) => (rs.id === ruleset.id ? { ...rs, rules } : rs));
-  }, [rules, ruleset, rulesets]);
+    return source.map((rs) => (rs.id === rulesetId ? { ...rs, rules } : rs));
+  }, [rules, ruleset, rulesetId, rulesets]);
   const projectAnalysisItems = useMemo(
     () =>
       projectRulesetsForAnalysis.flatMap((rs) =>
@@ -311,23 +321,23 @@ export function WorkpieceAnalyzeWorkspace({
   const maskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const isCurrentSelectedInRuleset = (ruleset.rules ?? []).some((r) =>
-      selectedIds.includes(r.id),
-    );
+    const rulesetRules = ruleset?.rules ?? [];
+    const isCurrentSelectedInRuleset = rulesetRules.some((r) => selectedIds.includes(r.id));
     const targetSelected = isCurrentSelectedInRuleset
       ? selectedIds
-      : (ruleset.rules ?? []).length > 0
-        ? [ruleset.rules[0].id]
+      : rulesetRules.length > 0
+        ? [rulesetRules[0].id]
         : [];
 
-    useRulesStore.getState().replaceAll(ruleset.rules ?? [], targetSelected, []);
+    useRulesStore.getState().replaceAll(rulesetRules, targetSelected, []);
 
     if (!isCurrentSelectedInRuleset) {
       setSelectedIds(targetSelected);
     }
 
     setConfigRuleId(null);
-  }, [ruleset.id]);
+    setAddRuleRulesetId(null);
+  }, [ruleset?.id]);
 
   useEffect(() => {
     if (searchRule && rules.some((r) => r.id === searchRule)) {
@@ -338,23 +348,31 @@ export function WorkpieceAnalyzeWorkspace({
 
   const commit = useCallback(
     (nextRules: EditorRule[], reason: string, nextSelectedIds?: string[]) => {
+      if (!ruleset) return;
+
       updateRulesetRules(ruleset.id, nextRules);
       const activeSel =
         nextSelectedIds ??
         (selectedIds.length > 0 ? selectedIds : useRulesStore.getState().selectedIds);
       useRulesStore.getState().replaceAll(nextRules, activeSel, []);
     },
-    [ruleset.id, updateRulesetRules, selectedIds],
+    [ruleset, updateRulesetRules, selectedIds],
   );
 
-  const handleNavigateAddRule = useCallback(
+  const handleCloseAddRule = useCallback(() => {
+    setAddRuleRulesetId(null);
+  }, []);
+
+  const handleOpenAddRule = useCallback(
     (targetRulesetId?: string) => {
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-        params: { projectId, rulesetId: targetRulesetId ?? ruleset.id },
-      });
+      const target = targetRulesetId ?? ruleset?.id ?? null;
+
+      if (!target) return;
+
+      setConfigRuleId(null);
+      setAddRuleRulesetId(target);
     },
-    [navigate, projectId, ruleset.id],
+    [ruleset],
   );
 
   const handleAddRuleset = useCallback(
@@ -386,8 +404,14 @@ export function WorkpieceAnalyzeWorkspace({
 
   const handleDeleteRuleset = useCallback(
     (targetRulesetId?: string) => {
-      const targetRuleset =
-        (rulesets ?? []).find((rs) => rs.id === (targetRulesetId ?? ruleset.id)) ?? ruleset;
+      const targetId = targetRulesetId ?? ruleset?.id;
+
+      if (!targetId) return;
+
+      const targetRuleset = (rulesets ?? []).find((rs) => rs.id === targetId) ?? ruleset;
+
+      if (!targetRuleset) return;
+
       const isConfirmed = window.confirm(
         `Delete rule set "${targetRuleset.name}"? This removes its rules from this project.`,
       );
@@ -405,7 +429,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       toast.success(`Rule set "${targetRuleset.name}" deleted.`);
     },
-    [deleteRuleset, onSelectRuleset, ruleset.id, ruleset.name, rulesets],
+    [deleteRuleset, onSelectRuleset, ruleset, rulesets],
   );
 
   const activeRule = useMemo(() => {
@@ -424,15 +448,31 @@ export function WorkpieceAnalyzeWorkspace({
     (ruleId: string) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
 
-      if (ownerRuleset.id !== ruleset.id) {
+      if (!ownerRuleset) return;
+
+      if (!ownerRuleset) return;
+
+      if (ownerRuleset.id !== ruleset?.id) {
         onSelectRuleset?.(ownerRuleset.id);
       }
 
       setSelectedIds([ruleId]);
       useRulesStore.getState().setSelection([ruleId], "tree.configure");
       setConfigRuleId(ruleId);
+      setAddRuleRulesetId(null);
     },
     [onSelectRuleset, ruleOwnerById, ruleset],
+  );
+
+  const handleInlineRuleCreated = useCallback(
+    (_ownerRulesetId: string, ruleId: string) => {
+      // The panel already committed the rule to the project + editor stores.
+      // Close it and open the new rule's configuration inline, mirroring
+      // the old add-rule -> tune navigation.
+      setAddRuleRulesetId(null);
+      handleOpenRuleConfig(ruleId);
+    },
+    [handleOpenRuleConfig],
   );
 
   const handleCloseRuleConfig = useCallback(() => {
@@ -441,11 +481,11 @@ export function WorkpieceAnalyzeWorkspace({
 
   const handleConfigRuleApplied = useCallback(
     (appliedRulesetId: string, nextRules: EditorRule[]) => {
-      if (appliedRulesetId === ruleset.id) {
+      if (appliedRulesetId === ruleset?.id) {
         useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
       }
     },
-    [ruleset.id, selectedIds],
+    [ruleset?.id, selectedIds],
   );
 
   const configRule = useMemo(() => {
@@ -475,14 +515,14 @@ export function WorkpieceAnalyzeWorkspace({
     (id: string) => {
       const ownerRuleset = ruleOwnerById.get(id);
 
-      if (ownerRuleset && ownerRuleset.id !== ruleset.id) {
+      if (ownerRuleset && ownerRuleset.id !== ruleset?.id) {
         onSelectRuleset?.(ownerRuleset.id);
       }
 
       setSelectedIds([id]);
       useRulesStore.getState().setSelection([id], "project.rule.select");
     },
-    [onSelectRuleset, ruleOwnerById, ruleset.id],
+    [onSelectRuleset, ruleOwnerById, ruleset?.id],
   );
 
   const handleLaunchPatternTuner = useCallback(() => {
@@ -525,7 +565,9 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleCameraSettings = useCallback(
     (ruleId: string, cameraSettings: RuleCameraSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+      if (!ownerRuleset) return;
+      const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -540,7 +582,7 @@ export function WorkpieceAnalyzeWorkspace({
       );
       updateRulesetRules(ownerRuleset.id, nextRules);
 
-      if (ownerRuleset.id === ruleset.id) {
+      if (ownerRuleset.id === ruleset?.id) {
         useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
       }
 
@@ -552,7 +594,9 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleLightSettings = useCallback(
     (ruleId: string, lightSettings: RuleLightSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+      if (!ownerRuleset) return;
+      const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -567,7 +611,7 @@ export function WorkpieceAnalyzeWorkspace({
       );
       updateRulesetRules(ownerRuleset.id, nextRules);
 
-      if (ownerRuleset.id === ruleset.id) {
+      if (ownerRuleset.id === ruleset?.id) {
         useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
       }
 
@@ -887,22 +931,26 @@ export function WorkpieceAnalyzeWorkspace({
     () => ({
       onToggleHidden: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const next = ownerRules.map((r) => (r.id === id ? { ...r, isHidden: !r.isHidden } : r));
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
       onDelete: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const target = ownerRules.find((r) => r.id === id);
         const next = ownerRules.filter((r) => r.id !== id);
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, [], []);
         }
 
@@ -910,7 +958,9 @@ export function WorkpieceAnalyzeWorkspace({
       },
       onReorder: (id: string, dir: "up" | "down") => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const idx = ownerRules.findIndex((r) => r.id === id);
         if (idx === -1) return;
         const targetIdx = dir === "up" ? idx - 1 : idx + 1;
@@ -920,13 +970,15 @@ export function WorkpieceAnalyzeWorkspace({
         next.splice(targetIdx, 0, moved);
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
       onMove: (id: string, toIndex: number) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const fromIndex = ownerRules.findIndex((r) => r.id === id);
         if (fromIndex === -1) return;
         const next = [...ownerRules];
@@ -935,7 +987,7 @@ export function WorkpieceAnalyzeWorkspace({
         next.splice(clamped, 0, moved);
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
@@ -1121,7 +1173,7 @@ export function WorkpieceAnalyzeWorkspace({
                     onDeleteRule={railHandlers.onDelete}
                     onReorderRule={railHandlers.onReorder}
                     onMoveRule={railHandlers.onMove}
-                    onAddRuleClick={handleNavigateAddRule}
+                    onAddRuleClick={handleOpenAddRule}
                     onAddRulesetClick={handleStartAddRuleset}
                     onDeleteRulesetClick={handleDeleteRuleset}
                     onConfigureRule={handleOpenRuleConfig}
@@ -1382,7 +1434,43 @@ export function WorkpieceAnalyzeWorkspace({
             data-tour="project-analysis-canvas"
             className="relative flex min-w-0 flex-col overflow-hidden"
           >
-            {configRule && configOwnerRuleset ? (
+            {!ruleset ? (
+              <div className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black p-8">
+                <div
+                  data-tour="project-overview-empty"
+                  className="flex max-w-sm flex-col items-center rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+                    <Layers size={22} />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                    No Rulesets Defined
+                  </h3>
+                  <p className="mt-1 text-xs text-white/50">
+                    Create an inspection ruleset program to begin automated vision analysis.
+                  </p>
+                  <button
+                    type="button"
+                    data-tour="project-overview-add-ruleset"
+                    onClick={handleStartAddRuleset}
+                    className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
+                  >
+                    <Plus size={14} />
+                    New Ruleset
+                  </button>
+                </div>
+              </div>
+            ) : addRuleRulesetId ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <AddRulePanel
+                  key={addRuleRulesetId}
+                  projectId={projectId}
+                  rulesetId={addRuleRulesetId}
+                  onRuleCreated={handleInlineRuleCreated}
+                  onExit={handleCloseAddRule}
+                />
+              </div>
+            ) : configRule && configOwnerRuleset ? (
               <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
                 <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
                   <div className="flex min-w-0 items-center gap-2">

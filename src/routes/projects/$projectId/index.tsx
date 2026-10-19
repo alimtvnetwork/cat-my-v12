@@ -5,7 +5,6 @@ import { RunningOpKindType } from "@/lib/stores/running-ops-store";
 // links to the plan's project sub-surfaces, and a legacy operator group.
 import { useEffect, useState } from "react";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
-import { Layers, Plus } from "lucide-react";
 import { useProjectStore, selectProject, selectRulesetsForProject } from "@/lib/projects/store";
 import { resolveIdParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import { WorkpieceAnalyzeWorkspace } from "@/components/vision/workpiece";
@@ -64,42 +63,14 @@ function ProjectOverview() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#07090e]">
-      {activeRuleset ? (
-        <WorkpieceAnalyzeWorkspace
-          key={activeRuleset.id}
-          project={project}
-          ruleset={activeRuleset}
-          rulesets={rulesets}
-          searchRule={ruleSearchParam}
-          onSelectRuleset={(rid) => setActiveRulesetId(rid)}
-        />
-      ) : (
-        <div className="flex flex-1 items-center justify-center p-8">
-          <div
-            data-tour="project-overview-empty"
-            className="flex max-w-sm flex-col items-center rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center shadow-2xl backdrop-blur-xl"
-          >
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
-              <Layers size={22} />
-            </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-              No Rulesets Defined
-            </h3>
-            <p className="mt-1 text-xs text-white/50">
-              Create an inspection ruleset program to begin automated vision analysis.
-            </p>
-            <Link
-              data-tour="project-overview-add-ruleset"
-              to="/projects/$projectId/rulesets/new"
-              params={{ projectId }}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
-            >
-              <Plus size={14} />
-              New Ruleset
-            </Link>
-          </div>
-        </div>
-      )}
+      <WorkpieceAnalyzeWorkspace
+        key={activeRuleset?.id ?? "no-ruleset"}
+        project={project}
+        ruleset={activeRuleset ?? null}
+        rulesets={rulesets}
+        searchRule={ruleSearchParam}
+        onSelectRuleset={(rid) => setActiveRulesetId(rid)}
+      />
     </div>
   );
 }
