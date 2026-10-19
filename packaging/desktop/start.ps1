@@ -61,20 +61,27 @@ function Find-AppBrowser {
     return $null
 }
 
-Start-Process -FilePath (Join-Path $AppRoot 'db-bootstrap.exe') -ArgumentList '--db-root', (Join-Path $AppRoot 'data') -Wait -WindowStyle Hidden
-Start-Process -FilePath (Join-Path $AppRoot 'backend-server.exe') -WorkingDirectory $AppRoot -WindowStyle Hidden
-Wait-AppUrl -Url $BackendUrl -Seconds 60
-Start-Process -FilePath (Join-Path $AppRoot 'runtime\bun.exe') -ArgumentList 'server\index.mjs' -WorkingDirectory (Join-Path $AppRoot 'frontend') -WindowStyle Hidden
-Wait-AppUrl -Url 'http://127.0.0.1:3000/' -Seconds 60
-$browserPath = Find-AppBrowser
+try {
+    Start-Process -FilePath (Join-Path $AppRoot 'db-bootstrap.exe') -ArgumentList '--db-root', (Join-Path $AppRoot 'data') -Wait -WindowStyle Hidden
+    Start-Process -FilePath (Join-Path $AppRoot 'backend-server.exe') -WorkingDirectory $AppRoot -WindowStyle Hidden
+    Wait-AppUrl -Url $BackendUrl -Seconds 60
+    Start-Process -FilePath (Join-Path $AppRoot 'runtime\bun.exe') -ArgumentList 'server\index.mjs' -WorkingDirectory (Join-Path $AppRoot 'frontend') -WindowStyle Hidden
+    Wait-AppUrl -Url 'http://127.0.0.1:3000/' -Seconds 60
+    $browserPath = Find-AppBrowser
 
-if (-not $browserPath) {
-    throw 'CAT iVISION requires Microsoft Edge or Google Chrome to open its application window.'
+    if (-not $browserPath) {
+        throw 'CAT iVISION requires Microsoft Edge or Google Chrome to open its application window.'
+    }
+
+    Start-Process -FilePath $browserPath -ArgumentList @(
+        "--app=$FrontendUrl",
+        '--start-fullscreen',
+        '--start-maximized',
+        '--no-first-run'
+    ) -WorkingDirectory $AppRoot
+} catch {
+    $errorLog = Join-Path $AppRoot 'startup-error.log'
+    Set-Content -LiteralPath $errorLog -Value "$((Get-Date).ToString('s')) ERROR: $($_.Exception.Message)`n$($_.ScriptStackTrace)" -Encoding utf8
+
+    throw
 }
-
-Start-Process -FilePath $browserPath -ArgumentList @(
-    "--app=$FrontendUrl",
-    '--start-fullscreen',
-    '--start-maximized',
-    '--no-first-run'
-) -WorkingDirectory $AppRoot

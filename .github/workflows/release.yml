@@ -296,9 +296,10 @@ jobs:
           grep -q 'CAT iVISION\.lnk' packaging/desktop/install.ps1
           grep -q 'cat-ivision\.desktop' packaging/desktop/install.sh
 
-          find release/windows release/linux -type f -print0 | sort -z | xargs -0 sha256sum > release/SHA256SUMS.txt
           (cd release/windows && zip -r ../control-automation-windows.zip .)
           (cd release/linux && zip -r ../control-automation-linux.zip .)
+          (cd release && sha256sum control-automation-windows.zip control-automation-linux.zip > SHA256SUMS.txt)
+          find release/windows release/linux -type f -print0 | sort -z | xargs -0 sha256sum >> release/SHA256SUMS.txt
 
           cat release/SHA256SUMS.txt
           echo "ok=true" >> "$GITHUB_OUTPUT"
