@@ -226,16 +226,18 @@ export function StandardAppShell({
             maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
           }}
         >
-          {/* Brand Wordmark */}
-          <Link
-            to="/"
-            title="Control Automation Home"
-            className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-bold tracking-tight text-white hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
-          >
-            <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-            <span className="hidden sm:inline">Control Automation</span>
-            <span className="sm:hidden font-mono text-[10px]">CA</span>
-          </Link>
+          {/* Brand Wordmark (home page only) */}
+          {pathname === "/" ? (
+            <Link
+              to="/"
+              title="Control Automation Home"
+              className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-bold tracking-tight text-white hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
+            >
+              <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+              <span className="hidden sm:inline">Control Automation</span>
+              <span className="sm:hidden font-mono text-[10px]">CA</span>
+            </Link>
+          ) : null}
 
           {/* Dropdown Menu Trigger */}
           <DropdownMenu
@@ -381,7 +383,7 @@ export function StandardAppShell({
             className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <PlayCircle className="h-3.5 w-3.5" />
-            <span>{isSimulationRunning ? "Simulation Running" : "Start Simulation"}</span>
+            <span>{isSimulationRunning ? "Simulation Running" : "Simulation"}</span>
           </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
