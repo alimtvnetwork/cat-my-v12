@@ -18,6 +18,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { ToolInspectionGraphic } from "@/components/vision/ToolInspectionGraphic";
+import { VISION_TOOL_CATALOG } from "@/lib/vision/tool-catalog";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import {
   DEFAULT_RULE_CAMERA_SETTINGS,
@@ -27,8 +28,44 @@ import {
   type RuleLightSettings,
 } from "@/lib/editor/types";
 
-function getRuleToolCode(rule: EditorRule): string {
-  return typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
+/**
+ * Distinctive name keywords per catalog tool code. Used only when a rule has
+ * no usable toolCode stored in its params (e.g. legacy / demo-project rules),
+ * so each rule still resolves to its own catalog image instead of the shared
+ * default graphic.
+ */
+const TOOL_NAME_KEYWORDS: Array<{ code: string; keywords: string[] }> = [
+  { code: "T105", keywords: ["pin 1", "pin1"] },
+  { code: "T102", keywords: ["greyscale", "pattern"] },
+  { code: "T101", keywords: ["area gate", "pixel intensity"] },
+  { code: "T104", keywords: ["edge count", "lead presence"] },
+  { code: "T109", keywords: ["binary blob", "solder bridge"] },
+  { code: "T108", keywords: ["void", "porosity"] },
+  { code: "T107", keywords: ["scratch", "crack"] },
+  { code: "T110", keywords: ["caliper"] },
+  { code: "T103", keywords: ["datamatrix", "qr code"] },
+  { code: "T106", keywords: ["ocr", "laser marking"] },
+  { code: "T112", keywords: ["coating", "uv fluorescence"] },
+  { code: "T111", keywords: ["circle", "via gauge"] },
+];
+
+function resolveRuleToolCode(rule: EditorRule): string {
+  const fromParams =
+    typeof rule.params?.toolCode === "string" ? rule.params.toolCode.toUpperCase().trim() : "";
+
+  if (fromParams && VISION_TOOL_CATALOG.some((tool) => tool.code === fromParams)) {
+    return fromParams;
+  }
+
+  const haystack = `${rule.name}`.toLowerCase().replace(/^rule\s*\d+\s*[:\-–—]?\s*/, "");
+
+  for (const { code, keywords } of TOOL_NAME_KEYWORDS) {
+    if (keywords.some((keyword) => haystack.includes(keyword))) {
+      return code;
+    }
+  }
+
+  return fromParams;
 }
 
 export interface InspectionHierarchyTreeProps {
@@ -578,7 +615,7 @@ function RuleNode({
   onDragOverRow,
   onDropOnRow,
 }: RuleNodeProps) {
-  const toolCode = getRuleToolCode(rule);
+  const toolCode = resolveRuleToolCode(rule);
   const cameraSettings =
     rule.cameraSettings ?? (rule.params as any)?.cameraSettings ?? DEFAULT_RULE_CAMERA_SETTINGS;
   const lightSettings =
@@ -619,12 +656,9 @@ function RuleNode({
           >
             {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </IconButton>
-          <span className="shrink-0 font-sans text-[10px] font-medium text-ca-ink-muted">
-            [{index + 1}]
-          </span>
           <ToolInspectionGraphic toolCode={toolCode} size={22} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
-            {rule.name}
+            {rule.name.replace(/^rule\s*\d+\s*[:\-–—]?\s*/i, "")}
           </span>
         </div>
 

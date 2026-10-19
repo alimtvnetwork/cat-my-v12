@@ -122,6 +122,33 @@ describe("InspectionHierarchyTree", () => {
     expect(screen.getByText("Light settings")).toBeTruthy();
   });
 
+  it("resolves catalog images from rule names when no toolCode is stored", () => {
+    const legacyRule = {
+      ...mockRule1,
+      id: "rule-legacy",
+      name: "Rule 3: Laser Marking OCR",
+      params: {},
+    };
+
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rules={[legacyRule]}
+        selectedRuleId="rule-legacy"
+        onSelectRule={vi.fn()}
+      />,
+    );
+
+    // Own catalog image (T106), not the shared default graphic
+    expect(screen.getByTestId("tool-graphic-T106")).toBeTruthy();
+    // "Rule 3:" prefix stripped, only the rule name shown
+    expect(screen.getByText("Laser Marking OCR")).toBeTruthy();
+    expect(screen.queryByText("Rule 3: Laser Marking OCR")).toBeNull();
+    // No index numbering beside the rule
+    expect(screen.queryByText("[1]")).toBeNull();
+  });
+
   it("supports hiding and deleting rules from the options dropdown", () => {
     const handleToggleHidden = vi.fn();
     const handleDeleteRule = vi.fn();
