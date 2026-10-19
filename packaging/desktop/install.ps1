@@ -341,35 +341,49 @@ try {
 
     Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
 
-    # Pin CAT iVISION to the Windows Start menu (best effort - never fails the install).
-    $pinned = $false
+    # Shell-verb pinning is best effort and never fails the install. Windows
+    # deliberately withholds "Pin to taskbar" from scripts on most systems,
+    # so that verb is attempted but usually falls through to the hint below.
+    function Invoke-ShellPinVerb([string]$VerbName) {
+        try {
+            $pinShortcut = Join-Path $startMenuDir 'CAT iVISION.lnk'
 
-    try {
-        $startMenuShortcut = Join-Path $startMenuDir 'CAT iVISION.lnk'
+            if (-not (Test-Path -LiteralPath $pinShortcut)) {
+                return $false
+            }
 
-        if (Test-Path -LiteralPath $startMenuShortcut) {
             $shellApp = New-Object -ComObject Shell.Application
             $programsFolder = $shellApp.NameSpace($startMenuDir)
             $menuItem = $programsFolder.ParseName('CAT iVISION.lnk')
 
-            if ($null -ne $menuItem) {
-                foreach ($verb in @($menuItem.Verbs())) {
-                    if (($verb.Name -replace '&', '').Trim() -ieq 'Pin to Start') {
-                        $verb.DoIt()
-                        $pinned = $true
-                        break
-                    }
+            if ($null -eq $menuItem) {
+                return $false
+            }
+
+            foreach ($verb in @($menuItem.Verbs())) {
+                if (($verb.Name -replace '&', '').Trim() -ieq $VerbName) {
+                    $verb.DoIt()
+
+                    return $true
                 }
             }
+        } catch {
+            # non-fatal: the Programs shortcut above is already a working entry point
         }
-    } catch {
-        # non-fatal: the Programs shortcut above is already a working entry point
+
+        return $false
     }
 
-    if ($pinned) {
+    if (Invoke-ShellPinVerb 'Pin to Start') {
         Write-InstallerStatusRow 'Pin to Start' 'ok' 'pinned'
     } else {
         Write-InstallerStatusRow 'Pin to Start' 'warn' 'unavailable on this system - use the Start menu entry'
+    }
+
+    if (Invoke-ShellPinVerb 'Pin to taskbar') {
+        Write-InstallerStatusRow 'Pin to taskbar' 'ok' 'pinned'
+    } else {
+        Write-InstallerStatusRow 'Pin to taskbar' 'warn' 'blocked by Windows - right-click the desktop shortcut, then Pin to taskbar'
     }
 
     Write-Host ''
