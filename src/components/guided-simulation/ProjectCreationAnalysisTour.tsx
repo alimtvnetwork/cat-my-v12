@@ -234,8 +234,6 @@ interface TourStep extends Step {
     | "run-analysis";
   actionPhase?: "enter" | "exit";
   autoMs?: number;
-  /** When true, the step never auto-advances; the user dismisses it manually. */
-  sticky?: boolean;
 }
 
 function hasTourTarget(step: TourStep): boolean {
@@ -938,7 +936,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         title: "Results",
         content:
           "All present devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching across occupied pockets (Pockets 1 & 2 detected as empty cavities).",
-        sticky: true,
+        autoMs: 7500,
       },
     ],
     [],
@@ -1203,13 +1201,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      // Sticky steps (e.g. the final Results) stay until the user dismisses them.
-      if (!step.sticky) {
-        const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
-        timerRef.current = window.setTimeout(() => {
-          advance();
-        }, delayMs);
-      }
+      const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
+      timerRef.current = window.setTimeout(() => {
+        advance();
+      }, delayMs);
     };
 
     beginStep();
