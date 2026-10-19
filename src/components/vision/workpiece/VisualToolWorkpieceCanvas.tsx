@@ -643,115 +643,6 @@ function drawDefectScanGrid(
   ctx.fillText(label, roi.x + 6, roi.y + roi.height - 6);
 }
 
-function drawRuleResultBadge(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  ruleName: string,
-  toolCode: string,
-  status: "pass" | "fail" | "warn" | "pending" | undefined,
-  score: number | undefined,
-  isSelected: boolean,
-): void {
-  const isPass = status === "pass";
-  const isFail = status === "fail";
-  const isWarn = status === "warn";
-
-  const statusText = isPass
-    ? `✔ PASS ${typeof score === "number" ? `${Math.round(score * 100)}%` : "100%"}`
-    : isFail
-      ? `✖ FAIL ${typeof score === "number" ? `${Math.round(score * 100)}%` : ""}`
-      : isWarn
-        ? "⚠ WARN"
-        : isSelected
-          ? "● SCANNING"
-          : "READY";
-
-  const statusColor = isPass
-    ? "#10b981"
-    : isFail
-      ? "#ef4444"
-      : isWarn
-        ? "#f59e0b"
-        : isSelected
-          ? "#00e5ff"
-          : "#94a3b8";
-
-  const cleanName = ruleName.length > 24 ? `${ruleName.slice(0, 22)}...` : ruleName;
-  const label = toolCode ? `[${toolCode}] ${cleanName}` : cleanName;
-
-  ctx.font = "bold 10px monospace";
-  const statusWidth = ctx.measureText(statusText).width;
-  ctx.font = "10px sans-serif";
-  const labelWidth = ctx.measureText(` ${label}`).width;
-
-  const badgeW = Math.max(120, statusWidth + labelWidth + 14);
-  const badgeH = 19;
-  const badgeY = Math.max(2, y - badgeH - 3);
-
-  ctx.fillStyle = "rgba(15, 23, 42, 0.92)";
-  ctx.fillRect(x, badgeY, badgeW, badgeH);
-
-  ctx.fillStyle = statusColor;
-  ctx.fillRect(x, badgeY, 3, badgeH);
-
-  ctx.strokeStyle = statusColor;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, badgeY, badgeW, badgeH);
-
-  ctx.fillStyle = statusColor;
-  ctx.font = "bold 10px monospace";
-  ctx.fillText(statusText, x + 7, badgeY + 13);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "10px sans-serif";
-  ctx.fillText(` ${label}`, x + 7 + statusWidth, badgeY + 13);
-}
-
-function drawDeviceRulePassBadges(
-  ctx: CanvasRenderingContext2D,
-  regions: readonly any[],
-  ruleLabel: string,
-  rowIndex: number,
-  status: "pass" | "fail" | "warn" | "pending" | undefined,
-): void {
-  if (status !== "pass") {
-    return;
-  }
-
-  for (const item of regions) {
-    const region = item?.region ?? item?.packageRegion ?? item;
-    const x = Number(region?.x);
-    const y = Number(region?.y);
-    const width = Number(region?.width);
-
-    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(width)) {
-      continue;
-    }
-
-    const label = `${item?.label ?? "Device"} ${ruleLabel} PASS`;
-    const badgeY = Math.max(4, Math.round(y - 26 + rowIndex * 20));
-
-    ctx.save();
-    ctx.font = "bold 9px monospace";
-    const textWidth = ctx.measureText(label).width;
-    const badgeW = Math.max(92, textWidth + 18);
-    const badgeH = 16;
-    const badgeX = Math.round(x + Math.max(4, (width - badgeW) / 2));
-
-    ctx.fillStyle = "rgba(5, 46, 34, 0.92)";
-    ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
-    ctx.fillStyle = "#34d399";
-    ctx.fillRect(badgeX, badgeY, 3, badgeH);
-    ctx.fillStyle = "#d1fae5";
-    ctx.fillText(label, badgeX + 7, badgeY + 11);
-    ctx.restore();
-  }
-}
-
 function drawScanningLaser(ctx: CanvasRenderingContext2D, roi: WorkpieceRoi): void {
   const midY = roi.y + roi.height / 2;
 
@@ -838,61 +729,6 @@ function drawFrameInspectionHud(
   }
 }
 
-function drawTapeStripInspectionHud(
-  ctx: CanvasRenderingContext2D,
-  canvasWidth: number,
-  stripResult: TapeStripEvaluationResult,
-): void {
-  const hudW = 380;
-  const hudH = 42;
-  const hudX = canvasWidth - hudW - 12;
-  const hudY = 12;
-
-  ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
-  ctx.fillRect(hudX, hudY, hudW, hudH);
-
-  const emptyCount = stripResult.emptyPockets;
-  const occupiedCount = stripResult.totalPockets - emptyCount;
-  const isPass = stripResult.status === "pass";
-  const borderColor = isPass ? "#10b981" : "#ef4444";
-
-  ctx.strokeStyle = borderColor;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(hudX, hudY, hudW, hudH);
-
-  ctx.fillStyle = borderColor;
-  ctx.fillRect(hudX, hudY, 4, hudH);
-
-  ctx.font = "bold 11px monospace";
-
-  if (isPass) {
-    ctx.fillStyle = "#10b981";
-    const header =
-      emptyCount > 0
-        ? `✔ TAPE STRIP: ${stripResult.passedPockets}/${occupiedCount} PRESENT DEVICES (100% YIELD)`
-        : `✔ TAPE STRIP: 100% YIELD (${stripResult.passedPockets}/${stripResult.totalPockets} POCKETS)`;
-    ctx.fillText(header, hudX + 12, hudY + 16);
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "10px sans-serif";
-    const sub =
-      emptyCount > 0
-        ? `${emptyCount} empty ${emptyCount === 1 ? "cavity" : "cavities"} detected. All present devices verified.`
-        : `All ${stripResult.totalPockets} pockets verified. Zero defect devices.`;
-    ctx.fillText(sub, hudX + 12, hudY + 32);
-  } else {
-    ctx.fillStyle = "#ef4444";
-    const header = `✖ TAPE STRIP: ${stripResult.failedPockets} DEFECTIVE DEVICES (${stripResult.passedPockets}/${occupiedCount} PASSED)`;
-    ctx.fillText(header, hudX + 12, hudY + 16);
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "10px sans-serif";
-    ctx.fillText(
-      `Yield: ${stripResult.yieldPercent}% · ${emptyCount > 0 ? `${emptyCount} empty cavities, ` : ""}${stripResult.failedPockets} device failures`,
-      hudX + 12,
-      hudY + 32,
-    );
-  }
-}
-
 function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluationResult): void {
   const { x, y, width: w, height: h } = pocket.region;
 
@@ -943,26 +779,6 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   ctx.fillRect(x + 2, y + 2, badgeW, badgeH);
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
-
-  // OCR markings: recognized text per OCR rule, with confidence and verdict.
-  if (pocket.ocrMarkings && pocket.ocrMarkings.length > 0) {
-    ctx.font = "bold 8px monospace";
-    ctx.textAlign = "left";
-
-    let ocrY = y + 22;
-
-    for (const marking of pocket.ocrMarkings) {
-      const label = `${marking.text || "(no text)"} ${marking.meanConfidence.toFixed(0)}% ${marking.passed ? "✓" : "✗"}`;
-      const labelW = ctx.measureText(label).width + 8;
-
-      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
-      ctx.fillRect(x + 2, ocrY, labelW, 12);
-      ctx.fillStyle = marking.passed ? "#a78bfa" : "#ef4444";
-      ctx.fillText(label, x + 6, ocrY + 9);
-
-      ocrY += 14;
-    }
-  }
 
   // Per-gap distances: a small dimension mark on each inter-pin gap, labeled in mm.
   if (pocket.pinPitch && pocket.pinPitch.gaps.length > 0) {
@@ -1504,16 +1320,6 @@ export function VisualToolWorkpieceCanvas({
             : "rgba(0, 229, 255, 0.12)";
 
       // Zero-ROI: Render intrinsic inspection features only without artificial bounding box
-      drawRuleResultBadge(
-        ctx,
-        roi.x,
-        roi.y,
-        toolName || "Inspection Rule",
-        toolCode || "",
-        validationStatus,
-        validationScore,
-        true,
-      );
 
       if (isPatternMatching) {
         const effectiveRegion = roi;
@@ -1713,17 +1519,6 @@ export function VisualToolWorkpieceCanvas({
           }
         }
 
-        drawRuleResultBadge(
-          ctx,
-          badgeX,
-          badgeY,
-          rule.name,
-          effectiveToolCode,
-          effectiveStatus,
-          effectiveScore,
-          isSelected,
-        );
-
         const isRuleDefect =
           effectiveToolCode === "T118" ||
           ruleNameLower.includes("defect") ||
@@ -1765,8 +1560,6 @@ export function VisualToolWorkpieceCanvas({
                 false,
               );
             }
-
-            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
           } else {
             const effectiveRegion: WorkpieceRoi = {
               x: ruleX,
@@ -1811,8 +1604,6 @@ export function VisualToolWorkpieceCanvas({
               isAnalyzeMode,
               isSkipped,
             );
-
-            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
           }
         } else if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
@@ -1876,8 +1667,6 @@ export function VisualToolWorkpieceCanvas({
                 );
               }
             }
-
-            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
           } else {
             const ruleDebug = (ruleResult as any)?.debug;
             const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
@@ -1946,8 +1735,6 @@ export function VisualToolWorkpieceCanvas({
                   isAnalyzeMode,
                 );
               }
-
-              drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
             } else {
               drawPin1Reticle(
                 ctx,
@@ -1978,9 +1765,7 @@ export function VisualToolWorkpieceCanvas({
         validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)
       ) {
-        if (tapeStripResult && tapeStripResult.totalPockets > 1) {
-          drawTapeStripInspectionHud(ctx, w, tapeStripResult);
-        } else {
+        if (!(tapeStripResult && tapeStripResult.totalPockets > 1)) {
           drawFrameInspectionHud(
             ctx,
             w,
@@ -2405,119 +2190,6 @@ export function VisualToolWorkpieceCanvas({
                     })}
                   </div>
                 )}
-
-                {/* Active Rule Details */}
-                {(() => {
-                  const activeRule = overlayRules.find((r) => r.id === selectedRuleId);
-                  const activeResult = selectedRuleId
-                    ? validationResultsMap?.[selectedRuleId]
-                    : undefined;
-                  const displayRuleName = activeRule?.name || toolName || "Active Rule";
-                  const displayToolCode = String(
-                    activeRule?.params?.toolCode || toolCode || "T102",
-                  );
-                  const displayScore =
-                    typeof activeResult?.score === "number"
-                      ? activeResult.score
-                      : typeof validationScore === "number"
-                        ? validationScore
-                        : activeResult?.status === "pass" || validationStatus === "pass"
-                          ? 1.0
-                          : undefined;
-
-                  const isPatternMatch = activeRule
-                    ? Boolean(
-                        displayToolCode === "T102" ||
-                        displayToolCode === "T116" ||
-                        displayRuleName.toLowerCase().includes("pattern") ||
-                        displayRuleName.toLowerCase().includes("white box"),
-                      )
-                    : isPatternMatching;
-
-                  const activeRuleRoi = activeRule
-                    ? {
-                        x: activeRule.x,
-                        y: activeRule.y,
-                        width: activeRule.width,
-                        height: activeRule.height,
-                      }
-                    : roi;
-
-                  const parsedActiveRuleBoxes = parseBoxesFromParams(
-                    activeRule?.params,
-                    activeRuleRoi,
-                  );
-
-                  const ruleBoxes =
-                    parsedActiveRuleBoxes.length > 0 ? parsedActiveRuleBoxes : activeBoxesToDraw;
-
-                  const totalCount =
-                    ruleBoxes.length > 0
-                      ? ruleBoxes.length
-                      : typeof activeRule?.params?.activeBoxCount === "number"
-                        ? (activeRule.params.activeBoxCount as number)
-                        : typeof toolParams?.activeBoxCount === "number"
-                          ? (toolParams.activeBoxCount as number)
-                          : activeBoxCount;
-
-                  const scoreFraction =
-                    typeof displayScore === "number"
-                      ? displayScore
-                      : activeResult?.status === "fail" || validationStatus === "fail"
-                        ? 0.0
-                        : 1.0;
-
-                  const debugMatched = (activeResult as any)?.debug?.matchedCount;
-                  const matchedCount =
-                    typeof debugMatched === "number"
-                      ? debugMatched
-                      : activeResult?.status === "pass" ||
-                          (!activeResult && validationStatus !== "fail")
-                        ? Math.max(0, totalCount - excludedNumbers.size)
-                        : Math.round(totalCount * scoreFraction);
-
-                  const percent =
-                    totalCount > 0 ? Math.round((matchedCount / totalCount) * 100) : 100;
-
-                  return (
-                    <div
-                      className={`grid grid-cols-1 sm:grid-cols-2 ${
-                        isAnalyzeMode ? "md:grid-cols-3" : "md:grid-cols-4"
-                      } gap-2 border-t border-ca-border/40 pt-2 text-[11px] text-ca-ink`}
-                    >
-                      <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
-                          Feature Rule
-                        </span>
-                        <span className="truncate">
-                          <strong>{displayRuleName}</strong> [{displayToolCode}]
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                        <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
-                          Match Score
-                        </span>
-                        <strong>
-                          {typeof displayScore === "number"
-                            ? `${(displayScore * 100).toFixed(1)}%`
-                            : "100%"}
-                        </strong>
-                      </div>
-
-                      {isPatternMatch && (
-                        <div className="flex flex-col rounded border border-ca-border/50 bg-[#0b0f12] px-2 py-1">
-                          <span className="text-[10px] uppercase tracking-wider text-ca-ink-muted">
-                            Pattern Elements
-                          </span>
-                          <strong>
-                            {matchedCount} / {totalCount} matched ({percent}%)
-                          </strong>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
               </>
             );
           })()}
