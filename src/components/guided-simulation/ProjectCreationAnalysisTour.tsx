@@ -1279,6 +1279,11 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           showProgress: true,
           buttons: ["skip", "primary"],
           closeButtonAction: "skip",
+          // The tour auto-plays: a stray click on the dimmed overlay must
+          // never dismiss it, and hover/click on the spotlighted control
+          // must reach the real element instead of dying on the overlay.
+          overlayClickAction: false,
+          blockTargetInteraction: false,
           targetWaitTimeout: 10000,
           spotlightPadding: 8,
           spotlightRadius: 8,
