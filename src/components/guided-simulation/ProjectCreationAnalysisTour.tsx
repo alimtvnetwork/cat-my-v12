@@ -384,7 +384,7 @@ function makePin1Rule(device: GuidedDeviceLayout, number: number, imageRef: stri
       searchRegion,
       ...(device.isEmbeddedGuidanceImage ? {} : { region: searchRegion }),
       pin1Config: {
-        thresholdLuma: 32,
+        thresholdLuma: 35,
         tolerancePx: 25,
         angleToleranceDeg: 1,
         registeredPin1: {
