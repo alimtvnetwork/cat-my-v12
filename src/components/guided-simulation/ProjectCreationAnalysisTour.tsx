@@ -951,11 +951,6 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       {
         target: "[data-tour='project-inspection-program']",
         placement: "auto",
-        floaterProps: {
-          options: {
-            preventOverflow: { enabled: true, boundariesElement: "viewport" },
-          },
-        } as any,
         title: "Configured rules",
         content:
           "The project contains exactly two rules: PIN1 Orientation and Greyscale Pattern Matching.",
@@ -988,6 +983,17 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         actionKey: "run-analysis",
         actionPhase: "exit",
         autoMs: 5000,
+      },
+      {
+        target: "body",
+        placement: "top",
+        title: "Results",
+        content:
+          "All 4 devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching.",
+        autoMs: 7500,
+        disableBeacon: true,
+        hideCloseButton: true,
+        showSkipButton: false,
       },
     ],
     [],
