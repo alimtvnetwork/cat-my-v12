@@ -1669,11 +1669,27 @@ export function VisualToolWorkpieceCanvas({
             }
           } else {
             const ruleDebug = (ruleResult as any)?.debug;
-            const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+            let multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
               ? ruleDebug.multiDevicePin1
               : Array.isArray((rule.params as any)?.multiDevicePin1)
                 ? (rule.params as any).multiDevicePin1
                 : [];
+            // Fallback: construct from tapeStripResult pockets (scripted tour)
+            if (multiDevicePin1.length === 0 && tapeStripResult?.pockets) {
+              const pocketPins = tapeStripResult.pockets
+                .filter((pk: any) => typeof pk.pinX === "number" && typeof pk.pinY === "number")
+                .map((pk: any, idx: number) => ({
+                  id: `pocket-${idx + 1}`,
+                  label: `Device ${idx + 1}`,
+                  x: pk.pinX,
+                  y: pk.pinY,
+                  radius: 11,
+                  packageRegion: pk.region,
+                }));
+              if (pocketPins.length > 0) {
+                multiDevicePin1 = pocketPins;
+              }
+            }
             const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
               ? ruleDebug.multiDevicePassRegions
               : Array.isArray((rule.params as any)?.multiDevicePassRegions)
