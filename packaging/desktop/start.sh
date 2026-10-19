@@ -70,6 +70,7 @@ fi
 
 nohup "$BROWSER_BIN" \
   --app="$FRONTEND_URL" \
+  --start-fullscreen \
   --start-maximized \
   --no-first-run \
   --class=cat-ivision \

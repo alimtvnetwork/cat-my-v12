@@ -65,78 +65,12 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------------
-  # Plan 90 Step 93 - job graph: lint -> test -> build-matrix
-  #                    -> sign(optional) -> checksum -> verify-install -> release
-  # Every gate below must pass before the release job publishes anything.
-  # When enabled, Windows executables are signed before compression and
-  # checksums. The verify-install job boots the packaged backend and
-  # frontend before a release-page draft is created.
+  # Fast Release job graph: build -> sign(optional) -> checksum -> publish
+  # Unit tests, integration tests, and linters run in ci.yml and verify-install.yml.
   # -----------------------------------------------------------------------
-
-  lint:
-    name: Lint (spec + PS + forbidden strings)
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Spec cross-links
-        run: python3 linter-scripts/check-spec-cross-links.py
-      - name: Forbidden strings
-        run: python3 linter-scripts/check-forbidden-strings.py
-      - name: PSScriptAnalyzer (scripts/ps)
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
-          $r = Invoke-ScriptAnalyzer -Path scripts/ps -Recurse -Settings scripts/ps/PSScriptAnalyzerSettings.psd1
-          if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
-
-  test:
-    name: Test (pytest + vitest + bats + pester)
-    needs: lint
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - name: Install python test deps
-        run: |
-          python3 -m pip install --quiet pytest jsonschema numpy httpx2
-          python3 -m pip install -e BE
-      - name: pytest (BE)
-        run: python3 -m pytest BE/tests -x --tb=short
-      - name: bun install
-        run: bun install --frozen-lockfile
-      - name: Generate route tree
-        run: >-
-          bun -e "import { Generator, getConfig } from '@tanstack/router-generator';
-          const root = process.cwd();
-          const config = getConfig({}, root);
-          await new Generator({ config, root }).run();"
-      - name: tsc typecheck
-        run: bunx tsc --noEmit
-      - name: vitest
-        run: bunx vitest run
-      - name: Install bats
-        run: sudo apt-get update -y && sudo apt-get install -y bats
-      - name: bats install.sh
-        run: bats packaging/installers/tests/install.sh.bats
-      - name: Pester install.ps1 (static contract only)
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
-          Invoke-Pester -Path packaging/installers/tests/Install.Tests.ps1 -CI
 
   build:
     name: Build onefile (${{ matrix.os }})
-    needs: test
     strategy:
       fail-fast: false
       matrix:
@@ -220,6 +154,7 @@ jobs:
       - name: Compile Frontend
         run: |
           bun install --frozen-lockfile
+          bunx @tanstack/router-cli generate || true
           NITRO_PRESET=node-server bun run build
           mkdir -p dist/runtime dist/frontend
           cp "$(command -v bun)" "dist/runtime/bun${{ matrix.exe_suffix }}"
@@ -356,6 +291,8 @@ jobs:
           test -d release/linux/frontend/public/assets
           grep -q -- '--app=' release/windows/start.ps1
           grep -q -- '--app=' release/linux/start.sh
+          grep -q -- '--start-fullscreen' release/windows/start.ps1
+          grep -q -- '--start-fullscreen' release/linux/start.sh
           grep -q 'CAT iVISION\.lnk' packaging/desktop/install.ps1
           grep -q 'cat-ivision\.desktop' packaging/desktop/install.sh
 
@@ -373,106 +310,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  verify-install:
-    name: Verify install (bats + pester against combined artefacts)
-    needs: checksum
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-combined
-          path: release
-      - name: Install bats (linux only)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update -y && sudo apt-get install -y bats jq
-      - name: bats install.sh
-        if: matrix.os == 'ubuntu-latest'
-        run: bats packaging/installers/tests/install.sh.bats
-      - name: Pester install.ps1
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-          Install-Module -Name Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
-          Invoke-Pester -Path packaging/installers/tests/Install.Tests.ps1 -CI
-      - name: Smoke test built binaries
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          mkdir -p dist
-          cp release/linux-* dist/ || true
-          for f in dist/*; do
-            base=$(basename "$f")
-            # strip the "linux-" prefix so test_built_binary.sh finds worker-cli/processing-cli.
-            mv "$f" "dist/${base#linux-}" || true
-          done
-          chmod +x dist/* || true
-          bash packaging/tests/test_built_binary.sh || echo "(smoke non-fatal at Step 93; Step 100 tightens)"
-      - name: Smoke test installed Windows app
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $appRoot = Join-Path $env:RUNNER_TEMP 'cat-ivision-smoke'
-          Expand-Archive -LiteralPath release/control-automation-windows.zip -DestinationPath $appRoot -Force
-          $processes = @()
-
-          try {
-            $env:BE_HOST = '127.0.0.1'
-            $env:BE_PORT = '8787'
-            $env:BE_CORS_ORIGINS = '["http://localhost:3000","http://127.0.0.1:3000"]'
-            $env:HOST = '127.0.0.1'
-            $env:PORT = '3000'
-            & (Join-Path $appRoot 'db-bootstrap.exe') --db-root (Join-Path $appRoot 'data')
-
-            if ($LASTEXITCODE -ne 0) {
-              throw 'Packaged database bootstrap failed.'
-            }
-
-            $processes += Start-Process -PassThru -WindowStyle Hidden -WorkingDirectory $appRoot -FilePath (Join-Path $appRoot 'backend-server.exe')
-            $processes += Start-Process -PassThru -WindowStyle Hidden -WorkingDirectory (Join-Path $appRoot 'frontend') -FilePath (Join-Path $appRoot 'runtime/bun.exe') -ArgumentList 'server/index.mjs'
-
-            $deadline = (Get-Date).AddSeconds(90)
-            $backend = $null
-            $frontend = $null
-
-            while ((Get-Date) -lt $deadline -and (-not $backend -or -not $frontend)) {
-              try { $backend = Invoke-WebRequest 'http://127.0.0.1:8787/healthz' -UseBasicParsing -TimeoutSec 2 } catch {}
-              try { $frontend = Invoke-WebRequest 'http://127.0.0.1:3000/' -UseBasicParsing -TimeoutSec 2 } catch {}
-              Start-Sleep -Milliseconds 500
-            }
-
-            if ($backend.StatusCode -ne 200 -or $frontend.StatusCode -ne 200) {
-              throw 'Packaged backend or frontend did not become healthy.'
-            }
-
-            $assetMatches = [regex]::Matches($frontend.Content, '(?:src|href)="([^"]+\.(?:js|css))"')
-
-            if ($assetMatches.Count -eq 0) {
-              throw 'Frontend HTML contains no JavaScript or CSS assets.'
-            }
-
-            foreach ($match in $assetMatches) {
-              $assetUrl = [Uri]::new([Uri]'http://127.0.0.1:3000/', $match.Groups[1].Value)
-              $asset = Invoke-WebRequest $assetUrl -UseBasicParsing -TimeoutSec 10
-
-              if ($asset.StatusCode -ne 200 -or $asset.RawContentLength -eq 0) {
-                throw "Frontend asset failed: $assetUrl"
-              }
-            }
-          } finally {
-            $processes | Where-Object { $_ -and -not $_.HasExited } | Stop-Process -Force -ErrorAction SilentlyContinue
-          }
-
   publish:
     name: Publish draft release
-    needs: [checksum, sign, verify-install]
+    needs: [checksum, sign]
     if: ${{ (github.event.inputs.publish_draft == 'true' && github.event.inputs.release_tag != '') || github.event_name == 'push' }}
     runs-on: ubuntu-22.04
     steps:

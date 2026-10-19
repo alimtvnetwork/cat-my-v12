@@ -87,13 +87,13 @@ if [ "$NO_SHELL" -eq 0 ]; then
     URL="http://localhost:$FE_PORT?backend=http://localhost:$BE_PORT"
     
     if command -v chromium &> /dev/null; then
-        chromium --app="$URL" &
+        chromium --app="$URL" --start-fullscreen --start-maximized --no-first-run &
         PIDS+=("$!")
     elif command -v chromium-browser &> /dev/null; then
-        chromium-browser --app="$URL" &
+        chromium-browser --app="$URL" --start-fullscreen --start-maximized --no-first-run &
         PIDS+=("$!")
     elif command -v google-chrome &> /dev/null; then
-        google-chrome --app="$URL" &
+        google-chrome --app="$URL" --start-fullscreen --start-maximized --no-first-run &
         PIDS+=("$!")
     else
         echo "Chromium/Chrome not found in PATH. Please open: $URL"
