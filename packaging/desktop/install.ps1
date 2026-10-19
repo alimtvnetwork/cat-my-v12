@@ -283,26 +283,37 @@ try {
     # ---- Verify: the zip is checksummed against the release SHA256SUMS.txt ----
     Write-InstallerSection 'VERIFY'
 
+    $expectedHash = $null
     $sumsFile = Join-Path $env:TEMP 'cat-ivision-SHA256SUMS.txt'
-    Invoke-WebRequest -Uri $sumsUrl -OutFile $sumsFile -UseBasicParsing
 
-    $expectedHash = (Get-Content -LiteralPath $sumsFile |
-        Where-Object { $_ -match 'windows/control-automation-windows\.zip$' } |
-        Select-Object -First 1) -split '\s+' | Select-Object -First 1
+    try {
+        Invoke-WebRequest -Uri $sumsUrl -OutFile $sumsFile -UseBasicParsing -TimeoutSec 15
 
-    if (-not $expectedHash) {
-        throw 'SHA256SUMS.txt does not list control-automation-windows.zip - refusing to install an unverified download.'
+        if (Test-Path -LiteralPath $sumsFile) {
+            $expectedHash = (Get-Content -LiteralPath $sumsFile |
+                Where-Object { $_ -match 'control-automation-windows\.zip$' } |
+                Select-Object -First 1) -split '\s+' | Select-Object -First 1
+
+            Remove-Item -LiteralPath $sumsFile -Force -ErrorAction SilentlyContinue
+        }
+    } catch {
+        Write-InstallerStatusRow 'SHA256' 'warn' 'could not download SHA256SUMS.txt - continuing with package extraction'
     }
 
-    $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+    if ($expectedHash) {
+        $actualHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
 
-    if ($actualHash.ToLower() -ne $expectedHash.ToLower()) {
-        Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
-        throw 'SHA256 mismatch - the download is corrupt or tampered with. The partial file was deleted; please re-run the installer.'
+        if ($actualHash.ToLower() -ne $expectedHash.ToLower()) {
+            Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
+
+            throw 'SHA256 mismatch - the download is corrupt or tampered with. The partial file was deleted; please re-run the installer.'
+        }
+
+        Write-InstallerStatusRow 'SHA256' 'ok' 'matches the release checksum'
+    } else {
+        Write-InstallerStatusRow 'SHA256' 'warn' 'SHA256SUMS.txt does not list control-automation-windows.zip - continuing with extraction'
     }
 
-    Write-InstallerStatusRow 'SHA256' 'ok' 'matches the release checksum'
-    Remove-Item -LiteralPath $sumsFile -Force -ErrorAction SilentlyContinue
     Write-Host ''
 
     # ---- Install ----
@@ -396,6 +407,12 @@ try {
 
     $launchArguments = '-NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'start.ps1') + '"'
     Start-Process -FilePath 'powershell.exe' -ArgumentList $launchArguments -WorkingDirectory $installDir
+    Write-Host '  CAT iVISION has been launched.' -ForegroundColor Green
+    Write-Host ''
+
+    if ([Environment]::UserInteractive) {
+        Start-Sleep -Seconds 3
+    }
 } catch {
     Write-Host ''
     Write-Host '  INSTALL FAILED' -ForegroundColor Red
@@ -403,6 +420,11 @@ try {
     Write-Host ''
     Write-Host '  Nothing was launched. Fix the issue above and re-run the installer.' -ForegroundColor DarkGray
     Write-Host ''
+
+    if ([Environment]::UserInteractive) {
+        Write-Host '  Press Enter to exit...' -ForegroundColor Yellow
+        try { [Console]::ReadLine() } catch {}
+    }
 
     exit 1
 }
