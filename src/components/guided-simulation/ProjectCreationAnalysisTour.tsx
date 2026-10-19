@@ -190,7 +190,7 @@ const DEVICE_LAYOUTS: readonly GuidedDeviceLayout[] = [
     searchY: 158,
     searchWidth: 237,
     searchHeight: 174,
-    textX: 615,
+    textX: 597,
     textTopY: 200,
     textBottomY: 237,
     textStep: 18,
@@ -214,7 +214,7 @@ const DEVICE_LAYOUTS: readonly GuidedDeviceLayout[] = [
     searchY: 158,
     searchWidth: 213,
     searchHeight: 174,
-    textX: 854,
+    textX: 836,
     textTopY: 202,
     textBottomY: 239,
     textStep: 18,
@@ -1186,6 +1186,36 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
         const passTimer = window.setTimeout(() => {
           setAnalysisLoading(false);
+          // Update project rules with analyzer-image params so canvas
+          // draws markers at correct positions (not setup-image params).
+          const store = useProjectStore.getState();
+          const ruleset = store.rulesets[rulesetId];
+          if (ruleset) {
+            const updatedRules = ruleset.rules.map((r) => {
+              if (r.id === TOUR_PIN1_RULE_ID) {
+                return {
+                  ...r,
+                  params: {
+                    ...r.params,
+                    multiDevicePin1: DEVICE_LAYOUTS.map((d) => ({
+                      id: d.id,
+                      label: d.label,
+                      x: d.pinX,
+                      y: d.pinY,
+                      radius: 11,
+                      packageRegion: { x: d.x, y: d.y, width: d.w, height: d.h },
+                    })),
+                    multiDevicePassRegions: DEVICE_LAYOUTS.map((d) => ({
+                      label: d.label,
+                      region: { x: d.x, y: d.y, width: d.w, height: d.h },
+                    })),
+                  },
+                };
+              }
+              return r;
+            });
+            store.updateRulesetRules(rulesetId, updatedRules);
+          }
           useValidationStore
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
