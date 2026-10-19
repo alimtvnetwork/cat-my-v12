@@ -342,8 +342,23 @@ function scrollTourTargetIntoView(step: TourStep): void {
 }
 
 function makeDemoRules(): EditorRule[] {
+  const pin1Rule = makePin1Rule(PIN1_SETUP_DEVICE_LAYOUT, 1, pin1SetupImage);
+  // Include analyzer-image multi-device PIN1 positions so the canvas
+  // draws all 4 markers during the scripted analysis.
+  (pin1Rule.params as any).multiDevicePin1 = DEVICE_LAYOUTS.map((d) => ({
+    id: d.id,
+    label: d.label,
+    x: d.pinX,
+    y: d.pinY,
+    radius: 11,
+    packageRegion: { x: d.x, y: d.y, width: d.w, height: d.h },
+  }));
+  (pin1Rule.params as any).multiDevicePassRegions = DEVICE_LAYOUTS.map((d) => ({
+    label: d.label,
+    region: { x: d.x, y: d.y, width: d.w, height: d.h },
+  }));
   return [
-    makePin1Rule(PIN1_SETUP_DEVICE_LAYOUT, 1, pin1SetupImage),
+    pin1Rule,
     makeGreyscaleRule(GREYSCALE_SETUP_DEVICE_LAYOUT, 2, greyscaleSetupImage),
   ];
 }
