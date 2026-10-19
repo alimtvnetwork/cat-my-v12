@@ -18,6 +18,8 @@ import {
   Upload,
   Wand2,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -133,6 +135,8 @@ export function WorkpieceAnalyzeWorkspace({
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   /** Rule id whose tool configuration is open inline (right viewport), if any. */
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
+  /** Left program sidebar collapsed into a slim rail so the canvas gets the space. */
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   /** Microns-per-pixel driving pin pitch + device measurements. */
   const calibrationUmPerPx = LEGACY_DEFAULT_UM_PER_PX;
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -1005,234 +1009,270 @@ export function WorkpieceAnalyzeWorkspace({
         ) : null}
 
         {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
-        <div className="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 overflow-hidden bg-transparent">
+        <div
+          className={`grid min-h-0 flex-1 gap-2.5 overflow-hidden bg-transparent ${
+            isSidebarCollapsed
+              ? "grid-cols-[44px_minmax(0,1fr)]"
+              : "grid-cols-[320px_minmax(0,1fr)]"
+          }`}
+        >
           {/* Left: inspection hierarchy tree & source container */}
-          <div
-            data-tour="project-inspection-program"
-            className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
-          >
-            {/* Tab switchers: Program vs Image Source */}
-            <div className="flex shrink-0 items-center justify-between rounded-lg border border-white/10 bg-black/60 p-0.5">
-              <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
-                <button
-                  type="button"
-                  data-tour="project-program-tab"
-                  onClick={() => setActiveSidebarTab("tree")}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
-                    activeSidebarTab === "tree"
-                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <FolderTree size={12} />
-                  <span>Program ({projectAnalysisItems.length})</span>
-                </button>
-                <button
-                  type="button"
-                  data-tour="project-image-source-tab"
-                  onClick={() => setActiveSidebarTab("source")}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
-                    activeSidebarTab === "source"
-                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <Camera size={12} />
-                  <span>Image & Source</span>
-                </button>
+          {isSidebarCollapsed ? (
+            <div className="flex h-full max-h-full min-h-0 min-w-0 flex-col items-center gap-2 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+              <button
+                type="button"
+                title="Expand sidebar"
+                aria-label="Expand sidebar"
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)] transition hover:bg-cyan-500/25 hover:text-cyan-200 active:scale-95"
+              >
+                <PanelLeftOpen size={16} />
+              </button>
+              <div className="flex flex-col items-center gap-1">
+                <FolderTree size={14} className="text-amber-400" />
+                <span className="font-sans text-[9px] font-medium text-white/60">
+                  {projectAnalysisItems.length}
+                </span>
               </div>
             </div>
-
-            {activeSidebarTab === "tree" ? (
-              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
-                <InspectionHierarchyTree
-                  project={project}
-                  ruleset={ruleset}
-                  rulesets={projectRulesetsForAnalysis}
-                  onSelectRuleset={onSelectRuleset}
-                  rules={projectOverlayRules}
-                  selectedRuleId={activeRule?.id ?? null}
-                  onSelectRule={handleSelectProjectRule}
-                  onToggleHidden={railHandlers.onToggleHidden}
-                  onDeleteRule={railHandlers.onDelete}
-                  onReorderRule={railHandlers.onReorder}
-                  onMoveRule={railHandlers.onMove}
-                  onAddRuleClick={handleNavigateAddRule}
-                  onAddRulesetClick={handleStartAddRuleset}
-                  onDeleteRulesetClick={handleDeleteRuleset}
-                  onConfigureRule={handleOpenRuleConfig}
-                  onUpdateCameraSettings={handleUpdateRuleCameraSettings}
-                  onUpdateLightSettings={handleUpdateRuleLightSettings}
-                />
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <section
-                  data-tour="project-image-samples"
-                  className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner"
+          ) : (
+            <div
+              data-tour="project-inspection-program"
+              className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
+            >
+              {/* Tab switchers: Program vs Image Source */}
+              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-black/60 p-0.5">
+                <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
+                  <button
+                    type="button"
+                    data-tour="project-program-tab"
+                    onClick={() => setActiveSidebarTab("tree")}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                      activeSidebarTab === "tree"
+                        ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <FolderTree size={12} />
+                    <span>Program ({projectAnalysisItems.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-tour="project-image-source-tab"
+                    onClick={() => setActiveSidebarTab("source")}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                      activeSidebarTab === "source"
+                        ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Camera size={12} />
+                    <span>Image & Source</span>
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  title="Minimize sidebar"
+                  aria-label="Minimize sidebar"
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  className="flex shrink-0 items-center justify-center rounded-md p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white active:scale-95"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
-                        Image & Camera Source
-                      </h2>
-                      <p className="text-[10px] font-sans text-white/50">
-                        {isLiveCameraMode
-                          ? "Live camera selected"
-                          : project.inspectionImageRef
-                            ? "1 registered inspection image (960×540)"
-                            : "No inspection image registered"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:border-white/30 hover:bg-white/10 active:scale-95"
-                    >
-                      <Upload size={12} />
-                      {project.inspectionImageRef ? "Change" : "Upload"}
-                    </button>
-                  </div>
+                  <PanelLeftClose size={14} />
+                </button>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/50 p-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsLiveCameraMode(false)}
-                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                        isLiveCameraMode
-                          ? "text-white/55 hover:bg-white/5 hover:text-white"
-                          : "bg-ca-primary text-black shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
-                      }`}
-                    >
-                      <FileImage size={12} />
-                      Image
-                    </button>
-                    <button
-                      type="button"
-                      data-tour="project-live-camera-source"
-                      onClick={() => {
-                        setIsLiveCameraMode(true);
-                        toast.info("Live camera source selected.");
-                      }}
-                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                        isLiveCameraMode
-                          ? "bg-emerald-400 text-black shadow-[0_0_10px_rgba(52,211,153,0.3)]"
-                          : "text-white/55 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Camera size={12} />
-                      Live Camera
-                    </button>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
-                      Sample Carrier Pockets
-                    </span>
-                    <div className="grid grid-cols-3 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-1-filled.jpg",
-                          );
-                          toast.info("Loaded Carrier Pocket 1 [Filled IC]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
-                            ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 1
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-2-empty-mixed.jpg",
-                          );
-                          toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef ===
-                          "/src/assets/samples/pocket-2-empty-mixed.jpg"
-                            ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 2
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-5-partial.jpg",
-                          );
-                          toast.info("Loaded Carrier Tape Strip [5 Pockets]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef === "/src/assets/samples/pocket-5-partial.jpg"
-                            ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 5 [Strip]
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="group relative h-36 overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-inner flex items-center justify-center">
-                    {isLiveCameraMode ? (
-                      <>
-                        <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-emerald-300/70">
-                          <Camera size={22} />
-                          <span className="font-sans text-[11px] uppercase tracking-wider">
-                            {liveCameraErrorText
-                              ? "Camera unavailable"
-                              : isLiveCameraReady
-                                ? "Feed visible on canvas"
-                                : "Connecting camera feed"}
-                          </span>
-                        </div>
-                        <div className="absolute left-2.5 top-2.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider text-emerald-200">
-                          Live
-                        </div>
-                      </>
-                    ) : project.inspectionImageRef ? (
-                      <>
-                        <img
-                          src={project.inspectionImageRef}
-                          alt="Current project inspection"
-                          className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => imageInputRef.current?.click()}
-                          className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white opacity-0 backdrop-blur-xs transition group-hover:opacity-100"
-                        >
-                          <Upload size={14} />
-                          Replace Image
-                        </button>
-                      </>
-                    ) : (
+              {activeSidebarTab === "tree" ? (
+                <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
+                  <InspectionHierarchyTree
+                    project={project}
+                    ruleset={ruleset}
+                    rulesets={projectRulesetsForAnalysis}
+                    onSelectRuleset={onSelectRuleset}
+                    rules={projectOverlayRules}
+                    selectedRuleId={activeRule?.id ?? null}
+                    onSelectRule={handleSelectProjectRule}
+                    onToggleHidden={railHandlers.onToggleHidden}
+                    onDeleteRule={railHandlers.onDelete}
+                    onReorderRule={railHandlers.onReorder}
+                    onMoveRule={railHandlers.onMove}
+                    onAddRuleClick={handleNavigateAddRule}
+                    onAddRulesetClick={handleStartAddRuleset}
+                    onDeleteRulesetClick={handleDeleteRuleset}
+                    onConfigureRule={handleOpenRuleConfig}
+                    onUpdateCameraSettings={handleUpdateRuleCameraSettings}
+                    onUpdateLightSettings={handleUpdateRuleLightSettings}
+                  />
+                </div>
+              ) : (
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <section
+                    data-tour="project-image-samples"
+                    className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
+                          Image & Camera Source
+                        </h2>
+                        <p className="text-[10px] font-sans text-white/50">
+                          {isLiveCameraMode
+                            ? "Live camera selected"
+                            : project.inspectionImageRef
+                              ? "1 registered inspection image (960×540)"
+                              : "No inspection image registered"}
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white/70 transition hover:bg-black/50 hover:text-white"
+                        className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:border-white/30 hover:bg-white/10 active:scale-95"
                       >
-                        <Upload size={14} />
-                        Upload Inspection Image
+                        <Upload size={12} />
+                        {project.inspectionImageRef ? "Change" : "Upload"}
                       </button>
-                    )}
-                  </div>
-                </section>
-              </div>
-            )}
-          </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/50 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsLiveCameraMode(false)}
+                        className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          isLiveCameraMode
+                            ? "text-white/55 hover:bg-white/5 hover:text-white"
+                            : "bg-ca-primary text-black shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
+                        }`}
+                      >
+                        <FileImage size={12} />
+                        Image
+                      </button>
+                      <button
+                        type="button"
+                        data-tour="project-live-camera-source"
+                        onClick={() => {
+                          setIsLiveCameraMode(true);
+                          toast.info("Live camera source selected.");
+                        }}
+                        className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          isLiveCameraMode
+                            ? "bg-emerald-400 text-black shadow-[0_0_10px_rgba(52,211,153,0.3)]"
+                            : "text-white/55 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <Camera size={12} />
+                        Live Camera
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                        Sample Carrier Pockets
+                      </span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              "/src/assets/samples/pocket-1-filled.jpg",
+                            );
+                            toast.info("Loaded Carrier Pocket 1 [Filled IC]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
+                              ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 1
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              "/src/assets/samples/pocket-2-empty-mixed.jpg",
+                            );
+                            toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef ===
+                            "/src/assets/samples/pocket-2-empty-mixed.jpg"
+                              ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              "/src/assets/samples/pocket-5-partial.jpg",
+                            );
+                            toast.info("Loaded Carrier Tape Strip [5 Pockets]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef ===
+                            "/src/assets/samples/pocket-5-partial.jpg"
+                              ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 5 [Strip]
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="group relative h-36 overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-inner flex items-center justify-center">
+                      {isLiveCameraMode ? (
+                        <>
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-emerald-300/70">
+                            <Camera size={22} />
+                            <span className="font-sans text-[11px] uppercase tracking-wider">
+                              {liveCameraErrorText
+                                ? "Camera unavailable"
+                                : isLiveCameraReady
+                                  ? "Feed visible on canvas"
+                                  : "Connecting camera feed"}
+                            </span>
+                          </div>
+                          <div className="absolute left-2.5 top-2.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider text-emerald-200">
+                            Live
+                          </div>
+                        </>
+                      ) : project.inspectionImageRef ? (
+                        <>
+                          <img
+                            src={project.inspectionImageRef}
+                            alt="Current project inspection"
+                            className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => imageInputRef.current?.click()}
+                            className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white opacity-0 backdrop-blur-xs transition group-hover:opacity-100"
+                          >
+                            <Upload size={14} />
+                            Replace Image
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white/70 transition hover:bg-black/50 hover:text-white"
+                        >
+                          <Upload size={14} />
+                          Upload Inspection Image
+                        </button>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Right: camera/current image viewport, or inline tool configuration */}
           <div

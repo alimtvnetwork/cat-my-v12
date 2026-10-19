@@ -107,12 +107,14 @@ describe("InspectionHierarchyTree", () => {
     // Level 2: RuleSet
     expect(screen.getByText(/RuleSet: Carrier Tape Inspection V1/i)).toBeTruthy();
 
-    // Level 3: Rules with name + tool icon + code, and per-rule subtrees
+    // Level 3: Rules with name + catalog tool image + code (no result badges)
     expect(screen.getByText("Pin 1 Orientation Config")).toBeTruthy();
     expect(screen.getByText("Greyscale Pattern Match 24-Box")).toBeTruthy();
+    expect(screen.getByTestId("tool-graphic-T105")).toBeTruthy();
+    expect(screen.getByTestId("tool-graphic-T102")).toBeTruthy();
     expect(screen.getByText("T105")).toBeTruthy();
     expect(screen.getByText("T102")).toBeTruthy();
-    expect(screen.getByText(/PASS/)).toBeTruthy();
+    expect(screen.queryByText(/PASS/)).toBeNull();
 
     // Camera / light subtree toggles live in the options menu
     openRuleMenu(0);
@@ -288,26 +290,6 @@ describe("InspectionHierarchyTree", () => {
       "rule-1",
       expect.objectContaining({ intensity: 95 }),
     );
-  });
-
-  it("toggles tree collapsing into a minimal icon bar", () => {
-    render(
-      <InspectionHierarchyTree
-        project={mockProject}
-        ruleset={mockRuleset}
-        rules={[mockRule1, mockRule2]}
-        selectedRuleId="rule-1"
-        onSelectRule={vi.fn()}
-      />,
-    );
-
-    const collapseButton = screen.getByTitle("Collapse tree sidebar");
-    fireEvent.click(collapseButton);
-
-    expect(screen.getByTitle("Expand inspection hierarchy tree")).toBeTruthy();
-
-    fireEvent.click(screen.getByTitle("Expand inspection hierarchy tree"));
-    expect(screen.getByText("Bottle Line Inspection")).toBeTruthy();
   });
 
   it("supports editing dedicated camera settings per rule", () => {

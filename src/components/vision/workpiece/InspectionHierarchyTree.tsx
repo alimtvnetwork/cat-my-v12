@@ -1,36 +1,23 @@
 import { useCallback, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import {
-  Activity,
-  AlertCircle,
-  Bug,
   Camera,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  CircleDot,
-  Clock,
   Cpu,
-  Crosshair,
   Eye,
   EyeOff,
   FileCode2,
   FolderTree,
-  Grid2X2,
   ListChecks,
   MoreVertical,
-  PaintBucket,
   Plus,
-  QrCode,
   RotateCcw,
-  Ruler,
-  ScanSearch,
   Sun,
   Trash2,
-  Type,
   Wand2,
-  type LucideIcon,
 } from "lucide-react";
+import { ToolInspectionGraphic } from "@/components/vision/ToolInspectionGraphic";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import {
   DEFAULT_RULE_CAMERA_SETTINGS,
@@ -39,35 +26,9 @@ import {
   type RuleCameraSettings,
   type RuleLightSettings,
 } from "@/lib/editor/types";
-import {
-  useValidationStore,
-  ValidationStatusType,
-  type ValidationResult,
-} from "@/lib/editor/validation-store";
 
 function getRuleToolCode(rule: EditorRule): string {
   return typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
-}
-
-function getToolIcon(code: string, name: string): LucideIcon {
-  const normalized = `${code} ${name}`.toLowerCase();
-
-  if (normalized.includes("pin 1") || normalized.includes("pin1")) return CircleDot;
-  if (normalized.includes("pattern") || code === "T102") return ScanSearch;
-  if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
-  if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
-  if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
-  if (normalized.includes("void") || normalized.includes("circle") || code === "T111")
-    return Crosshair;
-  if (normalized.includes("caliper") || normalized.includes("gauge") || code === "T110")
-    return Ruler;
-  if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103")
-    return QrCode;
-  if (normalized.includes("ocr") || normalized.includes("marking") || code === "T106") return Type;
-  if (normalized.includes("coating") || normalized.includes("color") || code === "T112")
-    return PaintBucket;
-
-  return ScanSearch;
 }
 
 export interface InspectionHierarchyTreeProps {
@@ -118,7 +79,6 @@ export function InspectionHierarchyTree({
   const [expandedRuleIds, setExpandedRuleIds] = useState<Record<string, boolean>>({});
   const [expandedCameraRuleId, setExpandedCameraRuleId] = useState<string | null>(null);
   const [expandedLightRuleId, setExpandedLightRuleId] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const displayRulesets = useMemo<RuleSet[]>(() => {
     if (rulesets && rulesets.length > 0) return rulesets;
@@ -130,17 +90,6 @@ export function InspectionHierarchyTree({
     () => displayRulesets.reduce((sum, rs) => sum + (rs.rules?.length ?? 0), 0),
     [displayRulesets],
   );
-
-  const validationRuns = useValidationStore((s) => s.runs);
-  const validationResults = useMemo(() => {
-    const merged: Record<string, ValidationResult> = {};
-
-    for (const rs of displayRulesets) {
-      Object.assign(merged, validationRuns[rs.id]?.results ?? {});
-    }
-
-    return merged;
-  }, [displayRulesets, validationRuns]);
 
   const toggleRuleExpanded = useCallback(
     (ruleId: string, isRuleOpen: boolean) => {
@@ -183,23 +132,6 @@ export function InspectionHierarchyTree({
     [expandedLightRuleId],
   );
 
-  if (isCollapsed) {
-    return (
-      <div
-        role="region"
-        aria-label="Inspection hierarchy tree"
-        className="flex h-full min-h-0 w-12 flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-inner backdrop-blur-md"
-      >
-        <IconButton title="Expand inspection hierarchy tree" onClick={() => setIsCollapsed(false)}>
-          <FolderTree size={16} />
-        </IconButton>
-        <span className="rounded bg-white/10 px-1 py-0.5 font-sans text-[9px] font-medium text-white/60">
-          {totalRuleCount}
-        </span>
-      </div>
-    );
-  }
-
   return (
     <div
       role="region"
@@ -207,7 +139,7 @@ export function InspectionHierarchyTree({
       className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 font-sans shadow-inner backdrop-blur-md"
     >
       {/* Header: project name */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
+      <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
           <FolderTree size={14} className="shrink-0 text-amber-400" />
           <span
@@ -220,10 +152,6 @@ export function InspectionHierarchyTree({
             {totalRuleCount}
           </span>
         </div>
-
-        <IconButton title="Collapse tree sidebar" onClick={() => setIsCollapsed(true)}>
-          <ChevronRight size={12} />
-        </IconButton>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 font-sans text-xs [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
@@ -383,7 +311,6 @@ export function InspectionHierarchyTree({
                                 <RulesList
                                   rules={rulesetRules}
                                   selectedRuleId={selectedRuleId}
-                                  validationResults={validationResults}
                                   expandedRuleIds={expandedRuleIds}
                                   expandedCameraRuleId={expandedCameraRuleId}
                                   expandedLightRuleId={expandedLightRuleId}
@@ -444,7 +371,6 @@ export function InspectionHierarchyTree({
 interface RulesListProps {
   rules: EditorRule[];
   selectedRuleId?: string | null;
-  validationResults: Record<string, ValidationResult>;
   expandedRuleIds: Record<string, boolean>;
   expandedCameraRuleId: string | null;
   expandedLightRuleId: string | null;
@@ -474,7 +400,6 @@ interface DragPayload {
 function RulesList({
   rules,
   selectedRuleId,
-  validationResults,
   expandedRuleIds,
   expandedCameraRuleId,
   expandedLightRuleId,
@@ -562,7 +487,6 @@ function RulesList({
             index={index}
             total={rules.length}
             isSelected={selectedRuleId === rule.id}
-            validationResult={validationResults[rule.id]}
             isExpanded={isRuleOpen}
             isCameraOpen={expandedCameraRuleId === rule.id}
             isLightOpen={expandedLightRuleId === rule.id}
@@ -612,7 +536,6 @@ interface RuleNodeProps {
   isDragging: boolean;
   showDropBefore: boolean;
   showDropAfter: boolean;
-  validationResult?: ValidationResult;
   onSelect: () => void;
   onConfigure: () => void;
   onToggleExpanded: () => void;
@@ -640,7 +563,6 @@ function RuleNode({
   isDragging,
   showDropBefore,
   showDropAfter,
-  validationResult,
   onSelect,
   onConfigure,
   onToggleExpanded,
@@ -657,9 +579,6 @@ function RuleNode({
   onDropOnRow,
 }: RuleNodeProps) {
   const toolCode = getRuleToolCode(rule);
-  const ToolIcon = getToolIcon(toolCode, rule.name);
-  const isPass = validationResult?.status === ValidationStatusType.Pass;
-  const isFail = validationResult?.status === ValidationStatusType.Fail;
   const cameraSettings =
     rule.cameraSettings ?? (rule.params as any)?.cameraSettings ?? DEFAULT_RULE_CAMERA_SETTINGS;
   const lightSettings =
@@ -703,10 +622,7 @@ function RuleNode({
           <span className="shrink-0 font-sans text-[10px] font-medium text-ca-ink-muted">
             [{index + 1}]
           </span>
-          <ToolIcon
-            size={14}
-            className={isSelected ? "shrink-0 text-ca-select" : "shrink-0 text-ca-ink-muted"}
-          />
+          <ToolInspectionGraphic toolCode={toolCode} size={22} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
             {rule.name}
           </span>
@@ -718,7 +634,6 @@ function RuleNode({
               {toolCode}
             </span>
           ) : null}
-          <StatusBadge isPass={isPass} isFail={isFail} validationResult={validationResult} />
           <div className="relative">
             <IconButton
               title="Rule options"
@@ -855,50 +770,6 @@ function RuleMenu({
         ))}
       </div>
     </>
-  );
-}
-
-function StatusBadge({
-  isPass,
-  isFail,
-  validationResult,
-}: {
-  isPass: boolean;
-  isFail: boolean;
-  validationResult?: ValidationResult;
-}) {
-  if (isPass) {
-    return (
-      <span
-        title={validationResult?.message ?? "Passed inspection"}
-        className="flex items-center gap-0.5 rounded border border-emerald-800/80 bg-emerald-950/70 px-1 py-0.2 text-[9px] font-semibold text-emerald-400"
-      >
-        <CheckCircle2 size={10} />
-        PASS{" "}
-        {typeof validationResult?.score === "number"
-          ? `${(validationResult.score * 100).toFixed(0)}%`
-          : ""}
-      </span>
-    );
-  }
-
-  if (isFail) {
-    return (
-      <span
-        title={validationResult?.message ?? "Failed inspection"}
-        className="flex items-center gap-0.5 rounded border border-rose-800/80 bg-rose-950/70 px-1 py-0.2 text-[9px] font-semibold text-rose-400"
-      >
-        <AlertCircle size={10} />
-        FAIL
-      </span>
-    );
-  }
-
-  return (
-    <span className="flex items-center gap-0.5 text-[9px] font-sans font-medium text-amber-400/80">
-      <Clock size={10} />
-      READY
-    </span>
   );
 }
 
