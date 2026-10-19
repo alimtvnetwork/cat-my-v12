@@ -34,6 +34,7 @@ import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
 import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
+import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus";
 
 const TOUR_PROJECT_NAME = "demo";
 const TOUR_RULESET_NAME = "demoset";
@@ -1084,6 +1085,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           useValidationStore
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
+          // Lift the workspace's stale-result gate so the scripted results
+          // show like a real Analyze run.
+          sessionAnalysisBus.emit();
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
           toast.success(
             "Guided simulation analysis complete: 3 present devices passed (100% yield).",
@@ -1149,12 +1153,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      timerRef.current = window.setTimeout(
-        () => {
-          advance();
-        },
-        Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS),
-      );
+      const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
+      timerRef.current = window.setTimeout(() => {
+        advance();
+      }, delayMs);
     };
 
     beginStep();

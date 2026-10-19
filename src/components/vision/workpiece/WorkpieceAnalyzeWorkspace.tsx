@@ -30,6 +30,7 @@ import { AddRulePanel } from "./AddRulePanel";
 import { AddRulesetPanel } from "./AddRulesetPanel";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
 import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
+import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus";
 import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
@@ -538,6 +539,15 @@ export function WorkpieceAnalyzeWorkspace({
       }
     });
   }, [handleStartAddRuleset]);
+
+  // The guided simulation's scripted analysis run produces results without
+  // going through the Analyze button; this lifts the stale-result gate so
+  // the canvas shows them like a real session run.
+  useEffect(() => {
+    return sessionAnalysisBus.subscribe(() => {
+      setHasSessionAnalysis(true);
+    });
+  }, []);
 
   const handleSelectProjectRule = useCallback(
     (id: string) => {

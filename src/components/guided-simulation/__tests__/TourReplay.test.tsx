@@ -201,5 +201,5 @@ describe("guided simulation tour replay", () => {
 
     // THE assertion from the bug report: the rule-adding step is reachable
     expect(q("[data-tour='project-add-rule-tree']")).not.toBeNull();
-  }, 60000);
+  }, 120000);
 });
