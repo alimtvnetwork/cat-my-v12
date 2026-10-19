@@ -29,6 +29,7 @@ Registry of every plan in `.ai-memory/plans/pending/` and `.ai-memory/plans/comp
 - 85 - plan83-residual-shepherd - completed - see `completed/85-plan83-residual-shepherd.md`
 - 88 - backend-implementation-v1-150-steps - completed - see `completed/88-backend-implementation-v1-150-steps.md`
 - 89 - error-manage-01-error-resolution - completed - see `completed/89-error-manage-01-error-resolution.md`
+- gitmap-update-and-branch-management - pending - see `gitmap-update-and-branch-management.md`
 
 ## Completed
 
