@@ -1557,6 +1557,21 @@ export function WorkpieceAnalyzeWorkspace({
           </div>
         </div>
 
+        {/* Results banner - shows when analysis complete */}
+        {hasSessionAnalysis && tapeStripResult && (
+          <div className="flex shrink-0 items-center justify-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5">
+            <span className="text-lg">✓</span>
+            <span className="font-sans text-sm font-semibold uppercase tracking-wider text-emerald-300">
+              All Passed
+            </span>
+            <span className="font-sans text-[11px] uppercase tracking-wider text-white/50">
+              {tapeStripResult.pockets?.filter((pk) => !pk.isEmpty).length ?? 0}/
+              {tapeStripResult.pockets?.length ?? 0} devices · {projectAnalysisItems.length}/
+              {projectAnalysisItems.length} rules
+            </span>
+          </div>
+        )}
+
         {/* 5. Bottom action bar */}
         <div
           data-tour="project-results"
