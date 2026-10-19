@@ -43,6 +43,7 @@ download_file() {
 
 download_file "$DOWNLOAD_URL" "$ARCHIVE_PATH"
 mkdir -p "$INSTALL_ROOT" "$APPLICATIONS_ROOT"
+pkill -f "$INSTALL_ROOT" 2>/dev/null || true
 unzip -o "$ARCHIVE_PATH" -d "$INSTALL_ROOT" >/dev/null
 chmod +x "$INSTALL_ROOT/start.sh" "$INSTALL_ROOT/runtime/bun" "$INSTALL_ROOT"/*-server "$INSTALL_ROOT"/db-bootstrap "$INSTALL_ROOT"/worker-cli "$INSTALL_ROOT"/processing-cli "$INSTALL_ROOT"/retention-run 2>/dev/null || true
 
