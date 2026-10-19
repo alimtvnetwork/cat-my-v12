@@ -1549,10 +1549,25 @@ export function VisualToolWorkpieceCanvas({
                     }))
                   : parseBoxesFromParams((pRes as any)?.params ?? rule.params, pocket.region);
 
+              const characterBoxesFallback =
+                pBoxes.length === 0 && Array.isArray((pocket as any).characterBoxes)
+                  ? ((pocket as any).characterBoxes as any[]).map((b: any) => ({
+                      number: b.number ?? b.boxNumber,
+                      label: b.label ?? b.character,
+                      x: b.x ?? b.referenceX,
+                      y: b.y ?? b.referenceY,
+                      width: b.width,
+                      height: b.height,
+                      area: b.width * b.height,
+                    }))
+                  : [];
+
+              const finalBoxes = pBoxes.length > 0 ? pBoxes : characterBoxesFallback;
+
               drawGreyscaleSimulationPatternOverlay(
                 ctx,
                 pocket.region,
-                pBoxes,
+                finalBoxes,
                 pStatus,
                 pScore,
                 pBoxResults,
@@ -1619,8 +1634,18 @@ export function VisualToolWorkpieceCanvas({
               const pStatus = pRes?.status ?? effectiveStatus;
               const pScore = pRes?.score ?? effectiveScore;
               const pDebug = pRes?.debug;
-              const holeX = pDebug?.detectedHoleX ?? pDebug?.nominalX;
-              const holeY = pDebug?.detectedHoleY ?? pDebug?.nominalY;
+              const pocketPinX =
+                typeof (pocket as any).pinX === "number" ? (pocket as any).pinX : undefined;
+              const pocketPinY =
+                typeof (pocket as any).pinY === "number" ? (pocket as any).pinY : undefined;
+              const rawHoleX = pDebug?.detectedHoleX ?? pDebug?.nominalX;
+              const rawHoleY = pDebug?.detectedHoleY ?? pDebug?.nominalY;
+              const isHoleInPocket =
+                typeof rawHoleX === "number" &&
+                rawHoleX >= pocket.region.x - 10 &&
+                rawHoleX <= pocket.region.x + pocket.region.width + 10;
+              const holeX = isHoleInPocket ? rawHoleX : (pocketPinX ?? rawHoleX);
+              const holeY = isHoleInPocket ? rawHoleY : (pocketPinY ?? rawHoleY);
 
               if (typeof holeX === "number" && typeof holeY === "number") {
                 const markerRoi: WorkpieceRoi = {
@@ -1629,6 +1654,7 @@ export function VisualToolWorkpieceCanvas({
                   width: 50,
                   height: 50,
                 };
+
                 const markerPinCfg = {
                   ...(pinCfg ?? {}),
                   centerX: holeX,
@@ -1643,6 +1669,7 @@ export function VisualToolWorkpieceCanvas({
                   },
                   packageRegion: pocket.region,
                 };
+
                 const markerResult = {
                   status: pStatus,
                   score: pScore,

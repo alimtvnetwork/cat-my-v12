@@ -849,8 +849,10 @@ export function WorkpieceAnalyzeWorkspace({
               const multiDevicePin1 = occupiedPockets
                 .map((p) => {
                   const pRes = p.ruleResults[r.id];
-                  const hX = pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX;
-                  const hY = pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY;
+                  const hX =
+                    pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
+                  const hY =
+                    pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
 
                   if (typeof hX === "number" && typeof hY === "number") {
                     return {
