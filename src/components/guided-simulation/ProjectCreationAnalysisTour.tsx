@@ -642,6 +642,14 @@ function makePassTapeStripResult(): TapeStripEvaluationResult {
       score: 1,
       message: "Guided simulation: device passed.",
       ruleResults: pocketResults,
+      // Direct pocket-level boxes for canvas (bypasses rule ID matching)
+      characterBoxes: deviceBoxes.map((b: any) => ({
+        number: b.boxNumber,
+        x: b.referenceX,
+        y: b.referenceY,
+        width: b.width,
+        height: b.height,
+      })),
     };
   });
 

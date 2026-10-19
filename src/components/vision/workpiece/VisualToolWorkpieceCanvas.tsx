@@ -1535,19 +1535,23 @@ export function VisualToolWorkpieceCanvas({
               const pRes = pocket.ruleResults[rule.id];
               const pStatus = pRes?.status ?? effectiveStatus;
               const pScore = pRes?.score ?? effectiveScore;
+              // Prefer direct pocket-level boxes (scripted tour results)
+              const pocketBoxes = (pocket as any)?.characterBoxes;
               const pBoxResults = (pRes as any)?.debug?.boxResults;
               const pBoxes =
-                Array.isArray(pBoxResults) && pBoxResults.length > 0
-                  ? pBoxResults.map((br: any) => ({
-                      number: br.boxNumber,
-                      label: br.label,
-                      x: br.matchedX ?? br.referenceX,
-                      y: br.matchedY ?? br.referenceY,
-                      width: br.width,
-                      height: br.height,
-                      area: br.width * br.height,
-                    }))
-                  : parseBoxesFromParams((pRes as any)?.params ?? rule.params, pocket.region);
+                Array.isArray(pocketBoxes) && pocketBoxes.length > 0
+                  ? pocketBoxes
+                  : Array.isArray(pBoxResults) && pBoxResults.length > 0
+                    ? pBoxResults.map((br: any) => ({
+                        number: br.boxNumber,
+                        label: br.label,
+                        x: br.matchedX ?? br.referenceX,
+                        y: br.matchedY ?? br.referenceY,
+                        width: br.width,
+                        height: br.height,
+                        area: br.width * br.height,
+                      }))
+                    : parseBoxesFromParams((pRes as any)?.params ?? rule.params, pocket.region);
 
               drawGreyscaleSimulationPatternOverlay(
                 ctx,
