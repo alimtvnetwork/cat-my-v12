@@ -31,6 +31,12 @@ import { toIntParam } from "@/lib/ids/int-alias";
 import { HtmlTagType } from "@/lib/enums/html";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  SAMPLE_IMAGE_POCKET_2_FILLED,
+  SAMPLE_IMAGE_POCKET_5_PARTIAL,
+} from "@/lib/vision/sample-images";
 
 export const Route = createFileRoute("/run")({
   head: () => ({
@@ -241,27 +247,27 @@ function RunPage() {
     () => [
       {
         name: "Pocket 1 (PASS)",
-        url: "/src/assets/samples/pocket-1-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_1_FILLED,
         isPass: true,
       },
       {
         name: "Pocket 2 (PASS)",
-        url: "/src/assets/samples/pocket-2-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_2_FILLED,
         isPass: true,
       },
       {
         name: "Empty Pocket (FAIL)",
-        url: "/src/assets/samples/pocket-2-empty-mixed.jpg",
+        url: SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
         isPass: false,
       },
       {
         name: "Pocket 1 (PASS)",
-        url: "/src/assets/samples/pocket-1-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_1_FILLED,
         isPass: true,
       },
       {
         name: "Partial Chip (FAIL)",
-        url: "/src/assets/samples/pocket-5-partial.jpg",
+        url: SAMPLE_IMAGE_POCKET_5_PARTIAL,
         isPass: false,
       },
     ],
@@ -293,7 +299,7 @@ function RunPage() {
         method: HttpMethod.Post,
         body: JSON.stringify({
           ruleType: "grayscale_tolerance",
-          referenceImageUrl: "/src/assets/samples/pocket-1-filled.jpg",
+          referenceImageUrl: SAMPLE_IMAGE_POCKET_1_FILLED,
           sampleImageUrl: sample.url,
           tolerance: 40,
           threshold: 0.8,

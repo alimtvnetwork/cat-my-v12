@@ -3,11 +3,11 @@ import {
   Activity,
   Bug,
   Camera,
-  Check,
   CircleDot,
   Crosshair,
   FileImage,
   FolderTree,
+  Layers,
   Grid2X2,
   PaintBucket,
   Play,
@@ -17,11 +17,22 @@ import {
   ScanSearch,
   Type,
   Upload,
+  Wand2,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
+import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
+import { AddRulePanel } from "./AddRulePanel";
+import { AddRulesetPanel } from "./AddRulesetPanel";
+import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
+import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
+import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus";
+import { useWorkspaceSaveStore } from "./workspace-save-store";
+import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
@@ -56,6 +67,11 @@ import {
   GUIDED_SIMULATION_ANALYSIS_EVENT,
   type GuidedSimulationAnalysisDetail,
 } from "@/components/guided-simulation/events";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  SAMPLE_IMAGE_POCKET_5_PARTIAL,
+} from "@/lib/vision/sample-images";
 
 const EMPTY_VALIDATION_RESULTS: Record<string, ValidationResult> = {};
 
@@ -98,7 +114,8 @@ const MANUAL_RUN_ANALYSIS_PARAMS: RunAnalysisParams = {
 
 export interface WorkpieceAnalyzeWorkspaceProps {
   project: Project;
-  ruleset: RuleSet;
+  /** Null when the project has no rulesets yet - the workspace renders its empty state. */
+  ruleset: RuleSet | null;
   rulesets?: RuleSet[];
   onSelectRuleset?: (rulesetId: string) => void;
   searchRule?: string;
@@ -113,34 +130,39 @@ export function WorkpieceAnalyzeWorkspace({
   searchRule,
 }: WorkpieceAnalyzeWorkspaceProps): React.JSX.Element {
   const projectId = project.id;
-  const rulesetId = ruleset.id;
+  const rulesetId = ruleset?.id ?? null;
   const updateRulesetRules = updateRulesetRulesInStore;
-  const createRuleset = useProjectStore((s) => s.createRuleset);
   const deleteRuleset = useProjectStore((s) => s.deleteRuleset);
+  /** Target ruleset for the inline Add Rule panel (right viewport). Null = closed. */
+  const [addRuleRulesetId, setAddRuleRulesetId] = useState<string | null>(null);
 
   const [savedVersion, setSavedVersion] = useState<number>(0);
   const savedVersionRef = useRef<number>(0);
-  const [isSaving, setIsSaving] = useState(false);
+  const setSaving = useWorkspaceSaveStore((s) => s.setSaving);
+  const registerSave = useWorkspaceSaveStore((s) => s.registerSave);
   const isAnalyzingRef = useRef<boolean>(false);
-  const navigate = useNavigate();
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
+  /**
+   * True only after Analyze has been clicked in this session. Analysis results
+   * must never be restored from the persisted validation store — the results
+   * area shows only what the current session's run produced.
+   */
+  const [hasSessionAnalysis, setHasSessionAnalysis] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
+  /** Rule id whose tool configuration is open inline (right viewport), if any. */
+  const [configRuleId, setConfigRuleId] = useState<string | null>(null);
+  /** Left program sidebar collapsed into a slim rail so the canvas gets the space. */
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  /** Last-used image sources (uploads + camera captures), capped at 5. */
+  const recents = useImageSourceRecentsStore((s) => s.recents);
+  const pushRecent = useImageSourceRecentsStore((s) => s.pushRecent);
+  const removeRecent = useImageSourceRecentsStore((s) => s.removeRecent);
   /** Microns-per-pixel driving pin pitch + device measurements. */
   const calibrationUmPerPx = LEGACY_DEFAULT_UM_PER_PX;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const updateProjectInspectionImageRef = useProjectStore((s) => s.updateProjectInspectionImageRef);
-
-  useEffect(() => {
-    return visualTunerBus.subscribe((ruleId) => {
-      setSelectedIds([ruleId]);
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-        params: { projectId, rulesetId: ruleset.id, ruleId },
-      });
-    });
-  }, [navigate, projectId, ruleset.id]);
 
   const updateSavedVersion = useCallback((v: number) => {
     savedVersionRef.current = v;
@@ -148,6 +170,10 @@ export function WorkpieceAnalyzeWorkspace({
   }, []);
 
   const getEnvelope = useCallback((): RuleSetEnvelope => {
+    if (!rulesetId) {
+      throw new Error("[WorkpieceAnalyzeWorkspace] no ruleset to save");
+    }
+
     const fresh = getFreshRuleset(rulesetId);
 
     if (!fresh) {
@@ -183,6 +209,8 @@ export function WorkpieceAnalyzeWorkspace({
 
   const onServerReloaded = useCallback(
     (env: RuleSetEnvelope) => {
+      if (!ruleset) return;
+
       const back = envelopeToProjectRuleset(env, {
         projectId: project.id,
         categoryName: ruleset.categoryName,
@@ -195,11 +223,11 @@ export function WorkpieceAnalyzeWorkspace({
       updateSavedVersion(env.Version);
       toast.info("Rule set reloaded from server.");
     },
-    [project.id, ruleset.categoryName, ruleset.id, updateRulesetRules, updateSavedVersion],
+    [project.id, ruleset, updateRulesetRules, updateSavedVersion],
   );
 
   const handleSaveRuleSet = useCallback(async () => {
-    setIsSaving(true);
+    setSaving(true);
     try {
       const envelope = getEnvelope();
       await saveRuleSet(envelope);
@@ -208,22 +236,31 @@ export function WorkpieceAnalyzeWorkspace({
       console.error("[WorkpieceAnalyzeWorkspace] save error", err);
       toast.error(err instanceof Error ? err.message : "Failed to save rule set.");
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
-  }, [getEnvelope, onSaved]);
+  }, [getEnvelope, onSaved, setSaving]);
+
+  // The Save button lives on the upper bar; register this workspace's save
+  // handler so the button can trigger it from outside this component.
+  // With no ruleset there is nothing to save - the button stays inert.
+  useEffect(() => {
+    registerSave(ruleset ? handleSaveRuleSet : null);
+
+    return () => registerSave(null);
+  }, [handleSaveRuleSet, registerSave, ruleset]);
 
   const liveStoreRules = useRulesStore((s) => s.rules);
   const rules = useMemo(() => {
     if (liveStoreRules.length > 0) {
       return liveStoreRules;
     }
-    return ruleset.rules ?? [];
-  }, [ruleset.rules, liveStoreRules]);
+    return ruleset?.rules ?? [];
+  }, [ruleset?.rules, liveStoreRules]);
   const projectRulesetsForAnalysis = useMemo(() => {
-    const source = rulesets && rulesets.length > 0 ? rulesets : [ruleset];
+    const source = rulesets && rulesets.length > 0 ? rulesets : ruleset ? [ruleset] : [];
 
-    return source.map((rs) => (rs.id === ruleset.id ? { ...rs, rules } : rs));
-  }, [rules, ruleset, rulesets]);
+    return source.map((rs) => (rs.id === rulesetId ? { ...rs, rules } : rs));
+  }, [rules, ruleset, rulesetId, rulesets]);
   const projectAnalysisItems = useMemo(
     () =>
       projectRulesetsForAnalysis.flatMap((rs) =>
@@ -287,21 +324,24 @@ export function WorkpieceAnalyzeWorkspace({
   const maskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const isCurrentSelectedInRuleset = (ruleset.rules ?? []).some((r) =>
-      selectedIds.includes(r.id),
-    );
+    const rulesetRules = ruleset?.rules ?? [];
+    const isCurrentSelectedInRuleset = rulesetRules.some((r) => selectedIds.includes(r.id));
     const targetSelected = isCurrentSelectedInRuleset
       ? selectedIds
-      : (ruleset.rules ?? []).length > 0
-        ? [ruleset.rules[0].id]
+      : rulesetRules.length > 0
+        ? [rulesetRules[0].id]
         : [];
 
-    useRulesStore.getState().replaceAll(ruleset.rules ?? [], targetSelected, []);
+    useRulesStore.getState().replaceAll(rulesetRules, targetSelected, []);
 
     if (!isCurrentSelectedInRuleset) {
       setSelectedIds(targetSelected);
     }
-  }, [ruleset.id]);
+
+    setConfigRuleId(null);
+    setAddRuleRulesetId(null);
+    setIsAddingRuleset(false);
+  }, [ruleset?.id]);
 
   useEffect(() => {
     if (searchRule && rules.some((r) => r.id === searchRule)) {
@@ -312,56 +352,69 @@ export function WorkpieceAnalyzeWorkspace({
 
   const commit = useCallback(
     (nextRules: EditorRule[], reason: string, nextSelectedIds?: string[]) => {
+      if (!ruleset) return;
+
       updateRulesetRules(ruleset.id, nextRules);
       const activeSel =
         nextSelectedIds ??
         (selectedIds.length > 0 ? selectedIds : useRulesStore.getState().selectedIds);
       useRulesStore.getState().replaceAll(nextRules, activeSel, []);
     },
-    [ruleset.id, updateRulesetRules, selectedIds],
+    [ruleset, updateRulesetRules, selectedIds],
   );
 
-  const handleNavigateAddRule = useCallback(
+  const handleCloseAddRule = useCallback(() => {
+    setAddRuleRulesetId(null);
+  }, []);
+
+  const handleOpenAddRule = useCallback(
     (targetRulesetId?: string) => {
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-        params: { projectId, rulesetId: targetRulesetId ?? ruleset.id },
-      });
+      const target = targetRulesetId ?? ruleset?.id ?? null;
+
+      if (!target) return;
+
+      setConfigRuleId(null);
+      setIsAddingRuleset(false);
+      setAddRuleRulesetId(target);
     },
-    [navigate, projectId, ruleset.id],
+    [ruleset],
   );
 
-  const handleAddRuleset = useCallback(
-    (name: string) => {
-      const newRulesetId = createRuleset(projectId, name);
+  const handleStartAddRuleset = useCallback(
+    (initialName?: string) => {
+      setDraftRulesetName(initialName ?? `Ruleset ${(rulesets?.length ?? 0) + 1}`);
+      setConfigRuleId(null);
+      setAddRuleRulesetId(null);
+      setIsAddingRuleset(true);
+    },
+    [rulesets?.length],
+  );
 
+  const handleInlineRulesetCreated = useCallback(
+    (newRulesetId: string, name: string) => {
+      setIsAddingRuleset(false);
+      setDraftRulesetName("");
       onSelectRuleset?.(newRulesetId);
       toast.success(`Rule set "${name}" added.`);
     },
-    [createRuleset, onSelectRuleset, projectId],
+    [onSelectRuleset],
   );
 
-  const handleStartAddRuleset = useCallback(() => {
-    setDraftRulesetName(`Ruleset ${(rulesets?.length ?? 0) + 1}`);
-    setIsAddingRuleset(true);
-  }, [rulesets?.length]);
-
-  const handleSubmitRuleset = useCallback(() => {
-    const name = draftRulesetName.trim();
-
-    if (!name) {
-      return;
-    }
-
-    handleAddRuleset(name);
-    setDraftRulesetName("");
+  const handleExitAddRuleset = useCallback(() => {
     setIsAddingRuleset(false);
-  }, [draftRulesetName, handleAddRuleset]);
+    setDraftRulesetName("");
+  }, []);
 
   const handleDeleteRuleset = useCallback(
     (targetRulesetId?: string) => {
-      const targetRuleset =
-        (rulesets ?? []).find((rs) => rs.id === (targetRulesetId ?? ruleset.id)) ?? ruleset;
+      const targetId = targetRulesetId ?? ruleset?.id;
+
+      if (!targetId) return;
+
+      const targetRuleset = (rulesets ?? []).find((rs) => rs.id === targetId) ?? ruleset;
+
+      if (!targetRuleset) return;
+
       const isConfirmed = window.confirm(
         `Delete rule set "${targetRuleset.name}"? This removes its rules from this project.`,
       );
@@ -379,7 +432,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       toast.success(`Rule set "${targetRuleset.name}" deleted.`);
     },
-    [deleteRuleset, onSelectRuleset, ruleset.id, ruleset.name, rulesets],
+    [deleteRuleset, onSelectRuleset, ruleset, rulesets],
   );
 
   const activeRule = useMemo(() => {
@@ -394,39 +447,131 @@ export function WorkpieceAnalyzeWorkspace({
     );
   }, [projectOverlayRules, rules, selectedIds]);
 
-  const handleNavigateTuneRule = useCallback(
+  const handleOpenRuleConfig = useCallback(
     (ruleId: string) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
 
+      if (!ownerRuleset) return;
+
+      if (!ownerRuleset) return;
+
+      if (ownerRuleset.id !== ruleset?.id) {
+        onSelectRuleset?.(ownerRuleset.id);
+      }
+
       setSelectedIds([ruleId]);
-      useRulesStore.getState().setSelection([ruleId], "tree.tune");
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-        params: { projectId, rulesetId: ownerRuleset.id, ruleId },
-      });
+      useRulesStore.getState().setSelection([ruleId], "tree.configure");
+      setConfigRuleId(ruleId);
+      setAddRuleRulesetId(null);
+      setIsAddingRuleset(false);
     },
-    [navigate, projectId, ruleOwnerById, ruleset],
+    [onSelectRuleset, ruleOwnerById, ruleset],
   );
+
+  const handleInlineRuleCreated = useCallback(
+    (_ownerRulesetId: string, ruleId: string) => {
+      // The panel already committed the rule to the project + editor stores.
+      // Close it and open the new rule's configuration inline, mirroring
+      // the old add-rule -> tune navigation.
+      setAddRuleRulesetId(null);
+      handleOpenRuleConfig(ruleId);
+    },
+    [handleOpenRuleConfig],
+  );
+
+  const handleCloseRuleConfig = useCallback(() => {
+    setConfigRuleId(null);
+  }, []);
+
+  const handleConfigRuleApplied = useCallback(
+    (appliedRulesetId: string, nextRules: EditorRule[]) => {
+      if (appliedRulesetId === ruleset?.id) {
+        useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
+      }
+    },
+    [ruleset?.id, selectedIds],
+  );
+
+  const configRule = useMemo(() => {
+    if (!configRuleId) return null;
+
+    return (
+      rules.find((r) => r.id === configRuleId) ??
+      projectOverlayRules.find((r) => r.id === configRuleId) ??
+      null
+    );
+  }, [configRuleId, rules, projectOverlayRules]);
+
+  const configOwnerRuleset = useMemo(
+    () => (configRule ? (ruleOwnerById.get(configRule.id) ?? ruleset) : null),
+    [configRule, ruleOwnerById, ruleset],
+  );
+
+  // Tool tune requests (e.g. from a tool's own config screen) open the tool
+  // configuration inline in this screen instead of navigating away.
+  useEffect(() => {
+    return visualTunerBus.subscribe((ruleId) => {
+      handleOpenRuleConfig(ruleId);
+    });
+  }, [handleOpenRuleConfig]);
+
+  // The guided simulation drives the inline Add Rule panel through this bus
+  // so the tour never leaves the overview workspace.
+  useEffect(() => {
+    return addRulePanelBus.subscribe((message) => {
+      if (message.type === "open") {
+        handleOpenAddRule(message.rulesetId);
+      } else {
+        setConfigRuleId(null);
+        setAddRuleRulesetId(null);
+      }
+    });
+  }, [handleOpenAddRule]);
+
+  // The guided simulation drives the inline Add Ruleset panel through this
+  // bus so ruleset creation also stays inside the overview workspace.
+  useEffect(() => {
+    return addRulesetPanelBus.subscribe((message) => {
+      if (message.type === "open") {
+        handleStartAddRuleset(message.initialName);
+      } else {
+        setIsAddingRuleset(false);
+      }
+    });
+  }, [handleStartAddRuleset]);
+
+  // The guided simulation's scripted analysis run produces results without
+  // going through the Analyze button; this lifts the stale-result gate so
+  // the canvas shows them like a real session run.
+  useEffect(() => {
+    return sessionAnalysisBus.subscribe((tapeStripResult) => {
+      setHasSessionAnalysis(true);
+
+      if (tapeStripResult) {
+        setTapeStripResult(tapeStripResult);
+      }
+    });
+  }, []);
 
   const handleSelectProjectRule = useCallback(
     (id: string) => {
       const ownerRuleset = ruleOwnerById.get(id);
 
-      if (ownerRuleset && ownerRuleset.id !== ruleset.id) {
+      if (ownerRuleset && ownerRuleset.id !== ruleset?.id) {
         onSelectRuleset?.(ownerRuleset.id);
       }
 
       setSelectedIds([id]);
       useRulesStore.getState().setSelection([id], "project.rule.select");
     },
-    [onSelectRuleset, ruleOwnerById, ruleset.id],
+    [onSelectRuleset, ruleOwnerById, ruleset?.id],
   );
 
   const handleLaunchPatternTuner = useCallback(() => {
     if (activeRule) {
-      handleNavigateTuneRule(activeRule.id);
+      handleOpenRuleConfig(activeRule.id);
     }
-  }, [activeRule, handleNavigateTuneRule]);
+  }, [activeRule, handleOpenRuleConfig]);
 
   const handlePatternBoxesChange = useCallback(
     (boxes: any[], constellation: any[]) => {
@@ -462,7 +607,9 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleCameraSettings = useCallback(
     (ruleId: string, cameraSettings: RuleCameraSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+      if (!ownerRuleset) return;
+      const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -477,7 +624,7 @@ export function WorkpieceAnalyzeWorkspace({
       );
       updateRulesetRules(ownerRuleset.id, nextRules);
 
-      if (ownerRuleset.id === ruleset.id) {
+      if (ownerRuleset.id === ruleset?.id) {
         useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
       }
 
@@ -489,7 +636,9 @@ export function WorkpieceAnalyzeWorkspace({
   const handleUpdateRuleLightSettings = useCallback(
     (ruleId: string, lightSettings: RuleLightSettings) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
-      const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+      if (!ownerRuleset) return;
+      const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
       const nextRules = ownerRules.map((r) =>
         r.id === ruleId
           ? ({
@@ -504,7 +653,7 @@ export function WorkpieceAnalyzeWorkspace({
       );
       updateRulesetRules(ownerRuleset.id, nextRules);
 
-      if (ownerRuleset.id === ruleset.id) {
+      if (ownerRuleset.id === ruleset?.id) {
         useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
       }
 
@@ -524,12 +673,18 @@ export function WorkpieceAnalyzeWorkspace({
     return merged;
   }, [projectRulesetsForAnalysis, validationRuns]);
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
+  // Never show cached results: the canvas only sees what this session's run produced.
+  const sessionValidationResults = hasSessionAnalysis
+    ? allValidationResults
+    : EMPTY_VALIDATION_RESULTS;
+  const sessionActiveValidation = hasSessionAnalysis ? activeValidationResult : undefined;
 
   // No auto analysis: the user runs it explicitly via the Analyze button.
   // Clear the result when the image, the rules, or the camera mode change,
   // so the canvas never shows stale markings.
   useEffect(() => {
     setTapeStripResult(null);
+    setHasSessionAnalysis(false);
   }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
 
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
@@ -562,6 +717,7 @@ export function WorkpieceAnalyzeWorkspace({
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
       updateProjectInspectionImageRef(project.id, dataUrl);
+      pushRecent({ dataUrl, label: "Camera frame", kind: "camera" });
       setIsLiveCameraMode(false);
 
       for (const item of projectRulesetsForAnalysis) {
@@ -580,6 +736,7 @@ export function WorkpieceAnalyzeWorkspace({
     project.id,
     project.inspectionImageRef,
     projectRulesetsForAnalysis,
+    pushRecent,
     updateProjectInspectionImageRef,
   ]);
 
@@ -595,6 +752,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       isAnalyzingRef.current = true;
       setIsAnalyzing(true);
+      setHasSessionAnalysis(true);
 
       if (params.hasStepToasts) {
         toast.info(
@@ -691,8 +849,10 @@ export function WorkpieceAnalyzeWorkspace({
               const multiDevicePin1 = occupiedPockets
                 .map((p) => {
                   const pRes = p.ruleResults[r.id];
-                  const hX = pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX;
-                  const hY = pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY;
+                  const hX =
+                    pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
+                  const hY =
+                    pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
 
                   if (typeof hX === "number" && typeof hY === "number") {
                     return {
@@ -815,22 +975,26 @@ export function WorkpieceAnalyzeWorkspace({
     () => ({
       onToggleHidden: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const next = ownerRules.map((r) => (r.id === id ? { ...r, isHidden: !r.isHidden } : r));
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
       onDelete: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const target = ownerRules.find((r) => r.id === id);
         const next = ownerRules.filter((r) => r.id !== id);
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, [], []);
         }
 
@@ -838,7 +1002,9 @@ export function WorkpieceAnalyzeWorkspace({
       },
       onReorder: (id: string, dir: "up" | "down") => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
-        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const idx = ownerRules.findIndex((r) => r.id === id);
         if (idx === -1) return;
         const targetIdx = dir === "up" ? idx - 1 : idx + 1;
@@ -848,7 +1014,24 @@ export function WorkpieceAnalyzeWorkspace({
         next.splice(targetIdx, 0, moved);
         updateRulesetRules(ownerRuleset.id, next);
 
-        if (ownerRuleset.id === ruleset.id) {
+        if (ownerRuleset.id === ruleset?.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
+      onMove: (id: string, toIndex: number) => {
+        const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
+        const fromIndex = ownerRules.findIndex((r) => r.id === id);
+        if (fromIndex === -1) return;
+        const next = [...ownerRules];
+        const [moved] = next.splice(fromIndex, 1);
+        const clamped = Math.max(0, Math.min(toIndex, next.length));
+        next.splice(clamped, 0, moved);
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset?.id) {
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
@@ -866,6 +1049,7 @@ export function WorkpieceAnalyzeWorkspace({
 
         if (dataUrl) {
           updateProjectInspectionImageRef(project.id, dataUrl);
+          pushRecent({ dataUrl, label: file.name, kind: "upload" });
           setIsLiveCameraMode(false);
           for (const item of projectRulesetsForAnalysis) {
             useValidationStore.getState().clear(item.id);
@@ -881,325 +1065,438 @@ export function WorkpieceAnalyzeWorkspace({
 
       reader.readAsDataURL(file);
     },
-    [project.id, projectRulesetsForAnalysis, updateProjectInspectionImageRef],
+    [project.id, projectRulesetsForAnalysis, pushRecent, updateProjectInspectionImageRef],
   );
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0d14] p-3 text-[#f8fafc]">
       <div className="flex min-h-0 w-full flex-1 flex-col gap-2.5 overflow-hidden">
-        {/* 1. Top Command Ribbon */}
-        <div className="flex shrink-0 items-center justify-between rounded-xl border border-[#222938] bg-[#0d1119]/90 px-3.5 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)] backdrop-blur-xl">
-          <div className="flex items-center">
-            <span className="font-sans text-xs font-bold tracking-wider uppercase text-[#f8fafc]">
-              {project.name}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSaveRuleSet}
-              disabled={isSaving}
-              className="flex items-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.5)] bg-[oklch(0.76_0.145_210)] px-3.5 py-1 font-sans text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_12px_oklch(0.76_0.145_210/0.35)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
-            >
-              <Check size={13} className="text-[#0a0d14]" />
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </div>
-
-        {/* Ruleset Creation Modal */}
-        {isAddingRuleset ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-            <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0b0f17] p-5 shadow-2xl">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-amber-400/30 bg-amber-400/10 text-amber-400">
-                  <Plus size={18} />
-                </div>
-                <div>
-                  <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-white">
-                    Create Ruleset Program
-                  </h3>
-                  <p className="font-sans text-[11px] text-white/50">
-                    Define a new inspection ruleset for this workpiece
-                  </p>
-                </div>
-              </div>
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSubmitRuleset();
-                }}
-                className="space-y-4"
+        {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
+        <div
+          className={`grid min-h-0 flex-1 gap-2.5 overflow-hidden bg-transparent ${
+            isSidebarCollapsed
+              ? "grid-cols-[44px_minmax(0,1fr)]"
+              : "grid-cols-[320px_minmax(0,1fr)]"
+          }`}
+        >
+          {/* Left: inspection hierarchy tree & source container */}
+          {isSidebarCollapsed ? (
+            <div className="flex h-full max-h-full min-h-0 min-w-0 flex-col items-center gap-2 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 py-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl">
+              <button
+                type="button"
+                title="Expand sidebar"
+                aria-label="Expand sidebar"
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)] transition hover:bg-cyan-500/25 hover:text-cyan-200 active:scale-95"
               >
-                <div>
-                  <label className="mb-1 block font-sans text-[10px] font-bold uppercase tracking-wider text-white/70">
-                    Ruleset Name
-                  </label>
-                  <input
-                    value={draftRulesetName}
-                    onChange={(event) => setDraftRulesetName(event.target.value)}
-                    autoFocus
-                    className="w-full rounded-lg border border-white/20 bg-black/60 px-3 py-2 font-sans text-xs text-white placeholder:text-white/30 focus:border-amber-400 focus:outline-none"
-                    placeholder="e.g. Ruleset 2 (SMD Inspection)"
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-2">
+                <PanelLeftOpen size={16} />
+              </button>
+              <div className="flex flex-col items-center gap-1">
+                <FolderTree size={14} className="text-amber-400" />
+                <span className="font-sans text-[9px] font-medium text-white/60">
+                  {projectAnalysisItems.length}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div
+              data-tour="project-inspection-program"
+              className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
+            >
+              {/* Tab switchers: Program vs Image Source */}
+              <div className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-black/60 p-0.5">
+                <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsAddingRuleset(false);
-                      setDraftRulesetName("");
-                    }}
-                    className="rounded-lg border border-white/20 px-3 py-1.5 font-sans text-xs font-semibold uppercase text-white/60 transition hover:bg-white/5 hover:text-white"
+                    data-tour="project-program-tab"
+                    onClick={() => setActiveSidebarTab("tree")}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                      activeSidebarTab === "tree"
+                        ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
                   >
-                    Cancel
+                    <FolderTree size={12} />
+                    <span>Program ({projectAnalysisItems.length})</span>
                   </button>
                   <button
-                    type="submit"
-                    className="rounded-lg bg-amber-400 px-4 py-1.5 font-sans text-xs font-bold uppercase text-black shadow-lg shadow-amber-400/20 transition hover:brightness-110"
+                    type="button"
+                    data-tour="project-image-source-tab"
+                    onClick={() => setActiveSidebarTab("source")}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                      activeSidebarTab === "source"
+                        ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
                   >
-                    Create Ruleset
+                    <Camera size={12} />
+                    <span>Image & Source</span>
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        ) : null}
-
-        {/* 3 & 4. Main workspace (left inspection program, right camera/current image viewport) */}
-        <div className="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] gap-2.5 overflow-hidden bg-transparent">
-          {/* Left: inspection hierarchy tree & source container */}
-          <div
-            data-tour="project-inspection-program"
-            className="flex h-full max-h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl"
-          >
-            {/* Tab switchers: Program vs Image Source */}
-            <div className="flex shrink-0 items-center justify-between rounded-lg border border-white/10 bg-black/60 p-0.5">
-              <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                 <button
                   type="button"
-                  data-tour="project-program-tab"
-                  onClick={() => setActiveSidebarTab("tree")}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
-                    activeSidebarTab === "tree"
-                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
+                  title="Minimize sidebar"
+                  aria-label="Minimize sidebar"
+                  onClick={() => setIsSidebarCollapsed(true)}
+                  className="flex shrink-0 items-center justify-center rounded-md p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white active:scale-95"
                 >
-                  <FolderTree size={12} />
-                  <span>Program ({projectAnalysisItems.length})</span>
-                </button>
-                <button
-                  type="button"
-                  data-tour="project-image-source-tab"
-                  onClick={() => setActiveSidebarTab("source")}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
-                    activeSidebarTab === "source"
-                      ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
-                      : "text-white/60 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <Camera size={12} />
-                  <span>Image & Source</span>
+                  <PanelLeftClose size={14} />
                 </button>
               </div>
-            </div>
 
-            {activeSidebarTab === "tree" ? (
-              <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
-                <InspectionHierarchyTree
-                  project={project}
-                  ruleset={ruleset}
-                  rulesets={projectRulesetsForAnalysis}
-                  onSelectRuleset={onSelectRuleset}
-                  rules={projectOverlayRules}
-                  selectedRuleId={activeRule?.id ?? null}
-                  onSelectRule={handleSelectProjectRule}
-                  onToggleHidden={railHandlers.onToggleHidden}
-                  onDeleteRule={railHandlers.onDelete}
-                  onReorderRule={railHandlers.onReorder}
-                  onAddRuleClick={handleNavigateAddRule}
-                  onAddRulesetClick={handleStartAddRuleset}
-                  onDeleteRulesetClick={handleDeleteRuleset}
-                  onTuneRule={handleNavigateTuneRule}
-                  onUpdateCameraSettings={handleUpdateRuleCameraSettings}
-                  onUpdateLightSettings={handleUpdateRuleLightSettings}
-                />
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <section
-                  data-tour="project-image-samples"
-                  className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
-                        Image & Camera Source
-                      </h2>
-                      <p className="text-[10px] font-sans text-white/50">
-                        {isLiveCameraMode
-                          ? "Live camera selected"
-                          : project.inspectionImageRef
-                            ? "1 registered inspection image (960×540)"
-                            : "No inspection image registered"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:border-white/30 hover:bg-white/10 active:scale-95"
-                    >
-                      <Upload size={12} />
-                      {project.inspectionImageRef ? "Change" : "Upload"}
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/50 p-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsLiveCameraMode(false)}
-                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                        isLiveCameraMode
-                          ? "text-white/55 hover:bg-white/5 hover:text-white"
-                          : "bg-ca-primary text-black shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
-                      }`}
-                    >
-                      <FileImage size={12} />
-                      Image
-                    </button>
-                    <button
-                      type="button"
-                      data-tour="project-live-camera-source"
-                      onClick={() => {
-                        setIsLiveCameraMode(true);
-                        toast.info("Live camera source selected.");
-                      }}
-                      className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                        isLiveCameraMode
-                          ? "bg-emerald-400 text-black shadow-[0_0_10px_rgba(52,211,153,0.3)]"
-                          : "text-white/55 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Camera size={12} />
-                      Live Camera
-                    </button>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
-                      Sample Carrier Pockets
-                    </span>
-                    <div className="grid grid-cols-3 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-1-filled.jpg",
-                          );
-                          toast.info("Loaded Carrier Pocket 1 [Filled IC]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
-                            ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 1
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-2-empty-mixed.jpg",
-                          );
-                          toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef ===
-                          "/src/assets/samples/pocket-2-empty-mixed.jpg"
-                            ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 2
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateProjectInspectionImageRef(
-                            project.id,
-                            "/src/assets/samples/pocket-5-partial.jpg",
-                          );
-                          toast.info("Loaded Carrier Tape Strip [5 Pockets]");
-                        }}
-                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                          project.inspectionImageRef === "/src/assets/samples/pocket-5-partial.jpg"
-                            ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
-                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
-                        }`}
-                      >
-                        Pocket 5 [Strip]
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="group relative h-36 overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-inner flex items-center justify-center">
-                    {isLiveCameraMode ? (
-                      <>
-                        <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-emerald-300/70">
-                          <Camera size={22} />
-                          <span className="font-sans text-[11px] uppercase tracking-wider">
-                            {liveCameraErrorText
-                              ? "Camera unavailable"
-                              : isLiveCameraReady
-                                ? "Feed visible on canvas"
-                                : "Connecting camera feed"}
-                          </span>
-                        </div>
-                        <div className="absolute left-2.5 top-2.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider text-emerald-200">
-                          Live
-                        </div>
-                      </>
-                    ) : project.inspectionImageRef ? (
-                      <>
-                        <img
-                          src={project.inspectionImageRef}
-                          alt="Current project inspection"
-                          className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => imageInputRef.current?.click()}
-                          className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white opacity-0 backdrop-blur-xs transition group-hover:opacity-100"
-                        >
-                          <Upload size={14} />
-                          Replace Image
-                        </button>
-                      </>
-                    ) : (
+              {activeSidebarTab === "tree" ? (
+                <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
+                  <InspectionHierarchyTree
+                    project={project}
+                    ruleset={ruleset}
+                    rulesets={projectRulesetsForAnalysis}
+                    onSelectRuleset={onSelectRuleset}
+                    rules={projectOverlayRules}
+                    selectedRuleId={activeRule?.id ?? null}
+                    onSelectRule={handleSelectProjectRule}
+                    onToggleHidden={railHandlers.onToggleHidden}
+                    onDeleteRule={railHandlers.onDelete}
+                    onReorderRule={railHandlers.onReorder}
+                    onMoveRule={railHandlers.onMove}
+                    onAddRuleClick={handleOpenAddRule}
+                    onAddRulesetClick={() => handleStartAddRuleset()}
+                    onDeleteRulesetClick={handleDeleteRuleset}
+                    onConfigureRule={handleOpenRuleConfig}
+                    onUpdateCameraSettings={handleUpdateRuleCameraSettings}
+                    onUpdateLightSettings={handleUpdateRuleLightSettings}
+                  />
+                </div>
+              ) : (
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <section
+                    data-tour="project-image-samples"
+                    className="flex flex-col gap-3 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-black/30 p-3 shadow-inner"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xs font-sans font-bold uppercase tracking-wider text-white/90">
+                          Image & Camera Source
+                        </h2>
+                        <p className="text-[10px] font-sans text-white/50">
+                          {isLiveCameraMode
+                            ? "Live camera selected"
+                            : project.inspectionImageRef
+                              ? "1 registered inspection image (960×540)"
+                              : "No inspection image registered"}
+                        </p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white/70 transition hover:bg-black/50 hover:text-white"
+                        className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:border-white/30 hover:bg-white/10 active:scale-95"
                       >
-                        <Upload size={14} />
-                        Upload Inspection Image
+                        <Upload size={12} />
+                        {project.inspectionImageRef ? "Change" : "Upload"}
                       </button>
-                    )}
-                  </div>
-                </section>
-              </div>
-            )}
-          </div>
+                    </div>
 
-          {/* Right: camera/current image viewport */}
+                    <div className="grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/50 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsLiveCameraMode(false)}
+                        className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          isLiveCameraMode
+                            ? "text-white/55 hover:bg-white/5 hover:text-white"
+                            : "bg-ca-primary text-black shadow-[0_0_10px_color-mix(in_oklab,var(--ca-primary)_25%,transparent)]"
+                        }`}
+                      >
+                        <FileImage size={12} />
+                        Image
+                      </button>
+                      <button
+                        type="button"
+                        data-tour="project-live-camera-source"
+                        onClick={() => {
+                          setIsLiveCameraMode(true);
+                          toast.info("Live camera source selected.");
+                        }}
+                        className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          isLiveCameraMode
+                            ? "bg-emerald-400 text-black shadow-[0_0_10px_rgba(52,211,153,0.3)]"
+                            : "text-white/55 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <Camera size={12} />
+                        Live Camera
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                        Sample Carrier Pockets
+                      </span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              SAMPLE_IMAGE_POCKET_1_FILLED,
+                            );
+                            toast.info("Loaded Carrier Pocket 1 [Filled IC]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_1_FILLED
+                              ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 1
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+                            );
+                            toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED
+                              ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 2
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateProjectInspectionImageRef(
+                              project.id,
+                              SAMPLE_IMAGE_POCKET_5_PARTIAL,
+                            );
+                            toast.info("Loaded Carrier Tape Strip [5 Pockets]");
+                          }}
+                          className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_5_PARTIAL
+                              ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
+                              : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                          }`}
+                        >
+                          Pocket 5 [Strip]
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="group relative h-36 overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-inner flex items-center justify-center">
+                      {isLiveCameraMode ? (
+                        <>
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-emerald-300/70">
+                            <Camera size={22} />
+                            <span className="font-sans text-[11px] uppercase tracking-wider">
+                              {liveCameraErrorText
+                                ? "Camera unavailable"
+                                : isLiveCameraReady
+                                  ? "Feed visible on canvas"
+                                  : "Connecting camera feed"}
+                            </span>
+                          </div>
+                          <div className="absolute left-2.5 top-2.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider text-emerald-200">
+                            Live
+                          </div>
+                        </>
+                      ) : project.inspectionImageRef ? (
+                        <>
+                          <img
+                            src={project.inspectionImageRef}
+                            alt="Current project inspection"
+                            className="h-full w-full object-contain opacity-90 transition group-hover:opacity-100"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => imageInputRef.current?.click()}
+                            className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white opacity-0 backdrop-blur-xs transition group-hover:opacity-100"
+                          >
+                            <Upload size={14} />
+                            Replace Image
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 font-sans text-xs font-bold uppercase tracking-wider text-white/70 transition hover:bg-black/50 hover:text-white"
+                        >
+                          <Upload size={14} />
+                          Upload Inspection Image
+                        </button>
+                      )}
+                    </div>
+
+                    {isLiveCameraMode ? (
+                      <button
+                        type="button"
+                        onClick={() => void captureLiveCameraFrame()}
+                        disabled={!isLiveCameraReady || isCapturingFrame}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2 font-sans text-[11px] font-bold uppercase tracking-wider text-black shadow-[0_0_14px_rgba(52,211,153,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Camera size={13} />
+                        {isCapturingFrame ? "Capturing..." : "Capture Frame"}
+                      </button>
+                    ) : null}
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                          Recent
+                        </span>
+                        <span className="font-sans text-[9px] text-white/35">
+                          last {MAX_RECENT_IMAGE_SOURCES}
+                        </span>
+                      </div>
+                      {recents.length === 0 ? (
+                        <p className="rounded-md border border-dashed border-white/10 bg-black/30 px-2 py-2 text-center font-sans text-[10px] text-white/35">
+                          Uploaded images and captured frames appear here.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {recents.map((recent) => {
+                            const isActive =
+                              !isLiveCameraMode && project.inspectionImageRef === recent.dataUrl;
+
+                            return (
+                              <div key={recent.id} className="group/recent relative">
+                                <button
+                                  type="button"
+                                  title={recent.label}
+                                  onClick={() => {
+                                    updateProjectInspectionImageRef(project.id, recent.dataUrl);
+                                    setIsLiveCameraMode(false);
+                                    for (const item of projectRulesetsForAnalysis) {
+                                      useValidationStore.getState().clear(item.id);
+                                    }
+                                    toast.info(`Loaded: ${recent.label}`);
+                                  }}
+                                  className={`block h-11 w-full overflow-hidden rounded-md border transition ${
+                                    isActive
+                                      ? "border-cyan-400/60 shadow-[0_0_10px_rgba(34,211,238,0.25)]"
+                                      : "border-white/10 hover:border-white/30"
+                                  }`}
+                                >
+                                  <img
+                                    src={recent.dataUrl}
+                                    alt={recent.label}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </button>
+                                <span className="pointer-events-none absolute left-0.5 top-0.5 rounded bg-black/70 px-1 py-px font-sans text-[8px] font-bold uppercase tracking-wider text-white/70">
+                                  {recent.kind === "camera" ? (
+                                    <Camera size={8} className="text-emerald-300" />
+                                  ) : (
+                                    <Upload size={8} className="text-cyan-300" />
+                                  )}
+                                </span>
+                                <button
+                                  type="button"
+                                  title="Remove from recent"
+                                  aria-label={`Remove ${recent.label} from recent`}
+                                  onClick={() => removeRecent(recent.id)}
+                                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white/70 transition hover:text-white group-hover/recent:flex"
+                                >
+                                  <X size={9} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Right: camera/current image viewport, or inline tool configuration */}
           <div
             data-tour="project-analysis-canvas"
             className="relative flex min-w-0 flex-col overflow-hidden"
           >
-            {isLiveCameraMode ? (
+            {isAddingRuleset ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <AddRulesetPanel
+                  projectId={projectId}
+                  projectName={project.name}
+                  defaultName={draftRulesetName}
+                  onCreated={handleInlineRulesetCreated}
+                  onExit={handleExitAddRuleset}
+                />
+              </div>
+            ) : !ruleset ? (
+              <div className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black p-8">
+                <div
+                  data-tour="project-overview-empty"
+                  className="flex max-w-sm flex-col items-center rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+                    <Layers size={22} />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                    No Rulesets Defined
+                  </h3>
+                  <p className="mt-1 text-xs text-white/50">
+                    Create an inspection ruleset program to begin automated vision analysis.
+                  </p>
+                  <button
+                    type="button"
+                    data-tour="project-overview-add-ruleset"
+                    onClick={() => handleStartAddRuleset()}
+                    className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
+                  >
+                    <Plus size={14} />
+                    New Ruleset
+                  </button>
+                </div>
+              </div>
+            ) : addRuleRulesetId ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <AddRulePanel
+                  key={addRuleRulesetId}
+                  projectId={projectId}
+                  rulesetId={addRuleRulesetId}
+                  onRuleCreated={handleInlineRuleCreated}
+                  onExit={handleCloseAddRule}
+                />
+              </div>
+            ) : configRule && configOwnerRuleset ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Wand2 size={13} className="shrink-0 text-cyan-300" />
+                    <span
+                      className="truncate font-sans text-xs font-bold uppercase tracking-wider text-white/90"
+                      title={configRule.name}
+                    >
+                      Tool Configuration: {configRule.name}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseRuleConfig}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
+                  >
+                    <X size={12} />
+                    Exit
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1">
+                  <RuleToolConfigPanel
+                    key={configRule.id}
+                    ruleset={configOwnerRuleset}
+                    rule={configRule}
+                    onExit={handleCloseRuleConfig}
+                    onRuleApplied={handleConfigRuleApplied}
+                  />
+                </div>
+              </div>
+            ) : isLiveCameraMode ? (
               <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
                 <video
@@ -1252,15 +1549,30 @@ export function WorkpieceAnalyzeWorkspace({
                 onSelectRule={handleSelectProjectRule}
                 onLaunchPatternTuner={handleLaunchPatternTuner}
                 onPatternBoxesChange={handlePatternBoxesChange}
-                validationStatus={activeValidationResult?.status}
-                validationScore={activeValidationResult?.score}
-                validationResultsMap={allValidationResults}
+                validationStatus={sessionActiveValidation?.status}
+                validationScore={sessionActiveValidation?.score}
+                validationResultsMap={sessionValidationResults}
                 isAnalyzing={isAnalysisBusy}
                 tapeStripResult={tapeStripResult}
               />
             )}
           </div>
         </div>
+
+        {/* Results banner - shows when analysis complete */}
+        {hasSessionAnalysis && tapeStripResult && (
+          <div className="flex shrink-0 items-center justify-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5">
+            <span className="text-lg">✓</span>
+            <span className="font-sans text-sm font-semibold uppercase tracking-wider text-emerald-300">
+              All Passed
+            </span>
+            <span className="font-sans text-[11px] uppercase tracking-wider text-white/50">
+              {tapeStripResult.pockets?.filter((pk) => !pk.isEmpty).length ?? 0}/
+              {tapeStripResult.pockets?.length ?? 0} devices · {projectAnalysisItems.length}/
+              {projectAnalysisItems.length} rules
+            </span>
+          </div>
+        )}
 
         {/* 5. Bottom action bar */}
         <div
@@ -1298,7 +1610,7 @@ export function WorkpieceAnalyzeWorkspace({
               className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-1.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(16,185,129,0.45)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
             >
               <Play size={14} className={isAnalysisBusy ? "animate-spin" : "fill-black"} />
-              {isAnalysisBusy ? "Running..." : "Run Analysis"}
+              {isAnalysisBusy ? "Analyzing..." : "Analyze"}
             </button>
           </div>
         </div>

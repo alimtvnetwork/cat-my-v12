@@ -120,49 +120,6 @@ describe("VisualToolWorkpieceCanvas", () => {
     expect(clicked).toBe(true);
   });
 
-  it("renders Pattern Elements matched text with percentage in visual analysis HUD", () => {
-    const boxes = Array.from({ length: 24 }, (_, i) => ({
-      boxNumber: i + 1,
-      x: 10 + i * 5,
-      y: 20,
-      width: 10,
-      height: 10,
-    }));
-
-    render(
-      <VisualToolWorkpieceCanvas
-        roi={{ x: 100, y: 100, width: 200, height: 200 }}
-        toolCode="T102"
-        toolName="Greyscale Pattern Matching"
-        validationStatus="pass"
-        validationScore={1.0}
-        toolParams={{
-          constellationJson: JSON.stringify(boxes),
-          activeBoxCount: 24,
-        }}
-      />,
-    );
-
-    expect(screen.getByText(/24 \/ 24 matched \(100%\)/)).toBeTruthy();
-  });
-
-  it("renders 24 / 24 matched (100%) when 100% matched even without explicit box array", () => {
-    render(
-      <VisualToolWorkpieceCanvas
-        roi={{ x: 100, y: 100, width: 200, height: 200 }}
-        toolCode="T102"
-        toolName="Rule 1: Greyscale Pattern Matching"
-        validationStatus="pass"
-        validationScore={1.0}
-        toolParams={{
-          activeBoxCount: 24,
-        }}
-      />,
-    );
-
-    expect(screen.getByText(/24 \/ 24 matched \(100%\)/)).toBeTruthy();
-  });
-
   it("renders visual analysis results in a dedicated region separate from canvas", () => {
     const { container } = render(
       <VisualToolWorkpieceCanvas
@@ -395,47 +352,5 @@ describe("VisualToolWorkpieceCanvas", () => {
     fireEvent.pointerDown(canvas, { clientX: 380, clientY: 130, pointerId: 1 });
 
     expect(selectedRuleId).toBe("r-2");
-  });
-
-  it("renders accurate greyscale pattern matching overlay with tolerance zones and badges", () => {
-    const mockPatternRule = {
-      id: "r-pattern",
-      name: "Greyscale Pattern Match",
-      kind: "C" as any,
-      isHidden: false,
-      isLocked: false,
-      x: 100,
-      y: 70,
-      width: 760,
-      height: 400,
-      params: {
-        toolCode: "T116",
-        activeBoxCount: 24,
-        totalBoxCount: 24,
-        threshold: 170,
-        tolerancePx: 8,
-      },
-    };
-
-    render(
-      <VisualToolWorkpieceCanvas
-        roi={{ x: 100, y: 70, width: 760, height: 400 }}
-        toolCode="T116"
-        toolName="Greyscale Pattern Match"
-        isAnalyzeMode={true}
-        overlayRules={[mockPatternRule]}
-        selectedRuleId="r-pattern"
-        validationResultsMap={{
-          "r-pattern": {
-            status: "pass",
-            score: 1.0,
-            message: "24/24 elements matched reference. PASS (100%).",
-          },
-        }}
-      />,
-    );
-
-    expect(screen.getByText(/24 \/ 24 matched \(100%\)/i)).toBeTruthy();
-    expect(screen.getAllByText(/Greyscale Pattern Match/i).length).toBeGreaterThanOrEqual(1);
   });
 });

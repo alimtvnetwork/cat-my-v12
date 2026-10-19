@@ -8,6 +8,9 @@ import { AddDeviceModal } from "@/components/devices/AddDeviceModal";
 
 export const Route = createFileRoute("/projects/new")({
   component: NewProjectPage,
+  validateSearch: (search: Record<string, unknown>): { guided?: string } => ({
+    guided: typeof search.guided === "string" ? search.guided : undefined,
+  }),
 });
 
 function NewProjectPage() {
@@ -16,9 +19,8 @@ function NewProjectPage() {
   const devicesMap = useDeviceStore((s) => s.devices);
   const deviceList = Object.values(devicesMap);
 
-  const isGuidedSimulation =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("guided") === "1";
+  const { guided } = Route.useSearch();
+  const isGuidedSimulation = guided === "1";
 
   const [name, setName] = useState(isGuidedSimulation ? "demo" : "");
   const [deviceId, setDeviceId] = useState<string>(() => deviceList[0]?.id || "");

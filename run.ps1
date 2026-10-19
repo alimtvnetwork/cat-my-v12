@@ -112,7 +112,12 @@ try {
         }
 
         Write-Host "Launching Chromium shell..."
-        $chromeArgs = "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl"
+        $chromeArgs = @(
+            "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
+            '--start-fullscreen',
+            '--start-maximized',
+            '--no-first-run'
+        )
         $chromePaths = @(
             "C:\Program Files\Google\Chrome\Application\chrome.exe",
             "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
@@ -120,6 +125,7 @@ try {
             "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
         )
         $chromeFound = $false
+
         foreach ($p in $chromePaths) {
             if (Test-Path $p) {
                 $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
@@ -128,6 +134,7 @@ try {
                 break
             }
         }
+
         if (-not $chromeFound) {
             Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
         }

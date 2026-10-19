@@ -3,6 +3,7 @@ import { SectionIdType } from "@/components/nav/SectionTopBar";
 // if the store has no entry (route unblocks step 9 create-and-navigate and
 // steps 11-16 that mount project children under this segment).
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Outlet,
   createFileRoute,
@@ -13,6 +14,7 @@ import {
 } from "@tanstack/react-router";
 import { HmiShell } from "@/components/hmi";
 import { SectionTopBar } from "@/components/nav/SectionTopBar";
+import { WorkspaceSaveButton } from "@/components/vision/workpiece";
 import { useProjectStore, selectProject } from "@/lib/projects/store";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 
@@ -90,6 +92,9 @@ function ProjectLayout() {
                 </Link>
               );
             })}
+            <div className="ml-auto flex shrink-0 items-center pl-3">
+              <WorkspaceSaveButton />
+            </div>
           </nav>
           <Outlet />
         </div>
@@ -104,9 +109,28 @@ function ProjectLayout() {
         active={getProjectActive(pathname)}
         params={{ projectId }}
       />
+      <HmiModeSavePortal />
       <Outlet />
     </HmiShell>
   );
+}
+
+/**
+ * Renders the workspace Save button inside the HMI section top bar's
+ * actions slot (the upper bar in HMI mode).
+ */
+function HmiModeSavePortal() {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setSlot(document.getElementById("section-topbar-actions-slot"));
+  }, []);
+
+  if (!slot) {
+    return null;
+  }
+
+  return createPortal(<WorkspaceSaveButton />, slot);
 }
 
 function getProjectActive(pathname: string): string {
@@ -212,7 +236,8 @@ function ProjectNotFound() {
             Project not found
           </h1>
           <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
-            No project matches <span className="font-mono text-ca-primary">{projectId}</span> in this browser.
+            No project matches <span className="font-mono text-ca-primary">{projectId}</span> in
+            this browser.
           </p>
           <Link
             to="/projects"

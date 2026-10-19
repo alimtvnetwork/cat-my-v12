@@ -74,6 +74,7 @@ if (-not $browserPath) {
 
 Start-Process -FilePath $browserPath -ArgumentList @(
     "--app=$FrontendUrl",
+    '--start-fullscreen',
     '--start-maximized',
     '--no-first-run'
 ) -WorkingDirectory $AppRoot

@@ -5,8 +5,8 @@ import { Square } from "lucide-react";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
 import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
-import pin1SetupImage from "../../../assets/ui/13-session-screenshot-file13.png";
-import greyscaleSetupImage from "../../../assets/ui/14-session-screenshot-file14.png";
+import pin1SetupImage from "../../../assets/ui/simulation-pin1-device.png";
+import greyscaleSetupImage from "../../../assets/ui/simulation-greyscale-device.png";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
   GUIDED_SIMULATION_ANALYSIS_EVENT,
@@ -30,7 +30,12 @@ import {
   ValidationStatusType,
   type ValidationResult,
 } from "@/lib/editor/validation-store";
+import type { TapeStripEvaluationResult } from "@/lib/vision/workpiece-rule-analyzer";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
+import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
+import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
+import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
+import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus";
 
 const TOUR_PROJECT_NAME = "demo";
 const TOUR_RULESET_NAME = "demoset";
@@ -70,127 +75,151 @@ interface GuidedDeviceLayout {
 const PIN1_SETUP_DEVICE_LAYOUT: GuidedDeviceLayout = {
   id: "d1",
   label: "Device 1",
-  x: 171,
-  y: 271,
-  w: 802,
-  h: 211,
-  pinX: 288,
-  pinY: 437,
-  pinTopY: 224,
-  pinBottomY: 481,
-  searchX: 171,
-  searchY: 271,
-  searchWidth: 802,
-  searchHeight: 211,
-  textX: 379,
-  textTopY: 309,
-  textBottomY: 363,
-  textStep: 77,
-  textWidth: 60,
-  textHeight: 47,
-  imageWidth: 1072,
-  imageHeight: 605,
-  pinSearchRegion: { x: 218, y: 361, width: 138, height: 116 },
+  x: 430,
+  y: 262,
+  w: 306,
+  h: 186,
+  pinX: 96,
+  pinY: 264,
+  pinTopY: 262,
+  pinBottomY: 448,
+  searchX: 425,
+  searchY: 358,
+  searchWidth: 182,
+  searchHeight: 99,
+  textX: 114,
+  textTopY: 197,
+  textBottomY: 234,
+  textStep: 18,
+  textWidth: 30,
+  textHeight: 28,
+  imageWidth: 1037,
+  imageHeight: 582,
+  pinSearchRegion: { x: 425, y: 358, width: 182, height: 99 },
   isEmbeddedGuidanceImage: true,
 };
 
 const GREYSCALE_SETUP_DEVICE_LAYOUT: GuidedDeviceLayout = {
   id: "d1",
   label: "Device 1",
-  x: 177,
-  y: 274,
-  w: 798,
-  h: 209,
-  pinX: 286,
-  pinY: 429,
-  pinTopY: 224,
-  pinBottomY: 482,
-  searchX: 345,
-  searchY: 285,
-  searchWidth: 456,
-  searchHeight: 137,
-  textX: 382,
-  textTopY: 309,
-  textBottomY: 358,
-  textStep: 79,
-  textWidth: 69,
-  textHeight: 41,
-  imageWidth: 1077,
-  imageHeight: 607,
-  greyscalePatternRegion: { x: 373, y: 291, width: 400, height: 116 },
+  x: 364,
+  y: 266,
+  w: 272,
+  h: 169,
+  pinX: 400,
+  pinY: 380,
+  pinTopY: 266,
+  pinBottomY: 435,
+  searchX: 390,
+  searchY: 294,
+  searchWidth: 232,
+  searchHeight: 102,
+  textX: 426,
+  textTopY: 300,
+  textBottomY: 383,
+  textStep: 30,
+  textWidth: 28,
+  textHeight: 75,
+  imageWidth: 957,
+  imageHeight: 537,
+  greyscalePatternRegion: { x: 426, y: 300, width: 156, height: 83 },
   isEmbeddedGuidanceImage: true,
 };
 
 const DEVICE_LAYOUTS: readonly GuidedDeviceLayout[] = [
   {
     id: "d1",
-    label: "Device 1 (Pocket 3)",
-    x: 430,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 460,
-    pinY: 317,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 430,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
-    textX: 450,
-    textTopY: 195,
-    textBottomY: 229,
-    textStep: 19,
+    label: "Device 1 (Pocket 1)",
+    x: 49,
+    y: 128,
+    w: 227,
+    h: 234,
+    pinX: 97,
+    pinY: 286,
+    pinTopY: 128,
+    pinBottomY: 362,
+    searchX: 49,
+    searchY: 158,
+    searchWidth: 227,
+    searchHeight: 174,
+    textX: 114,
+    textTopY: 197,
+    textBottomY: 234,
+    textStep: 18,
     textWidth: 16,
-    textHeight: 29,
+    textHeight: 28,
     imageWidth: 1042,
     imageHeight: 403,
   },
   {
     id: "d2",
-    label: "Device 2 (Pocket 4)",
-    x: 630,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 659,
-    pinY: 322,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 630,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
-    textX: 650,
-    textTopY: 195,
-    textBottomY: 229,
-    textStep: 19,
+    label: "Device 2 (Pocket 2)",
+    x: 282,
+    y: 128,
+    w: 227,
+    h: 234,
+    pinX: 333,
+    pinY: 287,
+    pinTopY: 128,
+    pinBottomY: 362,
+    searchX: 282,
+    searchY: 158,
+    searchWidth: 227,
+    searchHeight: 174,
+    textX: 353,
+    textTopY: 198,
+    textBottomY: 235,
+    textStep: 18,
     textWidth: 16,
-    textHeight: 29,
+    textHeight: 28,
     imageWidth: 1042,
     imageHeight: 403,
   },
   {
     id: "d3",
-    label: "Device 3 (Pocket 5)",
-    x: 835,
-    y: 143,
-    w: 180,
-    h: 202,
-    pinX: 868,
-    pinY: 318,
-    pinTopY: 143,
-    pinBottomY: 345,
-    searchX: 835,
-    searchY: 173,
-    searchWidth: 182,
-    searchHeight: 141,
-    textX: 855,
-    textTopY: 195,
-    textBottomY: 229,
-    textStep: 19,
+    label: "Device 3 (Pocket 3)",
+    x: 518,
+    y: 128,
+    w: 227,
+    h: 234,
+    pinX: 569,
+    pinY: 288,
+    pinTopY: 128,
+    pinBottomY: 362,
+    searchX: 518,
+    searchY: 158,
+    searchWidth: 227,
+    searchHeight: 174,
+    textX: 587,
+    textTopY: 199,
+    textBottomY: 236,
+    textStep: 18,
     textWidth: 16,
-    textHeight: 29,
+    textHeight: 28,
+    imageWidth: 1042,
+    imageHeight: 403,
+  },
+  {
+    id: "d4",
+    label: "Device 4 (Pocket 4)",
+    x: 751,
+    y: 128,
+    w: 227,
+    h: 234,
+    pinX: 802,
+    pinY: 288,
+    pinTopY: 128,
+    pinBottomY: 362,
+    searchX: 751,
+    searchY: 158,
+    searchWidth: 227,
+    searchHeight: 174,
+    textX: 821,
+    textTopY: 199,
+    textBottomY: 236,
+    textStep: 18,
+    textWidth: 16,
+    textHeight: 28,
     imageWidth: 1042,
     imageHeight: 403,
   },
@@ -313,8 +342,23 @@ function scrollTourTargetIntoView(step: TourStep): void {
 }
 
 function makeDemoRules(): EditorRule[] {
+  const pin1Rule = makePin1Rule(PIN1_SETUP_DEVICE_LAYOUT, 1, pin1SetupImage);
+  // Include analyzer-image multi-device PIN1 positions so the canvas
+  // draws all 4 markers during the scripted analysis.
+  (pin1Rule.params as any).multiDevicePin1 = DEVICE_LAYOUTS.map((d) => ({
+    id: d.id,
+    label: d.label,
+    x: d.pinX,
+    y: d.pinY,
+    radius: 11,
+    packageRegion: { x: d.x, y: d.y, width: d.w, height: d.h },
+  }));
+  (pin1Rule.params as any).multiDevicePassRegions = DEVICE_LAYOUTS.map((d) => ({
+    label: d.label,
+    region: { x: d.x, y: d.y, width: d.w, height: d.h },
+  }));
   return [
-    makePin1Rule(PIN1_SETUP_DEVICE_LAYOUT, 1, pin1SetupImage),
+    pin1Rule,
     makeGreyscaleRule(GREYSCALE_SETUP_DEVICE_LAYOUT, 2, greyscaleSetupImage),
   ];
 }
@@ -325,10 +369,10 @@ function makeAnalysisRules(): EditorRule[] {
       ...makePin1Rule(DEVICE_LAYOUTS[0], 1, analysisImage),
       id: TOUR_PIN1_RULE_ID,
       name: "Rule 1: Pin 1 Orientation",
-      x: 420,
-      y: 140,
-      width: 600,
-      height: 210,
+      x: 49,
+      y: 128,
+      width: 930,
+      height: 234,
       params: {
         ...makePin1Rule(DEVICE_LAYOUTS[0], 1, analysisImage).params,
         imageRef: analysisImage,
@@ -457,8 +501,8 @@ function makeGreyscaleRule(
       imageWidth: device.imageWidth,
       imageHeight: device.imageHeight,
       isEmbeddedGuidanceImage: Boolean(device.isEmbeddedGuidanceImage),
-      threshold: 62,
-      greyscaleLevel: 62,
+      threshold: 255,
+      greyscaleLevel: 255,
       minMatchPercent: 80,
       lumaTolerance: 255,
       searchRegion,
@@ -488,16 +532,16 @@ function makeMultiDeviceGreyscaleRule(): EditorRule {
     ...makeGreyscaleRule(DEVICE_LAYOUTS[0], 2, analysisImage),
     id: TOUR_PATTERN_RULE_ID,
     name: "Rule 2: Greyscale Pattern Matching",
-    x: 420,
-    y: 168,
-    width: 600,
-    height: 151,
+    x: 49,
+    y: 158,
+    width: 930,
+    height: 174,
     params: {
       ...makeGreyscaleRule(DEVICE_LAYOUTS[0], 2, analysisImage).params,
       imageRef: analysisImage,
-      searchRegion: { x: 420, y: 168, width: 600, height: 151 },
-      region: { x: 420, y: 168, width: 600, height: 151 },
-      patternRegion: { x: 445, y: 190, width: 550, height: 73 },
+      searchRegion: { x: 49, y: 158, width: 930, height: 174 },
+      region: { x: 49, y: 158, width: 930, height: 174 },
+      patternRegion: { x: 110, y: 195, width: 810, height: 72 },
       referenceBoxes,
       constellation: referenceBoxes,
       constellationJson: JSON.stringify(referenceBoxes),
@@ -559,6 +603,100 @@ function makePassResults(): Record<string, ValidationResult> {
       ];
     }),
   ) as Record<string, ValidationResult>;
+}
+
+/**
+ * Scripted tape-strip result for the guided simulation's final step.
+ * Mirrors the actual analyzer image: 4 pockets, all holding devices
+ * that pass both rules. Each pocket carries only its own 10 character
+ * boxes (5 for A1234, 5 for B5678) at absolute image coordinates.
+ */
+function makePassTapeStripResult(): TapeStripEvaluationResult {
+  const baseResults = makePassResults();
+  const pockets = DEVICE_LAYOUTS.map((device, index) => {
+    // Build per-pocket greyscale boxes from this device's text position
+    const deviceBoxes: any[] = [];
+    const rows = [
+      { y: device.textTopY, chars: "A1234" },
+      { y: device.textBottomY, chars: "B5678" },
+    ];
+    rows.forEach((row, rowIdx) => {
+      Array.from(row.chars).forEach((ch, charIdx) => {
+        deviceBoxes.push({
+          boxNumber: rowIdx * 5 + charIdx + 1,
+          referenceX: device.textX + device.textStep * charIdx,
+          referenceY: row.y,
+          matchedX: device.textX + device.textStep * charIdx,
+          matchedY: row.y,
+          width: device.textWidth,
+          height: device.textHeight,
+          isMatched: true,
+        });
+      });
+    });
+
+    const pocketResults: Record<string, ValidationResult> = {};
+    for (const [ruleId, result] of Object.entries(baseResults)) {
+      const isGreyscale = String((result as any)?.message ?? "").includes("Greyscale");
+      const isPinRule =
+        String((result as any)?.message ?? "").includes("Pin 1") ||
+        ruleId === TOUR_PIN1_RULE_ID;
+
+      pocketResults[ruleId] = {
+        ...result,
+        debug: {
+          ...((result as any)?.debug ?? {}),
+          // Put boxes in debug so canvas finds them directly
+          boxResults: isGreyscale ? deviceBoxes : ((result as any)?.debug?.boxResults ?? []),
+          ...(isPinRule
+            ? {
+                nominalX: device.pinX,
+                nominalY: device.pinY,
+                detectedHoleX: device.pinX,
+                detectedHoleY: device.pinY,
+                deltaDistance: 0,
+                offsetPx: 0,
+                tolerancePx: 25,
+                hasPin1Found: true,
+              }
+            : {}),
+        },
+      } as ValidationResult;
+    }
+
+    return {
+      pocketIndex: index + 1,
+      region: { x: device.x, y: device.y, width: device.w, height: device.h },
+      isEmpty: false,
+      presenceConfidence: 1,
+      status: ValidationStatusType.Pass,
+      score: 1,
+      message: "Guided simulation: device passed.",
+      ruleResults: pocketResults,
+      // PIN1 position for canvas fallback
+      pinX: device.pinX,
+      pinY: device.pinY,
+      // Direct pocket-level boxes for canvas (bypasses rule ID matching)
+      characterBoxes: deviceBoxes.map((b: any) => ({
+        number: b.boxNumber,
+        x: b.referenceX,
+        y: b.referenceY,
+        width: b.width,
+        height: b.height,
+      })),
+    };
+  });
+
+  return {
+    totalPockets: 4,
+    emptyPockets: 0,
+    passedPockets: 4,
+    failedPockets: 0,
+    yieldPercent: 100,
+    status: ValidationStatusType.Pass,
+    message: "Guided simulation: 4 present devices passed (100% yield).",
+    pockets,
+  };
 }
 
 function ensureDemoProject(): DemoContext {
@@ -758,7 +896,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       {
         target: "[data-tour='simulation-ruleset-create-submit']",
         title: "Create ruleset",
-        content: "Save demoset, then return to the project workspace so rules can be added.",
+        content: "Save demoset, then continue in the project workspace so rules can be added.",
         actionKey: "create-ruleset",
         actionPhase: "exit",
         autoMs: 4500,
@@ -772,7 +910,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 7000,
       },
       {
-        target: "[data-tour='project-add-rule']",
+        target: "[data-tour='project-add-rule-tree']",
         placement: "top",
         title: "Add the first rule",
         content: "Open the rule catalog to add the first tool into demoset.",
@@ -846,6 +984,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-inspection-program']",
+        placement: "auto",
         title: "Configured rules",
         content:
           "The project contains exactly two rules: PIN1 Orientation and Greyscale Pattern Matching.",
@@ -880,12 +1019,15 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 5000,
       },
       {
-        target: "[data-tour='project-analysis-results']",
+        target: "body",
         placement: "top",
         title: "Results",
         content:
-          "All present devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching across occupied pockets (Pockets 1 & 2 detected as empty cavities).",
+          "All 4 devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching.",
         autoMs: 7500,
+        disableBeacon: true,
+        hideCloseButton: true,
+        showSkipButton: false,
       },
     ],
     [],
@@ -951,11 +1093,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (step.actionKey === "go-ruleset-create" && demoRef.current) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/new",
-          params: { projectId: demoRef.current.projectId },
-          search: { guided: "1" } as any,
-        });
+        // The tour is on the project overview: open ruleset creation inline
+        // in the workspace viewport instead of navigating to a page.
+        // The name field is prefilled with demoset for the demo.
+        addRulesetPanelBus.emit({ type: "open", initialName: TOUR_RULESET_NAME });
 
         return;
       }
@@ -963,20 +1104,18 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       if (step.actionKey === "create-ruleset" && demoRef.current) {
         const demo = ensureDemoRuleset(demoRef.current.projectId);
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId",
-          params: { projectId: demo.projectId },
-        });
+        // Close the inline panel; the tour is already on the overview and
+        // the new ruleset becomes the active one.
+        addRulesetPanelBus.emit({ type: "close" });
         toast.success("Ruleset demoset created.");
 
         return;
       }
 
       if (step.actionKey === "go-add-rule" && demoRef.current?.rulesetId) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-          params: { projectId: demoRef.current.projectId, rulesetId: demoRef.current.rulesetId },
-        });
+        // The tour is on the project overview: open the rule catalog inline
+        // in the workspace viewport instead of navigating to a page.
+        addRulePanelBus.emit({ type: "open", rulesetId: demoRef.current.rulesetId });
 
         return;
       }
@@ -994,25 +1133,17 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           ruleId: TOUR_PIN1_RULE_ID,
         });
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-          params: {
-            projectId: demo.projectId,
-            rulesetId: demo.rulesetId ?? "",
-            ruleId: TOUR_PIN1_RULE_ID,
-          },
-          search: { guided: "1" } as any,
-        });
+        // Open the new rule's configuration inline in the workspace
+        // (the bus closes the catalog panel first).
+        visualTunerBus.emit(TOUR_PIN1_RULE_ID);
         toast.success("PIN1 rule added to demoset.");
 
         return;
       }
 
       if (step.actionKey === "finish-pin1-config" && demoRef.current?.rulesetId) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-          params: { projectId: demoRef.current.projectId, rulesetId: demoRef.current.rulesetId },
-        });
+        // Back to the inline catalog for the second tool.
+        addRulePanelBus.emit({ type: "open", rulesetId: demoRef.current.rulesetId });
         toast.success("PIN1 configuration preview complete.");
 
         return;
@@ -1031,15 +1162,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           ruleId: TOUR_PATTERN_RULE_ID,
         });
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-          params: {
-            projectId: demo.projectId,
-            rulesetId: demo.rulesetId ?? "",
-            ruleId: TOUR_PATTERN_RULE_ID,
-          },
-          search: { guided: "1" } as any,
-        });
+        // Open the new rule's configuration inline in the workspace.
+        visualTunerBus.emit(TOUR_PATTERN_RULE_ID);
         toast.success("Greyscale rule added to demoset.");
 
         return;
@@ -1051,10 +1175,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           rulesetId: demoRef.current.rulesetId,
         });
         demoRef.current = analysisDemo;
-        void navigate({
-          to: "/projects/$projectId",
-          params: { projectId: analysisDemo.projectId },
-        });
+        // Close the inline configuration; the tour is already on the overview.
+        addRulePanelBus.emit({ type: "close" });
         toast.success("Rules configured. Returning to Overview for multi-device analysis.");
 
         return;
@@ -1101,9 +1223,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           useValidationStore
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
+          // Lift the workspace's stale-result gate and provide the
+          // tape-strip result so the canvas draws the visual markers,
+          // like a real Analyze run.
+          sessionAnalysisBus.emit(makePassTapeStripResult());
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
           toast.success(
-            "Guided simulation analysis complete: 3 present devices passed (100% yield).",
+            "Guided simulation analysis complete: 4 present devices passed (100% yield).",
           );
         }, 2800);
 
@@ -1166,12 +1292,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      timerRef.current = window.setTimeout(
-        () => {
-          advance();
-        },
-        Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS),
-      );
+      const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
+      timerRef.current = window.setTimeout(() => {
+        advance();
+      }, delayMs);
     };
 
     beginStep();
@@ -1279,6 +1403,11 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           showProgress: true,
           buttons: ["skip", "primary"],
           closeButtonAction: "skip",
+          // The tour auto-plays: a stray click on the dimmed overlay must
+          // never dismiss it, and hover/click on the spotlighted control
+          // must reach the real element instead of dying on the overlay.
+          overlayClickAction: false,
+          blockTargetInteraction: false,
           targetWaitTimeout: 10000,
           spotlightPadding: 8,
           spotlightRadius: 8,

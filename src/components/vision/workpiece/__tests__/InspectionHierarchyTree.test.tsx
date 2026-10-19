@@ -77,7 +77,13 @@ describe("InspectionHierarchyTree", () => {
     );
   });
 
-  it("renders complete hierarchy tree: project -> device -> ruleset -> rules + lighting", () => {
+  /** Opens the ⋮ options menu for the rule row at the given index. */
+  function openRuleMenu(index: number) {
+    const menuButtons = screen.getAllByTitle("Rule options");
+    fireEvent.click(menuButtons[index]);
+  }
+
+  it("renders hierarchy starting at device with the project name in the header", () => {
     render(
       <InspectionHierarchyTree
         project={mockProject}
@@ -88,33 +94,64 @@ describe("InspectionHierarchyTree", () => {
       />,
     );
 
-    // Level 1: Project
-    expect(screen.getByText(/Project: Bottle Line Inspection/i)).toBeTruthy();
+    // Header shows the project name (no separate project row, no search box)
+    expect(screen.getByText("Bottle Line Inspection")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Search...")).toBeNull();
+    expect(screen.queryByText(/Project:/i)).toBeNull();
 
-    // Level 2: Device (Circuit / IC DUT)
+    // Level 1: Device (Circuit / IC DUT)
     expect(screen.getByText(/Device: DUT-Station-4/i)).toBeTruthy();
     expect(screen.getByText(/IC Package \/ Board DUT/i)).toBeTruthy();
     expect(screen.getByText(/IC Loaded/i)).toBeTruthy();
 
-    // Level 3: RuleSet
+    // Level 2: RuleSet
     expect(screen.getByText(/RuleSet: Carrier Tape Inspection V1/i)).toBeTruthy();
 
-    // Level 4: Rules & per-rule Camera / Light Subtrees
+    // Level 3: Rules with name + catalog tool image + code (no result badges)
     expect(screen.getByText("Pin 1 Orientation Config")).toBeTruthy();
     expect(screen.getByText("Greyscale Pattern Match 24-Box")).toBeTruthy();
+    expect(screen.getByTestId("tool-graphic-T105")).toBeTruthy();
+    expect(screen.getByTestId("tool-graphic-T102")).toBeTruthy();
     expect(screen.getByText("T105")).toBeTruthy();
     expect(screen.getByText("T102")).toBeTruthy();
-    expect(screen.getByText(/PASS/)).toBeTruthy();
+    expect(screen.queryByText(/PASS/)).toBeNull();
 
-    // Per-rule Camera and Light subtrees
-    expect(screen.getAllByTitle(/Camera Settings:/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByTitle(/Light Settings:/i).length).toBeGreaterThan(0);
+    // Camera / light subtree toggles live in the options menu
+    openRuleMenu(0);
+    expect(screen.getByText("Camera settings")).toBeTruthy();
+    expect(screen.getByText("Light settings")).toBeTruthy();
   });
 
-  it("supports hiding, deleting, and reordering rules directly in the tree", () => {
+  it("resolves catalog images from rule names when no toolCode is stored", () => {
+    const legacyRule = {
+      ...mockRule1,
+      id: "rule-legacy",
+      name: "Rule 3: Laser Marking OCR",
+      params: {},
+    };
+
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rules={[legacyRule]}
+        selectedRuleId="rule-legacy"
+        onSelectRule={vi.fn()}
+      />,
+    );
+
+    // Own catalog image (T106), not the shared default graphic
+    expect(screen.getByTestId("tool-graphic-T106")).toBeTruthy();
+    // "Rule 3:" prefix stripped, only the rule name shown
+    expect(screen.getByText("Laser Marking OCR")).toBeTruthy();
+    expect(screen.queryByText("Rule 3: Laser Marking OCR")).toBeNull();
+    // No index numbering beside the rule
+    expect(screen.queryByText("[1]")).toBeNull();
+  });
+
+  it("supports hiding and deleting rules from the options dropdown", () => {
     const handleToggleHidden = vi.fn();
     const handleDeleteRule = vi.fn();
-    const handleReorderRule = vi.fn();
 
     render(
       <InspectionHierarchyTree
@@ -125,17 +162,79 @@ describe("InspectionHierarchyTree", () => {
         onSelectRule={vi.fn()}
         onToggleHidden={handleToggleHidden}
         onDeleteRule={handleDeleteRule}
+      />,
+    );
+
+    openRuleMenu(0);
+    fireEvent.click(screen.getByText("Hide overlay"));
+    expect(handleToggleHidden).toHaveBeenCalledWith("rule-1");
+
+    openRuleMenu(0);
+    fireEvent.click(screen.getByText("Delete rule"));
+    expect(handleDeleteRule).toHaveBeenCalledWith("rule-1");
+  });
+
+  it("supports moving rules up and down from the options dropdown", () => {
+    const handleReorderRule = vi.fn();
+
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rules={[mockRule1, mockRule2]}
+        selectedRuleId="rule-1"
+        onSelectRule={vi.fn()}
         onReorderRule={handleReorderRule}
       />,
     );
 
-    const hideButtons = screen.getAllByTitle("Hide rule overlay");
-    fireEvent.click(hideButtons[0]);
-    expect(handleToggleHidden).toHaveBeenCalledWith("rule-1");
+    // First rule can only move down, second rule can only move up
+    openRuleMenu(0);
+    expect(screen.queryByText("Move up")).toBeNull();
+    fireEvent.click(screen.getByText("Move down"));
+    expect(handleReorderRule).toHaveBeenCalledWith("rule-1", "down");
 
-    const deleteButtons = screen.getAllByTitle("Delete rule");
-    fireEvent.click(deleteButtons[0]);
-    expect(handleDeleteRule).toHaveBeenCalledWith("rule-1");
+    openRuleMenu(1);
+    expect(screen.queryByText("Move down")).toBeNull();
+    fireEvent.click(screen.getByText("Move up"));
+    expect(handleReorderRule).toHaveBeenCalledWith("rule-2", "up");
+  });
+
+  it("calls onMoveRule with the drop index when a rule is dragged onto another", () => {
+    const handleMoveRule = vi.fn();
+
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rules={[mockRule1, mockRule2]}
+        selectedRuleId="rule-1"
+        onSelectRule={vi.fn()}
+        onMoveRule={handleMoveRule}
+      />,
+    );
+
+    const rows = screen.getAllByTitle("Rule options").map((btn) => {
+      let node: HTMLElement | null = btn as HTMLElement;
+      // climb to the draggable row
+      while (node && !node.hasAttribute("draggable")) {
+        node = node.parentElement;
+      }
+
+      return node as HTMLElement;
+    });
+
+    // Drag rule-1 onto the lower half of rule-2's row => move to the end.
+    // (fireEvent.drop does not carry clientY in this jsdom setup, so the
+    // drop event is built manually.)
+    fireEvent.dragStart(rows[0]);
+    fireEvent.dragOver(rows[1], { clientY: 1 });
+
+    const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(dropEvent, "clientY", { value: 1 });
+    fireEvent(rows[1], dropEvent);
+
+    expect(handleMoveRule).toHaveBeenCalledWith("rule-1", 1);
   });
 
   it("calls onSelectRule when a rule is clicked", () => {
@@ -154,8 +253,8 @@ describe("InspectionHierarchyTree", () => {
     expect(handleSelect).toHaveBeenCalledWith("rule-2");
   });
 
-  it("triggers onTuneRule when the tune button is clicked", () => {
-    const handleTune = vi.fn();
+  it("opens the tool configuration on double click", () => {
+    const handleConfigure = vi.fn();
     render(
       <InspectionHierarchyTree
         project={mockProject}
@@ -163,14 +262,30 @@ describe("InspectionHierarchyTree", () => {
         rules={[mockRule1, mockRule2]}
         selectedRuleId="rule-1"
         onSelectRule={vi.fn()}
-        onTuneRule={handleTune}
+        onConfigureRule={handleConfigure}
       />,
     );
 
-    const tuneButtons = screen.getAllByTitle("Visual Tune this rule");
-    expect(tuneButtons.length).toBeGreaterThan(0);
-    fireEvent.click(tuneButtons[0]);
-    expect(handleTune).toHaveBeenCalledWith("rule-1");
+    fireEvent.doubleClick(screen.getByText("Pin 1 Orientation Config"));
+    expect(handleConfigure).toHaveBeenCalledWith("rule-1");
+  });
+
+  it("opens the tool configuration from the options dropdown", () => {
+    const handleConfigure = vi.fn();
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rules={[mockRule1, mockRule2]}
+        selectedRuleId="rule-1"
+        onSelectRule={vi.fn()}
+        onConfigureRule={handleConfigure}
+      />,
+    );
+
+    openRuleMenu(1);
+    fireEvent.click(screen.getByText("Configure tool"));
+    expect(handleConfigure).toHaveBeenCalledWith("rule-2");
   });
 
   it("updates live light parameters per rule via subtree sliders", () => {
@@ -186,11 +301,8 @@ describe("InspectionHierarchyTree", () => {
       />,
     );
 
-    const lightButtons = screen.getAllByTitle(/Light Settings:/i);
-    expect(lightButtons.length).toBeGreaterThan(0);
-
-    // Open light settings panel for rule-1
-    fireEvent.click(lightButtons[0]);
+    openRuleMenu(0);
+    fireEvent.click(screen.getByText("Light settings"));
 
     expect(screen.getByText(/Light Settings: Pin 1 Orientation Config/i)).toBeTruthy();
     expect(screen.getByText("Intensity")).toBeTruthy();
@@ -207,26 +319,6 @@ describe("InspectionHierarchyTree", () => {
     );
   });
 
-  it("toggles tree collapsing into a minimal icon bar", () => {
-    render(
-      <InspectionHierarchyTree
-        project={mockProject}
-        ruleset={mockRuleset}
-        rules={[mockRule1, mockRule2]}
-        selectedRuleId="rule-1"
-        onSelectRule={vi.fn()}
-      />,
-    );
-
-    const collapseButton = screen.getByTitle("Collapse tree sidebar");
-    fireEvent.click(collapseButton);
-
-    expect(screen.getByTitle("Expand inspection hierarchy tree")).toBeTruthy();
-
-    fireEvent.click(screen.getByTitle("Expand inspection hierarchy tree"));
-    expect(screen.getByText(/Project: Bottle Line Inspection/i)).toBeTruthy();
-  });
-
   it("supports editing dedicated camera settings per rule", () => {
     const handleUpdateCameraSettings = vi.fn();
     render(
@@ -240,11 +332,8 @@ describe("InspectionHierarchyTree", () => {
       />,
     );
 
-    const cameraButtons = screen.getAllByTitle(/Camera Settings:/i);
-    expect(cameraButtons.length).toBeGreaterThan(0);
-
-    // Click camera button on first rule to open camera settings
-    fireEvent.click(cameraButtons[0]);
+    openRuleMenu(0);
+    fireEvent.click(screen.getByText("Camera settings"));
 
     expect(screen.getByText(/Camera Settings: Pin 1 Orientation Config/i)).toBeTruthy();
     expect(screen.getByText(/Exposure Time/i)).toBeTruthy();

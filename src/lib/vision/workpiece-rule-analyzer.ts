@@ -197,7 +197,7 @@ export function parseBoxesFromParams(
       toolType.includes("white box");
 
     if (isPatternTool) {
-      list = DEFAULT_24_PATTERN_BOXES;
+      list = [...DEFAULT_24_PATTERN_BOXES];
     }
   }
 
