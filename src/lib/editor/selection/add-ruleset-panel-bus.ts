@@ -1,6 +1,6 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 
-export type AddRulesetPanelMessage = { type: "open" } | { type: "close" };
+export type AddRulesetPanelMessage = { type: "open"; initialName?: string } | { type: "close" };
 
 type AddRulesetPanelListener = (message: AddRulesetPanelMessage) => void;
 

@@ -956,7 +956,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       if (step.actionKey === "go-ruleset-create" && demoRef.current) {
         // The tour is on the project overview: open ruleset creation inline
         // in the workspace viewport instead of navigating to a page.
-        addRulesetPanelBus.emit({ type: "open" });
+        // The name field is prefilled with demoset for the demo.
+        addRulesetPanelBus.emit({ type: "open", initialName: TOUR_RULESET_NAME });
 
         return;
       }

@@ -1149,17 +1149,20 @@ function IconButton({
   className = "",
   children,
   onClick,
+  "data-tour": dataTour,
 }: {
   title: string;
   className?: string;
   children: ReactNode;
   onClick?: () => void;
+  "data-tour"?: string;
 }) {
   return (
     <button
       type="button"
       title={title}
       aria-label={title}
+      data-tour={dataTour}
       onClick={(event) => {
         event.stopPropagation();
         onClick?.();

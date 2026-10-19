@@ -379,12 +379,15 @@ export function WorkpieceAnalyzeWorkspace({
     [ruleset],
   );
 
-  const handleStartAddRuleset = useCallback(() => {
-    setDraftRulesetName(`Ruleset ${(rulesets?.length ?? 0) + 1}`);
-    setConfigRuleId(null);
-    setAddRuleRulesetId(null);
-    setIsAddingRuleset(true);
-  }, [rulesets?.length]);
+  const handleStartAddRuleset = useCallback(
+    (initialName?: string) => {
+      setDraftRulesetName(initialName ?? `Ruleset ${(rulesets?.length ?? 0) + 1}`);
+      setConfigRuleId(null);
+      setAddRuleRulesetId(null);
+      setIsAddingRuleset(true);
+    },
+    [rulesets?.length],
+  );
 
   const handleInlineRulesetCreated = useCallback(
     (newRulesetId: string, name: string) => {
@@ -529,7 +532,7 @@ export function WorkpieceAnalyzeWorkspace({
   useEffect(() => {
     return addRulesetPanelBus.subscribe((message) => {
       if (message.type === "open") {
-        handleStartAddRuleset();
+        handleStartAddRuleset(message.initialName);
       } else {
         setIsAddingRuleset(false);
       }
@@ -1140,7 +1143,7 @@ export function WorkpieceAnalyzeWorkspace({
                     onReorderRule={railHandlers.onReorder}
                     onMoveRule={railHandlers.onMove}
                     onAddRuleClick={handleOpenAddRule}
-                    onAddRulesetClick={handleStartAddRuleset}
+                    onAddRulesetClick={() => handleStartAddRuleset()}
                     onDeleteRulesetClick={handleDeleteRuleset}
                     onConfigureRule={handleOpenRuleConfig}
                     onUpdateCameraSettings={handleUpdateRuleCameraSettings}
@@ -1428,7 +1431,7 @@ export function WorkpieceAnalyzeWorkspace({
                   <button
                     type="button"
                     data-tour="project-overview-add-ruleset"
-                    onClick={handleStartAddRuleset}
+                    onClick={() => handleStartAddRuleset()}
                     className="mt-5 inline-flex items-center gap-2 rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
                   >
                     <Plus size={14} />
