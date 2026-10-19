@@ -62,6 +62,11 @@ import {
   GUIDED_SIMULATION_ANALYSIS_EVENT,
   type GuidedSimulationAnalysisDetail,
 } from "@/components/guided-simulation/events";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  SAMPLE_IMAGE_POCKET_5_PARTIAL,
+} from "@/lib/vision/sample-images";
 
 const EMPTY_VALIDATION_RESULTS: Record<string, ValidationResult> = {};
 
@@ -1194,12 +1199,12 @@ export function WorkpieceAnalyzeWorkspace({
                           onClick={() => {
                             updateProjectInspectionImageRef(
                               project.id,
-                              "/src/assets/samples/pocket-1-filled.jpg",
+                              SAMPLE_IMAGE_POCKET_1_FILLED,
                             );
                             toast.info("Loaded Carrier Pocket 1 [Filled IC]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                            project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_1_FILLED
                               ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
                               : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                           }`}
@@ -1211,13 +1216,12 @@ export function WorkpieceAnalyzeWorkspace({
                           onClick={() => {
                             updateProjectInspectionImageRef(
                               project.id,
-                              "/src/assets/samples/pocket-2-empty-mixed.jpg",
+                              SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
                             );
                             toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                            project.inspectionImageRef ===
-                            "/src/assets/samples/pocket-2-empty-mixed.jpg"
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED
                               ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
                               : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                           }`}
@@ -1229,13 +1233,12 @@ export function WorkpieceAnalyzeWorkspace({
                           onClick={() => {
                             updateProjectInspectionImageRef(
                               project.id,
-                              "/src/assets/samples/pocket-5-partial.jpg",
+                              SAMPLE_IMAGE_POCKET_5_PARTIAL,
                             );
                             toast.info("Loaded Carrier Tape Strip [5 Pockets]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                            project.inspectionImageRef ===
-                            "/src/assets/samples/pocket-5-partial.jpg"
+                            project.inspectionImageRef === SAMPLE_IMAGE_POCKET_5_PARTIAL
                               ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
                               : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                           }`}

@@ -4,6 +4,7 @@ import { fetchBackend } from "@/lib/backend/http";
 import { ScoreResponseSchema } from "@/lib/vision/score-schema";
 import { HttpMethod } from "@/lib/constants";
 import { getReferenceImage } from "@/lib/stores/reference-image-store";
+import { SAMPLE_IMAGE_POCKET_1_FILLED } from "@/lib/vision/sample-images";
 
 const AUTO_EVAL_DEBOUNCE_MS = 200; // prevent spam on rapid captures
 const AUTO_EVAL_MIN_INTERVAL_MS = 200; // max 5fps = 1 frame per 200ms
@@ -79,8 +80,8 @@ export async function evaluateCurrentVision(
         ruleType,
         threshold: confidenceThreshold / 100,
         tolerance: 40,
-        referenceImageUrl: "/src/assets/samples/pocket-1-filled.jpg",
-        sampleImageUrl: currentSample || "/src/assets/samples/pocket-1-filled.jpg",
+        referenceImageUrl: SAMPLE_IMAGE_POCKET_1_FILLED,
+        sampleImageUrl: currentSample || SAMPLE_IMAGE_POCKET_1_FILLED,
         roi: roi ? { x: roi.x, y: roi.y, width: roi.width, height: roi.height } : undefined,
       }),
     });
