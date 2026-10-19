@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 import { AddRulePanel } from "./AddRulePanel";
+import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
 import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
@@ -510,6 +511,19 @@ export function WorkpieceAnalyzeWorkspace({
       handleOpenRuleConfig(ruleId);
     });
   }, [handleOpenRuleConfig]);
+
+  // The guided simulation drives the inline Add Rule panel through this bus
+  // so the tour never leaves the overview workspace.
+  useEffect(() => {
+    return addRulePanelBus.subscribe((message) => {
+      if (message.type === "open") {
+        handleOpenAddRule(message.rulesetId);
+      } else {
+        setConfigRuleId(null);
+        setAddRuleRulesetId(null);
+      }
+    });
+  }, [handleOpenAddRule]);
 
   const handleSelectProjectRule = useCallback(
     (id: string) => {

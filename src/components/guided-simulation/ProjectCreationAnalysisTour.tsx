@@ -31,6 +31,8 @@ import {
   type ValidationResult,
 } from "@/lib/editor/validation-store";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
+import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
+import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
 
 const TOUR_PROJECT_NAME = "demo";
 const TOUR_RULESET_NAME = "demoset";
@@ -973,10 +975,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (step.actionKey === "go-add-rule" && demoRef.current?.rulesetId) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-          params: { projectId: demoRef.current.projectId, rulesetId: demoRef.current.rulesetId },
-        });
+        // The tour is on the project overview: open the rule catalog inline
+        // in the workspace viewport instead of navigating to a page.
+        addRulePanelBus.emit({ type: "open", rulesetId: demoRef.current.rulesetId });
 
         return;
       }
@@ -994,25 +995,17 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           ruleId: TOUR_PIN1_RULE_ID,
         });
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-          params: {
-            projectId: demo.projectId,
-            rulesetId: demo.rulesetId ?? "",
-            ruleId: TOUR_PIN1_RULE_ID,
-          },
-          search: { guided: "1" } as any,
-        });
+        // Open the new rule's configuration inline in the workspace
+        // (the bus closes the catalog panel first).
+        visualTunerBus.emit(TOUR_PIN1_RULE_ID);
         toast.success("PIN1 rule added to demoset.");
 
         return;
       }
 
       if (step.actionKey === "finish-pin1-config" && demoRef.current?.rulesetId) {
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/add-rule",
-          params: { projectId: demoRef.current.projectId, rulesetId: demoRef.current.rulesetId },
-        });
+        // Back to the inline catalog for the second tool.
+        addRulePanelBus.emit({ type: "open", rulesetId: demoRef.current.rulesetId });
         toast.success("PIN1 configuration preview complete.");
 
         return;
@@ -1031,15 +1024,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           ruleId: TOUR_PATTERN_RULE_ID,
         });
         demoRef.current = demo;
-        void navigate({
-          to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-          params: {
-            projectId: demo.projectId,
-            rulesetId: demo.rulesetId ?? "",
-            ruleId: TOUR_PATTERN_RULE_ID,
-          },
-          search: { guided: "1" } as any,
-        });
+        // Open the new rule's configuration inline in the workspace.
+        visualTunerBus.emit(TOUR_PATTERN_RULE_ID);
         toast.success("Greyscale rule added to demoset.");
 
         return;
@@ -1051,10 +1037,8 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           rulesetId: demoRef.current.rulesetId,
         });
         demoRef.current = analysisDemo;
-        void navigate({
-          to: "/projects/$projectId",
-          params: { projectId: analysisDemo.projectId },
-        });
+        // Close the inline configuration; the tour is already on the overview.
+        addRulePanelBus.emit({ type: "close" });
         toast.success("Rules configured. Returning to Overview for multi-device analysis.");
 
         return;
