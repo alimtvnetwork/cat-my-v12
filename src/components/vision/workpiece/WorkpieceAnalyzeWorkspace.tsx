@@ -3,7 +3,6 @@ import {
   Activity,
   Bug,
   Camera,
-  Check,
   CircleDot,
   Crosshair,
   FileImage,
@@ -17,11 +16,15 @@ import {
   ScanSearch,
   Type,
   Upload,
+  Wand2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
+import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
+import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
@@ -120,27 +123,20 @@ export function WorkpieceAnalyzeWorkspace({
 
   const [savedVersion, setSavedVersion] = useState<number>(0);
   const savedVersionRef = useRef<number>(0);
-  const [isSaving, setIsSaving] = useState(false);
+  const setSaving = useWorkspaceSaveStore((s) => s.setSaving);
+  const registerSave = useWorkspaceSaveStore((s) => s.registerSave);
   const isAnalyzingRef = useRef<boolean>(false);
   const navigate = useNavigate();
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
+  /** Rule id whose tool configuration is open inline (right viewport), if any. */
+  const [configRuleId, setConfigRuleId] = useState<string | null>(null);
   /** Microns-per-pixel driving pin pitch + device measurements. */
   const calibrationUmPerPx = LEGACY_DEFAULT_UM_PER_PX;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const updateProjectInspectionImageRef = useProjectStore((s) => s.updateProjectInspectionImageRef);
-
-  useEffect(() => {
-    return visualTunerBus.subscribe((ruleId) => {
-      setSelectedIds([ruleId]);
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-        params: { projectId, rulesetId: ruleset.id, ruleId },
-      });
-    });
-  }, [navigate, projectId, ruleset.id]);
 
   const updateSavedVersion = useCallback((v: number) => {
     savedVersionRef.current = v;
@@ -199,7 +195,7 @@ export function WorkpieceAnalyzeWorkspace({
   );
 
   const handleSaveRuleSet = useCallback(async () => {
-    setIsSaving(true);
+    setSaving(true);
     try {
       const envelope = getEnvelope();
       await saveRuleSet(envelope);
@@ -208,9 +204,17 @@ export function WorkpieceAnalyzeWorkspace({
       console.error("[WorkpieceAnalyzeWorkspace] save error", err);
       toast.error(err instanceof Error ? err.message : "Failed to save rule set.");
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
-  }, [getEnvelope, onSaved]);
+  }, [getEnvelope, onSaved, setSaving]);
+
+  // The Save button lives on the upper bar; register this workspace's save
+  // handler so the button can trigger it from outside this component.
+  useEffect(() => {
+    registerSave(handleSaveRuleSet);
+
+    return () => registerSave(null);
+  }, [handleSaveRuleSet, registerSave]);
 
   const liveStoreRules = useRulesStore((s) => s.rules);
   const rules = useMemo(() => {
@@ -301,6 +305,8 @@ export function WorkpieceAnalyzeWorkspace({
     if (!isCurrentSelectedInRuleset) {
       setSelectedIds(targetSelected);
     }
+
+    setConfigRuleId(null);
   }, [ruleset.id]);
 
   useEffect(() => {
@@ -394,19 +400,56 @@ export function WorkpieceAnalyzeWorkspace({
     );
   }, [projectOverlayRules, rules, selectedIds]);
 
-  const handleNavigateTuneRule = useCallback(
+  const handleOpenRuleConfig = useCallback(
     (ruleId: string) => {
       const ownerRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
 
+      if (ownerRuleset.id !== ruleset.id) {
+        onSelectRuleset?.(ownerRuleset.id);
+      }
+
       setSelectedIds([ruleId]);
-      useRulesStore.getState().setSelection([ruleId], "tree.tune");
-      void navigate({
-        to: "/projects/$projectId/rulesets/$rulesetId/tune/$ruleId",
-        params: { projectId, rulesetId: ownerRuleset.id, ruleId },
-      });
+      useRulesStore.getState().setSelection([ruleId], "tree.configure");
+      setConfigRuleId(ruleId);
     },
-    [navigate, projectId, ruleOwnerById, ruleset],
+    [onSelectRuleset, ruleOwnerById, ruleset],
   );
+
+  const handleCloseRuleConfig = useCallback(() => {
+    setConfigRuleId(null);
+  }, []);
+
+  const handleConfigRuleApplied = useCallback(
+    (appliedRulesetId: string, nextRules: EditorRule[]) => {
+      if (appliedRulesetId === ruleset.id) {
+        useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
+      }
+    },
+    [ruleset.id, selectedIds],
+  );
+
+  const configRule = useMemo(() => {
+    if (!configRuleId) return null;
+
+    return (
+      rules.find((r) => r.id === configRuleId) ??
+      projectOverlayRules.find((r) => r.id === configRuleId) ??
+      null
+    );
+  }, [configRuleId, rules, projectOverlayRules]);
+
+  const configOwnerRuleset = useMemo(
+    () => (configRule ? (ruleOwnerById.get(configRule.id) ?? ruleset) : null),
+    [configRule, ruleOwnerById, ruleset],
+  );
+
+  // Tool tune requests (e.g. from a tool's own config screen) open the tool
+  // configuration inline in this screen instead of navigating away.
+  useEffect(() => {
+    return visualTunerBus.subscribe((ruleId) => {
+      handleOpenRuleConfig(ruleId);
+    });
+  }, [handleOpenRuleConfig]);
 
   const handleSelectProjectRule = useCallback(
     (id: string) => {
@@ -424,9 +467,9 @@ export function WorkpieceAnalyzeWorkspace({
 
   const handleLaunchPatternTuner = useCallback(() => {
     if (activeRule) {
-      handleNavigateTuneRule(activeRule.id);
+      handleOpenRuleConfig(activeRule.id);
     }
-  }, [activeRule, handleNavigateTuneRule]);
+  }, [activeRule, handleOpenRuleConfig]);
 
   const handlePatternBoxesChange = useCallback(
     (boxes: any[], constellation: any[]) => {
@@ -852,6 +895,21 @@ export function WorkpieceAnalyzeWorkspace({
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
+      onMove: (id: string, toIndex: number) => {
+        const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
+        const ownerRules = ownerRuleset.id === ruleset.id ? rules : (ownerRuleset.rules ?? []);
+        const fromIndex = ownerRules.findIndex((r) => r.id === id);
+        if (fromIndex === -1) return;
+        const next = [...ownerRules];
+        const [moved] = next.splice(fromIndex, 1);
+        const clamped = Math.max(0, Math.min(toIndex, next.length));
+        next.splice(clamped, 0, moved);
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
     }),
     [ruleOwnerById, rules, ruleset, selectedIds, updateRulesetRules],
   );
@@ -887,25 +945,6 @@ export function WorkpieceAnalyzeWorkspace({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0d14] p-3 text-[#f8fafc]">
       <div className="flex min-h-0 w-full flex-1 flex-col gap-2.5 overflow-hidden">
-        {/* 1. Top Command Ribbon */}
-        <div className="flex shrink-0 items-center justify-between rounded-xl border border-[#222938] bg-[#0d1119]/90 px-3.5 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_rgba(0,0,0,0.4)] backdrop-blur-xl">
-          <div className="flex items-center">
-            <span className="font-sans text-xs font-bold tracking-wider uppercase text-[#f8fafc]">
-              {project.name}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSaveRuleSet}
-              disabled={isSaving}
-              className="flex items-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.5)] bg-[oklch(0.76_0.145_210)] px-3.5 py-1 font-sans text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_12px_oklch(0.76_0.145_210/0.35)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
-            >
-              <Check size={13} className="text-[#0a0d14]" />
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </div>
-
         {/* Ruleset Creation Modal */}
         {isAddingRuleset ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
@@ -1017,10 +1056,11 @@ export function WorkpieceAnalyzeWorkspace({
                   onToggleHidden={railHandlers.onToggleHidden}
                   onDeleteRule={railHandlers.onDelete}
                   onReorderRule={railHandlers.onReorder}
+                  onMoveRule={railHandlers.onMove}
                   onAddRuleClick={handleNavigateAddRule}
                   onAddRulesetClick={handleStartAddRuleset}
                   onDeleteRulesetClick={handleDeleteRuleset}
-                  onTuneRule={handleNavigateTuneRule}
+                  onConfigureRule={handleOpenRuleConfig}
                   onUpdateCameraSettings={handleUpdateRuleCameraSettings}
                   onUpdateLightSettings={handleUpdateRuleLightSettings}
                 />
@@ -1194,12 +1234,43 @@ export function WorkpieceAnalyzeWorkspace({
             )}
           </div>
 
-          {/* Right: camera/current image viewport */}
+          {/* Right: camera/current image viewport, or inline tool configuration */}
           <div
             data-tour="project-analysis-canvas"
             className="relative flex min-w-0 flex-col overflow-hidden"
           >
-            {isLiveCameraMode ? (
+            {configRule && configOwnerRuleset ? (
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Wand2 size={13} className="shrink-0 text-cyan-300" />
+                    <span
+                      className="truncate font-sans text-xs font-bold uppercase tracking-wider text-white/90"
+                      title={configRule.name}
+                    >
+                      Tool Configuration: {configRule.name}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseRuleConfig}
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
+                  >
+                    <X size={12} />
+                    Exit
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1">
+                  <RuleToolConfigPanel
+                    key={configRule.id}
+                    ruleset={configOwnerRuleset}
+                    rule={configRule}
+                    onExit={handleCloseRuleConfig}
+                    onRuleApplied={handleConfigRuleApplied}
+                  />
+                </div>
+              </div>
+            ) : isLiveCameraMode ? (
               <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
                 <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
                 <video
