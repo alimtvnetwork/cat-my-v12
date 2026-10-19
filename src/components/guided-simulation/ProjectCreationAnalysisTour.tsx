@@ -774,7 +774,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 7000,
       },
       {
-        target: "[data-tour='project-add-rule']",
+        target: "[data-tour='project-add-rule-tree']",
         placement: "top",
         title: "Add the first rule",
         content: "Open the rule catalog to add the first tool into demoset.",
