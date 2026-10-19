@@ -133,6 +133,12 @@ export function WorkpieceAnalyzeWorkspace({
   const [isAddingRuleset, setIsAddingRuleset] = useState(false);
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
+  /**
+   * True only after Analyze has been clicked in this session. Analysis results
+   * must never be restored from the persisted validation store — the results
+   * area shows only what the current session's run produced.
+   */
+  const [hasSessionAnalysis, setHasSessionAnalysis] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   /** Rule id whose tool configuration is open inline (right viewport), if any. */
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
@@ -576,12 +582,18 @@ export function WorkpieceAnalyzeWorkspace({
     return merged;
   }, [projectRulesetsForAnalysis, validationRuns]);
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
+  // Never show cached results: the canvas only sees what this session's run produced.
+  const sessionValidationResults = hasSessionAnalysis
+    ? allValidationResults
+    : EMPTY_VALIDATION_RESULTS;
+  const sessionActiveValidation = hasSessionAnalysis ? activeValidationResult : undefined;
 
   // No auto analysis: the user runs it explicitly via the Analyze button.
   // Clear the result when the image, the rules, or the camera mode change,
   // so the canvas never shows stale markings.
   useEffect(() => {
     setTapeStripResult(null);
+    setHasSessionAnalysis(false);
   }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
 
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
@@ -649,6 +661,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       isAnalyzingRef.current = true;
       setIsAnalyzing(true);
+      setHasSessionAnalysis(true);
 
       if (params.hasStepToasts) {
         toast.info(
@@ -1450,9 +1463,9 @@ export function WorkpieceAnalyzeWorkspace({
                 onSelectRule={handleSelectProjectRule}
                 onLaunchPatternTuner={handleLaunchPatternTuner}
                 onPatternBoxesChange={handlePatternBoxesChange}
-                validationStatus={activeValidationResult?.status}
-                validationScore={activeValidationResult?.score}
-                validationResultsMap={allValidationResults}
+                validationStatus={sessionActiveValidation?.status}
+                validationScore={sessionActiveValidation?.score}
+                validationResultsMap={sessionValidationResults}
                 isAnalyzing={isAnalysisBusy}
                 tapeStripResult={tapeStripResult}
               />
