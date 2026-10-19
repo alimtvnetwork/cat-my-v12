@@ -10,3 +10,5 @@ export { WorkspaceSaveButton } from "./WorkspaceSaveButton";
 export { useWorkspaceSaveStore } from "./workspace-save-store";
 export { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 export type { RuleToolConfigPanelProps } from "./RuleToolConfigPanel";
+export { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
+export type { RecentImageKind, RecentImageSource } from "./image-source-recents-store";

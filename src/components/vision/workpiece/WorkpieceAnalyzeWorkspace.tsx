@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
 import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 import { useWorkspaceSaveStore } from "./workspace-save-store";
+import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
@@ -137,6 +138,10 @@ export function WorkpieceAnalyzeWorkspace({
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
   /** Left program sidebar collapsed into a slim rail so the canvas gets the space. */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  /** Last-used image sources (uploads + camera captures), capped at 5. */
+  const recents = useImageSourceRecentsStore((s) => s.recents);
+  const pushRecent = useImageSourceRecentsStore((s) => s.pushRecent);
+  const removeRecent = useImageSourceRecentsStore((s) => s.removeRecent);
   /** Microns-per-pixel driving pin pitch + device measurements. */
   const calibrationUmPerPx = LEGACY_DEFAULT_UM_PER_PX;
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -609,6 +614,7 @@ export function WorkpieceAnalyzeWorkspace({
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
       updateProjectInspectionImageRef(project.id, dataUrl);
+      pushRecent({ dataUrl, label: "Camera frame", kind: "camera" });
       setIsLiveCameraMode(false);
 
       for (const item of projectRulesetsForAnalysis) {
@@ -627,6 +633,7 @@ export function WorkpieceAnalyzeWorkspace({
     project.id,
     project.inspectionImageRef,
     projectRulesetsForAnalysis,
+    pushRecent,
     updateProjectInspectionImageRef,
   ]);
 
@@ -928,6 +935,7 @@ export function WorkpieceAnalyzeWorkspace({
 
         if (dataUrl) {
           updateProjectInspectionImageRef(project.id, dataUrl);
+          pushRecent({ dataUrl, label: file.name, kind: "upload" });
           setIsLiveCameraMode(false);
           for (const item of projectRulesetsForAnalysis) {
             useValidationStore.getState().clear(item.id);
@@ -943,7 +951,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       reader.readAsDataURL(file);
     },
-    [project.id, projectRulesetsForAnalysis, updateProjectInspectionImageRef],
+    [project.id, projectRulesetsForAnalysis, pushRecent, updateProjectInspectionImageRef],
   );
 
   return (
@@ -1266,6 +1274,85 @@ export function WorkpieceAnalyzeWorkspace({
                           <Upload size={14} />
                           Upload Inspection Image
                         </button>
+                      )}
+                    </div>
+
+                    {isLiveCameraMode ? (
+                      <button
+                        type="button"
+                        onClick={() => void captureLiveCameraFrame()}
+                        disabled={!isLiveCameraReady || isCapturingFrame}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-400 px-3 py-2 font-sans text-[11px] font-bold uppercase tracking-wider text-black shadow-[0_0_14px_rgba(52,211,153,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Camera size={13} />
+                        {isCapturingFrame ? "Capturing..." : "Capture Frame"}
+                      </button>
+                    ) : null}
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
+                          Recent
+                        </span>
+                        <span className="font-sans text-[9px] text-white/35">
+                          last {MAX_RECENT_IMAGE_SOURCES}
+                        </span>
+                      </div>
+                      {recents.length === 0 ? (
+                        <p className="rounded-md border border-dashed border-white/10 bg-black/30 px-2 py-2 text-center font-sans text-[10px] text-white/35">
+                          Uploaded images and captured frames appear here.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {recents.map((recent) => {
+                            const isActive =
+                              !isLiveCameraMode && project.inspectionImageRef === recent.dataUrl;
+
+                            return (
+                              <div key={recent.id} className="group/recent relative">
+                                <button
+                                  type="button"
+                                  title={recent.label}
+                                  onClick={() => {
+                                    updateProjectInspectionImageRef(project.id, recent.dataUrl);
+                                    setIsLiveCameraMode(false);
+                                    for (const item of projectRulesetsForAnalysis) {
+                                      useValidationStore.getState().clear(item.id);
+                                    }
+                                    toast.info(`Loaded: ${recent.label}`);
+                                  }}
+                                  className={`block h-11 w-full overflow-hidden rounded-md border transition ${
+                                    isActive
+                                      ? "border-cyan-400/60 shadow-[0_0_10px_rgba(34,211,238,0.25)]"
+                                      : "border-white/10 hover:border-white/30"
+                                  }`}
+                                >
+                                  <img
+                                    src={recent.dataUrl}
+                                    alt={recent.label}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </button>
+                                <span className="pointer-events-none absolute left-0.5 top-0.5 rounded bg-black/70 px-1 py-px font-sans text-[8px] font-bold uppercase tracking-wider text-white/70">
+                                  {recent.kind === "camera" ? (
+                                    <Camera size={8} className="text-emerald-300" />
+                                  ) : (
+                                    <Upload size={8} className="text-cyan-300" />
+                                  )}
+                                </span>
+                                <button
+                                  type="button"
+                                  title="Remove from recent"
+                                  aria-label={`Remove ${recent.label} from recent`}
+                                  onClick={() => removeRecent(recent.id)}
+                                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white/70 transition hover:text-white group-hover/recent:flex"
+                                >
+                                  <X size={9} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </section>
