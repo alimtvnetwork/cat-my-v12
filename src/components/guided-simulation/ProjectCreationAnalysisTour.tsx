@@ -981,17 +981,6 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         actionPhase: "exit",
         autoMs: 5000,
       },
-      {
-        target: "[data-tour='project-analysis-canvas-status']",
-        placement: "bottom",
-        floaterProps: {
-          options: { offset: [0, 12] },
-        } as any,
-        title: "Results",
-        content:
-          "All 4 devices are shown as passed with two rules: PIN1 Orientation and Greyscale Pattern Matching.",
-        autoMs: 7500,
-      },
     ],
     [],
   );
