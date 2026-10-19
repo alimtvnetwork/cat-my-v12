@@ -46,6 +46,7 @@ import {
   evaluateTapeStripRules,
   type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import { LEGACY_DEFAULT_UM_PER_PX } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useProjectStore } from "@/lib/projects/store";
 import { markSaved } from "@/lib/editor/store/save-status";
@@ -126,6 +127,8 @@ export function WorkpieceAnalyzeWorkspace({
   const [draftRulesetName, setDraftRulesetName] = useState("");
   const [tapeStripResult, setTapeStripResult] = useState<TapeStripEvaluationResult | null>(null);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
+  /** Microns-per-pixel driving pin pitch + device measurements. */
+  const calibrationUmPerPx = LEGACY_DEFAULT_UM_PER_PX;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const updateProjectInspectionImageRef = useProjectStore((s) => s.updateProjectInspectionImageRef);
 
@@ -284,14 +287,16 @@ export function WorkpieceAnalyzeWorkspace({
   const maskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const isCurrentSelectedInRuleset = ruleset.rules.some((r) => selectedIds.includes(r.id));
+    const isCurrentSelectedInRuleset = (ruleset.rules ?? []).some((r) =>
+      selectedIds.includes(r.id),
+    );
     const targetSelected = isCurrentSelectedInRuleset
       ? selectedIds
-      : ruleset.rules.length > 0
+      : (ruleset.rules ?? []).length > 0
         ? [ruleset.rules[0].id]
         : [];
 
-    useRulesStore.getState().replaceAll(ruleset.rules, targetSelected, []);
+    useRulesStore.getState().replaceAll(ruleset.rules ?? [], targetSelected, []);
 
     if (!isCurrentSelectedInRuleset) {
       setSelectedIds(targetSelected);
@@ -520,6 +525,13 @@ export function WorkpieceAnalyzeWorkspace({
   }, [projectRulesetsForAnalysis, validationRuns]);
   const activeValidationResult = activeRule ? allValidationResults[activeRule.id] : undefined;
 
+  // No auto analysis: the user runs it explicitly via the Analyze button.
+  // Clear the result when the image, the rules, or the camera mode change,
+  // so the canvas never shows stale markings.
+  useEffect(() => {
+    setTapeStripResult(null);
+  }, [isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems]);
+
   const captureLiveCameraFrame = useCallback(async (): Promise<string | null> => {
     const video = liveCameraVideoRef.current;
 
@@ -595,17 +607,20 @@ export function WorkpieceAnalyzeWorkspace({
           ? await captureLiveCameraFrame()
           : project.inspectionImageRef;
         const imgData = activeImageSrc ? await loadWorkpieceImageData(activeImageSrc) : null;
+        let stripRes: TapeStripEvaluationResult | null = null;
 
         if (imgData) {
-          const stripRes = evaluateTapeStripRules(
+          stripRes = await evaluateTapeStripRules(
             projectAnalysisItems.map((item) => item.rule),
             imgData,
+            undefined,
+            calibrationUmPerPx,
           );
           setTapeStripResult(stripRes);
 
           if (stripRes.emptyPockets > 0) {
-            toast.error(
-              `Tape inspection alert: ${stripRes.emptyPockets} empty ${stripRes.emptyPockets === 1 ? "pocket" : "pockets"} detected!`,
+            toast.info(
+              `Tape strip: ${stripRes.emptyPockets} empty ${stripRes.emptyPockets === 1 ? "cavity" : "cavities"} detected. Inspecting present devices...`,
             );
           }
         } else {
@@ -655,7 +670,77 @@ export function WorkpieceAnalyzeWorkspace({
           let ruleResult: ValidationResult;
 
           if (imgData) {
-            ruleResult = evaluateWorkpieceRuleReal(r, imgData);
+            if (stripRes && stripRes.totalPockets > 1) {
+              const occupiedPockets = stripRes.pockets.filter((p) => !p.isEmpty);
+              const pocketResults = occupiedPockets.map((p) => p.ruleResults[r.id]).filter(Boolean);
+              const hasAnyFailed = pocketResults.some(
+                (res) => res.status === ValidationStatusType.Fail,
+              );
+              const isAllPass = pocketResults.length > 0 && !hasAnyFailed;
+              const avgScore =
+                pocketResults.length > 0
+                  ? pocketResults.reduce((acc, curr) => acc + (curr.score ?? 0), 0) /
+                    pocketResults.length
+                  : 1.0;
+
+              const multiDevicePassRegions = occupiedPockets.map((p) => ({
+                label: `Pocket #${p.pocketIndex}`,
+                region: p.region,
+              }));
+
+              const multiDevicePin1 = occupiedPockets
+                .map((p) => {
+                  const pRes = p.ruleResults[r.id];
+                  const hX = pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX;
+                  const hY = pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY;
+
+                  if (typeof hX === "number" && typeof hY === "number") {
+                    return {
+                      x: hX,
+                      y: hY,
+                      centerX: hX,
+                      centerY: hY,
+                      label: `Pocket #${p.pocketIndex}`,
+                      packageRegion: p.region,
+                    };
+                  }
+
+                  return null;
+                })
+                .filter(Boolean);
+
+              const allBoxResults = pocketResults.flatMap(
+                (pRes) => (pRes?.debug?.boxResults ?? []) as any[],
+              );
+              const firstDebug = pocketResults[0]?.debug ?? {};
+              const totalMatchedCount =
+                allBoxResults.length > 0
+                  ? allBoxResults.filter((b) => b.isMatched).length
+                  : firstDebug.matchedCount;
+              const totalBoxCount =
+                allBoxResults.length > 0 ? allBoxResults.length : firstDebug.totalCount;
+
+              ruleResult = {
+                status: isAllPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+                score: Math.round(avgScore * 100) / 100,
+                message: isAllPass
+                  ? `Tape strip inspection: ${occupiedPockets.length}/${occupiedPockets.length} present devices passed "${r.name}".`
+                  : `Tape strip inspection: device defects detected for "${r.name}".`,
+                stub: false,
+                debug: {
+                  ...firstDebug,
+                  boxResults: allBoxResults.length > 0 ? allBoxResults : firstDebug.boxResults,
+                  matchedCount: totalMatchedCount,
+                  totalCount: totalBoxCount,
+                  multiDevicePassRegions,
+                  multiDevicePin1,
+                  occupiedPocketCount: occupiedPockets.length,
+                  totalPocketCount: stripRes.totalPockets,
+                },
+              };
+            } else {
+              ruleResult = evaluateWorkpieceRuleReal(r, imgData);
+            }
           } else {
             ruleResult = {
               status: ValidationStatusType.Fail,
@@ -707,13 +792,20 @@ export function WorkpieceAnalyzeWorkspace({
         }
       } catch (err) {
         console.error("[WorkpieceAnalyzeWorkspace] Analysis error:", err);
-        toast.error("Analysis failed to complete.");
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        toast.error(`Analysis failed to complete: ${errorMessage}`);
       } finally {
         isAnalyzingRef.current = false;
         setIsAnalyzing(false);
       }
     },
-    [captureLiveCameraFrame, isLiveCameraMode, project.inspectionImageRef, projectAnalysisItems],
+    [
+      captureLiveCameraFrame,
+      isLiveCameraMode,
+      project.inspectionImageRef,
+      projectAnalysisItems,
+      calibrationUmPerPx,
+    ],
   );
   const handleManualRunAnalysis = useCallback(() => {
     void handleRunAnalysis(MANUAL_RUN_ANALYSIS_PARAMS);
@@ -932,28 +1024,6 @@ export function WorkpieceAnalyzeWorkspace({
                   onUpdateCameraSettings={handleUpdateRuleCameraSettings}
                   onUpdateLightSettings={handleUpdateRuleLightSettings}
                 />
-
-                {/* Lower part action buttons */}
-                <div className="flex shrink-0 items-center gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    data-tour="project-add-ruleset"
-                    onClick={handleStartAddRuleset}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 px-3 py-1.5 font-sans text-xs font-semibold text-purple-200 transition hover:border-purple-400 hover:bg-purple-900/40 active:scale-95"
-                  >
-                    <Plus size={13} />
-                    <span>Add Ruleset</span>
-                  </button>
-                  <button
-                    type="button"
-                    data-tour="project-add-rule"
-                    onClick={() => handleNavigateAddRule()}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.4)] bg-[oklch(0.76_0.145_210/0.12)] px-3 py-1.5 font-sans text-xs font-semibold text-[oklch(0.76_0.145_210)] transition hover:border-[oklch(0.76_0.145_210)] hover:bg-[oklch(0.76_0.145_210/0.2)] active:scale-95"
-                  >
-                    <Plus size={13} />
-                    <span>Add Rule</span>
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="min-h-0 flex-1 overflow-y-auto">
@@ -1019,7 +1089,7 @@ export function WorkpieceAnalyzeWorkspace({
                     <span className="font-sans text-[10px] font-semibold uppercase tracking-wider text-white/50">
                       Sample Carrier Pockets
                     </span>
-                    <div className="grid grid-cols-2 gap-1.5">
+                    <div className="grid grid-cols-3 gap-1">
                       <button
                         type="button"
                         onClick={() => {
@@ -1029,13 +1099,13 @@ export function WorkpieceAnalyzeWorkspace({
                           );
                           toast.info("Loaded Carrier Pocket 1 [Filled IC]");
                         }}
-                        className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
                           project.inspectionImageRef === "/src/assets/samples/pocket-1-filled.jpg"
                             ? "border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
                             : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                         }`}
                       >
-                        Pocket 1 [Filled]
+                        Pocket 1
                       </button>
                       <button
                         type="button"
@@ -1046,14 +1116,31 @@ export function WorkpieceAnalyzeWorkspace({
                           );
                           toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
                         }}
-                        className={`rounded-md border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
                           project.inspectionImageRef ===
                           "/src/assets/samples/pocket-2-empty-mixed.jpg"
                             ? "border-amber-400/50 bg-amber-500/20 text-amber-200"
                             : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                         }`}
                       >
-                        Pocket 2 [Empty Defect]
+                        Pocket 2
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateProjectInspectionImageRef(
+                            project.id,
+                            "/src/assets/samples/pocket-5-partial.jpg",
+                          );
+                          toast.info("Loaded Carrier Tape Strip [5 Pockets]");
+                        }}
+                        className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                          project.inspectionImageRef === "/src/assets/samples/pocket-5-partial.jpg"
+                            ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
+                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                        }`}
+                      >
+                        Pocket 5 [Strip]
                       </button>
                     </div>
                   </div>

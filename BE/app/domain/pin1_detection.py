@@ -69,6 +69,8 @@ class Pin1Result:
     deltaY: int
     deltaDistance: float
     executionTimeMs: float
+    angleDegrees: float = 0.0
+    deltaAngleDegrees: float = 0.0
 
 
 @dataclass
@@ -302,7 +304,106 @@ def _candidate(
     )
 
 
+def _detect_holes_cv2(
+    rgba: bytes,
+    width: int,
+    height: int,
+    opts: Pin1Options,
+) -> tuple[Pin1Hole, ...]:
+    import cv2
+    import numpy as np
+
+    arr = np.frombuffer(rgba, dtype=np.uint8).reshape((height, width, BYTES_PER_RGBA_PIXEL))
+    start_x, start_y, end_x, end_y = _bounds(width, height, opts.search_region)
+    roi_bgr = arr[start_y:end_y, start_x:end_x, :3]
+    gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
+
+    mean_luma = float(np.mean(gray)) if gray.size > 0 else 50.0
+    threshold = opts.threshold_luma
+
+    if opts.polarity == "DarkIndentation" and threshold >= mean_luma:
+        threshold = max(15, round(mean_luma * 0.75))
+
+    thresh_type = cv2.THRESH_BINARY if opts.polarity == "LightDot" else cv2.THRESH_BINARY_INV
+    _, binary = cv2.threshold(gray, threshold, 255, thresh_type)
+
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    holes: list[Pin1Hole] = []
+    region_w = max(1, end_x - start_x)
+    region_h = max(1, end_y - start_y)
+    next_id = 1
+
+    for c in contours:
+        area = cv2.contourArea(c)
+
+        if area < math.pi * (opts.min_radius_px ** 2) * 0.4 or area > math.pi * (opts.max_radius_px ** 2) * 1.8:
+            continue
+
+        perimeter = cv2.arcLength(c, True)
+
+        if perimeter <= 0:
+            continue
+
+        circularity_raw = (4.0 * math.pi * area) / (perimeter * perimeter)
+        circularity = max(0, min(100, round(circularity_raw * 100)))
+
+        if len(c) >= 5:
+            _, (axis_w, axis_h), _ = cv2.fitEllipse(c)
+            minor_axis, major_axis = min(axis_w, axis_h), max(axis_w, axis_h)
+            ellipse_ratio = minor_axis / max(1e-3, major_axis)
+
+            if ellipse_ratio >= 0.45:
+                circularity = max(circularity, round(ellipse_ratio * 100))
+
+        if circularity < opts.min_circularity_percent:
+            continue
+
+        m = cv2.moments(c)
+
+        if m["m00"] == 0:
+            continue
+
+        local_cx = m["m10"] / m["m00"]
+        local_cy = m["m01"] / m["m00"]
+        global_cx = round(start_x + local_cx)
+        global_cy = round(start_y + local_cy)
+        radius = math.sqrt(area / math.pi)
+
+        mask = np.zeros(gray.shape, dtype=np.uint8)
+        cv2.drawContours(mask, [c], -1, 255, -1)
+        mean_val = float(cv2.mean(gray, mask=mask)[0])
+
+        hole = Pin1Hole(
+            id=next_id,
+            centerX=global_cx,
+            centerY=global_cy,
+            radius=round(radius, 1),
+            diameter=round(radius * 2, 1),
+            circularity=circularity,
+            areaPx=int(area),
+            meanLuma=round(mean_val),
+            isKept=True,
+            isPrimaryPin1=False,
+            relativeX=round(((global_cx - start_x) / region_w) * 1000) / 10,
+            relativeY=round(((global_cy - start_y) / region_h) * 1000) / 10,
+        )
+        holes.append(hole)
+        next_id += 1
+
+    holes.sort(key=_hole_rank)
+
+    if holes:
+        holes[0] = Pin1Hole(**{**holes[0].__dict__, "isPrimaryPin1": True})
+
+    return tuple(holes)
+
+
 def _detect_holes(rgba: bytes, width: int, height: int, opts: Pin1Options) -> tuple[Pin1Hole, ...]:
+    try:
+        return _detect_holes_cv2(rgba, width, height, opts)
+    except Exception:
+        pass
+
     binary, lumas, bounds = _binary_grid(rgba, width, height, opts)
     start_x, start_y, end_x, end_y = bounds
     visited = bytearray(width * height)
@@ -370,6 +471,8 @@ def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Resul
             deltaY=0,
             deltaDistance=0,
             executionTimeMs=0,
+            angleDegrees=0.0,
+            deltaAngleDegrees=0.0,
         )
 
     expected_x, expected_y = registered
@@ -388,6 +491,23 @@ def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Resul
 
     has_match = best is not None
     has_pass = has_match and best_distance <= opts.tolerance_px
+
+    angle_deg = 0.0
+    delta_angle = 0.0
+
+    if best is not None and opts.package_region is not None:
+        pkg_cx = opts.package_region.x + opts.package_region.width / 2.0
+        pkg_cy = opts.package_region.y + opts.package_region.height / 2.0
+        angle_deg = round((math.degrees(math.atan2(best.centerY - pkg_cy, best.centerX - pkg_cx)) + 360) % 360, 1)
+
+        expected_angle = (math.degrees(math.atan2(expected_y - pkg_cy, expected_x - pkg_cx)) + 360) % 360
+        raw_diff = abs(angle_deg - expected_angle)
+        delta_angle = round(360.0 - raw_diff if raw_diff > 180.0 else raw_diff, 1)
+
+        # Flag misorientation if angle error exceeds angular tolerance
+        if delta_angle > max(5.0, opts.angle_tolerance_deg * 3.0):
+            has_pass = False
+
     status: Pin1Status = "Passed" if has_pass else "Misoriented" if has_match else "Missing"
 
     return Pin1Result(
@@ -402,5 +522,8 @@ def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Resul
         deltaY=best.centerY - expected_y if best is not None else 0,
         deltaDistance=round(best_distance, 1) if best is not None else 0,
         executionTimeMs=0,
+        angleDegrees=angle_deg,
+        deltaAngleDegrees=delta_angle,
     )
+
 

@@ -209,6 +209,8 @@ export function StandardInspectionToolDispatcher(
   // 13. OCR2
   if (
     normalized.includes("ocr") ||
+    normalized.includes("t106") ||
+    normalized.includes("t114") ||
     normalized.includes("text") ||
     normalized.includes("font") ||
     normalized.includes("char") ||

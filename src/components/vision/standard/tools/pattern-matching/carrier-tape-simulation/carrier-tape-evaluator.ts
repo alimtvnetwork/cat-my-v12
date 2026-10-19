@@ -2,6 +2,7 @@ import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxe
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
+  PinGapMeasurement,
   PinPitchMeasurement,
   PixelBufferInput,
   PocketDef,
@@ -15,6 +16,9 @@ import type {
 export const RULE_1_NAME = "Rule 1: Pin 1 Orientation Rule";
 export const RULE_2_NAME = "Rule 2: greyscale-pattern-match-24-box";
 
+/** Default microns-per-pixel used for measurements (no calibration step). */
+export const LEGACY_DEFAULT_UM_PER_PX = 108.7;
+
 const FALLBACK_CHIP_CENTER_X = 68.0;
 const FALLBACK_CHIP_CENTER_Y = 76.0;
 const FALLBACK_MARKING_WIDTH = 58.0;
@@ -24,26 +28,26 @@ const FALLBACK_MARKING_HEIGHT = 44.0;
 const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedLuma: number }[] = [
   // Row 1: "MEGA32U4"
   { relX: -0.42, relY: -0.28, expectedLuma: 87 },
-  { relX: -0.30, relY: -0.28, expectedLuma: 97 },
+  { relX: -0.3, relY: -0.28, expectedLuma: 97 },
   { relX: -0.18, relY: -0.28, expectedLuma: 82 },
   { relX: -0.06, relY: -0.28, expectedLuma: 52 },
   { relX: 0.06, relY: -0.28, expectedLuma: 40 },
   { relX: 0.18, relY: -0.28, expectedLuma: 41 },
-  { relX: 0.30, relY: -0.28, expectedLuma: 55 },
+  { relX: 0.3, relY: -0.28, expectedLuma: 55 },
   { relX: 0.42, relY: -0.28, expectedLuma: 50 },
 
   // Row 2: "-AU"
   { relX: -0.35, relY: -0.08, expectedLuma: 79 },
-  { relX: -0.20, relY: -0.08, expectedLuma: 101 },
+  { relX: -0.2, relY: -0.08, expectedLuma: 101 },
   { relX: -0.05, relY: -0.08, expectedLuma: 89 },
-  { relX: 0.10, relY: -0.08, expectedLuma: 32 },
+  { relX: 0.1, relY: -0.08, expectedLuma: 32 },
 
   // Row 3: "1035E KR"
   { relX: -0.38, relY: 0.12, expectedLuma: 50 },
   { relX: -0.26, relY: 0.12, expectedLuma: 35 },
   { relX: -0.14, relY: 0.12, expectedLuma: 31 },
   { relX: -0.02, relY: 0.12, expectedLuma: 34 },
-  { relX: 0.10, relY: 0.12, expectedLuma: 36 },
+  { relX: 0.1, relY: 0.12, expectedLuma: 36 },
   { relX: 0.22, relY: 0.12, expectedLuma: 45 },
   { relX: 0.34, relY: 0.12, expectedLuma: 28 },
 
@@ -52,7 +56,7 @@ const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedL
   { relX: -0.22, relY: 0.32, expectedLuma: 48 },
   { relX: -0.08, relY: 0.32, expectedLuma: 27 },
   { relX: 0.06, relY: 0.32, expectedLuma: 37 },
-  { relX: 0.20, relY: 0.32, expectedLuma: 39 },
+  { relX: 0.2, relY: 0.32, expectedLuma: 39 },
 ];
 
 export function evaluatePocket(
@@ -82,9 +86,10 @@ export function evaluatePocket(
   }
 
   // Step 2: Occupied Pocket -> Evaluate Rule 1: Pin 1 Orientation Rule
-  const rule1 = isRealPixelActive && pixelBuffer
-    ? analyzeRule1Pin1Real(pixelBuffer, tolerances)
-    : evaluateRule1Pin1Synthetic(pocket, tolerances);
+  const rule1 =
+    isRealPixelActive && pixelBuffer
+      ? analyzeRule1Pin1Real(pixelBuffer, tolerances)
+      : evaluateRule1Pin1Synthetic(pocket, tolerances);
 
   // Short-circuiting: If Rule 1 fails, do NOT evaluate Rule 2 (greyscale-pattern-match-24-box)!
   if (!rule1.isPass) {
@@ -114,9 +119,10 @@ export function evaluatePocket(
   }
 
   // Step 3: Rule 1 passed -> Evaluate Rule 2: greyscale-pattern-match-24-box
-  const rule2 = isRealPixelActive && pixelBuffer
-    ? analyzeRule2PatternReal(pixelBuffer, tolerances)
-    : evaluateRule2PatternSynthetic(pocket, tolerances);
+  const rule2 =
+    isRealPixelActive && pixelBuffer
+      ? analyzeRule2PatternReal(pixelBuffer, tolerances)
+      : evaluateRule2PatternSynthetic(pocket, tolerances);
 
   if (!rule2.isPass) {
     return {
@@ -211,7 +217,13 @@ export function analyzeRule1Pin1Real(
     { name: "bottom-right", targetX: 95.0, targetY: 104.0, expectedAngle: 46.0 },
   ];
 
-  let bestHole: { x: number; y: number; quadrant: string; depthContrast: number; luma: number } | null = null;
+  let bestHole: {
+    x: number;
+    y: number;
+    quadrant: string;
+    depthContrast: number;
+    luma: number;
+  } | null = null;
   let minCoreLuma = Number.POSITIVE_INFINITY;
 
   for (const q of quadrantCenters) {
@@ -310,7 +322,7 @@ export function analyzeRule1Pin1Real(
   const deltaY = bestHole.y - centerY;
   const rawAngleDeg = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
 
-  let angleDevDeg = rawAngleDeg - (-134.0);
+  let angleDevDeg = rawAngleDeg - -134.0;
 
   while (angleDevDeg > 180) {
     angleDevDeg -= 360;
@@ -405,24 +417,28 @@ export function analyzeRule2PatternReal(
   const measuredDevice = measureDeviceEdges(buffer);
   const isMeasuredDeviceUsable = Boolean(
     measuredDevice &&
-      measuredDevice.widthPx >= width * 0.55 &&
-      measuredDevice.widthPx <= width * 0.95 &&
-      measuredDevice.heightPx >= height * 0.45 &&
-      measuredDevice.heightPx <= height * 0.95 &&
-      measuredDevice.leftEdgePx <= width * 0.25,
+    measuredDevice.widthPx >= width * 0.55 &&
+    measuredDevice.widthPx <= width * 0.95 &&
+    measuredDevice.heightPx >= height * 0.45 &&
+    measuredDevice.heightPx <= height * 0.95 &&
+    measuredDevice.leftEdgePx <= width * 0.25,
   );
-  const chipCenterX = isMeasuredDeviceUsable && measuredDevice
-    ? measuredDevice.leftEdgePx + measuredDevice.widthPx / 2
-    : FALLBACK_CHIP_CENTER_X;
-  const chipCenterY = isMeasuredDeviceUsable && measuredDevice
-    ? measuredDevice.topEdgePx + measuredDevice.heightPx / 2
-    : FALLBACK_CHIP_CENTER_Y;
-  const markingWidth = isMeasuredDeviceUsable && measuredDevice
-    ? Math.max(48, Math.min(64, measuredDevice.widthPx * 0.52))
-    : FALLBACK_MARKING_WIDTH;
-  const markingHeight = isMeasuredDeviceUsable && measuredDevice
-    ? Math.max(34, Math.min(48, measuredDevice.heightPx * 0.44))
-    : FALLBACK_MARKING_HEIGHT;
+  const chipCenterX =
+    isMeasuredDeviceUsable && measuredDevice
+      ? measuredDevice.leftEdgePx + measuredDevice.widthPx / 2
+      : FALLBACK_CHIP_CENTER_X;
+  const chipCenterY =
+    isMeasuredDeviceUsable && measuredDevice
+      ? measuredDevice.topEdgePx + measuredDevice.heightPx / 2
+      : FALLBACK_CHIP_CENTER_Y;
+  const markingWidth =
+    isMeasuredDeviceUsable && measuredDevice
+      ? Math.max(48, Math.min(64, measuredDevice.widthPx * 0.52))
+      : FALLBACK_MARKING_WIDTH;
+  const markingHeight =
+    isMeasuredDeviceUsable && measuredDevice
+      ? Math.max(34, Math.min(48, measuredDevice.heightPx * 0.44))
+      : FALLBACK_MARKING_HEIGHT;
   const boxOriginX = chipCenterX - markingWidth / 2;
   const boxOriginY = chipCenterY - markingHeight / 2;
   const chipScaleX = markingWidth / 100.0;
@@ -457,7 +473,8 @@ export function analyzeRule2PatternReal(
     const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
     const diff = Math.abs(measuredLuma - expectedLuma);
     const localContrast = measureLocalContrast(buffer, boxX, boxY, boxW, boxH);
-    const isMatched = (diff <= toleranceLuma || Math.abs(localContrast) >= minContrast) && measuredLuma > 18;
+    const isMatched =
+      (diff <= toleranceLuma || Math.abs(localContrast) >= minContrast) && measuredLuma > 18;
 
     if (isMatched) {
       matchedCount += 1;
@@ -686,10 +703,10 @@ function evaluateRule2PatternSynthetic(
 // ---------------------------------------------------------
 // Calibration: Micron Per Pixel
 // ---------------------------------------------------------
-// QFP-44 Atmel MEGA32U4: 10mm × 10mm real-world body size.
-// At the camera's working distance, this maps to ~92px in our images.
-// Calibration: 10000 μm / 92 px ≈ 108.7 μm/px
-const MICRONS_PER_PIXEL = 108.7;
+// The active calibration (from the Vision Calibration panel) supplies um/px.
+// LEGACY_DEFAULT_UM_PER_PX is the old hardcoded value (QFP-44 Atmel MEGA32U4:
+// 10mm x 10mm body ≈ 92px → 10000 um / 92 px ≈ 108.7 um/px), kept only as a
+// fallback when no calibration record exists yet.
 
 /**
  * Real edge-detection device measurement from actual pixel data.
@@ -704,6 +721,7 @@ const MICRONS_PER_PIXEL = 108.7;
  */
 export function measureDeviceEdges(
   pixelBuffer: PixelBufferInput,
+  umPerPx: number = LEGACY_DEFAULT_UM_PER_PX,
 ): DeviceMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -711,103 +729,117 @@ export function measureDeviceEdges(
     return null;
   }
 
-  const gradientThreshold = 10;
-  const scanBandRatio = 0.5;
+  const lumaAt = (x: number, y: number): number => {
+    const idx = (y * width + x) * 4;
 
-  // --- Horizontal edge detection (left/right device edges) ---
-  const hCenterStart = Math.floor(height * (0.5 - scanBandRatio / 2));
-  const hCenterEnd = Math.floor(height * (0.5 + scanBandRatio / 2));
-  const leftEdges: number[] = [];
-  const rightEdges: number[] = [];
+    return rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
+  };
 
-  for (let row = hCenterStart; row < hCenterEnd; row += 1) {
-    const rowOffset = row * width * 4;
+  // --- Chip body detection via dark-region flood fill ---
+  // The body is the large central dark rectangle. White silkscreen markings
+  // sit on top of it, so gradient scans hit the markings first. Instead,
+  // flood-fill the dark region containing the body's darkest central pixel:
+  // markings are just holes inside the region and cannot break the fill,
+  // while the brighter pocket floor, walls and pins stay outside it.
+  const cx0 = Math.floor(width * 0.3);
+  const cx1 = Math.floor(width * 0.7);
+  const cy0 = Math.floor(height * 0.3);
+  const cy1 = Math.floor(height * 0.7);
+  const centerSamples: number[] = [];
 
-    // Scan left → right for first strong gradient (left edge)
-    for (let x = 1; x < width - 1; x += 1) {
-      const idx = rowOffset + x * 4;
-      const prevIdx = rowOffset + (x - 1) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const prevLuma = rgba[prevIdx] * 0.299 + rgba[prevIdx + 1] * 0.587 + rgba[prevIdx + 2] * 0.114;
-      const grad = Math.abs(luma - prevLuma);
-
-      if (grad >= gradientThreshold) {
-        leftEdges.push(x);
-
-        break;
-      }
+  for (let y = cy0; y < cy1; y += 2) {
+    for (let x = cx0; x < cx1; x += 2) {
+      centerSamples.push(lumaAt(x, y));
     }
+  }
 
-    // Scan right → left for first strong gradient (right edge)
-    for (let x = width - 2; x > 0; x -= 1) {
-      const idx = rowOffset + x * 4;
-      const nextIdx = rowOffset + (x + 1) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const nextLuma = rgba[nextIdx] * 0.299 + rgba[nextIdx + 1] * 0.587 + rgba[nextIdx + 2] * 0.114;
-      const grad = Math.abs(luma - nextLuma);
+  centerSamples.sort((a, b) => a - b);
+  // 30th percentile resists white markings covering much of the center
+  const bodyLuma = centerSamples[Math.floor(centerSamples.length * 0.3)] ?? 40;
+  const darkLimit = bodyLuma + 20;
 
-      if (grad >= gradientThreshold) {
-        rightEdges.push(x);
+  // Darkest pixel in the central window as the flood seed
+  let seedX = Math.floor(width / 2);
+  let seedY = Math.floor(height / 2);
+  let seedLuma = Infinity;
 
-        break;
+  for (let y = cy0; y < cy1; y += 3) {
+    for (let x = cx0; x < cx1; x += 3) {
+      const luma = lumaAt(x, y);
+
+      if (luma < seedLuma) {
+        seedLuma = luma;
+        seedX = x;
+        seedY = y;
       }
     }
   }
 
-  // --- Vertical edge detection (top/bottom device edges) ---
-  const vCenterStart = Math.floor(width * (0.5 - scanBandRatio / 2));
-  const vCenterEnd = Math.floor(width * (0.5 + scanBandRatio / 2));
-  const topEdges: number[] = [];
-  const bottomEdges: number[] = [];
-
-  for (let col = vCenterStart; col < vCenterEnd; col += 1) {
-    // Scan top → bottom for first strong gradient (top edge)
-    for (let y = 1; y < height - 1; y += 1) {
-      const idx = (y * width + col) * 4;
-      const prevIdx = ((y - 1) * width + col) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const prevLuma = rgba[prevIdx] * 0.299 + rgba[prevIdx + 1] * 0.587 + rgba[prevIdx + 2] * 0.114;
-      const grad = Math.abs(luma - prevLuma);
-
-      if (grad >= gradientThreshold) {
-        topEdges.push(y);
-
-        break;
-      }
-    }
-
-    // Scan bottom → top for first strong gradient (bottom edge)
-    for (let y = height - 2; y > 0; y -= 1) {
-      const idx = (y * width + col) * 4;
-      const nextIdx = ((y + 1) * width + col) * 4;
-      const luma = rgba[idx] * 0.299 + rgba[idx + 1] * 0.587 + rgba[idx + 2] * 0.114;
-      const nextLuma = rgba[nextIdx] * 0.299 + rgba[nextIdx + 1] * 0.587 + rgba[nextIdx + 2] * 0.114;
-      const grad = Math.abs(luma - nextLuma);
-
-      if (grad >= gradientThreshold) {
-        bottomEdges.push(y);
-
-        break;
-      }
-    }
-  }
-
-  // Need enough edge samples for a reliable median
-  if (leftEdges.length < 2 || rightEdges.length < 2 || topEdges.length < 2 || bottomEdges.length < 2) {
+  if (seedLuma > darkLimit) {
     return null;
   }
 
-  // Median filter for noise robustness
-  const median = (arr: number[]): number => {
-    const sorted = [...arr].sort((a, b) => a - b);
+  const visited = new Uint8Array(width * height);
+  const stack: number[] = [seedY * width + seedX];
+  visited[seedY * width + seedX] = 1;
+  let minX = seedX;
+  let maxX = seedX;
+  let minY = seedY;
+  let maxY = seedY;
 
-    return sorted[Math.floor(sorted.length / 2)];
+  const tryVisit = (x: number, y: number): void => {
+    const idx = y * width + x;
+
+    if (visited[idx] === 1 || lumaAt(x, y) > darkLimit) {
+      return;
+    }
+
+    visited[idx] = 1;
+    stack.push(idx);
+
+    if (x < minX) {
+      minX = x;
+    }
+
+    if (x > maxX) {
+      maxX = x;
+    }
+
+    if (y < minY) {
+      minY = y;
+    }
+
+    if (y > maxY) {
+      maxY = y;
+    }
   };
 
-  const leftEdgePx = median(leftEdges);
-  const rightEdgePx = median(rightEdges);
-  const topEdgePx = median(topEdges);
-  const bottomEdgePx = median(bottomEdges);
+  while (stack.length > 0) {
+    const idx = stack.pop() as number;
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+
+    if (x > 0) {
+      tryVisit(x - 1, y);
+    }
+
+    if (x < width - 1) {
+      tryVisit(x + 1, y);
+    }
+
+    if (y > 0) {
+      tryVisit(x, y - 1);
+    }
+
+    if (y < height - 1) {
+      tryVisit(x, y + 1);
+    }
+  }
+
+  const leftEdgePx = minX;
+  const rightEdgePx = maxX;
+  const topEdgePx = minY;
+  const bottomEdgePx = maxY;
 
   const widthPx = Math.max(0, rightEdgePx - leftEdgePx);
   const heightPx = Math.max(0, bottomEdgePx - topEdgePx);
@@ -817,14 +849,28 @@ export function measureDeviceEdges(
     return null;
   }
 
-  const widthMm = (widthPx * MICRONS_PER_PIXEL) / 1000;
-  const heightMm = (heightPx * MICRONS_PER_PIXEL) / 1000;
+  const widthMm = (widthPx * umPerPx) / 1000;
+  const heightMm = (heightPx * umPerPx) / 1000;
 
   // Measure edge pitch — try bottom edge first, fallback to right edge
-  let pinPitch = measurePinPitchHorizontal(pixelBuffer, leftEdgePx, rightEdgePx, bottomEdgePx, "bottom");
+  let pinPitch = measurePinPitchHorizontal(
+    pixelBuffer,
+    leftEdgePx,
+    rightEdgePx,
+    bottomEdgePx,
+    "bottom",
+    umPerPx,
+  );
 
   if (!pinPitch) {
-    pinPitch = measurePinPitchVertical(pixelBuffer, topEdgePx, bottomEdgePx, rightEdgePx, "right");
+    pinPitch = measurePinPitchVertical(
+      pixelBuffer,
+      topEdgePx,
+      bottomEdgePx,
+      rightEdgePx,
+      "right",
+      umPerPx,
+    );
   }
 
   return {
@@ -832,11 +878,13 @@ export function measureDeviceEdges(
     heightPx,
     widthMm,
     heightMm,
+    widthUm: Math.round(widthPx * umPerPx * 10) / 10,
+    heightUm: Math.round(heightPx * umPerPx * 10) / 10,
     leftEdgePx,
     rightEdgePx,
     topEdgePx,
     bottomEdgePx,
-    micronsPerPixel: MICRONS_PER_PIXEL,
+    micronsPerPixel: umPerPx,
     pinPitch,
   };
 }
@@ -855,12 +903,97 @@ export function measureDeviceEdges(
  *   5. Compute center-to-center distances between consecutive pins.
  *   6. Median-filter the pitch values and convert to mm.
  */
-function measurePinPitchHorizontal(
+interface PinSpan {
+  start: number;
+  end: number;
+}
+
+/** Minimum brightness range across the scan band for pins to be distinguishable. */
+const MIN_PIN_CONTRAST_LUMA = 20;
+
+/** A gap smaller than this fraction of the median gap means a split pin. */
+const SPLIT_PIN_GAP_FRACTION = 0.45;
+
+/** A pin narrower than this fraction of the median pin width is noise. */
+const NOISE_PIN_WIDTH_FRACTION = 0.4;
+
+interface HardenPinSpansOptions {
+  minSpanWidthPx: number;
+  clipStart: number;
+  clipEnd: number;
+}
+
+/**
+ * Hardens raw pin-span detections: drops spans clipped by the scan
+ * boundaries and narrow noise spans, and merges spans that are really one
+ * pin split by a reflection or shadow (revealed by a gap far smaller than
+ * the typical inter-pin gap).
+ */
+function hardenPinSpans(spans: PinSpan[], options: HardenPinSpansOptions): PinSpan[] {
+  const { minSpanWidthPx, clipStart, clipEnd } = options;
+
+  let current = spans.filter(
+    (s) => s.end - s.start >= minSpanWidthPx && s.start > clipStart + 1 && s.end < clipEnd - 1,
+  );
+
+  if (current.length < 2) {
+    return current;
+  }
+
+  // Merge split pins: repeat until no gap looks like an intra-pin split.
+  let merged = true;
+
+  while (merged && current.length > 2) {
+    merged = false;
+    const gaps: number[] = [];
+
+    for (let i = 1; i < current.length; i += 1) {
+      gaps.push(Math.max(0, current[i].start - current[i - 1].end));
+    }
+
+    const sorted = [...gaps].sort((a, b) => a - b);
+    const medianGap = sorted[Math.floor(sorted.length / 2)];
+
+    if (medianGap <= 0) {
+      break;
+    }
+
+    const splitIndex = gaps.findIndex((g) => g < medianGap * SPLIT_PIN_GAP_FRACTION);
+
+    if (splitIndex !== -1) {
+      const mergedSpan = {
+        start: current[splitIndex].start,
+        end: current[splitIndex + 1].end,
+      };
+
+      current = [...current.slice(0, splitIndex), mergedSpan, ...current.slice(splitIndex + 2)];
+      merged = true;
+    }
+  }
+
+  // Drop narrow noise spans — a real pin array has near-uniform pin widths.
+  if (current.length >= 3) {
+    const widths = current.map((s) => s.end - s.start).sort((a, b) => a - b);
+    const medianWidth = widths[Math.floor(widths.length / 2)];
+    const filtered = current.filter(
+      (s) => s.end - s.start >= medianWidth * NOISE_PIN_WIDTH_FRACTION,
+    );
+
+    if (filtered.length >= 2) {
+      current = filtered;
+    }
+  }
+
+  return current;
+}
+
+export function measurePinPitchHorizontal(
   pixelBuffer: PixelBufferInput,
   leftEdgePx: number,
   rightEdgePx: number,
   bottomEdgePx: number,
   side: "bottom" | "top",
+  umPerPx: number,
 ): PinPitchMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -906,40 +1039,60 @@ function measurePinPitchHorizontal(
   const meanLuma = totalLuma / colLuma.length;
   const isPin: boolean[] = colLuma.map((l) => l > meanLuma);
 
-  // Step 3: Find pin centers by detecting gap→pin transitions
-  const pinCenters: number[] = [];
-  let pinStart = -1;
+  // Contrast gate: pins must stand out from the background, otherwise the
+  // adaptive threshold invents phantom pins from noise.
+  const lumaRange = Math.max(...colLuma) - Math.min(...colLuma);
+
+  if (lumaRange < MIN_PIN_CONTRAST_LUMA) {
+    return null;
+  }
+
+  // Step 3: Find raw pin spans (in crop coordinates) by detecting gap→pin transitions
+  const rawSpans: PinSpan[] = [];
+  let spanStart = -1;
+
+  const closeSpan = (endExclusive: number): void => {
+    if (spanStart === -1) {
+      return;
+    }
+
+    const spanWidth = endExclusive - spanStart;
+
+    // Filter out noise — real pins are at least 2px wide
+    if (spanWidth >= 2) {
+      rawSpans.push({ start: scanXStart + spanStart, end: scanXStart + endExclusive });
+    }
+
+    spanStart = -1;
+  };
 
   for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinCenter = (pinStart + i - 1) / 2;
-      const pinW = i - pinStart;
-
-      // Filter out noise — real pins are at least 2px wide
-      if (pinW >= 2) {
-        pinCenters.push(pinCenter);
-      }
-
-      pinStart = -1;
+    if (isPin[i] && spanStart === -1) {
+      spanStart = i;
+    } else if (!isPin[i] && spanStart !== -1) {
+      closeSpan(i);
     }
   }
 
   // Handle pin at end of scan
-  if (pinStart !== -1) {
-    const pinCenter = (pinStart + isPin.length - 1) / 2;
-    const pinW = isPin.length - pinStart;
-
-    if (pinW >= 2) {
-      pinCenters.push(pinCenter);
-    }
+  if (spanStart !== -1) {
+    closeSpan(isPin.length);
   }
+
+  // Hardening: drop clipped/noise spans, merge pins split by reflections.
+  const pinSpans = hardenPinSpans(rawSpans, {
+    minSpanWidthPx: 2,
+    clipStart: scanXStart,
+    clipEnd: scanXEnd,
+  });
 
   // Need at least 2 pins for pitch measurement
-  if (pinCenters.length < 2) {
+  if (pinSpans.length < 2) {
     return null;
   }
+
+  const pinCenters = pinSpans.map((s) => (s.start + s.end) / 2);
+  const pinWidths = pinSpans.map((s) => s.end - s.start);
 
   // Step 4: Compute center-to-center pitch between consecutive pins
   const pitches: number[] = [];
@@ -952,47 +1105,49 @@ function measurePinPitchHorizontal(
   const sorted = [...pitches].sort((a, b) => a - b);
   const medianPitch = sorted[Math.floor(sorted.length / 2)];
 
-  // Compute average pin width and gap
-  let totalPinWidth = 0;
-  let pinCount = 0;
-  pinStart = -1;
-
-  for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinW = i - pinStart;
-
-      if (pinW >= 2) {
-        totalPinWidth += pinW;
-        pinCount += 1;
-      }
-
-      pinStart = -1;
-    }
-  }
-
-  const avgPinWidthPx = pinCount > 0 ? totalPinWidth / pinCount : 3;
+  const avgPinWidthPx = pinWidths.reduce((sum, w) => sum + w, 0) / pinWidths.length;
   const gapPx = Math.max(0, medianPitch - avgPinWidthPx);
+
+  // Step 5: Per-gap distances — the empty space between consecutive pins
+  const bandCenterY = (scanYStart + scanYEnd) / 2;
+  const gaps: PinGapMeasurement[] = [];
+
+  for (let i = 1; i < pinSpans.length; i += 1) {
+    const gapStartPx = pinSpans[i - 1].end;
+    const gapEndPx = pinSpans[i].start;
+    const gapWidthPx = Math.max(0, gapEndPx - gapStartPx);
+
+    gaps.push({
+      x1: gapStartPx,
+      y1: bandCenterY,
+      x2: gapEndPx,
+      y2: bandCenterY,
+      gapPx: Math.round(gapWidthPx * 10) / 10,
+      gapMm: Math.round(((gapWidthPx * umPerPx) / 1000) * 100) / 100,
+    });
+  }
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
-    pitchMm: Math.round((medianPitch * MICRONS_PER_PIXEL) / 10) / 100,
+    pitchMm: Math.round((medianPitch * umPerPx) / 10) / 100,
+    pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
-    gapMm: Math.round((gapPx * MICRONS_PER_PIXEL) / 10) / 100,
+    gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
+    gaps,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
-    pinWidthMm: Math.round((avgPinWidthPx * MICRONS_PER_PIXEL) / 10) / 100,
-    detectedPinCount: pinCenters.length,
+    pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
+    detectedPinCount: pinSpans.length,
     measuredSide: side,
   };
 }
 
-function measurePinPitchVertical(
+export function measurePinPitchVertical(
   pixelBuffer: PixelBufferInput,
   topEdgePx: number,
   bottomEdgePx: number,
   rightEdgePx: number,
   side: "right" | "left",
+  umPerPx: number,
 ): PinPitchMeasurement | null {
   const { rgba, width, height } = pixelBuffer;
 
@@ -1034,36 +1189,56 @@ function measurePinPitchVertical(
   const meanLuma = totalLuma / rowLuma.length;
   const isPin: boolean[] = rowLuma.map((l) => l > meanLuma);
 
-  const pinCenters: number[] = [];
-  let pinStart = -1;
+  // Contrast gate: pins must stand out from the background, otherwise the
+  // adaptive threshold invents phantom pins from noise.
+  const lumaRange = Math.max(...rowLuma) - Math.min(...rowLuma);
 
-  for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinCenter = (pinStart + i - 1) / 2;
-      const pinW = i - pinStart;
-
-      if (pinW >= 1) {
-        pinCenters.push(pinCenter);
-      }
-
-      pinStart = -1;
-    }
-  }
-
-  if (pinStart !== -1) {
-    const pinCenter = (pinStart + isPin.length - 1) / 2;
-    const pinW = isPin.length - pinStart;
-
-    if (pinW >= 1) {
-      pinCenters.push(pinCenter);
-    }
-  }
-
-  if (pinCenters.length < 2) {
+  if (lumaRange < MIN_PIN_CONTRAST_LUMA) {
     return null;
   }
+
+  const rawSpans: PinSpan[] = [];
+  let spanStart = -1;
+
+  const closeSpan = (endExclusive: number): void => {
+    if (spanStart === -1) {
+      return;
+    }
+
+    const spanHeight = endExclusive - spanStart;
+
+    if (spanHeight >= 1) {
+      rawSpans.push({ start: scanYStart + spanStart, end: scanYStart + endExclusive });
+    }
+
+    spanStart = -1;
+  };
+
+  for (let i = 0; i < isPin.length; i += 1) {
+    if (isPin[i] && spanStart === -1) {
+      spanStart = i;
+    } else if (!isPin[i] && spanStart !== -1) {
+      closeSpan(i);
+    }
+  }
+
+  if (spanStart !== -1) {
+    closeSpan(isPin.length);
+  }
+
+  // Hardening: drop clipped/noise spans, merge pins split by reflections.
+  const pinSpans = hardenPinSpans(rawSpans, {
+    minSpanWidthPx: 1,
+    clipStart: scanYStart,
+    clipEnd: scanYEnd,
+  });
+
+  if (pinSpans.length < 2) {
+    return null;
+  }
+
+  const pinCenters = pinSpans.map((s) => (s.start + s.end) / 2);
+  const pinWidths = pinSpans.map((s) => s.end - s.start);
 
   const pitches: number[] = [];
 
@@ -1074,36 +1249,37 @@ function measurePinPitchVertical(
   const sorted = [...pitches].sort((a, b) => a - b);
   const medianPitch = sorted[Math.floor(sorted.length / 2)];
 
-  let totalPinWidth = 0;
-  let pinCount = 0;
-  pinStart = -1;
-
-  for (let i = 0; i < isPin.length; i += 1) {
-    if (isPin[i] && pinStart === -1) {
-      pinStart = i;
-    } else if (!isPin[i] && pinStart !== -1) {
-      const pinW = i - pinStart;
-
-      if (pinW >= 1) {
-        totalPinWidth += pinW;
-        pinCount += 1;
-      }
-
-      pinStart = -1;
-    }
-  }
-
-  const avgPinWidthPx = pinCount > 0 ? totalPinWidth / pinCount : 3;
+  const avgPinWidthPx = pinWidths.reduce((sum, w) => sum + w, 0) / pinWidths.length;
   const gapPx = Math.max(0, medianPitch - avgPinWidthPx);
+
+  const bandCenterX = (scanXStart + scanXEnd) / 2;
+  const gaps: PinGapMeasurement[] = [];
+
+  for (let i = 1; i < pinSpans.length; i += 1) {
+    const gapStartPx = pinSpans[i - 1].end;
+    const gapEndPx = pinSpans[i].start;
+    const gapWidthPx = Math.max(0, gapEndPx - gapStartPx);
+
+    gaps.push({
+      x1: bandCenterX,
+      y1: gapStartPx,
+      x2: bandCenterX,
+      y2: gapEndPx,
+      gapPx: Math.round(gapWidthPx * 10) / 10,
+      gapMm: Math.round(((gapWidthPx * umPerPx) / 1000) * 100) / 100,
+    });
+  }
 
   return {
     pitchPx: Math.round(medianPitch * 10) / 10,
-    pitchMm: Math.round((medianPitch * MICRONS_PER_PIXEL) / 10) / 100,
+    pitchMm: Math.round((medianPitch * umPerPx) / 10) / 100,
+    pitchUm: Math.round(medianPitch * umPerPx * 10) / 10,
     gapPx: Math.round(gapPx * 10) / 10,
-    gapMm: Math.round((gapPx * MICRONS_PER_PIXEL) / 10) / 100,
+    gapMm: Math.round((gapPx * umPerPx) / 10) / 100,
+    gaps,
     pinWidthPx: Math.round(avgPinWidthPx * 10) / 10,
-    pinWidthMm: Math.round((avgPinWidthPx * MICRONS_PER_PIXEL) / 10) / 100,
-    detectedPinCount: pinCenters.length,
+    pinWidthMm: Math.round((avgPinWidthPx * umPerPx) / 10) / 100,
+    detectedPinCount: pinSpans.length,
     measuredSide: side,
   };
 }

@@ -17,12 +17,69 @@ export function StandardCanvas({
   viewModes?: { regions: boolean; results: boolean; grid: boolean };
 }): React.JSX.Element | null {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
-  const [renderImageRef, setRenderImageRef] = useState(settings.imageRef || defaultWorkpieceFilledSample);
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
 
   const zoomFactor = settings.view.zoom / 100;
   const viewport: Viewport = { panX, panY, zoom: zoomFactor };
+
+  const imageRef = settings.imageRef || defaultWorkpieceFilledSample;
+
+  // Load the image via Image object (bypasses <img> tag issues), then draw to canvas.
+  useEffect(() => {
+    if (!imageRef) {
+      setLoadedImage(null);
+
+      return;
+    }
+
+    let cancelled = false;
+    const img = new Image();
+
+    img.onload = () => {
+      if (!cancelled) {
+        setLoadedImage(img);
+      }
+    };
+    img.onerror = () => {
+      if (!cancelled) {
+        setLoadedImage(null);
+      }
+    };
+    img.src = imageRef;
+
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [imageRef]);
+
+  // Draw the loaded image to the canvas.
+  useEffect(() => {
+    const canvas = imageCanvasRef.current;
+
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    const w = IMAGE_BOUNDS.width * zoomFactor;
+    const h = IMAGE_BOUNDS.height * zoomFactor;
+
+    canvas.width = Math.max(1, Math.round(w));
+    canvas.height = Math.max(1, Math.round(h));
+
+    ctx.fillStyle = "#333";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (loadedImage) {
+      ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+    }
+  }, [loadedImage, zoomFactor]);
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -96,12 +153,7 @@ export function StandardCanvas({
   };
 
   const showRegions = viewModes?.regions ?? true;
-  const imageRef = settings.imageRef || defaultWorkpieceFilledSample;
   const hasGrid = viewModes?.grid ?? false;
-
-  useEffect(() => {
-    setRenderImageRef(imageRef);
-  }, [imageRef]);
 
   return (
     <div
@@ -116,20 +168,12 @@ export function StandardCanvas({
           top: panY,
           width: IMAGE_BOUNDS.width * zoomFactor,
           height: IMAGE_BOUNDS.height * zoomFactor,
-          backgroundColor: "#333",
-          backgroundImage: `url("${renderImageRef}")`,
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "100% 100%",
         }}
       >
-        <img
-          key={renderImageRef}
-          src={renderImageRef}
-          alt="Registered reference"
-          draggable={false}
-          onError={() => setRenderImageRef(defaultWorkpieceFilledSample)}
-          className="h-full w-full select-none object-fill opacity-100"
+        <canvas
+          ref={imageCanvasRef}
+          className="h-full w-full select-none"
+          style={{ objectFit: "fill" }}
         />
         {hasGrid ? (
           <div

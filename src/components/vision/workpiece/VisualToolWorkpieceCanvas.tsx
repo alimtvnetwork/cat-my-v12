@@ -843,15 +843,16 @@ function drawTapeStripInspectionHud(
   canvasWidth: number,
   stripResult: TapeStripEvaluationResult,
 ): void {
-  const hudW = 340;
-  const hudH = 38;
+  const hudW = 380;
+  const hudH = 42;
   const hudX = canvasWidth - hudW - 12;
   const hudY = 12;
 
   ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
   ctx.fillRect(hudX, hudY, hudW, hudH);
 
-  const hasEmpty = stripResult.emptyPockets > 0;
+  const emptyCount = stripResult.emptyPockets;
+  const occupiedCount = stripResult.totalPockets - emptyCount;
   const isPass = stripResult.status === "pass";
   const borderColor = isPass ? "#10b981" : "#ef4444";
 
@@ -866,30 +867,28 @@ function drawTapeStripInspectionHud(
 
   if (isPass) {
     ctx.fillStyle = "#10b981";
-    ctx.fillText(
-      `✔ TAPE STRIP: 100% YIELD (${stripResult.passedPockets}/${stripResult.totalPockets} POCKETS)`,
-      hudX + 12,
-      hudY + 16,
-    );
+    const header =
+      emptyCount > 0
+        ? `✔ TAPE STRIP: ${stripResult.passedPockets}/${occupiedCount} PRESENT DEVICES (100% YIELD)`
+        : `✔ TAPE STRIP: 100% YIELD (${stripResult.passedPockets}/${stripResult.totalPockets} POCKETS)`;
+    ctx.fillText(header, hudX + 12, hudY + 16);
     ctx.fillStyle = "#94a3b8";
     ctx.font = "10px sans-serif";
-    ctx.fillText(
-      `All ${stripResult.totalPockets} pockets verified. Zero empty cavities.`,
-      hudX + 12,
-      hudY + 30,
-    );
+    const sub =
+      emptyCount > 0
+        ? `${emptyCount} empty ${emptyCount === 1 ? "cavity" : "cavities"} detected. All present devices verified.`
+        : `All ${stripResult.totalPockets} pockets verified. Zero defect devices.`;
+    ctx.fillText(sub, hudX + 12, hudY + 32);
   } else {
     ctx.fillStyle = "#ef4444";
-    const header = hasEmpty
-      ? `✖ TAPE STRIP: ${stripResult.emptyPockets} EMPTY CAVITY REJECTED`
-      : `✖ TAPE STRIP: ${stripResult.failedPockets} DEFECTIVE POCKETS`;
+    const header = `✖ TAPE STRIP: ${stripResult.failedPockets} DEFECTIVE DEVICES (${stripResult.passedPockets}/${occupiedCount} PASSED)`;
     ctx.fillText(header, hudX + 12, hudY + 16);
     ctx.fillStyle = "#94a3b8";
     ctx.font = "10px sans-serif";
     ctx.fillText(
-      `Yield: ${stripResult.yieldPercent}% (${stripResult.passedPockets}/${stripResult.totalPockets} passed)`,
+      `Yield: ${stripResult.yieldPercent}% · ${emptyCount > 0 ? `${emptyCount} empty cavities, ` : ""}${stripResult.failedPockets} device failures`,
       hudX + 12,
-      hudY + 30,
+      hudY + 32,
     );
   }
 }
@@ -898,30 +897,30 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   const { x, y, width: w, height: h } = pocket.region;
 
   if (pocket.isEmpty) {
-    ctx.strokeStyle = "#ef4444";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = "rgba(245, 158, 11, 0.75)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
     ctx.strokeRect(x, y, w, h);
     ctx.setLineDash([]);
 
-    ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+    ctx.fillStyle = "rgba(245, 158, 11, 0.08)";
     ctx.fillRect(x, y, w, h);
 
-    const badgeW = 140;
+    const badgeW = 150;
     const badgeH = 20;
     const badgeX = x + Math.max(4, Math.round((w - badgeW) / 2));
     const badgeY = y + Math.max(4, Math.round((h - badgeH) / 2));
 
-    ctx.fillStyle = "rgba(239, 68, 68, 0.92)";
+    ctx.fillStyle = "rgba(30, 27, 24, 0.94)";
     ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 1;
     ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 10px monospace";
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "bold 9.5px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`⚠ POCKET #${pocket.pocketIndex}: EMPTY`, badgeX + badgeW / 2, badgeY + 14);
+    ctx.fillText(`⊘ POCKET #${pocket.pocketIndex}: EMPTY CAVITY`, badgeX + badgeW / 2, badgeY + 14);
     ctx.textAlign = "left";
 
     return;
@@ -944,6 +943,107 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   ctx.fillRect(x + 2, y + 2, badgeW, badgeH);
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
+
+  // OCR markings: recognized text per OCR rule, with confidence and verdict.
+  if (pocket.ocrMarkings && pocket.ocrMarkings.length > 0) {
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "left";
+
+    let ocrY = y + 22;
+
+    for (const marking of pocket.ocrMarkings) {
+      const label = `${marking.text || "(no text)"} ${marking.meanConfidence.toFixed(0)}% ${marking.passed ? "✓" : "✗"}`;
+      const labelW = ctx.measureText(label).width + 8;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(x + 2, ocrY, labelW, 12);
+      ctx.fillStyle = marking.passed ? "#a78bfa" : "#ef4444";
+      ctx.fillText(label, x + 6, ocrY + 9);
+
+      ocrY += 14;
+    }
+  }
+
+  // Per-gap distances: a small dimension mark on each inter-pin gap, labeled in mm.
+  if (pocket.pinPitch && pocket.pinPitch.gaps.length > 0) {
+    const gaps = pocket.pinPitch.gaps;
+
+    ctx.font = "bold 7px monospace";
+    ctx.textAlign = "center";
+
+    gaps.forEach((gap, gapIndex) => {
+      const gx1 = x + gap.x1;
+      const gy1 = y + gap.y1;
+      const gx2 = x + gap.x2;
+      const gy2 = y + gap.y2;
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.95)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx1, gy1);
+      ctx.lineTo(gx2, gy2);
+      ctx.stroke();
+
+      const label = `${gap.gapMm.toFixed(2)}mm`;
+      const labelW = ctx.measureText(label).width + 6;
+      const midX = (gx1 + gx2) / 2;
+      const midY = (gy1 + gy2) / 2;
+      // Alternate above / below the gap line so dense pins don't collide.
+      const labelY = gapIndex % 2 === 0 ? midY + 2 : midY - 13;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(midX - labelW / 2, labelY, labelW, 11);
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillText(label, midX, labelY + 8.5);
+    });
+
+    ctx.textAlign = "left";
+  }
+
+  // Chip width: dimension line below the device, width in mm underneath it.
+  if (pocket.deviceMeasurement) {
+    const dm = pocket.deviceMeasurement;
+    const dimX1 = x + dm.leftEdgePx;
+    const dimX2 = x + dm.rightEdgePx;
+    const dimY = y + dm.bottomEdgePx + 12;
+
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX2, dimY);
+    ctx.stroke();
+
+    const arrowLen = 5;
+
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX1 + arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX1 + arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(dimX2, dimY);
+    ctx.lineTo(dimX2 - arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX2 - arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+
+    const widthLabel = `${dm.widthMm.toFixed(2)}mm`;
+
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+
+    const labelW = ctx.measureText(widthLabel).width + 8;
+    const labelX = (dimX1 + dimX2) / 2;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(labelX - labelW / 2, dimY + 3, labelW, 12);
+    ctx.fillStyle = "#facc15";
+    ctx.fillText(widthLabel, labelX, dimY + 12);
+    ctx.textAlign = "left";
+  }
 }
 
 export function VisualToolWorkpieceCanvas({
@@ -1005,21 +1105,21 @@ export function VisualToolWorkpieceCanvas({
 
     const cacheLoadedPixels = (loadedImg: HTMLImageElement) => {
       try {
-        const w = 960;
-        const h = 540;
+        const naturalW = loadedImg.naturalWidth || loadedImg.width || 960;
+        const naturalH = loadedImg.naturalHeight || loadedImg.height || 540;
+        const isSinglePocket = naturalW / naturalH < 0.92;
+        const targetW = isSinglePocket ? 960 : naturalW;
+        const targetH = isSinglePocket ? 540 : naturalH;
         const offCanvas = document.createElement("canvas");
-        offCanvas.width = w;
-        offCanvas.height = h;
+        offCanvas.width = targetW;
+        offCanvas.height = targetH;
         const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
 
         if (offCtx) {
-          // NOTE: kept as a full-frame stretch. The rule set is calibrated
-          // against these stretched cached pixels - letterboxing here flips
-          // pass/fail outcomes (see workpiece-rule-analyzer fixtures).
-          // Unifying display/eval geometry needs a rule re-tuning pass.
-          offCtx.drawImage(loadedImg, 0, 0, w, h);
-          const imgData = offCtx.getImageData(0, 0, w, h);
-          registerWorkpieceImageCache(imgSrc, { width: w, height: h, rgba: imgData.data });
+          offCtx.drawImage(loadedImg, 0, 0, targetW, targetH);
+          const imgData = offCtx.getImageData(0, 0, targetW, targetH);
+
+          registerWorkpieceImageCache(imgSrc, { width: targetW, height: targetH, rgba: imgData.data });
         }
       } catch {
         // Ignored
@@ -1179,29 +1279,26 @@ export function VisualToolWorkpieceCanvas({
         return;
       }
 
-      const w = 960;
-      const h = 540;
+      const naturalW = imageElement.naturalWidth || imageElement.width || 960;
+      const naturalH = imageElement.naturalHeight || imageElement.height || 540;
+      const isSinglePocket = naturalW / naturalH < 0.92;
+      const targetW = isSinglePocket ? 960 : naturalW;
+      const targetH = isSinglePocket ? 540 : naturalH;
       const offscreen = document.createElement("canvas");
-      offscreen.width = w;
-      offscreen.height = h;
+      offscreen.width = targetW;
+      offscreen.height = targetH;
       const offCtx = offscreen.getContext("2d");
 
       if (!offCtx) {
         return;
       }
 
-      const naturalW = imageElement.naturalWidth || imageElement.width || w;
-      const naturalH = imageElement.naturalHeight || imageElement.height || h;
-      const fit = getContainedDimensions(naturalW, naturalH, w, h);
-
-      offCtx.fillStyle = "#000000";
-      offCtx.fillRect(0, 0, w, h);
-      offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
-      const imgData = offCtx.getImageData(0, 0, w, h);
+      offCtx.drawImage(imageElement, 0, 0, targetW, targetH);
+      const imgData = offCtx.getImageData(0, 0, targetW, targetH);
 
       const result = markWhiteBoxes({
-        width: w,
-        height: h,
+        width: targetW,
+        height: targetH,
         rgba: imgData.data,
         whiteThreshold: thresholdLuma,
         searchRegion: roi,
@@ -1262,25 +1359,22 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
-    const w = 960;
-    const h = 540;
+    const naturalW = imageElement.naturalWidth || imageElement.width || 960;
+    const naturalH = imageElement.naturalHeight || imageElement.height || 540;
+    const isSinglePocket = naturalW / naturalH < 0.92;
+    const targetW = isSinglePocket ? 960 : naturalW;
+    const targetH = isSinglePocket ? 540 : naturalH;
     const offscreen = document.createElement("canvas");
-    offscreen.width = w;
-    offscreen.height = h;
+    offscreen.width = targetW;
+    offscreen.height = targetH;
     const offCtx = offscreen.getContext("2d");
 
     if (!offCtx) {
       return;
     }
 
-    const naturalW = imageElement.naturalWidth || imageElement.width || w;
-    const naturalH = imageElement.naturalHeight || imageElement.height || h;
-    const fit = getContainedDimensions(naturalW, naturalH, w, h);
-
-    offCtx.fillStyle = "#000000";
-    offCtx.fillRect(0, 0, w, h);
-    offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
-    const imgData = offCtx.getImageData(0, 0, w, h);
+    offCtx.drawImage(imageElement, 0, 0, targetW, targetH);
+    const imgData = offCtx.getImageData(0, 0, targetW, targetH);
     const updates: Record<string, WhiteBoxMark[]> = {};
 
     for (const r of rulesNeedingDetection) {
@@ -1293,8 +1387,8 @@ export function VisualToolWorkpieceCanvas({
       };
 
       const res = markWhiteBoxes({
-        width: w,
-        height: h,
+        width: targetW,
+        height: targetH,
         rgba: imgData.data,
         whiteThreshold: thresh,
         searchRegion: ruleRegion,
@@ -1345,21 +1439,35 @@ export function VisualToolWorkpieceCanvas({
     const naturalW = imageElement.naturalWidth || imageElement.width || w;
     const naturalH = imageElement.naturalHeight || imageElement.height || h;
     const fit = getContainedDimensions(naturalW, naturalH, w, h);
+    const sourceScaleX = fit.width / naturalW;
+    const sourceScaleY = fit.height / naturalH;
 
     ctx.fillStyle = "#06080d";
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
 
-    if (tapeStripResult && tapeStripResult.totalPockets > 1) {
-      for (const pocket of tapeStripResult.pockets) {
-        drawPocketOverlay(ctx, pocket);
-      }
-    }
-
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
 
+    // Analyze mode keeps the image clean until the user clicks Analyze:
+    // tapeStripResult is only set by an explicit analysis run.
+    if (isAnalyzeMode && !tapeStripResult && rulesToRender.length > 0) {
+      return;
+    }
+
     if (rulesToRender.length === 0) {
+      if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+        ctx.save();
+        ctx.translate(fit.x, fit.y);
+        ctx.scale(sourceScaleX, sourceScaleY);
+
+        for (const pocket of tapeStripResult.pockets) {
+          drawPocketOverlay(ctx, pocket);
+        }
+
+        ctx.restore();
+      }
+
       if (isAnalyzeMode) {
         ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
         ctx.fillRect(w / 2 - 220, h / 2 - 25, 440, 50);
@@ -1447,12 +1555,16 @@ export function VisualToolWorkpieceCanvas({
     } else {
       let totalPassCount = 0;
       let totalFailCount = 0;
-      const sourceScaleX = fit.width / naturalW;
-      const sourceScaleY = fit.height / naturalH;
 
       ctx.save();
       ctx.translate(fit.x, fit.y);
       ctx.scale(sourceScaleX, sourceScaleY);
+
+      if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+        for (const pocket of tapeStripResult.pockets) {
+          drawPocketOverlay(ctx, pocket);
+        }
+      }
 
       for (let idx = 0; idx < rulesToRender.length; idx += 1) {
         const rule = rulesToRender[idx];
@@ -1463,24 +1575,50 @@ export function VisualToolWorkpieceCanvas({
 
         const isSelected = rule.id === selectedRuleId;
         const ruleResult = validationResultsMap?.[rule.id];
-        const status = ruleResult?.status ?? (isSelected ? validationStatus : undefined);
-        const score = ruleResult?.score ?? (isSelected ? validationScore : undefined);
+        const occupiedTapePockets =
+          tapeStripResult && tapeStripResult.totalPockets > 1
+            ? tapeStripResult.pockets.filter((p) => !p.isEmpty)
+            : [];
+        const tapePocketResults = occupiedTapePockets
+          .map((p) => p.ruleResults[rule.id])
+          .filter(Boolean);
+        const hasTapeFail = tapePocketResults.some((res) => res.status === "fail");
+        const tapeRuleStatus =
+          tapePocketResults.length > 0
+            ? hasTapeFail
+              ? "fail"
+              : "pass"
+            : undefined;
+        const tapeRuleScore =
+          tapePocketResults.length > 0
+            ? tapePocketResults.reduce((acc, curr) => acc + (curr.score ?? 0), 0) /
+              tapePocketResults.length
+            : undefined;
 
-        if (isAnalyzeMode && !status) {
+        const effectiveStatus =
+          ruleResult?.status ??
+          tapeRuleStatus ??
+          (isSelected ? validationStatus : undefined);
+        const effectiveScore =
+          ruleResult?.score ??
+          tapeRuleScore ??
+          (isSelected ? validationScore : undefined);
+
+        if (isAnalyzeMode && !effectiveStatus && !isSelected && occupiedTapePockets.length === 0) {
           continue;
         }
 
-        if (status === "pass") {
+        if (effectiveStatus === "pass") {
           totalPassCount += 1;
         }
 
-        if (status === "fail") {
+        if (effectiveStatus === "fail") {
           totalFailCount += 1;
         }
 
-        const isFailed = status === "fail";
-        const isWarn = status === "warn";
-        const isPass = status === "pass";
+        const isFailed = effectiveStatus === "fail";
+        const isWarn = effectiveStatus === "warn";
+        const isPass = effectiveStatus === "pass";
 
         const strokeColor = isFailed
           ? "#ef4444"
@@ -1544,8 +1682,32 @@ export function VisualToolWorkpieceCanvas({
         if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
           const ruleDebug = (ruleResult as any)?.debug;
-          const debugHoleX = ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
-          const debugHoleY = ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
+          const firstPocketRes = occupiedTapePockets[0]?.ruleResults[rule.id];
+          const firstHoleX =
+            firstPocketRes?.debug?.detectedHoleX ??
+            firstPocketRes?.debug?.nominalX;
+          const firstHoleY =
+            firstPocketRes?.debug?.detectedHoleY ??
+            firstPocketRes?.debug?.nominalY;
+
+          const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+            ? ruleDebug.multiDevicePin1
+            : Array.isArray((rule.params as any)?.multiDevicePin1)
+              ? (rule.params as any).multiDevicePin1
+              : [];
+          const firstMarker = multiDevicePin1[0];
+          const markerHoleX = firstMarker?.x ?? firstMarker?.centerX;
+          const markerHoleY = firstMarker?.y ?? firstMarker?.centerY;
+          const debugHoleX =
+            firstHoleX ??
+            markerHoleX ??
+            ruleDebug?.detectedHoleX ??
+            ruleDebug?.nominalX;
+          const debugHoleY =
+            firstHoleY ??
+            markerHoleY ??
+            ruleDebug?.detectedHoleY ??
+            ruleDebug?.nominalY;
           const hX =
             debugHoleX ??
             pinCfg?.centerX ??
@@ -1569,8 +1731,8 @@ export function VisualToolWorkpieceCanvas({
           badgeY,
           rule.name,
           effectiveToolCode,
-          status,
-          score,
+          effectiveStatus,
+          effectiveScore,
           isSelected,
         );
 
@@ -1580,121 +1742,230 @@ export function VisualToolWorkpieceCanvas({
           ruleNameLower.includes("flaw");
 
         if (isRulePattern) {
-          const effectiveRegion: WorkpieceRoi = { x: ruleX, y: ruleY, width: ruleW, height: ruleH };
-          const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
-          const boxResults = (ruleResult as any)?.debug?.boxResults;
-          const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
-          const multiDevicePassRegions = Array.isArray(
-            (ruleResult as any)?.debug?.multiDevicePassRegions,
-          )
-            ? (ruleResult as any).debug.multiDevicePassRegions
-            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
-              ? (rule.params as any).multiDevicePassRegions
-              : [];
-          const ruleBoxes =
-            Array.isArray(boxResults) && boxResults.length > 0
-              ? boxResults.map((br: any) => ({
-                  number: br.boxNumber,
-                  x: br.matchedX ?? br.referenceX,
-                  y: br.matchedY ?? br.referenceY,
-                  width: br.width,
-                  height: br.height,
-                  area: br.width * br.height,
-                }))
-              : ruleBoxesFromParams.length > 0
-                ? ruleBoxesFromParams
-                : isSelected && activeBoxesToDraw.length > 0
-                  ? activeBoxesToDraw
-                  : [];
+          if (occupiedTapePockets.length > 0) {
+            const multiDevicePassRegions = occupiedTapePockets.map((p) => ({
+              label: `Pocket #${p.pocketIndex}`,
+              region: p.region,
+            }));
 
-          drawGreyscaleSimulationPatternOverlay(
-            ctx,
-            effectiveRegion,
-            ruleBoxes,
-            status,
-            score,
-            boxResults,
-            isAnalyzeMode,
-            isSkipped,
-          );
-          drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, status);
+            for (const pocket of occupiedTapePockets) {
+              const pRes = pocket.ruleResults[rule.id];
+              const pStatus = pRes?.status ?? effectiveStatus;
+              const pScore = pRes?.score ?? effectiveScore;
+              const pBoxResults = (pRes as any)?.debug?.boxResults;
+              const pBoxes =
+                Array.isArray(pBoxResults) && pBoxResults.length > 0
+                  ? pBoxResults.map((br: any) => ({
+                      number: br.boxNumber,
+                      label: br.label,
+                      x: br.matchedX ?? br.referenceX,
+                      y: br.matchedY ?? br.referenceY,
+                      width: br.width,
+                      height: br.height,
+                      area: br.width * br.height,
+                    }))
+                  : parseBoxesFromParams(
+                      (pRes as any)?.params ?? rule.params,
+                      pocket.region,
+                    );
+
+              drawGreyscaleSimulationPatternOverlay(
+                ctx,
+                pocket.region,
+                pBoxes,
+                pStatus,
+                pScore,
+                pBoxResults,
+                isAnalyzeMode,
+                false,
+              );
+            }
+
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
+          } else {
+            const effectiveRegion: WorkpieceRoi = { x: ruleX, y: ruleY, width: ruleW, height: ruleH };
+            const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
+            const boxResults = (ruleResult as any)?.debug?.boxResults;
+            const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
+            const multiDevicePassRegions = Array.isArray(
+              (ruleResult as any)?.debug?.multiDevicePassRegions,
+            )
+              ? (ruleResult as any).debug.multiDevicePassRegions
+              : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+                ? (rule.params as any).multiDevicePassRegions
+                : [];
+            const ruleBoxes =
+              Array.isArray(boxResults) && boxResults.length > 0
+                ? boxResults.map((br: any) => ({
+                    number: br.boxNumber,
+                    label: br.label,
+                    x: br.matchedX ?? br.referenceX,
+                    y: br.matchedY ?? br.referenceY,
+                    width: br.width,
+                    height: br.height,
+                    area: br.width * br.height,
+                  }))
+                : ruleBoxesFromParams.length > 0
+                  ? ruleBoxesFromParams
+                  : isSelected && activeBoxesToDraw.length > 0
+                    ? activeBoxesToDraw
+                    : [];
+
+            drawGreyscaleSimulationPatternOverlay(
+              ctx,
+              effectiveRegion,
+              ruleBoxes,
+              effectiveStatus,
+              effectiveScore,
+              boxResults,
+              isAnalyzeMode,
+              isSkipped,
+            );
+
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
+          }
         } else if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
-          const ruleDebug = (ruleResult as any)?.debug;
-          const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
-            ? ruleDebug.multiDevicePin1
-            : Array.isArray((rule.params as any)?.multiDevicePin1)
-              ? (rule.params as any).multiDevicePin1
-              : [];
-          const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
-            ? ruleDebug.multiDevicePassRegions
-            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
-              ? (rule.params as any).multiDevicePassRegions
-              : multiDevicePin1.map((marker: any) => ({
-                  label: marker.label,
-                  region: marker.packageRegion,
-                }));
 
-          if (multiDevicePin1.length > 0) {
-            for (const marker of multiDevicePin1) {
-              const markerX = Number(marker.x ?? marker.centerX);
-              const markerY = Number(marker.y ?? marker.centerY);
-              const markerRadius = Number(marker.radius ?? pinCfg?.radius ?? 11);
+          if (occupiedTapePockets.length > 0) {
+            const multiDevicePassRegions = occupiedTapePockets.map((p) => ({
+              label: `Pocket #${p.pocketIndex}`,
+              region: p.region,
+            }));
 
-              if (!Number.isFinite(markerX) || !Number.isFinite(markerY)) {
-                continue;
+            for (const pocket of occupiedTapePockets) {
+              const pRes = pocket.ruleResults[rule.id];
+              const pStatus = pRes?.status ?? effectiveStatus;
+              const pScore = pRes?.score ?? effectiveScore;
+              const pDebug = pRes?.debug;
+              const holeX = pDebug?.detectedHoleX ?? pDebug?.nominalX;
+              const holeY = pDebug?.detectedHoleY ?? pDebug?.nominalY;
+
+              if (typeof holeX === "number" && typeof holeY === "number") {
+                const markerRoi: WorkpieceRoi = {
+                  x: Math.max(0, Math.round(holeX - 25)),
+                  y: Math.max(0, Math.round(holeY - 25)),
+                  width: 50,
+                  height: 50,
+                };
+                const markerPinCfg = {
+                  ...(pinCfg ?? {}),
+                  centerX: holeX,
+                  centerY: holeY,
+                  radius: pinCfg?.radius ?? 11,
+                  registeredPin1: {
+                    x: holeX,
+                    y: holeY,
+                    centerX: holeX,
+                    centerY: holeY,
+                    radius: pinCfg?.radius ?? 11,
+                  },
+                  packageRegion: pocket.region,
+                };
+                const markerResult = {
+                  status: pStatus,
+                  score: pScore,
+                  debug: {
+                    ...(pDebug ?? {}),
+                    nominalX: holeX,
+                    nominalY: holeY,
+                    detectedHoleX: holeX,
+                    detectedHoleY: holeY,
+                    hasPin1Found: pStatus === "pass",
+                  },
+                } as any;
+
+                drawPin1Reticle(
+                  ctx,
+                  markerRoi,
+                  pStatus,
+                  pScore,
+                  markerPinCfg,
+                  markerResult,
+                  isAnalyzeMode,
+                );
               }
+            }
 
-              const markerRoi: WorkpieceRoi = {
-                x: Math.max(0, Math.round(markerX - 25)),
-                y: Math.max(0, Math.round(markerY - 25)),
-                width: 50,
-                height: 50,
-              };
-              const markerPinCfg = {
-                ...(pinCfg ?? {}),
-                centerX: markerX,
-                centerY: markerY,
-                radius: markerRadius,
-                registeredPin1: {
-                  x: markerX,
-                  y: markerY,
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
+          } else {
+            const ruleDebug = (ruleResult as any)?.debug;
+            const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+              ? ruleDebug.multiDevicePin1
+              : Array.isArray((rule.params as any)?.multiDevicePin1)
+                ? (rule.params as any).multiDevicePin1
+                : [];
+            const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
+              ? ruleDebug.multiDevicePassRegions
+              : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+                ? (rule.params as any).multiDevicePassRegions
+                : multiDevicePin1.map((marker: any) => ({
+                    label: marker.label,
+                    region: marker.packageRegion,
+                  }));
+
+            if (multiDevicePin1.length > 0) {
+              for (const marker of multiDevicePin1) {
+                const markerX = Number(marker.x ?? marker.centerX);
+                const markerY = Number(marker.y ?? marker.centerY);
+                const markerRadius = Number(marker.radius ?? pinCfg?.radius ?? 11);
+
+                if (!Number.isFinite(markerX) || !Number.isFinite(markerY)) {
+                  continue;
+                }
+
+                const markerRoi: WorkpieceRoi = {
+                  x: Math.max(0, Math.round(markerX - 25)),
+                  y: Math.max(0, Math.round(markerY - 25)),
+                  width: 50,
+                  height: 50,
+                };
+                const markerPinCfg = {
+                  ...(pinCfg ?? {}),
                   centerX: markerX,
                   centerY: markerY,
                   radius: markerRadius,
-                },
-                ...(marker.packageRegion ? { packageRegion: marker.packageRegion } : {}),
-              };
-              const markerResult = {
-                ...(ruleResult ?? {}),
-                debug: {
-                  ...(ruleDebug ?? {}),
-                  nominalX: markerX,
-                  nominalY: markerY,
-                  detectedHoleX: markerX,
-                  detectedHoleY: markerY,
-                  hasPin1Found: true,
-                },
-              } as any;
+                  registeredPin1: {
+                    x: markerX,
+                    y: markerY,
+                    centerX: markerX,
+                    centerY: markerY,
+                    radius: markerRadius,
+                  },
+                  ...(marker.packageRegion ? { packageRegion: marker.packageRegion } : {}),
+                };
+                const markerResult = {
+                  ...(ruleResult ?? {}),
+                  debug: {
+                    ...(ruleDebug ?? {}),
+                    nominalX: markerX,
+                    nominalY: markerY,
+                    detectedHoleX: markerX,
+                    detectedHoleY: markerY,
+                    hasPin1Found: true,
+                  },
+                } as any;
 
-              drawPin1Reticle(
-                ctx,
-                markerRoi,
-                status,
-                score,
-                markerPinCfg,
-                markerResult,
-                isAnalyzeMode,
-              );
+                drawPin1Reticle(
+                  ctx,
+                  markerRoi,
+                  effectiveStatus,
+                  effectiveScore,
+                  markerPinCfg,
+                  markerResult,
+                  isAnalyzeMode,
+                );
+              }
+
+              drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
+            } else {
+              drawPin1Reticle(ctx, ruleRoi, effectiveStatus, effectiveScore, pinCfg, ruleResult, isAnalyzeMode);
             }
-            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, status);
-          } else {
-            drawPin1Reticle(ctx, ruleRoi, status, score, pinCfg, ruleResult, isAnalyzeMode);
           }
         } else if (isRuleCaliper) {
-          drawCaliperRuler(ctx, ruleRoi, status);
+          drawCaliperRuler(ctx, ruleRoi, effectiveStatus);
         } else if (isRuleDefect) {
-          drawDefectScanGrid(ctx, ruleRoi, status);
+          drawDefectScanGrid(ctx, ruleRoi, effectiveStatus);
         }
 
         if (isAnalyzing && isSelected) {

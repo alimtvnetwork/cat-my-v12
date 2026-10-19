@@ -1,4 +1,4 @@
-"""Image preprocessing utilities for the vision evaluation pipeline.
+"""Image preprocessing utilities for the vision evaluation pipeline.ai
 Provides:
 - Downsampling for large images before matchTemplate (Task 222)
 - Structured JSON logging for OpenCV failures (Task 225)
@@ -182,3 +182,28 @@ def log_opencv_error(
             "rule_type": rule_type,
         },
     )
+
+
+def normalize_illumination_clahe(
+    image: np.ndarray,
+    clip_limit: float = 2.0,
+    tile_grid_size: tuple[int, int] = (8, 8),
+) -> np.ndarray:
+    """Normalize illumination across tape pockets using Contrast Limited Adaptive Histogram Equalization."""
+    if image is None or cv2 is None:
+        return image
+
+    has_color = len(image.shape) == 3 and image.shape[2] >= 3
+
+    if has_color:
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        l_chan, a_chan, b_chan = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+        l_equalized = clahe.apply(l_chan)
+        lab_equalized = cv2.merge((l_equalized, a_chan, b_chan))
+
+        return cv2.cvtColor(lab_equalized, cv2.COLOR_LAB2BGR)
+
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+
+    return clahe.apply(image)

@@ -35,6 +35,8 @@ describe("StandardInspectionToolDispatcher", () => {
     { toolType: "grayscale-blob", expectedTitle: "Grayscale Blob" },
     { toolType: "intensity", expectedTitle: "Intensity" },
     { toolType: "ocr", expectedTitle: "OCR2" },
+    { toolType: "T106", expectedTitle: "OCR2" },
+    { toolType: "T114", expectedTitle: "OCR2" },
     { toolType: "code-reader", expectedTitle: "Code Reader" },
     { toolType: "pattern-search", expectedTitle: "Pattern Search" },
   ];
