@@ -226,16 +226,17 @@ export function StandardAppShell({
             maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
           }}
         >
-          {/* Brand Wordmark (home page only) */}
+          {/* Brand (home page only) — CAT logo mark */}
           {pathname === "/" ? (
             <Link
               to="/"
-              title="Control Automation Home"
-              className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs font-bold tracking-tight text-white hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
+              title="CAT iVISION Home"
+              className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
             >
-              <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-              <span className="hidden sm:inline">Control Automation</span>
-              <span className="sm:hidden font-mono text-[10px]">CA</span>
+              <img src="/cat-logo.svg" alt="CAT" className="h-6 w-auto" draggable={false} />
+              <span className="hidden sm:inline text-xs font-bold tracking-tight text-white">
+                Control Automation
+              </span>
             </Link>
           ) : null}
 
