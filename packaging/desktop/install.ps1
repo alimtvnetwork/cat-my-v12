@@ -319,9 +319,40 @@ try {
     # ---- Install ----
     Write-InstallerSection 'INSTALL'
 
+    # Stop any existing running instances from the install directory to prevent file locking (e.g. bun.exe, backend-server.exe)
+    Get-Process -Name 'backend-server', 'bun', 'db-bootstrap', 'retention-run', 'cat-ivision', 'CAT-iVISION' -ErrorAction SilentlyContinue |
+        Where-Object {
+            try {
+                $_.Path -and ($_.Path.StartsWith($installDir, [System.StringComparison]::OrdinalIgnoreCase))
+            } catch {
+                $true
+            }
+        } | ForEach-Object {
+            try {
+                $_.Kill()
+                $_.WaitForExit(3000)
+            } catch {}
+        }
+
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
     Write-Host '    Extracting package...' -ForegroundColor DarkGray
-    Expand-Archive -LiteralPath $archive -DestinationPath $installDir -Force
+
+    $isExtracted = $false
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Expand-Archive -LiteralPath $archive -DestinationPath $installDir -Force
+            $isExtracted = $true
+            break
+        } catch {
+            if ($attempt -lt 3) {
+                Start-Sleep -Seconds 1
+            } else {
+                throw
+            }
+        }
+    }
+
     Write-InstallerStatusRow 'Extracted' 'ok' $installDir
 
     $shell = New-Object -ComObject WScript.Shell
