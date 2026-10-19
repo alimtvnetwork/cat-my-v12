@@ -2,15 +2,8 @@ import { describe, expect, it } from "vitest";
 import * as fs from "node:fs";
 import { PNG } from "pngjs";
 import { segmentCarrierTapePockets } from "../carrier-tape-segmenter";
-import {
-  evaluateTapeStripRules,
-  type WorkpieceImageData,
-} from "../workpiece-rule-analyzer";
-import {
-  EditorRuleKindType,
-  EditorToolFamilyType,
-  type EditorRule,
-} from "@/lib/editor/types";
+import { evaluateTapeStripRules, type WorkpieceImageData } from "../workpiece-rule-analyzer";
+import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { ValidationStatusType } from "@/lib/editor/validation-store";
 
 function loadPngSync(filePath: string): WorkpieceImageData {

@@ -17,8 +17,10 @@ interface ProjectOverviewSearch {
 
 export const Route = createFileRoute("/projects/$projectId/")({
   validateSearch: (search: Record<string, unknown>): ProjectOverviewSearch => {
-    const ruleset = typeof search.ruleset === "string" && search.ruleset.length > 0 ? search.ruleset : undefined;
-    const rule = typeof search.rule === "string" && search.rule.length > 0 ? search.rule : undefined;
+    const ruleset =
+      typeof search.ruleset === "string" && search.ruleset.length > 0 ? search.ruleset : undefined;
+    const rule =
+      typeof search.rule === "string" && search.rule.length > 0 ? search.rule : undefined;
 
     return { ruleset, rule };
   },
@@ -80,7 +82,9 @@ function ProjectOverview() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
               <Layers size={22} />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">No Rulesets Defined</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+              No Rulesets Defined
+            </h3>
             <p className="mt-1 text-xs text-white/50">
               Create an inspection ruleset program to begin automated vision analysis.
             </p>
@@ -142,8 +146,12 @@ function OverviewNotFound() {
   return (
     <div className="flex h-full items-center justify-center bg-[#07090e] p-8">
       <div className="max-w-md rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center backdrop-blur-xl">
-        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-white">Project Overview Not Found</h2>
-        <p className="text-xs text-white/60">The project overview could not be located in this session.</p>
+        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-white">
+          Project Overview Not Found
+        </h2>
+        <p className="text-xs text-white/60">
+          The project overview could not be located in this session.
+        </p>
       </div>
     </div>
   );

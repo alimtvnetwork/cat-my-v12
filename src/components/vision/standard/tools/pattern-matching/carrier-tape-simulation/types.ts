@@ -1,7 +1,5 @@
 export type CarrierTapeVariation =
-  | "empty-device-device"
-  | "device-device-empty"
-  | "device-empty-device";
+  "empty-device-device" | "device-device-empty" | "device-empty-device";
 
 export type PocketOccupancy = "empty" | "device";
 

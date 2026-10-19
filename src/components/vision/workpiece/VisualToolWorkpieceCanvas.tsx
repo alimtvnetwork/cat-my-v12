@@ -1119,7 +1119,11 @@ export function VisualToolWorkpieceCanvas({
           offCtx.drawImage(loadedImg, 0, 0, targetW, targetH);
           const imgData = offCtx.getImageData(0, 0, targetW, targetH);
 
-          registerWorkpieceImageCache(imgSrc, { width: targetW, height: targetH, rgba: imgData.data });
+          registerWorkpieceImageCache(imgSrc, {
+            width: targetW,
+            height: targetH,
+            rgba: imgData.data,
+          });
         }
       } catch {
         // Ignored
@@ -1584,11 +1588,7 @@ export function VisualToolWorkpieceCanvas({
           .filter(Boolean);
         const hasTapeFail = tapePocketResults.some((res) => res.status === "fail");
         const tapeRuleStatus =
-          tapePocketResults.length > 0
-            ? hasTapeFail
-              ? "fail"
-              : "pass"
-            : undefined;
+          tapePocketResults.length > 0 ? (hasTapeFail ? "fail" : "pass") : undefined;
         const tapeRuleScore =
           tapePocketResults.length > 0
             ? tapePocketResults.reduce((acc, curr) => acc + (curr.score ?? 0), 0) /
@@ -1596,13 +1596,9 @@ export function VisualToolWorkpieceCanvas({
             : undefined;
 
         const effectiveStatus =
-          ruleResult?.status ??
-          tapeRuleStatus ??
-          (isSelected ? validationStatus : undefined);
+          ruleResult?.status ?? tapeRuleStatus ?? (isSelected ? validationStatus : undefined);
         const effectiveScore =
-          ruleResult?.score ??
-          tapeRuleScore ??
-          (isSelected ? validationScore : undefined);
+          ruleResult?.score ?? tapeRuleScore ?? (isSelected ? validationScore : undefined);
 
         if (isAnalyzeMode && !effectiveStatus && !isSelected && occupiedTapePockets.length === 0) {
           continue;
@@ -1684,11 +1680,9 @@ export function VisualToolWorkpieceCanvas({
           const ruleDebug = (ruleResult as any)?.debug;
           const firstPocketRes = occupiedTapePockets[0]?.ruleResults[rule.id];
           const firstHoleX =
-            firstPocketRes?.debug?.detectedHoleX ??
-            firstPocketRes?.debug?.nominalX;
+            firstPocketRes?.debug?.detectedHoleX ?? firstPocketRes?.debug?.nominalX;
           const firstHoleY =
-            firstPocketRes?.debug?.detectedHoleY ??
-            firstPocketRes?.debug?.nominalY;
+            firstPocketRes?.debug?.detectedHoleY ?? firstPocketRes?.debug?.nominalY;
 
           const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
             ? ruleDebug.multiDevicePin1
@@ -1699,15 +1693,9 @@ export function VisualToolWorkpieceCanvas({
           const markerHoleX = firstMarker?.x ?? firstMarker?.centerX;
           const markerHoleY = firstMarker?.y ?? firstMarker?.centerY;
           const debugHoleX =
-            firstHoleX ??
-            markerHoleX ??
-            ruleDebug?.detectedHoleX ??
-            ruleDebug?.nominalX;
+            firstHoleX ?? markerHoleX ?? ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
           const debugHoleY =
-            firstHoleY ??
-            markerHoleY ??
-            ruleDebug?.detectedHoleY ??
-            ruleDebug?.nominalY;
+            firstHoleY ?? markerHoleY ?? ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
           const hX =
             debugHoleX ??
             pinCfg?.centerX ??
@@ -1764,10 +1752,7 @@ export function VisualToolWorkpieceCanvas({
                       height: br.height,
                       area: br.width * br.height,
                     }))
-                  : parseBoxesFromParams(
-                      (pRes as any)?.params ?? rule.params,
-                      pocket.region,
-                    );
+                  : parseBoxesFromParams((pRes as any)?.params ?? rule.params, pocket.region);
 
               drawGreyscaleSimulationPatternOverlay(
                 ctx,
@@ -1783,7 +1768,12 @@ export function VisualToolWorkpieceCanvas({
 
             drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
           } else {
-            const effectiveRegion: WorkpieceRoi = { x: ruleX, y: ruleY, width: ruleW, height: ruleH };
+            const effectiveRegion: WorkpieceRoi = {
+              x: ruleX,
+              y: ruleY,
+              width: ruleW,
+              height: ruleH,
+            };
             const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
             const boxResults = (ruleResult as any)?.debug?.boxResults;
             const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
@@ -1959,7 +1949,15 @@ export function VisualToolWorkpieceCanvas({
 
               drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
             } else {
-              drawPin1Reticle(ctx, ruleRoi, effectiveStatus, effectiveScore, pinCfg, ruleResult, isAnalyzeMode);
+              drawPin1Reticle(
+                ctx,
+                ruleRoi,
+                effectiveStatus,
+                effectiveScore,
+                pinCfg,
+                ruleResult,
+                isAnalyzeMode,
+              );
             }
           }
         } else if (isRuleCaliper) {

@@ -226,7 +226,10 @@ function evaluatePocketPresence(
   if (isEmpty) {
     presenceConfidence = Math.max(0.0, Math.min(0.35, edgeDensity * 10));
   } else {
-    presenceConfidence = Math.min(1.0, Math.max(0.70, (bodyStdDev / 32) * (hasLeadPeriodicity ? 1.0 : 0.85)));
+    presenceConfidence = Math.min(
+      1.0,
+      Math.max(0.7, (bodyStdDev / 32) * (hasLeadPeriodicity ? 1.0 : 0.85)),
+    );
   }
 
   return {
@@ -237,9 +240,7 @@ function evaluatePocketPresence(
   };
 }
 
-export function segmentCarrierTapePockets(
-  imageData: WorkpieceImageData,
-): TapeSegmentationResult {
+export function segmentCarrierTapePockets(imageData: WorkpieceImageData): TapeSegmentationResult {
   const w = imageData.width;
   const h = imageData.height;
 
@@ -274,8 +275,8 @@ export function segmentCarrierTapePockets(
       },
       markingRegion: {
         x: Math.round(w * 0.25),
-        y: Math.round(h * 0.30),
-        width: Math.round(w * 0.50),
+        y: Math.round(h * 0.3),
+        width: Math.round(w * 0.5),
         height: Math.round(h * 0.38),
       },
       leadsTopRegion: {
@@ -387,7 +388,7 @@ export function segmentCarrierTapePockets(
 
   const pockets: CarrierTapePocket[] = [];
   const pocketTop = Math.floor(h * 0.12);
-  const pocketHeight = Math.floor(h * 0.80);
+  const pocketHeight = Math.floor(h * 0.8);
 
   for (let i = 0; i < cleanBoundaries.length - 1; i += 1) {
     const px = cleanBoundaries[i];
@@ -416,14 +417,14 @@ export function segmentCarrierTapePockets(
       presenceConfidence: presence.presenceConfidence,
       bodyRegion: {
         x: px + Math.round(pw * 0.18),
-        y: pocketTop + Math.round(pocketHeight * 0.40),
+        y: pocketTop + Math.round(pocketHeight * 0.4),
         width: Math.round(pw * 0.64),
         height: Math.round(pocketHeight * 0.38),
       },
       markingRegion: {
-        x: px + Math.round(pw * 0.20),
+        x: px + Math.round(pw * 0.2),
         y: pocketTop + Math.round(pocketHeight * 0.45),
-        width: Math.round(pw * 0.60),
+        width: Math.round(pw * 0.6),
         height: Math.round(pocketHeight * 0.28),
       },
       leadsTopRegion: {

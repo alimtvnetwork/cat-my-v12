@@ -1,8 +1,4 @@
-import {
-  markWhiteBoxes,
-  type SearchRegion,
-  type WhiteBoxMark,
-} from "./white-box-marking";
+import { markWhiteBoxes, type SearchRegion, type WhiteBoxMark } from "./white-box-marking";
 
 export interface ReferenceBoxItem {
   boxNumber: number;

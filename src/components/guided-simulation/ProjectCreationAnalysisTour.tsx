@@ -204,7 +204,6 @@ function getDevicePassRegions() {
   }));
 }
 
-
 interface DemoContext {
   projectId: string;
   rulesetId?: string;
@@ -1103,7 +1102,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
           useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
-          toast.success("Guided simulation analysis complete: 3 present devices passed (100% yield).");
+          toast.success(
+            "Guided simulation analysis complete: 3 present devices passed (100% yield).",
+          );
         }, 2800);
 
         analysisTimersRef.current = [passTimer];
