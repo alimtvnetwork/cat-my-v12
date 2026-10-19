@@ -1186,36 +1186,6 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
         const passTimer = window.setTimeout(() => {
           setAnalysisLoading(false);
-          // Update project rules with analyzer-image params so canvas
-          // draws markers at correct positions (not setup-image params).
-          const store = useProjectStore.getState();
-          const ruleset = store.rulesets[rulesetId];
-          if (ruleset) {
-            const updatedRules = ruleset.rules.map((r) => {
-              if (r.id === TOUR_PIN1_RULE_ID) {
-                return {
-                  ...r,
-                  params: {
-                    ...r.params,
-                    multiDevicePin1: DEVICE_LAYOUTS.map((d) => ({
-                      id: d.id,
-                      label: d.label,
-                      x: d.pinX,
-                      y: d.pinY,
-                      radius: 11,
-                      packageRegion: { x: d.x, y: d.y, width: d.w, height: d.h },
-                    })),
-                    multiDevicePassRegions: DEVICE_LAYOUTS.map((d) => ({
-                      label: d.label,
-                      region: { x: d.x, y: d.y, width: d.w, height: d.h },
-                    })),
-                  },
-                };
-              }
-              return r;
-            });
-            store.updateRulesetRules(rulesetId, updatedRules);
-          }
           useValidationStore
             .getState()
             .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
