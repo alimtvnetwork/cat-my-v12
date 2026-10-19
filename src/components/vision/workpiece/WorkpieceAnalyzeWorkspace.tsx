@@ -1509,7 +1509,7 @@ export function WorkpieceAnalyzeWorkspace({
               className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-1.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(16,185,129,0.45)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
             >
               <Play size={14} className={isAnalysisBusy ? "animate-spin" : "fill-black"} />
-              {isAnalysisBusy ? "Running..." : "Run Analysis"}
+              {isAnalysisBusy ? "Analyzing..." : "Analyze"}
             </button>
           </div>
         </div>

@@ -22,7 +22,7 @@ export function WorkspaceSaveButton(): React.JSX.Element | null {
       className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[oklch(0.76_0.145_210/0.5)] bg-[oklch(0.76_0.145_210)] px-3.5 py-1 font-sans text-xs font-bold uppercase tracking-wider text-[#0a0d14] shadow-[0_0_12px_oklch(0.76_0.145_210/0.35)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
     >
       <Check size={13} className="text-[#0a0d14]" />
-      {isSaving ? "Saving..." : "Save Changes"}
+      {isSaving ? "Saving..." : "Save"}
     </button>
   );
 }
