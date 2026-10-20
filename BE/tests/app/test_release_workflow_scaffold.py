@@ -34,6 +34,7 @@ def test_release_workflow_declares_matrix_and_jobs() -> None:
     assert "workflow_dispatch:" in text
     assert "windows-latest" in text
     assert "ubuntu-latest" in text
+    assert "macos-latest" in text
     assert "SHA256SUMS.txt" in text
     assert "concurrency:" in text
     assert "release-${{ github.ref }}" in text
