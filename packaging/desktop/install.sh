@@ -3,11 +3,23 @@ set -Eeuo pipefail
 
 RELEASE_REPO=${RELEASE_REPO:-__RELEASE_REPO__}
 RELEASE_TAG=${RELEASE_TAG:-__RELEASE_TAG__}
-INSTALL_ROOT=${XDG_DATA_HOME:-$HOME/.local/share}/cat-ivision
-APPLICATIONS_ROOT=${XDG_DATA_HOME:-$HOME/.local/share}/applications
-DESKTOP_ROOT=${XDG_DESKTOP_DIR:-$HOME/Desktop}
-ARCHIVE_PATH=${TMPDIR:-/tmp}/cat-ivision-linux.zip
-DOWNLOAD_URL="https://github.com/$RELEASE_REPO/releases/download/$RELEASE_TAG/control-automation-linux.zip"
+OS_TYPE=$(uname -s)
+
+if [ "$OS_TYPE" = "Darwin" ]; then
+  PLATFORM="macos"
+  INSTALL_ROOT=${INSTALL_ROOT:-$HOME/Applications/CAT iVISION}
+  APPLICATIONS_ROOT=${APPLICATIONS_ROOT:-$HOME/Applications}
+  DESKTOP_ROOT=${DESKTOP_ROOT:-$HOME/Desktop}
+  ARCHIVE_PATH=${TMPDIR:-/tmp}/cat-ivision-macos.zip
+  DOWNLOAD_URL="https://github.com/$RELEASE_REPO/releases/download/$RELEASE_TAG/control-automation-macos.zip"
+else
+  PLATFORM="linux"
+  INSTALL_ROOT=${INSTALL_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/cat-ivision}
+  APPLICATIONS_ROOT=${APPLICATIONS_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/applications}
+  DESKTOP_ROOT=${DESKTOP_ROOT:-${XDG_DESKTOP_DIR:-$HOME/Desktop}}
+  ARCHIVE_PATH=${TMPDIR:-/tmp}/cat-ivision-linux.zip
+  DOWNLOAD_URL="https://github.com/$RELEASE_REPO/releases/download/$RELEASE_TAG/control-automation-linux.zip"
+fi
 
 for command_name in curl unzip; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
@@ -17,7 +29,7 @@ for command_name in curl unzip; do
   fi
 done
 
-printf 'Downloading CAT iVISION %s...\n' "$RELEASE_TAG"
+printf 'Downloading CAT iVISION %s (%s)...\n' "$RELEASE_TAG" "$PLATFORM"
 
 # aria2c acceleration, like the Gitmap / Antigravity Manager (AGM) installers:
 # prefer multi-connection downloading when aria2c is present, fall back to
@@ -53,8 +65,57 @@ if [ ! -s "$ICON_PATH" ]; then
   ICON_PATH="$INSTALL_ROOT/frontend/public/favicon.ico"
 fi
 
-DESKTOP_FILE="$APPLICATIONS_ROOT/cat-ivision.desktop"
-cat >"$DESKTOP_FILE" <<EOF
+if [ "$PLATFORM" = "macos" ]; then
+  # Strip Apple quarantine attributes on extracted executables
+  xattr -cr "$INSTALL_ROOT" 2>/dev/null || true
+
+  APP_BUNDLE="$APPLICATIONS_ROOT/CAT iVISION.app"
+  mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
+
+  cat >"$APP_BUNDLE/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>cat-ivision</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.cat.ivision</string>
+    <key>CFBundleName</key>
+    <string>CAT iVISION</string>
+    <key>CFBundleDisplayName</key>
+    <string>CAT iVISION</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>11.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+  cat >"$APP_BUNDLE/Contents/MacOS/cat-ivision" <<EOF
+#!/usr/bin/env bash
+exec bash "$INSTALL_ROOT/start.sh"
+EOF
+  chmod +x "$APP_BUNDLE/Contents/MacOS/cat-ivision"
+
+  if [ -s "$ICON_PATH" ]; then
+    cp "$ICON_PATH" "$APP_BUNDLE/Contents/Resources/AppIcon.png" 2>/dev/null || true
+  fi
+
+  if [ -d "$DESKTOP_ROOT" ]; then
+    ln -shf "$APP_BUNDLE" "$DESKTOP_ROOT/CAT iVISION.app" 2>/dev/null || true
+  fi
+
+  rm -f "$ARCHIVE_PATH"
+  printf 'Installation complete. CAT iVISION is available from Applications and your Desktop.\n'
+else
+  DESKTOP_FILE="$APPLICATIONS_ROOT/cat-ivision.desktop"
+  cat >"$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
 Name=CAT iVISION
@@ -67,17 +128,19 @@ Keywords=Inspection;Vision;Automation;CAT;
 StartupNotify=true
 StartupWMClass=cat-ivision
 EOF
-chmod +x "$DESKTOP_FILE"
+  chmod +x "$DESKTOP_FILE"
 
-if command -v update-desktop-database >/dev/null 2>&1; then
-  update-desktop-database "$APPLICATIONS_ROOT" >/dev/null 2>&1 || true
+  if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database "$APPLICATIONS_ROOT" >/dev/null 2>&1 || true
+  fi
+
+  if [ -d "$DESKTOP_ROOT" ]; then
+    cp "$DESKTOP_FILE" "$DESKTOP_ROOT/CAT iVISION.desktop"
+    chmod +x "$DESKTOP_ROOT/CAT iVISION.desktop"
+  fi
+
+  rm -f "$ARCHIVE_PATH"
+  printf 'Installation complete. CAT iVISION is available from the application menu and desktop.\n'
 fi
 
-if [ -d "$DESKTOP_ROOT" ]; then
-  cp "$DESKTOP_FILE" "$DESKTOP_ROOT/CAT iVISION.desktop"
-  chmod +x "$DESKTOP_ROOT/CAT iVISION.desktop"
-fi
-
-rm -f "$ARCHIVE_PATH"
-printf 'Installation complete. CAT iVISION is available from the application menu and desktop.\n'
 "$INSTALL_ROOT/start.sh"

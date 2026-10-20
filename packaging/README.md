@@ -96,7 +96,7 @@ Automated coverage lands in `packaging/tests/test_built_binary.sh`
 Before signing a release:
 
 1. Build on the CI runner OS/arch that matches the target artefact
-   (Windows `.exe` on `windows-latest`, Linux ELF on `ubuntu-latest`).
+   (Windows `.exe` on `windows-latest`, Linux ELF on `ubuntu-latest`, macOS Mach-O on `macos-latest`).
 2. `sha256sum dist/*` output must match the `SHA256SUMS.txt` job output
    character-for-character. A UPX-on rebuild or a differing Python
    patch version will drift the hash. Regenerate on drift; never

@@ -81,6 +81,9 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             exe_suffix: ""
+          - os: macos-latest
+            platform: macos
+            exe_suffix: ""
     runs-on: ${{ matrix.os }}
     env:
       PYTHONHASHSEED: "0"
@@ -266,6 +269,11 @@ jobs:
         with:
           name: release-linux
           path: dist-all/release-linux
+      - name: Download macOS artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: dist-all/release-macos
       - id: sums
         name: Combined SHA256SUMS + per-platform cross-check
         # Independent gate so a bad checksum never reaches sign/release.
@@ -281,25 +289,31 @@ jobs:
 
           cp packaging/desktop/start.ps1 release/windows/start.ps1
           cp packaging/desktop/start.sh release/linux/start.sh
+          cp packaging/desktop/start.sh release/macos/start.sh
           cp packaging/desktop/uninstall.ps1 release/uninstall.ps1
           cp packaging/desktop/uninstall.sh release/uninstall.sh
-          chmod +x release/uninstall.sh release/linux/start.sh release/linux/runtime/bun release/linux/* || true
+          chmod +x release/uninstall.sh release/linux/start.sh release/macos/start.sh release/linux/runtime/bun release/macos/runtime/bun release/linux/* release/macos/* || true
 
           test -s release/windows/frontend/public/favicon.ico
           test -s release/linux/frontend/public/favicon.ico
+          test -s release/macos/frontend/public/favicon.ico
           test -d release/windows/frontend/public/assets
           test -d release/linux/frontend/public/assets
+          test -d release/macos/frontend/public/assets
           grep -q -- '--app=' release/windows/start.ps1
           grep -q -- '--app=' release/linux/start.sh
+          grep -q -- '--app=' release/macos/start.sh
           grep -q -- '--start-fullscreen' release/windows/start.ps1
           grep -q -- '--start-fullscreen' release/linux/start.sh
+          grep -q -- '--start-fullscreen' release/macos/start.sh
           grep -q 'CAT iVISION\.lnk' packaging/desktop/install.ps1
           grep -q 'cat-ivision\.desktop' packaging/desktop/install.sh
 
           (cd release/windows && zip -r ../control-automation-windows.zip .)
           (cd release/linux && zip -r ../control-automation-linux.zip .)
-          (cd release && sha256sum control-automation-windows.zip control-automation-linux.zip > SHA256SUMS.txt)
-          find release/windows release/linux -type f -print0 | sort -z | xargs -0 sha256sum >> release/SHA256SUMS.txt
+          (cd release/macos && zip -r ../control-automation-macos.zip .)
+          (cd release && sha256sum control-automation-windows.zip control-automation-linux.zip control-automation-macos.zip > SHA256SUMS.txt)
+          find release/windows release/linux release/macos -type f -print0 | sort -z | xargs -0 sha256sum >> release/SHA256SUMS.txt
 
           cat release/SHA256SUMS.txt
           echo "ok=true" >> "$GITHUB_OUTPUT"
@@ -332,7 +346,7 @@ jobs:
           ls -la release
           cat release/SHA256SUMS.txt
 
-      - name: Generate Windows and Linux installers
+      - name: Generate Windows, Linux, and macOS installers
         env:
           RELEASE_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.inputs.release_tag || github.ref_name }}

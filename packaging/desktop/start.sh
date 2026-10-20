@@ -3,7 +3,14 @@ set -Eeuo pipefail
 
 APP_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DATA_ROOT="$APP_ROOT/data"
-LOG_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/cat-ivision"
+OS_TYPE=$(uname -s)
+
+if [ "$OS_TYPE" = "Darwin" ]; then
+  LOG_ROOT="$HOME/Library/Logs/cat-ivision"
+else
+  LOG_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/cat-ivision"
+fi
+
 BACKEND_URL="http://127.0.0.1:8787/healthz"
 FRONTEND_URL="http://127.0.0.1:3000/?ds=backend&backend=http://127.0.0.1:8787"
 
@@ -34,6 +41,28 @@ wait_for_url() {
 find_app_browser() {
   local command_name
 
+  if [ "$OS_TYPE" = "Darwin" ]; then
+    local mac_candidates=(
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      "$HOME/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
+      "$HOME/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
+      "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
+      "/Applications/Chromium.app/Contents/MacOS/Chromium"
+      "/Applications/Arc.app/Contents/MacOS/Arc"
+    )
+
+    for mac_bin in "${mac_candidates[@]}"; do
+      if [ -x "$mac_bin" ]; then
+        printf '%s\n' "$mac_bin"
+
+        return 0
+      fi
+    done
+
+    return 1
+  fi
+
   for command_name in microsoft-edge-stable microsoft-edge google-chrome-stable google-chrome chromium chromium-browser; do
     if command -v "$command_name" >/dev/null 2>&1; then
       command -v "$command_name"
@@ -62,17 +91,25 @@ fi
 
 wait_for_url 'http://127.0.0.1:3000/'
 
-if ! BROWSER_BIN=$(find_app_browser); then
+if BROWSER_BIN=$(find_app_browser); then
+  EXTRA_BROWSER_ARGS=()
+
+  if [ "$OS_TYPE" != "Darwin" ]; then
+    EXTRA_BROWSER_ARGS+=(--class=cat-ivision)
+  fi
+
+  nohup "$BROWSER_BIN" \
+    --app="$FRONTEND_URL" \
+    --start-fullscreen \
+    --user-data-dir="$DATA_ROOT/browser-profile" \
+    --no-first-run \
+    --no-default-browser-check \
+    ${EXTRA_BROWSER_ARGS[@]+"${EXTRA_BROWSER_ARGS[@]}"} \
+    >/dev/null 2>&1 &
+elif [ "$OS_TYPE" = "Darwin" ]; then
+  open "$FRONTEND_URL"
+else
   printf 'CAT iVISION requires Microsoft Edge, Google Chrome, or Chromium to open its application window.\n' >&2
 
   exit 1
 fi
-
-nohup "$BROWSER_BIN" \
-  --app="$FRONTEND_URL" \
-  --start-fullscreen \
-  --user-data-dir="$DATA_ROOT/browser-profile" \
-  --no-first-run \
-  --no-default-browser-check \
-  --class=cat-ivision \
-  >/dev/null 2>&1 &
