@@ -112,11 +112,13 @@ try {
         }
 
         Write-Host "Launching Chromium shell..."
+        $userDataDir = Join-Path (Get-Location) ".browser-profile"
         $chromeArgs = @(
             "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
             '--start-fullscreen',
-            '--start-maximized',
-            '--no-first-run'
+            "--user-data-dir=$userDataDir",
+            '--no-first-run',
+            '--no-default-browser-check'
         )
         $chromePaths = @(
             "C:\Program Files\Google\Chrome\Application\chrome.exe",

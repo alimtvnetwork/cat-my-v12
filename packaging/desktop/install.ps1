@@ -364,6 +364,10 @@ try {
         (Join-Path $startMenuDir 'CAT iVISION.lnk'),
         (Join-Path $desktopDir 'CAT iVISION.lnk')
     )) {
+        if (Test-Path -LiteralPath $shortcutPath) {
+            Remove-Item -LiteralPath $shortcutPath -Force -ErrorAction SilentlyContinue
+        }
+
         $shortcut = $shell.CreateShortcut($shortcutPath)
         $shortcut.TargetPath = 'powershell.exe'
         $shortcut.Arguments = '-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'start.ps1') + '"'
@@ -372,11 +376,29 @@ try {
         $shortcut.WindowStyle = 7
 
         if (Test-Path -LiteralPath $iconPath) {
-            $shortcut.IconLocation = $iconPath
+            $shortcut.IconLocation = "$iconPath,0"
         }
 
         $shortcut.Save()
     }
+
+    try {
+        $code = @'
+[System.Runtime.InteropServices.DllImport("shell32.dll")]
+public static extern void SHChangeNotify(int wEventId, int uFlags, System.IntPtr dwItem1, System.IntPtr dwItem2);
+'@
+        $shellType = Add-Type -MemberDefinition $code -Name 'ShellNotification' -Namespace 'CATWinShell' -PassThru -ErrorAction SilentlyContinue
+
+        if ($shellType) {
+            $shellType::SHChangeNotify(0x08000000, 0, [System.IntPtr]::Zero, [System.IntPtr]::Zero)
+        }
+    } catch {}
+
+    try {
+        if (Get-Command 'ie4uinit.exe' -ErrorAction SilentlyContinue) {
+            Start-Process -FilePath 'ie4uinit.exe' -ArgumentList '-show' -WindowStyle Hidden -ErrorAction SilentlyContinue
+        }
+    } catch {}
 
     Write-InstallerStatusRow 'Start menu shortcut' 'ok' 'CAT iVISION.lnk'
     Write-InstallerStatusRow 'Desktop shortcut' 'ok' 'CAT iVISION.lnk'

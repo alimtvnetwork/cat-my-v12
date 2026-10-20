@@ -73,11 +73,14 @@ try {
         throw 'CAT iVISION requires Microsoft Edge or Google Chrome to open its application window.'
     }
 
+    $userDataDir = Join-Path $AppRoot 'data\browser-profile'
+
     Start-Process -FilePath $browserPath -ArgumentList @(
         "--app=$FrontendUrl",
         '--start-fullscreen',
-        '--start-maximized',
-        '--no-first-run'
+        "--user-data-dir=$userDataDir",
+        '--no-first-run',
+        '--no-default-browser-check'
     ) -WorkingDirectory $AppRoot
 } catch {
     $errorLog = Join-Path $AppRoot 'startup-error.log'

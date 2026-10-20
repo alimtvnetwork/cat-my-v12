@@ -71,7 +71,8 @@ fi
 nohup "$BROWSER_BIN" \
   --app="$FRONTEND_URL" \
   --start-fullscreen \
-  --start-maximized \
+  --user-data-dir="$DATA_ROOT/browser-profile" \
   --no-first-run \
+  --no-default-browser-check \
   --class=cat-ivision \
   >/dev/null 2>&1 &
