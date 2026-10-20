@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
+import { ACTIONS, EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
 import { useNavigate } from "@tanstack/react-router";
-import { Square } from "lucide-react";
+import { Loader2, Square } from "lucide-react";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
 import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
@@ -357,10 +357,7 @@ function makeDemoRules(): EditorRule[] {
     label: d.label,
     region: { x: d.x, y: d.y, width: d.w, height: d.h },
   }));
-  return [
-    pin1Rule,
-    makeGreyscaleRule(GREYSCALE_SETUP_DEVICE_LAYOUT, 2, greyscaleSetupImage),
-  ];
+  return [pin1Rule, makeGreyscaleRule(GREYSCALE_SETUP_DEVICE_LAYOUT, 2, greyscaleSetupImage)];
 }
 
 function makeAnalysisRules(): EditorRule[] {
@@ -639,8 +636,7 @@ function makePassTapeStripResult(): TapeStripEvaluationResult {
     for (const [ruleId, result] of Object.entries(baseResults)) {
       const isGreyscale = String((result as any)?.message ?? "").includes("Greyscale");
       const isPinRule =
-        String((result as any)?.message ?? "").includes("Pin 1") ||
-        ruleId === TOUR_PIN1_RULE_ID;
+        String((result as any)?.message ?? "").includes("Pin 1") || ruleId === TOUR_PIN1_RULE_ID;
 
       pocketResults[ruleId] = {
         ...result,
@@ -776,11 +772,69 @@ function prepareMultiDeviceAnalysis(params: { projectId: string; rulesetId: stri
   return { projectId, rulesetId };
 }
 
+function preloadSimulationImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !src) {
+      resolve();
+
+      return;
+    }
+
+    if (
+      typeof Image === "undefined" ||
+      (typeof navigator !== "undefined" && navigator.userAgent.includes("jsdom"))
+    ) {
+      resolve();
+
+      return;
+    }
+
+    let isSettled = false;
+
+    const onDone = () => {
+      if (isSettled) {
+        return;
+      }
+
+      isSettled = true;
+      resolve();
+    };
+
+    const img = new Image();
+
+    img.onload = () => {
+      if ("decode" in img && typeof img.decode === "function") {
+        img.decode().then(onDone).catch(onDone);
+
+        return;
+      }
+
+      onDone();
+    };
+
+    img.onerror = onDone;
+    img.src = src;
+
+    window.setTimeout(onDone, 1200);
+  });
+}
+
+function preloadAllSimulationAssets(): Promise<void> {
+  return Promise.all([
+    preloadSimulationImage(ruleSetupImage),
+    preloadSimulationImage(analysisImage),
+    preloadSimulationImage(pin1SetupImage),
+    preloadSimulationImage(greyscaleSetupImage),
+  ]).then(() => undefined);
+}
+
 export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const navigate = useNavigate();
   const [isRunning, setIsRunning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const isRunningRef = useRef(false);
+  const isLoadingRef = useRef(false);
   const isStepAdvancingRef = useRef(false);
   const demoRef = useRef<DemoContext | null>(null);
   const actionKeysRef = useRef<Set<string>>(new Set());
@@ -1048,10 +1102,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   }, []);
 
   const finishTour = useCallback(() => {
+    toast.dismiss("simulation-preparing");
     clearTimer();
     clearAnalysisTimers();
     setSimulationMenuOpen(false);
     deleteDemoProject();
+    isLoadingRef.current = false;
+    setIsLoading(false);
     isRunningRef.current = false;
     setIsRunning(false);
     setStepIndex(0);
@@ -1307,11 +1364,12 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   }, [advance, clearTimer, isRunning, runStepAction, stepIndex, steps]);
 
   const handleStart = useCallback(() => {
-    if (isRunningRef.current) {
+    if (isRunningRef.current || isLoadingRef.current) {
       return;
     }
 
-    isRunningRef.current = true;
+    isLoadingRef.current = true;
+    setIsLoading(true);
     clearTimer();
     clearAnalysisTimers();
     demoRef.current = null;
@@ -1321,15 +1379,25 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
     const startFromHome = async () => {
       try {
-        await navigate({ to: "/" });
+        toast.loading("Preparing simulation environment...", { id: "simulation-preparing" });
+
+        await Promise.all([navigate({ to: "/" }), preloadAllSimulationAssets()]);
+
+        toast.dismiss("simulation-preparing");
+        isLoadingRef.current = false;
+        setIsLoading(false);
+        isRunningRef.current = true;
         setIsRunning(true);
 
         window.setTimeout(() => {
           setSimulationMenuOpen(true);
-        }, 200);
+        }, 150);
       } catch (error) {
+        isLoadingRef.current = false;
+        setIsLoading(false);
         isRunningRef.current = false;
         setSimulationMenuOpen(false);
+        toast.dismiss("simulation-preparing");
         console.error("[guided-simulation] failed to start from Home", error);
         toast.error("Simulation could not open the Home page.");
       }
@@ -1340,9 +1408,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
   useEffect(() => {
     document.documentElement.dataset.guidedSimulationRunning = isRunning ? "true" : "false";
-    const detail: GuidedSimulationStateDetail = { isRunning };
+    document.documentElement.dataset.guidedSimulationLoading = isLoading ? "true" : "false";
+    const detail: GuidedSimulationStateDetail = { isRunning, isLoading };
     window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_STATE_EVENT, { detail }));
-  }, [isRunning]);
+  }, [isRunning, isLoading]);
 
   useEffect(() => {
     const onCommand = (event: Event) => {
@@ -1354,7 +1423,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         return;
       }
 
-      if (command !== "start" || isRunningRef.current) {
+      if (command === "advance") {
+        advance();
+
+        return;
+      }
+
+      if (command !== "start" || isRunningRef.current || isLoadingRef.current) {
         return;
       }
 
@@ -1366,7 +1441,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     return () => {
       window.removeEventListener(GUIDED_SIMULATION_COMMAND_EVENT, onCommand);
     };
-  }, [finishTour, handleStart, isRunning]);
+  }, [advance, finishTour, handleStart]);
 
   const handleJoyride = useCallback(
     (data: EventData) => {
@@ -1423,6 +1498,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
             borderRadius: 8,
             boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
             fontFamily: "Poppins, sans-serif",
+            pointerEvents: "auto",
           },
           tooltipTitle: {
             fontFamily: "Ubuntu, sans-serif",
@@ -1431,9 +1507,20 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           buttonPrimary: {
             color: "#06110c",
             fontWeight: 800,
+            cursor: "pointer",
+            pointerEvents: "auto",
           },
         }}
       />
+      {isLoading ? (
+        <div
+          data-tour="simulation-loading-banner"
+          className="fixed left-1/2 top-14 z-[10030] -translate-x-1/2 flex items-center gap-2.5 rounded-lg border border-cyan-400/40 bg-[#0c1017]/95 px-4 py-2 font-mono text-xs font-semibold text-cyan-200 shadow-2xl backdrop-blur-xl animate-in fade-in"
+        >
+          <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+          <span>Preparing simulation workspace...</span>
+        </div>
+      ) : null}
       {isRunning ? (
         <button
           type="button"

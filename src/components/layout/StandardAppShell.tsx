@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Layers,
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -106,12 +107,18 @@ export function StandardAppShell({
       typeof document !== "undefined" &&
       document.documentElement.dataset.guidedSimulationRunning === "true",
   );
+  const [isSimulationLoading, setIsSimulationLoading] = useState(
+    () =>
+      typeof document !== "undefined" &&
+      document.documentElement.dataset.guidedSimulationLoading === "true",
+  );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const onSimulationState = (event: Event) => {
       const detail = (event as CustomEvent<GuidedSimulationStateDetail>).detail;
       setIsSimulationRunning(Boolean(detail?.isRunning));
+      setIsSimulationLoading(Boolean(detail?.isLoading));
 
       if (detail?.isRunning && window.location.pathname === "/") {
         setIsMenuOpen(true);
@@ -242,6 +249,7 @@ export function StandardAppShell({
 
           {/* Dropdown Menu Trigger */}
           <DropdownMenu
+            modal={false}
             open={isMenuOpen}
             onOpenChange={(isOpen) => {
               if (!isOpen && isSimulationRunning && pathname === "/") {
@@ -265,6 +273,11 @@ export function StandardAppShell({
 
             <DropdownMenuContent
               align="start"
+              onPointerDownOutside={(e) => {
+                if (isSimulationRunning && pathname === "/") {
+                  e.preventDefault();
+                }
+              }}
               className="w-56 rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl backdrop-blur-xl z-50 text-slate-200"
             >
               <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between">
@@ -285,7 +298,16 @@ export function StandardAppShell({
                       <Link
                         to={item.href}
                         data-tour={item.tour}
-                        onClick={() => setIsMenuOpen(false)}
+                        onClick={() => {
+                          setIsMenuOpen(false);
+
+                          if (isSimulationProjectTarget) {
+                            const detail: GuidedSimulationCommandDetail = { command: "advance" };
+                            window.dispatchEvent(
+                              new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }),
+                            );
+                          }
+                        }}
                         className={cn(
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
@@ -372,7 +394,7 @@ export function StandardAppShell({
             type="button"
             data-tour="simulation-launcher"
             onClick={() => {
-              if (isSimulationRunning) {
+              if (isSimulationRunning || isSimulationLoading) {
                 return;
               }
 
@@ -380,11 +402,21 @@ export function StandardAppShell({
               const detail: GuidedSimulationCommandDetail = { command: "start" };
               window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }));
             }}
-            disabled={isSimulationRunning}
+            disabled={isSimulationRunning || isSimulationLoading}
             className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <PlayCircle className="h-3.5 w-3.5" />
-            <span>{isSimulationRunning ? "Simulation Running" : "Simulation"}</span>
+            {isSimulationLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
+            ) : (
+              <PlayCircle className="h-3.5 w-3.5" />
+            )}
+            <span>
+              {isSimulationLoading
+                ? "Loading Simulation..."
+                : isSimulationRunning
+                  ? "Simulation Running"
+                  : "Simulation"}
+            </span>
           </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />

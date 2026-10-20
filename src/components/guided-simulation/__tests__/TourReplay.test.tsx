@@ -202,4 +202,69 @@ describe("guided simulation tour replay", () => {
     // THE assertion from the bug report: the rule-adding step is reachable
     expect(q("[data-tour='project-add-rule-tree']")).not.toBeNull();
   }, 120000);
+  it("emits loading state before running and allows the first tooltip next button to advance immediately", async () => {
+    vi.useFakeTimers();
+    Element.prototype.scrollIntoView = vi.fn() as any;
+
+    const rootRoute = createRootRoute({
+      component: () => (
+        <>
+          <Outlet />
+          <ProjectCreationAnalysisTour />
+        </>
+      ),
+    });
+    const indexRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/",
+      component: HomeStub,
+    });
+    const projectsRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/projects",
+      component: ProjectsStub,
+    });
+    const routeTree = rootRoute.addChildren([indexRoute, projectsRoute]);
+    const router = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ["/"] }),
+    });
+
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      await router.load();
+    });
+
+    const states: Array<{ isRunning: boolean; isLoading: boolean }> = [];
+    const onState = (event: Event) => {
+      states.push((event as CustomEvent).detail);
+    };
+    window.addEventListener("ca:guided-simulation-state", onState);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "start" } }),
+      );
+    });
+
+    const q = (sel: string) => document.querySelector(sel);
+
+    // Initial state: loading was emitted and now running
+    expect(states.length).toBeGreaterThanOrEqual(1);
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+
+    // The primary button ("Next") is clickable and advances immediately without waiting 6500ms
+    const primaryButton = q("[data-testid='button-primary']") as HTMLButtonElement | null;
+    expect(primaryButton).not.toBeNull();
+
+    await act(async () => {
+      primaryButton?.click();
+      vi.advanceTimersByTime(800);
+    });
+
+    // Reached Step 2 (/projects) immediately
+    expect(q("[data-tour='projects-create-button']")).not.toBeNull();
+
+    window.removeEventListener("ca:guided-simulation-state", onState);
+  });
 });
