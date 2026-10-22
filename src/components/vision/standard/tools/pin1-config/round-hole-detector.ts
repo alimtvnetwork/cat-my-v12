@@ -388,9 +388,19 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
   let bestMatch: Pin1HoleItem | null = null;
   let minDistance = Number.POSITIVE_INFINITY;
 
+  const expectedRadius = registeredPin1.radius ?? 10;
+
   for (const hole of detectedHoles) {
     if (!hole.isKept) {
       continue;
+    }
+
+    if (expectedRadius > 0) {
+      const radiusRatio = hole.radius / expectedRadius;
+
+      if (radiusRatio < 0.55 || radiusRatio > 1.85) {
+        continue;
+      }
     }
 
     const dx = hole.centerX - expectedX;

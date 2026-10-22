@@ -40,6 +40,18 @@ import {
   type CarrierTapePocket,
   type TapeSegmentationResult,
 } from "./carrier-tape-segmenter";
+import { ShapeType, type Geometry } from "@/domain/vision/shapes";
+import type { EvaluateAreaGateParams } from "@/domain/vision/area-gate-types";
+import type {
+  DefectTargetType,
+  DetectedFlawItem,
+  EvaluateBlobParams,
+  EvaluateDefectParams,
+} from "@/domain/vision/surface-flaw-types";
+import {
+  findConnectedBlobs,
+  type ConnectedBlob,
+} from "./algorithms/connected-components";
 
 export {
   defaultWorkpieceFilledSample,
@@ -47,6 +59,7 @@ export {
   segmentCarrierTapePockets,
   type CarrierTapePocket,
   type TapeSegmentationResult,
+  type EvaluateAreaGateParams,
 };
 
 export interface ContainedDimensions {
@@ -514,7 +527,9 @@ function hasPin1PixelEvidence(
     ringCount > 0
       ? (outer.mean * outer.count - center.mean * center.count) / ringCount
       : outer.mean;
-  const isDarkDimple = center.mean <= thresholdLuma || ringMean - center.mean >= 12;
+  const isDarkDimple =
+    (center.mean <= thresholdLuma && ringMean - center.mean >= 6) ||
+    ringMean - center.mean >= 12;
   const isLightMark = center.mean >= 160 && center.mean - ringMean >= 10;
 
   return center.count > 0 && (isDarkDimple || isLightMark);
@@ -569,9 +584,9 @@ export async function loadWorkpieceImageData(imageSrc: string): Promise<Workpiec
           srcData = png.data;
         }
 
-        const isSinglePocket = srcWidth / srcHeight < 0.92;
+        const isNotNormalized = srcWidth !== 960 || srcHeight !== 540;
 
-        if (isSinglePocket) {
+        if (isNotNormalized) {
           const scaledData = new Uint8ClampedArray(960 * 540 * 4);
 
           for (let y = 0; y < 540; y += 1) {
@@ -907,7 +922,7 @@ export function evaluatePatternRule(
   opticalContext: string,
 ): ValidationResult {
   const minPercent = Number(rule.params?.minMatchPercent ?? 80);
-  const minPresenceLuma = Number(rule.params?.minPresenceLuma ?? 20);
+  const minPresenceLuma = Number(rule.params?.minPresenceLuma ?? 45);
   const tolerancePx = Number(rule.params?.tolerancePx ?? 8);
   const lumaTolerance = Number(rule.params?.lumaTolerance ?? 32);
   const ruleRoi: SearchRegion = {
@@ -1021,8 +1036,7 @@ export function evaluatePatternRule(
   const meanLuma = pixelCount > 0 ? sumL / pixelCount : 0;
   const variance = pixelCount > 0 ? Math.max(0, sumL2 / pixelCount - meanLuma * meanLuma) : 0;
   const stdDev = Math.sqrt(variance);
-  const hasDevice =
-    pixelCount > 0 && (meanLuma >= minPresenceLuma || (meanLuma >= 15 && stdDev >= 6.0));
+  const hasDevice = pixelCount > 0 && meanLuma >= minPresenceLuma;
 
   if (!hasDevice) {
     const totalCount = ruleBoxes.length > 0 ? ruleBoxes.length : 24;
@@ -1581,10 +1595,25 @@ export function evaluatePin1Rule(
 }
 
 export function evaluateDefectRule(
-  rule: EditorRule,
-  imageData: WorkpieceImageData,
-  opticalContext: string,
+  ruleOrParams: EditorRule | EvaluateDefectParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
 ): ValidationResult {
+  const rule = "rule" in ruleOrParams ? ruleOrParams.rule : ruleOrParams;
+  const imageData = "imageData" in ruleOrParams ? ruleOrParams.imageData : maybeImageData;
+  const opticalContext =
+    ("opticalContext" in ruleOrParams ? ruleOrParams.opticalContext : maybeOpticalContext) ??
+    "Defect Inspection";
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for defect evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
   const searchRegion: SearchRegion = {
     x: Math.round(rule.x),
     y: Math.round(rule.y),
@@ -1592,14 +1621,26 @@ export function evaluateDefectRule(
     height: Math.round(rule.height),
   };
 
-  let sumL = 0;
-  let sumL2 = 0;
-  let pixelCount = 0;
-
   const startX = Math.max(0, searchRegion.x);
   const startY = Math.max(0, searchRegion.y);
   const endX = Math.min(imageData.width, searchRegion.x + searchRegion.width);
   const endY = Math.min(imageData.height, searchRegion.y + searchRegion.height);
+
+  const regionWidth = endX - startX;
+  const regionHeight = endY - startY;
+
+  if (regionWidth <= 0 || regionHeight <= 0) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid defect search geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  let sumL = 0;
+  let sumL2 = 0;
+  let pixelCount = 0;
 
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
@@ -1628,7 +1669,7 @@ export function evaluateDefectRule(
   const variance = Math.max(0, sumL2 / pixelCount - meanLuma * meanLuma);
   const stdDev = Math.sqrt(variance);
 
-  const isComponentMissing = meanLuma < 30 || (meanLuma < 38 && stdDev < 12);
+  const isComponentMissing = meanLuma < 53 || (meanLuma < 58 && stdDev < 18);
 
   const whiteMarks = markWhiteBoxes({
     width: imageData.width,
@@ -1652,15 +1693,393 @@ export function evaluateDefectRule(
     };
   }
 
+  const toolCode = String(rule.params?.toolCode ?? "");
+  const ruleNameLower = rule.name.toLowerCase();
+  const isScratchTool =
+    toolCode === "T107" ||
+    ruleNameLower.includes("scratch") ||
+    ruleNameLower.includes("crack");
+  const isVoidTool =
+    toolCode === "T108" ||
+    ruleNameLower.includes("void") ||
+    ruleNameLower.includes("porosity");
+
+  const isMicroDefectTool =
+    isScratchTool ||
+    isVoidTool ||
+    typeof rule.params?.defectSensitivity === "number";
+
+  if (!isMicroDefectTool || toolCode === "T118") {
+    return {
+      status: ValidationStatusType.Pass,
+      score: 0.98,
+      message: `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. Zero critical defects detected. ${opticalContext}: PASS.`,
+      stub: false,
+      debug: {
+        meanLuma,
+        stdDev,
+        whiteBoxCount: whiteMarks.boxes.length,
+      },
+    };
+  }
+
+  const sensitivity = Number(rule.params?.defectSensitivity ?? 50);
+  const contrastDelta = Math.max(8, Math.round(55 - sensitivity * 0.45));
+
+  const rawTarget = rule.params?.defectTarget;
+  let defectTarget: DefectTargetType = "both";
+
+  if (
+    rawTarget === "dark-defects" ||
+    rawTarget === "bright-defects" ||
+    rawTarget === "both"
+  ) {
+    defectTarget = rawTarget;
+  } else if (isScratchTool || isVoidTool) {
+    defectTarget = "dark-defects";
+  }
+
+  const minDefectArea = Number(rule.params?.minDefectArea ?? (isScratchTool ? 6 : 4));
+  const maxAllowedDefects =
+    typeof rule.params?.maxAllowedDefects === "number"
+      ? Number(rule.params.maxAllowedDefects)
+      : 25;
+  const elongationThreshold = Number(rule.params?.elongationThreshold ?? 2.2);
+
+  const binaryGrid = new Uint8Array(regionWidth * regionHeight);
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const imgIdx = (y * imageData.width + x) * 4;
+      const luma =
+        0.299 * imageData.rgba[imgIdx] +
+        0.587 * imageData.rgba[imgIdx + 1] +
+        0.114 * imageData.rgba[imgIdx + 2];
+
+      const diff = luma - meanLuma;
+      let isDefectPixel = false;
+
+      if (defectTarget === "dark-defects") {
+        isDefectPixel = -diff >= contrastDelta;
+      } else if (defectTarget === "bright-defects") {
+        isDefectPixel = diff >= contrastDelta;
+      } else {
+        isDefectPixel = Math.abs(diff) >= contrastDelta;
+      }
+
+      if (isDefectPixel) {
+        binaryGrid[(y - startY) * regionWidth + (x - startX)] = 255;
+      }
+    }
+  }
+
+  const rawBlobs = findConnectedBlobs({
+    binaryGrid,
+    width: regionWidth,
+    height: regionHeight,
+    minArea: minDefectArea,
+    isEightConnected: true,
+  });
+
+  const detectedFlaws: DetectedFlawItem[] = [];
+
+  for (const blob of rawBlobs) {
+    const maxDim = Math.max(blob.bbox.width, blob.bbox.height);
+    const minDim = Math.max(1, Math.min(blob.bbox.width, blob.bbox.height));
+    const elongation = Number((maxDim / minDim).toFixed(2));
+    const isElongated = elongation >= elongationThreshold;
+
+    let flawType: "scratch" | "void" | "particle" | "bridge" | "blob" = "particle";
+
+    if (isElongated) {
+      flawType = "scratch";
+    } else if (isVoidTool || defectTarget === "dark-defects") {
+      flawType = "void";
+    }
+
+    const minCrackLength = Number(rule.params?.minCrackLengthPx ?? 12);
+
+    if (isScratchTool && (!isElongated || maxDim < minCrackLength)) {
+      continue;
+    }
+
+    detectedFlaws.push({
+      id: blob.id,
+      flawType,
+      areaPx: blob.area,
+      bbox: {
+        x: blob.bbox.minX + startX,
+        y: blob.bbox.minY + startY,
+        width: blob.bbox.width,
+        height: blob.bbox.height,
+      },
+      centroid: {
+        x: blob.centroid.x + startX,
+        y: blob.centroid.y + startY,
+      },
+      aspectRatio: elongation,
+      contrastDiff: contrastDelta,
+    });
+  }
+
+  const flawCount = detectedFlaws.length;
+  const maxTotalVoidPct =
+    typeof rule.params?.maxTotalVoidPct === "number"
+      ? Number(rule.params.maxTotalVoidPct)
+      : undefined;
+  const totalFlawArea = detectedFlaws.reduce((sum, f) => sum + f.areaPx, 0);
+  const totalVoidPct = (totalFlawArea / Math.max(1, regionWidth * regionHeight)) * 100;
+
+  let isPass = true;
+
+  if (typeof maxTotalVoidPct === "number") {
+    isPass = totalVoidPct <= maxTotalVoidPct;
+  } else {
+    isPass = flawCount <= maxAllowedDefects;
+  }
+
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
+    ? rule.params.judgmentItems
+    : [];
+
+  if (judgmentItems.length > 0) {
+    for (const item of judgmentItems) {
+      const lower = Number(item.lowerLimit ?? 0);
+      const upper = Number(item.upperLimit ?? maxAllowedDefects);
+      const isItemPass = flawCount >= lower && flawCount <= upper;
+
+      if (!isItemPass) {
+        isPass = false;
+      }
+    }
+  }
+
+  const score = isPass
+    ? Math.max(0.7, Number((0.98 - flawCount * 0.05).toFixed(2)))
+    : Math.max(0.1, Number((0.5 - flawCount * 0.1).toFixed(2)));
+
+  const message = isPass
+    ? `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. ${flawCount} defect(s) detected (allowed max: ${maxAllowedDefects}). ${opticalContext}: PASS.`
+    : `Surface anomaly rejected: detected ${flawCount} defect(s) exceeding tolerance (allowed max: ${maxAllowedDefects}). ${opticalContext}: FAIL.`;
+
   return {
-    status: ValidationStatusType.Pass,
-    score: 0.98,
-    message: `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. Zero critical defects detected. ${opticalContext}: PASS.`,
+    status: isPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score,
+    message,
     stub: false,
     debug: {
       meanLuma,
       stdDev,
       whiteBoxCount: whiteMarks.boxes.length,
+      flaws: detectedFlaws,
+      flawCount,
+      defectSensitivity: sensitivity,
+      defectTarget,
+    },
+  };
+}
+
+export function evaluateBlobRule(
+  ruleOrParams: EditorRule | EvaluateBlobParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
+): ValidationResult {
+  const rule = "rule" in ruleOrParams ? ruleOrParams.rule : ruleOrParams;
+  const imageData = "imageData" in ruleOrParams ? ruleOrParams.imageData : maybeImageData;
+  const opticalContext =
+    ("opticalContext" in ruleOrParams ? ruleOrParams.opticalContext : maybeOpticalContext) ??
+    "Blob Inspection";
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for blob evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const searchRegion: SearchRegion = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  const startX = Math.max(0, searchRegion.x);
+  const startY = Math.max(0, searchRegion.y);
+  const endX = Math.min(imageData.width, searchRegion.x + searchRegion.width);
+  const endY = Math.min(imageData.height, searchRegion.y + searchRegion.height);
+
+  const regionWidth = endX - startX;
+  const regionHeight = endY - startY;
+
+  if (regionWidth <= 0 || regionHeight <= 0) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid blob search geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  let sumL = 0;
+  let sumL2 = 0;
+  let pixelCount = 0;
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const idx = (y * imageData.width + x) * 4;
+      const luma =
+        0.299 * imageData.rgba[idx] +
+        0.587 * imageData.rgba[idx + 1] +
+        0.114 * imageData.rgba[idx + 2];
+
+      sumL += luma;
+      sumL2 += luma * luma;
+      pixelCount += 1;
+    }
+  }
+
+  if (pixelCount === 0) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid blob search geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const meanLuma = sumL / pixelCount;
+  const variance = Math.max(0, sumL2 / pixelCount - meanLuma * meanLuma);
+  const stdDev = Math.sqrt(variance);
+
+  const hasExplicitMinCount = typeof rule.params?.minBlobCount === "number";
+  const isComponentMissing =
+    !hasExplicitMinCount && (meanLuma < 53 || (meanLuma < 58 && stdDev < 18));
+
+  if (isComponentMissing) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Blob inspection rejected: workpiece missing or cavity empty (luma: ${meanLuma.toFixed(1)}, contrast: ${stdDev.toFixed(1)}). ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { meanLuma, stdDev, blobCount: 0, totalBlobArea: 0 },
+    };
+  }
+
+  const binaryThreshold = Number(rule.params?.binaryThreshold ?? 128);
+  const targetPolarity =
+    (rule.params?.targetPolarity as "bright" | "dark" | "both") ?? "bright";
+  const minBlobArea = Number(rule.params?.minBlobArea ?? 8);
+  const maxBlobArea = Number(rule.params?.maxBlobArea ?? 500000);
+  const minBlobCount = Number(rule.params?.minBlobCount ?? 0);
+  const maxBlobCount = Number(rule.params?.maxBlobCount ?? 100);
+  const hasHoleFilling = Boolean(rule.params?.hasHoleFilling ?? false);
+
+  const binaryGrid = new Uint8Array(regionWidth * regionHeight);
+  let totalLuma = 0;
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const imgIdx = (y * imageData.width + x) * 4;
+      const luma =
+        0.299 * imageData.rgba[imgIdx] +
+        0.587 * imageData.rgba[imgIdx + 1] +
+        0.114 * imageData.rgba[imgIdx + 2];
+
+      totalLuma += luma;
+      let isForeground = false;
+
+      if (targetPolarity === "dark") {
+        isForeground = luma <= binaryThreshold;
+      } else if (targetPolarity === "both") {
+        isForeground = Math.abs(luma - 128) >= Math.abs(binaryThreshold - 128);
+      } else {
+        isForeground = luma >= binaryThreshold;
+      }
+
+      if (isForeground) {
+        binaryGrid[(y - startY) * regionWidth + (x - startX)] = 255;
+      }
+    }
+  }
+
+  const rawBlobs = findConnectedBlobs({
+    binaryGrid,
+    width: regionWidth,
+    height: regionHeight,
+    minArea: minBlobArea,
+    maxArea: maxBlobArea,
+    isEightConnected: true,
+    hasHoleFilling,
+  });
+
+  const blobs = rawBlobs.map((blob) => ({
+    id: blob.id,
+    areaPx: blob.area,
+    bbox: {
+      x: blob.bbox.minX + startX,
+      y: blob.bbox.minY + startY,
+      width: blob.bbox.width,
+      height: blob.bbox.height,
+    },
+    centroid: {
+      x: blob.centroid.x + startX,
+      y: blob.centroid.y + startY,
+    },
+    aspectRatio: blob.aspectRatio,
+  }));
+
+  const blobCount = blobs.length;
+  const totalBlobArea = blobs.reduce((sum, blob) => sum + blob.areaPx, 0);
+
+  let isPass = blobCount >= minBlobCount && blobCount <= maxBlobCount;
+
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
+    ? rule.params.judgmentItems
+    : [];
+
+  if (judgmentItems.length > 0) {
+    for (const item of judgmentItems) {
+      const lower = Number(item.lowerLimit ?? 0);
+      const upper = Number(item.upperLimit ?? Number.POSITIVE_INFINITY);
+      const itemNameLower = String(item.name ?? "").toLowerCase();
+
+      let measuredVal = blobCount;
+
+      if (itemNameLower.includes("area")) {
+        measuredVal = totalBlobArea;
+      }
+
+      const isItemPass = measuredVal >= lower && measuredVal <= upper;
+
+      if (!isItemPass) {
+        isPass = false;
+      }
+    }
+  }
+
+  const avgLuma = totalLuma / Math.max(1, regionWidth * regionHeight);
+  const score = isPass ? 0.95 : 0.2;
+
+  const message = isPass
+    ? `Blob inspection passed: ${blobCount} blob(s) detected (total area: ${totalBlobArea} px) within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. ${opticalContext}: PASS.`
+    : `Blob inspection failed: ${blobCount} blob(s) detected (range [${minBlobCount}..${maxBlobCount}], total area: ${totalBlobArea} px). ${opticalContext}: FAIL.`;
+
+  return {
+    status: isPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score,
+    message,
+    stub: false,
+    debug: {
+      blobs,
+      blobCount,
+      totalBlobArea,
+      binaryThreshold,
+      targetPolarity,
+      avgLuma,
+      hasHoleFilling,
     },
   };
 }
@@ -1682,6 +2101,11 @@ export function evaluateCaliperRule(
   const endX = Math.min(imageData.width, searchRegion.x + searchRegion.width);
   const endY = Math.min(imageData.height, searchRegion.y + searchRegion.height);
   const regionH = Math.max(1, endY - startY);
+  const regionW = Math.max(1, endX - startX);
+
+  let sumL = 0;
+  let sumL2 = 0;
+  let count = 0;
 
   const colLumas: number[] = [];
 
@@ -1696,9 +2120,32 @@ export function evaluateCaliperRule(
         0.114 * imageData.rgba[idx + 2];
 
       sum += luma;
+      sumL += luma;
+      sumL2 += luma * luma;
+      count += 1;
     }
 
     colLumas.push(sum / regionH);
+  }
+
+  const meanLuma = count > 0 ? sumL / count : 0;
+  const variance = Math.max(0, count > 0 ? sumL2 / count - meanLuma * meanLuma : 0);
+  const stdDev = Math.sqrt(variance);
+
+  const isComponentMissing = meanLuma < 53 || (meanLuma < 58 && stdDev < 18);
+
+  if (isComponentMissing) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Caliper inspection rejected: workpiece missing or cavity empty (luma: ${meanLuma.toFixed(1)}, contrast: ${stdDev.toFixed(1)}). ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: {
+        meanLuma,
+        stdDev,
+        maxGrad: 0,
+      },
+    };
   }
 
   const grads: number[] = [];
@@ -1712,7 +2159,8 @@ export function evaluateCaliperRule(
   const nominalPx = Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
   const avgRegionLuma = colLumas.reduce((a, b) => a + b, 0) / Math.max(1, colLumas.length);
 
-  const hasEdges = maxGrad >= 6.0 && avgRegionLuma >= 35;
+  const minContrast = Math.min(6.0, Number(rule.params?.minEdgeContrast ?? 6.0));
+  const hasEdges = maxGrad >= minContrast && avgRegionLuma >= 35;
 
   if (!hasEdges) {
     return {
@@ -1741,42 +2189,258 @@ export function evaluateCaliperRule(
   };
 }
 
+function isPointInPolygon(
+  px: number,
+  py: number,
+  points: Array<{ x: number; y: number }>,
+): boolean {
+  if (points.length < 3) {
+    return false;
+  }
+
+  let isInside = false;
+  const len = points.length;
+
+  for (let i = 0, j = len - 1; i < len; j = i++) {
+    const xi = points[i].x;
+    const yi = points[i].y;
+    const xj = points[j].x;
+    const yj = points[j].y;
+
+    const isIntersect =
+      yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+
+    if (isIntersect) {
+      isInside = !isInside;
+    }
+  }
+
+  return isInside;
+}
+
+function isPointInCircle(
+  px: number,
+  py: number,
+  cx: number,
+  cy: number,
+  radius: number,
+): boolean {
+  const dx = px - cx;
+  const dy = py - cy;
+
+  return dx * dx + dy * dy <= radius * radius;
+}
+
+function isPointInEllipse(
+  px: number,
+  py: number,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+): boolean {
+  if (rx <= 0 || ry <= 0) {
+    return false;
+  }
+
+  const dx = px - cx;
+  const dy = py - cy;
+
+  return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1;
+}
+
+function isPointInMaskShape(
+  px: number,
+  py: number,
+  mask: { shape: ShapeType; geometry?: Geometry },
+): boolean {
+  if (!mask.geometry) {
+    return false;
+  }
+
+  const geom = mask.geometry;
+
+  if (mask.shape === ShapeType.Circle) {
+    const cx = geom.x ?? 0;
+    const cy = geom.y ?? 0;
+    const r = geom.radius ?? 20;
+
+    return isPointInCircle(px, py, cx, cy, r);
+  }
+
+  if (mask.shape === ShapeType.Polygon && geom.points && geom.points.length >= 3) {
+    return isPointInPolygon(px, py, geom.points);
+  }
+
+  if (mask.shape === ShapeType.Ellipse) {
+    const cx = geom.x ?? 0;
+    const cy = geom.y ?? 0;
+    const rx = (geom.width ?? 40) / 2;
+    const ry = (geom.height ?? 40) / 2;
+
+    return isPointInEllipse(px, py, cx, cy, rx, ry);
+  }
+
+  const mx = geom.x ?? 0;
+  const my = geom.y ?? 0;
+  const mw = geom.width ?? 40;
+  const mh = geom.height ?? 40;
+
+  return px >= mx && px < mx + mw && py >= my && py < my + mh;
+}
+
 export function evaluateAreaGateRule(
-  rule: EditorRule,
-  imageData: WorkpieceImageData,
-  opticalContext: string,
+  ruleOrParams: EditorRule | EvaluateAreaGateParams,
+  legacyImageData?: WorkpieceImageData,
+  legacyOpticalContext?: string,
 ): ValidationResult {
-  const searchRegion: SearchRegion = {
-    x: Math.round(rule.x),
-    y: Math.round(rule.y),
-    width: Math.round(rule.width),
-    height: Math.round(rule.height),
-  };
+  const isParamStruct = "rule" in ruleOrParams && "imageData" in ruleOrParams;
+  const rule = isParamStruct
+    ? (ruleOrParams as EvaluateAreaGateParams).rule
+    : (ruleOrParams as EditorRule);
+  const imageData = isParamStruct
+    ? (ruleOrParams as EvaluateAreaGateParams).imageData
+    : (legacyImageData as WorkpieceImageData);
+  const opticalContext = isParamStruct
+    ? ((ruleOrParams as EvaluateAreaGateParams).opticalContext ?? "Optical Area Gate")
+    : (legacyOpticalContext ?? "Optical Area Gate");
+  const rawRuleUm = Number(rule.params?.umPerPixel);
+  const fallbackUm = Number.isFinite(rawRuleUm) && rawRuleUm > 0 ? rawRuleUm : 10;
+  const calibratedUmPerPixel = isParamStruct
+    ? ((ruleOrParams as EvaluateAreaGateParams).umPerPixel ?? fallbackUm)
+    : fallbackUm;
 
-  const thresh = Number(rule.params?.intensityThreshold ?? 128);
-  const minArea = Number(rule.params?.minAreaPx ?? rule.params?.minPixelCount ?? 3500);
-  const maxArea = Number(
-    rule.params?.maxAreaPx ??
-      rule.params?.maxPixelCount ??
-      Math.max(30000, rule.width * rule.height * 0.9),
+  const rawSearchRegion =
+    rule.params?.searchRegion ??
+    (rule as any).searchRegion ?? {
+      shape: ShapeType.Rectangle,
+      geometry: { x: rule.x, y: rule.y, width: rule.width, height: rule.height },
+    };
+
+  const shape: ShapeType = (rawSearchRegion as any)?.shape ?? ShapeType.Rectangle;
+  const geom: Geometry = (rawSearchRegion as any)?.geometry ?? rawSearchRegion;
+
+  const rectX = Math.round(Number(geom.x ?? rule.x));
+  const rectY = Math.round(Number(geom.y ?? rule.y));
+  const rectW = Math.round(Number(geom.width ?? rule.width));
+  const rectH = Math.round(Number(geom.height ?? rule.height));
+
+  let circleCx = rectX + rectW / 2;
+  let circleCy = rectY + rectH / 2;
+  const circleR =
+    typeof geom.radius === "number" ? geom.radius : Math.min(rectW, rectH) / 2;
+
+  let startX = rectX;
+  let startY = rectY;
+  let endX = rectX + rectW;
+  let endY = rectY + rectH;
+
+  if (shape === ShapeType.Circle) {
+    if (typeof geom.x === "number") {
+      circleCx = geom.x;
+    }
+    if (typeof geom.y === "number") {
+      circleCy = geom.y;
+    }
+    startX = Math.floor(circleCx - circleR);
+    startY = Math.floor(circleCy - circleR);
+    endX = Math.ceil(circleCx + circleR);
+    endY = Math.ceil(circleCy + circleR);
+  } else if (shape === ShapeType.Polygon && geom.points && geom.points.length >= 3) {
+    const xs = geom.points.map((p) => p.x);
+    const ys = geom.points.map((p) => p.y);
+    startX = Math.floor(Math.min(...xs));
+    startY = Math.floor(Math.min(...ys));
+    endX = Math.ceil(Math.max(...xs));
+    endY = Math.ceil(Math.max(...ys));
+  } else if (shape === ShapeType.Ellipse) {
+    const rx = rectW / 2;
+    const ry = rectH / 2;
+    circleCx = rectX + rx;
+    circleCy = rectY + ry;
+    startX = Math.floor(circleCx - rx);
+    startY = Math.floor(circleCy - ry);
+    endX = Math.ceil(circleCx + rx);
+    endY = Math.ceil(circleCy + ry);
+  }
+
+  const clampedStartX = Math.max(0, startX);
+  const clampedStartY = Math.max(0, startY);
+  const clampedEndX = Math.min(imageData.width, endX);
+  const clampedEndY = Math.min(imageData.height, endY);
+
+  const thresh = Number(
+    rule.params?.intensityThreshold ?? rule.params?.threshold ?? 128,
   );
-  const isBrightOnDark = rule.params?.presencePolarity !== "darkOnBright";
+  const areaMode =
+    (rule.params?.areaMode as "pixels" | "percentage" | "physical" | undefined) ??
+    "pixels";
+  const targetPolarity =
+    (rule.params?.targetPolarity as "bright" | "dark" | "both" | undefined) ??
+    (rule.params?.presencePolarity === "darkOnBright" ? "dark" : "bright");
 
+  let masks: Array<{ shape: ShapeType; geometry?: Geometry }> = [];
+
+  if (Array.isArray(rule.params?.masks)) {
+    masks = rule.params.masks as Array<{ shape: ShapeType; geometry?: Geometry }>;
+  } else if (Array.isArray(rule.params?.maskRegions)) {
+    masks = rule.params.maskRegions as Array<{ shape: ShapeType; geometry?: Geometry }>;
+  }
+
+  let totalRoiPixels = 0;
   let activePixels = 0;
-  const startX = Math.max(0, searchRegion.x);
-  const startY = Math.max(0, searchRegion.y);
-  const endX = Math.min(imageData.width, searchRegion.x + searchRegion.width);
-  const endY = Math.min(imageData.height, searchRegion.y + searchRegion.height);
 
-  for (let y = startY; y < endY; y += 1) {
-    for (let x = startX; x < endX; x += 1) {
+  for (let y = clampedStartY; y < clampedEndY; y += 1) {
+    for (let x = clampedStartX; x < clampedEndX; x += 1) {
+      let isInsideRoi = false;
+
+      if (shape === ShapeType.Circle) {
+        isInsideRoi = isPointInCircle(x, y, circleCx, circleCy, circleR);
+      } else if (shape === ShapeType.Polygon && geom.points && geom.points.length >= 3) {
+        isInsideRoi = isPointInPolygon(x, y, geom.points);
+      } else if (shape === ShapeType.Ellipse) {
+        isInsideRoi = isPointInEllipse(x, y, circleCx, circleCy, rectW / 2, rectH / 2);
+      } else {
+        isInsideRoi =
+          x >= rectX && x < rectX + rectW && y >= rectY && y < rectY + rectH;
+      }
+
+      if (!isInsideRoi) {
+        continue;
+      }
+
+      let isMasked = false;
+
+      if (masks.length > 0) {
+        for (const mask of masks) {
+          if (mask.shape !== ShapeType.None && isPointInMaskShape(x, y, mask)) {
+            isMasked = true;
+            break;
+          }
+        }
+      }
+
+      if (isMasked) {
+        continue;
+      }
+
+      totalRoiPixels += 1;
+
       const idx = (y * imageData.width + x) * 4;
       const luma =
         0.299 * imageData.rgba[idx] +
         0.587 * imageData.rgba[idx + 1] +
         0.114 * imageData.rgba[idx + 2];
 
-      const isActive = isBrightOnDark ? luma >= thresh : luma <= thresh;
+      let isActive = false;
+
+      if (targetPolarity === "dark") {
+        isActive = luma <= thresh;
+      } else if (targetPolarity === "both") {
+        isActive = true;
+      } else {
+        isActive = luma >= thresh;
+      }
 
       if (isActive) {
         activePixels += 1;
@@ -1784,24 +2448,76 @@ export function evaluateAreaGateRule(
     }
   }
 
-  const isAreaPass = activePixels >= minArea && activePixels <= maxArea;
+  let measuredValue = activePixels;
+  let unit = "px";
+
+  if (areaMode === "percentage") {
+    measuredValue =
+      totalRoiPixels > 0
+        ? Math.round((activePixels / totalRoiPixels) * 1000) / 10
+        : 0;
+    unit = "%";
+  } else if (areaMode === "physical") {
+    const mmPerPixel = calibratedUmPerPixel / 1000;
+    const mm2PerPixel = mmPerPixel * mmPerPixel;
+    measuredValue = Math.round(activePixels * mm2PerPixel * 10000) / 10000;
+    unit = "mm²";
+  }
+
+  const judgmentItem = rule.params?.judgmentItems?.[0];
+  const minLimit = Number(
+    judgmentItem?.lowerLimit ??
+      rule.params?.minArea ??
+      rule.params?.minAreaPx ??
+      rule.params?.minPixelCount ??
+      (areaMode === "percentage" ? 10 : areaMode === "physical" ? 0.1 : 3500),
+  );
+  const maxLimit = Number(
+    judgmentItem?.upperLimit ??
+      rule.params?.maxArea ??
+      rule.params?.maxAreaPx ??
+      rule.params?.maxPixelCount ??
+      (areaMode === "percentage"
+        ? 95
+        : areaMode === "physical"
+          ? 25.0
+          : Math.max(30000, rectW * rectH * 0.9)),
+  );
+
+  const isAreaPass = measuredValue >= minLimit && measuredValue <= maxLimit;
 
   if (isAreaPass) {
     return {
       status: ValidationStatusType.Pass,
       score: 0.95,
-      message: `Area gate confirmed: ${activePixels}px within limits [${minArea}px..${maxArea}px]. ${opticalContext}: PASS.`,
+      message: `Area gate confirmed: ${measuredValue}${unit} within limits [${minLimit}${unit}..${maxLimit}${unit}]. ${opticalContext}: PASS.`,
       stub: false,
-      debug: { activePixels, minArea, maxArea },
+      debug: {
+        activePixels,
+        totalRoiPixels,
+        measuredValue,
+        unit,
+        minArea: minLimit,
+        maxArea: maxLimit,
+        areaMode,
+      },
     };
   }
 
   return {
     status: ValidationStatusType.Fail,
-    score: Math.max(0, Math.min(1.0, activePixels / Math.max(1, minArea))),
-    message: `Area gate violation: detected ${activePixels}px outside allowed limits [${minArea}px..${maxArea}px]. ${opticalContext}: FAIL.`,
+    score: Math.max(0, Math.min(1.0, measuredValue / Math.max(1, minLimit))),
+    message: `Area gate violation: detected ${measuredValue}${unit} outside allowed limits [${minLimit}${unit}..${maxLimit}${unit}]. ${opticalContext}: FAIL.`,
     stub: false,
-    debug: { activePixels, minArea, maxArea },
+    debug: {
+      activePixels,
+      totalRoiPixels,
+      measuredValue,
+      unit,
+      minArea: minLimit,
+      maxArea: maxLimit,
+      areaMode,
+    },
   };
 }
 
@@ -1852,6 +2568,18 @@ export function evaluateGeneralFeatureRule(
   const mean = sumL / count;
   const variance = Math.max(0, sumL2 / count - mean * mean);
   const stdDev = Math.sqrt(variance);
+
+  const isComponentMissing = mean < 53 || (mean < 58 && stdDev < 18);
+
+  if (isComponentMissing) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Feature absent: workpiece missing or cavity empty (luma: ${mean.toFixed(1)}, contrast: ${stdDev.toFixed(1)}). ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { mean, stdDev },
+    };
+  }
 
   const hasFeature = mean >= 35 && stdDev >= 10;
 
@@ -1913,14 +2641,22 @@ export function evaluateWorkpieceRuleReal(
   }
 
   if (
-    toolCode === "T118" ||
     toolCode === "T109" ||
+    ruleNameLower.includes("blob") ||
+    ruleNameLower.includes("bridge")
+  ) {
+    return evaluateBlobRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T118" ||
     toolCode === "T107" ||
     toolCode === "T108" ||
     ruleNameLower.includes("defect") ||
     ruleNameLower.includes("flaw") ||
     ruleNameLower.includes("scratch") ||
-    ruleNameLower.includes("blob")
+    ruleNameLower.includes("void") ||
+    ruleNameLower.includes("porosity")
   ) {
     return evaluateDefectRule(rule, imageData, opticalContext);
   }
