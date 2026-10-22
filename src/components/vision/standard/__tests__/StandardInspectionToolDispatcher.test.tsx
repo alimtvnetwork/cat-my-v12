@@ -103,4 +103,24 @@ describe("StandardInspectionToolDispatcher", () => {
 
     expect(screen.getAllByText(/Defect/i).length).toBeGreaterThan(0);
   });
+
+  it("dispatches Scratch & Crack Detector with constellation settings to Defect Tool, never Pattern Matching", () => {
+    const settingsWithConstellation = {
+      ...defaultSettings,
+      constellation: [{ number: 1, x: 10, y: 10, width: 20, height: 20 }],
+      referenceBoxes: [{ number: 1, x: 10, y: 10, width: 20, height: 20 }],
+    };
+
+    render(
+      <StandardInspectionToolDispatcher
+        toolType="T107"
+        ruleName="Rule 2: Scratch & Crack Detector"
+        settings={settingsWithConstellation}
+        onChange={onChange}
+      />,
+    );
+
+    expect(screen.getAllByText(/Defect/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Pattern Configuration/i)).toBeNull();
+  });
 });

@@ -88,6 +88,21 @@ export function StandardInspectionToolDispatcher(
     !combined.includes("logo") &&
     !combined.includes("defect") &&
     !combined.includes("flaw") &&
+    !combined.includes("scratch") &&
+    !combined.includes("crack") &&
+    !combined.includes("void") &&
+    !combined.includes("porosity") &&
+    !combined.includes("area") &&
+    !combined.includes("blob") &&
+    !combined.includes("caliper") &&
+    !combined.includes("pitch") &&
+    toolCode !== "T101" &&
+    toolCode !== "T104" &&
+    toolCode !== "T107" &&
+    toolCode !== "T108" &&
+    toolCode !== "T109" &&
+    toolCode !== "T110" &&
+    toolCode !== "T103" &&
     !(props.settings as any)?.isDefectReject &&
     (toolCode === "T102" ||
       toolCode === "T116" ||
@@ -101,8 +116,7 @@ export function StandardInspectionToolDispatcher(
       combined.includes("31 box") ||
       combined.includes("2-bit") ||
       combined.includes("light pattern") ||
-      (props.settings as any)?.type === "pattern_match" ||
-      Boolean((props.settings as any)?.constellation));
+      (props.settings as any)?.type === "pattern_match");
 
   if (isGreyscalePattern) {
     return <StandardGreyscalePatternMatchingTool {...props} />;
