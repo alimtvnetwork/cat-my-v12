@@ -191,25 +191,17 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
             out[idx + 2] = 94;
             out[idx + 3] = 255;
           } else {
-            const dimmed = Math.round(luma * 0.35);
-            out[idx] = dimmed;
-            out[idx + 1] = dimmed;
-            out[idx + 2] = dimmed;
-            out[idx + 3] = 255;
+            out[idx] = raw[idx];
+            out[idx + 1] = raw[idx + 1];
+            out[idx + 2] = raw[idx + 2];
+            out[idx + 3] = raw[idx + 3];
           }
-        } else if (isInsideRegion) {
-          const luma = Math.round(
-            0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
-          );
-          out[idx] = luma;
-          out[idx + 1] = luma;
-          out[idx + 2] = luma;
-          out[idx + 3] = 255;
         } else {
-          out[idx] = 12;
-          out[idx + 1] = 16;
-          out[idx + 2] = 22;
-          out[idx + 3] = 255;
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
         }
       }
 

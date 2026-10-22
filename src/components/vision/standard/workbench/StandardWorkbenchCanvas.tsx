@@ -225,7 +225,7 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
           onPointerDown={drag.handlePointerDown}
           onPointerMove={drag.handlePointerMove}
           onPointerUp={drag.handlePointerUp}
-          className="h-full max-h-full w-full max-w-full rounded border border-[#1e2630] object-contain shadow-2xl cursor-crosshair touch-none"
+          className="aspect-video h-full max-h-full w-full max-w-full rounded border border-[#1e2630] object-contain shadow-2xl cursor-crosshair touch-none"
         />
       </div>
     </div>

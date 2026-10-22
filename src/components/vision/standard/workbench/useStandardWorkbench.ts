@@ -48,7 +48,7 @@ function parseSavedRegion(raw: unknown): SearchRegion | null {
 
 export function useStandardWorkbench(props: UseStandardWorkbenchProps) {
   const [source, setSource] = useState<WhiteBoxMarkingInput | null>(null);
-  const [hasFilteredPreview, setHasFilteredPreview] = useState(true);
+  const [hasFilteredPreview, setHasFilteredPreview] = useState(false);
   const [hasOverlays, setHasOverlays] = useState(true);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [dragState, setDragState] = useState<RegionDrag | null>(null);

@@ -187,17 +187,12 @@ export function StandardVoidPorosityTool(
           out[idx + 1] = 158;
           out[idx + 2] = 11;
           out[idx + 3] = 255;
-        } else if (isInsideRegion) {
-          const dimmed = Math.round(luma * 0.4);
-          out[idx] = dimmed;
-          out[idx + 1] = dimmed;
-          out[idx + 2] = dimmed;
-          out[idx + 3] = 255;
         } else {
-          out[idx] = 12;
-          out[idx + 1] = 16;
-          out[idx + 2] = 22;
-          out[idx + 3] = 255;
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
         }
       }
 

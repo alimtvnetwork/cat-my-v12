@@ -162,18 +162,12 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
           out[idx + 1] = 255;
           out[idx + 2] = 157;
           out[idx + 3] = 255;
-        } else if (isInsideRegion) {
-          const dimmed = Math.round(luma * 0.5);
-          out[idx] = dimmed;
-          out[idx + 1] = dimmed;
-          out[idx + 2] = dimmed;
-          out[idx + 3] = 255;
         } else {
-          const dimmed = Math.round(luma * 0.2);
-          out[idx] = dimmed;
-          out[idx + 1] = dimmed;
-          out[idx + 2] = dimmed;
-          out[idx + 3] = 255;
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
         }
       }
 
