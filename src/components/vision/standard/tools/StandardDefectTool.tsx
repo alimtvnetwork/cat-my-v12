@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
 import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
+import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { DefectTargetType } from "@/domain/vision/surface-flaw-types";
 
 export interface StandardDefectToolProps {
   settings: PatternSearchSettings;
@@ -20,12 +21,113 @@ export interface StandardDefectToolProps {
 }
 
 export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.Element {
-  const [defectSensitivity, setDefectSensitivity] = useState<number>(35);
-  const [defectTarget, setDefectTarget] = useState<"dark-defects" | "bright-defects" | "both">(
-    "both",
+  const initialParams = props.settings.params ?? {};
+
+  const [defectSensitivity, setDefectSensitivity] = useState<number>(
+    Number(initialParams.defectSensitivity ?? 35),
   );
-  const [minDefectArea, setMinDefectArea] = useState<number>(15);
-  const [maxAllowedDefects, setMaxAllowedDefects] = useState<number>(0);
+  const [defectTarget, setDefectTarget] = useState<DefectTargetType>(
+    (initialParams.defectTarget as DefectTargetType) ?? "both",
+  );
+  const [minDefectArea, setMinDefectArea] = useState<number>(
+    Number(initialParams.minDefectArea ?? 15),
+  );
+  const [maxAllowedDefects, setMaxAllowedDefects] = useState<number>(
+    Number(initialParams.maxAllowedDefects ?? 0),
+  );
+
+  useEffect(() => {
+    props.onChange((prev) => {
+      const existingParams = prev.params ?? {};
+      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
+
+      const defaultDefectItem: JudgmentItem = {
+        id: "j1",
+        name: "Flaw Count",
+        unit: "count",
+        lowerLimit: 0,
+        measured: 0,
+        upperLimit: maxAllowedDefects,
+        status: "PASS",
+      };
+
+      const judgmentItems =
+        existingItems && existingItems.length > 0 ? existingItems : [defaultDefectItem];
+
+      return {
+        ...prev,
+        params: {
+          ...existingParams,
+          toolCode: existingParams.toolCode ?? "T107",
+          defectSensitivity,
+          defectTarget,
+          minDefectArea,
+          maxAllowedDefects,
+          judgmentItems,
+        },
+      };
+    });
+  }, []);
+
+  const handleSensitivityChange = (value: number) => {
+    setDefectSensitivity(value);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        defectSensitivity: value,
+      },
+    }));
+  };
+
+  const handleDefectTargetChange = (target: DefectTargetType) => {
+    setDefectTarget(target);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        defectTarget: target,
+      },
+    }));
+  };
+
+  const handleMinAreaChange = (value: number) => {
+    setMinDefectArea(value);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        minDefectArea: value,
+      },
+    }));
+  };
+
+  const handleMaxDefectsChange = (value: number) => {
+    setMaxAllowedDefects(value);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item, idx) => {
+        if (idx === 0) {
+          return { ...item, upperLimit: value };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...prev.params,
+          maxAllowedDefects: value,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
 
   const tabs: ToolTabItem[] = [
     {
@@ -52,7 +154,7 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
                 min={1}
                 max={100}
                 value={defectSensitivity}
-                onChange={(e) => setDefectSensitivity(Number(e.target.value))}
+                onChange={(e) => handleSensitivityChange(Number(e.target.value))}
                 className="w-full accent-ca-select"
               />
             </div>
@@ -64,7 +166,7 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
                     type="radio"
                     name="defect-type"
                     checked={defectTarget === mode}
-                    onChange={() => setDefectTarget(mode)}
+                    onChange={() => handleDefectTargetChange(mode)}
                     className="accent-ca-select"
                   />
                   <span className="capitalize">{mode.replace("-", " ")}</span>
@@ -91,7 +193,7 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
                   type="number"
                   min={1}
                   value={minDefectArea}
-                  onChange={(e) => setMinDefectArea(Number(e.target.value))}
+                  onChange={(e) => handleMinAreaChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -103,7 +205,7 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
                   type="number"
                   min={0}
                   value={maxAllowedDefects}
-                  onChange={(e) => setMaxAllowedDefects(Number(e.target.value))}
+                  onChange={(e) => handleMaxDefectsChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>

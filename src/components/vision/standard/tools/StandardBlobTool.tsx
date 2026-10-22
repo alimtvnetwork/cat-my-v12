@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
 import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
+import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
@@ -20,12 +20,209 @@ export interface StandardBlobToolProps {
 }
 
 export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Element {
-  const [binaryThreshold, setBinaryThreshold] = useState<number>(128);
-  const [minBlobArea, setMinBlobArea] = useState<number>(50);
-  const [maxBlobArea, setMaxBlobArea] = useState<number>(5000);
-  const [minBlobCount, setMinBlobCount] = useState<number>(1);
-  const [maxBlobCount, setMaxBlobCount] = useState<number>(4);
-  const [fillHoles, setFillHoles] = useState<boolean>(true);
+  const initialParams = props.settings.params ?? {};
+
+  const [binaryThreshold, setBinaryThreshold] = useState<number>(
+    Number(initialParams.binaryThreshold ?? 128),
+  );
+  const [minBlobArea, setMinBlobArea] = useState<number>(
+    Number(initialParams.minBlobArea ?? 50),
+  );
+  const [maxBlobArea, setMaxBlobArea] = useState<number>(
+    Number(initialParams.maxBlobArea ?? 5000),
+  );
+  const [minBlobCount, setMinBlobCount] = useState<number>(
+    Number(initialParams.minBlobCount ?? 1),
+  );
+  const [maxBlobCount, setMaxBlobCount] = useState<number>(
+    Number(initialParams.maxBlobCount ?? 4),
+  );
+  const [hasHoleFilling, setHasHoleFilling] = useState<boolean>(
+    Boolean(initialParams.hasHoleFilling ?? true),
+  );
+  const [targetPolarity, setTargetPolarity] = useState<"bright" | "dark" | "both">(
+    (initialParams.targetPolarity as "bright" | "dark" | "both") ?? "bright",
+  );
+
+  useEffect(() => {
+    props.onChange((prev) => {
+      const existingParams = prev.params ?? {};
+      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
+
+      const defaultCountItem: JudgmentItem = {
+        id: "j1",
+        name: "Blob Count",
+        unit: "count",
+        lowerLimit: minBlobCount,
+        measured: minBlobCount,
+        upperLimit: maxBlobCount,
+        status: "PASS",
+      };
+
+      const defaultAreaItem: JudgmentItem = {
+        id: "j2",
+        name: "Blob Area",
+        unit: "px",
+        lowerLimit: minBlobArea,
+        measured: Math.round((minBlobArea + maxBlobArea) / 2),
+        upperLimit: maxBlobArea,
+        status: "PASS",
+      };
+
+      const judgmentItems =
+        existingItems && existingItems.length > 0
+          ? existingItems
+          : [defaultCountItem, defaultAreaItem];
+
+      return {
+        ...prev,
+        params: {
+          ...existingParams,
+          toolCode: existingParams.toolCode ?? "T109",
+          binaryThreshold,
+          minBlobArea,
+          maxBlobArea,
+          minBlobCount,
+          maxBlobCount,
+          hasHoleFilling,
+          targetPolarity,
+          judgmentItems,
+        },
+      };
+    });
+  }, []);
+
+  const handleThresholdChange = (value: number) => {
+    setBinaryThreshold(value);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        binaryThreshold: value,
+      },
+    }));
+  };
+
+  const handleHoleFillingChange = (hasHoles: boolean) => {
+    setHasHoleFilling(hasHoles);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        hasHoleFilling: hasHoles,
+      },
+    }));
+  };
+
+  const handlePolarityChange = (polarity: "bright" | "dark" | "both") => {
+    setTargetPolarity(polarity);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        targetPolarity: polarity,
+      },
+    }));
+  };
+
+  const handleMinCountChange = (value: number) => {
+    setMinBlobCount(value);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item) => {
+        if (item.name.toLowerCase().includes("count")) {
+          return { ...item, lowerLimit: value };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...prev.params,
+          minBlobCount: value,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
+
+  const handleMaxCountChange = (value: number) => {
+    setMaxBlobCount(value);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item) => {
+        if (item.name.toLowerCase().includes("count")) {
+          return { ...item, upperLimit: value };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...prev.params,
+          maxBlobCount: value,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
+
+  const handleMinAreaChange = (value: number) => {
+    setMinBlobArea(value);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item) => {
+        if (item.name.toLowerCase().includes("area")) {
+          return { ...item, lowerLimit: value };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...prev.params,
+          minBlobArea: value,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
+
+  const handleMaxAreaChange = (value: number) => {
+    setMaxBlobArea(value);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item) => {
+        if (item.name.toLowerCase().includes("area")) {
+          return { ...item, upperLimit: value };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...prev.params,
+          maxBlobArea: value,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
 
   const tabs: ToolTabItem[] = [
     {
@@ -52,16 +249,31 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
                 min={0}
                 max={255}
                 value={binaryThreshold}
-                onChange={(e) => setBinaryThreshold(Number(e.target.value))}
+                onChange={(e) => handleThresholdChange(Number(e.target.value))}
                 className="w-full accent-ca-select"
               />
+            </div>
+
+            <div className="flex items-center gap-4 pt-1">
+              {(["bright", "dark", "both"] as const).map((mode) => (
+                <label key={mode} className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="blob-polarity"
+                    checked={targetPolarity === mode}
+                    onChange={() => handlePolarityChange(mode)}
+                    className="accent-ca-select"
+                  />
+                  <span className="capitalize">{mode} Polarity</span>
+                </label>
+              ))}
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer pt-1">
               <input
                 type="checkbox"
-                checked={fillHoles}
-                onChange={(e) => setFillHoles(e.target.checked)}
+                checked={hasHoleFilling}
+                onChange={(e) => handleHoleFillingChange(e.target.checked)}
                 className="rounded border-ca-border accent-ca-select"
               />
               <span>Fill Internal Enclosed Holes</span>
@@ -86,7 +298,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
                   type="number"
                   min={0}
                   value={minBlobCount}
-                  onChange={(e) => setMinBlobCount(Number(e.target.value))}
+                  onChange={(e) => handleMinCountChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -96,7 +308,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
                   type="number"
                   min={0}
                   value={maxBlobCount}
-                  onChange={(e) => setMaxBlobCount(Number(e.target.value))}
+                  onChange={(e) => handleMaxCountChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -106,7 +318,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
                   type="number"
                   min={1}
                   value={minBlobArea}
-                  onChange={(e) => setMinBlobArea(Number(e.target.value))}
+                  onChange={(e) => handleMinAreaChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -116,7 +328,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
                   type="number"
                   min={1}
                   value={maxBlobArea}
-                  onChange={(e) => setMaxBlobArea(Number(e.target.value))}
+                  onChange={(e) => handleMaxAreaChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>

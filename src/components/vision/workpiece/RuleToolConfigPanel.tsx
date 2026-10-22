@@ -5,6 +5,7 @@ import {
   createDefaultPatternSearchSettings,
   type PatternSearchSettings,
 } from "@/domain/vision/pattern-search";
+import { ShapeType } from "@/domain/vision/shapes";
 import { WhiteBoxMarkingTool } from "@/components/vision/WhiteBoxMarkingTool";
 import { Pin1MarkingTool } from "@/components/vision/standard/tools/pin1-config/Pin1MarkingTool";
 import { StandardInspectionToolDispatcher } from "@/components/vision/standard/tools/StandardInspectionToolDispatcher";
@@ -62,8 +63,34 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   activeBoxCount = Math.max(1, referenceBoxes.length);
   totalBoxCount = Math.max(1, referenceBoxes.length);
 
+  const ruleParams = { ...(rule.params ?? {}) };
+  const initialJudgmentItems = (ruleParams.judgmentItems as unknown[] | undefined) ?? [
+    {
+      id: "j1",
+      name: "Measured Value",
+      unit: "px",
+      lowerLimit: 0,
+      measured: 50,
+      upperLimit: 100,
+      status: "PASS",
+    },
+    {
+      id: "j2",
+      name: "Correlation / Score",
+      unit: "%",
+      lowerLimit: 70,
+      measured: 94.2,
+      upperLimit: 100,
+      status: "PASS",
+    },
+  ];
+
   return {
     ...base,
+    params: {
+      ...ruleParams,
+      judgmentItems: initialJudgmentItems,
+    },
     toolCode,
     threshold,
     marginPx,
@@ -291,6 +318,17 @@ export function RuleToolConfigPanel({
     const updatedParams = {
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
+      searchRegion: {
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      },
+      searchRegionJson: JSON.stringify({
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      }),
+      ...(settings.masks
+        ? { masks: settings.masks, masksJson: JSON.stringify(settings.masks) }
+        : {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
       ...((settings as any)?.imageRef ? { imageRef: (settings as any).imageRef } : {}),
       x: ruleX,

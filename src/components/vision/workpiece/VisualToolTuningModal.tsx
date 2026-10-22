@@ -26,7 +26,9 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const rawThresh = rule.params?.greyscaleLevel ?? rule.params?.threshold ?? 170;
   const rawThreshNum = typeof rawThresh === "number" ? rawThresh : 170;
-  const threshold = Number.isFinite(rawThreshNum) ? Math.max(0, Math.min(255, Math.round(rawThreshNum))) : 170;
+  const threshold = Number.isFinite(rawThreshNum)
+    ? Math.max(0, Math.min(255, Math.round(rawThreshNum)))
+    : 170;
   const marginPx = typeof rule.params?.marginPx === "number" ? rule.params.marginPx : 8;
   const tolPx = typeof rule.params?.tolerancePx === "number" ? rule.params.tolerancePx : 8;
 
@@ -65,9 +67,35 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
     height: rule.height,
   };
 
+  const ruleParams = { ...(rule.params ?? {}) };
+  const initialJudgmentItems = (ruleParams.judgmentItems as unknown[] | undefined) ?? [
+    {
+      id: "j1",
+      name: "Measured Value",
+      unit: "px",
+      lowerLimit: 0,
+      measured: 50,
+      upperLimit: 100,
+      status: "PASS",
+    },
+    {
+      id: "j2",
+      name: "Correlation / Score",
+      unit: "%",
+      lowerLimit: 70,
+      measured: 94.2,
+      upperLimit: 100,
+      status: "PASS",
+    },
+  ];
+
   return {
     ...base,
     name: rule.name,
+    params: {
+      ...ruleParams,
+      judgmentItems: initialJudgmentItems,
+    },
     searchRegion: {
       shape: ShapeType.Rectangle,
       geometry: tuningSearchRegion,
@@ -96,7 +124,9 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   };
 }
 
-function readSavedRegion(rawRegion: unknown): { x: number; y: number; width: number; height: number } | null {
+function readSavedRegion(
+  rawRegion: unknown,
+): { x: number; y: number; width: number; height: number } | null {
   let value = rawRegion;
 
   if (typeof rawRegion === "string") {
@@ -179,7 +209,9 @@ export function VisualToolTuningModal({
 
   function handleApplyPattern(pattern: FormulatedPatternGeometry): void {
     const rawThresh = Number((settings as any).threshold ?? (rule.params as any)?.threshold ?? 170);
-    const threshold = Number.isFinite(rawThresh) ? Math.max(0, Math.min(255, Math.round(rawThresh))) : 170;
+    const threshold = Number.isFinite(rawThresh)
+      ? Math.max(0, Math.min(255, Math.round(rawThresh)))
+      : 170;
     const searchRegion = {
       x: pattern.searchRegion.x,
       y: pattern.searchRegion.y,
@@ -306,12 +338,13 @@ export function VisualToolTuningModal({
 
   function handleApplyStandardTool(): void {
     const rawRegion = settings.searchRegion;
-    const geom = (rawRegion as any)?.geometry ?? rawRegion ?? {
-      x: rule.x,
-      y: rule.y,
-      width: rule.width,
-      height: rule.height,
-    };
+    const geom = (rawRegion as any)?.geometry ??
+      rawRegion ?? {
+        x: rule.x,
+        y: rule.y,
+        width: rule.width,
+        height: rule.height,
+      };
 
     const ruleX = Number(geom.x ?? rule.x);
     const ruleY = Number(geom.y ?? rule.y);
@@ -323,6 +356,17 @@ export function VisualToolTuningModal({
     const updatedParams = {
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
+      searchRegion: {
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      },
+      searchRegionJson: JSON.stringify({
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      }),
+      ...(settings.masks
+        ? { masks: settings.masks, masksJson: JSON.stringify(settings.masks) }
+        : {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
       ...(effectiveImageRef ? { imageRef: effectiveImageRef } : {}),
       x: ruleX,

@@ -16,9 +16,21 @@ describe("Catalog Rules on filled image", () => {
         roi = { x: 100, y: 70, width: 760, height: 400 };
       } else if (tool.code === "T105" || tool.code === "T117" || tool.name.toLowerCase().includes("pin 1")) {
         roi = { x: 180, y: 140, width: 140, height: 140 };
-      } else if (tool.code === "T118" || tool.name.toLowerCase().includes("defect")) {
+      } else if (
+        tool.code === "T118" ||
+        tool.code === "T107" ||
+        tool.code === "T108" ||
+        tool.name.toLowerCase().includes("defect") ||
+        tool.name.toLowerCase().includes("scratch") ||
+        tool.name.toLowerCase().includes("void")
+      ) {
         roi = { x: 200, y: 360, width: 480, height: 160 };
-      } else if (tool.code === "T110" || tool.name.toLowerCase().includes("caliper")) {
+      } else if (
+        tool.code === "T110" ||
+        tool.code === "T104" ||
+        tool.name.toLowerCase().includes("caliper") ||
+        tool.name.toLowerCase().includes("lead")
+      ) {
         roi = { x: 180, y: 200, width: 280, height: 120 };
       }
 
@@ -92,9 +104,21 @@ describe("Catalog Rules on filled image", () => {
         roi = { x: 100, y: 70, width: 760, height: 400 };
       } else if (tool.code === "T105" || tool.code === "T117" || tool.name.toLowerCase().includes("pin 1")) {
         roi = { x: 180, y: 140, width: 140, height: 140 };
-      } else if (tool.code === "T118" || tool.name.toLowerCase().includes("defect")) {
+      } else if (
+        tool.code === "T118" ||
+        tool.code === "T107" ||
+        tool.code === "T108" ||
+        tool.name.toLowerCase().includes("defect") ||
+        tool.name.toLowerCase().includes("scratch") ||
+        tool.name.toLowerCase().includes("void")
+      ) {
         roi = { x: 200, y: 360, width: 480, height: 160 };
-      } else if (tool.code === "T110" || tool.name.toLowerCase().includes("caliper")) {
+      } else if (
+        tool.code === "T110" ||
+        tool.code === "T104" ||
+        tool.name.toLowerCase().includes("caliper") ||
+        tool.name.toLowerCase().includes("lead")
+      ) {
         roi = { x: 180, y: 200, width: 280, height: 120 };
       }
 
@@ -127,8 +151,8 @@ describe("Catalog Rules on filled image", () => {
                 minMatchPercent: 80,
                 searchRegion: { x: 100, y: 70, width: 760, height: 400 },
                 patternRegion: { x: 150, y: 100, width: 600, height: 300 },
-                referenceBoxes: DEFAULT_24_PATTERN_BOXES,
-                constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES),
+                referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
+                constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }))),
               }
             : {}),
           ...(tool.code === "T105" || tool.code === "T117"
