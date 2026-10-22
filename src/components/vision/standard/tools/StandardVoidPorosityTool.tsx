@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
@@ -56,14 +56,21 @@ export function StandardVoidPorosityTool(
     Number(initialParams.maxAllowedVoids ?? 0),
   );
 
-  // Analyze enclosed void cavities and calculate total porosity ratio
-  const { detectedVoids, measuredPorosityPercent, isPass } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [detectedVoids, setDetectedVoids] = useState<DetectedVoid[]>([]);
+  const [measuredPorosityPercent, setMeasuredPorosityPercent] = useState<number>(0);
+  const [isPass, setIsPass] = useState<boolean>(true);
+
+  // Execute void analysis strictly on "Process" click
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        detectedVoids: [] as DetectedVoid[],
-        measuredPorosityPercent: 0,
-        isPass: true,
-      };
+      setDetectedVoids([]);
+      setMeasuredPorosityPercent(0);
+      setIsPass(true);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -80,8 +87,6 @@ export function StandardVoidPorosityTool(
 
     let totalVoidPixels = 0;
     const voids: DetectedVoid[] = [];
-
-    // Grid cluster detection for low-luma enclosed pockets
     const cellSize = 14;
 
     for (let y = startY; y < endY - cellSize; y += cellSize) {
@@ -117,11 +122,10 @@ export function StandardVoidPorosityTool(
     const porosityRatio = Math.round((totalVoidPixels / totalSubstratePixels) * 1000) / 10;
     const pass = voids.length <= maxAllowedVoids && porosityRatio <= maxPorosityPercent;
 
-    return {
-      detectedVoids: voids,
-      measuredPorosityPercent: porosityRatio,
-      isPass: pass,
-    };
+    setDetectedVoids(voids);
+    setMeasuredPorosityPercent(porosityRatio);
+    setIsPass(pass);
+    setHasProcessed(true);
   }, [
     workbench.source,
     workbench.searchRegion,
@@ -130,6 +134,26 @@ export function StandardVoidPorosityTool(
     maxPorosityPercent,
     maxAllowedVoids,
   ]);
+
+  const handleSensitivityChange = useCallback((val: number) => {
+    setVoidSensitivity(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinDiameterChange = useCallback((val: number) => {
+    setMinVoidDiameterPx(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxPorosityChange = useCallback((val: number) => {
+    setMaxPorosityPercent(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxVoidsChange = useCallback((val: number) => {
+    setMaxAllowedVoids(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -158,8 +182,7 @@ export function StandardVoidPorosityTool(
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
         const isVoid = luma <= voidThresholdLuma;
 
-        if (isInsideRegion && isVoid) {
-          // Highlight void cavities in bright neon amber
+        if (hasProcessed && isInsideRegion && isVoid) {
           out[idx] = 245;
           out[idx + 1] = 158;
           out[idx + 2] = 11;
@@ -180,11 +203,15 @@ export function StandardVoidPorosityTool(
 
       return output;
     },
-    [workbench.searchRegion, voidSensitivity],
+    [workbench.searchRegion, voidSensitivity, hasProcessed],
   );
 
   const renderCustomOverlays = useCallback(
     (ctx: CanvasRenderingContext2D) => {
+      if (!hasProcessed) {
+        return;
+      }
+
       for (const voidItem of detectedVoids) {
         ctx.save();
         ctx.strokeStyle = "#f59e0b";
@@ -196,7 +223,6 @@ export function StandardVoidPorosityTool(
         ctx.fill();
         ctx.stroke();
 
-        // Crosshair
         ctx.beginPath();
         ctx.moveTo(voidItem.centerX - 4, voidItem.centerY);
         ctx.lineTo(voidItem.centerX + 4, voidItem.centerY);
@@ -204,7 +230,6 @@ export function StandardVoidPorosityTool(
         ctx.lineTo(voidItem.centerX, voidItem.centerY + 4);
         ctx.stroke();
 
-        // Label
         ctx.fillStyle = "#f59e0b";
         ctx.font = "bold 9px monospace";
         ctx.fillText(
@@ -215,10 +240,14 @@ export function StandardVoidPorosityTool(
         ctx.restore();
       }
     },
-    [detectedVoids],
+    [detectedVoids, hasProcessed],
   );
 
+  // Apply button: only adds / updates rule when explicitly clicked
   const handleApply = useCallback(() => {
+    const finalVoids = detectedVoids.length;
+    const finalPass = finalVoids <= maxAllowedVoids && measuredPorosityPercent <= maxPorosityPercent;
+
     const defaultPorosityItem: JudgmentItem = {
       id: "j1",
       name: "Porosity Ratio",
@@ -226,7 +255,7 @@ export function StandardVoidPorosityTool(
       lowerLimit: 0,
       measured: measuredPorosityPercent,
       upperLimit: maxPorosityPercent,
-      status: isPass ? "PASS" : "FAIL",
+      status: finalPass ? "PASS" : "FAIL",
     };
 
     const defaultVoidCountItem: JudgmentItem = {
@@ -234,9 +263,9 @@ export function StandardVoidPorosityTool(
       name: "Void Cavity Count",
       unit: "count",
       lowerLimit: 0,
-      measured: detectedVoids.length,
+      measured: finalVoids,
       upperLimit: maxAllowedVoids,
-      status: detectedVoids.length <= maxAllowedVoids ? "PASS" : "FAIL",
+      status: finalVoids <= maxAllowedVoids ? "PASS" : "FAIL",
     };
 
     props.onChange((prev) => ({
@@ -249,7 +278,7 @@ export function StandardVoidPorosityTool(
         maxPorosityPercent,
         maxAllowedVoids,
         measuredPorosityPercent,
-        detectedVoidCount: detectedVoids.length,
+        detectedVoidCount: finalVoids,
         judgmentItems: [defaultPorosityItem, defaultVoidCountItem],
       },
     }));
@@ -262,7 +291,6 @@ export function StandardVoidPorosityTool(
     maxAllowedVoids,
     measuredPorosityPercent,
     detectedVoids,
-    isPass,
     props,
   ]);
 
@@ -274,7 +302,8 @@ export function StandardVoidPorosityTool(
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
-      onRefresh={props.onRefresh}
+      onProcess={handleProcess}
+      onRefresh={handleProcess}
       canvas={
         <StandardWorkbenchCanvas
           source={workbench.source}
@@ -284,9 +313,16 @@ export function StandardVoidPorosityTool(
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Cavity Segmentation)"
           toolBadge="T108 VOID/POROSITY"
-          statusText={`${measuredPorosityPercent.toFixed(1)}% POROSITY [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${measuredPorosityPercent.toFixed(1)}% POROSITY [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -303,11 +339,13 @@ export function StandardVoidPorosityTool(
           detectedVoidCount={detectedVoids.length}
           measuredPorosityPercent={measuredPorosityPercent}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
-          onVoidSensitivityChange={setVoidSensitivity}
-          onMinVoidDiameterChange={setMinVoidDiameterPx}
-          onMaxPorosityPercentChange={setMaxPorosityPercent}
-          onMaxAllowedVoidsChange={setMaxAllowedVoids}
+          onVoidSensitivityChange={handleSensitivityChange}
+          onMinVoidDiameterChange={handleMinDiameterChange}
+          onMaxPorosityPercentChange={handleMaxPorosityChange}
+          onMaxAllowedVoidsChange={handleMaxVoidsChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />

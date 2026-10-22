@@ -1,5 +1,5 @@
 import React, { type ReactNode } from "react";
-import { Camera, RefreshCw, Upload } from "lucide-react";
+import { Camera, Play, RefreshCw, Upload } from "lucide-react";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
 
@@ -10,6 +10,7 @@ export interface StandardWorkbenchShellProps {
   onCloseCamera: () => void;
   onCaptureCameraFrame: (input: WhiteBoxMarkingInput) => void;
   onLoadFile: (file: File) => void;
+  onProcess?: () => void;
   onRefresh?: () => void;
   toolName?: string;
   toolCode?: string;
@@ -66,6 +67,17 @@ export function StandardWorkbenchShell(props: StandardWorkbenchShellProps): Reac
               <Camera size={14} className="text-cyan-400" />
               Live Camera
             </button>
+
+            {props.onProcess && (
+              <button
+                type="button"
+                onClick={props.onProcess}
+                className="flex items-center gap-2 rounded border border-cyan-500/70 bg-cyan-950/60 px-4 py-1.5 text-xs font-black uppercase tracking-wider text-cyan-300 transition-all hover:bg-cyan-900/80 hover:text-white shadow-[0_0_10px_rgba(6,182,212,0.25)]"
+              >
+                <Play size={13} className="fill-cyan-400 text-cyan-400" />
+                Process Inspection
+              </button>
+            )}
 
             {props.onRefresh && (
               <button

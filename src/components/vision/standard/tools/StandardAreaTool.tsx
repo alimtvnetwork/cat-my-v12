@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { AreaMeasurementMode, AreaTargetPolarity } from "@/domain/vision/area-gate-types";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
@@ -51,14 +51,21 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
     Number(initialParams.maxArea ?? initialParams.maxAreaPx ?? 50000),
   );
 
-  // Calculate live area metric from current image source and search region
-  const { activePixels, measuredArea, isPass } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [measuredArea, setMeasuredArea] = useState<number>(
+    Number(initialParams.measuredArea ?? 5000),
+  );
+  const [isPass, setIsPass] = useState<boolean>(true);
+
+  // Execute vision rule analysis strictly on demand
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        activePixels: 5000,
-        measuredArea: 5000,
-        isPass: true,
-      };
+      setMeasuredArea(5000);
+      setIsPass(5000 >= minArea && 5000 <= maxArea);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -94,12 +101,35 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
 
     const pass = measured >= minArea && measured <= maxArea;
 
-    return {
-      activePixels: count,
-      measuredArea: measured,
-      isPass: pass,
-    };
+    setMeasuredArea(measured);
+    setIsPass(pass);
+    setHasProcessed(true);
   }, [workbench.source, workbench.searchRegion, targetPolarity, threshold, areaMode, minArea, maxArea]);
+
+  const handleModeChange = useCallback((mode: AreaMeasurementMode) => {
+    setAreaMode(mode);
+    setHasProcessed(false);
+  }, []);
+
+  const handlePolarityChange = useCallback((polarity: AreaTargetPolarity) => {
+    setTargetPolarity(polarity);
+    setHasProcessed(false);
+  }, []);
+
+  const handleThresholdChange = useCallback((val: number) => {
+    setThreshold(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinAreaChange = useCallback((val: number) => {
+    setMinArea(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxAreaChange = useCallback((val: number) => {
+    setMaxArea(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -126,21 +156,19 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
         const isTarget = targetPolarity === "dark" ? luma <= threshold : luma >= threshold;
 
-        if (isInsideRegion && isTarget) {
-          // Highlight active target pixels in bright neon emerald
+        if (hasProcessed && isInsideRegion && isTarget) {
+          // Highlight active target pixels in neon emerald once processed
           out[idx] = 0;
           out[idx + 1] = 255;
           out[idx + 2] = 157;
           out[idx + 3] = 255;
         } else if (isInsideRegion) {
-          // Dim background within ROI
-          const dimmed = Math.round(luma * 0.45);
+          const dimmed = Math.round(luma * 0.5);
           out[idx] = dimmed;
           out[idx + 1] = dimmed;
           out[idx + 2] = dimmed;
           out[idx + 3] = 255;
         } else {
-          // Darken area outside ROI
           const dimmed = Math.round(luma * 0.2);
           out[idx] = dimmed;
           out[idx + 1] = dimmed;
@@ -151,10 +179,13 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
 
       return output;
     },
-    [workbench.searchRegion, targetPolarity, threshold],
+    [workbench.searchRegion, targetPolarity, threshold, hasProcessed],
   );
 
+  // Apply button: only adds / updates rule when explicitly clicked
   const handleApply = useCallback(() => {
+    const finalMeasured = measuredArea;
+    const finalPass = finalMeasured >= minArea && finalMeasured <= maxArea;
     const unit = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
 
     const defaultAreaItem: JudgmentItem = {
@@ -162,9 +193,9 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
       name: "Detected Area",
       unit,
       lowerLimit: minArea,
-      measured: measuredArea,
+      measured: finalMeasured,
       upperLimit: maxArea,
-      status: isPass ? "PASS" : "FAIL",
+      status: finalPass ? "PASS" : "FAIL",
     };
 
     props.onChange((prev) => ({
@@ -181,13 +212,13 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
         minAreaPx: minArea,
         maxArea,
         maxAreaPx: maxArea,
-        measuredArea,
+        measuredArea: finalMeasured,
         judgmentItems: [defaultAreaItem],
       },
     }));
 
     props.onOk?.();
-  }, [areaMode, targetPolarity, threshold, minArea, maxArea, measuredArea, isPass, props]);
+  }, [areaMode, targetPolarity, threshold, minArea, maxArea, measuredArea, props]);
 
   const unitLabel = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
 
@@ -199,7 +230,8 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
-      onRefresh={props.onRefresh}
+      onProcess={handleProcess}
+      onRefresh={handleProcess}
       canvas={
         <StandardWorkbenchCanvas
           source={workbench.source}
@@ -209,9 +241,16 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Binarization Mask)"
           toolBadge="T101 AREA GATE"
-          statusText={`${measuredArea.toLocaleString()} ${unitLabel} [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${measuredArea.toLocaleString()} ${unitLabel} [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -227,12 +266,14 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
           maxArea={maxArea}
           measuredArea={measuredArea}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
-          onAreaModeChange={setAreaMode}
-          onPolarityChange={setTargetPolarity}
-          onThresholdChange={setThreshold}
-          onMinAreaChange={setMinArea}
-          onMaxAreaChange={setMaxArea}
+          onAreaModeChange={handleModeChange}
+          onPolarityChange={handlePolarityChange}
+          onThresholdChange={handleThresholdChange}
+          onMinAreaChange={handleMinAreaChange}
+          onMaxAreaChange={handleMaxAreaChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />

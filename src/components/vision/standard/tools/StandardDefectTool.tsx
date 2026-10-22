@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { DefectTargetType } from "@/domain/vision/surface-flaw-types";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
@@ -56,13 +56,19 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
     Number(initialParams.maxAllowedDefects ?? 0),
   );
 
-  // Analyze surface flaw candidates based on gradient differential
-  const { detectedFlaws, isPass } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [detectedFlaws, setDetectedFlaws] = useState<DetectedFlaw[]>([]);
+  const [isPass, setIsPass] = useState<boolean>(true);
+
+  // Execute surface flaw analysis strictly on "Process" click
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        detectedFlaws: [] as DetectedFlaw[],
-        isPass: true,
-      };
+      setDetectedFlaws([]);
+      setIsPass(true);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -75,8 +81,6 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
 
     const thresholdGradient = Math.round(180 * (1 - defectSensitivity / 100));
     const flaws: DetectedFlaw[] = [];
-
-    // Simple grid scan for high-frequency gradient anomaly clusters
     const step = 16;
 
     for (let y = startY; y < endY - step; y += step) {
@@ -124,11 +128,30 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
 
     const pass = flaws.length <= maxAllowedDefects;
 
-    return {
-      detectedFlaws: flaws,
-      isPass: pass,
-    };
+    setDetectedFlaws(flaws);
+    setIsPass(pass);
+    setHasProcessed(true);
   }, [workbench.source, workbench.searchRegion, defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects]);
+
+  const handleSensitivityChange = useCallback((val: number) => {
+    setDefectSensitivity(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleDefectTargetChange = useCallback((target: DefectTargetType) => {
+    setDefectTarget(target);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinAreaChange = useCallback((val: number) => {
+    setMinDefectArea(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxAllowedDefectsChange = useCallback((val: number) => {
+    setMaxAllowedDefects(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -152,7 +175,7 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
 
-        if (isInsideRegion && x + 1 < source.width && y + 1 < source.height) {
+        if (hasProcessed && isInsideRegion && x + 1 < source.width && y + 1 < source.height) {
           const idxR = (y * source.width + (x + 1)) * 4;
           const idxD = ((y + 1) * source.width + x) * 4;
 
@@ -163,7 +186,6 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
           const grad = Math.abs(luma - lumaR) + Math.abs(luma - lumaD);
 
           if (grad >= thresholdGradient) {
-            // Neon rose / red edge highlight
             out[idx] = 244;
             out[idx + 1] = 63;
             out[idx + 2] = 94;
@@ -175,6 +197,14 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
             out[idx + 2] = dimmed;
             out[idx + 3] = 255;
           }
+        } else if (isInsideRegion) {
+          const luma = Math.round(
+            0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
+          );
+          out[idx] = luma;
+          out[idx + 1] = luma;
+          out[idx + 2] = luma;
+          out[idx + 3] = 255;
         } else {
           out[idx] = 12;
           out[idx + 1] = 16;
@@ -185,11 +215,15 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
 
       return output;
     },
-    [workbench.searchRegion, defectSensitivity],
+    [workbench.searchRegion, defectSensitivity, hasProcessed],
   );
 
   const renderCustomOverlays = useCallback(
     (ctx: CanvasRenderingContext2D) => {
+      if (!hasProcessed) {
+        return;
+      }
+
       for (const flaw of detectedFlaws) {
         ctx.save();
         ctx.strokeStyle = "#f43f5e";
@@ -214,18 +248,22 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
         ctx.restore();
       }
     },
-    [detectedFlaws],
+    [detectedFlaws, hasProcessed],
   );
 
+  // Apply button: only adds / updates rule when explicitly clicked
   const handleApply = useCallback(() => {
+    const finalCount = detectedFlaws.length;
+    const finalPass = finalCount <= maxAllowedDefects;
+
     const defaultDefectItem: JudgmentItem = {
       id: "j1",
       name: "Flaw Count",
       unit: "count",
       lowerLimit: 0,
-      measured: detectedFlaws.length,
+      measured: finalCount,
       upperLimit: maxAllowedDefects,
-      status: isPass ? "PASS" : "FAIL",
+      status: finalPass ? "PASS" : "FAIL",
     };
 
     props.onChange((prev) => ({
@@ -237,13 +275,13 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
         defectTarget,
         minDefectArea,
         maxAllowedDefects,
-        detectedCount: detectedFlaws.length,
+        detectedCount: finalCount,
         judgmentItems: [defaultDefectItem],
       },
     }));
 
     props.onOk?.();
-  }, [defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects, detectedFlaws, isPass, props]);
+  }, [defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects, detectedFlaws, props]);
 
   return (
     <StandardWorkbenchShell
@@ -253,7 +291,8 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
-      onRefresh={props.onRefresh}
+      onProcess={handleProcess}
+      onRefresh={handleProcess}
       canvas={
         <StandardWorkbenchCanvas
           source={workbench.source}
@@ -263,9 +302,16 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Gradient Contrast)"
           toolBadge="T107 SCRATCH/CRACK"
-          statusText={`${detectedFlaws.length} FLAWS [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${detectedFlaws.length} FLAWS [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -281,11 +327,13 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
           maxAllowedDefects={maxAllowedDefects}
           detectedCount={detectedFlaws.length}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
-          onSensitivityChange={setDefectSensitivity}
-          onDefectTargetChange={setDefectTarget}
-          onMinAreaChange={setMinDefectArea}
-          onMaxAllowedDefectsChange={setMaxAllowedDefects}
+          onSensitivityChange={handleSensitivityChange}
+          onDefectTargetChange={handleDefectTargetChange}
+          onMinAreaChange={handleMinAreaChange}
+          onMaxAllowedDefectsChange={handleMaxAllowedDefectsChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />
