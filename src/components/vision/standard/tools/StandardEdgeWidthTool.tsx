@@ -52,15 +52,27 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     Number(initialParams.expectedLeadCount ?? 8),
   );
 
-  // Caliper edge measurement across scan axis
-  const { measuredDistance, measuredLeadCount, isPass, edgeTransitions } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [measuredDistance, setMeasuredDistance] = useState<number>(
+    Number(initialParams.nominalDistance ?? 45),
+  );
+  const [measuredLeadCount, setMeasuredLeadCount] = useState<number>(
+    Number(initialParams.expectedLeadCount ?? 8),
+  );
+  const [isPass, setIsPass] = useState<boolean>(true);
+  const [edgeTransitions, setEdgeTransitions] = useState<number[]>([]);
+
+  // Execute caliper edge detection strictly on demand
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        measuredDistance: 45.0,
-        measuredLeadCount: expectedLeadCount,
-        isPass: true,
-        edgeTransitions: [100, 145] as number[],
-      };
+      setMeasuredDistance(nominalDistance);
+      setMeasuredLeadCount(expectedLeadCount);
+      setIsPass(true);
+      setEdgeTransitions([100, 100 + nominalDistance]);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -106,12 +118,11 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     const detectedCount = Math.max(1, Math.round(transitions.length / 2));
     const pass = Math.abs(dist - nominalDistance) <= tolerance;
 
-    return {
-      measuredDistance: dist,
-      measuredLeadCount: detectedCount,
-      isPass: pass,
-      edgeTransitions: transitions,
-    };
+    setMeasuredDistance(dist);
+    setMeasuredLeadCount(detectedCount);
+    setIsPass(pass);
+    setEdgeTransitions(transitions);
+    setHasProcessed(true);
   }, [
     workbench.source,
     workbench.searchRegion,
@@ -121,6 +132,36 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     tolerance,
     expectedLeadCount,
   ]);
+
+  const handleModeChange = useCallback((mode: "width" | "pitch" | "gap") => {
+    setMeasurementMode(mode);
+    setHasProcessed(false);
+  }, []);
+
+  const handlePolarityChange = useCallback((polarity: "dark-to-light" | "light-to-dark" | "any") => {
+    setEdgePolarity(polarity);
+    setHasProcessed(false);
+  }, []);
+
+  const handleContrastChange = useCallback((val: number) => {
+    setContrastThreshold(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleNominalDistanceChange = useCallback((val: number) => {
+    setNominalDistance(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleToleranceChange = useCallback((val: number) => {
+    setTolerance(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleExpectedCountChange = useCallback((val: number) => {
+    setExpectedLeadCount(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -198,6 +239,12 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
       ctx.stroke();
       ctx.setLineDash([]);
 
+      if (!hasProcessed) {
+        ctx.restore();
+
+        return;
+      }
+
       // Draw Caliper transition ticks
       for (const edgeX of edgeTransitions) {
         ctx.strokeStyle = "#00f0ff";
@@ -245,7 +292,7 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
 
       ctx.restore();
     },
-    [workbench.searchRegion, edgeTransitions, measuredDistance, isPass],
+    [workbench.searchRegion, hasProcessed, edgeTransitions, measuredDistance, isPass],
   );
 
   const handleApply = useCallback(() => {
@@ -298,6 +345,7 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
       onRefresh={props.onRefresh}
       canvas={
         <StandardWorkbenchCanvas
@@ -308,9 +356,16 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Edge Gradient)"
           toolBadge="T110 CALIPER"
-          statusText={`${measuredDistance.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${measuredDistance.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -329,14 +384,16 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
           measuredDistance={measuredDistance}
           measuredLeadCount={measuredLeadCount}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           toolCode="T110"
           actionButtonLabel={props.actionButtonLabel}
-          onMeasurementModeChange={setMeasurementMode}
-          onPolarityChange={setEdgePolarity}
-          onContrastThresholdChange={setContrastThreshold}
-          onNominalDistanceChange={setNominalDistance}
-          onToleranceChange={setTolerance}
-          onExpectedLeadCountChange={setExpectedLeadCount}
+          onMeasurementModeChange={handleModeChange}
+          onPolarityChange={handlePolarityChange}
+          onContrastThresholdChange={handleContrastChange}
+          onNominalDistanceChange={handleNominalDistanceChange}
+          onToleranceChange={handleToleranceChange}
+          onExpectedLeadCountChange={handleExpectedCountChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />

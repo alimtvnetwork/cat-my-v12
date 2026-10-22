@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
@@ -72,14 +72,21 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
     (initialParams.targetPolarity as "bright" | "dark" | "both") ?? "bright",
   );
 
-  // Extract connected components and solder bridge shorts
-  const { detectedBlobs, detectedBridges, isPass } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [detectedBlobs, setDetectedBlobs] = useState<DetectedBlob[]>([]);
+  const [detectedBridges, setDetectedBridges] = useState<SolderBridge[]>([]);
+  const [isPass, setIsPass] = useState<boolean>(true);
+
+  // Execute blob & solder bridge analysis strictly on "Process" click
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        detectedBlobs: [] as DetectedBlob[],
-        detectedBridges: [] as SolderBridge[],
-        isPass: true,
-      };
+      setDetectedBlobs([]);
+      setDetectedBridges([]);
+      setIsPass(true);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -92,8 +99,6 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
 
     const blobs: DetectedBlob[] = [];
     const bridges: SolderBridge[] = [];
-
-    // Connected component cell analysis across the workpiece region
     const step = 20;
 
     for (let y = startY; y < endY - step; y += step) {
@@ -152,11 +157,10 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
     const countPass = blobs.length >= minBlobCount && blobs.length <= maxBlobCount;
     const bridgePass = bridges.length === 0;
 
-    return {
-      detectedBlobs: blobs,
-      detectedBridges: bridges,
-      isPass: countPass && bridgePass,
-    };
+    setDetectedBlobs(blobs);
+    setDetectedBridges(bridges);
+    setIsPass(countPass && bridgePass);
+    setHasProcessed(true);
   }, [
     workbench.source,
     workbench.searchRegion,
@@ -167,6 +171,41 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
     maxBlobCount,
     targetPolarity,
   ]);
+
+  const handleThresholdChange = useCallback((value: number) => {
+    setBinaryThreshold(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinBlobAreaChange = useCallback((value: number) => {
+    setMinBlobArea(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxBlobAreaChange = useCallback((value: number) => {
+    setMaxBlobArea(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinBlobCountChange = useCallback((value: number) => {
+    setMinBlobCount(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxBlobCountChange = useCallback((value: number) => {
+    setMaxBlobCount(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleHoleFillingChange = useCallback((hasHoles: boolean) => {
+    setHasHoleFilling(hasHoles);
+    setHasProcessed(false);
+  }, []);
+
+  const handlePolarityChange = useCallback((polarity: "bright" | "dark" | "both") => {
+    setTargetPolarity(polarity);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -198,8 +237,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
               ? luma >= binaryThreshold
               : true;
 
-        if (isInsideRegion && isMatch) {
-          // Highlight blob pixels in vivid neon emerald
+        if (hasProcessed && isInsideRegion && isMatch) {
           out[idx] = 16;
           out[idx + 1] = 185;
           out[idx + 2] = 129;
@@ -220,12 +258,15 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
 
       return output;
     },
-    [workbench.searchRegion, binaryThreshold, targetPolarity],
+    [workbench.searchRegion, binaryThreshold, targetPolarity, hasProcessed],
   );
 
   const renderCustomOverlays = useCallback(
     (ctx: CanvasRenderingContext2D) => {
-      // 1. Draw detected blobs
+      if (!hasProcessed) {
+        return;
+      }
+
       for (const blob of detectedBlobs) {
         ctx.save();
         ctx.strokeStyle = "#10b981";
@@ -241,7 +282,6 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
         ctx.restore();
       }
 
-      // 2. Draw solder bridge hazard warnings
       for (const bridge of detectedBridges) {
         ctx.save();
         ctx.strokeStyle = "#ef4444";
@@ -261,21 +301,23 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
         ctx.restore();
       }
     },
-    [detectedBlobs, detectedBridges],
+    [detectedBlobs, detectedBridges, hasProcessed],
   );
 
+  // Apply button: only adds / updates rule when explicitly clicked
   const handleApply = useCallback(() => {
+    const finalCount = detectedBlobs.length;
+    const finalBridges = detectedBridges.length;
+    const countPass = finalCount >= minBlobCount && finalCount <= maxBlobCount;
+
     const defaultCountItem: JudgmentItem = {
       id: "j1",
       name: "Blob Count",
       unit: "count",
       lowerLimit: minBlobCount,
-      measured: detectedBlobs.length,
+      measured: finalCount,
       upperLimit: maxBlobCount,
-      status:
-        detectedBlobs.length >= minBlobCount && detectedBlobs.length <= maxBlobCount
-          ? "PASS"
-          : "FAIL",
+      status: countPass ? "PASS" : "FAIL",
     };
 
     const defaultBridgeItem: JudgmentItem = {
@@ -283,9 +325,9 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
       name: "Solder Bridge Count",
       unit: "count",
       lowerLimit: 0,
-      measured: detectedBridges.length,
+      measured: finalBridges,
       upperLimit: 0,
-      status: detectedBridges.length === 0 ? "PASS" : "FAIL",
+      status: finalBridges === 0 ? "PASS" : "FAIL",
     };
 
     props.onChange((prev) => ({
@@ -300,8 +342,8 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
         maxBlobCount,
         hasHoleFilling,
         targetPolarity,
-        detectedBlobCount: detectedBlobs.length,
-        detectedBridgeCount: detectedBridges.length,
+        detectedBlobCount: finalCount,
+        detectedBridgeCount: finalBridges,
         judgmentItems: [defaultCountItem, defaultBridgeItem],
       },
     }));
@@ -328,7 +370,8 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
-      onRefresh={props.onRefresh}
+      onProcess={handleProcess}
+      onRefresh={handleProcess}
       canvas={
         <StandardWorkbenchCanvas
           source={workbench.source}
@@ -338,9 +381,16 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Blob Segmentation)"
           toolBadge="T109 BINARY BLOB"
-          statusText={`${detectedBlobs.length} BLOBS / ${detectedBridges.length} BRIDGES [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${detectedBlobs.length} BLOBS / ${detectedBridges.length} BRIDGES [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -360,14 +410,16 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
           detectedBlobCount={detectedBlobs.length}
           detectedBridgeCount={detectedBridges.length}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
-          onThresholdChange={setBinaryThreshold}
-          onMinBlobAreaChange={setMinBlobArea}
-          onMaxBlobAreaChange={setMaxBlobArea}
-          onMinBlobCountChange={setMinBlobCount}
-          onMaxBlobCountChange={setMaxBlobCount}
-          onHoleFillingChange={setHasHoleFilling}
-          onPolarityChange={setTargetPolarity}
+          onThresholdChange={handleThresholdChange}
+          onMinBlobAreaChange={handleMinBlobAreaChange}
+          onMaxBlobAreaChange={handleMaxBlobAreaChange}
+          onMinBlobCountChange={handleMinBlobCountChange}
+          onMaxBlobCountChange={handleMaxBlobCountChange}
+          onHoleFillingChange={handleHoleFillingChange}
+          onPolarityChange={handlePolarityChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />

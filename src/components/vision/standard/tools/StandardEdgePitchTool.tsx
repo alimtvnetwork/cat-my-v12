@@ -52,15 +52,27 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     Number(initialParams.expectedLeadCount ?? initialParams.expectedCount ?? 12),
   );
 
-  // Pitch calculation: spacing between repetitive comb teeth / leads
-  const { measuredDistance, measuredLeadCount, isPass, edgeTransitions } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [measuredDistance, setMeasuredDistance] = useState<number>(
+    Number(initialParams.nominalPitchPx ?? 30),
+  );
+  const [measuredLeadCount, setMeasuredLeadCount] = useState<number>(
+    Number(initialParams.expectedLeadCount ?? initialParams.expectedCount ?? 12),
+  );
+  const [isPass, setIsPass] = useState<boolean>(true);
+  const [edgeTransitions, setEdgeTransitions] = useState<number[]>([]);
+
+  // Execute lead pitch inspection strictly on demand
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        measuredDistance: 30.0,
-        measuredLeadCount: expectedLeadCount,
-        isPass: true,
-        edgeTransitions: [100, 130, 160, 190, 220] as number[],
-      };
+      setMeasuredDistance(nominalDistance);
+      setMeasuredLeadCount(expectedLeadCount);
+      setIsPass(true);
+      setEdgeTransitions([100, 100 + nominalDistance, 100 + nominalDistance * 2]);
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -105,12 +117,11 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     const detectedCount = transitions.length;
     const pass = Math.abs(avgPitch - nominalDistance) <= tolerance;
 
-    return {
-      measuredDistance: avgPitch,
-      measuredLeadCount: detectedCount,
-      isPass: pass,
-      edgeTransitions: transitions,
-    };
+    setMeasuredDistance(avgPitch);
+    setMeasuredLeadCount(detectedCount);
+    setIsPass(pass);
+    setEdgeTransitions(transitions);
+    setHasProcessed(true);
   }, [
     workbench.source,
     workbench.searchRegion,
@@ -119,6 +130,36 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     tolerance,
     expectedLeadCount,
   ]);
+
+  const handleModeChange = useCallback((mode: "width" | "pitch" | "gap") => {
+    setMeasurementMode(mode);
+    setHasProcessed(false);
+  }, []);
+
+  const handlePolarityChange = useCallback((polarity: "dark-to-light" | "light-to-dark" | "any") => {
+    setEdgePolarity(polarity);
+    setHasProcessed(false);
+  }, []);
+
+  const handleContrastChange = useCallback((val: number) => {
+    setContrastThreshold(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleNominalDistanceChange = useCallback((val: number) => {
+    setNominalDistance(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleToleranceChange = useCallback((val: number) => {
+    setTolerance(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleExpectedCountChange = useCallback((val: number) => {
+    setExpectedLeadCount(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -195,6 +236,12 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
       ctx.stroke();
       ctx.setLineDash([]);
 
+      if (!hasProcessed) {
+        ctx.restore();
+
+        return;
+      }
+
       // Draw Lead Pitch Rulers
       for (let i = 0; i < edgeTransitions.length; i += 1) {
         const edgeX = edgeTransitions[i];
@@ -229,7 +276,7 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
 
       ctx.restore();
     },
-    [workbench.searchRegion, edgeTransitions, measuredDistance, isPass],
+    [workbench.searchRegion, hasProcessed, edgeTransitions, measuredDistance, isPass],
   );
 
   const handleApply = useCallback(() => {
@@ -282,6 +329,7 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
       onRefresh={props.onRefresh}
       canvas={
         <StandardWorkbenchCanvas
@@ -292,9 +340,16 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Pitch Edge Detection)"
           toolBadge="T111 LEAD PITCH"
-          statusText={`${measuredDistance.toFixed(1)} px (${measuredLeadCount} pins) [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${measuredDistance.toFixed(1)} px (${measuredLeadCount} pins) [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -313,14 +368,16 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
           measuredDistance={measuredDistance}
           measuredLeadCount={measuredLeadCount}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           toolCode="T111"
           actionButtonLabel={props.actionButtonLabel}
-          onMeasurementModeChange={setMeasurementMode}
-          onPolarityChange={setEdgePolarity}
-          onContrastThresholdChange={setContrastThreshold}
-          onNominalDistanceChange={setNominalDistance}
-          onToleranceChange={setTolerance}
-          onExpectedLeadCountChange={setExpectedLeadCount}
+          onMeasurementModeChange={handleModeChange}
+          onPolarityChange={handlePolarityChange}
+          onContrastThresholdChange={handleContrastChange}
+          onNominalDistanceChange={handleNominalDistanceChange}
+          onToleranceChange={handleToleranceChange}
+          onExpectedLeadCountChange={handleExpectedCountChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />
