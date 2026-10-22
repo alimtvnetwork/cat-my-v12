@@ -43,10 +43,16 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getByText(/Area Measurement Mode/i)).toBeDefined();
     expect(screen.getByText(/Target Polarity/i)).toBeDefined();
     expect(screen.getByText(/Intensity Threshold/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
 
-    // Toggle polarity
+    // Toggle polarity (should keep in pending state until process is clicked)
     const darkBtn = screen.getByText(/Dark on Bright/i);
     fireEvent.click(darkBtn);
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    // Click Process Rule
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     // Click Apply
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
@@ -73,6 +79,11 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getByText(/Target Flaw Type/i)).toBeDefined();
     expect(screen.getByText(/Defect Contrast Sensitivity/i)).toBeDefined();
     expect(screen.getByText(/Max Allowed Defects/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    // Click Process Rule
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     // Click Apply
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
@@ -99,6 +110,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getByText(/Cavity Contrast Sensitivity/i)).toBeDefined();
     expect(screen.getByText(/Min Void Diameter/i)).toBeDefined();
     expect(screen.getByText(/Max Allowed Porosity Ratio/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
@@ -124,6 +139,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getByText(/Binarization Threshold/i)).toBeDefined();
     expect(screen.getByText(/Blob Area Limits/i)).toBeDefined();
     expect(screen.getByText(/Component Count Limits/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
@@ -148,6 +167,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getAllByText(/T110/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Sub-Pixel Caliper/i)).toBeDefined();
     expect(screen.getByText(/Nominal Dimension & Tolerance/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
@@ -171,6 +194,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getAllByText(/Lead Pitch/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/T111/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Sub-Pixel Caliper/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
@@ -195,6 +222,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getAllByText(/T104/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Scan Direction/i)).toBeDefined();
     expect(screen.getByText(/Transition Polarity/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
@@ -219,6 +250,10 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getAllByText(/T103/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Decoded Payload/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Target Symbology/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
 
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);

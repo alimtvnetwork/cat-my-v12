@@ -60,14 +60,23 @@ export function StandardEdgePositionTool(
     Number(initialParams.tolerancePx ?? 10),
   );
 
-  // Analyze edge position along specified ray
-  const { measuredPosition, isPass, edgePoint } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [measuredPosition, setMeasuredPosition] = useState<number>(
+    Number(initialParams.nominalPositionPx ?? 120),
+  );
+  const [isPass, setIsPass] = useState<boolean>(true);
+  const [edgePoint, setEdgePoint] = useState<{ x: number; y: number }>({ x: 120, y: 150 });
+
+  // Analyze edge position along specified ray strictly on demand
+  const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      return {
-        measuredPosition: 120.0,
-        isPass: true,
-        edgePoint: { x: 120, y: 150 },
-      };
+      setMeasuredPosition(nominalPosition);
+      setIsPass(true);
+      setEdgePoint({ x: nominalPosition, y: 150 });
+      setHasProcessed(true);
+
+      return;
     }
 
     const { width, height, rgba } = workbench.source;
@@ -138,11 +147,10 @@ export function StandardEdgePositionTool(
 
     const pass = Math.abs(foundCoord - nominalPosition) <= tolerancePx;
 
-    return {
-      measuredPosition: foundCoord,
-      isPass: pass,
-      edgePoint: foundPoint,
-    };
+    setMeasuredPosition(foundCoord);
+    setIsPass(pass);
+    setEdgePoint(foundPoint);
+    setHasProcessed(true);
   }, [
     workbench.source,
     workbench.searchRegion,
@@ -152,6 +160,42 @@ export function StandardEdgePositionTool(
     nominalPosition,
     tolerancePx,
   ]);
+
+  const handleScanDirectionChange = useCallback(
+    (direction: "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top") => {
+      setScanDirection(direction);
+      setHasProcessed(false);
+    },
+    [],
+  );
+
+  const handlePolarityChange = useCallback(
+    (polarity: "light-to-dark" | "dark-to-light" | "both") => {
+      setEdgePolarity(polarity);
+      setHasProcessed(false);
+    },
+    [],
+  );
+
+  const handleThresholdChange = useCallback((val: number) => {
+    setEdgeThreshold(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleFilterWidthChange = useCallback((val: number) => {
+    setFilterWidth(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleNominalPositionChange = useCallback((val: number) => {
+    setNominalPosition(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleToleranceChange = useCallback((val: number) => {
+    setTolerancePx(val);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -241,6 +285,12 @@ export function StandardEdgePositionTool(
 
       ctx.setLineDash([]);
 
+      if (!hasProcessed) {
+        ctx.restore();
+
+        return;
+      }
+
       // 2. Detected Edge Transition Crosshair
       const strokeColor = isPass ? "#00ff9d" : "#f43f5e";
       ctx.strokeStyle = strokeColor;
@@ -274,7 +324,7 @@ export function StandardEdgePositionTool(
 
       ctx.restore();
     },
-    [workbench.searchRegion, scanDirection, isPass, edgePoint, measuredPosition],
+    [workbench.searchRegion, scanDirection, hasProcessed, isPass, edgePoint, measuredPosition],
   );
 
   const handleApply = useCallback(() => {
@@ -325,6 +375,7 @@ export function StandardEdgePositionTool(
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
       onRefresh={props.onRefresh}
       canvas={
         <StandardWorkbenchCanvas
@@ -335,9 +386,16 @@ export function StandardEdgePositionTool(
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Edge Scan Ray)"
           toolBadge="T104 EDGE POSITION"
-          statusText={`EDGE @ ${measuredPosition.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `EDGE @ ${measuredPosition.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -355,13 +413,16 @@ export function StandardEdgePositionTool(
           tolerancePx={tolerancePx}
           measuredPosition={measuredPosition}
           isPass={isPass}
+          hasProcessed={hasProcessed}
+          toolCode="T104"
           actionButtonLabel={props.actionButtonLabel}
-          onScanDirectionChange={setScanDirection}
-          onEdgePolarityChange={setEdgePolarity}
-          onEdgeThresholdChange={setEdgeThreshold}
-          onFilterWidthChange={setFilterWidth}
-          onNominalPositionChange={setNominalPosition}
-          onToleranceChange={setTolerancePx}
+          onScanDirectionChange={handleScanDirectionChange}
+          onEdgePolarityChange={handlePolarityChange}
+          onEdgeThresholdChange={handleThresholdChange}
+          onFilterWidthChange={handleFilterWidthChange}
+          onNominalPositionChange={handleNominalPositionChange}
+          onToleranceChange={handleToleranceChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />

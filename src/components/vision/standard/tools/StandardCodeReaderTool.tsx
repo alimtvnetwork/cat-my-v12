@@ -40,8 +40,17 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
     String(initialParams.expectedPattern ?? ""),
   );
 
-  // Decode payload from workpiece ROI
-  const { decodedPayload, detectedSymbology, printQualityGrade, isPass } = useMemo(() => {
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [decodedPayload, setDecodedPayload] = useState<string>(
+    String(initialParams.decodedPayload ?? "SN20261022-A9048-REV2"),
+  );
+  const [detectedSymbology, setDetectedSymbology] = useState<string>("DataMatrix");
+  const [printQualityGrade, setPrintQualityGrade] = useState<string>("A (4.0)");
+  const [isPass, setIsPass] = useState<boolean>(true);
+
+  // Decode payload from workpiece ROI strictly on demand
+  const handleProcess = useCallback(() => {
     const defaultPayload =
       symbology === "qr"
         ? "https://sensai.inspection.internal/pkg/78219"
@@ -72,13 +81,25 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
       }
     }
 
-    return {
-      decodedPayload: payload,
-      detectedSymbology: symName,
-      printQualityGrade: "A (4.0)",
-      isPass: matchPass,
-    };
+    setDecodedPayload(payload);
+    setDetectedSymbology(symName);
+    setPrintQualityGrade("A (4.0)");
+    setIsPass(matchPass);
+    setHasProcessed(true);
   }, [symbology, expectedPattern, initialParams.decodedPayload]);
+
+  const handleSymbologyChange = useCallback(
+    (sym: "qr" | "datamatrix" | "code128" | "ean13") => {
+      setSymbology(sym);
+      setHasProcessed(false);
+    },
+    [],
+  );
+
+  const handlePatternChange = useCallback((pattern: string) => {
+    setExpectedPattern(pattern);
+    setHasProcessed(false);
+  }, []);
 
   const createFilteredImageData = useCallback(
     (source: WhiteBoxMarkingInput): ImageData => {
@@ -126,7 +147,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
 
   const renderCustomOverlays = useCallback(
     (ctx: CanvasRenderingContext2D) => {
-      if (!workbench.searchRegion) {
+      if (!workbench.searchRegion || !hasProcessed) {
         return;
       }
 
@@ -184,7 +205,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
 
       ctx.restore();
     },
-    [workbench.searchRegion, isPass, detectedSymbology, decodedPayload],
+    [workbench.searchRegion, hasProcessed, isPass, detectedSymbology, decodedPayload],
   );
 
   const handleApply = useCallback(() => {
@@ -223,6 +244,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
       onCloseCamera={() => workbench.setIsCameraOpen(false)}
       onCaptureCameraFrame={workbench.handleCaptureFrame}
       onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
       onRefresh={props.onRefresh}
       canvas={
         <StandardWorkbenchCanvas
@@ -233,9 +255,16 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
           hasOverlays={workbench.hasOverlays}
           filterModeLabel="FILTERED (Binarized Code Cells)"
           toolBadge="T103 CODE READER"
-          statusText={`${detectedSymbology} [${isPass ? "PASS" : "FAIL"}]`}
-          isPass={isPass}
-          onSearchRegionChange={workbench.handleRegionChange}
+          statusText={
+            hasProcessed
+              ? `${detectedSymbology} [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
           onDragStateChange={workbench.setDragState}
           onToggleFilteredPreview={workbench.toggleFilteredPreview}
           onResetRegion={workbench.resetRegion}
@@ -251,9 +280,11 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
           detectedSymbology={detectedSymbology}
           printQualityGrade={printQualityGrade}
           isPass={isPass}
+          hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
-          onSymbologyChange={setSymbology}
-          onExpectedPatternChange={setExpectedPattern}
+          onSymbologyChange={handleSymbologyChange}
+          onExpectedPatternChange={handlePatternChange}
+          onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
         />
