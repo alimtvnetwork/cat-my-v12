@@ -643,6 +643,52 @@ function drawDefectScanGrid(
   ctx.fillText(label, roi.x + 6, roi.y + roi.height - 6);
 }
 
+function drawAreaGateRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(16, 185, 129, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#10b981";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("AREA GATE (T101)", roi.x + 6, roi.y + 14);
+  ctx.restore();
+}
+
+function drawBlobInspectionRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(139, 92, 246, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(139, 92, 246, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#8b5cf6";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("BLOB EXTRACTION (T109)", roi.x + 6, roi.y + 14);
+  ctx.restore();
+}
+
 function drawScanningLaser(ctx: CanvasRenderingContext2D, roi: WorkpieceRoi): void {
   const midY = roi.y + roi.height / 2;
 
@@ -1518,9 +1564,25 @@ export function VisualToolWorkpieceCanvas({
           }
         }
 
+        const isRuleArea =
+          effectiveToolCode === "T101" ||
+          ruleNameLower.includes("area") ||
+          ruleNameLower.includes("pixel intensity");
+
+        const isRuleBlob =
+          effectiveToolCode === "T109" ||
+          ruleNameLower.includes("blob") ||
+          ruleNameLower.includes("bridge");
+
         const isRuleDefect =
+          effectiveToolCode === "T107" ||
+          effectiveToolCode === "T108" ||
           effectiveToolCode === "T118" ||
           ruleNameLower.includes("defect") ||
+          ruleNameLower.includes("scratch") ||
+          ruleNameLower.includes("crack") ||
+          ruleNameLower.includes("void") ||
+          ruleNameLower.includes("porosity") ||
           ruleNameLower.includes("flaw");
 
         if (isRulePattern) {
@@ -1793,6 +1855,10 @@ export function VisualToolWorkpieceCanvas({
           drawCaliperRuler(ctx, ruleRoi, effectiveStatus);
         } else if (isRuleDefect) {
           drawDefectScanGrid(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleArea) {
+          drawAreaGateRegion(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleBlob) {
+          drawBlobInspectionRegion(ctx, ruleRoi, effectiveStatus);
         }
 
         if (isAnalyzing && isSelected) {

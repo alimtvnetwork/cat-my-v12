@@ -1491,6 +1491,7 @@ export function WorkpieceAnalyzeWorkspace({
                     key={configRule.id}
                     ruleset={configOwnerRuleset}
                     rule={configRule}
+                    imageRef={project?.inspectionImageRef}
                     onExit={handleCloseRuleConfig}
                     onRuleApplied={handleConfigRuleApplied}
                   />

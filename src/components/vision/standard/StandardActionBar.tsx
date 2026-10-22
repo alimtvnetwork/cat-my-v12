@@ -22,7 +22,7 @@ export function StandardActionBar({
   onOk,
 }: StandardActionBarProps): React.JSX.Element | null {
   return (
-    <div className="flex items-center justify-between px-2 bg-std-chrome h-14 shrink-0 font-sans tracking-wide text-sm border-t border-std-border-dark">
+    <div className="flex items-center justify-between px-2 bg-std-chrome h-14 shrink-0 font-sans tracking-wide text-sm border-t border-std-border-dark overflow-x-auto min-w-0">
       <div className="flex items-center gap-2">
         <button
           type="button"

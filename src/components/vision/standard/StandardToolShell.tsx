@@ -52,7 +52,23 @@ export function StandardToolShell({
   onDisplay,
   onRefresh,
 }: StandardToolShellProps): React.JSX.Element {
-  const [activeTabId, setActiveTabId] = useState<string>(defaultTabId || tabs[0]?.id || "region");
+  const preferredDefaultTabId =
+    defaultTabId ||
+    tabs.find(
+      (t) =>
+        t.id === "detection" ||
+        t.id === "extraction" ||
+        t.id === "measurement" ||
+        t.id === "pattern" ||
+        t.id === "code" ||
+        t.id === "intensity" ||
+        t.id === "ocr" ||
+        t.id === "pin1",
+    )?.id ||
+    tabs[0]?.id ||
+    "region";
+
+  const [activeTabId, setActiveTabId] = useState<string>(preferredDefaultTabId);
   const [viewModes, setViewModes] = useState({ regions: true, results: true, grid: false });
 
   const activeTabContent = tabs.find((t) => t.id === activeTabId)?.content || tabs[0]?.content;
@@ -288,13 +304,13 @@ export function StandardToolShell({
 
   return (
     <StandardToolContext.Provider value={contextValue}>
-      <div className="flex flex-col h-full bg-std-chrome overflow-x-auto text-std-text font-sans select-none">
-        <div className="flex flex-col min-w-[1024px] min-h-[720px] h-full relative">
-          <ResizablePanelGroup orientation="horizontal" className="flex flex-1 min-h-0">
+      <div className="flex flex-col h-full w-full bg-std-chrome overflow-hidden text-std-text font-sans select-none">
+        <div className="flex flex-col w-full h-full min-w-0 min-h-0 relative">
+          <ResizablePanelGroup orientation="horizontal" className="flex flex-1 min-h-0 w-full">
             {/* Left Canvas Panel */}
             <ResizablePanel
-              defaultSize="62%"
-              minSize="45%"
+              defaultSize="60%"
+              minSize="35%"
               className="flex flex-col relative bg-std-chrome min-w-0"
             >
               <StandardImageToolbar
@@ -320,10 +336,10 @@ export function StandardToolShell({
 
             {/* Right Configuration Tool Panel */}
             <ResizablePanel
-              defaultSize="38%"
-              minSize="28%"
-              maxSize="55%"
-              className="border-l border-ca-border flex flex-col bg-ca-panel text-ca-ink relative z-20"
+              defaultSize="40%"
+              minSize="25%"
+              maxSize="65%"
+              className="border-l border-ca-border flex flex-col bg-ca-panel text-ca-ink relative z-20 min-w-0"
             >
               {/* Tool Title Bar */}
               <div className="flex items-center justify-between border-b border-ca-border bg-ca-panel-2 px-3 py-1.5 shrink-0">
