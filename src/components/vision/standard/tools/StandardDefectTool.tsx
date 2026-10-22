@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useMemo, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { DefectTargetType } from "@/domain/vision/surface-flaw-types";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { DefectToolPanel } from "../workbench/DefectToolPanel";
+import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardDefectToolProps {
   settings: PatternSearchSettings;
@@ -18,10 +19,29 @@ export interface StandardDefectToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
+}
+
+interface DetectedFlaw {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  score: number;
 }
 
 export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.Element {
-  const initialParams = props.settings.params ?? {};
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
+
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
   const [defectSensitivity, setDefectSensitivity] = useState<number>(
     Number(initialParams.defectSensitivity ?? 35),
@@ -36,212 +56,240 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
     Number(initialParams.maxAllowedDefects ?? 0),
   );
 
-  useEffect(() => {
-    props.onChange((prev) => {
-      const existingParams = prev.params ?? {};
-      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
-
-      const defaultDefectItem: JudgmentItem = {
-        id: "j1",
-        name: "Flaw Count",
-        unit: "count",
-        lowerLimit: 0,
-        measured: 0,
-        upperLimit: maxAllowedDefects,
-        status: "PASS",
-      };
-
-      const judgmentItems =
-        existingItems && existingItems.length > 0 ? existingItems : [defaultDefectItem];
-
+  // Analyze surface flaw candidates based on gradient differential
+  const { detectedFlaws, isPass } = useMemo(() => {
+    if (!workbench.source || !workbench.searchRegion) {
       return {
-        ...prev,
-        params: {
-          ...existingParams,
-          toolCode: existingParams.toolCode ?? "T107",
-          defectSensitivity,
-          defectTarget,
-          minDefectArea,
-          maxAllowedDefects,
-          judgmentItems,
-        },
+        detectedFlaws: [] as DetectedFlaw[],
+        isPass: true,
       };
-    });
-  }, []);
+    }
 
-  const handleSensitivityChange = (value: number) => {
-    setDefectSensitivity(value);
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
 
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...prev.params,
-        defectSensitivity: value,
-      },
-    }));
-  };
+    const startX = Math.max(1, Math.min(width - 2, region.x));
+    const startY = Math.max(1, Math.min(height - 2, region.y));
+    const endX = Math.max(2, Math.min(width - 1, region.x + region.width));
+    const endY = Math.max(2, Math.min(height - 1, region.y + region.height));
 
-  const handleDefectTargetChange = (target: DefectTargetType) => {
-    setDefectTarget(target);
+    const thresholdGradient = Math.round(180 * (1 - defectSensitivity / 100));
+    const flaws: DetectedFlaw[] = [];
 
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...prev.params,
-        defectTarget: target,
-      },
-    }));
-  };
+    // Simple grid scan for high-frequency gradient anomaly clusters
+    const step = 16;
 
-  const handleMinAreaChange = (value: number) => {
-    setMinDefectArea(value);
+    for (let y = startY; y < endY - step; y += step) {
+      for (let x = startX; x < endX - step; x += step) {
+        let anomalyCount = 0;
 
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...prev.params,
-        minDefectArea: value,
-      },
-    }));
-  };
+        for (let dy = 0; dy < step; dy += 2) {
+          for (let dx = 0; dx < step; dx += 2) {
+            const idx = ((y + dy) * width + (x + dx)) * 4;
+            const idxRight = ((y + dy) * width + (x + dx + 1)) * 4;
+            const idxDown = ((y + dy + 1) * width + (x + dx)) * 4;
 
-  const handleMaxDefectsChange = (value: number) => {
-    setMaxAllowedDefects(value);
+            const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+            const lumaR = 0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
+            const lumaD = 0.299 * rgba[idxDown] + 0.587 * rgba[idxDown + 1] + 0.114 * rgba[idxDown + 2];
 
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item, idx) => {
-        if (idx === 0) {
-          return { ...item, upperLimit: value };
+            const grad = Math.abs(luma - lumaR) + Math.abs(luma - lumaD);
+
+            if (defectTarget === "dark-defects" && luma > 128) {
+              continue;
+            }
+
+            if (defectTarget === "bright-defects" && luma < 128) {
+              continue;
+            }
+
+            if (grad >= thresholdGradient) {
+              anomalyCount += 1;
+            }
+          }
         }
 
-        return item;
-      });
+        if (anomalyCount >= minDefectArea) {
+          flaws.push({
+            id: flaws.length + 1,
+            x,
+            y,
+            width: step,
+            height: step,
+            score: anomalyCount,
+          });
+        }
+      }
+    }
 
-      return {
-        ...prev,
-        params: {
-          ...prev.params,
-          maxAllowedDefects: value,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
+    const pass = flaws.length <= maxAllowedDefects;
 
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Flaw Inspection Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Surface Defect Extraction",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Differential Flaw & Scratch Detection
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-ca-ink-muted">
-                <span>Defect Contrast Sensitivity</span>
-                <span className="font-mono">{defectSensitivity}</span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={100}
-                value={defectSensitivity}
-                onChange={(e) => handleSensitivityChange(Number(e.target.value))}
-                className="w-full accent-ca-select"
-              />
-            </div>
+    return {
+      detectedFlaws: flaws,
+      isPass: pass,
+    };
+  }, [workbench.source, workbench.searchRegion, defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects]);
 
-            <div className="flex items-center gap-4 pt-2">
-              {(["dark-defects", "bright-defects", "both"] as const).map((mode) => (
-                <label key={mode} className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="defect-type"
-                    checked={defectTarget === mode}
-                    onChange={() => handleDefectTargetChange(mode)}
-                    className="accent-ca-select"
-                  />
-                  <span className="capitalize">{mode.replace("-", " ")}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      ),
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
+
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
+
+      const thresholdGradient = Math.round(180 * (1 - defectSensitivity / 100));
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+
+        if (isInsideRegion && x + 1 < source.width && y + 1 < source.height) {
+          const idxR = (y * source.width + (x + 1)) * 4;
+          const idxD = ((y + 1) * source.width + x) * 4;
+
+          const luma = 0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2];
+          const lumaR = 0.299 * raw[idxR] + 0.587 * raw[idxR + 1] + 0.114 * raw[idxR + 2];
+          const lumaD = 0.299 * raw[idxD] + 0.587 * raw[idxD + 1] + 0.114 * raw[idxD + 2];
+
+          const grad = Math.abs(luma - lumaR) + Math.abs(luma - lumaD);
+
+          if (grad >= thresholdGradient) {
+            // Neon rose / red edge highlight
+            out[idx] = 244;
+            out[idx + 1] = 63;
+            out[idx + 2] = 94;
+            out[idx + 3] = 255;
+          } else {
+            const dimmed = Math.round(luma * 0.35);
+            out[idx] = dimmed;
+            out[idx + 1] = dimmed;
+            out[idx + 2] = dimmed;
+            out[idx + 3] = 255;
+          }
+        } else {
+          out[idx] = 12;
+          out[idx + 1] = 16;
+          out[idx + 2] = 22;
+          out[idx + 3] = 255;
+        }
+      }
+
+      return output;
     },
-    {
-      id: "judgment",
-      label: "Defect Judgment Limits",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Defect Size & Quantity Thresholds
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Defect Pixel Size (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={minDefectArea}
-                  onChange={(e) => handleMinAreaChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">
-                  Max Allowed Flaw Count (0 = Zero Defect)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={maxAllowedDefects}
-                  onChange={(e) => handleMaxDefectsChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
+    [workbench.searchRegion, defectSensitivity],
+  );
+
+  const renderCustomOverlays = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      for (const flaw of detectedFlaws) {
+        ctx.save();
+        ctx.strokeStyle = "#f43f5e";
+        ctx.lineWidth = 2;
+        ctx.fillStyle = "rgba(244, 63, 94, 0.2)";
+
+        ctx.fillRect(flaw.x, flaw.y, flaw.width, flaw.height);
+        ctx.strokeRect(flaw.x, flaw.y, flaw.width, flaw.height);
+
+        // Flaw Crosshair
+        ctx.beginPath();
+        ctx.moveTo(flaw.x - 4, flaw.y + flaw.height / 2);
+        ctx.lineTo(flaw.x + flaw.width + 4, flaw.y + flaw.height / 2);
+        ctx.moveTo(flaw.x + flaw.width / 2, flaw.y - 4);
+        ctx.lineTo(flaw.x + flaw.width / 2, flaw.y + flaw.height + 4);
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = "#f43f5e";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText(`FLAW #${flaw.id}`, flaw.x, Math.max(10, flaw.y - 4));
+        ctx.restore();
+      }
     },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
-    },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
-    },
-  ];
+    [detectedFlaws],
+  );
+
+  const handleApply = useCallback(() => {
+    const defaultDefectItem: JudgmentItem = {
+      id: "j1",
+      name: "Flaw Count",
+      unit: "count",
+      lowerLimit: 0,
+      measured: detectedFlaws.length,
+      upperLimit: maxAllowedDefects,
+      status: isPass ? "PASS" : "FAIL",
+    };
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        toolCode: "T107",
+        defectSensitivity,
+        defectTarget,
+        minDefectArea,
+        maxAllowedDefects,
+        detectedCount: detectedFlaws.length,
+        judgmentItems: [defaultDefectItem],
+      },
+    }));
+
+    props.onOk?.();
+  }, [defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects, detectedFlaws, isPass, props]);
 
   return (
-    <StandardToolShell
-      toolName="Surface Defect / Flaw Inspection Tool"
-      toolKindId="T07-DEFECT"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
+    <StandardWorkbenchShell
+      toolName="Scratch & Crack Detector"
+      toolCode="T107"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
       onRefresh={props.onRefresh}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Gradient Contrast)"
+          toolBadge="T107 SCRATCH/CRACK"
+          statusText={`${detectedFlaws.length} FLAWS [${isPass ? "PASS" : "FAIL"}]`}
+          isPass={isPass}
+          onSearchRegionChange={workbench.handleRegionChange}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+          renderCustomOverlays={renderCustomOverlays}
+        />
+      }
+      inspectorPanel={
+        <DefectToolPanel
+          sensitivity={defectSensitivity}
+          defectTarget={defectTarget}
+          minArea={minDefectArea}
+          maxAllowedDefects={maxAllowedDefects}
+          detectedCount={detectedFlaws.length}
+          isPass={isPass}
+          actionButtonLabel={props.actionButtonLabel}
+          onSensitivityChange={setDefectSensitivity}
+          onDefectTargetChange={setDefectTarget}
+          onMinAreaChange={setMinDefectArea}
+          onMaxAllowedDefectsChange={setMaxAllowedDefects}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }

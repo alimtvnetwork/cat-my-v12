@@ -8,6 +8,7 @@ import { StandardEdgeWidthTool } from "./StandardEdgeWidthTool";
 import { StandardEdgePitchTool } from "./StandardEdgePitchTool";
 import { StandardEdgePairsTool } from "./StandardEdgePairsTool";
 import { StandardDefectTool } from "./StandardDefectTool";
+import { StandardVoidPorosityTool } from "./StandardVoidPorosityTool";
 import { StandardBlobTool } from "./StandardBlobTool";
 import { StandardGrayscaleBlobTool } from "./StandardGrayscaleBlobTool";
 import { StandardProfilePositionTool } from "./StandardProfilePositionTool";
@@ -35,6 +36,9 @@ export interface StandardInspectionToolDispatcherProps {
   onDisplay?: () => void;
   onRefresh?: () => void;
   onPreview?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
 }
 
 export function StandardInspectionToolDispatcher(
@@ -149,19 +153,26 @@ export function StandardInspectionToolDispatcher(
     return <StandardAreaTool {...props} />;
   }
 
-  // Phase 2: Surface Flaw Detection (Scratch & Crack, Void & Porosity)
+  // Phase 2: Void & Porosity Detection (T108)
+  const isVoidPorosity =
+    toolCode === "T108" ||
+    combined.includes("t108") ||
+    combined.includes("void") ||
+    combined.includes("porosity");
+
+  if (isVoidPorosity) {
+    return <StandardVoidPorosityTool {...props} />;
+  }
+
+  // Phase 2: Surface Flaw Detection (Scratch & Crack, Stains) (T107)
   const isDefect =
     toolCode === "T107" ||
-    toolCode === "T108" ||
     toolCode === "T118" ||
     combined.includes("t107") ||
-    combined.includes("t108") ||
     combined.includes("t118") ||
     combined.includes("defect") ||
     combined.includes("scratch") ||
     combined.includes("crack") ||
-    combined.includes("void") ||
-    combined.includes("porosity") ||
     combined.includes("flaw") ||
     combined.includes("stain");
 

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { DetectionConditionsTab } from "../tabs/DetectionConditionsTab";
-import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useMemo, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { AreaMeasurementMode, AreaTargetPolarity } from "@/domain/vision/area-gate-types";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { AreaToolPanel } from "../workbench/AreaToolPanel";
+import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardAreaToolProps {
   settings: PatternSearchSettings;
@@ -19,10 +19,20 @@ export interface StandardAreaToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
 }
 
 export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Element {
-  const initialParams = props.settings.params ?? {};
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
+
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
   const [areaMode, setAreaMode] = useState<AreaMeasurementMode>(
     (initialParams.areaMode as AreaMeasurementMode) ?? "pixels",
@@ -41,278 +51,192 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
     Number(initialParams.maxArea ?? initialParams.maxAreaPx ?? 50000),
   );
 
-  useEffect(() => {
-    props.onChange((prev) => {
-      const existingParams = prev.params ?? {};
-      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
-
-      const unit = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
-
-      const defaultAreaItem: JudgmentItem = {
-        id: "j1",
-        name: "Detected Area",
-        unit,
-        lowerLimit: minArea,
-        measured: 5000,
-        upperLimit: maxArea,
-        status: "PASS",
-      };
-
-      const judgmentItems =
-        existingItems && existingItems.length > 0 ? existingItems : [defaultAreaItem];
-
+  // Calculate live area metric from current image source and search region
+  const { activePixels, measuredArea, isPass } = useMemo(() => {
+    if (!workbench.source || !workbench.searchRegion) {
       return {
-        ...prev,
-        params: {
-          ...existingParams,
-          toolCode: "T101",
-          areaMode,
-          targetPolarity,
-          presencePolarity: targetPolarity === "dark" ? "darkOnBright" : "brightOnDark",
-          intensityThreshold: threshold,
-          threshold,
-          minArea,
-          minAreaPx: minArea,
-          maxArea,
-          maxAreaPx: maxArea,
-          judgmentItems,
-        },
+        activePixels: 5000,
+        measuredArea: 5000,
+        isPass: true,
       };
-    });
-  }, []);
+    }
 
-  const handleAreaModeChange = (mode: AreaMeasurementMode) => {
-    setAreaMode(mode);
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
 
-    const unit = mode === "pixels" ? "px" : mode === "percentage" ? "%" : "mm²";
+    const startX = Math.max(0, Math.min(width - 1, region.x));
+    const startY = Math.max(0, Math.min(height - 1, region.y));
+    const endX = Math.max(0, Math.min(width, region.x + region.width));
+    const endY = Math.max(0, Math.min(height, region.y + region.height));
 
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item, idx) => {
-        if (idx === 0) {
-          return { ...item, unit };
+    let count = 0;
+    const totalRoiPixels = Math.max(1, (endX - startX) * (endY - startY));
+
+    for (let y = startY; y < endY; y += 1) {
+      for (let x = startX; x < endX; x += 1) {
+        const idx = (y * width + x) * 4;
+        const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+        const isTarget = targetPolarity === "dark" ? luma <= threshold : luma >= threshold;
+
+        if (isTarget) {
+          count += 1;
         }
+      }
+    }
 
-        return item;
-      });
+    let measured = count;
 
-      return {
-        ...prev,
-        params: {
-          ...(prev.params ?? {}),
-          areaMode: mode,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
+    if (areaMode === "percentage") {
+      measured = Math.round((count / totalRoiPixels) * 1000) / 10;
+    } else if (areaMode === "physical") {
+      measured = Math.round(count * 0.0025 * 10) / 10;
+    }
 
-  const handlePolarityChange = (polarity: AreaTargetPolarity) => {
-    setTargetPolarity(polarity);
+    const pass = measured >= minArea && measured <= maxArea;
+
+    return {
+      activePixels: count,
+      measuredArea: measured,
+      isPass: pass,
+    };
+  }, [workbench.source, workbench.searchRegion, targetPolarity, threshold, areaMode, minArea, maxArea]);
+
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
+
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const luma = Math.round(
+          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
+        );
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+        const isTarget = targetPolarity === "dark" ? luma <= threshold : luma >= threshold;
+
+        if (isInsideRegion && isTarget) {
+          // Highlight active target pixels in bright neon emerald
+          out[idx] = 0;
+          out[idx + 1] = 255;
+          out[idx + 2] = 157;
+          out[idx + 3] = 255;
+        } else if (isInsideRegion) {
+          // Dim background within ROI
+          const dimmed = Math.round(luma * 0.45);
+          out[idx] = dimmed;
+          out[idx + 1] = dimmed;
+          out[idx + 2] = dimmed;
+          out[idx + 3] = 255;
+        } else {
+          // Darken area outside ROI
+          const dimmed = Math.round(luma * 0.2);
+          out[idx] = dimmed;
+          out[idx + 1] = dimmed;
+          out[idx + 2] = dimmed;
+          out[idx + 3] = 255;
+        }
+      }
+
+      return output;
+    },
+    [workbench.searchRegion, targetPolarity, threshold],
+  );
+
+  const handleApply = useCallback(() => {
+    const unit = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
+
+    const defaultAreaItem: JudgmentItem = {
+      id: "j1",
+      name: "Detected Area",
+      unit,
+      lowerLimit: minArea,
+      measured: measuredArea,
+      upperLimit: maxArea,
+      status: isPass ? "PASS" : "FAIL",
+    };
 
     props.onChange((prev) => ({
       ...prev,
       params: {
         ...(prev.params ?? {}),
-        targetPolarity: polarity,
-        presencePolarity: polarity === "dark" ? "darkOnBright" : "brightOnDark",
+        toolCode: "T101",
+        areaMode,
+        targetPolarity,
+        presencePolarity: targetPolarity === "dark" ? "darkOnBright" : "brightOnDark",
+        intensityThreshold: threshold,
+        threshold,
+        minArea,
+        minAreaPx: minArea,
+        maxArea,
+        maxAreaPx: maxArea,
+        measuredArea,
+        judgmentItems: [defaultAreaItem],
       },
     }));
-  };
 
-  const handleThresholdChange = (val: number) => {
-    setThreshold(val);
+    props.onOk?.();
+  }, [areaMode, targetPolarity, threshold, minArea, maxArea, measuredArea, isPass, props]);
 
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...(prev.params ?? {}),
-        threshold: val,
-        intensityThreshold: val,
-      },
-    }));
-  };
-
-  const handleLimitsChange = (newMin: number, newMax: number) => {
-    setMinArea(newMin);
-    setMaxArea(newMax);
-
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item, idx) => {
-        if (idx === 0) {
-          const measured = item.measured;
-          const isWithinLimits = measured >= newMin && measured <= newMax;
-
-          return {
-            ...item,
-            lowerLimit: newMin,
-            upperLimit: newMax,
-            status: isWithinLimits ? "PASS" : "FAIL",
-          };
-        }
-
-        return item;
-      });
-
-      return {
-        ...prev,
-        params: {
-          ...(prev.params ?? {}),
-          minArea: newMin,
-          minAreaPx: newMin,
-          maxArea: newMax,
-          maxAreaPx: newMax,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
-
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Inspection Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Area Detection",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Area Measurement Mode
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(["pixels", "percentage", "physical"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => handleAreaModeChange(m)}
-                  className={`p-2 border text-center font-medium rounded ${
-                    areaMode === m
-                      ? "bg-ca-select text-ca-bg border-ca-select font-bold"
-                      : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
-                  }`}
-                >
-                  {m === "pixels"
-                    ? "Pixel Count (px)"
-                    : m === "percentage"
-                      ? "Area Ratio (%)"
-                      : "Physical (mm²)"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Binarization & Target Polarity
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="area-polarity"
-                  checked={targetPolarity === "bright"}
-                  onChange={() => handlePolarityChange("bright")}
-                  className="accent-ca-select"
-                />
-                <span>Bright Pixels (Light Target)</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="area-polarity"
-                  checked={targetPolarity === "dark"}
-                  onChange={() => handlePolarityChange("dark")}
-                  className="accent-ca-select"
-                />
-                <span>Dark Pixels (Dark Target)</span>
-              </label>
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-ca-ink-muted">
-                <span>Threshold Level</span>
-                <span className="font-mono">{threshold} / 255</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={255}
-                value={threshold}
-                onChange={(e) => handleThresholdChange(Number(e.target.value))}
-                className="w-full accent-ca-select"
-              />
-            </div>
-          </div>
-
-          <DetectionConditionsTab />
-        </div>
-      ),
-    },
-    {
-      id: "judgment",
-      label: "Judgment Limits",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Area Limits Specification
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Lower Limit (Min Area)</label>
-                <input
-                  type="number"
-                  value={minArea}
-                  onChange={(e) => handleLimitsChange(Number(e.target.value), maxArea)}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Upper Limit (Max Area)</label>
-                <input
-                  type="number"
-                  value={maxArea}
-                  onChange={(e) => handleLimitsChange(minArea, Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
-    },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
-    },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
-    },
-  ];
+  const unitLabel = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
 
   return (
-    <StandardToolShell
-      toolName="Area Measurement Tool"
-      toolKindId="T01-AREA"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
+    <StandardWorkbenchShell
+      toolName="Area Gate / Pixel Intensity"
+      toolCode="T101"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
       onRefresh={props.onRefresh}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Binarization Mask)"
+          toolBadge="T101 AREA GATE"
+          statusText={`${measuredArea.toLocaleString()} ${unitLabel} [${isPass ? "PASS" : "FAIL"}]`}
+          isPass={isPass}
+          onSearchRegionChange={workbench.handleRegionChange}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+        />
+      }
+      inspectorPanel={
+        <AreaToolPanel
+          areaMode={areaMode}
+          targetPolarity={targetPolarity}
+          threshold={threshold}
+          minArea={minArea}
+          maxArea={maxArea}
+          measuredArea={measuredArea}
+          isPass={isPass}
+          actionButtonLabel={props.actionButtonLabel}
+          onAreaModeChange={setAreaMode}
+          onPolarityChange={setTargetPolarity}
+          onThresholdChange={setThreshold}
+          onMinAreaChange={setMinArea}
+          onMaxAreaChange={setMaxArea}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }
