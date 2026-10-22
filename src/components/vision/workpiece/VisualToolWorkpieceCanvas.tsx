@@ -1464,7 +1464,6 @@ export function VisualToolWorkpieceCanvas({
           (isSelected && isPatternMatching);
 
         const isRulePin1 =
-          effectiveToolCode === "T103" ||
           effectiveToolCode === "T105" ||
           effectiveToolCode === "T117" ||
           ruleNameLower.includes("pin1") ||

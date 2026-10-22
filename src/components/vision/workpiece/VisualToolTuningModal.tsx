@@ -181,7 +181,6 @@ export function VisualToolTuningModal({
     normalizedName.includes("white box");
 
   const isPin1 =
-    toolCode === "T103" ||
     toolCode === "T105" ||
     toolCode === "T117" ||
     toolCode === "pin1_config" ||

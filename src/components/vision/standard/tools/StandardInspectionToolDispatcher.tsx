@@ -34,24 +34,36 @@ export interface StandardInspectionToolDispatcherProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
-
   onPreview?: () => void;
 }
 
 export function StandardInspectionToolDispatcher(
   props: StandardInspectionToolDispatcherProps,
 ): React.JSX.Element {
-  const normalized = (
-    props.toolType ||
-    props.ruleName ||
-    (props.settings as any)?.toolType ||
-    (props.settings as any)?.type ||
-    ""
-  ).toLowerCase();
+  const toolCode = String(
+    (props.settings.params as any)?.toolCode ||
+      props.toolType ||
+      (props.settings as any)?.toolCode ||
+      (props.settings as any)?.type ||
+      "",
+  ).toUpperCase();
+
+  const combined = [
+    toolCode,
+    props.toolType,
+    props.ruleName,
+    props.settings.name,
+    (props.settings as any)?.toolType,
+    (props.settings as any)?.type,
+    (props.settings.params as any)?.category,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
   const isDefectMatch =
-    normalized.includes("defect match") ||
-    normalized.includes("flaw match") ||
+    combined.includes("defect match") ||
+    combined.includes("flaw match") ||
     (props.settings as any)?.toolType === "Defect Matching" ||
     (props.settings as any)?.type === "defect_match" ||
     Boolean((props.settings as any)?.isDefectReject);
@@ -61,10 +73,10 @@ export function StandardInspectionToolDispatcher(
   }
 
   const isGreyscaleSimulation =
-    normalized.includes("greyscle simulation") ||
-    normalized.includes("greyscale simulation") ||
-    normalized.includes("carrier tape") ||
-    normalized.includes("carrier-tape") ||
+    combined.includes("greyscle simulation") ||
+    combined.includes("greyscale simulation") ||
+    combined.includes("carrier tape") ||
+    combined.includes("carrier-tape") ||
     (props.settings as any)?.toolType === "Greyscle simulation" ||
     (props.settings as any)?.type === "greyscale_simulation";
 
@@ -73,18 +85,22 @@ export function StandardInspectionToolDispatcher(
   }
 
   const isGreyscalePattern =
-    !normalized.includes("logo") &&
-    !normalized.includes("defect") &&
-    !normalized.includes("flaw") &&
+    !combined.includes("logo") &&
+    !combined.includes("defect") &&
+    !combined.includes("flaw") &&
     !(props.settings as any)?.isDefectReject &&
-    (normalized.includes("pattern match") ||
-      normalized.includes("greyscale pattern") ||
-      normalized.includes("grayscale pattern") ||
-      normalized.includes("white box") ||
-      normalized.includes("24 box") ||
-      normalized.includes("31 box") ||
-      normalized.includes("2-bit") ||
-      normalized.includes("light pattern") ||
+    (toolCode === "T102" ||
+      toolCode === "T116" ||
+      combined.includes("t102") ||
+      combined.includes("t116") ||
+      combined.includes("pattern match") ||
+      combined.includes("greyscale pattern") ||
+      combined.includes("grayscale pattern") ||
+      combined.includes("white box") ||
+      combined.includes("24 box") ||
+      combined.includes("31 box") ||
+      combined.includes("2-bit") ||
+      combined.includes("light pattern") ||
       (props.settings as any)?.type === "pattern_match" ||
       Boolean((props.settings as any)?.constellation));
 
@@ -93,9 +109,13 @@ export function StandardInspectionToolDispatcher(
   }
 
   const isPin1 =
-    normalized.includes("pin1") ||
-    normalized.includes("pin 1") ||
-    normalized.includes("pin-1") ||
+    toolCode === "T105" ||
+    toolCode === "T117" ||
+    combined.includes("t105") ||
+    combined.includes("t117") ||
+    combined.includes("pin1") ||
+    combined.includes("pin 1") ||
+    combined.includes("pin-1") ||
     (props.settings as any)?.type === "pin1_config" ||
     Boolean((props.settings as any)?.pin1Config);
 
@@ -103,133 +123,185 @@ export function StandardInspectionToolDispatcher(
     return <StandardPin1ConfigTool {...props} />;
   }
 
-  // 1. Area Tool
-  if (normalized.includes("area")) {
+  // Phase 1: Area Gate (Pixel Intensity)
+  const isArea =
+    toolCode === "T101" ||
+    combined.includes("t101") ||
+    combined.includes("area") ||
+    combined.includes("pixel intensity") ||
+    combined.includes("pixel count");
+
+  if (isArea) {
     return <StandardAreaTool {...props} />;
   }
 
-  // 2. ShapeTrax3
-  if (
-    normalized.includes("shape") ||
-    normalized.includes("trax") ||
-    normalized.includes("contour")
-  ) {
+  // Phase 2: Surface Flaw Detection (Scratch & Crack, Void & Porosity)
+  const isDefect =
+    toolCode === "T107" ||
+    toolCode === "T108" ||
+    toolCode === "T118" ||
+    combined.includes("t107") ||
+    combined.includes("t108") ||
+    combined.includes("t118") ||
+    combined.includes("defect") ||
+    combined.includes("scratch") ||
+    combined.includes("crack") ||
+    combined.includes("void") ||
+    combined.includes("porosity") ||
+    combined.includes("flaw") ||
+    combined.includes("stain");
+
+  if (isDefect) {
+    return <StandardDefectTool {...props} />;
+  }
+
+  // Grayscale Blob
+  const isGrayscaleBlob =
+    (combined.includes("gray") || combined.includes("grey")) &&
+    (combined.includes("blob") || combined.includes("particle"));
+
+  if (isGrayscaleBlob) {
+    return <StandardGrayscaleBlobTool {...props} />;
+  }
+
+  // Phase 2: Binary Blob (Solder Bridge Detector)
+  const isBinaryBlob =
+    toolCode === "T109" ||
+    combined.includes("t109") ||
+    combined.includes("blob") ||
+    combined.includes("solder bridge") ||
+    combined.includes("bridge") ||
+    combined.includes("particle") ||
+    combined.includes("count");
+
+  if (isBinaryBlob) {
+    return <StandardBlobTool {...props} />;
+  }
+
+  // ShapeTrax3
+  const isShapeTrax =
+    combined.includes("shape") ||
+    combined.includes("trax") ||
+    combined.includes("contour");
+
+  if (isShapeTrax) {
     return <StandardShapeTrax3Tool {...props} />;
   }
 
-  // 3. Profile Width
-  if (
-    normalized.includes("profile") &&
-    (normalized.includes("width") ||
-      normalized.includes("caliper") ||
-      normalized.includes("thickness"))
-  ) {
+  // Profile Width
+  const isProfileWidth =
+    combined.includes("profile") &&
+    (combined.includes("width") ||
+      combined.includes("caliper") ||
+      combined.includes("thickness"));
+
+  if (isProfileWidth) {
     return <StandardProfileWidthTool {...props} />;
   }
 
-  // 4. Profile Position
-  if (normalized.includes("profile")) {
+  // Profile Position
+  const isProfilePosition = combined.includes("profile");
+
+  if (isProfilePosition) {
     return <StandardProfilePositionTool {...props} />;
   }
 
-  // 5. Edge Pitch
-  if (
-    normalized.includes("pitch") ||
-    normalized.includes("comb") ||
-    normalized.includes("connector")
-  ) {
+  // Phase 3: Edge Pitch (Lead Pitch / Comb Periodicity)
+  const isEdgePitch =
+    props.toolType === "edge-pitch" ||
+    combined.includes("edge-pitch") ||
+    (combined.includes("pitch") && !combined.includes("caliper & edge")) ||
+    combined.includes("comb") ||
+    combined.includes("connector") ||
+    (props.settings.params as any)?.measurementMode === "pitch" ||
+    (props.settings.params as any)?.pitchPolarity !== undefined;
+
+  if (isEdgePitch) {
     return <StandardEdgePitchTool {...props} />;
   }
 
-  // 6. Edge Pairs
-  if (normalized.includes("pair")) {
+  // Edge Pairs
+  const isEdgePairs = combined.includes("pair");
+
+  if (isEdgePairs) {
     return <StandardEdgePairsTool {...props} />;
   }
 
-  // 7. Edge Width
-  if (
-    normalized.includes("width") ||
-    normalized.includes("gap") ||
-    normalized.includes("caliper")
-  ) {
+  // Phase 3: Edge Width (Caliper & Edge Metrology)
+  const isEdgeWidth =
+    toolCode === "T110" ||
+    combined.includes("t110") ||
+    combined.includes("edge-width") ||
+    combined.includes("width") ||
+    combined.includes("gap") ||
+    combined.includes("caliper");
+
+  if (isEdgeWidth) {
     return <StandardEdgeWidthTool {...props} />;
   }
 
-  // 8. Edge Position
-  if (
-    normalized.includes("edge") ||
-    normalized.includes("position") ||
-    normalized.includes("pin") ||
-    normalized.includes("line")
-  ) {
+  // Phase 3: Edge Position (Edge Count & Lead Presence)
+  const isEdgePosition =
+    toolCode === "T104" ||
+    combined.includes("t104") ||
+    combined.includes("edge-position") ||
+    combined.includes("lead presence") ||
+    combined.includes("edge count") ||
+    combined.includes("edge") ||
+    combined.includes("position") ||
+    combined.includes("pin") ||
+    combined.includes("line");
+
+  if (isEdgePosition) {
     return <StandardEdgePositionTool {...props} />;
   }
 
-  // 9. Defect
-  if (
-    normalized.includes("defect") ||
-    normalized.includes("scratch") ||
-    normalized.includes("flaw") ||
-    normalized.includes("stain")
-  ) {
-    return <StandardDefectTool {...props} />;
-  }
-  if (
-    normalized.includes("greyscale pattern") ||
-    normalized.includes("grayscale pattern") ||
-    normalized.includes("2-bit") ||
-    normalized.includes("light pattern")
-  ) {
-    return <StandardGreyscalePatternMatchingTool {...props} />;
-  }
-  // 10. Grayscale Blob
-  if (
-    (normalized.includes("gray") || normalized.includes("grey")) &&
-    (normalized.includes("blob") || normalized.includes("particle"))
-  ) {
-    return <StandardGrayscaleBlobTool {...props} />;
-  }
-  // 11. Binary Blob
-  if (
-    normalized.includes("blob") ||
-    normalized.includes("particle") ||
-    normalized.includes("count")
-  ) {
-    return <StandardBlobTool {...props} />;
-  }
-  // 12. Intensity / Brightness
-  if (
-    normalized.includes("intensity") ||
-    normalized.includes("brightness") ||
-    normalized.includes("luminance") ||
-    normalized.includes("mean")
-  ) {
+  // Intensity / Brightness
+  const isIntensity =
+    toolCode === "T112" ||
+    combined.includes("t112") ||
+    combined.includes("intensity") ||
+    combined.includes("brightness") ||
+    combined.includes("luminance") ||
+    combined.includes("mean") ||
+    combined.includes("conformal coating");
+
+  if (isIntensity) {
     return <StandardIntensityTool {...props} />;
   }
-  // 13. OCR2
-  if (
-    normalized.includes("ocr") ||
-    normalized.includes("t106") ||
-    normalized.includes("t114") ||
-    normalized.includes("text") ||
-    normalized.includes("font") ||
-    normalized.includes("char") ||
-    normalized.includes("string")
-  ) {
+
+  // OCR2
+  const isOcr2 =
+    toolCode === "T106" ||
+    toolCode === "T114" ||
+    combined.includes("t106") ||
+    combined.includes("t114") ||
+    combined.includes("ocr") ||
+    combined.includes("text") ||
+    combined.includes("font") ||
+    combined.includes("char") ||
+    combined.includes("string");
+
+  if (isOcr2) {
     return <StandardOcr2Tool {...props} />;
   }
-  // 14. 1D / 2D Code Reader
-  if (
-    normalized.includes("code") ||
-    normalized.includes("barcode") ||
-    normalized.includes("qr") ||
-    normalized.includes("matrix") ||
-    normalized.includes("datamatrix") ||
-    normalized.includes("1d")
-  ) {
+
+  // 1D / 2D Code Reader
+  const isCodeReader =
+    toolCode === "T103" ||
+    combined.includes("t103") ||
+    combined.includes("code") ||
+    combined.includes("barcode") ||
+    combined.includes("qr") ||
+    combined.includes("matrix") ||
+    combined.includes("datamatrix") ||
+    combined.includes("1d") ||
+    combined.includes("2d");
+
+  if (isCodeReader) {
     return <StandardCodeReaderTool {...props} />;
   }
 
-  // 15. Default: Standard Pattern Search
+  // Default Fallback: Standard Pattern Search
   return <StandardPatternSearch {...props} />;
 }
