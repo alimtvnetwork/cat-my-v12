@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useMemo, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { BlobToolPanel } from "../workbench/BlobToolPanel";
+import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardBlobToolProps {
   settings: PatternSearchSettings;
@@ -17,10 +18,37 @@ export interface StandardBlobToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
+}
+
+interface DetectedBlob {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  areaPx: number;
+}
+
+interface SolderBridge {
+  id: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Element {
-  const initialParams = props.settings.params ?? {};
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
+
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
   const [binaryThreshold, setBinaryThreshold] = useState<number>(
     Number(initialParams.binaryThreshold ?? 128),
@@ -44,327 +72,306 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
     (initialParams.targetPolarity as "bright" | "dark" | "both") ?? "bright",
   );
 
-  useEffect(() => {
-    props.onChange((prev) => {
-      const existingParams = prev.params ?? {};
-      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
-
-      const defaultCountItem: JudgmentItem = {
-        id: "j1",
-        name: "Blob Count",
-        unit: "count",
-        lowerLimit: minBlobCount,
-        measured: minBlobCount,
-        upperLimit: maxBlobCount,
-        status: "PASS",
-      };
-
-      const defaultAreaItem: JudgmentItem = {
-        id: "j2",
-        name: "Blob Area",
-        unit: "px",
-        lowerLimit: minBlobArea,
-        measured: Math.round((minBlobArea + maxBlobArea) / 2),
-        upperLimit: maxBlobArea,
-        status: "PASS",
-      };
-
-      const judgmentItems =
-        existingItems && existingItems.length > 0
-          ? existingItems
-          : [defaultCountItem, defaultAreaItem];
-
+  // Extract connected components and solder bridge shorts
+  const { detectedBlobs, detectedBridges, isPass } = useMemo(() => {
+    if (!workbench.source || !workbench.searchRegion) {
       return {
-        ...prev,
-        params: {
-          ...existingParams,
-          toolCode: existingParams.toolCode ?? "T109",
-          binaryThreshold,
-          minBlobArea,
-          maxBlobArea,
-          minBlobCount,
-          maxBlobCount,
-          hasHoleFilling,
-          targetPolarity,
-          judgmentItems,
-        },
+        detectedBlobs: [] as DetectedBlob[],
+        detectedBridges: [] as SolderBridge[],
+        isPass: true,
       };
-    });
-  }, []);
+    }
 
-  const handleThresholdChange = (value: number) => {
-    setBinaryThreshold(value);
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
+
+    const startX = Math.max(0, Math.min(width - 1, region.x));
+    const startY = Math.max(0, Math.min(height - 1, region.y));
+    const endX = Math.max(1, Math.min(width, region.x + region.width));
+    const endY = Math.max(1, Math.min(height, region.y + region.height));
+
+    const blobs: DetectedBlob[] = [];
+    const bridges: SolderBridge[] = [];
+
+    // Connected component cell analysis across the workpiece region
+    const step = 20;
+
+    for (let y = startY; y < endY - step; y += step) {
+      for (let x = startX; x < endX - step; x += step) {
+        let activePixelCount = 0;
+
+        for (let dy = 0; dy < step; dy += 2) {
+          for (let dx = 0; dx < step; dx += 2) {
+            const idx = ((y + dy) * width + (x + dx)) * 4;
+            const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+            const isMatch =
+              targetPolarity === "dark"
+                ? luma <= binaryThreshold
+                : targetPolarity === "bright"
+                  ? luma >= binaryThreshold
+                  : true;
+
+            if (isMatch) {
+              activePixelCount += 4;
+            }
+          }
+        }
+
+        if (activePixelCount >= minBlobArea && activePixelCount <= maxBlobArea) {
+          blobs.push({
+            id: blobs.length + 1,
+            x,
+            y,
+            width: step,
+            height: step,
+            areaPx: activePixelCount,
+          });
+        }
+      }
+    }
+
+    // Check for bridging between closely spaced blobs
+    for (let i = 0; i < blobs.length; i += 1) {
+      for (let j = i + 1; j < blobs.length; j += 1) {
+        const b1 = blobs[i];
+        const b2 = blobs[j];
+        const dist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
+
+        if (dist > 0 && dist < step * 1.25) {
+          bridges.push({
+            id: bridges.length + 1,
+            x1: b1.x + b1.width / 2,
+            y1: b1.y + b1.height / 2,
+            x2: b2.x + b2.width / 2,
+            y2: b2.y + b2.height / 2,
+          });
+        }
+      }
+    }
+
+    const countPass = blobs.length >= minBlobCount && blobs.length <= maxBlobCount;
+    const bridgePass = bridges.length === 0;
+
+    return {
+      detectedBlobs: blobs,
+      detectedBridges: bridges,
+      isPass: countPass && bridgePass,
+    };
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    binaryThreshold,
+    minBlobArea,
+    maxBlobArea,
+    minBlobCount,
+    maxBlobCount,
+    targetPolarity,
+  ]);
+
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
+
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const luma = Math.round(
+          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
+        );
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+        const isMatch =
+          targetPolarity === "dark"
+            ? luma <= binaryThreshold
+            : targetPolarity === "bright"
+              ? luma >= binaryThreshold
+              : true;
+
+        if (isInsideRegion && isMatch) {
+          // Highlight blob pixels in vivid neon emerald
+          out[idx] = 16;
+          out[idx + 1] = 185;
+          out[idx + 2] = 129;
+          out[idx + 3] = 255;
+        } else if (isInsideRegion) {
+          const dimmed = Math.round(luma * 0.4);
+          out[idx] = dimmed;
+          out[idx + 1] = dimmed;
+          out[idx + 2] = dimmed;
+          out[idx + 3] = 255;
+        } else {
+          out[idx] = 12;
+          out[idx + 1] = 16;
+          out[idx + 2] = 22;
+          out[idx + 3] = 255;
+        }
+      }
+
+      return output;
+    },
+    [workbench.searchRegion, binaryThreshold, targetPolarity],
+  );
+
+  const renderCustomOverlays = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      // 1. Draw detected blobs
+      for (const blob of detectedBlobs) {
+        ctx.save();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2;
+        ctx.fillStyle = "rgba(16, 185, 129, 0.15)";
+
+        ctx.fillRect(blob.x, blob.y, blob.width, blob.height);
+        ctx.strokeRect(blob.x, blob.y, blob.width, blob.height);
+
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText(`BLOB #${blob.id}`, blob.x, Math.max(10, blob.y - 4));
+        ctx.restore();
+      }
+
+      // 2. Draw solder bridge hazard warnings
+      for (const bridge of detectedBridges) {
+        ctx.save();
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 2]);
+
+        ctx.beginPath();
+        ctx.moveTo(bridge.x1, bridge.y1);
+        ctx.lineTo(bridge.x2, bridge.y2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.font = "bold 10px monospace";
+        const midX = (bridge.x1 + bridge.x2) / 2;
+        const midY = (bridge.y1 + bridge.y2) / 2;
+        ctx.fillText("BRIDGE SHORT", midX - 35, midY - 6);
+        ctx.restore();
+      }
+    },
+    [detectedBlobs, detectedBridges],
+  );
+
+  const handleApply = useCallback(() => {
+    const defaultCountItem: JudgmentItem = {
+      id: "j1",
+      name: "Blob Count",
+      unit: "count",
+      lowerLimit: minBlobCount,
+      measured: detectedBlobs.length,
+      upperLimit: maxBlobCount,
+      status:
+        detectedBlobs.length >= minBlobCount && detectedBlobs.length <= maxBlobCount
+          ? "PASS"
+          : "FAIL",
+    };
+
+    const defaultBridgeItem: JudgmentItem = {
+      id: "j2",
+      name: "Solder Bridge Count",
+      unit: "count",
+      lowerLimit: 0,
+      measured: detectedBridges.length,
+      upperLimit: 0,
+      status: detectedBridges.length === 0 ? "PASS" : "FAIL",
+    };
 
     props.onChange((prev) => ({
       ...prev,
       params: {
-        ...prev.params,
-        binaryThreshold: value,
+        ...(prev.params ?? {}),
+        toolCode: "T109",
+        binaryThreshold,
+        minBlobArea,
+        maxBlobArea,
+        minBlobCount,
+        maxBlobCount,
+        hasHoleFilling,
+        targetPolarity,
+        detectedBlobCount: detectedBlobs.length,
+        detectedBridgeCount: detectedBridges.length,
+        judgmentItems: [defaultCountItem, defaultBridgeItem],
       },
     }));
-  };
 
-  const handleHoleFillingChange = (hasHoles: boolean) => {
-    setHasHoleFilling(hasHoles);
-
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...prev.params,
-        hasHoleFilling: hasHoles,
-      },
-    }));
-  };
-
-  const handlePolarityChange = (polarity: "bright" | "dark" | "both") => {
-    setTargetPolarity(polarity);
-
-    props.onChange((prev) => ({
-      ...prev,
-      params: {
-        ...prev.params,
-        targetPolarity: polarity,
-      },
-    }));
-  };
-
-  const handleMinCountChange = (value: number) => {
-    setMinBlobCount(value);
-
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item) => {
-        if (item.name.toLowerCase().includes("count")) {
-          return { ...item, lowerLimit: value };
-        }
-
-        return item;
-      });
-
-      return {
-        ...prev,
-        params: {
-          ...prev.params,
-          minBlobCount: value,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
-
-  const handleMaxCountChange = (value: number) => {
-    setMaxBlobCount(value);
-
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item) => {
-        if (item.name.toLowerCase().includes("count")) {
-          return { ...item, upperLimit: value };
-        }
-
-        return item;
-      });
-
-      return {
-        ...prev,
-        params: {
-          ...prev.params,
-          maxBlobCount: value,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
-
-  const handleMinAreaChange = (value: number) => {
-    setMinBlobArea(value);
-
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item) => {
-        if (item.name.toLowerCase().includes("area")) {
-          return { ...item, lowerLimit: value };
-        }
-
-        return item;
-      });
-
-      return {
-        ...prev,
-        params: {
-          ...prev.params,
-          minBlobArea: value,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
-
-  const handleMaxAreaChange = (value: number) => {
-    setMaxBlobArea(value);
-
-    props.onChange((prev) => {
-      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
-      const nextItems = existing.map((item) => {
-        if (item.name.toLowerCase().includes("area")) {
-          return { ...item, upperLimit: value };
-        }
-
-        return item;
-      });
-
-      return {
-        ...prev,
-        params: {
-          ...prev.params,
-          maxBlobArea: value,
-          judgmentItems: nextItems,
-        },
-      };
-    });
-  };
-
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Blob Search Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Binary Blob Extraction",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Binarization & Morphology
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-ca-ink-muted">
-                <span>Threshold Level</span>
-                <span className="font-mono">{binaryThreshold}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={255}
-                value={binaryThreshold}
-                onChange={(e) => handleThresholdChange(Number(e.target.value))}
-                className="w-full accent-ca-select"
-              />
-            </div>
-
-            <div className="flex items-center gap-4 pt-1">
-              {(["bright", "dark", "both"] as const).map((mode) => (
-                <label key={mode} className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="blob-polarity"
-                    checked={targetPolarity === mode}
-                    onChange={() => handlePolarityChange(mode)}
-                    className="accent-ca-select"
-                  />
-                  <span className="capitalize">{mode} Polarity</span>
-                </label>
-              ))}
-            </div>
-
-            <label className="flex items-center gap-2 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={hasHoleFilling}
-                onChange={(e) => handleHoleFillingChange(e.target.checked)}
-                className="rounded border-ca-border accent-ca-select"
-              />
-              <span>Fill Internal Enclosed Holes</span>
-            </label>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "judgment",
-      label: "Blob Judgment Limits",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Blob Quantity & Area Limits
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Blob Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={minBlobCount}
-                  onChange={(e) => handleMinCountChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Max Blob Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={maxBlobCount}
-                  onChange={(e) => handleMaxCountChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Area per Blob (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={minBlobArea}
-                  onChange={(e) => handleMinAreaChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Max Area per Blob (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={maxBlobArea}
-                  onChange={(e) => handleMaxAreaChange(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
-    },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
-    },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
-    },
-  ];
+    props.onOk?.();
+  }, [
+    binaryThreshold,
+    minBlobArea,
+    maxBlobArea,
+    minBlobCount,
+    maxBlobCount,
+    hasHoleFilling,
+    targetPolarity,
+    detectedBlobs,
+    detectedBridges,
+    props,
+  ]);
 
   return (
-    <StandardToolShell
-      toolName="Binary Blob Analysis Tool"
-      toolKindId="T08-BLOB"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
+    <StandardWorkbenchShell
+      toolName="Binary Blob & Solder Bridge"
+      toolCode="T109"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
       onRefresh={props.onRefresh}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Blob Segmentation)"
+          toolBadge="T109 BINARY BLOB"
+          statusText={`${detectedBlobs.length} BLOBS / ${detectedBridges.length} BRIDGES [${isPass ? "PASS" : "FAIL"}]`}
+          isPass={isPass}
+          onSearchRegionChange={workbench.handleRegionChange}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+          renderCustomOverlays={renderCustomOverlays}
+        />
+      }
+      inspectorPanel={
+        <BlobToolPanel
+          binaryThreshold={binaryThreshold}
+          minBlobArea={minBlobArea}
+          maxBlobArea={maxBlobArea}
+          minBlobCount={minBlobCount}
+          maxBlobCount={maxBlobCount}
+          hasHoleFilling={hasHoleFilling}
+          targetPolarity={targetPolarity}
+          detectedBlobCount={detectedBlobs.length}
+          detectedBridgeCount={detectedBridges.length}
+          isPass={isPass}
+          actionButtonLabel={props.actionButtonLabel}
+          onThresholdChange={setBinaryThreshold}
+          onMinBlobAreaChange={setMinBlobArea}
+          onMaxBlobAreaChange={setMaxBlobArea}
+          onMinBlobCountChange={setMinBlobCount}
+          onMaxBlobCountChange={setMaxBlobCount}
+          onHoleFillingChange={setHasHoleFilling}
+          onPolarityChange={setTargetPolarity}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }

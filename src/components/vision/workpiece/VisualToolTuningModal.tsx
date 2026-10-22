@@ -439,6 +439,9 @@ export function VisualToolTuningModal({
             onChange={setSettings}
             onOk={handleApplyStandardTool}
             onCancel={onClose}
+            imageRef={effectiveImageRef}
+            onImageRegistered={handleImageRegistered}
+            actionButtonLabel="OK - Apply & Return"
           />
         )}
       </div>

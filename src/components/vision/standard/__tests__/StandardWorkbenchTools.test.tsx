@@ -1,0 +1,228 @@
+// @vitest-environment jsdom
+import React from "react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { createDefaultPatternSearchSettings } from "@/domain/vision/pattern-search";
+import { StandardAreaTool } from "../tools/StandardAreaTool";
+import { StandardDefectTool } from "../tools/StandardDefectTool";
+import { StandardVoidPorosityTool } from "../tools/StandardVoidPorosityTool";
+import { StandardBlobTool } from "../tools/StandardBlobTool";
+import { StandardEdgeWidthTool } from "../tools/StandardEdgeWidthTool";
+import { StandardEdgePitchTool } from "../tools/StandardEdgePitchTool";
+import { StandardEdgePositionTool } from "../tools/StandardEdgePositionTool";
+import { StandardCodeReaderTool } from "../tools/StandardCodeReaderTool";
+
+if (typeof window.ResizeObserver === "undefined") {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
+describe("Standard Workbench Dedicated Vision Tools", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders T101 StandardAreaTool with tailored options and applies settings", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t101");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardAreaTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Area Gate/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T101/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Area Measurement Mode/i)).toBeDefined();
+    expect(screen.getByText(/Target Polarity/i)).toBeDefined();
+    expect(screen.getByText(/Intensity Threshold/i)).toBeDefined();
+
+    // Toggle polarity
+    const darkBtn = screen.getByText(/Dark on Bright/i);
+    fireEvent.click(darkBtn);
+
+    // Click Apply
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T107 StandardDefectTool with tailored scratch & crack options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t107");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardDefectTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Scratch & Crack/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T107/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Target Flaw Type/i)).toBeDefined();
+    expect(screen.getByText(/Defect Contrast Sensitivity/i)).toBeDefined();
+    expect(screen.getByText(/Max Allowed Defects/i)).toBeDefined();
+
+    // Click Apply
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T108 StandardVoidPorosityTool with cavity options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t108");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardVoidPorosityTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Void & Porosity/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T108/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Cavity Contrast Sensitivity/i)).toBeDefined();
+    expect(screen.getByText(/Min Void Diameter/i)).toBeDefined();
+    expect(screen.getByText(/Max Allowed Porosity Ratio/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T109 StandardBlobTool with solder bridge and blob options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t109");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardBlobTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Binary Blob/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T109/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Binarization Threshold/i)).toBeDefined();
+    expect(screen.getByText(/Blob Area Limits/i)).toBeDefined();
+    expect(screen.getByText(/Component Count Limits/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T110 StandardEdgeWidthTool with caliper options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t110");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardEdgeWidthTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Caliper/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T110/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Sub-Pixel Caliper/i)).toBeDefined();
+    expect(screen.getByText(/Nominal Dimension & Tolerance/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T111 StandardEdgePitchTool with comb pitch options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t111");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardEdgePitchTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Lead Pitch/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T111/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Sub-Pixel Caliper/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T104 StandardEdgePositionTool with scan direction options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t104");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardEdgePositionTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Edge Position/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T104/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Scan Direction/i)).toBeDefined();
+    expect(screen.getByText(/Transition Polarity/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T103 StandardCodeReaderTool with symbology and payload options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t103");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardCodeReaderTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Code Reader/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T103/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Decoded Payload/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Target Symbology/i)).toBeDefined();
+
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+});

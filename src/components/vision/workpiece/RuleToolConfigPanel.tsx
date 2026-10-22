@@ -429,6 +429,9 @@ export function RuleToolConfigPanel({
           onChange={setSettings}
           onOk={handleApplyStandardTool}
           onCancel={onExit}
+          imageRef={effectiveImageRef}
+          onImageRegistered={handleImageRegistered}
+          actionButtonLabel="OK - Apply & Return"
         />
       )}
     </div>

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useMemo, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { EdgeWidthToolPanel } from "../workbench/EdgeWidthToolPanel";
 import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardEdgeWidthToolProps {
@@ -18,290 +18,329 @@ export interface StandardEdgeWidthToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
 }
 
-export function StandardEdgeWidthTool(
-  props: StandardEdgeWidthToolProps,
-): React.JSX.Element {
-  const initialParams = props.settings.params ?? {};
+export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.JSX.Element {
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
 
-  const [edge1Polarity, setEdge1Polarity] = useState<
-    "light-to-dark" | "dark-to-light"
-  >(
-    (initialParams.edge1Polarity as "light-to-dark" | "dark-to-light") ??
-      "light-to-dark",
-  );
-  const [edge2Polarity, setEdge2Polarity] = useState<
-    "light-to-dark" | "dark-to-light"
-  >(
-    (initialParams.edge2Polarity as "light-to-dark" | "dark-to-light") ??
-      "dark-to-light",
-  );
-  const [nominalWidth, setNominalWidth] = useState<number>(
-    Number(initialParams.nominalWidthPx ?? 30.0),
-  );
-  const [tolerancePx, setTolerancePx] = useState<number>(
-    Number(initialParams.tolerancePx ?? 5.0),
-  );
-  const [minWidth, setMinWidth] = useState<number>(
-    Number(initialParams.minWidth ?? nominalWidth - tolerancePx),
-  );
-  const [maxWidth, setMaxWidth] = useState<number>(
-    Number(initialParams.maxWidth ?? nominalWidth + tolerancePx),
-  );
-  const [minEdgeContrast, setMinEdgeContrast] = useState<number>(
-    Number(initialParams.minEdgeContrast ?? 15),
-  );
-  const [hasSubPixelInterpolation, setHasSubPixelInterpolation] =
-    useState<boolean>(
-      Boolean(initialParams.hasSubPixelInterpolation ?? true),
-    );
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
-  useEffect(() => {
-    props.onChange((prev) => {
-      const existingParams = prev.params ?? {};
-      const existingItems =
-        existingParams.judgmentItems as JudgmentItem[] | undefined;
+  const [measurementMode, setMeasurementMode] = useState<"width" | "pitch" | "gap">(
+    (initialParams.measurementMode as "width" | "pitch" | "gap") ?? "width",
+  );
+  const [edgePolarity, setEdgePolarity] = useState<"dark-to-light" | "light-to-dark" | "any">(
+    (initialParams.edgePolarity as "dark-to-light" | "light-to-dark" | "any") ?? "any",
+  );
+  const [contrastThreshold, setContrastThreshold] = useState<number>(
+    Number(initialParams.contrastThreshold ?? 30),
+  );
+  const [nominalDistance, setNominalDistance] = useState<number>(
+    Number(initialParams.nominalDistance ?? 45),
+  );
+  const [tolerance, setTolerance] = useState<number>(
+    Number(initialParams.tolerance ?? 5),
+  );
+  const [expectedLeadCount, setExpectedLeadCount] = useState<number>(
+    Number(initialParams.expectedLeadCount ?? 8),
+  );
 
-      const defaultWidthItem: JudgmentItem = {
-        id: "j1",
-        name: "Caliper Width",
-        unit: "px",
-        lowerLimit: minWidth,
-        measured: Number(
-          (existingParams.debug as any)?.measuredWidthPx ?? nominalWidth,
-        ),
-        upperLimit: maxWidth,
-        status: "PASS",
-      };
-
-      const judgmentItems =
-        existingItems && existingItems.length > 0
-          ? existingItems
-          : [defaultWidthItem];
-
+  // Caliper edge measurement across scan axis
+  const { measuredDistance, measuredLeadCount, isPass, edgeTransitions } = useMemo(() => {
+    if (!workbench.source || !workbench.searchRegion) {
       return {
-        ...prev,
-        params: {
-          ...existingParams,
-          toolCode: existingParams.toolCode ?? "T110",
-          measurementMode: "width",
-          nominalWidthPx: nominalWidth,
-          tolerancePx,
-          minWidth,
-          maxWidth,
-          edge1Polarity,
-          edge2Polarity,
-          minEdgeContrast,
-          hasSubPixelInterpolation,
-          judgmentItems,
-        },
+        measuredDistance: 45.0,
+        measuredLeadCount: expectedLeadCount,
+        isPass: true,
+        edgeTransitions: [100, 145] as number[],
       };
-    });
+    }
+
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
+
+    const startX = Math.max(1, Math.min(width - 2, region.x));
+    const midY = Math.max(0, Math.min(height - 1, region.y + Math.round(region.height / 2)));
+    const endX = Math.max(2, Math.min(width - 1, region.x + region.width));
+
+    const transitions: number[] = [];
+    const thresholdGrad = Math.round(contrastThreshold * 1.5);
+
+    for (let x = startX; x < endX; x += 1) {
+      const idxLeft = (midY * width + (x - 1)) * 4;
+      const idxRight = (midY * width + (x + 1)) * 4;
+
+      const lumaL = 0.299 * rgba[idxLeft] + 0.587 * rgba[idxLeft + 1] + 0.114 * rgba[idxLeft + 2];
+      const lumaR = 0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
+      const diff = lumaR - lumaL;
+
+      const isCandidate =
+        edgePolarity === "dark-to-light"
+          ? diff >= thresholdGrad
+          : edgePolarity === "light-to-dark"
+            ? diff <= -thresholdGrad
+            : Math.abs(diff) >= thresholdGrad;
+
+      if (isCandidate) {
+        const lastEdge = transitions[transitions.length - 1];
+
+        if (lastEdge === undefined || x - lastEdge > 6) {
+          transitions.push(x);
+        }
+      }
+    }
+
+    let dist = nominalDistance;
+
+    if (transitions.length >= 2) {
+      dist = Math.round((transitions[1] - transitions[0]) * 10) / 10;
+    }
+
+    const detectedCount = Math.max(1, Math.round(transitions.length / 2));
+    const pass = Math.abs(dist - nominalDistance) <= tolerance;
+
+    return {
+      measuredDistance: dist,
+      measuredLeadCount: detectedCount,
+      isPass: pass,
+      edgeTransitions: transitions,
+    };
   }, [
-    nominalWidth,
-    tolerancePx,
-    minWidth,
-    maxWidth,
-    edge1Polarity,
-    edge2Polarity,
-    minEdgeContrast,
-    hasSubPixelInterpolation,
+    workbench.source,
+    workbench.searchRegion,
+    contrastThreshold,
+    edgePolarity,
+    nominalDistance,
+    tolerance,
+    expectedLeadCount,
   ]);
 
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Inspection Span Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Dual Edge Detection",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Dual Edge Boundary Transitions
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="font-medium text-ca-ink">
-                  Edge 1 (Leading Edge)
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="e1-pol"
-                      checked={edge1Polarity === "light-to-dark"}
-                      onChange={() => setEdge1Polarity("light-to-dark")}
-                      className="accent-ca-select"
-                    />
-                    <span>Light to Dark</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="e1-pol"
-                      checked={edge1Polarity === "dark-to-light"}
-                      onChange={() => setEdge1Polarity("dark-to-light")}
-                      className="accent-ca-select"
-                    />
-                    <span>Dark to Light</span>
-                  </label>
-                </div>
-              </div>
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
 
-              <div className="space-y-2">
-                <div className="font-medium text-ca-ink">
-                  Edge 2 (Trailing Edge)
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="e2-pol"
-                      checked={edge2Polarity === "light-to-dark"}
-                      onChange={() => setEdge2Polarity("light-to-dark")}
-                      className="accent-ca-select"
-                    />
-                    <span>Light to Dark</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="e2-pol"
-                      checked={edge2Polarity === "dark-to-light"}
-                      onChange={() => setEdge2Polarity("dark-to-light")}
-                      className="accent-ca-select"
-                    />
-                    <span>Dark to Light</span>
-                  </label>
-                </div>
-              </div>
-            </div>
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-ca-border">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">
-                  Min Edge Contrast
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={minEdgeContrast}
-                  onChange={(e) => setMinEdgeContrast(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div className="flex items-center gap-2 pt-4">
-                <input
-                  id="chk-subpixel-width"
-                  type="checkbox"
-                  checked={hasSubPixelInterpolation}
-                  onChange={(e) =>
-                    setHasSubPixelInterpolation(e.target.checked)
-                  }
-                  className="accent-ca-select"
-                />
-                <label
-                  htmlFor="chk-subpixel-width"
-                  className="text-ca-ink cursor-pointer"
-                >
-                  Sub-Pixel Edge Fitting
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
+      const thresholdGrad = Math.round(contrastThreshold * 1.5);
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+
+        if (isInsideRegion && x + 1 < source.width && x > 0) {
+          const idxL = (y * source.width + (x - 1)) * 4;
+          const idxR = (y * source.width + (x + 1)) * 4;
+
+          const lumaL = 0.299 * raw[idxL] + 0.587 * raw[idxL + 1] + 0.114 * raw[idxL + 2];
+          const lumaR = 0.299 * raw[idxR] + 0.587 * raw[idxR + 1] + 0.114 * raw[idxR + 2];
+          const diff = Math.abs(lumaR - lumaL);
+
+          if (diff >= thresholdGrad) {
+            // Neon cyan edge transition marker
+            out[idx] = 6;
+            out[idx + 1] = 182;
+            out[idx + 2] = 212;
+            out[idx + 3] = 255;
+          } else {
+            const dimmed = Math.round(lumaL * 0.35);
+            out[idx] = dimmed;
+            out[idx + 1] = dimmed;
+            out[idx + 2] = dimmed;
+            out[idx + 3] = 255;
+          }
+        } else {
+          out[idx] = 12;
+          out[idx + 1] = 16;
+          out[idx + 2] = 22;
+          out[idx + 3] = 255;
+        }
+      }
+
+      return output;
     },
-    {
-      id: "judgment",
-      label: "Width Judgment Limits",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Width Tolerances (px / mm)
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">
-                  Nominal Width
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={nominalWidth}
-                  onChange={(e) => {
-                    const nom = Number(e.target.value);
-                    setNominalWidth(nom);
-                    setMinWidth(nom - tolerancePx);
-                    setMaxWidth(nom + tolerancePx);
-                  }}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">
-                  Min Width
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={minWidth}
-                  onChange={(e) => setMinWidth(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">
-                  Max Width
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={maxWidth}
-                  onChange={(e) => setMaxWidth(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
+    [workbench.searchRegion, contrastThreshold],
+  );
+
+  const renderCustomOverlays = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      if (!workbench.searchRegion) {
+        return;
+      }
+
+      const region = workbench.searchRegion;
+      const midY = region.y + Math.round(region.height / 2);
+
+      // Caliper Scan Line
+      ctx.save();
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(region.x, midY);
+      ctx.lineTo(region.x + region.width, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Caliper transition ticks
+      for (const edgeX of edgeTransitions) {
+        ctx.strokeStyle = "#00f0ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(edgeX, midY - 14);
+        ctx.lineTo(edgeX, midY + 14);
+        ctx.stroke();
+      }
+
+      // Draw Caliper Dimension Arrow
+      if (edgeTransitions.length >= 2) {
+        const x1 = edgeTransitions[0];
+        const x2 = edgeTransitions[1];
+
+        ctx.strokeStyle = isPass ? "#00ff9d" : "#f43f5e";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x1, midY);
+        ctx.lineTo(x2, midY);
+        ctx.stroke();
+
+        // Arrowheads
+        ctx.fillStyle = isPass ? "#00ff9d" : "#f43f5e";
+        ctx.beginPath();
+        ctx.moveTo(x1, midY);
+        ctx.lineTo(x1 + 6, midY - 4);
+        ctx.lineTo(x1 + 6, midY + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(x2, midY);
+        ctx.lineTo(x2 - 6, midY - 4);
+        ctx.lineTo(x2 - 6, midY + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dimension Label
+        ctx.font = "bold 11px monospace";
+        const text = `${measuredDistance.toFixed(1)} px`;
+        const midX = (x1 + x2) / 2;
+        ctx.fillText(text, midX - 20, midY - 8);
+      }
+
+      ctx.restore();
     },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
-    },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
-    },
-  ];
+    [workbench.searchRegion, edgeTransitions, measuredDistance, isPass],
+  );
+
+  const handleApply = useCallback(() => {
+    const defaultDistanceItem: JudgmentItem = {
+      id: "j1",
+      name: "Caliper Distance",
+      unit: "px",
+      lowerLimit: nominalDistance - tolerance,
+      measured: measuredDistance,
+      upperLimit: nominalDistance + tolerance,
+      status: isPass ? "PASS" : "FAIL",
+    };
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        toolCode: "T110",
+        measurementMode,
+        edgePolarity,
+        contrastThreshold,
+        nominalDistance,
+        tolerance,
+        expectedLeadCount,
+        measuredDistance,
+        measuredLeadCount,
+        judgmentItems: [defaultDistanceItem],
+      },
+    }));
+
+    props.onOk?.();
+  }, [
+    measurementMode,
+    edgePolarity,
+    contrastThreshold,
+    nominalDistance,
+    tolerance,
+    expectedLeadCount,
+    measuredDistance,
+    measuredLeadCount,
+    isPass,
+    props,
+  ]);
 
   return (
-    <StandardToolShell
-      toolName="Edge Width (Caliper Gap / Thickness) Tool"
-      toolKindId="T06-EDGE-WIDTH"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
+    <StandardWorkbenchShell
+      toolName="Edge Width & Caliper Inspector"
+      toolCode="T110"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
       onRefresh={props.onRefresh}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Edge Gradient)"
+          toolBadge="T110 CALIPER"
+          statusText={`${measuredDistance.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`}
+          isPass={isPass}
+          onSearchRegionChange={workbench.handleRegionChange}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+          renderCustomOverlays={renderCustomOverlays}
+        />
+      }
+      inspectorPanel={
+        <EdgeWidthToolPanel
+          measurementMode={measurementMode}
+          edgePolarity={edgePolarity}
+          contrastThreshold={contrastThreshold}
+          nominalDistance={nominalDistance}
+          tolerance={tolerance}
+          expectedLeadCount={expectedLeadCount}
+          measuredDistance={measuredDistance}
+          measuredLeadCount={measuredLeadCount}
+          isPass={isPass}
+          toolCode="T110"
+          actionButtonLabel={props.actionButtonLabel}
+          onMeasurementModeChange={setMeasurementMode}
+          onPolarityChange={setEdgePolarity}
+          onContrastThresholdChange={setContrastThreshold}
+          onNominalDistanceChange={setNominalDistance}
+          onToleranceChange={setTolerance}
+          onExpectedLeadCountChange={setExpectedLeadCount}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }
