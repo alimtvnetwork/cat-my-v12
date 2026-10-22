@@ -125,7 +125,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
 
-        if (isInsideRegion) {
+        if (hasProcessed && isInsideRegion) {
           // Sharpen contrast for 2D cell grid
           const cellVal = luma < 120 ? 0 : 255;
           out[idx] = cellVal === 255 ? 0 : 0;
@@ -133,16 +133,17 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
           out[idx + 2] = cellVal === 255 ? 255 : 24;
           out[idx + 3] = 255;
         } else {
-          out[idx] = 12;
-          out[idx + 1] = 16;
-          out[idx + 2] = 22;
-          out[idx + 3] = 255;
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
         }
       }
 
       return output;
     },
-    [workbench.searchRegion],
+    [workbench.searchRegion, hasProcessed],
   );
 
   const renderCustomOverlays = useCallback(

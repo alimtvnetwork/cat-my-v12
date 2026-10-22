@@ -183,7 +183,7 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
 
-        if (isInsideRegion && x + 1 < source.width && x > 0) {
+        if (hasProcessed && isInsideRegion && x + 1 < source.width && x > 0) {
           const idxL = (y * source.width + (x - 1)) * 4;
           const idxR = (y * source.width + (x + 1)) * 4;
 
@@ -197,23 +197,23 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
             out[idx + 2] = 255;
             out[idx + 3] = 255;
           } else {
-            const dimmed = Math.round(lumaL * 0.35);
-            out[idx] = dimmed;
-            out[idx + 1] = dimmed;
-            out[idx + 2] = dimmed;
-            out[idx + 3] = 255;
+            out[idx] = raw[idx];
+            out[idx + 1] = raw[idx + 1];
+            out[idx + 2] = raw[idx + 2];
+            out[idx + 3] = raw[idx + 3];
           }
         } else {
-          out[idx] = 12;
-          out[idx + 1] = 16;
-          out[idx + 2] = 22;
-          out[idx + 3] = 255;
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
         }
       }
 
       return output;
     },
-    [workbench.searchRegion, contrastThreshold],
+    [workbench.searchRegion, contrastThreshold, hasProcessed],
   );
 
   const renderCustomOverlays = useCallback(
