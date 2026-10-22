@@ -1,4 +1,5 @@
 import React from "react";
+import { useStandardToolContext } from "../StandardToolContext";
 
 export interface JudgmentItem {
   id: string;
@@ -40,20 +41,78 @@ const defaultItems: JudgmentItem[] = [
 ];
 
 export function JudgmentConditionsTab({
-  items = defaultItems,
+  items,
   onChangeItem,
   onAutoSetLimits,
   onCancel,
   onOk,
 }: JudgmentConditionsTabProps): React.JSX.Element {
-  const [internalItems, setInternalItems] = React.useState<JudgmentItem[]>(items);
-  const activeItems = items || internalItems;
+  const context = useStandardToolContext();
+  const contextItems = context?.settings.params?.judgmentItems as JudgmentItem[] | undefined;
+
+  const resolvedInitial = items ?? contextItems ?? defaultItems;
+  const [internalItems, setInternalItems] = React.useState<JudgmentItem[]>(resolvedInitial);
+  const activeItems = items ?? contextItems ?? internalItems;
 
   const handleChange = (index: number, updated: Partial<JudgmentItem>) => {
+    const currentItem = activeItems[index] ?? {
+      id: `j${index + 1}`,
+      name: "Item",
+      lowerLimit: 0,
+      measured: 0,
+      upperLimit: 100,
+      status: "PASS",
+    };
+
+    const nextLower = updated.lowerLimit ?? currentItem.lowerLimit;
+    const nextUpper = updated.upperLimit ?? currentItem.upperLimit;
+    const nextMeasured = updated.measured ?? currentItem.measured;
+    const isWithinLimits = nextMeasured >= nextLower && nextMeasured <= nextUpper;
+    const computedStatus: "PASS" | "FAIL" = isWithinLimits ? "PASS" : "FAIL";
+
+    const fullUpdated: Partial<JudgmentItem> = {
+      ...updated,
+      status: computedStatus,
+    };
+
     const next = [...activeItems];
-    next[index] = { ...next[index], ...updated };
+    next[index] = { ...currentItem, ...fullUpdated };
     setInternalItems(next);
-    onChangeItem?.(index, updated);
+
+    if (onChangeItem) {
+      onChangeItem(index, fullUpdated);
+    } else if (context) {
+      context.updateJudgmentItem(index, fullUpdated);
+    }
+  };
+
+  const handleAutoSetLimits = () => {
+    if (onAutoSetLimits) {
+      onAutoSetLimits();
+
+      return;
+    }
+
+    if (context) {
+      context.autoSetLimits();
+
+      return;
+    }
+
+    const next = activeItems.map((item) => {
+      const margin = Math.abs(item.measured) * 0.2 || 10;
+      const lower = Math.round((item.measured - margin) * 100) / 100;
+      const upper = Math.round((item.measured + margin) * 100) / 100;
+
+      return {
+        ...item,
+        lowerLimit: lower,
+        upperLimit: upper,
+        status: "PASS" as const,
+      };
+    });
+
+    setInternalItems(next);
   };
 
   return (
@@ -68,15 +127,13 @@ export function JudgmentConditionsTab({
               Within limits = PASS • Outside limits = FAIL
             </p>
           </div>
-          {onAutoSetLimits && (
-            <button
-              type="button"
-              onClick={onAutoSetLimits}
-              className="px-2 py-1 bg-ca-panel border border-ca-border rounded text-xs font-semibold text-ca-ink hover:bg-ca-panel-2 shadow-sm"
-            >
-              Auto Set Limits
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleAutoSetLimits}
+            className="px-2 py-1 bg-ca-panel border border-ca-border rounded text-xs font-semibold text-ca-ink hover:bg-ca-panel-2 shadow-sm"
+          >
+            Auto Set Limits
+          </button>
         </div>
 
         {/* Judgment Items Table */}

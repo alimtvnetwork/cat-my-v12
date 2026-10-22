@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
 import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
 import { DetectionConditionsTab } from "../tabs/DetectionConditionsTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
+import { JudgmentConditionsTab, type JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { AreaMeasurementMode, AreaTargetPolarity } from "@/domain/vision/area-gate-types";
 
 export interface StandardAreaToolProps {
   settings: PatternSearchSettings;
@@ -21,11 +22,152 @@ export interface StandardAreaToolProps {
 }
 
 export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Element {
-  const [areaMode, setAreaMode] = useState<"pixels" | "percentage" | "physical">("pixels");
-  const [targetPolarity, setTargetPolarity] = useState<"bright" | "dark" | "both">("bright");
-  const [threshold, setThreshold] = useState<number>(128);
-  const [minArea, setMinArea] = useState<number>(1000);
-  const [maxArea, setMaxArea] = useState<number>(50000);
+  const initialParams = props.settings.params ?? {};
+
+  const [areaMode, setAreaMode] = useState<AreaMeasurementMode>(
+    (initialParams.areaMode as AreaMeasurementMode) ?? "pixels",
+  );
+  const [targetPolarity, setTargetPolarity] = useState<AreaTargetPolarity>(
+    (initialParams.targetPolarity as AreaTargetPolarity) ??
+      (initialParams.presencePolarity === "darkOnBright" ? "dark" : "bright"),
+  );
+  const [threshold, setThreshold] = useState<number>(
+    Number(initialParams.intensityThreshold ?? initialParams.threshold ?? 128),
+  );
+  const [minArea, setMinArea] = useState<number>(
+    Number(initialParams.minArea ?? initialParams.minAreaPx ?? 1000),
+  );
+  const [maxArea, setMaxArea] = useState<number>(
+    Number(initialParams.maxArea ?? initialParams.maxAreaPx ?? 50000),
+  );
+
+  useEffect(() => {
+    props.onChange((prev) => {
+      const existingParams = prev.params ?? {};
+      const existingItems = existingParams.judgmentItems as JudgmentItem[] | undefined;
+
+      const unit = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
+
+      const defaultAreaItem: JudgmentItem = {
+        id: "j1",
+        name: "Detected Area",
+        unit,
+        lowerLimit: minArea,
+        measured: 5000,
+        upperLimit: maxArea,
+        status: "PASS",
+      };
+
+      const judgmentItems =
+        existingItems && existingItems.length > 0 ? existingItems : [defaultAreaItem];
+
+      return {
+        ...prev,
+        params: {
+          ...existingParams,
+          toolCode: "T101",
+          areaMode,
+          targetPolarity,
+          presencePolarity: targetPolarity === "dark" ? "darkOnBright" : "brightOnDark",
+          intensityThreshold: threshold,
+          threshold,
+          minArea,
+          minAreaPx: minArea,
+          maxArea,
+          maxAreaPx: maxArea,
+          judgmentItems,
+        },
+      };
+    });
+  }, []);
+
+  const handleAreaModeChange = (mode: AreaMeasurementMode) => {
+    setAreaMode(mode);
+
+    const unit = mode === "pixels" ? "px" : mode === "percentage" ? "%" : "mm²";
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item, idx) => {
+        if (idx === 0) {
+          return { ...item, unit };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...(prev.params ?? {}),
+          areaMode: mode,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
+
+  const handlePolarityChange = (polarity: AreaTargetPolarity) => {
+    setTargetPolarity(polarity);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        targetPolarity: polarity,
+        presencePolarity: polarity === "dark" ? "darkOnBright" : "brightOnDark",
+      },
+    }));
+  };
+
+  const handleThresholdChange = (val: number) => {
+    setThreshold(val);
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        threshold: val,
+        intensityThreshold: val,
+      },
+    }));
+  };
+
+  const handleLimitsChange = (newMin: number, newMax: number) => {
+    setMinArea(newMin);
+    setMaxArea(newMax);
+
+    props.onChange((prev) => {
+      const existing = (prev.params?.judgmentItems as JudgmentItem[] | undefined) ?? [];
+      const nextItems = existing.map((item, idx) => {
+        if (idx === 0) {
+          const measured = item.measured;
+          const isWithinLimits = measured >= newMin && measured <= newMax;
+
+          return {
+            ...item,
+            lowerLimit: newMin,
+            upperLimit: newMax,
+            status: isWithinLimits ? "PASS" : "FAIL",
+          };
+        }
+
+        return item;
+      });
+
+      return {
+        ...prev,
+        params: {
+          ...(prev.params ?? {}),
+          minArea: newMin,
+          minAreaPx: newMin,
+          maxArea: newMax,
+          maxAreaPx: newMax,
+          judgmentItems: nextItems,
+        },
+      };
+    });
+  };
 
   const tabs: ToolTabItem[] = [
     {
@@ -47,7 +189,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setAreaMode(m)}
+                  onClick={() => handleAreaModeChange(m)}
                   className={`p-2 border text-center font-medium rounded ${
                     areaMode === m
                       ? "bg-ca-select text-ca-bg border-ca-select font-bold"
@@ -74,7 +216,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                   type="radio"
                   name="area-polarity"
                   checked={targetPolarity === "bright"}
-                  onChange={() => setTargetPolarity("bright")}
+                  onChange={() => handlePolarityChange("bright")}
                   className="accent-ca-select"
                 />
                 <span>Bright Pixels (Light Target)</span>
@@ -84,7 +226,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                   type="radio"
                   name="area-polarity"
                   checked={targetPolarity === "dark"}
-                  onChange={() => setTargetPolarity("dark")}
+                  onChange={() => handlePolarityChange("dark")}
                   className="accent-ca-select"
                 />
                 <span>Dark Pixels (Dark Target)</span>
@@ -100,7 +242,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                 min={0}
                 max={255}
                 value={threshold}
-                onChange={(e) => setThreshold(Number(e.target.value))}
+                onChange={(e) => handleThresholdChange(Number(e.target.value))}
                 className="w-full accent-ca-select"
               />
             </div>
@@ -125,7 +267,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                 <input
                   type="number"
                   value={minArea}
-                  onChange={(e) => setMinArea(Number(e.target.value))}
+                  onChange={(e) => handleLimitsChange(Number(e.target.value), maxArea)}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -134,7 +276,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
                 <input
                   type="number"
                   value={maxArea}
-                  onChange={(e) => setMaxArea(Number(e.target.value))}
+                  onChange={(e) => handleLimitsChange(minArea, Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
