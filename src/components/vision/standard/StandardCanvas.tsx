@@ -211,6 +211,79 @@ export function StandardCanvas({
         }
       }
 
+      const debugCaliper = (
+        settings.params as {
+          debug?: {
+            edges?: Array<{
+              canvasCoordinate: { x: number; y: number };
+              polarity: string;
+              subPixelPos: number;
+            }>;
+            measuredWidthPx?: number;
+            leadPitchMeanPx?: number;
+            metricUnit?: string;
+          };
+        }
+      )?.debug;
+
+      if (
+        Array.isArray(debugCaliper?.edges) &&
+        debugCaliper.edges.length > 0
+      ) {
+        for (const edge of debugCaliper.edges) {
+          const ex = edge.canvasCoordinate.x * zoomFactor;
+          const ey = edge.canvasCoordinate.y * zoomFactor;
+
+          ctx.strokeStyle =
+            edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ex, ey - 8);
+          ctx.lineTo(ex, ey + 8);
+          ctx.stroke();
+
+          ctx.fillStyle =
+            edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (debugCaliper.edges.length >= 2) {
+          const first = debugCaliper.edges[0];
+          const last = debugCaliper.edges[debugCaliper.edges.length - 1];
+          const x1 = first.canvasCoordinate.x * zoomFactor;
+          const x2 = last.canvasCoordinate.x * zoomFactor;
+          const yPos = (first.canvasCoordinate.y - 14) * zoomFactor;
+
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x1, yPos);
+          ctx.lineTo(x2, yPos);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x1, yPos - 4);
+          ctx.lineTo(x1, yPos + 4);
+          ctx.moveTo(x2, yPos - 4);
+          ctx.lineTo(x2, yPos + 4);
+          ctx.stroke();
+
+          const label =
+            typeof debugCaliper.measuredWidthPx === "number"
+              ? `${debugCaliper.measuredWidthPx.toFixed(1)} px`
+              : "";
+
+          if (label) {
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "bold 10px monospace";
+            const midX = (x1 + x2) / 2;
+            ctx.fillText(label, midX - 18, Math.max(12, yPos - 3));
+          }
+        }
+      }
+
       ctx.restore();
     }
   }, [

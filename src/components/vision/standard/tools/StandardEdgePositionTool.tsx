@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
 import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
 import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
 import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
 import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardEdgePositionToolProps {
   settings: PatternSearchSettings;
@@ -19,17 +20,90 @@ export interface StandardEdgePositionToolProps {
   onRefresh?: () => void;
 }
 
-export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): React.JSX.Element {
+export function StandardEdgePositionTool(
+  props: StandardEdgePositionToolProps,
+): React.JSX.Element {
+  const initialParams = props.settings.params ?? {};
+
   const [scanDirection, setScanDirection] = useState<
     "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top"
-  >("left-to-right");
-  const [edgePolarity, setEdgePolarity] = useState<"light-to-dark" | "dark-to-light" | "both">(
-    "light-to-dark",
+  >(
+    (initialParams.scanDirection as
+      | "left-to-right"
+      | "right-to-left"
+      | "top-to-bottom"
+      | "bottom-to-top") ?? "left-to-right",
   );
-  const [edgeThreshold, setEdgeThreshold] = useState<number>(30);
-  const [filterWidth, setFilterWidth] = useState<number>(5);
-  const [minPosition, setMinPosition] = useState<number>(100);
-  const [maxPosition, setMaxPosition] = useState<number>(500);
+  const [edgePolarity, setEdgePolarity] = useState<
+    "light-to-dark" | "dark-to-light" | "both"
+  >(
+    (initialParams.edgePolarity as
+      | "light-to-dark"
+      | "dark-to-light"
+      | "both") ?? "light-to-dark",
+  );
+  const [edgeThreshold, setEdgeThreshold] = useState<number>(
+    Number(initialParams.minEdgeContrast ?? 30),
+  );
+  const [filterWidth, setFilterWidth] = useState<number>(
+    Number(initialParams.filterWidth ?? 5),
+  );
+  const [nominalPosition, setNominalPosition] = useState<number>(
+    Number(initialParams.nominalPositionPx ?? 100),
+  );
+  const [tolerancePx, setTolerancePx] = useState<number>(
+    Number(initialParams.tolerancePx ?? 10),
+  );
+
+  useEffect(() => {
+    props.onChange((prev) => {
+      const existingParams = prev.params ?? {};
+      const existingItems =
+        existingParams.judgmentItems as JudgmentItem[] | undefined;
+
+      const defaultPosItem: JudgmentItem = {
+        id: "j1",
+        name: "Edge Position",
+        unit: "px",
+        lowerLimit: nominalPosition - tolerancePx,
+        measured: Number(
+          (existingParams.debug as any)?.edges?.[0]?.subPixelPos ??
+            nominalPosition,
+        ),
+        upperLimit: nominalPosition + tolerancePx,
+        status: "PASS",
+      };
+
+      const judgmentItems =
+        existingItems && existingItems.length > 0
+          ? existingItems
+          : [defaultPosItem];
+
+      return {
+        ...prev,
+        params: {
+          ...existingParams,
+          toolCode: existingParams.toolCode ?? "T110",
+          measurementMode: "position",
+          scanDirection,
+          edgePolarity,
+          minEdgeContrast: edgeThreshold,
+          filterWidth,
+          nominalPositionPx: nominalPosition,
+          tolerancePx,
+          hasSubPixelInterpolation: true,
+          judgmentItems,
+        },
+      };
+    });
+  }, [
+    scanDirection,
+    edgePolarity,
+    edgeThreshold,
+    filterWidth,
+    nominalPosition,
+    tolerancePx,
+  ]);
 
   const tabs: ToolTabItem[] = [
     {
@@ -47,65 +121,59 @@ export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): 
               Scan Direction & Polarity
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {(["left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"] as const).map(
-                (d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setScanDirection(d)}
-                    className={`p-1.5 border text-center font-medium rounded ${
-                      scanDirection === d
-                        ? "bg-ca-select text-ca-bg border-ca-select font-bold"
-                        : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ),
-              )}
+              {(
+                [
+                  "left-to-right",
+                  "right-to-left",
+                  "top-to-bottom",
+                  "bottom-to-top",
+                ] as const
+              ).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setScanDirection(d)}
+                  className={`p-1.5 border text-center font-medium rounded ${
+                    scanDirection === d
+                      ? "bg-ca-select text-ca-bg border-ca-select font-bold"
+                      : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
             </div>
 
-            <div className="flex items-center gap-4 pt-2">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "light-to-dark"}
-                  onChange={() => setEdgePolarity("light-to-dark")}
-                  className="accent-ca-select"
-                />
-                <span>Light to Dark</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "dark-to-light"}
-                  onChange={() => setEdgePolarity("dark-to-light")}
-                  className="accent-ca-select"
-                />
-                <span>Dark to Light</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "both"}
-                  onChange={() => setEdgePolarity("both")}
-                  className="accent-ca-select"
-                />
-                <span>Both</span>
-              </label>
+            <div className="pt-2 border-t border-ca-border space-y-2">
+              <label className="text-ca-ink-muted block">Edge Polarity</label>
+              <div className="flex gap-4">
+                {(["light-to-dark", "dark-to-light", "both"] as const).map(
+                  (pol) => (
+                    <label
+                      key={pol}
+                      className="flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="pos-pol"
+                        checked={edgePolarity === pol}
+                        onChange={() => setEdgePolarity(pol)}
+                        className="accent-ca-select"
+                      />
+                      <span className="capitalize">
+                        {pol.replace(/-/g, " ")}
+                      </span>
+                    </label>
+                  ),
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Differential Edge Detection Parameters
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-ca-border">
               <div>
-                <label className="text-ca-ink-muted block mb-1">Edge Gradient Threshold</label>
+                <label className="text-ca-ink-muted block mb-1">
+                  Edge Threshold
+                </label>
                 <input
                   type="number"
                   min={1}
@@ -116,7 +184,9 @@ export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): 
                 />
               </div>
               <div>
-                <label className="text-ca-ink-muted block mb-1">Filter Smoothing Width (px)</label>
+                <label className="text-ca-ink-muted block mb-1">
+                  Filter Width
+                </label>
                 <input
                   type="number"
                   min={1}
@@ -134,29 +204,33 @@ export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): 
     },
     {
       id: "judgment",
-      label: "Position Judgment",
+      label: "Position Limits",
       content: (
         <div className="space-y-4">
           <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
             <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Measured Edge Coordinate Limits (px)
+              Position Tolerance Specification
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="text-ca-ink-muted block mb-1">Min Coordinate (px)</label>
+                <label className="text-ca-ink-muted block mb-1">
+                  Nominal Position (px)
+                </label>
                 <input
                   type="number"
-                  value={minPosition}
-                  onChange={(e) => setMinPosition(Number(e.target.value))}
+                  value={nominalPosition}
+                  onChange={(e) => setNominalPosition(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
               <div>
-                <label className="text-ca-ink-muted block mb-1">Max Coordinate (px)</label>
+                <label className="text-ca-ink-muted block mb-1">
+                  Tolerance (±px)
+                </label>
                 <input
                   type="number"
-                  value={maxPosition}
-                  onChange={(e) => setMaxPosition(Number(e.target.value))}
+                  value={tolerancePx}
+                  onChange={(e) => setTolerancePx(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -180,8 +254,8 @@ export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): 
 
   return (
     <StandardToolShell
-      toolName="Edge Position Inspection Tool"
-      toolKindId="T03-EDGE-POS"
+      toolName="Edge Position (Single Line / Alignment) Tool"
+      toolKindId="T04-EDGE-POS"
       tabs={tabs}
       settings={props.settings}
       onChangeSettings={props.onChange}

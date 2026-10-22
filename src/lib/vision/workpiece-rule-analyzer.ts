@@ -48,6 +48,16 @@ import type {
   EvaluateBlobParams,
   EvaluateDefectParams,
 } from "@/domain/vision/surface-flaw-types";
+import type {
+  CaliperEdgePolarityType,
+  CaliperMeasurementModeType,
+  CaliperScanDirectionType,
+  EvaluateCaliperParams,
+} from "@/domain/vision/caliper-types";
+import {
+  computeCaliperMetrics,
+  extractSubPixelEdges,
+} from "./algorithms/caliper";
 import {
   findConnectedBlobs,
   type ConnectedBlob,
@@ -60,6 +70,7 @@ export {
   type CarrierTapePocket,
   type TapeSegmentationResult,
   type EvaluateAreaGateParams,
+  type EvaluateCaliperParams,
 };
 
 export interface ContainedDimensions {
@@ -2085,10 +2096,25 @@ export function evaluateBlobRule(
 }
 
 export function evaluateCaliperRule(
-  rule: EditorRule,
-  imageData: WorkpieceImageData,
-  opticalContext: string,
+  ruleOrParams: EditorRule | EvaluateCaliperParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
 ): ValidationResult {
+  const rule = "rule" in ruleOrParams ? ruleOrParams.rule : ruleOrParams;
+  const imageData = "imageData" in ruleOrParams ? ruleOrParams.imageData : maybeImageData;
+  const opticalContext =
+    ("opticalContext" in ruleOrParams ? ruleOrParams.opticalContext : maybeOpticalContext) ??
+    "Caliper Metrology";
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for caliper evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
   const searchRegion: SearchRegion = {
     x: Math.round(rule.x),
     y: Math.round(rule.y),
@@ -2103,29 +2129,31 @@ export function evaluateCaliperRule(
   const regionH = Math.max(1, endY - startY);
   const regionW = Math.max(1, endX - startX);
 
+  if (regionW <= 1 || regionH <= 1) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid caliper search geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
   let sumL = 0;
   let sumL2 = 0;
   let count = 0;
 
-  const colLumas: number[] = [];
-
-  for (let x = startX; x < endX; x += 1) {
-    let sum = 0;
-
-    for (let y = startY; y < endY; y += 1) {
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
       const luma =
         0.299 * imageData.rgba[idx] +
         0.587 * imageData.rgba[idx + 1] +
         0.114 * imageData.rgba[idx + 2];
 
-      sum += luma;
       sumL += luma;
       sumL2 += luma * luma;
       count += 1;
     }
-
-    colLumas.push(sum / regionH);
   }
 
   const meanLuma = count > 0 ? sumL / count : 0;
@@ -2144,23 +2172,63 @@ export function evaluateCaliperRule(
         meanLuma,
         stdDev,
         maxGrad: 0,
+        edges: [],
+        edgeCount: 0,
       },
     };
   }
 
-  const grads: number[] = [];
-
-  for (let i = 1; i < colLumas.length - 1; i += 1) {
-    grads.push(Math.abs(colLumas[i + 1] - colLumas[i - 1]));
-  }
-
-  const maxGrad = grads.length > 0 ? Math.max(...grads) : 0;
-  const tolerancePx = Number(rule.params?.tolerancePx ?? 15);
-  const nominalPx = Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
-  const avgRegionLuma = colLumas.reduce((a, b) => a + b, 0) / Math.max(1, colLumas.length);
-
+  const scanDirection: CaliperScanDirectionType =
+    (rule.params?.scanDirection as CaliperScanDirectionType) ?? "horizontal";
+  const edgePolarity: CaliperEdgePolarityType =
+    (rule.params?.edgePolarity as CaliperEdgePolarityType) ?? "both";
   const minContrast = Math.min(6.0, Number(rule.params?.minEdgeContrast ?? 6.0));
-  const hasEdges = maxGrad >= minContrast && avgRegionLuma >= 35;
+  const filterWidth = Number(rule.params?.filterWidth ?? 1);
+  const hasSubPixelInterpolation = Boolean(
+    rule.params?.hasSubPixelInterpolation ?? true,
+  );
+
+  const edges = extractSubPixelEdges({
+    imageData,
+    roi: searchRegion,
+    scanDirection,
+    edgePolarity,
+    minEdgeContrast: minContrast,
+    filterWidth,
+    hasSubPixelInterpolation,
+  });
+
+  const maxGrad =
+    edges.length > 0 ? Math.max(...edges.map((e) => Math.abs(e.gradient))) : 0;
+
+  const tolerancePx = Number(rule.params?.tolerancePx ?? 15);
+  const hasExplicitNominal = typeof rule.params?.nominalWidthPx === "number";
+  const nominalPx = Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
+  const pxToMetricRatio = Number(rule.params?.pxToMetricRatio ?? 0.025);
+  const metricUnit = (rule.params?.metricUnit as "mm" | "um" | "px") ?? "px";
+  const expectedCount =
+    typeof rule.params?.expectedCount === "number"
+      ? Number(rule.params.expectedCount)
+      : undefined;
+
+  const ruleNameLower = (rule.name || "").toLowerCase();
+  const rawMode = rule.params?.measurementMode as CaliperMeasurementModeType;
+  const measurementMode: CaliperMeasurementModeType =
+    rawMode ??
+    (ruleNameLower.includes("pitch") || ruleNameLower.includes("comb")
+      ? "pitch"
+      : "width");
+
+  const metrics = computeCaliperMetrics({
+    edges,
+    nominalWidthPx: nominalPx,
+    tolerancePx,
+    pxToMetricRatio,
+    metricUnit,
+    expectedCount,
+  });
+
+  const hasEdges = edges.length > 0 && maxGrad >= minContrast && meanLuma >= 35;
 
   if (!hasEdges) {
     return {
@@ -2172,19 +2240,111 @@ export function evaluateCaliperRule(
         maxGrad,
         nominalPx,
         tolerancePx,
+        edges,
+        edgeCount: metrics.edgeCount,
+        measuredWidthPx: metrics.measuredWidthPx,
+        meanLuma,
+        stdDev,
+      },
+    };
+  }
+
+  let isPass = true;
+
+  const hasLeadCountCheck = Boolean(
+    rule.params?.hasLeadCountCheck ?? rule.params?.isLeadCountEnabled ?? false,
+  );
+
+  if (hasLeadCountCheck && typeof expectedCount === "number") {
+    if (metrics.edgeCount !== expectedCount) {
+      isPass = false;
+    }
+  }
+
+  const hasNominalWidthCheck = typeof rule.params?.nominalWidthPx === "number";
+
+  if (hasNominalWidthCheck) {
+    if (Math.abs(metrics.measuredWidthPx - nominalPx) > tolerancePx) {
+      isPass = false;
+    }
+  }
+
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
+    ? rule.params.judgmentItems
+    : [];
+
+  if (judgmentItems.length > 0) {
+    for (const item of judgmentItems) {
+      const lower = Number(item.lowerLimit ?? 0);
+      const upper = Number(item.upperLimit ?? Number.POSITIVE_INFINITY);
+      const itemNameLower = String(item.name ?? "").toLowerCase();
+
+      let measuredVal = metrics.measuredWidthPx;
+
+      if (itemNameLower.includes("pitch")) {
+        measuredVal = metrics.leadPitchMeanPx;
+      } else if (itemNameLower.includes("count") || itemNameLower.includes("edge")) {
+        measuredVal = metrics.edgeCount;
+      }
+
+      const isItemPass = measuredVal >= lower && measuredVal <= upper;
+
+      if (!isItemPass) {
+        isPass = false;
+      }
+    }
+  }
+
+  if (isPass) {
+    const successMsg =
+      measurementMode === "pitch"
+        ? `Lead pitch comb within tolerance (pitch: ${metrics.leadPitchMeanPx}px / ${metrics.leadPitchMeanMetric.toFixed(2)}${metricUnit}, leads: ${metrics.edgeCount}, uniformity: ${(metrics.leadPitchUniformityScore * 100).toFixed(0)}%). ${opticalContext}: PASS.`
+        : `Caliper dimension within nominal tolerance ±${tolerancePx}px (edge gradient: ${maxGrad.toFixed(1)}). ${opticalContext}: PASS.`;
+
+    return {
+      status: ValidationStatusType.Pass,
+      score: 0.96,
+      message: successMsg,
+      stub: false,
+      debug: {
+        maxGrad,
+        nominalPx,
+        tolerancePx,
+        edges: metrics.edges,
+        edgeCount: metrics.edgeCount,
+        measuredWidthPx: metrics.measuredWidthPx,
+        measuredWidthMetric: metrics.measuredWidthMetric,
+        leadPitchMeanPx: metrics.leadPitchMeanPx,
+        leadPitchMeanMetric: metrics.leadPitchMeanMetric,
+        leadPitchStdDevPx: metrics.leadPitchStdDevPx,
+        leadPitchUniformityScore: metrics.leadPitchUniformityScore,
+        metricUnit,
+        meanLuma,
+        stdDev,
       },
     };
   }
 
   return {
-    status: ValidationStatusType.Pass,
-    score: 0.96,
-    message: `Caliper dimension within nominal tolerance ±${tolerancePx}px (edge gradient: ${maxGrad.toFixed(1)}). ${opticalContext}: PASS.`,
+    status: ValidationStatusType.Fail,
+    score: 0.2,
+    message: `Caliper dimension out of bounds (measured: ${metrics.measuredWidthPx}px / ${metrics.measuredWidthMetric.toFixed(2)}${metricUnit}, nominal: ${nominalPx}px ±${tolerancePx}px). ${opticalContext}: FAIL.`,
     stub: false,
     debug: {
       maxGrad,
       nominalPx,
       tolerancePx,
+      edges: metrics.edges,
+      edgeCount: metrics.edgeCount,
+      measuredWidthPx: metrics.measuredWidthPx,
+      measuredWidthMetric: metrics.measuredWidthMetric,
+      leadPitchMeanPx: metrics.leadPitchMeanPx,
+      leadPitchMeanMetric: metrics.leadPitchMeanMetric,
+      leadPitchStdDevPx: metrics.leadPitchStdDevPx,
+      leadPitchUniformityScore: metrics.leadPitchUniformityScore,
+      metricUnit,
+      meanLuma,
+      stdDev,
     },
   };
 }
