@@ -252,6 +252,11 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     expect(screen.getAllByText(/T103/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Decoded Payload/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Target Symbology/i)).toBeDefined();
+    expect(screen.getByText(/Minimum Required ISO Quality Grade/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const gradeBBtn = screen.getByRole("button", { name: /Grade B/i });
+    fireEvent.click(gradeBBtn);
     expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
 
     const processBtn = screen.getByRole("button", { name: /Process Rule/i });

@@ -67,6 +67,12 @@ import type {
   EvaluateConformalCoatingParams,
   UvTracerChannelType,
 } from "@/domain/vision/conformal-coating-types";
+import type {
+  CodeReaderResult,
+  EvaluateCodeReaderParams,
+  IsoQualityGrade,
+  SymbologyType,
+} from "@/domain/vision/code-reader-types";
 import {
   computeCaliperMetrics,
   extractSubPixelEdges,
@@ -79,6 +85,10 @@ import {
   computeDeltaE,
   srgbToCieLab,
 } from "./algorithms/color-and-coating";
+import {
+  decodeAndGradeCode,
+  isGradeAtLeast,
+} from "./algorithms/code-reader-iso";
 import {
   findConnectedBlobs,
   type ConnectedBlob,
@@ -94,6 +104,7 @@ export {
   type EvaluateCaliperParams,
   type EvaluateCircleGaugeParams,
   type EvaluateConformalCoatingParams,
+  type EvaluateCodeReaderParams,
 };
 
 export interface ContainedDimensions {
@@ -2946,6 +2957,108 @@ export function evaluateConformalCoatingRule(
   };
 }
 
+export function evaluateCodeReaderRule(
+  ruleOrParams: EditorRule | EvaluateCodeReaderParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
+): ValidationResult {
+  const isParamStruct = "rule" in ruleOrParams;
+  const rule = isParamStruct
+    ? (ruleOrParams as EvaluateCodeReaderParams).rule
+    : (ruleOrParams as EditorRule);
+  const imageData = isParamStruct
+    ? (ruleOrParams as EvaluateCodeReaderParams).imageData
+    : maybeImageData;
+  const opticalContext = isParamStruct
+    ? ((ruleOrParams as EvaluateCodeReaderParams).opticalContext ?? "1D/2D Code Reader")
+    : (maybeOpticalContext ?? "1D/2D Code Reader");
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for code reader evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const roi = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  if (roi.width <= 4 || roi.height <= 4) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid code reader ROI geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const symbology = (params.symbology as SymbologyType) ?? "datamatrix";
+  const expectedPattern = String(params.expectedPattern ?? "");
+  const minQualityGrade = (params.minQualityGrade as IsoQualityGrade) ?? "B";
+  const presetPayload =
+    typeof params.decodedPayload === "string" ? params.decodedPayload : undefined;
+
+  const result = decodeAndGradeCode({
+    imageData,
+    roi,
+    symbology,
+    expectedPattern,
+    minQualityGrade,
+    presetPayload,
+  });
+
+  if (!result.hasCodeDetected) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `No readable 1D/2D barcode or matrix pattern found in ROI. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, params, result },
+    };
+  }
+
+  if (result.isPass) {
+    return {
+      status: ValidationStatusType.Pass,
+      score: 0.98,
+      message: `Verified decode [${result.symbologyName}]: "${result.payload}" (ISO/IEC 15415 Grade ${result.grading.overallGrade}, SC: ${result.grading.symbolContrast}%). ${opticalContext}: PASS.`,
+      stub: false,
+      debug: {
+        roi,
+        result,
+        payload: result.payload,
+        overallGrade: result.grading.overallGrade,
+        symbolContrast: result.grading.symbolContrast,
+        modulation: result.grading.modulation,
+      },
+    };
+  }
+
+  const failReason = !result.isPatternMatch
+    ? `decoded string "${result.payload}" failed pattern match criteria "${expectedPattern}"`
+    : `quality grade ${result.grading.overallGrade} below required ${minQualityGrade} (Contrast: ${result.grading.symbolContrast}%)`;
+
+  return {
+    status: ValidationStatusType.Fail,
+    score: 0.3,
+    message: `Code reader rejected: ${failReason}. ${opticalContext}: FAIL.`,
+    stub: false,
+    debug: {
+      roi,
+      result,
+      payload: result.payload,
+      overallGrade: result.grading.overallGrade,
+    },
+  };
+}
+
 export function evaluateGeneralFeatureRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -3127,6 +3240,17 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("delta e")
   ) {
     return evaluateConformalCoatingRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T103" ||
+    ruleNameLower.includes("code") ||
+    ruleNameLower.includes("datamatrix") ||
+    ruleNameLower.includes("matrix") ||
+    ruleNameLower.includes("barcode") ||
+    ruleNameLower.includes("qr")
+  ) {
+    return evaluateCodeReaderRule(rule, imageData, opticalContext);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);

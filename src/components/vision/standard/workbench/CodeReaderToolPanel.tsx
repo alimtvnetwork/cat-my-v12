@@ -1,17 +1,25 @@
 import React from "react";
-import { Check, X, QrCode, Barcode, ShieldCheck, Play, Clock } from "lucide-react";
+import { Check, X, QrCode, Barcode, ShieldCheck, Play, Clock, Award } from "lucide-react";
+import type {
+  IsoGradingReport,
+  IsoQualityGrade,
+  SymbologyType,
+} from "@/domain/vision/code-reader-types";
 
 export interface CodeReaderToolPanelProps {
-  symbology: "qr" | "datamatrix" | "code128" | "ean13";
+  symbology: SymbologyType;
   expectedPattern: string;
+  minQualityGrade: IsoQualityGrade;
   decodedPayload: string;
   detectedSymbology: string;
   printQualityGrade: string;
+  gradingReport?: IsoGradingReport | null;
   isPass: boolean;
   hasProcessed: boolean;
   actionButtonLabel?: string;
-  onSymbologyChange: (symbology: "qr" | "datamatrix" | "code128" | "ean13") => void;
+  onSymbologyChange: (symbology: SymbologyType) => void;
   onExpectedPatternChange: (pattern: string) => void;
+  onMinQualityGradeChange: (grade: IsoQualityGrade) => void;
   onProcess: () => void;
   onApply: () => void;
   onCancel?: () => void;
@@ -19,6 +27,14 @@ export interface CodeReaderToolPanelProps {
 
 export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.Element {
   const label = props.actionButtonLabel ?? "OK - Apply to Rule";
+
+  const gradeColor = (grade: IsoQualityGrade) => {
+    if (grade === "A") return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    if (grade === "B") return "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
+    if (grade === "C") return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+    if (grade === "D") return "bg-orange-500/20 text-orange-300 border-orange-500/40";
+    return "bg-rose-500/20 text-rose-300 border-rose-500/40";
+  };
 
   return (
     <aside className="flex h-full flex-col overflow-hidden text-slate-100 font-sans">
@@ -86,23 +102,91 @@ export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.
             </div>
           </div>
 
-          <div className="mt-2 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
+          <div className="mt-2 flex items-center justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
             <span>Symbology: {!props.hasProcessed ? "--" : props.detectedSymbology}</span>
-            <span>ISO/IEC Grade: {!props.hasProcessed ? "--" : props.printQualityGrade}</span>
+            <div className="flex items-center gap-1">
+              <span>ISO Grade:</span>
+              {props.hasProcessed && props.gradingReport ? (
+                <span
+                  className={`rounded px-1.5 py-0.2 font-bold border ${gradeColor(
+                    props.gradingReport.overallGrade,
+                  )}`}
+                >
+                  {props.gradingReport.overallGrade} ({props.gradingReport.overallScore.toFixed(1)})
+                </span>
+              ) : (
+                <span>--</span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 2. Symbology Selection */}
+        {/* 2. ISO/IEC 15415/15416 Verification Metrics Breakdown */}
+        {props.hasProcessed && props.gradingReport && (
+          <div className="rounded-lg border border-[#212832] bg-[#121720] p-3 space-y-2">
+            <div className="flex items-center gap-1.5 border-b border-[#212832] pb-1">
+              <Award className="h-3.5 w-3.5 text-cyan-400" />
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                ISO/IEC Quality Verification Metrics
+              </label>
+            </div>
+            <div className="space-y-1.5 pt-1">
+              {props.gradingReport.metrics.map((m) => (
+                <div
+                  key={m.name}
+                  className="flex items-center justify-between text-[11px] font-mono"
+                >
+                  <span className="text-slate-400">{m.name}:</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-200">{m.value}</span>
+                    <span
+                      className={`rounded px-1.5 py-0.2 text-[10px] font-bold border ${gradeColor(
+                        m.grade,
+                      )}`}
+                    >
+                      {m.grade}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Minimum Quality Grade Threshold */}
+        <div className="rounded-lg border border-[#212832] bg-[#121720] p-3 space-y-2">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+            Minimum Required ISO Quality Grade
+          </label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {(["A", "B", "C", "D"] as IsoQualityGrade[]).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => props.onMinQualityGradeChange(g)}
+                className={`rounded border p-1.5 text-center text-xs font-bold uppercase transition-all ${
+                  props.minQualityGrade === g
+                    ? "border-cyan-400 bg-cyan-950/50 text-cyan-200 shadow-[0_0_8px_rgba(6,182,212,0.2)]"
+                    : "border-[#2d3748] bg-[#1a202c] text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Grade {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. Symbology Selection */}
         <div className="rounded-lg border border-[#212832] bg-[#121720] p-3 space-y-2">
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
             Target Symbology
           </label>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { id: "qr", label: "QR Code", icon: QrCode },
               { id: "datamatrix", label: "DataMatrix (2D)", icon: QrCode },
+              { id: "qr", label: "QR Code", icon: QrCode },
               { id: "code128", label: "Code 128 (1D)", icon: Barcode },
-              { id: "ean13", label: "EAN-13 (1D)", icon: Barcode },
+              { id: "code39", label: "Code 39 (1D)", icon: Barcode },
             ].map((s) => {
               const Icon = s.icon;
 
@@ -110,9 +194,7 @@ export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() =>
-                    props.onSymbologyChange(s.id as "qr" | "datamatrix" | "code128" | "ean13")
-                  }
+                  onClick={() => props.onSymbologyChange(s.id as SymbologyType)}
                   className={`flex items-center gap-2 rounded border p-2 text-xs font-bold transition-all ${
                     props.symbology === s.id
                       ? "border-cyan-400 bg-cyan-950/50 text-cyan-200 shadow-[0_0_8px_rgba(6,182,212,0.2)]"
@@ -127,7 +209,7 @@ export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.
           </div>
         </div>
 
-        {/* 3. Expected Pattern / Regex */}
+        {/* 5. Expected Pattern / Regex */}
         <div className="rounded-lg border border-[#212832] bg-[#121720] p-3 space-y-2">
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
             Expected Pattern / String Filter
@@ -136,7 +218,7 @@ export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.
             type="text"
             value={props.expectedPattern}
             onChange={(e) => props.onExpectedPatternChange(e.target.value)}
-            placeholder="e.g. SN-[0-9]{8} or leave blank for any"
+            placeholder="e.g. ^SN-[0-9]{8} or leave blank for any"
             className="w-full rounded border border-[#2d3748] bg-[#1a202c] px-2.5 py-1.5 font-mono text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
           />
           <div className="text-[10px] text-slate-500">

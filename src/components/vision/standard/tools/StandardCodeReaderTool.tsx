@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
@@ -6,6 +6,13 @@ import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { CodeReaderToolPanel } from "../workbench/CodeReaderToolPanel";
 import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
+import type {
+  CodeReaderResult,
+  IsoGradingReport,
+  IsoQualityGrade,
+  SymbologyType,
+} from "@/domain/vision/code-reader-types";
+import { decodeAndGradeCode } from "@/lib/vision/algorithms/code-reader-iso";
 
 export interface StandardCodeReaderToolProps {
   settings: PatternSearchSettings;
@@ -33,15 +40,19 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
 
   const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
-  const [symbology, setSymbology] = useState<"qr" | "datamatrix" | "code128" | "ean13">(
-    (initialParams.symbology as "qr" | "datamatrix" | "code128" | "ean13") ?? "datamatrix",
+  const [symbology, setSymbology] = useState<SymbologyType>(
+    (initialParams.symbology as SymbologyType) ?? "datamatrix",
   );
   const [expectedPattern, setExpectedPattern] = useState<string>(
     String(initialParams.expectedPattern ?? ""),
   );
+  const [minQualityGrade, setMinQualityGrade] = useState<IsoQualityGrade>(
+    (initialParams.minQualityGrade as IsoQualityGrade) ?? "B",
+  );
 
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [codeResult, setCodeResult] = useState<CodeReaderResult | null>(null);
   const [decodedPayload, setDecodedPayload] = useState<string>(
     String(initialParams.decodedPayload ?? "SN20261022-A9048-REV2"),
   );
@@ -51,53 +62,54 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
 
   // Decode payload from workpiece ROI strictly on demand
   const handleProcess = useCallback(() => {
-    const defaultPayload =
-      symbology === "qr"
-        ? "https://sensai.inspection.internal/pkg/78219"
-        : symbology === "datamatrix"
-          ? "SN20261022-A9048-REV2"
-          : symbology === "code128"
-            ? "1D-PKG-489201"
-            : "4006381333931";
+    if (!workbench.source || !workbench.searchRegion) {
+      setHasProcessed(true);
+      setIsPass(true);
 
-    const payload = String(initialParams.decodedPayload ?? defaultPayload);
-    const symName =
-      symbology === "qr"
-        ? "QR Code"
-        : symbology === "datamatrix"
-          ? "DataMatrix"
-          : symbology === "code128"
-            ? "Code 128"
-            : "EAN-13";
-
-    let matchPass = true;
-
-    if (expectedPattern.trim() !== "") {
-      try {
-        const rx = new RegExp(expectedPattern);
-        matchPass = rx.test(payload);
-      } catch {
-        matchPass = payload.includes(expectedPattern);
-      }
+      return;
     }
 
-    setDecodedPayload(payload);
-    setDetectedSymbology(symName);
-    setPrintQualityGrade("A (4.0)");
-    setIsPass(matchPass);
-    setHasProcessed(true);
-  }, [symbology, expectedPattern, initialParams.decodedPayload]);
+    const result = decodeAndGradeCode({
+      imageData: workbench.source,
+      roi: workbench.searchRegion,
+      symbology,
+      expectedPattern,
+      minQualityGrade,
+      presetPayload:
+        typeof initialParams.decodedPayload === "string"
+          ? initialParams.decodedPayload
+          : undefined,
+    });
 
-  const handleSymbologyChange = useCallback(
-    (sym: "qr" | "datamatrix" | "code128" | "ean13") => {
-      setSymbology(sym);
-      setHasProcessed(false);
-    },
-    [],
-  );
+    setCodeResult(result);
+    setDecodedPayload(result.payload);
+    setDetectedSymbology(result.symbologyName);
+    setPrintQualityGrade(
+      `Grade ${result.grading.overallGrade} (${result.grading.overallScore.toFixed(1)})`,
+    );
+    setIsPass(result.isPass);
+    setHasProcessed(true);
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    symbology,
+    expectedPattern,
+    minQualityGrade,
+    initialParams.decodedPayload,
+  ]);
+
+  const handleSymbologyChange = useCallback((sym: SymbologyType) => {
+    setSymbology(sym);
+    setHasProcessed(false);
+  }, []);
 
   const handlePatternChange = useCallback((pattern: string) => {
     setExpectedPattern(pattern);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinQualityGradeChange = useCallback((grade: IsoQualityGrade) => {
+    setMinQualityGrade(grade);
     setHasProcessed(false);
   }, []);
 
@@ -190,23 +202,57 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
       ctx.lineTo(region.x + region.width, region.y + region.height - cornerLen);
       ctx.stroke();
 
-      // 2. Decoded payload banner over the code
+      // 2. Projected Module Cell Grid
+      const gridCols = symbology === "code128" || symbology === "code39" ? 24 : 14;
+      const gridRows = symbology === "code128" || symbology === "code39" ? 1 : 14;
+      const cellW = region.width / gridCols;
+      const cellH = region.height / gridRows;
+
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.25)";
+      ctx.lineWidth = 1;
+
+      for (let c = 1; c < gridCols; c += 1) {
+        ctx.beginPath();
+        ctx.moveTo(region.x + c * cellW, region.y);
+        ctx.lineTo(region.x + c * cellW, region.y + region.height);
+        ctx.stroke();
+      }
+
+      if (gridRows > 1) {
+        for (let r = 1; r < gridRows; r += 1) {
+          ctx.beginPath();
+          ctx.moveTo(region.x, region.y + r * cellH);
+          ctx.lineTo(region.x + region.width, region.y + r * cellH);
+          ctx.stroke();
+        }
+      }
+
+      // 3. Decoded payload banner over the code
       ctx.fillStyle = "rgba(10, 13, 18, 0.85)";
-      ctx.fillRect(region.x, region.y - 24, Math.max(200, region.width), 20);
+      ctx.fillRect(region.x, region.y - 24, Math.max(220, region.width), 20);
       ctx.strokeStyle = strokeColor;
-      ctx.strokeRect(region.x, region.y - 24, Math.max(200, region.width), 20);
+      ctx.strokeRect(region.x, region.y - 24, Math.max(220, region.width), 20);
 
       ctx.fillStyle = strokeColor;
       ctx.font = "bold 10px monospace";
+      const gradeStr = codeResult ? `[Grade ${codeResult.grading.overallGrade}]` : "";
       ctx.fillText(
-        `${detectedSymbology}: ${decodedPayload.slice(0, 24)}... [${isPass ? "PASS" : "FAIL"}]`,
+        `${gradeStr} ${detectedSymbology}: ${decodedPayload.slice(0, 22)} [${isPass ? "PASS" : "FAIL"}]`,
         region.x + 6,
         region.y - 10,
       );
 
       ctx.restore();
     },
-    [workbench.searchRegion, hasProcessed, isPass, detectedSymbology, decodedPayload],
+    [
+      workbench.searchRegion,
+      hasProcessed,
+      isPass,
+      detectedSymbology,
+      decodedPayload,
+      codeResult,
+      symbology,
+    ],
   );
 
   const handleApply = useCallback(() => {
@@ -220,6 +266,16 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
       status: isPass ? "PASS" : "FAIL",
     };
 
+    const defaultGradeItem: JudgmentItem = {
+      id: "j2",
+      name: "ISO/IEC Quality Score",
+      unit: "score",
+      lowerLimit: minQualityGrade === "A" ? 3.5 : minQualityGrade === "B" ? 2.5 : 1.5,
+      measured: codeResult ? codeResult.grading.overallScore : 4.0,
+      upperLimit: 4.0,
+      status: isPass ? "PASS" : "FAIL",
+    };
+
     props.onChange((prev) => ({
       ...prev,
       params: {
@@ -227,15 +283,29 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
         toolCode: "T103",
         symbology,
         expectedPattern,
+        minQualityGrade,
         decodedPayload,
         detectedSymbology,
         printQualityGrade,
-        judgmentItems: [defaultCodeItem],
+        overallIsoGrade: codeResult ? codeResult.grading.overallGrade : "A",
+        symbolContrast: codeResult ? codeResult.grading.symbolContrast : 80,
+        modulation: codeResult ? codeResult.grading.modulation : 0.7,
+        judgmentItems: [defaultCodeItem, defaultGradeItem],
       },
     }));
 
     props.onOk?.();
-  }, [symbology, expectedPattern, decodedPayload, detectedSymbology, printQualityGrade, isPass, props]);
+  }, [
+    symbology,
+    expectedPattern,
+    minQualityGrade,
+    decodedPayload,
+    detectedSymbology,
+    printQualityGrade,
+    codeResult,
+    isPass,
+    props,
+  ]);
 
   return (
     <StandardWorkbenchShell
@@ -277,14 +347,17 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
         <CodeReaderToolPanel
           symbology={symbology}
           expectedPattern={expectedPattern}
+          minQualityGrade={minQualityGrade}
           decodedPayload={decodedPayload}
           detectedSymbology={detectedSymbology}
           printQualityGrade={printQualityGrade}
+          gradingReport={codeResult ? codeResult.grading : null}
           isPass={isPass}
           hasProcessed={hasProcessed}
           actionButtonLabel={props.actionButtonLabel}
           onSymbologyChange={handleSymbologyChange}
           onExpectedPatternChange={handlePatternChange}
+          onMinQualityGradeChange={handleMinQualityGradeChange}
           onProcess={handleProcess}
           onApply={handleApply}
           onCancel={props.onCancel}
