@@ -54,10 +54,18 @@ import type {
   CaliperScanDirectionType,
   EvaluateCaliperParams,
 } from "@/domain/vision/caliper-types";
+import type {
+  CircleFitResult,
+  CircleGaugePolarityType,
+  EvaluateCircleGaugeParams,
+} from "@/domain/vision/circle-gauge-types";
 import {
   computeCaliperMetrics,
   extractSubPixelEdges,
 } from "./algorithms/caliper";
+import {
+  computeCircleGaugeMetrics,
+} from "./algorithms/circle-fit";
 import {
   findConnectedBlobs,
   type ConnectedBlob,
@@ -71,6 +79,7 @@ export {
   type TapeSegmentationResult,
   type EvaluateAreaGateParams,
   type EvaluateCaliperParams,
+  type EvaluateCircleGaugeParams,
 };
 
 export interface ContainedDimensions {
@@ -2681,6 +2690,127 @@ export function evaluateAreaGateRule(
   };
 }
 
+export function evaluateCircleGaugeRule(
+  ruleOrParams: EditorRule | EvaluateCircleGaugeParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
+): ValidationResult {
+  const isParamStruct = "rule" in ruleOrParams;
+  const rule = isParamStruct
+    ? (ruleOrParams as EvaluateCircleGaugeParams).rule
+    : (ruleOrParams as EditorRule);
+  const imageData = isParamStruct
+    ? (ruleOrParams as EvaluateCircleGaugeParams).imageData
+    : maybeImageData;
+  const opticalContext = isParamStruct
+    ? ((ruleOrParams as EvaluateCircleGaugeParams).opticalContext ?? "Circle & Via Gauge")
+    : (maybeOpticalContext ?? "Circle & Via Gauge");
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for circle gauge evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const roi = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  if (roi.width <= 4 || roi.height <= 4) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid circle gauge ROI geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const nominalPx = Number(params.nominalDiameterPx ?? params.nominalDiameter ?? Math.min(roi.width, roi.height) * 0.6);
+  const tolerancePx = Number(params.diameterTolerancePx ?? params.tolerance ?? 4);
+  const minRoundnessScorePct = Number(params.minRoundnessScorePct ?? 80);
+  const edgePolarity = (params.edgePolarity as CircleGaugePolarityType) ?? "dark-to-light";
+  const minEdgeContrast = Number(params.minEdgeContrast ?? 20);
+  const rayCount = Number(params.rayCount ?? 64);
+  const filterWidth = Number(params.filterWidth ?? 3);
+  const metricUnit = (params.metricUnit as "mm" | "um" | "px") ?? "px";
+  const pxToMetricRatio = Number(params.pxToMetricRatio ?? 1);
+
+  const fitResult = computeCircleGaugeMetrics({
+    imageData,
+    roi,
+    nominalDiameterPx: nominalPx,
+    diameterTolerancePx: tolerancePx,
+    minRoundnessScorePct,
+    edgePolarity,
+    minEdgeContrast,
+    rayCount,
+    filterWidth,
+    pxToMetricRatio,
+    metricUnit,
+  });
+
+  if (!fitResult.hasValidFit) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `Circle fit failed: insufficient or unstable radial edge points detected (inliers: ${fitResult.inlierCount}/${fitResult.totalRayCount}). ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: {
+        roi,
+        nominalPx,
+        tolerancePx,
+        fitResult,
+      },
+    };
+  }
+
+  if (fitResult.isPass) {
+    return {
+      status: ValidationStatusType.Pass,
+      score: 0.98,
+      message: `Circle & via gauge pass: measured diameter ${fitResult.diameterPx.toFixed(2)}px (nominal: ${nominalPx} ± ${tolerancePx}px), roundness: ${fitResult.roundnessScorePct.toFixed(1)}% (min: ${minRoundnessScorePct}%). ${opticalContext}: PASS.`,
+      stub: false,
+      debug: {
+        roi,
+        fitResult,
+        centerX: fitResult.centerX,
+        centerY: fitResult.centerY,
+        radiusPx: fitResult.radiusPx,
+        diameterPx: fitResult.diameterPx,
+        roundnessScorePct: fitResult.roundnessScorePct,
+      },
+    };
+  }
+
+  const failReason =
+    fitResult.diameterErrorPx > tolerancePx
+      ? `diameter ${fitResult.diameterPx.toFixed(2)}px out of tolerance ±${tolerancePx}px (error: ${fitResult.diameterErrorPx.toFixed(2)}px)`
+      : `roundness ${fitResult.roundnessScorePct.toFixed(1)}% below minimum ${minRoundnessScorePct}%`;
+
+  return {
+    status: ValidationStatusType.Fail,
+    score: 0.3,
+    message: `Circle gauge rejected: ${failReason}. ${opticalContext}: FAIL.`,
+    stub: false,
+    debug: {
+      roi,
+      fitResult,
+      centerX: fitResult.centerX,
+      centerY: fitResult.centerY,
+      radiusPx: fitResult.radiusPx,
+      diameterPx: fitResult.diameterPx,
+      roundnessScorePct: fitResult.roundnessScorePct,
+    },
+  };
+}
+
 export function evaluateGeneralFeatureRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -2839,6 +2969,17 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("gate")
   ) {
     return evaluateAreaGateRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T111" ||
+    ruleNameLower.includes("circle") ||
+    ruleNameLower.includes("via") ||
+    ruleNameLower.includes("drill hole") ||
+    ruleNameLower.includes("fiducial") ||
+    ruleNameLower.includes("roundness")
+  ) {
+    return evaluateCircleGaugeRule(rule, imageData, opticalContext);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);
