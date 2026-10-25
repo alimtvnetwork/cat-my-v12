@@ -337,7 +337,8 @@ function scrollTourTargetIntoView(step: TourStep): void {
       window.scrollBy({ top: deltaY, left: deltaX, behavior: "auto" });
     }
 
-    window.dispatchEvent(new Event("resize"));
+    // No resize dispatch: Joyride's floater already repositions on scroll,
+    // and a forced resize caused a second, visible tooltip jump.
   });
 }
 
@@ -833,6 +834,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  // True while an exit step is navigating / opening a panel, before the
+  // next step index is set. The old tooltip is hidden during this window
+  // so it never floats over the new page (the screenshot glitch).
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const isRunningRef = useRef(false);
   const isLoadingRef = useRef(false);
   const isStepAdvancingRef = useRef(false);
@@ -840,6 +845,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const actionKeysRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<number | null>(null);
   const targetWaitTimerRef = useRef<number | null>(null);
+  const advanceTimerRef = useRef<number | null>(null);
   const analysisTimersRef = useRef<number[]>([]);
 
   const setAnalysisLoading = useCallback((isLoading: boolean) => {
@@ -1087,7 +1093,20 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     [],
   );
 
-  const joyrideSteps = useMemo(() => steps.map((step) => ({ ...step, skipBeacon: true })), [steps]);
+  // One placement for every element-anchored step, and one scroll source.
+  // Per-step "auto"/"left"/"right"/"top" placements plus Joyride's own
+  // scrolling made the tooltip jump between steps; "bottom" everywhere
+  // (final body step stays "top") and skipScroll keep it in one place.
+  const joyrideSteps = useMemo(
+    () =>
+      steps.map((step) => ({
+        ...step,
+        placement: step.target === "body" ? "top" : "bottom",
+        skipBeacon: true,
+        skipScroll: true,
+      })),
+    [steps],
+  );
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -1099,11 +1118,17 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       window.clearTimeout(targetWaitTimerRef.current);
       targetWaitTimerRef.current = null;
     }
+
+    if (advanceTimerRef.current !== null) {
+      window.clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
   }, []);
 
   const finishTour = useCallback(() => {
     toast.dismiss("simulation-preparing");
     clearTimer();
+    setIsTransitioning(false);
     clearAnalysisTimers();
     setSimulationMenuOpen(false);
     deleteDemoProject();
@@ -1315,11 +1340,19 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       return;
     }
 
-    const delayMs = step.actionPhase === "exit" ? 700 : 0;
-
-    window.setTimeout(() => {
+    if (step.actionPhase === "exit") {
+      // Hide the old tooltip while the exit action navigates / opens a
+      // panel, so it never orphans over the new page. The timer is stored
+      // so Skip / Stop (finishTour -> clearTimer) cancels it.
+      setIsTransitioning(true);
+      advanceTimerRef.current = window.setTimeout(() => {
+        advanceTimerRef.current = null;
+        setIsTransitioning(false);
+        setStepIndex(stepIndex + 1);
+      }, 700);
+    } else {
       setStepIndex(stepIndex + 1);
-    }, delayMs);
+    }
   }, [clearTimer, finishTour, runStepAction, stepIndex, steps]);
 
   useEffect(() => {
@@ -1499,6 +1532,11 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
             boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
             fontFamily: "Poppins, sans-serif",
             pointerEvents: "auto",
+            // Fixed width: content-driven width moved the tooltip's left
+            // edge whenever a short step followed a long one.
+            width: 360,
+            maxWidth: "calc(100vw - 32px)",
+            ...(isTransitioning ? { display: "none" } : {}),
           },
           tooltipTitle: {
             fontFamily: "Ubuntu, sans-serif",
