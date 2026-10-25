@@ -2,6 +2,7 @@ export enum ValidationStatusType {
   Pass = "pass",
   Fail = "fail",
   Warn = "warn",
+  Skipped = "skipped",
 }
 
 export namespace ValidationStatusType {
@@ -15,5 +16,9 @@ export namespace ValidationStatusType {
 
   export function isWarn(status: unknown): status is ValidationStatusType.Warn {
     return status === ValidationStatusType.Warn;
+  }
+
+  export function isSkipped(status: unknown): status is ValidationStatusType.Skipped {
+    return status === ValidationStatusType.Skipped;
   }
 }
