@@ -13,6 +13,7 @@ import { StandardEdgePositionTool } from "../tools/StandardEdgePositionTool";
 import { StandardCodeReaderTool } from "../tools/StandardCodeReaderTool";
 import { StandardCircleGaugeTool } from "../tools/StandardCircleGaugeTool";
 import { StandardConformalCoatingTool } from "../tools/StandardConformalCoatingTool";
+import { StandardShapeTrax3Tool } from "../tools/StandardShapeTrax3Tool";
 
 if (typeof window.ResizeObserver === "undefined") {
   window.ResizeObserver = class ResizeObserver {
@@ -337,6 +338,34 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     fireEvent.click(processBtn);
 
     // Click Apply
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders StandardShapeTrax3Tool with contour options and dual buttons", () => {
+    const settings = createDefaultPatternSearchSettings("rule-shapetrax");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardShapeTrax3Tool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/ShapeTrax3/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Contour Contrast Sensitivity/i)).toBeDefined();
+    expect(screen.getByText(/Minimum Match Score/i)).toBeDefined();
+    expect(screen.getByText(/Rotation Angle Range/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
+
     const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
     fireEvent.click(applyBtn);
 

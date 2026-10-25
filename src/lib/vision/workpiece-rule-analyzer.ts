@@ -73,6 +73,10 @@ import type {
   IsoQualityGrade,
   SymbologyType,
 } from "@/domain/vision/code-reader-types";
+import type {
+  EvaluateShapeTraxParams,
+  ShapeTraxMatchResult,
+} from "@/domain/vision/shapetrax-types";
 import {
   computeCaliperMetrics,
   extractSubPixelEdges,
@@ -90,6 +94,9 @@ import {
   isGradeAtLeast,
 } from "./algorithms/code-reader-iso";
 import {
+  matchShapeTrax,
+} from "./algorithms/shapetrax";
+import {
   findConnectedBlobs,
   type ConnectedBlob,
 } from "./algorithms/connected-components";
@@ -105,6 +112,7 @@ export {
   type EvaluateCircleGaugeParams,
   type EvaluateConformalCoatingParams,
   type EvaluateCodeReaderParams,
+  type EvaluateShapeTraxParams,
 };
 
 export interface ContainedDimensions {
@@ -3059,6 +3067,111 @@ export function evaluateCodeReaderRule(
   };
 }
 
+export function evaluateShapeTraxRule(
+  ruleOrParams: EditorRule | EvaluateShapeTraxParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
+): ValidationResult {
+  const isParamStruct = "rule" in ruleOrParams;
+  const rule = isParamStruct
+    ? (ruleOrParams as EvaluateShapeTraxParams).rule
+    : (ruleOrParams as EditorRule);
+  const imageData = isParamStruct
+    ? (ruleOrParams as EvaluateShapeTraxParams).imageData
+    : maybeImageData;
+  const opticalContext = isParamStruct
+    ? ((ruleOrParams as EvaluateShapeTraxParams).opticalContext ?? "ShapeTrax3 Contour Match")
+    : (maybeOpticalContext ?? "ShapeTrax3 Contour Match");
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for ShapeTrax3 evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const roi = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  if (roi.width <= 4 || roi.height <= 4) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid ShapeTrax3 search ROI geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const minMatchPercent = Number(params.minMatchPercent ?? 75);
+  const contrastThreshold = Number(params.contrastThreshold ?? 30);
+  const angleRangeDeg = Number(params.angleRangeDeg ?? params.angleRange ?? 180);
+  const scaleRangeMin = Number(params.scaleRangeMin ?? 90);
+  const scaleRangeMax = Number(params.scaleRangeMax ?? 110);
+
+  const result = matchShapeTrax({
+    imageData,
+    roi,
+    minMatchPercent,
+    contrastThreshold,
+    angleRangeDeg,
+    scaleRangeMin,
+    scaleRangeMax,
+  });
+
+  if (!result.hasMatchFound) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `ShapeTrax3 contour match failed: insufficient boundary features detected in ROI. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, params, result },
+    };
+  }
+
+  if (result.isPass) {
+    return {
+      status: ValidationStatusType.Pass,
+      score: Math.min(1.0, result.score / 100),
+      message: `ShapeTrax3 contour match pass: ${result.score.toFixed(1)}% score (min: ${minMatchPercent}%), θ=${result.angleDeg.toFixed(1)}°, scale=${result.scalePct.toFixed(1)}%. ${opticalContext}: PASS.`,
+      stub: false,
+      debug: {
+        roi,
+        result,
+        score: result.score,
+        angleDeg: result.angleDeg,
+        scalePct: result.scalePct,
+        matchedPoints: result.matchedPointCount,
+      },
+    };
+  }
+
+  const failReason =
+    result.score < minMatchPercent
+      ? `score ${result.score.toFixed(1)}% below required ${minMatchPercent}%`
+      : `angle ${result.angleDeg.toFixed(1)}° out of tolerance ±${angleRangeDeg}°`;
+
+  return {
+    status: ValidationStatusType.Fail,
+    score: Math.max(0.1, result.score / 100),
+    message: `ShapeTrax3 contour match rejected: ${failReason}. ${opticalContext}: FAIL.`,
+    stub: false,
+    debug: {
+      roi,
+      result,
+      score: result.score,
+      angleDeg: result.angleDeg,
+      scalePct: result.scalePct,
+    },
+  };
+}
+
 export function evaluateGeneralFeatureRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -3251,6 +3364,14 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("qr")
   ) {
     return evaluateCodeReaderRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    ruleNameLower.includes("shapetrax") ||
+    ruleNameLower.includes("contour") ||
+    ruleNameLower.includes("trax")
+  ) {
+    return evaluateShapeTraxRule(rule, imageData, opticalContext);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);
