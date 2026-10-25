@@ -15,6 +15,7 @@ import { StandardGrayscaleBlobTool } from "./StandardGrayscaleBlobTool";
 import { StandardProfilePositionTool } from "./StandardProfilePositionTool";
 import { StandardProfileWidthTool } from "./StandardProfileWidthTool";
 import { StandardIntensityTool } from "./StandardIntensityTool";
+import { StandardConformalCoatingTool } from "./StandardConformalCoatingTool";
 import { StandardOcr2Tool } from "./StandardOcr2Tool";
 import { StandardCodeReaderTool } from "./StandardCodeReaderTool";
 import { StandardGreyscalePatternMatchingTool } from "./StandardGreyscalePatternMatchingTool";
@@ -103,6 +104,7 @@ export function StandardInspectionToolDispatcher(
     !combined.includes("pitch") &&
     !combined.includes("circle") &&
     !combined.includes("via") &&
+    !combined.includes("coating") &&
     toolCode !== "T101" &&
     toolCode !== "T104" &&
     toolCode !== "T107" &&
@@ -110,6 +112,7 @@ export function StandardInspectionToolDispatcher(
     toolCode !== "T109" &&
     toolCode !== "T110" &&
     toolCode !== "T111" &&
+    toolCode !== "T112" &&
     toolCode !== "T103" &&
     !(props.settings as any)?.isDefectReject &&
     (toolCode === "T102" ||
@@ -303,15 +306,31 @@ export function StandardInspectionToolDispatcher(
     return <StandardEdgePositionTool {...props} />;
   }
 
+  // Phase 5: Conformal Coating & CIE Lab Color (T112)
+  const isConformalCoating =
+    toolCode === "T112" ||
+    props.toolType === "coating" ||
+    props.toolType === "conformal-coating" ||
+    props.toolType === "color" ||
+    combined.includes("t112") ||
+    combined.includes("conformal") ||
+    combined.includes("coating") ||
+    combined.includes("fluorescence") ||
+    combined.includes("uv glow") ||
+    combined.includes("cie lab") ||
+    combined.includes("delta e") ||
+    combined.includes("color distance");
+
+  if (isConformalCoating) {
+    return <StandardConformalCoatingTool {...props} />;
+  }
+
   // Intensity / Brightness
   const isIntensity =
-    toolCode === "T112" ||
-    combined.includes("t112") ||
     combined.includes("intensity") ||
     combined.includes("brightness") ||
     combined.includes("luminance") ||
-    combined.includes("mean") ||
-    combined.includes("conformal coating");
+    combined.includes("mean");
 
   if (isIntensity) {
     return <StandardIntensityTool {...props} />;

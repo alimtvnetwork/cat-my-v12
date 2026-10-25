@@ -12,6 +12,7 @@ import { StandardEdgePitchTool } from "../tools/StandardEdgePitchTool";
 import { StandardEdgePositionTool } from "../tools/StandardEdgePositionTool";
 import { StandardCodeReaderTool } from "../tools/StandardCodeReaderTool";
 import { StandardCircleGaugeTool } from "../tools/StandardCircleGaugeTool";
+import { StandardConformalCoatingTool } from "../tools/StandardConformalCoatingTool";
 
 if (typeof window.ResizeObserver === "undefined") {
   window.ResizeObserver = class ResizeObserver {
@@ -287,6 +288,43 @@ describe("Standard Workbench Dedicated Vision Tools", () => {
     // Toggle target feature
     const viaBtn = screen.getByRole("button", { name: /PTH Via/i });
     fireEvent.click(viaBtn);
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    // Click Process Rule
+    const processBtn = screen.getByRole("button", { name: /Process Rule/i });
+    fireEvent.click(processBtn);
+
+    // Click Apply
+    const applyBtn = screen.getByRole("button", { name: /Apply to Rule/i });
+    fireEvent.click(applyBtn);
+
+    expect(handleOk).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders T112 StandardConformalCoatingTool with UV fluorescence and CIE Lab options", () => {
+    const settings = createDefaultPatternSearchSettings("rule-t112");
+    const handleChange = vi.fn();
+    const handleOk = vi.fn();
+
+    render(
+      <StandardConformalCoatingTool
+        settings={settings}
+        onChange={handleChange}
+        onOk={handleOk}
+      />,
+    );
+
+    expect(screen.getAllByText(/Conformal Coating/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/T112/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Inspection Mode/i)).toBeDefined();
+    expect(screen.getByText(/UV Tracer Fluorescent Band/i)).toBeDefined();
+    expect(screen.getByText(/Fluorescence Glow Threshold/i)).toBeDefined();
+    expect(screen.getByText(/Minimum Coverage/i)).toBeDefined();
+    expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
+
+    // Toggle mode to Keep-Out Zone
+    const kozBtn = screen.getByRole("button", { name: /Keep-Out/i });
+    fireEvent.click(kozBtn);
     expect(screen.getAllByText(/PENDING PROCESS/i).length).toBeGreaterThan(0);
 
     // Click Process Rule
