@@ -7,6 +7,7 @@ import {
   VISION_TOOL_CATALOG,
   InspectionCategoryType,
   getVisionToolsByCategory,
+  getVisionToolDisplayName,
   type VisionToolDefinition,
 } from "@/lib/vision/tool-catalog";
 import type { EditorRule } from "@/lib/editor/types";
@@ -496,6 +497,9 @@ export function AddRulePanel({ projectId, rulesetId, onRuleCreated, onExit }: Ad
                   Showing <span className="font-bold text-[#f8fafc]">{filteredTools.length}</span>{" "}
                   tools
                 </span>
+                <span className="font-sans text-[11px] text-[#64748b]">
+                  * = not implemented
+                </span>
               </div>
             </div>
 
@@ -544,7 +548,7 @@ export function AddRulePanel({ projectId, rulesetId, onRuleCreated, onExit }: Ad
                             {tool.code}
                           </span>
                           <h3 className="truncate font-sans text-xs font-semibold leading-tight text-[#f8fafc] group-hover:text-cyan-300 transition-colors">
-                            {tool.name.replace(/ \(.*\)/, "")}
+                            {getVisionToolDisplayName(tool).replace(/ \(.*\)/, "")}
                           </h3>
                         </div>
 
@@ -573,7 +577,7 @@ export function AddRulePanel({ projectId, rulesetId, onRuleCreated, onExit }: Ad
                         {selectedTool.code} · {selectedTool.category}
                       </span>
                       <h2 className="mt-0.5 text-sm font-semibold text-white">
-                        {selectedTool.name}
+                        {getVisionToolDisplayName(selectedTool)}
                       </h2>
                     </div>
                   </div>

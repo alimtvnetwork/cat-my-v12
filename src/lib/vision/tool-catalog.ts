@@ -690,6 +690,25 @@ export function getVisionToolsByCategory(category: InspectionCategoryType): Visi
   return VISION_TOOL_CATALOG.filter((t) => t.category === category);
 }
 
+/**
+ * Tools actually implemented in the app today. Every other catalog tool
+ * is shown with a "*" prefix (see getVisionToolDisplayName) to mark it
+ * as not implemented, rather than silently presenting it as available.
+ */
+export const IMPLEMENTED_VISION_TOOL_CODES: readonly string[] = Object.freeze(["T102", "T105"]);
+
+export function isVisionToolImplemented(tool: VisionToolDefinition): boolean {
+  return IMPLEMENTED_VISION_TOOL_CODES.includes(tool.code);
+}
+
+export function getVisionToolDisplayName(tool: VisionToolDefinition): string {
+  if (isVisionToolImplemented(tool)) {
+    return tool.name;
+  }
+
+  return `* ${tool.name}`;
+}
+
 export function findVisionTool(id: string): VisionToolDefinition | undefined {
   return VISION_TOOL_CATALOG.find((t) => t.id === id || t.code === id);
 }
