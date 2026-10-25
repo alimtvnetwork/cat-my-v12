@@ -11,6 +11,7 @@ export interface EdgePositionToolPanelProps {
   measuredPosition: number;
   isPass: boolean;
   hasProcessed: boolean;
+  toolCode?: string;
   actionButtonLabel?: string;
   onScanDirectionChange: (
     direction: "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top",
@@ -40,7 +41,7 @@ export function EdgePositionToolPanel(props: EdgePositionToolPanelProps): React.
           </span>
         </div>
         <span className="rounded bg-cyan-950/80 px-2 py-0.5 font-mono text-[11px] font-bold text-cyan-400 border border-cyan-800/50">
-          T104
+          {props.toolCode ?? "T104"}
         </span>
       </div>
 

@@ -7,6 +7,7 @@ import { StandardEdgePositionTool } from "./StandardEdgePositionTool";
 import { StandardEdgeWidthTool } from "./StandardEdgeWidthTool";
 import { StandardEdgePitchTool } from "./StandardEdgePitchTool";
 import { StandardEdgePairsTool } from "./StandardEdgePairsTool";
+import { StandardCircleGaugeTool } from "./StandardCircleGaugeTool";
 import { StandardDefectTool } from "./StandardDefectTool";
 import { StandardVoidPorosityTool } from "./StandardVoidPorosityTool";
 import { StandardBlobTool } from "./StandardBlobTool";
@@ -100,12 +101,15 @@ export function StandardInspectionToolDispatcher(
     !combined.includes("blob") &&
     !combined.includes("caliper") &&
     !combined.includes("pitch") &&
+    !combined.includes("circle") &&
+    !combined.includes("via") &&
     toolCode !== "T101" &&
     toolCode !== "T104" &&
     toolCode !== "T107" &&
     toolCode !== "T108" &&
     toolCode !== "T109" &&
     toolCode !== "T110" &&
+    toolCode !== "T111" &&
     toolCode !== "T103" &&
     !(props.settings as any)?.isDefectReject &&
     (toolCode === "T102" ||
@@ -229,6 +233,24 @@ export function StandardInspectionToolDispatcher(
 
   if (isProfilePosition) {
     return <StandardProfilePositionTool {...props} />;
+  }
+
+  // Phase 4: Circle & Via Gauge (Radial Ray-Marching & Pratt Algebraic Circle Fit)
+  const isCircleGauge =
+    toolCode === "T111" ||
+    props.toolType === "circle" ||
+    props.toolType === "circle-gauge" ||
+    props.toolType === "via" ||
+    combined.includes("t111") ||
+    combined.includes("circle") ||
+    combined.includes("via gauge") ||
+    combined.includes("via") ||
+    combined.includes("drill hole") ||
+    combined.includes("fiducial") ||
+    combined.includes("roundness");
+
+  if (isCircleGauge) {
+    return <StandardCircleGaugeTool {...props} />;
   }
 
   // Phase 3: Edge Pitch (Lead Pitch / Comb Periodicity)
