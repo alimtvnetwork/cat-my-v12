@@ -1963,23 +1963,26 @@ export function VisualToolWorkpieceCanvas({
   return (
     <div className="flex min-h-0 h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
       {/* Top HUD Controls (Consolidated Slim Status Bar) */}
+      {/* Fixed height, single row: the HUD must never wrap to a second line
+          when the selected rule changes, or the viewport below it (and the
+          displayed image) resizes with it. Overflow scrolls horizontally. */}
       <div className="border-b border-ca-border bg-[#11161b] text-xs">
-        <div className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
+        <div className="flex h-11 flex-nowrap items-center justify-between gap-1.5 overflow-hidden px-3 py-1.5">
+          <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
+            <span className="flex shrink-0 items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
               <ScanSearch size={14} className="text-ca-select" />
               {isAnalyzeMode ? "Analysis:" : "Inspection:"}
             </span>
             <span
               data-tour="project-analysis-canvas-status"
-              className={`rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}
+              className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}
             >
               {isAnalyzeMode
                 ? `${frameStatusLabel} · ${visualPassCount}/${visualTotalCount}`
                 : toolName || "Autonomous Tool Inspection"}
             </span>
             {isPatternMatching && (
-              <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
+              <span className="shrink-0 rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
                 {(() => {
                   const count =
                     activeBoxesToDraw.length > 0
@@ -1993,12 +1996,12 @@ export function VisualToolWorkpieceCanvas({
               </span>
             )}
             {isPin1 && (
-              <span className="rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400">
+              <span className="shrink-0 rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400">
                 Pin 1 Reticle Calibrated
               </span>
             )}
             {isAnalyzeMode && overlayRules.length > 0 && (
-              <div className="flex items-center gap-1 pl-1">
+              <div className="flex shrink-0 flex-nowrap items-center gap-1 pl-1">
                 {overlayRules.map((r, i) => {
                   const res = validationResultsMap?.[r.id];
                   const isSelected = r.id === selectedRuleId;
@@ -2032,7 +2035,7 @@ export function VisualToolWorkpieceCanvas({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {!isAnalyzeMode && isPatternMatching && (
               <button
                 type="button"
