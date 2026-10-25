@@ -40,15 +40,9 @@ describe("vision tool catalog", () => {
       }
     }
 
-    expect(getVisionToolDisplayName(findVisionTool("T102")!)).toBe(
-      "Greyscale Pattern Matching",
-    );
-    expect(getVisionToolDisplayName(findVisionTool("T105")!)).toBe(
-      "Pin 1 Orientation Config",
-    );
-    expect(getVisionToolDisplayName(findVisionTool("T101")!)).toBe(
-      "* Area Gate (Pixel Intensity)",
-    );
+    expect(getVisionToolDisplayName(findVisionTool("T102")!)).toBe("Greyscale Pattern Matching");
+    expect(getVisionToolDisplayName(findVisionTool("T105")!)).toBe("Pin 1 Orientation Config");
+    expect(getVisionToolDisplayName(findVisionTool("T101")!)).toBe("* Area Gate (Pixel Intensity)");
   });
 
   it("every tool has valid optical defaults and parameters", () => {

@@ -497,9 +497,7 @@ export function AddRulePanel({ projectId, rulesetId, onRuleCreated, onExit }: Ad
                   Showing <span className="font-bold text-[#f8fafc]">{filteredTools.length}</span>{" "}
                   tools
                 </span>
-                <span className="font-sans text-[11px] text-[#64748b]">
-                  * = not implemented
-                </span>
+                <span className="font-sans text-[11px] text-[#64748b]">* = not implemented</span>
               </div>
             </div>
 
