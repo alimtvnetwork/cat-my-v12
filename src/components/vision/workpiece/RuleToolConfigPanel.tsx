@@ -365,7 +365,8 @@ export function RuleToolConfigPanel({
     toolCode === "T111" ||
     toolCode === "T103" ||
     toolCode === "T106" ||
-    toolCode === "T112";
+    toolCode === "T112" ||
+    toolCode === "M301";
 
   const isGreyscalePattern =
     !hasStandardToolCode &&

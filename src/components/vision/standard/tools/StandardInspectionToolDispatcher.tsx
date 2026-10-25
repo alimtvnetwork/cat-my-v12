@@ -106,6 +106,13 @@ export function StandardInspectionToolDispatcher(
     !combined.includes("circle") &&
     !combined.includes("via") &&
     !combined.includes("coating") &&
+    !combined.includes("math") &&
+    !combined.includes("sandbox") &&
+    !combined.includes("gating") &&
+    !combined.includes("code") &&
+    !combined.includes("barcode") &&
+    !combined.includes("datamatrix") &&
+    !combined.includes("qr") &&
     toolCode !== "T101" &&
     toolCode !== "T104" &&
     toolCode !== "T107" &&
@@ -115,6 +122,8 @@ export function StandardInspectionToolDispatcher(
     toolCode !== "T111" &&
     toolCode !== "T112" &&
     toolCode !== "T103" &&
+    toolCode !== "M301" &&
+    toolCode !== "M302" &&
     !(props.settings as any)?.isDefectReject &&
     (toolCode === "T102" ||
       toolCode === "T116" ||

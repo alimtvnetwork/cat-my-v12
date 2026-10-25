@@ -9,6 +9,8 @@ import { useWorkpieceProject } from "@/hooks/useWorkpieceProject";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { DEFAULT_24_PATTERN_BOXES } from "@/lib/vision/white-box-marking";
 import { useSitemapStateCacheStore } from "@/lib/stores/sitemap-state-cache-store";
+import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
+import { useRulesStore } from "@/lib/editor/store/rules-slice";
 
 export const Route = createFileRoute("/analyze")({
   head: () => ({
@@ -222,6 +224,18 @@ function AnalyzeScreen(): React.JSX.Element {
       selectedId: targetRuleset.id,
     });
   }, [currentPathname, targetProject, targetRuleset, saveSnapshot]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__CA_ANALYZE_API__ = {
+        updateRulesetRules,
+        targetRuleset,
+        targetProject,
+        useRulesStore,
+        openRule: (ruleId: string) => visualTunerBus.emit(ruleId),
+      };
+    }
+  }, [targetProject, targetRuleset, updateRulesetRules]);
 
   if (!targetProject || !targetRuleset) {
     return (
