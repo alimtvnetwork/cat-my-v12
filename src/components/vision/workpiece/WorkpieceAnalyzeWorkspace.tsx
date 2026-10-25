@@ -57,6 +57,10 @@ import {
   evaluateTapeStripRules,
   type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import {
+  evaluateRuleGatingDecision,
+  createSkippedValidationResult,
+} from "@/lib/execution/dag-execution-planner";
 import { LEGACY_DEFAULT_UM_PER_PX } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useProjectStore } from "@/lib/projects/store";
@@ -899,7 +903,22 @@ export function WorkpieceAnalyzeWorkspace({
                 },
               };
             } else {
-              ruleResult = evaluateWorkpieceRuleReal(r, imgData);
+              const previousResultsForWorkspace: Record<string, ValidationResult> = {};
+              for (const b of Object.values(batchedResults)) {
+                Object.assign(previousResultsForWorkspace, b.results);
+              }
+              const allRulesMap = new Map(projectAnalysisItems.map((it) => [it.rule.id, it.rule]));
+              const decision = evaluateRuleGatingDecision({
+                rule: r,
+                previousResults: previousResultsForWorkspace,
+                allRulesMap,
+              });
+
+              if (decision.isSkipped) {
+                ruleResult = createSkippedValidationResult({ rule: r, decision });
+              } else {
+                ruleResult = evaluateWorkpieceRuleReal(r, imgData, previousResultsForWorkspace);
+              }
             }
           } else {
             ruleResult = {
@@ -912,7 +931,7 @@ export function WorkpieceAnalyzeWorkspace({
 
           if (ruleResult.status === ValidationStatusType.Pass) {
             passCount += 1;
-          } else {
+          } else if (ruleResult.status === ValidationStatusType.Fail) {
             failCount += 1;
           }
 

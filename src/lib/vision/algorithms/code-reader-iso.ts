@@ -343,7 +343,31 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
   }
 
   const isGradePass = isGradeAtLeast(grading.overallGrade, minQualityGrade);
-  const hasCodeDetected = rMax - rMin >= 30;
+  let horizontalTransitions = 0;
+  const midY = Math.round((startY + endY) / 2);
+  const rowOffset = midY * imageData.width;
+  let prevIsDark =
+    0.299 * imageData.rgba[(rowOffset + startX) * 4] +
+      0.587 * imageData.rgba[(rowOffset + startX) * 4 + 1] +
+      0.114 * imageData.rgba[(rowOffset + startX) * 4 + 2] <
+    threshold;
+
+  for (let x = startX + 1; x < endX; x++) {
+    const idx = (rowOffset + x) * 4;
+    const isDark =
+      0.299 * imageData.rgba[idx] +
+        0.587 * imageData.rgba[idx + 1] +
+        0.114 * imageData.rgba[idx + 2] <
+      threshold;
+
+    if (isDark !== prevIsDark) {
+      horizontalTransitions++;
+      prevIsDark = isDark;
+    }
+  }
+
+  const isCavityEmpty = (meanLuma < 53 && rMax - rMin < 90) || rMax - rMin < 35;
+  const hasCodeDetected = !isCavityEmpty;
   const isPass = hasCodeDetected && isPatternMatch && isGradePass;
 
   return {

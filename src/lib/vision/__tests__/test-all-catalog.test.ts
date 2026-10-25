@@ -32,6 +32,34 @@ describe("Catalog Rules on filled image", () => {
         tool.name.toLowerCase().includes("lead")
       ) {
         roi = { x: 180, y: 200, width: 280, height: 120 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code") ||
+        tool.name.toLowerCase().includes("barcode")
+      ) {
+        roi = { x: 210, y: 180, width: 100, height: 100 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code")
+      ) {
+        roi = { x: 190, y: 240, width: 180, height: 140 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code") ||
+        tool.name.toLowerCase().includes("barcode")
+      ) {
+        roi = { x: 190, y: 240, width: 180, height: 140 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code") ||
+        tool.name.toLowerCase().includes("barcode")
+      ) {
+        roi = { x: 220, y: 180, width: 140, height: 140 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code")
+      ) {
+        roi = { x: 220, y: 180, width: 140, height: 140 };
       }
 
       const rule: EditorRule = {
@@ -83,6 +111,29 @@ describe("Catalog Rules on filled image", () => {
                 }),
               }
             : {}),
+          ...(tool.code === "T111" || tool.name.toLowerCase().includes("circle")
+            ? {
+                nominalDiameterPx: 120,
+                diameterTolerancePx: 15,
+                nominalDiameter: 120,
+                tolerance: 15,
+                minRoundnessScorePct: 50,
+              }
+            : {}),
+          ...(tool.code === "T103" || tool.name.toLowerCase().includes("code reader")
+            ? {
+                expectedPattern: "^SN2026",
+                symbology: "datamatrix",
+                minQualityGrade: "F",
+              }
+            : {}),
+          ...(tool.code === "T112" || tool.name.toLowerCase().includes("coating")
+            ? {
+                minCoveragePct: 0,
+                maxAllowedVoids: 10,
+                maxUncoatedVoids: 10,
+              }
+            : {}),
         },
       };
 
@@ -120,6 +171,11 @@ describe("Catalog Rules on filled image", () => {
         tool.name.toLowerCase().includes("lead")
       ) {
         roi = { x: 180, y: 200, width: 280, height: 120 };
+      } else if (
+        tool.code === "T103" ||
+        tool.name.toLowerCase().includes("code")
+      ) {
+        roi = { x: 210, y: 180, width: 100, height: 100 };
       }
 
       const rule: EditorRule = {
@@ -168,6 +224,21 @@ describe("Catalog Rules on filled image", () => {
                   searchRegion: { x: 180, y: 140, width: 140, height: 140 },
                   packageRegion: { x: 200, y: 160, width: 500, height: 300 },
                 }),
+              }
+            : {}),
+          ...(tool.code === "T111" || tool.name.toLowerCase().includes("circle")
+            ? {
+                nominalDiameterPx: 120,
+                diameterTolerancePx: 15,
+                nominalDiameter: 120,
+                tolerance: 15,
+                minRoundnessScorePct: 50,
+              }
+            : {}),
+          ...(tool.code === "T103" || tool.name.toLowerCase().includes("code reader")
+            ? {
+                expectedPattern: "^SN2026",
+                symbology: "datamatrix",
               }
             : {}),
         },

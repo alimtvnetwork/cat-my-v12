@@ -100,6 +100,16 @@ import {
   findConnectedBlobs,
   type ConnectedBlob,
 } from "./algorithms/connected-components";
+import {
+  evaluateMathExpression,
+  extractVariablesFromRuleResults,
+} from "@/lib/execution/math-sandbox";
+import {
+  buildRuleDAG,
+  evaluateRuleGatingDecision,
+  createSkippedValidationResult,
+} from "@/lib/execution/dag-execution-planner";
+import type { MathSandboxLimits } from "@/domain/execution/math-rule-types";
 
 export {
   defaultWorkpieceFilledSample,
@@ -3172,6 +3182,50 @@ export function evaluateShapeTraxRule(
   };
 }
 
+export function evaluateMathSandboxRule(
+  rule: EditorRule,
+  priorResults?: Record<string, ValidationResult>,
+): ValidationResult {
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const expression = String(
+    params.expression ?? params.mathExpression ?? params.formula ?? "1.0",
+  );
+  const limits: MathSandboxLimits = {
+    min: typeof params.minLimit === "number" ? params.minLimit : (params.limits as any)?.min,
+    max: typeof params.maxLimit === "number" ? params.maxLimit : (params.limits as any)?.max,
+    nominal: typeof params.nominal === "number" ? params.nominal : (params.limits as any)?.nominal,
+    tolerance: typeof params.tolerance === "number" ? params.tolerance : (params.limits as any)?.tolerance,
+  };
+  const operator = (params.operator ?? params.comparisonOperator ?? "between") as any;
+
+  const extracted = priorResults ? extractVariablesFromRuleResults([rule], priorResults) : {};
+  const customVars = (params.customVariables as Record<string, number> | undefined) ?? {};
+  const mergedVars: Record<string, number> = { ...extracted, ...customVars };
+
+  const evalResult = evaluateMathExpression({
+    expression,
+    variables: mergedVars,
+    limits,
+    operator,
+  });
+
+  return {
+    status: evalResult.isPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: evalResult.score,
+    message: `[M301 Math Sandbox] ${evalResult.message}`,
+    stub: false,
+    debug: {
+      toolCode: "M301",
+      expression,
+      value: evalResult.value,
+      isPass: evalResult.isPass,
+      executionDurationMs: evalResult.executionDurationMs,
+      limits: evalResult.limits,
+      variablesUsed: evalResult.variablesUsed,
+    },
+  };
+}
+
 export function evaluateGeneralFeatureRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -3258,6 +3312,7 @@ export function evaluateGeneralFeatureRule(
 export function evaluateWorkpieceRuleReal(
   rule: EditorRule,
   imageData: WorkpieceImageData,
+  priorResults?: Record<string, ValidationResult>,
 ): ValidationResult {
   const toolCode = String(rule.params?.toolCode || "").toUpperCase();
   const ruleNameLower = (rule.name || "").toLowerCase();
@@ -3372,6 +3427,17 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("trax")
   ) {
     return evaluateShapeTraxRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "M301" ||
+    toolCode === "M302" ||
+    ruleNameLower.includes("math") ||
+    ruleNameLower.includes("sandbox") ||
+    ruleNameLower.includes("calc") ||
+    ruleNameLower.includes("custom function")
+  ) {
+    return evaluateMathSandboxRule(rule, priorResults);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);
@@ -4062,15 +4128,34 @@ export async function evaluateTapeStripRules(
       };
     }
 
+    const dag = buildRuleDAG(rules);
+    const ruleMap = new Map<string, EditorRule>(rules.map((r) => [r.id, r]));
     const ruleResults: Record<string, ValidationResult> = {};
     let isAllPass = true;
     let minScore = 1.0;
 
-    for (const r of rules) {
-      const res = evaluateWorkpieceRuleReal(r, imageData);
+    for (const ruleId of dag.orderedRuleIds) {
+      const r = ruleMap.get(ruleId);
+
+      if (!r) continue;
+
+      const decision = evaluateRuleGatingDecision({
+        rule: r,
+        previousResults: ruleResults,
+        allRulesMap: ruleMap,
+      });
+
+      let res: ValidationResult;
+
+      if (decision.isSkipped) {
+        res = createSkippedValidationResult({ rule: r, decision });
+      } else {
+        res = evaluateWorkpieceRuleReal(r, imageData, ruleResults);
+      }
+
       ruleResults[r.id] = res;
 
-      if (res.status !== ValidationStatusType.Pass) {
+      if (res.status === ValidationStatusType.Fail) {
         isAllPass = false;
       }
 
@@ -4158,23 +4243,42 @@ export async function evaluateTapeStripRules(
       continue;
     }
 
+    const dag = buildRuleDAG(rules);
+    const ruleMap = new Map<string, EditorRule>(rules.map((r) => [r.id, r]));
     const pocketRuleResults: Record<string, ValidationResult> = {};
     let isPocketPass = true;
     let minScore = 1.0;
 
-    for (const r of rules) {
-      const authorPocket = findAuthoringPocket(r, pockets);
-      const adaptedRule = adaptRuleToPocket({
+    for (const ruleId of dag.orderedRuleIds) {
+      const r = ruleMap.get(ruleId);
+
+      if (!r) continue;
+
+      const decision = evaluateRuleGatingDecision({
         rule: r,
-        authorPocket,
-        targetPocket: pocket,
-        imageData,
+        previousResults: pocketRuleResults,
+        allRulesMap: ruleMap,
       });
 
-      const res = evaluateWorkpieceRuleReal(adaptedRule, imageData);
+      let res: ValidationResult;
+
+      if (decision.isSkipped) {
+        res = createSkippedValidationResult({ rule: r, decision });
+      } else {
+        const authorPocket = findAuthoringPocket(r, pockets);
+        const adaptedRule = adaptRuleToPocket({
+          rule: r,
+          authorPocket,
+          targetPocket: pocket,
+          imageData,
+        });
+
+        res = evaluateWorkpieceRuleReal(adaptedRule, imageData, pocketRuleResults);
+      }
+
       pocketRuleResults[r.id] = res;
 
-      if (res.status !== ValidationStatusType.Pass) {
+      if (res.status === ValidationStatusType.Fail) {
         isPocketPass = false;
       }
 

@@ -39,7 +39,7 @@ export interface WorkpieceRoi {
 }
 
 export interface RuleValidationDetail {
-  status: "pass" | "fail" | "warn" | "pending";
+  status: "pass" | "fail" | "warn" | "pending" | "skipped";
   score?: number;
   message?: string;
 }
@@ -59,7 +59,7 @@ export interface VisualToolWorkpieceCanvasProps {
   onLaunchPatternTuner?: () => void;
   onPatternBoxesChange?: (boxes: WhiteBoxMark[], constellation: any[]) => void;
   actionSlot?: React.ReactNode;
-  validationStatus?: "pass" | "fail" | "warn" | "pending";
+  validationStatus?: "pass" | "fail" | "warn" | "pending" | "skipped";
   validationScore?: number;
   validationResultsMap?: Record<string, RuleValidationDetail>;
   onRunAnalysis?: () => void;
@@ -109,7 +109,7 @@ function drawCompletePatternOverlay(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -131,10 +131,10 @@ function drawCompletePatternOverlay(
     drawToleranceZones(ctx, geometry.toleranceZones);
   }
 
-  drawPatternBoxes(ctx, boxes, excludedNumbers, status);
+  drawPatternBoxes(ctx, boxes, excludedNumbers, status === "skipped" ? "pending" : status);
 
   if (geometry) {
-    drawFormulatedEnvelope(ctx, geometry, status);
+    drawFormulatedEnvelope(ctx, geometry, status === "skipped" ? "pending" : status);
   }
 }
 
@@ -142,7 +142,7 @@ function drawRealBoxes(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -162,7 +162,7 @@ function drawGreyscaleSimulationPatternOverlay(
   ctx: CanvasRenderingContext2D,
   ruleRoi: WorkpieceRoi,
   boxes: readonly WhiteBoxMark[],
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   boxResults?: any[],
   isAnalyzeMode = false,
@@ -313,7 +313,7 @@ function drawConstellationPattern(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
   boxCount: number,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   imageWidth = 960,
   imageHeight = 540,
 ): void {
@@ -391,7 +391,7 @@ function drawCornerBrackets(
 function drawPin1Reticle(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   pin1Config?: Record<string, any>,
   ruleResult?: any,
@@ -581,7 +581,7 @@ function drawPin1Reticle(
 function drawCaliperRuler(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
   const midY = roi.y + roi.height / 2;
@@ -609,7 +609,7 @@ function drawCaliperRuler(
 function drawDefectScanGrid(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
 
@@ -646,7 +646,7 @@ function drawDefectScanGrid(
 function drawAreaGateRegion(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const isFailed = status === "fail";
   const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(16, 185, 129, 0.85)";
@@ -669,7 +669,7 @@ function drawAreaGateRegion(
 function drawBlobInspectionRegion(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const isFailed = status === "fail";
   const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(139, 92, 246, 0.85)";
@@ -1629,7 +1629,7 @@ export function VisualToolWorkpieceCanvas({
                 ctx,
                 pocket.region,
                 finalBoxes,
-                pStatus,
+                (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
                 pScore,
                 pBoxResults,
                 isAnalyzeMode,
@@ -1747,7 +1747,7 @@ export function VisualToolWorkpieceCanvas({
                 drawPin1Reticle(
                   ctx,
                   markerRoi,
-                  pStatus,
+                  (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
                   pScore,
                   markerPinCfg,
                   markerResult,
