@@ -2,6 +2,7 @@ import React, { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Menu,
+  X,
   ChevronDown,
   Home,
   FolderKanban,
@@ -263,7 +264,8 @@ export function StandardAppShell({
               <button
                 type="button"
                 data-tour="standard-menu-trigger"
-                className="group flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
+                aria-expanded={isMenuOpen}
+                className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
               >
                 <Menu className="h-3.5 w-3.5 text-cyan-400 transition-transform group-hover:scale-110" />
                 <span>Menu</span>
@@ -273,16 +275,43 @@ export function StandardAppShell({
 
             <DropdownMenuContent
               align="start"
+              collisionPadding={16}
               onPointerDownOutside={(e) => {
                 if (isSimulationRunning && pathname === "/") {
                   e.preventDefault();
+
+                  return;
                 }
+
+                setIsMenuOpen(false);
               }}
-              className="w-56 rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl backdrop-blur-xl z-50 text-slate-200"
+              onEscapeKeyDown={() => {
+                if (isSimulationRunning && pathname === "/") {
+                  return;
+                }
+
+                setIsMenuOpen(false);
+              }}
+              className="w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl backdrop-blur-xl z-50 text-slate-200"
             >
-              <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between">
-                <span>Navigation</span>
-                <span className="text-[9px] text-cyan-400/80 font-mono">Workflows</span>
+              <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate">Navigation</span>
+                <span className="shrink-0 text-[9px] text-cyan-400/80 font-mono">Workflows</span>
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  title="Close menu"
+                  onClick={() => {
+                    if (isSimulationRunning && pathname === "/") {
+                      return;
+                    }
+
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] p-1 text-slate-300 transition hover:border-cyan-400/40 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="my-1 bg-white/10" />
 
@@ -317,17 +346,17 @@ export function StandardAppShell({
                             "border border-amber-300 bg-amber-400/20 text-amber-100 ring-2 ring-amber-300/80 shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-pulse",
                         )}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <ItemIcon
                             className={cn(
-                              "h-3.5 w-3.5",
+                              "h-3.5 w-3.5 shrink-0",
                               isCurrentActive ? "text-cyan-300" : "text-slate-400",
                             )}
                           />
-                          <span>{item.label}</span>
+                          <span className="min-w-0 truncate">{item.label}</span>
                         </div>
                         {isCurrentActive && (
-                          <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
+                          <span className="flex shrink-0 items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                             Active
                           </span>
@@ -359,17 +388,17 @@ export function StandardAppShell({
                             : "text-slate-300 hover:bg-white/10 hover:text-white",
                         )}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <ItemIcon
                             className={cn(
-                              "h-3.5 w-3.5",
+                              "h-3.5 w-3.5 shrink-0",
                               isCurrentActive ? "text-cyan-300" : "text-slate-400",
                             )}
                           />
-                          <span>{item.label}</span>
+                          <span className="min-w-0 truncate">{item.label}</span>
                         </div>
                         {isCurrentActive && (
-                          <span className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
+                          <span className="flex shrink-0 items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-700/60 font-semibold">
                             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                             Active
                           </span>
