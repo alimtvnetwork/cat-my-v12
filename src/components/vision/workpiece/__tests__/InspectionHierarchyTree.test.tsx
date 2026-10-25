@@ -104,8 +104,12 @@ describe("InspectionHierarchyTree", () => {
     expect(screen.getByText(/IC Package \/ Board DUT/i)).toBeTruthy();
     expect(screen.getByText(/IC Loaded/i)).toBeTruthy();
 
-    // Level 2: RuleSet
-    expect(screen.getByText(/RuleSet: Carrier Tape Inspection V1/i)).toBeTruthy();
+    // Level 2: rulesets sit directly under Device, no "Rule Sets" group,
+    // no "RuleSet:" prefix; hovering a ruleset reveals it is a Rule Set.
+    expect(screen.queryByText("Rule Sets")).toBeNull();
+    expect(screen.queryByText(/RuleSet: Carrier Tape Inspection V1/i)).toBeNull();
+    expect(screen.getByText("Carrier Tape Inspection V1")).toBeTruthy();
+    expect(screen.getByText("Rule Set")).toBeTruthy();
 
     // Level 3: Rules with name + catalog tool image + code (no result badges)
     expect(screen.getByText("Pin 1 Orientation Config")).toBeTruthy();
@@ -120,6 +124,31 @@ describe("InspectionHierarchyTree", () => {
     openRuleMenu(0);
     expect(screen.getByText("Camera settings")).toBeTruthy();
     expect(screen.getByText("Light settings")).toBeTruthy();
+  });
+
+  it("lists multiple rulesets directly under the device without a Rule Sets group", () => {
+    const secondRuleset: RuleSet = {
+      id: "rs-2",
+      projectId: "proj-1",
+      name: "Production Quality",
+      rules: [mockRule1],
+    };
+
+    render(
+      <InspectionHierarchyTree
+        project={mockProject}
+        ruleset={mockRuleset}
+        rulesets={[mockRuleset, secondRuleset]}
+        rules={[mockRule1, mockRule2]}
+        selectedRuleId="rule-1"
+        onSelectRule={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Rule Sets")).toBeNull();
+    expect(screen.getByText("Carrier Tape Inspection V1")).toBeTruthy();
+    expect(screen.getByText("Production Quality")).toBeTruthy();
+    expect(screen.getAllByText("Rule Set")).toHaveLength(2);
   });
 
   it("resolves catalog images from rule names when no toolCode is stored", () => {

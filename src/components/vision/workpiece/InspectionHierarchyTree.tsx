@@ -111,7 +111,6 @@ export function InspectionHierarchyTree({
   onUpdateLightSettings,
 }: InspectionHierarchyTreeProps) {
   const [isDeviceOpen, setIsDeviceOpen] = useState(true);
-  const [isRuleSetsOpen, setIsRuleSetsOpen] = useState(true);
   const [openRulesetIds, setOpenRulesetIds] = useState<Record<string, boolean>>({});
   const [openRulesMap, setOpenRulesMap] = useState<Record<string, boolean>>({});
   const [expandedRuleIds, setExpandedRuleIds] = useState<Record<string, boolean>>({});
@@ -207,29 +206,7 @@ export function InspectionHierarchyTree({
 
           {isDeviceOpen ? (
             <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
-              <TreeRow
-                isOpen={isRuleSetsOpen}
-                icon={<FileCode2 size={14} className="shrink-0 text-purple-400" />}
-                title="Rule Sets"
-                meta={`${displayRulesets.length}`}
-                onClick={() => setIsRuleSetsOpen((value) => !value)}
-                action={
-                  onAddRulesetClick ? (
-                    <IconButton
-                      data-tour="project-add-ruleset"
-                      title="Add ruleset"
-                      onClick={onAddRulesetClick}
-                      className="hover:text-purple-300"
-                    >
-                      <Plus size={11} />
-                    </IconButton>
-                  ) : null
-                }
-              />
-
-              {isRuleSetsOpen ? (
-                <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
-                  {displayRulesets.map((rs) => {
+              {displayRulesets.map((rs) => {
                     const isActiveRuleset = rs.id === ruleset?.id;
                     const isRulesetOpen = openRulesetIds[rs.id] ?? true;
                     const isRulesListOpen = openRulesMap[rs.id] ?? true;
@@ -238,6 +215,7 @@ export function InspectionHierarchyTree({
                     return (
                       <div key={rs.id} className="space-y-0.5">
                         <div
+                          title={`Rule Set: ${rs.name}`}
                           className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
                             isActiveRuleset
                               ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
@@ -275,13 +253,16 @@ export function InspectionHierarchyTree({
                           </IconButton>
                           <FileCode2 size={13} className="shrink-0 text-purple-400" />
                           <div className="min-w-0 flex-1 truncate text-xs font-semibold">
-                            <span>RuleSet: {rs.name}</span>
+                            <span>{rs.name}</span>
                             {rs.categoryName ? (
                               <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
                                 ({rs.categoryName})
                               </span>
                             ) : null}
                           </div>
+                          <span className="hidden shrink-0 rounded border border-purple-400/40 bg-purple-500/15 px-1 py-0.2 text-[9px] font-medium text-purple-200 group-hover:inline-flex">
+                            Rule Set
+                          </span>
                           <div className="flex shrink-0 items-center gap-1">
                             <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
                               {rs.rules?.length ?? 0}
@@ -376,8 +357,6 @@ export function InspectionHierarchyTree({
                       </div>
                     );
                   })}
-                </div>
-              ) : null}
             </div>
           ) : null}
         </div>
@@ -387,6 +366,7 @@ export function InspectionHierarchyTree({
           {onAddRulesetClick ? (
             <button
               type="button"
+              data-tour="project-add-ruleset"
               onClick={onAddRulesetClick}
               className="rounded border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs font-semibold text-white transition hover:border-purple-400/50 hover:bg-purple-500/15"
             >
