@@ -22,6 +22,7 @@ import { StandardGreyscalePatternMatchingTool } from "./StandardGreyscalePattern
 import { StandardGreyscaleSimulationTool } from "./StandardGreyscaleSimulationTool";
 import { StandardPin1ConfigTool } from "./StandardPin1ConfigTool";
 import { StandardDefectMatchingTool } from "./StandardDefectMatchingTool";
+import { StandardMathSandboxTool } from "./StandardMathSandboxTool";
 
 export interface StandardInspectionToolDispatcherProps {
   toolType?: string;
@@ -366,6 +367,25 @@ export function StandardInspectionToolDispatcher(
 
   if (isCodeReader) {
     return <StandardCodeReaderTool {...props} />;
+  }
+
+  // Phase 6: M301 Math Sandbox & Execution Gating
+  const isMathSandbox =
+    toolCode === "M301" ||
+    toolCode === "M302" ||
+    props.toolType === "math" ||
+    props.toolType === "sandbox" ||
+    props.toolType === "gating" ||
+    combined.includes("m301") ||
+    combined.includes("m302") ||
+    combined.includes("math") ||
+    combined.includes("sandbox") ||
+    combined.includes("custom function") ||
+    combined.includes("formula") ||
+    combined.includes("gating");
+
+  if (isMathSandbox) {
+    return <StandardMathSandboxTool {...props} />;
   }
 
   // Default Fallback: Standard Pattern Search
