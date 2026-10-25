@@ -59,6 +59,14 @@ import type {
   CircleGaugePolarityType,
   EvaluateCircleGaugeParams,
 } from "@/domain/vision/circle-gauge-types";
+import type {
+  AnalyzeCoatingParams,
+  CieLabColor,
+  CoatingInspectionModeType,
+  ConformalCoatingResult,
+  EvaluateConformalCoatingParams,
+  UvTracerChannelType,
+} from "@/domain/vision/conformal-coating-types";
 import {
   computeCaliperMetrics,
   extractSubPixelEdges,
@@ -66,6 +74,11 @@ import {
 import {
   computeCircleGaugeMetrics,
 } from "./algorithms/circle-fit";
+import {
+  analyzeConformalCoating,
+  computeDeltaE,
+  srgbToCieLab,
+} from "./algorithms/color-and-coating";
 import {
   findConnectedBlobs,
   type ConnectedBlob,
@@ -80,6 +93,7 @@ export {
   type EvaluateAreaGateParams,
   type EvaluateCaliperParams,
   type EvaluateCircleGaugeParams,
+  type EvaluateConformalCoatingParams,
 };
 
 export interface ContainedDimensions {
@@ -2811,6 +2825,127 @@ export function evaluateCircleGaugeRule(
   };
 }
 
+export function evaluateConformalCoatingRule(
+  ruleOrParams: EditorRule | EvaluateConformalCoatingParams,
+  maybeImageData?: WorkpieceImageData,
+  maybeOpticalContext?: string,
+): ValidationResult {
+  const isParamStruct = "rule" in ruleOrParams;
+  const rule = isParamStruct
+    ? (ruleOrParams as EvaluateConformalCoatingParams).rule
+    : (ruleOrParams as EditorRule);
+  const imageData = isParamStruct
+    ? (ruleOrParams as EvaluateConformalCoatingParams).imageData
+    : maybeImageData;
+  const opticalContext = isParamStruct
+    ? ((ruleOrParams as EvaluateConformalCoatingParams).opticalContext ?? "Conformal Coating & Color")
+    : (maybeOpticalContext ?? "Conformal Coating & Color");
+
+  if (!imageData) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Image data unavailable for conformal coating evaluation. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const roi = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  if (roi.width <= 2 || roi.height <= 2) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid coating inspection ROI geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const inspectionMode =
+    (params.inspectionMode as CoatingInspectionModeType) ?? "uv-fluorescence";
+  const uvChannel = (params.uvChannel as UvTracerChannelType) ?? "uv-blue";
+  const fluorescenceThreshold = Number(params.fluorescenceThreshold ?? 110);
+  const minCoveragePct = Number(params.minCoveragePct ?? 95);
+  const maxDeltaE = Number(params.maxDeltaE ?? 5.0);
+  const maxAllowedVoids = Number(params.maxAllowedVoids ?? 0);
+  const targetLab = (params.targetLab as CieLabColor) ?? { l: 60, a: -10, b: 35 };
+
+  const result = analyzeConformalCoating({
+    imageData,
+    roi,
+    inspectionMode,
+    uvChannel,
+    fluorescenceThreshold,
+    minCoveragePct,
+    maxDeltaE,
+    targetLab,
+    maxAllowedVoids,
+  });
+
+  if (!result.hasValidMeasurement) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `Conformal coating inspection failed: unable to sample pixels in ROI. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, params, result },
+    };
+  }
+
+  if (result.isPass) {
+    const successMsg =
+      inspectionMode === "keep-out-zone"
+        ? `Keep-out zone verified clear (coating breach: ${result.coveragePct}%). ${opticalContext}: PASS.`
+        : inspectionMode === "cie-lab-color"
+          ? `CIE Lab color match pass: Delta E = ${result.deltaE.toFixed(1)} (limit: <= ${maxDeltaE}), coverage: ${result.coveragePct}%. ${opticalContext}: PASS.`
+          : `Conformal coating coverage pass: ${result.coveragePct}% (min: ${minCoveragePct}%), 0 prohibited voids. ${opticalContext}: PASS.`;
+
+    return {
+      status: ValidationStatusType.Pass,
+      score: 0.97,
+      message: successMsg,
+      stub: false,
+      debug: {
+        roi,
+        result,
+        coveragePct: result.coveragePct,
+        deltaE: result.deltaE,
+        uncoatedVoidCount: result.uncoatedVoidCount,
+        meanLuma: result.meanLuma,
+      },
+    };
+  }
+
+  const failReason =
+    inspectionMode === "keep-out-zone"
+      ? `keep-out zone breach: ${result.coveragePct}% coating detected in prohibited zone`
+      : inspectionMode === "cie-lab-color"
+        ? `color difference Delta E = ${result.deltaE.toFixed(1)} exceeds limit ${maxDeltaE}`
+        : result.coveragePct < minCoveragePct
+          ? `coverage ${result.coveragePct}% below minimum requirement ${minCoveragePct}%`
+          : `detected ${result.uncoatedVoidCount} uncoated voids (max allowed: ${maxAllowedVoids})`;
+
+  return {
+    status: ValidationStatusType.Fail,
+    score: 0.25,
+    message: `Conformal coating rejected: ${failReason}. ${opticalContext}: FAIL.`,
+    stub: false,
+    debug: {
+      roi,
+      result,
+      coveragePct: result.coveragePct,
+      deltaE: result.deltaE,
+      uncoatedVoidCount: result.uncoatedVoidCount,
+    },
+  };
+}
+
 export function evaluateGeneralFeatureRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -2980,6 +3115,18 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("roundness")
   ) {
     return evaluateCircleGaugeRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T112" ||
+    ruleNameLower.includes("coating") ||
+    ruleNameLower.includes("conformal") ||
+    ruleNameLower.includes("fluorescence") ||
+    ruleNameLower.includes("cie") ||
+    ruleNameLower.includes("color distance") ||
+    ruleNameLower.includes("delta e")
+  ) {
+    return evaluateConformalCoatingRule(rule, imageData, opticalContext);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);
