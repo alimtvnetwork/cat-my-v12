@@ -96,6 +96,7 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("pin1") ||
     normalized.includes("pin 1") ||
     normalized.includes("pin-1") ||
+    normalized.includes("orientation") ||
     (props.settings as any)?.type === "pin1_config" ||
     Boolean((props.settings as any)?.pin1Config);
 
@@ -160,7 +161,8 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("edge") ||
     normalized.includes("position") ||
     normalized.includes("pin") ||
-    normalized.includes("line")
+    normalized.includes("line") ||
+    normalized.includes("lead")
   ) {
     return <StandardEdgePositionTool {...props} />;
   }
@@ -170,7 +172,8 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("defect") ||
     normalized.includes("scratch") ||
     normalized.includes("flaw") ||
-    normalized.includes("stain")
+    normalized.includes("stain") ||
+    normalized.includes("crack")
   ) {
     return <StandardDefectTool {...props} />;
   }
@@ -193,7 +196,9 @@ export function StandardInspectionToolDispatcher(
   if (
     normalized.includes("blob") ||
     normalized.includes("particle") ||
-    normalized.includes("count")
+    normalized.includes("count") ||
+    normalized.includes("bridge") ||
+    normalized.includes("short")
   ) {
     return <StandardBlobTool {...props} />;
   }
@@ -214,7 +219,9 @@ export function StandardInspectionToolDispatcher(
     normalized.includes("text") ||
     normalized.includes("font") ||
     normalized.includes("char") ||
-    normalized.includes("string")
+    normalized.includes("string") ||
+    normalized.includes("marking") ||
+    normalized.includes("lot")
   ) {
     return <StandardOcr2Tool {...props} />;
   }

@@ -40,6 +40,20 @@ import {
   type CarrierTapePocket,
   type TapeSegmentationResult,
 } from "./carrier-tape-segmenter";
+import {
+  evaluateCaliper,
+  evaluateEdgeCount,
+  type EdgePolarity,
+  type MeasurementMode,
+  type ScanDirection,
+} from "./tools/edge-caliper";
+import {
+  analyzeBinaryBlobs,
+  analyzeScratchesCracks,
+  analyzeVoidPorosity,
+} from "./tools/flaw-blob-void";
+import { measureCircleGauge } from "./tools/circle-gauge";
+import { evaluateConformalCoating, type RgbPixel } from "./tools/coating-ocr";
 
 export {
   defaultWorkpieceFilledSample,
@@ -1580,6 +1594,62 @@ export function evaluatePin1Rule(
   };
 }
 
+/** Crop a rule ROI to a row-major luminance array (Rec. 601). */
+function extractRoiLuma(
+  imageData: WorkpieceImageData,
+  region: SearchRegion,
+): { width: number; height: number; data: number[] } {
+  const startX = Math.max(0, region.x);
+  const startY = Math.max(0, region.y);
+  const endX = Math.min(imageData.width, region.x + region.width);
+  const endY = Math.min(imageData.height, region.y + region.height);
+  const width = Math.max(0, endX - startX);
+  const height = Math.max(0, endY - startY);
+  const data: number[] = [];
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const idx = (y * imageData.width + x) * 4;
+
+      data.push(
+        0.299 * imageData.rgba[idx] +
+          0.587 * imageData.rgba[idx + 1] +
+          0.114 * imageData.rgba[idx + 2],
+      );
+    }
+  }
+
+  return { width, height, data };
+}
+
+/** Crop a rule ROI to RGB pixels for the conformal-coating UV signal. */
+function extractRoiRgb(
+  imageData: WorkpieceImageData,
+  region: SearchRegion,
+): { width: number; height: number; pixels: RgbPixel[] } {
+  const startX = Math.max(0, region.x);
+  const startY = Math.max(0, region.y);
+  const endX = Math.min(imageData.width, region.x + region.width);
+  const endY = Math.min(imageData.height, region.y + region.height);
+  const width = Math.max(0, endX - startX);
+  const height = Math.max(0, endY - startY);
+  const pixels: RgbPixel[] = [];
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const idx = (y * imageData.width + x) * 4;
+
+      pixels.push({
+        r: imageData.rgba[idx],
+        g: imageData.rgba[idx + 1],
+        b: imageData.rgba[idx + 2],
+      });
+    }
+  }
+
+  return { width, height, pixels };
+}
+
 export function evaluateDefectRule(
   rule: EditorRule,
   imageData: WorkpieceImageData,
@@ -1652,17 +1722,89 @@ export function evaluateDefectRule(
     };
   }
 
+  const toolCode = String(rule.params?.toolCode || "").toUpperCase();
+  const roi = extractRoiLuma(imageData, searchRegion);
+
+  if (roi.width === 0 || roi.height === 0) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid defect search geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  if (toolCode === "T109" || ruleNameIsBlob(rule)) {
+    const result = analyzeBinaryBlobs(roi, {
+      binarizeThreshold: Number(rule.params?.binarizeThreshold ?? 140),
+      minDefectAreaPx: Number(rule.params?.minDefectAreaPx ?? 15),
+      maxAllowedDefects: Number(rule.params?.maxAllowedDefects ?? 0),
+    });
+
+    return {
+      status: result.pass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+      score: result.pass ? 0.98 : 0.1,
+      message: `Binary blob scan: ${result.blobCount} blob(s), ${result.totalBlobArea}px total, max allowed ${Number(rule.params?.maxAllowedDefects ?? 0)}. ${opticalContext}: ${result.pass ? "PASS" : "FAIL"}.`,
+      stub: false,
+      debug: {
+        blobCount: result.blobCount,
+        totalBlobArea: result.totalBlobArea,
+        blobs: result.blobs,
+      },
+    };
+  }
+
+  if (toolCode === "T108") {
+    const result = analyzeVoidPorosity(
+      roi,
+      { x: 0, y: 0, width: roi.width, height: roi.height },
+      {
+        minVoidAreaPx: Number(rule.params?.minVoidAreaPx ?? 5),
+        maxTotalVoidPct: Number(rule.params?.maxTotalVoidPct ?? 25),
+        maxSingleVoidPct: Number(rule.params?.maxSingleVoidPct ?? 15),
+      },
+    );
+
+    return {
+      status: result.pass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+      score: result.pass ? 0.98 : 0.1,
+      message: `Void scan: total ${result.totalVoidPct.toFixed(1)}%, largest single ${result.maxSingleVoidPct.toFixed(1)}%, ${result.voidCount} void(s). ${opticalContext}: ${result.pass ? "PASS" : "FAIL"}.`,
+      stub: false,
+      debug: {
+        totalVoidPct: result.totalVoidPct,
+        maxSingleVoidPct: result.maxSingleVoidPct,
+        voidCount: result.voidCount,
+        padAreaPx: result.padAreaPx,
+      },
+    };
+  }
+
+  const scratch = analyzeScratchesCracks(roi, {
+    gradientThreshold: Number(rule.params?.gradientThreshold ?? 45),
+    minCrackLengthPx: Number(rule.params?.minCrackLengthPx ?? 12),
+    maxAllowedDefects: Number(rule.params?.maxAllowedDefects ?? 0),
+  });
+
   return {
-    status: ValidationStatusType.Pass,
-    score: 0.98,
-    message: `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. Zero critical defects detected. ${opticalContext}: PASS.`,
+    status: scratch.pass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: scratch.pass ? 0.98 : 0.1,
+    message: `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. ${scratch.defectCount} critical defect(s), longest ${scratch.maxCrackLengthPx.toFixed(1)}px. ${opticalContext}: ${scratch.pass ? "PASS" : "FAIL"}.`,
     stub: false,
     debug: {
       meanLuma,
       stdDev,
       whiteBoxCount: whiteMarks.boxes.length,
+      defectCount: scratch.defectCount,
+      maxCrackLengthPx: scratch.maxCrackLengthPx,
+      defects: scratch.defects,
     },
   };
+}
+
+function ruleNameIsBlob(rule: EditorRule): boolean {
+  const name = (rule.name || "").toLowerCase();
+
+  return name.includes("blob") || name.includes("bridge") || name.includes("short");
 }
 
 export function evaluateCaliperRule(
@@ -1677,66 +1819,184 @@ export function evaluateCaliperRule(
     height: Math.round(rule.height),
   };
 
-  const startX = Math.max(0, searchRegion.x);
-  const startY = Math.max(0, searchRegion.y);
-  const endX = Math.min(imageData.width, searchRegion.x + searchRegion.width);
-  const endY = Math.min(imageData.height, searchRegion.y + searchRegion.height);
-  const regionH = Math.max(1, endY - startY);
+  const roi = extractRoiLuma(imageData, searchRegion);
+  const edgeResult = evaluateEdgeCount({
+    luminance: roi.data,
+    width: roi.width,
+    height: roi.height,
+    scanDirection: rule.params?.measurementAxis === "vertical" ? "vertical" : "horizontal",
+    edgePolarity: "both",
+    minEdgeContrast: 6,
+    filterWidth: 3,
+    expectedCount: 0,
+  });
+  const caliper = evaluateCaliper({
+    edgePositions: edgeResult.positions,
+    nominalDimensionMm: Number(rule.params?.nominalDimensionMm ?? 0.5),
+    lowerToleranceMm: Number(rule.params?.lowerToleranceMm ?? -0.05),
+    upperToleranceMm: Number(rule.params?.upperToleranceMm ?? 0.05),
+    pxToMetricRatio: Number(rule.params?.pxToMetricRatio ?? 0.025),
+    measurementMode: (rule.params?.measurementMode as MeasurementMode) ?? "pitch",
+  });
+  const measuredMm =
+    caliper.measurementMode === "width" ? caliper.measuredWidthMm : caliper.meanPitchMm;
 
-  const colLumas: number[] = [];
-
-  for (let x = startX; x < endX; x += 1) {
-    let sum = 0;
-
-    for (let y = startY; y < endY; y += 1) {
-      const idx = (y * imageData.width + x) * 4;
-      const luma =
-        0.299 * imageData.rgba[idx] +
-        0.587 * imageData.rgba[idx + 1] +
-        0.114 * imageData.rgba[idx + 2];
-
-      sum += luma;
-    }
-
-    colLumas.push(sum / regionH);
-  }
-
-  const grads: number[] = [];
-
-  for (let i = 1; i < colLumas.length - 1; i += 1) {
-    grads.push(Math.abs(colLumas[i + 1] - colLumas[i - 1]));
-  }
-
-  const maxGrad = grads.length > 0 ? Math.max(...grads) : 0;
-  const tolerancePx = Number(rule.params?.tolerancePx ?? 15);
-  const nominalPx = Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
-  const avgRegionLuma = colLumas.reduce((a, b) => a + b, 0) / Math.max(1, colLumas.length);
-
-  const hasEdges = maxGrad >= 6.0 && avgRegionLuma >= 35;
-
-  if (!hasEdges) {
+  if (edgeResult.edgeCount < 2) {
     return {
       status: ValidationStatusType.Fail,
       score: 0.1,
-      message: `Caliper edge detection failed: no stable workpiece edge transitions found in ROI (peak gradient: ${maxGrad.toFixed(1)}). ${opticalContext}: FAIL.`,
+      message: `Caliper edge detection failed: only ${edgeResult.edgeCount} edge(s) found in ROI (peak gradient: ${edgeResult.maxGradient.toFixed(1)}). ${opticalContext}: FAIL.`,
       stub: false,
       debug: {
-        maxGrad,
-        nominalPx,
-        tolerancePx,
+        edgeCount: edgeResult.edgeCount,
+        maxGrad: edgeResult.maxGradient,
+        measuredWidthMm: caliper.measuredWidthMm,
+        nominalWidthMm: caliper.nominalWidthMm,
+        toleranceMm: caliper.toleranceMm,
+        jitterStdDevMm: caliper.jitterStdDevMm,
+        edgePairs: caliper.edgePairs,
       },
     };
   }
 
   return {
-    status: ValidationStatusType.Pass,
-    score: 0.96,
-    message: `Caliper dimension within nominal tolerance ±${tolerancePx}px (edge gradient: ${maxGrad.toFixed(1)}). ${opticalContext}: PASS.`,
+    status: caliper.passed ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: caliper.passed ? 0.96 : 0.1,
+    message: `Caliper ${caliper.measurementMode}: ${measuredMm.toFixed(3)}mm vs nominal ${caliper.nominalWidthMm}mm ±${caliper.toleranceMm}mm, jitter ${caliper.jitterStdDevMm.toFixed(4)}mm. ${opticalContext}: ${caliper.passed ? "PASS" : "FAIL"}.`,
     stub: false,
     debug: {
-      maxGrad,
-      nominalPx,
-      tolerancePx,
+      edgeCount: edgeResult.edgeCount,
+      maxGrad: edgeResult.maxGradient,
+      measuredWidthMm: caliper.measuredWidthMm,
+      nominalWidthMm: caliper.nominalWidthMm,
+      toleranceMm: caliper.toleranceMm,
+      jitterStdDevMm: caliper.jitterStdDevMm,
+      edgePairs: caliper.edgePairs,
+    },
+  };
+}
+
+export function evaluateEdgeCountRule(
+  rule: EditorRule,
+  imageData: WorkpieceImageData,
+  opticalContext: string,
+): ValidationResult {
+  const searchRegion: SearchRegion = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+  const roi = extractRoiLuma(imageData, searchRegion);
+  const result = evaluateEdgeCount({
+    luminance: roi.data,
+    width: roi.width,
+    height: roi.height,
+    scanDirection: (rule.params?.scanDirection as ScanDirection) ?? "horizontal",
+    edgePolarity: (rule.params?.edgePolarity as EdgePolarity) ?? "both",
+    minEdgeContrast: Number(rule.params?.minEdgeContrast ?? 35),
+    filterWidth: Number(rule.params?.filterWidth ?? 3),
+    expectedCount: Number(rule.params?.expectedCount ?? 16),
+  });
+
+  return {
+    status: result.passed ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: result.passed ? 0.96 : 0.1,
+    message: `Edge count: ${result.edgeCount} detected, ${result.expectedCount} expected (peak gradient: ${result.maxGradient.toFixed(1)}). ${opticalContext}: ${result.passed ? "PASS" : "FAIL"}.`,
+    stub: false,
+    debug: {
+      edgeCount: result.edgeCount,
+      maxGradient: result.maxGradient,
+      edges: result.edges,
+    },
+  };
+}
+
+export function evaluateCircleGaugeRule(
+  rule: EditorRule,
+  imageData: WorkpieceImageData,
+  opticalContext: string,
+): ValidationResult {
+  const searchRegion: SearchRegion = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+  const roi = extractRoiLuma(imageData, searchRegion);
+  const result = measureCircleGauge(roi.data, roi.width, roi.height, {
+    center: { x: roi.width / 2, y: roi.height / 2 },
+    searchRadiusPx: Math.max(1, Math.min(roi.width, roi.height) / 2),
+    nominalDiameterMm: Number(rule.params?.nominalDiameterMm ?? 1.2),
+    diameterToleranceMm: Number(rule.params?.diameterToleranceMm ?? 0.08),
+    minRoundnessScorePct: Number(rule.params?.minRoundnessScorePct ?? 85),
+    rayCount: Number(rule.params?.rayCount ?? 64),
+    edgePolarity:
+      (rule.params?.edgePolarity as "dark-to-light" | "light-to-dark" | "both") ?? "dark-to-light",
+    mmPerPx: Number(rule.params?.pxToMetricRatio ?? 0.025),
+  });
+
+  return {
+    status: result.passed ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: result.passed ? 0.96 : 0.1,
+    message: `Circle gauge: diameter ${result.measuredDiameterMm.toFixed(3)}mm, roundness ${result.roundnessScorePct.toFixed(1)}%, ${result.inlierCount}/${result.totalRayCount} rays inlier. ${opticalContext}: ${result.passed ? "PASS" : "FAIL"}.`,
+    stub: false,
+    debug: {
+      measuredDiameterMm: result.measuredDiameterMm,
+      roundnessScorePct: result.roundnessScorePct,
+      inlierCount: result.inlierCount,
+      totalRayCount: result.totalRayCount,
+      fittedCenter: result.fittedCenter,
+    },
+  };
+}
+
+export function evaluateCoatingRule(
+  rule: EditorRule,
+  imageData: WorkpieceImageData,
+  opticalContext: string,
+): ValidationResult {
+  const searchRegion: SearchRegion = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+  const roi = extractRoiRgb(imageData, searchRegion);
+  const targetLab =
+    rule.params?.targetLab && typeof rule.params.targetLab === "object"
+      ? (rule.params.targetLab as { l: number; a: number; b: number })
+      : { l: 100, a: 0, b: 0 };
+  const result = evaluateConformalCoating({
+    pixels: roi.pixels,
+    width: roi.width,
+    height: roi.height,
+    params: {
+      fluorescenceThreshold: Number(rule.params?.fluorescenceThreshold ?? 110),
+      minCoveragePct: Number(rule.params?.minCoveragePct ?? 95),
+      maxDeltaE: Number(rule.params?.maxDeltaE ?? 5),
+      targetLab,
+    },
+  });
+  const maxAllowedVoids = Number(rule.params?.maxAllowedVoids ?? 0);
+  const deltaEGated = rule.params?.targetLab !== undefined;
+  const passed =
+    result.coveragePct >= Number(rule.params?.minCoveragePct ?? 95) &&
+    result.keepOutBreaches === 0 &&
+    result.uncoatedVoidCount <= maxAllowedVoids &&
+    (!deltaEGated || result.deltaE <= Number(rule.params?.maxDeltaE ?? 5));
+
+  return {
+    status: passed ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+    score: passed ? 0.96 : 0.1,
+    message: `Conformal coating: coverage ${result.coveragePct.toFixed(1)}%, ΔE ${result.deltaE.toFixed(2)}${deltaEGated ? "" : " (vs white reference; no target Lab configured)"}, ${result.uncoatedVoidCount} uncoated void(s), ${result.keepOutBreaches} keep-out breach(es). ${opticalContext}: ${passed ? "PASS" : "FAIL"}.`,
+    stub: false,
+    debug: {
+      coveragePct: result.coveragePct,
+      deltaE: result.deltaE,
+      uncoatedVoidCount: result.uncoatedVoidCount,
+      measuredLab: result.measuredLab,
+      keepOutBreaches: result.keepOutBreaches,
     },
   };
 }
@@ -1761,6 +2021,10 @@ export function evaluateAreaGateRule(
       Math.max(30000, rule.width * rule.height * 0.9),
   );
   const isBrightOnDark = rule.params?.presencePolarity !== "darkOnBright";
+  const isBothPolarity =
+    rule.params?.presencePolarity === "both" ||
+    rule.params?.presencePolarity === "bothOnDark" ||
+    rule.params?.presencePolarity === "bothOnLight";
 
   let activePixels = 0;
   const startX = Math.max(0, searchRegion.x);
@@ -1776,7 +2040,11 @@ export function evaluateAreaGateRule(
         0.587 * imageData.rgba[idx + 1] +
         0.114 * imageData.rgba[idx + 2];
 
-      const isActive = isBrightOnDark ? luma >= thresh : luma <= thresh;
+      const isActive = isBothPolarity
+        ? Math.abs(luma - 128) >= Math.abs(thresh - 128)
+        : isBrightOnDark
+          ? luma >= thresh
+          : luma <= thresh;
 
       if (isActive) {
         activePixels += 1;
@@ -1785,6 +2053,10 @@ export function evaluateAreaGateRule(
   }
 
   const isAreaPass = activePixels >= minArea && activePixels <= maxArea;
+  const totalRoiPixels = Math.max(1, (endX - startX) * (endY - startY));
+  const coveragePct = (activePixels / totalRoiPixels) * 100;
+  const umPerPixel = Number(rule.params?.umPerPixel ?? 10.0);
+  const physicalAreaMm2 = activePixels * Math.pow(umPerPixel / 1000, 2);
 
   if (isAreaPass) {
     return {
@@ -1792,7 +2064,7 @@ export function evaluateAreaGateRule(
       score: 0.95,
       message: `Area gate confirmed: ${activePixels}px within limits [${minArea}px..${maxArea}px]. ${opticalContext}: PASS.`,
       stub: false,
-      debug: { activePixels, minArea, maxArea },
+      debug: { activePixels, totalRoiPixels, coveragePct, physicalAreaMm2, minArea, maxArea },
     };
   }
 
@@ -1801,7 +2073,7 @@ export function evaluateAreaGateRule(
     score: Math.max(0, Math.min(1.0, activePixels / Math.max(1, minArea))),
     message: `Area gate violation: detected ${activePixels}px outside allowed limits [${minArea}px..${maxArea}px]. ${opticalContext}: FAIL.`,
     stub: false,
-    debug: { activePixels, minArea, maxArea },
+    debug: { activePixels, totalRoiPixels, coveragePct, physicalAreaMm2, minArea, maxArea },
   };
 }
 
@@ -1920,14 +2192,37 @@ export function evaluateWorkpieceRuleReal(
     ruleNameLower.includes("defect") ||
     ruleNameLower.includes("flaw") ||
     ruleNameLower.includes("scratch") ||
+    ruleNameLower.includes("crack") ||
+    ruleNameLower.includes("void") ||
+    ruleNameLower.includes("porosity") ||
     ruleNameLower.includes("blob")
   ) {
     return evaluateDefectRule(rule, imageData, opticalContext);
   }
 
+  if (toolCode === "T104" || ruleNameLower.includes("edge count")) {
+    return evaluateEdgeCountRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T111" ||
+    ruleNameLower.includes("circle") ||
+    ruleNameLower.includes("via") ||
+    ruleNameLower.includes("drill")
+  ) {
+    return evaluateCircleGaugeRule(rule, imageData, opticalContext);
+  }
+
+  if (
+    toolCode === "T112" ||
+    ruleNameLower.includes("coating") ||
+    ruleNameLower.includes("conformal")
+  ) {
+    return evaluateCoatingRule(rule, imageData, opticalContext);
+  }
+
   if (
     toolCode === "T110" ||
-    toolCode === "T104" ||
     ruleNameLower.includes("caliper") ||
     ruleNameLower.includes("pitch") ||
     ruleNameLower.includes("dimension") ||
