@@ -20,7 +20,9 @@ export interface ConformalCoatingToolPanelProps {
   meanRgb: RgbColor;
   meanLab: CieLabColor;
   uncoatedVoidCount: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   toolCode?: string;
   actionButtonLabel?: string;
@@ -96,7 +98,11 @@ export function ConformalCoatingToolPanel(
                 />
               )}
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                {isKoz ? "Keep-Out Zone Check" : isColor ? "CIE Lab Color Match" : "UV Tracer Coverage"}
+                {isKoz
+                  ? "Keep-Out Zone Check"
+                  : isColor
+                    ? "CIE Lab Color Match"
+                    : "UV Tracer Coverage"}
               </span>
             </div>
             <span
@@ -148,7 +154,8 @@ export function ConformalCoatingToolPanel(
                   }}
                 />
                 <span>
-                  L*={props.meanLab.l.toFixed(0)} a*={props.meanLab.a.toFixed(0)} b*={props.meanLab.b.toFixed(0)}
+                  L*={props.meanLab.l.toFixed(0)} a*={props.meanLab.a.toFixed(0)} b*=
+                  {props.meanLab.b.toFixed(0)}
                 </span>
               </div>
             </div>
@@ -156,7 +163,8 @@ export function ConformalCoatingToolPanel(
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Position coating ROI and click &quot;Process Rule&quot; to inspect UV fluorescence and CIE Lab color.
+              Position coating ROI and click &quot;Process Rule&quot; to inspect UV fluorescence and
+              CIE Lab color.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">

@@ -48,14 +48,49 @@ export interface StandardOcr2ToolProps {
  * the actions. This fixes the broken StandardCanvas image display.
  */
 export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Element {
-  const [fontFamily, setFontFamily] = useState<OcrFontFamilyType>(OcrFontFamilyType.StandardSans);
-  const [characterCount, setCharacterCount] = useState<number | null>(OCR_DEFAULT_CHARACTER_COUNT);
-  const [expectedFormat, setExpectedFormat] = useState<string>(OCR_DEFAULT_EXPECTED_FORMAT);
-  const [minConfidence, setMinConfidence] = useState<number>(OCR_DEFAULT_MIN_CONFIDENCE);
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
+  const initialFontFamily =
+    typeof initialParams.fontType === "string" &&
+    (Object.values(OcrFontFamilyType) as string[]).includes(initialParams.fontType)
+      ? (initialParams.fontType as OcrFontFamilyType)
+      : OcrFontFamilyType.StandardSans;
+  const [fontFamily, setFontFamily] = useState<OcrFontFamilyType>(initialFontFamily);
+  const [characterCount, setCharacterCount] = useState<number | null>(
+    typeof initialParams.expectedCharacterCount === "number"
+      ? (initialParams.expectedCharacterCount as number)
+      : typeof initialParams.characterCount === "number"
+        ? (initialParams.characterCount as number)
+        : OCR_DEFAULT_CHARACTER_COUNT,
+  );
+  const [expectedFormat, setExpectedFormat] = useState<string>(
+    typeof initialParams.expectedFormat === "string"
+      ? (initialParams.expectedFormat as string)
+      : typeof initialParams.expectedString === "string"
+        ? (initialParams.expectedString as string)
+        : OCR_DEFAULT_EXPECTED_FORMAT,
+  );
+  const [minConfidence, setMinConfidence] = useState<number>(
+    typeof initialParams.minConfidencePct === "number"
+      ? (initialParams.minConfidencePct as number)
+      : typeof initialParams.minConfidence === "number"
+        ? (initialParams.minConfidence as number)
+        : OCR_DEFAULT_MIN_CONFIDENCE,
+  );
   const [ocrRunning, setOcrRunning] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrJudgment, setOcrJudgment] = useState<OcrJudgment | null>(null);
-  const [textRegion, setTextRegion] = useState({ x: 50, y: 50, width: 200, height: 150 });
+  const [textRegion, setTextRegion] = useState(() => {
+    const saved = initialParams.textRegion as
+      | { x?: number; y?: number; width?: number; height?: number }
+      | undefined;
+
+    return {
+      x: typeof saved?.x === "number" ? Math.round(saved.x) : 50,
+      y: typeof saved?.y === "number" ? Math.round(saved.y) : 50,
+      width: typeof saved?.width === "number" ? Math.max(1, Math.round(saved.width)) : 200,
+      height: typeof saved?.height === "number" ? Math.max(1, Math.round(saved.height)) : 150,
+    };
+  });
   const [source, setSource] = useState<WhiteBoxMarkingInput | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>("region");
   const [message, setMessage] = useState<string>("");
@@ -196,6 +231,54 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
       setOcrRunning(false);
     }
   };
+
+  // Apply = rule creation. Previously the OK button called onOk with
+  // NO onChange at all, so the OCR settings on screen were never saved
+  // to the rule. It now writes TEACH params only: the expected text /
+  // format, the confidence gate (under both the catalog key
+  // minConfidencePct and the legacy minConfidence key), the font type,
+  // and the character count, plus the text region (absolute teach-image
+  // pixels, kept for legacy rules) and its region-relative copy. The
+  // preview recognition result (recognized text, mean confidence,
+  // pass/fail) is deliberately NOT written: the analyzer re-recognizes
+  // on every analysis image. expectedString is written only when the
+  // format value is a plain literal (no regex metacharacters): that is
+  // what activates the analyzer's exact-string (Levenshtein) path. A
+  // regex-style format is stored as expectedFormat only, so it keeps
+  // taking the legacy regex path instead of being misread as literal
+  // text. The toolCode is left untouched (the dispatcher routes both
+  // T106 and T114 here).
+  const handleApply = useCallback(() => {
+    const format = expectedFormat.trim();
+    const isPlainLiteral = format.length > 0 && !/[.^$*+?()[\]{}|\\]/.test(format);
+    const searchGeometry = props.settings.searchRegion?.geometry;
+    const textRegionRelativeToSearchRegion =
+      searchGeometry && typeof searchGeometry.x === "number" && typeof searchGeometry.y === "number"
+        ? {
+            x: textRegion.x - searchGeometry.x,
+            y: textRegion.y - searchGeometry.y,
+            width: textRegion.width,
+            height: textRegion.height,
+          }
+        : undefined;
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        expectedFormat: format,
+        ...(isPlainLiteral ? { expectedString: format } : {}),
+        minConfidencePct: minConfidence,
+        minConfidence,
+        fontType: fontFamily,
+        characterCount,
+        expectedCharacterCount: characterCount,
+        textRegion,
+        ...(textRegionRelativeToSearchRegion ? { textRegionRelativeToSearchRegion } : {}),
+      },
+    }));
+    props.onOk?.();
+  }, [expectedFormat, minConfidence, fontFamily, characterCount, textRegion, props]);
 
   const tabs = [
     { id: "region", label: "Text Reading Region" },
@@ -477,7 +560,7 @@ export function StandardOcr2Tool(props: StandardOcr2ToolProps): React.JSX.Elemen
             </button>
             <button
               type="button"
-              onClick={() => props.onOk?.()}
+              onClick={handleApply}
               className="rounded bg-[#00ff9d] px-6 py-1.5 text-xs font-bold uppercase text-black hover:brightness-110"
             >
               OK

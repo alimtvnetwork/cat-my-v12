@@ -5,6 +5,7 @@ import {
   isGradeAtLeast,
   calculateIsoGrading,
   decodeAndGradeCode,
+  decodeAndGradeCodeAsync,
 } from "../code-reader-iso";
 import type { WorkpieceImageData } from "@/lib/vision/workpiece-rule-analyzer";
 
@@ -103,5 +104,81 @@ describe("ISO/IEC 15415 & 15416 Quality Grading Engine", () => {
     expect(result.isPatternMatch).toBe(true);
     expect(result.isGradePass).toBe(true);
     expect(result.isPass).toBe(true);
+  });
+});
+
+describe("ZXing decode (decodeAndGradeCodeAsync)", () => {
+  /**
+   * Render a REAL QR code with ZXing's own encoder (MultiFormatWriter),
+   * then decode it with the production async path. This is a genuine
+   * encode→decode round trip, not a hand-drawn QR-like pattern: if the
+   * decoder were fake, it could not read the encoder's output.
+   */
+  async function makeQrImageData(text: string): Promise<WorkpieceImageData> {
+    const { BarcodeFormat, EncodeHintType, MultiFormatWriter } = await import("@zxing/library");
+    const hints = new Map();
+    hints.set(EncodeHintType.MARGIN, 2);
+    const matrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, 120, 120, hints);
+    const moduleScale = 2;
+    const width = matrix.getWidth() * moduleScale;
+    const height = matrix.getHeight() * moduleScale;
+    const rgba = new Uint8ClampedArray(width * height * 4);
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const idx = (y * width + x) * 4;
+        const isDark = matrix.get(Math.floor(x / moduleScale), Math.floor(y / moduleScale));
+        const val = isDark ? 20 : 235;
+
+        rgba[idx] = val;
+        rgba[idx + 1] = val;
+        rgba[idx + 2] = val;
+        rgba[idx + 3] = 255;
+      }
+    }
+
+    return { width, height, rgba };
+  }
+
+  it("decodes a real encoded QR code from pixels (no preset payload)", async () => {
+    const imageData = await makeQrImageData("SN20261025-A100");
+
+    const result = await decodeAndGradeCodeAsync({
+      imageData,
+      roi: { x: 0, y: 0, width: imageData.width, height: imageData.height },
+      symbology: "qr",
+      expectedPattern: "^SN[0-9]+",
+      minQualityGrade: "C",
+    });
+
+    expect(result.hasCodeDetected).toBe(true);
+    expect(result.payload).toBe("SN20261025-A100");
+    expect(result.isPatternMatch).toBe(true);
+    expect(result.isPass).toBe(true);
+  });
+
+  it("returns no payload (grade F) for a blank ROI instead of inventing one", async () => {
+    const width = 80;
+    const height = 80;
+    const rgba = new Uint8ClampedArray(width * height * 4);
+
+    for (let i = 0; i < width * height; i += 1) {
+      rgba[i * 4] = 200;
+      rgba[i * 4 + 1] = 200;
+      rgba[i * 4 + 2] = 200;
+      rgba[i * 4 + 3] = 255;
+    }
+
+    const result = await decodeAndGradeCodeAsync({
+      imageData: { width, height, rgba },
+      roi: { x: 0, y: 0, width, height },
+      symbology: "qr",
+      minQualityGrade: "C",
+    });
+
+    expect(result.payload).toBe("");
+    expect(result.hasCodeDetected).toBe(false);
+    expect(result.grading.overallGrade).toBe("F");
+    expect(result.isPass).toBe(false);
   });
 });

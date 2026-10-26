@@ -6,7 +6,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { DefectToolPanel } from "../workbench/DefectToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardDefectToolProps {
   settings: PatternSearchSettings;
@@ -59,14 +58,18 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [detectedFlaws, setDetectedFlaws] = useState<DetectedFlaw[]>([]);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   // Execute surface flaw analysis strictly on "Process" click
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
+      // Preview only: no teach image / search region, so no flaw list and
+      // no verdict. Stay unprocessed; never report a pass.
       setDetectedFlaws([]);
-      setIsPass(true);
-      setHasProcessed(true);
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -94,8 +97,10 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
             const idxDown = ((y + dy + 1) * width + (x + dx)) * 4;
 
             const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
-            const lumaR = 0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
-            const lumaD = 0.299 * rgba[idxDown] + 0.587 * rgba[idxDown + 1] + 0.114 * rgba[idxDown + 2];
+            const lumaR =
+              0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
+            const lumaD =
+              0.299 * rgba[idxDown] + 0.587 * rgba[idxDown + 1] + 0.114 * rgba[idxDown + 2];
 
             const grad = Math.abs(luma - lumaR) + Math.abs(luma - lumaD);
 
@@ -131,7 +136,14 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
     setDetectedFlaws(flaws);
     setIsPass(pass);
     setHasProcessed(true);
-  }, [workbench.source, workbench.searchRegion, defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects]);
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    defectSensitivity,
+    defectTarget,
+    minDefectArea,
+    maxAllowedDefects,
+  ]);
 
   const handleSensitivityChange = useCallback((val: number) => {
     setDefectSensitivity(val);
@@ -244,36 +256,33 @@ export function StandardDefectTool(props: StandardDefectToolProps): React.JSX.El
   );
 
   // Apply button: only adds / updates rule when explicitly clicked
+  // Apply = rule creation. Writes TEACH params only: the preview flaw
+  // list is deliberately NOT written (no detectedCount, no
+  // judgmentItems, no isPass) — the analyzer re-detects flaws on every
+  // analysis image. gradientThreshold is the exact value the preview
+  // derives from sensitivity (180 * (1 - sensitivity/100)); the UI's
+  // "Minimum Flaw Size" control is the teach value the analyzer reads
+  // as minCrackLengthPx, since this workbench has no separate
+  // crack-length control. The preview flaw coordinates are absolute
+  // teach-image pixels but are not stored, so no relative form is
+  // needed for them.
   const handleApply = useCallback(() => {
-    const finalCount = detectedFlaws.length;
-    const finalPass = finalCount <= maxAllowedDefects;
-
-    const defaultDefectItem: JudgmentItem = {
-      id: "j1",
-      name: "Flaw Count",
-      unit: "count",
-      lowerLimit: 0,
-      measured: finalCount,
-      upperLimit: maxAllowedDefects,
-      status: finalPass ? "PASS" : "FAIL",
-    };
-
     props.onChange((prev) => ({
       ...prev,
       params: {
         ...(prev.params ?? {}),
         toolCode: "T107",
         defectSensitivity,
+        gradientThreshold: Math.round(180 * (1 - defectSensitivity / 100)),
         defectTarget,
         minDefectArea,
+        minCrackLengthPx: minDefectArea,
         maxAllowedDefects,
-        detectedCount: finalCount,
-        judgmentItems: [defaultDefectItem],
       },
     }));
 
     props.onOk?.();
-  }, [defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects, detectedFlaws, props]);
+  }, [defectSensitivity, defectTarget, minDefectArea, maxAllowedDefects, props]);
 
   return (
     <StandardWorkbenchShell

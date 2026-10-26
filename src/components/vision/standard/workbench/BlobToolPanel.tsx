@@ -11,7 +11,9 @@ export interface BlobToolPanelProps {
   targetPolarity: "bright" | "dark" | "both";
   detectedBlobCount: number;
   detectedBridgeCount: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   actionButtonLabel?: string;
   onThresholdChange: (val: number) => void;
@@ -114,7 +116,8 @@ export function BlobToolPanel(props: BlobToolPanelProps): React.JSX.Element {
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Adjust binarization parameters below and click &quot;Process Rule&quot; to inspect components.
+              Adjust binarization parameters below and click &quot;Process Rule&quot; to inspect
+              components.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
@@ -252,7 +255,9 @@ export function BlobToolPanel(props: BlobToolPanelProps): React.JSX.Element {
               onChange={(e) => props.onHoleFillingChange(e.target.checked)}
               className="accent-emerald-400 h-4 w-4"
             />
-            <span className="text-xs text-slate-300">Enable Internal Hole Filling (Morphology)</span>
+            <span className="text-xs text-slate-300">
+              Enable Internal Hole Filling (Morphology)
+            </span>
           </label>
         </div>
       </div>

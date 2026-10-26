@@ -143,6 +143,7 @@ export async function recognizeMarking(
   const { image, appliedUpscale } = preprocessForOcr(
     input,
     options.upscaleFactor ?? DEFAULT_OCR_UPSCALE_FACTOR,
+    { useClahe: options.useClahe },
   );
   const worker = await getWorker(options);
   const { data } = await worker.recognize(toImageLike(image), {}, { blocks: true });

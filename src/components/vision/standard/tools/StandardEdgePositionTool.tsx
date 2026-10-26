@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { EdgePositionToolPanel } from "../workbench/EdgePositionToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardEdgePositionToolProps {
   settings: PatternSearchSettings;
@@ -23,9 +22,7 @@ export interface StandardEdgePositionToolProps {
   actionButtonLabel?: string;
 }
 
-export function StandardEdgePositionTool(
-  props: StandardEdgePositionToolProps,
-): React.JSX.Element {
+export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): React.JSX.Element {
   const workbench = useStandardWorkbench({
     settings: props.settings,
     onChange: props.onChange,
@@ -50,31 +47,30 @@ export function StandardEdgePositionTool(
   const [edgeThreshold, setEdgeThreshold] = useState<number>(
     Number(initialParams.minEdgeContrast ?? 30),
   );
-  const [filterWidth, setFilterWidth] = useState<number>(
-    Number(initialParams.filterWidth ?? 5),
-  );
+  const [filterWidth, setFilterWidth] = useState<number>(Number(initialParams.filterWidth ?? 5));
   const [nominalPosition, setNominalPosition] = useState<number>(
     Number(initialParams.nominalPositionPx ?? 120),
   );
-  const [tolerancePx, setTolerancePx] = useState<number>(
-    Number(initialParams.tolerancePx ?? 10),
-  );
+  const [tolerancePx, setTolerancePx] = useState<number>(Number(initialParams.tolerancePx ?? 10));
 
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [measuredPosition, setMeasuredPosition] = useState<number>(
     Number(initialParams.nominalPositionPx ?? 120),
   );
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
   const [edgePoint, setEdgePoint] = useState<{ x: number; y: number }>({ x: 120, y: 150 });
 
   // Analyze edge position along specified ray strictly on demand
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setMeasuredPosition(nominalPosition);
-      setIsPass(true);
-      setEdgePoint({ x: nominalPosition, y: 150 });
-      setHasProcessed(true);
+      // Preview only: no teach image / search region, so nothing is
+      // measured. Do NOT seed the preview with the nominal position and
+      // never report a pass from an absent image.
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -327,16 +323,24 @@ export function StandardEdgePositionTool(
     [workbench.searchRegion, scanDirection, hasProcessed, isPass, edgePoint, measuredPosition],
   );
 
+  // Apply = rule creation. Writes TEACH params only: the preview edge
+  // position and its verdict are deliberately NOT written (no
+  // measuredPosition, no judgmentItems, no isPass) — the analyzer
+  // re-locates the edge on every analysis image. This workbench has no
+  // lead-count control, so expectedCount is preserved from the rule
+  // when one was already taught (e.g. via the catalog) and otherwise
+  // left absent rather than invented. Portability: the nominal
+  // position is stored relative to the teach search region
+  // (nominalPositionRelativeToSearchRegionPx, along the scan axis)
+  // alongside the absolute nominalPositionPx, so the analyzer can
+  // prefer the relative form; the absolute key is kept for legacy rules.
   const handleApply = useCallback(() => {
-    const defaultPositionItem: JudgmentItem = {
-      id: "j1",
-      name: "Edge Position",
-      unit: "px",
-      lowerLimit: nominalPosition - tolerancePx,
-      measured: measuredPosition,
-      upperLimit: nominalPosition + tolerancePx,
-      status: isPass ? "PASS" : "FAIL",
-    };
+    const region = workbench.searchRegion;
+    const nominalPositionRelativeToSearchRegionPx = region
+      ? scanDirection === "top-to-bottom" || scanDirection === "bottom-to-top"
+        ? nominalPosition - region.y
+        : nominalPosition - region.x
+      : undefined;
 
     props.onChange((prev) => ({
       ...prev,
@@ -348,9 +352,13 @@ export function StandardEdgePositionTool(
         minEdgeContrast: edgeThreshold,
         filterWidth,
         nominalPositionPx: nominalPosition,
+        ...(nominalPositionRelativeToSearchRegionPx !== undefined
+          ? { nominalPositionRelativeToSearchRegionPx }
+          : {}),
         tolerancePx,
-        measuredPosition,
-        judgmentItems: [defaultPositionItem],
+        ...(typeof initialParams.expectedCount === "number"
+          ? { expectedCount: initialParams.expectedCount }
+          : {}),
       },
     }));
 
@@ -362,8 +370,8 @@ export function StandardEdgePositionTool(
     filterWidth,
     nominalPosition,
     tolerancePx,
-    measuredPosition,
-    isPass,
+    initialParams.expectedCount,
+    workbench.searchRegion,
     props,
   ]);
 

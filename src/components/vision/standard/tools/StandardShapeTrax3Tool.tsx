@@ -5,12 +5,8 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { ShapeTrax3ToolPanel } from "../workbench/ShapeTrax3ToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
-import type {
-  ShapeTraxContourPoint,
-  ShapeTraxMatchResult,
-} from "@/domain/vision/shapetrax-types";
-import { matchShapeTrax } from "@/lib/vision/algorithms/shapetrax";
+import type { ShapeTraxContourPoint, ShapeTraxMatchResult } from "@/domain/vision/shapetrax-types";
+import { extractContourPoints, matchShapeTrax } from "@/lib/vision/algorithms/shapetrax";
 
 export interface StandardShapeTrax3ToolProps {
   settings: PatternSearchSettings;
@@ -68,12 +64,16 @@ export function StandardShapeTrax3Tool(props: StandardShapeTrax3ToolProps): Reac
   const [matchedY, setMatchedY] = useState<number>(0);
   const [angleDeg, setAngleDeg] = useState<number>(0);
   const [scalePct, setScalePct] = useState<number>(100);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setHasProcessed(true);
-      setIsPass(true);
+      // Preview only: no teach image / search region, so no match and no
+      // verdict. Stay unprocessed; never report a pass.
+      setHasProcessed(false);
+      setIsPass(undefined);
 
       return;
     }
@@ -280,31 +280,54 @@ export function StandardShapeTrax3Tool(props: StandardShapeTrax3ToolProps): Reac
     [workbench.searchRegion, hasProcessed, matchResult],
   );
 
+  // Apply = rule creation. Writes TEACH params only, plus — and only
+  // from a teach image — the taught model: modelPoints with the
+  // angle/scale search ranges. NOTE on where the model comes from:
+  // the workbench Process calls matchShapeTrax WITHOUT a stored model,
+  // and that function deliberately returns empty contourPoints in that
+  // case (no self-match), so Process alone can never yield a model.
+  // Apply therefore extracts the teach contours itself from the
+  // currently loaded teach image + search region (rule creation, not
+  // preview judgment) when Process did not already supply contours.
+  // If no contour was captured (no teach image/region, or fewer than
+  // the 3 points a model needs), NO model is stored: modelPoints is an
+  // empty array, so the rule stays unconfigured rather than carrying a
+  // fake model, and the analyzer must fail it as no-model. The preview
+  // score / angle / scale and their verdict are deliberately NOT
+  // written as judgment inputs (no measuredScore, no measuredAngleDeg,
+  // no measuredScalePct, no isPass, no judgmentItems); they are kept
+  // only as lastPreview* telemetry below, which the analyzer ignores.
+  // Portability: the model origin (centroid of the taught points) is
+  // stored relative to the teach search region
+  // (modelOriginRelativeToSearchRegion) alongside the absolute centroid,
+  // and the contour points are stored both as captured (absolute
+  // teach-image pixels) and as a region-relative copy
+  // (modelPointsRelativeToSearchRegion), so the analyzer can prefer the
+  // relative form; the absolute keys are kept for legacy rules.
   const handleApply = useCallback(() => {
-    const finalScore = matchResult ? matchResult.score : score;
-    const finalAngle = matchResult ? matchResult.angleDeg : angleDeg;
-    const finalScale = matchResult ? matchResult.scalePct : scalePct;
-    const finalPass = matchResult ? matchResult.isPass : isPass;
-
-    const defaultScoreItem: JudgmentItem = {
-      id: "j1",
-      name: "Contour Correlation Score",
-      unit: "%",
-      lowerLimit: minMatchPercent,
-      measured: Number(finalScore.toFixed(1)),
-      upperLimit: 100,
-      status: finalPass ? "PASS" : "FAIL",
-    };
-
-    const defaultAngleItem: JudgmentItem = {
-      id: "j2",
-      name: "Rotation Angle",
-      unit: "deg",
-      lowerLimit: -angleRangeDeg,
-      measured: Number(finalAngle.toFixed(1)),
-      upperLimit: angleRangeDeg,
-      status: Math.abs(finalAngle) <= angleRangeDeg ? "PASS" : "FAIL",
-    };
+    const region = workbench.searchRegion;
+    const taughtContours =
+      hasProcessed && matchResult && matchResult.contourPoints.length > 0
+        ? matchResult.contourPoints
+        : workbench.source && region
+          ? extractContourPoints({
+              imageData: workbench.source,
+              roi: region,
+              contrastThreshold,
+            })
+          : [];
+    // A model needs at least 3 points (SHAPETRAX_MIN_MODEL_POINTS);
+    // fewer is no usable model, not a model.
+    const contourPoints = taughtContours.length >= 3 ? taughtContours : [];
+    const centroid =
+      contourPoints.length > 0
+        ? {
+            x: contourPoints.reduce((sum, pt) => sum + pt.x, 0) / contourPoints.length,
+            y: contourPoints.reduce((sum, pt) => sum + pt.y, 0) / contourPoints.length,
+          }
+        : undefined;
+    const modelOriginRelativeToSearchRegion =
+      centroid && region ? { x: centroid.x - region.x, y: centroid.y - region.y } : undefined;
 
     props.onChange((prev) => ({
       ...prev,
@@ -318,21 +341,42 @@ export function StandardShapeTrax3Tool(props: StandardShapeTrax3ToolProps): Reac
         scaleRangeMax,
         roughSearchLevel,
         detailSearchLevel,
-        measuredScore: Number(finalScore.toFixed(1)),
-        measuredAngleDeg: Number(finalAngle.toFixed(1)),
-        measuredScalePct: Number(finalScale.toFixed(1)),
-        isPass: finalPass,
-        judgmentItems: [defaultScoreItem, defaultAngleItem],
+        modelPoints: contourPoints,
+        modelPointCount: contourPoints.length,
+        ...(centroid
+          ? {
+              modelOriginX: centroid.x,
+              modelOriginY: centroid.y,
+              modelOriginRelativeToSearchRegion,
+            }
+          : {}),
+        ...(region
+          ? {
+              modelPointsRelativeToSearchRegion: contourPoints.map((pt) => ({
+                ...pt,
+                x: pt.x - region.x,
+                y: pt.y - region.y,
+              })),
+            }
+          : {}),
+        // Preview telemetry only — the analyzer ignores lastPreview*
+        // keys; they exist so the workbench can show what the last
+        // preview matched without that ever becoming a rule judgment.
+        ...(hasProcessed && matchResult
+          ? {
+              lastPreviewScore: Number(matchResult.score.toFixed(1)),
+              lastPreviewAngleDeg: Number(matchResult.angleDeg.toFixed(1)),
+              lastPreviewScalePct: Number(matchResult.scalePct.toFixed(1)),
+              lastPreviewIsPass: matchResult.isPass,
+            }
+          : {}),
       },
     }));
 
     props.onOk?.();
   }, [
     matchResult,
-    score,
-    angleDeg,
-    scalePct,
-    isPass,
+    hasProcessed,
     minMatchPercent,
     contrastThreshold,
     angleRangeDeg,
@@ -340,6 +384,8 @@ export function StandardShapeTrax3Tool(props: StandardShapeTrax3ToolProps): Reac
     scaleRangeMax,
     roughSearchLevel,
     detailSearchLevel,
+    workbench.source,
+    workbench.searchRegion,
     props,
   ]);
 
@@ -363,9 +409,7 @@ export function StandardShapeTrax3Tool(props: StandardShapeTrax3ToolProps): Reac
           filterModeLabel="FILTERED (Vectorized Contours)"
           toolBadge="SHAPETRAX3"
           statusText={
-            hasProcessed
-              ? `${score.toFixed(1)}% [${isPass ? "PASS" : "FAIL"}]`
-              : "PENDING PROCESS"
+            hasProcessed ? `${score.toFixed(1)}% [${isPass ? "PASS" : "FAIL"}]` : "PENDING PROCESS"
           }
           isPass={hasProcessed ? isPass : undefined}
           onSearchRegionChange={(region) => {

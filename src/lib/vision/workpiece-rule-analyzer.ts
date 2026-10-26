@@ -87,7 +87,7 @@ import {
   computeDeltaE,
   srgbToCieLab,
 } from "./algorithms/color-and-coating";
-import { decodeAndGradeCode, isGradeAtLeast } from "./algorithms/code-reader-iso";
+import { decodeAndGradeCodeAsync } from "./algorithms/code-reader-iso";
 import { matchShapeTrax } from "./algorithms/shapetrax";
 import { findConnectedBlobs, type ConnectedBlob } from "./algorithms/connected-components";
 import {
@@ -1451,9 +1451,11 @@ export function evaluatePin1Rule(
       ? Number(rule.params.minCircularityPct)
       : typeof pin1Config.minCircularityPct === "number"
         ? Number(pin1Config.minCircularityPct)
-        : typeof rule.params?.minCircularityPercent === "number"
-          ? Number(rule.params.minCircularityPercent)
-          : undefined;
+        : typeof pin1Config.minCircularityPercent === "number"
+          ? Number(pin1Config.minCircularityPercent)
+          : typeof rule.params?.minCircularityPercent === "number"
+            ? Number(rule.params.minCircularityPercent)
+            : undefined;
   const expectedDiameterPx =
     typeof rule.params?.expectedDiameterPx === "number"
       ? Number(rule.params.expectedDiameterPx)
@@ -2217,20 +2219,10 @@ export function evaluateDefectRule(
     isPass = flawCount <= maxAllowedDefects;
   }
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
-
-  if (judgmentItems.length > 0) {
-    for (const item of judgmentItems) {
-      const lower = Number(item.lowerLimit ?? 0);
-      const upper = Number(item.upperLimit ?? maxAllowedDefects);
-      const isItemPass = flawCount >= lower && flawCount <= upper;
-
-      if (!isItemPass) {
-        isPass = false;
-      }
-    }
-  }
-
+  // NOTE (rule-creation principle): preview judgmentItems are NEVER
+  // read here. A saved preview verdict must not override a fresh
+  // measurement on the image being analyzed; only teach params
+  // (thresholds, limits) drive this evaluator.
   const score = isPass
     ? Math.max(0.7, Number((0.98 - flawCount * 0.05).toFixed(2)))
     : Math.max(0.1, Number((0.5 - flawCount * 0.1).toFixed(2)));
@@ -2423,30 +2415,11 @@ export function evaluateBlobRule(
   const blobCount = blobs.length;
   const totalBlobArea = blobs.reduce((sum, blob) => sum + blob.areaPx, 0);
 
-  let isPass = blobCount >= minBlobCount && blobCount <= maxBlobCount;
+  const isPass = blobCount >= minBlobCount && blobCount <= maxBlobCount;
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
-
-  if (judgmentItems.length > 0) {
-    for (const item of judgmentItems) {
-      const lower = Number(item.lowerLimit ?? 0);
-      const upper = Number(item.upperLimit ?? Number.POSITIVE_INFINITY);
-      const itemNameLower = String(item.name ?? "").toLowerCase();
-
-      let measuredVal = blobCount;
-
-      if (itemNameLower.includes("area")) {
-        measuredVal = totalBlobArea;
-      }
-
-      const isItemPass = measuredVal >= lower && measuredVal <= upper;
-
-      if (!isItemPass) {
-        isPass = false;
-      }
-    }
-  }
-
+  // NOTE (rule-creation principle): preview judgmentItems are NEVER
+  // read here; only the measured blob count/area and the teach
+  // min/max limits drive this evaluator.
   const avgLuma = totalLuma / Math.max(1, regionWidth * regionHeight);
   const score = isPass ? 0.95 : 0.2;
 
@@ -2556,14 +2529,20 @@ export function evaluateCaliperRule(
     };
   }
 
+  // Canonical keys first, workbench legacy aliases second (catalog
+  // agent audit): contrastThreshold -> minEdgeContrast,
+  // expectedLeadCount -> expectedCount, tolerance -> tolerancePx,
+  // edgePolarity "any" -> "both" (the extractor only matches "both"
+  // or an exact polarity, so "any" would otherwise match nothing).
   const scanDirection: CaliperScanDirectionType =
     (rule.params?.scanDirection as CaliperScanDirectionType) ?? "horizontal";
+  const rawPolarity = String(rule.params?.edgePolarity ?? "both");
   const edgePolarity: CaliperEdgePolarityType =
-    (rule.params?.edgePolarity as CaliperEdgePolarityType) ?? "both";
+    rawPolarity === "any" ? "both" : (rawPolarity as CaliperEdgePolarityType);
   // Spec T104 §3: minEdgeContrast default 35. The old
   // Math.min(6.0, ...) clamp is removed — it silently lowered any
   // configured contrast down to 6.0.
-  const minContrast = Number(rule.params?.minEdgeContrast ?? 35);
+  const minContrast = Number(rule.params?.minEdgeContrast ?? rule.params?.contrastThreshold ?? 35);
   const filterWidth = Number(rule.params?.filterWidth ?? 1);
   const hasSubPixelInterpolation = Boolean(rule.params?.hasSubPixelInterpolation ?? true);
 
@@ -2579,7 +2558,7 @@ export function evaluateCaliperRule(
 
   const maxGrad = edges.length > 0 ? Math.max(...edges.map((e) => Math.abs(e.gradient))) : 0;
 
-  const tolerancePx = Number(rule.params?.tolerancePx ?? 15);
+  const tolerancePx = Number(rule.params?.tolerancePx ?? rule.params?.tolerance ?? 15);
   const caliperToolCode = String(rule.params?.toolCode ?? "").toUpperCase();
   const pxToMetricRatio = Number(rule.params?.pxToMetricRatio ?? 0.025);
   // Spec T110 §5 (mm mode): when nominalDimensionMm is present, the
@@ -2602,7 +2581,11 @@ export function evaluateCaliperRule(
     : Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
   const metricUnit = (rule.params?.metricUnit as "mm" | "um" | "px") ?? "px";
   const expectedCount =
-    typeof rule.params?.expectedCount === "number" ? Number(rule.params.expectedCount) : undefined;
+    typeof rule.params?.expectedCount === "number"
+      ? Number(rule.params.expectedCount)
+      : typeof rule.params?.expectedLeadCount === "number"
+        ? Number(rule.params.expectedLeadCount)
+        : undefined;
 
   const ruleNameLower = (rule.name || "").toLowerCase();
   const rawMode = rule.params?.measurementMode as CaliperMeasurementModeType;
@@ -2700,30 +2683,9 @@ export function evaluateCaliperRule(
     }
   }
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
-
-  if (judgmentItems.length > 0) {
-    for (const item of judgmentItems) {
-      const lower = Number(item.lowerLimit ?? 0);
-      const upper = Number(item.upperLimit ?? Number.POSITIVE_INFINITY);
-      const itemNameLower = String(item.name ?? "").toLowerCase();
-
-      let measuredVal = metrics.measuredWidthPx;
-
-      if (itemNameLower.includes("pitch")) {
-        measuredVal = metrics.leadPitchMeanPx;
-      } else if (itemNameLower.includes("count") || itemNameLower.includes("edge")) {
-        measuredVal = metrics.edgeCount;
-      }
-
-      const isItemPass = measuredVal >= lower && measuredVal <= upper;
-
-      if (!isItemPass) {
-        isPass = false;
-      }
-    }
-  }
-
+  // NOTE (rule-creation principle): preview judgmentItems are NEVER
+  // read here; only the measured width/pitch/count and the teach
+  // nominals/tolerances drive this evaluator.
   if (isPass) {
     const successMsg = isMmMode
       ? `Caliper dimension within tolerance (measured: ${measuredDimensionMm.toFixed(3)}mm, nominal: ${nominalDimensionMm}mm [${((nominalDimensionMm as number) + lowerToleranceMm).toFixed(3)}..${((nominalDimensionMm as number) + upperToleranceMm).toFixed(3)}mm], pitch jitter stdDev: ${(metrics.leadPitchStdDevPx * pxToMetricRatio).toFixed(3)}mm). ${opticalContext}: PASS.`
@@ -3064,18 +3026,17 @@ export function evaluateAreaGateRule(
     unit = "mm²";
   }
 
-  const judgmentItem = rule.params?.judgmentItems?.[0];
-  // Spec T101 §3: pixels-mode min default is 4000 (not 3500).
+  // NOTE (rule-creation principle): a saved preview judgmentItem must
+  // NOT set the area limits. Limits come only from teach params
+  // (minArea/minAreaPx/minPixelCount, maxArea/maxAreaPx/maxPixelCount).
   const minLimit = Number(
-    judgmentItem?.lowerLimit ??
-      rule.params?.minArea ??
+    rule.params?.minArea ??
       rule.params?.minAreaPx ??
       rule.params?.minPixelCount ??
       (areaMode === "percentage" ? 10 : areaMode === "physical" ? 0.1 : 4000),
   );
   const maxLimit = Number(
-    judgmentItem?.upperLimit ??
-      rule.params?.maxArea ??
+    rule.params?.maxArea ??
       rule.params?.maxAreaPx ??
       rule.params?.maxPixelCount ??
       (areaMode === "percentage"
@@ -3588,27 +3549,98 @@ export function evaluateCodeReaderRule(
   }
 
   const params = (rule.params as Record<string, unknown> | undefined) ?? {};
-  // Key aliasing (catalog first): expectedPatternRegex ->
-  // expectedPattern; symbology normalized dataMatrix -> datamatrix,
-  // qrCode -> qr, microQr -> qr (engine has no microQr symbology).
-  // No-presetPayload behaviour is verified by the engine itself: with
-  // no decodedPayload it returns payload "", hasCodeDetected false,
-  // grade F, and the !hasCodeDetected branch below FAILs the rule.
+  // Rule-creation principle for T103: params.decodedPayload is a
+  // TAUGHT payload (decoded from the teach image in the workbench),
+  // i.e. the EXPECTED value — it is NEVER a preset test decode.
+  // The sync evaluator cannot run the ZXing decoder (it is lazily
+  // async), so a sync-only caller cannot get a real test decode
+  // here. It must use evaluateCodeReaderRuleAsync (used by
+  // evaluateTapeStripRules, the real analyzer path) instead of
+  // grading the taught payload as if it were the test payload.
+  // Grading a supplied payload directly is an engine-level operation
+  // (decodeAndGradeCode with presetPayload), not an analyzer rule.
   const symbology = normalizeSymbology(pickString(params as Record<string, any>, ["symbology"]));
+  const taughtPayload =
+    typeof params.decodedPayload === "string" && params.decodedPayload.trim() !== ""
+      ? params.decodedPayload.trim()
+      : undefined;
   const expectedPattern = String(
     pickString(params as Record<string, any>, ["expectedPatternRegex", "expectedPattern"]) ?? "",
   );
-  const minQualityGrade = (params.minQualityGrade as IsoQualityGrade) ?? "B";
-  const presetPayload =
-    typeof params.decodedPayload === "string" ? params.decodedPayload : undefined;
 
-  const result = decodeAndGradeCode({
+  if (!taughtPayload && expectedPattern === "") {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Code reader rule is unconfigured: no taught payload and no expected pattern stored in the rule. Teach a code on an example image first. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, params },
+    };
+  }
+
+  return {
+    status: ValidationStatusType.Fail,
+    score: 0.1,
+    message: `Code reader decode requires the async analyzer path (ZXing decode of the test image); a sync evaluation cannot decode pixels and must not grade the taught payload as a test result. Run via evaluateTapeStripRules. ${opticalContext}: FAIL.`,
+    stub: false,
+    debug: { roi, params, taughtPayloadPresent: Boolean(taughtPayload), expectedPattern },
+  };
+}
+
+export async function evaluateCodeReaderRuleAsync(
+  rule: EditorRule,
+  imageData: WorkpieceImageData,
+  opticalContext = "1D/2D Code Reader",
+): Promise<ValidationResult> {
+  const roi = {
+    x: Math.round(rule.x),
+    y: Math.round(rule.y),
+    width: Math.round(rule.width),
+    height: Math.round(rule.height),
+  };
+
+  if (roi.width <= 4 || roi.height <= 4) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Invalid code reader ROI geometry. ${opticalContext}: FAIL.`,
+      stub: false,
+    };
+  }
+
+  const params = (rule.params as Record<string, unknown> | undefined) ?? {};
+  const symbology = normalizeSymbology(pickString(params as Record<string, any>, ["symbology"]));
+  const taughtPayload =
+    typeof params.decodedPayload === "string" && params.decodedPayload.trim() !== ""
+      ? params.decodedPayload.trim()
+      : undefined;
+  const regexPattern = String(
+    pickString(params as Record<string, any>, ["expectedPatternRegex", "expectedPattern"]) ?? "",
+  );
+  // A taught payload is an exact expected value and wins over a
+  // looser regex: a different serial that merely matches the regex
+  // must not pass a rule taught on one specific serial.
+  const expectedPattern = taughtPayload
+    ? `^${taughtPayload.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`
+    : regexPattern;
+  const minQualityGrade = (params.minQualityGrade as IsoQualityGrade) ?? "B";
+
+  if (!taughtPayload && expectedPattern === "") {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `Code reader rule is unconfigured: no taught payload and no expected pattern stored in the rule. Teach a code on an example image first. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, params },
+    };
+  }
+
+  const result = await decodeAndGradeCodeAsync({
     imageData,
     roi,
     symbology,
     expectedPattern,
     minQualityGrade,
-    presetPayload,
   });
 
   if (!result.hasCodeDetected) {
@@ -3617,7 +3649,7 @@ export function evaluateCodeReaderRule(
       score: 0.1,
       message: `No readable 1D/2D barcode or matrix pattern found in ROI. ${opticalContext}: FAIL.`,
       stub: false,
-      debug: { roi, params, result },
+      debug: { roi, params, result, taughtPayloadPresent: Boolean(taughtPayload) },
     };
   }
 
@@ -3705,15 +3737,16 @@ export function evaluateShapeTraxRule(
   const scaleRangeMax = Number(params.scaleRangeMax ?? 110);
 
   // Spec ShapeTrax3 §2/§5: matching is against a stored reference
-  // model. The shapetrax types carry NO model field at all
-  // (no modelPoints / templatePoints / referenceContour in
-  // ShapeTraxParams or MatchShapeTraxParams), so absence of any such
-  // field in the rule params is treated as "no reference model" and
-  // the rule FAILs here instead of scoring the image's own contours
-  // against themselves. When a model IS present, modelPointCount is
-  // the stored model's point count; matchedPointCount stays the
-  // algorithm's measured inlier/contour count (the algorithm cannot
-  // measure a true model-matched count — see shapetrax.ts note).
+  // model taught in the workbench (modelPoints, stored by Apply from
+  // teach-image contours). The engine recenters the model on its own
+  // centroid, so absolute teach pixels and region-relative points are
+  // equivalent for matching. Absence of any model field is "no
+  // reference model" and the rule FAILs here instead of scoring the
+  // image's own contours against themselves. When a model IS present,
+  // it is passed to matchShapeTrax, which scores the test ROI's
+  // contours against THAT model over angle/scale transforms
+  // (generalized Hough voting is still not implemented — this is a
+  // bounded grid search, see shapetrax.ts).
   const modelFieldKeys = [
     "modelPoints",
     "templatePoints",
@@ -3724,6 +3757,7 @@ export function evaluateShapeTraxRule(
     "referenceModel",
   ];
   let modelPointCount: number | undefined;
+  let modelPoints: unknown;
 
   for (const key of modelFieldKeys) {
     const raw = (params as Record<string, unknown>)[key];
@@ -3739,6 +3773,7 @@ export function evaluateShapeTraxRule(
 
     if (Array.isArray(arr) && arr.length > 0) {
       modelPointCount = arr.length;
+      modelPoints = arr;
       break;
     }
   }
@@ -3767,6 +3802,7 @@ export function evaluateShapeTraxRule(
     angleRangeDeg,
     scaleRangeMin,
     scaleRangeMax,
+    model: modelPoints as any,
   });
 
   if (!result.hasMatchFound) {
@@ -4314,9 +4350,26 @@ async function recognizePocketMarkings(
     }
 
     for (const rule of ocrRules) {
+      const criteria = ocrJudgmentCriteria(rule);
+
+      // Rule-creation principle: an OCR rule with no taught reference
+      // (no expected string and no expected format) is unconfigured
+      // and FAILs — it must not pass on any recognized text merely
+      // because the judge has no criterion to fail it on.
+      if (!criteria.expectedString && !criteria.expectedFormat) {
+        pocket.ruleResults[rule.id] = {
+          status: ValidationStatusType.Fail,
+          score: 0,
+          message: `OCR rule is unconfigured: no expected string or format taught in the rule. Teach an expected marking first.`,
+          stub: false,
+          debug: { expectedString: undefined, expectedFormat: undefined },
+        };
+
+        continue;
+      }
+
       try {
         const recognition = await recognizeMarking(bodyPixels);
-        const criteria = ocrJudgmentCriteria(rule);
         const judgment = judgeMarkingRecognition(recognition, criteria);
         const passed = judgment.passed;
         const text = recognition.text || "";
@@ -4455,8 +4508,44 @@ export function findAuthoringPocket(
   return fallbackPocket;
 }
 
+/**
+ * Adapt a taught rule to a target pocket.
+ *
+ * Portability contract (rule-creation principle): a rule taught on
+ * one pocket/image size must work on another pocket of the same
+ * device type. Adaptation here is translate + scale ONLY, for every
+ * tool — pocket-relative references are preferred where the workbench
+ * stored them (Pin1 relativeX/Y, pattern boxes relative to the
+ * pattern region, ShapeTrax model recentered on its centroid), and
+ * absolute teach coordinates are scaled by pocket size, never copied
+ * verbatim into a different-size pocket. Rotation is NOT done by
+ * adaptation: Pin1's nominal angle is recomputed from target-pocket
+ * geometry, pattern rotation is handled by the matcher's angle
+ * search, and ShapeTrax rotation is handled by the engine's
+ * angle/scale search over the stored model. Pattern references are
+ * always the taught boxes, adapted by translate+scale; a rule with
+ * no taught boxes keeps an empty reference list and fails
+ * unconfigured in the pattern evaluator, never self-matches.
+ */
 export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
   const { rule, authorPocket, targetPocket, imageData } = params;
+
+  // Identity adaptation: when the author pocket IS the target pocket
+  // (the normal single-pocket case, and any pocket whose geometry
+  // already matches), the rule is already in target coordinates.
+  // Returning it unchanged avoids the Pin1/pattern special paths
+  // recomputing regions/angles from pocket fractions and changing a
+  // rule that was already judged correctly at those coordinates.
+  // Real adaptation (translate+scale, documented below) happens only
+  // when author and target pockets actually differ.
+  if (
+    authorPocket.x === targetPocket.x &&
+    authorPocket.y === targetPocket.y &&
+    authorPocket.width === targetPocket.width &&
+    authorPocket.height === targetPocket.height
+  ) {
+    return rule;
+  }
 
   const toolCode = String(rule.params?.toolCode || "").toUpperCase();
   const ruleNameLower = (rule.name || "").toLowerCase();
@@ -4588,8 +4677,6 @@ export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
       height: rule.height,
     });
 
-    const isGenericAtmegaTemplate =
-      rawBoxes.length === 24 && (rawBoxes[0]?.label === "M" || rawBoxes[0]?.label === "#1");
     const hasExplicitMultiDevice = rawBoxes.some((b) => Boolean((b as any).deviceId));
     const pocketBoxes = hasExplicitMultiDevice
       ? rawBoxes.filter((box) => {
@@ -4606,35 +4693,14 @@ export function adaptRuleToPocket(params: AdaptRuleToPocketParams): EditorRule {
     } else {
       let baseBoxes: WhiteBoxMark[] = rawBoxes;
 
-      if ((isGenericAtmegaTemplate || rawBoxes.length === 0) && imageData) {
-        const targetMarkingRegion = targetPocket.markingRegion ?? targetBody;
-        const targetMarks = extractWorkpieceMarkings({
-          imageData,
-          region: targetMarkingRegion,
-        });
-
-        if (targetMarks.length > 0) {
-          baseBoxes = targetMarks;
-        } else {
-          const authorMarkingRegion =
-            authorPocket.markingRegion ?? authorPocket.bodyRegion ?? targetBody;
-          const authorMarks = extractWorkpieceMarkings({
-            imageData,
-            region: authorMarkingRegion,
-          });
-
-          if (authorMarks.length > 0) {
-            baseBoxes = authorMarks.map((b) => ({
-              ...b,
-              x: Math.round(targetPocket.x + (b.x - authorPocket.x) * scaleX),
-              y: Math.round(targetPocket.y + (b.y - authorPocket.y) * scaleY),
-              width: Math.max(4, Math.round(b.width * scaleX)),
-              height: Math.max(4, Math.round(b.height * scaleY)),
-              area: Math.max(16, Math.round(b.width * b.height * scaleX * scaleY)),
-            }));
-          }
-        }
-      } else if (rawBoxes.length > 0 && authorPocket !== targetPocket) {
+      // Teach principle: the reference is the TAUGHT boxes, never the
+      // target pocket's own markings. A generic template is adapted by
+      // translate+scale like any taught box; an empty box list stays
+      // empty so the pattern evaluator fails unconfigured instead of
+      // self-matching. (Previously this branch re-extracted markings
+      // from the target pocket and used them as the reference, which
+      // could pass by self-match.)
+      if (rawBoxes.length > 0 && authorPocket !== targetPocket) {
         baseBoxes = rawBoxes.map((box) => ({
           ...box,
           x: Math.round(targetPocket.x + (box.x - authorPocket.x) * scaleX),
@@ -4796,6 +4862,24 @@ function measurePocketDevice(
   }
 
   return measureDeviceEdges(pocketCrop, umPerPx);
+}
+
+/**
+ * Code-reader rules need the async ZXing path; the sync dispatcher
+ * cannot decode pixels. Tape-strip evaluation (the real analyzer
+ * path) routes code rules here instead of evaluateWorkpieceRuleReal.
+ */
+function isCodeReaderRule(rule: EditorRule): boolean {
+  const toolCode = String(rule.params?.toolCode || "").toUpperCase();
+  const nameLower = (rule.name || "").toLowerCase();
+
+  return (
+    toolCode === "T103" ||
+    nameLower.includes("code") ||
+    nameLower.includes("datamatrix") ||
+    nameLower.includes("barcode") ||
+    nameLower.includes("qr")
+  );
 }
 
 export async function evaluateTapeStripRules(
@@ -4972,8 +5056,31 @@ export async function evaluateTapeStripRules(
 
       if (decision.isSkipped) {
         res = createSkippedValidationResult({ rule: r, decision });
+      } else if (isCodeReaderRule(r)) {
+        // Code rules go through the async ZXing path, adapted to
+        // this pocket like every other rule in the multi-pocket
+        // path (previously the single-pocket path evaluated rules
+        // unadapted, so a rule taught on another pocket/image size
+        // was judged at its teach coordinates).
+        const authorPocket = findAuthoringPocket(r, pockets);
+        const adaptedRule = adaptRuleToPocket({
+          rule: r,
+          authorPocket,
+          targetPocket: single,
+          imageData,
+        });
+
+        res = await evaluateCodeReaderRuleAsync(adaptedRule, imageData, effectiveOpticalContext);
       } else {
-        res = evaluateWorkpieceRuleReal(r, imageData, ruleResults, rules);
+        const authorPocket = findAuthoringPocket(r, pockets);
+        const adaptedRule = adaptRuleToPocket({
+          rule: r,
+          authorPocket,
+          targetPocket: single,
+          imageData,
+        });
+
+        res = evaluateWorkpieceRuleReal(adaptedRule, imageData, ruleResults, rules);
       }
 
       ruleResults[r.id] = res;
@@ -5126,7 +5233,9 @@ export async function evaluateTapeStripRules(
           imageData,
         });
 
-        res = evaluateWorkpieceRuleReal(adaptedRule, imageData, pocketRuleResults, rules);
+        res = isCodeReaderRule(r)
+          ? await evaluateCodeReaderRuleAsync(adaptedRule, imageData, effectiveOpticalContext)
+          : evaluateWorkpieceRuleReal(adaptedRule, imageData, pocketRuleResults, rules);
       }
 
       pocketRuleResults[r.id] = res;

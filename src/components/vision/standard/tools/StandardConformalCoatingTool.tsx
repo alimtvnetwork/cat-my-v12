@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { ConformalCoatingToolPanel } from "../workbench/ConformalCoatingToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import type {
   CieLabColor,
   CoatingInspectionModeType,
@@ -60,9 +59,7 @@ export function StandardConformalCoatingTool(
   const [minCoveragePct, setMinCoveragePct] = useState<number>(
     Number(initialParams.minCoveragePct ?? 95),
   );
-  const [maxDeltaE, setMaxDeltaE] = useState<number>(
-    Number(initialParams.maxDeltaE ?? 5.0),
-  );
+  const [maxDeltaE, setMaxDeltaE] = useState<number>(Number(initialParams.maxDeltaE ?? 5.0));
   const [maxAllowedVoids, setMaxAllowedVoids] = useState<number>(
     Number(initialParams.maxAllowedVoids ?? 0),
   );
@@ -73,12 +70,16 @@ export function StandardConformalCoatingTool(
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [coatingResult, setCoatingResult] = useState<ConformalCoatingResult | null>(null);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setHasProcessed(true);
-      setIsPass(true);
+      // Preview only: no teach image / search region, so no coating result
+      // and no verdict. Stay unprocessed; never report a pass.
+      setHasProcessed(false);
+      setIsPass(undefined);
 
       return;
     }
@@ -257,7 +258,9 @@ export function StandardConformalCoatingTool(
         ctx.strokeRect(region.x, region.y, region.width, region.height);
 
         // Caution diagonal hatching
-        ctx.strokeStyle = coatingResult.isPass ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.3)";
+        ctx.strokeStyle = coatingResult.isPass
+          ? "rgba(16, 185, 129, 0.2)"
+          : "rgba(239, 68, 68, 0.3)";
         ctx.lineWidth = 1;
         const step = 16;
 
@@ -277,11 +280,7 @@ export function StandardConformalCoatingTool(
 
         ctx.fillStyle = "#ff0080";
         ctx.font = "bold 9px monospace";
-        ctx.fillText(
-          `VOID (${voidItem.areaPx}px)`,
-          voidItem.x,
-          Math.max(10, voidItem.y - 3),
-        );
+        ctx.fillText(`VOID (${voidItem.areaPx}px)`, voidItem.x, Math.max(10, voidItem.y - 3));
       }
 
       // Status summary badge in bottom corner of ROI
@@ -303,31 +302,19 @@ export function StandardConformalCoatingTool(
     [workbench.searchRegion, hasProcessed, coatingResult, inspectionMode],
   );
 
+  // Apply = rule creation. Writes TEACH params only. The preview
+  // coverage / delta-E / void count and its verdict are deliberately
+  // NOT written (no measuredCoveragePct, no measuredDeltaE, no
+  // detectedVoidCount, no isPass, no judgmentItems): the analyzer
+  // re-measures coating on every analysis image. Note the previous
+  // Apply defaulted an unprocessed preview to PASS (finalPass = true
+  // when coatingResult was null) — Apply without Process now writes
+  // teach params only and no verdict at all. This tool has no keep-out
+  // mask control (keep-out-zone is an inspection mode, not a mask
+  // region), so no mask reference is stored.
   const handleApply = useCallback(() => {
-    const finalCoverage = coatingResult ? coatingResult.coveragePct : minCoveragePct;
-    const finalDeltaE = coatingResult ? coatingResult.deltaE : 0;
-    const finalVoids = coatingResult ? coatingResult.uncoatedVoidCount : 0;
-    const finalPass = coatingResult ? coatingResult.isPass : true;
-
-    const defaultCoverageItem: JudgmentItem = {
-      id: "j1",
-      name: inspectionMode === "keep-out-zone" ? "Keep-Out Breach" : "Coating Coverage",
-      unit: "%",
-      lowerLimit: inspectionMode === "keep-out-zone" ? 0 : minCoveragePct,
-      measured: Number(finalCoverage.toFixed(1)),
-      upperLimit: inspectionMode === "keep-out-zone" ? 2.0 : 100,
-      status: finalPass ? "PASS" : "FAIL",
-    };
-
-    const defaultVoidItem: JudgmentItem = {
-      id: "j2",
-      name: "Uncoated Pinholes",
-      unit: "count",
-      lowerLimit: 0,
-      measured: finalVoids,
-      upperLimit: maxAllowedVoids,
-      status: finalVoids <= maxAllowedVoids ? "PASS" : "FAIL",
-    };
+    const uvColorChannel =
+      uvChannel === "uv-blue" ? "uvBlue" : uvChannel === "uv-green" ? "uvGreen" : "luminance";
 
     props.onChange((prev) => ({
       ...prev,
@@ -336,22 +323,17 @@ export function StandardConformalCoatingTool(
         toolCode: "T112",
         inspectionMode,
         uvChannel,
+        uvColorChannel,
         fluorescenceThreshold,
         minCoveragePct,
         maxDeltaE,
         maxAllowedVoids,
         targetLab,
-        measuredCoveragePct: Number(finalCoverage.toFixed(1)),
-        measuredDeltaE: Number(finalDeltaE.toFixed(1)),
-        detectedVoidCount: finalVoids,
-        isPass: finalPass,
-        judgmentItems: [defaultCoverageItem, defaultVoidItem],
       },
     }));
 
     props.onOk?.();
   }, [
-    coatingResult,
     minCoveragePct,
     maxAllowedVoids,
     inspectionMode,

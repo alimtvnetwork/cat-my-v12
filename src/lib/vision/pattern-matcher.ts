@@ -425,3 +425,179 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     rotationDeg: bestRotation?.angleDeg ?? 0,
   };
 }
+
+/**
+ * Pocket-portability helpers (pure, dependency-free).
+ *
+ * A rule taught on one image/pocket must be usable on another pocket
+ * (different position, possibly different size) without re-teaching.
+ * These helpers are the coordinate layer for that: they convert
+ * between absolute image coordinates and pocket-relative coordinates,
+ * and adapt a stored reference to a target pocket. They do NOT run any
+ * detection — the coordinator calls them when wiring a stored rule
+ * (Pin1 registered position, pattern boxes) onto a target pocket.
+ *
+ * This block is mirrored in ./carrier-tape-segmenter.ts with identical
+ * signatures so either import site works without a cross-dependency;
+ * keep the two copies in sync if either changes.
+ */
+
+/** An axis-aligned box, e.g. a pocket box or a stored reference box. */
+export interface PocketBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PocketPoint {
+  x: number;
+  y: number;
+}
+
+/**
+ * Pocket-relative point as fractions of the pocket size: u = 0 at the
+ * pocket's left edge, 1 at its right edge; v = 0 at the top, 1 at the
+ * bottom. Fractions (not pixel offsets) are what make a taught
+ * position portable to a differently sized pocket.
+ */
+export interface PocketRelativePoint {
+  u: number;
+  v: number;
+}
+
+/**
+ * Absolute teach-image point -> pocket-relative fractions.
+ * Translation+scale only: no rotation is applied or assumed. A point
+ * outside the pocket yields u/v outside [0, 1], which is meaningful
+ * (it records how far outside it was) rather than being clamped.
+ */
+export function absoluteToPocketRelative(
+  point: PocketPoint,
+  pocket: PocketBox,
+): PocketRelativePoint {
+  return {
+    u: pocket.width !== 0 ? (point.x - pocket.x) / pocket.width : 0,
+    v: pocket.height !== 0 ? (point.y - pocket.y) / pocket.height : 0,
+  };
+}
+
+/** Pocket-relative fractions -> absolute point in the given pocket. Translation+scale only. */
+export function pocketRelativeToAbsolute(
+  relative: PocketRelativePoint,
+  pocket: PocketBox,
+): PocketPoint {
+  return {
+    x: pocket.x + relative.u * pocket.width,
+    y: pocket.y + relative.v * pocket.height,
+  };
+}
+
+/** Absolute point -> pixel offset from the pocket's top-left corner. Translation only (no scaling). */
+export function absoluteToPocketOffset(point: PocketPoint, pocket: PocketBox): PocketPoint {
+  return { x: point.x - pocket.x, y: point.y - pocket.y };
+}
+
+/** Pixel offset from a pocket's top-left corner -> absolute point. Translation only (no scaling). */
+export function pocketOffsetToAbsolute(offset: PocketPoint, pocket: PocketBox): PocketPoint {
+  return { x: pocket.x + offset.x, y: pocket.y + offset.y };
+}
+
+/**
+ * Adapt a stored point (e.g. a Pin1 registered position) taught in
+ * `sourcePocket` to `targetPocket`: translate+scale via pocket-relative
+ * fractions. When `rotationDeg` is non-zero, the adapted point is
+ * additionally rotated about the TARGET pocket's centre — that is the
+ * only rotation in this helper set, and it applies to the adapted
+ * point, not to the source geometry. With rotationDeg = 0 (default)
+ * this is pure translate+scale.
+ */
+export function adaptPointToPocket(
+  point: PocketPoint,
+  sourcePocket: PocketBox,
+  targetPocket: PocketBox,
+  rotationDeg = 0,
+): PocketPoint {
+  const adapted = pocketRelativeToAbsolute(
+    absoluteToPocketRelative(point, sourcePocket),
+    targetPocket,
+  );
+
+  if (rotationDeg === 0) {
+    return adapted;
+  }
+
+  const theta = (rotationDeg * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const centreX = targetPocket.x + targetPocket.width / 2;
+  const centreY = targetPocket.y + targetPocket.height / 2;
+  const relX = adapted.x - centreX;
+  const relY = adapted.y - centreY;
+
+  return {
+    x: centreX + relX * cos - relY * sin,
+    y: centreY + relX * sin + relY * cos,
+  };
+}
+
+/**
+ * Adapt a stored box (e.g. a pattern box) taught in `sourcePocket` to
+ * `targetPocket`: origin via pocket-relative fractions, size scaled by
+ * the pocket width/height ratios. With rotationDeg = 0 (default) this
+ * is pure translate+scale and the result is the exact scaled box.
+ * With a non-zero rotation the four adapted corners are rotated about
+ * the target pocket's centre and the AXIS-ALIGNED BOUNDING BOX of the
+ * rotated corners is returned — an oriented box cannot be represented
+ * by PocketBox, so callers that need orientation must keep the angle
+ * alongside this box rather than reading orientation from it.
+ */
+export function adaptBoxToPocket(
+  box: PocketBox,
+  sourcePocket: PocketBox,
+  targetPocket: PocketBox,
+  rotationDeg = 0,
+): PocketBox {
+  const topLeft = adaptPointToPocket(
+    { x: box.x, y: box.y },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const bottomRight = adaptPointToPocket(
+    { x: box.x + box.width, y: box.y + box.height },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+
+  if (rotationDeg === 0) {
+    return {
+      x: topLeft.x,
+      y: topLeft.y,
+      width: bottomRight.x - topLeft.x,
+      height: bottomRight.y - topLeft.y,
+    };
+  }
+
+  const topRight = adaptPointToPocket(
+    { x: box.x + box.width, y: box.y },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const bottomLeft = adaptPointToPocket(
+    { x: box.x, y: box.y + box.height },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const xs = [topLeft.x, topRight.x, bottomRight.x, bottomLeft.x];
+  const ys = [topLeft.y, topRight.y, bottomRight.y, bottomLeft.y];
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}

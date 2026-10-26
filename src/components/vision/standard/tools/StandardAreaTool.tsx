@@ -6,7 +6,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { AreaToolPanel } from "../workbench/AreaToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardAreaToolProps {
   settings: PatternSearchSettings;
@@ -53,17 +52,21 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
 
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
-  const [measuredArea, setMeasuredArea] = useState<number>(
-    Number(initialParams.measuredArea ?? 5000),
-  );
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview measurement only. Never written to the rule: the analyzer
+  // re-measures the saved rule on every analysis image.
+  const [measuredArea, setMeasuredArea] = useState<number>(0);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   // Execute vision rule analysis strictly on demand
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setMeasuredArea(5000);
-      setIsPass(5000 >= minArea && 5000 <= maxArea);
-      setHasProcessed(true);
+      // Preview only: without a teach image and a search region there is
+      // nothing to measure. Stay unprocessed and verdict-less; never
+      // report a pass (or a seeded 5000px measurement) from an absent image.
+      setHasProcessed(false);
+      setIsPass(undefined);
 
       return;
     }
@@ -104,7 +107,15 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
     setMeasuredArea(measured);
     setIsPass(pass);
     setHasProcessed(true);
-  }, [workbench.source, workbench.searchRegion, targetPolarity, threshold, areaMode, minArea, maxArea]);
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    targetPolarity,
+    threshold,
+    areaMode,
+    minArea,
+    maxArea,
+  ]);
 
   const handleModeChange = useCallback((mode: AreaMeasurementMode) => {
     setAreaMode(mode);
@@ -149,9 +160,7 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
         const x = i % source.width;
         const y = Math.floor(i / source.width);
 
-        const luma = Math.round(
-          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
-        );
+        const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
         const isTarget = targetPolarity === "dark" ? luma <= threshold : luma >= threshold;
@@ -176,22 +185,16 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
     [workbench.searchRegion, targetPolarity, threshold, hasProcessed],
   );
 
-  // Apply button: only adds / updates rule when explicitly clicked
+  // Apply = rule creation. Writes TEACH params only: the analyzer
+  // re-measures area from these on every analysis image. The preview
+  // measurement and its PASS/FAIL are deliberately NOT written here
+  // (no measuredArea, no judgmentItems, no isPass), so Apply without
+  // Process can never create a passing rule, and a preview judgment can
+  // never become a rule judgment. The teach region itself is the search
+  // region (saved by the workbench on region change); this tool stores
+  // no other absolute teach-image coordinates, so there is no
+  // region-relative coordinate to add for it.
   const handleApply = useCallback(() => {
-    const finalMeasured = measuredArea;
-    const finalPass = finalMeasured >= minArea && finalMeasured <= maxArea;
-    const unit = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
-
-    const defaultAreaItem: JudgmentItem = {
-      id: "j1",
-      name: "Detected Area",
-      unit,
-      lowerLimit: minArea,
-      measured: finalMeasured,
-      upperLimit: maxArea,
-      status: finalPass ? "PASS" : "FAIL",
-    };
-
     props.onChange((prev) => ({
       ...prev,
       params: {
@@ -206,13 +209,11 @@ export function StandardAreaTool(props: StandardAreaToolProps): React.JSX.Elemen
         minAreaPx: minArea,
         maxArea,
         maxAreaPx: maxArea,
-        measuredArea: finalMeasured,
-        judgmentItems: [defaultAreaItem],
       },
     }));
 
     props.onOk?.();
-  }, [areaMode, targetPolarity, threshold, minArea, maxArea, measuredArea, props]);
+  }, [areaMode, targetPolarity, threshold, minArea, maxArea, props]);
 
   const unitLabel = areaMode === "pixels" ? "px" : areaMode === "percentage" ? "%" : "mm²";
 

@@ -10,7 +10,9 @@ export interface EdgeWidthToolPanelProps {
   expectedLeadCount: number;
   measuredDistance: number;
   measuredLeadCount: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   toolCode?: string;
   actionButtonLabel?: string;
@@ -104,7 +106,8 @@ export function EdgeWidthToolPanel(props: EdgeWidthToolPanelProps): React.JSX.El
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Position caliper ROI below and click &quot;Process Rule&quot; to measure sub-pixel edges.
+              Position caliper ROI below and click &quot;Process Rule&quot; to measure sub-pixel
+              edges.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
@@ -187,7 +190,9 @@ export function EdgeWidthToolPanel(props: EdgeWidthToolPanelProps): React.JSX.El
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-slate-400">Tolerance Band:</span>
-              <span className="font-mono font-bold text-cyan-400">&plusmn; {props.tolerance} px</span>
+              <span className="font-mono font-bold text-cyan-400">
+                &plusmn; {props.tolerance} px
+              </span>
             </div>
             <input
               type="range"

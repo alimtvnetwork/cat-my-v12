@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { EdgeWidthToolPanel } from "../workbench/EdgeWidthToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardEdgePitchToolProps {
   settings: PatternSearchSettings;
@@ -45,9 +44,7 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
   const [nominalDistance, setNominalDistance] = useState<number>(
     Number(initialParams.nominalPitchPx ?? 30),
   );
-  const [tolerance, setTolerance] = useState<number>(
-    Number(initialParams.tolerance ?? 3),
-  );
+  const [tolerance, setTolerance] = useState<number>(Number(initialParams.tolerance ?? 3));
   const [expectedLeadCount, setExpectedLeadCount] = useState<number>(
     Number(initialParams.expectedLeadCount ?? initialParams.expectedCount ?? 12),
   );
@@ -60,17 +57,20 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
   const [measuredLeadCount, setMeasuredLeadCount] = useState<number>(
     Number(initialParams.expectedLeadCount ?? initialParams.expectedCount ?? 12),
   );
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
   const [edgeTransitions, setEdgeTransitions] = useState<number[]>([]);
 
   // Execute lead pitch inspection strictly on demand
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setMeasuredDistance(nominalDistance);
-      setMeasuredLeadCount(expectedLeadCount);
-      setIsPass(true);
-      setEdgeTransitions([100, 100 + nominalDistance, 100 + nominalDistance * 2]);
-      setHasProcessed(true);
+      // Preview only: no teach image / search region, so nothing is
+      // measured. Do NOT seed the preview with the nominal values and
+      // never report a pass from an absent image.
+      setEdgeTransitions([]);
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -90,7 +90,8 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
       const idxRight = (midY * width + (x + 1)) * 4;
 
       const lumaL = 0.299 * rgba[idxLeft] + 0.587 * rgba[idxLeft + 1] + 0.114 * rgba[idxLeft + 2];
-      const lumaR = 0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
+      const lumaR =
+        0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
       const diff = Math.abs(lumaR - lumaL);
 
       if (diff >= thresholdGrad) {
@@ -122,24 +123,20 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     setIsPass(pass);
     setEdgeTransitions(transitions);
     setHasProcessed(true);
-  }, [
-    workbench.source,
-    workbench.searchRegion,
-    contrastThreshold,
-    nominalDistance,
-    tolerance,
-    expectedLeadCount,
-  ]);
+  }, [workbench.source, workbench.searchRegion, contrastThreshold, nominalDistance, tolerance]);
 
   const handleModeChange = useCallback((mode: "width" | "pitch" | "gap") => {
     setMeasurementMode(mode);
     setHasProcessed(false);
   }, []);
 
-  const handlePolarityChange = useCallback((polarity: "dark-to-light" | "light-to-dark" | "any") => {
-    setEdgePolarity(polarity);
-    setHasProcessed(false);
-  }, []);
+  const handlePolarityChange = useCallback(
+    (polarity: "dark-to-light" | "light-to-dark" | "any") => {
+      setEdgePolarity(polarity);
+      setHasProcessed(false);
+    },
+    [],
+  );
 
   const handleContrastChange = useCallback((val: number) => {
     setContrastThreshold(val);
@@ -279,17 +276,17 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     [workbench.searchRegion, hasProcessed, edgeTransitions, measuredDistance, isPass],
   );
 
+  // Apply = rule creation. Writes TEACH params only: the preview
+  // measured pitch / lead count and their verdict are deliberately NOT
+  // written (no measuredDistance, no measuredLeadCount, no
+  // judgmentItems, no isPass) — the analyzer re-measures on every
+  // analysis image. expectedCount is the analyzer alias of
+  // expectedLeadCount. Portability: the preview edge-transition
+  // positions are display-only measurements and are stored in neither
+  // absolute nor relative form; the teach frame is the search region
+  // saved by the workbench, and the scalar nominals above are
+  // frame-independent.
   const handleApply = useCallback(() => {
-    const defaultPitchItem: JudgmentItem = {
-      id: "j1",
-      name: "Lead Pitch",
-      unit: "px",
-      lowerLimit: nominalDistance - tolerance,
-      measured: measuredDistance,
-      upperLimit: nominalDistance + tolerance,
-      status: isPass ? "PASS" : "FAIL",
-    };
-
     props.onChange((prev) => ({
       ...prev,
       params: {
@@ -301,9 +298,7 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
         nominalPitchPx: nominalDistance,
         tolerance,
         expectedLeadCount,
-        measuredDistance,
-        measuredLeadCount,
-        judgmentItems: [defaultPitchItem],
+        expectedCount: expectedLeadCount,
       },
     }));
 
@@ -315,9 +310,6 @@ export function StandardEdgePitchTool(props: StandardEdgePitchToolProps): React.
     nominalDistance,
     tolerance,
     expectedLeadCount,
-    measuredDistance,
-    measuredLeadCount,
-    isPass,
     props,
   ]);
 

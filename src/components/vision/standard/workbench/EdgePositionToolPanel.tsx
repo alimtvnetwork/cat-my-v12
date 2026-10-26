@@ -1,5 +1,15 @@
 import React from "react";
-import { Check, X, Crosshair, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Play, Clock } from "lucide-react";
+import {
+  Check,
+  X,
+  Crosshair,
+  ArrowRight,
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Play,
+  Clock,
+} from "lucide-react";
 
 export interface EdgePositionToolPanelProps {
   scanDirection: "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top";
@@ -9,7 +19,9 @@ export interface EdgePositionToolPanelProps {
   nominalPosition: number;
   tolerancePx: number;
   measuredPosition: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   toolCode?: string;
   actionButtonLabel?: string;
@@ -212,9 +224,7 @@ export function EdgePositionToolPanel(props: EdgePositionToolPanelProps): React.
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-slate-400">Nominal Position:</span>
-              <span className="font-mono font-bold text-slate-200">
-                {props.nominalPosition} px
-              </span>
+              <span className="font-mono font-bold text-slate-200">{props.nominalPosition} px</span>
             </div>
             <input
               type="range"

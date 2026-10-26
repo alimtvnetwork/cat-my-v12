@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { CodeReaderToolPanel } from "../workbench/CodeReaderToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import type {
   CodeReaderResult,
   IsoGradingReport,
@@ -53,18 +52,26 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [codeResult, setCodeResult] = useState<CodeReaderResult | null>(null);
+  // No default payload: an empty payload stays empty. A payload is only
+  // ever stored by Apply when it was actually taught/decoded (see
+  // handleApply); a hardcoded serial here used to make every new rule
+  // look decoded before any code was read.
   const [decodedPayload, setDecodedPayload] = useState<string>(
-    String(initialParams.decodedPayload ?? "SN20261022-A9048-REV2"),
+    String(initialParams.decodedPayload ?? ""),
   );
   const [detectedSymbology, setDetectedSymbology] = useState<string>("DataMatrix");
   const [printQualityGrade, setPrintQualityGrade] = useState<string>("A (4.0)");
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   // Decode payload from workpiece ROI strictly on demand
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setHasProcessed(true);
-      setIsPass(true);
+      // Preview only: no teach image / search region, so no decode and no
+      // verdict. Stay unprocessed; never report a pass.
+      setHasProcessed(false);
+      setIsPass(undefined);
 
       return;
     }
@@ -76,9 +83,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
       expectedPattern,
       minQualityGrade,
       presetPayload:
-        typeof initialParams.decodedPayload === "string"
-          ? initialParams.decodedPayload
-          : undefined,
+        typeof initialParams.decodedPayload === "string" ? initialParams.decodedPayload : undefined,
     });
 
     setCodeResult(result);
@@ -131,9 +136,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
         const x = i % source.width;
         const y = Math.floor(i / source.width);
 
-        const luma = Math.round(
-          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
-        );
+        const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
 
@@ -255,26 +258,18 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
     ],
   );
 
+  // Apply = rule creation. Writes TEACH params only, with the UI key
+  // (expectedPattern) and the catalog key (expectedPatternRegex) kept
+  // in sync. decodedPayload is written ONLY when it is non-blank, i.e.
+  // actually taught/decoded — never a default, and an empty payload
+  // stays absent so the analyzer fails the rule as no-decode instead of
+  // passing on invented data. The preview grading (detected symbology,
+  // print grade, ISO scores) and its verdict are deliberately NOT
+  // written (no detectedSymbology, no printQualityGrade, no
+  // overallIsoGrade, no judgmentItems, no isPass): the analyzer grades
+  // on every analysis image.
   const handleApply = useCallback(() => {
-    const defaultCodeItem: JudgmentItem = {
-      id: "j1",
-      name: "Code Read Verification",
-      unit: "text",
-      lowerLimit: 0,
-      measured: isPass ? 1 : 0,
-      upperLimit: 1,
-      status: isPass ? "PASS" : "FAIL",
-    };
-
-    const defaultGradeItem: JudgmentItem = {
-      id: "j2",
-      name: "ISO/IEC Quality Score",
-      unit: "score",
-      lowerLimit: minQualityGrade === "A" ? 3.5 : minQualityGrade === "B" ? 2.5 : 1.5,
-      measured: codeResult ? codeResult.grading.overallScore : 4.0,
-      upperLimit: 4.0,
-      status: isPass ? "PASS" : "FAIL",
-    };
+    const taughtPayload = decodedPayload.trim();
 
     props.onChange((prev) => ({
       ...prev,
@@ -283,29 +278,14 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
         toolCode: "T103",
         symbology,
         expectedPattern,
+        expectedPatternRegex: expectedPattern,
         minQualityGrade,
-        decodedPayload,
-        detectedSymbology,
-        printQualityGrade,
-        overallIsoGrade: codeResult ? codeResult.grading.overallGrade : "A",
-        symbolContrast: codeResult ? codeResult.grading.symbolContrast : 80,
-        modulation: codeResult ? codeResult.grading.modulation : 0.7,
-        judgmentItems: [defaultCodeItem, defaultGradeItem],
+        ...(taughtPayload ? { decodedPayload: taughtPayload } : {}),
       },
     }));
 
     props.onOk?.();
-  }, [
-    symbology,
-    expectedPattern,
-    minQualityGrade,
-    decodedPayload,
-    detectedSymbology,
-    printQualityGrade,
-    codeResult,
-    isPass,
-    props,
-  ]);
+  }, [symbology, expectedPattern, minQualityGrade, decodedPayload, props]);
 
   return (
     <StandardWorkbenchShell
@@ -327,9 +307,7 @@ export function StandardCodeReaderTool(props: StandardCodeReaderToolProps): Reac
           filterModeLabel="FILTERED (Binarized Code Cells)"
           toolBadge="T103 CODE READER"
           statusText={
-            hasProcessed
-              ? `${detectedSymbology} [${isPass ? "PASS" : "FAIL"}]`
-              : "PENDING PROCESS"
+            hasProcessed ? `${detectedSymbology} [${isPass ? "PASS" : "FAIL"}]` : "PENDING PROCESS"
           }
           isPass={hasProcessed ? isPass : undefined}
           onSearchRegionChange={(region) => {

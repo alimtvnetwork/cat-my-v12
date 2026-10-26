@@ -1,5 +1,14 @@
 import React from "react";
-import { Check, X, Calculator, ShieldCheck, Play, Clock, ArrowRight, GitBranch } from "lucide-react";
+import {
+  Check,
+  X,
+  Calculator,
+  ShieldCheck,
+  Play,
+  Clock,
+  ArrowRight,
+  GitBranch,
+} from "lucide-react";
 import type {
   MathComparisonOperator,
   MathSandboxLimits,
@@ -35,7 +44,8 @@ export interface MathSandboxToolPanelProps {
 
 export function MathSandboxToolPanel(props: MathSandboxToolPanelProps): React.JSX.Element {
   const label = props.actionButtonLabel ?? "OK - Apply to Rule";
-  const isPass = props.evalResult?.isPass ?? true;
+  // No evaluation yet means no verdict: never default an absent result to PASS.
+  const isPass = props.evalResult?.isPass;
 
   const insertToken = (token: string) => {
     props.onExpressionChange(`${props.expression ? `${props.expression} ` : ""}${token}`);
@@ -126,16 +136,18 @@ export function MathSandboxToolPanel(props: MathSandboxToolPanelProps): React.JS
 
           {/* Quick Math Buttons */}
           <div className="flex flex-wrap gap-1 pt-1">
-            {["+", "-", "*", "/", "^", "abs()", "sqrt()", "min()", "max()", "round()"].map((btn) => (
-              <button
-                key={btn}
-                type="button"
-                onClick={() => insertToken(btn)}
-                className="rounded border border-[#374151] bg-[#1e2633] px-2 py-0.5 font-mono text-[10px] text-cyan-300 hover:bg-[#2d3748] hover:text-white"
-              >
-                {btn}
-              </button>
-            ))}
+            {["+", "-", "*", "/", "^", "abs()", "sqrt()", "min()", "max()", "round()"].map(
+              (btn) => (
+                <button
+                  key={btn}
+                  type="button"
+                  onClick={() => insertToken(btn)}
+                  className="rounded border border-[#374151] bg-[#1e2633] px-2 py-0.5 font-mono text-[10px] text-cyan-300 hover:bg-[#2d3748] hover:text-white"
+                >
+                  {btn}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -197,9 +209,7 @@ export function MathSandboxToolPanel(props: MathSandboxToolPanelProps): React.JS
               onChange={(e) => props.onSkipIfParentFailedChange(e.target.checked)}
               className="rounded border-[#2d3748] bg-[#1a202c] text-cyan-500 focus:ring-0"
             />
-            <span className="text-[11px] text-slate-300">
-              Skip Rule If Upstream Gate Fails
-            </span>
+            <span className="text-[11px] text-slate-300">Skip Rule If Upstream Gate Fails</span>
           </label>
         </div>
 

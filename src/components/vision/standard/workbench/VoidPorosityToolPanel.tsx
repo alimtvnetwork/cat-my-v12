@@ -8,7 +8,9 @@ export interface VoidPorosityToolPanelProps {
   maxAllowedVoids: number;
   detectedVoidCount: number;
   measuredPorosityPercent: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   actionButtonLabel?: string;
   onVoidSensitivityChange: (val: number) => void;
@@ -91,15 +93,14 @@ export function VoidPorosityToolPanel(props: VoidPorosityToolPanelProps): React.
                     : "text-amber-400"
               }`}
             >
-              {props.hasProcessed
-                ? `${props.measuredPorosityPercent.toFixed(2)}%`
-                : "--"}
+              {props.hasProcessed ? `${props.measuredPorosityPercent.toFixed(2)}%` : "--"}
             </span>
           </div>
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Adjust void criteria below and click &quot;Process Rule&quot; to calculate cavity ratio.
+              Adjust void criteria below and click &quot;Process Rule&quot; to calculate cavity
+              ratio.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400">

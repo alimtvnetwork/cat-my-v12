@@ -38,6 +38,15 @@ export interface OcrEngineOptions {
   expectedCharacterCount?: number | null;
   /** Pre-recognition upscale factor. Defaults to 3. */
   upscaleFactor?: number;
+  /**
+   * Opt-in spec T106 CLAHE step (tile-based, clip-limited) inserted
+   * after polarity normalization and before local Otsu binarization.
+   * Defaults to false: the default pipeline (local Otsu only) is the
+   * previously verified behaviour, and CLAHE on small near-uniform
+   * laser-mark ROIs risks amplifying background texture. Set true
+   * only for ROIs where uneven illumination defeats local Otsu.
+   */
+  useClahe?: boolean;
   /** Tesseract page segmentation mode. Defaults to PSM.SINGLE_BLOCK ('6'). */
   pageSegMode?: string;
   /**

@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { EdgeWidthToolPanel } from "../workbench/EdgeWidthToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardEdgeWidthToolProps {
   settings: PatternSearchSettings;
@@ -45,9 +44,7 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
   const [nominalDistance, setNominalDistance] = useState<number>(
     Number(initialParams.nominalDistance ?? 45),
   );
-  const [tolerance, setTolerance] = useState<number>(
-    Number(initialParams.tolerance ?? 5),
-  );
+  const [tolerance, setTolerance] = useState<number>(Number(initialParams.tolerance ?? 5));
   const [expectedLeadCount, setExpectedLeadCount] = useState<number>(
     Number(initialParams.expectedLeadCount ?? 8),
   );
@@ -60,17 +57,20 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
   const [measuredLeadCount, setMeasuredLeadCount] = useState<number>(
     Number(initialParams.expectedLeadCount ?? 8),
   );
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
   const [edgeTransitions, setEdgeTransitions] = useState<number[]>([]);
 
   // Execute caliper edge detection strictly on demand
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setMeasuredDistance(nominalDistance);
-      setMeasuredLeadCount(expectedLeadCount);
-      setIsPass(true);
-      setEdgeTransitions([100, 100 + nominalDistance]);
-      setHasProcessed(true);
+      // Preview only: no teach image / search region, so nothing is
+      // measured. Do NOT seed the preview with the nominal values and
+      // never report a pass from an absent image.
+      setEdgeTransitions([]);
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -90,7 +90,8 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
       const idxRight = (midY * width + (x + 1)) * 4;
 
       const lumaL = 0.299 * rgba[idxLeft] + 0.587 * rgba[idxLeft + 1] + 0.114 * rgba[idxLeft + 2];
-      const lumaR = 0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
+      const lumaR =
+        0.299 * rgba[idxRight] + 0.587 * rgba[idxRight + 1] + 0.114 * rgba[idxRight + 2];
       const diff = lumaR - lumaL;
 
       const isCandidate =
@@ -130,7 +131,6 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     edgePolarity,
     nominalDistance,
     tolerance,
-    expectedLeadCount,
   ]);
 
   const handleModeChange = useCallback((mode: "width" | "pitch" | "gap") => {
@@ -138,10 +138,13 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     setHasProcessed(false);
   }, []);
 
-  const handlePolarityChange = useCallback((polarity: "dark-to-light" | "light-to-dark" | "any") => {
-    setEdgePolarity(polarity);
-    setHasProcessed(false);
-  }, []);
+  const handlePolarityChange = useCallback(
+    (polarity: "dark-to-light" | "light-to-dark" | "any") => {
+      setEdgePolarity(polarity);
+      setHasProcessed(false);
+    },
+    [],
+  );
 
   const handleContrastChange = useCallback((val: number) => {
     setContrastThreshold(val);
@@ -295,17 +298,25 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     [workbench.searchRegion, hasProcessed, edgeTransitions, measuredDistance, isPass],
   );
 
+  // Apply = rule creation. Writes TEACH params only: the preview
+  // measured width / lead count and their verdict are deliberately NOT
+  // written (no measuredDistance, no measuredLeadCount, no
+  // judgmentItems, no isPass) — the analyzer re-measures on every
+  // analysis image. The workbench nominal is in px, so the catalog mm
+  // nominal is derived with pxToMetricRatio (the stored ratio if the
+  // rule already has one, else the analyzer default 0.025 mm/px), with
+  // symmetric mm tolerances derived from the px tolerance.
+  // nominalWidthPx is written ONLY if the rule already had it (legacy).
+  // Portability: the preview edge-transition positions are display-only
+  // measurements and are stored in neither absolute nor relative form;
+  // the teach frame is the search region saved by the workbench, and
+  // the scalar nominals above are frame-independent.
   const handleApply = useCallback(() => {
-    const defaultDistanceItem: JudgmentItem = {
-      id: "j1",
-      name: "Caliper Distance",
-      unit: "px",
-      lowerLimit: nominalDistance - tolerance,
-      measured: measuredDistance,
-      upperLimit: nominalDistance + tolerance,
-      status: isPass ? "PASS" : "FAIL",
-    };
-
+    const pxToMetricRatio =
+      typeof initialParams.pxToMetricRatio === "number" &&
+      Number.isFinite(initialParams.pxToMetricRatio)
+        ? (initialParams.pxToMetricRatio as number)
+        : 0.025;
     props.onChange((prev) => ({
       ...prev,
       params: {
@@ -315,11 +326,17 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
         edgePolarity,
         contrastThreshold,
         nominalDistance,
+        nominalDistancePx: nominalDistance,
+        nominalDimensionMm: nominalDistance * pxToMetricRatio,
+        pxToMetricRatio,
+        lowerToleranceMm: -tolerance * pxToMetricRatio,
+        upperToleranceMm: tolerance * pxToMetricRatio,
         tolerance,
         expectedLeadCount,
-        measuredDistance,
-        measuredLeadCount,
-        judgmentItems: [defaultDistanceItem],
+        expectedCount: expectedLeadCount,
+        ...(typeof initialParams.nominalWidthPx === "number"
+          ? { nominalWidthPx: initialParams.nominalWidthPx }
+          : {}),
       },
     }));
 
@@ -331,9 +348,8 @@ export function StandardEdgeWidthTool(props: StandardEdgeWidthToolProps): React.
     nominalDistance,
     tolerance,
     expectedLeadCount,
-    measuredDistance,
-    measuredLeadCount,
-    isPass,
+    initialParams.pxToMetricRatio,
+    initialParams.nominalWidthPx,
     props,
   ]);
 

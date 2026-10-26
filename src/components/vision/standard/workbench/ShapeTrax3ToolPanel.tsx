@@ -16,7 +16,9 @@ export interface ShapeTrax3ToolPanelProps {
   scalePct: number;
   matchedPoints: number;
   totalModelPoints: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   toolCode?: string;
   actionButtonLabel?: string;
@@ -103,7 +105,9 @@ export function ShapeTrax3ToolPanel(props: ShapeTrax3ToolPanelProps): React.JSX.
           <div className="mt-1 flex items-baseline justify-between">
             <span className="text-xs text-slate-400 font-medium">Rotation Angle (&theta;):</span>
             <span className="font-mono text-sm font-bold text-cyan-300">
-              {props.hasProcessed ? `${props.angleDeg >= 0 ? "+" : ""}${props.angleDeg.toFixed(1)}°` : "--"}
+              {props.hasProcessed
+                ? `${props.angleDeg >= 0 ? "+" : ""}${props.angleDeg.toFixed(1)}°`
+                : "--"}
             </span>
           </div>
 
@@ -117,13 +121,16 @@ export function ShapeTrax3ToolPanel(props: ShapeTrax3ToolPanelProps): React.JSX.
           <div className="mt-1 flex items-baseline justify-between">
             <span className="text-xs text-slate-400 font-medium">Centroid Pose:</span>
             <span className="font-mono text-xs font-bold text-slate-300">
-              {props.hasProcessed ? `(${props.matchedX.toFixed(1)}, ${props.matchedY.toFixed(1)})` : "--"}
+              {props.hasProcessed
+                ? `(${props.matchedX.toFixed(1)}, ${props.matchedY.toFixed(1)})`
+                : "--"}
             </span>
           </div>
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Position search ROI and click &quot;Process Rule&quot; to vectorize sub-pixel boundary contours.
+              Position search ROI and click &quot;Process Rule&quot; to vectorize sub-pixel boundary
+              contours.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
@@ -138,9 +145,7 @@ export function ShapeTrax3ToolPanel(props: ShapeTrax3ToolPanelProps): React.JSX.
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-bold text-slate-300">Minimum Match Score</span>
-              <span className="font-mono font-bold text-emerald-400">
-                {props.minMatchPercent}%
-              </span>
+              <span className="font-mono font-bold text-emerald-400">{props.minMatchPercent}%</span>
             </div>
             <input
               type="range"
@@ -156,9 +161,7 @@ export function ShapeTrax3ToolPanel(props: ShapeTrax3ToolPanelProps): React.JSX.
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-bold text-slate-300">Contour Contrast Sensitivity</span>
-              <span className="font-mono font-bold text-cyan-400">
-                {props.contrastThreshold}
-              </span>
+              <span className="font-mono font-bold text-cyan-400">{props.contrastThreshold}</span>
             </div>
             <input
               type="range"

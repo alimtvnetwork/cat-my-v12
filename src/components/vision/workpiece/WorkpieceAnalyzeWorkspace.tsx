@@ -54,6 +54,7 @@ import {
 import {
   loadWorkpieceImageData,
   evaluateWorkpieceRuleReal,
+  evaluateCodeReaderRuleAsync,
   evaluateTapeStripRules,
   type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
@@ -853,10 +854,8 @@ export function WorkpieceAnalyzeWorkspace({
               const multiDevicePin1 = occupiedPockets
                 .map((p) => {
                   const pRes = p.ruleResults[r.id];
-                  const hX =
-                    pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
-                  const hY =
-                    pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
+                  const hX = pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
+                  const hY = pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
 
                   if (typeof hX === "number" && typeof hY === "number") {
                     return {
@@ -916,6 +915,12 @@ export function WorkpieceAnalyzeWorkspace({
 
               if (decision.isSkipped) {
                 ruleResult = createSkippedValidationResult({ rule: r, decision });
+              } else if (String((r.params as any)?.toolCode ?? "").toUpperCase() === "T103") {
+                // Code rules need the async ZXing path even when there
+                // is no tape-strip result to reuse; the sync evaluator
+                // cannot decode pixels and must not grade the taught
+                // payload as a test result.
+                ruleResult = await evaluateCodeReaderRuleAsync(r, imgData, "1D/2D Code Reader");
               } else {
                 ruleResult = evaluateWorkpieceRuleReal(r, imgData, previousResultsForWorkspace);
               }

@@ -9,10 +9,7 @@ import { evaluateMathExpression } from "@/lib/execution/math-sandbox";
 import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
-import {
-  MathSandboxToolPanel,
-  type AvailableVariable,
-} from "../workbench/MathSandboxToolPanel";
+import { MathSandboxToolPanel, type AvailableVariable } from "../workbench/MathSandboxToolPanel";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useValidationStore } from "@/lib/editor/validation-store";
 
@@ -32,9 +29,7 @@ export interface StandardMathSandboxToolProps {
   actionButtonLabel?: string;
 }
 
-export function StandardMathSandboxTool(
-  props: StandardMathSandboxToolProps,
-): React.JSX.Element {
+export function StandardMathSandboxTool(props: StandardMathSandboxToolProps): React.JSX.Element {
   const workbench = useStandardWorkbench({
     settings: props.settings,
     onChange: props.onChange,
@@ -45,7 +40,11 @@ export function StandardMathSandboxTool(
   const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
   const [expression, setExpression] = useState<string>(
-    String(initialParams.expression ?? initialParams.mathExpression ?? "LeadPitch >= 1.2 && LeadPitch <= 1.4"),
+    String(
+      initialParams.expression ??
+        initialParams.mathExpression ??
+        "LeadPitch >= 1.2 && LeadPitch <= 1.4",
+    ),
   );
   const [operator, setOperator] = useState<MathComparisonOperator>(
     (initialParams.operator as MathComparisonOperator) ?? "between",
@@ -110,14 +109,18 @@ export function StandardMathSandboxTool(
       }
     }
 
-    // Default simulation variables if rules haven't run yet
+    // Default simulation variables if rules haven't run yet. There is
+    // deliberately NO Pin1_Score placeholder here: a seeded 0.98 used to
+    // make the sandbox evaluate against a Pin 1 score that was never
+    // measured. Upstream scores only ever come from real rule runs
+    // above; with no runs, only these generic simulation variables
+    // exist, and the user must wire a real upstream rule.
     if (list.length === 0) {
       list.push(
         { name: "LeadPitch", value: 1.27, label: "Lead Pitch (mm)" },
         { name: "Circle_Diameter", value: 50.2, label: "Circle Diameter (px)" },
         { name: "T110_Width", value: 12.45, label: "Caliper Width (px)" },
         { name: "T101_Area", value: 1420, label: "Area Gate (px)" },
-        { name: "Pin1_Score", value: 0.98, label: "Pin1 Score" },
       );
     }
 
@@ -142,6 +145,12 @@ export function StandardMathSandboxTool(
     setHasProcessed(true);
   }, [expression, availableVariables, limits, operator]);
 
+  // Apply = rule creation. Writes TEACH params only: the expression,
+  // operator, limits and the upstream-rule dependency. The preview
+  // evaluation result is deliberately NOT written (no measuredValue):
+  // a formula result is computed by the analyzer from live upstream
+  // values on every analysis image, never stored from a preview run.
+  // Apply without Process therefore writes teach params only.
   const handleApply = useCallback(() => {
     props.onChange((prev) => ({
       ...prev,
@@ -150,6 +159,7 @@ export function StandardMathSandboxTool(
         toolCode: "M301",
         category: "MathematicalOperations",
         expression,
+        mathExpression: expression,
         operator,
         limits,
         minLimit: limits.min,
@@ -159,22 +169,13 @@ export function StandardMathSandboxTool(
         dependsOnRuleId: dependsOnRuleId || undefined,
         skipIfParentFailed,
         hasParentGate: Boolean(dependsOnRuleId),
-        measuredValue: evalResult?.value ?? null,
       },
     }));
 
     if (props.onOk) {
       props.onOk();
     }
-  }, [
-    props,
-    expression,
-    operator,
-    limits,
-    dependsOnRuleId,
-    skipIfParentFailed,
-    evalResult,
-  ]);
+  }, [props, expression, operator, limits, dependsOnRuleId, skipIfParentFailed]);
 
   const renderCustomOverlays = useCallback(
     (ctx: CanvasRenderingContext2D, width: number, height: number) => {

@@ -17,7 +17,9 @@ export interface CircleGaugeToolPanelProps {
   roundnessScore: number;
   inlierCount: number;
   totalRayCount: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   toolCode?: string;
   actionButtonLabel?: string;
@@ -111,15 +113,14 @@ export function CircleGaugeToolPanel(props: CircleGaugeToolPanelProps): React.JS
           <div className="mt-1 flex items-baseline justify-between">
             <span className="text-xs text-slate-400 font-medium">Inlier Edge Rays:</span>
             <span className="font-mono text-sm font-bold text-slate-200">
-              {props.hasProcessed
-                ? `${props.inlierCount} / ${props.totalRayCount} rays`
-                : "--"}
+              {props.hasProcessed ? `${props.inlierCount} / ${props.totalRayCount} rays` : "--"}
             </span>
           </div>
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Position circle/via ROI below and click &quot;Process Rule&quot; to perform radial ray-marching & Pratt circle fit.
+              Position circle/via ROI below and click &quot;Process Rule&quot; to perform radial
+              ray-marching & Pratt circle fit.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400 border-t border-[#212832] pt-1">
@@ -229,9 +230,7 @@ export function CircleGaugeToolPanel(props: CircleGaugeToolPanelProps): React.JS
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-bold text-slate-300">Min Roundness Score</span>
-              <span className="font-mono font-bold text-cyan-400">
-                {props.minRoundnessScore}%
-              </span>
+              <span className="font-mono font-bold text-cyan-400">{props.minRoundnessScore}%</span>
             </div>
             <input
               type="range"
@@ -247,9 +246,7 @@ export function CircleGaugeToolPanel(props: CircleGaugeToolPanelProps): React.JS
           <div>
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-bold text-slate-300">Min Edge Contrast</span>
-              <span className="font-mono font-bold text-cyan-400">
-                {props.contrastThreshold}
-              </span>
+              <span className="font-mono font-bold text-cyan-400">{props.contrastThreshold}</span>
             </div>
             <input
               type="range"

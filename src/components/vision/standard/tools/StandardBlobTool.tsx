@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { BlobToolPanel } from "../workbench/BlobToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardBlobToolProps {
   settings: PatternSearchSettings;
@@ -53,18 +52,10 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
   const [binaryThreshold, setBinaryThreshold] = useState<number>(
     Number(initialParams.binaryThreshold ?? 128),
   );
-  const [minBlobArea, setMinBlobArea] = useState<number>(
-    Number(initialParams.minBlobArea ?? 50),
-  );
-  const [maxBlobArea, setMaxBlobArea] = useState<number>(
-    Number(initialParams.maxBlobArea ?? 5000),
-  );
-  const [minBlobCount, setMinBlobCount] = useState<number>(
-    Number(initialParams.minBlobCount ?? 1),
-  );
-  const [maxBlobCount, setMaxBlobCount] = useState<number>(
-    Number(initialParams.maxBlobCount ?? 4),
-  );
+  const [minBlobArea, setMinBlobArea] = useState<number>(Number(initialParams.minBlobArea ?? 50));
+  const [maxBlobArea, setMaxBlobArea] = useState<number>(Number(initialParams.maxBlobArea ?? 5000));
+  const [minBlobCount, setMinBlobCount] = useState<number>(Number(initialParams.minBlobCount ?? 1));
+  const [maxBlobCount, setMaxBlobCount] = useState<number>(Number(initialParams.maxBlobCount ?? 4));
   const [hasHoleFilling, setHasHoleFilling] = useState<boolean>(
     Boolean(initialParams.hasHoleFilling ?? true),
   );
@@ -76,15 +67,19 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [detectedBlobs, setDetectedBlobs] = useState<DetectedBlob[]>([]);
   const [detectedBridges, setDetectedBridges] = useState<SolderBridge[]>([]);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   // Execute blob & solder bridge analysis strictly on "Process" click
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
+      // Preview only: no teach image / search region, so no preview result
+      // and no verdict. Stay unprocessed; never report a pass.
       setDetectedBlobs([]);
       setDetectedBridges([]);
-      setIsPass(true);
-      setHasProcessed(true);
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -225,9 +220,7 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
         const x = i % source.width;
         const y = Math.floor(i / source.width);
 
-        const luma = Math.round(
-          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
-        );
+        const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
         const isMatch =
@@ -300,46 +293,29 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
   );
 
   // Apply button: only adds / updates rule when explicitly clicked
+  // Apply = rule creation. Writes TEACH params only, under both the
+  // workbench keys and the catalog/analyzer aliases
+  // (binarizeThreshold / minDefectAreaPx / maxAllowedDefects), so the
+  // analyzer gates on the taught values. The preview blob/bridge lists
+  // and their counts are deliberately NOT written (no detectedBlobCount,
+  // no detectedBridgeCount, no judgmentItems, no isPass): the analyzer
+  // re-detects blobs on every analysis image.
   const handleApply = useCallback(() => {
-    const finalCount = detectedBlobs.length;
-    const finalBridges = detectedBridges.length;
-    const countPass = finalCount >= minBlobCount && finalCount <= maxBlobCount;
-
-    const defaultCountItem: JudgmentItem = {
-      id: "j1",
-      name: "Blob Count",
-      unit: "count",
-      lowerLimit: minBlobCount,
-      measured: finalCount,
-      upperLimit: maxBlobCount,
-      status: countPass ? "PASS" : "FAIL",
-    };
-
-    const defaultBridgeItem: JudgmentItem = {
-      id: "j2",
-      name: "Solder Bridge Count",
-      unit: "count",
-      lowerLimit: 0,
-      measured: finalBridges,
-      upperLimit: 0,
-      status: finalBridges === 0 ? "PASS" : "FAIL",
-    };
-
     props.onChange((prev) => ({
       ...prev,
       params: {
         ...(prev.params ?? {}),
         toolCode: "T109",
         binaryThreshold,
+        binarizeThreshold: binaryThreshold,
         minBlobArea,
+        minDefectAreaPx: minBlobArea,
         maxBlobArea,
         minBlobCount,
         maxBlobCount,
+        maxAllowedDefects: maxBlobCount,
         hasHoleFilling,
         targetPolarity,
-        detectedBlobCount: finalCount,
-        detectedBridgeCount: finalBridges,
-        judgmentItems: [defaultCountItem, defaultBridgeItem],
       },
     }));
 
@@ -352,8 +328,6 @@ export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Elemen
     maxBlobCount,
     hasHoleFilling,
     targetPolarity,
-    detectedBlobs,
-    detectedBridges,
     props,
   ]);
 

@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { CircleGaugeToolPanel } from "../workbench/CircleGaugeToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 import type {
   CircleFitResult,
   CircleGaugePolarityType,
@@ -29,9 +28,7 @@ export interface StandardCircleGaugeToolProps {
   actionButtonLabel?: string;
 }
 
-export function StandardCircleGaugeTool(
-  props: StandardCircleGaugeToolProps,
-): React.JSX.Element {
+export function StandardCircleGaugeTool(props: StandardCircleGaugeToolProps): React.JSX.Element {
   const workbench = useStandardWorkbench({
     settings: props.settings,
     onChange: props.onChange,
@@ -59,9 +56,7 @@ export function StandardCircleGaugeTool(
   const [contrastThreshold, setContrastThreshold] = useState<number>(
     Number(initialParams.minEdgeContrast ?? 20),
   );
-  const [rayCount, setRayCount] = useState<number>(
-    Number(initialParams.rayCount ?? 64),
-  );
+  const [rayCount, setRayCount] = useState<number>(Number(initialParams.rayCount ?? 64));
 
   // Explicit processing state: no tool auto-analyzes
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
@@ -70,12 +65,16 @@ export function StandardCircleGaugeTool(
     Number(initialParams.nominalDiameterPx ?? initialParams.nominalDiameter ?? 50),
   );
   const [roundnessScore, setRoundnessScore] = useState<number>(0);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
-      setHasProcessed(true);
-      setIsPass(true);
+      // Preview only: no teach image / search region, so no fit and no
+      // verdict. Stay unprocessed; never report a pass.
+      setHasProcessed(false);
+      setIsPass(undefined);
 
       return;
     }
@@ -327,32 +326,23 @@ export function StandardCircleGaugeTool(
     [workbench.searchRegion, hasProcessed, fitResult, nominalDiameter],
   );
 
+  // Apply = rule creation. Writes TEACH params only: nominals and gates
+  // in both px (workbench legacy) and mm (catalog/analyzer, converted
+  // with pxToMetricRatio — the stored ratio if the rule already has one,
+  // else the analyzer default 0.025 mm/px). The preview fitted diameter /
+  // roundness and its verdict are deliberately NOT written (no
+  // measuredDiameterPx, no roundnessScorePct as a measurement, no isPass,
+  // no judgmentItems): the analyzer re-fits on every analysis image.
+  // Portability: this tool stores no absolute teach-image coordinates
+  // (the fitted centre is a preview measurement, not teach data), so
+  // there is no relative coordinate to add; the teach frame is the
+  // search region saved by the workbench on region change.
   const handleApply = useCallback(() => {
-    const finalDiameter = fitResult ? fitResult.diameterPx : nominalDiameter;
-    const finalRoundness = fitResult ? fitResult.roundnessScorePct : 0;
-    const finalPass =
-      Math.abs(finalDiameter - nominalDiameter) <= tolerance &&
-      finalRoundness >= minRoundnessScore;
-
-    const defaultDiameterItem: JudgmentItem = {
-      id: "j1",
-      name: "Circle Diameter",
-      unit: "px",
-      lowerLimit: nominalDiameter - tolerance,
-      measured: Number(finalDiameter.toFixed(2)),
-      upperLimit: nominalDiameter + tolerance,
-      status: Math.abs(finalDiameter - nominalDiameter) <= tolerance ? "PASS" : "FAIL",
-    };
-
-    const defaultRoundnessItem: JudgmentItem = {
-      id: "j2",
-      name: "Roundness Score",
-      unit: "%",
-      lowerLimit: minRoundnessScore,
-      measured: Number(finalRoundness.toFixed(1)),
-      upperLimit: 100,
-      status: finalRoundness >= minRoundnessScore ? "PASS" : "FAIL",
-    };
+    const pxToMetricRatio =
+      typeof initialParams.pxToMetricRatio === "number" &&
+      Number.isFinite(initialParams.pxToMetricRatio)
+        ? (initialParams.pxToMetricRatio as number)
+        : 0.025;
 
     props.onChange((prev) => ({
       ...prev,
@@ -362,20 +352,18 @@ export function StandardCircleGaugeTool(
         targetFeature,
         edgePolarity,
         nominalDiameterPx: nominalDiameter,
+        nominalDiameterMm: nominalDiameter * pxToMetricRatio,
         diameterTolerancePx: tolerance,
+        diameterToleranceMm: tolerance * pxToMetricRatio,
+        pxToMetricRatio,
         minRoundnessScorePct: minRoundnessScore,
         minEdgeContrast: contrastThreshold,
         rayCount,
-        measuredDiameterPx: Number(finalDiameter.toFixed(2)),
-        roundnessScorePct: Number(finalRoundness.toFixed(1)),
-        isPass: finalPass,
-        judgmentItems: [defaultDiameterItem, defaultRoundnessItem],
       },
     }));
 
     props.onOk?.();
   }, [
-    fitResult,
     nominalDiameter,
     tolerance,
     minRoundnessScore,
@@ -383,6 +371,7 @@ export function StandardCircleGaugeTool(
     edgePolarity,
     contrastThreshold,
     rayCount,
+    initialParams.pxToMetricRatio,
     props,
   ]);
 

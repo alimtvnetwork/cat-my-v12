@@ -14,7 +14,9 @@ export interface CodeReaderToolPanelProps {
   detectedSymbology: string;
   printQualityGrade: string;
   gradingReport?: IsoGradingReport | null;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   actionButtonLabel?: string;
   onSymbologyChange: (symbology: SymbologyType) => void;
@@ -96,9 +98,7 @@ export function CodeReaderToolPanel(props: CodeReaderToolPanelProps): React.JSX.
           <div className="mt-2.5">
             <span className="text-[11px] text-slate-400 font-medium">Decoded String:</span>
             <div className="mt-1 rounded bg-[#0a0d12] p-2 font-mono text-xs text-cyan-300 break-all border border-[#212832]">
-              {!props.hasProcessed
-                ? "--"
-                : props.decodedPayload || "NO_BARCODE_DETECTED"}
+              {!props.hasProcessed ? "--" : props.decodedPayload || "NO_BARCODE_DETECTED"}
             </div>
           </div>
 

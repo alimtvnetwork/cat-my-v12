@@ -6,6 +6,7 @@ import type {
   SymbologyType,
 } from "@/domain/vision/code-reader-types";
 import type { WorkpieceImageData } from "@/lib/vision/workpiece-rule-analyzer";
+import { decodeBarcodeFromImageData } from "./zxing-decoder";
 
 export function gradeToScore(grade: IsoQualityGrade): number {
   if (grade === "A") {
@@ -280,12 +281,15 @@ export interface DecodeAndGradeCodeParams {
   expectedPattern?: string;
   minQualityGrade?: IsoQualityGrade;
   /**
-   * The only decode input in this phase: a real decoded payload supplied by
-   * the caller (e.g. the rule's `decodedPayload` param). There is no decoder
-   * wired into this module yet (no ZXing/WASM decode of the ROI pixels), so
-   * when this is absent/blank the result is an explicit NO-DECODE: payload
-   * "", hasCodeDetected false, overall grade F, isPass false. Callers must
-   * FAIL the rule on that result — never substitute a hardcoded payload.
+   * A real decoded payload supplied by the caller (e.g. the rule's
+   * `decodedPayload` param). In the SYNC decodeAndGradeCode below this
+   * is the only decode input: when it is absent/blank the result is an
+   * explicit NO-DECODE (payload "", hasCodeDetected false, grade F,
+   * isPass false) — callers must FAIL the rule on that result, never
+   * substitute a hardcoded payload. For a real pixel decode use the
+   * ASYNC decodeAndGradeCodeAsync below, which attempts a ZXing decode
+   * of imageData+ROI when presetPayload is absent (a sync function
+   * cannot await the lazily-loaded ZXing bundle).
    */
   presetPayload?: string;
 }
@@ -480,4 +484,57 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
     isPass,
     hasCodeDetected,
   };
+}
+
+/**
+ * Async decode path — the one the coordinator should call from the
+ * analyzer. Resolution order for the payload:
+ *   1. presetPayload when supplied (caller-supplied real decode, e.g.
+ *      the rule's stored `decodedPayload` — unchanged sync behaviour).
+ *   2. Otherwise a real ZXing decode of imageData+ROI
+ *      (see ./zxing-decoder: MultiFormatReader, TRY_HARDER, normal +
+ *      inverted polarity, rotations for small ROIs).
+ *   3. Otherwise the sync no-decode result (payload "", grade F,
+ *      isPass false) — never a hardcoded payload.
+ * The decoded payload is then graded by the same sync path, so pattern
+ * and grade gates are identical to the preset path. Symbology
+ * mismatch: when a specific symbology was requested and ZXing decoded
+ * a different one, the payload is still reported (it is a real decode)
+ * but isPass is forced false — a wrong-symbology code is not a pass.
+ * When the request is "any", the result's symbology is the decoded one.
+ */
+export async function decodeAndGradeCodeAsync(
+  params: DecodeAndGradeCodeParams,
+): Promise<CodeReaderResult> {
+  const hasPreset = typeof params.presetPayload === "string" && params.presetPayload.trim() !== "";
+
+  if (hasPreset) {
+    return decodeAndGradeCode(params);
+  }
+
+  const decoded = await decodeBarcodeFromImageData({
+    imageData: params.imageData,
+    roi: params.roi,
+    symbology: params.symbology,
+  });
+
+  if (!decoded) {
+    return decodeAndGradeCode(params);
+  }
+
+  const requested = params.symbology ?? "datamatrix";
+  const isSymbologyMismatch =
+    requested !== "any" && decoded.symbology !== "any" && decoded.symbology !== requested;
+
+  const result = decodeAndGradeCode({
+    ...params,
+    symbology: requested === "any" ? decoded.symbology : requested,
+    presetPayload: decoded.text,
+  });
+
+  if (isSymbologyMismatch) {
+    return { ...result, isPass: false };
+  }
+
+  return result;
 }

@@ -6,13 +6,18 @@
  * (tesseract wants ~30px+ character height), polarity normalization to
  * dark-text-on-light, and local (tile-based) Otsu binarization.
  *
- * Preprocessing actually implemented for spec T106: LOCAL OTSU ONLY.
- * Spec T106 also lists a CLAHE contrast stretch, but CLAHE is NOT
- * implemented here: local Otsu already handles the uneven illumination
- * CLAHE targets, and running a contrast stretch ahead of binarization
- * on small, near-uniform laser-mark ROIs risks amplifying background
- * texture into false strokes. The upscale factor is unchanged by this
- * change (it stays caller-supplied; the engine default is still 3).
+ * Spec T106 also lists a CLAHE contrast stretch. CLAHE IS implemented
+ * here (applyClahe, tile-based with clip limiting and bilinear tile
+ * interpolation) but is OPT-IN, not part of the default pipeline:
+ * local Otsu already handles the uneven illumination CLAHE targets,
+ * and running a contrast stretch ahead of binarization on small,
+ * near-uniform laser-mark ROIs risks amplifying background texture
+ * into false strokes. The default pipeline is therefore unchanged
+ * (grayscale → upscale → polarity → local Otsu); callers that need the
+ * spec CLAHE step pass useClahe to preprocessForOcr (or set
+ * OcrEngineOptions.useClahe), which inserts CLAHE after polarity
+ * normalization and before local Otsu. The upscale factor is unchanged
+ * (it stays caller-supplied; the engine default is still 3).
  *
  * All functions operate on plain pixel buffers (no DOM), so they are
  * unit-testable in Node.
@@ -340,6 +345,119 @@ export function binarizeLocal(
   return binarizeWithThresholdMap(image, localOtsuThresholds(image, tileSize));
 }
 
+/**
+ * CLAHE (Contrast Limited Adaptive Histogram Equalization), tile-based.
+ *
+ * Each tile's histogram is clipped at `clipLimit` times the tile's mean
+ * bin count (default 2.0 — a bin can hold at most twice the average
+ * count), the clipped excess is redistributed evenly over all 256 bins,
+ * and the resulting per-tile CDFs are bilinearly interpolated between
+ * tile centres per pixel, so no block seams appear at tile boundaries.
+ * The clip limit is what keeps CLAHE from doing what an unclipped
+ * adaptive equalization would do on a near-uniform ROI: amplifying a
+ * tiny background-texture peak into full-contrast false strokes.
+ * A perfectly uniform image stays uniform (every tile has the same
+ * CDF, so interpolation cannot introduce variation), though its level
+ * may shift toward mid-gray — that is expected for an equalizer and
+ * harmless downstream, since local Otsu binarizes it uniformly.
+ */
+export const DEFAULT_CLAHE_TILE_SIZE = 16;
+export const DEFAULT_CLAHE_CLIP_LIMIT = 2.0;
+
+export interface ClaheOptions {
+  tileSize?: number;
+  /** Max bin count as a multiple of the mean bin count. Default 2.0. */
+  clipLimit?: number;
+}
+
+export function applyClahe(image: GrayImage, options: ClaheOptions = {}): GrayImage {
+  const { data, width, height } = image;
+
+  if (width === 0 || height === 0) {
+    return image;
+  }
+
+  const tileSize = Math.max(1, Math.floor(options.tileSize ?? DEFAULT_CLAHE_TILE_SIZE));
+  const clipLimit = options.clipLimit ?? DEFAULT_CLAHE_CLIP_LIMIT;
+  const tilesX = Math.ceil(width / tileSize);
+  const tilesY = Math.ceil(height / tileSize);
+
+  // Per-tile CDF lookup tables, row-major tiles x 256 levels.
+  const cdfs = new Float64Array(tilesX * tilesY * 256);
+
+  for (let ty = 0; ty < tilesY; ty += 1) {
+    const y0 = ty * tileSize;
+    const tileHeight = Math.min(tileSize, height - y0);
+
+    for (let tx = 0; tx < tilesX; tx += 1) {
+      const x0 = tx * tileSize;
+      const tileWidth = Math.min(tileSize, width - x0);
+      const tilePixels = tileWidth * tileHeight;
+      const histogram = new Float64Array(256);
+
+      for (let row = 0; row < tileHeight; row += 1) {
+        const offset = (y0 + row) * width + x0;
+
+        for (let col = 0; col < tileWidth; col += 1) {
+          histogram[data[offset + col]] += 1;
+        }
+      }
+
+      const limit = Math.max(1, (clipLimit * tilePixels) / 256);
+      let excess = 0;
+
+      for (let level = 0; level < 256; level += 1) {
+        if (histogram[level] > limit) {
+          excess += histogram[level] - limit;
+          histogram[level] = limit;
+        }
+      }
+
+      const redistributed = excess / 256;
+
+      for (let level = 0; level < 256; level += 1) {
+        histogram[level] += redistributed;
+      }
+
+      const cdfOffset = (ty * tilesX + tx) * 256;
+      let cumulative = 0;
+
+      for (let level = 0; level < 256; level += 1) {
+        cumulative += histogram[level];
+        cdfs[cdfOffset + level] = (cumulative / tilePixels) * 255;
+      }
+    }
+  }
+
+  const centersX = tileCenters(width, tileSize, tilesX);
+  const centersY = tileCenters(height, tileSize, tilesY);
+  const out = new Uint8Array(data.length);
+
+  for (let y = 0; y < height; y += 1) {
+    const by = bracketCenters(centersY, y);
+
+    for (let x = 0; x < width; x += 1) {
+      const bx = bracketCenters(centersX, x);
+      const value = data[y * width + x];
+      const at = (tx: number, ty: number): number => cdfs[(ty * tilesX + tx) * 256 + value];
+      const top = at(bx.index0, by.index0) * (1 - bx.weight) + at(bx.index1, by.index0) * bx.weight;
+      const bottom =
+        at(bx.index0, by.index1) * (1 - bx.weight) + at(bx.index1, by.index1) * bx.weight;
+      const mapped = top * (1 - by.weight) + bottom * by.weight;
+      out[y * width + x] = Math.max(0, Math.min(255, Math.round(mapped)));
+    }
+  }
+
+  return { data: out, width, height };
+}
+
+export interface PreprocessForOcrOptions {
+  /** Opt-in spec CLAHE step (after polarity, before local Otsu). Default false. */
+  useClahe?: boolean;
+  claheTileSize?: number;
+  claheClipLimit?: number;
+}
+
 export interface PreprocessedMarking {
   image: GrayImage;
   /** upscaleFactor applied — divide processed coordinates by this for source coords. */
@@ -352,17 +470,19 @@ export interface PreprocessedMarking {
   threshold: number;
   /** Smoothed per-tile threshold map used for binarization. */
   thresholdMap: LocalOtsuThresholdMap;
+  /** True when the opt-in CLAHE step ran before binarization. */
+  claheApplied: boolean;
 }
 
 /**
- * Full pipeline: grayscale → upscale → dark-text-on-light → local Otsu
- * binarize. Signatures and the upscale factor are unchanged; only the
- * final binarization step changed (global Otsu → local Otsu).
- * CLAHE is deliberately not part of this pipeline (see module header).
+ * Full pipeline: grayscale → upscale → dark-text-on-light → [CLAHE
+ * when useClahe] → local Otsu binarize. The two-argument call shape is
+ * unchanged and still runs the previous default pipeline.
  */
 export function preprocessForOcr(
   input: OcrPixelBuffer,
   upscaleFactor: number,
+  options: PreprocessForOcrOptions = {},
 ): PreprocessedMarking {
   const factor = upscaleFactor > 1 ? upscaleFactor : 1;
   let gray = rgbaToGrayscale(input);
@@ -370,6 +490,15 @@ export function preprocessForOcr(
 
   if (!isDarkTextOnLight(gray)) {
     gray = invertGray(gray);
+  }
+
+  const claheApplied = options.useClahe === true;
+
+  if (claheApplied) {
+    gray = applyClahe(gray, {
+      tileSize: options.claheTileSize,
+      clipLimit: options.claheClipLimit,
+    });
   }
 
   const thresholdMap = localOtsuThresholds(gray);
@@ -382,5 +511,5 @@ export function preprocessForOcr(
         )
       : 127;
 
-  return { image: binary, appliedUpscale: factor, threshold, thresholdMap };
+  return { image: binary, appliedUpscale: factor, threshold, thresholdMap, claheApplied };
 }

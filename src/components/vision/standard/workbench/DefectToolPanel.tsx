@@ -8,7 +8,9 @@ export interface DefectToolPanelProps {
   minArea: number;
   maxAllowedDefects: number;
   detectedCount: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   actionButtonLabel?: string;
   onSensitivityChange: (val: number) => void;
@@ -99,7 +101,8 @@ export function DefectToolPanel(props: DefectToolPanelProps): React.JSX.Element 
 
           {!props.hasProcessed ? (
             <div className="mt-2 rounded bg-black/40 p-2 text-[10px] text-amber-300 font-mono">
-              Adjust sensitivity below and click &quot;Process Rule&quot; to run differential flaw analysis.
+              Adjust sensitivity below and click &quot;Process Rule&quot; to run differential flaw
+              analysis.
             </div>
           ) : (
             <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-400">
@@ -143,9 +146,7 @@ export function DefectToolPanel(props: DefectToolPanelProps): React.JSX.Element 
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
               Defect Contrast Sensitivity
             </label>
-            <span className="font-mono text-xs font-bold text-rose-400">
-              {props.sensitivity}%
-            </span>
+            <span className="font-mono text-xs font-bold text-rose-400">{props.sensitivity}%</span>
           </div>
           <input
             type="range"
@@ -168,9 +169,7 @@ export function DefectToolPanel(props: DefectToolPanelProps): React.JSX.Element 
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
               Minimum Flaw Size (px)
             </label>
-            <span className="font-mono text-xs font-bold text-slate-200">
-              {props.minArea} px
-            </span>
+            <span className="font-mono text-xs font-bold text-slate-200">{props.minArea} px</span>
           </div>
           <input
             type="range"

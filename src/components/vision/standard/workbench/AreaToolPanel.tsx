@@ -9,7 +9,9 @@ export interface AreaToolPanelProps {
   minArea: number;
   maxArea: number;
   measuredArea: number;
-  isPass: boolean;
+  // Preview verdict only: undefined while no Process has run. Every
+  // PASS/FAIL display in this panel is gated on hasProcessed.
+  isPass: boolean | undefined;
   hasProcessed: boolean;
   actionButtonLabel?: string;
   onAreaModeChange: (mode: AreaMeasurementMode) => void;
@@ -97,9 +99,7 @@ export function AreaToolPanel(props: AreaToolPanelProps): React.JSX.Element {
           <div className="mt-2.5 flex items-baseline justify-between">
             <span className="text-xs text-slate-400 font-medium">Measured Surface Area:</span>
             <span className="font-mono text-lg font-black text-cyan-300">
-              {props.hasProcessed
-                ? `${props.measuredArea.toLocaleString()} ${unitLabel}`
-                : "--"}
+              {props.hasProcessed ? `${props.measuredArea.toLocaleString()} ${unitLabel}` : "--"}
             </span>
           </div>
 
@@ -142,7 +142,11 @@ export function AreaToolPanel(props: AreaToolPanelProps): React.JSX.Element {
                     : "border-[#2d3748] bg-[#1a202c] text-slate-400 hover:text-slate-200"
                 }`}
               >
-                {mode === "pixels" ? "Pixels (px)" : mode === "percentage" ? "Percent (%)" : "Area (mm²)"}
+                {mode === "pixels"
+                  ? "Pixels (px)"
+                  : mode === "percentage"
+                    ? "Percent (%)"
+                    : "Area (mm²)"}
               </button>
             ))}
           </div>

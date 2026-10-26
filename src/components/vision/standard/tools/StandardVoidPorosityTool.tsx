@@ -5,7 +5,6 @@ import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
 import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
 import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
 import { VoidPorosityToolPanel } from "../workbench/VoidPorosityToolPanel";
-import type { JudgmentItem } from "../tabs/JudgmentConditionsTab";
 
 export interface StandardVoidPorosityToolProps {
   settings: PatternSearchSettings;
@@ -58,15 +57,21 @@ export function StandardVoidPorosityTool(props: StandardVoidPorosityToolProps): 
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
   const [detectedVoids, setDetectedVoids] = useState<DetectedVoid[]>([]);
   const [measuredPorosityPercent, setMeasuredPorosityPercent] = useState<number>(0);
-  const [isPass, setIsPass] = useState<boolean>(true);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
 
   // Execute void analysis strictly on "Process" click
   const handleProcess = useCallback(() => {
     if (!workbench.source || !workbench.searchRegion) {
+      // Preview only: no teach image / search region, so no void list and
+      // no verdict. Stay unprocessed; never report a pass.
+      // (The grid-cell counting in the real branch is preview telemetry
+      // only; Apply stores thresholds/ratios, never this count.)
       setDetectedVoids([]);
       setMeasuredPorosityPercent(0);
-      setIsPass(true);
-      setHasProcessed(true);
+      setIsPass(undefined);
+      setHasProcessed(false);
 
       return;
     }
@@ -251,32 +256,16 @@ export function StandardVoidPorosityTool(props: StandardVoidPorosityToolProps): 
   // Note: in this branch only maxTotalVoidPct is currently read on the T108
   // analyzer path; maxSingleVoidPct / minVoidAreaPx are catalog/coating keys
   // that the engine does not yet consume for T108 (see parent wiring task).
+  // Apply = rule creation. Writes TEACH thresholds/ratios only. The
+  // grid-cell low-luma counting in handleProcess is a PREVIEW
+  // approximation, not the rule's void measurement: its count and
+  // porosity are NOT written as judgment inputs. They are kept only as
+  // lastPreview* telemetry below (and only when a Process actually
+  // ran), which the analyzer ignores. No judgmentItems, no isPass, so
+  // Apply without Process writes teach params only and no verdict.
   const handleApply = useCallback(() => {
-    const finalVoids = detectedVoids.length;
-    const finalPass =
-      finalVoids <= maxAllowedVoids && measuredPorosityPercent <= maxPorosityPercent;
     const minVoidRadiusPx = Math.max(2, Math.round(minVoidDiameterPx / 2));
     const minVoidAreaPx = Math.PI * minVoidRadiusPx * minVoidRadiusPx;
-
-    const defaultPorosityItem: JudgmentItem = {
-      id: "j1",
-      name: "Porosity Ratio",
-      unit: "%",
-      lowerLimit: 0,
-      measured: measuredPorosityPercent,
-      upperLimit: maxPorosityPercent,
-      status: finalPass ? "PASS" : "FAIL",
-    };
-
-    const defaultVoidCountItem: JudgmentItem = {
-      id: "j2",
-      name: "Void Cavity Count",
-      unit: "count",
-      lowerLimit: 0,
-      measured: finalVoids,
-      upperLimit: maxAllowedVoids,
-      status: finalVoids <= maxAllowedVoids ? "PASS" : "FAIL",
-    };
 
     props.onChange((prev) => ({
       ...prev,
@@ -284,15 +273,23 @@ export function StandardVoidPorosityTool(props: StandardVoidPorosityToolProps): 
         ...(prev.params ?? {}),
         toolCode: "T108",
         voidSensitivity,
+        voidThresholdLuma: Math.round(50 + voidSensitivity * 1.2),
         minVoidDiameterPx,
         maxPorosityPercent,
         maxAllowedVoids,
         maxTotalVoidPct: maxPorosityPercent,
         maxSingleVoidPct: maxPorosityPercent,
         minVoidAreaPx,
-        measuredPorosityPercent,
-        detectedVoidCount: finalVoids,
-        judgmentItems: [defaultPorosityItem, defaultVoidCountItem],
+        // Preview telemetry only — the analyzer ignores lastPreview*
+        // keys; they exist so the workbench can show what the last
+        // preview measured without that ever becoming a rule judgment.
+        ...(hasProcessed
+          ? {
+              lastPreviewVoidCount: detectedVoids.length,
+              lastPreviewPorosityPct: measuredPorosityPercent,
+              lastPreviewIsPass: isPass,
+            }
+          : {}),
       },
     }));
 
@@ -304,6 +301,8 @@ export function StandardVoidPorosityTool(props: StandardVoidPorosityToolProps): 
     maxAllowedVoids,
     measuredPorosityPercent,
     detectedVoids,
+    hasProcessed,
+    isPass,
     props,
   ]);
 
