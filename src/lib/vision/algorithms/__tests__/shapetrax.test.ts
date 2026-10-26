@@ -69,7 +69,12 @@ describe("ShapeTrax3 Contour Vectorization & Matching", () => {
       rgba,
     };
 
-    const result = matchShapeTrax({
+    // Spec ShapeTrax3 §5: the raw angle/scale must be checked BEFORE
+    // any clamping. This ellipse's raw scale is 66.5% (measured), so
+    // a 90–110 range must FAIL — the old clamp-then-check tautology
+    // passed it by clamping 66.5 into range first, and the old 50%
+    // score floor hid the true coherence score (78.4).
+    const narrowRange = matchShapeTrax({
       imageData,
       roi: { x: 10, y: 10, width: 80, height: 80 },
       minMatchPercent: 70,
@@ -79,10 +84,25 @@ describe("ShapeTrax3 Contour Vectorization & Matching", () => {
       scaleRangeMax: 110,
     });
 
-    expect(result.hasMatchFound).toBe(true);
-    expect(result.x).toBeCloseTo(50, 1);
-    expect(result.y).toBeCloseTo(50, 1);
-    expect(result.score).toBeGreaterThanOrEqual(70);
-    expect(result.isPass).toBe(true);
+    expect(narrowRange.hasMatchFound).toBe(true);
+    expect(narrowRange.x).toBeCloseTo(50, 1);
+    expect(narrowRange.y).toBeCloseTo(50, 1);
+    expect(narrowRange.score).toBeGreaterThanOrEqual(70);
+    expect(narrowRange.scalePct).toBeCloseTo(66.5, 0);
+    expect(narrowRange.isPass).toBe(false);
+
+    // With a range that actually contains the measured raw scale,
+    // the same shape passes on its honest score and angle.
+    const wideRange = matchShapeTrax({
+      imageData,
+      roi: { x: 10, y: 10, width: 80, height: 80 },
+      minMatchPercent: 70,
+      contrastThreshold: 25,
+      angleRangeDeg: 180,
+      scaleRangeMin: 60,
+      scaleRangeMax: 110,
+    });
+
+    expect(wideRange.isPass).toBe(true);
   });
 });

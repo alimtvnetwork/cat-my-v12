@@ -118,7 +118,10 @@ export class MathSandboxParser {
       }
 
       // Numbers
-      if (this.isDigit(char) || (char === "." && i + 1 < expr.length && this.isDigit(expr[i + 1]))) {
+      if (
+        this.isDigit(char) ||
+        (char === "." && i + 1 < expr.length && this.isDigit(expr[i + 1]))
+      ) {
         let numStr = "";
         const start = i;
 
@@ -227,10 +230,7 @@ export class MathSandboxParser {
   private parseRelational(): number {
     let left = this.parseAdditive();
 
-    while (
-      this.peek().type === "OPERATOR" &&
-      ["<", "<=", ">", ">="].includes(this.peek().value)
-    ) {
+    while (this.peek().type === "OPERATOR" && ["<", "<=", ">", ">="].includes(this.peek().value)) {
       const op = this.consume().value;
       const right = this.parseAdditive();
 
@@ -411,7 +411,9 @@ export class MathSandboxParser {
       throw new Error("Unexpected end of expression");
     }
 
-    throw new Error(`Unexpected token '${token.value || token.type}' at position ${token.position}`);
+    throw new Error(
+      `Unexpected token '${token.value || token.type}' at position ${token.position}`,
+    );
   }
 }
 
@@ -466,6 +468,53 @@ export function extractVariablesFromRuleResults(
   return vars;
 }
 
+export type CanonicalMathComparisonOperator = "between" | "gte" | "lte" | "eq" | "boolean";
+
+/**
+ * Normalize an operator to the engine's canonical form at the evaluation
+ * entry point, so spec-conformant rules do not fall through to "between".
+ *
+ * Spec (section 7, M301) -> engine:
+ *   lessThan    -> lte (value <= max limit; the engine has no strict `<` branch)
+ *   greaterThan -> gte (value >= min limit; the engine has no strict `>` branch)
+ *   equals      -> eq  (value within nominal +/- tolerance)
+ * Canonical names ("between", "gte", "lte", "eq", "boolean") pass through
+ * unchanged. Unknown/empty operators keep the historical default "between".
+ */
+export function normalizeMathComparisonOperator(
+  operator: MathComparisonOperator | string | undefined,
+): CanonicalMathComparisonOperator {
+  if (!operator) {
+    return "between";
+  }
+
+  const normalized = String(operator)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+
+  switch (normalized) {
+    case "lessthan":
+      return "lte";
+    case "greaterthan":
+      return "gte";
+    case "equals":
+      return "eq";
+    case "between":
+      return "between";
+    case "gte":
+      return "gte";
+    case "lte":
+      return "lte";
+    case "eq":
+      return "eq";
+    case "boolean":
+      return "boolean";
+    default:
+      return "between";
+  }
+}
+
 export function evaluateMathExpression(params: {
   expression: string;
   variables: Record<string, number>;
@@ -479,6 +528,7 @@ export function evaluateMathExpression(params: {
     return {
       isPass: true,
       value: 0,
+      formulaValue: 0,
       score: 1.0,
       message: "Empty math expression (neutral PASS)",
       variablesUsed: {},
@@ -496,6 +546,7 @@ export function evaluateMathExpression(params: {
     return {
       isPass: false,
       value: null,
+      formulaValue: null,
       score: 0.0,
       message: `Math evaluation syntax error: ${err instanceof Error ? err.message : String(err)}`,
       variablesUsed: params.variables,
@@ -505,7 +556,7 @@ export function evaluateMathExpression(params: {
   }
 
   const durationMs = Date.now() - startTime;
-  const operator = params.operator ?? "between";
+  const operator = normalizeMathComparisonOperator(params.operator);
   const limits = params.limits;
 
   let isPass = true;
@@ -566,6 +617,7 @@ export function evaluateMathExpression(params: {
   return {
     isPass,
     value: computedValue,
+    formulaValue: computedValue,
     score: Math.max(0.0, Math.min(1.0, score)),
     message: verdictMessage,
     variablesUsed: params.variables,

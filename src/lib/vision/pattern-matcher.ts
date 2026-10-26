@@ -19,6 +19,16 @@ export interface ConstellationMatchParams {
   threshold?: number;
   tolerancePx?: number;
   minMatchPercent?: number;
+  /**
+   * Bounded rotation search window in degrees (spec T102 angleRangeDeg).
+   * When absent or 0, only the unrotated constellation is tried.
+   * Candidate angles are 0, ±5, ±10, ... up to this range, rotating the
+   * expected box centres about the constellation centroid. The winner
+   * is the highest matched count, then lowest distance, then smallest
+   * |angle| — so a rotation only wins when it strictly improves the
+   * match over the unrotated constellation.
+   */
+  angleRangeDeg?: number;
 }
 
 export interface BoxMatchItem {
@@ -45,6 +55,8 @@ export interface PatternMatchResult {
   patternBounds: { x: number; y: number; width: number; height: number };
   boxResults: BoxMatchItem[];
   executionTimeMs: number;
+  /** Rotation (deg) of the winning constellation, 0 when unrotated. Optional so other PatternMatchResult producers are unaffected. */
+  rotationDeg?: number;
 }
 
 interface OffsetCandidate {
@@ -242,56 +254,130 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
   }
 
   const candidateBoxes = markingResult.boxes;
-  const bestOffset = findBestOffset(params.referenceBoxes, candidateBoxes, tolerance);
 
-  interface PairCandidate {
-    refIndex: number;
-    candIndex: number;
-    dist: number;
+  // Bounded rotation search: rotate expected box centres about the
+  // constellation centroid by candidate angles within angleRangeDeg
+  // (step 5 deg). For each rotation, find the best translation offset
+  // and greedily pair candidates; keep the rotation with the highest
+  // matched count, then lowest distance, then smallest |angle|.
+  const angleRange = params.angleRangeDeg ?? 0;
+  const candidateAngles: number[] = [0];
+
+  if (Number.isFinite(angleRange) && angleRange > 0) {
+    for (let a = 5; a <= angleRange; a += 5) {
+      candidateAngles.push(a, -a);
+    }
   }
 
-  const candidatePairs: PairCandidate[] = [];
+  const centroidX =
+    params.referenceBoxes.reduce((sum, b) => sum + b.x + b.width / 2, 0) /
+    params.referenceBoxes.length;
+  const centroidY =
+    params.referenceBoxes.reduce((sum, b) => sum + b.y + b.height / 2, 0) /
+    params.referenceBoxes.length;
 
-  for (let r = 0; r < params.referenceBoxes.length; r += 1) {
-    const ref = params.referenceBoxes[r];
-    const expectedX = ref.x + bestOffset.dx;
-    const expectedY = ref.y + bestOffset.dy;
-    const expectedCenterX = expectedX + ref.width / 2;
-    const expectedCenterY = expectedY + ref.height / 2;
+  interface RotationCandidate {
+    angleDeg: number;
+    dx: number;
+    dy: number;
+    matched: Map<number, number>;
+    matchedCount: number;
+    totalDistance: number;
+    rotatedBoxes: ReferenceBoxItem[];
+  }
 
-    for (let c = 0; c < candidateBoxes.length; c += 1) {
-      const cand = candidateBoxes[c];
-      const candCenterX = cand.x + cand.width / 2;
-      const candCenterY = cand.y + cand.height / 2;
-      const distX = Math.abs(candCenterX - expectedCenterX);
-      const distY = Math.abs(candCenterY - expectedCenterY);
+  let bestRotation: RotationCandidate | null = null;
 
-      if (distX <= tolerance && distY <= tolerance) {
-        candidatePairs.push({
-          refIndex: r,
-          candIndex: c,
-          dist: distX + distY,
-        });
+  for (const angleDeg of candidateAngles) {
+    const rad = (angleDeg * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const rotatedBoxes: ReferenceBoxItem[] = params.referenceBoxes.map((b) => {
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      const relX = cx - centroidX;
+      const relY = cy - centroidY;
+      const rotCx = centroidX + relX * cos - relY * sin;
+      const rotCy = centroidY + relX * sin + relY * cos;
+
+      return { ...b, x: rotCx - b.width / 2, y: rotCy - b.height / 2 };
+    });
+
+    const offset = findBestOffset(rotatedBoxes, candidateBoxes, tolerance);
+
+    interface PairCandidate {
+      refIndex: number;
+      candIndex: number;
+      dist: number;
+    }
+
+    const candidatePairs: PairCandidate[] = [];
+
+    for (let r = 0; r < rotatedBoxes.length; r += 1) {
+      const ref = rotatedBoxes[r];
+      const expectedCenterX = ref.x + offset.dx + ref.width / 2;
+      const expectedCenterY = ref.y + offset.dy + ref.height / 2;
+
+      for (let c = 0; c < candidateBoxes.length; c += 1) {
+        const cand = candidateBoxes[c];
+        const candCenterX = cand.x + cand.width / 2;
+        const candCenterY = cand.y + cand.height / 2;
+        const distX = Math.abs(candCenterX - expectedCenterX);
+        const distY = Math.abs(candCenterY - expectedCenterY);
+
+        if (distX <= tolerance && distY <= tolerance) {
+          candidatePairs.push({ refIndex: r, candIndex: c, dist: distX + distY });
+        }
       }
     }
-  }
 
-  candidatePairs.sort((a, b) => a.dist - b.dist);
+    candidatePairs.sort((a, b) => a.dist - b.dist);
 
-  const matchedRefIndices = new Map<number, number>();
-  const matchedCandIndices = new Set<number>();
+    const matched = new Map<number, number>();
+    const matchedCands = new Set<number>();
+    let pairDistance = 0;
 
-  for (const pair of candidatePairs) {
-    if (!matchedRefIndices.has(pair.refIndex) && !matchedCandIndices.has(pair.candIndex)) {
-      matchedRefIndices.set(pair.refIndex, pair.candIndex);
-      matchedCandIndices.add(pair.candIndex);
+    for (const pair of candidatePairs) {
+      if (!matched.has(pair.refIndex) && !matchedCands.has(pair.candIndex)) {
+        matched.set(pair.refIndex, pair.candIndex);
+        matchedCands.add(pair.candIndex);
+        pairDistance += pair.dist;
+      }
+    }
+
+    const totalDistance = pairDistance + (rotatedBoxes.length - matched.size) * tolerance * 4;
+    const candidate: RotationCandidate = {
+      angleDeg,
+      dx: offset.dx,
+      dy: offset.dy,
+      matched,
+      matchedCount: matched.size,
+      totalDistance,
+      rotatedBoxes,
+    };
+
+    if (
+      bestRotation === null ||
+      candidate.matchedCount > bestRotation.matchedCount ||
+      (candidate.matchedCount === bestRotation.matchedCount &&
+        candidate.totalDistance < bestRotation.totalDistance) ||
+      (candidate.matchedCount === bestRotation.matchedCount &&
+        candidate.totalDistance === bestRotation.totalDistance &&
+        Math.abs(candidate.angleDeg) < Math.abs(bestRotation.angleDeg))
+    ) {
+      bestRotation = candidate;
     }
   }
+
+  const bestOffset = { dx: bestRotation?.dx ?? 0, dy: bestRotation?.dy ?? 0 };
+  const matchedRefIndices = bestRotation?.matched ?? new Map<number, number>();
+  const rotatedBoxes = bestRotation?.rotatedBoxes ?? params.referenceBoxes;
 
   const boxResults: BoxMatchItem[] = [];
 
   for (let r = 0; r < params.referenceBoxes.length; r += 1) {
     const ref = params.referenceBoxes[r];
+    const rotated = rotatedBoxes[r];
     const candIdx = matchedRefIndices.get(r);
 
     if (candIdx !== undefined) {
@@ -311,8 +397,8 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
         boxNumber: ref.boxNumber,
         referenceX: ref.x,
         referenceY: ref.y,
-        matchedX: ref.x + bestOffset.dx,
-        matchedY: ref.y + bestOffset.dy,
+        matchedX: rotated.x + bestOffset.dx,
+        matchedY: rotated.y + bestOffset.dy,
         width: ref.width,
         height: ref.height,
         isMatched: false,
@@ -336,5 +422,6 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     patternBounds,
     boxResults,
     executionTimeMs,
+    rotationDeg: bestRotation?.angleDeg ?? 0,
   };
 }

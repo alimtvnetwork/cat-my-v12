@@ -68,6 +68,72 @@ export function StandardInspectionToolDispatcher(
     .join(" ")
     .toLowerCase();
 
+  // Exact-code-first routing (spec section 9): an explicit toolCode always
+  // wins over name/category substring inference below, so a rule whose name
+  // mentions another tool's keywords (e.g. a T110 rule named "pitch check")
+  // still mounts its own dedicated tool component.
+  switch (toolCode) {
+    case "T101":
+      return <StandardAreaTool {...props} />;
+    case "T102":
+    case "T116":
+      return <StandardGreyscalePatternMatchingTool {...props} />;
+    case "T103":
+      return <StandardCodeReaderTool {...props} />;
+    case "T104":
+      return <StandardEdgePositionTool {...props} />;
+    case "T105":
+    case "T117":
+      return <StandardPin1ConfigTool {...props} />;
+    case "T106":
+    case "T114":
+      return <StandardOcr2Tool {...props} />;
+    case "T107":
+    case "T118":
+      return <StandardDefectTool {...props} />;
+    case "T108":
+      return <StandardVoidPorosityTool {...props} />;
+    case "T109":
+      return <StandardBlobTool {...props} />;
+    case "T110":
+      return <StandardEdgeWidthTool {...props} />;
+    case "T111":
+      return <StandardCircleGaugeTool {...props} />;
+    case "T112":
+      return <StandardConformalCoatingTool {...props} />;
+    case "M301":
+    case "M302":
+      return <StandardMathSandboxTool {...props} />;
+    case "SHAPETRAX3":
+    case "SHAPETRAX":
+      return <StandardShapeTrax3Tool {...props} />;
+    default:
+      break;
+  }
+
+  // Phase 6: M301 Math Sandbox & Execution Gating (moved above the
+  // name-substring branches): a math rule whose name mentions pitch, width,
+  // blob, code, etc. must still reach the math sandbox, not the tool named
+  // by the incidental keyword. The exact-code cases above already return
+  // before this point; this branch covers code-less math rules.
+  const isMathSandbox =
+    toolCode === "M301" ||
+    toolCode === "M302" ||
+    props.toolType === "math" ||
+    props.toolType === "sandbox" ||
+    props.toolType === "gating" ||
+    combined.includes("m301") ||
+    combined.includes("m302") ||
+    combined.includes("math") ||
+    combined.includes("sandbox") ||
+    combined.includes("custom function") ||
+    combined.includes("formula") ||
+    combined.includes("gating");
+
+  if (isMathSandbox) {
+    return <StandardMathSandboxTool {...props} />;
+  }
+
   const isDefectMatch =
     combined.includes("defect match") ||
     combined.includes("flaw match") ||
@@ -222,9 +288,7 @@ export function StandardInspectionToolDispatcher(
 
   // ShapeTrax3
   const isShapeTrax =
-    combined.includes("shape") ||
-    combined.includes("trax") ||
-    combined.includes("contour");
+    combined.includes("shape") || combined.includes("trax") || combined.includes("contour");
 
   if (isShapeTrax) {
     return <StandardShapeTrax3Tool {...props} />;
@@ -233,9 +297,7 @@ export function StandardInspectionToolDispatcher(
   // Profile Width
   const isProfileWidth =
     combined.includes("profile") &&
-    (combined.includes("width") ||
-      combined.includes("caliper") ||
-      combined.includes("thickness"));
+    (combined.includes("width") || combined.includes("caliper") || combined.includes("thickness"));
 
   if (isProfileWidth) {
     return <StandardProfileWidthTool {...props} />;
@@ -259,6 +321,7 @@ export function StandardInspectionToolDispatcher(
     combined.includes("via gauge") ||
     combined.includes("via") ||
     combined.includes("drill hole") ||
+    combined.includes("drill") ||
     combined.includes("fiducial") ||
     combined.includes("roundness");
 
@@ -353,6 +416,8 @@ export function StandardInspectionToolDispatcher(
     combined.includes("t106") ||
     combined.includes("t114") ||
     combined.includes("ocr") ||
+    combined.includes("marking") ||
+    combined.includes("lot") ||
     combined.includes("text") ||
     combined.includes("font") ||
     combined.includes("char") ||
@@ -376,25 +441,6 @@ export function StandardInspectionToolDispatcher(
 
   if (isCodeReader) {
     return <StandardCodeReaderTool {...props} />;
-  }
-
-  // Phase 6: M301 Math Sandbox & Execution Gating
-  const isMathSandbox =
-    toolCode === "M301" ||
-    toolCode === "M302" ||
-    props.toolType === "math" ||
-    props.toolType === "sandbox" ||
-    props.toolType === "gating" ||
-    combined.includes("m301") ||
-    combined.includes("m302") ||
-    combined.includes("math") ||
-    combined.includes("sandbox") ||
-    combined.includes("custom function") ||
-    combined.includes("formula") ||
-    combined.includes("gating");
-
-  if (isMathSandbox) {
-    return <StandardMathSandboxTool {...props} />;
   }
 
   // Default Fallback: Standard Pattern Search

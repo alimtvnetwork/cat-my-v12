@@ -4,7 +4,15 @@
  * Laser-etched / inked device markings are small and low-contrast, so the
  * raw ROI is normalized before recognition: grayscale conversion, upscale
  * (tesseract wants ~30px+ character height), polarity normalization to
- * dark-text-on-light, and Otsu binarization.
+ * dark-text-on-light, and local (tile-based) Otsu binarization.
+ *
+ * Preprocessing actually implemented for spec T106: LOCAL OTSU ONLY.
+ * Spec T106 also lists a CLAHE contrast stretch, but CLAHE is NOT
+ * implemented here: local Otsu already handles the uneven illumination
+ * CLAHE targets, and running a contrast stretch ahead of binarization
+ * on small, near-uniform laser-mark ROIs risks amplifying background
+ * texture into false strokes. The upscale factor is unchanged by this
+ * change (it stays caller-supplied; the engine default is still 3).
  *
  * All functions operate on plain pixel buffers (no DOM), so they are
  * unit-testable in Node.
@@ -165,14 +173,193 @@ export function binarize(image: GrayImage, threshold: number): GrayImage {
   return { data: out, width, height };
 }
 
+/**
+ * Tile size for local Otsu binarization. 16px tiles are small enough to
+ * follow illumination gradients across a device marking, yet large
+ * enough that each tile's histogram still separates text from background.
+ */
+export const DEFAULT_LOCAL_OTSU_TILE_SIZE = 16;
+
+export interface LocalOtsuThresholdMap {
+  /** Row-major (tilesY rows x tilesX columns) per-tile Otsu thresholds. */
+  thresholds: number[];
+  tilesX: number;
+  tilesY: number;
+  tileSize: number;
+}
+
+/**
+ * Per-tile Otsu thresholds, smoothed with a 3x3 neighbourhood mean so
+ * adjacent tiles do not jump abruptly (edge tiles average over only
+ * their existing neighbours). A tile containing a single gray level
+ * keeps otsuThreshold's 127 fallback, which is safe after polarity
+ * normalization to dark-text-on-light: light background maps to 255
+ * and dark text to 0.
+ */
+export function localOtsuThresholds(
+  image: GrayImage,
+  tileSize: number = DEFAULT_LOCAL_OTSU_TILE_SIZE,
+): LocalOtsuThresholdMap {
+  const { data, width, height } = image;
+  const size = Math.max(1, Math.floor(tileSize));
+  const tilesX = width > 0 ? Math.ceil(width / size) : 0;
+  const tilesY = height > 0 ? Math.ceil(height / size) : 0;
+  const raw: number[] = [];
+
+  for (let ty = 0; ty < tilesY; ty += 1) {
+    const y0 = ty * size;
+    const tileHeight = Math.min(size, height - y0);
+
+    for (let tx = 0; tx < tilesX; tx += 1) {
+      const x0 = tx * size;
+      const tileWidth = Math.min(size, width - x0);
+      const tileData = new Uint8Array(tileWidth * tileHeight);
+
+      for (let row = 0; row < tileHeight; row += 1) {
+        const srcOffset = (y0 + row) * width + x0;
+        tileData.set(data.subarray(srcOffset, srcOffset + tileWidth), row * tileWidth);
+      }
+
+      raw.push(otsuThreshold({ data: tileData, width: tileWidth, height: tileHeight }));
+    }
+  }
+
+  const thresholds = raw.map((_, index) => {
+    const tx = index % tilesX;
+    const ty = Math.floor(index / tilesX);
+    let sum = 0;
+    let count = 0;
+
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        const nx = tx + dx;
+        const ny = ty + dy;
+
+        if (nx >= 0 && nx < tilesX && ny >= 0 && ny < tilesY) {
+          sum += raw[ny * tilesX + nx];
+          count += 1;
+        }
+      }
+    }
+
+    return count > 0 ? Math.round(sum / count) : raw[index];
+  });
+
+  return { thresholds, tilesX, tilesY, tileSize: size };
+}
+
+/** Centre coordinate of each tile along one axis (edge tiles are narrower). */
+function tileCenters(length: number, tileSize: number, tiles: number): number[] {
+  const centers: number[] = [];
+
+  for (let t = 0; t < tiles; t += 1) {
+    const start = t * tileSize;
+    const end = Math.min(length, start + tileSize) - 1;
+    centers.push((start + end) / 2);
+  }
+
+  return centers;
+}
+
+/** Bracketing tile centres for a pixel position, with interpolation weight. */
+function bracketCenters(
+  centers: number[],
+  position: number,
+): { index0: number; index1: number; weight: number } {
+  if (centers.length <= 1) {
+    return { index0: 0, index1: 0, weight: 0 };
+  }
+
+  let index0 = 0;
+
+  while (index0 < centers.length - 1 && centers[index0 + 1] <= position) {
+    index0 += 1;
+  }
+
+  const index1 = Math.min(index0 + 1, centers.length - 1);
+  const span = centers[index1] - centers[index0];
+  const weight = span === 0 ? 0 : Math.min(1, Math.max(0, (position - centers[index0]) / span));
+
+  return { index0, index1, weight };
+}
+
+/**
+ * Threshold at one pixel, bilinearly interpolated between the smoothed
+ * per-tile thresholds of the surrounding tile centres. Interpolation (as
+ * opposed to a per-tile step) keeps binarization seamless across tile
+ * boundaries instead of drawing block seams through characters.
+ */
+export function localThresholdAt(
+  map: LocalOtsuThresholdMap,
+  imageWidth: number,
+  imageHeight: number,
+  x: number,
+  y: number,
+): number {
+  if (map.thresholds.length === 0 || map.tilesX === 0 || map.tilesY === 0) {
+    return 127;
+  }
+
+  const centersX = tileCenters(imageWidth, map.tileSize, map.tilesX);
+  const centersY = tileCenters(imageHeight, map.tileSize, map.tilesY);
+  const bx = bracketCenters(centersX, x);
+  const by = bracketCenters(centersY, y);
+  const at = (tx: number, ty: number): number => map.thresholds[ty * map.tilesX + tx];
+
+  const top = at(bx.index0, by.index0) * (1 - bx.weight) + at(bx.index1, by.index0) * bx.weight;
+  const bottom = at(bx.index0, by.index1) * (1 - bx.weight) + at(bx.index1, by.index1) * bx.weight;
+
+  return top * (1 - by.weight) + bottom * by.weight;
+}
+
+function binarizeWithThresholdMap(image: GrayImage, map: LocalOtsuThresholdMap): GrayImage {
+  const { data, width, height } = image;
+  const out = new Uint8Array(data.length);
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = y * width + x;
+      out[i] = data[i] > localThresholdAt(map, width, height, x, y) ? 255 : 0;
+    }
+  }
+
+  return { data: out, width, height };
+}
+
+/**
+ * Local/adaptive Otsu binarization: per-tile Otsu thresholds (smoothed
+ * over neighbouring tiles, bilinearly interpolated per pixel), so a
+ * shading gradient across the marking cannot push one side of the ROI
+ * over a single global threshold. Same signature shape as `binarize`;
+ * the global `binarize`/`otsuThreshold` functions are unchanged.
+ */
+export function binarizeLocal(
+  image: GrayImage,
+  tileSize: number = DEFAULT_LOCAL_OTSU_TILE_SIZE,
+): GrayImage {
+  return binarizeWithThresholdMap(image, localOtsuThresholds(image, tileSize));
+}
+
 export interface PreprocessedMarking {
   image: GrayImage;
   /** upscaleFactor applied — divide processed coordinates by this for source coords. */
   appliedUpscale: number;
+  /**
+   * Mean of the smoothed per-tile Otsu thresholds, for reporting only.
+   * Binarization itself used the per-pixel interpolated thresholds in
+   * `thresholdMap`, not this single value.
+   */
   threshold: number;
+  /** Smoothed per-tile threshold map used for binarization. */
+  thresholdMap: LocalOtsuThresholdMap;
 }
 
-/** Full pipeline: grayscale → upscale → dark-text-on-light → Otsu binarize. */
+/**
+ * Full pipeline: grayscale → upscale → dark-text-on-light → local Otsu
+ * binarize. Signatures and the upscale factor are unchanged; only the
+ * final binarization step changed (global Otsu → local Otsu).
+ * CLAHE is deliberately not part of this pipeline (see module header).
+ */
 export function preprocessForOcr(
   input: OcrPixelBuffer,
   upscaleFactor: number,
@@ -185,8 +372,15 @@ export function preprocessForOcr(
     gray = invertGray(gray);
   }
 
-  const threshold = otsuThreshold(gray);
-  const binary = binarize(gray, threshold);
+  const thresholdMap = localOtsuThresholds(gray);
+  const binary = binarizeWithThresholdMap(gray, thresholdMap);
+  const threshold =
+    thresholdMap.thresholds.length > 0
+      ? Math.round(
+          thresholdMap.thresholds.reduce((sum, value) => sum + value, 0) /
+            thresholdMap.thresholds.length,
+        )
+      : 127;
 
-  return { image: binary, appliedUpscale: factor, threshold };
+  return { image: binary, appliedUpscale: factor, threshold, thresholdMap };
 }

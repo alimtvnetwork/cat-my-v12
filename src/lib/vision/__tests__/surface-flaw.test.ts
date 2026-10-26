@@ -5,20 +5,10 @@ import {
   evaluateBlobRule,
   type WorkpieceImageData,
 } from "../workpiece-rule-analyzer";
-import {
-  ValidationStatusType,
-} from "@/lib/editor/validation-store";
-import {
-  EditorRuleKindType,
-  EditorToolFamilyType,
-  type EditorRule,
-} from "@/lib/editor/types";
+import { ValidationStatusType } from "@/lib/editor/validation-store";
+import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 
-function createSolidTestImage(
-  width: number,
-  height: number,
-  fillLuma: number,
-): WorkpieceImageData {
+function createSolidTestImage(width: number, height: number, fillLuma: number): WorkpieceImageData {
   const rgba = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < width * height; i += 1) {
@@ -195,9 +185,14 @@ describe("Surface Defect (T107 Scratch & T108 Void) Evaluation", () => {
   it("fails when a void / porosity pit is present in T108 inspection", () => {
     const imgData = createSolidTestImage(200, 200, 140);
 
-    // Draw a dark void spot: 5x5 circle-like square at (70, 70)
-    for (let y = 70; y < 75; y += 1) {
-      for (let x = 70; x < 75; x += 1) {
+    // Spec T108 §5 (IPC-A-610 Class 3) judges PERCENTAGES, not counts:
+    // totalVoidPct <= 25 AND maxSingleVoidPct <= 15. The old 5x5 void
+    // was 0.098% total/single and PASSES that conjunction, so the old
+    // count-based FAIL directly contradicted the spec. Draw a void
+    // covering ~39% of the 160x160 ROI (100x100 dark square) so both
+    // percentages exceed their limits.
+    for (let y = 70; y < 170; y += 1) {
+      for (let x = 70; x < 170; x += 1) {
         const idx = (y * 200 + x) * 4;
         imgData.rgba[idx] = 40;
         imgData.rgba[idx + 1] = 40;
@@ -228,8 +223,10 @@ describe("Surface Defect (T107 Scratch & T108 Void) Evaluation", () => {
     const result = evaluateDefectRule(rule, imgData, "Optical Channel 1");
 
     expect(result.status).toBe(ValidationStatusType.Fail);
-    expect(result.debug?.flawCount).toBe(1);
-    expect(result.debug?.flaws?.[0]?.flawType).toBe("void");
+    expect(result.debug?.voidCount).toBe(1);
+    expect(result.debug?.totalVoidPct).toBeGreaterThan(25);
+    expect(result.debug?.maxSingleVoidPct).toBeGreaterThan(15);
+    expect(result.debug?.padAreaPx).toBe(160 * 160);
   });
 });
 

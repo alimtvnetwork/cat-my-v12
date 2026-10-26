@@ -8,7 +8,11 @@ import {
 import { ValidationStatusType, type ValidationResult } from "@/lib/editor/validation-store";
 import type { EditorRule } from "@/lib/editor/types";
 
-function createMockRule(id: string, name: string, params: Record<string, unknown> = {}): EditorRule {
+function createMockRule(
+  id: string,
+  name: string,
+  params: Record<string, unknown> = {},
+): EditorRule {
   return {
     id,
     name,
@@ -67,8 +71,12 @@ describe("DAG Execution Planner & Branch Skipping", () => {
 
     expect(dag.hasCycle).toBe(true);
     expect(dag.cycleNodeIds?.length).toBe(2);
-    // Graceful fallback includes all nodes
-    expect(dag.orderedRuleIds.length).toBe(2);
+    // Spec DAG gating: cycle nodes are EXCLUDED from execution order
+    // (they are emitted as Skipped results instead) — the old
+    // "graceful fallback includes all nodes" would execute a cycle.
+    expect(dag.orderedRuleIds.length).toBe(0);
+    expect(dag.orderedRuleIds).not.toContain("rule-a");
+    expect(dag.orderedRuleIds).not.toContain("rule-b");
   });
 
   it("skips downstream rule when parent rule fails", () => {
@@ -151,10 +159,20 @@ describe("DAG Execution Planner & Branch Skipping", () => {
       rules: [ruleC, ruleA, ruleB],
       executeRule: (rule) => {
         if (rule.id === "r-1") {
-          return { status: ValidationStatusType.Fail, score: 0.1, message: "Gate failed", stub: false };
+          return {
+            status: ValidationStatusType.Fail,
+            score: 0.1,
+            message: "Gate failed",
+            stub: false,
+          };
         }
         if (rule.id === "r-2") {
-          return { status: ValidationStatusType.Pass, score: 0.95, message: "Independent pass", stub: false };
+          return {
+            status: ValidationStatusType.Pass,
+            score: 0.95,
+            message: "Independent pass",
+            stub: false,
+          };
         }
         if (rule.id === "r-3") {
           ruleCExecuted = true;

@@ -22,4 +22,8 @@ export {
 } from "./preprocess";
 export { encodeBmpGray } from "./bmp";
 export { cleanOcrText, isOcrEngineReady, recognizeMarking, terminateOcrEngine } from "./engine";
-export { judgeMarkingRecognition } from "./judge";
+// Re-exported so analyzer/callers can use the spec T106 Levenshtein
+// distance directly. Note on preprocessing (see ./preprocess): the
+// pipeline uses local/adaptive Otsu binarization, NOT CLAHE — the spec
+// lists CLAHE, but it is deliberately not implemented there.
+export { judgeMarkingRecognition, levenshteinDistance } from "./judge";

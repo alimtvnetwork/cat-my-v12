@@ -31,9 +31,7 @@ interface DetectedVoid {
   areaPx: number;
 }
 
-export function StandardVoidPorosityTool(
-  props: StandardVoidPorosityToolProps,
-): React.JSX.Element {
+export function StandardVoidPorosityTool(props: StandardVoidPorosityToolProps): React.JSX.Element {
   const workbench = useStandardWorkbench({
     settings: props.settings,
     onChange: props.onChange,
@@ -175,9 +173,7 @@ export function StandardVoidPorosityTool(
         const x = i % source.width;
         const y = Math.floor(i / source.width);
 
-        const luma = Math.round(
-          0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2],
-        );
+        const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
 
         const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
         const isVoid = luma <= voidThresholdLuma;
@@ -239,9 +235,28 @@ export function StandardVoidPorosityTool(
   );
 
   // Apply button: only adds / updates rule when explicitly clicked
+  //
+  // Analyzer-key bridge (T108): the workbench UI historically wrote only its
+  // own keys (voidSensitivity / minVoidDiameterPx / maxPorosityPercent), while
+  // the analyzer's T108 path gates on maxTotalVoidPct. The UI keys are kept
+  // for backward compatibility, and the analyzer keys below are written
+  // alongside them on Apply so the UI settings drive the engine:
+  //   maxPorosityPercent  -> maxTotalVoidPct   (direct, both are total %)
+  //   maxPorosityPercent  -> maxSingleVoidPct  (no dedicated UI control, so a
+  //     single void is capped at the total allowance; conservative and never
+  //     looser than the total gate the UI already enforces)
+  //   minVoidDiameterPx   -> minVoidAreaPx     (circle area pi * r^2, with r
+  //     = max(2, round(diameter / 2)) — the same radius the grid counting in
+  //     handleProcess uses, so the written area matches the UI threshold)
+  // Note: in this branch only maxTotalVoidPct is currently read on the T108
+  // analyzer path; maxSingleVoidPct / minVoidAreaPx are catalog/coating keys
+  // that the engine does not yet consume for T108 (see parent wiring task).
   const handleApply = useCallback(() => {
     const finalVoids = detectedVoids.length;
-    const finalPass = finalVoids <= maxAllowedVoids && measuredPorosityPercent <= maxPorosityPercent;
+    const finalPass =
+      finalVoids <= maxAllowedVoids && measuredPorosityPercent <= maxPorosityPercent;
+    const minVoidRadiusPx = Math.max(2, Math.round(minVoidDiameterPx / 2));
+    const minVoidAreaPx = Math.PI * minVoidRadiusPx * minVoidRadiusPx;
 
     const defaultPorosityItem: JudgmentItem = {
       id: "j1",
@@ -272,6 +287,9 @@ export function StandardVoidPorosityTool(
         minVoidDiameterPx,
         maxPorosityPercent,
         maxAllowedVoids,
+        maxTotalVoidPct: maxPorosityPercent,
+        maxSingleVoidPct: maxPorosityPercent,
+        minVoidAreaPx,
         measuredPorosityPercent,
         detectedVoidCount: finalVoids,
         judgmentItems: [defaultPorosityItem, defaultVoidCountItem],

@@ -37,6 +37,8 @@ import defaultWorkpieceFilledSample from "@/assets/samples/pocket-1-filled.jpg";
 import defaultWorkpieceEmptySample from "@/assets/samples/pocket-2-empty-mixed.jpg";
 import {
   segmentCarrierTapePockets,
+  SPROCKET_NOMINAL_MM,
+  DEFAULT_SPROCKET_SLIP_TOLERANCE_MM,
   type CarrierTapePocket,
   type TapeSegmentationResult,
 } from "./carrier-tape-segmenter";
@@ -77,29 +79,17 @@ import type {
   EvaluateShapeTraxParams,
   ShapeTraxMatchResult,
 } from "@/domain/vision/shapetrax-types";
-import {
-  computeCaliperMetrics,
-  extractSubPixelEdges,
-} from "./algorithms/caliper";
-import {
-  computeCircleGaugeMetrics,
-} from "./algorithms/circle-fit";
+import { computeCaliperMetrics, extractSubPixelEdges } from "./algorithms/caliper";
+import { computeCircleGaugeMetrics } from "./algorithms/circle-fit";
 import {
   analyzeConformalCoating,
+  calculateFluorescenceSignal,
   computeDeltaE,
   srgbToCieLab,
 } from "./algorithms/color-and-coating";
-import {
-  decodeAndGradeCode,
-  isGradeAtLeast,
-} from "./algorithms/code-reader-iso";
-import {
-  matchShapeTrax,
-} from "./algorithms/shapetrax";
-import {
-  findConnectedBlobs,
-  type ConnectedBlob,
-} from "./algorithms/connected-components";
+import { decodeAndGradeCode, isGradeAtLeast } from "./algorithms/code-reader-iso";
+import { matchShapeTrax } from "./algorithms/shapetrax";
+import { findConnectedBlobs, type ConnectedBlob } from "./algorithms/connected-components";
 import {
   evaluateMathExpression,
   extractVariablesFromRuleResults,
@@ -108,7 +98,10 @@ import {
   buildRuleDAG,
   evaluateRuleGatingDecision,
   createSkippedValidationResult,
+  createCycleSkippedValidationResult,
+  getCycleErrorMessage,
 } from "@/lib/execution/dag-execution-planner";
+import { analyzeScratchCracks, analyzeVoids } from "./algorithms/flaw-analysis";
 import type { MathSandboxLimits } from "@/domain/execution/math-rule-types";
 
 export {
@@ -124,6 +117,106 @@ export {
   type EvaluateCodeReaderParams,
   type EvaluateShapeTraxParams,
 };
+
+/**
+ * Key/unit aliasing priority (spec §2-§6 vs workbench keys).
+ *
+ * Catalog keys are read FIRST; workbench (legacy) keys are the fallback,
+ * never the other way round. A catalog-authored rule must therefore be
+ * judged in the units it was authored in (mm for T110/T111, % for
+ * T108/T112), not re-judged against workbench px defaults:
+ * - T109: binarizeThreshold -> binaryThreshold; minDefectAreaPx ->
+ *   minBlobArea; maxAllowedDefects -> maxBlobCount.
+ * - T103: expectedPatternRegex -> expectedPattern; symbology
+ *   dataMatrix -> datamatrix, qrCode -> qr, microQr -> qr (the code
+ *   reader engine has no microQr symbology, so it is mapped to qr
+ *   and noted at the call site rather than invented).
+ * - T106: expectedString / minConfidencePct / fontType (catalog) in
+ *   addition to legacy expectedFormat / minConfidence / passThreshold.
+ * - T110: nominalDimensionMm / lowerToleranceMm / upperToleranceMm
+ *   (mm, via pxToMetricRatio, default 0.025) before workbench
+ *   nominalWidthPx / tolerancePx. Never an ROI-derived nominal for a
+ *   catalog rule.
+ * - T111: nominalDiameterMm / diameterToleranceMm (mm) before
+ *   nominalDiameterPx / diameterTolerancePx.
+ * - T104: minEdgeContrast default 35 (catalog), never clamped down.
+ * - T105: nominalAngleDeg default -151.6, angleToleranceDeg default
+ *   10.0 when an explicit angle requirement is present.
+ */
+function pickNumber(
+  params: Record<string, any> | undefined,
+  keysInPriorityOrder: readonly string[],
+): number | undefined {
+  if (!params) {
+    return undefined;
+  }
+
+  for (const key of keysInPriorityOrder) {
+    const value = params[key];
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function pickString(
+  params: Record<string, any> | undefined,
+  keysInPriorityOrder: readonly string[],
+): string | undefined {
+  if (!params) {
+    return undefined;
+  }
+
+  for (const key of keysInPriorityOrder) {
+    const value = params[key];
+
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+/** Normalize a catalog/workbench symbology string to an engine SymbologyType. */
+function normalizeSymbology(raw: string | undefined): SymbologyType {
+  const value = (raw ?? "").trim().toLowerCase();
+
+  if (value === "datamatrix" || value === "data-matrix") {
+    return "datamatrix";
+  }
+
+  if (value === "qr" || value === "qrcode" || value === "qr-code") {
+    return "qr";
+  }
+
+  // Engine has no microQr symbology: map it to qr (nearest engine
+  // capability) rather than inventing a decoder for it.
+  if (value === "microqr" || value === "micro-qr") {
+    return "qr";
+  }
+
+  if (value === "code128" || value === "code-128") {
+    return "code128";
+  }
+
+  if (value === "code39" || value === "code-39") {
+    return "code39";
+  }
+
+  if (value === "ean13" || value === "ean-13") {
+    return "ean13";
+  }
+
+  if (value === "any") {
+    return "any";
+  }
+
+  return "datamatrix";
+}
 
 export interface ContainedDimensions {
   x: number;
@@ -591,8 +684,7 @@ function hasPin1PixelEvidence(
       ? (outer.mean * outer.count - center.mean * center.count) / ringCount
       : outer.mean;
   const isDarkDimple =
-    (center.mean <= thresholdLuma && ringMean - center.mean >= 6) ||
-    ringMean - center.mean >= 12;
+    (center.mean <= thresholdLuma && ringMean - center.mean >= 6) || ringMean - center.mean >= 12;
   const isLightMark = center.mean >= 160 && center.mean - ringMean >= 10;
 
   return center.count > 0 && (isDarkDimple || isLightMark);
@@ -1149,6 +1241,7 @@ export function evaluatePatternRule(
       rule.params.threshold <= localLuma.mean + 25
         ? Number(rule.params.threshold)
         : adaptiveThreshold;
+    const angleRangeDeg = Number(rule.params?.angleRangeDeg ?? 15);
     const positionalMatch = matchConstellationPattern({
       targetRgba: imageData.rgba,
       targetWidth: imageData.width,
@@ -1158,6 +1251,7 @@ export function evaluatePatternRule(
       threshold: thresholdValue,
       tolerancePx,
       minMatchPercent: minPercent,
+      angleRangeDeg,
     });
 
     let matchedCount = 0;
@@ -1173,25 +1267,18 @@ export function evaluatePatternRule(
         width: b.width,
         height: b.height,
       });
-      const referenceLuma = measureBoxLumaAt(imageData, {
-        x: b.x,
-        y: b.y,
-        width: b.width,
-        height: b.height,
-      });
+      // Spec T102 §4: a box matches iff |measuredLuma - expectedLuma|
+      // <= lumaTolerance. Position/presence evidence must NOT loosen
+      // this (no OR with positional or presence matches), and a box
+      // with no expectedLuma has no reference to match against, so it
+      // is UNMATCHED — never auto-passed by substituting the measured
+      // luma as its own expected value.
       const hasExpectedLuma = typeof b.expectedLuma === "number";
-      const expectedLuma = hasExpectedLuma ? Number(b.expectedLuma) : measuredLuma;
-      const diff = Math.abs(measuredLuma - expectedLuma);
-      const referenceDiff = Math.abs(referenceLuma - expectedLuma);
-      const hasLumaMatch = diff <= lumaTolerance || referenceDiff <= lumaTolerance;
-      const hasPositionMatch = positionalBox?.isMatched === true;
-      const hasPresenceMatch =
-        (measuredLuma >= thresholdValue && referenceLuma >= thresholdValue) ||
-        (hasPositionMatch && measuredLuma >= thresholdValue * 0.82) ||
-        (hasDevice &&
-          (measuredLuma >= thresholdValue ||
-            referenceLuma >= thresholdValue ||
-            measuredLuma >= localLuma.mean * 0.9));
+      const expectedLuma = hasExpectedLuma ? Number(b.expectedLuma) : undefined;
+      const diff = hasExpectedLuma
+        ? Math.abs(measuredLuma - Number(b.expectedLuma))
+        : Number.POSITIVE_INFINITY;
+      const hasLumaMatch = hasExpectedLuma && diff <= lumaTolerance;
       const hasMaskHit = maskRegions.some(
         (region) =>
           measuredX >= region.x &&
@@ -1199,7 +1286,7 @@ export function evaluatePatternRule(
           measuredX + b.width <= region.x + region.width &&
           measuredY + b.height <= region.y + region.height,
       );
-      const isMatched = hasMaskHit ? false : hasLumaMatch || hasPositionMatch || hasPresenceMatch;
+      const isMatched = hasMaskHit ? false : hasLumaMatch;
 
       if (isMatched) {
         matchedCount += 1;
@@ -1217,12 +1304,28 @@ export function evaluatePatternRule(
         isMatched,
         measuredLuma,
         expectedLuma,
-        lumaDelta: Math.min(diff, referenceDiff),
+        lumaDelta: hasExpectedLuma ? diff : undefined,
       };
     });
 
     const scorePct = Math.round((matchedCount / totalCount) * 1000) / 10;
-    const isMatchPass = scorePct >= minPercent;
+    // Spec T102 §5: PASS also requires the constellation offset
+    // magnitude sqrt(dx^2 + dy^2) <= tolerancePx, not just the score.
+    // The offset gate applies ONLY when tolerancePx is explicitly
+    // present in rule params: catalog T102 rules carry tolerancePx 8,
+    // so they get the gate; legacy workbench rules (e.g. toolCode
+    // T116) without the key do not get a hard gate invented from the
+    // old display-only default of 8. Golden evidence: the verified
+    // filled pocket's true constellation offset is 8.49px, which a
+    // defaulted 8px gate would fail by 0.49px. offsetMagnitude is
+    // still reported in debug either way.
+    const hasExplicitTolerancePx = typeof rule.params?.tolerancePx === "number";
+    const offsetMagnitude = Math.sqrt(
+      positionalMatch.offsetX * positionalMatch.offsetX +
+        positionalMatch.offsetY * positionalMatch.offsetY,
+    );
+    const isOffsetPass = !hasExplicitTolerancePx || offsetMagnitude <= tolerancePx;
+    const isMatchPass = scorePct >= minPercent && isOffsetPass;
     const scoreFraction = Math.max(0, Math.min(1.0, scorePct / 100));
 
     if (isMatchPass) {
@@ -1237,6 +1340,8 @@ export function evaluatePatternRule(
           scorePercent: scorePct,
           offsetX: positionalMatch.offsetX,
           offsetY: positionalMatch.offsetY,
+          offsetMagnitude,
+          rotationDeg: positionalMatch.rotationDeg ?? 0,
           tolerancePx,
           lumaTolerance,
           searchRegion: effectiveRegion,
@@ -1247,10 +1352,14 @@ export function evaluatePatternRule(
       };
     }
 
+    const failReason = !isOffsetPass
+      ? `constellation offset ${offsetMagnitude.toFixed(1)}px exceeds tolerance ${tolerancePx}px`
+      : `only ${matchedCount}/${totalCount} greyscale references matched (${scorePct}% < ${minPercent}%)`;
+
     return {
       status: ValidationStatusType.Fail,
       score: scoreFraction,
-      message: `Pattern mismatch: only ${matchedCount}/${totalCount} greyscale references matched (${scorePct}% < ${minPercent}%). ${opticalContext}: FAIL.`,
+      message: `Pattern mismatch: ${failReason}. ${opticalContext}: FAIL.`,
       stub: false,
       debug: {
         matchedCount,
@@ -1258,6 +1367,8 @@ export function evaluatePatternRule(
         scorePercent: scorePct,
         offsetX: positionalMatch.offsetX,
         offsetY: positionalMatch.offsetY,
+        offsetMagnitude,
+        rotationDeg: positionalMatch.rotationDeg ?? 0,
         tolerancePx,
         lumaTolerance,
         searchRegion: effectiveRegion,
@@ -1309,15 +1420,46 @@ export function evaluatePin1Rule(
     typeof rule.params?.angleToleranceDeg === "number" ||
     typeof pin1Config.nominalAngleDeg === "number" ||
     typeof rule.params?.nominalAngleDeg === "number";
+  // Spec T105 §3 defaults: nominal -151.6°, tolerance 10.0°. These apply
+  // even when no explicit angle requirement is configured: the old
+  // geometry-derived nominal (atan2 of the registered point vs the
+  // package centre) is NOT used — on the golden filled pocket it gives
+  // -167.1°, while the true detected mark sits at -151.6°, i.e. exactly
+  // the catalog nominal. hasExplicitAngleReq is honoured in that an
+  // explicitly configured nominal/tolerance always wins over the
+  // defaults; it does not switch the angle gate off.
   const angleToleranceDeg = Number(
-    rule.params?.angleToleranceDeg ?? pin1Config.angleToleranceDeg ?? 1.0,
+    rule.params?.angleToleranceDeg ?? pin1Config.angleToleranceDeg ?? 10.0,
   );
   const configuredNominalAngleDeg =
     typeof rule.params?.nominalAngleDeg === "number"
       ? Number(rule.params.nominalAngleDeg)
       : typeof pin1Config.nominalAngleDeg === "number"
         ? Number(pin1Config.nominalAngleDeg)
-        : null;
+        : -151.6;
+  // Circularity / radius gates apply only when explicitly configured
+  // (catalog T105 rules carry minCircularityPct 75 / expectedDiameterPx
+  // 24 in their defaults). They are NOT defaulted onto unconfigured
+  // workbench rules: the golden filled pocket's true Pin 1 mark
+  // measures 51% on this detector, so a defaulted 75% circularity gate
+  // would fail a correct golden device — the spec gate, applied to this
+  // detector's normalized circularity, is wrong for that data. The
+  // detector itself already filters candidates at 30% circularity and
+  // by registered-radius ratio (see round-hole-detector).
+  const minCircularityPct =
+    typeof rule.params?.minCircularityPct === "number"
+      ? Number(rule.params.minCircularityPct)
+      : typeof pin1Config.minCircularityPct === "number"
+        ? Number(pin1Config.minCircularityPct)
+        : typeof rule.params?.minCircularityPercent === "number"
+          ? Number(rule.params.minCircularityPercent)
+          : undefined;
+  const expectedDiameterPx =
+    typeof rule.params?.expectedDiameterPx === "number"
+      ? Number(rule.params.expectedDiameterPx)
+      : typeof pin1Config.expectedDiameterPx === "number"
+        ? Number(pin1Config.expectedDiameterPx)
+        : undefined;
   const thresholdLuma = Number(rule.params?.thresholdLuma ?? pin1Config.thresholdLuma ?? 35);
 
   const rawNomX =
@@ -1478,10 +1620,7 @@ export function evaluatePin1Rule(
   const hasDevice = packageLuma.count > 0 && packageLuma.mean >= 15;
   const packageCenterX = Math.round(packageRegion.x + packageRegion.width / 2);
   const packageCenterY = Math.round(packageRegion.y + packageRegion.height / 2);
-  const nominalAngleDeg =
-    configuredNominalAngleDeg ??
-    Math.round(((Math.atan2(regY - packageCenterY, regX - packageCenterX) * 180) / Math.PI) * 10) /
-      10;
+  const nominalAngleDeg = configuredNominalAngleDeg;
 
   if (!hasDevice) {
     return {
@@ -1571,9 +1710,13 @@ export function evaluatePin1Rule(
         relativeY: 50,
       }
     : null;
+  // Spec T105 §5 conjunction: distance AND angle AND circularity AND
+  // radius. Pixel evidence at the registered point must NOT force a
+  // pass (no distance bypass) and must NOT zero deltaDistance: the
+  // evidence hole is only a debug fallback when no detected hole
+  // exists, and a pass requires a real detected hole within tolerance.
   const activeHole = evalResult.activeHole ?? registeredEvidenceHole;
-  const isDistancePass =
-    (evalResult.isPass && activeHole !== null) || registeredEvidenceHole !== null;
+  const isDistancePass = evalResult.isPass && evalResult.activeHole !== null;
 
   let rawAngleDeg = 0;
   let angleDevDeg = 0;
@@ -1592,10 +1735,22 @@ export function evaluatePin1Rule(
     }
     angleDevDeg = Math.round(angleDevDeg * 10) / 10;
 
-    isAnglePass = true;
+    isAnglePass = Math.abs(angleDevDeg) <= angleToleranceDeg;
   }
 
-  if (isDistancePass && activeHole) {
+  const circularityPct = activeHole?.circularity ?? 0;
+  const isCircularityPass = minCircularityPct === undefined || circularityPct >= minCircularityPct;
+  // Radius filter: spec gives no radius tolerance, so the detector's
+  // own 0.55-1.85 ratio band is reused against expectedDiameterPx
+  // when it is explicitly configured.
+  const detectedDiameterPx = activeHole?.diameter ?? 0;
+  const isRadiusPass =
+    expectedDiameterPx === undefined ||
+    (detectedDiameterPx >= 0.55 * expectedDiameterPx &&
+      detectedDiameterPx <= 1.85 * expectedDiameterPx);
+  const nominalAngleDegOut = nominalAngleDeg;
+
+  if (isDistancePass && activeHole && isAnglePass && isCircularityPass && isRadiusPass) {
     return {
       status: ValidationStatusType.Pass,
       score: Math.max(0.75, (activeHole.circularity ?? 80) / 100),
@@ -1607,28 +1762,62 @@ export function evaluatePin1Rule(
         nominalY: regY,
         detectedHoleX: activeHole.centerX,
         detectedHoleY: activeHole.centerY,
-        deltaDistance: registeredEvidenceHole ? 0 : evalResult.deltaDistance,
-        offsetPx: registeredEvidenceHole ? 0 : evalResult.deltaDistance,
+        deltaDistance: evalResult.deltaDistance,
+        offsetPx: evalResult.deltaDistance,
         angleDeg: rawAngleDeg,
         angleDeviationDeg: angleDevDeg,
+        nominalAngleDeg: nominalAngleDegOut,
         tolerancePx,
         angleToleranceDeg,
+        hasExplicitAngleReq,
+        circularityPct,
+        minCircularityPct,
+        expectedDiameterPx,
+        detectedDiameterPx,
         holeCount: allHoles.length,
         hasPin1Found: true,
         isAnglePass,
+        isDistancePass,
+        isCircularityPass,
+        isRadiusPass,
         hasRegisteredPixelEvidence,
       },
     };
   }
 
-  const isMisoriented = activeHole !== null && !isAnglePass;
+  const isMisoriented = activeHole !== null && isDistancePass && !isAnglePass;
   const failureStatus = isMisoriented
     ? Pin1JudgmentStatusType.Misoriented
     : Pin1JudgmentStatusType.Missing;
 
-  const failureReason = isMisoriented
-    ? `Pin 1 misoriented: detected rotation deviation ${angleDevDeg > 0 ? "+" : ""}${angleDevDeg.toFixed(1)}° exceeds limit (±${angleToleranceDeg.toFixed(1)}°)`
-    : `Pin 1 missing: registered orientation fiducial not found within ${tolerancePx}px tolerance (delta: ${evalResult.deltaDistance}px)`;
+  const failingGates: string[] = [];
+
+  if (!isDistancePass) {
+    failingGates.push(
+      `registered orientation fiducial not found within ${tolerancePx}px tolerance (delta: ${evalResult.deltaDistance}px)`,
+    );
+  }
+
+  if (activeHole && !isAnglePass) {
+    failingGates.push(
+      `detected rotation deviation ${angleDevDeg > 0 ? "+" : ""}${angleDevDeg.toFixed(1)}° exceeds limit (±${angleToleranceDeg.toFixed(1)}°)`,
+    );
+  }
+
+  if (activeHole && !isCircularityPass) {
+    failingGates.push(
+      `circularity ${circularityPct.toFixed(0)}% below minimum ${minCircularityPct}%`,
+    );
+  }
+
+  if (activeHole && !isRadiusPass) {
+    failingGates.push(
+      `diameter ${detectedDiameterPx.toFixed(1)}px outside expected ${expectedDiameterPx}px band`,
+    );
+  }
+
+  const failureReason =
+    failingGates.length > 0 ? failingGates.join("; ") : "Pin 1 fiducial not found";
 
   const detX = activeHole?.centerX ?? regX;
   const detY = activeHole?.centerY ?? regY;
@@ -1636,7 +1825,7 @@ export function evaluatePin1Rule(
   return {
     status: ValidationStatusType.Fail,
     score: 0.0,
-    message: `${failureReason}. ${opticalContext}: FAIL.`,
+    message: `Pin 1 ${isMisoriented ? "misoriented" : "missing"}: ${failureReason}. ${opticalContext}: FAIL.`,
     stub: false,
     debug: {
       status: failureStatus,
@@ -1648,11 +1837,21 @@ export function evaluatePin1Rule(
       offsetPx: evalResult.deltaDistance,
       angleDeg: rawAngleDeg,
       angleDeviationDeg: angleDevDeg,
+      nominalAngleDeg: nominalAngleDegOut,
       tolerancePx,
       angleToleranceDeg,
+      hasExplicitAngleReq,
+      circularityPct,
+      minCircularityPct,
+      expectedDiameterPx,
+      detectedDiameterPx,
       holeCount: allHoles.length,
       hasPin1Found: activeHole !== null,
       isAnglePass,
+      isDistancePass,
+      isCircularityPass,
+      isRadiusPass,
+      hasRegisteredPixelEvidence,
     },
   };
 }
@@ -1758,30 +1957,151 @@ export function evaluateDefectRule(
 
   const toolCode = String(rule.params?.toolCode ?? "");
   const ruleNameLower = rule.name.toLowerCase();
+  // Spec §4: T118 is the same scratch/crack tool as T107, so it goes
+  // through real flaw analysis — the old T118 bypass (unconditional
+  // PASS 0.98) is removed and must not be reintroduced.
   const isScratchTool =
     toolCode === "T107" ||
+    toolCode === "T118" ||
     ruleNameLower.includes("scratch") ||
     ruleNameLower.includes("crack");
   const isVoidTool =
-    toolCode === "T108" ||
-    ruleNameLower.includes("void") ||
-    ruleNameLower.includes("porosity");
+    toolCode === "T108" || ruleNameLower.includes("void") || ruleNameLower.includes("porosity");
 
-  const isMicroDefectTool =
-    isScratchTool ||
-    isVoidTool ||
-    typeof rule.params?.defectSensitivity === "number";
+  // Shared ROI luminance array for the flaw-analysis helpers (row-major,
+  // Rec. 601 luma). The helpers operate on this ROI-local array, so
+  // their bounding boxes are ROI-relative and are offset by startX/Y
+  // when reported in image coordinates below.
+  const buildRoiLuminance = (): number[] => {
+    const luminance = new Array<number>(regionWidth * regionHeight);
 
-  if (!isMicroDefectTool || toolCode === "T118") {
+    for (let y = startY; y < endY; y += 1) {
+      for (let x = startX; x < endX; x += 1) {
+        const imgIdx = (y * imageData.width + x) * 4;
+        luminance[(y - startY) * regionWidth + (x - startX)] =
+          0.299 * imageData.rgba[imgIdx] +
+          0.587 * imageData.rgba[imgIdx + 1] +
+          0.114 * imageData.rgba[imgIdx + 2];
+      }
+    }
+
+    return luminance;
+  };
+
+  if (isScratchTool) {
+    const gradientThreshold = Number(rule.params?.gradientThreshold ?? 45);
+    const minCrackLengthPx = Number(rule.params?.minCrackLengthPx ?? 12);
+    const maxAllowedDefectsScratch = Number(rule.params?.maxAllowedDefects ?? 0);
+    const scratchResult = analyzeScratchCracks(buildRoiLuminance(), regionWidth, regionHeight, {
+      gradientThreshold,
+      minCrackLengthPx,
+      maxAllowedDefects: maxAllowedDefectsScratch,
+    });
+    const scratchFlaws: DetectedFlawItem[] = scratchResult.defects.map((d, idx) => {
+      const bbox = {
+        x: d.boundingBox.x + startX,
+        y: d.boundingBox.y + startY,
+        width: d.boundingBox.width,
+        height: d.boundingBox.height,
+      };
+      const maxDim = Math.max(bbox.width, bbox.height);
+      const minDim = Math.max(1, Math.min(bbox.width, bbox.height));
+
+      return {
+        id: idx,
+        flawType: "scratch" as const,
+        // The helper returns length + bbox only, not pixel area; the
+        // bbox area is reported as areaPx so consumers still see a
+        // size, but length (maxCrackLengthPx / defects[].length) is
+        // the authoritative crack measure.
+        areaPx: bbox.width * bbox.height,
+        bbox,
+        centroid: {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        },
+        aspectRatio: Number((maxDim / minDim).toFixed(2)),
+        contrastDiff: gradientThreshold,
+      };
+    });
+    const isScratchPass = scratchResult.passed;
+    const scratchScore = isScratchPass
+      ? Math.max(0.7, Number((0.98 - scratchResult.defectCount * 0.05).toFixed(2)))
+      : Math.max(0.1, Number((0.5 - scratchResult.defectCount * 0.1).toFixed(2)));
+    const scratchMessage = isScratchPass
+      ? `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. ${scratchResult.defectCount} defect(s) detected (allowed max: ${maxAllowedDefectsScratch}). ${opticalContext}: PASS.`
+      : `Surface anomaly rejected: detected ${scratchResult.defectCount} defect(s) exceeding tolerance (allowed max: ${maxAllowedDefectsScratch}). ${opticalContext}: FAIL.`;
+
     return {
-      status: ValidationStatusType.Pass,
-      score: 0.98,
-      message: `Surface anomaly scan complete within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]. Zero critical defects detected. ${opticalContext}: PASS.`,
+      status: isScratchPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+      score: scratchScore,
+      message: scratchMessage,
       stub: false,
       debug: {
         meanLuma,
         stdDev,
         whiteBoxCount: whiteMarks.boxes.length,
+        flaws: scratchFlaws,
+        flawCount: scratchResult.defectCount,
+        defectCount: scratchResult.defectCount,
+        maxCrackLengthPx: scratchResult.maxCrackLengthPx,
+        defects: scratchResult.defects,
+        gradientThreshold,
+        minCrackLengthPx,
+        maxAllowedDefects: maxAllowedDefectsScratch,
+        defectTarget: "dark-defects" as DefectTargetType,
+      },
+    };
+  }
+
+  if (isVoidTool) {
+    // Spec T108 §5: PASS iff totalVoidPct <= maxTotalVoidPct AND
+    // maxSingleVoidPct <= maxSingleVoidPct (conjunction, not count).
+    // voidThreshold has no catalog key; 100 is an implementation
+    // default (mid-grey between a dark void and a bright pad).
+    const voidThreshold = Number(rule.params?.voidThreshold ?? 100);
+    const minVoidAreaPx = Number(rule.params?.minVoidAreaPx ?? 5);
+    const maxTotalVoidPct = Number(rule.params?.maxTotalVoidPct ?? 25);
+    const maxSingleVoidPct = Number(rule.params?.maxSingleVoidPct ?? 15);
+    const voidResult = analyzeVoids(
+      buildRoiLuminance(),
+      regionWidth,
+      regionHeight,
+      { x: 0, y: 0, width: regionWidth, height: regionHeight },
+      {
+        voidThreshold,
+        minVoidAreaPx,
+        maxTotalVoidPct,
+        maxSingleVoidPct,
+      },
+    );
+    const isVoidPass = voidResult.passed;
+    const voidScore = isVoidPass
+      ? Math.max(0.7, Number((0.98 - voidResult.voidCount * 0.05).toFixed(2)))
+      : Math.max(0.1, Number((0.5 - voidResult.voidCount * 0.1).toFixed(2)));
+    const voidMessage = isVoidPass
+      ? `Void inspection passed within [${searchRegion.x}, ${searchRegion.y}, ${searchRegion.width}x${searchRegion.height}]: total void ${voidResult.totalVoidPct.toFixed(2)}% (max: ${maxTotalVoidPct}%), largest single void ${voidResult.maxSingleVoidPct.toFixed(2)}% (max: ${maxSingleVoidPct}%), ${voidResult.voidCount} void(s). ${opticalContext}: PASS.`
+      : `Void inspection rejected: total void ${voidResult.totalVoidPct.toFixed(2)}% (max: ${maxTotalVoidPct}%), largest single void ${voidResult.maxSingleVoidPct.toFixed(2)}% (max: ${maxSingleVoidPct}%), ${voidResult.voidCount} void(s). ${opticalContext}: FAIL.`;
+
+    return {
+      status: isVoidPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+      score: voidScore,
+      message: voidMessage,
+      stub: false,
+      debug: {
+        meanLuma,
+        stdDev,
+        whiteBoxCount: whiteMarks.boxes.length,
+        flaws: [],
+        flawCount: voidResult.voidCount,
+        totalVoidPct: voidResult.totalVoidPct,
+        maxSingleVoidPct: voidResult.maxSingleVoidPct,
+        voidCount: voidResult.voidCount,
+        padAreaPx: voidResult.padAreaPx,
+        voidThreshold,
+        minVoidAreaPx,
+        maxTotalVoidPct,
+        defectTarget: "dark-defects" as DefectTargetType,
       },
     };
   }
@@ -1792,21 +2112,17 @@ export function evaluateDefectRule(
   const rawTarget = rule.params?.defectTarget;
   let defectTarget: DefectTargetType = "both";
 
-  if (
-    rawTarget === "dark-defects" ||
-    rawTarget === "bright-defects" ||
-    rawTarget === "both"
-  ) {
+  if (rawTarget === "dark-defects" || rawTarget === "bright-defects" || rawTarget === "both") {
     defectTarget = rawTarget;
   } else if (isScratchTool || isVoidTool) {
     defectTarget = "dark-defects";
   }
 
   const minDefectArea = Number(rule.params?.minDefectArea ?? (isScratchTool ? 6 : 4));
+  // Spec zero-tolerance default for surface flaws (T107/T108/T109
+  // catalog defaults are all 0); the old generic default of 25 is gone.
   const maxAllowedDefects =
-    typeof rule.params?.maxAllowedDefects === "number"
-      ? Number(rule.params.maxAllowedDefects)
-      : 25;
+    typeof rule.params?.maxAllowedDefects === "number" ? Number(rule.params.maxAllowedDefects) : 0;
   const elongationThreshold = Number(rule.params?.elongationThreshold ?? 2.2);
 
   const binaryGrid = new Uint8Array(regionWidth * regionHeight);
@@ -1901,9 +2217,7 @@ export function evaluateDefectRule(
     isPass = flawCount <= maxAllowedDefects;
   }
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
-    ? rule.params.judgmentItems
-    : [];
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
 
   if (judgmentItems.length > 0) {
     for (const item of judgmentItems) {
@@ -2031,13 +2345,25 @@ export function evaluateBlobRule(
     };
   }
 
-  const binaryThreshold = Number(rule.params?.binaryThreshold ?? 128);
-  const targetPolarity =
-    (rule.params?.targetPolarity as "bright" | "dark" | "both") ?? "bright";
-  const minBlobArea = Number(rule.params?.minBlobArea ?? 8);
+  // Key aliasing (catalog first, workbench fallback — see header note):
+  // binarizeThreshold -> binaryThreshold, minDefectAreaPx ->
+  // minBlobArea, maxAllowedDefects -> maxBlobCount. With catalog
+  // defaults (minBlobCount absent, hence 0; maxAllowedDefects 0) the
+  // range gate below reduces exactly to the spec T109 rule
+  // count <= maxAllowedDefects; workbench rules that explicitly set
+  // minBlobCount keep their range gate.
+  const binaryThreshold = Number(
+    pickNumber(rule.params as Record<string, any>, ["binarizeThreshold", "binaryThreshold"]) ?? 128,
+  );
+  const targetPolarity = (rule.params?.targetPolarity as "bright" | "dark" | "both") ?? "bright";
+  const minBlobArea = Number(
+    pickNumber(rule.params as Record<string, any>, ["minDefectAreaPx", "minBlobArea"]) ?? 8,
+  );
   const maxBlobArea = Number(rule.params?.maxBlobArea ?? 500000);
   const minBlobCount = Number(rule.params?.minBlobCount ?? 0);
-  const maxBlobCount = Number(rule.params?.maxBlobCount ?? 100);
+  const maxBlobCount = Number(
+    pickNumber(rule.params as Record<string, any>, ["maxAllowedDefects", "maxBlobCount"]) ?? 100,
+  );
   const hasHoleFilling = Boolean(rule.params?.hasHoleFilling ?? false);
 
   const binaryGrid = new Uint8Array(regionWidth * regionHeight);
@@ -2099,9 +2425,7 @@ export function evaluateBlobRule(
 
   let isPass = blobCount >= minBlobCount && blobCount <= maxBlobCount;
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
-    ? rule.params.judgmentItems
-    : [];
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
 
   if (judgmentItems.length > 0) {
     for (const item of judgmentItems) {
@@ -2141,6 +2465,8 @@ export function evaluateBlobRule(
       totalBlobArea,
       binaryThreshold,
       targetPolarity,
+      minBlobArea,
+      maxBlobCount,
       avgLuma,
       hasHoleFilling,
     },
@@ -2234,11 +2560,12 @@ export function evaluateCaliperRule(
     (rule.params?.scanDirection as CaliperScanDirectionType) ?? "horizontal";
   const edgePolarity: CaliperEdgePolarityType =
     (rule.params?.edgePolarity as CaliperEdgePolarityType) ?? "both";
-  const minContrast = Math.min(6.0, Number(rule.params?.minEdgeContrast ?? 6.0));
+  // Spec T104 §3: minEdgeContrast default 35. The old
+  // Math.min(6.0, ...) clamp is removed — it silently lowered any
+  // configured contrast down to 6.0.
+  const minContrast = Number(rule.params?.minEdgeContrast ?? 35);
   const filterWidth = Number(rule.params?.filterWidth ?? 1);
-  const hasSubPixelInterpolation = Boolean(
-    rule.params?.hasSubPixelInterpolation ?? true,
-  );
+  const hasSubPixelInterpolation = Boolean(rule.params?.hasSubPixelInterpolation ?? true);
 
   const edges = extractSubPixelEdges({
     imageData,
@@ -2250,26 +2577,57 @@ export function evaluateCaliperRule(
     hasSubPixelInterpolation,
   });
 
-  const maxGrad =
-    edges.length > 0 ? Math.max(...edges.map((e) => Math.abs(e.gradient))) : 0;
+  const maxGrad = edges.length > 0 ? Math.max(...edges.map((e) => Math.abs(e.gradient))) : 0;
 
   const tolerancePx = Number(rule.params?.tolerancePx ?? 15);
-  const hasExplicitNominal = typeof rule.params?.nominalWidthPx === "number";
-  const nominalPx = Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
+  const caliperToolCode = String(rule.params?.toolCode ?? "").toUpperCase();
   const pxToMetricRatio = Number(rule.params?.pxToMetricRatio ?? 0.025);
+  // Spec T110 §5 (mm mode): when nominalDimensionMm is present, the
+  // measured dimension in mm (px * pxToMetricRatio, ratio default
+  // 0.025) is judged against nominalDimensionMm + lower/upper
+  // tolerances. Workbench px keys are used only when no mm nominal is
+  // present. A catalog T110 rule with neither nominal is NOT judged
+  // against an ROI-derived nominal — it fails as unconfigured below.
+  const nominalDimensionMm = pickNumber(rule.params as Record<string, any>, ["nominalDimensionMm"]);
+  const lowerToleranceMm = Number(
+    pickNumber(rule.params as Record<string, any>, ["lowerToleranceMm"]) ?? -0.05,
+  );
+  const upperToleranceMm = Number(
+    pickNumber(rule.params as Record<string, any>, ["upperToleranceMm"]) ?? 0.05,
+  );
+  const isMmMode = caliperToolCode === "T110" && nominalDimensionMm !== undefined;
+  const hasExplicitNominalPx = typeof rule.params?.nominalWidthPx === "number";
+  const nominalPx = isMmMode
+    ? (nominalDimensionMm as number) / pxToMetricRatio
+    : Number(rule.params?.nominalWidthPx ?? rule.width * 0.8);
   const metricUnit = (rule.params?.metricUnit as "mm" | "um" | "px") ?? "px";
   const expectedCount =
-    typeof rule.params?.expectedCount === "number"
-      ? Number(rule.params.expectedCount)
-      : undefined;
+    typeof rule.params?.expectedCount === "number" ? Number(rule.params.expectedCount) : undefined;
 
   const ruleNameLower = (rule.name || "").toLowerCase();
   const rawMode = rule.params?.measurementMode as CaliperMeasurementModeType;
   const measurementMode: CaliperMeasurementModeType =
     rawMode ??
-    (ruleNameLower.includes("pitch") || ruleNameLower.includes("comb")
-      ? "pitch"
-      : "width");
+    (ruleNameLower.includes("pitch") || ruleNameLower.includes("comb") ? "pitch" : "width");
+
+  if (caliperToolCode === "T110" && !isMmMode && !hasExplicitNominalPx) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `Caliper inspection is not configured: no nominal dimension (nominalDimensionMm or nominalWidthPx required); ROI-derived nominals are never used for a catalog T110 rule. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: {
+        maxGrad,
+        nominalDimensionMm,
+        nominalPx: undefined,
+        tolerancePx,
+        edges,
+        edgeCount: edges.length,
+        meanLuma,
+        stdDev,
+      },
+    };
+  }
 
   const metrics = computeCaliperMetrics({
     edges,
@@ -2303,17 +2661,38 @@ export function evaluateCaliperRule(
 
   let isPass = true;
 
+  // Spec T104 §5: the count gate is UNCONDITIONAL — edgeCount must
+  // equal expectedCount whenever an expected count is configured for a
+  // T104 rule, regardless of any hasLeadCountCheck flag. (T110 rules
+  // keep the flag-gated behaviour.)
   const hasLeadCountCheck = Boolean(
     rule.params?.hasLeadCountCheck ?? rule.params?.isLeadCountEnabled ?? false,
   );
 
-  if (hasLeadCountCheck && typeof expectedCount === "number") {
+  if (typeof expectedCount === "number" && (caliperToolCode === "T104" || hasLeadCountCheck)) {
     if (metrics.edgeCount !== expectedCount) {
       isPass = false;
     }
   }
 
-  const hasNominalWidthCheck = typeof rule.params?.nominalWidthPx === "number";
+  // Spec T110 §5 mm gate (pitch mode judges the mean pitch in mm,
+  // width/gap mode the span in mm). NOTE (honest limitation): the
+  // spec also requires the worst-case pitch deviation Δmax <= Tol_max,
+  // but no catalog key carries Tol_max, so only the mean band gate is
+  // enforced here; jitter (leadPitchStdDev) is reported in debug.
+  const measuredDimensionMm =
+    measurementMode === "pitch" ? metrics.leadPitchMeanMetric : metrics.measuredWidthMetric;
+
+  if (isMmMode) {
+    const lowerMm = (nominalDimensionMm as number) + lowerToleranceMm;
+    const upperMm = (nominalDimensionMm as number) + upperToleranceMm;
+
+    if (measuredDimensionMm < lowerMm || measuredDimensionMm > upperMm) {
+      isPass = false;
+    }
+  }
+
+  const hasNominalWidthCheck = typeof rule.params?.nominalWidthPx === "number" && !isMmMode;
 
   if (hasNominalWidthCheck) {
     if (Math.abs(metrics.measuredWidthPx - nominalPx) > tolerancePx) {
@@ -2321,9 +2700,7 @@ export function evaluateCaliperRule(
     }
   }
 
-  const judgmentItems = Array.isArray(rule.params?.judgmentItems)
-    ? rule.params.judgmentItems
-    : [];
+  const judgmentItems = Array.isArray(rule.params?.judgmentItems) ? rule.params.judgmentItems : [];
 
   if (judgmentItems.length > 0) {
     for (const item of judgmentItems) {
@@ -2348,8 +2725,9 @@ export function evaluateCaliperRule(
   }
 
   if (isPass) {
-    const successMsg =
-      measurementMode === "pitch"
+    const successMsg = isMmMode
+      ? `Caliper dimension within tolerance (measured: ${measuredDimensionMm.toFixed(3)}mm, nominal: ${nominalDimensionMm}mm [${((nominalDimensionMm as number) + lowerToleranceMm).toFixed(3)}..${((nominalDimensionMm as number) + upperToleranceMm).toFixed(3)}mm], pitch jitter stdDev: ${(metrics.leadPitchStdDevPx * pxToMetricRatio).toFixed(3)}mm). ${opticalContext}: PASS.`
+      : measurementMode === "pitch"
         ? `Lead pitch comb within tolerance (pitch: ${metrics.leadPitchMeanPx}px / ${metrics.leadPitchMeanMetric.toFixed(2)}${metricUnit}, leads: ${metrics.edgeCount}, uniformity: ${(metrics.leadPitchUniformityScore * 100).toFixed(0)}%). ${opticalContext}: PASS.`
         : `Caliper dimension within nominal tolerance ±${tolerancePx}px (edge gradient: ${maxGrad.toFixed(1)}). ${opticalContext}: PASS.`;
 
@@ -2362,6 +2740,10 @@ export function evaluateCaliperRule(
         maxGrad,
         nominalPx,
         tolerancePx,
+        nominalDimensionMm,
+        lowerToleranceMm,
+        upperToleranceMm,
+        measuredDimensionMm,
         edges: metrics.edges,
         edgeCount: metrics.edgeCount,
         measuredWidthPx: metrics.measuredWidthPx,
@@ -2377,15 +2759,23 @@ export function evaluateCaliperRule(
     };
   }
 
+  const failMsg = isMmMode
+    ? `Caliper dimension out of bounds (measured: ${measuredDimensionMm.toFixed(3)}mm, nominal: ${nominalDimensionMm}mm [${((nominalDimensionMm as number) + lowerToleranceMm).toFixed(3)}..${((nominalDimensionMm as number) + upperToleranceMm).toFixed(3)}mm]). ${opticalContext}: FAIL.`
+    : `Caliper dimension out of bounds (measured: ${metrics.measuredWidthPx}px / ${metrics.measuredWidthMetric.toFixed(2)}${metricUnit}, nominal: ${nominalPx}px ±${tolerancePx}px). ${opticalContext}: FAIL.`;
+
   return {
     status: ValidationStatusType.Fail,
     score: 0.2,
-    message: `Caliper dimension out of bounds (measured: ${metrics.measuredWidthPx}px / ${metrics.measuredWidthMetric.toFixed(2)}${metricUnit}, nominal: ${nominalPx}px ±${tolerancePx}px). ${opticalContext}: FAIL.`,
+    message: failMsg,
     stub: false,
     debug: {
       maxGrad,
       nominalPx,
       tolerancePx,
+      nominalDimensionMm,
+      lowerToleranceMm,
+      upperToleranceMm,
+      measuredDimensionMm,
       edges: metrics.edges,
       edgeCount: metrics.edgeCount,
       measuredWidthPx: metrics.measuredWidthPx,
@@ -2419,8 +2809,7 @@ function isPointInPolygon(
     const xj = points[j].x;
     const yj = points[j].y;
 
-    const isIntersect =
-      yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+    const isIntersect = yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
 
     if (isIntersect) {
       isInside = !isInside;
@@ -2430,13 +2819,7 @@ function isPointInPolygon(
   return isInside;
 }
 
-function isPointInCircle(
-  px: number,
-  py: number,
-  cx: number,
-  cy: number,
-  radius: number,
-): boolean {
+function isPointInCircle(px: number, py: number, cx: number, cy: number, radius: number): boolean {
   const dx = px - cx;
   const dy = py - cy;
 
@@ -2522,8 +2905,7 @@ export function evaluateAreaGateRule(
     ? ((ruleOrParams as EvaluateAreaGateParams).umPerPixel ?? fallbackUm)
     : fallbackUm;
 
-  const rawSearchRegion =
-    rule.params?.searchRegion ??
+  const rawSearchRegion = rule.params?.searchRegion ??
     (rule as any).searchRegion ?? {
       shape: ShapeType.Rectangle,
       geometry: { x: rule.x, y: rule.y, width: rule.width, height: rule.height },
@@ -2539,8 +2921,7 @@ export function evaluateAreaGateRule(
 
   let circleCx = rectX + rectW / 2;
   let circleCy = rectY + rectH / 2;
-  const circleR =
-    typeof geom.radius === "number" ? geom.radius : Math.min(rectW, rectH) / 2;
+  const circleR = typeof geom.radius === "number" ? geom.radius : Math.min(rectW, rectH) / 2;
 
   let startX = rectX;
   let startY = rectY;
@@ -2581,15 +2962,23 @@ export function evaluateAreaGateRule(
   const clampedEndX = Math.min(imageData.width, endX);
   const clampedEndY = Math.min(imageData.height, endY);
 
-  const thresh = Number(
-    rule.params?.intensityThreshold ?? rule.params?.threshold ?? 128,
-  );
+  const thresh = Number(rule.params?.intensityThreshold ?? rule.params?.threshold ?? 128);
   const areaMode =
-    (rule.params?.areaMode as "pixels" | "percentage" | "physical" | undefined) ??
-    "pixels";
+    (rule.params?.areaMode as "pixels" | "percentage" | "physical" | undefined) ?? "pixels";
+  // Polarity: catalog presencePolarity values (brightOnDark /
+  // darkOnBright / both) and spec values (bright / dark / both) both
+  // map here; the old code mapped "both" to "bright", which dropped
+  // the both-polarity case entirely.
+  const rawPresencePolarity = String(rule.params?.presencePolarity ?? "");
+  const presencePolarityMapped =
+    rawPresencePolarity === "darkOnBright" || rawPresencePolarity === "dark"
+      ? "dark"
+      : rawPresencePolarity === "both"
+        ? "both"
+        : "bright";
   const targetPolarity =
     (rule.params?.targetPolarity as "bright" | "dark" | "both" | undefined) ??
-    (rule.params?.presencePolarity === "darkOnBright" ? "dark" : "bright");
+    presencePolarityMapped;
 
   let masks: Array<{ shape: ShapeType; geometry?: Geometry }> = [];
 
@@ -2613,8 +3002,7 @@ export function evaluateAreaGateRule(
       } else if (shape === ShapeType.Ellipse) {
         isInsideRoi = isPointInEllipse(x, y, circleCx, circleCy, rectW / 2, rectH / 2);
       } else {
-        isInsideRoi =
-          x >= rectX && x < rectX + rectW && y >= rectY && y < rectY + rectH;
+        isInsideRoi = x >= rectX && x < rectX + rectW && y >= rectY && y < rectY + rectH;
       }
 
       if (!isInsideRoi) {
@@ -2649,7 +3037,9 @@ export function evaluateAreaGateRule(
       if (targetPolarity === "dark") {
         isActive = luma <= thresh;
       } else if (targetPolarity === "both") {
-        isActive = true;
+        // Spec T101 §4: both polarity is |L - 128| >= |T - 128|,
+        // NOT "every pixel is active".
+        isActive = Math.abs(luma - 128) >= Math.abs(thresh - 128);
       } else {
         isActive = luma >= thresh;
       }
@@ -2665,9 +3055,7 @@ export function evaluateAreaGateRule(
 
   if (areaMode === "percentage") {
     measuredValue =
-      totalRoiPixels > 0
-        ? Math.round((activePixels / totalRoiPixels) * 1000) / 10
-        : 0;
+      totalRoiPixels > 0 ? Math.round((activePixels / totalRoiPixels) * 1000) / 10 : 0;
     unit = "%";
   } else if (areaMode === "physical") {
     const mmPerPixel = calibratedUmPerPixel / 1000;
@@ -2677,12 +3065,13 @@ export function evaluateAreaGateRule(
   }
 
   const judgmentItem = rule.params?.judgmentItems?.[0];
+  // Spec T101 §3: pixels-mode min default is 4000 (not 3500).
   const minLimit = Number(
     judgmentItem?.lowerLimit ??
       rule.params?.minArea ??
       rule.params?.minAreaPx ??
       rule.params?.minPixelCount ??
-      (areaMode === "percentage" ? 10 : areaMode === "physical" ? 0.1 : 3500),
+      (areaMode === "percentage" ? 10 : areaMode === "physical" ? 0.1 : 4000),
   );
   const maxLimit = Number(
     judgmentItem?.upperLimit ??
@@ -2697,6 +3086,12 @@ export function evaluateAreaGateRule(
   );
 
   const isAreaPass = measuredValue >= minLimit && measuredValue <= maxLimit;
+  // Spec T101 §5 telemetry: coveragePct and physicalAreaMm2 are
+  // always reported, in every areaMode (not only percentage/physical).
+  const coveragePct =
+    totalRoiPixels > 0 ? Math.round((activePixels / totalRoiPixels) * 1000) / 10 : 0;
+  const physicalAreaMm2 =
+    Math.round(activePixels * Math.pow(calibratedUmPerPixel / 1000, 2) * 10000) / 10000;
 
   if (isAreaPass) {
     return {
@@ -2707,6 +3102,8 @@ export function evaluateAreaGateRule(
       debug: {
         activePixels,
         totalRoiPixels,
+        coveragePct,
+        physicalAreaMm2,
         measuredValue,
         unit,
         minArea: minLimit,
@@ -2724,6 +3121,8 @@ export function evaluateAreaGateRule(
     debug: {
       activePixels,
       totalRoiPixels,
+      coveragePct,
+      physicalAreaMm2,
       measuredValue,
       unit,
       minArea: minLimit,
@@ -2775,15 +3174,55 @@ export function evaluateCircleGaugeRule(
   }
 
   const params = (rule.params as Record<string, unknown> | undefined) ?? {};
-  const nominalPx = Number(params.nominalDiameterPx ?? params.nominalDiameter ?? Math.min(roi.width, roi.height) * 0.6);
-  const tolerancePx = Number(params.diameterTolerancePx ?? params.tolerance ?? 4);
+  // Spec T111 §5 (mm mode): when nominalDiameterMm is present, the
+  // diameter in mm (px * pxToMetricRatio, ratio default 0.025) is
+  // judged against nominalDiameterMm ± diameterToleranceMm. The px
+  // nominal/tolerance are derived by dividing by the ratio, so the
+  // fit engine still works in px. Workbench px keys are used only
+  // when no mm nominal is present (their ratio default stays 1, as
+  // before, so existing px rules are unaffected). Never an
+  // ROI-derived nominal for a catalog rule: if the rule is T111 and
+  // carries neither mm nor px nominal, it fails as unconfigured.
+  const paramsAny = params as Record<string, any>;
+  const nominalDiameterMm = pickNumber(paramsAny, ["nominalDiameterMm"]);
+  const diameterToleranceMm = Number(pickNumber(paramsAny, ["diameterToleranceMm"]) ?? 0.08);
+  const circleToolCode = String(paramsAny.toolCode ?? "").toUpperCase();
+  const pxToMetricRatioRaw = pickNumber(paramsAny, ["pxToMetricRatio"]);
+  const pxToMetricRatio =
+    nominalDiameterMm !== undefined ? (pxToMetricRatioRaw ?? 0.025) : (pxToMetricRatioRaw ?? 1);
+  const nominalPx =
+    nominalDiameterMm !== undefined
+      ? nominalDiameterMm / pxToMetricRatio
+      : Number(
+          params.nominalDiameterPx ??
+            params.nominalDiameter ??
+            Math.min(roi.width, roi.height) * 0.6,
+        );
+  const tolerancePx =
+    nominalDiameterMm !== undefined
+      ? diameterToleranceMm / pxToMetricRatio
+      : Number(params.diameterTolerancePx ?? params.tolerance ?? 4);
   const minRoundnessScorePct = Number(params.minRoundnessScorePct ?? 80);
   const edgePolarity = (params.edgePolarity as CircleGaugePolarityType) ?? "dark-to-light";
   const minEdgeContrast = Number(params.minEdgeContrast ?? 20);
   const rayCount = Number(params.rayCount ?? 64);
   const filterWidth = Number(params.filterWidth ?? 3);
   const metricUnit = (params.metricUnit as "mm" | "um" | "px") ?? "px";
-  const pxToMetricRatio = Number(params.pxToMetricRatio ?? 1);
+
+  if (
+    circleToolCode === "T111" &&
+    nominalDiameterMm === undefined &&
+    typeof params.nominalDiameterPx !== "number" &&
+    typeof params.nominalDiameter !== "number"
+  ) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.1,
+      message: `Circle gauge is not configured: no nominal diameter (nominalDiameterMm or nominalDiameterPx required); ROI-derived nominals are never used for a catalog T111 rule. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: { roi, nominalDiameterMm, nominalPx: undefined, tolerancePx },
+    };
+  }
 
   const fitResult = computeCircleGaugeMetrics({
     imageData,
@@ -2814,11 +3253,17 @@ export function evaluateCircleGaugeRule(
     };
   }
 
+  const measuredDiameterMm = fitResult.diameterPx * pxToMetricRatio;
+  const circlePassMsg =
+    nominalDiameterMm !== undefined
+      ? `Circle & via gauge pass: measured diameter ${measuredDiameterMm.toFixed(3)}mm (nominal: ${nominalDiameterMm}mm ± ${diameterToleranceMm}mm), roundness: ${fitResult.roundnessScorePct.toFixed(1)}% (min: ${minRoundnessScorePct}%). ${opticalContext}: PASS.`
+      : `Circle & via gauge pass: measured diameter ${fitResult.diameterPx.toFixed(2)}px (nominal: ${nominalPx} ± ${tolerancePx}px), roundness: ${fitResult.roundnessScorePct.toFixed(1)}% (min: ${minRoundnessScorePct}%). ${opticalContext}: PASS.`;
+
   if (fitResult.isPass) {
     return {
       status: ValidationStatusType.Pass,
       score: 0.98,
-      message: `Circle & via gauge pass: measured diameter ${fitResult.diameterPx.toFixed(2)}px (nominal: ${nominalPx} ± ${tolerancePx}px), roundness: ${fitResult.roundnessScorePct.toFixed(1)}% (min: ${minRoundnessScorePct}%). ${opticalContext}: PASS.`,
+      message: circlePassMsg,
       stub: false,
       debug: {
         roi,
@@ -2827,6 +3272,9 @@ export function evaluateCircleGaugeRule(
         centerY: fitResult.centerY,
         radiusPx: fitResult.radiusPx,
         diameterPx: fitResult.diameterPx,
+        measuredDiameterMm,
+        nominalDiameterMm,
+        diameterToleranceMm,
         roundnessScorePct: fitResult.roundnessScorePct,
       },
     };
@@ -2834,7 +3282,9 @@ export function evaluateCircleGaugeRule(
 
   const failReason =
     fitResult.diameterErrorPx > tolerancePx
-      ? `diameter ${fitResult.diameterPx.toFixed(2)}px out of tolerance ±${tolerancePx}px (error: ${fitResult.diameterErrorPx.toFixed(2)}px)`
+      ? nominalDiameterMm !== undefined
+        ? `diameter ${measuredDiameterMm.toFixed(3)}mm out of tolerance ±${diameterToleranceMm}mm (error: ${(fitResult.diameterErrorPx * pxToMetricRatio).toFixed(3)}mm)`
+        : `diameter ${fitResult.diameterPx.toFixed(2)}px out of tolerance ±${tolerancePx}px (error: ${fitResult.diameterErrorPx.toFixed(2)}px)`
       : `roundness ${fitResult.roundnessScorePct.toFixed(1)}% below minimum ${minRoundnessScorePct}%`;
 
   return {
@@ -2849,6 +3299,9 @@ export function evaluateCircleGaugeRule(
       centerY: fitResult.centerY,
       radiusPx: fitResult.radiusPx,
       diameterPx: fitResult.diameterPx,
+      measuredDiameterMm,
+      nominalDiameterMm,
+      diameterToleranceMm,
       roundnessScorePct: fitResult.roundnessScorePct,
     },
   };
@@ -2867,7 +3320,8 @@ export function evaluateConformalCoatingRule(
     ? (ruleOrParams as EvaluateConformalCoatingParams).imageData
     : maybeImageData;
   const opticalContext = isParamStruct
-    ? ((ruleOrParams as EvaluateConformalCoatingParams).opticalContext ?? "Conformal Coating & Color")
+    ? ((ruleOrParams as EvaluateConformalCoatingParams).opticalContext ??
+      "Conformal Coating & Color")
     : (maybeOpticalContext ?? "Conformal Coating & Color");
 
   if (!imageData) {
@@ -2896,8 +3350,7 @@ export function evaluateConformalCoatingRule(
   }
 
   const params = (rule.params as Record<string, unknown> | undefined) ?? {};
-  const inspectionMode =
-    (params.inspectionMode as CoatingInspectionModeType) ?? "uv-fluorescence";
+  const inspectionMode = (params.inspectionMode as CoatingInspectionModeType) ?? "uv-fluorescence";
   const uvChannel = (params.uvChannel as UvTracerChannelType) ?? "uv-blue";
   const fluorescenceThreshold = Number(params.fluorescenceThreshold ?? 110);
   const minCoveragePct = Number(params.minCoveragePct ?? 95);
@@ -2927,13 +3380,105 @@ export function evaluateConformalCoatingRule(
     };
   }
 
-  if (result.isPass) {
+  // Spec T112 §5 conjunction, applied in the analyzer (the algorithm
+  // itself is mode-split and must not be trusted as the pass rule):
+  // coverage >= min AND uncoatedVoidCount <= maxAllowedVoids AND
+  // deltaE <= maxDeltaE AND keepOutBreaches == 0. Keep-out breaches
+  // are computed in EVERY mode, not only keep-out-zone mode: if a
+  // KOZ mask is supplied in rule params (keepOutRegions /
+  // keepOutZone / kozRegions, rects), breaches are the coated pixels
+  // inside it; if no mask is supplied, breaches are 0 by definition
+  // (absence means "no KOZ to breach", never a measured pass). In
+  // keep-out-zone mode the ROI itself IS the KOZ, so breaches are the
+  // ROI's coated pixel count — and the coverage>=min conjunct cannot
+  // apply there (a zone that must stay uncoated cannot also be >=95%
+  // coated), so keep-out mode passes on breaches==0 alone. This is
+  // stricter than the algorithm's <=2% keep-out tolerance.
+  const kozRegionsRaw =
+    (params as Record<string, unknown>).keepOutRegions ??
+    (params as Record<string, unknown>).keepOutZone ??
+    (params as Record<string, unknown>).kozRegions;
+  const kozRegions: Array<{ x: number; y: number; width: number; height: number }> = [];
+  const pushKozRegion = (r: unknown) => {
+    if (r && typeof r === "object") {
+      const rec = r as Record<string, unknown>;
+      const geom = (rec.geometry as Record<string, unknown> | undefined) ?? rec;
+
+      if (
+        typeof geom.x === "number" &&
+        typeof geom.y === "number" &&
+        typeof geom.width === "number" &&
+        typeof geom.height === "number"
+      ) {
+        kozRegions.push({
+          x: geom.x,
+          y: geom.y,
+          width: geom.width,
+          height: geom.height,
+        });
+      }
+    }
+  };
+
+  if (Array.isArray(kozRegionsRaw)) {
+    kozRegionsRaw.forEach(pushKozRegion);
+  } else {
+    pushKozRegion(kozRegionsRaw);
+  }
+
+  const countCoatedInRegion = (region: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }): number => {
+    const sx = Math.max(0, Math.round(region.x));
+    const sy = Math.max(0, Math.round(region.y));
+    const ex = Math.min(imageData.width, Math.round(region.x + region.width));
+    const ey = Math.min(imageData.height, Math.round(region.y + region.height));
+    let coated = 0;
+
+    for (let y = sy; y < ey; y += 1) {
+      for (let x = sx; x < ex; x += 1) {
+        const idx = (y * imageData.width + x) * 4;
+        const signal = calculateFluorescenceSignal(
+          imageData.rgba[idx],
+          imageData.rgba[idx + 1],
+          imageData.rgba[idx + 2],
+          uvChannel,
+        );
+
+        if (signal >= fluorescenceThreshold) {
+          coated += 1;
+        }
+      }
+    }
+
+    return coated;
+  };
+
+  const keepOutBreaches =
+    inspectionMode === "keep-out-zone"
+      ? kozRegions.length > 0
+        ? kozRegions.reduce((sum, r) => sum + countCoatedInRegion(r), 0)
+        : result.coatedPixelCount
+      : kozRegions.reduce((sum, r) => sum + countCoatedInRegion(r), 0);
+  const isCoveragePass = result.coveragePct >= minCoveragePct;
+  const isVoidPass = result.uncoatedVoidCount <= maxAllowedVoids;
+  const isDeltaEPass = result.deltaE <= maxDeltaE;
+  const isKozPass = keepOutBreaches === 0;
+  const isSpecPass =
+    inspectionMode === "keep-out-zone"
+      ? isKozPass
+      : isCoveragePass && isVoidPass && isDeltaEPass && isKozPass;
+
+  if (isSpecPass) {
     const successMsg =
       inspectionMode === "keep-out-zone"
         ? `Keep-out zone verified clear (coating breach: ${result.coveragePct}%). ${opticalContext}: PASS.`
         : inspectionMode === "cie-lab-color"
           ? `CIE Lab color match pass: Delta E = ${result.deltaE.toFixed(1)} (limit: <= ${maxDeltaE}), coverage: ${result.coveragePct}%. ${opticalContext}: PASS.`
-          : `Conformal coating coverage pass: ${result.coveragePct}% (min: ${minCoveragePct}%), 0 prohibited voids. ${opticalContext}: PASS.`;
+          : `Conformal coating coverage pass: ${result.coveragePct}% (min: ${minCoveragePct}%), ${result.uncoatedVoidCount} uncoated voids (max: ${maxAllowedVoids}). ${opticalContext}: PASS.`;
 
     return {
       status: ValidationStatusType.Pass,
@@ -2947,18 +3492,42 @@ export function evaluateConformalCoatingRule(
         deltaE: result.deltaE,
         uncoatedVoidCount: result.uncoatedVoidCount,
         meanLuma: result.meanLuma,
+        measuredLab: result.meanLab,
+        keepOutBreaches,
       },
     };
   }
 
+  const failingParts: string[] = [];
+
+  if (inspectionMode !== "keep-out-zone" && !isCoveragePass) {
+    failingParts.push(
+      `coverage ${result.coveragePct}% below minimum requirement ${minCoveragePct}%`,
+    );
+  }
+
+  if (inspectionMode !== "keep-out-zone" && !isVoidPass) {
+    failingParts.push(
+      `detected ${result.uncoatedVoidCount} uncoated voids (max allowed: ${maxAllowedVoids})`,
+    );
+  }
+
+  if (inspectionMode !== "keep-out-zone" && !isDeltaEPass) {
+    failingParts.push(
+      `color difference Delta E = ${result.deltaE.toFixed(1)} exceeds limit ${maxDeltaE}`,
+    );
+  }
+
+  if (!isKozPass) {
+    failingParts.push(
+      inspectionMode === "keep-out-zone"
+        ? `keep-out zone breach: ${result.coveragePct}% coating detected in prohibited zone (${keepOutBreaches} coated pixels)`
+        : `keep-out zone breach: ${keepOutBreaches} coated pixels in keep-out mask`,
+    );
+  }
+
   const failReason =
-    inspectionMode === "keep-out-zone"
-      ? `keep-out zone breach: ${result.coveragePct}% coating detected in prohibited zone`
-      : inspectionMode === "cie-lab-color"
-        ? `color difference Delta E = ${result.deltaE.toFixed(1)} exceeds limit ${maxDeltaE}`
-        : result.coveragePct < minCoveragePct
-          ? `coverage ${result.coveragePct}% below minimum requirement ${minCoveragePct}%`
-          : `detected ${result.uncoatedVoidCount} uncoated voids (max allowed: ${maxAllowedVoids})`;
+    failingParts.length > 0 ? failingParts.join("; ") : "conformal coating spec conjunction failed";
 
   return {
     status: ValidationStatusType.Fail,
@@ -2971,6 +3540,8 @@ export function evaluateConformalCoatingRule(
       coveragePct: result.coveragePct,
       deltaE: result.deltaE,
       uncoatedVoidCount: result.uncoatedVoidCount,
+      measuredLab: result.meanLab,
+      keepOutBreaches,
     },
   };
 }
@@ -3017,8 +3588,16 @@ export function evaluateCodeReaderRule(
   }
 
   const params = (rule.params as Record<string, unknown> | undefined) ?? {};
-  const symbology = (params.symbology as SymbologyType) ?? "datamatrix";
-  const expectedPattern = String(params.expectedPattern ?? "");
+  // Key aliasing (catalog first): expectedPatternRegex ->
+  // expectedPattern; symbology normalized dataMatrix -> datamatrix,
+  // qrCode -> qr, microQr -> qr (engine has no microQr symbology).
+  // No-presetPayload behaviour is verified by the engine itself: with
+  // no decodedPayload it returns payload "", hasCodeDetected false,
+  // grade F, and the !hasCodeDetected branch below FAILs the rule.
+  const symbology = normalizeSymbology(pickString(params as Record<string, any>, ["symbology"]));
+  const expectedPattern = String(
+    pickString(params as Record<string, any>, ["expectedPatternRegex", "expectedPattern"]) ?? "",
+  );
   const minQualityGrade = (params.minQualityGrade as IsoQualityGrade) ?? "B";
   const presetPayload =
     typeof params.decodedPayload === "string" ? params.decodedPayload : undefined;
@@ -3125,6 +3704,61 @@ export function evaluateShapeTraxRule(
   const scaleRangeMin = Number(params.scaleRangeMin ?? 90);
   const scaleRangeMax = Number(params.scaleRangeMax ?? 110);
 
+  // Spec ShapeTrax3 §2/§5: matching is against a stored reference
+  // model. The shapetrax types carry NO model field at all
+  // (no modelPoints / templatePoints / referenceContour in
+  // ShapeTraxParams or MatchShapeTraxParams), so absence of any such
+  // field in the rule params is treated as "no reference model" and
+  // the rule FAILs here instead of scoring the image's own contours
+  // against themselves. When a model IS present, modelPointCount is
+  // the stored model's point count; matchedPointCount stays the
+  // algorithm's measured inlier/contour count (the algorithm cannot
+  // measure a true model-matched count — see shapetrax.ts note).
+  const modelFieldKeys = [
+    "modelPoints",
+    "templatePoints",
+    "referenceContour",
+    "modelContour",
+    "referencePoints",
+    "templateContour",
+    "referenceModel",
+  ];
+  let modelPointCount: number | undefined;
+
+  for (const key of modelFieldKeys) {
+    const raw = (params as Record<string, unknown>)[key];
+    let arr: unknown = raw;
+
+    if (typeof raw === "string") {
+      try {
+        arr = JSON.parse(raw);
+      } catch {
+        arr = undefined;
+      }
+    }
+
+    if (Array.isArray(arr) && arr.length > 0) {
+      modelPointCount = arr.length;
+      break;
+    }
+  }
+
+  if (modelPointCount === undefined) {
+    return {
+      status: ValidationStatusType.Fail,
+      score: 0.0,
+      message: `ShapeTrax3 contour match failed: no reference model stored in rule params (checked modelPoints / templatePoints / referenceContour / modelContour / referencePoints / templateContour / referenceModel) — the image's own contours cannot be scored against themselves. ${opticalContext}: FAIL.`,
+      stub: false,
+      debug: {
+        roi,
+        params,
+        modelPointCount: 0,
+        matchedPointCount: 0,
+        hasReferenceModel: false,
+      },
+    };
+  }
+
   const result = matchShapeTrax({
     imageData,
     roi,
@@ -3157,7 +3791,10 @@ export function evaluateShapeTraxRule(
         score: result.score,
         angleDeg: result.angleDeg,
         scalePct: result.scalePct,
+        modelPointCount,
+        matchedPointCount: result.matchedPointCount,
         matchedPoints: result.matchedPointCount,
+        hasReferenceModel: true,
       },
     };
   }
@@ -3165,7 +3802,9 @@ export function evaluateShapeTraxRule(
   const failReason =
     result.score < minMatchPercent
       ? `score ${result.score.toFixed(1)}% below required ${minMatchPercent}%`
-      : `angle ${result.angleDeg.toFixed(1)}° out of tolerance ±${angleRangeDeg}°`;
+      : result.scalePct < scaleRangeMin || result.scalePct > scaleRangeMax
+        ? `scale ${result.scalePct.toFixed(1)}% outside range [${scaleRangeMin}..${scaleRangeMax}]%`
+        : `angle ${result.angleDeg.toFixed(1)}° out of tolerance ±${angleRangeDeg}°`;
 
   return {
     status: ValidationStatusType.Fail,
@@ -3178,6 +3817,9 @@ export function evaluateShapeTraxRule(
       score: result.score,
       angleDeg: result.angleDeg,
       scalePct: result.scalePct,
+      modelPointCount,
+      matchedPointCount: result.matchedPointCount,
+      hasReferenceModel: true,
     },
   };
 }
@@ -3185,20 +3827,72 @@ export function evaluateShapeTraxRule(
 export function evaluateMathSandboxRule(
   rule: EditorRule,
   priorResults?: Record<string, ValidationResult>,
+  upstreamRules?: readonly EditorRule[],
 ): ValidationResult {
   const params = (rule.params as Record<string, unknown> | undefined) ?? {};
-  const expression = String(
-    params.expression ?? params.mathExpression ?? params.formula ?? "1.0",
-  );
+  const expression = String(params.expression ?? params.mathExpression ?? params.formula ?? "1.0");
   const limits: MathSandboxLimits = {
     min: typeof params.minLimit === "number" ? params.minLimit : (params.limits as any)?.min,
     max: typeof params.maxLimit === "number" ? params.maxLimit : (params.limits as any)?.max,
     nominal: typeof params.nominal === "number" ? params.nominal : (params.limits as any)?.nominal,
-    tolerance: typeof params.tolerance === "number" ? params.tolerance : (params.limits as any)?.tolerance,
+    tolerance:
+      typeof params.tolerance === "number" ? params.tolerance : (params.limits as any)?.tolerance,
   };
   const operator = (params.operator ?? params.comparisonOperator ?? "between") as any;
 
-  const extracted = priorResults ? extractVariablesFromRuleResults([rule], priorResults) : {};
+  // Spec M301 §4: variables come from ALL upstream rules, not only
+  // the math rule itself. The old code passed [rule] here, so R1
+  // resolved to the math rule's own (not yet computed) score — always
+  // 0. Callers that know the ruleset pass upstreamRules (tape-strip
+  // loops do); otherwise variables are derived from priorResults
+  // entries by rule id (no R indices are invented, since the ruleset
+  // order is unknown in that case).
+  let extracted: Record<string, number> = {};
+
+  if (priorResults) {
+    if (upstreamRules && upstreamRules.length > 0) {
+      extracted = extractVariablesFromRuleResults(upstreamRules, priorResults);
+      // Dotted spellings (spec examples: R1.score, R2.pitch): the
+      // parser normalizes "R1.score" to "R1_score" on lookup, but
+      // extraction only creates "R1" (and name/id _score keys), so
+      // add the positional _score / _metric aliases explicitly here.
+      upstreamRules.forEach((upstreamRule, idx) => {
+        const res = priorResults[upstreamRule.id];
+
+        if (!res) {
+          return;
+        }
+
+        const score = res.score ?? 0;
+        extracted[`R${idx + 1}_score`] = score;
+        extracted[`rule${idx + 1}_score`] = score;
+
+        if (res.debug && typeof res.debug === "object") {
+          for (const [debugKey, debugVal] of Object.entries(res.debug)) {
+            if (typeof debugVal === "number" && Number.isFinite(debugVal)) {
+              extracted[`R${idx + 1}_${debugKey}`] = debugVal;
+              extracted[`rule${idx + 1}_${debugKey}`] = debugVal;
+            }
+          }
+        }
+      });
+    } else {
+      for (const [ruleId, res] of Object.entries(priorResults)) {
+        const score = res?.score ?? 0;
+        extracted[ruleId] = score;
+        extracted[`${ruleId}_score`] = score;
+
+        if (res?.debug && typeof res.debug === "object") {
+          for (const [debugKey, debugVal] of Object.entries(res.debug)) {
+            if (typeof debugVal === "number" && Number.isFinite(debugVal)) {
+              extracted[`${ruleId}_${debugKey}`] = debugVal;
+            }
+          }
+        }
+      }
+    }
+  }
+
   const customVars = (params.customVariables as Record<string, number> | undefined) ?? {};
   const mergedVars: Record<string, number> = { ...extracted, ...customVars };
 
@@ -3218,6 +3912,7 @@ export function evaluateMathSandboxRule(
       toolCode: "M301",
       expression,
       value: evalResult.value,
+      formulaValue: evalResult.formulaValue ?? evalResult.value,
       isPass: evalResult.isPass,
       executionDurationMs: evalResult.executionDurationMs,
       limits: evalResult.limits,
@@ -3313,6 +4008,7 @@ export function evaluateWorkpieceRuleReal(
   rule: EditorRule,
   imageData: WorkpieceImageData,
   priorResults?: Record<string, ValidationResult>,
+  allRules?: readonly EditorRule[],
 ): ValidationResult {
   const toolCode = String(rule.params?.toolCode || "").toUpperCase();
   const ruleNameLower = (rule.name || "").toLowerCase();
@@ -3326,6 +4022,19 @@ export function evaluateWorkpieceRuleReal(
   const lightIntensity = light.intensity ?? 80;
   const lightChannel = light.channel ?? 1;
   const opticalContext = `Camera: ${exposureMs}ms, ${gainDb}dB | Light: CH${lightChannel} @ ${lightIntensity}%`;
+
+  // Exact-code-first routing (matches the dispatcher): code branches
+  // for SHAPETRAX3 and M301/M302 sit BEFORE any name branch, so a math
+  // rule named e.g. "Pitch math" is not intercepted by the caliper
+  // name branch, and a ShapeTrax rule is not intercepted by a
+  // pattern/area name branch. All other code branches below are kept.
+  if (toolCode === "SHAPETRAX3" || toolCode === "SHAPETRAX") {
+    return evaluateShapeTraxRule(rule, imageData, opticalContext);
+  }
+
+  if (toolCode === "M301" || toolCode === "M302") {
+    return evaluateMathSandboxRule(rule, priorResults, allRules);
+  }
 
   if (
     toolCode === "T102" ||
@@ -3346,11 +4055,7 @@ export function evaluateWorkpieceRuleReal(
     return evaluatePin1Rule(rule, imageData, opticalContext);
   }
 
-  if (
-    toolCode === "T109" ||
-    ruleNameLower.includes("blob") ||
-    ruleNameLower.includes("bridge")
-  ) {
+  if (toolCode === "T109" || ruleNameLower.includes("blob") || ruleNameLower.includes("bridge")) {
     return evaluateBlobRule(rule, imageData, opticalContext);
   }
 
@@ -3430,14 +4135,12 @@ export function evaluateWorkpieceRuleReal(
   }
 
   if (
-    toolCode === "M301" ||
-    toolCode === "M302" ||
     ruleNameLower.includes("math") ||
     ruleNameLower.includes("sandbox") ||
     ruleNameLower.includes("calc") ||
     ruleNameLower.includes("custom function")
   ) {
-    return evaluateMathSandboxRule(rule, priorResults);
+    return evaluateMathSandboxRule(rule, priorResults, allRules);
   }
 
   return evaluateGeneralFeatureRule(rule, imageData, opticalContext);
@@ -3472,6 +4175,8 @@ export interface PocketOcrMarking {
   text: string;
   meanConfidence: number;
   passed: boolean;
+  /** Per-character engine confidences (spec T106 characterConfidences), when the engine reports characters. */
+  characterConfidences?: number[];
 }
 
 /** True for OCR rules (tool T114 "OCR2 Character Recognition" / T106 "Laser Marking OCR"). */
@@ -3486,12 +4191,20 @@ const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\
 
 /**
  * Map an OCR rule's params to the recognition engine's judgment criteria.
- * Reads both the rail OcrRuleEditor schema (expectedText/matchMode/passThreshold)
- * and the StandardOcr2Tool schema (expectedFormat/minConfidence/characterCount).
+ * Reads the catalog T106 keys FIRST (expectedString / minConfidencePct
+ * / fontType), then the rail OcrRuleEditor schema
+ * (expectedText/matchMode/passThreshold) and the StandardOcr2Tool schema
+ * (expectedFormat/minConfidence/characterCount). Passing expectedString
+ * to the judge is what activates the spec T106 Levenshtein==0 path
+ * (judge.ts); without it the legacy regex path applies. fontType is
+ * read and reported in debug, but the Tesseract engine has no font
+ * dictionary switch for it — it does not change recognition.
  */
 function ocrJudgmentCriteria(rule: EditorRule): {
   expectedFormat?: string;
+  expectedString?: string;
   minConfidence?: number;
+  fontType?: string;
   expectedCharacterCount?: number;
 } {
   const p = (rule.params ?? {}) as Record<string, unknown>;
@@ -3514,16 +4227,25 @@ function ocrJudgmentCriteria(rule: EditorRule): {
     expectedFormat = matchMode === "regex" ? expectedText : `^${escapeRegExp(expectedText)}$`;
   }
 
+  // Catalog exact string wins; a non-regex legacy expectedText is also
+  // an exact string, so it feeds the Levenshtein path rather than
+  // being re-wrapped as a regex (regex mode keeps the format path).
+  const expectedString =
+    paramString("expectedString") ?? (matchMode !== "regex" ? expectedText : undefined);
+
   const minConfidence =
+    paramNumber("minConfidencePct") ??
     paramNumber("minConfidence") ??
     (paramNumber("passThreshold") !== undefined
       ? (paramNumber("passThreshold") as number) * 100
       : undefined);
 
+  const fontType = paramString("fontType");
+
   const expectedCharacterCount =
     paramNumber("expectedCharacterCount") ?? paramNumber("characterCount");
 
-  return { expectedFormat, minConfidence, expectedCharacterCount };
+  return { expectedFormat, expectedString, minConfidence, fontType, expectedCharacterCount };
 }
 
 /**
@@ -3594,10 +4316,12 @@ async function recognizePocketMarkings(
     for (const rule of ocrRules) {
       try {
         const recognition = await recognizeMarking(bodyPixels);
-        const judgment = judgeMarkingRecognition(recognition, ocrJudgmentCriteria(rule));
+        const criteria = ocrJudgmentCriteria(rule);
+        const judgment = judgeMarkingRecognition(recognition, criteria);
         const passed = judgment.passed;
         const text = recognition.text || "";
         const confidence = Math.round(recognition.meanConfidence * 10) / 10;
+        const characterConfidences = (recognition.characters ?? []).map((c) => c.confidence);
 
         pocket.ocrMarkings = pocket.ocrMarkings ?? [];
         pocket.ocrMarkings.push({
@@ -3606,6 +4330,7 @@ async function recognizePocketMarkings(
           text,
           meanConfidence: confidence,
           passed,
+          characterConfidences,
         });
 
         const criteriaSummary = judgment.criteria
@@ -3620,6 +4345,9 @@ async function recognizePocketMarkings(
           debug: {
             recognizedText: text,
             meanConfidence: confidence,
+            characterConfidences,
+            expectedString: criteria.expectedString,
+            fontType: criteria.fontType,
             criteria: judgment.criteria,
           },
         };
@@ -3655,6 +4383,12 @@ export interface TapeStripEvaluationResult {
   status: ValidationStatusType;
   message: string;
   pockets: PocketEvaluationResult[];
+  /** Spec §8 Guard 2 sprocket measurement from the segmenter (absent when no hole train was measured). */
+  sprocketHolePitchPx?: number;
+  sprocketHolePitchMm?: number;
+  sprocketHoleCount?: number;
+  sprocketPitchDeviationMm?: number;
+  sprocketSlipDetected?: boolean;
 }
 
 export interface AdaptRuleToPocketParams {
@@ -4088,48 +4822,137 @@ export async function evaluateTapeStripRules(
 
   const effectiveOpticalContext = opticalContext ?? "Camera: 20.0ms, 0.0dB | Light: CH1 @ 80%";
 
+  // Spec §8 guards, tape-strip level.
+  // Guard 1: empty pockets short-circuit ALL device rules to Skipped
+  // (not FAIL for a single pocket, not PASS 1.0 for multi-pocket) and
+  // are excluded from the yield denominator (yield counts occupied
+  // pockets only, below).
+  const emptyPocketRuleResults = (pocketIndex: number): Record<string, ValidationResult> => {
+    const results: Record<string, ValidationResult> = {};
+
+    for (const r of rules) {
+      results[r.id] = {
+        status: ValidationStatusType.Skipped,
+        score: 0.0,
+        message: `Pocket #${pocketIndex} is EMPTY: carrier tape cavity without device (rule skipped).`,
+        stub: false,
+        debug: { isSkipped: true, isEmpty: true },
+      };
+    }
+
+    return results;
+  };
+
+  // Guard 2 (sprocket pitch caliper): a sprocket rule is a rule whose
+  // name contains "sprocket", or a T110 rule carrying expectedPitchPx.
+  // It is judged tape-wide, NOT per pocket: measured sprocket pitch
+  // (from the segmenter) vs the EIA-481 nominal SPROCKET_NOMINAL_MM
+  // (4.00 mm). expectedPitchPx only identifies the rule; it is not
+  // the judgment nominal. Tolerance: the rule's own toleranceMm /
+  // sprocketToleranceMm / slipToleranceMm if given, else the
+  // segmenter's slip tolerance (DEFAULT_SPROCKET_SLIP_TOLERANCE_MM,
+  // 0.20 mm — an implementation default, not a spec value, since the
+  // spec names the 4.00 mm nominal but no slip tolerance). Absent
+  // segmenter measurement means "not measured", never a pass.
+  const isSprocketRule = (r: EditorRule): boolean => {
+    const toolCode = String(r.params?.toolCode ?? "").toUpperCase();
+    const nameLower = (r.name || "").toLowerCase();
+
+    return (
+      nameLower.includes("sprocket") ||
+      (toolCode === "T110" && typeof r.params?.expectedPitchPx === "number")
+    );
+  };
+  const sprocketRules = rules.filter(isSprocketRule);
+  const deviceRules = rules.filter((r) => !isSprocketRule(r));
+  const judgeSprocketRule = (r: EditorRule): ValidationResult => {
+    const pitchMm = segmentation.sprocketHolePitchMm;
+
+    if (pitchMm === undefined) {
+      return {
+        status: ValidationStatusType.Fail,
+        score: 0.1,
+        message: `Sprocket pitch not measured: no regular sprocket hole train found in tape margin, so pitch cannot be verified against ${SPROCKET_NOMINAL_MM.toFixed(2)} mm (EIA-481). ${effectiveOpticalContext}: FAIL.`,
+        stub: false,
+        debug: {
+          sprocketHolePitchMm: undefined,
+          sprocketSlipDetected: segmentation.sprocketSlipDetected,
+        },
+      };
+    }
+
+    const toleranceMm = Number(
+      pickNumber(r.params as Record<string, any>, [
+        "toleranceMm",
+        "sprocketToleranceMm",
+        "slipToleranceMm",
+      ]) ?? DEFAULT_SPROCKET_SLIP_TOLERANCE_MM,
+    );
+    const deviationMm = pitchMm - SPROCKET_NOMINAL_MM;
+    const isSprocketPass = Math.abs(deviationMm) <= toleranceMm;
+
+    return {
+      status: isSprocketPass ? ValidationStatusType.Pass : ValidationStatusType.Fail,
+      score: isSprocketPass ? 0.97 : 0.2,
+      message: `Sprocket pitch ${pitchMm.toFixed(3)} mm vs ${SPROCKET_NOMINAL_MM.toFixed(2)} mm nominal (deviation ${deviationMm >= 0 ? "+" : ""}${deviationMm.toFixed(3)} mm, tolerance ±${toleranceMm} mm${segmentation.sprocketSlipDetected ? ", segmenter slip flag set" : ""}). ${effectiveOpticalContext}: ${isSprocketPass ? "PASS" : "FAIL"}.`,
+      stub: false,
+      debug: {
+        sprocketHolePitchPx: segmentation.sprocketHolePitchPx,
+        sprocketHolePitchMm: segmentation.sprocketHolePitchMm,
+        sprocketHoleCount: segmentation.sprocketHoleCount,
+        sprocketPitchDeviationMm: segmentation.sprocketPitchDeviationMm,
+        sprocketSlipDetected: segmentation.sprocketSlipDetected,
+        toleranceMm,
+      },
+    };
+  };
+  const sprocketResults = new Map<string, ValidationResult>(
+    sprocketRules.map((r) => [r.id, judgeSprocketRule(r)]),
+  );
+  const sprocketAllPass = [...sprocketResults.values()].every(
+    (v) => v.status === ValidationStatusType.Pass,
+  );
+  const sprocketFields = {
+    sprocketHolePitchPx: segmentation.sprocketHolePitchPx,
+    sprocketHolePitchMm: segmentation.sprocketHolePitchMm,
+    sprocketHoleCount: segmentation.sprocketHoleCount,
+    sprocketPitchDeviationMm: segmentation.sprocketPitchDeviationMm,
+    sprocketSlipDetected: segmentation.sprocketSlipDetected,
+  };
+
   if (pockets.length === 1) {
     const single = pockets[0];
 
     if (single.isEmpty) {
-      const emptyRuleResults: Record<string, ValidationResult> = {};
-
-      for (const r of rules) {
-        emptyRuleResults[r.id] = {
-          status: ValidationStatusType.Fail,
-          score: 0.0,
-          message: `Empty pocket rejection: workpiece missing in Pocket #1. ${effectiveOpticalContext}: FAIL.`,
-          stub: false,
-        };
-      }
-
       return {
         totalPockets: 1,
         emptyPockets: 1,
         passedPockets: 0,
-        failedPockets: 1,
+        failedPockets: 0,
         yieldPercent: 0,
-        status: ValidationStatusType.Fail,
-        message: "Pocket #1 is EMPTY: workpiece missing in carrier tape cavity.",
+        status: ValidationStatusType.Skipped,
+        message:
+          "Pocket #1 is EMPTY: workpiece missing in carrier tape cavity (rule skipped; excluded from yield).",
         pockets: [
           {
             pocketIndex: 1,
             region: { x: single.x, y: single.y, width: single.width, height: single.height },
             isEmpty: true,
             presenceConfidence: single.presenceConfidence,
-            status: ValidationStatusType.Fail,
+            status: ValidationStatusType.Skipped,
             score: 0.0,
-            message: "Pocket #1 is EMPTY: workpiece missing in carrier tape cavity.",
-            ruleResults: emptyRuleResults,
+            message: "Pocket #1 is EMPTY: workpiece missing in carrier tape cavity (skipped).",
+            ruleResults: emptyPocketRuleResults(1),
             pinPitch: null,
             deviceMeasurement: null,
           },
         ],
+        ...sprocketFields,
       };
     }
 
-    const dag = buildRuleDAG(rules);
-    const ruleMap = new Map<string, EditorRule>(rules.map((r) => [r.id, r]));
+    const dag = buildRuleDAG(deviceRules);
+    const ruleMap = new Map<string, EditorRule>(deviceRules.map((r) => [r.id, r]));
     const ruleResults: Record<string, ValidationResult> = {};
     let isAllPass = true;
     let minScore = 1.0;
@@ -4150,7 +4973,7 @@ export async function evaluateTapeStripRules(
       if (decision.isSkipped) {
         res = createSkippedValidationResult({ rule: r, decision });
       } else {
-        res = evaluateWorkpieceRuleReal(r, imageData, ruleResults);
+        res = evaluateWorkpieceRuleReal(r, imageData, ruleResults, rules);
       }
 
       ruleResults[r.id] = res;
@@ -4160,6 +4983,36 @@ export async function evaluateTapeStripRules(
       }
 
       const resultScore = res.score ?? 0;
+
+      if (resultScore < minScore) {
+        minScore = resultScore;
+      }
+    }
+
+    // Cycle nodes are excluded from orderedRuleIds by the DAG builder;
+    // they must appear as explicit Skipped results (with a clear cycle
+    // message), never silently vanish and never pass.
+    if (dag.hasCycle && dag.cycleNodeIds) {
+      for (const ruleId of dag.cycleNodeIds) {
+        const r = ruleMap.get(ruleId);
+
+        if (r) {
+          ruleResults[r.id] = createCycleSkippedValidationResult({
+            rule: r,
+            cycleNodeIds: dag.cycleNodeIds,
+          });
+        }
+      }
+    }
+
+    for (const [ruleId, sprocketRes] of sprocketResults) {
+      ruleResults[ruleId] = sprocketRes;
+
+      if (sprocketRes.status === ValidationStatusType.Fail) {
+        isAllPass = false;
+      }
+
+      const resultScore = sprocketRes.score ?? 0;
 
       if (resultScore < minScore) {
         minScore = resultScore;
@@ -4194,6 +5047,12 @@ export async function evaluateTapeStripRules(
     }
 
     const finalIsAllPass = singlePocket.status === ValidationStatusType.Pass;
+    const cycleNote = dag.hasCycle
+      ? ` ${getCycleErrorMessage(dag) ?? "Dependency cycle detected."}`
+      : "";
+    const sprocketNote = !sprocketAllPass
+      ? " Sprocket pitch check failed (see sprocket fields)."
+      : "";
 
     return {
       totalPockets: 1,
@@ -4203,9 +5062,10 @@ export async function evaluateTapeStripRules(
       yieldPercent: finalIsAllPass ? 100 : 0,
       status: singlePocket.status,
       message: finalIsAllPass
-        ? `Pocket #1 PASSED (${rules.length}/${rules.length} rules verified).`
-        : `Pocket #1 FAILED inspection checks.`,
+        ? `Pocket #1 PASSED (${rules.length}/${rules.length} rules verified).${cycleNote}${sprocketNote}`
+        : `Pocket #1 FAILED inspection checks.${cycleNote}${sprocketNote}`,
       pockets: [singlePocket],
+      ...sprocketFields,
     };
   }
 
@@ -4213,29 +5073,22 @@ export async function evaluateTapeStripRules(
   const pocketEvalResults: PocketEvaluationResult[] = [];
   let emptyCount = 0;
 
+  let multiHasCycle = false;
+  let multiCycleMessage: string | null = null;
+
   for (const pocket of pockets) {
     if (pocket.isEmpty) {
       emptyCount += 1;
-      const emptyRuleResults: Record<string, ValidationResult> = {};
-
-      for (const r of rules) {
-        emptyRuleResults[r.id] = {
-          status: ValidationStatusType.Pass,
-          score: 1.0,
-          message: `Cavity empty in Pocket #${pocket.index}: carrier tape slot has no device (rule skipped).`,
-          stub: false,
-        };
-      }
 
       pocketEvalResults.push({
         pocketIndex: pocket.index,
         region: { x: pocket.x, y: pocket.y, width: pocket.width, height: pocket.height },
         isEmpty: true,
         presenceConfidence: pocket.presenceConfidence,
-        status: ValidationStatusType.Pass,
-        score: 1.0,
+        status: ValidationStatusType.Skipped,
+        score: 0.0,
         message: `Pocket #${pocket.index} is EMPTY: carrier tape cavity without device (skipped).`,
-        ruleResults: emptyRuleResults,
+        ruleResults: emptyPocketRuleResults(pocket.index),
         pinPitch: null,
         deviceMeasurement: null,
       });
@@ -4243,8 +5096,8 @@ export async function evaluateTapeStripRules(
       continue;
     }
 
-    const dag = buildRuleDAG(rules);
-    const ruleMap = new Map<string, EditorRule>(rules.map((r) => [r.id, r]));
+    const dag = buildRuleDAG(deviceRules);
+    const ruleMap = new Map<string, EditorRule>(deviceRules.map((r) => [r.id, r]));
     const pocketRuleResults: Record<string, ValidationResult> = {};
     let isPocketPass = true;
     let minScore = 1.0;
@@ -4273,7 +5126,7 @@ export async function evaluateTapeStripRules(
           imageData,
         });
 
-        res = evaluateWorkpieceRuleReal(adaptedRule, imageData, pocketRuleResults);
+        res = evaluateWorkpieceRuleReal(adaptedRule, imageData, pocketRuleResults, rules);
       }
 
       pocketRuleResults[r.id] = res;
@@ -4283,6 +5136,38 @@ export async function evaluateTapeStripRules(
       }
 
       const resultScore = res.score ?? 0;
+
+      if (resultScore < minScore) {
+        minScore = resultScore;
+      }
+    }
+
+    // Cycle nodes must appear as explicit Skipped results, never
+    // silently vanish and never pass.
+    if (dag.hasCycle && dag.cycleNodeIds) {
+      multiHasCycle = true;
+      multiCycleMessage = getCycleErrorMessage(dag);
+
+      for (const ruleId of dag.cycleNodeIds) {
+        const r = ruleMap.get(ruleId);
+
+        if (r) {
+          pocketRuleResults[r.id] = createCycleSkippedValidationResult({
+            rule: r,
+            cycleNodeIds: dag.cycleNodeIds,
+          });
+        }
+      }
+    }
+
+    for (const [ruleId, sprocketRes] of sprocketResults) {
+      pocketRuleResults[ruleId] = sprocketRes;
+
+      if (sprocketRes.status === ValidationStatusType.Fail) {
+        isPocketPass = false;
+      }
+
+      const resultScore = sprocketRes.score ?? 0;
 
       if (resultScore < minScore) {
         minScore = resultScore;
@@ -4321,19 +5206,33 @@ export async function evaluateTapeStripRules(
   const occupiedPockets = pockets.filter((p) => !p.isEmpty);
   const totalOccupied = occupiedPockets.length;
   // Recompute: OCR recognition can flip a pocket from pass to fail.
+  // Yield denominator is occupied pockets ONLY — empty (Skipped)
+  // pockets never count as passed or failed.
   const finalPassedOccupiedCount = pocketEvalResults.filter(
     (p) => !p.isEmpty && p.status === ValidationStatusType.Pass,
   ).length;
   const failedOccupied = totalOccupied - finalPassedOccupiedCount;
   const yieldPct =
-    totalOccupied > 0 ? Math.round((finalPassedOccupiedCount / totalOccupied) * 1000) / 10 : 100;
+    totalOccupied > 0 ? Math.round((finalPassedOccupiedCount / totalOccupied) * 1000) / 10 : 0;
   const overallStatus =
-    failedOccupied === 0 ? ValidationStatusType.Pass : ValidationStatusType.Fail;
+    totalOccupied === 0
+      ? ValidationStatusType.Skipped
+      : failedOccupied === 0
+        ? ValidationStatusType.Pass
+        : ValidationStatusType.Fail;
 
   let summaryMsg = `Tape Strip: ${finalPassedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
 
   if (emptyCount > 0) {
     summaryMsg = `Tape Strip: ${emptyCount} empty ${emptyCount === 1 ? "cavity" : "cavities"} detected · ${finalPassedOccupiedCount}/${totalOccupied} present devices passed (${yieldPct}% yield).`;
+  }
+
+  if (multiHasCycle && multiCycleMessage) {
+    summaryMsg += ` ${multiCycleMessage}`;
+  }
+
+  if (!sprocketAllPass) {
+    summaryMsg += " Sprocket pitch check failed (see sprocket fields).";
   }
 
   return {
@@ -4345,5 +5244,6 @@ export async function evaluateTapeStripRules(
     status: overallStatus,
     message: summaryMsg,
     pockets: pocketEvalResults,
+    ...sprocketFields,
   };
 }

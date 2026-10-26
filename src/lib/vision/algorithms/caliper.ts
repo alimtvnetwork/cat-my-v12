@@ -35,10 +35,7 @@ export function extract1DProfile(params: {
 
       for (let x = startX; x < endX; x += 1) {
         const idx = (y * imgWidth + x) * 4;
-        const luma =
-          0.299 * rgba[idx] +
-          0.587 * rgba[idx + 1] +
-          0.114 * rgba[idx + 2];
+        const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
 
         sum += luma;
       }
@@ -56,10 +53,7 @@ export function extract1DProfile(params: {
 
     for (let y = startY; y < endY; y += 1) {
       const idx = (y * imgWidth + x) * 4;
-      const luma =
-        0.299 * rgba[idx] +
-        0.587 * rgba[idx + 1] +
-        0.114 * rgba[idx + 2];
+      const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
 
       sum += luma;
     }
@@ -70,7 +64,38 @@ export function extract1DProfile(params: {
   return profile;
 }
 
+/**
+ * Smooth a 1D profile with a discrete Gaussian kernel.
+ *
+ * The kernel size is derived from `filterWidth` the same way as before
+ * (even widths are bumped to the next odd size, so the kernel stays
+ * symmetric around the centre sample). The old implementation used that
+ * window as a box/mean filter; this implementation instead samples a
+ * Gaussian inside the same window.
+ *
+ * Sigma derivation: with `half = floor(kernelSize / 2)`, sigma is
+ * `half / 2`, so the kernel spans +/-2 sigma. Each tap weight is
+ * `exp(-k^2 / (2 * sigma^2))` for offset `k`, and the weights are
+ * renormalized to sum to 1, so a constant profile passes through
+ * unchanged (no DC gain or loss).
+ *
+ * Edge handling: near the ends of the profile there are no samples
+ * outside the array to draw on, so the partial kernel covering only
+ * in-bounds taps is renormalized to sum to 1 (a truncated, reweighted
+ * kernel). This is NOT zero padding (which would drag the ends toward
+ * zero) and NOT reflection (which would invent samples); the trade-off
+ * is that edge samples are smoothed over a narrower effective window
+ * than interior samples.
+ *
+ * Short-circuit: a kernel of size 1 (or a profile no longer than the
+ * kernel) is returned as an unchanged copy, preserving the previous
+ * behaviour for degenerate inputs.
+ */
 export function smooth1DProfile(profile: number[], filterWidth: number): number[] {
+  if (!Number.isFinite(filterWidth) || filterWidth <= 1) {
+    return [...profile];
+  }
+
   const kernelSize = Math.max(1, filterWidth % 2 === 0 ? filterWidth + 1 : filterWidth);
 
   if (kernelSize <= 1 || profile.length <= kernelSize) {
@@ -78,30 +103,45 @@ export function smooth1DProfile(profile: number[], filterWidth: number): number[
   }
 
   const half = Math.floor(kernelSize / 2);
+  const sigma = half / 2;
+  const weights: number[] = [];
+  let weightSum = 0;
+
+  for (let k = -half; k <= half; k += 1) {
+    const weight = Math.exp(-(k * k) / (2 * sigma * sigma));
+    weights.push(weight);
+    weightSum += weight;
+  }
+
+  // Normalize the full kernel once; edge taps are renormalized again
+  // below over just the in-bounds portion.
+  for (let i = 0; i < weights.length; i += 1) {
+    weights[i] /= weightSum;
+  }
+
   const smoothed = new Array(profile.length).fill(0);
 
   for (let i = 0; i < profile.length; i += 1) {
     let sum = 0;
-    let count = 0;
+    let partialWeightSum = 0;
 
     for (let k = -half; k <= half; k += 1) {
       const idx = i + k;
 
       if (idx >= 0 && idx < profile.length) {
-        sum += profile[idx];
-        count += 1;
+        const weight = weights[k + half];
+        sum += weight * profile[idx];
+        partialWeightSum += weight;
       }
     }
 
-    smoothed[i] = count > 0 ? sum / count : profile[i];
+    smoothed[i] = partialWeightSum > 0 ? sum / partialWeightSum : profile[i];
   }
 
   return smoothed;
 }
 
-export function extractSubPixelEdges(
-  params: ExtractSubPixelEdgesParams,
-): SubPixelEdgePoint[] {
+export function extractSubPixelEdges(params: ExtractSubPixelEdgesParams): SubPixelEdgePoint[] {
   const {
     imageData,
     roi,
@@ -155,10 +195,7 @@ export function extractSubPixelEdges(
     const prevAbs = Math.abs(grads[i - 1]);
     const nextAbs = Math.abs(grads[i + 1]);
 
-    const isPeak =
-      curAbs >= minEdgeContrast &&
-      curAbs > prevAbs &&
-      curAbs >= nextAbs;
+    const isPeak = curAbs >= minEdgeContrast && curAbs > prevAbs && curAbs >= nextAbs;
 
     if (!isPeak) {
       continue;
@@ -179,11 +216,9 @@ export function extractSubPixelEdges(
     }
 
     const subPos = i + subOffset;
-    const polarity: CaliperEdgePolarityType =
-      grads[i] >= 0 ? "dark-to-light" : "light-to-dark";
+    const polarity: CaliperEdgePolarityType = grads[i] >= 0 ? "dark-to-light" : "light-to-dark";
 
-    const isPolarityMatch =
-      edgePolarity === "both" || edgePolarity === polarity;
+    const isPolarityMatch = edgePolarity === "both" || edgePolarity === polarity;
 
     if (!isPolarityMatch) {
       continue;
@@ -215,17 +250,8 @@ export function extractSubPixelEdges(
   return edges;
 }
 
-export function computeCaliperMetrics(
-  params: ComputeCaliperMetricsParams,
-): CaliperResultMetrics {
-  const {
-    edges,
-    nominalWidthPx,
-    tolerancePx,
-    pxToMetricRatio,
-    metricUnit,
-    expectedCount,
-  } = params;
+export function computeCaliperMetrics(params: ComputeCaliperMetricsParams): CaliperResultMetrics {
+  const { edges, nominalWidthPx, tolerancePx, pxToMetricRatio, metricUnit, expectedCount } = params;
 
   const edgeCount = edges.length;
   const hasEdgesDetected = edgeCount >= 2;
@@ -274,11 +300,9 @@ export function computeCaliperMetrics(
   const leadPitchMeanMetric = leadPitchMeanPx * pxToMetricRatio;
 
   const isWidthInTolerance =
-    hasEdgesDetected &&
-    Math.abs(measuredWidthPx - nominalWidthPx) <= tolerancePx;
+    hasEdgesDetected && Math.abs(measuredWidthPx - nominalWidthPx) <= tolerancePx;
 
-  const isCountMatched =
-    typeof expectedCount === "number" ? edgeCount === expectedCount : true;
+  const isCountMatched = typeof expectedCount === "number" ? edgeCount === expectedCount : true;
 
   const isWithinTolerance = isWidthInTolerance && isCountMatched;
 

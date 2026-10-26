@@ -93,7 +93,11 @@ export function calculateIsoGrading(params: CalculateIsoGradingParams): IsoGradi
     modGrade = "D";
   }
 
-  // 3. Axial Non-Uniformity (ANU = 2 * |W - H| / (W + H))
+  // 3. Axial Non-Uniformity (ANU = |W / H - 1.0|, per the spec formula).
+  // NOTE: The spec gives the ANU formula but NO grade thresholds for it.
+  // The A/B/C/D cut-offs below (0.06 / 0.08 / 0.10 / 0.12) are NOT
+  // spec-given values — they are implementation choices made in this file.
+  // Do not cite them as ISO/IEC 15415 or spec thresholds.
   const anuVal = Math.abs(aspectRatio - 1.0);
   let anuGrade: IsoQualityGrade = "F";
 
@@ -107,7 +111,12 @@ export function calculateIsoGrading(params: CalculateIsoGradingParams): IsoGradi
     anuGrade = "D";
   }
 
-  // 4. Grid Non-Uniformity (GNU = max vector jitter / cell pitch)
+  // 4. Grid Non-Uniformity (GNU = max vector jitter / cell pitch).
+  // NOTE: The spec defines GNU only as the vector offset of cell
+  // intersections from the theoretical grid — it gives NO grade thresholds
+  // for it. The A/B/C/D cut-offs below (0.38 / 0.50 / 0.63 / 0.75) are NOT
+  // spec-given values — they are implementation choices made in this file.
+  // Do not cite them as ISO/IEC 15415 or spec thresholds.
   const gnuVal = cellPitchPx > 0 ? gridJitterPx / cellPitchPx : 0;
   let gnuGrade: IsoQualityGrade = "F";
 
@@ -194,6 +203,71 @@ export function calculateIsoGrading(params: CalculateIsoGradingParams): IsoGradi
   };
 }
 
+// No-decode grading report: used when no real decoded payload was supplied.
+// Without a decoded symbol there is nothing to grade, so no parameter grade
+// is claimed — every grade is F and every graded value is zeroed, which keeps
+// the ISO rule "overall = min of the 5 parameter grades" intact (min = F).
+// minReflectance / maxReflectance keep the measured ROI reflectance range;
+// they are raw measurements, not grades, and must not be read as a symbol
+// quality result.
+export function createNoDecodeGradingReport(rMin: number, rMax: number): IsoGradingReport {
+  const metrics: IsoMetricItem[] = [
+    {
+      name: "Symbol Contrast (SC)",
+      value: 0,
+      grade: "F",
+      score: 0,
+      description: "No symbol decoded — no grade claimed",
+    },
+    {
+      name: "Modulation (MOD)",
+      value: 0,
+      grade: "F",
+      score: 0,
+      description: "No symbol decoded — no grade claimed",
+    },
+    {
+      name: "Axial Non-Uniformity (ANU)",
+      value: 0,
+      grade: "F",
+      score: 0,
+      description: "No symbol decoded — no grade claimed",
+    },
+    {
+      name: "Grid Non-Uniformity (GNU)",
+      value: 0,
+      grade: "F",
+      score: 0,
+      description: "No symbol decoded — no grade claimed",
+    },
+    {
+      name: "Unused Error Correction (UEC)",
+      value: 0,
+      grade: "F",
+      score: 0,
+      description: "No symbol decoded — no grade claimed",
+    },
+  ];
+
+  return {
+    overallGrade: "F",
+    overallScore: 0,
+    symbolContrast: 0,
+    symbolContrastGrade: "F",
+    modulation: 0,
+    modulationGrade: "F",
+    axialNonUniformity: 0,
+    axialNonUniformityGrade: "F",
+    gridNonUniformity: 0,
+    gridNonUniformityGrade: "F",
+    unusedErrorCorrection: 0,
+    unusedErrorCorrectionGrade: "F",
+    minReflectance: Math.round(rMin),
+    maxReflectance: Math.round(rMax),
+    metrics,
+  };
+}
+
 export interface DecodeAndGradeCodeParams {
   imageData: WorkpieceImageData;
   roi: {
@@ -205,6 +279,14 @@ export interface DecodeAndGradeCodeParams {
   symbology?: SymbologyType;
   expectedPattern?: string;
   minQualityGrade?: IsoQualityGrade;
+  /**
+   * The only decode input in this phase: a real decoded payload supplied by
+   * the caller (e.g. the rule's `decodedPayload` param). There is no decoder
+   * wired into this module yet (no ZXing/WASM decode of the ROI pixels), so
+   * when this is absent/blank the result is an explicit NO-DECODE: payload
+   * "", hasCodeDetected false, overall grade F, isPass false. Callers must
+   * FAIL the rule on that result — never substitute a hardcoded payload.
+   */
   presetPayload?: string;
 }
 
@@ -286,9 +368,7 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
   }
 
   const darkVar =
-    darkCount > 0
-      ? Math.sqrt(Math.max(0, darkSumSq / darkCount - (darkSum / darkCount) ** 2))
-      : 0;
+    darkCount > 0 ? Math.sqrt(Math.max(0, darkSumSq / darkCount - (darkSum / darkCount) ** 2)) : 0;
   const lightVar =
     lightCount > 0
       ? Math.sqrt(Math.max(0, lightSumSq / lightCount - (lightSum / lightCount) ** 2))
@@ -301,26 +381,30 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
   const cellPitchPx = Math.max(2, Math.round(Math.min(width, height) / 16));
   const gridJitterPx = 0.4;
 
-  const grading = calculateIsoGrading({
-    rMin,
-    rMax,
-    meanLuma,
-    withinModuleNoise: withinNoise,
-    aspectRatio,
-    gridJitterPx,
-    cellPitchPx,
-  });
+  // NO-DECODER CONTRACT: this module cannot decode a symbol from pixels —
+  // there is no ZXing/WASM decoder wired in. The only real decode input is
+  // presetPayload supplied by the caller. When it is absent or blank, this
+  // function MUST NOT invent a payload: it returns an explicit no-decode
+  // result (payload "", hasCodeDetected false, overall grade F) so the
+  // caller FAILs the rule. Previously this fell back to hardcoded payloads
+  // per symbology; that fallback is removed and must not be reintroduced.
+  const hasDecodedPayload = typeof presetPayload === "string" && presetPayload.trim() !== "";
+  const payload = hasDecodedPayload ? (presetPayload as string) : "";
 
-  const defaultPayload =
-    symbology === "qr"
-      ? "https://sensai.inspection.internal/pkg/78219"
-      : symbology === "datamatrix"
-        ? "SN20261022-A9048-REV2"
-        : symbology === "code128"
-          ? "1D-PKG-489201"
-          : "4006381333931";
-
-  const payload = presetPayload && presetPayload.trim() !== "" ? presetPayload : defaultPayload;
+  // Grading is only meaningful for a decoded symbol. Without a decode, the
+  // ROI reflectance statistics are not a symbol grade, so report all-F
+  // (see createNoDecodeGradingReport) instead of grading the raw pixels.
+  const grading = hasDecodedPayload
+    ? calculateIsoGrading({
+        rMin,
+        rMax,
+        meanLuma,
+        withinModuleNoise: withinNoise,
+        aspectRatio,
+        gridJitterPx,
+        cellPitchPx,
+      })
+    : createNoDecodeGradingReport(rMin, rMax);
 
   const symbologyNames: Record<SymbologyType, string> = {
     datamatrix: "DataMatrix (ECC 200)",
@@ -331,14 +415,20 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
     any: "Auto-Detect Symbology",
   };
 
-  let isPatternMatch = true;
+  // No decode means no pattern to validate: a regex must never be run
+  // against an invented or empty payload and reported as a match.
+  let isPatternMatch = false;
 
-  if (expectedPattern.trim() !== "") {
-    try {
-      const rx = new RegExp(expectedPattern);
-      isPatternMatch = rx.test(payload);
-    } catch {
-      isPatternMatch = payload.includes(expectedPattern);
+  if (hasDecodedPayload) {
+    isPatternMatch = true;
+
+    if (expectedPattern.trim() !== "") {
+      try {
+        const rx = new RegExp(expectedPattern);
+        isPatternMatch = rx.test(payload);
+      } catch {
+        isPatternMatch = payload.includes(expectedPattern);
+      }
     }
   }
 
@@ -367,14 +457,17 @@ export function decodeAndGradeCode(params: DecodeAndGradeCodeParams): CodeReader
   }
 
   const isCavityEmpty = (meanLuma < 53 && rMax - rMin < 90) || rMax - rMin < 35;
-  const hasCodeDetected = !isCavityEmpty;
+  // Detection requires a real decode: image statistics alone (a non-empty
+  // looking ROI) never count as a detected code while there is no decoder.
+  const hasCodeDetected = hasDecodedPayload && !isCavityEmpty;
   const isPass = hasCodeDetected && isPatternMatch && isGradePass;
 
   return {
     payload,
     symbology,
     symbologyName: symbologyNames[symbology] ?? "Barcode",
-    matrixSize: { rows: 16, cols: 16 },
+    // No decode, no matrix: do not claim a 16x16 symbol that was never read.
+    matrixSize: hasDecodedPayload ? { rows: 16, cols: 16 } : { rows: 0, cols: 0 },
     boundingBox: {
       x: startX,
       y: startY,

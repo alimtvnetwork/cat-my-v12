@@ -110,16 +110,15 @@ export function buildRuleDAG(rules: readonly EditorRule[]): DAGExecutionOrderRes
   let cycleNodeIds: string[] | undefined;
 
   if (hasCycle) {
-    cycleNodeIds = rules
-      .filter((r) => !orderedRuleIds.includes(r.id))
-      .map((r) => r.id);
+    cycleNodeIds = rules.filter((r) => !orderedRuleIds.includes(r.id)).map((r) => r.id);
 
-    // Fallback: append remaining cycle nodes in original order so execution is resilient
-    for (const r of rules) {
-      if (!orderedRuleIds.includes(r.id)) {
-        orderedRuleIds.push(r.id);
-      }
-    }
+    // Deliberately NOT appended to orderedRuleIds: a cycle node (or a node
+    // blocked downstream of one) has no valid execution position, so
+    // presenting it in order would silently execute it as if valid.
+    // Callers must handle cycleNodeIds explicitly — fail the set with
+    // assertAcyclicDAG / getCycleErrorMessage, or skip the nodes with
+    // createCycleSkippedValidationResult. executeDAGRules below does the
+    // latter so cyclic rules still appear in results as Skipped.
   }
 
   return {
@@ -127,6 +126,65 @@ export function buildRuleDAG(rules: readonly EditorRule[]): DAGExecutionOrderRes
     orderedRuleIds,
     cycleNodeIds,
     dependencyMap,
+  };
+}
+
+/**
+ * Clear, caller-usable cycle message, or null when the DAG is acyclic.
+ * Returns null (not a message) when hasCycle is false even if a stale
+ * cycleNodeIds list is present, so callers can gate on this alone.
+ */
+export function getCycleErrorMessage(dag: DAGExecutionOrderResult): string | null {
+  if (!dag.hasCycle || !dag.cycleNodeIds || dag.cycleNodeIds.length === 0) {
+    return null;
+  }
+
+  return (
+    `Dependency cycle detected: rule(s) ${dag.cycleNodeIds.join(", ")} ` +
+    `could not be topologically ordered (in a cycle, or blocked downstream of one). ` +
+    `Cyclic rules were excluded from the execution order and must be skipped or failed, not executed.`
+  );
+}
+
+/**
+ * Fail-fast guard for callers that must not run a cyclic rule set at all.
+ * Throws an Error carrying getCycleErrorMessage(dag); no-op when acyclic.
+ */
+export function assertAcyclicDAG(dag: DAGExecutionOrderResult): void {
+  const message = getCycleErrorMessage(dag);
+
+  if (message) {
+    throw new Error(message);
+  }
+}
+
+/**
+ * Skip-path counterpart to createSkippedValidationResult, for rules
+ * excluded from orderedRuleIds because of a cycle. Use it to materialize
+ * a result for every cycleNodeId instead of silently dropping the rule
+ * (or, worse, executing it in an arbitrary order).
+ */
+export function createCycleSkippedValidationResult(params: {
+  rule: EditorRule;
+  cycleNodeIds?: string[];
+}): ValidationResult {
+  const cycleList = params.cycleNodeIds ?? [];
+  const cycleText = cycleList.length > 0 ? cycleList.join(", ") : params.rule.id;
+
+  return {
+    status: ValidationStatusType.Skipped,
+    score: 0.0,
+    message:
+      `Rule "${params.rule.name}" skipped: dependency cycle involving ${cycleText} — ` +
+      `the rule was excluded from the execution order and was not executed.`,
+    stub: false,
+    debug: {
+      isSkipped: true,
+      isCycleSkipped: true,
+      cycleNodeIds: cycleList,
+      ruleId: params.rule.id,
+      ruleName: params.rule.name,
+    },
   };
 }
 
@@ -237,6 +295,30 @@ export async function executeDAGRules(params: {
 
     if (onRuleCompleted) {
       onRuleCompleted(rule, result);
+    }
+  }
+
+  // Cycle nodes are no longer in orderedRuleIds, so give them an explicit
+  // Skipped result (with a cycle message) rather than dropping them from
+  // the result map or executing them in an arbitrary order.
+  if (dag.hasCycle && dag.cycleNodeIds) {
+    for (const ruleId of dag.cycleNodeIds) {
+      const rule = ruleMap.get(ruleId);
+
+      if (!rule || ruleId in accumulatedResults) {
+        continue;
+      }
+
+      const result = createCycleSkippedValidationResult({
+        rule,
+        cycleNodeIds: dag.cycleNodeIds,
+      });
+
+      accumulatedResults[rule.id] = result;
+
+      if (onRuleCompleted) {
+        onRuleCompleted(rule, result);
+      }
     }
   }
 

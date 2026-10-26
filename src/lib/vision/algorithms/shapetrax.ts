@@ -27,10 +27,22 @@ export function extractContourPoints(params: ExtractContoursParams): ShapeTraxCo
       const idxU = (rowPrev + x) * 4;
       const idxD = (rowNext + x) * 4;
 
-      const lumaL = 0.299 * imageData.rgba[idxL] + 0.587 * imageData.rgba[idxL + 1] + 0.114 * imageData.rgba[idxL + 2];
-      const lumaR = 0.299 * imageData.rgba[idxR] + 0.587 * imageData.rgba[idxR + 1] + 0.114 * imageData.rgba[idxR + 2];
-      const lumaU = 0.299 * imageData.rgba[idxU] + 0.587 * imageData.rgba[idxU + 1] + 0.114 * imageData.rgba[idxU + 2];
-      const lumaD = 0.299 * imageData.rgba[idxD] + 0.587 * imageData.rgba[idxD + 1] + 0.114 * imageData.rgba[idxD + 2];
+      const lumaL =
+        0.299 * imageData.rgba[idxL] +
+        0.587 * imageData.rgba[idxL + 1] +
+        0.114 * imageData.rgba[idxL + 2];
+      const lumaR =
+        0.299 * imageData.rgba[idxR] +
+        0.587 * imageData.rgba[idxR + 1] +
+        0.114 * imageData.rgba[idxR + 2];
+      const lumaU =
+        0.299 * imageData.rgba[idxU] +
+        0.587 * imageData.rgba[idxU + 1] +
+        0.114 * imageData.rgba[idxU + 2];
+      const lumaD =
+        0.299 * imageData.rgba[idxD] +
+        0.587 * imageData.rgba[idxD + 1] +
+        0.114 * imageData.rgba[idxD + 2];
 
       const gx = lumaR - lumaL;
       const gy = lumaD - lumaU;
@@ -118,16 +130,23 @@ export function matchShapeTrax(params: MatchShapeTraxParams): ShapeTraxMatchResu
   // Principal axis angle in radians
   const thetaRad = 0.5 * Math.atan2(2 * mu11, mu20 - mu02);
   const rawAngleDeg = Math.round(((thetaRad * 180) / Math.PI) * 10) / 10;
-  const angleDeg = Math.max(-angleRangeDeg, Math.min(angleRangeDeg, rawAngleDeg));
 
   // 3. Scale Estimation relative to nominal ROI bounding box
   const radiusOfGyration = Math.sqrt((mu20 + mu02) / n);
   const nominalRadius = Math.min(roi.width, roi.height) * 0.28;
   const rawScalePct =
-    nominalRadius > 0
-      ? Math.round((radiusOfGyration / nominalRadius) * 1000) / 10
-      : 100;
-  const scalePct = Math.max(scaleRangeMin, Math.min(scaleRangeMax, rawScalePct));
+    nominalRadius > 0 ? Math.round((radiusOfGyration / nominalRadius) * 1000) / 10 : 100;
+
+  // Spec pass rule (ShapeTrax3 §5): angle and scale are gated on the
+  // RAW measured values BEFORE any clamping. Clamping first and then
+  // checking would make the gates tautologies (a clamped value is
+  // always inside its range), so the raw values are returned as-is
+  // and the gates below read them directly. No score floor: the score
+  // is the measured directional coherence itself (0-100), not
+  // 50 + coherence * 49.4 — a weak contour must be able to score
+  // below the match threshold instead of being lifted to >= 50%.
+  const angleDeg = rawAngleDeg;
+  const scalePct = rawScalePct;
 
   // 4. Vectorized Directional Coherence Score
   let coherenceSum = 0;
@@ -141,8 +160,7 @@ export function matchShapeTrax(params: MatchShapeTraxParams): ShapeTraxMatchResu
   }
 
   const meanCoherence = n > 0 ? coherenceSum / n : 0;
-  // Normalized score: 50% baseline + coherence scaling up to 99%
-  const score = Math.min(99.4, Math.round((50 + meanCoherence * 49.4) * 10) / 10);
+  const score = Math.min(100, Math.round(meanCoherence * 1000) / 10);
 
   const isAnglePass = Math.abs(angleDeg) <= angleRangeDeg;
   const isScalePass = scalePct >= scaleRangeMin && scalePct <= scaleRangeMax;
@@ -155,6 +173,13 @@ export function matchShapeTrax(params: MatchShapeTraxParams): ShapeTraxMatchResu
     y: Math.round(cy * 10) / 10,
     angleDeg,
     scalePct,
+    // NOTE (analyzer-level, spec §5 telemetry): modelPointCount here is
+    // the measured contour count, NOT a stored reference-model count —
+    // this algorithm has no reference model to count. The analyzer
+    // must not present it as a model count, and must FAIL when no
+    // reference model is stored in the rule (see evaluateShapeTraxRule).
+    // matchedPointCount is likewise the inlier/contour count implied
+    // by the measured score, not a count of model points matched.
     modelPointCount: n,
     matchedPointCount: Math.round(n * (score / 100)),
     isPass,
