@@ -48,10 +48,8 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.PresenceAbsence,
     kind: EditorRuleKindType.C,
     family: EditorToolFamilyType.Rect,
-    description:
-      "2-bit greyscale constellation pattern matching with numbered white boxes to verify component presence, orientation, and laser marking.",
-    targetFeature:
-      "IC body orientation, pin 1 polarity, chip laser marking, connector latch seated state",
+    description: "2-bit greyscale constellation pattern matching with numbered white boxes to verify component presence, orientation, and laser marking.",
+    targetFeature: "IC body orientation, pin 1 polarity, chip laser marking, connector latch seated state",
     defaultExposureMs: 12.5,
     defaultGainDb: 0.0,
     defaultLightPct: 85,
@@ -65,7 +63,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       angleRangeDeg: 15,
       scoreMetric: "constellation",
       hasPolarityInverted: false,
-      lumaTolerance: 32,
     },
     params: [
       {
@@ -76,8 +73,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         max: 250,
         step: 5,
         defaultValue: 170,
-        description:
-          "2-bit binarization threshold separating reflective pattern markings from substrate.",
+        description: "2-bit binarization threshold separating reflective pattern markings from substrate.",
       },
       {
         key: "minMatchPercent",
@@ -88,8 +84,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         max: 100,
         step: 1,
         defaultValue: 80,
-        description:
-          "Minimum correlation / box match percentage required to declare inspection PASS.",
+        description: "Minimum correlation / box match percentage required to declare inspection PASS.",
       },
       {
         key: "tolerancePx",
@@ -110,8 +105,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         max: 64,
         step: 1,
         defaultValue: 24,
-        description:
-          "Number of white constellation boxes formulating the reference golden template.",
+        description: "Number of white constellation boxes formulating the reference golden template.",
       },
       {
         key: "angleRangeDeg",
@@ -140,16 +134,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: "constellation",
         description: "Core computer vision pattern matching and verification algorithm.",
       },
-      {
-        key: "lumaTolerance",
-        label: "Luma Tolerance",
-        type: "number",
-        min: 5,
-        max: 80,
-        step: 1,
-        defaultValue: 32,
-        description: "Allowable luminance deviation per individual box.",
-      },
     ],
   },
   {
@@ -159,8 +143,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.PresenceAbsence,
     kind: EditorRuleKindType.C,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Detects physical circular hole or laser polarity dimple on IC packages to guarantee correct orientation.",
+    description: "Detects physical circular hole or laser polarity dimple on IC packages to guarantee correct orientation.",
     targetFeature: "Pin 1 polarity dimple, circular fiducial dot, chamfer notch",
     defaultExposureMs: 10.0,
     defaultGainDb: 0.0,
@@ -173,8 +156,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       tolerancePx: 25,
       expectedDiameterPx: 24,
       minCircularityPct: 75,
-      nominalAngleDeg: -151.6,
-      angleToleranceDeg: 10.0,
     },
     params: [
       {
@@ -209,39 +190,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 75,
         description: "Roundness metric ensuring detected feature is a true circular dimple.",
       },
-      {
-        key: "tolerancePx",
-        label: "Tolerance",
-        type: "number",
-        unit: "px",
-        min: 1,
-        max: 80,
-        step: 1,
-        defaultValue: 25,
-        description: "Distance tolerance from expected coordinate.",
-      },
-      {
-        key: "nominalAngleDeg",
-        label: "Nominal Angle",
-        type: "number",
-        unit: "deg",
-        min: -180,
-        max: 180,
-        step: 0.1,
-        defaultValue: -151.6,
-        description: "Polar angle from package centroid to Pin 1.",
-      },
-      {
-        key: "angleToleranceDeg",
-        label: "Angle Tolerance",
-        type: "number",
-        unit: "deg",
-        min: 1,
-        max: 45,
-        step: 0.5,
-        defaultValue: 10.0,
-        description: "Allowable angular rotation tolerance cone.",
-      },
     ],
   },
   {
@@ -251,8 +199,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.PresenceAbsence,
     kind: EditorRuleKindType.R,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Calculates foreground pixel density to confirm solder fillet presence and passive placement.",
+    description: "Calculates foreground pixel density to confirm solder fillet presence and passive placement.",
     targetFeature: "SMD 0402 / 0201 capacitors, resistors, solder paste deposits",
     defaultExposureMs: 8.0,
     defaultGainDb: 1.2,
@@ -265,8 +212,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       minAreaPx: 4000,
       maxAreaPx: 30000,
       presencePolarity: "brightOnDark",
-      areaMode: "pixels",
-      umPerPixel: 10.0,
     },
     params: [
       {
@@ -297,44 +242,9 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         options: [
           { value: "brightOnDark", label: "Bright on Dark (Solder / Silver pad)" },
           { value: "darkOnBright", label: "Dark on Bright (Black IC / Chip body)" },
-          { value: "both", label: "Both (Bright or Dark)" },
         ],
         defaultValue: "brightOnDark",
         description: "Foreground contrast polarity relative to background.",
-      },
-      {
-        key: "areaMode",
-        label: "Area Mode",
-        type: "select",
-        options: [
-          { value: "pixels", label: "Pixels" },
-          { value: "percentage", label: "Percentage" },
-          { value: "physical", label: "Physical" },
-        ],
-        defaultValue: "pixels",
-        description: "Measurement unit for acceptance gating.",
-      },
-      {
-        key: "umPerPixel",
-        label: "µm per Pixel",
-        type: "number",
-        unit: "µm/px",
-        min: 0.1,
-        max: 100,
-        step: 0.1,
-        defaultValue: 10.0,
-        description: "Metric conversion factor for physical area (mm²).",
-      },
-      {
-        key: "maxAreaPx",
-        label: "Max Pixel Area",
-        type: "number",
-        unit: "px",
-        min: 1,
-        max: 100000,
-        step: 10,
-        defaultValue: 30000,
-        description: "Upper limit to guard against foreign contamination.",
       },
     ],
   },
@@ -345,8 +255,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.PresenceAbsence,
     kind: EditorRuleKindType.R,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Counts spatial edge transitions along a linear profile to verify all IC leads are present.",
+    description: "Counts spatial edge transitions along a linear profile to verify all IC leads are present.",
     targetFeature: "QFP / SOIC / Connector terminal lead count and bent pin detection",
     defaultExposureMs: 10.0,
     defaultGainDb: 0.5,
@@ -358,8 +267,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       expectedCount: 16,
       minEdgeContrast: 35,
       scanDirection: "horizontal",
-      edgePolarity: "both",
-      filterWidth: 3,
     },
     params: [
       {
@@ -382,40 +289,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 35,
         description: "Minimum grayscale gradient step to register a valid pin boundary.",
       },
-      {
-        key: "scanDirection",
-        label: "Scan Direction",
-        type: "select",
-        options: [
-          { value: "horizontal", label: "Horizontal" },
-          { value: "vertical", label: "Vertical" },
-        ],
-        defaultValue: "horizontal",
-        description: "Direction of the projection scan line.",
-      },
-      {
-        key: "edgePolarity",
-        label: "Edge Polarity",
-        type: "select",
-        options: [
-          { value: "light-to-dark", label: "Light to Dark" },
-          { value: "dark-to-light", label: "Dark to Light" },
-          { value: "both", label: "Both" },
-        ],
-        defaultValue: "both",
-        description: "Transition direction of interest.",
-      },
-      {
-        key: "filterWidth",
-        label: "Filter Width",
-        type: "number",
-        unit: "px",
-        min: 1,
-        max: 15,
-        step: 1,
-        defaultValue: 3,
-        description: "Gaussian smoothing kernel size.",
-      },
     ],
   },
 
@@ -427,8 +300,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.FlawDetection,
     kind: EditorRuleKindType.K,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Morphological connected component analysis detecting metallic bridges and solder shorts.",
+    description: "Morphological connected component analysis detecting metallic bridges and solder shorts.",
     targetFeature: "Solder bridging between QFP / SOP leads, solder balls, tin whiskers",
     defaultExposureMs: 5.0,
     defaultGainDb: 2.0,
@@ -472,8 +344,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         max: 5,
         step: 1,
         defaultValue: 0,
-        description:
-          "Maximum allowable defects before flagging entire board as NG (0 = Zero Tolerance).",
+        description: "Maximum allowable defects before flagging entire board as NG (0 = Zero Tolerance).",
       },
     ],
   },
@@ -484,8 +355,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.FlawDetection,
     kind: EditorRuleKindType.K,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Computes total area percentage of internal voids in thermal pads and solder ball joints.",
+    description: "Computes total area percentage of internal voids in thermal pads and solder ball joints.",
     targetFeature: "QFN ground pad solder voids, BGA ball porosity (IPC-A-610 standards)",
     defaultExposureMs: 7.5,
     defaultGainDb: 1.0,
@@ -497,7 +367,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       maxTotalVoidPct: 25,
       maxSingleVoidPct: 15,
       sensitivityMode: "standard",
-      minVoidAreaPx: 5,
     },
     params: [
       {
@@ -522,17 +391,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 15,
         description: "Maximum allowable area for any single contiguous void bubble.",
       },
-      {
-        key: "minVoidAreaPx",
-        label: "Min Void Area",
-        type: "number",
-        unit: "px",
-        min: 2,
-        max: 50,
-        step: 1,
-        defaultValue: 5,
-        description: "Noise floor ignoring microscopic grain structure.",
-      },
     ],
   },
   {
@@ -542,10 +400,8 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.FlawDetection,
     kind: EditorRuleKindType.K,
     family: EditorToolFamilyType.Rect,
-    description:
-      "High-pass spatial frequency filtering detecting micro-cracks on silicon dies and mask scratches.",
-    targetFeature:
-      "Silicon die edge chips, surface scratch on passivation, PCB trace hair fractures",
+    description: "High-pass spatial frequency filtering detecting micro-cracks on silicon dies and mask scratches.",
+    targetFeature: "Silicon die edge chips, surface scratch on passivation, PCB trace hair fractures",
     defaultExposureMs: 6.0,
     defaultGainDb: 2.5,
     defaultLightPct: 90,
@@ -556,7 +412,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       gradientThreshold: 45,
       minCrackLengthPx: 12,
       filterKernel: "sobel",
-      maxAllowedDefects: 0,
     },
     params: [
       {
@@ -580,16 +435,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 12,
         description: "Minimum contiguous crack length required to reject.",
       },
-      {
-        key: "maxAllowedDefects",
-        label: "Max Allowed Defects",
-        type: "number",
-        min: 0,
-        max: 5,
-        step: 1,
-        defaultValue: 0,
-        description: "Allowable crack count (0 = Zero Tolerance).",
-      },
     ],
   },
 
@@ -601,8 +446,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.CountMeasure,
     kind: EditorRuleKindType.E,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Sub-pixel metrology measuring pin pitch, terminal width, and co-planarity alignment.",
+    description: "Sub-pixel metrology measuring pin pitch, terminal width, and co-planarity alignment.",
     targetFeature: "QFP / SOIC terminal pitch (e.g. 0.50mm / 0.65mm), lead width, tip straightness",
     defaultExposureMs: 10.0,
     defaultGainDb: 0.0,
@@ -611,13 +455,11 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     defaultStrobeUs: 300,
     defaultParamValues: {
       toolCode: "T110",
-      nominalDimensionMm: 0.5,
+      nominalDimensionMm: 0.50,
       lowerToleranceMm: -0.05,
       upperToleranceMm: 0.05,
       edgeTransition: "any",
       measurementAxis: "horizontal",
-      measurementMode: "pitch",
-      pxToMetricRatio: 0.025,
     },
     params: [
       {
@@ -628,7 +470,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         min: 0.01,
         max: 50.0,
         step: 0.01,
-        defaultValue: 0.5,
+        defaultValue: 0.50,
         description: "Target design pitch or lead width from CAD drawing.",
       },
       {
@@ -664,29 +506,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: "horizontal",
         description: "Spatial orientation of caliper search lines.",
       },
-      {
-        key: "measurementMode",
-        label: "Measurement Mode",
-        type: "select",
-        options: [
-          { value: "width", label: "Width" },
-          { value: "pitch", label: "Pitch" },
-          { value: "gap", label: "Gap" },
-        ],
-        defaultValue: "pitch",
-        description: "Dimension type to evaluate.",
-      },
-      {
-        key: "pxToMetricRatio",
-        label: "Px to Metric Ratio",
-        type: "number",
-        unit: "mm/px",
-        min: 0.001,
-        max: 1.0,
-        step: 0.001,
-        defaultValue: 0.025,
-        description: "Optical calibration factor.",
-      },
     ],
   },
   {
@@ -696,8 +515,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.CountMeasure,
     kind: EditorRuleKindType.E,
     family: EditorToolFamilyType.Rect,
-    description:
-      "RANSAC circle fitting measuring drill hole diameter, via annular ring, and fiducial roundness.",
+    description: "RANSAC circle fitting measuring drill hole diameter, via annular ring, and fiducial roundness.",
     targetFeature: "Mounting holes, plated through-holes (PTH), optical fiducial dots",
     defaultExposureMs: 9.0,
     defaultGainDb: 0.0,
@@ -706,11 +524,9 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     defaultStrobeUs: 280,
     defaultParamValues: {
       toolCode: "T111",
-      nominalDiameterMm: 1.2,
+      nominalDiameterMm: 1.20,
       diameterToleranceMm: 0.08,
       minRoundnessScorePct: 85,
-      rayCount: 64,
-      edgePolarity: "dark-to-light",
     },
     params: [
       {
@@ -721,7 +537,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         min: 0.1,
         max: 20.0,
         step: 0.05,
-        defaultValue: 1.2,
+        defaultValue: 1.20,
         description: "Nominal hole or circle diameter in millimeters.",
       },
       {
@@ -735,40 +551,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 0.08,
         description: "Bilateral diameter tolerance margin.",
       },
-      {
-        key: "minRoundnessScorePct",
-        label: "Min Roundness Score",
-        type: "number",
-        unit: "%",
-        min: 50,
-        max: 100,
-        step: 1,
-        defaultValue: 85,
-        description: "Minimum circularity score.",
-      },
-      {
-        key: "rayCount",
-        label: "Ray Count",
-        type: "number",
-        unit: "rays",
-        min: 16,
-        max: 128,
-        step: 1,
-        defaultValue: 64,
-        description: "Number of radial projection rays.",
-      },
-      {
-        key: "edgePolarity",
-        label: "Edge Polarity",
-        type: "select",
-        options: [
-          { value: "dark-to-light", label: "Dark to Light" },
-          { value: "light-to-dark", label: "Light to Dark" },
-          { value: "both", label: "Both" },
-        ],
-        defaultValue: "dark-to-light",
-        description: "Transition across feature edge.",
-      },
     ],
   },
 
@@ -780,8 +562,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.IdOcr,
     kind: EditorRuleKindType.E,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Decodes laser-etched ECC200 DataMatrix, wafer 2D codes, and high-density PCB serial markers.",
+    description: "Decodes laser-etched ECC200 DataMatrix, wafer 2D codes, and high-density PCB serial markers.",
     targetFeature: "PCB serial number DataMatrix, wafer identification code, package QR",
     defaultExposureMs: 15.0,
     defaultGainDb: 1.0,
@@ -803,7 +584,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
           { value: "dataMatrix", label: "ECC200 DataMatrix" },
           { value: "qrCode", label: "QR Code" },
           { value: "microQr", label: "Micro QR" },
-          { value: "code128", label: "Code 128" },
         ],
         defaultValue: "dataMatrix",
         description: "2D barcode standard encoding scheme.",
@@ -813,21 +593,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         label: "Expected Pattern (Regex)",
         type: "text",
         defaultValue: "STM32.*",
-        description:
-          "Regular expression verifying the decoded serial format matches expected lot format.",
-      },
-      {
-        key: "minQualityGrade",
-        label: "Min Quality Grade",
-        type: "select",
-        options: [
-          { value: "A", label: "Grade A" },
-          { value: "B", label: "Grade B" },
-          { value: "C", label: "Grade C" },
-          { value: "D", label: "Grade D" },
-        ],
-        defaultValue: "B",
-        description: "Minimum acceptable ISO overall grade.",
+        description: "Regular expression verifying the decoded serial format matches expected lot format.",
       },
     ],
   },
@@ -838,8 +604,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.IdOcr,
     kind: EditorRuleKindType.S,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Deep OCR character recognition reading laser-marked part numbers, lot codes, and date codes.",
+    description: "Deep OCR character recognition reading laser-marked part numbers, lot codes, and date codes.",
     targetFeature: "Laser-etched IC top marking, silicon revision text (e.g. STM32F407VGT6)",
     defaultExposureMs: 14.0,
     defaultGainDb: 1.5,
@@ -871,18 +636,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         defaultValue: 80,
         description: "Minimum neural OCR confidence per character.",
       },
-      {
-        key: "fontType",
-        label: "Font Type",
-        type: "select",
-        options: [
-          { value: "laserEtched", label: "Laser Etched" },
-          { value: "dotMatrix", label: "Dot Matrix" },
-          { value: "standard", label: "Standard" },
-        ],
-        defaultValue: "laserEtched",
-        description: "Character dictionary model.",
-      },
     ],
   },
 
@@ -894,8 +647,7 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
     category: InspectionCategoryType.ColorCoating,
     kind: EditorRuleKindType.R,
     family: EditorToolFamilyType.Rect,
-    description:
-      "Evaluates UV fluorescent tracer dye illumination to verify complete conformal coating coverage.",
+    description: "Evaluates UV fluorescent tracer dye illumination to verify complete conformal coating coverage.",
     targetFeature: "Silicone / Acrylic conformal coating coverage, shadow area voids, edge wet-out",
     defaultExposureMs: 25.0,
     defaultGainDb: 3.0,
@@ -907,9 +659,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
       minCoveragePct: 95,
       fluorescenceThreshold: 110,
       uvColorChannel: "uvBlue",
-      maxDeltaE: 5.0,
-      inspectionMode: "uv-fluorescence",
-      maxAllowedVoids: 0,
     },
     params: [
       {
@@ -932,39 +681,6 @@ export const VISION_TOOL_CATALOG: readonly VisionToolDefinition[] = Object.freez
         step: 5,
         defaultValue: 110,
         description: "Intensity threshold identifying coated vs uncoated bare substrate.",
-      },
-      {
-        key: "maxDeltaE",
-        label: "Max Delta E",
-        type: "number",
-        unit: "ΔE",
-        min: 0.5,
-        max: 20,
-        step: 0.1,
-        defaultValue: 5.0,
-        description: "Maximum allowable perceptual color distance.",
-      },
-      {
-        key: "inspectionMode",
-        label: "Inspection Mode",
-        type: "select",
-        options: [
-          { value: "uv-fluorescence", label: "UV Fluorescence" },
-          { value: "keep-out-zone", label: "Keep-Out Zone" },
-          { value: "cie-lab-color", label: "CIE Lab Color" },
-        ],
-        defaultValue: "uv-fluorescence",
-        description: "Inspection mode.",
-      },
-      {
-        key: "maxAllowedVoids",
-        label: "Max Allowed Voids",
-        type: "number",
-        min: 0,
-        max: 5,
-        step: 1,
-        defaultValue: 0,
-        description: "Permissible uncoated void count.",
       },
     ],
   },
