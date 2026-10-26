@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { BlobToolPanel } from "../workbench/BlobToolPanel";
 
 export interface StandardBlobToolProps {
   settings: PatternSearchSettings;
@@ -17,142 +17,382 @@ export interface StandardBlobToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
+}
+
+interface DetectedBlob {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  areaPx: number;
+}
+
+interface SolderBridge {
+  id: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 export function StandardBlobTool(props: StandardBlobToolProps): React.JSX.Element {
-  const [binaryThreshold, setBinaryThreshold] = useState<number>(128);
-  const [minBlobArea, setMinBlobArea] = useState<number>(50);
-  const [maxBlobArea, setMaxBlobArea] = useState<number>(5000);
-  const [minBlobCount, setMinBlobCount] = useState<number>(1);
-  const [maxBlobCount, setMaxBlobCount] = useState<number>(4);
-  const [fillHoles, setFillHoles] = useState<boolean>(true);
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
 
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Blob Search Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Binary Blob Extraction",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Binarization & Morphology
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-ca-ink-muted">
-                <span>Threshold Level</span>
-                <span className="font-mono">{binaryThreshold}</span>
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={255}
-                value={binaryThreshold}
-                onChange={(e) => setBinaryThreshold(Number(e.target.value))}
-                className="w-full accent-ca-select"
-              />
-            </div>
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
 
-            <label className="flex items-center gap-2 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={fillHoles}
-                onChange={(e) => setFillHoles(e.target.checked)}
-                className="rounded border-ca-border accent-ca-select"
-              />
-              <span>Fill Internal Enclosed Holes</span>
-            </label>
-          </div>
-        </div>
-      ),
+  const [binaryThreshold, setBinaryThreshold] = useState<number>(
+    Number(initialParams.binaryThreshold ?? 128),
+  );
+  const [minBlobArea, setMinBlobArea] = useState<number>(Number(initialParams.minBlobArea ?? 50));
+  const [maxBlobArea, setMaxBlobArea] = useState<number>(Number(initialParams.maxBlobArea ?? 5000));
+  const [minBlobCount, setMinBlobCount] = useState<number>(Number(initialParams.minBlobCount ?? 1));
+  const [maxBlobCount, setMaxBlobCount] = useState<number>(Number(initialParams.maxBlobCount ?? 4));
+  const [hasHoleFilling, setHasHoleFilling] = useState<boolean>(
+    Boolean(initialParams.hasHoleFilling ?? true),
+  );
+  const [targetPolarity, setTargetPolarity] = useState<"bright" | "dark" | "both">(
+    (initialParams.targetPolarity as "bright" | "dark" | "both") ?? "bright",
+  );
+
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [detectedBlobs, setDetectedBlobs] = useState<DetectedBlob[]>([]);
+  const [detectedBridges, setDetectedBridges] = useState<SolderBridge[]>([]);
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
+
+  // Execute blob & solder bridge analysis strictly on "Process" click
+  const handleProcess = useCallback(() => {
+    if (!workbench.source || !workbench.searchRegion) {
+      // Preview only: no teach image / search region, so no preview result
+      // and no verdict. Stay unprocessed; never report a pass.
+      setDetectedBlobs([]);
+      setDetectedBridges([]);
+      setIsPass(undefined);
+      setHasProcessed(false);
+
+      return;
+    }
+
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
+
+    const startX = Math.max(0, Math.min(width - 1, region.x));
+    const startY = Math.max(0, Math.min(height - 1, region.y));
+    const endX = Math.max(1, Math.min(width, region.x + region.width));
+    const endY = Math.max(1, Math.min(height, region.y + region.height));
+
+    const blobs: DetectedBlob[] = [];
+    const bridges: SolderBridge[] = [];
+    const step = 20;
+
+    for (let y = startY; y < endY - step; y += step) {
+      for (let x = startX; x < endX - step; x += step) {
+        let activePixelCount = 0;
+
+        for (let dy = 0; dy < step; dy += 2) {
+          for (let dx = 0; dx < step; dx += 2) {
+            const idx = ((y + dy) * width + (x + dx)) * 4;
+            const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+            const isMatch =
+              targetPolarity === "dark"
+                ? luma <= binaryThreshold
+                : targetPolarity === "bright"
+                  ? luma >= binaryThreshold
+                  : true;
+
+            if (isMatch) {
+              activePixelCount += 4;
+            }
+          }
+        }
+
+        if (activePixelCount >= minBlobArea && activePixelCount <= maxBlobArea) {
+          blobs.push({
+            id: blobs.length + 1,
+            x,
+            y,
+            width: step,
+            height: step,
+            areaPx: activePixelCount,
+          });
+        }
+      }
+    }
+
+    // Check for bridging between closely spaced blobs
+    for (let i = 0; i < blobs.length; i += 1) {
+      for (let j = i + 1; j < blobs.length; j += 1) {
+        const b1 = blobs[i];
+        const b2 = blobs[j];
+        const dist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
+
+        if (dist > 0 && dist < step * 1.25) {
+          bridges.push({
+            id: bridges.length + 1,
+            x1: b1.x + b1.width / 2,
+            y1: b1.y + b1.height / 2,
+            x2: b2.x + b2.width / 2,
+            y2: b2.y + b2.height / 2,
+          });
+        }
+      }
+    }
+
+    const countPass = blobs.length >= minBlobCount && blobs.length <= maxBlobCount;
+    const bridgePass = bridges.length === 0;
+
+    setDetectedBlobs(blobs);
+    setDetectedBridges(bridges);
+    setIsPass(countPass && bridgePass);
+    setHasProcessed(true);
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    binaryThreshold,
+    minBlobArea,
+    maxBlobArea,
+    minBlobCount,
+    maxBlobCount,
+    targetPolarity,
+  ]);
+
+  const handleThresholdChange = useCallback((value: number) => {
+    setBinaryThreshold(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinBlobAreaChange = useCallback((value: number) => {
+    setMinBlobArea(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxBlobAreaChange = useCallback((value: number) => {
+    setMaxBlobArea(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMinBlobCountChange = useCallback((value: number) => {
+    setMinBlobCount(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleMaxBlobCountChange = useCallback((value: number) => {
+    setMaxBlobCount(value);
+    setHasProcessed(false);
+  }, []);
+
+  const handleHoleFillingChange = useCallback((hasHoles: boolean) => {
+    setHasHoleFilling(hasHoles);
+    setHasProcessed(false);
+  }, []);
+
+  const handlePolarityChange = useCallback((polarity: "bright" | "dark" | "both") => {
+    setTargetPolarity(polarity);
+    setHasProcessed(false);
+  }, []);
+
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
+
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+        const isMatch =
+          targetPolarity === "dark"
+            ? luma <= binaryThreshold
+            : targetPolarity === "bright"
+              ? luma >= binaryThreshold
+              : true;
+
+        if (hasProcessed && isInsideRegion && isMatch) {
+          out[idx] = 16;
+          out[idx + 1] = 185;
+          out[idx + 2] = 129;
+          out[idx + 3] = 255;
+        } else {
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
+        }
+      }
+
+      return output;
     },
-    {
-      id: "judgment",
-      label: "Blob Judgment Limits",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Blob Quantity & Area Limits
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Blob Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={minBlobCount}
-                  onChange={(e) => setMinBlobCount(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Max Blob Count</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={maxBlobCount}
-                  onChange={(e) => setMaxBlobCount(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Area per Blob (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={minBlobArea}
-                  onChange={(e) => setMinBlobArea(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Max Area per Blob (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={maxBlobArea}
-                  onChange={(e) => setMaxBlobArea(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
+    [workbench.searchRegion, binaryThreshold, targetPolarity, hasProcessed],
+  );
+
+  const renderCustomOverlays = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      if (!hasProcessed) {
+        return;
+      }
+
+      for (const blob of detectedBlobs) {
+        ctx.save();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2;
+        ctx.fillStyle = "rgba(16, 185, 129, 0.15)";
+
+        ctx.fillRect(blob.x, blob.y, blob.width, blob.height);
+        ctx.strokeRect(blob.x, blob.y, blob.width, blob.height);
+
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText(`BLOB #${blob.id}`, blob.x, Math.max(10, blob.y - 4));
+        ctx.restore();
+      }
+
+      for (const bridge of detectedBridges) {
+        ctx.save();
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 2]);
+
+        ctx.beginPath();
+        ctx.moveTo(bridge.x1, bridge.y1);
+        ctx.lineTo(bridge.x2, bridge.y2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#ef4444";
+        ctx.font = "bold 10px monospace";
+        const midX = (bridge.x1 + bridge.x2) / 2;
+        const midY = (bridge.y1 + bridge.y2) / 2;
+        ctx.fillText("BRIDGE SHORT", midX - 35, midY - 6);
+        ctx.restore();
+      }
     },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
-    },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
-    },
-  ];
+    [detectedBlobs, detectedBridges, hasProcessed],
+  );
+
+  // Apply button: only adds / updates rule when explicitly clicked
+  // Apply = rule creation. Writes TEACH params only, under both the
+  // workbench keys and the catalog/analyzer aliases
+  // (binarizeThreshold / minDefectAreaPx / maxAllowedDefects), so the
+  // analyzer gates on the taught values. The preview blob/bridge lists
+  // and their counts are deliberately NOT written (no detectedBlobCount,
+  // no detectedBridgeCount, no judgmentItems, no isPass): the analyzer
+  // re-detects blobs on every analysis image.
+  const handleApply = useCallback(() => {
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        toolCode: "T109",
+        binaryThreshold,
+        binarizeThreshold: binaryThreshold,
+        minBlobArea,
+        minDefectAreaPx: minBlobArea,
+        maxBlobArea,
+        minBlobCount,
+        maxBlobCount,
+        maxAllowedDefects: maxBlobCount,
+        hasHoleFilling,
+        targetPolarity,
+      },
+    }));
+
+    props.onOk?.();
+  }, [
+    binaryThreshold,
+    minBlobArea,
+    maxBlobArea,
+    minBlobCount,
+    maxBlobCount,
+    hasHoleFilling,
+    targetPolarity,
+    props,
+  ]);
 
   return (
-    <StandardToolShell
-      toolName="Binary Blob Analysis Tool"
-      toolKindId="T08-BLOB"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
-      onRefresh={props.onRefresh}
+    <StandardWorkbenchShell
+      toolName="Binary Blob & Solder Bridge"
+      toolCode="T109"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
+      onRefresh={handleProcess}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Blob Segmentation)"
+          toolBadge="T109 BINARY BLOB"
+          statusText={
+            hasProcessed
+              ? `${detectedBlobs.length} BLOBS / ${detectedBridges.length} BRIDGES [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+          renderCustomOverlays={renderCustomOverlays}
+        />
+      }
+      inspectorPanel={
+        <BlobToolPanel
+          binaryThreshold={binaryThreshold}
+          minBlobArea={minBlobArea}
+          maxBlobArea={maxBlobArea}
+          minBlobCount={minBlobCount}
+          maxBlobCount={maxBlobCount}
+          hasHoleFilling={hasHoleFilling}
+          targetPolarity={targetPolarity}
+          detectedBlobCount={detectedBlobs.length}
+          detectedBridgeCount={detectedBridges.length}
+          isPass={isPass}
+          hasProcessed={hasProcessed}
+          actionButtonLabel={props.actionButtonLabel}
+          onThresholdChange={handleThresholdChange}
+          onMinBlobAreaChange={handleMinBlobAreaChange}
+          onMaxBlobAreaChange={handleMaxBlobAreaChange}
+          onMinBlobCountChange={handleMinBlobCountChange}
+          onMaxBlobCountChange={handleMaxBlobCountChange}
+          onHoleFillingChange={handleHoleFillingChange}
+          onPolarityChange={handlePolarityChange}
+          onProcess={handleProcess}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }

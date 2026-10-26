@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyClahe,
   binarize,
   invertGray,
   isDarkTextOnLight,
@@ -117,5 +118,42 @@ describe("preprocessForOcr", () => {
     // Border (background) must be light, text dark after normalization
     expect(image.data[0]).toBe(255);
     expect(image.data[10 * 20 + 10]).toBe(0);
+  });
+});
+
+describe("applyClahe", () => {
+  it("keeps a uniform image uniform (no texture invented)", () => {
+    const out = applyClahe(makeGray(32, 32, 180), { tileSize: 16 });
+
+    expect(out.width).toBe(32);
+    expect(out.height).toBe(32);
+    for (const v of out.data) {
+      expect(v).toBe(out.data[0]);
+    }
+  });
+
+  it("widens a low-contrast bimodal image", () => {
+    const data = new Uint8Array(32 * 32);
+    for (let i = 0; i < data.length; i += 1) {
+      data[i] = i % 2 === 0 ? 110 : 140;
+    }
+    const input: GrayImage = { data, width: 32, height: 32 };
+    const out = applyClahe(input, { tileSize: 16 });
+    let min = 255;
+    let max = 0;
+    for (const v of out.data) {
+      min = Math.min(min, v);
+      max = Math.max(max, v);
+    }
+    // Input span is 30; CLAHE must spread the two levels further apart.
+    expect(max - min).toBeGreaterThan(30);
+  });
+});
+
+describe("preprocessForOcr CLAHE opt-in", () => {
+  it("reports claheApplied false by default and true when requested", () => {
+    const input = makeRgba(10, 10, 30, 30, 30);
+    expect(preprocessForOcr(input, 1).claheApplied).toBe(false);
+    expect(preprocessForOcr(input, 1, { useClahe: true }).claheApplied).toBe(true);
   });
 });

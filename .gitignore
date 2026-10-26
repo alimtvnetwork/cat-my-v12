@@ -45,6 +45,7 @@ __pycache__/
 # Tests
 test-results/
 tests/reports/
+.browser-profile/
 .ai-memory/temp/
 temp-scripts/
 

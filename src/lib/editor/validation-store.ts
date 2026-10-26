@@ -28,6 +28,7 @@ export enum ValidationStatusType {
   Fail = "fail",
   Warn = "warn",
   Pending = "pending",
+  Skipped = "skipped",
 }
 
 export interface ValidationResult {

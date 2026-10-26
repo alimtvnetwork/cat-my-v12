@@ -19,6 +19,16 @@ export interface ConstellationMatchParams {
   threshold?: number;
   tolerancePx?: number;
   minMatchPercent?: number;
+  /**
+   * Bounded rotation search window in degrees (spec T102 angleRangeDeg).
+   * When absent or 0, only the unrotated constellation is tried.
+   * Candidate angles are 0, ±5, ±10, ... up to this range, rotating the
+   * expected box centres about the constellation centroid. The winner
+   * is the highest matched count, then lowest distance, then smallest
+   * |angle| — so a rotation only wins when it strictly improves the
+   * match over the unrotated constellation.
+   */
+  angleRangeDeg?: number;
 }
 
 export interface BoxMatchItem {
@@ -45,6 +55,8 @@ export interface PatternMatchResult {
   patternBounds: { x: number; y: number; width: number; height: number };
   boxResults: BoxMatchItem[];
   executionTimeMs: number;
+  /** Rotation (deg) of the winning constellation, 0 when unrotated. Optional so other PatternMatchResult producers are unaffected. */
+  rotationDeg?: number;
 }
 
 interface OffsetCandidate {
@@ -242,56 +254,130 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
   }
 
   const candidateBoxes = markingResult.boxes;
-  const bestOffset = findBestOffset(params.referenceBoxes, candidateBoxes, tolerance);
 
-  interface PairCandidate {
-    refIndex: number;
-    candIndex: number;
-    dist: number;
+  // Bounded rotation search: rotate expected box centres about the
+  // constellation centroid by candidate angles within angleRangeDeg
+  // (step 5 deg). For each rotation, find the best translation offset
+  // and greedily pair candidates; keep the rotation with the highest
+  // matched count, then lowest distance, then smallest |angle|.
+  const angleRange = params.angleRangeDeg ?? 0;
+  const candidateAngles: number[] = [0];
+
+  if (Number.isFinite(angleRange) && angleRange > 0) {
+    for (let a = 5; a <= angleRange; a += 5) {
+      candidateAngles.push(a, -a);
+    }
   }
 
-  const candidatePairs: PairCandidate[] = [];
+  const centroidX =
+    params.referenceBoxes.reduce((sum, b) => sum + b.x + b.width / 2, 0) /
+    params.referenceBoxes.length;
+  const centroidY =
+    params.referenceBoxes.reduce((sum, b) => sum + b.y + b.height / 2, 0) /
+    params.referenceBoxes.length;
 
-  for (let r = 0; r < params.referenceBoxes.length; r += 1) {
-    const ref = params.referenceBoxes[r];
-    const expectedX = ref.x + bestOffset.dx;
-    const expectedY = ref.y + bestOffset.dy;
-    const expectedCenterX = expectedX + ref.width / 2;
-    const expectedCenterY = expectedY + ref.height / 2;
+  interface RotationCandidate {
+    angleDeg: number;
+    dx: number;
+    dy: number;
+    matched: Map<number, number>;
+    matchedCount: number;
+    totalDistance: number;
+    rotatedBoxes: ReferenceBoxItem[];
+  }
 
-    for (let c = 0; c < candidateBoxes.length; c += 1) {
-      const cand = candidateBoxes[c];
-      const candCenterX = cand.x + cand.width / 2;
-      const candCenterY = cand.y + cand.height / 2;
-      const distX = Math.abs(candCenterX - expectedCenterX);
-      const distY = Math.abs(candCenterY - expectedCenterY);
+  let bestRotation: RotationCandidate | null = null;
 
-      if (distX <= tolerance && distY <= tolerance) {
-        candidatePairs.push({
-          refIndex: r,
-          candIndex: c,
-          dist: distX + distY,
-        });
+  for (const angleDeg of candidateAngles) {
+    const rad = (angleDeg * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const rotatedBoxes: ReferenceBoxItem[] = params.referenceBoxes.map((b) => {
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      const relX = cx - centroidX;
+      const relY = cy - centroidY;
+      const rotCx = centroidX + relX * cos - relY * sin;
+      const rotCy = centroidY + relX * sin + relY * cos;
+
+      return { ...b, x: rotCx - b.width / 2, y: rotCy - b.height / 2 };
+    });
+
+    const offset = findBestOffset(rotatedBoxes, candidateBoxes, tolerance);
+
+    interface PairCandidate {
+      refIndex: number;
+      candIndex: number;
+      dist: number;
+    }
+
+    const candidatePairs: PairCandidate[] = [];
+
+    for (let r = 0; r < rotatedBoxes.length; r += 1) {
+      const ref = rotatedBoxes[r];
+      const expectedCenterX = ref.x + offset.dx + ref.width / 2;
+      const expectedCenterY = ref.y + offset.dy + ref.height / 2;
+
+      for (let c = 0; c < candidateBoxes.length; c += 1) {
+        const cand = candidateBoxes[c];
+        const candCenterX = cand.x + cand.width / 2;
+        const candCenterY = cand.y + cand.height / 2;
+        const distX = Math.abs(candCenterX - expectedCenterX);
+        const distY = Math.abs(candCenterY - expectedCenterY);
+
+        if (distX <= tolerance && distY <= tolerance) {
+          candidatePairs.push({ refIndex: r, candIndex: c, dist: distX + distY });
+        }
       }
     }
-  }
 
-  candidatePairs.sort((a, b) => a.dist - b.dist);
+    candidatePairs.sort((a, b) => a.dist - b.dist);
 
-  const matchedRefIndices = new Map<number, number>();
-  const matchedCandIndices = new Set<number>();
+    const matched = new Map<number, number>();
+    const matchedCands = new Set<number>();
+    let pairDistance = 0;
 
-  for (const pair of candidatePairs) {
-    if (!matchedRefIndices.has(pair.refIndex) && !matchedCandIndices.has(pair.candIndex)) {
-      matchedRefIndices.set(pair.refIndex, pair.candIndex);
-      matchedCandIndices.add(pair.candIndex);
+    for (const pair of candidatePairs) {
+      if (!matched.has(pair.refIndex) && !matchedCands.has(pair.candIndex)) {
+        matched.set(pair.refIndex, pair.candIndex);
+        matchedCands.add(pair.candIndex);
+        pairDistance += pair.dist;
+      }
+    }
+
+    const totalDistance = pairDistance + (rotatedBoxes.length - matched.size) * tolerance * 4;
+    const candidate: RotationCandidate = {
+      angleDeg,
+      dx: offset.dx,
+      dy: offset.dy,
+      matched,
+      matchedCount: matched.size,
+      totalDistance,
+      rotatedBoxes,
+    };
+
+    if (
+      bestRotation === null ||
+      candidate.matchedCount > bestRotation.matchedCount ||
+      (candidate.matchedCount === bestRotation.matchedCount &&
+        candidate.totalDistance < bestRotation.totalDistance) ||
+      (candidate.matchedCount === bestRotation.matchedCount &&
+        candidate.totalDistance === bestRotation.totalDistance &&
+        Math.abs(candidate.angleDeg) < Math.abs(bestRotation.angleDeg))
+    ) {
+      bestRotation = candidate;
     }
   }
+
+  const bestOffset = { dx: bestRotation?.dx ?? 0, dy: bestRotation?.dy ?? 0 };
+  const matchedRefIndices = bestRotation?.matched ?? new Map<number, number>();
+  const rotatedBoxes = bestRotation?.rotatedBoxes ?? params.referenceBoxes;
 
   const boxResults: BoxMatchItem[] = [];
 
   for (let r = 0; r < params.referenceBoxes.length; r += 1) {
     const ref = params.referenceBoxes[r];
+    const rotated = rotatedBoxes[r];
     const candIdx = matchedRefIndices.get(r);
 
     if (candIdx !== undefined) {
@@ -311,8 +397,8 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
         boxNumber: ref.boxNumber,
         referenceX: ref.x,
         referenceY: ref.y,
-        matchedX: ref.x + bestOffset.dx,
-        matchedY: ref.y + bestOffset.dy,
+        matchedX: rotated.x + bestOffset.dx,
+        matchedY: rotated.y + bestOffset.dy,
         width: ref.width,
         height: ref.height,
         isMatched: false,
@@ -336,5 +422,182 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     patternBounds,
     boxResults,
     executionTimeMs,
+    rotationDeg: bestRotation?.angleDeg ?? 0,
   };
+}
+
+/**
+ * Pocket-portability helpers (pure, dependency-free).
+ *
+ * A rule taught on one image/pocket must be usable on another pocket
+ * (different position, possibly different size) without re-teaching.
+ * These helpers are the coordinate layer for that: they convert
+ * between absolute image coordinates and pocket-relative coordinates,
+ * and adapt a stored reference to a target pocket. They do NOT run any
+ * detection — the coordinator calls them when wiring a stored rule
+ * (Pin1 registered position, pattern boxes) onto a target pocket.
+ *
+ * This block is mirrored in ./carrier-tape-segmenter.ts with identical
+ * signatures so either import site works without a cross-dependency;
+ * keep the two copies in sync if either changes.
+ */
+
+/** An axis-aligned box, e.g. a pocket box or a stored reference box. */
+export interface PocketBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PocketPoint {
+  x: number;
+  y: number;
+}
+
+/**
+ * Pocket-relative point as fractions of the pocket size: u = 0 at the
+ * pocket's left edge, 1 at its right edge; v = 0 at the top, 1 at the
+ * bottom. Fractions (not pixel offsets) are what make a taught
+ * position portable to a differently sized pocket.
+ */
+export interface PocketRelativePoint {
+  u: number;
+  v: number;
+}
+
+/**
+ * Absolute teach-image point -> pocket-relative fractions.
+ * Translation+scale only: no rotation is applied or assumed. A point
+ * outside the pocket yields u/v outside [0, 1], which is meaningful
+ * (it records how far outside it was) rather than being clamped.
+ */
+export function absoluteToPocketRelative(
+  point: PocketPoint,
+  pocket: PocketBox,
+): PocketRelativePoint {
+  return {
+    u: pocket.width !== 0 ? (point.x - pocket.x) / pocket.width : 0,
+    v: pocket.height !== 0 ? (point.y - pocket.y) / pocket.height : 0,
+  };
+}
+
+/** Pocket-relative fractions -> absolute point in the given pocket. Translation+scale only. */
+export function pocketRelativeToAbsolute(
+  relative: PocketRelativePoint,
+  pocket: PocketBox,
+): PocketPoint {
+  return {
+    x: pocket.x + relative.u * pocket.width,
+    y: pocket.y + relative.v * pocket.height,
+  };
+}
+
+/** Absolute point -> pixel offset from the pocket's top-left corner. Translation only (no scaling). */
+export function absoluteToPocketOffset(point: PocketPoint, pocket: PocketBox): PocketPoint {
+  return { x: point.x - pocket.x, y: point.y - pocket.y };
+}
+
+/** Pixel offset from a pocket's top-left corner -> absolute point. Translation only (no scaling). */
+export function pocketOffsetToAbsolute(offset: PocketPoint, pocket: PocketBox): PocketPoint {
+  return { x: pocket.x + offset.x, y: pocket.y + offset.y };
+}
+
+/**
+ * Adapt a stored point (e.g. a Pin1 registered position) taught in
+ * `sourcePocket` to `targetPocket`: translate+scale via pocket-relative
+ * fractions. When `rotationDeg` is non-zero, the adapted point is
+ * additionally rotated about the TARGET pocket's centre — that is the
+ * only rotation in this helper set, and it applies to the adapted
+ * point, not to the source geometry. With rotationDeg = 0 (default)
+ * this is pure translate+scale.
+ */
+export function adaptPointToPocket(
+  point: PocketPoint,
+  sourcePocket: PocketBox,
+  targetPocket: PocketBox,
+  rotationDeg = 0,
+): PocketPoint {
+  const adapted = pocketRelativeToAbsolute(
+    absoluteToPocketRelative(point, sourcePocket),
+    targetPocket,
+  );
+
+  if (rotationDeg === 0) {
+    return adapted;
+  }
+
+  const theta = (rotationDeg * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const centreX = targetPocket.x + targetPocket.width / 2;
+  const centreY = targetPocket.y + targetPocket.height / 2;
+  const relX = adapted.x - centreX;
+  const relY = adapted.y - centreY;
+
+  return {
+    x: centreX + relX * cos - relY * sin,
+    y: centreY + relX * sin + relY * cos,
+  };
+}
+
+/**
+ * Adapt a stored box (e.g. a pattern box) taught in `sourcePocket` to
+ * `targetPocket`: origin via pocket-relative fractions, size scaled by
+ * the pocket width/height ratios. With rotationDeg = 0 (default) this
+ * is pure translate+scale and the result is the exact scaled box.
+ * With a non-zero rotation the four adapted corners are rotated about
+ * the target pocket's centre and the AXIS-ALIGNED BOUNDING BOX of the
+ * rotated corners is returned — an oriented box cannot be represented
+ * by PocketBox, so callers that need orientation must keep the angle
+ * alongside this box rather than reading orientation from it.
+ */
+export function adaptBoxToPocket(
+  box: PocketBox,
+  sourcePocket: PocketBox,
+  targetPocket: PocketBox,
+  rotationDeg = 0,
+): PocketBox {
+  const topLeft = adaptPointToPocket(
+    { x: box.x, y: box.y },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const bottomRight = adaptPointToPocket(
+    { x: box.x + box.width, y: box.y + box.height },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+
+  if (rotationDeg === 0) {
+    return {
+      x: topLeft.x,
+      y: topLeft.y,
+      width: bottomRight.x - topLeft.x,
+      height: bottomRight.y - topLeft.y,
+    };
+  }
+
+  const topRight = adaptPointToPocket(
+    { x: box.x + box.width, y: box.y },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const bottomLeft = adaptPointToPocket(
+    { x: box.x, y: box.y + box.height },
+    sourcePocket,
+    targetPocket,
+    rotationDeg,
+  );
+  const xs = [topLeft.x, topRight.x, bottomRight.x, bottomLeft.x];
+  const ys = [topLeft.y, topRight.y, bottomRight.y, bottomLeft.y];
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }

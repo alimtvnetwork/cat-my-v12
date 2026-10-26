@@ -27,7 +27,7 @@ interface Props {
 }
 
 const TONE: Record<
-  Exclude<ValidationStatusType, ValidationStatusType.Pending | ValidationStatusType.Pass>,
+  Exclude<ValidationStatusType, ValidationStatusType.Pending | ValidationStatusType.Pass | ValidationStatusType.Skipped>,
   { ring: string; glow: string; label: string }
 > = {
   [ValidationStatusType.Fail]: {

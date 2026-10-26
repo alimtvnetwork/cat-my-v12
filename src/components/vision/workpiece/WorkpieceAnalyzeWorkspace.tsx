@@ -54,9 +54,14 @@ import {
 import {
   loadWorkpieceImageData,
   evaluateWorkpieceRuleReal,
+  evaluateCodeReaderRuleAsync,
   evaluateTapeStripRules,
   type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import {
+  evaluateRuleGatingDecision,
+  createSkippedValidationResult,
+} from "@/lib/execution/dag-execution-planner";
 import { LEGACY_DEFAULT_UM_PER_PX } from "@/components/vision/standard/tools/pattern-matching/carrier-tape-simulation/carrier-tape-evaluator";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useProjectStore } from "@/lib/projects/store";
@@ -849,10 +854,8 @@ export function WorkpieceAnalyzeWorkspace({
               const multiDevicePin1 = occupiedPockets
                 .map((p) => {
                   const pRes = p.ruleResults[r.id];
-                  const hX =
-                    pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
-                  const hY =
-                    pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
+                  const hX = pRes?.debug?.detectedHoleX ?? pRes?.debug?.nominalX ?? (p as any).pinX;
+                  const hY = pRes?.debug?.detectedHoleY ?? pRes?.debug?.nominalY ?? (p as any).pinY;
 
                   if (typeof hX === "number" && typeof hY === "number") {
                     return {
@@ -899,7 +902,28 @@ export function WorkpieceAnalyzeWorkspace({
                 },
               };
             } else {
-              ruleResult = evaluateWorkpieceRuleReal(r, imgData);
+              const previousResultsForWorkspace: Record<string, ValidationResult> = {};
+              for (const b of Object.values(batchedResults)) {
+                Object.assign(previousResultsForWorkspace, b.results);
+              }
+              const allRulesMap = new Map(projectAnalysisItems.map((it) => [it.rule.id, it.rule]));
+              const decision = evaluateRuleGatingDecision({
+                rule: r,
+                previousResults: previousResultsForWorkspace,
+                allRulesMap,
+              });
+
+              if (decision.isSkipped) {
+                ruleResult = createSkippedValidationResult({ rule: r, decision });
+              } else if (String((r.params as any)?.toolCode ?? "").toUpperCase() === "T103") {
+                // Code rules need the async ZXing path even when there
+                // is no tape-strip result to reuse; the sync evaluator
+                // cannot decode pixels and must not grade the taught
+                // payload as a test result.
+                ruleResult = await evaluateCodeReaderRuleAsync(r, imgData, "1D/2D Code Reader");
+              } else {
+                ruleResult = evaluateWorkpieceRuleReal(r, imgData, previousResultsForWorkspace);
+              }
             }
           } else {
             ruleResult = {
@@ -912,7 +936,7 @@ export function WorkpieceAnalyzeWorkspace({
 
           if (ruleResult.status === ValidationStatusType.Pass) {
             passCount += 1;
-          } else {
+          } else if (ruleResult.status === ValidationStatusType.Fail) {
             failCount += 1;
           }
 
@@ -1491,6 +1515,7 @@ export function WorkpieceAnalyzeWorkspace({
                     key={configRule.id}
                     ruleset={configOwnerRuleset}
                     rule={configRule}
+                    imageRef={project?.inspectionImageRef}
                     onExit={handleCloseRuleConfig}
                     onRuleApplied={handleConfigRuleApplied}
                   />

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { StandardToolShell, ToolTabItem } from "../StandardToolShell";
-import { InspectionRegionTab } from "../tabs/InspectionRegionTab";
-import { JudgmentConditionsTab } from "../tabs/JudgmentConditionsTab";
-import { ImageEnhanceTab } from "../tabs/ImageEnhanceTab";
-import { DisplaySettingsTab } from "../tabs/DisplaySettingsTab";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import React, { useCallback, useMemo, useState } from "react";
+import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import type { WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { useStandardWorkbench } from "../workbench/useStandardWorkbench";
+import { StandardWorkbenchShell } from "../workbench/StandardWorkbenchShell";
+import { StandardWorkbenchCanvas } from "../workbench/StandardWorkbenchCanvas";
+import { EdgePositionToolPanel } from "../workbench/EdgePositionToolPanel";
 
 export interface StandardEdgePositionToolProps {
   settings: PatternSearchSettings;
@@ -17,182 +17,424 @@ export interface StandardEdgePositionToolProps {
   onOriginPoint?: () => void;
   onDisplay?: () => void;
   onRefresh?: () => void;
+  imageRef?: string;
+  onImageRegistered?: (url: string) => void;
+  actionButtonLabel?: string;
 }
 
 export function StandardEdgePositionTool(props: StandardEdgePositionToolProps): React.JSX.Element {
+  const workbench = useStandardWorkbench({
+    settings: props.settings,
+    onChange: props.onChange,
+    imageRef: props.imageRef,
+    onImageRegistered: props.onImageRegistered,
+  });
+
+  const initialParams = (props.settings.params as Record<string, unknown> | undefined) ?? {};
+
   const [scanDirection, setScanDirection] = useState<
     "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top"
-  >("left-to-right");
-  const [edgePolarity, setEdgePolarity] = useState<"light-to-dark" | "dark-to-light" | "both">(
-    "light-to-dark",
+  >(
+    (initialParams.scanDirection as
+      | "left-to-right"
+      | "right-to-left"
+      | "top-to-bottom"
+      | "bottom-to-top") ?? "left-to-right",
   );
-  const [edgeThreshold, setEdgeThreshold] = useState<number>(30);
-  const [filterWidth, setFilterWidth] = useState<number>(5);
-  const [minPosition, setMinPosition] = useState<number>(100);
-  const [maxPosition, setMaxPosition] = useState<number>(500);
+  const [edgePolarity, setEdgePolarity] = useState<"light-to-dark" | "dark-to-light" | "both">(
+    (initialParams.edgePolarity as "light-to-dark" | "dark-to-light" | "both") ?? "light-to-dark",
+  );
+  const [edgeThreshold, setEdgeThreshold] = useState<number>(
+    Number(initialParams.minEdgeContrast ?? 30),
+  );
+  const [filterWidth, setFilterWidth] = useState<number>(Number(initialParams.filterWidth ?? 5));
+  const [nominalPosition, setNominalPosition] = useState<number>(
+    Number(initialParams.nominalPositionPx ?? 120),
+  );
+  const [tolerancePx, setTolerancePx] = useState<number>(Number(initialParams.tolerancePx ?? 10));
 
-  const tabs: ToolTabItem[] = [
-    {
-      id: "region",
-      label: "Scan Line / Box Region",
-      content: <InspectionRegionTab />,
-    },
-    {
-      id: "detection",
-      label: "Edge Extraction",
-      content: (
-        <div className="space-y-4 text-xs font-sans text-ca-ink">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Scan Direction & Polarity
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(["left-to-right", "right-to-left", "top-to-bottom", "bottom-to-top"] as const).map(
-                (d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setScanDirection(d)}
-                    className={`p-1.5 border text-center font-medium rounded ${
-                      scanDirection === d
-                        ? "bg-ca-select text-ca-bg border-ca-select font-bold"
-                        : "bg-ca-panel border-ca-border text-ca-ink hover:bg-ca-panel-2"
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ),
-              )}
-            </div>
+  // Explicit processing state: no tool auto-analyzes
+  const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+  const [measuredPosition, setMeasuredPosition] = useState<number>(
+    Number(initialParams.nominalPositionPx ?? 120),
+  );
+  // Preview verdict only, never a rule judgment: undefined until a real
+  // Process runs on a teach image. Apply must not write this to the rule.
+  const [isPass, setIsPass] = useState<boolean | undefined>(undefined);
+  const [edgePoint, setEdgePoint] = useState<{ x: number; y: number }>({ x: 120, y: 150 });
 
-            <div className="flex items-center gap-4 pt-2">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "light-to-dark"}
-                  onChange={() => setEdgePolarity("light-to-dark")}
-                  className="accent-ca-select"
-                />
-                <span>Light to Dark</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "dark-to-light"}
-                  onChange={() => setEdgePolarity("dark-to-light")}
-                  className="accent-ca-select"
-                />
-                <span>Dark to Light</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="edge-pol"
-                  checked={edgePolarity === "both"}
-                  onChange={() => setEdgePolarity("both")}
-                  className="accent-ca-select"
-                />
-                <span>Both</span>
-              </label>
-            </div>
-          </div>
+  // Analyze edge position along specified ray strictly on demand
+  const handleProcess = useCallback(() => {
+    if (!workbench.source || !workbench.searchRegion) {
+      // Preview only: no teach image / search region, so nothing is
+      // measured. Do NOT seed the preview with the nominal position and
+      // never report a pass from an absent image.
+      setIsPass(undefined);
+      setHasProcessed(false);
 
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1">
-              Differential Edge Detection Parameters
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Edge Gradient Threshold</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={255}
-                  value={edgeThreshold}
-                  onChange={(e) => setEdgeThreshold(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Filter Smoothing Width (px)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={21}
-                  step={2}
-                  value={filterWidth}
-                  onChange={(e) => setFilterWidth(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
+      return;
+    }
+
+    const { width, height, rgba } = workbench.source;
+    const region = workbench.searchRegion;
+
+    const midX = Math.round(region.x + region.width / 2);
+    const midY = Math.round(region.y + region.height / 2);
+
+    let foundCoord = nominalPosition;
+    let foundPoint = { x: midX, y: midY };
+    const thresholdGrad = Math.round(edgeThreshold * 1.5);
+
+    if (scanDirection === "left-to-right" || scanDirection === "right-to-left") {
+      const isLtoR = scanDirection === "left-to-right";
+      const start = isLtoR ? Math.max(1, region.x) : Math.min(width - 2, region.x + region.width);
+      const end = isLtoR ? Math.min(width - 2, region.x + region.width) : Math.max(1, region.x);
+      const step = isLtoR ? 1 : -1;
+
+      for (let x = start; isLtoR ? x < end : x > end; x += step) {
+        const idxL = (midY * width + (x - 1)) * 4;
+        const idxR = (midY * width + (x + 1)) * 4;
+
+        const lumaL = 0.299 * rgba[idxL] + 0.587 * rgba[idxL + 1] + 0.114 * rgba[idxL + 2];
+        const lumaR = 0.299 * rgba[idxR] + 0.587 * rgba[idxR + 1] + 0.114 * rgba[idxR + 2];
+        const diff = lumaR - lumaL;
+
+        const isMatch =
+          edgePolarity === "dark-to-light"
+            ? diff >= thresholdGrad
+            : edgePolarity === "light-to-dark"
+              ? diff <= -thresholdGrad
+              : Math.abs(diff) >= thresholdGrad;
+
+        if (isMatch) {
+          foundCoord = x;
+          foundPoint = { x, y: midY };
+          break;
+        }
+      }
+    } else {
+      const isTtoB = scanDirection === "top-to-bottom";
+      const start = isTtoB ? Math.max(1, region.y) : Math.min(height - 2, region.y + region.height);
+      const end = isTtoB ? Math.min(height - 2, region.y + region.height) : Math.max(1, region.y);
+      const step = isTtoB ? 1 : -1;
+
+      for (let y = start; isTtoB ? y < end : y > end; y += step) {
+        const idxU = ((y - 1) * width + midX) * 4;
+        const idxD = ((y + 1) * width + midX) * 4;
+
+        const lumaU = 0.299 * rgba[idxU] + 0.587 * rgba[idxU + 1] + 0.114 * rgba[idxU + 2];
+        const lumaD = 0.299 * rgba[idxD] + 0.587 * rgba[idxD + 1] + 0.114 * rgba[idxD + 2];
+        const diff = lumaD - lumaU;
+
+        const isMatch =
+          edgePolarity === "dark-to-light"
+            ? diff >= thresholdGrad
+            : edgePolarity === "light-to-dark"
+              ? diff <= -thresholdGrad
+              : Math.abs(diff) >= thresholdGrad;
+
+        if (isMatch) {
+          foundCoord = y;
+          foundPoint = { x: midX, y };
+          break;
+        }
+      }
+    }
+
+    const pass = Math.abs(foundCoord - nominalPosition) <= tolerancePx;
+
+    setMeasuredPosition(foundCoord);
+    setIsPass(pass);
+    setEdgePoint(foundPoint);
+    setHasProcessed(true);
+  }, [
+    workbench.source,
+    workbench.searchRegion,
+    scanDirection,
+    edgePolarity,
+    edgeThreshold,
+    nominalPosition,
+    tolerancePx,
+  ]);
+
+  const handleScanDirectionChange = useCallback(
+    (direction: "left-to-right" | "right-to-left" | "top-to-bottom" | "bottom-to-top") => {
+      setScanDirection(direction);
+      setHasProcessed(false);
     },
-    {
-      id: "judgment",
-      label: "Position Judgment",
-      content: (
-        <div className="space-y-4">
-          <div className="p-3 bg-ca-panel-2 border border-ca-border rounded space-y-3">
-            <div className="font-semibold text-ca-ink uppercase tracking-wide border-b border-ca-border pb-1 text-xs">
-              Measured Edge Coordinate Limits (px)
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Min Coordinate (px)</label>
-                <input
-                  type="number"
-                  value={minPosition}
-                  onChange={(e) => setMinPosition(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-              <div>
-                <label className="text-ca-ink-muted block mb-1">Max Coordinate (px)</label>
-                <input
-                  type="number"
-                  value={maxPosition}
-                  onChange={(e) => setMaxPosition(Number(e.target.value))}
-                  className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
-                />
-              </div>
-            </div>
-          </div>
-          <JudgmentConditionsTab />
-        </div>
-      ),
+    [],
+  );
+
+  const handlePolarityChange = useCallback(
+    (polarity: "light-to-dark" | "dark-to-light" | "both") => {
+      setEdgePolarity(polarity);
+      setHasProcessed(false);
     },
-    {
-      id: "enhance",
-      label: "Image Enhancement",
-      content: <ImageEnhanceTab />,
+    [],
+  );
+
+  const handleThresholdChange = useCallback((val: number) => {
+    setEdgeThreshold(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleFilterWidthChange = useCallback((val: number) => {
+    setFilterWidth(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleNominalPositionChange = useCallback((val: number) => {
+    setNominalPosition(val);
+    setHasProcessed(false);
+  }, []);
+
+  const handleToleranceChange = useCallback((val: number) => {
+    setTolerancePx(val);
+    setHasProcessed(false);
+  }, []);
+
+  const createFilteredImageData = useCallback(
+    (source: WhiteBoxMarkingInput): ImageData => {
+      const output = new ImageData(source.width, source.height);
+      const out = output.data;
+      const raw = source.rgba;
+      const totalPixels = source.width * source.height;
+
+      const region = workbench.searchRegion;
+      const rx1 = region ? region.x : 0;
+      const ry1 = region ? region.y : 0;
+      const rx2 = region ? region.x + region.width : source.width;
+      const ry2 = region ? region.y + region.height : source.height;
+
+      const thresholdGrad = Math.round(edgeThreshold * 1.5);
+
+      for (let i = 0; i < totalPixels; i += 1) {
+        const idx = i * 4;
+        const x = i % source.width;
+        const y = Math.floor(i / source.width);
+
+        const isInsideRegion = x >= rx1 && x < rx2 && y >= ry1 && y < ry2;
+
+        if (hasProcessed && isInsideRegion && x + 1 < source.width && x > 0) {
+          const idxL = (y * source.width + (x - 1)) * 4;
+          const idxR = (y * source.width + (x + 1)) * 4;
+
+          const lumaL = 0.299 * raw[idxL] + 0.587 * raw[idxL + 1] + 0.114 * raw[idxL + 2];
+          const lumaR = 0.299 * raw[idxR] + 0.587 * raw[idxR + 1] + 0.114 * raw[idxR + 2];
+          const diff = Math.abs(lumaR - lumaL);
+
+          if (diff >= thresholdGrad) {
+            out[idx] = 0;
+            out[idx + 1] = 240;
+            out[idx + 2] = 255;
+            out[idx + 3] = 255;
+          } else {
+            out[idx] = raw[idx];
+            out[idx + 1] = raw[idx + 1];
+            out[idx + 2] = raw[idx + 2];
+            out[idx + 3] = raw[idx + 3];
+          }
+        } else {
+          // Keep the full workpiece image completely visible - never cut off
+          out[idx] = raw[idx];
+          out[idx + 1] = raw[idx + 1];
+          out[idx + 2] = raw[idx + 2];
+          out[idx + 3] = raw[idx + 3];
+        }
+      }
+
+      return output;
     },
-    {
-      id: "display",
-      label: "Display Settings",
-      content: <DisplaySettingsTab />,
+    [workbench.searchRegion, edgeThreshold, hasProcessed],
+  );
+
+  const renderCustomOverlays = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      if (!workbench.searchRegion) {
+        return;
+      }
+
+      const region = workbench.searchRegion;
+      const midX = Math.round(region.x + region.width / 2);
+      const midY = Math.round(region.y + region.height / 2);
+
+      ctx.save();
+
+      // 1. Scan Ray with direction arrow
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+
+      const isHorizontal = scanDirection === "left-to-right" || scanDirection === "right-to-left";
+
+      if (isHorizontal) {
+        ctx.beginPath();
+        ctx.moveTo(region.x, midY);
+        ctx.lineTo(region.x + region.width, midY);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(midX, region.y);
+        ctx.lineTo(midX, region.y + region.height);
+        ctx.stroke();
+      }
+
+      ctx.setLineDash([]);
+
+      if (!hasProcessed) {
+        ctx.restore();
+
+        return;
+      }
+
+      // 2. Detected Edge Transition Crosshair
+      const strokeColor = isPass ? "#00ff9d" : "#f43f5e";
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2.5;
+
+      if (isHorizontal) {
+        ctx.beginPath();
+        ctx.moveTo(edgePoint.x, region.y);
+        ctx.lineTo(edgePoint.x, region.y + region.height);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(region.x, edgePoint.y);
+        ctx.lineTo(region.x + region.width, edgePoint.y);
+        ctx.stroke();
+      }
+
+      // Edge Point Center Reticle
+      ctx.fillStyle = strokeColor;
+      ctx.beginPath();
+      ctx.arc(edgePoint.x, edgePoint.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Text Badge
+      ctx.font = "bold 10px monospace";
+      ctx.fillText(
+        `EDGE: ${measuredPosition.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`,
+        edgePoint.x + 8,
+        edgePoint.y - 8,
+      );
+
+      ctx.restore();
     },
-  ];
+    [workbench.searchRegion, scanDirection, hasProcessed, isPass, edgePoint, measuredPosition],
+  );
+
+  // Apply = rule creation. Writes TEACH params only: the preview edge
+  // position and its verdict are deliberately NOT written (no
+  // measuredPosition, no judgmentItems, no isPass) — the analyzer
+  // re-locates the edge on every analysis image. This workbench has no
+  // lead-count control, so expectedCount is preserved from the rule
+  // when one was already taught (e.g. via the catalog) and otherwise
+  // left absent rather than invented. Portability: the nominal
+  // position is stored relative to the teach search region
+  // (nominalPositionRelativeToSearchRegionPx, along the scan axis)
+  // alongside the absolute nominalPositionPx, so the analyzer can
+  // prefer the relative form; the absolute key is kept for legacy rules.
+  const handleApply = useCallback(() => {
+    const region = workbench.searchRegion;
+    const nominalPositionRelativeToSearchRegionPx = region
+      ? scanDirection === "top-to-bottom" || scanDirection === "bottom-to-top"
+        ? nominalPosition - region.y
+        : nominalPosition - region.x
+      : undefined;
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: {
+        ...(prev.params ?? {}),
+        toolCode: "T104",
+        scanDirection,
+        edgePolarity,
+        minEdgeContrast: edgeThreshold,
+        filterWidth,
+        nominalPositionPx: nominalPosition,
+        ...(nominalPositionRelativeToSearchRegionPx !== undefined
+          ? { nominalPositionRelativeToSearchRegionPx }
+          : {}),
+        tolerancePx,
+        ...(typeof initialParams.expectedCount === "number"
+          ? { expectedCount: initialParams.expectedCount }
+          : {}),
+      },
+    }));
+
+    props.onOk?.();
+  }, [
+    scanDirection,
+    edgePolarity,
+    edgeThreshold,
+    filterWidth,
+    nominalPosition,
+    tolerancePx,
+    initialParams.expectedCount,
+    workbench.searchRegion,
+    props,
+  ]);
 
   return (
-    <StandardToolShell
-      toolName="Edge Position Inspection Tool"
-      toolKindId="T03-EDGE-POS"
-      tabs={tabs}
-      settings={props.settings}
-      onChangeSettings={props.onChange}
-      onEvaluate={props.onEvaluate}
-      onCancel={props.onCancel}
-      onOk={props.onOk}
-      onSettings={props.onSettings}
-      onRegisterImage={props.onRegisterImage}
-      onOriginPoint={props.onOriginPoint}
-      onDisplay={props.onDisplay}
+    <StandardWorkbenchShell
+      toolName="Edge Position Measurement"
+      toolCode="T104"
+      isCameraOpen={workbench.isCameraOpen}
+      onCloseCamera={() => workbench.setIsCameraOpen(false)}
+      onCaptureCameraFrame={workbench.handleCaptureFrame}
+      onLoadFile={workbench.handleLoadFile}
+      onProcess={handleProcess}
       onRefresh={props.onRefresh}
+      canvas={
+        <StandardWorkbenchCanvas
+          source={workbench.source}
+          searchRegion={workbench.searchRegion}
+          dragState={workbench.dragState}
+          hasFilteredPreview={workbench.hasFilteredPreview}
+          hasOverlays={workbench.hasOverlays}
+          filterModeLabel="FILTERED (Edge Scan Ray)"
+          toolBadge="T104 EDGE POSITION"
+          statusText={
+            hasProcessed
+              ? `EDGE @ ${measuredPosition.toFixed(1)} px [${isPass ? "PASS" : "FAIL"}]`
+              : "PENDING PROCESS"
+          }
+          isPass={hasProcessed ? isPass : undefined}
+          onSearchRegionChange={(region) => {
+            workbench.handleRegionChange(region);
+            setHasProcessed(false);
+          }}
+          onDragStateChange={workbench.setDragState}
+          onToggleFilteredPreview={workbench.toggleFilteredPreview}
+          onResetRegion={workbench.resetRegion}
+          createFilteredImageData={createFilteredImageData}
+          renderCustomOverlays={renderCustomOverlays}
+        />
+      }
+      inspectorPanel={
+        <EdgePositionToolPanel
+          scanDirection={scanDirection}
+          edgePolarity={edgePolarity}
+          edgeThreshold={edgeThreshold}
+          filterWidth={filterWidth}
+          nominalPosition={nominalPosition}
+          tolerancePx={tolerancePx}
+          measuredPosition={measuredPosition}
+          isPass={isPass}
+          hasProcessed={hasProcessed}
+          toolCode="T104"
+          actionButtonLabel={props.actionButtonLabel}
+          onScanDirectionChange={handleScanDirectionChange}
+          onEdgePolarityChange={handlePolarityChange}
+          onEdgeThresholdChange={handleThresholdChange}
+          onFilterWidthChange={handleFilterWidthChange}
+          onNominalPositionChange={handleNominalPositionChange}
+          onToleranceChange={handleToleranceChange}
+          onProcess={handleProcess}
+          onApply={handleApply}
+          onCancel={props.onCancel}
+        />
+      }
     />
   );
 }

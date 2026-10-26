@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useProjectStore, selectRulesetsForProject } from "@/lib/projects/store";
+import { useProjectStore, selectRulesetsForProject, selectProject } from "@/lib/projects/store";
 import { resolveIdParam, toIntParam, IntAliasNamespaceType } from "@/lib/ids/int-alias";
 import type { EditorRule } from "@/lib/editor/types";
 import { RuleToolConfigPanel } from "@/components/vision/workpiece/RuleToolConfigPanel";
@@ -13,6 +13,7 @@ function TuneRulePage() {
   const { projectId, rulesetId, ruleId } = Route.useParams();
   const navigate = useNavigate();
 
+  const project = useProjectStore((s) => selectProject(s, projectId));
   const rulesets = useProjectStore((s) => selectRulesetsForProject(s, projectId));
   const resolvedRulesetId = useMemo(
     () => resolveIdParam(IntAliasNamespaceType.Ruleset, rulesetId) || rulesetId,
@@ -59,6 +60,7 @@ function TuneRulePage() {
       key={rule.id}
       ruleset={ruleset}
       rule={rule}
+      imageRef={project?.inspectionImageRef}
       onExit={() => void navigateBack()}
     />
   );

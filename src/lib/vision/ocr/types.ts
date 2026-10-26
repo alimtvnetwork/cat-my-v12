@@ -3,7 +3,9 @@
  *
  * Reads printed / laser-etched text on chips (part numbers, lot codes,
  * date codes) and judges the result against the OCR2 tool's criteria:
- * extracted string match, minimum character confidence, character count.
+ * exact string match (spec T106: Levenshtein distance 0), minimum
+ * character confidence, character count. A legacy regex format filter
+ * remains for callers that do not supply an exact expected string.
  *
  * The recognition backend is Tesseract (via tesseract.js, WASM), which runs
  * fully client-side — no server dependency. The engine is lazy: the worker
@@ -20,6 +22,14 @@ export interface OcrPixelBuffer {
 export interface OcrEngineOptions {
   /** Tesseract language code. Defaults to 'eng'. */
   language?: string;
+  /**
+   * Spec T106 `expectedString`: the exact text the cleaned read string
+   * must equal. When supplied (non-empty), the judgment uses the
+   * Levenshtein distance between the read string and this value (pass
+   * iff distance is 0) and it takes precedence over `expectedFormat`.
+   * When absent, the legacy `expectedFormat` regex path is used instead.
+   */
+  expectedString?: string;
   /** Regex the cleaned text must match (the tool's "Lexicon / Regex Format Filter"). */
   expectedFormat?: string;
   /** Minimum mean character confidence, 0-100. Defaults to 0 (no gate). */
@@ -28,6 +38,15 @@ export interface OcrEngineOptions {
   expectedCharacterCount?: number | null;
   /** Pre-recognition upscale factor. Defaults to 3. */
   upscaleFactor?: number;
+  /**
+   * Opt-in spec T106 CLAHE step (tile-based, clip-limited) inserted
+   * after polarity normalization and before local Otsu binarization.
+   * Defaults to false: the default pipeline (local Otsu only) is the
+   * previously verified behaviour, and CLAHE on small near-uniform
+   * laser-mark ROIs risks amplifying background texture. Set true
+   * only for ROIs where uneven illumination defeats local Otsu.
+   */
+  useClahe?: boolean;
   /** Tesseract page segmentation mode. Defaults to PSM.SINGLE_BLOCK ('6'). */
   pageSegMode?: string;
   /**
@@ -67,7 +86,7 @@ export interface OcrRecognitionResult {
   processingMs: number;
 }
 
-export type OcrCriterionKey = "format" | "confidence" | "character-count";
+export type OcrCriterionKey = "format" | "exact-match" | "confidence" | "character-count";
 
 export interface OcrCriterionResult {
   key: OcrCriterionKey;

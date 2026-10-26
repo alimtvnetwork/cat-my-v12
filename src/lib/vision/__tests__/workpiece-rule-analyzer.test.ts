@@ -79,8 +79,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 70,
       width: 760,
       height: 400,
-      params: { /* TS workaround */
-        toolCode: "T116",
+      params: {
+        /* TS workaround */ toolCode: "T116",
         minMatchPercent: 80,
         constellationJson: JSON.stringify(TEST_24_PATTERN_BOXES),
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
@@ -91,7 +91,6 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     };
 
     const res = evaluatePatternRule(patternRule, imgData, "Optical Test");
-
 
     expect(res.status).toBe(ValidationStatusType.Pass);
     expect(res.score).toBeGreaterThanOrEqual(0.8);
@@ -116,8 +115,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 70,
       width: 760,
       height: 400,
-      params: { /* TS workaround */
-        toolCode: "T116",
+      params: {
+        /* TS workaround */ toolCode: "T116",
         minMatchPercent: 80,
         constellationJson: JSON.stringify(TEST_24_PATTERN_BOXES),
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
@@ -151,8 +150,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 140,
       width: 140,
       height: 140,
-      params: { /* TS workaround */
-        toolCode: "T117",
+      params: {
+        /* TS workaround */ toolCode: "T117",
         tolerancePx: 100,
         pin1Config: {
           registeredPin1: { x: 249, y: 264, radius: 24, centerX: 249, centerY: 264 },
@@ -163,7 +162,6 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     };
 
     const res = evaluatePin1Rule(pin1Rule, imgData, "Optical Test");
-
 
     expect(res.status).toBe(ValidationStatusType.Pass);
     expect(res.score).toBeGreaterThanOrEqual(0.7);
@@ -188,8 +186,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 140,
       width: 140,
       height: 140,
-      params: { /* TS workaround */
-        toolCode: "T117",
+      params: {
+        /* TS workaround */ toolCode: "T117",
         pin1Config: {
           registeredPin1: { x: 249, y: 264, radius: 24, centerX: 249, centerY: 264 },
           searchRegion: { x: 180, y: 140, width: 140, height: 140 },
@@ -224,6 +222,10 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
         tolerancePx: 10,
         pin1Config: {
           thresholdLuma: 35,
+          // Spec T105 §3: the catalog default nominal (-151.6°) correctly
+          // FAILS this device, whose mark sits at -175.2°; the rule
+          // must configure its own nominal for the real angle gate.
+          nominalAngleDeg: -175.2,
           registeredPin1: { x: 64, y: 82, radius: 8, centerX: 64, centerY: 82 },
           searchRegion: { x: 35, y: 52, width: 60, height: 60 },
           packageRegion: { x: 30, y: 40, width: 140, height: 90 },
@@ -255,8 +257,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 360,
       width: 480,
       height: 160,
-      params: { /* TS workaround */
-        toolCode: "T118",
+      params: {
+        /* TS workaround */ toolCode: "T118",
       },
     };
 
@@ -294,8 +296,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 90,
       width: 80,
       height: 80,
-      params: { /* TS workaround */
-        toolCode: "T101",
+      params: {
+        /* TS workaround */ toolCode: "T101",
         minAreaPx: 50,
         maxAreaPx: 200,
         intensityThreshold: 128,
@@ -309,8 +311,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     // Test with minAreaPx = 500 (expect fail)
     const failRule: EditorRule = {
       ...areaRule,
-      params: { /* TS workaround */
-        ...areaRule.params,
+      params: {
+        /* TS workaround */ ...areaRule.params,
         minAreaPx: 500,
       },
     };
@@ -360,8 +362,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 20,
       width: 70,
       height: 35,
-      params: { /* TS workaround */
-        toolCode: "T116",
+      params: {
+        /* TS workaround */ toolCode: "T116",
         minMatchPercent: 100,
         minPresenceLuma: 25,
         constellationJson: JSON.stringify(boxes),
@@ -374,13 +376,12 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     const res = evaluatePatternRule(patternRule, imgData, "Dark chip");
 
-
     expect(res.status).toBe(ValidationStatusType.Pass);
     expect(res.debug?.matchedCount).toBe(2);
     expect(res.message).toContain("2/2 pattern marks matched reference");
   });
 
-  it("passes bright saved greyscale boxes even when older rules lack expected luma", () => {
+  it("strictly FAILS bright saved greyscale boxes when older rules lack expected luma", () => {
     const width = 160;
     const height = 100;
     const rgba = new Uint8ClampedArray(width * height * 4);
@@ -435,9 +436,12 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     const res = evaluatePatternRule(patternRule, imgData, "Bright boxes");
 
-    expect(res.status).toBe(ValidationStatusType.Pass);
-    expect(res.debug?.matchedCount).toBe(3);
-    expect(res.message).toContain("3/3 pattern marks matched reference");
+    // Spec T102 §4: a box matches iff |measuredLuma - expectedLuma|
+    // <= lumaTolerance. Boxes without an expectedLuma have no
+    // reference to match against, so they are unmatched — the old
+    // auto-pass on presence alone directly contradicts the spec.
+    expect(res.status).toBe(ValidationStatusType.Fail);
+    expect(res.debug?.matchedCount).toBe(0);
   });
 
   it("dispatches evaluateWorkpieceRuleReal cleanly across all rule categories", async () => {
@@ -457,8 +461,8 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 70,
       width: 760,
       height: 400,
-      params: { /* TS workaround */
-        toolCode: "T116",
+      params: {
+        /* TS workaround */ toolCode: "T116",
         minMatchPercent: 50,
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
         patternRegion: { x: 150, y: 100, width: 600, height: 300 },
@@ -492,26 +496,116 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       y: 220,
       width: 350,
       height: 180,
-      params: { /* TS workaround */
-        toolCode: "T116",
+      params: {
+        /* TS workaround */ toolCode: "T116",
         minMatchPercent: 80,
         activeBoxCount: 5,
         totalBoxCount: 5,
         constellationJson: JSON.stringify([
-          { boxNumber: 1, label: "M", x: 420, y: 280, width: 25, height: 17, area: 425, expectedLuma: 200 },
-          { boxNumber: 2, label: "E", x: 450, y: 280, width: 21, height: 17, area: 357, expectedLuma: 200 },
-          { boxNumber: 3, label: "G", x: 475, y: 280, width: 24, height: 17, area: 408, expectedLuma: 200 },
-          { boxNumber: 4, label: "A", x: 505, y: 280, width: 24, height: 17, area: 408, expectedLuma: 200 },
-          { boxNumber: 5, label: "3", x: 535, y: 280, width: 20, height: 17, area: 340, expectedLuma: 200 },
+          {
+            boxNumber: 1,
+            label: "M",
+            x: 420,
+            y: 280,
+            width: 25,
+            height: 17,
+            area: 425,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 2,
+            label: "E",
+            x: 450,
+            y: 280,
+            width: 21,
+            height: 17,
+            area: 357,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 3,
+            label: "G",
+            x: 475,
+            y: 280,
+            width: 24,
+            height: 17,
+            area: 408,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 4,
+            label: "A",
+            x: 505,
+            y: 280,
+            width: 24,
+            height: 17,
+            area: 408,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 5,
+            label: "3",
+            x: 535,
+            y: 280,
+            width: 20,
+            height: 17,
+            area: 340,
+            expectedLuma: 200,
+          },
         ]),
         searchRegion: { x: 350, y: 220, width: 350, height: 180 },
         patternRegion: { x: 380, y: 250, width: 300, height: 100 },
         referenceBoxes: [
-          { boxNumber: 1, label: "M", x: 420, y: 280, width: 25, height: 17, area: 425, expectedLuma: 200 },
-          { boxNumber: 2, label: "E", x: 450, y: 280, width: 21, height: 17, area: 357, expectedLuma: 200 },
-          { boxNumber: 3, label: "G", x: 475, y: 280, width: 24, height: 17, area: 408, expectedLuma: 200 },
-          { boxNumber: 4, label: "A", x: 505, y: 280, width: 24, height: 17, area: 408, expectedLuma: 200 },
-          { boxNumber: 5, label: "3", x: 535, y: 280, width: 20, height: 17, area: 340, expectedLuma: 200 },
+          {
+            boxNumber: 1,
+            label: "M",
+            x: 420,
+            y: 280,
+            width: 25,
+            height: 17,
+            area: 425,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 2,
+            label: "E",
+            x: 450,
+            y: 280,
+            width: 21,
+            height: 17,
+            area: 357,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 3,
+            label: "G",
+            x: 475,
+            y: 280,
+            width: 24,
+            height: 17,
+            area: 408,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 4,
+            label: "A",
+            x: 505,
+            y: 280,
+            width: 24,
+            height: 17,
+            area: 408,
+            expectedLuma: 200,
+          },
+          {
+            boxNumber: 5,
+            label: "3",
+            x: 535,
+            y: 280,
+            width: 20,
+            height: 17,
+            area: 340,
+            expectedLuma: 200,
+          },
         ],
         lumaTolerance: 255,
       },

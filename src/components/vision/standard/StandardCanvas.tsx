@@ -79,7 +79,222 @@ export function StandardCanvas({
     if (loadedImage) {
       ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
     }
-  }, [loadedImage, zoomFactor]);
+
+    const isAreaTool =
+      settings.params?.toolCode === "T101" ||
+      settings.id === "T101" ||
+      settings.name.toLowerCase().includes("area");
+
+    const isResultsVisible = viewModes?.results ?? true;
+
+    if (isAreaTool && isResultsVisible && settings.searchRegion?.geometry) {
+      const geom = settings.searchRegion.geometry;
+      const rx = (geom.x ?? 0) * zoomFactor;
+      const ry = (geom.y ?? 0) * zoomFactor;
+      const rw = (geom.width ?? 100) * zoomFactor;
+      const rh = (geom.height ?? 100) * zoomFactor;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(16, 185, 129, 0.22)";
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.85)";
+      ctx.lineWidth = 1.5;
+
+      if (settings.searchRegion.shape === ShapeType.Circle) {
+        const cx = (geom.x ?? 0) * zoomFactor;
+        const cy = (geom.y ?? 0) * zoomFactor;
+        const cr = (geom.radius ?? Math.min(rw, rh) / 2) * zoomFactor;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (
+        settings.searchRegion.shape === ShapeType.Polygon &&
+        geom.points &&
+        geom.points.length >= 3
+      ) {
+        ctx.beginPath();
+        ctx.moveTo(geom.points[0].x * zoomFactor, geom.points[0].y * zoomFactor);
+
+        for (let i = 1; i < geom.points.length; i++) {
+          ctx.lineTo(geom.points[i].x * zoomFactor, geom.points[i].y * zoomFactor);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeRect(rx, ry, rw, rh);
+      }
+
+      ctx.restore();
+    }
+
+    const toolCode = String(settings.params?.toolCode ?? settings.id ?? "");
+    const nameLower = settings.name.toLowerCase();
+
+    const isDefectTool =
+      toolCode === "T107" ||
+      toolCode === "T108" ||
+      toolCode === "T118" ||
+      nameLower.includes("defect") ||
+      nameLower.includes("scratch") ||
+      nameLower.includes("void");
+
+    const isBlobTool =
+      toolCode === "T109" ||
+      nameLower.includes("blob") ||
+      nameLower.includes("bridge");
+
+    if ((isDefectTool || isBlobTool) && isResultsVisible && settings.searchRegion?.geometry) {
+      const geom = settings.searchRegion.geometry;
+      const rx = (geom.x ?? 0) * zoomFactor;
+      const ry = (geom.y ?? 0) * zoomFactor;
+      const rw = (geom.width ?? 100) * zoomFactor;
+      const rh = (geom.height ?? 100) * zoomFactor;
+
+      ctx.save();
+
+      if (isDefectTool) {
+        ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+        ctx.strokeStyle = "rgba(239, 68, 68, 0.85)";
+      } else {
+        ctx.fillStyle = "rgba(59, 130, 246, 0.15)";
+        ctx.strokeStyle = "rgba(59, 130, 246, 0.85)";
+      }
+
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(rx, ry, rw, rh);
+      ctx.strokeRect(rx, ry, rw, rh);
+
+      const debugFlaws = (settings.params as { debug?: { flaws?: Array<{
+        bbox: { x: number; y: number; width: number; height: number };
+        flawType: string;
+      }> } })?.debug?.flaws;
+
+      if (Array.isArray(debugFlaws)) {
+        for (const flaw of debugFlaws) {
+          const fx = flaw.bbox.x * zoomFactor;
+          const fy = flaw.bbox.y * zoomFactor;
+          const fw = flaw.bbox.width * zoomFactor;
+          const fh = flaw.bbox.height * zoomFactor;
+
+          ctx.strokeStyle = "#f87171";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(fx, fy, fw, fh);
+          ctx.fillStyle = "#f87171";
+          ctx.font = "10px sans-serif";
+          ctx.fillText(flaw.flawType, fx, Math.max(10, fy - 2));
+        }
+      }
+
+      const debugBlobs = (settings.params as { debug?: { blobs?: Array<{
+        bbox: { x: number; y: number; width: number; height: number };
+        id: number;
+        areaPx: number;
+      }> } })?.debug?.blobs;
+
+      if (Array.isArray(debugBlobs)) {
+        for (const b of debugBlobs) {
+          const bx = b.bbox.x * zoomFactor;
+          const by = b.bbox.y * zoomFactor;
+          const bw = b.bbox.width * zoomFactor;
+          const bh = b.bbox.height * zoomFactor;
+
+          ctx.strokeStyle = "#60a5fa";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(bx, by, bw, bh);
+          ctx.fillStyle = "#60a5fa";
+          ctx.font = "10px sans-serif";
+          ctx.fillText(`Blob #${b.id} (${b.areaPx}px)`, bx, Math.max(10, by - 2));
+        }
+      }
+
+      const debugCaliper = (
+        settings.params as {
+          debug?: {
+            edges?: Array<{
+              canvasCoordinate: { x: number; y: number };
+              polarity: string;
+              subPixelPos: number;
+            }>;
+            measuredWidthPx?: number;
+            leadPitchMeanPx?: number;
+            metricUnit?: string;
+          };
+        }
+      )?.debug;
+
+      if (
+        Array.isArray(debugCaliper?.edges) &&
+        debugCaliper.edges.length > 0
+      ) {
+        for (const edge of debugCaliper.edges) {
+          const ex = edge.canvasCoordinate.x * zoomFactor;
+          const ey = edge.canvasCoordinate.y * zoomFactor;
+
+          ctx.strokeStyle =
+            edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ex, ey - 8);
+          ctx.lineTo(ex, ey + 8);
+          ctx.stroke();
+
+          ctx.fillStyle =
+            edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (debugCaliper.edges.length >= 2) {
+          const first = debugCaliper.edges[0];
+          const last = debugCaliper.edges[debugCaliper.edges.length - 1];
+          const x1 = first.canvasCoordinate.x * zoomFactor;
+          const x2 = last.canvasCoordinate.x * zoomFactor;
+          const yPos = (first.canvasCoordinate.y - 14) * zoomFactor;
+
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x1, yPos);
+          ctx.lineTo(x2, yPos);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x1, yPos - 4);
+          ctx.lineTo(x1, yPos + 4);
+          ctx.moveTo(x2, yPos - 4);
+          ctx.lineTo(x2, yPos + 4);
+          ctx.stroke();
+
+          const label =
+            typeof debugCaliper.measuredWidthPx === "number"
+              ? `${debugCaliper.measuredWidthPx.toFixed(1)} px`
+              : "";
+
+          if (label) {
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "bold 10px monospace";
+            const midX = (x1 + x2) / 2;
+            ctx.fillText(label, midX - 18, Math.max(12, yPos - 3));
+          }
+        }
+      }
+
+      ctx.restore();
+    }
+  }, [
+    loadedImage,
+    zoomFactor,
+    settings.searchRegion,
+    settings.params,
+    settings.id,
+    settings.name,
+    viewModes?.results,
+  ]);
 
   useEffect(() => {
     const el = canvasRef.current;
@@ -174,6 +389,12 @@ export function StandardCanvas({
           ref={imageCanvasRef}
           className="h-full w-full select-none"
           style={{ objectFit: "fill" }}
+        />
+        <img
+          src={imageRef}
+          alt="Registered reference"
+          className="hidden pointer-events-none"
+          tabIndex={-1}
         />
         {hasGrid ? (
           <div

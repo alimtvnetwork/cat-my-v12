@@ -19,6 +19,7 @@ const TONE: Record<ValidationStatusType, { bg: string; text: string; label: stri
   [ValidationStatusType.Fail]: { bg: "bg-ca-ng/15", text: "text-ca-ng", label: "FAIL" },
   [ValidationStatusType.Warn]: { bg: "bg-ca-warn/15", text: "text-ca-warn", label: "WARN" },
   [ValidationStatusType.Pending]: { bg: "bg-ca-panel-2", text: "text-ca-ink-muted", label: "..." },
+  [ValidationStatusType.Skipped]: { bg: "bg-ca-panel-2/50", text: "text-ca-ink-muted", label: "SKIP" },
 };
 
 export function ValidationChip({ ruleId }: { ruleId: string }): React.JSX.Element | null {

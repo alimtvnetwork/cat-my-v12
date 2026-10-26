@@ -39,7 +39,7 @@ export interface WorkpieceRoi {
 }
 
 export interface RuleValidationDetail {
-  status: "pass" | "fail" | "warn" | "pending";
+  status: "pass" | "fail" | "warn" | "pending" | "skipped";
   score?: number;
   message?: string;
 }
@@ -59,7 +59,7 @@ export interface VisualToolWorkpieceCanvasProps {
   onLaunchPatternTuner?: () => void;
   onPatternBoxesChange?: (boxes: WhiteBoxMark[], constellation: any[]) => void;
   actionSlot?: React.ReactNode;
-  validationStatus?: "pass" | "fail" | "warn" | "pending";
+  validationStatus?: "pass" | "fail" | "warn" | "pending" | "skipped";
   validationScore?: number;
   validationResultsMap?: Record<string, RuleValidationDetail>;
   onRunAnalysis?: () => void;
@@ -109,7 +109,7 @@ function drawCompletePatternOverlay(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -131,10 +131,10 @@ function drawCompletePatternOverlay(
     drawToleranceZones(ctx, geometry.toleranceZones);
   }
 
-  drawPatternBoxes(ctx, boxes, excludedNumbers, status);
+  drawPatternBoxes(ctx, boxes, excludedNumbers, status === "skipped" ? "pending" : status);
 
   if (geometry) {
-    drawFormulatedEnvelope(ctx, geometry, status);
+    drawFormulatedEnvelope(ctx, geometry, status === "skipped" ? "pending" : status);
   }
 }
 
@@ -142,7 +142,7 @@ function drawRealBoxes(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -162,7 +162,7 @@ function drawGreyscaleSimulationPatternOverlay(
   ctx: CanvasRenderingContext2D,
   ruleRoi: WorkpieceRoi,
   boxes: readonly WhiteBoxMark[],
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   boxResults?: any[],
   isAnalyzeMode = false,
@@ -313,7 +313,7 @@ function drawConstellationPattern(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
   boxCount: number,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   imageWidth = 960,
   imageHeight = 540,
 ): void {
@@ -391,7 +391,7 @@ function drawCornerBrackets(
 function drawPin1Reticle(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   pin1Config?: Record<string, any>,
   ruleResult?: any,
@@ -581,7 +581,7 @@ function drawPin1Reticle(
 function drawCaliperRuler(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
   const midY = roi.y + roi.height / 2;
@@ -609,7 +609,7 @@ function drawCaliperRuler(
 function drawDefectScanGrid(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
 
@@ -641,6 +641,52 @@ function drawDefectScanGrid(
   ctx.font = "bold 9px monospace";
   const label = status === "fail" ? "ANOMALY DETECTED" : "ZERO DEFECTS";
   ctx.fillText(label, roi.x + 6, roi.y + roi.height - 6);
+}
+
+function drawAreaGateRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(16, 185, 129, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#10b981";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("AREA GATE (T101)", roi.x + 6, roi.y + 14);
+  ctx.restore();
+}
+
+function drawBlobInspectionRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(139, 92, 246, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(139, 92, 246, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#8b5cf6";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("BLOB EXTRACTION (T109)", roi.x + 6, roi.y + 14);
+  ctx.restore();
 }
 
 function drawScanningLaser(ctx: CanvasRenderingContext2D, roi: WorkpieceRoi): void {
@@ -1464,7 +1510,6 @@ export function VisualToolWorkpieceCanvas({
           (isSelected && isPatternMatching);
 
         const isRulePin1 =
-          effectiveToolCode === "T103" ||
           effectiveToolCode === "T105" ||
           effectiveToolCode === "T117" ||
           ruleNameLower.includes("pin1") ||
@@ -1519,9 +1564,25 @@ export function VisualToolWorkpieceCanvas({
           }
         }
 
+        const isRuleArea =
+          effectiveToolCode === "T101" ||
+          ruleNameLower.includes("area") ||
+          ruleNameLower.includes("pixel intensity");
+
+        const isRuleBlob =
+          effectiveToolCode === "T109" ||
+          ruleNameLower.includes("blob") ||
+          ruleNameLower.includes("bridge");
+
         const isRuleDefect =
+          effectiveToolCode === "T107" ||
+          effectiveToolCode === "T108" ||
           effectiveToolCode === "T118" ||
           ruleNameLower.includes("defect") ||
+          ruleNameLower.includes("scratch") ||
+          ruleNameLower.includes("crack") ||
+          ruleNameLower.includes("void") ||
+          ruleNameLower.includes("porosity") ||
           ruleNameLower.includes("flaw");
 
         if (isRulePattern) {
@@ -1568,7 +1629,7 @@ export function VisualToolWorkpieceCanvas({
                 ctx,
                 pocket.region,
                 finalBoxes,
-                pStatus,
+                (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
                 pScore,
                 pBoxResults,
                 isAnalyzeMode,
@@ -1686,7 +1747,7 @@ export function VisualToolWorkpieceCanvas({
                 drawPin1Reticle(
                   ctx,
                   markerRoi,
-                  pStatus,
+                  (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
                   pScore,
                   markerPinCfg,
                   markerResult,
@@ -1794,6 +1855,10 @@ export function VisualToolWorkpieceCanvas({
           drawCaliperRuler(ctx, ruleRoi, effectiveStatus);
         } else if (isRuleDefect) {
           drawDefectScanGrid(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleArea) {
+          drawAreaGateRegion(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleBlob) {
+          drawBlobInspectionRegion(ctx, ruleRoi, effectiveStatus);
         }
 
         if (isAnalyzing && isSelected) {

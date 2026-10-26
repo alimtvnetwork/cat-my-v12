@@ -5,6 +5,7 @@ import {
   createDefaultPatternSearchSettings,
   type PatternSearchSettings,
 } from "@/domain/vision/pattern-search";
+import { ShapeType } from "@/domain/vision/shapes";
 import { WhiteBoxMarkingTool } from "@/components/vision/WhiteBoxMarkingTool";
 import { Pin1MarkingTool } from "@/components/vision/standard/tools/pin1-config/Pin1MarkingTool";
 import { StandardInspectionToolDispatcher } from "@/components/vision/standard/tools/StandardInspectionToolDispatcher";
@@ -62,8 +63,34 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   activeBoxCount = Math.max(1, referenceBoxes.length);
   totalBoxCount = Math.max(1, referenceBoxes.length);
 
+  const ruleParams = { ...(rule.params ?? {}) };
+  const initialJudgmentItems = (ruleParams.judgmentItems as unknown[] | undefined) ?? [
+    {
+      id: "j1",
+      name: "Measured Value",
+      unit: "px",
+      lowerLimit: 0,
+      measured: 50,
+      upperLimit: 100,
+      status: "PASS",
+    },
+    {
+      id: "j2",
+      name: "Correlation / Score",
+      unit: "%",
+      lowerLimit: 70,
+      measured: 94.2,
+      upperLimit: 100,
+      status: "PASS",
+    },
+  ];
+
   return {
     ...base,
+    params: {
+      ...ruleParams,
+      judgmentItems: initialJudgmentItems,
+    },
     toolCode,
     threshold,
     marginPx,
@@ -91,6 +118,8 @@ export interface RuleToolConfigPanelProps {
   onExit: () => void;
   /** Called after an apply with the updated rule list so hosts can sync live state. */
   onRuleApplied?: (rulesetId: string, rules: EditorRule[]) => void;
+  /** Workpiece inspection image reference from the host project. */
+  imageRef?: string;
 }
 
 /**
@@ -104,15 +133,16 @@ export function RuleToolConfigPanel({
   rule,
   onExit,
   onRuleApplied,
+  imageRef,
 }: RuleToolConfigPanelProps): JSX.Element {
   const initialSettings = useMemo(() => {
     const ruleImageRef =
       typeof (rule.params as any)?.imageRef === "string"
         ? ((rule.params as any).imageRef as string)
-        : undefined;
+        : imageRef;
 
     return buildSettingsFromRule(rule, ruleImageRef);
-  }, [rule]);
+  }, [rule, imageRef]);
 
   const [settings, setSettings] = useState<any>(initialSettings);
 
@@ -291,6 +321,17 @@ export function RuleToolConfigPanel({
     const updatedParams = {
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
+      searchRegion: {
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      },
+      searchRegionJson: JSON.stringify({
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      }),
+      ...(settings.masks
+        ? { masks: settings.masks, masksJson: JSON.stringify(settings.masks) }
+        : {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
       ...((settings as any)?.imageRef ? { imageRef: (settings as any).imageRef } : {}),
       x: ruleX,
@@ -314,23 +355,36 @@ export function RuleToolConfigPanel({
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
   const normalizedName = rule.name.toLowerCase();
 
+  const hasStandardToolCode =
+    toolCode === "T101" ||
+    toolCode === "T104" ||
+    toolCode === "T107" ||
+    toolCode === "T108" ||
+    toolCode === "T109" ||
+    toolCode === "T110" ||
+    toolCode === "T111" ||
+    toolCode === "T103" ||
+    toolCode === "T106" ||
+    toolCode === "T112" ||
+    toolCode === "M301";
+
   const isGreyscalePattern =
-    toolCode === "T102" ||
-    toolCode === "T116" ||
-    toolCode === "greyscale_pattern_match" ||
-    normalizedName.includes("pattern match") ||
-    normalizedName.includes("greyscale pattern") ||
-    normalizedName.includes("white box");
+    !hasStandardToolCode &&
+    (toolCode === "T102" ||
+      toolCode === "T116" ||
+      toolCode === "greyscale_pattern_match" ||
+      normalizedName.includes("pattern match") ||
+      normalizedName.includes("greyscale pattern") ||
+      normalizedName.includes("white box"));
 
   const isPin1 =
-    toolCode === "T103" ||
-    toolCode === "T105" ||
-    toolCode === "T117" ||
-    toolCode === "pin1_config" ||
-    toolCode === "pin1_orientation" ||
-    normalizedName.includes("orientation") ||
-    normalizedName.includes("pin 1") ||
-    normalizedName.includes("pin1");
+    !hasStandardToolCode &&
+    (toolCode === "T105" ||
+      toolCode === "T117" ||
+      toolCode === "pin1_config" ||
+      toolCode === "pin1_orientation" ||
+      normalizedName.includes("pin 1") ||
+      normalizedName.includes("pin1"));
 
   const effectiveImageRef =
     typeof (settings as any)?.imageRef === "string"
@@ -376,6 +430,9 @@ export function RuleToolConfigPanel({
           onChange={setSettings}
           onOk={handleApplyStandardTool}
           onCancel={onExit}
+          imageRef={effectiveImageRef}
+          onImageRegistered={handleImageRegistered}
+          actionButtonLabel="OK - Apply & Return"
         />
       )}
     </div>
