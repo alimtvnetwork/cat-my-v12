@@ -36,6 +36,7 @@ import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
 import { addRulesetPanelBus } from "@/lib/editor/selection/add-ruleset-panel-bus";
 import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus";
+import { getTourFloatingOptions, getTourTooltipPlacement } from "./tour-placement";
 
 const TOUR_PROJECT_NAME = "demo";
 const TOUR_RULESET_NAME = "demoset";
@@ -1044,7 +1045,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-inspection-program']",
-        placement: "auto",
+        // Tall left sidebar: only "right" has room. "auto" flipped to
+        // top/bottom in the past, where there is no room, and cut off.
+        placement: "right",
         title: "Configured rules",
         content:
           "The project contains exactly two rules: PIN1 Orientation and Greyscale Pattern Matching.",
@@ -1093,18 +1096,30 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     [],
   );
 
-  // One placement for every element-anchored step, and one scroll source.
-  // Per-step "auto"/"left"/"right"/"top" placements plus Joyride's own
-  // scrolling made the tooltip jump between steps; "bottom" everywhere
-  // (final body step stays "top") and skipScroll keep it in one place.
+  // Placement policy, and why it is not "bottom" for every step.
+  // Bottom works for short targets, but steps 15, 18 and 19 anchor to
+  // full-height panels (the right config panel, and the left inspection
+  // program sidebar). There is no room above or below a full-height
+  // panel, so a bottom tooltip flips to the top, runs out of the
+  // viewport, and on step 15 lands under the fixed Stop button at the
+  // top-right. Those three steps therefore keep a side placement
+  // (left for the right panel, right for the left sidebar), where the
+  // tooltip sits at the panel's vertical centre, inside the viewport,
+  // and flipping is disabled so it can never jump back to the top.
+  // Every other element step stays "bottom", the final body step "top".
   const joyrideSteps = useMemo(
     () =>
-      steps.map((step) => ({
-        ...step,
-        placement: step.target === "body" ? "top" : "bottom",
-        skipBeacon: true,
-        skipScroll: true,
-      })),
+      steps.map((step) => {
+        const floatingOptions = getTourFloatingOptions(step);
+
+        return {
+          ...step,
+          placement: getTourTooltipPlacement(step),
+          skipBeacon: true,
+          skipScroll: true,
+          ...(floatingOptions ? { floatingOptions } : {}),
+        };
+      }),
     [steps],
   );
 
