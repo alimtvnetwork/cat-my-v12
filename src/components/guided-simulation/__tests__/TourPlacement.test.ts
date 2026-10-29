@@ -39,6 +39,25 @@ describe("tour tooltip placement for tall targets", () => {
     expect(getTourFloatingOptions(s)).toEqual({ flipOptions: false });
   });
 
+  it("keeps step 8 (Configure ruleset) on the right, with no flipping", () => {
+    const s = step({
+      target: "[data-tour='simulation-ruleset-create-panel']",
+      placement: "right",
+    });
+    expect(getTourTooltipPlacement(s)).toBe("right");
+    expect(getTourFloatingOptions(s)).toEqual({ flipOptions: false });
+  });
+
+  it("keeps step 9 (Create ruleset) on the right, with no flipping", () => {
+    const s = step({
+      target: "[data-tour='simulation-ruleset-create-submit']",
+      placement: "right",
+      actionKey: "create-ruleset",
+    });
+    expect(getTourTooltipPlacement(s)).toBe("right");
+    expect(getTourFloatingOptions(s)).toEqual({ flipOptions: false });
+  });
+
   it("respects explicit step placement or defaults to bottom, and body step on top", () => {
     const defaultStep = step({ actionKey: "go-project-list" });
     expect(getTourTooltipPlacement(defaultStep)).toBe("bottom");

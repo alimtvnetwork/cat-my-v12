@@ -971,7 +971,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-panel']",
-        placement: "top",
+        placement: "right",
         title: "Configure ruleset",
         content:
           "Name the ruleset demoset. This is only a rule category, not an image registration step.",
@@ -979,7 +979,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-submit']",
-        placement: "top",
+        placement: "right",
         title: "Create ruleset",
         content: "Save demoset, then continue in the project workspace so rules can be added.",
         actionKey: "create-ruleset",

@@ -90,4 +90,16 @@ describe("SimulationPlayerBar", () => {
     fireEvent.change(slider, { target: { value: "12" } });
     expect(onChangeDwellTime).toHaveBeenCalledWith(12);
   });
+
+  it("applies cursor-pointer styling to all interactive buttons and slider", () => {
+    render(<SimulationPlayerBar {...defaultProps} onTakeOver={vi.fn()} />);
+
+    const buttons = screen.getAllByRole("button");
+    for (const btn of buttons) {
+      expect(btn.className).toContain("cursor-pointer");
+    }
+
+    const slider = screen.getByRole("slider");
+    expect(slider.className).toContain("cursor-pointer");
+  });
 });

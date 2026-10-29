@@ -24,6 +24,12 @@ export const TOUR_TALL_TARGET_ACTION_KEYS: readonly string[] = [
   "finish-pin1-config",
   "finish-greyscale-config",
   "focus-rules",
+  "create-ruleset",
+];
+
+export const TOUR_SIDE_PANEL_TARGETS: readonly string[] = [
+  "[data-tour='simulation-ruleset-create-panel']",
+  "[data-tour='simulation-ruleset-create-submit']",
 ];
 
 export function getTourTooltipPlacement(step: TourPlacementStep): Step["placement"] {
@@ -42,6 +48,10 @@ export function getTourFloatingOptions(
   step: TourPlacementStep,
 ): { flipOptions: false } | undefined {
   if (step.actionKey && TOUR_TALL_TARGET_ACTION_KEYS.includes(step.actionKey)) {
+    return { flipOptions: false };
+  }
+
+  if (typeof step.target === "string" && TOUR_SIDE_PANEL_TARGETS.includes(step.target)) {
     return { flipOptions: false };
   }
 
