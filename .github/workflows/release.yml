@@ -421,7 +421,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
-          draft: true
+          draft: false
           prerelease: ${{ contains(github.event.inputs.release_tag || github.ref_name, '-rc') || contains(github.event.inputs.release_tag || github.ref_name, '-beta') }}
           files: release/*
           fail_on_unmatched_files: true
