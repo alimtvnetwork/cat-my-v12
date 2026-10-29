@@ -8,6 +8,22 @@
 
 ---
 
+## [v4.112.54] - 2026-10-28
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.53] - 2026-10-27
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
 ## [v4.112.52] - 2026-10-24
 
 ### Added
