@@ -93,9 +93,22 @@ export function resolveIdParam(ns: IntAliasNamespace, param: string | undefined 
   const store = readStore();
   const b = store[ns];
 
-  if (!b) return param;
-  for (const [realId, alias] of Object.entries(b.map)) {
-    if (alias === n) return realId;
+  if (b) {
+    for (const [realId, alias] of Object.entries(b.map)) {
+      if (alias === n) return realId;
+    }
+  }
+
+  if (n === 1 && ns === IntAliasNamespaceType.Project) {
+    return "prj-smt-74hc595-line";
+  }
+
+  if (n === 1 && ns === IntAliasNamespaceType.Ruleset) {
+    return "rs-smt-74hc-production";
+  }
+
+  if (n === 2 && ns === IntAliasNamespaceType.Ruleset) {
+    return "rs-smt-74hc-empty-guard";
   }
 
   return param;

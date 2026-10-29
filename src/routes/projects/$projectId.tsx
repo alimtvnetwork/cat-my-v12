@@ -174,6 +174,21 @@ function useProjectStoreHydrated(): boolean {
 }
 
 function ProjectLoading() {
+  const { mode } = useUiMode();
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell activeNav="projects" title="Project" subtitle="Loading...">
+        <div className="flex flex-1 flex-col items-center justify-center p-6 gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+          <span className="font-mono text-xs uppercase tracking-widest text-slate-400 animate-pulse">
+            Loading project telemetry...
+          </span>
+        </div>
+      </StandardAppShell>
+    );
+  }
+
   return (
     <HmiShell title="Project">
       <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 gap-3">
@@ -188,65 +203,88 @@ function ProjectLoading() {
 
 function ProjectError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  const { mode } = useUiMode();
+
   useEffect(() => {
     console.error("[projects/$projectId] error boundary", error);
     reportLovableError(error, { boundary: "projects_$projectId_error_component" });
   }, [error]);
 
-  return (
-    <HmiShell title="Project">
-      <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-        <div className="rounded-2xl border border-rose-500/20 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
-          <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-rose-400">
-            This project didn't load
-          </h1>
-          <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">{error.message}</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                router.invalidate();
-                reset();
-              }}
-              className="rounded-lg bg-ca-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:brightness-110"
-            >
-              Try again
-            </button>
-            <Link
-              to="/projects"
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-ca-ink hover:bg-white/10"
-            >
-              All projects
-            </Link>
-          </div>
-        </div>
-      </div>
-    </HmiShell>
-  );
-}
-
-function ProjectNotFound() {
-  const { projectId } = Route.useParams();
-
-  return (
-    <HmiShell title="Project not found">
-      <div className="flex flex-1 flex-col items-center justify-center p-hmi-6 text-center">
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
-          <h1 className="font-display text-hmi-title font-extrabold uppercase tracking-wide text-ca-ink">
-            Project not found
-          </h1>
-          <p className="mt-hmi-2 text-hmi-body text-ca-ink-muted">
-            No project matches <span className="font-mono text-ca-primary">{projectId}</span> in
-            this browser.
-          </p>
+  const content = (
+    <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+      <div className="rounded-2xl border border-rose-500/20 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
+        <h1 className="font-display text-base font-extrabold uppercase tracking-wide text-rose-400">
+          This project didn't load
+        </h1>
+        <p className="mt-2 text-xs text-slate-400">{error.message}</p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="rounded-lg bg-cyan-500 px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:brightness-110"
+          >
+            Try again
+          </button>
           <Link
             to="/projects"
-            className="mt-6 inline-flex rounded-lg bg-ca-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-ca-primary/20 transition hover:brightness-110"
+            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-200 hover:bg-white/10"
           >
             All projects
           </Link>
         </div>
       </div>
-    </HmiShell>
+    </div>
   );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell activeNav="projects" title="Project Error" subtitle="Load Failed">
+        {content}
+      </StandardAppShell>
+    );
+  }
+
+  return <HmiShell title="Project">{content}</HmiShell>;
+}
+
+function ProjectNotFound() {
+  const { projectId } = Route.useParams();
+  const { mode } = useUiMode();
+
+  const content = (
+    <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+      <div className="rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl shadow-2xl max-w-md w-full">
+        <h1 className="font-display text-base font-extrabold uppercase tracking-wide text-slate-100">
+          Project not found
+        </h1>
+        <p className="mt-2 text-xs text-slate-400">
+          No project matches <span className="font-mono text-cyan-400">{projectId}</span> in this
+          browser.
+        </p>
+        <Link
+          to="/projects"
+          className="mt-6 inline-flex rounded-lg bg-cyan-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
+        >
+          All projects
+        </Link>
+      </div>
+    </div>
+  );
+
+  if (mode === UiModeType.Standard) {
+    return (
+      <StandardAppShell
+        activeNav="projects"
+        title="Project not found"
+        subtitle={`ID: ${projectId}`}
+      >
+        {content}
+      </StandardAppShell>
+    );
+  }
+
+  return <HmiShell title="Project not found">{content}</HmiShell>;
 }
