@@ -239,3 +239,6 @@ Every playbook starts with section 1 (Read First) and section 3 (Before You Do X
 - UI: `src/components/data-source/DataSourceToggle.tsx`; Settings card in `src/routes/settings.index.tsx` (Data source group).
 - Seed integration: `src/lib/seed/index.ts` reads `resolveBackendUrl("/api/seed")` when the seed provider is switched to `remote`.
 - Write gate: `src/lib/data-source/gate.ts` (`runBackendWrite`) is the single seam every mutating call must pass through.
+- .ai-memory/memory/readme.md
+- .ai-memory/memory/learned/01-recent-session-2026-10-29.md
+- .ai-memory/plans/readme.md
