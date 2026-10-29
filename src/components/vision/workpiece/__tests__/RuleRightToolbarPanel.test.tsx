@@ -43,7 +43,6 @@ describe("RuleRightToolbarPanel", () => {
     ruleset: mockRuleset as any,
     onUpdateRule: vi.fn(),
     onToggleHidden: vi.fn(),
-    onOpenDeepConfig: vi.fn(),
     onClose: vi.fn(),
     isEvaluating: false,
     onEvaluateSingleRule: vi.fn(),
@@ -127,5 +126,32 @@ describe("RuleRightToolbarPanel", () => {
     fireEvent.click(closeBtn);
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("renders dedicated Pin 1 configuration tools when a Pin 1 rule is selected", () => {
+    const pin1Rule: EditorRule = {
+      ...mockRule,
+      id: "pin1-rule",
+      name: "Pin 1 Orientation Config",
+      params: {
+        toolCode: "T105",
+        thresholdLuma: 42,
+        tolerancePx: 20,
+        expectedDiameterPx: 26,
+        minCircularityPct: 70,
+      } as any,
+    };
+
+    render(<RuleRightToolbarPanel {...defaultProps} rule={pin1Rule} />);
+
+    expect(screen.getByText("Pin 1 Configuration Tools")).toBeDefined();
+    expect(screen.getByText("Luminance Threshold")).toBeDefined();
+    expect(screen.getByText("42")).toBeDefined();
+    expect(screen.getByText("Position Tolerance (± px)")).toBeDefined();
+    expect(screen.getByText("20 px")).toBeDefined();
+    expect(screen.getByText("Expected Hole Diameter")).toBeDefined();
+    expect(screen.getByText("26 px")).toBeDefined();
+    expect(screen.getByText("Min Circularity %")).toBeDefined();
+    expect(screen.getByText("70%")).toBeDefined();
   });
 });

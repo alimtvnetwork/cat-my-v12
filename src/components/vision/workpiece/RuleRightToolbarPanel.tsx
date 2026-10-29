@@ -17,7 +17,6 @@ import {
   Sliders,
   Trash2,
   Type,
-  Wand2,
   X,
   XCircle,
   type LucideIcon,
@@ -31,7 +30,6 @@ export interface RuleRightToolbarPanelProps {
   ruleset: RuleSet | null;
   onUpdateRule: (updatedRule: EditorRule) => void;
   onToggleHidden: (ruleId: string) => void;
-  onOpenDeepConfig?: (ruleId: string) => void;
   onClose: () => void;
   validationResult?: ValidationResult;
   isEvaluating?: boolean;
@@ -86,7 +84,6 @@ function RuleRightToolbarPanelContent({
   ruleset,
   onUpdateRule,
   onToggleHidden,
-  onOpenDeepConfig,
   onClose,
   validationResult,
   isEvaluating = false,
@@ -96,6 +93,11 @@ function RuleRightToolbarPanelContent({
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const ToolIcon = getToolIcon(toolCode, rule.name);
   const isRuleHidden = Boolean(rule.isHidden);
+
+  const isPin1Rule =
+    toolCode === "T105" ||
+    rule.name.toLowerCase().includes("pin 1") ||
+    rule.name.toLowerCase().includes("pin1");
 
   // Local state for ROI inputs to avoid jitter while typing
   const [roiX, setRoiX] = useState(String(Math.round(rule.x)));
@@ -130,7 +132,30 @@ function RuleRightToolbarPanelContent({
     [rule, onUpdateRule],
   );
 
-  // Tool parameter helpers
+  // Pin 1 specific parameter values
+  const pin1Threshold =
+    typeof rule.params?.thresholdLuma === "number"
+      ? rule.params.thresholdLuma
+      : typeof rule.params?.greyscaleLevel === "number"
+        ? rule.params.greyscaleLevel
+        : typeof rule.params?.threshold === "number"
+          ? rule.params.threshold
+          : 35;
+
+  const pin1TolerancePx =
+    typeof rule.params?.tolerancePx === "number" ? rule.params.tolerancePx : 25;
+
+  const pin1DiameterPx =
+    typeof rule.params?.expectedDiameterPx === "number" ? rule.params.expectedDiameterPx : 24;
+
+  const pin1MinCircularity =
+    typeof rule.params?.minCircularityPct === "number"
+      ? rule.params.minCircularityPct
+      : typeof (rule.params as any)?.minCircularityPercent === "number"
+        ? (rule.params as any).minCircularityPercent
+        : 75;
+
+  // General tool parameter helpers
   const greyscaleVal =
     typeof rule.params?.greyscaleLevel === "number"
       ? rule.params.greyscaleLevel
@@ -158,6 +183,39 @@ function RuleRightToolbarPanelContent({
       };
 
       onUpdateRule(nextRule);
+    },
+    [rule, onUpdateRule],
+  );
+
+  const handlePin1ThresholdChange = useCallback(
+    (val: number) => {
+      const nextParams = {
+        ...(rule.params ?? {}),
+        thresholdLuma: val,
+        greyscaleLevel: val,
+        threshold: val,
+      };
+
+      onUpdateRule({
+        ...rule,
+        params: nextParams,
+      });
+    },
+    [rule, onUpdateRule],
+  );
+
+  const handlePin1CircularityChange = useCallback(
+    (val: number) => {
+      const nextParams = {
+        ...(rule.params ?? {}),
+        minCircularityPct: val,
+        minCircularityPercent: val,
+      };
+
+      onUpdateRule({
+        ...rule,
+        params: nextParams,
+      });
     },
     [rule, onUpdateRule],
   );
@@ -340,100 +398,165 @@ function RuleRightToolbarPanelContent({
         </div>
 
         {/* Tool Parameters & Tuning */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-bold uppercase tracking-wider text-white/80 text-[11px]">
-              Tool Parameters
-            </span>
-            <Sliders size={13} className="text-cyan-400" />
-          </div>
-
-          {/* Greyscale / Threshold Slider */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-white/60">Greyscale Threshold</span>
-              <span className="font-mono font-bold text-cyan-300">{greyscaleVal}</span>
+        {isPin1Rule ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold uppercase tracking-wider text-white/80 text-[11px]">
+                Pin 1 Configuration Tools
+              </span>
+              <Sliders size={13} className="text-cyan-400" />
             </div>
-            <input
-              type="range"
-              min={0}
-              max={255}
-              value={greyscaleVal}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                handleParamChange("greyscaleLevel", val);
-                handleParamChange("threshold", val);
-              }}
-              className="h-1.5 w-full cursor-pointer accent-cyan-400"
-            />
-          </div>
 
-          {/* Tolerance */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-white/60">Tolerance (± px)</span>
-              <span className="font-mono font-bold text-cyan-300">{tolerancePx} px</span>
+            {/* Luminance Threshold */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Luminance Threshold</span>
+                <span className="font-mono font-bold text-cyan-300">{pin1Threshold}</span>
+              </div>
+              <input
+                type="range"
+                min={10}
+                max={255}
+                value={pin1Threshold}
+                onChange={(e) => handlePin1ThresholdChange(parseInt(e.target.value, 10))}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
             </div>
-            <input
-              type="range"
-              min={1}
-              max={40}
-              value={tolerancePx}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                handleParamChange("tolerancePx", val);
-              }}
-              className="h-1.5 w-full cursor-pointer accent-cyan-400"
-            />
-          </div>
 
-          {/* Margin */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-white/60">Search Margin (px)</span>
-              <span className="font-mono font-bold text-cyan-300">{marginPx} px</span>
+            {/* Position Tolerance */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Position Tolerance (± px)</span>
+                <span className="font-mono font-bold text-cyan-300">{pin1TolerancePx} px</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={60}
+                value={pin1TolerancePx}
+                onChange={(e) => handleParamChange("tolerancePx", parseInt(e.target.value, 10))}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
             </div>
-            <input
-              type="range"
-              min={0}
-              max={50}
-              value={marginPx}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                handleParamChange("marginPx", val);
-              }}
-              className="h-1.5 w-full cursor-pointer accent-cyan-400"
-            />
-          </div>
 
-          {/* Active Box Count */}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-white/60">Active Target Count</span>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={activeBoxCount}
-              onChange={(e) => {
-                const val = Math.max(1, parseInt(e.target.value, 10) || 1);
-                handleParamChange("activeBoxCount", val);
-              }}
-              className="w-16 rounded-md border border-white/15 bg-black/50 px-2 py-1 text-center font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
-            />
-          </div>
-        </div>
+            {/* Expected Hole Diameter */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Expected Hole Diameter</span>
+                <span className="font-mono font-bold text-cyan-300">{pin1DiameterPx} px</span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={80}
+                value={pin1DiameterPx}
+                onChange={(e) =>
+                  handleParamChange("expectedDiameterPx", parseInt(e.target.value, 10))
+                }
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
+            </div>
 
-        {/* Deep Configuration Launch Option */}
-        {onOpenDeepConfig ? (
-          <button
-            type="button"
-            onClick={() => onOpenDeepConfig(rule.id)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-cyan-300 transition hover:bg-cyan-500/20 hover:border-cyan-400/50 active:scale-95"
-          >
-            <Wand2 size={13} />
-            Launch Deep Pattern Tuner
-          </button>
-        ) : null}
+            {/* Min Circularity % */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Min Circularity %</span>
+                <span className="font-mono font-bold text-cyan-300">{pin1MinCircularity}%</span>
+              </div>
+              <input
+                type="range"
+                min={30}
+                max={100}
+                value={pin1MinCircularity}
+                onChange={(e) => handlePin1CircularityChange(parseInt(e.target.value, 10))}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold uppercase tracking-wider text-white/80 text-[11px]">
+                Tool Parameters
+              </span>
+              <Sliders size={13} className="text-cyan-400" />
+            </div>
+
+            {/* Greyscale / Threshold Slider */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Greyscale Threshold</span>
+                <span className="font-mono font-bold text-cyan-300">{greyscaleVal}</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={255}
+                value={greyscaleVal}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  handleParamChange("greyscaleLevel", val);
+                  handleParamChange("threshold", val);
+                }}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
+            </div>
+
+            {/* Tolerance */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Tolerance (± px)</span>
+                <span className="font-mono font-bold text-cyan-300">{tolerancePx} px</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={40}
+                value={tolerancePx}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  handleParamChange("tolerancePx", val);
+                }}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
+            </div>
+
+            {/* Margin */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-white/60">Search Margin (px)</span>
+                <span className="font-mono font-bold text-cyan-300">{marginPx} px</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={50}
+                value={marginPx}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  handleParamChange("marginPx", val);
+                }}
+                className="h-1.5 w-full cursor-pointer accent-cyan-400"
+              />
+            </div>
+
+            {/* Active Box Count */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] text-white/60">Active Target Count</span>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={activeBoxCount}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value, 10) || 1);
+                  handleParamChange("activeBoxCount", val);
+                }}
+                className="w-16 rounded-md border border-white/15 bg-black/50 px-2 py-1 text-center font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Sticky Action Bar */}

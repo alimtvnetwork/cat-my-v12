@@ -28,7 +28,6 @@ import { VisualToolWorkpieceCanvas } from "./index";
 import type { WorkpieceRoi } from "./VisualToolWorkpieceCanvas";
 import { AnalyzeImageToolbar } from "./AnalyzeImageToolbar";
 import { RuleRightToolbarPanel } from "./RuleRightToolbarPanel";
-import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 import { AddRulePanel } from "./AddRulePanel";
 import { AddRulesetPanel } from "./AddRulesetPanel";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
@@ -161,7 +160,6 @@ export function WorkpieceAnalyzeWorkspace({
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   /** Rule id whose tool configuration is open inline (right viewport), if any. */
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
-  const [isDeepConfigOpen, setIsDeepConfigOpen] = useState(false);
   const [evaluatingRuleId, setEvaluatingRuleId] = useState<string | null>(null);
   /** Left program sidebar collapsed into a slim rail so the canvas gets the space. */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -348,7 +346,6 @@ export function WorkpieceAnalyzeWorkspace({
       setSelectedIds(targetSelected);
     }
 
-    setIsDeepConfigOpen(false);
     setConfigRuleId(null);
     setAddRuleRulesetId(null);
     setIsAddingRuleset(false);
@@ -384,7 +381,6 @@ export function WorkpieceAnalyzeWorkspace({
 
       if (!target) return;
 
-      setIsDeepConfigOpen(false);
       setConfigRuleId(null);
       setIsAddingRuleset(false);
       setAddRuleRulesetId(target);
@@ -395,7 +391,6 @@ export function WorkpieceAnalyzeWorkspace({
   const handleStartAddRuleset = useCallback(
     (initialName?: string) => {
       setDraftRulesetName(initialName ?? `Ruleset ${(rulesets?.length ?? 0) + 1}`);
-      setIsDeepConfigOpen(false);
       setConfigRuleId(null);
       setAddRuleRulesetId(null);
       setIsAddingRuleset(true);
@@ -475,7 +470,6 @@ export function WorkpieceAnalyzeWorkspace({
       setSelectedIds([ruleId]);
       useRulesStore.getState().setSelection([ruleId], "tree.configure");
       setConfigRuleId(ruleId);
-      setIsDeepConfigOpen(true);
       setAddRuleRulesetId(null);
       setIsAddingRuleset(false);
     },
@@ -494,33 +488,8 @@ export function WorkpieceAnalyzeWorkspace({
   );
 
   const handleCloseRuleConfig = useCallback(() => {
-    setIsDeepConfigOpen(false);
     setConfigRuleId(null);
   }, []);
-
-  const handleConfigRuleApplied = useCallback(
-    (appliedRulesetId: string, nextRules: EditorRule[]) => {
-      if (appliedRulesetId === ruleset?.id) {
-        useRulesStore.getState().replaceAll(nextRules, selectedIds, []);
-      }
-    },
-    [ruleset?.id, selectedIds],
-  );
-
-  const configRule = useMemo(() => {
-    if (!configRuleId) return null;
-
-    return (
-      rules.find((r) => r.id === configRuleId) ??
-      projectOverlayRules.find((r) => r.id === configRuleId) ??
-      null
-    );
-  }, [configRuleId, rules, projectOverlayRules]);
-
-  const configOwnerRuleset = useMemo(
-    () => (configRule ? (ruleOwnerById.get(configRule.id) ?? ruleset) : null),
-    [configRule, ruleOwnerById, ruleset],
-  );
 
   // Tool tune requests (e.g. from a tool's own config screen) open the tool
   // configuration inline in this screen instead of navigating away.
@@ -537,7 +506,6 @@ export function WorkpieceAnalyzeWorkspace({
       if (message.type === "open") {
         handleOpenAddRule(message.rulesetId);
       } else {
-        setIsDeepConfigOpen(false);
         setConfigRuleId(null);
         setAddRuleRulesetId(null);
       }
@@ -1724,46 +1692,13 @@ export function WorkpieceAnalyzeWorkspace({
                     )}
                   </div>
 
-                  {/* Right-Hand Side Toolbar: Deep Configuration OR Quick Parameter Panel */}
-                  {isDeepConfigOpen && configRule && configOwnerRuleset ? (
-                    <div className="flex h-full w-88 xl:w-96 shrink-0 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-[#0c1017] shadow-2xl">
-                      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Wand2 size={13} className="shrink-0 text-cyan-300" />
-                          <span
-                            className="truncate font-sans text-xs font-bold uppercase tracking-wider text-white/90"
-                            title={configRule.name}
-                          >
-                            Deep Tuner: {configRule.name}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleCloseRuleConfig}
-                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
-                        >
-                          <X size={12} />
-                          Exit
-                        </button>
-                      </div>
-                      <div className="min-h-0 flex-1 overflow-auto">
-                        <RuleToolConfigPanel
-                          key={configRule.id}
-                          ruleset={configOwnerRuleset}
-                          rule={configRule}
-                          imageRef={project?.inspectionImageRef}
-                          onExit={handleCloseRuleConfig}
-                          onRuleApplied={handleConfigRuleApplied}
-                        />
-                      </div>
-                    </div>
-                  ) : activeRule ? (
+                  {/* Right-Hand Side Toolbar: Tool Configuration Panel */}
+                  {activeRule ? (
                     <RuleRightToolbarPanel
                       rule={activeRule}
                       ruleset={ruleOwnerById.get(activeRule.id) ?? ruleset}
                       onUpdateRule={railHandlers.onUpdateRule}
                       onToggleHidden={railHandlers.onToggleHidden}
-                      onOpenDeepConfig={handleOpenRuleConfig}
                       onClose={() => {
                         setSelectedIds([]);
                         setConfigRuleId(null);
