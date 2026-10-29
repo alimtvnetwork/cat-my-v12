@@ -268,6 +268,15 @@ function hasTourTarget(step: TourStep): boolean {
     return true;
   }
 
+  if (step.target.includes("rule-config-controls")) {
+    if (
+      document.querySelector(step.target) !== null ||
+      document.querySelector("[data-tour='rule-right-toolbar-panel']") !== null
+    ) {
+      return true;
+    }
+  }
+
   return document.querySelector(step.target) !== null;
 }
 
@@ -1021,7 +1030,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 7000,
       },
       {
-        target: "[data-tour='rule-config-controls']",
+        target: "[data-tour='rule-config-controls'], [data-tour='rule-right-toolbar-panel']",
         placement: "left",
         title: "Set PIN1 region",
         content:
@@ -1049,7 +1058,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         autoMs: 7000,
       },
       {
-        target: "[data-tour='rule-config-controls']",
+        target: "[data-tour='rule-config-controls'], [data-tour='rule-right-toolbar-panel']",
         placement: "left",
         title: "Set Greyscale region",
         content:
@@ -1623,6 +1632,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     const step = steps[stepIndex];
     let isCancelled = false;
     isStepAdvancingRef.current = false;
+    const waitStartedAt = Date.now();
     clearTimer();
 
     const beginStep = () => {
@@ -1631,9 +1641,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (!hasTourTarget(step)) {
-        targetWaitTimerRef.current = window.setTimeout(beginStep, 150);
+        if (Date.now() - waitStartedAt > 2000) {
+          // Safety fallback: if target wait exceeds 2s, proceed with step so countdown timer never freezes
+        } else {
+          targetWaitTimerRef.current = window.setTimeout(beginStep, 150);
 
-        return;
+          return;
+        }
       }
 
       if (step.actionPhase !== "exit") {

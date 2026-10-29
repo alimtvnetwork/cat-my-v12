@@ -316,7 +316,10 @@ function RuleRightToolbarPanelContent({
       </div>
 
       {/* Scrollable Content */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-3.5 space-y-4 font-sans text-xs">
+      <div
+        data-tour="rule-config-controls"
+        className="min-h-0 flex-1 overflow-y-auto p-3.5 space-y-4 font-sans text-xs"
+      >
         {/* Status & Evaluation banner */}
         <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
