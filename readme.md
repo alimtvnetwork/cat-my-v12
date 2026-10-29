@@ -184,3 +184,9 @@ Before submitting contributions:
 <p align="center">
   <sub><em>Auto-generated specification root README compliant with §9 checklist.</em></sub>
 </p>
+
+## Memory
+
+- .ai-memory/memory/readme.md
+- .ai-memory/memory/learned/01-recent-session-2026-10-29.md
+- .ai-memory/plans/readme.md

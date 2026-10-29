@@ -45,3 +45,5 @@ This file tracks recurring forbidden patterns that the AI must never repeat.
 
 - Never skip cross-verifying the pending plans index with the actual file system in \.ai-memory/plans/pending/\. Do not assume all index entries exist on disk.
 - Never commit temporary scratchfiles (\ emp.txt\, \ emp2.txt\) from agent loops.
+- Do not store a personal access token inside a git remote URL. Use SSH.
+- Do not commit Go coverage profiles or SQLite `-shm` and `-wal` sidecars.
