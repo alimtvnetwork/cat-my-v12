@@ -18,6 +18,7 @@ import { AltMnemonicLayer } from "@/components/shortcuts/AltMnemonicLayer";
 import { InputModalityTracker } from "@/hooks/useInputModality";
 import { InlineEditNavigationGuard } from "@/components/shell/InlineEditNavigationGuard";
 import { LiveAnnouncer } from "@/components/a11y/LiveAnnouncer";
+import { ActivityRecorderRoot } from "@/components/recorder/ActivityRecorderRoot";
 import { GlobalHomeAffordance } from "@/components/nav/GlobalHomeAffordance";
 import { AppShellNav } from "@/components/app-shell/nav";
 import { AppShellSidebar } from "@/components/app-shell/sidebar";
@@ -51,6 +52,7 @@ export function RootShellLayout({ children }: { children: ReactNode }) {
       <InputModalityTracker />
       <InlineEditNavigationGuard />
       <LiveAnnouncer />
+      <ActivityRecorderRoot />
     </>
   );
 }

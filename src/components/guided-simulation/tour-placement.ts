@@ -9,6 +9,10 @@ import type { Step } from "react-joyride";
  * full-height panel, so a bottom tooltip flips to the top, runs out of
  * the viewport, and on step 15 lands under the fixed Stop button at the
  * top-right. Those steps keep a side placement, with flipping disabled.
+ *
+ * All steps with explicit placement (e.g. "top" for modals, "left" for drawers,
+ * "right" for sidebars) are respected to prevent overlaps with the floating
+ * HUD bar at the bottom.
  */
 export interface TourPlacementStep {
   target: Step["target"];
@@ -27,7 +31,7 @@ export function getTourTooltipPlacement(step: TourPlacementStep): Step["placemen
     return "top";
   }
 
-  if (step.actionKey && TOUR_TALL_TARGET_ACTION_KEYS.includes(step.actionKey)) {
+  if (step.placement) {
     return step.placement;
   }
 

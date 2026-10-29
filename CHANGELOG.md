@@ -1,8 +1,17 @@
 # Changelog
 
+## [v4.113.0] - 2026-10-29
+
+### Added
+
+- Alim meeting agenda - image selection, right toolbar, rule toggle, simulation take over, bug recorder
+
+---
+
 ## [v4.112.52] - 2026-10-24
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -10,6 +19,7 @@
 ## [v4.112.51] - 2026-10-24
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -17,6 +27,7 @@
 ## [v4.112.50] - 2026-10-24
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -24,6 +35,7 @@
 ## [v4.112.49] - 2026-10-24
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -31,6 +43,7 @@
 ## [v4.112.48] - 2026-10-24
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -38,6 +51,7 @@
 ## [v4.112.47] - 2026-10-23
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -45,6 +59,7 @@
 ## [v4.112.46] - 2026-10-23
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -52,6 +67,7 @@
 ## [v4.112.45] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -59,6 +75,7 @@
 ## [v4.112.44] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -66,6 +83,7 @@
 ## [v4.112.43] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -73,6 +91,7 @@
 ## [v4.112.42] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -80,6 +99,7 @@
 ## [v4.112.41] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -87,6 +107,7 @@
 ## [v4.112.40] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -94,6 +115,7 @@
 ## [v4.112.39] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -101,6 +123,7 @@
 ## [v4.112.38] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -108,6 +131,7 @@
 ## [v4.112.37] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -115,6 +139,7 @@
 ## [v4.112.36] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -122,6 +147,7 @@
 ## [v4.112.35] - 2026-10-22
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -129,6 +155,7 @@
 ## [v4.112.34] - 2026-10-21
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -136,6 +163,7 @@
 ## [v4.112.33] - 2026-10-19
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -143,6 +171,7 @@
 ## [v4.112.32] - 2026-10-19
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -150,6 +179,7 @@
 ## [v4.112.31] - 2026-10-19
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -157,6 +187,7 @@
 ## [v4.112.30] - 2026-10-19
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -164,6 +195,7 @@
 ## [v4.112.29] - 2026-10-18
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -171,6 +203,7 @@
 ## [v4.112.28] - 2026-10-18
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -178,6 +211,7 @@
 ## [v4.112.27] - 2026-10-18
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -185,6 +219,7 @@
 ## [v4.112.26] - 2026-10-18
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -192,6 +227,7 @@
 ## [v4.112.25] - 2026-10-18
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -199,6 +235,7 @@
 ## [v4.112.24] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -206,6 +243,7 @@
 ## [v4.112.23] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -213,6 +251,7 @@
 ## [v4.112.22] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -220,6 +259,7 @@
 ## [v4.112.21] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -227,6 +267,7 @@
 ## [v4.112.20] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -234,6 +275,7 @@
 ## [v4.112.19] - 2026-10-17
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -241,6 +283,7 @@
 ## [v4.112.18] - 2026-10-16
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -248,6 +291,7 @@
 ## [v4.112.17] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -255,6 +299,7 @@
 ## [v4.112.16] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -262,6 +307,7 @@
 ## [v4.112.15] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -269,6 +315,7 @@
 ## [v4.112.14] - 2026-10-03
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -276,6 +323,7 @@
 ## [v4.112.13] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -283,6 +331,7 @@
 ## [v4.112.12] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -290,6 +339,7 @@
 ## [v4.112.11] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -297,6 +347,7 @@
 ## [v4.112.10] - 2026-10-01
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -304,6 +355,7 @@
 ## [v4.112.9] - 2026-10-01
 
 ### Added
+
 - Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines
 
 ---

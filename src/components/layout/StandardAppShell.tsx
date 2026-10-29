@@ -32,6 +32,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 // import { WindowMenu } from "@/components/app-shell/WindowMenu";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
+import { RecorderLauncherButton } from "@/components/recorder/RecorderLauncherButton";
 import {
   GUIDED_SIMULATION_COMMAND_EVENT,
   GUIDED_SIMULATION_MENU_EVENT,
@@ -419,6 +420,7 @@ export function StandardAppShell({
 
         <div className="flex h-full items-center gap-2 sm:gap-3 shrink-0 ml-2 flex-nowrap overflow-hidden">
           <UiModeSwitch />
+          <RecorderLauncherButton />
           <button
             type="button"
             data-tour="simulation-launcher"

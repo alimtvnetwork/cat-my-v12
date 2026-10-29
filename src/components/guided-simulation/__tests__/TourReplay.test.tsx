@@ -259,12 +259,239 @@ describe("guided simulation tour replay", () => {
 
     await act(async () => {
       primaryButton?.click();
+    });
+    await act(async () => {
       vi.advanceTimersByTime(800);
     });
 
     // Reached Step 2 (/projects) immediately
     expect(q("[data-tour='projects-create-button']")).not.toBeNull();
 
+    // Now test navigating back via Previous command
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "previous" } }),
+      );
+      vi.advanceTimersByTime(400);
+    });
+
+    // Successfully returned to Step 1 on / without getting stuck or spinner
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+
     window.removeEventListener("ca:guided-simulation-state", onState);
   });
+  it("navigates to previous step seamlessly even when paused, and maintains pause state", async () => {
+    vi.useFakeTimers();
+    Element.prototype.scrollIntoView = vi.fn() as any;
+
+    const rootRoute = createRootRoute({
+      component: () => (
+        <>
+          <Outlet />
+          <ProjectCreationAnalysisTour />
+        </>
+      ),
+    });
+    const indexRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/",
+      component: HomeStub,
+    });
+    const projectsRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/projects",
+      component: ProjectsStub,
+    });
+    const routeTree = rootRoute.addChildren([indexRoute, projectsRoute]);
+    const router = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ["/"] }),
+    });
+
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      await router.load();
+    });
+
+    const states: Array<{ isRunning: boolean; isLoading: boolean; isPaused: boolean }> = [];
+    const onState = (event: Event) => {
+      states.push((event as CustomEvent).detail);
+    };
+    window.addEventListener("ca:guided-simulation-state", onState);
+
+    // 1. Start tour
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "start" } }),
+      );
+    });
+
+    const q = (sel: string) => document.querySelector(sel);
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+
+    // 2. Advance to Step 2 (/projects)
+    const primaryButton = q("[data-testid='button-primary']") as HTMLButtonElement | null;
+    expect(primaryButton).not.toBeNull();
+
+    await act(async () => {
+      primaryButton?.click();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(800);
+    });
+
+    expect(q("[data-tour='projects-create-button']")).not.toBeNull();
+
+    // 3. Pause simulation
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "pause" } }),
+      );
+    });
+
+    const lastState = states[states.length - 1];
+    expect(lastState?.isPaused).toBe(true);
+
+    // 4. Navigate previous while paused
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "previous" } }),
+      );
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(400);
+    });
+
+    // 5. Successfully landed back on Step 1 (/)
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+
+    // 6. Advance timer 10 seconds: must NOT auto-advance because it is paused
+    await act(async () => {
+      vi.advanceTimersByTime(10000);
+    });
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+    expect(q("[data-tour='projects-create-button']")).toBeNull();
+
+    // 7. Resume simulation: now timer runs and advances to Step 2
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "resume" } }),
+      );
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(8000);
+    });
+
+    expect(q("[data-tour='projects-create-button']")).not.toBeNull();
+
+    window.removeEventListener("ca:guided-simulation-state", onState);
+  });
+
+  it("allows take_over command to stop simulation while keeping demo workspace intact", async () => {
+    vi.useFakeTimers();
+    Element.prototype.scrollIntoView = vi.fn() as any;
+
+    const rootRoute = createRootRoute({
+      component: () => (
+        <>
+          <Outlet />
+          <ProjectCreationAnalysisTour />
+        </>
+      ),
+    });
+    const indexRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/",
+      component: HomeStub,
+    });
+    const projectsRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/projects",
+      component: ProjectsStub,
+    });
+    const projectNewRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/projects/new",
+      component: ProjectNewStub,
+    });
+    const projectOverviewRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/projects/$projectId",
+      component: ProjectOverviewStub,
+    });
+    const routeTree = rootRoute.addChildren([
+      indexRoute,
+      projectsRoute,
+      projectNewRoute,
+      projectOverviewRoute,
+    ]);
+    const router = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ["/"] }),
+    });
+
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      await router.load();
+    });
+
+    const states: { isRunning: boolean }[] = [];
+    const onState = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      states.push(detail);
+    };
+
+    window.addEventListener("ca:guided-simulation-state", onState);
+
+    // 1. Start tour
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "start" } }),
+      );
+    });
+
+    const q = (sel: string) => document.querySelector(sel);
+
+    async function advanceTime(ms: number) {
+      await act(async () => {
+        vi.advanceTimersByTime(ms);
+      });
+    }
+
+    // Step 1: Menu -> Step 2: Create Button -> Step 3: Project Name -> Step 4: Submit
+    expect(q("[data-tour='standard-menu-trigger']")).not.toBeNull();
+    await advanceTime(8000);
+
+    expect(q("[data-tour='projects-create-button']")).not.toBeNull();
+    await advanceTime(8000);
+
+    expect(q("[data-tour='simulation-project-name']")).not.toBeNull();
+    await advanceTime(8000);
+
+    expect(q("[data-tour='simulation-project-create-submit']")).not.toBeNull();
+    await advanceTime(13000);
+
+    expect(q("[data-tour='project-overview-tab']")).not.toBeNull();
+
+    const projectsBefore = Object.values(useProjectStore.getState().projects);
+    const demoProject = projectsBefore.find((p) => p.name.toLowerCase().includes("demo"));
+    expect(demoProject).toBeDefined();
+
+    // 2. Dispatch take_over command
+    await act(async () => {
+      window.dispatchEvent(
+        new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail: { command: "take_over" } }),
+      );
+    });
+
+    // 3. Verify simulation stopped
+    const lastState = states[states.length - 1];
+    expect(lastState?.isRunning).toBe(false);
+
+    // 4. Verify project still exists in store and was NOT deleted
+    const projectsAfter = Object.values(useProjectStore.getState().projects);
+    expect(projectsAfter.some((p) => p.id === demoProject?.id)).toBe(true);
+
+    window.removeEventListener("ca:guided-simulation-state", onState);
+  }, 30000);
 });

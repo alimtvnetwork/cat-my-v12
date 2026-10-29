@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ACTIONS, EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2, Square } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { SimulationPlayerBar } from "./SimulationPlayerBar";
 import { toast } from "sonner";
 import ruleSetupImage from "../../../assets/ui/12-session-screenshot-file12.png";
 import analysisImage from "../../../assets/ui/11-session-screenshot-file11.png";
@@ -839,6 +841,15 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   // next step index is set. The old tooltip is hidden during this window
   // so it never floats over the new page (the screenshot glitch).
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [dwellTimeSec, setDwellTimeSec] = useState(7);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [totalStepSec, setTotalStepSec] = useState(7);
+  const isPausedRef = useRef(false);
+  const dwellTimeSecRef = useRef(7);
+  const isCustomDwellSetRef = useRef(false);
+  const elapsedMsRef = useRef(0);
+  const totalStepMsRef = useRef(7000);
   const isRunningRef = useRef(false);
   const isLoadingRef = useRef(false);
   const isStepAdvancingRef = useRef(false);
@@ -918,6 +929,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-project-create-submit']",
+        placement: "top",
         title: "Save project and continue",
         content: "The demo project is saved, then the app lands on the project overview page.",
         actionKey: "create-project",
@@ -934,6 +946,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-overview-empty']",
+        placement: "top",
         title: "Project overview",
         content: "The new project starts empty. No ruleset image is required here.",
         autoMs: 6500,
@@ -949,6 +962,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-panel']",
+        placement: "top",
         title: "Configure ruleset",
         content:
           "Name the ruleset demoset. This is only a rule category, not an image registration step.",
@@ -956,6 +970,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-submit']",
+        placement: "top",
         title: "Create ruleset",
         content: "Save demoset, then continue in the project workspace so rules can be added.",
         actionKey: "create-ruleset",
@@ -972,7 +987,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-add-rule-tree']",
-        placement: "top",
+        placement: "right",
         title: "Add the first rule",
         content: "Open the rule catalog to add the first tool into demoset.",
         actionKey: "go-add-rule",
@@ -981,7 +996,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='rule-add-catalog-header']",
-        placement: "bottom",
+        placement: "left",
         title: "Tool catalog",
         content:
           "This catalog lists the available inspection tools and any existing calibrated rules.",
@@ -989,7 +1004,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='rule-add-pin1-tool']",
-        placement: "auto",
+        placement: "left",
         title: "Select PIN1 tool",
         content:
           "Select PIN1 Orientation from the catalog. The rule is not added until Configure is chosen.",
@@ -1017,7 +1032,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='rule-add-greyscale-tool']",
-        placement: "auto",
+        placement: "left",
         title: "Select Greyscale tool",
         content:
           "Select Greyscale Pattern Matching. Configure will add it after the tool is selected.",
@@ -1056,7 +1071,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-image-source-tab']",
-        placement: "auto",
+        placement: "right",
         title: "Inspection image registered",
         content:
           "The project has its own inspection image. Rule registration images stay separate from the project canvas.",
@@ -1065,7 +1080,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='project-analysis-canvas-status']",
-        placement: "bottom",
+        placement: "top",
         title: "Visual analysis canvas",
         content:
           "This is where the final inspection result is presented with rule overlays on the workpiece image.",
@@ -1117,6 +1132,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           placement: getTourTooltipPlacement(step),
           skipBeacon: true,
           skipScroll: true,
+          loaderComponent: () => null,
           ...(floatingOptions ? { floatingOptions } : {}),
         };
       }),
@@ -1126,6 +1142,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current);
+      window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
 
@@ -1144,6 +1161,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     toast.dismiss("simulation-preparing");
     clearTimer();
     setIsTransitioning(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    isCustomDwellSetRef.current = false;
     clearAnalysisTimers();
     setSimulationMenuOpen(false);
     deleteDemoProject();
@@ -1155,6 +1175,228 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     actionKeysRef.current.clear();
     isStepAdvancingRef.current = false;
   }, [clearAnalysisTimers, clearTimer, deleteDemoProject, setSimulationMenuOpen]);
+
+  const handleTakeOver = useCallback(() => {
+    toast.dismiss("simulation-preparing");
+    clearTimer();
+    clearAnalysisTimers();
+    setIsTransitioning(false);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    isCustomDwellSetRef.current = false;
+    setSimulationMenuOpen(false);
+    isLoadingRef.current = false;
+    setIsLoading(false);
+    isRunningRef.current = false;
+    setIsRunning(false);
+    setStepIndex(0);
+    actionKeysRef.current.clear();
+    isStepAdvancingRef.current = false;
+    demoRef.current = null;
+
+    toast.success("Simulation handed over! You can now freely explore.", {
+      description: "The demo workspace and inspection rules are ready for testing.",
+      duration: 5000,
+    });
+  }, [clearAnalysisTimers, clearTimer, setSimulationMenuOpen]);
+
+  const prepareStepEnvironment = useCallback(
+    async (targetIndex: number) => {
+      // Synchronize action keys up to targetIndex so future forward steps can execute
+      actionKeysRef.current = new Set(
+        steps
+          .slice(0, targetIndex)
+          .map((s) => s.actionKey)
+          .filter(Boolean) as string[],
+      );
+
+      // Ensure demo project exists for steps after step 3
+      if (targetIndex >= 4 && !demoRef.current) {
+        demoRef.current = ensureDemoProject();
+      }
+
+      const projectId = demoRef.current?.projectId ?? TOUR_PROJECT_NAME;
+
+      if (targetIndex === 0) {
+        setSimulationMenuOpen(true);
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "close" });
+        await navigate({ to: "/" });
+
+        return;
+      }
+
+      if (targetIndex === 1) {
+        setSimulationMenuOpen(false);
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "close" });
+        await navigate({ to: "/projects" });
+
+        return;
+      }
+
+      if (targetIndex === 2 || targetIndex === 3) {
+        setSimulationMenuOpen(false);
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "close" });
+        await navigate({ to: "/projects/new", search: { guided: "1" } as any });
+
+        return;
+      }
+
+      if (targetIndex >= 4 && targetIndex <= 6) {
+        setSimulationMenuOpen(false);
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "close" });
+
+        if (demoRef.current?.rulesetId) {
+          useProjectStore.getState().deleteRuleset(demoRef.current.rulesetId);
+          demoRef.current = { projectId };
+        }
+
+        await navigate({
+          to: "/projects/$projectId",
+          params: { projectId },
+        });
+
+        return;
+      }
+
+      if (targetIndex === 7 || targetIndex === 8) {
+        setSimulationMenuOpen(false);
+        addRulePanelBus.emit({ type: "close" });
+
+        if (demoRef.current?.rulesetId) {
+          useProjectStore.getState().deleteRuleset(demoRef.current.rulesetId);
+          demoRef.current = { projectId };
+        }
+
+        await navigate({
+          to: "/projects/$projectId",
+          params: { projectId },
+        });
+        addRulesetPanelBus.emit({ type: "open", initialName: TOUR_RULESET_NAME });
+
+        return;
+      }
+
+      // Steps 9 and above require demo ruleset
+      if (!demoRef.current?.rulesetId) {
+        demoRef.current = ensureDemoRuleset(projectId);
+      }
+
+      const rulesetId = demoRef.current.rulesetId!;
+
+      if (targetIndex === 9 || targetIndex === 10) {
+        setSimulationMenuOpen(false);
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "close" });
+        await navigate({
+          to: "/projects/$projectId",
+          params: { projectId },
+        });
+        document.querySelector<HTMLButtonElement>("[data-tour='project-program-tab']")?.click();
+        const ruleset = useProjectStore.getState().rulesets[rulesetId];
+        const rules = ruleset?.rules ?? [];
+        useRulesStore.getState().replaceAll(rules, rules.length > 0 ? [rules[0].id] : [], []);
+
+        return;
+      }
+
+      if (targetIndex >= 11 && targetIndex <= 13) {
+        setSimulationMenuOpen(false);
+        addRulesetPanelBus.emit({ type: "close" });
+        await navigate({
+          to: "/projects/$projectId",
+          params: { projectId },
+        });
+        addRulePanelBus.emit({ type: "open", rulesetId });
+
+        if (targetIndex === 13) {
+          window.setTimeout(() => {
+            document.querySelector<HTMLButtonElement>("[data-tour='rule-add-pin1-tool']")?.click();
+          }, 100);
+        }
+
+        return;
+      }
+
+      if (targetIndex === 14) {
+        setSimulationMenuOpen(false);
+        demoRef.current = upsertDemoRule({
+          projectId,
+          rulesetId,
+          ruleId: TOUR_PIN1_RULE_ID,
+        });
+        addRulePanelBus.emit({ type: "close" });
+        visualTunerBus.emit(TOUR_PIN1_RULE_ID);
+
+        return;
+      }
+
+      if (targetIndex === 15 || targetIndex === 16) {
+        setSimulationMenuOpen(false);
+        demoRef.current = upsertDemoRule({
+          projectId,
+          rulesetId,
+          ruleId: TOUR_PIN1_RULE_ID,
+        });
+        addRulesetPanelBus.emit({ type: "close" });
+        addRulePanelBus.emit({ type: "open", rulesetId });
+
+        if (targetIndex === 16) {
+          window.setTimeout(() => {
+            document
+              .querySelector<HTMLButtonElement>("[data-tour='rule-add-greyscale-tool']")
+              ?.click();
+          }, 100);
+        }
+
+        return;
+      }
+
+      if (targetIndex === 17) {
+        setSimulationMenuOpen(false);
+        demoRef.current = upsertDemoRule({
+          projectId,
+          rulesetId,
+          ruleId: TOUR_PATTERN_RULE_ID,
+        });
+        addRulePanelBus.emit({ type: "close" });
+        visualTunerBus.emit(TOUR_PATTERN_RULE_ID);
+
+        return;
+      }
+
+      if (targetIndex >= 18) {
+        setSimulationMenuOpen(false);
+        demoRef.current = prepareMultiDeviceAnalysis({
+          projectId,
+          rulesetId,
+        });
+        addRulePanelBus.emit({ type: "close" });
+        await navigate({
+          to: "/projects/$projectId",
+          params: { projectId },
+        });
+
+        if (targetIndex === 18) {
+          document.querySelector<HTMLButtonElement>("[data-tour='project-program-tab']")?.click();
+        } else if (targetIndex === 19) {
+          document
+            .querySelector<HTMLButtonElement>("[data-tour='project-image-source-tab']")
+            ?.click();
+        } else if (targetIndex >= 21) {
+          useValidationStore
+            .getState()
+            .setResults(rulesetId, makePassResults(), "Guided simulation final inspection");
+          sessionAnalysisBus.emit(makePassTapeStripResult());
+          useRulesStore.getState().setSelection([TOUR_PATTERN_RULE_ID], "guided-simulation");
+        }
+      }
+    },
+    [navigate, setSimulationMenuOpen, steps],
+  );
 
   const runStepAction = useCallback(
     (step: TourStep): void => {
@@ -1345,6 +1587,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     clearTimer();
     const step = steps[stepIndex];
 
+    elapsedMsRef.current = 0;
+    setElapsedSec(0);
+
     if (step.actionPhase === "exit") {
       runStepAction(step);
     }
@@ -1397,10 +1642,31 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
       scrollTourTargetIntoView(step);
 
-      const delayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
-      timerRef.current = window.setTimeout(() => {
-        advance();
-      }, delayMs);
+      const defaultDelayMs = Math.max(step.autoMs ?? TOUR_MIN_STEP_MS, TOUR_MIN_STEP_MS);
+      const delayMs = isCustomDwellSetRef.current ? dwellTimeSecRef.current * 1000 : defaultDelayMs;
+
+      totalStepMsRef.current = delayMs;
+      setTotalStepSec(delayMs / 1000);
+      elapsedMsRef.current = 0;
+      setElapsedSec(0);
+
+      if (!isCustomDwellSetRef.current) {
+        const stepSec = Math.round(delayMs / 1000);
+        dwellTimeSecRef.current = stepSec;
+        setDwellTimeSec(stepSec);
+      }
+
+      timerRef.current = window.setInterval(() => {
+        if (!isPausedRef.current) {
+          elapsedMsRef.current += 100;
+          setElapsedSec(elapsedMsRef.current / 1000);
+
+          if (elapsedMsRef.current >= totalStepMsRef.current) {
+            clearTimer();
+            advance();
+          }
+        }
+      }, 100);
     };
 
     beginStep();
@@ -1410,6 +1676,47 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       clearTimer();
     };
   }, [advance, clearTimer, isRunning, runStepAction, stepIndex, steps]);
+
+  const togglePause = useCallback(() => {
+    isPausedRef.current = !isPausedRef.current;
+    setIsPaused(isPausedRef.current);
+  }, []);
+
+  const goToPrevious = useCallback(async () => {
+    if (stepIndex <= 0 || isStepAdvancingRef.current) {
+      return;
+    }
+
+    const prevIndex = stepIndex - 1;
+    clearTimer();
+    elapsedMsRef.current = 0;
+    setElapsedSec(0);
+
+    setIsTransitioning(true);
+    await prepareStepEnvironment(prevIndex);
+
+    advanceTimerRef.current = window.setTimeout(() => {
+      advanceTimerRef.current = null;
+      setIsTransitioning(false);
+      setStepIndex(prevIndex);
+    }, 150);
+  }, [clearTimer, prepareStepEnvironment, stepIndex]);
+
+  const handleChangeDwellTime = useCallback(
+    (newSec: number) => {
+      dwellTimeSecRef.current = newSec;
+      setDwellTimeSec(newSec);
+      isCustomDwellSetRef.current = true;
+      totalStepMsRef.current = newSec * 1000;
+      setTotalStepSec(newSec);
+
+      if (elapsedMsRef.current >= totalStepMsRef.current) {
+        clearTimer();
+        advance();
+      }
+    },
+    [advance, clearTimer],
+  );
 
   const handleStart = useCallback(() => {
     if (isRunningRef.current || isLoadingRef.current) {
@@ -1457,9 +1764,49 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   useEffect(() => {
     document.documentElement.dataset.guidedSimulationRunning = isRunning ? "true" : "false";
     document.documentElement.dataset.guidedSimulationLoading = isLoading ? "true" : "false";
-    const detail: GuidedSimulationStateDetail = { isRunning, isLoading };
+    const detail: GuidedSimulationStateDetail = { isRunning, isLoading, isPaused };
     window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_STATE_EVENT, { detail }));
-  }, [isRunning, isLoading]);
+  }, [isRunning, isLoading, isPaused]);
+
+  useEffect(() => {
+    if (!isRunning) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (KeyboardKeyType.isSpace(event.key)) {
+        event.preventDefault();
+        togglePause();
+
+        return;
+      }
+
+      if (KeyboardKeyType.isArrowRight(event.key)) {
+        event.preventDefault();
+        advance();
+
+        return;
+      }
+
+      if (KeyboardKeyType.isArrowLeft(event.key)) {
+        event.preventDefault();
+        goToPrevious();
+
+        return;
+      }
+
+      if (KeyboardKeyType.isEscape(event.key)) {
+        event.preventDefault();
+        finishTour();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [advance, finishTour, goToPrevious, isRunning, togglePause]);
 
   useEffect(() => {
     const onCommand = (event: Event) => {
@@ -1471,8 +1818,34 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         return;
       }
 
+      if (command === "take_over") {
+        handleTakeOver();
+
+        return;
+      }
+
       if (command === "advance") {
         advance();
+
+        return;
+      }
+
+      if (command === "pause") {
+        isPausedRef.current = true;
+        setIsPaused(true);
+
+        return;
+      }
+
+      if (command === "resume") {
+        isPausedRef.current = false;
+        setIsPaused(false);
+
+        return;
+      }
+
+      if (command === "previous") {
+        goToPrevious();
 
         return;
       }
@@ -1489,7 +1862,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     return () => {
       window.removeEventListener(GUIDED_SIMULATION_COMMAND_EVENT, onCommand);
     };
-  }, [advance, finishTour, handleStart]);
+  }, [advance, finishTour, goToPrevious, handleStart, handleTakeOver]);
 
   const handleJoyride = useCallback(
     (data: EventData) => {
@@ -1522,6 +1895,14 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         onEvent={handleJoyride}
         continuous
         scrollToFirstStep
+        floatingOptions={{
+          flipOptions: {
+            padding: { top: 60, bottom: 120, left: 24, right: 24 },
+          },
+          shiftOptions: {
+            padding: { top: 60, bottom: 120, left: 24, right: 24 },
+          },
+        }}
         options={{
           showProgress: true,
           buttons: ["skip", "primary"],
@@ -1541,6 +1922,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           arrowColor: "#111820",
         }}
         styles={{
+          loader: {
+            display: "none",
+          },
           tooltip: {
             border: "1px solid rgba(255,255,255,0.14)",
             borderRadius: 8,
@@ -1575,14 +1959,23 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         </div>
       ) : null}
       {isRunning ? (
-        <button
-          type="button"
-          onClick={finishTour}
-          className="fixed right-4 top-14 z-[10020] inline-flex items-center gap-2 rounded-lg border border-rose-400/50 bg-rose-950/95 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-100 shadow-[0_12px_40px_rgba(0,0,0,0.45),0_0_18px_rgba(244,63,94,0.18)] backdrop-blur transition hover:border-rose-300 hover:bg-rose-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-300"
-        >
-          <Square className="h-3.5 w-3.5 fill-current" />
-          Stop
-        </button>
+        <SimulationPlayerBar
+          stepIndex={stepIndex}
+          totalSteps={steps.length}
+          stepTitle={String(steps[stepIndex]?.title ?? "Tour Step")}
+          isPaused={isPaused}
+          dwellTimeSec={dwellTimeSec}
+          elapsedSec={elapsedSec}
+          currentStepTotalSec={totalStepSec}
+          hasPreviousStep={stepIndex > 0}
+          hasNextStep={stepIndex < steps.length - 1}
+          onTogglePause={togglePause}
+          onNext={advance}
+          onPrevious={goToPrevious}
+          onStop={finishTour}
+          onTakeOver={handleTakeOver}
+          onChangeDwellTime={handleChangeDwellTime}
+        />
       ) : null}
     </>
   );

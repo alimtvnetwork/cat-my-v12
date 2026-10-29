@@ -554,7 +554,7 @@ function ProjectsIndex() {
                             </span>
                             <span className="text-ca-border/60">·</span>
                             <span className="font-mono text-[10px] text-ca-ink-muted">
-                              {new Date(p.createdAt).toLocaleDateString()}
+                              {new Date(p.createdAt).toISOString().slice(0, 10)}
                             </span>
                           </div>
                         </Link>

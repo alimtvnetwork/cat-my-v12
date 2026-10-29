@@ -1629,7 +1629,7 @@ export function VisualToolWorkpieceCanvas({
                 ctx,
                 pocket.region,
                 finalBoxes,
-                (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
+                pStatus as "pass" | "fail" | "warn" | "pending" | "skipped",
                 pScore,
                 pBoxResults,
                 isAnalyzeMode,
@@ -1747,7 +1747,7 @@ export function VisualToolWorkpieceCanvas({
                 drawPin1Reticle(
                   ctx,
                   markerRoi,
-                  (pStatus as "pass" | "fail" | "warn" | "pending" | "skipped"),
+                  pStatus as "pass" | "fail" | "warn" | "pending" | "skipped",
                   pScore,
                   markerPinCfg,
                   markerResult,

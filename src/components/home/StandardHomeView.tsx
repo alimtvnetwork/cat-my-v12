@@ -143,11 +143,15 @@ export function StandardHomeView({
     }));
   }, [recentProjects, allStoreProjects]);
 
-  const primaryProject = displayProjects[0] || (smtDefaultProject ? {
-    projectId: smtDefaultProject.id,
-    name: smtDefaultProject.name,
-    openedAt: smtDefaultProject.createdAt,
-  } : undefined);
+  const primaryProject =
+    displayProjects[0] ||
+    (smtDefaultProject
+      ? {
+          projectId: smtDefaultProject.id,
+          name: smtDefaultProject.name,
+          openedAt: smtDefaultProject.createdAt,
+        }
+      : undefined);
 
   return (
     <StandardAppShell activeNav="home">
@@ -174,15 +178,17 @@ export function StandardHomeView({
                 {displayProjects.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-[#222938] bg-[#0c1017] p-6 text-center">
                     <FolderKanban size={24} className="mx-auto mb-3 text-[#64748b]" />
-                    <p className="text-xs font-semibold uppercase text-[#f8fafc]">No program loaded</p>
+                    <p className="text-xs font-semibold uppercase text-[#f8fafc]">
+                      No program loaded
+                    </p>
                     <p className="mt-1 text-xs text-[#94a3b8]">
                       Create a project to start inspection setup.
                     </p>
                   </div>
                 ) : (
-                  displayProjects.slice(0, 5).map((project) => (
-                    <ProjectRow key={project.projectId} project={project} />
-                  ))
+                  displayProjects
+                    .slice(0, 5)
+                    .map((project) => <ProjectRow key={project.projectId} project={project} />)
                 )}
               </div>
             </section>
@@ -194,7 +200,12 @@ export function StandardHomeView({
                 </h2>
               </div>
               <div className="grid grid-cols-2 gap-px bg-[#1e293b]/70">
-                <StatusCell label="Vision Engine" value="Active (60 FPS)" tone="good" variant="cyan" />
+                <StatusCell
+                  label="Vision Engine"
+                  value="Active (60 FPS)"
+                  tone="good"
+                  variant="cyan"
+                />
                 <StatusCell label="Camera Link" value="Basler Ace 4K" tone="good" variant="cyan" />
                 <StatusCell label="Lighting Matrix" value="Strobe 80%" tone="good" />
                 <StatusCell
@@ -235,7 +246,10 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
             className="group/enter item-pad-cta inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-gradient-to-b from-[#182335] to-[#101724] text-[10px] font-bold uppercase leading-none tracking-wider text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_2px_6px_rgba(0,0,0,0.5)] transition-all hover:border-[oklch(0.76_0.145_210/0.8)] hover:text-[oklch(0.76_0.145_210)] hover:shadow-[0_0_12px_rgba(34,211,238,0.25)] active:scale-[0.98]"
           >
             <span className="leading-none">Enter</span>
-            <ArrowRight size={12} className="transition-transform duration-150 group-hover/enter:translate-x-1" />
+            <ArrowRight
+              size={12}
+              className="transition-transform duration-150 group-hover/enter:translate-x-1"
+            />
           </Link>
         </div>
 
@@ -259,7 +273,10 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
                     <ActionIcon size={14} className="shrink-0 text-[#94a3b8]" />
                     <span className="truncate uppercase font-medium">{action.label}</span>
                   </span>
-                  <ArrowRight size={11} className="shrink-0 text-[#94a3b8] transition-transform group-hover/qa:translate-x-0.5" />
+                  <ArrowRight
+                    size={11}
+                    className="shrink-0 text-[#94a3b8] transition-transform group-hover/qa:translate-x-0.5"
+                  />
                 </Link>
               );
             })}
@@ -286,13 +303,17 @@ function ProjectRow({
           <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
             <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
           </span>
-          <span className="truncate text-sm font-bold uppercase text-[#f8fafc]">{project.name}</span>
+          <span className="truncate text-sm font-bold uppercase text-[#f8fafc]">
+            {project.name}
+          </span>
         </div>
         <ArrowRight size={13} className="shrink-0 text-[#94a3b8]" />
       </div>
       <div className="mt-1 flex items-center justify-between gap-2 pl-4 text-[10px] font-mono uppercase text-[#94a3b8]">
         <span>ID {project.projectId.slice(0, 6)}</span>
-        <span>{new Date(project.openedAt).toLocaleDateString()}</span>
+        <span suppressHydrationWarning>
+          {new Date(project.openedAt).toISOString().slice(0, 10)}
+        </span>
       </div>
     </Link>
   );
@@ -336,11 +357,7 @@ function StatusCell({
         )}
         <span
           className={`text-xs font-mono font-bold uppercase tracking-tight truncate ${
-            isGood
-              ? isCyan
-                ? "text-cyan-300"
-                : "text-emerald-400"
-              : "text-[#cbd5e1]"
+            isGood ? (isCyan ? "text-cyan-300" : "text-emerald-400") : "text-[#cbd5e1]"
           }`}
         >
           {value}

@@ -25,6 +25,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { VisualToolWorkpieceCanvas } from "./index";
+import type { WorkpieceRoi } from "./VisualToolWorkpieceCanvas";
+import { AnalyzeImageToolbar } from "./AnalyzeImageToolbar";
+import { RuleRightToolbarPanel } from "./RuleRightToolbarPanel";
 import { RuleToolConfigPanel } from "./RuleToolConfigPanel";
 import { AddRulePanel } from "./AddRulePanel";
 import { AddRulesetPanel } from "./AddRulesetPanel";
@@ -113,7 +116,7 @@ interface RunAnalysisParams {
 
 const MANUAL_RUN_ANALYSIS_PARAMS: RunAnalysisParams = {
   hasStepDelay: true,
-  hasStepToasts: true,
+  hasStepToasts: false,
   hasSelectionFocus: true,
 };
 
@@ -158,6 +161,8 @@ export function WorkpieceAnalyzeWorkspace({
   const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
   /** Rule id whose tool configuration is open inline (right viewport), if any. */
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
+  const [isDeepConfigOpen, setIsDeepConfigOpen] = useState(false);
+  const [evaluatingRuleId, setEvaluatingRuleId] = useState<string | null>(null);
   /** Left program sidebar collapsed into a slim rail so the canvas gets the space. */
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   /** Last-used image sources (uploads + camera captures), capped at 5. */
@@ -343,6 +348,7 @@ export function WorkpieceAnalyzeWorkspace({
       setSelectedIds(targetSelected);
     }
 
+    setIsDeepConfigOpen(false);
     setConfigRuleId(null);
     setAddRuleRulesetId(null);
     setIsAddingRuleset(false);
@@ -378,6 +384,7 @@ export function WorkpieceAnalyzeWorkspace({
 
       if (!target) return;
 
+      setIsDeepConfigOpen(false);
       setConfigRuleId(null);
       setIsAddingRuleset(false);
       setAddRuleRulesetId(target);
@@ -388,6 +395,7 @@ export function WorkpieceAnalyzeWorkspace({
   const handleStartAddRuleset = useCallback(
     (initialName?: string) => {
       setDraftRulesetName(initialName ?? `Ruleset ${(rulesets?.length ?? 0) + 1}`);
+      setIsDeepConfigOpen(false);
       setConfigRuleId(null);
       setAddRuleRulesetId(null);
       setIsAddingRuleset(true);
@@ -467,6 +475,7 @@ export function WorkpieceAnalyzeWorkspace({
       setSelectedIds([ruleId]);
       useRulesStore.getState().setSelection([ruleId], "tree.configure");
       setConfigRuleId(ruleId);
+      setIsDeepConfigOpen(true);
       setAddRuleRulesetId(null);
       setIsAddingRuleset(false);
     },
@@ -485,6 +494,7 @@ export function WorkpieceAnalyzeWorkspace({
   );
 
   const handleCloseRuleConfig = useCallback(() => {
+    setIsDeepConfigOpen(false);
     setConfigRuleId(null);
   }, []);
 
@@ -527,6 +537,7 @@ export function WorkpieceAnalyzeWorkspace({
       if (message.type === "open") {
         handleOpenAddRule(message.rulesetId);
       } else {
+        setIsDeepConfigOpen(false);
         setConfigRuleId(null);
         setAddRuleRulesetId(null);
       }
@@ -913,7 +924,14 @@ export function WorkpieceAnalyzeWorkspace({
                 allRulesMap,
               });
 
-              if (decision.isSkipped) {
+              if (r.isHidden) {
+                ruleResult = {
+                  status: ValidationStatusType.Skipped,
+                  score: 1.0,
+                  message: "Rule is disabled",
+                  stub: false,
+                };
+              } else if (decision.isSkipped) {
                 ruleResult = createSkippedValidationResult({ rule: r, decision });
               } else if (String((r.params as any)?.toolCode ?? "").toUpperCase() === "T103") {
                 // Code rules need the async ZXing path even when there
@@ -963,16 +981,14 @@ export function WorkpieceAnalyzeWorkspace({
           }
         }
 
-        if (params.hasStepToasts) {
-          if (failCount === 0) {
-            toast.success(
-              `Sequential inspection complete: All ${projectAnalysisItems.length} rules PASSED (${passCount}/${projectAnalysisItems.length}). Workpiece OK.`,
-            );
-          } else {
-            toast.error(
-              `Sequential inspection complete: ${failCount}/${projectAnalysisItems.length} rules FAILED (${passCount} passed). Workpiece REJECTED.`,
-            );
-          }
+        if (failCount === 0) {
+          toast.success(
+            `Sequential inspection complete: All ${projectAnalysisItems.length} rules PASSED (${passCount}/${projectAnalysisItems.length}). Workpiece OK.`,
+          );
+        } else {
+          toast.error(
+            `Sequential inspection complete: ${failCount}/${projectAnalysisItems.length} rules FAILED (${passCount} passed). Workpiece REJECTED.`,
+          );
         }
       } catch (err) {
         console.error("[WorkpieceAnalyzeWorkspace] Analysis error:", err);
@@ -997,6 +1013,18 @@ export function WorkpieceAnalyzeWorkspace({
 
   const railHandlers = useMemo(
     () => ({
+      onUpdateRule: (updatedRule: EditorRule) => {
+        const ownerRuleset = ruleOwnerById.get(updatedRule.id) ?? ruleset;
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
+        const next = ownerRules.map((r) => (r.id === updatedRule.id ? updatedRule : r));
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset?.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
       onToggleHidden: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
 
@@ -1061,6 +1089,117 @@ export function WorkpieceAnalyzeWorkspace({
       },
     }),
     [ruleOwnerById, rules, ruleset, selectedIds, updateRulesetRules],
+  );
+
+  const handleChangeActiveRuleRoi = useCallback(
+    (roi: WorkpieceRoi) => {
+      if (!activeRule) return;
+
+      const updatedRule: EditorRule = {
+        ...activeRule,
+        x: roi.x,
+        y: roi.y,
+        width: roi.width,
+        height: roi.height,
+      };
+
+      railHandlers.onUpdateRule(updatedRule);
+    },
+    [activeRule, railHandlers],
+  );
+
+  const handleEvaluateSingleRule = useCallback(
+    async (ruleId: string) => {
+      const targetRule = projectOverlayRules.find((r) => r.id === ruleId);
+
+      if (!targetRule) return;
+
+      setEvaluatingRuleId(ruleId);
+
+      try {
+        const activeImageSrc = isLiveCameraMode
+          ? await captureLiveCameraFrame()
+          : project.inspectionImageRef;
+        const imgData = activeImageSrc ? await loadWorkpieceImageData(activeImageSrc) : null;
+
+        if (!imgData) {
+          toast.error("No valid image loaded to evaluate rule.");
+
+          return;
+        }
+
+        const result = await evaluateWorkpieceRuleReal(targetRule, imgData);
+        const targetRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
+
+        if (targetRuleset) {
+          useValidationStore
+            .getState()
+            .mergeResults(targetRuleset.id, { [ruleId]: result }, targetRuleset.name);
+        }
+
+        if (result.status === ValidationStatusType.Pass) {
+          toast.success(
+            `Rule "${targetRule.name}" PASSED (${Math.round((result.score ?? 1) * 100)}%)`,
+          );
+        } else if (result.status === ValidationStatusType.Warn) {
+          toast.warning(`Rule "${targetRule.name}" WARNING: ${result.message}`);
+        } else {
+          toast.error(`Rule "${targetRule.name}" FAILED: ${result.message ?? "Threshold not met"}`);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast.error(`Evaluation failed: ${msg}`);
+      } finally {
+        setEvaluatingRuleId(null);
+      }
+    },
+    [
+      captureLiveCameraFrame,
+      isLiveCameraMode,
+      project.inspectionImageRef,
+      projectOverlayRules,
+      ruleOwnerById,
+      ruleset,
+    ],
+  );
+
+  const handleUploadImageWithAlias = useCallback(
+    (file: File, alias: string) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+
+        if (dataUrl) {
+          updateProjectInspectionImageRef(project.id, dataUrl);
+          pushRecent({ dataUrl, label: alias, kind: "upload" });
+          setIsLiveCameraMode(false);
+
+          for (const item of projectRulesetsForAnalysis) {
+            useValidationStore.getState().clear(item.id);
+          }
+
+          toast.success(`Registered image "${alias}" successfully.`);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    },
+    [project.id, projectRulesetsForAnalysis, pushRecent, updateProjectInspectionImageRef],
+  );
+
+  const handleSelectPresetOrRecentImage = useCallback(
+    (imageRef: string, label: string) => {
+      updateProjectInspectionImageRef(project.id, imageRef);
+      setIsLiveCameraMode(false);
+
+      for (const item of projectRulesetsForAnalysis) {
+        useValidationStore.getState().clear(item.id);
+      }
+
+      toast.info(`Selected inspection image: ${label}`);
+    },
+    [project.id, projectRulesetsForAnalysis, updateProjectInspectionImageRef],
   );
 
   const onImportImage = useCallback(
@@ -1441,7 +1580,7 @@ export function WorkpieceAnalyzeWorkspace({
           {/* Right: camera/current image viewport, or inline tool configuration */}
           <div
             data-tour="project-analysis-canvas"
-            className="relative flex min-w-0 flex-col overflow-hidden"
+            className="relative flex min-h-0 flex-1 min-w-0 flex-col overflow-hidden"
           >
             {isAddingRuleset ? (
               <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
@@ -1489,97 +1628,154 @@ export function WorkpieceAnalyzeWorkspace({
                   onExit={handleCloseAddRule}
                 />
               </div>
-            ) : configRule && configOwnerRuleset ? (
-              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
-                <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Wand2 size={13} className="shrink-0 text-cyan-300" />
-                    <span
-                      className="truncate font-sans text-xs font-bold uppercase tracking-wider text-white/90"
-                      title={configRule.name}
-                    >
-                      Tool Configuration: {configRule.name}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCloseRuleConfig}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
-                  >
-                    <X size={12} />
-                    Exit
-                  </button>
-                </div>
-                <div className="min-h-0 flex-1">
-                  <RuleToolConfigPanel
-                    key={configRule.id}
-                    ruleset={configOwnerRuleset}
-                    rule={configRule}
-                    imageRef={project?.inspectionImageRef}
-                    onExit={handleCloseRuleConfig}
-                    onRuleApplied={handleConfigRuleApplied}
-                  />
-                </div>
-              </div>
-            ) : isLiveCameraMode ? (
-              <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
-                <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
-                <video
-                  ref={liveCameraVideoRef}
-                  playsInline
-                  autoPlay
-                  muted
-                  className="relative z-10 max-h-full max-w-full object-contain"
-                />
-                <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-black/70 px-3 py-2 font-sans text-xs font-bold uppercase tracking-wider text-emerald-200 shadow-lg backdrop-blur">
-                  <span
-                    className={`h-2 w-2 rounded-full ${isLiveCameraReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-amber-400 animate-pulse"}`}
-                  />
-                  {isLiveCameraReady ? "Live Camera Feed" : "Connecting Camera"}
-                </div>
-                {liveCameraErrorText ? (
-                  <div className="absolute z-30 max-w-md rounded-xl border border-rose-500/30 bg-rose-950/70 p-4 text-center font-sans text-xs text-rose-100 shadow-xl backdrop-blur">
-                    {liveCameraErrorText}
-                  </div>
-                ) : null}
-                {!isLiveCameraReady && !liveCameraErrorText ? (
-                  <div className="absolute z-30 rounded-xl border border-white/10 bg-black/70 px-4 py-3 font-sans text-xs uppercase tracking-wider text-white/70 shadow-xl backdrop-blur">
-                    Opening camera stream...
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => void captureLiveCameraFrame()}
-                  disabled={!isLiveCameraReady || isCapturingFrame}
-                  className="absolute bottom-4 right-4 z-30 flex items-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_18px_rgba(52,211,153,0.35)] transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Camera size={14} />
-                  {isCapturingFrame ? "Capturing..." : "Capture Frame"}
-                </button>
-              </div>
             ) : (
-              <VisualToolWorkpieceCanvas
-                imageRef={project.inspectionImageRef}
-                toolCode={
-                  typeof activeRule?.params?.toolCode === "string"
-                    ? activeRule.params.toolCode
-                    : undefined
-                }
-                toolName={activeRule?.name}
-                toolParams={activeRule?.params}
-                isEditable={false}
-                isAnalyzeMode={true}
-                overlayRules={projectOverlayRules}
-                selectedRuleId={activeRule?.id}
-                onSelectRule={handleSelectProjectRule}
-                onLaunchPatternTuner={handleLaunchPatternTuner}
-                onPatternBoxesChange={handlePatternBoxesChange}
-                validationStatus={sessionActiveValidation?.status}
-                validationScore={sessionActiveValidation?.score}
-                validationResultsMap={sessionValidationResults}
-                isAnalyzing={isAnalysisBusy}
-                tapeStripResult={tapeStripResult}
-              />
+              <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+                {/* 1. Top Analyze Image Selection Toolbar with Aliases & Resolution Check */}
+                <AnalyzeImageToolbar
+                  currentImageRef={project.inspectionImageRef}
+                  isLiveCameraMode={isLiveCameraMode}
+                  isLiveCameraReady={isLiveCameraReady}
+                  onSelectLiveCamera={() => {
+                    setIsLiveCameraMode(true);
+                    toast.info("Live camera feed activated.");
+                  }}
+                  onSelectImage={handleSelectPresetOrRecentImage}
+                  onUploadImage={handleUploadImageWithAlias}
+                  recents={recents}
+                  onRemoveRecent={removeRecent}
+                  calibratedWidth={960}
+                  calibratedHeight={540}
+                />
+
+                {/* 2. Main Work Area: Center Canvas + Right Toolbar Panel */}
+                <div className="flex min-h-0 flex-1 gap-2.5 p-2 overflow-hidden">
+                  {/* Center Canvas or Live Stream */}
+                  <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black">
+                    {isLiveCameraMode ? (
+                      <div className="relative flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
+                        <video
+                          ref={liveCameraVideoRef}
+                          playsInline
+                          autoPlay
+                          muted
+                          className="relative z-10 max-h-full max-w-full object-contain"
+                        />
+                        <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-black/70 px-3 py-2 font-sans text-xs font-bold uppercase tracking-wider text-emerald-200 shadow-lg backdrop-blur">
+                          <span
+                            className={`h-2 w-2 rounded-full ${isLiveCameraReady ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-amber-400 animate-pulse"}`}
+                          />
+                          {isLiveCameraReady ? "Live Camera Feed" : "Connecting Camera"}
+                        </div>
+                        {liveCameraErrorText ? (
+                          <div className="absolute z-30 max-w-md rounded-xl border border-rose-500/30 bg-rose-950/70 p-4 text-center font-sans text-xs text-rose-100 shadow-xl backdrop-blur">
+                            {liveCameraErrorText}
+                          </div>
+                        ) : null}
+                        {!isLiveCameraReady && !liveCameraErrorText ? (
+                          <div className="absolute z-30 rounded-xl border border-white/10 bg-black/70 px-4 py-3 font-sans text-xs uppercase tracking-wider text-white/70 shadow-xl backdrop-blur">
+                            Opening camera stream...
+                          </div>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => void captureLiveCameraFrame()}
+                          disabled={!isLiveCameraReady || isCapturingFrame}
+                          className="absolute bottom-4 right-4 z-30 flex items-center gap-2 rounded-lg bg-emerald-400 px-4 py-2 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_18px_rgba(52,211,153,0.35)] transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Camera size={14} />
+                          {isCapturingFrame ? "Capturing..." : "Capture Frame"}
+                        </button>
+                      </div>
+                    ) : (
+                      <VisualToolWorkpieceCanvas
+                        imageRef={project.inspectionImageRef}
+                        roi={
+                          activeRule
+                            ? {
+                                x: activeRule.x,
+                                y: activeRule.y,
+                                width: activeRule.width,
+                                height: activeRule.height,
+                              }
+                            : undefined
+                        }
+                        onChangeRoi={handleChangeActiveRuleRoi}
+                        toolCode={
+                          typeof activeRule?.params?.toolCode === "string"
+                            ? activeRule.params.toolCode
+                            : undefined
+                        }
+                        toolName={activeRule?.name}
+                        toolParams={activeRule?.params}
+                        isEditable={Boolean(activeRule)}
+                        isAnalyzeMode={true}
+                        overlayRules={projectOverlayRules}
+                        selectedRuleId={activeRule?.id}
+                        onSelectRule={handleSelectProjectRule}
+                        onLaunchPatternTuner={handleLaunchPatternTuner}
+                        onPatternBoxesChange={handlePatternBoxesChange}
+                        validationStatus={sessionActiveValidation?.status}
+                        validationScore={sessionActiveValidation?.score}
+                        validationResultsMap={sessionValidationResults}
+                        isAnalyzing={isAnalysisBusy}
+                        tapeStripResult={tapeStripResult}
+                      />
+                    )}
+                  </div>
+
+                  {/* Right-Hand Side Toolbar: Deep Configuration OR Quick Parameter Panel */}
+                  {isDeepConfigOpen && configRule && configOwnerRuleset ? (
+                    <div className="flex h-full w-88 xl:w-96 shrink-0 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-[#0c1017] shadow-2xl">
+                      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-3 py-1.5">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Wand2 size={13} className="shrink-0 text-cyan-300" />
+                          <span
+                            className="truncate font-sans text-xs font-bold uppercase tracking-wider text-white/90"
+                            title={configRule.name}
+                          >
+                            Deep Tuner: {configRule.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCloseRuleConfig}
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-wider text-white/80 transition hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
+                        >
+                          <X size={12} />
+                          Exit
+                        </button>
+                      </div>
+                      <div className="min-h-0 flex-1 overflow-auto">
+                        <RuleToolConfigPanel
+                          key={configRule.id}
+                          ruleset={configOwnerRuleset}
+                          rule={configRule}
+                          imageRef={project?.inspectionImageRef}
+                          onExit={handleCloseRuleConfig}
+                          onRuleApplied={handleConfigRuleApplied}
+                        />
+                      </div>
+                    </div>
+                  ) : activeRule ? (
+                    <RuleRightToolbarPanel
+                      rule={activeRule}
+                      ruleset={ruleOwnerById.get(activeRule.id) ?? ruleset}
+                      onUpdateRule={railHandlers.onUpdateRule}
+                      onToggleHidden={railHandlers.onToggleHidden}
+                      onOpenDeepConfig={handleOpenRuleConfig}
+                      onClose={() => {
+                        setSelectedIds([]);
+                        setConfigRuleId(null);
+                      }}
+                      validationResult={sessionActiveValidation}
+                      isEvaluating={evaluatingRuleId === activeRule.id}
+                      onEvaluateSingleRule={handleEvaluateSingleRule}
+                      onDeleteRule={railHandlers.onDelete}
+                    />
+                  ) : null}
+                </div>
+              </div>
             )}
           </div>
         </div>

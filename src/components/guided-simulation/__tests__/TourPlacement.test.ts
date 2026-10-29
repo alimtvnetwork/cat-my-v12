@@ -39,12 +39,18 @@ describe("tour tooltip placement for tall targets", () => {
     expect(getTourFloatingOptions(s)).toEqual({ flipOptions: false });
   });
 
-  it("keeps every other element step on the bottom, and the body step on top", () => {
-    const other = step({ placement: "left", actionKey: "go-project-list" });
-    expect(getTourTooltipPlacement(other)).toBe("bottom");
-    expect(getTourFloatingOptions(other)).toBeUndefined();
+  it("respects explicit step placement or defaults to bottom, and body step on top", () => {
+    const defaultStep = step({ actionKey: "go-project-list" });
+    expect(getTourTooltipPlacement(defaultStep)).toBe("bottom");
+    expect(getTourFloatingOptions(defaultStep)).toBeUndefined();
 
-    const body = step({ target: "body", placement: "top" });
+    const topStep = step({ placement: "top" });
+    expect(getTourTooltipPlacement(topStep)).toBe("top");
+
+    const rightStep = step({ placement: "right" });
+    expect(getTourTooltipPlacement(rightStep)).toBe("right");
+
+    const body = step({ target: "body" });
     expect(getTourTooltipPlacement(body)).toBe("top");
   });
 });

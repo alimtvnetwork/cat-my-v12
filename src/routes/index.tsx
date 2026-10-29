@@ -501,7 +501,12 @@ function PrimaryCta() {
         className="hmi-focus-ring group relative inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-ca-primary via-ca-primary to-ca-primary/90 px-5 py-2.5 text-hmi-body font-bold text-ca-on-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4),0_0_24px_-2px_color-mix(in_oklab,var(--ca-primary)_45%,transparent)] transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_32px_color-mix(in_oklab,var(--ca-primary)_60%,transparent)] active:scale-[0.99]"
       >
         <span>{label}</span>
-        <ArrowRight size={16} aria-hidden strokeWidth={2.5} className="shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
+        <ArrowRight
+          size={16}
+          aria-hidden
+          strokeWidth={2.5}
+          className="shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+        />
       </button>
 
       {top ? (
@@ -511,7 +516,12 @@ function PrimaryCta() {
           onClick={() => navigate({ to: "/projects?new=1" as any })}
           className="hmi-focus-ring group inline-flex items-center gap-2 rounded-xl border border-ca-border/80 bg-ca-panel/80 px-4 py-2.5 text-hmi-body font-semibold text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.3)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 active:scale-[0.99]"
         >
-          <FolderPlusIcon size={16} aria-hidden strokeWidth={2} className="shrink-0 text-ca-ink-muted transition-colors group-hover:text-ca-primary" />
+          <FolderPlusIcon
+            size={16}
+            aria-hidden
+            strokeWidth={2}
+            className="shrink-0 text-ca-ink-muted transition-colors group-hover:text-ca-primary"
+          />
           <span>Create project</span>
         </button>
       ) : null}
@@ -521,7 +531,9 @@ function PrimaryCta() {
           <h2 className="sr-only">Pick a workflow</h2>
           <span className="inline-flex items-center gap-1.5 rounded-md border border-ca-border/50 bg-ca-panel/40 px-2.5 py-1 font-mono text-[11px] text-ca-ink-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-ca-ink-muted/50" />
-            Last opened {new Date(top.openedAt).toLocaleDateString()}
+            <span suppressHydrationWarning>
+              Last opened {new Date(top.openedAt).toISOString().slice(0, 10)}
+            </span>
           </span>
         </>
       ) : (

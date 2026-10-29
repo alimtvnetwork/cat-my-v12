@@ -207,156 +207,152 @@ export function InspectionHierarchyTree({
           {isDeviceOpen ? (
             <div className="ml-2.5 space-y-0.5 border-l border-ca-border/40 pl-2">
               {displayRulesets.map((rs) => {
-                    const isActiveRuleset = rs.id === ruleset?.id;
-                    const isRulesetOpen = openRulesetIds[rs.id] ?? true;
-                    const isRulesListOpen = openRulesMap[rs.id] ?? true;
-                    const rulesetRules = rs.rules ?? [];
+                const isActiveRuleset = rs.id === ruleset?.id;
+                const isRulesetOpen = openRulesetIds[rs.id] ?? true;
+                const isRulesListOpen = openRulesMap[rs.id] ?? true;
+                const rulesetRules = rs.rules ?? [];
 
-                    return (
-                      <div key={rs.id} className="space-y-0.5">
+                return (
+                  <div key={rs.id} className="space-y-0.5">
+                    <div
+                      title={`Rule Set: ${rs.name}`}
+                      className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
+                        isActiveRuleset
+                          ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
+                          : "border-transparent text-white/85 hover:border-white/10 hover:bg-white/[0.04]"
+                      }`}
+                      onClick={() => {
+                        if (isActiveRuleset) {
+                          setOpenRulesetIds((current) => ({
+                            ...current,
+                            [rs.id]: !isRulesetOpen,
+                          }));
+                        } else {
+                          onSelectRuleset?.(rs.id);
+                          setOpenRulesetIds((current) => ({
+                            ...current,
+                            [rs.id]: true,
+                          }));
+                        }
+                      }}
+                    >
+                      <IconButton
+                        title={isRulesetOpen ? "Collapse ruleset" : "Expand ruleset"}
+                        onClick={() => {
+                          setOpenRulesetIds((current) => ({
+                            ...current,
+                            [rs.id]: !isRulesetOpen,
+                          }));
+                        }}
+                      >
+                        {isRulesetOpen ? (
+                          <ChevronDown size={12} className="shrink-0 text-ca-ink-muted" />
+                        ) : (
+                          <ChevronRight size={12} className="shrink-0 text-ca-ink-muted" />
+                        )}
+                      </IconButton>
+                      <FileCode2 size={13} className="shrink-0 text-purple-400" />
+                      <div className="min-w-0 flex-1 truncate text-xs font-semibold">
+                        <span>{rs.name}</span>
+                        {rs.categoryName ? (
+                          <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
+                            ({rs.categoryName})
+                          </span>
+                        ) : null}
+                      </div>
+                      <span className="hidden shrink-0 rounded border border-purple-400/40 bg-purple-500/15 px-1 py-0.2 text-[9px] font-medium text-purple-200 group-hover:inline-flex">
+                        Rule Set
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
+                          {rs.rules?.length ?? 0}
+                        </span>
+                        {onAddRuleClick ? (
+                          <IconButton
+                            data-tour="project-add-rule-tree"
+                            title="Add rule from tools"
+                            onClick={() => onAddRuleClick(rs.id)}
+                            className="hover:text-purple-300"
+                          >
+                            <Plus size={11} />
+                          </IconButton>
+                        ) : null}
+                        {onDeleteRulesetClick && isActiveRuleset && displayRulesets.length > 1 ? (
+                          <IconButton
+                            title="Delete ruleset"
+                            onClick={() => onDeleteRulesetClick(rs.id)}
+                            className="hover:text-rose-300"
+                          >
+                            <Trash2 size={11} />
+                          </IconButton>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {isRulesetOpen ? (
+                      <div className="ml-2.5 space-y-0.5 border-l border-ca-border/30 pl-2">
                         <div
-                          title={`Rule Set: ${rs.name}`}
-                          className={`group flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-1 transition-all ${
-                            isActiveRuleset
-                              ? "border-purple-400/40 bg-purple-950/40 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.15)]"
-                              : "border-transparent text-white/85 hover:border-white/10 hover:bg-white/[0.04]"
-                          }`}
                           onClick={() => {
-                            if (isActiveRuleset) {
-                              setOpenRulesetIds((current) => ({
-                                ...current,
-                                [rs.id]: !isRulesetOpen,
-                              }));
-                            } else {
-                              onSelectRuleset?.(rs.id);
-                              setOpenRulesetIds((current) => ({
-                                ...current,
-                                [rs.id]: true,
-                              }));
-                            }
+                            setOpenRulesMap((current) => ({
+                              ...current,
+                              [rs.id]: !isRulesListOpen,
+                            }));
                           }}
+                          className="flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink-muted transition hover:bg-white/[0.04] hover:text-white"
                         >
                           <IconButton
-                            title={isRulesetOpen ? "Collapse ruleset" : "Expand ruleset"}
+                            title={isRulesListOpen ? "Collapse rules list" : "Expand rules list"}
                             onClick={() => {
-                              setOpenRulesetIds((current) => ({
+                              setOpenRulesMap((current) => ({
                                 ...current,
-                                [rs.id]: !isRulesetOpen,
+                                [rs.id]: !isRulesListOpen,
                               }));
                             }}
                           >
-                            {isRulesetOpen ? (
-                              <ChevronDown size={12} className="shrink-0 text-ca-ink-muted" />
+                            {isRulesListOpen ? (
+                              <ChevronDown size={11} className="shrink-0 text-ca-ink-muted" />
                             ) : (
-                              <ChevronRight size={12} className="shrink-0 text-ca-ink-muted" />
+                              <ChevronRight size={11} className="shrink-0 text-ca-ink-muted" />
                             )}
                           </IconButton>
-                          <FileCode2 size={13} className="shrink-0 text-purple-400" />
-                          <div className="min-w-0 flex-1 truncate text-xs font-semibold">
-                            <span>{rs.name}</span>
-                            {rs.categoryName ? (
-                              <span className="ml-1.5 font-sans text-[10px] font-normal text-ca-ink-muted/70">
-                                ({rs.categoryName})
-                              </span>
-                            ) : null}
-                          </div>
-                          <span className="hidden shrink-0 rounded border border-purple-400/40 bg-purple-500/15 px-1 py-0.2 text-[9px] font-medium text-purple-200 group-hover:inline-flex">
-                            Rule Set
-                          </span>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <span className="rounded border border-ca-border/70 bg-ca-bg px-1 py-0.2 text-[9px] font-sans font-medium text-ca-ink-muted">
-                              {rs.rules?.length ?? 0}
-                            </span>
-                            {onAddRuleClick ? (
-                              <IconButton
-                                data-tour="project-add-rule-tree"
-                                title="Add rule from tools"
-                                onClick={() => onAddRuleClick(rs.id)}
-                                className="hover:text-purple-300"
-                              >
-                                <Plus size={11} />
-                              </IconButton>
-                            ) : null}
-                            {onDeleteRulesetClick &&
-                            isActiveRuleset &&
-                            displayRulesets.length > 1 ? (
-                              <IconButton
-                                title="Delete ruleset"
-                                onClick={() => onDeleteRulesetClick(rs.id)}
-                                className="hover:text-rose-300"
-                              >
-                                <Trash2 size={11} />
-                              </IconButton>
-                            ) : null}
-                          </div>
+                          <ListChecks size={12} className="text-emerald-400" />
+                          <span>Rules ({rulesetRules.length})</span>
                         </div>
 
-                        {isRulesetOpen ? (
-                          <div className="ml-2.5 space-y-0.5 border-l border-ca-border/30 pl-2">
-                            <div
-                              onClick={() => {
-                                setOpenRulesMap((current) => ({
-                                  ...current,
-                                  [rs.id]: !isRulesListOpen,
-                                }));
-                              }}
-                              className="flex cursor-pointer select-none items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink-muted transition hover:bg-white/[0.04] hover:text-white"
-                            >
-                              <IconButton
-                                title={
-                                  isRulesListOpen ? "Collapse rules list" : "Expand rules list"
-                                }
-                                onClick={() => {
-                                  setOpenRulesMap((current) => ({
-                                    ...current,
-                                    [rs.id]: !isRulesListOpen,
-                                  }));
-                                }}
-                              >
-                                {isRulesListOpen ? (
-                                  <ChevronDown size={11} className="shrink-0 text-ca-ink-muted" />
-                                ) : (
-                                  <ChevronRight size={11} className="shrink-0 text-ca-ink-muted" />
-                                )}
-                              </IconButton>
-                              <ListChecks size={12} className="text-emerald-400" />
-                              <span>Rules ({rulesetRules.length})</span>
+                        {isRulesListOpen ? (
+                          rulesetRules.length === 0 ? (
+                            <div className="rounded border border-dashed border-ca-border/60 px-2 py-1.5 text-center text-[11px] text-ca-ink-muted/70">
+                              No rules defined
                             </div>
-
-                            {isRulesListOpen ? (
-                              rulesetRules.length === 0 ? (
-                                <div className="rounded border border-dashed border-ca-border/60 px-2 py-1.5 text-center text-[11px] text-ca-ink-muted/70">
-                                  No rules defined
-                                </div>
-                              ) : (
-                                <RulesList
-                                  rules={rulesetRules}
-                                  selectedRuleId={selectedRuleId}
-                                  expandedRuleIds={expandedRuleIds}
-                                  expandedCameraRuleId={expandedCameraRuleId}
-                                  expandedLightRuleId={expandedLightRuleId}
-                                  onSelect={(ruleId) => {
-                                    onSelectRuleset?.(rs.id);
-                                    onSelectRule(ruleId);
-                                  }}
-                                  onToggleExpanded={toggleRuleExpanded}
-                                  onToggleCamera={toggleCameraPanel}
-                                  onToggleLight={toggleLightPanel}
-                                  onToggleHidden={onToggleHidden}
-                                  onDeleteRule={onDeleteRule}
-                                  onReorderRule={onReorderRule}
-                                  onMoveRule={onMoveRule}
-                                  onConfigureRule={onConfigureRule}
-                                  onUpdateCameraSettings={onUpdateCameraSettings}
-                                  onUpdateLightSettings={onUpdateLightSettings}
-                                />
-                              )
-                            ) : null}
-                          </div>
+                          ) : (
+                            <RulesList
+                              rules={rulesetRules}
+                              selectedRuleId={selectedRuleId}
+                              expandedRuleIds={expandedRuleIds}
+                              expandedCameraRuleId={expandedCameraRuleId}
+                              expandedLightRuleId={expandedLightRuleId}
+                              onSelect={(ruleId) => {
+                                onSelectRuleset?.(rs.id);
+                                onSelectRule(ruleId);
+                              }}
+                              onToggleExpanded={toggleRuleExpanded}
+                              onToggleCamera={toggleCameraPanel}
+                              onToggleLight={toggleLightPanel}
+                              onToggleHidden={onToggleHidden}
+                              onDeleteRule={onDeleteRule}
+                              onReorderRule={onReorderRule}
+                              onMoveRule={onMoveRule}
+                              onConfigureRule={onConfigureRule}
+                              onUpdateCameraSettings={onUpdateCameraSettings}
+                              onUpdateLightSettings={onUpdateLightSettings}
+                            />
+                          )
                         ) : null}
                       </div>
-                    );
-                  })}
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </div>
@@ -640,6 +636,11 @@ function RuleNode({
             {isExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
           </IconButton>
           <ToolInspectionGraphic toolCode={toolCode} size={22} />
+          {rule.isHidden ? (
+            <span className="shrink-0 rounded bg-amber-950/70 border border-amber-600/40 px-1 py-0.2 font-mono text-[8px] font-bold text-amber-300">
+              OFF
+            </span>
+          ) : null}
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/90">
             {rule.name.replace(/^rule\s*\d+\s*[:\-–—]?\s*/i, "")}
           </span>
@@ -651,6 +652,20 @@ function RuleNode({
               {toolCode}
             </span>
           ) : null}
+          <IconButton
+            title={
+              rule.isHidden ? "Enable Rule (currently disabled)" : "Disable Rule (keeps in ruleset)"
+            }
+            aria-label={rule.isHidden ? `Enable ${rule.name}` : `Disable ${rule.name}`}
+            onClick={() => onToggleHidden?.(rule.id)}
+            className={
+              rule.isHidden
+                ? "text-amber-400 hover:text-amber-300"
+                : "text-white/40 hover:text-white"
+            }
+          >
+            {rule.isHidden ? <EyeOff size={12} /> : <Eye size={12} />}
+          </IconButton>
           <div className="relative">
             <IconButton
               title="Rule options"
