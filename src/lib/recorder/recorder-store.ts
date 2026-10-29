@@ -109,13 +109,21 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
   },
 
   resumeRecording: () => {
-    if (!get().isRecording) {
+    const { session } = get();
+
+    if (!session) {
       return;
     }
 
+    const updatedSession = { ...session };
+    delete updatedSession.stoppedAt;
+
     set({
       status: RecorderStatusType.Recording,
+      isRecording: true,
       isPaused: false,
+      isExportModalOpen: false,
+      session: updatedSession,
     });
   },
 

@@ -49,7 +49,7 @@ export function RecorderExportModal(): React.JSX.Element | null {
           </div>
           <button
             type="button"
-            onClick={() => setExportModalOpen(false)}
+            onClick={resumeRecording}
             className="rounded p-1 text-slate-400 hover:text-white"
           >
             <X className="h-4 w-4" />
@@ -63,10 +63,7 @@ export function RecorderExportModal(): React.JSX.Element | null {
         <div className="flex items-center justify-between border-t border-slate-800 pt-3">
           <button
             type="button"
-            onClick={() => {
-              setExportModalOpen(false);
-              resumeRecording();
-            }}
+            onClick={resumeRecording}
             className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
           >
             Resume Recording

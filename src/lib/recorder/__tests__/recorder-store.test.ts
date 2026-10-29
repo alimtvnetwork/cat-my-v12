@@ -69,4 +69,21 @@ describe("useRecorderStore", () => {
     expect(state.isExportModalOpen).toBe(true);
     expect(state.session?.stoppedAt).toBeDefined();
   });
+
+  it("resumes recording after stopRecording was called and modal was open", () => {
+    useRecorderStore.getState().startRecording("/analysis");
+    useRecorderStore.getState().stopRecording();
+
+    expect(useRecorderStore.getState().isRecording).toBe(false);
+    expect(useRecorderStore.getState().isExportModalOpen).toBe(true);
+
+    useRecorderStore.getState().resumeRecording();
+
+    const state = useRecorderStore.getState();
+    expect(state.status).toBe(RecorderStatusType.Recording);
+    expect(state.isRecording).toBe(true);
+    expect(state.isPaused).toBe(false);
+    expect(state.isExportModalOpen).toBe(false);
+    expect(state.session?.stoppedAt).toBeUndefined();
+  });
 });
