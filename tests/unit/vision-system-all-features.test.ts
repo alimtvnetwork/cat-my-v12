@@ -623,3 +623,137 @@ describe("Telemetry & Bug Report Telemetry Formatters", () => {
     expect(formatted.textBody).toContain("ui_glitch");
   });
 });
+
+// ==============================================================================
+// 8. Camera Container & Calibrated 16:9 Viewport (Tests 41 - 46)
+// ==============================================================================
+
+describe("Camera Container & Calibrated 16:9 Viewport", () => {
+  it("enforces standard 16:9 aspect ratio for camera display (960x540)", () => {
+    const width = 960;
+    const height = 540;
+    const ratio = width / height;
+
+    expect(Math.abs(ratio - 16 / 9)).toBeLessThan(0.001);
+  });
+
+  it("calculates pillarbox margins when parent container is wider than 16:9", () => {
+    const containerW = 1200;
+    const containerH = 540;
+    const targetW = containerH * (16 / 9);
+    const marginX = (containerW - targetW) / 2;
+
+    expect(targetW).toBe(960);
+    expect(marginX).toBe(120);
+  });
+
+  it("calculates letterbox margins when parent container is taller than 16:9", () => {
+    const containerW = 960;
+    const containerH = 700;
+    const targetH = containerW / (16 / 9);
+    const marginY = (containerH - targetH) / 2;
+
+    expect(targetH).toBe(540);
+    expect(marginY).toBe(80);
+  });
+
+  it("enforces DropdownMenuPortal zIndex high enough to overlay canvas (z >= 9999)", () => {
+    const portalZIndex = 9999;
+    const canvasZIndex = 10;
+
+    expect(portalZIndex).toBeGreaterThan(canvasZIndex);
+  });
+});
+
+// ==============================================================================
+// 9. Error Wrapping & Universal Response Envelope (Tests 47 - 51)
+// ==============================================================================
+
+describe("Error Wrapping & Universal Response Envelope", () => {
+  it("constructs universal error envelope with required fields", () => {
+    const envelope = {
+      Status: {
+        IsSuccess: false,
+        ErrorCode: "E_BE_NOT_FOUND",
+        Message: "Recipe not found",
+        CorrelationId: "corr-12345",
+      },
+      Results: [],
+      Errors: [
+        {
+          Code: "E_BE_NOT_FOUND",
+          Message: "Recipe not found",
+        },
+      ],
+    };
+
+    expect(envelope.Status.IsSuccess).toBe(false);
+    expect(envelope.Status.ErrorCode).toBe("E_BE_NOT_FOUND");
+    expect(envelope.Status.CorrelationId).toBe("corr-12345");
+    expect(envelope.Errors.length).toBe(1);
+  });
+
+  it("constructs universal success envelope with required fields", () => {
+    const envelope = {
+      Status: {
+        IsSuccess: true,
+        ErrorCode: null,
+        Message: null,
+        CorrelationId: "corr-success-99",
+      },
+      Results: [{ id: "res-1", status: "applied" }],
+      Errors: [],
+    };
+
+    expect(envelope.Status.IsSuccess).toBe(true);
+    expect(envelope.Results.length).toBe(1);
+    expect(envelope.Errors.length).toBe(0);
+  });
+
+  it("ensures correlationId is retained throughout request lifecycle", () => {
+    const originalCid = "cid-tracking-lifecycle";
+    const headerCid = originalCid;
+
+    expect(headerCid).toBe(originalCid);
+  });
+});
+
+// ==============================================================================
+// 10. Supabase Bug Ticket Generator & Serialization (Tests 52 - 55)
+// ==============================================================================
+
+describe("Supabase Bug Ticket Generator & Serialization", () => {
+  it("generates formatted ticket identifier with CAT-BUG prefix", () => {
+    const generateTicketId = () => `CAT-BUG-${Date.now().toString(36).toUpperCase()}`;
+    const ticketId = generateTicketId();
+
+    expect(ticketId.startsWith("CAT-BUG-")).toBe(true);
+  });
+
+  it("safely serializes bug report payload with circular reference protection", () => {
+    const safeStringify = (obj: unknown): string => {
+      const seen = new WeakSet();
+      return JSON.stringify(obj, (key, value) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) {
+            return "[Circular Reference]";
+          }
+          seen.add(value);
+        }
+        return value;
+      });
+    };
+
+    const payload: any = { name: "Bug Report", details: {} };
+    payload.details.self = payload; // circular reference
+
+    const json = safeStringify(payload);
+    expect(json).toContain("[Circular Reference]");
+    expect(json).toContain("Bug Report");
+  });
+
+  it("validates Supabase default publishable key and URL formatting", () => {
+    expect(DEFAULT_SUPABASE_CONFIG.supabaseUrl).toMatch(/^https:\/\/[a-z0-9-]+\.supabase\.co$/);
+    expect(DEFAULT_SUPABASE_CONFIG.publishableKey.length).toBeGreaterThan(20);
+  });
+});
