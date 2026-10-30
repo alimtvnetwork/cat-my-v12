@@ -89,7 +89,7 @@ def _record_repo_failure(
         record = {
             "CorrelationId": uuid.uuid4().hex,
             "Code": error.code.name,
-            "Level": "ERROR",
+            "Level": "error",
             "Message": str(error),
             "StackTrace": traceback.format_exc(),
             "Endpoint": f"SqliteRulesRepo.{operation}",
@@ -184,10 +184,14 @@ class SqliteRulesRepo:
 
     def save_rule_set(self, envelope: RuleSetEnvelope | dict[str, Any]) -> RuleSetEnvelope:
         self._ensure_recipe_table()
-        rule_set_id = (
-            envelope.get("RuleSetId", 0)
-            if isinstance(envelope, dict)
-            else envelope.RuleSetId
+        # Best-effort id for the failure record when parsing itself fails:
+        # a raw dict may carry an int RuleSetId even when the envelope is
+        # otherwise invalid. Validation failures must also reach the Error
+        # table, so parsing runs inside the try below (previously it raised
+        # before the except handlers and was never recorded).
+        raw_id = envelope.get("RuleSetId") if isinstance(envelope, dict) else None
+        rule_set_id: int | None = (
+            raw_id if isinstance(raw_id, int) and not isinstance(raw_id, bool) else None
         )
         try:
             if isinstance(envelope, dict):
