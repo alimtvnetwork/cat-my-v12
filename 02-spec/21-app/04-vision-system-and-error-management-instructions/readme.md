@@ -84,6 +84,6 @@ flowchart TD
 
 ## 4. Subtasks & Execution Roadmap
 
-- [`01-window-controls-and-ui-glitch-fixes.md`](../../.ai-memory/plans/subtasks/04-vision-system-and-error-management-instructions/01-window-controls-and-ui-glitch-fixes.md)
-- [`02-error-splitdb-and-bug-reporting.md`](../../.ai-memory/plans/subtasks/04-vision-system-and-error-management-instructions/02-error-splitdb-and-bug-reporting.md)
-- [`03-vision-roi-layers-grayscale-and-cli-addressing.md`](../../.ai-memory/plans/subtasks/04-vision-system-and-error-management-instructions/03-vision-roi-layers-grayscale-and-cli-addressing.md)
+- [`01-window-controls-and-ui-glitch-fixes.md`](../../../.ai-memory/plans/subtasks/54-vision-system-and-error-management-instructions/08-window-controls-fix.md)
+- [`02-error-splitdb-and-bug-reporting.md`](../../../.ai-memory/plans/subtasks/54-vision-system-and-error-management-instructions/09-error-capture-splitdb.md)
+- [`03-vision-roi-layers-grayscale-and-cli-addressing.md`](../../../.ai-memory/plans/subtasks/54-vision-system-and-error-management-instructions/10-roi-lock-pattern-layers.md)

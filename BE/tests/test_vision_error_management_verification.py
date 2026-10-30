@@ -42,9 +42,17 @@ from BE.repos.sqlite_error_repo import SqliteErrorRepo
 from BE.repos.sqlite_rules_repo import SqliteRulesRepo
 from BE.ui_remote.queue import (
     audit as get_audit,
+)
+from BE.ui_remote.queue import (
     enqueue as enqueue_packet,
+)
+from BE.ui_remote.queue import (
     lookup as lookup_packet,
+)
+from BE.ui_remote.queue import (
     pending as get_pending,
+)
+from BE.ui_remote.queue import (
     resolve as resolve_packet,
 )
 from BE.ui_remote.registry import ELEMENTS, list_elements
@@ -155,7 +163,7 @@ def test_recipe_update_version_auto_increment():
         "Rules": [],
         "DraftMeta": {"ClientId": "c1", "UpdatedAt": "2026-10-31T01:00:00Z", "Origin": "server"},
     }
-    saved_v2 = repo.save_rule_set(envelope_v2)
+    repo.save_rule_set(envelope_v2)
 
     loaded = repo.get_rule_set(rule_set_id)
 
@@ -405,6 +413,10 @@ def test_system_error_get_nonexistent_returns_none():
 def test_task_error_table_schema_and_indexes():
     """Verify task Error table schema and indexes exist."""
     conn = get_task_conn()
+    # Self-heal first: on a clean machine the default task.db has no Error
+    # table until something writes (CI failed here with empty PRAGMA).
+    # An empty write creates the table via the writer's ensure step.
+    write_errors(conn, errors=[])
     cursor = conn.execute("PRAGMA table_info(Error);")
     cols = {row[1]: row[2] for row in cursor.fetchall()}
 
@@ -831,7 +843,7 @@ def test_ui_remote_audit_recording():
     assert isinstance(entries, list)
     matching = [e for e in entries if e.get("packetId") == pid]
     assert len(matching) == 1
-    assert matching[0]["status"] == "done" 
+    assert matching[0]["status"] == "done"
 
 
 # ==============================================================================
