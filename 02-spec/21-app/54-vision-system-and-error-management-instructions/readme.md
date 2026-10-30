@@ -413,3 +413,105 @@ Literal `catch { // Ignored }` / `.catch(() => { // Ignored })`:
 - **Email + Supabase:** greenfield modules, not fixes.
 - **Window buttons:** confirmed independently — provider missing (see
   section 8); cannot be fixed in `WindowControlButtons.tsx` alone.
+
+## 11. Analysis Findings (Research Wave 1 — AGM CLI-UI + Supabase Reference)
+
+Verified read-only against Antigravity-Manager main. All paths relative
+to that repo.
+
+### CLI-to-UI: the chain to copy (not the registry)
+
+- AGM never screen-scrapes its own UI: CLI and Tauri app share one Rust
+  library; the CLI drives the UI through two channels — a SQLite work
+  queue the app polls, and an authenticated local HTTP API that emits
+  Tauri events the React frontend listens for and executes through the
+  SAME code path as a real user click.
+- `agm ui open | goto <route> | ls [route] | scroll <element-id>
+  [route] | click <element-id> [route]`
+  (`src-tauri/src/bin/agm/ui_cmds.rs`).
+- **Addressing is by element `id` ONLY — no XPath anywhere in AGM.**
+  The CLI validates the id against a STATIC per-route element manifest
+  (`UiRoute { path, page, components, known_ids, focusable }`); it
+  refuses unknown or ambiguous ids unless the route is given.
+  `agm ui ls <route>` prints the manifest; `GET /api/ui/element-tree?
+  route=<route>` serves it (`src-tauri/src/proxy/server/admin_ui.rs`).
+  It is explicitly a static manifest, NOT a live DOM snapshot.
+- Frontend resolution fallback chain (`src/hooks/useUiRemoteControl.ts`):
+  `getElementById(id)` → `[data-ui-id]` → `[data-ui-name]` →
+  `[data-testid]` → `[title]` → `el.click()` / `scrollIntoView + focus`.
+  Missing elements become tracked warnings, never silent failures.
+- Transport: CLI → daemon over HTTP `127.0.0.1:8045`
+  (`src-tauri/src/modules/cli/daemon.rs`), `Authorization: Bearer
+  <token>` + `x-api-key` (token from env or app config), 5s timeout.
+  Click packet: `POST /api/ui/click { "route", "element_id", "actor":
+  "cli" }`. Backend validates, emits Tauri event (`agm://ui-click` /
+  `agm://ui-scroll` / `agm://ui-navigate`), records an audit entry
+  (`actor=cli`, `trigger`, `element_id`, `route` → `ui_audit.db`), and
+  returns `{success, element_id, route, actor}`. Every failure prints
+  the real message to stderr with a non-zero exit ("No Silent Errors");
+  a missing bridge endpoint is reported as `performed: false`, never
+  faked.
+- CLI envelope (`CliEnvelope`): `{ success, status, command,
+  instance_id, timestamp, data, error, meta }`; errors carry
+  `{ code: "DISPATCH_FAILED", message }`.
+- Second channel (prompt queue → CDP drive): `agm prompts send|enqueue`
+  writes SQLite `active_prompts` (addressed by instance_id + repo_path);
+  a scheduler (5s tick when queued, 30s idle backoff) dispatches to idle
+  projects FIFO; delivery into the IDE uses CDP (launch with
+  `--remote-debugging-port=0`, discover port from `DevToolsActivePort`,
+  WebSocket: focus input → `Input.insertText` → click send via
+  aria-label selector list, Enter-keydown fallback).
+- **Gap vs cat-my-v12's ask:** AGM has no id + display-name + XPath
+  triple and no live element-tree endpoint. Cat-my must build what AGM
+  only planned: a per-screen element registry (id, visible name, XPath)
+  populated from real page sources, a live-DOM endpoint, and the same
+  CLI → HTTP → frontend-event → `el.click()` chain. Copy the CHAIN,
+  not the registry.
+
+### Supabase pattern (plain PostgREST, no SDK)
+
+- Client (`src-tauri/src/modules/supabase_client/client.rs`): headers
+  `apikey` + `Authorization: Bearer <key>`, 15s timeout, URL normalized
+  (redundant `/rest/v1` paths and trailing slashes stripped).
+  `select` / `insert` / `upsert` over `{base}/rest/v1/{table}`; stored
+  functions over `{base}/rest/v1/rpc/{fn}`. Transport errors classified
+  into user-facing text (timeout/connect → "project may be paused
+  (free-tier)" hints, explicitly NOT blamed on the API key) and counted
+  toward a circuit breaker.
+- Credentials: plain JSON `supabase_config.json` in the app data dir
+  (mirrored to `%APPDATA%/antigravity-manager/` on Windows; NO
+  encryption). Shape: `{ endpoints: [{ id, name, url, api_key, role:
+  "root|secondary", is_enabled, prune_threshold_mb, priority, notes,
+  tags }], node_alias, is_sync_enabled, auto_prune_*, heartbeat_interval_secs:
+  300 }`. Loading also accepts the same config wrapped in a
+  `JsonEnvelope`; `agm supabase status` can auto-seed endpoints from
+  repo-secrets files.
+- Frontend service (`src/services/supabaseService.ts`): thin Tauri-invoke
+  wrapper (get/save config, test endpoint, check tables, migrate data,
+  schema-SQL copy, export/import config, account leases, fleet
+  machines, sync now). Settings UI (`src/components/settings/
+  SupabaseSync/`, routes `/supabase` and `settings/supabase`): URL entry
+  with sanitization, endpoint test, table verification, schema-SQL
+  copy, data migration between endpoints.
+- Two-role schema (`supabase_schema.rs`, shipped as SQL constants the
+  user runs in the dashboard, RLS anon/authenticated full-access):
+  Root DB — `nodes`, `instance_profiles`, `workspace_leases` + RPC
+  `acquire_workspace_lease` (atomic, 90s TTL default); Secondary DB —
+  `command_queue`, `command_telemetry`, `endpoint_health` + RPC
+  `claim_next_command` (atomically claims oldest pending command).
+- Sync loop (`fleet.rs`, `sync.rs`): 60s startup quiet period, 300s
+  loop, skipped while circuit breaker open or sync disabled; per
+  enabled root endpoint sends heartbeat (upsert `nodes` row + sync
+  `instance_profiles`).
+- **Recreation sketch for cat-my bug reports:** one `bug_reports` table
+  (id, node/machine id, title, stack trace, status, created_at) + one
+  `bug_attachments` or storage-bucket reference; a
+  `supabase_config.json`-style settings file (URL + key, role, enabled
+  flag); a PostgREST client with the same header scheme; an upload path
+  (insert report → upload attachments) and a download path (select
+  pending reports → developer CLI pulls them); heartbeat/lease
+  equivalent NOT needed for bug reports.
+- Adjacent (not deep-dived, for the error-DB workstream): AGM's
+  `src-tauri/src/modules/error_db/` (db.rs, ops.rs, diagnostics.rs,
+  types.rs), `src-tauri/src/modules/audit/` (UI audit trail),
+  `src/services/emailService.ts` (notifier email).
