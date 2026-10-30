@@ -1,40 +1,62 @@
 import React, { useState, useCallback } from "react";
 import { Minus, Square, X, AlertTriangle, LogOut } from "lucide-react";
+import { resolveBackendUrl } from "@/lib/data-source";
+import { getAutomationAttrs } from "@/utils/automation-registry";
 
 export function WindowControlButtons(): React.JSX.Element {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   const handleMinimize = useCallback(() => {
-    const desktopApi = (window as unknown as { desktopApi?: { minimize?: () => void } }).desktopApi;
+    try {
+      const desktopApi = (window as unknown as { desktopApi?: { minimize?: () => void } }).desktopApi;
 
-    if (desktopApi?.minimize) {
-      desktopApi.minimize();
+      if (desktopApi?.minimize) {
+        desktopApi.minimize();
 
-      return;
+        return;
+      }
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+
+      window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
+    } catch (err) {
+      console.warn("[WindowControls] minimize error", err);
     }
-
-    // Web fallback: collapse viewport or dispatch event
-    window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
   }, []);
 
   const handleToggleMaximize = useCallback(() => {
-    const desktopApi = (window as unknown as { desktopApi?: { toggleMaximize?: () => void } }).desktopApi;
+    try {
+      const desktopApi = (window as unknown as { desktopApi?: { toggleMaximize?: () => void } }).desktopApi;
 
-    if (desktopApi?.toggleMaximize) {
-      desktopApi.toggleMaximize();
+      if (desktopApi?.toggleMaximize) {
+        desktopApi.toggleMaximize();
 
-      return;
-    }
+        return;
+      }
 
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (err) {
+      console.warn("[WindowControls] maximize error", err);
     }
   }, []);
 
-  const handleConfirmExit = useCallback(() => {
-    setIsExitDialogOpen(false);
+  const handleConfirmExit = useCallback(async () => {
+    setIsExiting(true);
+
+    try {
+      const shutdownUrl = resolveBackendUrl("/shutdown");
+      await fetch(shutdownUrl, { method: "POST" }).catch(() => {});
+    } catch {
+      // Backend shutdown attempt finished
+    }
+
     const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
 
     if (desktopApi?.close) {
@@ -43,15 +65,33 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
-    // Web fallback: attempt window close or reset session
     try {
       window.close();
     } catch {
-      // Ignored
+      // Browser prevented window.close
     }
 
+    setIsExitDialogOpen(false);
     window.location.href = "/";
   }, []);
+
+  const minAttrs = getAutomationAttrs({
+    id: "btn-window-minimize",
+    name: "Minimize Window",
+    parentPath: "//div[@data-testid='window-controls-bar']",
+  });
+
+  const maxAttrs = getAutomationAttrs({
+    id: "btn-window-maximize",
+    name: "Window Layer or Maximize",
+    parentPath: "//div[@data-testid='window-controls-bar']",
+  });
+
+  const closeAttrs = getAutomationAttrs({
+    id: "btn-window-close",
+    name: "Close Application",
+    parentPath: "//div[@data-testid='window-controls-bar']",
+  });
 
   return (
     <>
@@ -64,6 +104,7 @@ export function WindowControlButtons(): React.JSX.Element {
           title="Minimize to taskbar"
           aria-label="Minimize Window"
           onClick={handleMinimize}
+          {...minAttrs}
           className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-white/10 hover:text-slate-100 active:scale-95"
         >
           <Minus className="h-3.5 w-3.5" />
@@ -74,6 +115,7 @@ export function WindowControlButtons(): React.JSX.Element {
           title="Window layer / Maximize"
           aria-label="Window Layer or Maximize"
           onClick={handleToggleMaximize}
+          {...maxAttrs}
           className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-white/10 hover:text-slate-100 active:scale-95"
         >
           <Square className="h-3 w-3" />
@@ -84,6 +126,7 @@ export function WindowControlButtons(): React.JSX.Element {
           title="Exit application"
           aria-label="Close Application"
           onClick={() => setIsExitDialogOpen(true)}
+          {...closeAttrs}
           className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-rose-600 hover:text-white active:scale-95"
         >
           <X className="h-3.5 w-3.5" />
@@ -113,6 +156,7 @@ export function WindowControlButtons(): React.JSX.Element {
             <div className="mt-5 flex items-center justify-end gap-2.5">
               <button
                 type="button"
+                id="btn-dialog-exit-cancel"
                 onClick={() => setIsExitDialogOpen(false)}
                 className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
               >
@@ -121,11 +165,13 @@ export function WindowControlButtons(): React.JSX.Element {
 
               <button
                 type="button"
+                id="btn-dialog-exit-confirm"
+                disabled={isExiting}
                 onClick={handleConfirmExit}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span>Exit Now</span>
+                <span>{isExiting ? "Exiting..." : "Exit Now"}</span>
               </button>
             </div>
           </div>
