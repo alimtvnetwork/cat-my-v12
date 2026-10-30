@@ -107,8 +107,10 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
 
 ## 5. MBUD — Matters to Be Discussed in the Morning (Ambiguities)
 
-1. Screenshot contents (above) — confirm each glitch visually once images
-   are in the spec assets folder.
+1. Screenshot contents — RESOLVED 31-Oct-25 ~02:10: all 12 images
+   extracted by parallel agents to `assets/screenshots/` and 4 key images
+   visually confirmed (see section 12). Remaining: confirm the other 8
+   images against their spec 04 descriptions in the morning.
 2. ROI lock interaction: double-click to unlock — confirm the exact gesture
    (double-click vs long-press vs lock toggle).
 3. Pattern numbering scheme: confirm numbering restarts per ROI or is global.
@@ -592,3 +594,51 @@ connects (this screenshot), (b) Radix Portal clipping claimed in spec
 04, (c) stale camera-facade instances / blank save-camera select
 (spec 54 section 9). All three go into the camera workstream; they are
 not competing explanations.
+
+## 13. Wave 1 Completion — Window Controls (31-Oct-25 ~02:10)
+
+Workstream COMPLETE, all changes on origin/main, spot-verified by the
+coordinator (shutdown route present, old reload crash path gone, MBUD
+item 8 present). Subtask 08 marked COMPLETE by the agent.
+
+- `BE/routes/shutdown.py` (new) — `POST /shutdown`, loopback-only
+  (403 otherwise), replies with the success envelope first, then
+  SIGTERM-exits the backend on a 0.5s timer (graceful path via the
+  existing SIGTERM handler, `os._exit(0)` fallback). Frontend bun
+  server deliberately NOT stopped here — the launcher owns that.
+- `BE/main.py` — shutdown router registered (2 lines).
+- `WindowControlButtons.tsx` (rewritten) — honest browser behavior:
+  minimize uses `desktopApi` if a future shell provides it, else a toast
+  saying minimize is unavailable in browser mode; maximize =
+  `desktopApi` or fullscreen toggle, rejections to the error store;
+  close = confirm dialog → `POST /shutdown` (3s abort timeout) →
+  `window.close()` attempt → guidance state ("close this browser
+  window now, Alt+F4 — the launcher stops the remaining services").
+  The old `window.location.href = "/"` reload crash path is GONE. Zero
+  swallowed catches remain in this file.
+- `StandardAppShell.tsx` — Exit menu item dispatches
+  `cat-vision:request-exit`, opening the same confirm dialog; no
+  duplicate exit logic. UiModeSwitch and Simulation button code
+  untouched.
+- `packaging/desktop/start.ps1` + `start.sh` — launcher supervises the
+  stack: keeps the browser PID, waits on it, then POSTs `/shutdown`
+  and stops backend + frontend. A 5s delegation guard skips teardown
+  when the browser exits immediately (handed off to an already-running
+  instance). Failed-start cleanup stops servers when the browser never
+  launches. macOS `open` path unchanged (no PID; teardown via in-app
+  Exit only).
+- `src/lib/version-info.ts` — claim corrected to "Browser window
+  controls (fullscreen toggle, guided app exit with backend shutdown)
+  in titlebar".
+- Commits: f293edea (shutdown endpoint), 65d248c0 (honest controls +
+  single Exit path), acd654b4 (merge syncing parallel agents, clean),
+  a74ec564 (launcher supervision), 63faee20 (claim + MBUD + subtask).
+- NOT verified at runtime (per program order: no builds/tests until
+  end of tunnel). Morning checklist: click each button in the installed
+  app, confirm Exit stops the backend, ports 8787/3000 free, no
+  orphaned `backend-server.exe`/`bun.exe` in Task Manager.
+- Shared-checkout note: one push was initially rejected
+  non-fast-forward (parallel agents landing between batches), resolved
+  with a clean merge; the agent verified its version-info + MBUD edits
+  landed intact via another agent's commit 8e86343b, and never staged
+  anyone else's files.
