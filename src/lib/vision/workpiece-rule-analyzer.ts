@@ -120,14 +120,20 @@ export {
 };
 
 // Corrupt saved-rule JSON must surface in the error store, never vanish.
-// parseBoxesFromParams runs inside render paths (useMemo / JSX in the
-// workpiece canvas), so the capture is deferred past commit, and each
-// distinct corrupt payload is captured once so a re-rendering canvas
-// cannot flood the bounded error history. Only the payload shape (field
-// name + string length) is recorded, never the raw content.
+// parseBoxesFromParams and parseStoredRegion run inside render paths
+// (useMemo / JSX in the workpiece canvas), so the capture is deferred
+// past commit, and each distinct corrupt payload is captured once so a
+// re-rendering canvas cannot flood the bounded error history. Only the
+// payload shape (field name + string length) is recorded, never the raw
+// content.
 const capturedCorruptPayloadKeys = new Set<string>();
 
-function captureCorruptSavedJson(field: string, payload: string, err: unknown): void {
+function captureCorruptSavedJson(
+  field: string,
+  payload: string,
+  err: unknown,
+  action = "parseBoxesFromParams",
+): void {
   const key = `${field}:${payload}`;
 
   if (capturedCorruptPayloadKeys.has(key)) {
@@ -141,7 +147,7 @@ function captureCorruptSavedJson(field: string, payload: string, err: unknown): 
       err,
       {
         triggerComponent: "workpiece-rule-analyzer",
-        triggerAction: "parseBoxesFromParams",
+        triggerAction: action,
         context: { field, payloadLength: payload.length },
       },
       "E_ANALYZER_PARSE_SAVED_JSON",
@@ -613,7 +619,9 @@ function parseStoredRegion(params: EditorRuleParams | undefined, key: string): S
 
   try {
     return readRegionLike(JSON.parse(json));
-  } catch {
+  } catch (err) {
+    captureCorruptSavedJson(`${key}Json`, json, err, "parseStoredRegion");
+
     return null;
   }
 }
