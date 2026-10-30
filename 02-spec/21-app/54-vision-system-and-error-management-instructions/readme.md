@@ -1,0 +1,114 @@
+# Spec 54 — Vision System and Error Management Instructions
+
+**Slug:** vision-system-and-error-management-instructions
+**Date:** 31-Oct-25 (planning phase)
+**Repo:** cat-my-v12, branch main
+**Status:** PLANNING ONLY — no code changes in this phase. Analysis first, then execution waves.
+
+## 1. User's Problem Statement (Summary)
+
+Issues keep returning despite repeated prompts. The vision system must be fixed
+systematically: window controls, error capture, CLI-addressable UI, hover
+glitches, Pin1/grayscale/pattern-search behavior, layers, simulation timing,
+camera dropdown, and bug reporting via email + Supabase.
+
+## 2. Confirmed Understanding (User's Model)
+
+- **Window controls:** minimize, maximize, close in the vision system must work;
+  close currently crashes.
+- **Error discipline:** every error goes through the error wrapper + error
+  model (spec 02-spec/03-error-manage/). No swallowing. All errors persist to
+  an error database built on the SplitDB concept, exportable as bug reports
+  in recording mode, and listable from the CLI with stack traces so AI can
+  fix step by step.
+- **CLI-addressable UI (first line of defense):** every button/screen element
+  carries three things: an `Id`, a display name (as seen on screen), and an
+  XPath. The CLI can click any button by Id or XPath. The CLI must be able to
+  change anything in the UI (grayscale tolerance, ROI, patterns) and drive
+  end-to-end tests from the CLI, including screenshot validation.
+- **Hover glitch:** menu buttons jump on hover; the simulation next button
+  glitches the same way. Root cause to be found, not guessed.
+- **ROI + patterns (Photoshop model):** ROI is created first (specific color),
+  then locked — it does not move unless double-clicked. Inside the ROI,
+  pattern search finds numbered patterns (each with height/width/color
+  evidence). Patterns are layers ON TOP of the ROI (second/top layers),
+  movable/resizable/rotatable like Photoshop shapes, with a layers panel and
+  right-click send-back/send-forward.
+- **Pin1 vs shapes:** ROI itself is NOT rectangle/circle/square — the PATTERN
+  searched inside the ROI can be rectangle, circle, etc. Pin1 configuration
+  must show the tool types (rectangle, circle, ...).
+- **Grayscale:** grayscale changes BITS, not just display colors — dark gets
+  darker, white gets whiter, reducing toward black/white so text/shapes stand
+  out. Grayscale tolerance must be drivable from the CLI.
+- **Simulation:** multiple simulations addable (recording or user-added); the
+  configured delay must be honored exactly (a 2s delay must not take longer).
+- **Camera dropdown:** live source / live camera select + saving-camera
+  dropdown bug (previously reported, not fixed).
+- **Validation:** save/create/click flows must validate so the user never
+  reaches the error in the first place; random testing (create/save/click)
+  must surface errors through the CLI.
+- **Bug reporting:** record-a-bug exports via email (sender + notifier
+  defaults) and Supabase (settings section; dummy/inbuilt settings later).
+  Reference: Antigravity Manager / Antigravity Tools CLI-UI packet + Supabase
+  logic — study first, recreate the pattern.
+- **Assets reference:** assets folder, vision system pictures 11 August
+  (vision inspection grid ROI-2, feature-extraction samples) — the old
+  system's red ROI + auto-numbered pattern shapes inside it, modernized.
+
+## 3. Execution Order (User-Directed)
+
+1. Issue analysis + code analysis FIRST (this spec + research reports).
+2. CLI-UI element registry (Id/name/XPath) + CLI click/drive — first defense.
+3. Window controls + error capture/SplitDB (foundation).
+4. ROI lock + patterns-as-layers + layers panel + Pin1 tools + grayscale bits.
+5. Hover glitch + simulation timing + camera dropdown.
+6. Email + Supabase bug reporting.
+7. End-to-end tests (100–200 cases) via CLI; build fix at the end of the
+   tunnel; CI green by morning.
+
+## 4. Evidence Links (Screenshots, User-Supplied)
+
+Recorded verbatim; image contents could NOT be extracted from this
+environment (prnt.sc pages expose no image via text fetch). The user is
+asked to drop the image files into the spec assets folder in the morning;
+URLs are preserved here for reference.
+
+- https://prnt.sc/pUuIGz0ih_ZZ
+- https://prnt.sc/wL_7nmmUJQPh
+- https://prnt.sc/wXoDp20hMNwJ
+- https://prnt.sc/rzcoeqtbFB8l
+- https://prnt.sc/9qwZWqYiKV95
+- https://prnt.sc/Os3MgbBIMHmT
+- https://prnt.sc/_lKsg1rvFRnI
+- Glitch menu: https://prnt.sc/RJPTx3RB8gDf
+- https://prnt.sc/j21Xbgbsy6bB
+- Pattern search point: https://prnt.sc/JA4FdRFDSKi2
+- https://prnt.sc/mr6_-1EdpFtG
+- Dropdown: https://prnt.sc/bg2jMNWxHjkn
+
+## 5. MBUD — Matters to Be Discussed in the Morning (Ambiguities)
+
+1. Screenshot contents (above) — confirm each glitch visually once images
+   are in the spec assets folder.
+2. ROI lock interaction: double-click to unlock — confirm the exact gesture
+   (double-click vs long-press vs lock toggle).
+3. Pattern numbering scheme: confirm numbering restarts per ROI or is global.
+4. Supabase dummy/inbuilt settings: credentials to be supplied later; plan
+   uses a settings section with placeholders, no secrets committed.
+5. Email sender/notifier defaults: addresses to be supplied later; plan
+   uses configurable defaults, no secrets committed.
+6. Grayscale "bits" semantics: confirm whether the threshold output is a
+   1-bit mask or a contrast-stretched preview (implementation will expose
+   both and let the morning call decide).
+7. Which simulation delay paths overshoot (timer stacking vs render block)
+   — pending research report.
+
+## 6. Guardrails
+
+- Pull before every commit; merge on conflict (never force-push).
+- Commit after every plan and after significant code; nothing pending >10 min.
+- Micro-batches of 5–8 files; heatmap logging for shared files.
+- Relative git paths only, everywhere including release notes.
+- No repo deletion; no destructive git commands; no disabling CI/CD.
+- One single commit per completed task, hyphen format, pushed immediately.
+- No builds until the task is done; build fix at the end of the tunnel.
