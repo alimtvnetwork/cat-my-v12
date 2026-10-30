@@ -41,6 +41,7 @@ from BE.cli.common.doctor import assert_healthy, run_preflight
 from BE.cli.common.session import SessionCtx
 from BE.cli.processing.commands import batch as _batch
 from BE.cli.processing.commands import dry_run as _dry_run
+from BE.cli.processing.commands import errors as _errors
 from BE.cli.processing.commands import evaluate as _evaluate
 from BE.cli.processing.commands import status as _status
 from BE.cli.processing.commands import ui_remote as _ui_remote
@@ -168,6 +169,12 @@ def build_dispatcher() -> Dispatcher:
         handler=_ui_remote.handle,
         configure=_ui_remote.configure,
         help="Drive the app UI from the CLI: ls/click/scroll/navigate/set/audit/result (spec 54).",
+    ))
+    d.register(Subcommand(
+        name="errors",
+        handler=_errors.handle,
+        configure=_errors.configure,
+        help="List, show, or export Task-DB errors with stack traces (spec 54 §10).",
     ))
     return d
 

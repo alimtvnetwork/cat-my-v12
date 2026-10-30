@@ -67,6 +67,7 @@ _DETAILS_FIELDS: tuple[str, ...] = (
     "invocationChain",
     "method",
     "responseStatus",
+    "requestBody",
     "backendStackTrace",
     "file",
     "line",
