@@ -27,6 +27,8 @@ function resolveById(elementId: string): ResolvedElement | null {
   }
 
   const selectors = [
+    `[data-automation-id="${elementId}"]`,
+    `[data-automation-name="${elementId}"]`,
     `[data-ui-id="${elementId}"]`,
     `[data-ui-name="${elementId}"]`,
     `[data-testid="${elementId}"]`,

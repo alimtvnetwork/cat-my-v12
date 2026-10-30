@@ -7,6 +7,7 @@ import {
   type Pin1HoleItem,
   type Pin1MatchResult,
   type Pin1RegionEditMode,
+  type Pin1ShapeType,
 } from "./types";
 
 export interface Pin1ReviewPanelProps {
@@ -25,6 +26,8 @@ export interface Pin1ReviewPanelProps {
   isSaving?: boolean;
   saveMessage?: string | null;
   actionButtonLabel?: string;
+  shapeType?: Pin1ShapeType;
+  onShapeTypeChange?: (shape: Pin1ShapeType) => void;
   greyscaleMode?: GrayscaleMode;
   onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
   onThresholdChange: (val: number) => void;
@@ -123,7 +126,32 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
           )}
         </div>
 
-        {/* 2. Pin 1 Fiducial Geometry Card */}
+        {/* 2. Shape Tool Selection Card */}
+        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
+          <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
+            <span>Fiducial Shape Tool</span>
+            <span className="font-mono text-[11px] text-cyan-400 uppercase">{props.shapeType ?? "circle"}</span>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {(["circle", "rectangle", "ring", "square"] as const).map((shape) => (
+              <button
+                key={shape}
+                type="button"
+                data-automation-id={`review-shape-${shape}`}
+                onClick={() => props.onShapeTypeChange?.(shape)}
+                className={`rounded border px-2 py-1.5 text-[11px] font-semibold uppercase transition-colors ${
+                  (props.shapeType ?? "circle") === shape
+                    ? "border-cyan-400 bg-cyan-400/20 text-cyan-300"
+                    : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-bg"
+                }`}
+              >
+                {shape}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. Pin 1 Fiducial Geometry Card */}
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
           <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
             <span>Pin 1 Fiducial Geometry</span>

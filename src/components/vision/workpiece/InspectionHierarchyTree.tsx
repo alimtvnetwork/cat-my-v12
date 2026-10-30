@@ -20,7 +20,10 @@ import {
   Trash2,
   Unlock,
   Wand2,
+  Layers,
 } from "lucide-react";
+import { PhotoshopLayersPanel } from "../layers/PhotoshopLayersPanel";
+import type { VisionLayerItem, VisionLayerType } from "../layers/types";
 import { ToolInspectionGraphic } from "@/components/vision/ToolInspectionGraphic";
 import { VISION_TOOL_CATALOG } from "@/lib/vision/tool-catalog";
 import type { Project, RuleSet } from "@/lib/projects/types";
@@ -126,6 +129,55 @@ export function InspectionHierarchyTree({
   const [expandedRuleIds, setExpandedRuleIds] = useState<Record<string, boolean>>({});
   const [expandedCameraRuleId, setExpandedCameraRuleId] = useState<string | null>(null);
   const [expandedLightRuleId, setExpandedLightRuleId] = useState<string | null>(null);
+  const [activeViewMode, setActiveViewMode] = useState<"tree" | "layers">("tree");
+
+  const layers = useMemo<VisionLayerItem[]>(() => {
+    const list: VisionLayerItem[] = [
+      {
+        id: "layer-base-image",
+        name: "Base Workpiece Image",
+        type: "image",
+        isVisible: true,
+        isLocked: true,
+        colorTag: "#38bdf8",
+        zIndex: 10,
+        details: project.name || "Live Workpiece Feed",
+      },
+      {
+        id: "layer-master-roi",
+        name: "Master ROI (Cyan Boundary)",
+        type: "roi",
+        isVisible: true,
+        isLocked: false,
+        colorTag: "#00e5ff",
+        zIndex: 20,
+        details: "Top Header Grip · 4 Corners",
+      },
+    ];
+
+    rules.forEach((rule, idx) => {
+      const toolCode = resolveRuleToolCode(rule);
+      const isPattern = toolCode === "T102" || rule.name.toLowerCase().includes("pattern");
+      const isMask = toolCode === "T108" || rule.name.toLowerCase().includes("mask");
+      const isOverlay = rule.name.toLowerCase().includes("overlay") || rule.name.toLowerCase().includes("hud");
+      const layerType: VisionLayerType = isPattern ? "pattern" : isMask ? "mask" : isOverlay ? "overlay" : "rule";
+      const colorTag = isPattern ? "#10b981" : isMask ? "#f59e0b" : isOverlay ? "#f43f5e" : "#00e5ff";
+
+      list.push({
+        id: rule.id,
+        ruleId: rule.id,
+        name: rule.name,
+        type: layerType,
+        isVisible: !rule.isHidden,
+        isLocked: Boolean(rule.isLocked),
+        colorTag,
+        zIndex: 30 + idx * 10,
+        details: `${toolCode || "RULE"} · [${Math.round(rule.width)}×${Math.round(rule.height)}]`,
+      });
+    });
+
+    return list;
+  }, [project.name, rules]);
 
   const displayRulesets = useMemo<RuleSet[]>(() => {
     if (rulesets && rulesets.length > 0) return rulesets;
@@ -187,8 +239,8 @@ export function InspectionHierarchyTree({
       aria-label="Inspection hierarchy tree"
       className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-black/40 font-sans shadow-inner backdrop-blur-md"
     >
-      {/* Header: project name */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
+      {/* Header: project name and View Mode toggle */}
+      <div className="flex shrink-0 items-center justify-between border-b border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
           <FolderTree size={14} className="shrink-0 text-amber-400" />
           <span
@@ -201,9 +253,59 @@ export function InspectionHierarchyTree({
             {totalRuleCount}
           </span>
         </div>
+
+        {/* View Switcher: Tree vs Photoshop Layers */}
+        <div className="flex items-center gap-0.5 rounded-md bg-black/60 p-0.5 border border-white/10">
+          <button
+            type="button"
+            onClick={() => setActiveViewMode("tree")}
+            className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase transition ${
+              activeViewMode === "tree"
+                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                : "text-white/40 hover:text-white"
+            }`}
+            title="Tree Hierarchy View"
+          >
+            <FolderTree size={10} />
+            <span>Tree</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveViewMode("layers")}
+            className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase transition ${
+              activeViewMode === "layers"
+                ? "bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/40"
+                : "text-white/40 hover:text-white"
+            }`}
+            title="Photoshop-Style Layers Stack View"
+          >
+            <Layers size={10} />
+            <span>Layers</span>
+          </button>
+        </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 font-sans text-xs [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
+      {activeViewMode === "layers" ? (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <PhotoshopLayersPanel
+            layers={layers}
+            selectedLayerId={selectedRuleId}
+            onSelectLayer={(id) => {
+              if (rules.some((r) => r.id === id)) {
+                onSelectRule(id);
+              }
+            }}
+            onToggleVisibility={(id) => onToggleHidden?.(id)}
+            onToggleLocked={(id) => onToggleLocked?.(id)}
+            onBringToFront={(id) => onBringToFront?.(id)}
+            onSendToBack={(id) => onSendToBack?.(id)}
+            onMoveUp={(id) => onReorderRule?.(id, "up")}
+            onMoveDown={(id) => onReorderRule?.(id, "down")}
+            onDeleteLayer={(id) => onDeleteRule?.(id)}
+          />
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5 font-sans text-xs [scrollbar-color:rgba(255,255,255,0.2)_transparent] [scrollbar-width:thin]">
         <div className="select-none space-y-0.5">
           <TreeRow
             isOpen={isDeviceOpen}
@@ -370,6 +472,8 @@ export function InspectionHierarchyTree({
           ) : null}
         </div>
       </div>
+      )}
+
       {onAddRulesetClick || onAddRuleClick ? (
         <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/[0.08] p-2">
           {onAddRulesetClick ? (

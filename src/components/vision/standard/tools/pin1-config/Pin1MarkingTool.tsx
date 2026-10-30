@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Binary, Camera, RefreshCw, Trash2, Upload } from "lucide-react";
+import { Binary, Camera, Circle, Disc, Ratio, RefreshCw, Square, Trash2, Upload } from "lucide-react";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
 import { LayersPanel } from "@/components/vision/white-box/LayersPanel";
 import type { CanvasLayer } from "@/components/vision/white-box/types";
@@ -146,7 +146,65 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]"
           >
             {/* Top-left absolute toolbar (Old HMI style over canvas) */}
-            <div className="absolute top-2 left-2 z-10 flex gap-2">
+            <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+              <div className="flex rounded border border-[#444] bg-[#222]/80 p-0.5 shadow">
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-rectangle"
+                  title="Rectangle Shape Tool"
+                  onClick={() => model.setShapeType("rectangle")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "rectangle"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Square className="h-3.5 w-3.5" />
+                  <span>Rect</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-circle"
+                  title="Circle Shape Tool"
+                  onClick={() => model.setShapeType("circle")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "circle"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Circle className="h-3.5 w-3.5" />
+                  <span>Circle</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-ring"
+                  title="Ring Shape Tool"
+                  onClick={() => model.setShapeType("ring")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "ring"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Disc className="h-3.5 w-3.5" />
+                  <span>Ring</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-square"
+                  title="Square Shape Tool"
+                  onClick={() => model.setShapeType("square")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "square"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Ratio className="h-3.5 w-3.5" />
+                  <span>Square</span>
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={model.toggleGreyscalePreview}
@@ -168,29 +226,30 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             </div>
 
             <Pin1Canvas
-              source={model.source}
-              searchRegion={model.searchRegion}
-              packageRegion={model.packageRegion}
-              activeRegion={activeRegion}
-              regionEditMode={model.regionEditMode}
-              detectedHoles={model.detectedHoles}
-              registeredPin1={model.registeredPin1}
-              matchResult={model.matchResult}
-              hasOverlays={props.hasCanvasOverlays ?? true}
-              hasGreyscalePreview={model.hasGreyscalePreview}
-              thresholdLuma={model.thresholdLuma}
-              polarity={model.polarity}
-              greyscaleMode={model.greyscaleMode}
-              dragState={model.dragState}
-              isSearchLocked={isSearchLocked}
-              onSearchLockChange={setIsSearchLocked}
-              layerOrder={layerOrder}
-              onLayerOrderChange={setLayerOrder}
-              onSearchRegionChange={model.handleActiveRegionChange}
-              onDragStateChange={model.setDragState}
-              onSelectHole={model.setPrimaryPin1Hole}
-              onRegisterPoint={model.registerPin1AtPoint}
-            />
+            shapeType={model.shapeType}
+            source={model.source}
+            searchRegion={model.searchRegion}
+            packageRegion={model.packageRegion}
+            activeRegion={activeRegion}
+            regionEditMode={model.regionEditMode}
+            detectedHoles={model.detectedHoles}
+            registeredPin1={model.registeredPin1}
+            matchResult={model.matchResult}
+            hasOverlays={props.hasCanvasOverlays ?? true}
+            hasGreyscalePreview={model.hasGreyscalePreview}
+            thresholdLuma={model.thresholdLuma}
+            polarity={model.polarity}
+            greyscaleMode={model.greyscaleMode}
+            dragState={model.dragState}
+            isSearchLocked={isSearchLocked}
+            onSearchLockChange={setIsSearchLocked}
+            layerOrder={layerOrder}
+            onLayerOrderChange={setLayerOrder}
+            onSearchRegionChange={model.handleActiveRegionChange}
+            onDragStateChange={model.setDragState}
+            onSelectHole={model.setPrimaryPin1Hole}
+            onRegisterPoint={model.registerPin1AtPoint}
+          />
           </div>
 
           {/* Right: Settings Panel */}
@@ -198,56 +257,54 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             data-tour="rule-config-controls"
             className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]"
           >
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <Pin1ReviewPanel
-                thresholdLuma={model.thresholdLuma}
-                polarity={model.polarity}
-                minCircularity={model.minCircularity}
-                minRadiusPx={model.minRadiusPx}
-                maxRadiusPx={model.maxRadiusPx}
-                tolerancePx={model.tolerancePx}
-                searchRegion={model.searchRegion}
-                packageRegion={model.packageRegion}
-                regionEditMode={model.regionEditMode}
-                detectedHoles={model.detectedHoles}
-                registeredPin1={model.registeredPin1}
-                matchResult={model.matchResult}
-                isSaving={model.isSaving}
-                saveMessage={model.saveMessage}
-                actionButtonLabel={buttonLabel}
-                greyscaleMode={model.greyscaleMode}
-                onGreyscaleModeChange={model.changeGreyscaleMode}
-                onThresholdChange={model.handleThresholdChange}
-                onPolarityChange={model.handlePolarityChange}
-                onCircularityChange={model.setMinCircularity}
-                onRadiusRangeChange={(minR, maxR) => {
-                  model.setMinRadiusPx(minR);
-                  model.setMaxRadiusPx(maxR);
-                }}
-                onToleranceChange={model.setTolerancePx}
-                onRegionEditModeChange={model.setRegionEditMode}
-                onAddPackageRegion={model.addPackageRegion}
-                onToggleKeepHole={model.toggleKeepHole}
-                onSelectPrimaryPin1={model.setPrimaryPin1Hole}
-                onIncludeAll={model.includeAllHoles}
-                onExcludeAll={model.excludeAllHoles}
-                onSaveRule={model.savePin1Rule}
-                onCancel={props.onCancel}
-              />
-            </div>
-            <div className="h-[240px] shrink-0">
-              <LayersPanel
-                layers={layers}
-                selectedLayerId={selectedLayerId}
-                panelId="ui-pin1-layers-panel"
-                onSelectLayer={handleSelectLayer}
-                onToggleLayerVisibility={handleToggleLayerVisibility}
-                onToggleLayerLock={handleToggleLayerLock}
-                onBringLayerForward={handleBringLayerForward}
-                onSendLayerBackward={handleSendLayerBackward}
-                isLayerReorderable={(layer) => layer.id === "roi" || layer.id === "package"}
-              />
-            </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+          <Pin1ReviewPanel
+            thresholdLuma={model.thresholdLuma}
+            polarity={model.polarity}
+            minCircularity={model.minCircularity}
+            minRadiusPx={model.minRadiusPx}
+            maxRadiusPx={model.maxRadiusPx}
+            tolerancePx={model.tolerancePx}
+            searchRegion={model.searchRegion}
+            packageRegion={model.packageRegion}
+            regionEditMode={model.regionEditMode}
+            detectedHoles={model.detectedHoles}
+            registeredPin1={model.registeredPin1}
+            matchResult={model.matchResult}
+            isSaving={model.isSaving}
+            saveMessage={model.saveMessage}
+            actionButtonLabel={buttonLabel}
+            shapeType={model.shapeType}
+            onShapeTypeChange={model.setShapeType}
+            greyscaleMode={model.greyscaleMode}
+            onGreyscaleModeChange={model.changeGreyscaleMode}
+            onThresholdChange={model.handleThresholdChange}
+            onPolarityChange={model.handlePolarityChange}
+            onCircularityChange={model.setMinCircularity}
+            onRadiusRangeChange={(minR, maxR) => {
+              model.setMinRadiusPx(minR);
+              model.setMaxRadiusPx(maxR);
+            }}
+            onToleranceChange={model.setTolerancePx}
+            onRegionEditModeChange={model.setRegionEditMode}
+            onAddPackageRegion={model.addPackageRegion}
+            onToggleKeepHole={model.toggleKeepHole}
+            onSelectPrimaryPin1={model.setPrimaryPin1Hole}
+            onIncludeAll={model.includeAllHoles}
+            onExcludeAll={model.excludeAllHoles}
+            onSaveRule={model.savePin1Rule}
+            onCancel={props.onCancel}
+          />
+          </div>
+          <div className="h-[240px] shrink-0">
+            <LayersPanel
+              layers={layers}
+              selectedLayerId={selectedLayerId}
+              panelId="ui-pin1-layers-panel"
+              onSelectLayer={handleSelectLayer}
+              onToggleLayerVisibility={handleToggleLayerVisibility}
+            />
+          </div>
           </div>
         </div>
 

@@ -45,7 +45,7 @@ const TOUR_RULESET_NAME = "demoset";
 const TOUR_PIN1_RULE_ID = "guided-demo-pin1-rule-d1";
 const TOUR_PATTERN_RULE_ID = "guided-demo-greyscale-rule-d1";
 const TOUR_VIEWPORT_PADDING = 96;
-const TOUR_MIN_STEP_MS = 6500;
+const TOUR_MIN_STEP_MS = 1000;
 
 interface GuidedDeviceLayout {
   id: string;
@@ -1598,7 +1598,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     isStepAdvancingRef.current = true;
     window.setTimeout(() => {
       isStepAdvancingRef.current = false;
-    }, 800);
+    }, 200);
     clearTimer();
     const step = steps[stepIndex];
 
@@ -1621,6 +1621,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       // the next step's beginStep as soon as its target resolves — there
       // is no fixed 700ms wait, so dwell-to-advance time stays exact.
       setIsTransitioning(true);
+
     }
 
     setStepIndex(stepIndex + 1);
@@ -1646,10 +1647,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       }
 
       if (!hasTourTarget(step)) {
-        if (Date.now() - waitStartedAt > 2000) {
+        if (Date.now() - waitStartedAt > 300) {
           // Safety fallback: if target wait exceeds 2s, proceed with step so countdown timer never freezes
         } else {
-          targetWaitTimerRef.current = window.setTimeout(beginStep, 150);
+          targetWaitTimerRef.current = window.setTimeout(beginStep, 50);
 
           return;
         }

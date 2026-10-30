@@ -1,4 +1,4 @@
-﻿"""SQLite implementation of RulesRepo for Day 1 MVP persistence."""
+"""SQLite implementation of RulesRepo for Day 1 MVP persistence."""
 
 from __future__ import annotations
 
@@ -109,16 +109,13 @@ def _record_repo_failure(
 class SqliteRulesRepo:
     def __init__(self) -> None:
         self.conn = get_root_conn()
+        self._ensure_recipe_table()
 
+    def _ensure_recipe_table(self) -> None:
+        """Self-healing bootstrap: ensure Recipe table exists before executing queries."""
         try:
             _ensure_recipe_table(self.conn)
         except Exception as exc:
-            # Import-time guard: this repo is a module-level singleton
-            # (BE/repos/rules_repo.py), so a hard raise here would take
-            # down the whole backend import. The per-call ensure in
-            # save_rule_set/get_rule_set retries and raises properly at
-            # the operation site, where the envelope + error SplitDB
-            # path can record it.
             _log.warning("rules_repo.recipe_ensure_deferred error=%s", exc)
 
     def list_rules(self) -> list[CatRule]:
@@ -131,62 +128,70 @@ class SqliteRulesRepo:
             {"rule_id": rule_id, "provider": "SqliteRulesRepo"},
         )
 
+    def _fetch_existing_version(self, rule_set_id: int) -> int | None:
+        cur = self.conn.execute(
+            "SELECT Version FROM Recipe WHERE RuleSetId = ?",
+            (rule_set_id,),
+        )
+        row = cur.fetchone()
+        return row[0] if row is not None else None
+
+    def _resolve_next_version(
+        self, client_version: int, prior_version: int | None, rule_set_id: int
+    ) -> int:
+        if prior_version is not None:
+            if client_version < prior_version:
+                raise AppError(
+                    ErrorCode.E_BE_CONFLICT,
+                    "rule set version is behind server",
+                    {
+                        "RuleSetId": rule_set_id,
+                        "client_version": client_version,
+                        "server_version": prior_version,
+                    },
+                )
+            return prior_version + 1
+        return client_version + 1
+
+    def _commit_envelope(self, envelope: RuleSetEnvelope, new_version: int) -> RuleSetEnvelope:
+        now_iso = datetime.now(UTC).isoformat()
+        dm = DraftMeta(ClientId=envelope.DraftMeta.ClientId, UpdatedAt=now_iso, Origin="server")
+        return RuleSetEnvelope(
+            SchemaVersion=envelope.SchemaVersion,
+            RuleSetId=envelope.RuleSetId,
+            Name=envelope.Name,
+            Version=new_version,
+            Enabled=envelope.Enabled,
+            Rules=envelope.Rules,
+            DraftMeta=dm,
+        )
+
+    def _upsert_recipe(self, committed: RuleSetEnvelope, has_existing: bool) -> None:
+        payload_json = json.dumps(committed.to_wire())
+        is_enabled = 1 if committed.Enabled else 0
+        if has_existing:
+            self.conn.execute(
+                "UPDATE Recipe SET Name = ?, Version = ?, IsEnabled = ?, PayloadJson = ?, "
+                "UpdatedAt = CAST(strftime('%s', 'now') AS INTEGER) WHERE RuleSetId = ?",
+                (committed.Name, committed.Version, is_enabled, payload_json, committed.RuleSetId),
+            )
+        else:
+            self.conn.execute(
+                "INSERT INTO Recipe (RuleSetId, Name, Version, IsEnabled, PayloadJson) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (committed.RuleSetId, committed.Name, committed.Version, is_enabled, payload_json),
+            )
+
     def save_rule_set(self, envelope: RuleSetEnvelope) -> RuleSetEnvelope:
+        self._ensure_recipe_table()
         try:
-            _ensure_recipe_table(self.conn)
-
-            cur = self.conn.execute(
-                "SELECT Version FROM Recipe WHERE RuleSetId = ?",
-                (envelope.RuleSetId,),
+            prior_version = self._fetch_existing_version(envelope.RuleSetId)
+            has_existing = prior_version is not None
+            new_version = self._resolve_next_version(
+                envelope.Version, prior_version, envelope.RuleSetId
             )
-            row = cur.fetchone()
-            if row is not None:
-                prior_version = row[0]
-                if envelope.Version < prior_version:
-                    raise AppError(
-                        ErrorCode.E_BE_CONFLICT,
-                        "rule set version is behind server",
-                        {
-                            "RuleSetId": envelope.RuleSetId,
-                            "client_version": envelope.Version,
-                            "server_version": prior_version,
-                        },
-                    )
-                new_version = prior_version + 1
-            else:
-                new_version = envelope.Version + 1
-
-            now_iso = datetime.now(UTC).isoformat()
-            dm = DraftMeta(
-                ClientId=envelope.DraftMeta.ClientId,
-                UpdatedAt=now_iso,
-                Origin="server",
-            )
-            committed = RuleSetEnvelope(
-                SchemaVersion=envelope.SchemaVersion,
-                RuleSetId=envelope.RuleSetId,
-                Name=envelope.Name,
-                Version=new_version,
-                Enabled=envelope.Enabled,
-                Rules=envelope.Rules,
-                DraftMeta=dm,
-            )
-
-            payload_json = json.dumps(committed.to_wire())
-            is_enabled = 1 if committed.Enabled else 0
-
-            if row is not None:
-                self.conn.execute(
-                    "UPDATE Recipe SET Name = ?, Version = ?, IsEnabled = ?, PayloadJson = ?, "
-                    "UpdatedAt = CAST(strftime('%s', 'now') AS INTEGER) WHERE RuleSetId = ?",
-                    (committed.Name, committed.Version, is_enabled, payload_json, committed.RuleSetId),
-                )
-            else:
-                self.conn.execute(
-                    "INSERT INTO Recipe (RuleSetId, Name, Version, IsEnabled, PayloadJson) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (committed.RuleSetId, committed.Name, committed.Version, is_enabled, payload_json),
-                )
+            committed = self._commit_envelope(envelope, new_version)
+            self._upsert_recipe(committed, has_existing=has_existing)
             return committed
         except AppError as exc:
             _record_repo_failure(
@@ -209,9 +214,8 @@ class SqliteRulesRepo:
             raise wrapped from e
 
     def get_rule_set(self, rule_set_id: int) -> RuleSetEnvelope:
+        self._ensure_recipe_table()
         try:
-            _ensure_recipe_table(self.conn)
-
             cur = self.conn.execute(
                 "SELECT PayloadJson FROM Recipe WHERE RuleSetId = ?",
                 (rule_set_id,),
@@ -226,9 +230,6 @@ class SqliteRulesRepo:
             payload = json.loads(row[0])
             return parse_envelope(payload)
         except AppError as exc:
-            # NOT_FOUND is a routine lookup miss, not a failure of this
-            # path; every other AppError (e.g. a bootstrap failure) is
-            # recorded so the CLI errors command can show it.
             if exc.code is not ErrorCode.E_BE_NOT_FOUND:
                 _record_repo_failure(
                     operation="get_rule_set",

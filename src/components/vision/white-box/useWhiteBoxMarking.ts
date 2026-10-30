@@ -30,6 +30,7 @@ import {
   rgbaToBase64,
   base64ToRgba,
   markWhiteBoxes,
+  type GrayscaleBitDepth,
   type GrayscaleMode,
   type WhiteBoxMark,
   type WhiteBoxMarkingInput,
@@ -68,8 +69,12 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const initialSettings = props?.settings as any;
   const [marginPx, setMarginPx] = useState(() => initialSettings?.marginPx ?? 8);
   const [greyscaleLevel, setGreyscaleLevel] = useState(() => initialSettings?.threshold ?? 170);
-  // Grayscale preview mode (spec 54). Detection still uses greyscaleLevel
-  // as whiteThreshold; the mode only changes the preview bits.
+  const [bitDepth, setBitDepth] = useState<GrayscaleBitDepth>(
+    () => initialSettings?.bitDepth ?? "1-bit",
+  );
+  const [contrastLevel, setContrastLevel] = useState<number>(
+    () => initialSettings?.contrastLevel ?? 0,
+  );
   const [greyscaleMode, setGreyscaleMode] = useState<GrayscaleMode>(() => {
     const raw = initialSettings?.greyscaleMode;
 
@@ -459,6 +464,22 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setExcludedNumbers(new Set());
     setMessage("Greyscale level changed. Click Process to re-detect.");
   }
+
+  function changeBitDepth(depth: GrayscaleBitDepth): void {
+    setBitDepth(depth);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage(`Bit-depth mode changed to ${depth}. Click Process to re-detect.`);
+  }
+
+  function changeContrastLevel(value: number): void {
+    const nextVal = Math.max(0, Math.min(100, value));
+    setContrastLevel(nextVal);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage(`Contrast level changed to ${nextVal}%. Click Process to re-detect.`);
 
   function changeGreyscaleMode(mode: GrayscaleMode): void {
     setGreyscaleMode(mode);
@@ -869,6 +890,8 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     excludedNumbers,
     marginPx,
     greyscaleLevel,
+    bitDepth,
+    contrastLevel,
     greyscaleMode,
     searchRegion,
     maskRegions,
@@ -894,6 +917,8 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     loadCapturedFrame,
     processRegion,
     changeGreyscaleLevel,
+    changeBitDepth,
+    changeContrastLevel,
     changeGreyscaleMode,
     changeMarginPx,
     removeBox,

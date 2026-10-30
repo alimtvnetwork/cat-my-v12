@@ -77,7 +77,7 @@ export function SimulationPlayerBar({
             </span>
           ) : (
             <span className="text-[11px] text-slate-400">
-              <span className="font-semibold text-cyan-300 font-mono">
+              <span className="font-semibold text-cyan-300 font-mono inline-block w-10 text-right tabular-nums">
                 {remainingSec.toFixed(1)}s
               </span>{" "}
               remaining
@@ -104,11 +104,15 @@ export function SimulationPlayerBar({
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
+            id="btn-sim-prev"
+            data-automation-id="btn-sim-prev"
+            data-automation-name="Previous Step"
+            data-automation-xpath="//button[@id='btn-sim-prev']"
             onClick={onPrevious}
             disabled={!hasPreviousStep}
             title="Previous Step"
             aria-label="Previous Step"
-            className="flex cursor-pointer items-center gap-1 rounded-md border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-slate-200 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
+            className="flex cursor-pointer items-center gap-1 rounded-md border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-slate-200 transition-colors hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             <SkipBack className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Prev</span>
@@ -120,7 +124,7 @@ export function SimulationPlayerBar({
             title={isPaused ? "Resume Simulation" : "Pause Simulation"}
             aria-label={isPaused ? "Resume Simulation" : "Pause Simulation"}
             className={cn(
-              "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 font-semibold transition-all active:scale-95",
+              "flex cursor-pointer items-center justify-center min-w-[80px] gap-1.5 rounded-md px-3 py-1 font-semibold transition-all active:scale-95",
               isPaused
                 ? "border border-amber-400/60 bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                 : "border border-cyan-400/60 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 shadow-[0_0_12px_rgba(34,211,238,0.25)]",
@@ -136,11 +140,16 @@ export function SimulationPlayerBar({
 
           <button
             type="button"
+            id="btn-sim-next"
+            data-automation-id="btn-sim-next"
+            data-automation-name="Next Step"
+            data-automation-xpath="//button[@id='btn-sim-next']"
+            data-no-lift
             onClick={onNext}
             disabled={!hasNextStep}
             title="Next Step"
             aria-label="Next Step"
-            className="flex cursor-pointer items-center gap-1 rounded-md border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-slate-200 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
+            className="flex cursor-pointer items-center gap-1 rounded-md border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-slate-200 transition-colors hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             <span className="hidden sm:inline">Next</span>
             <SkipForward className="h-3.5 w-3.5" />
@@ -155,7 +164,7 @@ export function SimulationPlayerBar({
             </span>
             <input
               type="range"
-              min={2}
+              min={1}
               max={10}
               step={1}
               value={dwellTimeSec}
@@ -167,6 +176,10 @@ export function SimulationPlayerBar({
 
           <button
             type="button"
+            id="btn-sim-exit"
+            data-automation-id="btn-sim-exit"
+            data-automation-name="Exit Simulation"
+            data-automation-xpath="//button[@id='btn-sim-exit']"
             onClick={onStop}
             title="Exit Simulation"
             aria-label="Exit Simulation"

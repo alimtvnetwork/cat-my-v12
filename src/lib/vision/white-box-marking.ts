@@ -184,21 +184,91 @@ export function toTwoBitGrayRgba(input: WhiteBoxMarkingInput): Uint8ClampedArray
   return grayToRgba(toTwoBitGray(input.rgba));
 }
 
-export function toThresholdPreviewRgba(
-  input: WhiteBoxMarkingInput,
-  whiteThreshold: number,
-): Uint8ClampedArray {
-  assertRgba(input);
-  const gray = toContinuousGray(input.rgba);
-  const threshold = clampByte(whiteThreshold);
+export type GrayscaleBitDepth = "1-bit" | "2-bit" | "8-bit";
 
-  for (let index = 0; index < gray.length; index += 1) {
-    if (gray[index] >= threshold) {
-      gray[index] = 255;
+export interface ThresholdPreviewOptions {
+  bitDepth?: GrayscaleBitDepth;
+  contrast?: number;
+  lowCutoff?: number;
+  highCutoff?: number;
+}
+
+export function applyGrayscaleBitDepthContrast(
+  gray: Uint8ClampedArray,
+  threshold: number,
+  options?: ThresholdPreviewOptions | GrayscaleBitDepth,
+): Uint8ClampedArray {
+  const opts: ThresholdPreviewOptions =
+    typeof options === "string" ? { bitDepth: options } : (options ?? {});
+  const bitDepth: GrayscaleBitDepth = opts.bitDepth ?? "1-bit";
+  const contrast = Math.max(0, Math.min(100, opts.contrast ?? 0));
+  const clampedThreshold = clampByte(threshold);
+
+  let lowCutoff = opts.lowCutoff;
+  let highCutoff = opts.highCutoff;
+
+  if (lowCutoff === undefined || highCutoff === undefined) {
+    if (contrast > 0) {
+      const halfRange = Math.max(2, Math.round(128 * (1 - (contrast / 100) * 0.85)));
+      lowCutoff = Math.max(0, clampedThreshold - halfRange);
+      highCutoff = Math.min(255, clampedThreshold + halfRange);
+    } else {
+      lowCutoff = 0;
+      highCutoff = 255;
     }
   }
 
-  return grayToRgba(gray);
+  const rangeSpan = Math.max(1, highCutoff - lowCutoff);
+  const out = new Uint8ClampedArray(gray.length);
+
+  for (let index = 0; index < gray.length; index += 1) {
+    const rawVal = gray[index];
+
+    let stretched: number;
+    if (rawVal <= lowCutoff) {
+      stretched = 0;
+    } else if (rawVal >= highCutoff) {
+      stretched = 255;
+    } else {
+      stretched = Math.round(((rawVal - lowCutoff) * 255) / rangeSpan);
+    }
+
+    if (bitDepth === "1-bit") {
+      if (contrast > 0) {
+        out[index] = stretched >= 128 ? 255 : 0;
+      } else {
+        out[index] = rawVal >= clampedThreshold ? 255 : 0;
+      }
+    } else if (bitDepth === "2-bit") {
+      const val = contrast > 0 ? stretched : rawVal;
+
+      if (val < TWO_BIT_GRAY_BREAKS[0]) {
+        out[index] = TWO_BIT_GRAY_LEVELS[0];
+      } else if (val < TWO_BIT_GRAY_BREAKS[1]) {
+        out[index] = TWO_BIT_GRAY_LEVELS[1];
+      } else if (val < TWO_BIT_GRAY_BREAKS[2]) {
+        out[index] = TWO_BIT_GRAY_LEVELS[2];
+      } else {
+        out[index] = TWO_BIT_GRAY_LEVELS[3];
+      }
+    } else {
+      out[index] = clampByte(contrast > 0 ? stretched : rawVal);
+    }
+  }
+
+  return out;
+}
+
+export function toThresholdPreviewRgba(
+  input: WhiteBoxMarkingInput,
+  whiteThreshold: number,
+  options?: ThresholdPreviewOptions | GrayscaleBitDepth,
+): Uint8ClampedArray {
+  assertRgba(input);
+  const gray = toContinuousGray(input.rgba);
+  const processedGray = applyGrayscaleBitDepthContrast(gray, whiteThreshold, options);
+
+  return grayToRgba(processedGray);
 }
 
 /** Full-range contrast stretch: the darkest pixel becomes 0, the brightest
@@ -269,13 +339,15 @@ export function renderSelectedWhiteBoxMarks(
   input: WhiteBoxMarkingInput,
   boxes: WhiteBoxMark[],
   whiteThreshold?: number,
-  greyscaleMode: GrayscaleMode = "threshold",
+  optionsOrMode?: ThresholdPreviewOptions | GrayscaleBitDepth | GrayscaleMode,
 ): WhiteBoxMarkingResult {
   assertRgba(input);
   const rgba =
     whiteThreshold === undefined
       ? grayToRgba(toTwoBitGray(input.rgba))
-      : toGrayscalePreviewRgba(input, greyscaleMode, whiteThreshold);
+      : (typeof optionsOrMode === "string" && (optionsOrMode === "threshold" || optionsOrMode === "stretch" || optionsOrMode === "one-bit"))
+        ? toGrayscalePreviewRgba(input, optionsOrMode, whiteThreshold)
+        : toThresholdPreviewRgba(input, whiteThreshold, optionsOrMode as ThresholdPreviewOptions | GrayscaleBitDepth | undefined);
   drawBoxes(rgba, input.width, input.height, boxes);
 
   return { width: input.width, height: input.height, rgba, boxes };

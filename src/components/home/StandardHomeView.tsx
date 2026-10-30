@@ -275,7 +275,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
                   </span>
                   <ArrowRight
                     size={11}
-                    className="shrink-0 text-[#94a3b8] transition-transform group-hover/qa:translate-x-0.5"
+                    className="shrink-0 text-[#94a3b8] transition-colors group-hover/qa:text-cyan-300"
                   />
                 </Link>
               );

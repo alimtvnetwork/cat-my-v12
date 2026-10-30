@@ -34,14 +34,30 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  automationId?: string;
+  displayName?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, automationId, displayName, id, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    const resolvedId = id || automationId;
+    const automationProps = resolvedId
+      ? {
+          id: resolvedId,
+          "data-automation-id": resolvedId,
+          "data-automation-name": displayName || resolvedId,
+          "data-automation-xpath": `//button[@id='${resolvedId}']`,
+        }
+      : {};
 
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...automationProps}
+        {...props}
+      />
     );
   },
 );

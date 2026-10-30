@@ -70,6 +70,24 @@ async def handler_app_error(request: Request, exc: AppError) -> JSONResponse:
             "cheat_sheet": "02-spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod and exc.http_status.value >= 500 else None,
         },
     )
+    try:
+        from BE.repos.sqlite_error_repo import get_error_repo
+        get_error_repo().record_error(
+            correlation_id=correlation_id,
+            error_code=exc.code.value,
+            severity="WARNING" if exc.http_status.value < 500 else "ERROR",
+            subsystem="BACKEND_APP_ERROR",
+            message=exc.message,
+            stack_trace="\n".join(_stack_frames(exc)),
+            context={
+                "operation": _operation(request),
+                "url": _requested_at(request),
+                "details": exc.details,
+            },
+        )
+    except Exception as db_exc:
+        logger.warning("Failed to record app error to SplitDB: %s", db_exc)
+
     envelope = exc.to_envelope(
         requested_at=_requested_at(request),
         backend_frames=_stack_frames(exc) if not get_settings().is_prod else None,
@@ -111,6 +129,24 @@ async def handler_unhandled(request: Request, exc: Exception) -> JSONResponse:
             "cheat_sheet": "02-spec/03-error-manage/01-error-resolution/02-debugging-cheat-sheet.md" if not get_settings().is_prod else None,
         },
     )
+    try:
+        from BE.repos.sqlite_error_repo import get_error_repo
+        get_error_repo().record_error(
+            correlation_id=correlation_id,
+            error_code=code.value,
+            severity="CRITICAL",
+            subsystem="BACKEND_UNHANDLED",
+            message=_safe_message(exc),
+            stack_trace=traceback.format_exc(),
+            context={
+                "operation": _operation(request),
+                "url": _requested_at(request),
+                "exception_type": type(exc).__name__,
+            },
+        )
+    except Exception as db_exc:
+        logger.warning("Failed to record unhandled error to SplitDB: %s", db_exc)
+
     envelope = failure(
         code=code.value,
         message=_safe_message(exc),

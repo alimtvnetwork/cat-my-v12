@@ -17,12 +17,7 @@ import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import {
-  HolePolarityType,
-  type Pin1HoleItem,
-  type Pin1MatchResult,
-  type Pin1RegionEditMode,
-} from "./types";
+import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode, type Pin1ShapeType } from "./types";
 
 export interface Pin1CanvasProps {
   source: WhiteBoxMarkingInput | null;
@@ -30,6 +25,7 @@ export interface Pin1CanvasProps {
   packageRegion: SearchRegion | null;
   activeRegion: SearchRegion | null;
   regionEditMode: Pin1RegionEditMode;
+  shapeType?: Pin1ShapeType;
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1: Pin1HoleItem | null;
   matchResult: Pin1MatchResult | null;
@@ -323,8 +319,23 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.setLineDash([]);
 
       ctx.beginPath();
-      ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
-      ctx.stroke();
+      if (props.shapeType === "rectangle") {
+        const rw = hole.radius * 2.2;
+        const rh = hole.radius * 1.6;
+        ctx.strokeRect(hole.centerX - rw / 2, hole.centerY - rh / 2, rw, rh);
+      } else if (props.shapeType === "square") {
+        const side = hole.radius * 2;
+        ctx.strokeRect(hole.centerX - side / 2, hole.centerY - side / 2, side, side);
+      } else if (props.shapeType === "ring") {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hole.centerX, hole.centerY, Math.max(2, hole.radius * 0.55), 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       // Crosshair
       ctx.beginPath();

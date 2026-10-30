@@ -39,6 +39,7 @@ export interface Pin1InspectionSettings {
   registeredPin1?: Pin1HoleItem | null;
   searchRegion?: SearchRegion | null;
   packageRegion?: SearchRegion | null;
+  shapeType?: Pin1ShapeType;
   /** Pattern shape searched inside the ROI (spec 54). The ROI itself
    *  stays a plain region; the pattern takes the shape. */
   patternShape?: ShapeType;
@@ -59,8 +60,11 @@ export interface Pin1MatchResult {
   matchPercent?: number;
   scale?: number;
   packageRegion?: SearchRegion | null;
+  shapeType?: Pin1ShapeType;
   executionTimeMs: number;
 }
+
+export type Pin1ShapeType = "rectangle" | "circle" | "ring" | "square";
 
 export type Pin1RegionEditMode = "search" | "package" | "pin";
 
