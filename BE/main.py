@@ -33,6 +33,7 @@ from BE.routes import rules as rules_route
 from BE.routes import samples as samples_route
 from BE.routes import score as score_route
 from BE.routes import seed as seed_route
+from BE.routes import shutdown as shutdown_route
 from BE.routes import system as system_route
 from BE.routes import telemetry as telemetry_route
 from BE.routes import vision as vision_route
@@ -97,6 +98,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+    app.include_router(shutdown_route.router)
     app.include_router(vision_route.router)
 
 
