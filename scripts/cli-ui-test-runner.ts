@@ -2,10 +2,12 @@ import { chromium, type Page, type Browser } from "@playwright/test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:5173";
+const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
 const CHROME_PATH =
   process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-  "C:\\Users\\mohan\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe";
+  (fs.existsSync("C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe")
+    ? "C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe"
+    : "C:\\Users\\mohan\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe");
 const OUTPUT_DIR = path.resolve(process.cwd(), "reports/e2e-screenshots");
 
 interface StepResult {
