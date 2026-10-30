@@ -22,6 +22,7 @@ from BE.errors.handlers import register_exception_handlers
 from BE.logging_config import configure_logging
 from BE.middleware.rate_limit import RateLimitMiddleware
 from BE.middleware.request_id import RequestIdMiddleware
+from BE.routes import bug_reports as bug_reports_route
 from BE.routes import camera as camera_route
 from BE.routes import cli_config as cli_config_route
 from BE.routes import cli_doctor as cli_doctor_route
@@ -104,6 +105,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(shutdown_route.router)
     app.include_router(vision_route.router)
     app.include_router(ui_remote_route.router)
+    app.include_router(bug_reports_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:
