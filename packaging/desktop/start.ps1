@@ -63,9 +63,9 @@ function Find-AppBrowser {
 
 try {
     Start-Process -FilePath (Join-Path $AppRoot 'db-bootstrap.exe') -ArgumentList '--db-root', (Join-Path $AppRoot 'data') -Wait -WindowStyle Hidden
-    Start-Process -FilePath (Join-Path $AppRoot 'backend-server.exe') -WorkingDirectory $AppRoot -WindowStyle Hidden
+    $backendProcess = Start-Process -FilePath (Join-Path $AppRoot 'backend-server.exe') -WorkingDirectory $AppRoot -WindowStyle Hidden -PassThru
     Wait-AppUrl -Url $BackendUrl -Seconds 60
-    Start-Process -FilePath (Join-Path $AppRoot 'runtime\bun.exe') -ArgumentList 'server\index.mjs' -WorkingDirectory (Join-Path $AppRoot 'frontend') -WindowStyle Hidden
+    $frontendProcess = Start-Process -FilePath (Join-Path $AppRoot 'runtime\bun.exe') -ArgumentList 'server\index.mjs' -WorkingDirectory (Join-Path $AppRoot 'frontend') -WindowStyle Hidden -PassThru
     Wait-AppUrl -Url 'http://127.0.0.1:3000/' -Seconds 60
     $browserPath = Find-AppBrowser
 
@@ -75,16 +75,57 @@ try {
 
     $userDataDir = Join-Path $AppRoot 'data\browser-profile'
 
-    Start-Process -FilePath $browserPath -ArgumentList @(
+    $browserProcess = Start-Process -FilePath $browserPath -ArgumentList @(
         "--app=$FrontendUrl",
         '--start-fullscreen',
         "--user-data-dir=$userDataDir",
         '--no-first-run',
         '--no-default-browser-check'
-    ) -WorkingDirectory $AppRoot
+    ) -WorkingDirectory $AppRoot -PassThru
 } catch {
     $errorLog = Join-Path $AppRoot 'startup-error.log'
     Set-Content -LiteralPath $errorLog -Value "$((Get-Date).ToString('s')) ERROR: $($_.Exception.Message)`n$($_.ScriptStackTrace)" -Encoding utf8
 
     throw
+} finally {
+    # Spec 54 section 8: the launcher supervises the whole stack. When the
+    # browser window closes, the backend and frontend must not be orphaned
+    # (orphans held ports 8787/3000 and broke the next launch).
+    if ($browserProcess) {
+        $browserStartTime = $browserProcess.StartTime
+        Wait-Process -InputObject $browserProcess -ErrorAction SilentlyContinue
+        $browserLifetime = (Get-Date) - $browserStartTime
+
+        if ($browserLifetime.TotalSeconds -lt 5) {
+            # The launched process exited almost immediately: it most likely
+            # handed off to an already-running browser instance with the same
+            # profile. Tearing down now would kill servers the user is still
+            # using, so leave them running and note it.
+            Add-Content -LiteralPath (Join-Path $AppRoot 'shutdown.log') -Value "$((Get-Date).ToString('s')) NOTE: browser process exited quickly; assuming delegation, leaving backend/frontend running." -Encoding utf8
+        } else {
+            try {
+                Invoke-WebRequest -Uri 'http://127.0.0.1:8787/shutdown' -Method POST -UseBasicParsing -TimeoutSec 2 | Out-Null
+            } catch {
+                # Backend may already be gone; process teardown below covers it.
+            }
+
+            foreach ($serviceProcess in @($backendProcess, $frontendProcess)) {
+                if ($serviceProcess -and -not $serviceProcess.HasExited) {
+                    try {
+                        Stop-Process -InputObject $serviceProcess -Force -ErrorAction Stop
+                    } catch {
+                        Add-Content -LiteralPath (Join-Path $AppRoot 'shutdown.log') -Value "$((Get-Date).ToString('s')) WARN: could not stop process $($serviceProcess.Id): $($_.Exception.Message)" -Encoding utf8
+                    }
+                }
+            }
+        }
+    } elseif ($backendProcess -or $frontendProcess) {
+        # Startup failed before the browser launched: do not leave servers
+        # behind from the failed start.
+        foreach ($serviceProcess in @($backendProcess, $frontendProcess)) {
+            if ($serviceProcess -and -not $serviceProcess.HasExited) {
+                Stop-Process -InputObject $serviceProcess -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }
