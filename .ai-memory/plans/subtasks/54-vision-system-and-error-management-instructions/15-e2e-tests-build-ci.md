@@ -49,3 +49,9 @@ Full numbers live in spec 54 readme section 23. Headline results:
   on exactly those plus since-fixed clean-machine items; the run
   for the later commits was still pending when section 23 was
   written.
+- CI update (run `41116550166`, commit `2bbd484c`): pytest
+  success; frontend green through prettier + eslint, failing only
+  at vitest on the same 7 pre-existing tests; backend failing only
+  at ruff on the same 3 pre-existing errors; spec linters failing
+  only on the same 6 pre-existing cross-links; all other jobs
+  success. No new spec-54-caused CI failure remains.

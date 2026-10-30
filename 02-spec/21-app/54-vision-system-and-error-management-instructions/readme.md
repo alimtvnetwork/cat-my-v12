@@ -1392,6 +1392,15 @@ Pre-existing failures (NOT fixed — evidence, not spec-54 scope):
   and 6 pre-existing cross-links are expected to fail there too
   until their owners fix them. The spec-54-relevant jobs are green
   except for those pre-existing items.
+- CI update (run `41116550166`, commit `2bbd484c`, completed
+  after this section was first written): **pytest success**;
+  frontend job green through route tree, both tsc passes,
+  prettier, and eslint, failing only at vitest on the same 7
+  pre-existing tests; backend job failing only at ruff on the
+  same 3 pre-existing errors (verified: full-tree ruff now shows
+  exactly those 3); spec linters failing only on the same 6
+  pre-existing cross-links; all other jobs success. No new
+  spec-54-caused CI failure remains.
 
 MBUD items still open (section 5): 1 (partial — 4/12 screenshots
 confirmed, 8 remain), 2 (unlock gesture), 3 (numbering scope),
