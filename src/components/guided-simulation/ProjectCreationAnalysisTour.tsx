@@ -846,9 +846,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
-  // True while an exit step is navigating / opening a panel, before the
-  // next step index is set. The old tooltip is hidden during this window
-  // so it never floats over the new page (the screenshot glitch).
+  // True while an exit step is navigating / opening a panel, until the
+  // next step's target resolves. The old tooltip is hidden during this
+  // window so it never floats over the new page (the screenshot glitch).
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [dwellTimeSec, setDwellTimeSec] = useState(3);
@@ -867,6 +867,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   const timerRef = useRef<number | null>(null);
   const targetWaitTimerRef = useRef<number | null>(null);
   const advanceTimerRef = useRef<number | null>(null);
+  const stepStartedAtRef = useRef(0);
+  const pausedTotalMsRef = useRef(0);
+  const pauseStartedAtRef = useRef<number | null>(null);
   const analysisTimersRef = useRef<number[]>([]);
 
   const setAnalysisLoading = useCallback((isLoading: boolean) => {
@@ -1614,17 +1617,13 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
 
     if (step.actionPhase === "exit") {
       // Hide the old tooltip while the exit action navigates / opens a
-      // panel, so it never orphans over the new page. The timer is stored
-      // so Skip / Stop (finishTour -> clearTimer) cancels it.
+      // panel, so it never orphans over the new page. The hide lifts in
+      // the next step's beginStep as soon as its target resolves — there
+      // is no fixed 700ms wait, so dwell-to-advance time stays exact.
       setIsTransitioning(true);
-      advanceTimerRef.current = window.setTimeout(() => {
-        advanceTimerRef.current = null;
-        setIsTransitioning(false);
-        setStepIndex(stepIndex + 1);
-      }, 700);
-    } else {
-      setStepIndex(stepIndex + 1);
     }
+
+    setStepIndex(stepIndex + 1);
   }, [clearTimer, finishTour, runStepAction, stepIndex, steps]);
 
   useEffect(() => {
@@ -1636,6 +1635,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     let isCancelled = false;
     isStepAdvancingRef.current = false;
     const waitStartedAt = Date.now();
+    stepStartedAtRef.current = Date.now();
+    pausedTotalMsRef.current = 0;
+    pauseStartedAtRef.current = null;
     clearTimer();
 
     const beginStep = () => {
@@ -1652,6 +1654,10 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           return;
         }
       }
+
+      // The exit-transition hide lifts as soon as the next target
+      // resolves, so the tooltip never orphans over the previous page.
+      setIsTransitioning(false);
 
       if (step.actionPhase !== "exit") {
         runStepAction(step);
@@ -1673,15 +1679,22 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         setDwellTimeSec(stepSec);
       }
 
+      // Wall-clock dwell: elapsed is measured from the step start (the
+      // target wait folds into the dwell), never by counting 100ms ticks,
+      // so a 2s dwell takes ~2s even when the main thread is busy or the
+      // tab is throttled.
       timerRef.current = window.setInterval(() => {
-        if (!isPausedRef.current) {
-          elapsedMsRef.current += 100;
-          setElapsedSec(elapsedMsRef.current / 1000);
+        if (isPausedRef.current) {
+          return;
+        }
 
-          if (elapsedMsRef.current >= totalStepMsRef.current) {
-            clearTimer();
-            advance();
-          }
+        const elapsedMs = Date.now() - stepStartedAtRef.current - pausedTotalMsRef.current;
+        elapsedMsRef.current = elapsedMs;
+        setElapsedSec(elapsedMs / 1000);
+
+        if (elapsedMs >= totalStepMsRef.current) {
+          clearTimer();
+          advance();
         }
       }, 100);
     };
@@ -1695,6 +1708,16 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   }, [advance, clearTimer, isRunning, runStepAction, stepIndex, steps]);
 
   const togglePause = useCallback(() => {
+    if (isPausedRef.current) {
+      // Resuming: fold the paused span out of the wall-clock dwell.
+      if (pauseStartedAtRef.current !== null) {
+        pausedTotalMsRef.current += Date.now() - pauseStartedAtRef.current;
+        pauseStartedAtRef.current = null;
+      }
+    } else {
+      pauseStartedAtRef.current = Date.now();
+    }
+
     isPausedRef.current = !isPausedRef.current;
     setIsPaused(isPausedRef.current);
   }, []);
@@ -1913,10 +1936,12 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
         continuous
         scrollToFirstStep
         floatingOptions={{
-          flipOptions: {
-            padding: { top: 60, bottom: 120, left: 24, right: 24 },
-          },
-          shiftOptions: {
+          // Flip disabled for every step: a flipping tooltip moves the
+          // Next button whenever runStepAction moves the target. Shift
+          // keeps the pinned tooltip inside the viewport (bottom padding
+          // clears the fixed player HUD bar).
+          flip: false,
+          shift: {
             padding: { top: 60, bottom: 120, left: 24, right: 24 },
           },
         }}
@@ -1952,6 +1977,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
             // edge whenever a short step followed a long one.
             width: 360,
             maxWidth: "calc(100vw - 32px)",
+            // Minimum height: content-driven height moved the footer (and
+            // the Next button) whenever a short step followed a long one.
+            minHeight: 160,
             ...(isTransitioning ? { display: "none" } : {}),
           },
           tooltipTitle: {
