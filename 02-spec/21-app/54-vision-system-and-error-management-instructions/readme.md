@@ -803,7 +803,7 @@ coordinator (registry, CLI command, hook, TS mirror all present).
 - Wave 1 is now fully complete: window controls + swallowing fixes +
   error SplitDB/CLI + CLI-UI registry, all on origin/main.
 
-## 17. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:13)
+## 17. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:19)
 
 Workstream COMPLETE, 3 batches on origin/main. Greenfield: email and
 Supabase had 0 hits in src/BE before this work.
@@ -846,7 +846,7 @@ Supabase had 0 hits in src/BE before this work.
   save/test/send-test flow, schema.sql applied + tables verified,
   snapshot regen.
 
-## 17. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
+## 18. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
 
 Workstream COMPLETE, commit on origin/main, spot-verified by the
 coordinator (commit stat shows only the agent's 2 files;
