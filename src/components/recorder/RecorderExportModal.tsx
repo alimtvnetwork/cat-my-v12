@@ -178,6 +178,8 @@ ${summary.actualBehavior || "N/A"}`;
       }
     } finally {
       setIsUploadingSupabase(false);
+    }
+  };
 
 
   // RECORD BUG -> POST /bug-reports (spec 54 wave 2: route + CLI ready,
