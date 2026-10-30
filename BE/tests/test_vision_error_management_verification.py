@@ -888,13 +888,20 @@ def test_cli_errors_show_execution(mock_session_ctx: MagicMock):
     """Verify processing-cli errors show <cid> returns single record."""
     conn = get_task_conn()
     cid = f"cli-show-{uuid.uuid4().hex[:8]}"
-    write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_SHOW", "Level": "error", "Message": "Show msg"}])
+    outcome = write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_SHOW", "Level": "error", "Message": "Show msg"}])
 
     ns = argparse.Namespace(action="show", correlation_id=cid, db_root=None)
     result = cli_errors.handle(ns, mock_session_ctx)
 
     assert result["CorrelationId"] == cid
     assert result["Code"] == "E_SHOW"
+
+    numeric_id = str(outcome.Rows[0].ErrorId)
+    ns_num = argparse.Namespace(action="show", correlation_id=numeric_id, db_root=None)
+    result_num = cli_errors.handle(ns_num, mock_session_ctx)
+
+    assert result_num["ErrorId"] == outcome.Rows[0].ErrorId
+    assert result_num["CorrelationId"] == cid
 
 
 def test_cli_errors_export_json_format(mock_session_ctx: MagicMock):

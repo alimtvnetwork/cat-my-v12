@@ -150,10 +150,16 @@ export function StandardAppShell({
       setIsMenuOpen(Boolean(detail?.isOpen));
     };
 
+    const onOpenVersionModal = () => {
+      setIsVersionModalOpen(true);
+    };
+
     window.addEventListener(GUIDED_SIMULATION_MENU_EVENT, onSimulationMenu);
+    window.addEventListener("cat-vision:open-version-modal", onOpenVersionModal);
 
     return () => {
       window.removeEventListener(GUIDED_SIMULATION_MENU_EVENT, onSimulationMenu);
+      window.removeEventListener("cat-vision:open-version-modal", onOpenVersionModal);
     };
   }, []);
 

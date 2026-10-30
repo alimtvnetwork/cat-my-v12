@@ -460,20 +460,31 @@ def get_error_by_correlation(
     correlation_id: str,
 ) -> dict[str, Any] | None:
     _ensure_tables(conn)
+
     if not isinstance(correlation_id, str) or not correlation_id:
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
             "correlation_id must be a non-empty string",
             {"Field": "CorrelationId"},
         )
+
     try:
         conn.row_factory = sqlite3.Row
-        row = conn.safe_execute(
-            "SELECT ErrorId, CorrelationId, Code, Level, Message, StackTrace, "
-            "Endpoint, TriggerComponent, SessionId, Details, CreatedAt, PersistedAt "
-            "FROM Error WHERE CorrelationId = ?",
-            (correlation_id,),
-        ).fetchone()
+
+        if correlation_id.isdigit():
+            row = conn.safe_execute(
+                "SELECT ErrorId, CorrelationId, Code, Level, Message, StackTrace, "
+                "Endpoint, TriggerComponent, SessionId, Details, CreatedAt, PersistedAt "
+                "FROM Error WHERE CorrelationId = ? OR ErrorId = ?",
+                (correlation_id, int(correlation_id)),
+            ).fetchone()
+        else:
+            row = conn.safe_execute(
+                "SELECT ErrorId, CorrelationId, Code, Level, Message, StackTrace, "
+                "Endpoint, TriggerComponent, SessionId, Details, CreatedAt, PersistedAt "
+                "FROM Error WHERE CorrelationId = ?",
+                (correlation_id,),
+            ).fetchone()
     except sqlite3.Error as exc:
         _log.error("error.read.db_error op=get_error error=%s", exc)
         raise AppError(
@@ -481,8 +492,10 @@ def get_error_by_correlation(
             "Error read failed; is bin/db-bootstrap.py applied?",
             {"SqliteError": str(exc), "Hint": "python bin/db-bootstrap.py"},
         ) from exc
+
     if row is None:
         return None
+
     return _row_to_wire(row)
 
 
