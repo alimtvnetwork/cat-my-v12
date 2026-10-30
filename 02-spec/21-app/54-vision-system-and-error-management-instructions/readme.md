@@ -133,6 +133,13 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
    shell (Tauri/Electron) that provides a real window.desktopApi bridge.
    That is an architecture decision, not a bug fix, and is NOT started
    in this workstream.
+9. Frontend error-code registry alignment (spec 54 error work): the
+   swallowing-fix wave introduced frontend codes (E_PIN1_LOAD_TARGET,
+   E_PATTERN_MATCH_LOAD, E_WHITEBOX_LOAD_IMAGE, E_WHITEBOX_PRUNE_DUPLICATE,
+   E_WORKBENCH_LOAD_IMAGE, E_WORKBENCH_LOAD_FILE, E_WORKPIECE_CACHE_PIXELS,
+   plus JSON.parse codes) recorded as-is by buildCapturedError; they are
+   not yet in any backend code registry. Morning call: align them into
+   the backend registry or accept frontend-only codes.
 
 ## 6. Guardrails
 
@@ -642,3 +649,41 @@ item 8 present). Subtask 08 marked COMPLETE by the agent.
   with a clean merge; the agent verified its version-info + MBUD edits
   landed intact via another agent's commit 8e86343b, and never staged
   anyone else's files.
+
+## 14. Wave 1 Completion — Error Swallowing Fixes (31-Oct-25 ~02:11)
+
+Workstream COMPLETE, both batches on origin/main, spot-verified by the
+coordinator (0 "Ignored" hits across all 179 files in
+src/components/vision/ and 0 in workpiece-rule-analyzer.ts).
+
+- Batch 1 (e540d552, via merge acd654b4): direct
+  `useErrorStore.captureError` in non-render paths, guarded by the
+  existing `isCancelled` flag so unmount noise stays silent:
+  usePin1Rule.ts loadTarget → E_PIN1_LOAD_TARGET; usePatternMatchingRule.ts
+  match → E_PATTERN_MATCH_LOAD; useWhiteBoxMarking.ts image-load →
+  E_WHITEBOX_LOAD_IMAGE and duplicate-prune → E_WHITEBOX_PRUNE_DUPLICATE
+  (loop continues after capture); useStandardWorkbench.ts image-load →
+  E_WORKBENCH_LOAD_IMAGE and file-load → E_WORKBENCH_LOAD_FILE (file name
+  + size as context); VisualToolWorkpieceCanvas.tsx pixel-cache →
+  E_WORKPIECE_CACHE_PIXELS. Every capture carries triggerComponent,
+  triggerAction, and structured context per the spec 03-error-manage
+  contract.
+- Batch 2 (382067a2, HEAD at the time): JSON.parse catches, render-path
+  safe — VisualToolTuningModal.tsx collects failures via an out-param
+  from buildSettingsFromRule (runs inside useMemo) and captures in a
+  useEffect (no store mutation mid-render; context = field + ruleId +
+  payload length only, never raw content); workpiece-rule-analyzer.ts
+  parseBoxesFromParams 4 fields captured via a queueMicrotask-deferred
+  helper with a once-per-payload dedup Set (canvas must not flood the
+  bounded 50-entry history). Fallback behavior preserved everywhere
+  (box-list fallthrough order unchanged, no rethrows added).
+- Not touched, as ordered: history-facade.ts and WindowControlButtons.tsx
+  (other agents' files). No files deleted. Relative paths only.
+- Flagged follow-ups (not silently skipped): VisualToolTuningModal.tsx
+  `readSavedRegion` and workpiece-rule-analyzer.ts `parseStoredRegion`
+  still return null on corrupt JSON without capture — out of assigned
+  lines, left for a follow-up wave; new frontend error codes not yet in
+  any backend registry — recorded as MBUD item 9.
+- Parallel-work note: first pull --ff-only failed on divergence, merged
+  cleanly (no force-push, no rebase/amend); sibling untracked files and
+  uncommitted edits left alone.
