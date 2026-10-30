@@ -358,12 +358,12 @@ export function StandardAppShell({
                           }
                         }}
                         className={cn(
-                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
+                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none border border-transparent",
                           isCurrentActive
-                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
                             : "text-slate-300 hover:bg-white/10 hover:text-white",
                           isSimulationProjectTarget &&
-                            "border border-amber-300 bg-amber-400/20 text-amber-100 ring-2 ring-amber-300/80 shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-pulse",
+                            "border-amber-300 bg-amber-400/20 text-amber-100 ring-2 ring-amber-300/80 shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-pulse",
                         )}
                       >
                         <div className="flex min-w-0 items-center gap-2">
@@ -402,9 +402,9 @@ export function StandardAppShell({
                         to={item.href}
                         onClick={() => setIsMenuOpen(false)}
                         className={cn(
-                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
+                          "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none border border-transparent",
                           isCurrentActive
-                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+                            ? "bg-cyan-500/20 text-cyan-200 font-semibold border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
                             : "text-slate-300 hover:bg-white/10 hover:text-white",
                         )}
                       >
@@ -480,12 +480,17 @@ export function StandardAppShell({
             ) : (
               <PlayCircle className="h-3.5 w-3.5" />
             )}
-            <span>
-              {isSimulationLoading
-                ? "Loading Simulation..."
-                : isSimulationRunning
-                  ? "Simulation Running"
-                  : "Simulation"}
+            <span className="grid">
+              <span className="col-start-1 row-start-1 invisible whitespace-nowrap">
+                Loading Simulation...
+              </span>
+              <span className="col-start-1 row-start-1 whitespace-nowrap">
+                {isSimulationLoading
+                  ? "Loading Simulation..."
+                  : isSimulationRunning
+                    ? "Simulation Running"
+                    : "Simulation"}
+              </span>
             </span>
           </button>
           <div className="h-4 w-px bg-ca-border" />
