@@ -27,7 +27,7 @@ export interface RunProjectResult {
 
 export const runProject = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => RunProjectInput.parse(data))
+  .validator((data) => RunProjectInput.parse(data))
   .handler(async ({ data, context }): Promise<RunProjectResult> => {
     const supabase = context.supabase as unknown as SupabaseClient;
     const summary = {

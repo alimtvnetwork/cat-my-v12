@@ -18,7 +18,7 @@ const CompileShapeInput = z.object({
 
 export const compileShape = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => CompileShapeInput.parse(data))
+  .validator((data) => CompileShapeInput.parse(data))
   .handler(async ({ data, context }) => {
     const { normaliseSvgPath, insertShape } = await import("./shapes.server");
     const svgPath = normaliseSvgPath(data.svgPath);

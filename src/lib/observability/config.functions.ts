@@ -103,7 +103,7 @@ function beBaseUrl(): string {
 import { beFetch } from "@/lib/be-fetch";
 
 export const getEffectiveConfig = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})
@@ -136,7 +136,7 @@ const UserWriteInput = z.object({
 });
 
 export const getUserConfig = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})
@@ -155,7 +155,7 @@ export const getUserConfig = createServerFn({ method: HttpMethod.Get })
   });
 
 export const setUserConfig = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((raw) => UserWriteInput.parse(raw))
+  .validator((raw) => UserWriteInput.parse(raw))
   .handler(async ({ data }): Promise<UserLayer> => {
     const url = `${beBaseUrl()}/api/cli/config/user`;
     const env = await beFetch<UserLayer>(url, {

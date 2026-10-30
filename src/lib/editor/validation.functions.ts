@@ -118,7 +118,7 @@ export const checkWorkerHealth = createServerFn({ method: HttpMethod.Get }).hand
 );
 
 export const scoreRulesRemote = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .validator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ScoreResult> => {
     const url = process.env.VALIDATION_WORKER_URL;
     const token = process.env.VALIDATION_WORKER_TOKEN;

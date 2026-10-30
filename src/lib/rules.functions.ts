@@ -48,7 +48,7 @@ interface RulesetBody {
 
 export const saveRule = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => SaveRuleInput.parse(data))
+  .validator((data: unknown) => SaveRuleInput.parse(data))
   .handler(async ({ data, context }): Promise<SaveRuleResult> => {
     const correlationId =
       typeof crypto !== "undefined" && "randomUUID" in crypto

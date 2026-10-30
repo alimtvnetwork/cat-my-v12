@@ -39,7 +39,7 @@ function beBaseUrl(): string {
 }
 
 export const getDoctorReport = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})

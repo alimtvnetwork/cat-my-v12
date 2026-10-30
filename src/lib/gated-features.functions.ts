@@ -30,7 +30,7 @@ async function guard<T>(feature: FeatureName, run: () => Promise<T>): Promise<T>
 }
 
 export const runExtendedOcr = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((data: { imageRef: string }) => {
+  .validator((data: { imageRef: string }) => {
     if (!data || typeof data.imageRef !== "string" || data.imageRef.length === 0) {
       throw new Error("imageRef required");
     }
@@ -56,7 +56,7 @@ export const downloadCloudRuleCatalog = createServerFn({ method: HttpMethod.Get 
 );
 
 export const importRuleBundle = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((data: { bundle: string }) => {
+  .validator((data: { bundle: string }) => {
     if (!data || typeof data.bundle !== "string") throw new Error("bundle required");
 
     if (data.bundle.length > 1_048_576) throw new Error("bundle too large");

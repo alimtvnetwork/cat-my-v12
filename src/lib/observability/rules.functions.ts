@@ -52,7 +52,7 @@ function beBaseUrl(): string {
 }
 
 export const listRules = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})

@@ -28,7 +28,7 @@ export interface CreateProjectResult {
 
 export const createProject = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => CreateProjectInput.parse(data))
+  .validator((data) => CreateProjectInput.parse(data))
   .handler(async ({ data, context }): Promise<CreateProjectResult> => {
     // Cast to untyped client: step-85 tables are not yet in the generated
     // `Database` types. Same pattern as `shapes.server.ts`.
