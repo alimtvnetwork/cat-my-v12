@@ -120,7 +120,7 @@ async function runCliUiTests(): Promise<void> {
       "Navigate to root / and verify header controls",
       page,
       async () => {
-        await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+        await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(800);
         const title = await page.title();
         const simulationBtn = page.locator("[data-tour='simulation-launcher']");
@@ -311,7 +311,7 @@ async function runCliUiTests(): Promise<void> {
       "Navigate to /analyze and verify top toolbar with preset buttons",
       page,
       async () => {
-        await page.goto(`${BASE_URL}/analyze`, { waitUntil: "networkidle" });
+        await page.goto(`${BASE_URL}/analyze`, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(800);
 
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
@@ -512,7 +512,7 @@ async function runCliUiTests(): Promise<void> {
       "Verify titlebar window controls (minimize, maximize, close) and version badge modal",
       page,
       async () => {
-        await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+        await page.goto(`${BASE_URL}/`, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(800);
 
         // Verify window controls

@@ -1,6 +1,6 @@
 # Subtask 01: Top-Level Window Controls & Layout Shift Elimination
 # File: .ai-memory/plans/subtasks/04-vision-system-and-error-management-instructions/ss-01-window-controls-and-glitch-fixes.md
-# Status: PENDING
+# Status: COMPLETED
 
 ## Objectives
 1. Fix top-level window controls (`Minimize`, `Maximize/Restore`, `Close`) in `src/components/layout/WindowControlButtons.tsx` and `src/components/layout/StandardAppShell.tsx`:
