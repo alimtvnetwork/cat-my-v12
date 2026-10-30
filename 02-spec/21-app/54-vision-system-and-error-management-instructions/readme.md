@@ -810,6 +810,68 @@ coordinator (registry, CLI command, hook, TS mirror all present).
 - Wave 1 is now fully complete: window controls + swallowing fixes +
   error SplitDB/CLI + CLI-UI registry, all on origin/main.
 
+## 17. Wave 2 Completion — ROI Lock + Pattern Layers + Layers Panel (31-Oct-25 ~02:20)
+
+Workstream COMPLETE, all batches on origin/main. NOT verified at
+runtime (per program order: no builds/tests until end of tunnel).
+End-of-tunnel wave must exercise: create ROI -> locked (outside click
+does not replace) -> double-click unlock -> move/resize/rotate ->
+right-click reorder/hide -> panel selection sync -> CLI scroll/focus
+of the new registry ids.
+
+- Types/geometry/hook: `CanvasLayer` (id, kind roi|pattern|mask|box,
+  label, number, isLocked, isVisible, rotationDeg, zOrder) +
+  `LayersPanelProps` in `white-box/types.ts`; `rotateHandlePoint` /
+  `hitRotateHandle` / `rotationAngleDeg` in `pattern-geometry.ts`
+  (`regionHandles()` unchanged so Pin1Canvas is unaffected; rotation
+  is opt-in); `useCanvasPointerDrag` gains `isLocked` (locked =
+  selection-only, no replacement on outside click),
+  `isRotationEnabled`, `onRegionRotationChange`.
+- `PatternCanvas`: draw order bottom to top (ROI -> pattern region ->
+  masks -> tolerance zones -> numbered boxes on top); locked ROI
+  label shows "SEARCH REGION • LOCKED" and draws no handles;
+  double-click inside a locked ROI unlocks it; right-click context
+  menu (topmost hit first) with Bring Forward / Send Backward /
+  Lock-Unlock (ROI only) / Hide Layer; rotate handle (stem + circle
+  above the active region) with rotation drawn via
+  ctx.translate/rotate; hidden layers skipped; `data-ui-id=
+  "ui-pattern-canvas"` on the canvas.
+- NEW `white-box/LayersPanel.tsx`: Photoshop-style, top-first rows,
+  kind badge, rotation degrees, lock icon, eye toggle, ROI lock
+  toggle, reorder chevrons; buttons render only when their callback
+  is provided; selection syncs with canvas selection via shared tool
+  model state.
+- Wiring: `WhiteBoxMarkingTool` (full: selection, visibility via
+  toggleBox for boxes / hidden set for regions, lock, reorder,
+  rotation; panel `ui-whitebox-layers-panel`; canvas container
+  `ui-whitebox-canvas`) and `Pin1MarkingTool` (selection + keep/exclude
+  visibility only; panel `ui-pin1-layers-panel`; canvas container
+  `ui-pin1-canvas-wrap`). Pin1 lock/reorder deliberately NOT wired:
+  Pin1Canvas cannot enforce them yet, and dead buttons would be fake
+  functionality — Pin1Canvas enforcement is a follow-up wave.
+- JSON capture (wave-1 batch-2 follow-up): `readSavedRegion` threads
+  a failures out-param (buildSettingsFromRule -> existing useEffect
+  capture, E_TUNING_MODAL_PARSE_SAVED_JSON; handleApplyPin1 captures
+  directly as an event handler); `parseStoredRegion` uses the shared
+  `captureCorruptSavedJson` helper (new `action` param),
+  E_ANALYZER_PARSE_SAVED_JSON. Field + payload length only, never raw
+  content. `parseStoredRegionList` silent catch left as-is (out of
+  assigned scope).
+- Registry: 5 new entries (`ui-pattern-canvas`,
+  `ui-whitebox-canvas`, `ui-whitebox-layers-panel`,
+  `ui-pin1-canvas-wrap`, `ui-pin1-layers-panel`), TS mirror
+  regenerated (27 elements total).
+- Known limits (honest, not skipped): rotation is a layer transform —
+  detection bounds stay axis-aligned until rotated matching exists;
+  pattern shape tools belong to the sibling wave-2 workstream;
+  box-layer reorder is not offered (boxes stay in number order on
+  top); no end-to-end click was executed against a running app.
+- Shared-checkout note: sibling waves landed alongside (pin1 shape
+  picker, bug-reporting settings, greyscale modes); one push rejected
+  non-fast-forward, resolved by pull/merge; only this workstream's
+  files were ever staged (targeted `git add`, never `git add -A`).
+  Sibling uncommitted edits were left alone throughout.
+
 ## 17. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:19)
 
 Workstream COMPLETE, 3 batches on origin/main. Greenfield: email and
