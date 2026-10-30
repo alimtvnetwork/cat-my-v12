@@ -217,7 +217,7 @@ async function runCliUiTests(): Promise<void> {
         // Return to home or ensure header visible
         const recorderBtn = page.locator("button:has-text('Record Bug')");
         await recorderBtn.waitFor({ state: "visible", timeout: 5000 });
-        await recorderBtn.click({ force: true });
+        await recorderBtn.evaluate((el: HTMLElement) => el.click());
 
         // Floating HUD should appear
         const hud = page.locator("[data-recorder-hud='true']");
@@ -276,7 +276,7 @@ async function runCliUiTests(): Promise<void> {
       async () => {
         const hud = page.locator("[data-recorder-hud='true']");
         const exportZipBtn = hud.locator("button:has-text('Export ZIP')");
-        await exportZipBtn.click();
+        await exportZipBtn.evaluate((el: HTMLElement) => el.click());
         await page.waitForTimeout(500);
 
         // Modal should open
@@ -373,7 +373,7 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
-        await dropdownBtn.evaluate((el: HTMLElement) => el.click());
+        await dropdownBtn.click({ force: true });
 
         const liveCamOption = page.locator("text='Live Camera Feed'").first();
         await liveCamOption.waitFor({ state: "visible", timeout: 5000 });
@@ -540,7 +540,7 @@ async function runCliUiTests(): Promise<void> {
         // Verify version badge
         const versionBadge = page.locator("[data-testid='version-badge-button']");
         await versionBadge.waitFor({ state: "visible", timeout: 5000 });
-        await versionBadge.click({ force: true });
+        await versionBadge.evaluate((el: HTMLElement) => el.click());
         await page.waitForTimeout(500);
 
         // Version modal should open
