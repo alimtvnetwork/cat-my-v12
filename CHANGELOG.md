@@ -1,5 +1,23 @@
 # Changelog
 
+## [v4.113.6] - 2026-10-30
+
+### Fixed
+- Release workflow: publish releases directly as public assets (draft: false) for immediate installer downloads
+- SSR hydration: resolve integer ID alias on server and align standard shell loading boundary to eliminate hydration mismatch
+- Simulation: eliminate joyride tooltip collision with floating player bar on ruleset creation steps 8 and 9
+- Simulation: add interactive pointer cursor, active click feedback, and high-contrast glassmorphic styling across player controls
+- Bug Recorder: fix resume recording trigger from diagnostic export modal
+
+### Added
+- Guided Simulation 2-tier HUD with step navigation (Prev/Next), pause/resume countdown, dwell time slider, and seamless Take Over
+- Direct right-hand toolbar parameters for Pin 1 and Greyscale inspection rules with permanent center-canvas focus
+- Image source quick-switch toolbar with presets (Pocket 1, Pocket 2, Pocket 5) and resolution mismatch detection
+- Rule enable/disable toggle with active 'OFF' indicator badge
+
+---
+
+
 ## [v4.113.4] - 2026-10-29
 
 ### Added

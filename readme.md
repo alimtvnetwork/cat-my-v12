@@ -12,7 +12,7 @@
 
 <!-- STAMP:BADGES -->
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v4.113.4-3B82F6" alt="Version v4.113.4" />
+  <img src="https://img.shields.io/badge/version-v4.113.6-3B82F6" alt="Version v4.113.6" />
   <img src="https://img.shields.io/badge/license-MIT-10B981" alt="License MIT" />
   <img src="https://img.shields.io/badge/status-active-22C55E" alt="Status Active" />
   <img src="https://img.shields.io/badge/ai--ready-100%25-FF6E3C" alt="AI Ready" />
@@ -40,7 +40,7 @@
 
 <p align="center">
   <sub>
-    <!-- STAMP:VERSION -->v4.113.4<!-- /STAMP:VERSION --> ·
+    <!-- STAMP:VERSION -->v4.113.6<!-- /STAMP:VERSION --> ·
     <!-- STAMP:UPDATED -->2026-09-19<!-- /STAMP:UPDATED --> ·
     <!-- STAMP:FILES -->1064 files<!-- /STAMP:FILES --> ·
     <!-- STAMP:FOLDERS -->142 folders<!-- /STAMP:FOLDERS --> ·
