@@ -184,10 +184,15 @@ class SqliteRulesRepo:
 
     def save_rule_set(self, envelope: RuleSetEnvelope | dict[str, Any]) -> RuleSetEnvelope:
         self._ensure_recipe_table()
-        if isinstance(envelope, dict):
-            envelope = parse_envelope(envelope)
-        rule_set_id = envelope.RuleSetId
+        rule_set_id = (
+            envelope.get("RuleSetId", 0)
+            if isinstance(envelope, dict)
+            else envelope.RuleSetId
+        )
         try:
+            if isinstance(envelope, dict):
+                envelope = parse_envelope(envelope)
+            rule_set_id = envelope.RuleSetId
             prior_version = self._fetch_existing_version(rule_set_id)
             has_existing = prior_version is not None
             new_version = self._resolve_next_version(

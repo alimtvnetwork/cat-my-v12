@@ -140,16 +140,7 @@ async def post_bug_report(request: Request) -> JSONResponse:
     channels = payload.get("channels") or ["email", "supabase"]
     deliveries: dict[str, Any] = {}
 
-    if "email" in channels:
-        try:
-            deliveries["email"] = bug_reports.deliver_email(
-                report,
-                sender=payload.get("email_from"),
-                recipient=payload.get("email_to"),
-            )
-        except EmailSendError as error:
-            raise AppError(ErrorCode.E_BUG_EMAIL_FAILED, str(error), {}) from error
-
+    client = None
     if "supabase" in channels:
         client = client_from_config(bug_config.load_supabase_config())
 
@@ -160,6 +151,17 @@ async def post_bug_report(request: Request) -> JSONResponse:
                 {"Hint": "POST /bug-reports/config"},
             )
 
+    if "email" in channels:
+        try:
+            deliveries["email"] = bug_reports.deliver_email(
+                report,
+                sender=payload.get("email_from"),
+                recipient=payload.get("email_to"),
+            )
+        except EmailSendError as error:
+            raise AppError(ErrorCode.E_BUG_EMAIL_FAILED, str(error), {}) from error
+
+    if "supabase" in channels and client is not None:
         try:
             deliveries["supabase"] = bug_reports.deliver_supabase(report, client)
         except SupabaseError as error:
