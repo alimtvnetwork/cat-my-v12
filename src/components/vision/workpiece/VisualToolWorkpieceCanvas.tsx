@@ -1547,6 +1547,12 @@ export function VisualToolWorkpieceCanvas({
     return [];
   }, [configuredBoxes, detectedBoxes, isPatternMatching, roi]);
 
+  // Demo fallback boxes must not override an explicitly configured element
+  // count in the header label: when no real boxes exist, the label shows
+  // activeBoxCount (the rule's own count), not the 57 generated boxes.
+  const isGeneratedPatternBoxes =
+    configuredBoxes.length === 0 && detectedBoxes.length === 0 && isPatternMatching;
+
   const handleDetectElements = useCallback(
     (shouldNotify = false) => {
       if (!imageElement) {
@@ -2520,6 +2526,10 @@ export function VisualToolWorkpieceCanvas({
         y >= roi.y - 20 &&
         y <= roi.y + roi.height + 20;
 
+      // Branch deliberately disabled by the parallel spec-54 work (click-to-
+      // set Pin1 center is superseded by the marking tool); kept, not
+      // deleted, so it can be re-enabled. Lint suppression is intentional.
+      // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
       if (false && isInsideSearchArea) {
         const nextPin1Config = {
           ...((toolParams as any)?.pin1Config ?? {}),
@@ -2636,7 +2646,7 @@ export function VisualToolWorkpieceCanvas({
 
     if (activeCornerHandle && dragStartPos && onChangeRoi) {
       const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
-      let nextRoi = { ...dragStartPos.initialRoi };
+      const nextRoi = { ...dragStartPos.initialRoi };
 
       if (activeCornerHandle === "se") {
         nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
@@ -2871,7 +2881,7 @@ export function VisualToolWorkpieceCanvas({
               <span className="shrink-0 rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
                 {(() => {
                   const count =
-                    activeBoxesToDraw.length > 0
+                    !isGeneratedPatternBoxes && activeBoxesToDraw.length > 0
                       ? activeBoxesToDraw.length
                       : activeBoxCount > 0
                         ? activeBoxCount
