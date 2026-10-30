@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { WindowControlButtons } from "@/components/layout/WindowControlButtons";
+import { WindowControlButtons, WINDOW_EXIT_REQUEST_EVENT } from "@/components/layout/WindowControlButtons";
 import { VersionInfoModal } from "@/components/layout/VersionInfoModal";
 import { APP_VERSION_INFO } from "@/lib/version-info";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
@@ -430,21 +430,9 @@ export function StandardAppShell({
               <DropdownMenuItem
                 onClick={() => {
                   setIsMenuOpen(false);
-                  const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
-
-                  if (desktopApi?.close) {
-                    desktopApi.close();
-
-                    return;
-                  }
-
-                  try {
-                    window.close();
-                  } catch {
-                    // Fallback
-                  }
-
-                  window.location.href = "/";
+                  // Single exit path (spec 54 section 8): the confirm dialog
+                  // and shutdown flow live only in WindowControlButtons.
+                  window.dispatchEvent(new CustomEvent(WINDOW_EXIT_REQUEST_EVENT));
                 }}
                 className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors outline-none"
               >

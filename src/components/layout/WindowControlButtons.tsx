@@ -1,11 +1,65 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Minus, Square, X, AlertTriangle, LogOut } from "lucide-react";
+import { toast } from "sonner";
+
+import { useBackendMode } from "@/lib/backend/mode";
+import { useErrorStore } from "@/lib/stores/errorStore";
+
+/**
+ * Window controls for the desktop app (spec 54 section 8).
+ *
+ * Honest browser behavior: this app runs as a browser --app window
+ * (Edge/Chrome --app --start-fullscreen), NOT a native shell, and
+ * window.desktopApi was never implemented. So:
+ *
+ * - Minimize: browsers cannot minimize a window from JS. When no native
+ *   bridge exists, the button says so instead of silently doing nothing.
+ * - Maximize: the browser-honest equivalent is the fullscreen toggle.
+ * - Close: the confirm dialog asks the backend to shut down
+ *   (POST /shutdown), then the dialog tells the user to close the
+ *   browser window. The old code redirected to "/" here, which reloaded
+ *   the whole SPA mid-flight and read as a crash. That redirect is gone.
+ *
+ * Every failure is routed into the error store (useErrorStore) instead
+ * of a swallowed catch. The Exit menu item in StandardAppShell shares
+ * this exact flow by dispatching WINDOW_EXIT_REQUEST_EVENT, which opens
+ * the same confirm dialog; there is no second copy of the exit logic.
+ *
+ * A future native shell (Tauri/Electron) is a morning architecture
+ * decision (spec 54 MBUD). If one ever provides window.desktopApi, these
+ * handlers prefer it automatically.
+ */
+export const WINDOW_EXIT_REQUEST_EVENT = "cat-vision:request-exit";
+
+interface DesktopApi {
+  minimize?: () => void;
+  toggleMaximize?: () => void;
+  close?: () => void;
+}
+
+function readDesktopApi(): DesktopApi | undefined {
+  return (window as unknown as { desktopApi?: DesktopApi }).desktopApi;
+}
 
 export function WindowControlButtons(): React.JSX.Element {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
+  const [isShuttingDown, setIsShuttingDown] = useState(false);
+  const baseUrl = useBackendMode((s) => s.baseUrl);
+
+  useEffect(() => {
+    const openExitDialog = (): void => {
+      setIsExitDialogOpen(true);
+    };
+
+    window.addEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
+
+    return () => {
+      window.removeEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
+    };
+  }, []);
 
   const handleMinimize = useCallback(() => {
-    const desktopApi = (window as unknown as { desktopApi?: { minimize?: () => void } }).desktopApi;
+    const desktopApi = readDesktopApi();
 
     if (desktopApi?.minimize) {
       desktopApi.minimize();
@@ -13,12 +67,11 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
-    // Web fallback: collapse viewport or dispatch event
-    window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
+    toast.info("Minimize is not available in browser mode. Use your operating system window controls to minimize this window.");
   }, []);
 
   const handleToggleMaximize = useCallback(() => {
-    const desktopApi = (window as unknown as { desktopApi?: { toggleMaximize?: () => void } }).desktopApi;
+    const desktopApi = readDesktopApi();
 
     if (desktopApi?.toggleMaximize) {
       desktopApi.toggleMaximize();
@@ -26,16 +79,25 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
+    const fullscreenRequest = document.fullscreenElement
+      ? document.exitFullscreen()
+      : document.documentElement.requestFullscreen();
+
+    fullscreenRequest.catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "toggleMaximize",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_FULLSCREEN",
+      );
+    });
   }, []);
 
   const handleConfirmExit = useCallback(() => {
-    setIsExitDialogOpen(false);
-    const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
+    const desktopApi = readDesktopApi();
 
     if (desktopApi?.close) {
       desktopApi.close();
@@ -43,14 +105,50 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
-    // Web fallback: attempt window close or reset session
-    try {
-      window.close();
-    } catch {
-      // Ignored
-    }
+    setIsShuttingDown(true);
 
-    window.location.href = "/";
+    const shutdownController = new AbortController();
+    const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
+
+    fetch(`${baseUrl}/shutdown`, {
+      method: "POST",
+      signal: shutdownController.signal,
+    })
+      .catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            endpoint: `${baseUrl}/shutdown`,
+            method: "POST",
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "confirmExit",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_SHUTDOWN",
+        );
+      })
+      .finally(() => {
+        window.clearTimeout(shutdownTimeout);
+
+        try {
+          window.close();
+        } catch (err: unknown) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "WindowControlButtons",
+              triggerAction: "confirmExit",
+              source: "WindowControlButtons",
+            },
+            "E_WINDOW_CLOSE",
+          );
+        }
+      });
+  }, [baseUrl]);
+
+  const handleDismissShutdown = useCallback(() => {
+    setIsExitDialogOpen(false);
+    setIsShuttingDown(false);
   }, []);
 
   return (
@@ -103,30 +201,46 @@ export function WindowControlButtons(): React.JSX.Element {
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-white">Exit Application?</h3>
+                <h3 className="text-sm font-bold text-white">
+                  {isShuttingDown ? "Shutting Down…" : "Exit Application?"}
+                </h3>
                 <p className="text-xs text-slate-400">
-                  Are you sure you want to close Cat Vision, Cat I Vision?
+                  {isShuttingDown
+                    ? "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
+                    : "Are you sure you want to close Cat Vision, Cat I Vision?"}
                 </p>
               </div>
             </div>
 
             <div className="mt-5 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsExitDialogOpen(false)}
-                className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
-              >
-                Cancel
-              </button>
+              {isShuttingDown ? (
+                <button
+                  type="button"
+                  onClick={handleDismissShutdown}
+                  className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                >
+                  Dismiss
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsExitDialogOpen(false)}
+                    className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
 
-              <button
-                type="button"
-                onClick={handleConfirmExit}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span>Exit Now</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmExit}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Exit Now</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
