@@ -299,11 +299,16 @@ export function WorkpieceAnalyzeWorkspace({
     return projectOverlayRules.map((rule, idx) => ({
       id: rule.id,
       name: rule.name,
-      type: (rule.params?.toolCode === "T102" || rule.params?.toolCode === "T116" || rule.params?.toolCode === "T105" ? "pattern" : "roi"),
+      type:
+        rule.params?.toolCode === "T102" ||
+        rule.params?.toolCode === "T116" ||
+        rule.params?.toolCode === "T105"
+          ? "pattern"
+          : "roi",
       isVisible: !rule.isHidden,
       isLocked: Boolean(rule.isLocked),
       colorTag: "#22d3ee",
-      zIndex: rule.orderIndex ?? idx,
+      zIndex: idx,
       ruleId: rule.id,
     }));
   }, [projectOverlayRules]);
@@ -1422,8 +1427,8 @@ export function WorkpieceAnalyzeWorkspace({
                     onToggleLocked={(id) => railHandlers.onToggleLocked(id)}
                     onBringToFront={(id) => railHandlers.onBringToFront(id)}
                     onSendToBack={(id) => railHandlers.onSendToBack(id)}
-                    onMoveUp={(id) => railHandlers.onMove(id, "up")}
-                    onMoveDown={(id) => railHandlers.onMove(id, "down")}
+                    onMoveUp={(id) => railHandlers.onReorder(id, "up")}
+                    onMoveDown={(id) => railHandlers.onReorder(id, "down")}
                     onDeleteLayer={(id) => railHandlers.onDelete(id)}
                   />
                 </div>

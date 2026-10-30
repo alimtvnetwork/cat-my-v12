@@ -955,7 +955,12 @@ function drawCornerHandles(
   }
 }
 
-export function getRoiHeaderRect(roi: WorkpieceRoi): { x: number; y: number; width: number; height: number } {
+export function getRoiHeaderRect(roi: WorkpieceRoi): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
   const height = 22;
   const width = Math.max(220, Math.min(roi.width, 380));
   const x = roi.x;
@@ -964,7 +969,10 @@ export function getRoiHeaderRect(roi: WorkpieceRoi): { x: number; y: number; wid
   return { x, y, width, height };
 }
 
-export function getPolygonVertices(roi: WorkpieceRoi, vertexCount = 6): Array<{ x: number; y: number }> {
+export function getPolygonVertices(
+  roi: WorkpieceRoi,
+  vertexCount = 6,
+): Array<{ x: number; y: number }> {
   const count = Math.max(3, Math.min(12, vertexCount));
   const cx = roi.x + roi.width / 2;
   const cy = roi.y + roi.height / 2;
@@ -1183,9 +1191,9 @@ export function generate57SequentialPatternBoxes(roi: WorkpieceRoi): WhiteBoxMar
   // Middle rows: 30 boxes (16 to 45) in a structured 3-tier matrix
   const midCols = 10;
   const midRows = 3;
-  const midStartX = Math.round(roi.x + padX + usableW * 0.30);
+  const midStartX = Math.round(roi.x + padX + usableW * 0.3);
   const midSlotW = (usableW * 0.68) / midCols;
-  const midBoxW = Math.max(6, Math.round(midSlotW * 0.80));
+  const midBoxW = Math.max(6, Math.round(midSlotW * 0.8));
   const midBoxH = Math.max(6, Math.round(usableH * 0.14));
   const midStartY = Math.round(roi.y + padY + topBoxH + usableH * 0.06);
   const midRowGap = Math.max(2, Math.round(usableH * 0.04));
@@ -1212,9 +1220,9 @@ export function generate57SequentialPatternBoxes(roi: WorkpieceRoi): WhiteBoxMar
 
   // Row 5 (Bottom lead pads): 12 boxes (46 to 57)
   const botCount = 12;
-  const botStartX = Math.round(roi.x + padX + usableW * 0.30);
+  const botStartX = Math.round(roi.x + padX + usableW * 0.3);
   const botSlotW = (usableW * 0.68) / botCount;
-  const botBoxW = Math.max(6, Math.round(botSlotW * 0.80));
+  const botBoxW = Math.max(6, Math.round(botSlotW * 0.8));
   const botBoxH = Math.max(8, Math.round(usableH * 0.18));
   const botY = Math.round(roi.y + roi.height - padY - botBoxH);
 
@@ -1977,8 +1985,18 @@ export function VisualToolWorkpieceCanvas({
           if (shapeType === "circle") {
             drawCircleWithHandles(ctx, ruleRoi, ruleStrokeColor, fillColor, isEditable);
           } else if (shapeType === "polygon") {
-            const polyVertices = getPolygonVertices(ruleRoi, Number((rule.params as any)?.vertexCount) || 6);
-            drawPolygonWithVertices(ctx, ruleRoi, polyVertices, ruleStrokeColor, fillColor, isEditable);
+            const polyVertices = getPolygonVertices(
+              ruleRoi,
+              Number((rule.params as any)?.vertexCount) || 6,
+            );
+            drawPolygonWithVertices(
+              ctx,
+              ruleRoi,
+              polyVertices,
+              ruleStrokeColor,
+              fillColor,
+              isEditable,
+            );
           } else {
             ctx.strokeRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
             ctx.fillStyle = fillColor;
@@ -1993,7 +2011,13 @@ export function VisualToolWorkpieceCanvas({
             : isRulePattern
               ? "PATTERN SEARCH REGION"
               : `${rule.name.toUpperCase()} SEARCH REGION`;
-          drawRoiHeaderGrip(ctx, ruleRoi, labelPrefix, Boolean(rule.isLocked || isRoiLocked), ruleStrokeColor);
+          drawRoiHeaderGrip(
+            ctx,
+            ruleRoi,
+            labelPrefix,
+            Boolean(rule.isLocked || isRoiLocked),
+            ruleStrokeColor,
+          );
 
           // 4 Corner drag handles
           if (isEditable && !rule.isLocked && !isRoiLocked) {
@@ -2433,10 +2457,7 @@ export function VisualToolWorkpieceCanvas({
       y <= headerRect.y + headerRect.height;
 
     const isInsideRoi =
-      x >= roi.x &&
-      x <= roi.x + roi.width &&
-      y >= roi.y &&
-      y <= roi.y + roi.height;
+      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
     // Clicking outside locks the ROI
     if (!isInsideRoi && !isInsideHeader) {
@@ -2514,7 +2535,7 @@ export function VisualToolWorkpieceCanvas({
           },
         };
 
-        onUpdateParams({
+        onUpdateParams?.({
           ...toolParams,
           pin1Config: nextPin1Config,
           pin1ConfigJson: JSON.stringify(nextPin1Config),
@@ -2658,7 +2679,8 @@ export function VisualToolWorkpieceCanvas({
       const seHit =
         Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
 
-      const hover = !isRoiLocked && (nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null);
+      const hover =
+        !isRoiLocked && (nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null);
       setCursorHandleType(hover ? hover : null);
 
       const isInside =
@@ -2706,10 +2728,7 @@ export function VisualToolWorkpieceCanvas({
       y <= headerRect.y + headerRect.height;
 
     const isInsideRoi =
-      x >= roi.x &&
-      x <= roi.x + roi.width &&
-      y >= roi.y &&
-      y <= roi.y + roi.height;
+      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
     // Double-clicking the ROI header unlocks/locks the ROI
     if (isInsideHeader || isInsideRoi) {
@@ -2723,9 +2742,11 @@ export function VisualToolWorkpieceCanvas({
     e.preventDefault();
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
 
-    const clickedRule = [...overlayRules].reverse().find(
-      (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
-    );
+    const clickedRule = [...overlayRules]
+      .reverse()
+      .find(
+        (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
+      );
 
     setCanvasContextMenu({
       isOpen: true,
