@@ -1,3 +1,5 @@
+import { ShapeType } from "@/domain/vision/shapes";
+
 export interface WhiteBoxMark {
   number: number;
   label?: string;
@@ -18,7 +20,18 @@ export interface SearchRegion {
   y: number;
   width: number;
   height: number;
+  /** Pattern shape inscribed in this region (spec 54). Defaults to Rectangle. */
+  shape?: ShapeType;
+  /** Clockwise rotation in degrees around the region center (ellipse/rectangle). */
+  rotationDeg?: number;
+  /** Polygon vertices in image coordinates (Polygon shape only). */
+  points?: Array<{ x: number; y: number }>;
 }
+
+/** Grayscale preview mode (spec 54): threshold keeps legacy whiten-only
+ *  behavior; stretch applies a full-range contrast stretch (dark darker,
+ *  white whiter); one-bit reduces every pixel to pure black or white. */
+export type GrayscaleMode = "threshold" | "stretch" | "one-bit";
 
 export interface WhiteBoxMarkingInput {
   width: number;
@@ -188,16 +201,81 @@ export function toThresholdPreviewRgba(
   return grayToRgba(gray);
 }
 
+/** Full-range contrast stretch: the darkest pixel becomes 0, the brightest
+ *  becomes 255, everything else scales linearly — dark darker, white whiter. */
+export function toContrastStretchedGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
+  const gray = toContinuousGray(rgba);
+
+  let min = 255;
+  let max = 0;
+
+  for (let index = 0; index < gray.length; index += 1) {
+    if (gray[index] < min) {
+      min = gray[index];
+    }
+
+    if (gray[index] > max) {
+      max = gray[index];
+    }
+  }
+
+  if (max <= min) {
+    return gray;
+  }
+
+  const scale = 255 / (max - min);
+
+  for (let index = 0; index < gray.length; index += 1) {
+    gray[index] = clampByte((gray[index] - min) * scale);
+  }
+
+  return gray;
+}
+
+/** True 1-bit reduction: every pixel becomes pure black (0) or pure white (255). */
+export function toOneBitGray(rgba: Uint8ClampedArray, threshold: number): Uint8ClampedArray {
+  const gray = toContinuousGray(rgba);
+  const limit = clampByte(threshold);
+
+  for (let index = 0; index < gray.length; index += 1) {
+    gray[index] = gray[index] >= limit ? 255 : 0;
+  }
+
+  return gray;
+}
+
+/** Mode-aware grayscale preview. "threshold" preserves the legacy
+ *  whiten-only behavior exactly; "stretch" and "one-bit" implement the
+ *  spec 54 bits model. Existing callers keep "threshold" by default. */
+export function toGrayscalePreviewRgba(
+  input: WhiteBoxMarkingInput,
+  mode: GrayscaleMode,
+  whiteThreshold: number,
+): Uint8ClampedArray {
+  assertRgba(input);
+
+  if (mode === "stretch") {
+    return grayToRgba(toContrastStretchedGray(input.rgba));
+  }
+
+  if (mode === "one-bit") {
+    return grayToRgba(toOneBitGray(input.rgba, whiteThreshold));
+  }
+
+  return toThresholdPreviewRgba(input, whiteThreshold);
+}
+
 export function renderSelectedWhiteBoxMarks(
   input: WhiteBoxMarkingInput,
   boxes: WhiteBoxMark[],
   whiteThreshold?: number,
+  greyscaleMode: GrayscaleMode = "threshold",
 ): WhiteBoxMarkingResult {
   assertRgba(input);
   const rgba =
     whiteThreshold === undefined
       ? grayToRgba(toTwoBitGray(input.rgba))
-      : toThresholdPreviewRgba(input, whiteThreshold);
+      : toGrayscalePreviewRgba(input, greyscaleMode, whiteThreshold);
   drawBoxes(rgba, input.width, input.height, boxes);
 
   return { width: input.width, height: input.height, rgba, boxes };
@@ -520,7 +598,163 @@ function clampRegion(
   const y = Math.max(0, Math.min(height, Math.floor(region.y)));
   const x2 = Math.max(0, Math.min(width, Math.ceil(region.x + region.width)));
   const y2 = Math.max(0, Math.min(height, Math.ceil(region.y + region.height)));
-  return { x, y, width: Math.max(0, x2 - x), height: Math.max(0, y2 - y) };
+
+  return {
+    ...region,
+    x,
+    y,
+    width: Math.max(0, x2 - x),
+    height: Math.max(0, y2 - y),
+  };
+}
+
+/* ---- Pattern-shape geometry (spec 54) ----
+ * The ROI stays a plain bounding region; the PATTERN searched inside it
+ * takes the shape. Rectangle fills the bounds; circle is the inscribed
+ * circle (diameter = min side); ellipse is inscribed in the bounds;
+ * polygon uses stored points, falling back to the region corners. */
+
+function patternShapeCenter(region: SearchRegion): { x: number; y: number } {
+  return { x: region.x + region.width / 2, y: region.y + region.height / 2 };
+}
+
+function rotatePointAroundCenter(
+  point: { x: number; y: number },
+  center: { x: number; y: number },
+  angleDeg: number,
+): { x: number; y: number } {
+  if (angleDeg === 0) {
+    return point;
+  }
+
+  const angle = (angleDeg * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+
+  return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
+}
+
+/** Outline points for the pattern shape (corners for rectangle, 48
+ *  samples for circle/ellipse, stored points for polygon). Rotation is
+ *  applied around the region center. */
+export function getPatternShapePoints(region: SearchRegion): Array<{ x: number; y: number }> {
+  const shape = region.shape ?? ShapeType.Rectangle;
+  const center = patternShapeCenter(region);
+  const rotation = region.rotationDeg ?? 0;
+
+  if (shape === ShapeType.Polygon) {
+    const stored = region.points ?? [];
+    const base =
+      stored.length >= 3
+        ? stored
+        : [
+            { x: region.x, y: region.y },
+            { x: region.x + region.width, y: region.y },
+            { x: region.x + region.width, y: region.y + region.height },
+            { x: region.x, y: region.y + region.height },
+          ];
+
+    return base.map((point) => rotatePointAroundCenter(point, center, rotation));
+  }
+
+  if (shape === ShapeType.Circle || shape === ShapeType.Ellipse) {
+    const radiusX = shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.width / 2;
+    const radiusY = shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.height / 2;
+    const points: Array<{ x: number; y: number }> = [];
+
+    for (let step = 0; step < 48; step += 1) {
+      const angle = (step / 48) * Math.PI * 2;
+      const raw = { x: center.x + radiusX * Math.cos(angle), y: center.y + radiusY * Math.sin(angle) };
+      points.push(rotatePointAroundCenter(raw, center, rotation));
+    }
+
+    return points;
+  }
+
+  const corners = [
+    { x: region.x, y: region.y },
+    { x: region.x + region.width, y: region.y },
+    { x: region.x + region.width, y: region.y + region.height },
+    { x: region.x, y: region.y + region.height },
+  ];
+
+  return corners.map((point) => rotatePointAroundCenter(point, center, rotation));
+}
+
+/** Hit-test: is the point inside the pattern shape (not just the box)? */
+export function isPointInPatternShape(
+  point: { x: number; y: number },
+  region: SearchRegion,
+): boolean {
+  const shape = region.shape ?? ShapeType.Rectangle;
+  const center = patternShapeCenter(region);
+  const rotation = region.rotationDeg ?? 0;
+  const local = rotatePointAroundCenter(point, center, -rotation);
+
+  if (shape === ShapeType.Circle) {
+    const radius = Math.min(region.width, region.height) / 2;
+
+    return Math.hypot(local.x - center.x, local.y - center.y) <= radius;
+  }
+
+  if (shape === ShapeType.Ellipse) {
+    const dx = (local.x - center.x) / Math.max(1, region.width / 2);
+    const dy = (local.y - center.y) / Math.max(1, region.height / 2);
+
+    return dx * dx + dy * dy <= 1;
+  }
+
+  if (shape === ShapeType.Polygon) {
+    const vertices = getPatternShapePoints({ ...region, rotationDeg: 0 });
+    let isInside = false;
+
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i, i += 1) {
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
+      const crosses =
+        yi > local.y !== yj > local.y &&
+        local.x < ((xj - xi) * (local.y - yi)) / (yj - yi) + xi;
+
+      if (crosses) {
+        isInside = !isInside;
+      }
+    }
+
+    return isInside;
+  }
+
+  return (
+    local.x >= region.x &&
+    local.y >= region.y &&
+    local.x <= region.x + region.width &&
+    local.y <= region.y + region.height
+  );
+}
+
+/** Trace the pattern-shape outline onto a canvas path (caller strokes/fills). */
+export function tracePatternShapePath(
+  context: CanvasRenderingContext2D,
+  region: SearchRegion,
+): void {
+  const points = getPatternShapePoints(region);
+
+  context.beginPath();
+
+  if (points.length === 0) {
+    return;
+  }
+
+  context.moveTo(points[0].x, points[0].y);
+
+  for (let index = 1; index < points.length; index += 1) {
+    context.lineTo(points[index].x, points[index].y);
+  }
+
+  context.closePath();
 }
 
 function walkComponent(
