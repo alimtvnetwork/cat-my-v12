@@ -803,6 +803,49 @@ coordinator (registry, CLI command, hook, TS mirror all present).
 - Wave 1 is now fully complete: window controls + swallowing fixes +
   error SplitDB/CLI + CLI-UI registry, all on origin/main.
 
+## 17. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:13)
+
+Workstream COMPLETE, 3 batches on origin/main. Greenfield: email and
+Supabase had 0 hits in src/BE before this work.
+
+- Batch 1: `BE/bug_reports/` core — `config.py` (resolution: explicit
+  > env > repo-secrets non-secret fields; Supabase settings file 0600
+  in app-data), `supabase_client.py` (stdlib PostgREST, AGM header
+  scheme, 15s timeout, URL normalization, classified errors, circuit
+  breaker), `schema.sql` (bug_reports + bug_attachments),
+  `email_sender.py` (delegates to the go-email-reader binary; never
+  touches passwords).
+- Batch 2: `BE/bug_reports/reports.py` (compose from Task-DB Error row
+  + email/Supabase delivery + tempdir JSONL audit),
+  `BE/routes/bug_reports.py` (loopback-only: POST /bug-reports,
+  GET /pending, GET/POST /config sanitized with blank-key-keeps-stored,
+  POST /test reachability + table verification),
+  `BE/cli/processing/commands/bug_reports.py` (`processing-cli
+  bug-reports pending/download/send`), wiring in `BE/main.py`,
+  `BE/cli/processing/main.py`, `BE/errors/codes.py`
+  (E_BUG_EMAIL_FAILED, E_BUG_SUPABASE_FAILED).
+- Batch 3: frontend `src/components/settings/BugReportingSettings.tsx`
+  (Supabase URL/key/role/enabled + test + email readiness + send-test),
+  `src/routes/settings/bug-reporting.tsx` (new route),
+  `src/components/settings/SettingsSidenav.tsx` (one nav entry),
+  `BE/bug_reports/README.md` (flow + setup + honest caveats),
+  subtask 14 marked COMPLETE.
+- Deliberate limits (not silently skipped): HTTP route never accepts
+  local attachment paths (bytes via CLI --attach + best-effort Storage
+  upload, else reference rows); Supabase key stored reversibly (0600),
+  same as AGM, stated in UI + README, never in git, never returned by
+  GET /config; RLS permissive policies commented out on purpose;
+  `openapi.snapshot.json` not regenerated (needs a running app);
+  RECORD BUG button wiring to POST /bug-reports NOT done (recorder
+  components outside this workstream's ownership — route + CLI ready
+  for that follow-up).
+- NOT verified at runtime (per program order: no builds/tests until
+  end of tunnel; Python files syntax-checked only via `ast.parse`).
+  End-of-tunnel wave must exercise: POST /bug-reports round-trip
+  (email + Supabase), pending/download/send CLI runs, settings UI
+  save/test/send-test flow, schema.sql applied + tables verified,
+  snapshot regen.
+
 ## 17. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
 
 Workstream COMPLETE, commit on origin/main, spot-verified by the

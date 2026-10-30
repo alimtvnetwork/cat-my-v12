@@ -244,7 +244,15 @@ async def post_bug_report_config(request: Request) -> JSONResponse:
         raise AppError(ErrorCode.E_BE_BAD_REQUEST, "url is required", {"Field": "url"})
 
     if not isinstance(api_key, str) or not api_key:
-        raise AppError(ErrorCode.E_BE_BAD_REQUEST, "api_key is required", {"Field": "api_key"})
+        # Blank key keeps the stored key (settings UI placeholder flow);
+        # a blank key with nothing stored is still a validation error.
+        stored = bug_config.load_supabase_config()
+        stored_key = stored.get("api_key") if stored else None
+
+        if not isinstance(stored_key, str) or not stored_key:
+            raise AppError(ErrorCode.E_BE_BAD_REQUEST, "api_key is required", {"Field": "api_key"})
+
+        api_key = stored_key
 
     stored = {
         "url": url,
