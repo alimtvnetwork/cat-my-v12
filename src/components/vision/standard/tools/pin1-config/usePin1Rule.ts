@@ -16,6 +16,7 @@ import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { EditorRuleKindType, EditorToolFamilyType } from "@/lib/editor/types";
 import type { Rule, RuleId } from "@/lib/rules/model";
 import { syncRuleToBackend } from "@/lib/rules/backendSync";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import {
   detectRoundHolesInRegion,
   evaluatePin1AgainstReference,
@@ -340,8 +341,18 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         await executeDetection(stdSource, activeSearchRegion);
 
         setMessage("Loaded workpiece image. Ready for Pin 1 verification.");
-      } catch {
-        // Ignored
+      } catch (err) {
+        if (!isCancelled) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "usePin1Rule",
+              triggerAction: "loadTarget",
+              context: { targetUrlLength: targetUrl.length },
+            },
+            "E_PIN1_LOAD_TARGET",
+          );
+        }
       }
     };
 

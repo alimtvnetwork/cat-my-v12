@@ -30,6 +30,7 @@ import {
   type TapeStripEvaluationResult,
   type PocketEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export interface WorkpieceRoi {
   x: number;
@@ -1058,8 +1059,16 @@ export function VisualToolWorkpieceCanvas({
             rgba: imgData.data,
           });
         }
-      } catch {
-        // Ignored
+      } catch (err) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "VisualToolWorkpieceCanvas",
+            triggerAction: "cacheLoadedPixels",
+            context: { imageSrcLength: imgSrc.length },
+          },
+          "E_WORKPIECE_CACHE_PIXELS",
+        );
       }
     };
 

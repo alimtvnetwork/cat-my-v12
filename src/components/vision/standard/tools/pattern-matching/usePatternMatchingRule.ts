@@ -21,6 +21,7 @@ import {
 
 import type { PatternMatchingRuleProps } from "./types";
 import { useConveyorSimulation } from "./useConveyorSimulation";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export const STANDARD_CANVAS_WIDTH = 960;
 export const STANDARD_CANVAS_HEIGHT = 540;
@@ -216,8 +217,18 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
         setMatchResult(result);
       })
-      .catch(() => {
-        // Ignored
+      .catch((err) => {
+        if (!isCancelled) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "usePatternMatchingRule",
+              triggerAction: "loadTargetImage",
+              context: { targetUrlLength: targetUrl.length },
+            },
+            "E_PATTERN_MATCH_LOAD",
+          );
+        }
       });
 
     return () => {
