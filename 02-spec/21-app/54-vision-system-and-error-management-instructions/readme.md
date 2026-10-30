@@ -872,7 +872,7 @@ of the new registry ids.
   files were ever staged (targeted `git add`, never `git add -A`).
   Sibling uncommitted edits were left alone throughout.
 
-## 17. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:19)
+## 18. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:19)
 
 Workstream COMPLETE, 3 batches on origin/main. Greenfield: email and
 Supabase had 0 hits in src/BE before this work.
@@ -915,7 +915,7 @@ Supabase had 0 hits in src/BE before this work.
   save/test/send-test flow, schema.sql applied + tables verified,
   snapshot regen.
 
-## 18. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
+## 19. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
 Workstream COMPLETE, commit on origin/main, spot-verified by the
 coordinator (commit stat shows only the agent's 2 files;
 `_ensure_recipe_table` present in the repo file).
@@ -976,7 +976,7 @@ coordinator (commit stat shows only the agent's 2 files;
 - Shared-checkout note: a sibling's uncommitted edit to
   `src/lib/vision/white-box-marking.ts` was left unstaged and untouched.
 
-## 19. Wave 2 Completion — Pin1 Pattern Shapes + Grayscale Bits (31-Oct-25 ~02:21)
+## 20. Wave 2 Completion — Pin1 Pattern Shapes + Grayscale Bits (31-Oct-25 ~02:21)
 
 Workstream COMPLETE, 6 commits on origin/main, spot-verified by the
 coordinator (Pattern Shape picker, GrayscaleMode type, and patternShape
