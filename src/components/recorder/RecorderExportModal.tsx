@@ -431,7 +431,7 @@ ${summary.actualBehavior || "N/A"}`;
 
               <button
                 type="button"
-disabled={isUploadingSupabase || isSendingBugReport}
+                disabled={isUploadingSupabase || isSendingBugReport}
                 onClick={handleUploadSupabase}
                 title="Upload diagnostic bundle to Supabase cloud and send report"
                 className="flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"

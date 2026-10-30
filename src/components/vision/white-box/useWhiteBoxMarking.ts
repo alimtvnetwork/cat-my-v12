@@ -480,6 +480,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMessage(`Contrast level changed to ${nextVal}%. Click Process to re-detect.`);
+  }
 
   function changeGreyscaleMode(mode: GrayscaleMode): void {
     setGreyscaleMode(mode);

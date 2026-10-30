@@ -1941,8 +1941,14 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
           // Next button whenever runStepAction moves the target. Shift
           // keeps the pinned tooltip inside the viewport (bottom padding
           // clears the fixed player HUD bar).
-          flip: false,
-          shift: {
+          // NOTE (spec 54 end-of-tunnel): react-joyride 3.2.0 types do
+          // not accept the newer `flip` / `shift` keys, so the
+          // `flipOptions: false` + `shiftOptions` shape is used instead
+          // (same shape as the per-step helper in tour-placement.ts).
+          // Live-machine verification that the tooltip stays pinned is
+          // still owed — see spec 54 §23.
+          flipOptions: false,
+          shiftOptions: {
             padding: { top: 60, bottom: 120, left: 24, right: 24 },
           },
         }}
