@@ -1,4 +1,4 @@
-import { chromium, type Page, type Browser } from "@playwright/test";
+import { chromium, type Page, type Browser } from "playwright";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -8,6 +8,7 @@ function resolveChromePath(): string {
     return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
   }
   const candidates = [
+    "C:\\Users\\Administrator\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe",
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
