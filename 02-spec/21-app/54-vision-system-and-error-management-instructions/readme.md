@@ -303,3 +303,113 @@ and glitch 3 is a state-sync design flaw, not a race — both are cheap,
 isolated fixes. Glitch 2's timing overshoot is structural and must be
 fixed before any dwell tuning, since tuning the value cannot compensate
 for the added waits.
+
+## 10. Analysis Findings (Research Wave 1 — Error Management)
+
+Verified read-only against main. All paths relative.
+
+### Spec contract (02-spec/03-error-manage/)
+
+- Zero swallowed errors (TOTAL BAN): no empty catch, no blank-identifier
+  discards, no fallback defaults masking an error. Every caught error
+  must be resolved with structured context logging OR wrapped and
+  returned.
+- Typed `AppError` (code + message + details + cause); universal
+  response envelope `{ Status, Attributes, Results, Errors }`.
+- Three-tier flow: delegated server → backend → frontend error store +
+  Global Error Modal + toasts; HTTP status as primary indicator.
+- AC-01: error responses contain numeric `Code` in registry range,
+  `Message`, `Details`, `Stack` (up to 40 frames); unregistered codes
+  fall back to a generic in-range code + warning log; sensitive values
+  redacted.
+- AC-02: modal shows backend code + triggering component + timestamp;
+  "Copy All" copies frontend + backend context; codeless backend errors
+  get synthetic code `GEN-1000` + parsing warning.
+
+### What already exists (spec-aligned)
+
+- `BE/errors/apperror.py` (`AppError` + `ErrorCode`),
+  `BE/errors/handlers.py`, `BE/errors/codes.py`; CLI dispatcher
+  (`BE/cli/common/dispatcher.py`) maps `AppError` → envelope + exit code.
+- Envelope: `src/lib/backend/envelope.ts` (zod), `BE/envelope.py`.
+- Frontend model: `src/types/errors.ts` (`CapturedError`: id, 8-char
+  `correlationId`, code, level, message, `stackTrace`, `parsedFrames`,
+  endpoint/method/status, trigger component/action, `invocationChain`,
+  `backendLogs`, `backendStackTrace`, `sessionId`, `uiClickPath`,
+  `executionLogs`, envelope fields).
+- Store: `src/lib/stores/errorStore.ts` (Zustand, bounded FIFO,
+  `MAX_HISTORY = 50`, every mutation logged via `ClientLogger`).
+- Global capture: `src/lib/errors/globalCapture.ts` (single-mount
+  `window.error` + `unhandledrejection` → store + error-bus).
+- UI: `GlobalErrorModal.tsx`, `ErrorHistoryDrawer.tsx`,
+  `ErrorQueueBadge.tsx`, `EnvelopeErrorBoundary.tsx`.
+- Backend-failure capture: `src/lib/be-fetch.ts` (every
+  `EnvelopeError` captured unless `suppressCapture`).
+- Export: `src/lib/errors/export.ts` (JSON/CSV incl. stackTrace,
+  correlationId) — browser-download only.
+
+### ERROR SWALLOWING — CONFIRMED (spec violation)
+
+Literal `catch { // Ignored }` / `.catch(() => { // Ignored })`:
+
+- `src/components/vision/standard/tools/pin1-config/usePin1Rule.ts:344`
+  — Pin 1 detection failures vanish.
+- `src/components/vision/standard/tools/pattern-matching/
+  usePatternMatchingRule.ts:220` — match failures vanish.
+- `src/components/vision/white-box/useWhiteBoxMarking.ts:188` — image
+  load + initial `processRegion` failures vanish; `:567` — duplicate
+  cleanup delete failures vanish.
+- `src/components/vision/standard/workbench/useStandardWorkbench.ts:89`
+  — image-load failure vanishes; `:142` — FileReader upload failure
+  vanishes.
+- `src/components/vision/workpiece/VisualToolWorkpieceCanvas.tsx:1062`
+  — pixel-cache loader failures vanish.
+- `src/components/layout/WindowControlButtons.tsx:50` — close fallback
+  catch, then unconditional redirect to `/`; `:33`/`:36` — fullscreen
+  promise catches.
+- `src/lib/errors/history-facade.ts` — load/save/clear failures only
+  logged, never captured into the store.
+- Benign but policy-violating: `VisualToolTuningModal.tsx:41,51` and
+  `workpiece-rule-analyzer.ts:291,319,339,355` — `JSON.parse` failures
+  swallowed with no log line.
+
+### Error database: DOES NOT EXIST (largest gap)
+
+- SplitDB pattern exists (`02-spec/05-split-db-architecture/`, SQLite,
+  WAL; `BE/db/migrations/root/` 4 migrations, `BE/db/migrations/task/`
+  9 migrations, tables incl. `CliInvocation`, `CaptureSession`,
+  `Recipe`, `Result`, `RunSession`, `RuleResult`).
+- No error table in any migration, no error writer, no error DB.
+  Frontend history lives only in browser storage (IndexedDB key
+  `lovable:error-history:v1`, bounded 50-entry FIFO) with a comment
+  that "the eventual backend swap only touches this file" — the swap
+  never happened. Errors die with the browser profile.
+
+### CLI / AI access: MISSING
+
+- Backend CLI exists (`BE/cli/`: batch, dry_run, evaluate, status,
+  verify_bundle, watch, doctor, heartbeat, log_reader). No `errors`
+  command.
+- No channel from frontend errors to the backend at all: no
+  `POST /api/errors` (0 hits), and `log_reader.py` reads only backend
+  JSONL session logs. Frontend `CapturedError`s never leave the browser.
+- Email: 0 hits for smtp/sendmail/send_email/mailto in `src`/`BE`.
+- Supabase: 0 hits in `src`/`BE`.
+- AC-02 gap: synthetic code `GEN-1000`: 0 hits in `src` — not
+  implemented. AC-01 nuance: `buildCapturedError` stores `err.stack`
+  whole; no 40-frame truncation observed.
+
+### Fix targets
+
+- **Stop swallowing** (route to the store): the 9 files listed above.
+- **Error DB (SplitDB):** new migration (e.g. `task/0029_task_errors.sql`,
+  PascalCase columns: `Id`, `CorrelationId`, `Code`, `Level`, `Message`,
+  `StackTrace`, `Endpoint`, `TriggerComponent`, `SessionId`, `CreatedAt`,
+  `Details` JSON); writer mirroring `rule_result.py` / `run_session.py`;
+  ingest route for frontend `CapturedError` payloads; backend-sync path
+  in `history-facade.ts`.
+- **CLI + AI access:** new `BE/cli/` command (`errors list` /
+  `errors show <correlationId>`, `errors export` headless JSON/CSV).
+- **Email + Supabase:** greenfield modules, not fixes.
+- **Window buttons:** confirmed independently — provider missing (see
+  section 8); cannot be fixed in `WindowControlButtons.tsx` alone.
