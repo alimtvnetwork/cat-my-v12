@@ -1,5 +1,22 @@
 # Changelog
 
+## [v4.113.9] - 2026-10-30
+
+### Fixed
+- Vision Canvas ROI Overlays: Restored interactive cyan dashed Search Region bounding box with 4 corner resize handles, translucent fill, and dimensional label badge on workpiece canvas.
+- Coordinate Space Hit Testing: Unified image metrics and inverse-transformed pointer coordinates, eliminating scaling and translation drift between canvas pixels and image coordinates.
+- Pin 1 Orientation Mapping: Enabled instant canvas click-to-map and real-time reticle dragging for Pin 1 fiducial registration.
+- Greyscale Pattern Matching: Restored enclosing pattern region boundary envelope around character constellation marks with labels and box numbers.
+- Canvas Early-Return Blocker: Eliminated premature early-return in analyze mode so active and selected inspection rules render immediately on the workpiece.
+
+### Added
+- Visual Tool Tuning Workbench: Embedded dedicated Visual Tool Tuning Modal directly into workspace with quick "Tune in Visual Workbench" buttons on Pin 1 and Greyscale parameter cards.
+- Multi-Channel Bug Report Export: Added Telegram Bot API integration and email draft dispatch alongside ZIP package downloads.
+- Desktop Window Management: Added minimize, maximize/restore, close window controls, and Exit application menu item.
+- App Rebranding: Updated titlebar branding to "Cat Vision, Cat I Vision" with clickable release notes modal.
+
+---
+
 ## [v4.113.8] - 2026-10-30
 
 ### Fixed
