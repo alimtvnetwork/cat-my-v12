@@ -103,6 +103,7 @@ import {
 } from "@/lib/execution/dag-execution-planner";
 import { analyzeScratchCracks, analyzeVoids } from "./algorithms/flaw-analysis";
 import type { MathSandboxLimits } from "@/domain/execution/math-rule-types";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export {
   defaultWorkpieceFilledSample,
@@ -117,6 +118,36 @@ export {
   type EvaluateCodeReaderParams,
   type EvaluateShapeTraxParams,
 };
+
+// Corrupt saved-rule JSON must surface in the error store, never vanish.
+// parseBoxesFromParams runs inside render paths (useMemo / JSX in the
+// workpiece canvas), so the capture is deferred past commit, and each
+// distinct corrupt payload is captured once so a re-rendering canvas
+// cannot flood the bounded error history. Only the payload shape (field
+// name + string length) is recorded, never the raw content.
+const capturedCorruptPayloadKeys = new Set<string>();
+
+function captureCorruptSavedJson(field: string, payload: string, err: unknown): void {
+  const key = `${field}:${payload}`;
+
+  if (capturedCorruptPayloadKeys.has(key)) {
+    return;
+  }
+
+  capturedCorruptPayloadKeys.add(key);
+
+  queueMicrotask(() => {
+    useErrorStore.getState().captureError(
+      err,
+      {
+        triggerComponent: "workpiece-rule-analyzer",
+        triggerAction: "parseBoxesFromParams",
+        context: { field, payloadLength: payload.length },
+      },
+      "E_ANALYZER_PARSE_SAVED_JSON",
+    );
+  });
+}
 
 /**
  * Key/unit aliasing priority (spec §2-§6 vs workbench keys).
@@ -287,8 +318,8 @@ export function parseBoxesFromParams(
       if (Array.isArray(parsed) && parsed.length > 0) {
         list = parsed;
       }
-    } catch {
-      // Ignored if invalid json
+    } catch (err) {
+      captureCorruptSavedJson("constellationJson", toolParams.constellationJson, err);
     }
   }
 
@@ -315,8 +346,8 @@ export function parseBoxesFromParams(
       if (Array.isArray(parsed) && parsed.length > 0) {
         list = parsed;
       }
-    } catch {
-      // Ignored if invalid json
+    } catch (err) {
+      captureCorruptSavedJson("referenceBoxesJson", toolParams.referenceBoxesJson, err);
     }
   }
 
@@ -335,8 +366,8 @@ export function parseBoxesFromParams(
       if (Array.isArray(parsed) && parsed.length > 0) {
         list = parsed;
       }
-    } catch {
-      // Ignored if invalid json
+    } catch (err) {
+      captureCorruptSavedJson("patternBoxesJson", toolParams.patternBoxesJson, err);
     }
   }
 
@@ -351,8 +382,8 @@ export function parseBoxesFromParams(
       if (Array.isArray(parsed) && parsed.length > 0) {
         list = parsed;
       }
-    } catch {
-      // Ignored if invalid json
+    } catch (err) {
+      captureCorruptSavedJson("boxesJson", toolParams.boxesJson, err);
     }
   }
 
