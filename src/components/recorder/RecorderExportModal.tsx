@@ -11,6 +11,7 @@ import {
   Cloud,
   CloudUpload,
 } from "lucide-react";
+import { HttpMethod } from "@/lib/constants";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
 import { IssueCategoryType, type BugReportSummary } from "@/lib/recorder/types";
@@ -181,7 +182,6 @@ ${summary.actualBehavior || "N/A"}`;
     }
   };
 
-
   // RECORD BUG -> POST /bug-reports (spec 54 wave 2: route + CLI ready,
   // the button was the missing link). Delivery goes through the backend
   // (email + Supabase) instead of the mailto/Telegram side channels.
@@ -238,7 +238,7 @@ ${summary.actualBehavior || "N/A"}`;
       ].filter((part) => part.length > 0);
 
       const res = await fetch(`${baseUrl}/bug-reports`, {
-        method: "POST",
+        method: HttpMethod.Post,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: summary.title || "Untitled Bug",

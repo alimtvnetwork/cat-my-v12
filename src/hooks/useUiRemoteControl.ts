@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { HttpMethod } from "@/lib/constants";
 
 import { useBackendMode } from "@/lib/backend/mode";
 import { ClientLogger } from "@/lib/observability/client-logger";
@@ -146,7 +147,7 @@ async function reportResult(
   },
 ): Promise<void> {
   await fetch(`${baseUrl}/ui-remote/results`, {
-    method: "POST",
+    method: HttpMethod.Post,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ packetId, ...result }),
   });

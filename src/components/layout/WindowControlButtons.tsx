@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { HttpMethod } from "@/lib/constants";
 import { Minus, Square, Copy, X, AlertTriangle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,7 +40,19 @@ function resolveDesktopBridge(): DesktopApi | undefined {
     return direct;
   }
 
-  const tauriWindow = (window as unknown as { __TAURI__?: { window?: { getCurrent?: () => { minimize?: () => void; toggleMaximize?: () => void; close?: () => void } } } }).__TAURI__?.window?.getCurrent?.();
+  const tauriWindow = (
+    window as unknown as {
+      __TAURI__?: {
+        window?: {
+          getCurrent?: () => {
+            minimize?: () => void;
+            toggleMaximize?: () => void;
+            close?: () => void;
+          };
+        };
+      };
+    }
+  ).__TAURI__?.window?.getCurrent?.();
   if (tauriWindow) {
     return {
       minimize: () => tauriWindow.minimize?.(),
@@ -141,7 +154,7 @@ export function WindowControlButtons(): React.JSX.Element {
     const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
 
     fetch(`${baseUrl}/shutdown`, {
-      method: "POST",
+      method: HttpMethod.Post,
       signal: shutdownController.signal,
     })
       .catch((err: unknown) => {
@@ -149,7 +162,7 @@ export function WindowControlButtons(): React.JSX.Element {
           err,
           {
             endpoint: `${baseUrl}/shutdown`,
-            method: "POST",
+            method: HttpMethod.Post,
             triggerComponent: "WindowControlButtons",
             triggerAction: "confirmExit",
             source: "WindowControlButtons",

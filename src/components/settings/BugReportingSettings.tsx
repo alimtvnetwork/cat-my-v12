@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bug, Mail, Database } from "lucide-react";
+import { HttpMethod } from "@/lib/constants";
 import { SettingsCard } from "./SettingsCard";
 
 // Spec 54: Bug Reporting settings (email + Supabase delivery).
@@ -98,7 +99,7 @@ export function BugReportingSettings(): React.JSX.Element | null {
     setNotice(null);
     try {
       const res = await fetch(`${backendUrl}/bug-reports/config`, {
-        method: "POST",
+        method: HttpMethod.Post,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: supabaseUrl.trim(),
@@ -125,7 +126,7 @@ export function BugReportingSettings(): React.JSX.Element | null {
     setIsTesting(true);
     setNotice(null);
     try {
-      const res = await fetch(`${backendUrl}/bug-reports/test`, { method: "POST" });
+      const res = await fetch(`${backendUrl}/bug-reports/test`, { method: HttpMethod.Post });
       const view = unwrapResults<TestResultView>(await res.json());
       if (!res.ok || !view) {
         setNotice(`Endpoint test failed (HTTP ${res.status}). Check the URL and key.`);
@@ -149,7 +150,7 @@ export function BugReportingSettings(): React.JSX.Element | null {
     setNotice(null);
     try {
       const res = await fetch(`${backendUrl}/bug-reports`, {
-        method: "POST",
+        method: HttpMethod.Post,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: testTitle.trim() || "Test bug report",

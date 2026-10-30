@@ -1,4 +1,5 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
+import { HttpMethod } from "@/lib/constants";
 // Plan 71 Step 15: error history persistence.
 //
 // The Zustand `useErrorStore` is in-memory only. To satisfy
@@ -116,7 +117,7 @@ export async function syncErrorToBackend(error: CapturedError): Promise<boolean>
   if (baseUrl === null) return false;
   try {
     const res = await fetch(`${baseUrl}/errors`, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: {
         "Content-Type": "application/json",
         "X-Correlation-Id": error.correlationId,
@@ -145,7 +146,7 @@ export async function syncErrorHistoryToBackend(history: CapturedError[]): Promi
   if (pending.length === 0) return true;
   try {
     const res = await fetch(`${baseUrl}/errors`, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pending),
     });
