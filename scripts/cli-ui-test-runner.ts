@@ -119,6 +119,7 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+        await page.waitForTimeout(800);
         const title = await page.title();
         const simulationBtn = page.locator("[data-tour='simulation-launcher']");
         const recorderBtn = page.locator("button:has-text('Record Bug')");
@@ -259,7 +260,7 @@ async function runCliUiTests(): Promise<void> {
         await page.waitForTimeout(500);
 
         // Modal should open
-        const modalHeader = page.locator("text='Export Activity & Bug Report ZIP'");
+        const modalHeader = page.locator("text='Export Activity & Bug Report'");
         await modalHeader.waitFor({ state: "visible", timeout: 5000 });
 
         // Check textarea for issue description
@@ -269,11 +270,11 @@ async function runCliUiTests(): Promise<void> {
         }
 
         // Verify export button exists
-        const downloadBtn = page.locator("button:has-text('Download Bug Report (.ZIP)')");
+        const downloadBtn = page.locator("button:has-text('Download ZIP')");
         const hasDownload = await downloadBtn.isVisible();
-        if (!hasDownload) throw new Error("Download Bug Report (.ZIP) button not found");
+        if (!hasDownload) throw new Error("Download ZIP button not found");
 
-        return "Export dialog displayed with action log, issue textarea, and Export ZIP button";
+        return "Export dialog displayed with action log, issue textarea, and Export options";
       },
       "06_recorder_export_modal",
     );
@@ -291,7 +292,7 @@ async function runCliUiTests(): Promise<void> {
         }
         await page.waitForTimeout(300);
 
-        const modalHeader = page.locator("text='Export Activity & Bug Report ZIP'");
+        const modalHeader = page.locator("text='Export Activity & Bug Report'");
         const isModalVisible = await modalHeader.isVisible();
         if (isModalVisible) throw new Error("Modal failed to close on discard");
 
@@ -309,7 +310,7 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         await page.goto(`${BASE_URL}/analyze`, { waitUntil: "networkidle" });
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(800);
 
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
         await dropdownBtn.waitFor({ state: "visible", timeout: 8000 });
@@ -499,6 +500,41 @@ async function runCliUiTests(): Promise<void> {
         return `Sonner toaster container present: ${hasToaster}`;
       },
       "15_notifications_check",
+    );
+
+    // -------------------------------------------------------------
+    // Suite 8: Window Controls, Version Modal & Multi-Shape ROI
+    // -------------------------------------------------------------
+    await recordStep(
+      "Window Controls & Version",
+      "Verify titlebar window controls (minimize, maximize, close) and version badge modal",
+      page,
+      async () => {
+        await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+        await page.waitForTimeout(800);
+
+        // Verify window controls
+        const winControls = page.locator("[data-testid='window-controls-bar']");
+        await winControls.waitFor({ state: "visible", timeout: 5000 });
+
+        // Verify version badge
+        const versionBadge = page.locator("[data-testid='version-badge-button']");
+        await versionBadge.waitFor({ state: "visible", timeout: 5000 });
+        await versionBadge.click();
+        await page.waitForTimeout(500);
+
+        // Version modal should open
+        const modalTitle = page.locator("#version-modal-title");
+        await modalTitle.waitFor({ state: "visible", timeout: 5000 });
+        const titleText = await modalTitle.innerText();
+
+        // Close modal
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(400);
+
+        return `Window controls confirmed; version modal opened with title: "${titleText}"`;
+      },
+      "16_window_controls_and_version_modal",
     );
   } finally {
     await browser.close();

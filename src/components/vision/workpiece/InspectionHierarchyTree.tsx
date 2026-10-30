@@ -4,17 +4,21 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  ChevronsDown,
+  ChevronsUp,
   Cpu,
   Eye,
   EyeOff,
   FileCode2,
   FolderTree,
   ListChecks,
+  Lock,
   MoreVertical,
   Plus,
   RotateCcw,
   Sun,
   Trash2,
+  Unlock,
   Wand2,
 } from "lucide-react";
 import { ToolInspectionGraphic } from "@/components/vision/ToolInspectionGraphic";
@@ -78,6 +82,9 @@ export interface InspectionHierarchyTreeProps {
   selectedRuleId?: string | null;
   onSelectRule: (ruleId: string) => void;
   onToggleHidden?: (ruleId: string) => void;
+  onToggleLocked?: (ruleId: string) => void;
+  onBringToFront?: (ruleId: string) => void;
+  onSendToBack?: (ruleId: string) => void;
   onDeleteRule?: (ruleId: string) => void;
   onReorderRule?: (ruleId: string, direction: "up" | "down") => void;
   onMoveRule?: (ruleId: string, toIndex: number) => void;
@@ -100,6 +107,9 @@ export function InspectionHierarchyTree({
   selectedRuleId,
   onSelectRule,
   onToggleHidden,
+  onToggleLocked,
+  onBringToFront,
+  onSendToBack,
   onDeleteRule,
   onReorderRule,
   onMoveRule,
@@ -339,6 +349,9 @@ export function InspectionHierarchyTree({
                               onToggleCamera={toggleCameraPanel}
                               onToggleLight={toggleLightPanel}
                               onToggleHidden={onToggleHidden}
+                              onToggleLocked={onToggleLocked}
+                              onBringToFront={onBringToFront}
+                              onSendToBack={onSendToBack}
                               onDeleteRule={onDeleteRule}
                               onReorderRule={onReorderRule}
                               onMoveRule={onMoveRule}
@@ -395,6 +408,9 @@ interface RulesListProps {
   onToggleCamera: (ruleId: string) => void;
   onToggleLight: (ruleId: string) => void;
   onToggleHidden?: (ruleId: string) => void;
+  onToggleLocked?: (ruleId: string) => void;
+  onBringToFront?: (ruleId: string) => void;
+  onSendToBack?: (ruleId: string) => void;
   onDeleteRule?: (ruleId: string) => void;
   onReorderRule?: (ruleId: string, direction: "up" | "down") => void;
   onMoveRule?: (ruleId: string, toIndex: number) => void;
@@ -424,6 +440,9 @@ function RulesList({
   onToggleCamera,
   onToggleLight,
   onToggleHidden,
+  onToggleLocked,
+  onBringToFront,
+  onSendToBack,
   onDeleteRule,
   onReorderRule,
   onMoveRule,
@@ -515,6 +534,9 @@ function RulesList({
             onToggleCamera={() => onToggleCamera(rule.id)}
             onToggleLight={() => onToggleLight(rule.id)}
             onToggleHidden={onToggleHidden}
+            onToggleLocked={onToggleLocked}
+            onBringToFront={onBringToFront}
+            onSendToBack={onSendToBack}
             onDeleteRule={onDeleteRule}
             onReorderRule={onReorderRule}
             onUpdateCameraSettings={onUpdateCameraSettings}
@@ -558,6 +580,9 @@ interface RuleNodeProps {
   onToggleCamera: () => void;
   onToggleLight: () => void;
   onToggleHidden?: (ruleId: string) => void;
+  onToggleLocked?: (ruleId: string) => void;
+  onBringToFront?: (ruleId: string) => void;
+  onSendToBack?: (ruleId: string) => void;
   onDeleteRule?: (ruleId: string) => void;
   onReorderRule?: (ruleId: string, direction: "up" | "down") => void;
   onUpdateCameraSettings?: (ruleId: string, settings: RuleCameraSettings) => void;
@@ -585,6 +610,9 @@ function RuleNode({
   onToggleCamera,
   onToggleLight,
   onToggleHidden,
+  onToggleLocked,
+  onBringToFront,
+  onSendToBack,
   onDeleteRule,
   onReorderRule,
   onUpdateCameraSettings,
@@ -666,6 +694,20 @@ function RuleNode({
           >
             {rule.isHidden ? <EyeOff size={12} /> : <Eye size={12} />}
           </IconButton>
+
+          <IconButton
+            title={rule.isLocked ? "Unlock Layer" : "Lock Layer"}
+            aria-label={rule.isLocked ? `Unlock ${rule.name}` : `Lock ${rule.name}`}
+            onClick={() => onToggleLocked?.(rule.id)}
+            className={
+              rule.isLocked
+                ? "text-amber-400 hover:text-amber-300"
+                : "text-white/40 hover:text-white"
+            }
+          >
+            {rule.isLocked ? <Lock size={12} /> : <Unlock size={12} />}
+          </IconButton>
+
           <div className="relative">
             <IconButton
               title="Rule options"
@@ -698,6 +740,20 @@ function RuleNode({
                     icon: rule.isHidden ? <Eye size={12} /> : <EyeOff size={12} />,
                     onClick: () => onToggleHidden?.(rule.id),
                   },
+                  {
+                    label: rule.isLocked ? "Unlock layer" : "Lock layer",
+                    icon: rule.isLocked ? <Unlock size={12} /> : <Lock size={12} />,
+                    onClick: () => onToggleLocked?.(rule.id),
+                  },
+                  ...(onBringToFront && index < total - 1
+                    ? [
+                        {
+                          label: "Bring to front",
+                          icon: <ChevronsUp size={12} />,
+                          onClick: () => onBringToFront(rule.id),
+                        },
+                      ]
+                    : []),
                   ...(onReorderRule && index > 0
                     ? [
                         {
@@ -713,6 +769,15 @@ function RuleNode({
                           label: "Move down",
                           icon: <ChevronDown size={12} />,
                           onClick: () => onReorderRule(rule.id, "down"),
+                        },
+                      ]
+                    : []),
+                  ...(onSendToBack && index > 0
+                    ? [
+                        {
+                          label: "Send to back",
+                          icon: <ChevronsDown size={12} />,
+                          onClick: () => onSendToBack(rule.id),
                         },
                       ]
                     : []),

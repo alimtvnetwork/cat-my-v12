@@ -52,6 +52,19 @@ function handleClickEvent(e: MouseEvent): void {
   const { targetComponent, selector, description } = describeElement(target);
   const route = window.location.pathname;
 
+  const snapshot = captureScreenSnapshot({
+    title: description,
+    source: "manual",
+    targetElement: target,
+    quality: 0.6,
+  });
+
+  const screenshotId = store.addScreenshot({
+    title: description,
+    dataUrl: snapshot.dataUrl,
+    source: "manual",
+  });
+
   const eventParams: AddEventParams = {
     actor: RecorderActorType.User,
     eventType: RecorderEventType.Click,
@@ -59,7 +72,8 @@ function handleClickEvent(e: MouseEvent): void {
     targetComponent,
     selector,
     route,
-    hasScreenshot: false,
+    hasScreenshot: Boolean(screenshotId),
+    screenshotId: screenshotId || undefined,
     coordinates: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
   };
 
@@ -149,12 +163,28 @@ export function startGlobalInterception(): void {
 
   isInterceptionActive = true;
 
+  const handleWindowError = (event: ErrorEvent) => {
+    recordSystemEvent(`Runtime Error: ${event.message}`, {
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    });
+  };
+
+  const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    recordSystemEvent(`Unhandled Promise Rejection: ${String(event.reason)}`);
+  };
+
   window.addEventListener("click", handleClickEvent, true);
   window.addEventListener("change", handleInputEvent, true);
+  window.addEventListener("error", handleWindowError);
+  window.addEventListener("unhandledrejection", handleUnhandledRejection);
 
   cleanupHandlers = () => {
     window.removeEventListener("click", handleClickEvent, true);
     window.removeEventListener("change", handleInputEvent, true);
+    window.removeEventListener("error", handleWindowError);
+    window.removeEventListener("unhandledrejection", handleUnhandledRejection);
   };
 }
 

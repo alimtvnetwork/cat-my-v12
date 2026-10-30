@@ -235,7 +235,7 @@ export function AnalyzeImageToolbar({
 
         {/* Dropdown Menu */}
         {isDropdownOpen ? (
-          <div className="absolute left-0 top-full z-50 mt-1 w-80 rounded-xl border border-white/15 bg-[#0b0e14] p-1.5 shadow-2xl backdrop-blur-2xl">
+          <div className="absolute left-0 top-full z-[60] mt-1 w-80 rounded-xl border border-white/15 bg-[#0b0e14] p-1.5 shadow-2xl backdrop-blur-2xl">
             {/* Live Camera Option */}
             <div className="border-b border-white/[0.08] pb-1 mb-1">
               <button
@@ -364,38 +364,40 @@ export function AnalyzeImageToolbar({
           </div>
         ) : null}
 
-        {/* Quick Presets Inline Buttons */}
-        <div className="hidden sm:flex items-center gap-1 ml-1">
-          {PRESET_INSPECTION_IMAGES.map((preset) => {
-            const isSelected = !isLiveCameraMode && currentImageRef === preset.imageRef;
+        {/* Quick Presets Inline Buttons (hidden when Live Camera is active) */}
+        {!isLiveCameraMode ? (
+          <div className="hidden sm:flex items-center gap-1 ml-1">
+            {PRESET_INSPECTION_IMAGES.map((preset) => {
+              const isSelected = !isLiveCameraMode && currentImageRef === preset.imageRef;
 
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => onSelectImage(preset.imageRef, preset.alias)}
-                title={preset.alias}
-                className={`rounded-md px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
-                  isSelected
-                    ? "bg-cyan-500/20 text-cyan-200 border border-cyan-400/40"
-                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10"
-                }`}
-              >
-                {preset.label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => onSelectImage(preset.imageRef, preset.alias)}
+                  title={preset.alias}
+                  className={`rounded-md px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
+                    isSelected
+                      ? "bg-cyan-500/20 text-cyan-200 border border-cyan-400/40"
+                      : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            title="Upload inspection image"
-            className="flex items-center gap-1 rounded-md border border-dashed border-white/20 bg-white/5 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-white/60 hover:border-cyan-400/40 hover:text-cyan-200"
-          >
-            <Upload size={10} />
-            Upload
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Upload inspection image"
+              className="flex items-center gap-1 rounded-md border border-dashed border-white/20 bg-white/5 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-white/60 hover:border-cyan-400/40 hover:text-cyan-200"
+            >
+              <Upload size={10} />
+              Upload
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Right: Resolution Readout & Advisory Warning Badge */}

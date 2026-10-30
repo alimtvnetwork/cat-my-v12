@@ -908,6 +908,30 @@ function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluati
   }
 }
 
+function drawCornerHandles(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  color = "#00e5ff",
+): void {
+  const size = 8;
+  const half = size / 2;
+  const corners = [
+    { x: roi.x, y: roi.y },
+    { x: roi.x + roi.width, y: roi.y },
+    { x: roi.x, y: roi.y + roi.height },
+    { x: roi.x + roi.width, y: roi.y + roi.height },
+  ];
+
+  ctx.fillStyle = "#0a0e17";
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  for (const c of corners) {
+    ctx.fillRect(c.x - half, c.y - half, size, size);
+    ctx.strokeRect(c.x - half, c.y - half, size, size);
+  }
+}
+
 export function VisualToolWorkpieceCanvas({
   imageRef,
   roi: propRoi,
@@ -940,6 +964,9 @@ export function VisualToolWorkpieceCanvas({
   const [autoDetectedBoxesByRuleId, setAutoDetectedBoxesByRuleId] = useState<
     Record<string, WhiteBoxMark[]>
   >({});
+  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number; initialRoi: WorkpieceRoi } | null>(null);
+  const [cursorHandleType, setCursorHandleType] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
 
   const imgSrc = imageRef || null;
 
@@ -1365,7 +1392,37 @@ export function VisualToolWorkpieceCanvas({
             ? "rgba(16, 185, 129, 0.14)"
             : "rgba(0, 229, 255, 0.12)";
 
-      // Zero-ROI: Render intrinsic inspection features only without artificial bounding box
+      // Search region (ROI) bounding outline and corner-only handles
+      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
+
+      ctx.save();
+      ctx.strokeStyle = roiStroke;
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = roiFill;
+
+      if (shapeType === "circle") {
+        ctx.beginPath();
+        ctx.ellipse(
+          roi.x + roi.width / 2,
+          roi.y + roi.height / 2,
+          Math.max(2, roi.width / 2),
+          Math.max(2, roi.height / 2),
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+        ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+      }
+
+      if (isEditable) {
+        drawCornerHandles(ctx, roi, roiStroke);
+      }
+
+      ctx.restore();
 
       if (isPatternMatching) {
         const effectiveRegion = roi;
@@ -1935,6 +1992,25 @@ export function VisualToolWorkpieceCanvas({
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
 
+    // 0. Corner handles hit test (NW, NE, SW, SE)
+    if (isEditable && onChangeRoi) {
+      const handleHitRadius = 14;
+      const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
+      const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
+      const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+
+      const hit = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
+
+      if (hit) {
+        setActiveCornerHandle(hit);
+        setDragStartPos({ x, y, initialRoi: { ...roi } });
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+        return;
+      }
+    }
+
     // 1. First priority: Check if user clicked on an individual pattern box (to toggle exclusion)
     if (isPatternMatching && activeBoxesToDraw.length > 0) {
       const boxUnderCursor = activeBoxesToDraw.find(
@@ -1958,12 +2034,18 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // 2. Second priority: Check if user clicked on another rule to select it
+    // 2. Second priority: Check if user clicked on another rule to select it (skip locked rules)
     if (onSelectRule && overlayRules.length > 0) {
       const clickedRule = [...overlayRules]
         .reverse()
         .find(
-          (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
+          (r) =>
+            !r.isHidden &&
+            !r.isLocked &&
+            x >= r.x &&
+            x <= r.x + r.width &&
+            y >= r.y &&
+            y <= r.y + r.height,
         );
 
       if (clickedRule) {
@@ -1974,17 +2056,87 @@ export function VisualToolWorkpieceCanvas({
     }
   }
 
-  function handlePointerMove(_e: React.PointerEvent<HTMLCanvasElement>) {
-    // Zero-ROI: manual ROI dragging is disabled
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+
+    if (activeCornerHandle && dragStartPos && onChangeRoi) {
+      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
+      let nextRoi = { ...dragStartPos.initialRoi };
+
+      if (activeCornerHandle === "se") {
+        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
+        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+      } else if (activeCornerHandle === "nw") {
+        const dx = x - dragStartPos.initialRoi.x;
+        const dy = y - dragStartPos.initialRoi.y;
+        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
+        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
+        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
+        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+      } else if (activeCornerHandle === "ne") {
+        const dy = y - dragStartPos.initialRoi.y;
+        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
+        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
+        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+      } else if (activeCornerHandle === "sw") {
+        const dx = x - dragStartPos.initialRoi.x;
+        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
+        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
+        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+      }
+
+      if (shapeType === "square") {
+        const side = Math.max(nextRoi.width, nextRoi.height);
+        nextRoi.width = side;
+        nextRoi.height = side;
+      }
+
+      onChangeRoi(nextRoi);
+
+      return;
+    }
+
+    if (isEditable && !activeCornerHandle) {
+      const handleHitRadius = 14;
+      const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
+      const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
+      const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+
+      const hover = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
+      setCursorHandleType(hover);
+    }
   }
 
-  function handlePointerUp(_e: React.PointerEvent<HTMLCanvasElement>) {
-    // Zero-ROI: manual ROI dragging is disabled
+  function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (activeCornerHandle) {
+      setActiveCornerHandle(null);
+      setDragStartPos(null);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
   }
 
   const cursorStyle = useMemo(() => {
+    if (
+      activeCornerHandle === "nw" ||
+      activeCornerHandle === "se" ||
+      cursorHandleType === "nw" ||
+      cursorHandleType === "se"
+    ) {
+      return "nwse-resize";
+    }
+
+    if (
+      activeCornerHandle === "ne" ||
+      activeCornerHandle === "sw" ||
+      cursorHandleType === "ne" ||
+      cursorHandleType === "sw"
+    ) {
+      return "nesw-resize";
+    }
+
     return "default";
-  }, []);
+  }, [activeCornerHandle, cursorHandleType]);
 
   const visualRulesList = overlayRules.length > 0 ? overlayRules : [];
   const visualPassCount =

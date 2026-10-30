@@ -44,7 +44,7 @@ export function HeaderBrand(): React.JSX.Element | null {
           draggable={false}
         />
         <span className="hidden min-w-0 truncate text-hmi-body font-bold tracking-tight text-ca-ink sm:inline">
-          Control Automation
+          Cat Vision, Cat I Vision
         </span>
         <span className="text-hmi-body font-bold tracking-tight text-ca-ink sm:hidden" aria-hidden>
           CA

@@ -9,6 +9,7 @@ import {
   Eye,
   EyeOff,
   Grid2X2,
+  HelpCircle,
   PaintBucket,
   Play,
   QrCode,
@@ -104,6 +105,7 @@ function RuleRightToolbarPanelContent({
   const [roiY, setRoiY] = useState(String(Math.round(rule.y)));
   const [roiW, setRoiW] = useState(String(Math.round(rule.width)));
   const [roiH, setRoiH] = useState(String(Math.round(rule.height)));
+  const [isConfidenceHelpOpen, setIsConfidenceHelpOpen] = useState(false);
 
   // Sync ROI when rule changes externally (e.g. dragged on canvas)
   useEffect(() => {
@@ -322,11 +324,32 @@ function RuleRightToolbarPanelContent({
       >
         {/* Status & Evaluation banner */}
         <div className="flex items-center justify-between rounded-lg border border-white/10 bg-black/40 px-3 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
-            Rule State
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+              Rule State
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setIsConfidenceHelpOpen((prev) => !prev)}
+              title="What is inspection confidence (% PASS)?"
+              className="text-white/40 hover:text-cyan-300 transition"
+            >
+              <HelpCircle size={12} />
+            </button>
+          </div>
+
           {statusBadge}
         </div>
+
+        {isConfidenceHelpOpen ? (
+          <div className="rounded-lg border border-cyan-500/30 bg-cyan-950/40 p-2.5 text-[11px] text-cyan-200 space-y-1">
+            <span className="font-bold text-white block">Inspection Confidence Metric (% PASS)</span>
+            <p className="leading-relaxed text-slate-300">
+              Normalized correlation matching score (0–100%) against verified golden reference IC workpiece images. Scores ≥ 85% satisfy production quality criteria.
+            </p>
+          </div>
+        ) : null}
 
         {/* Region of Interest (ROI) */}
         <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2.5">
@@ -396,6 +419,34 @@ function RuleRightToolbarPanelContent({
                 }}
                 className="mt-0.5 w-full rounded-md border border-white/15 bg-black/50 px-2 py-1 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
               />
+            </div>
+          </div>
+
+          {/* Region Shape Selection */}
+          <div className="space-y-1 pt-1 border-t border-white/10">
+            <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+              Region Shape
+            </span>
+
+            <div className="grid grid-cols-3 gap-1">
+              {(["rectangle", "square", "circle"] as const).map((shape) => {
+                const isSelected = (rule.params?.shapeType || "rectangle") === shape;
+
+                return (
+                  <button
+                    key={shape}
+                    type="button"
+                    onClick={() => handleParamChange("shapeType", shape)}
+                    className={`rounded-md py-1 text-[10px] font-bold uppercase transition ${
+                      isSelected
+                        ? "border border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
+                        : "border border-white/10 bg-white/5 text-white/50 hover:text-white"
+                    }`}
+                  >
+                    {shape}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

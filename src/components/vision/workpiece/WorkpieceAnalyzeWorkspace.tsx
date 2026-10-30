@@ -1005,6 +1005,52 @@ export function WorkpieceAnalyzeWorkspace({
           useRulesStore.getState().replaceAll(next, selectedIds, []);
         }
       },
+      onToggleLocked: (id: string) => {
+        const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
+        const next = ownerRules.map((r) => (r.id === id ? { ...r, isLocked: !r.isLocked } : r));
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset?.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
+      onBringToFront: (id: string) => {
+        const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
+        const idx = ownerRules.findIndex((r) => r.id === id);
+
+        if (idx === -1 || idx === ownerRules.length - 1) return;
+        const next = [...ownerRules];
+        const [moved] = next.splice(idx, 1);
+        next.push(moved);
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset?.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
+      onSendToBack: (id: string) => {
+        const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
+
+        if (!ownerRuleset) return;
+        const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
+        const idx = ownerRules.findIndex((r) => r.id === id);
+
+        if (idx <= 0) return;
+        const next = [...ownerRules];
+        const [moved] = next.splice(idx, 1);
+        next.unshift(moved);
+        updateRulesetRules(ownerRuleset.id, next);
+
+        if (ownerRuleset.id === ruleset?.id) {
+          useRulesStore.getState().replaceAll(next, selectedIds, []);
+        }
+      },
       onDelete: (id: string) => {
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
 
@@ -1164,8 +1210,6 @@ export function WorkpieceAnalyzeWorkspace({
       for (const item of projectRulesetsForAnalysis) {
         useValidationStore.getState().clear(item.id);
       }
-
-      toast.info(`Selected inspection image: ${label}`);
     },
     [project.id, projectRulesetsForAnalysis, updateProjectInspectionImageRef],
   );
@@ -1286,6 +1330,9 @@ export function WorkpieceAnalyzeWorkspace({
                     selectedRuleId={activeRule?.id ?? null}
                     onSelectRule={handleSelectProjectRule}
                     onToggleHidden={railHandlers.onToggleHidden}
+                    onToggleLocked={railHandlers.onToggleLocked}
+                    onBringToFront={railHandlers.onBringToFront}
+                    onSendToBack={railHandlers.onSendToBack}
                     onDeleteRule={railHandlers.onDelete}
                     onReorderRule={railHandlers.onReorder}
                     onMoveRule={railHandlers.onMove}
@@ -1369,7 +1416,6 @@ export function WorkpieceAnalyzeWorkspace({
                               project.id,
                               SAMPLE_IMAGE_POCKET_1_FILLED,
                             );
-                            toast.info("Loaded Carrier Pocket 1 [Filled IC]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
                             project.inspectionImageRef === SAMPLE_IMAGE_POCKET_1_FILLED
@@ -1386,7 +1432,6 @@ export function WorkpieceAnalyzeWorkspace({
                               project.id,
                               SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
                             );
-                            toast.warning("Loaded Carrier Pocket 2 [Empty Defect]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
                             project.inspectionImageRef === SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED
@@ -1403,7 +1448,6 @@ export function WorkpieceAnalyzeWorkspace({
                               project.id,
                               SAMPLE_IMAGE_POCKET_5_PARTIAL,
                             );
-                            toast.info("Loaded Carrier Tape Strip [5 Pockets]");
                           }}
                           className={`rounded-md border px-2 py-1.5 font-sans text-[10px] font-bold uppercase tracking-wider transition ${
                             project.inspectionImageRef === SAMPLE_IMAGE_POCKET_5_PARTIAL

@@ -42,13 +42,13 @@ import { MissionControlDashboard } from "@/components/cyber/MissionControlDashbo
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Control Automation, Pick a workflow" },
+      { title: "Cat Vision, Cat I Vision, Pick a workflow" },
       {
         name: "description",
         content:
           "Configure the line, open a project, run a trial, or batch-test a ruleset with AI. Every screen is one click away.",
       },
-      { property: "og:title", content: "Control Automation, Pick a workflow" },
+      { property: "og:title", content: "Cat Vision, Cat I Vision, Pick a workflow" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",

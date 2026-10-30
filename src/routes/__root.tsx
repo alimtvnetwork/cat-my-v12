@@ -42,14 +42,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Control Automation, Pick a workflow" },
+      { title: "Cat Vision, Cat I Vision, Pick a workflow" },
       {
         name: "description",
         content:
           "Configure the line, open a project, run a trial, or batch-test a ruleset with AI. Every screen is one click away.",
       },
-      { name: "author", content: "Control Automation" },
-      { property: "og:title", content: "Control Automation, Pick a workflow" },
+      { name: "author", content: "Cat Vision, Cat I Vision" },
+      { property: "og:title", content: "Cat Vision, Cat I Vision, Pick a workflow" },
       {
         property: "og:description",
         content:
@@ -57,7 +57,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Control Automation, Pick a workflow" },
+      { name: "twitter:title", content: "Cat Vision, Cat I Vision, Pick a workflow" },
       {
         name: "twitter:description",
         content:

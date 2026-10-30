@@ -26,7 +26,7 @@ describe("RecorderExportModal", () => {
 
     render(<RecorderExportModal />);
 
-    expect(screen.getByText("Export Activity & Bug Report ZIP")).not.toBeNull();
+    expect(screen.getByText("Export Activity & Bug Report")).not.toBeNull();
     expect(screen.getByText("Resume Recording")).not.toBeNull();
     expect(screen.getByText("Discard")).not.toBeNull();
   });
@@ -46,7 +46,7 @@ describe("RecorderExportModal", () => {
     expect(state.isExportModalOpen).toBe(false);
 
     rerender(<RecorderExportModal />);
-    expect(screen.queryByText("Export Activity & Bug Report ZIP")).toBeNull();
+    expect(screen.queryByText("Export Activity & Bug Report")).toBeNull();
   });
 
   it("resumes recording when close X button is clicked", () => {
@@ -68,6 +68,6 @@ describe("RecorderExportModal", () => {
     expect(state.isExportModalOpen).toBe(false);
 
     rerender(<RecorderExportModal />);
-    expect(screen.queryByText("Export Activity & Bug Report ZIP")).toBeNull();
+    expect(screen.queryByText("Export Activity & Bug Report")).toBeNull();
   });
 });

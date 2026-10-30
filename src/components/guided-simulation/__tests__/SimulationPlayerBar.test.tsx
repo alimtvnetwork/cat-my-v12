@@ -87,8 +87,8 @@ describe("SimulationPlayerBar", () => {
     render(<SimulationPlayerBar {...defaultProps} onChangeDwellTime={onChangeDwellTime} />);
 
     const slider = screen.getByRole("slider");
-    fireEvent.change(slider, { target: { value: "12" } });
-    expect(onChangeDwellTime).toHaveBeenCalledWith(12);
+    fireEvent.change(slider, { target: { value: "5" } });
+    expect(onChangeDwellTime).toHaveBeenCalledWith(5);
   });
 
   it("applies cursor-pointer styling to all interactive buttons and slider", () => {

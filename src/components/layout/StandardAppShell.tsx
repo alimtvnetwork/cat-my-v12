@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Layers,
   Loader2,
+  LogOut,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,7 +30,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-// import { WindowMenu } from "@/components/app-shell/WindowMenu";
+import { WindowControlButtons } from "@/components/layout/WindowControlButtons";
+import { VersionInfoModal } from "@/components/layout/VersionInfoModal";
+import { APP_VERSION_INFO } from "@/lib/version-info";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { RecorderLauncherButton } from "@/components/recorder/RecorderLauncherButton";
@@ -115,6 +118,7 @@ export function StandardAppShell({
       document.documentElement.dataset.guidedSimulationLoading === "true",
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
 
   useEffect(() => {
     const onSimulationState = (event: Event) => {
@@ -235,18 +239,30 @@ export function StandardAppShell({
             maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
           }}
         >
-          {/* Brand (home page only) — CAT logo mark */}
+          {/* Brand (home page only) — CAT logo mark & Cat Vision branding */}
           {pathname === "/" ? (
-            <Link
-              to="/"
-              title="CAT iVISION Home"
-              className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
-            >
-              <img src="/cat-logo.svg" alt="CAT" className="h-6 w-auto" draggable={false} />
-              <span className="hidden sm:inline text-xs font-bold tracking-tight text-white">
-                Control Automation
-              </span>
-            </Link>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link
+                to="/"
+                title="CAT iVISION Home"
+                className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
+              >
+                <img src="/cat-logo.svg" alt="CAT" className="h-6 w-auto" draggable={false} />
+                <span className="hidden sm:inline text-xs font-bold tracking-tight text-white">
+                  Cat Vision, Cat I Vision
+                </span>
+              </Link>
+
+              <button
+                type="button"
+                data-testid="version-badge-button"
+                onClick={() => setIsVersionModalOpen(true)}
+                title={`Released ${APP_VERSION_INFO.releaseDate} — Click for release details`}
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-300 transition-all hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white active:scale-95 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+              >
+                <span>{APP_VERSION_INFO.version}</span>
+              </button>
+            </div>
           ) : null}
 
           {/* Dropdown Menu Trigger */}
@@ -409,6 +425,38 @@ export function StandardAppShell({
                   );
                 })}
               </div>
+
+              <DropdownMenuSeparator className="my-1 bg-white/10" />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
+
+                  if (desktopApi?.close) {
+                    desktopApi.close();
+
+                    return;
+                  }
+
+                  try {
+                    window.close();
+                  } catch {
+                    // Fallback
+                  }
+
+                  window.location.href = "/";
+                }}
+                className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors outline-none"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <LogOut className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Exit Application</span>
+                </div>
+
+                <span className="text-[9px] font-mono uppercase tracking-wider text-rose-400/80 bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-700/60 font-semibold">
+                  Alt+F4
+                </span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -451,10 +499,14 @@ export function StandardAppShell({
           </button>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
-          {/* WindowMenu commented out per user request; uncomment below to restore: */}
-          {/* <WindowMenu /> */}
+          <WindowControlButtons />
         </div>
       </header>
+
+      <VersionInfoModal
+        isOpen={isVersionModalOpen}
+        onClose={() => setIsVersionModalOpen(false)}
+      />
 
       {/* Action Strip (Rendered only when actions are supplied) */}
       {actions && (

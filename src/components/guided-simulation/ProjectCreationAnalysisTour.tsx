@@ -851,14 +851,14 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
   // so it never floats over the new page (the screenshot glitch).
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [dwellTimeSec, setDwellTimeSec] = useState(7);
+  const [dwellTimeSec, setDwellTimeSec] = useState(3);
   const [elapsedSec, setElapsedSec] = useState(0);
-  const [totalStepSec, setTotalStepSec] = useState(7);
+  const [totalStepSec, setTotalStepSec] = useState(3);
   const isPausedRef = useRef(false);
-  const dwellTimeSecRef = useRef(7);
+  const dwellTimeSecRef = useRef(3);
   const isCustomDwellSetRef = useRef(false);
   const elapsedMsRef = useRef(0);
-  const totalStepMsRef = useRef(7000);
+  const totalStepMsRef = useRef(3000);
   const isRunningRef = useRef(false);
   const isLoadingRef = useRef(false);
   const isStepAdvancingRef = useRef(false);
@@ -971,7 +971,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-panel']",
-        placement: "right",
+        placement: "left",
         title: "Configure ruleset",
         content:
           "Name the ruleset demoset. This is only a rule category, not an image registration step.",
@@ -979,7 +979,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
       },
       {
         target: "[data-tour='simulation-ruleset-create-submit']",
-        placement: "right",
+        placement: "left",
         title: "Create ruleset",
         content: "Save demoset, then continue in the project workspace so rules can be added.",
         actionKey: "create-ruleset",
@@ -1175,7 +1175,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     isCustomDwellSetRef.current = false;
     clearAnalysisTimers();
     setSimulationMenuOpen(false);
-    deleteDemoProject();
+    // Keep demo project state preserved so configured rules and images remain accessible
     isLoadingRef.current = false;
     setIsLoading(false);
     isRunningRef.current = false;
@@ -1183,7 +1183,7 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     setStepIndex(0);
     actionKeysRef.current.clear();
     isStepAdvancingRef.current = false;
-  }, [clearAnalysisTimers, clearTimer, deleteDemoProject, setSimulationMenuOpen]);
+  }, [clearAnalysisTimers, clearTimer, setSimulationMenuOpen]);
 
   const handleTakeOver = useCallback(() => {
     toast.dismiss("simulation-preparing");
@@ -1593,6 +1593,9 @@ export function ProjectCreationAnalysisTour(): React.JSX.Element {
     }
 
     isStepAdvancingRef.current = true;
+    window.setTimeout(() => {
+      isStepAdvancingRef.current = false;
+    }, 800);
     clearTimer();
     const step = steps[stepIndex];
 

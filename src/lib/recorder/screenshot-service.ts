@@ -2,6 +2,8 @@ export interface CaptureScreenshotOptions {
   title?: string;
   source?: "manual" | "step" | "canvas";
   targetElement?: HTMLElement | null;
+  isFullScreen?: boolean;
+  quality?: number;
 }
 
 export interface ScreenshotResult {
@@ -12,8 +14,8 @@ export interface ScreenshotResult {
   height: number;
 }
 
-const FALLBACK_PNG =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+const FALLBACK_JPEG =
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
 
 function getVisibleCanvas(): HTMLCanvasElement | null {
   if (typeof document === "undefined") {
@@ -33,9 +35,10 @@ function getVisibleCanvas(): HTMLCanvasElement | null {
 function renderSyntheticSnapshot(
   targetElement: HTMLElement | null,
   title: string,
+  quality = 0.6,
 ): ScreenshotResult {
   if (typeof document === "undefined") {
-    return { hasImage: true, dataUrl: FALLBACK_PNG, title, width: 1, height: 1 };
+    return { hasImage: true, dataUrl: FALLBACK_JPEG, title, width: 1, height: 1 };
   }
 
   const canvas = document.createElement("canvas");
@@ -44,7 +47,7 @@ function renderSyntheticSnapshot(
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    return { hasImage: true, dataUrl: FALLBACK_PNG, title, width: 800, height: 500 };
+    return { hasImage: true, dataUrl: FALLBACK_JPEG, title, width: 800, height: 500 };
   }
 
   drawSnapshotBackground(ctx, canvas.width, canvas.height);
@@ -53,7 +56,7 @@ function renderSyntheticSnapshot(
 
   return {
     hasImage: true,
-    dataUrl: canvas.toDataURL("image/png"),
+    dataUrl: canvas.toDataURL("image/jpeg", quality),
     title,
     width: canvas.width,
     height: canvas.height,
@@ -76,7 +79,7 @@ function drawSnapshotBackground(
 function drawSnapshotHeader(ctx: CanvasRenderingContext2D, title: string): void {
   ctx.fillStyle = "#22d3ee";
   ctx.font = "bold 16px monospace";
-  ctx.fillText("CAT-iVISION SCREENSHOT CAPTURE", 24, 38);
+  ctx.fillText("CAT VISION (CAT iVISION) SNAPSHOT", 24, 38);
 
   ctx.fillStyle = "#94a3b8";
   ctx.font = "13px sans-serif";
@@ -100,7 +103,7 @@ function drawSnapshotElementInfo(
   ctx.font = "14px monospace";
 
   if (!targetElement) {
-    ctx.fillText("Full Screen View / Canvas State", 40, 150);
+    ctx.fillText("In-App View / Canvas Active State", 40, 150);
 
     return;
   }
@@ -116,12 +119,13 @@ function drawSnapshotElementInfo(
 }
 
 export function captureScreenSnapshot(options: CaptureScreenshotOptions = {}): ScreenshotResult {
-  const title = options.title ?? "Screen Snapshot";
+  const title = options.title ?? "In-App Snapshot";
+  const quality = typeof options.quality === "number" ? options.quality : 0.6;
   const canvas = getVisibleCanvas();
 
   if (canvas) {
     try {
-      const dataUrl = canvas.toDataURL("image/png");
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
 
       return {
         hasImage: true,
@@ -132,9 +136,9 @@ export function captureScreenSnapshot(options: CaptureScreenshotOptions = {}): S
       };
     } catch {
       // Security or tainted canvas fallback
-      return renderSyntheticSnapshot(options.targetElement ?? null, title);
+      return renderSyntheticSnapshot(options.targetElement ?? null, title, quality);
     }
   }
 
-  return renderSyntheticSnapshot(options.targetElement ?? null, title);
+  return renderSyntheticSnapshot(options.targetElement ?? null, title, quality);
 }

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Download, Loader2, X } from "lucide-react";
+import { Download, Loader2, X, Mail, Send, Settings, CheckCircle2, AlertCircle } from "lucide-react";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
 import { IssueCategoryType, type BugReportSummary } from "@/lib/recorder/types";
+import { sendTelegramMessage } from "@/lib/recorder/telegram-service";
 import { RecorderSummaryForm } from "./RecorderSummaryForm";
 import { RecorderTimelinePreview } from "./RecorderTimelinePreview";
+import { TelegramSettingsModal } from "./TelegramSettingsModal";
 
 export function RecorderExportModal(): React.JSX.Element | null {
   const isExportModalOpen = useRecorderStore((s) => s.isExportModalOpen);
@@ -14,6 +16,10 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const resumeRecording = useRecorderStore((s) => s.resumeRecording);
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+
   const [summary, setSummary] = useState<BugReportSummary>({
     title: "",
     description: "",
@@ -28,6 +34,7 @@ export function RecorderExportModal(): React.JSX.Element | null {
 
   const handleDownload = async () => {
     setIsExporting(true);
+
     try {
       await exportSessionToZip(session, summary);
       setExportModalOpen(false);
@@ -37,62 +44,179 @@ export function RecorderExportModal(): React.JSX.Element | null {
     }
   };
 
+  const handleEmailReport = () => {
+    const subject = encodeURIComponent(`[Bug Report] ${summary.title || "Cat Vision UI Issue"}`);
+    const bodyText = `Cat Vision (Cat I Vision) Bug Report
+--------------------------------------
+Title: ${summary.title || "Untitled Issue"}
+Category: ${summary.category}
+Initial Route: ${session.initialRoute}
+Events Captured: ${session.events.length}
+Screenshots: ${session.screenshots.length}
+
+Expected:
+${summary.expectedBehavior || "N/A"}
+
+Actual:
+${summary.actualBehavior || "N/A"}
+
+Description:
+${summary.description || "N/A"}
+`;
+    const mailtoUrl = `mailto:support@catvision.ai?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+    window.open(mailtoUrl, "_blank");
+  };
+
+  const handleSendTelegram = async () => {
+    setIsSendingTelegram(true);
+    setTelegramStatus(null);
+
+    const messageText = `*Cat Vision Bug Report*
+*Title:* ${summary.title || "Untitled Bug"}
+*Category:* ${summary.category}
+*Route:* \`${session.initialRoute}\`
+*Events:* ${session.events.length} | *Screenshots:* ${session.screenshots.length}
+
+*Expected:*
+${summary.expectedBehavior || "N/A"}
+
+*Actual:*
+${summary.actualBehavior || "N/A"}`;
+
+    try {
+      const result = await sendTelegramMessage(messageText);
+      setTelegramStatus(result);
+
+      if (result.isSuccess) {
+        window.setTimeout(() => {
+          setExportModalOpen(false);
+          cancelRecording();
+        }, 1500);
+      }
+    } finally {
+      setIsSendingTelegram(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-xl rounded-xl border border-slate-700 bg-[#0f172a] p-5 shadow-2xl flex flex-col gap-4 text-slate-100 animate-in fade-in zoom-in-95">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 className="text-base font-bold text-white">Export Activity & Bug Report ZIP</h2>
-            <p className="text-xs text-slate-400">
-              Download complete reproduction bundle for AI diagnosis and debugging.
-            </p>
+    <>
+      <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="relative w-full max-w-xl rounded-xl border border-slate-700 bg-[#0f172a] p-5 shadow-2xl flex flex-col gap-4 text-slate-100 animate-in fade-in zoom-in-95">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 className="text-base font-bold text-white">Export Activity & Bug Report</h2>
+              <p className="text-xs text-slate-400">
+                Download ZIP, email support, or dispatch directly to Telegram chat.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsTelegramModalOpen(true)}
+                title="Configure Telegram Bot"
+                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-300 hover:text-white hover:bg-white/10"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                <span>Telegram Setup</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={resumeRecording}
+                className="rounded p-1 text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={resumeRecording}
-            className="rounded p-1 text-slate-400 hover:text-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
 
-        <RecorderSummaryForm summary={summary} onChange={setSummary} />
+          <RecorderSummaryForm summary={summary} onChange={setSummary} />
 
-        <RecorderTimelinePreview events={session.events} screenshots={session.screenshots} />
+          <RecorderTimelinePreview events={session.events} screenshots={session.screenshots} />
 
-        <div className="flex items-center justify-between border-t border-slate-800 pt-3">
-          <button
-            type="button"
-            onClick={resumeRecording}
-            className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
-          >
-            Resume Recording
-          </button>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={cancelRecording}
-              className="rounded px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40"
+          {telegramStatus ? (
+            <div
+              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
+                telegramStatus.isSuccess
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+              }`}
             >
-              Discard
-            </button>
-            <button
-              type="button"
-              disabled={isExporting}
-              onClick={handleDownload}
-              className="flex items-center gap-1.5 rounded bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {isExporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {telegramStatus.isSuccess ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
               ) : (
-                <Download className="h-3.5 w-3.5" />
+                <AlertCircle className="h-4 w-4 shrink-0" />
               )}
-              <span>{isExporting ? "Bundling ZIP..." : "Download Bug Report (.ZIP)"}</span>
+              <span>{telegramStatus.message}</span>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap items-center justify-between border-t border-slate-800 pt-3 gap-2">
+            <button
+              type="button"
+              onClick={resumeRecording}
+              className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              Resume Recording
             </button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={cancelRecording}
+                className="rounded px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40"
+              >
+                Discard
+              </button>
+
+              <button
+                type="button"
+                onClick={handleEmailReport}
+                title="Send as email"
+                className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span>Email</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSendingTelegram}
+                onClick={handleSendTelegram}
+                title="Send directly to Telegram chat"
+                className="flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-500/20 disabled:opacity-50"
+              >
+                {isSendingTelegram ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                <span>Telegram</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isExporting}
+                onClick={handleDownload}
+                className="flex items-center gap-1.5 rounded bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                <span>Download ZIP</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <TelegramSettingsModal
+        isOpen={isTelegramModalOpen}
+        onClose={() => setIsTelegramModalOpen(false)}
+      />
+    </>
   );
 }
