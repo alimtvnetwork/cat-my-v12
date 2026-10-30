@@ -144,6 +144,13 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
     frames, but the error SplitDB stores full stacks for step-by-step AI
     fixing. Morning call: keep full stacks, or truncate at write/read
     time per AC-01.
+11. ROI-vs-pattern shape coexistence (spec 54 vision work): the current
+    UI's REGION SHAPE buttons (RECTANGLE / SQUARE / CIRCLE) set the ROI
+    shape, while the new wave-2 picker sets the PATTERN shape. Morning
+    call: keep both, or retire the ROI buttons per the user's model
+    (ROI stays a plain region)? Saved shape values also changed from
+    lowercase `"rectangle"` to ShapeType enum values (`"Rectangle"`,
+    `"Circle"`, …); the reader accepts both, so old saves load fine.
 
 ## 6. Guardrails
 
@@ -847,7 +854,6 @@ Supabase had 0 hits in src/BE before this work.
   snapshot regen.
 
 ## 18. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
-
 Workstream COMPLETE, commit on origin/main, spot-verified by the
 coordinator (commit stat shows only the agent's 2 files;
 `_ensure_recipe_table` present in the repo file).
@@ -907,3 +913,79 @@ coordinator (commit stat shows only the agent's 2 files;
   screenshot.
 - Shared-checkout note: a sibling's uncommitted edit to
   `src/lib/vision/white-box-marking.ts` was left unstaged and untouched.
+
+## 19. Wave 2 Completion — Pin1 Pattern Shapes + Grayscale Bits (31-Oct-25 ~02:21)
+
+Workstream COMPLETE, 6 commits on origin/main, spot-verified by the
+coordinator (Pattern Shape picker, GrayscaleMode type, and patternShape
+state all present in the files).
+
+- Pin1 pattern shape — ROI stays plain, pattern takes the shape:
+  `src/lib/vision/white-box-marking.ts` — `SearchRegion` extended with
+  optional `shape` / `rotationDeg` / `points` (backward compatible;
+  `clampRegion` preserves them), plus `getPatternShapePoints`,
+  `isPointInPatternShape`, `tracePatternShapePath`. Rectangle fills
+  the bounds, circle is the inscribed circle, ellipse inscribed in the
+  bounds, polygon uses stored points or falls back to corners, with
+  rotation around the center.
+  `usePin1Rule.ts` — new `patternShape` state, restored from saved
+  `pin1Config.patternShape` then the saved wrapper shape (legacy
+  lowercase `"rectangle"` accepted). The hardcoded `shape:
+  "rectangle"` at save time is GONE — saves now write `shape:
+  patternShape` plus `patternShape` in `pin1Config`/`pin1ConfigJson`.
+  The drag handler re-attaches the shape so dragging cannot silently
+  reset it.
+  `Pin1SettingsCard.tsx` — Pattern Shape picker (Rectangle / Circle /
+  Ellipse / Polygon) with per-button `data-ui-id`. Existing REGION
+  SHAPE buttons untouched, as ordered.
+  `Pin1Canvas.tsx` — fuchsia pattern-shape overlay inscribed in the ROI
+  (label `PATTERN SHAPE: <SHAPE>`, vertex markers for polygon).
+  Clicking the shape hit-tests and selects it (thicker stroke) WITHOUT
+  consuming the event, so region move/resize behavior is unchanged.
+  Canvas carries `data-ui-id="ui-pin1-canvas"`.
+- Grayscale bits — dark darker, white whiter, down to black/white:
+  `GrayscaleMode` (`threshold` | `stretch` | `one-bit`),
+  `toContrastStretchedGray` (full-range linear stretch), `toOneBitGray`
+  (pure 0/255), `toGrayscalePreviewRgba`; `renderSelectedWhiteBoxMarks`
+  gained an optional mode param defaulting to `threshold`.
+  `toThresholdPreviewRgba` behavior unchanged (DefectCanvas /
+  PatternMatchCanvas / PatternCanvas depend on it).
+  `GreyscaleSliderCard.tsx` — mode button row (Threshold / Stretch /
+  1-Bit) placed AFTER the slider, so the existing
+  `ui-greyscale-level` XPath still matches. Backend detection still
+  uses the slider value as `whiteThreshold` in every mode.
+  `useWhiteBoxMarking.ts` — `greyscaleMode` state +
+  `changeGreyscaleMode`, both returned.
+- CLI-UI registry: 8 entries appended to `BE/ui_remote/registry.py`
+  (14 → 22): `ui-pin1-pattern-shape-rectangle/circle/ellipse/polygon`,
+  `ui-pin1-canvas`, `ui-greyscale-mode-threshold/stretch/one-bit`; TS
+  mirror regenerated. `ui-greyscale-level` verified still matching.
+- Commits: d0c57039 (geometry + modes), 41c59b1e (shape state),
+  53474ab9 (picker + overlay), 0e81a5c1 (mode control wiring),
+  8b12c389 (registry + mirror), 2a03a719 (subtask 12 complete).
+- NOT built (with reasons, recorded in subtask 12): parent-tool wiring
+  is outside this workstream's ownership — `StandardPin1ConfigTool.tsx`
+  must pass `patternShape`/`onPatternShapeChange` to the card and
+  `patternShape` to the canvas; `BoxReviewPanel.tsx` /
+  `Pin1ReviewPanel.tsx` must pass `greyscaleMode`/`onGreyscaleModeChange`
+  to the slider card. Until then the new controls render but are safe
+  no-ops (optional props, defaults Rectangle / threshold) and the
+  canvas overlay does not appear. Exact 2-line diffs are in the subtask
+  file. White-box canvas preview for stretch/1-bit needs the layers
+  agent to pass the mode to `renderSelectedWhiteBoxMarks` /
+  `toGrayscalePreviewRgba` (lib functions ready). Polygon point editing
+  not built (needs a point editor UI; points default to corners).
+  Detection stays rect-based (backend + local detector use bounding
+  rects; shape is a search/display contract, not a detection-region
+  change).
+- NOT verified at runtime (per program order; brace/paren balance
+  re-read only). End-of-tunnel wave must typecheck and exercise the
+  picker, overlay, mode buttons, and `processing-cli ui click/set` on
+  the new entries.
+- MBUD additions: ROI-vs-pattern shape coexistence (MBUD item 11);
+  saved shape enum values (reader accepts both old and new).
+- Process notes: one push rejected (sibling landed first), resolved
+  via shared-tree sync, no force-push; first pull --ff-only failed
+  with "Cannot fast-forward to multiple branches" while the tree was
+  already in sync, subsequent pulls worked; sibling uncommitted edits
+  never staged or touched.
