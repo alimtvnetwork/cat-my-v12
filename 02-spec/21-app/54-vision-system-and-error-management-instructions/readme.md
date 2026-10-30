@@ -802,3 +802,65 @@ coordinator (registry, CLI command, hook, TS mirror all present).
   owed to the end-of-tunnel window.
 - Wave 1 is now fully complete: window controls + swallowing fixes +
   error SplitDB/CLI + CLI-UI registry, all on origin/main.
+
+## 17. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
+
+Workstream COMPLETE, commit on origin/main, spot-verified by the
+coordinator (commit stat shows only the agent's 2 files;
+`_ensure_recipe_table` present in the repo file).
+
+- Screenshot confirmed by eye: `assets/screenshots/
+  mr6_-1EdpFtG_20261031_014811.png` — SAVE clicked, red toast
+  "Failed to save recipe: no such table: Recipe".
+- Root cause: `BE/db/connections.py` opens connections only and never
+  runs DDL (its own docstring says migration is `bin/db-bootstrap.py`'s
+  job); `sqlite3.connect()` silently creates an empty `root.db` on
+  first open. `SqliteRulesRepo` (PUT /rules/{RuleSetId} SAVE path)
+  trusted the schema; its first statement (`SELECT Version FROM Recipe
+  WHERE RuleSetId = ?`) raised `sqlite3.OperationalError: no such
+  table: Recipe` on any unmigrated data dir (fresh install, skipped/
+  failed bootstrap, backend run directly, test env). The generic
+  `except Exception` wrapped it as `AppError(E_BE_INTERNAL, "Failed to
+  save recipe: ...")` → frontend toast. The migration itself exists
+  (`BE/db/migrations/root/0020_recipes.sql`) — nothing on the repo
+  path ensured it was applied. Matches parallel spec 04 §3 exactly.
+- Fix (commit b066e6ad, `BE/repos/sqlite_rules_repo.py` +146/-6, spec
+  04 §3.2 "Recipe self-healing DDL"): `_ensure_recipe_table(conn)`
+  probes `sqlite_master` for `Recipe` (one cheap query when it
+  exists); if missing, runs DDL mirroring `0020_recipes.sql` exactly
+  (table + `IdxRecipe_RuleSetId`, no `SchemaVersion` write — bootstrap
+  still owns that bookkeeping, and a later bootstrap re-applying 0020
+  is a no-op). Called in `__init__` (guarded: the repo is a
+  module-level singleton, so an import-time raise would take down the
+  whole backend — failure is logged and the per-call ensure retries)
+  and at the start of `save_rule_set` + `get_rule_set`, so SAVE can
+  never hit "no such table" again even if the DB file is replaced
+  mid-process.
+- Failure persistence (wave-1 readout, no swallow): every failure on
+  both paths is best-effort persisted via
+  `BE/app/db/writers/error.py:write_errors` (task conn, uuid
+  `CorrelationId`, `SqliteRulesRepo.<operation>` endpoint) before the
+  `AppError` is re-raised — readable via `processing-cli errors list /
+  show`. The persistence helper never raises: an unmigrated `task.db`
+  (no Error table yet) only logs, never masks the original error.
+  `get_rule_set` skips recording for routine `E_BE_NOT_FOUND` lookup
+  misses. The envelope → frontend capture → `POST /errors` sync path
+  still fires as well.
+- SAVE behavior now with a missing table: fresh empty `root.db` + SAVE
+  → repo creates the table + index on the spot, save proceeds normally
+  (insert or version-checked update, unchanged logic). If the DDL
+  itself fails (e.g. unwritable DB dir), SAVE raises a clear `AppError`
+  ("Recipe table bootstrap failed: …; run python
+  bin/db-bootstrap.py"), recorded in the Error table when available
+  and surfaced through the envelope — never a bare toast, never a
+  swallowed catch.
+- NOT verified at runtime (per program order; `ast.parse` only).
+  End-of-tunnel wave must exercise: fresh empty `root.db` +
+  `save_rule_set` without `bin/db-bootstrap.py`, `processing-cli
+  errors list` showing a forced failure, and `bin/db-bootstrap.py` on
+  top of a self-healed DB (0020 must apply cleanly as a no-op).
+- Flagged for the validation wave (out of this workstream): the "Res
+  Mismatch: 392x273 (Calibrated: 960x540)" warning in the same
+  screenshot.
+- Shared-checkout note: a sibling's uncommitted edit to
+  `src/lib/vision/white-box-marking.ts` was left unstaged and untouched.
