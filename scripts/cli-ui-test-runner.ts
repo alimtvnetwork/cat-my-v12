@@ -187,7 +187,7 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         const simulationBtn = page.locator("[data-tour='simulation-launcher']");
-        await simulationBtn.evaluate((el: HTMLElement) => el.click());
+        await simulationBtn.click();
 
         // Wait for player HUD to mount after simulation preloading
         const playerBar = page.locator("[data-tour='simulation-player-hud']");
