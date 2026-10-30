@@ -217,3 +217,89 @@ Verified read-only against main. All paths relative.
 Check Task Manager after an in-app "Exit" for orphaned
 `backend-server.exe`/`bun.exe`, and check `<install>/startup-error.log`
 on the next launch for a port-bind failure.
+
+## 9. Analysis Findings (Research Wave 1 — Hover / Simulation / Camera)
+
+Verified read-only against main. All paths relative.
+
+### Menu hover glitch — ROOT CAUSE FOUND
+
+- `src/components/ui-mode/UiModeSwitch.tsx`: the switch wrapper is
+  `group flex items-center gap-1 group-hover:gap-2 transition-all`, and
+  both labels are `max-w-0 opacity-0 group-hover:max-w-[70px]
+  group-hover:opacity-100 transition-all duration-200`. Hovering grows
+  the switch by up to ~140px plus a gap change, pushing neighboring
+  header buttons sideways; if the cursor crosses into a neighbor
+  mid-transition, hover flickers and the bar oscillates — exactly the
+  "goes from one place to another" symptom.
+- It sits at `StandardAppShell.tsx:470` beside RecorderLauncherButton,
+  Simulation launcher, and ThemeToggle, in a cluster with nowhere to go
+  but sideways (`overflow-hidden` can clip).
+- Introduced by commit dece3598 (19-Oct-26 navbar tweaks) — AFTER the
+  prior session's menu-hover verification. The prior fix is present (the
+  duplicate titlebar nav is gone; `ModernMainNav.tsx` no longer exists)
+  but does not cover this newer hover-expand behavior.
+- Secondary: the Simulation button label swaps (Simulation / Simulation
+  Running / spinner) on state change, shifting neighbors.
+- Fix targets: `UiModeSwitch.tsx` (reserve fixed label width or
+  opacity-only reveal, no width/gap animation); optionally
+  `StandardAppShell.tsx` (fixed-width Simulation button label).
+
+### Simulation delay overshoot + Next-button jump — ROOT CAUSE FOUND
+
+- `src/components/guided-simulation/ProjectCreationAnalysisTour.tsx`:
+  `beginStep` polls for the tour target every 150ms with a 2s safety
+  fallback BEFORE the countdown starts; scroll-into-view also runs
+  first. Worst case ~2s of waiting before the 2s dwell even begins.
+- The countdown is `setInterval(..., 100)` adding a fixed 100ms per
+  tick — when the main thread is busy or the tab throttles, real ticks
+  arrive late but still count as 100ms, so wall-clock time stretches.
+- `advance()` adds a further 700ms `setTimeout` transition on
+  exit-phase steps; each step's `runStepAction` navigates/opens panels
+  before the next timer starts. A "2s" step easily takes 3–5s.
+- Next-button jump: the Joyride tooltip is floater-positioned against
+  the spotlighted target; `runStepAction` moves targets, the floater
+  re-calculates and flips placement (bottom→top). Prior commit 261ce5d2
+  only fixed overlay clicks, not repositioning. `tour-placement.ts`
+  confirms flipping stays enabled for most targets.
+- Fix targets: `ProjectCreationAnalysisTour.tsx` (wall-clock countdown
+  via `Date.now()` delta; start dwell immediately or fold target-wait
+  into it; remove/merge the 700ms exit transition);
+  `tour-placement.ts` + Joyride options (disable flipping or pin
+  placement); `SimulationPlayerBar.tsx` only if the player-bar Next
+  button itself is the reported one (buttons use `transition-all` +
+  `active:scale-95`, bar re-renders 10x/second on elapsed ticks).
+
+### Camera dropdown / save-camera — ROOT CAUSE FOUND
+
+- Each `useCameraLibrary()` call creates its own facade + store
+  instance with its own cached snapshot; stores never sync across
+  instances. After "Save current as new", the parent dropdown's option
+  list is stale: the newly saved camera is missing, the bound select
+  renders blank, and the "missing from the library" warning appears.
+- Evidence: `src/lib/camera/useCameraLibrary.ts` (new instance per hook
+  call); `src/lib/camera/facade.ts` (per-instance store/listeners, no
+  `storage` event listener anywhere); `src/lib/camera/store.ts`
+  (per-instance snapshot; nothing calls `reload()` on external changes).
+- `ProjectCameraSection.tsx`: parent dropdown
+  (`id="project-camera-select"`) uses instance A; `onSaved` binds the
+  new id, but with `all` stale, `selectedId` matches no option → blank
+  select + "Bound camera setting id … is missing from the library".
+- Secondary bug: `SaveCameraSetupModal.tsx` reset `useEffect` depends on
+  `[open, currentSettingId, all]`, so any `all` change while the modal
+  is open resets the user's source-select choice.
+- Ruled out: the Live Camera toggle itself is wired
+  (`WorkpieceAnalyzeWorkspace.tsx:324,330`); the pain is dropdown
+  staleness, not the toggle.
+- Fix targets: `useCameraLibrary.ts` (share one module-level facade) or
+  `facade.ts` + `store.ts` (listen to `storage` events / call
+  `reload()`); `SaveCameraSetupModal.tsx` (reset effect depends on
+  `open` only).
+
+### Cross-cutting note
+
+Glitch 1 (Oct 19 navbar tweak) postdates the last verified menu fix,
+and glitch 3 is a state-sync design flaw, not a race — both are cheap,
+isolated fixes. Glitch 2's timing overshoot is structural and must be
+fixed before any dwell tuning, since tuning the value cannot compensate
+for the added waits.
