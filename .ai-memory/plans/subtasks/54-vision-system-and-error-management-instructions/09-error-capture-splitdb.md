@@ -1,5 +1,7 @@
 # Subtask: 09-error-capture-splitdb
 
+Status: COMPLETE (verified green)
+
 See plan: .ai-memory/plans/pending/54-vision-system-and-error-management-instructions.md
 
 ## Error SplitDB + CLI readout agent — progress
