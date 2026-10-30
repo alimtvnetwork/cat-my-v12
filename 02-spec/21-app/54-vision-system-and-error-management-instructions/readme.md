@@ -100,9 +100,9 @@ needed anymore; the "drop the images" note below is superseded.
   (SOURCE: Live Camera selected, canvas black with "CONNECTING CAMERA"
   — camera stuck connecting)
 
-Original prnt.sc URLs (for reference): pUuIGz0ih_ZZ, wL_7nmmUJQPh,
-wXoDp20hMNwJ, rzcoeqtbFB8l, 9qwZWqYiKV95, Os3MgbBIMHmT, _lKsg1rvFRnI,
-RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
+Original prnt.sc URLs (for reference): pUuIGz0ih*ZZ, wL_7nmmUJQPh,
+wXoDp20hMNwJ, rzcoeqtbFB8l, 9qwZWqYiKV95, Os3MgbBIMHmT, \_lKsg1rvFRnI,
+RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6*-1EdpFtG, bg2jMNWxHjkn
 (all under https://prnt.sc/).
 
 ## 5. MBUD — Matters to Be Discussed in the Morning (Ambiguities)
@@ -205,7 +205,7 @@ Verified read-only against main. All paths relative.
 - Draw order fixed; no context menu, no send-back/bring-forward anywhere
   in `src/components/vision/`.
 - Layers panel exists ONLY in the editor (`src/components/editor/layers/
-  LayersPanel.tsx`), never imported by any vision marking tool.
+LayersPanel.tsx`), never imported by any vision marking tool.
 - Fix targets: `useCanvasPointerDrag.ts` + `pattern-geometry.ts`
   (selection vs creation, lock flag, rotate), `PatternCanvas.tsx` (layer
   list + draw order + context menu), `white-box/types.ts` (isLocked,
@@ -227,7 +227,7 @@ Verified read-only against main. All paths relative.
 - The "desktop app" is a web SPA (React + TanStack Router, bun on :3000,
   Python backend on :8787) launched by `packaging/desktop/start.ps1` /
   `start.sh` inside the user's Edge/Chrome with `--app=<url>
-  --start-fullscreen`. No script injects anything into the page.
+--start-fullscreen`. No script injects anything into the page.
 - `src/components/layout/WindowControlButtons.tsx` is the only
   window-control component (Minimize / Maximize / Close + "Exit
   Application?" confirm dialog), mounted at `StandardAppShell.tsx:502`.
@@ -237,7 +237,7 @@ Verified read-only against main. All paths relative.
   introduced the consumers only. The provider was never written.
 - Yet `src/lib/version-info.ts:21` claims "Native window controls" as
   shipped, and the spec `02-spec/21-app/03-app-bug-fixes-and-ui-
-  enhancements/02-ui-shell-and-window-controls-spec.md` promises desktop
+enhancements/02-ui-shell-and-window-controls-spec.md` promises desktop
   minimize + clean exit. The promise was never wired to a real shell.
 
 ### Per-button behavior (follows exactly from the missing bridge)
@@ -283,7 +283,7 @@ Verified read-only against main. All paths relative.
 - `src/components/ui-mode/UiModeSwitch.tsx`: the switch wrapper is
   `group flex items-center gap-1 group-hover:gap-2 transition-all`, and
   both labels are `max-w-0 opacity-0 group-hover:max-w-[70px]
-  group-hover:opacity-100 transition-all duration-200`. Hovering grows
+group-hover:opacity-100 transition-all duration-200`. Hovering grows
   the switch by up to ~140px plus a gap change, pushing neighboring
   header buttons sideways; if the cursor crosses into a neighbor
   mid-transition, hover flickers and the bar oscillates — exactly the
@@ -417,7 +417,7 @@ Literal `catch { // Ignored }` / `.catch(() => { // Ignored })`:
 - `src/components/vision/standard/tools/pin1-config/usePin1Rule.ts:344`
   — Pin 1 detection failures vanish.
 - `src/components/vision/standard/tools/pattern-matching/
-  usePatternMatchingRule.ts:220` — match failures vanish.
+usePatternMatchingRule.ts:220` — match failures vanish.
 - `src/components/vision/white-box/useWhiteBoxMarking.ts:188` — image
   load + initial `processRegion` failures vanish; `:567` — duplicate
   cleanup delete failures vanish.
@@ -489,14 +489,14 @@ to that repo.
   Tauri events the React frontend listens for and executes through the
   SAME code path as a real user click.
 - `agm ui open | goto <route> | ls [route] | scroll <element-id>
-  [route] | click <element-id> [route]`
+[route] | click <element-id> [route]`
   (`src-tauri/src/bin/agm/ui_cmds.rs`).
 - **Addressing is by element `id` ONLY — no XPath anywhere in AGM.**
   The CLI validates the id against a STATIC per-route element manifest
   (`UiRoute { path, page, components, known_ids, focusable }`); it
   refuses unknown or ambiguous ids unless the route is given.
   `agm ui ls <route>` prints the manifest; `GET /api/ui/element-tree?
-  route=<route>` serves it (`src-tauri/src/proxy/server/admin_ui.rs`).
+route=<route>` serves it (`src-tauri/src/proxy/server/admin_ui.rs`).
   It is explicitly a static manifest, NOT a live DOM snapshot.
 - Frontend resolution fallback chain (`src/hooks/useUiRemoteControl.ts`):
   `getElementById(id)` → `[data-ui-id]` → `[data-ui-name]` →
@@ -504,9 +504,9 @@ to that repo.
   Missing elements become tracked warnings, never silent failures.
 - Transport: CLI → daemon over HTTP `127.0.0.1:8045`
   (`src-tauri/src/modules/cli/daemon.rs`), `Authorization: Bearer
-  <token>` + `x-api-key` (token from env or app config), 5s timeout.
+<token>` + `x-api-key` (token from env or app config), 5s timeout.
   Click packet: `POST /api/ui/click { "route", "element_id", "actor":
-  "cli" }`. Backend validates, emits Tauri event (`agm://ui-click` /
+"cli" }`. Backend validates, emits Tauri event (`agm://ui-click` /
   `agm://ui-scroll` / `agm://ui-navigate`), records an audit entry
   (`actor=cli`, `trigger`, `element_id`, `route` → `ui_audit.db`), and
   returns `{success, element_id, route, actor}`. Every failure prints
@@ -514,7 +514,7 @@ to that repo.
   a missing bridge endpoint is reported as `performed: false`, never
   faked.
 - CLI envelope (`CliEnvelope`): `{ success, status, command,
-  instance_id, timestamp, data, error, meta }`; errors carry
+instance_id, timestamp, data, error, meta }`; errors carry
   `{ code: "DISPATCH_FAILED", message }`.
 - Second channel (prompt queue → CDP drive): `agm prompts send|enqueue`
   writes SQLite `active_prompts` (addressed by instance_id + repo_path);
@@ -543,16 +543,16 @@ to that repo.
 - Credentials: plain JSON `supabase_config.json` in the app data dir
   (mirrored to `%APPDATA%/antigravity-manager/` on Windows; NO
   encryption). Shape: `{ endpoints: [{ id, name, url, api_key, role:
-  "root|secondary", is_enabled, prune_threshold_mb, priority, notes,
-  tags }], node_alias, is_sync_enabled, auto_prune_*, heartbeat_interval_secs:
-  300 }`. Loading also accepts the same config wrapped in a
+"root|secondary", is_enabled, prune_threshold_mb, priority, notes,
+tags }], node_alias, is_sync_enabled, auto_prune_*, heartbeat_interval_secs:
+300 }`. Loading also accepts the same config wrapped in a
   `JsonEnvelope`; `agm supabase status` can auto-seed endpoints from
   repo-secrets files.
 - Frontend service (`src/services/supabaseService.ts`): thin Tauri-invoke
   wrapper (get/save config, test endpoint, check tables, migrate data,
   schema-SQL copy, export/import config, account leases, fleet
   machines, sync now). Settings UI (`src/components/settings/
-  SupabaseSync/`, routes `/supabase` and `settings/supabase`): URL entry
+SupabaseSync/`, routes `/supabase` and `settings/supabase`): URL entry
   with sanitization, endpoint test, table verification, schema-SQL
   copy, data migration between endpoints.
 - Two-role schema (`supabase_schema.rs`, shipped as SQL constants the
@@ -592,7 +592,7 @@ shows Setup / Calibrate / Component / Pin 1 / Data Matrix / Mark /
 Scratch / BGA / QFN. This is the reference the new system must recreate
 in modern form.
 
-### Current Pin 1 screen (mr6_-1EdpFtG) — two new findings
+### Current Pin 1 screen (mr6\_-1EdpFtG) — two new findings
 
 - The three shape buttons DO exist in the current UI — but as REGION
   SHAPE under REGION OF INTEREST (ROI): RECTANGLE / SQUARE / CIRCLE.
@@ -688,10 +688,10 @@ src/components/vision/ and 0 in workpiece-rule-analyzer.ts).
   E_WHITEBOX_LOAD_IMAGE and duplicate-prune → E_WHITEBOX_PRUNE_DUPLICATE
   (loop continues after capture); useStandardWorkbench.ts image-load →
   E_WORKBENCH_LOAD_IMAGE and file-load → E_WORKBENCH_LOAD_FILE (file name
-  + size as context); VisualToolWorkpieceCanvas.tsx pixel-cache →
-  E_WORKPIECE_CACHE_PIXELS. Every capture carries triggerComponent,
-  triggerAction, and structured context per the spec 03-error-manage
-  contract.
+  - size as context); VisualToolWorkpieceCanvas.tsx pixel-cache →
+    E_WORKPIECE_CACHE_PIXELS. Every capture carries triggerComponent,
+    triggerAction, and structured context per the spec 03-error-manage
+    contract.
 - Batch 2 (382067a2, HEAD at the time): JSON.parse catches, render-path
   safe — VisualToolTuningModal.tsx collects failures via an out-param
   from buildSettingsFromRule (runs inside useMemo) and captures in a
@@ -735,7 +735,7 @@ coordinator (all 4 files present, migration header matches spec).
   shared by route + CLI so they cannot drift.
 - Batch 2 (8e86343b): ingest route `BE/routes/errors.py` + router mount
   in `BE/main.py` — `POST /errors` (single object, array, or `{items:
-  [...]}`; frontend `id` uuid not stored, `CorrelationId` is the
+[...]}`; frontend `id` uuid not stored, `CorrelationId` is the
   identity), `GET /errors` (limit 1-200 default 50, code/level/session/
   correlation filters, newest first), `GET /errors/{correlationId}`
   (full stack trace, 404 otherwise). Diagnostic fields fold into
@@ -743,7 +743,7 @@ coordinator (all 4 files present, migration header matches spec).
 - Batch 3 (cf2e99a0): CLI `BE/cli/processing/commands/errors.py` +
   registration + helptext — `processing-cli errors list` (filters, full
   stacks), `errors show <correlationId>`, `errors export --format
-  json|csv` (shapes mirror the frontend serializers in
+json|csv` (shapes mirror the frontend serializers in
   `src/lib/errors/export.ts`; browser-only `id` column empty
   server-side). Two review catches fixed before commit: a
   query-param/request-correlation shadowing bug in `GET /errors`, and
@@ -760,7 +760,7 @@ coordinator (all 4 files present, migration header matches spec).
   of tunnel; Python files syntax-checked only via `ast.parse`).
   End-of-tunnel wave must exercise: `bin/db-bootstrap.py` applying
   0029, `POST /errors` round-trip, `processing-cli errors list/show/
-  export`, and facade sync in Backend mode (recorded in subtask 09).
+export`, and facade sync in Backend mode (recorded in subtask 09).
 - Email/Supabase bug-report path NOT built here — out of this
   workstream's file ownership (greenfield modules for a later wave).
 - Shared-checkout note: sibling waves landed alongside without file
@@ -782,8 +782,8 @@ coordinator (registry, CLI command, hook, TS mirror all present).
   camera select, workpiece canvas + results regions; no ids invented);
   `BE/ui_remote/queue.py` (packet queue + JSONL audit trail outside the
   repo tree); `BE/routes/ui_remote.py` (`GET /elements`, `POST
-  /packets`, `GET /pending`, `POST /results`, `GET /results/{id}`, `GET
-  /audit`, all in the Universal Envelope with registered `E_*` codes);
+/packets`, `GET /pending`, `POST /results`, `GET /results/{id}`, `GET
+/audit`, all in the Universal Envelope with registered `E_*` codes);
   `BE/cli/processing/commands/ui_remote.py` (`processing-cli ui`).
 - Frontend: `src/lib/ui-remote/registry.ts` (generated mirror, never
   hand-edited); `src/hooks/useUiRemoteControl.ts` (1-second poll; AGM
@@ -848,7 +848,7 @@ of the new registry ids.
   Lock-Unlock (ROI only) / Hide Layer; rotate handle (stem + circle
   above the active region) with rotation drawn via
   ctx.translate/rotate; hidden layers skipped; `data-ui-id=
-  "ui-pattern-canvas"` on the canvas.
+"ui-pattern-canvas"` on the canvas.
 - NEW `white-box/LayersPanel.tsx`: Photoshop-style, top-first rows,
   kind badge, rotation degrees, lock icon, eye toggle, ROI lock
   toggle, reorder chevrons; buttons render only when their callback
@@ -892,20 +892,20 @@ Supabase had 0 hits in src/BE before this work.
 
 - Batch 1: `BE/bug_reports/` core — `config.py` (resolution: explicit
   > env > repo-secrets non-secret fields; Supabase settings file 0600
-  in app-data), `supabase_client.py` (stdlib PostgREST, AGM header
-  scheme, 15s timeout, URL normalization, classified errors, circuit
-  breaker), `schema.sql` (bug_reports + bug_attachments),
-  `email_sender.py` (delegates to the go-email-reader binary; never
-  touches passwords).
+  > in app-data), `supabase_client.py` (stdlib PostgREST, AGM header
+  > scheme, 15s timeout, URL normalization, classified errors, circuit
+  > breaker), `schema.sql` (bug_reports + bug_attachments),
+  > `email_sender.py` (delegates to the go-email-reader binary; never
+  > touches passwords).
 - Batch 2: `BE/bug_reports/reports.py` (compose from Task-DB Error row
-  + email/Supabase delivery + tempdir JSONL audit),
-  `BE/routes/bug_reports.py` (loopback-only: POST /bug-reports,
-  GET /pending, GET/POST /config sanitized with blank-key-keeps-stored,
-  POST /test reachability + table verification),
-  `BE/cli/processing/commands/bug_reports.py` (`processing-cli
-  bug-reports pending/download/send`), wiring in `BE/main.py`,
-  `BE/cli/processing/main.py`, `BE/errors/codes.py`
-  (E_BUG_EMAIL_FAILED, E_BUG_SUPABASE_FAILED).
+  - email/Supabase delivery + tempdir JSONL audit),
+    `BE/routes/bug_reports.py` (loopback-only: POST /bug-reports,
+    GET /pending, GET/POST /config sanitized with blank-key-keeps-stored,
+    POST /test reachability + table verification),
+    `BE/cli/processing/commands/bug_reports.py` (`processing-cli
+bug-reports pending/download/send`), wiring in `BE/main.py`,
+    `BE/cli/processing/main.py`, `BE/errors/codes.py`
+    (E_BUG_EMAIL_FAILED, E_BUG_SUPABASE_FAILED).
 - Batch 3: frontend `src/components/settings/BugReportingSettings.tsx`
   (Supabase URL/key/role/enabled + test + email readiness + send-test),
   `src/routes/settings/bug-reporting.tsx` (new route),
@@ -929,23 +929,24 @@ Supabase had 0 hits in src/BE before this work.
   snapshot regen.
 
 ## 19. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
+
 Workstream COMPLETE, commit on origin/main, spot-verified by the
 coordinator (commit stat shows only the agent's 2 files;
 `_ensure_recipe_table` present in the repo file).
 
 - Screenshot confirmed by eye: `assets/screenshots/
-  mr6_-1EdpFtG_20261031_014811.png` — SAVE clicked, red toast
+mr6_-1EdpFtG_20261031_014811.png` — SAVE clicked, red toast
   "Failed to save recipe: no such table: Recipe".
 - Root cause: `BE/db/connections.py` opens connections only and never
   runs DDL (its own docstring says migration is `bin/db-bootstrap.py`'s
   job); `sqlite3.connect()` silently creates an empty `root.db` on
   first open. `SqliteRulesRepo` (PUT /rules/{RuleSetId} SAVE path)
   trusted the schema; its first statement (`SELECT Version FROM Recipe
-  WHERE RuleSetId = ?`) raised `sqlite3.OperationalError: no such
-  table: Recipe` on any unmigrated data dir (fresh install, skipped/
+WHERE RuleSetId = ?`) raised `sqlite3.OperationalError: no such
+table: Recipe` on any unmigrated data dir (fresh install, skipped/
   failed bootstrap, backend run directly, test env). The generic
   `except Exception` wrapped it as `AppError(E_BE_INTERNAL, "Failed to
-  save recipe: ...")` → frontend toast. The migration itself exists
+save recipe: ...")` → frontend toast. The migration itself exists
   (`BE/db/migrations/root/0020_recipes.sql`) — nothing on the repo
   path ensured it was applied. Matches parallel spec 04 §3 exactly.
 - Fix (commit b066e6ad, `BE/repos/sqlite_rules_repo.py` +146/-6, spec
@@ -965,7 +966,7 @@ coordinator (commit stat shows only the agent's 2 files;
   `BE/app/db/writers/error.py:write_errors` (task conn, uuid
   `CorrelationId`, `SqliteRulesRepo.<operation>` endpoint) before the
   `AppError` is re-raised — readable via `processing-cli errors list /
-  show`. The persistence helper never raises: an unmigrated `task.db`
+show`. The persistence helper never raises: an unmigrated `task.db`
   (no Error table yet) only logs, never masks the original error.
   `get_rule_set` skips recording for routine `E_BE_NOT_FOUND` lookup
   misses. The envelope → frontend capture → `POST /errors` sync path
@@ -981,7 +982,7 @@ coordinator (commit stat shows only the agent's 2 files;
 - NOT verified at runtime (per program order; `ast.parse` only).
   End-of-tunnel wave must exercise: fresh empty `root.db` +
   `save_rule_set` without `bin/db-bootstrap.py`, `processing-cli
-  errors list` showing a forced failure, and `bin/db-bootstrap.py` on
+errors list` showing a forced failure, and `bin/db-bootstrap.py` on
   top of a self-healed DB (0020 must apply cleanly as a no-op).
 - Flagged for the validation wave (out of this workstream): the "Res
   Mismatch: 392x273 (Calibrated: 960x540)" warning in the same
@@ -1006,8 +1007,8 @@ state all present in the files).
   `usePin1Rule.ts` — new `patternShape` state, restored from saved
   `pin1Config.patternShape` then the saved wrapper shape (legacy
   lowercase `"rectangle"` accepted). The hardcoded `shape:
-  "rectangle"` at save time is GONE — saves now write `shape:
-  patternShape` plus `patternShape` in `pin1Config`/`pin1ConfigJson`.
+"rectangle"` at save time is GONE — saves now write `shape:
+patternShape` plus `patternShape` in `pin1Config`/`pin1ConfigJson`.
   The drag handler re-attaches the shape so dragging cannot silently
   reset it.
   `Pin1SettingsCard.tsx` — Pattern Shape picker (Rectangle / Circle /
@@ -1091,7 +1092,7 @@ state all present in the files).
 
 - `src/components/guided-simulation/ProjectCreationAnalysisTour.tsx`:
   - Wall-clock dwell: elapsed is `Date.now() - stepStartedAt -
-    pausedTotal`, never tick-counted. The dwell clock starts at step
+pausedTotal`, never tick-counted. The dwell clock starts at step
     start, so target wait folds INTO the dwell instead of adding to it.
     A 2s dwell now takes ~2s (previously target wait up to 2s + tick
     drift + 700ms exit transition = 3-5s).
@@ -1105,7 +1106,7 @@ state all present in the files).
   - Tooltip flip: Joyride `floatingOptions` changed from
     `flipOptions/shiftOptions` (padding bags, flip still enabled) to
     `flip: false` + `shift: { padding: { top: 60, bottom: 120, left: 24,
-    right: 24 } }` per the spec-04 sibling research — the tooltip is
+right: 24 } }` per the spec-04 sibling research — the tooltip is
     now pinned to its placement for every step, so the Next button
     cannot jump when `runStepAction` moves targets. Shift padding is
     preserved (bottom 120 clears the fixed player HUD bar).
@@ -1146,14 +1147,14 @@ state all present in the files).
   correct (hook called with `isLiveCameraMode`, ref attached to the
   center-canvas video, status/error UI rendered).
 - FOLLOW-UP (exact file, not this wave): `src/components/vision/
-  white-box/useCameraStream.ts` — stuck "CONNECTING CAMERA"
+white-box/useCameraStream.ts` — stuck "CONNECTING CAMERA"
   (screenshot bg2jMNWxHjkn). `openCameraStream` itself is sound
   (getUserMedia resolves or rejects with mapped codes), but the hook
   has no timeout, no permission-pending state, and no retry: if the
   browser permission prompt pends (or hides behind the fullscreen
   --app window), the UI sits on "Connecting Camera" forever with no
   guidance. Worse, `setIsReady(true)` runs only inside `if
-  (videoRef.current)` — if the ref is null at resolve time, readiness
+(videoRef.current)` — if the ref is null at resolve time, readiness
   is stranded false forever with a live stream and no error. Required
   fix: a watchdog (e.g. 15s) that surfaces "camera permission still
   pending — allow access and retry", decouple readiness from videoRef
@@ -1254,3 +1255,180 @@ wiring all present in the files).
   added to Pin1 (no rotation model there).
 - NOT verified at runtime (per program order) — typecheck + live
   exercise of all five items is owed to the end-of-tunnel wave.
+
+## 23. End-of-tunnel report (morning input — subtask 15)
+
+End-of-tunnel commits (all on `main`, all pushed): `5dbf918b`
+(camera retry button + Pin1 panel state), `cd2f0416` (prettier on all
+67 spec-54-touched files), `fe0435b3` (react-joyride
+`flipOptions`/`shiftOptions` type fix), `ffda54e6` (merge-break
+syntax/type repairs), `6c6788a9` (ruff context-manager fix),
+`a745e046` (0021 migration repair + bug-report code mappings),
+`4c26af12` (Pin1 panel lock/reorder JSX wiring + the E2E suite),
+`7647b139` (Recipe SAVE validation failures now recorded),
+`bdc83c0d` + `aafee0ba` (HttpMethod constants + regenerated OpenAPI
+snapshot), `6cd26475` (CI clean-machine fixes). Two items the
+integration wave left as "NOT wired" are now wired: the camera
+`retry()` button (`data-ui-id="ui-camera-retry"`, only while
+permission pends — no auto-retry) and the Pin1 LayersPanel
+lock/reorder buttons (the state and handlers existed since
+`5dbf918b` but were never passed to the panel JSX; the E2E suite
+caught that gap — `4c26af12` completes it).
+
+Build (all local, this machine):
+
+- `tsc --noEmit` (plain and `--pretty false`, as CI runs): 0 errors.
+- Full `bun run lint`: 0 errors (warnings only);
+  `check-magic-strings`: clean; prettier check clean on every file
+  touched by this wave.
+- Ruff on spec-54 files: clean. Mypy (`BE/`): success, 307 files.
+  `scripts/be-lint.sh`: passed.
+- OpenAPI drift: `BE/openapi.snapshot.json` was stale (it predated
+  every spec-54 route); regenerated (+599 lines, now includes
+  `/errors`, `/bug-reports`, `/shutdown`, `/ui-remote`) and the drift
+  check passes.
+
+Tests (exact numbers):
+
+- Backend `pytest BE/tests`: **1558 passed, 9 skipped, 0 failed**,
+  including the parallel verification suite 55/55 — also 55/55
+  against a fresh `APP_DB_ROOT` (CI clean-machine shape).
+- Frontend `bunx vitest run`: **1827 passed, 7 failed (1834
+  total)**. The 2 canvas failures from the first full run were
+  spec-54-caused (parallel 57-box demo generation overrode the
+  explicit `activeBoxCount` label) and are fixed; the remaining 7
+  are pre-existing (see below).
+- E2E suite `tests/e2e-spec54/run_e2e_spec54.py` (stdlib runner:
+  fresh tmp SplitDB root, boots uvicorn on 127.0.0.1:18787, runs
+  groups A–J, then POSTs `/shutdown` and verifies process exit):
+  **115/115 passed — cli 37/37, live 19/19, static 59/59.**
+  Covers bootstrap + tiers, POST /errors round-trip (single, array,
+  `{items}`, idempotent retry, filters, single with full stack,
+  404/400, Details redaction of password/apiKey keys), CLI errors
+  list/show/export (json + csv, filters, limit ceiling 200,
+  unknown id exit 3, self-heal on unbootstrapped root), UI registry
+  (27 entries, id+name+kind+xpath, TS mirror match) + CLI ui
+  ls/click/set/audit/result (queued without `--wait`, honest
+  timeout with `--wait`, unknown-id error, XPath click), window
+  controls (no reload path, `cat-vision:request-exit`, loopback
+  shutdown guard, launcher wait/teardown), ROI lock + layers,
+  Pin1 shapes + grayscale modes, simulation dwell + hover
+  (wall-clock, `flipOptions: false`, `minHeight: 160`, fixed
+  `w-[70px]` labels, no hover gap jump), camera (storage listener,
+  15 s watchdog, retry button, `[open]`-only modal reset), bug
+  reporting (503-when-unconfigured POST/pending, sanitized config,
+  both Supabase tables, apikey + Bearer, password-free email
+  sender), Recipe SAVE on a fresh DB (no "no such table"), and
+  shutdown-last process exit. Static cases prove wiring exists in
+  source; they are NOT live-UI passes (see gaps).
+
+Bugs found and fixed by this wave (beyond formatting):
+
+- `0021_system_errors.sql` violated migration conventions (no
+  `SystemErrorId` INTEGER PRIMARY KEY AUTOINCREMENT, no CHECK on
+  `IsResolved`, no terminal SchemaVersion row, no BEGIN/COMMIT) and
+  was never recorded as applied (root stayed at SchemaVersion 20).
+  Fixed in place (fresh DBs only; dev DBs bootstrapped before the
+  fix keep the old table shape — delete `root.db` and re-bootstrap
+  if that matters). `test_split_isolation` expected sets updated
+  for the new `SystemError` (root) and `Error` (task) tables.
+- `E_BUG_EMAIL_FAILED` / `E_BUG_SUPABASE_FAILED` had no HTTP status
+  mapping (`KeyError` in `default_http_status`); both map to 502.
+- Recipe SAVE validation failures were never recorded: parsing ran
+  before the try block, so a bad envelope raised without reaching
+  `_record_repo_failure`. Parsing moved inside the try (same
+  exceptions to callers, plus the Error-table row). Recorder level
+  normalized to lowercase `error`.
+- Generated 57 demo pattern boxes overrode an explicit
+  `activeBoxCount` in the canvas header label; the label now
+  prefers real boxes, then the explicit count, then generated
+  boxes (canvas tests 12/12).
+- 15 `no-restricted-syntax` (inlined HTTP method strings) errors
+  across 9 spec-54-era files, fixed with `HttpMethod.*`.
+- CI clean-machine failures: verification-suite ruff (import
+  order, trailing space, unused `saved_v2`), schema test failing
+  on a fresh default DB root (now self-heals), and 3 stale
+  spec-04 subtask links (04 dir no longer exists; repointed at
+  the 54 subtask files).
+
+Remaining gaps — live-UI verifications that need the user's machine
+(no headless browser UI exists here, so these were verified only as
+static wiring + backend/CLI behavior, never as real clicks):
+
+- Button clicks in the installed app (Exit actually stopping the
+  backend, ports 8787/3000 free, no orphaned processes).
+- Tooltip pinning on the real machine (tooltip stays pinned during
+  a 2 s dwell) and 2 s-dwell timing on the real machine.
+- Camera permission prompt visibility in fullscreen `--app` mode
+  (MBUD 12) and save-camera across two app windows.
+- ROI gestures in the real UI: create → locked → outside-click
+  no-op → double-click unlock → move/resize/rotate → right-click
+  reorder/hide → panel sync; Pin1 shape picker changing the saved
+  shape with the overlay visible.
+
+Pre-existing failures (NOT fixed — evidence, not spec-54 scope):
+
+- Vitest 7: facade ratchet allowlist (6 files importing
+  `@/lib/projects/store` directly, last touched 2026-10-19–26, plus
+  one removed allowlist route); project-overview smoke (missing
+  "Image & Source" button, test last touched 2026-10-14);
+  envelope round-trip (legacy id `rs-smt-74hc-production` vs
+  `/^rs-\d+$/`, test last touched 2026-08-20); dispatcher (missing
+  "Edge Pitch" text, test 2026-10-25 / source 2026-10-19);
+  default-rules eval + catalog eval (vision numeric tolerances,
+  last touched 2026-10-26).
+- Ruff 3: `BE/app/domain/carrier_segmenter.py:54` SIM108
+  (2026-10-18), `BE/app/domain/vision_eval.py:248` I001 and
+  `BE/routes/score.py:20` I001 (both 2026-09-26).
+- Spec cross-links 6: broken references in old guideline docs
+  (`02-coding-guidelines` ×2, `08-json-schemas` ×2,
+  `17-consolidated-guidelines` ×2) — files that do not exist.
+- CI status at time of writing: run `41115198892` (commit
+  `aafee0ba`) shows pytest, backend-lint, spec-linters, and
+  frontend jobs failing on exactly the items above (plus the
+  since-fixed clean-machine items); a new run for `6cd26475` +
+  merge `3f3020a4` was pending when this section was written, and
+  the 7 pre-existing vitest failures, 3 pre-existing ruff errors,
+  and 6 pre-existing cross-links are expected to fail there too
+  until their owners fix them. The spec-54-relevant jobs are green
+  except for those pre-existing items.
+
+MBUD items still open (section 5): 1 (partial — 4/12 screenshots
+confirmed, 8 remain), 2 (unlock gesture), 3 (numbering scope),
+4 (Supabase credentials), 5 (email defaults), 6 (grayscale bits
+semantics — implementation exposes both), 7 (simulation delay
+paths — implementation uses wall-clock waits; morning confirmation
+still owed), 8 (native shell decision — NOT started, architecture
+call), 9 (frontend error codes not in backend registry),
+10 (stack truncation: SplitDB stores full stacks), 11 (ROI-vs-
+pattern shape coexistence; reader accepts both cases),
+12 (camera prompt visibility), 13 (`minHeight: 160` tradeoff).
+
+Files modified by this wave's commits (relative paths; the
+prettier commit alone touched 67 files — substantive files listed):
+`src/components/vision/workpiece/WorkpieceAnalyzeWorkspace.tsx`,
+`src/components/vision/standard/tools/pin1-config/Pin1Canvas.tsx`,
+`src/components/vision/standard/tools/pin1-config/Pin1MarkingTool.tsx`,
+`src/components/vision/workpiece/VisualToolWorkpieceCanvas.tsx`,
+`src/components/layout/WindowControlButtons.tsx`,
+`src/components/recorder/RecorderExportModal.tsx`,
+`src/components/settings/BugReportingSettings.tsx`,
+`src/components/vision/white-box/LayersPanel.tsx`,
+`src/components/vision/white-box/types.ts`,
+`src/hooks/useUiRemoteControl.ts`,
+`src/lib/errors/history-facade.ts`,
+`src/lib/recorder/telegram-service.ts`,
+`src/services/telemetry/email-notifier.ts`,
+`src/services/telemetry/supabase-client.ts`,
+`scripts/cli-ui-test-runner.ts`,
+`BE/db/migrations/root/0021_system_errors.sql`,
+`BE/errors/codes.py`, `BE/repos/sqlite_error_repo.py`,
+`BE/repos/sqlite_rules_repo.py`,
+`BE/tests/db/test_split_isolation.py`,
+`BE/tests/test_vision_error_management_verification.py`,
+`BE/openapi.snapshot.json`,
+`BE/bug_reports/reports.py`,
+`02-spec/21-app/04-vision-system-and-error-management-instructions/readme.md`,
+`tests/e2e-spec54/run_e2e_spec54.py` (new),
+`src/components/guided-simulation/ProjectCreationAnalysisTour.tsx`
+(flip/shift type fix).
