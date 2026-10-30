@@ -3,11 +3,27 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
-const CHROME_PATH =
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ||
-  (fs.existsSync("C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe")
-    ? "C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe"
-    : "C:\\Users\\mohan\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe");
+function resolveChromePath(): string {
+  if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)) {
+    return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+  }
+  const candidates = [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe",
+    "C:\\Users\\mohan\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return candidates[0];
+}
+
+const CHROME_PATH = resolveChromePath();
 const OUTPUT_DIR = path.resolve(process.cwd(), "reports/e2e-screenshots");
 
 interface StepResult {
@@ -93,6 +109,7 @@ async function runCliUiTests(): Promise<void> {
   const browser: Browser = await chromium.launch({
     executablePath: CHROME_PATH,
     headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
   });
 
   const context = await browser.newContext({
