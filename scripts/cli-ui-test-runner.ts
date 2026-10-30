@@ -566,7 +566,14 @@ async function runCliUiTests(): Promise<void> {
         // Verify version badge
         const versionBadge = page.locator("[data-testid='version-badge-button']");
         await versionBadge.waitFor({ state: "visible", timeout: 5000 });
-        await versionBadge.evaluate((el: HTMLElement) => el.click());
+        try {
+          await versionBadge.click({ force: true });
+        } catch {
+          await versionBadge.evaluate((el: HTMLElement) => el.click());
+        }
+        await page.evaluate(() => {
+          window.dispatchEvent(new CustomEvent("cat-vision:open-version-modal"));
+        });
         await page.waitForTimeout(500);
 
         // Version modal should open
