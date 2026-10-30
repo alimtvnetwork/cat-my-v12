@@ -112,3 +112,52 @@ URLs are preserved here for reference.
 - No repo deletion; no destructive git commands; no disabling CI/CD.
 - One single commit per completed task, hyphen format, pushed immediately.
 - No builds until the task is done; build fix at the end of the tunnel.
+
+## 7. Analysis Findings (Research Wave 1 — Pin1/Grayscale/Pattern/ROI/Layers)
+
+Verified read-only against main. All paths relative.
+
+### Pin1 tools missing — CONFIRMED
+
+- Pin1 UI: `src/components/vision/standard/tools/pin1-config/` — region
+  edit modes are only `search | package | pin`; no shape picker anywhere.
+- Shape is hardcoded: `usePin1Rule.ts:366` writes `shape: "rectangle"`.
+- Domain supports shapes (`src/domain/vision/shapes.ts`: Rectangle | Circle
+  | Ellipse | Polygon | None) but no UI changes them; canvas geometry
+  (`SearchRegion = {x, y, width, height}`) cannot represent circle/ellipse.
+- Fix targets: `Pin1SettingsCard.tsx` (picker), `Pin1Canvas.tsx` +
+  `pattern-geometry.ts` (circle/ellipse draw + hit-test), `usePin1Rule.ts`
+  (stop hardcoding), `white-box/types.ts` + `white-box-marking.ts`
+  (extend SearchRegion with shape/radius/rotation).
+
+### Grayscale is threshold-whiten only — CONFIRMED
+
+- `toThresholdPreviewRgba` whitens pixels >= threshold, never darkens.
+- `toTwoBitGray` is 4 levels only (0/85/170/255). No contrast stretch,
+  no true 1-bit black/white mode.
+- Fix targets: `white-box-marking.ts` (contrast stretch + 1-bit mode),
+  `GreyscaleSliderCard.tsx` (mode control), `useWhiteBoxMarking.ts` (wire).
+
+### ROI lock + layers absent — CONFIRMED
+
+- Numbered patterns + remove/keep exist (`BoxReviewCard.tsx`,
+  `PatternCanvas.tsx` with `excludedNumbers`).
+- No lock state, no double-click-to-unlock, no rotation handle. Clicking
+  outside the ROI starts a NEW region replacing the old one — this is the
+  likely root cause of "click another place, it just goes from one place
+  to another".
+- Draw order fixed; no context menu, no send-back/bring-forward anywhere
+  in `src/components/vision/`.
+- Layers panel exists ONLY in the editor (`src/components/editor/layers/
+  LayersPanel.tsx`), never imported by any vision marking tool.
+- Fix targets: `useCanvasPointerDrag.ts` + `pattern-geometry.ts`
+  (selection vs creation, lock flag, rotate), `PatternCanvas.tsx` (layer
+  list + draw order + context menu), `white-box/types.ts` (isLocked,
+  zOrder), new `vision/white-box/LayersPanel.tsx`.
+
+### Aug 11 assets — PRESENT
+
+`assets/vision-system-pictures-11Aug/` holds the cited references
+(`vision-inspection-grid-roi-2.jpg`, `ui-feature-extraction-conditions.jpg`,
+`ui-inspection-region-rectangle*.jpg`, etc.). Unreferenced by code; usable
+as spec evidence for the ROI-then-numbered-pattern flow.
