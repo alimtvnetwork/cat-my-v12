@@ -747,3 +747,58 @@ coordinator (all 4 files present, migration header matches spec).
   collisions; pull-before-commit caught two stale reads (sibling's
   `shutdown_route` in `BE/main.py`, sibling's `ui` command in
   processing `main.py`) — re-read and merged rather than overwritten.
+
+## 16. Wave 1 Completion — CLI-UI Element System (31-Oct-25 ~02:12)
+
+Workstream COMPLETE, 3 commits on origin/main, spot-verified by the
+coordinator (registry, CLI command, hook, TS mirror all present).
+
+- Backend — the AGM chain adapted to this stack (browser --app SPA +
+  Python backend on :8787, no Tauri bus, so the backend holds an
+  in-memory packet queue the browser polls):
+  `BE/ui_remote/registry.py` (single source of truth: 14 verified
+  entries, each with Id + visible name + XPath — window controls, exit
+  dialog, simulation player bar + dwell slider, greyscale slider,
+  camera select, workpiece canvas + results regions; no ids invented);
+  `BE/ui_remote/queue.py` (packet queue + JSONL audit trail outside the
+  repo tree); `BE/routes/ui_remote.py` (`GET /elements`, `POST
+  /packets`, `GET /pending`, `POST /results`, `GET /results/{id}`, `GET
+  /audit`, all in the Universal Envelope with registered `E_*` codes);
+  `BE/cli/processing/commands/ui_remote.py` (`processing-cli ui`).
+- Frontend: `src/lib/ui-remote/registry.ts` (generated mirror, never
+  hand-edited); `src/hooks/useUiRemoteControl.ts` (1-second poll; AGM
+  fallback chain getElementById → [data-ui-id] → [data-ui-name] →
+  [data-testid] → [title] → XPath; performs the action through the
+  same code path as a user click — real `el.click()`, native value
+  setter + input/change events for `set`; missing elements captured
+  into the error store as tracked warnings, never silent; navigation
+  via history `pushState` + `popstate`); `src/lib/ui-remote/README.md`
+  (usage doc); `03-ai-scripts/generate-ui-remote-registry.py`
+  (regenerates the TS mirror from Python).
+- Wiring (minimal): `BE/main.py` (router mount),
+  `BE/cli/processing/main.py` (`ui` registration),
+  `StandardAppShell.tsx` (one import + one hook call).
+- Commits: bddfd01d (backend), d9642ae7 (frontend), 354b1b30 (wiring);
+  one push rejected mid-flight (sibling landed first), merged and
+  re-pushed; sibling merge acd654b4 carried the backend batch.
+- Usage: `processing-cli ui ls` (local manifest read, no backend
+  needed); `processing-cli ui click ui-sim-next` (exit 0 = queued, NOT
+  performed); `processing-cli ui click ui-sim-next --wait` (non-zero on
+  failure/timeout); XPath clicks (targets starting with `/` or `(`);
+  `processing-cli ui set ui-greyscale-level 170 --wait`;
+  `processing-cli ui set ui-sim-dwell 2 --wait`;
+  `processing-cli ui audit --limit 20`.
+- NOT built (with reason): vision marking screen buttons
+  (WhiteBoxMarkingTool, Pin1Canvas, Pin1SettingsCard, PatternCanvas)
+  carry zero `data-testid` / `aria-label` / `id` attributes, so there
+  is nothing real to register — ids refused to be invented. The vision
+  workstream (wave 2) must add `data-ui-id` attributes; the registry is
+  extendable (one entry in `BE/ui_remote/registry.py` + rerun the
+  generator). Route scoping is `["*"]` for v1 (ids unique app-wide);
+  tighten per-screen once vision screens gain ids. Greyscale slider
+  XPath is structural (input has no id); a `data-ui-id` on
+  `GreyscaleSliderCard` would make it robust. No end-to-end click was
+  executed against a running app — first live `ui click --wait` run is
+  owed to the end-of-tunnel window.
+- Wave 1 is now fully complete: window controls + swallowing fixes +
+  error SplitDB/CLI + CLI-UI registry, all on origin/main.
