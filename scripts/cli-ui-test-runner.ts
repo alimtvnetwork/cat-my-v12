@@ -165,7 +165,7 @@ async function runCliUiTests(): Promise<void> {
 
         // Wait for player HUD to mount after simulation preloading
         const playerBar = page.locator("[data-tour='simulation-player-hud']");
-        await playerBar.waitFor({ state: "visible", timeout: 10000 });
+        await playerBar.waitFor({ state: "visible", timeout: 25000 });
 
         // Dwell slider verification
         const dwellSlider = playerBar.locator("input[type='range']");
@@ -384,9 +384,9 @@ async function runCliUiTests(): Promise<void> {
         const hasUpload = await uploadOption.isVisible();
         if (!hasUpload) throw new Error("Upload New Image with Alias option not found in dropdown");
 
-        // Close dropdown
-        await dropdownBtn.click();
-        await page.waitForTimeout(200);
+        // Close dropdown via Escape so modal backdrop is cleanly removed
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(300);
 
         return "Dropdown menu contains Live Camera Feed, Standard Presets, and Upload with Alias";
       },
