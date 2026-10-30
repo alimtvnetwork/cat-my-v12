@@ -1,5 +1,6 @@
 import { chromium, type Page, type Browser } from "playwright";
 import * as fs from "node:fs";
+import { HttpMethod } from "@/lib/constants";
 import * as path from "node:path";
 
 let BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
@@ -12,7 +13,7 @@ async function probeActiveBaseUrl(): Promise<string> {
   for (const port of candidatePorts) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}`, {
-        method: "HEAD",
+        method: HttpMethod.Head,
         signal: AbortSignal.timeout(800),
       });
       if (res.status < 500) {
@@ -25,7 +26,10 @@ async function probeActiveBaseUrl(): Promise<string> {
   return "http://127.0.0.1:3000";
 }
 function resolveChromePath(): string {
-  if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)) {
+  if (
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH &&
+    fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
+  ) {
     return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
   }
   const candidates = [

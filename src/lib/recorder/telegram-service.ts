@@ -1,3 +1,4 @@
+import { HttpMethod } from "@/lib/constants";
 export interface TelegramConfig {
   botToken: string;
   chatId: string;
@@ -38,7 +39,9 @@ export function saveTelegramConfig(config: TelegramConfig): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 }
 
-export async function testTelegramConnection(botToken: string): Promise<{ isSuccess: boolean; message: string }> {
+export async function testTelegramConnection(
+  botToken: string,
+): Promise<{ isSuccess: boolean; message: string }> {
   const token = botToken.trim();
 
   if (!token) {
@@ -68,7 +71,9 @@ export async function testTelegramConnection(botToken: string): Promise<{ isSucc
   }
 }
 
-export async function sendTelegramMessage(text: string): Promise<{ isSuccess: boolean; message: string }> {
+export async function sendTelegramMessage(
+  text: string,
+): Promise<{ isSuccess: boolean; message: string }> {
   const config = loadTelegramConfig();
 
   if (!config.botToken || !config.chatId) {
@@ -81,7 +86,7 @@ export async function sendTelegramMessage(text: string): Promise<{ isSuccess: bo
   try {
     const url = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
     const res = await fetch(url, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: config.chatId,

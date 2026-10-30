@@ -1,4 +1,5 @@
 import type { BugReportSummary, RecorderSession } from "@/lib/recorder/types";
+import { HttpMethod } from "@/lib/constants";
 
 export interface SupabaseConfig {
   supabaseUrl: string;
@@ -54,7 +55,9 @@ export function loadSupabaseConfig(): SupabaseConfig {
     const parsed = JSON.parse(raw);
     return {
       supabaseUrl: String(parsed.supabaseUrl ?? DEFAULT_SUPABASE_CONFIG.supabaseUrl).trim(),
-      publishableKey: String(parsed.publishableKey ?? DEFAULT_SUPABASE_CONFIG.publishableKey).trim(),
+      publishableKey: String(
+        parsed.publishableKey ?? DEFAULT_SUPABASE_CONFIG.publishableKey,
+      ).trim(),
       bucketName: String(parsed.bucketName ?? DEFAULT_SUPABASE_CONFIG.bucketName).trim(),
       isEnabled: Boolean(parsed.isEnabled ?? true),
       hasAutoSync: Boolean(parsed.hasAutoSync ?? true),
@@ -118,7 +121,7 @@ export async function testSupabaseConnection(config: SupabaseConfig): Promise<Su
 
   try {
     const res = await fetch(`${url}/rest/v1/`, {
-      method: "GET",
+      method: HttpMethod.Get,
       headers: {
         apikey: key,
         Authorization: `Bearer ${key}`,
@@ -150,7 +153,7 @@ function generateTicketId(): string {
 async function uploadArtifactFile(
   config: SupabaseConfig,
   ticketId: string,
-  base64DataUrl: string
+  base64DataUrl: string,
 ): Promise<boolean> {
   try {
     const base64Content = base64DataUrl.replace(/^data:image\/\w+;base64,/, "");
@@ -164,7 +167,7 @@ async function uploadArtifactFile(
 
     const uploadUrl = `${config.supabaseUrl.replace(/\/+$/, "")}/storage/v1/object/${config.bucketName}/${ticketId}/canvas.png`;
     const res = await fetch(uploadUrl, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: {
         apikey: config.publishableKey,
         Authorization: `Bearer ${config.publishableKey}`,
@@ -180,7 +183,7 @@ async function uploadArtifactFile(
 }
 
 export async function uploadBugReportToSupabase(
-  payload: SupabaseBugReportPayload
+  payload: SupabaseBugReportPayload,
 ): Promise<SupabaseUploadResult> {
   const config = loadSupabaseConfig();
   const ticketId = generateTicketId();
@@ -219,7 +222,7 @@ export async function uploadBugReportToSupabase(
 
     const restUrl = `${config.supabaseUrl.replace(/\/+$/, "")}/rest/v1/bug_reports`;
     const res = await fetch(restUrl, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: {
         apikey: config.publishableKey,
         Authorization: `Bearer ${config.publishableKey}`,

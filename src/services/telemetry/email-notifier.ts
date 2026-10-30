@@ -1,4 +1,5 @@
 import type { BugReportSummary, RecorderSession } from "@/lib/recorder/types";
+import { HttpMethod } from "@/lib/constants";
 
 export interface EmailConfig {
   senderEmail: string;
@@ -165,7 +166,7 @@ Timestamp: ${new Date().toISOString()}
 }
 
 export async function dispatchBugReportEmail(
-  payload: EmailNotificationPayload
+  payload: EmailNotificationPayload,
 ): Promise<EmailNotificationResult> {
   const config = loadEmailConfig();
   const formatted = formatEmailNotification(payload);
@@ -193,7 +194,7 @@ export async function dispatchBugReportEmail(
 
   try {
     const res = await fetch(config.webhookUrl, {
-      method: "POST",
+      method: HttpMethod.Post,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(emailData),
     });
