@@ -18,7 +18,7 @@ export const APP_VERSION_INFO: VersionInfo = {
   commitHash: "038f4b22",
   buildTarget: "HMI Production Web & Desktop",
   highlights: [
-    "Native window controls (minimize, maximize / layer, exit) in titlebar",
+    "Browser window controls (fullscreen toggle, guided app exit with backend shutdown) in titlebar",
     "Application rebranding to Cat Vision, Cat I Vision",
     "Interactive corner-only ROI drag handles & multi-shape masks (Rectangle, Square, Circle)",
     "Layer stacking controls (Bring to Front, Send to Back) & tamper-proof layer locking",

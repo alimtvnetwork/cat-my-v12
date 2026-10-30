@@ -102,6 +102,16 @@ URLs are preserved here for reference.
    both and let the morning call decide).
 7. Which simulation delay paths overshoot (timer stacking vs render block)
    — pending research report.
+8. Native shell decision (spec 54 window controls): true minimize and
+   true window-close are impossible from a browser --app window — JS
+   cannot minimize a window and cannot close a script-unopened window.
+   The implemented behavior is honest browser behavior (fullscreen
+   toggle for maximize, toast guidance for minimize, /shutdown +
+   launcher teardown for Exit). If the product must have real minimize
+   and real close, the morning decision is whether to adopt a native
+   shell (Tauri/Electron) that provides a real window.desktopApi bridge.
+   That is an architecture decision, not a bug fix, and is NOT started
+   in this workstream.
 
 ## 6. Guardrails
 
