@@ -1051,3 +1051,121 @@ state all present in the files).
   with "Cannot fast-forward to multiple branches" while the tree was
   already in sync, subsequent pulls worked; sibling uncommitted edits
   never staged or touched.
+
+## 21. Wave 1 Completion — Hover / Simulation / Camera (31-Oct-25 ~02:25)
+
+### Menu hover — FIXED (2 files)
+
+- `src/components/ui-mode/UiModeSwitch.tsx`: labels now reserve a fixed
+  `w-[70px]` each and reveal by opacity only; the wrapper gap is fixed
+  (`gap-2`, no `group-hover:gap-2`). No width or gap property animates
+  on hover anymore, so header neighbors can never be pushed sideways.
+  The toggle knob still animates (transform only, no layout impact).
+- `src/components/layout/StandardAppShell.tsx` (menu items only; the
+  Exit item untouched): every nav menu item now carries a permanent
+  `border border-transparent`; the active variant changes only the
+  border COLOR (`border-cyan-400/40`), and the simulation-target
+  variant only its color (`border-amber-300`). Active/inactive rows are
+  now pixel-identical in layout — this was the spec-04 1-2px shift
+  (active rows had a border, inactive rows had none).
+- Same file (Simulation launcher button only): the label now uses a
+  grid stack — the longest label ("Loading Simulation...") renders
+  invisible in the same cell, reserving the width — so
+  Simulation / Simulation Running / Loading Simulation... swaps never
+  shift neighbors. No hardcoded pixel width; font-metric independent.
+
+### Simulation timing — FIXED (1 file)
+
+- `src/components/guided-simulation/ProjectCreationAnalysisTour.tsx`:
+  - Wall-clock dwell: elapsed is `Date.now() - stepStartedAt -
+    pausedTotal`, never tick-counted. The dwell clock starts at step
+    start, so target wait folds INTO the dwell instead of adding to it.
+    A 2s dwell now takes ~2s (previously target wait up to 2s + tick
+    drift + 700ms exit transition = 3-5s).
+  - Pause accounting: `togglePause` records pause spans and folds them
+    out of the dwell, so pausing no longer stretches or shrinks a step.
+  - Exit transition: the fixed 700ms timer is removed. `advance()` sets
+    the next step immediately and raises the transition hide, which
+    lifts in the next step's `beginStep` as soon as its target resolves
+    (never orphans over the old page, never waits a fixed delay).
+    `goToPrevious` keeps its deliberate 150ms env-settle delay.
+  - Tooltip flip: Joyride `floatingOptions` changed from
+    `flipOptions/shiftOptions` (padding bags, flip still enabled) to
+    `flip: false` + `shift: { padding: { top: 60, bottom: 120, left: 24,
+    right: 24 } }` per the spec-04 sibling research — the tooltip is
+    now pinned to its placement for every step, so the Next button
+    cannot jump when `runStepAction` moves targets. Shift padding is
+    preserved (bottom 120 clears the fixed player HUD bar).
+  - Tooltip card lock: `minHeight: 160` added to tooltip styles, so
+    content-length variation no longer moves the footer/Next button.
+    (Width was already fixed at 360.)
+  - NOT changed on purpose: `tour-placement.ts` + its test (per-step
+    `{ flipOptions: false }` for tall/side-panel steps) are retained
+    test-covered; the global `flip: false` subsumes them.
+  - NOT changed on purpose: `SimulationPlayerBar.tsx` — verified its
+    buttons change only colors on hover and `active:scale-95` is a
+    transform (no reflow), so the player-bar Next button is not a jump
+    source; changing `transition-all` would only degrade press
+    feedback. The reported simulation Next-button jump is the Joyride
+    tooltip button, fixed above.
+
+### Camera dropdown — FIXED (2 files) + 1 follow-up
+
+- Research correction: spec 9 claimed each `useCameraLibrary()` call
+  creates its own facade — WRONG for this codebase. `makeCameraFacade`
+  has returned a module-level singleton since the initial commit, and
+  `/setup/camera` also saves through it, so in-app saves already
+  notify every dropdown. The real staleness gaps were:
+  - `src/lib/camera/facade.ts`: no listener for out-of-band writes.
+    Added a `storage` event listener (registered once in
+    `ensureStore`): when the camera library key changes in another
+    document (second app window, seed, bundle import), the store
+    reloads and fans out to all hooks. Storage events never fire in
+    the writing document, so own saves never double-fire.
+  - `src/features/projects/modals/SaveCameraSetupModal.tsx`: the reset
+    effect depended on `[open, currentSettingId, all]`, so any library
+    refresh while the modal was open wiped the operator's draft. Deps
+    are now `[open]` only (with the repo-standard eslint-disable
+    comment); reset still runs on every open with open-time values.
+  - `useCameraLibrary.ts`: no change — verified correct (singleton
+    facade, cache invalidated by facade listeners, stable snapshot).
+- NOT changed: `WorkpieceAnalyzeWorkspace.tsx` camera wiring — verified
+  correct (hook called with `isLiveCameraMode`, ref attached to the
+  center-canvas video, status/error UI rendered).
+- FOLLOW-UP (exact file, not this wave): `src/components/vision/
+  white-box/useCameraStream.ts` — stuck "CONNECTING CAMERA"
+  (screenshot bg2jMNWxHjkn). `openCameraStream` itself is sound
+  (getUserMedia resolves or rejects with mapped codes), but the hook
+  has no timeout, no permission-pending state, and no retry: if the
+  browser permission prompt pends (or hides behind the fullscreen
+  --app window), the UI sits on "Connecting Camera" forever with no
+  guidance. Worse, `setIsReady(true)` runs only inside `if
+  (videoRef.current)` — if the ref is null at resolve time, readiness
+  is stranded false forever with a live stream and no error. Required
+  fix: a watchdog (e.g. 15s) that surfaces "camera permission still
+  pending — allow access and retry", decouple readiness from videoRef
+  presence (set ready on stream acquisition; attach srcObject in a
+  separate effect), and a retry affordance. Morning confirmation
+  needed: whether the permission prompt is visible on the user's
+  machine in fullscreen --app mode (MBUD addition).
+
+### Verification status + MBUD additions
+
+- NOT verified at runtime (per program order; edits re-read only).
+  End-of-tunnel wave must: hover the header and confirm zero pixel
+  movement; run a 2s-dwell simulation and time step advances; run a
+  save-camera flow across two app windows; and exercise the stuck
+  camera path after the `useCameraStream` follow-up.
+- FloatingOptions API-shape risk (flagged, not hidden): the
+  `flip: false` / `shift:` shape follows the spec-04 sibling research
+  for react-joyride 3.2; the previous `flipOptions`/`shiftOptions`
+  keys demonstrably did not stop flipping. If the end-of-tunnel
+  typecheck rejects the new keys, fall back to
+  `flipOptions: false` + `shiftOptions: { padding }` and re-verify
+  placement on the real machine.
+- MBUD additions: (a) stuck-camera permission-prompt visibility in
+  fullscreen --app mode; (b) tooltip `minHeight: 160` cosmetic
+  tradeoff (short steps render a taller card) — confirm acceptable.
+- Process notes: shared-tree sync (pull/merge before each commit,
+  targeted adds only, sibling uncommitted edits never staged);
+  commits pushed and origin-verified via ls-remote after each batch.
