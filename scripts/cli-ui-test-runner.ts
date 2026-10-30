@@ -24,7 +24,7 @@ function resolveChromePath(): string {
   return candidates[0];
 }
 
-const CHROME_PATH = resolveChromePath();
+const CHROME_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || resolveChromePath();
 const OUTPUT_DIR = path.resolve(process.cwd(), "reports/e2e-screenshots");
 
 interface StepResult {
@@ -373,7 +373,7 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
-        await dropdownBtn.click();
+        await dropdownBtn.click({ force: true });
         await page.waitForTimeout(300);
 
         const liveCamOption = page.locator("text='Live Camera Feed'");
@@ -404,7 +404,7 @@ async function runCliUiTests(): Promise<void> {
         // Find rule in tree (e.g. Pin 1 Orientation Config)
         const ruleItem = page.locator("text='Pin 1 Orientation Config'").first();
         await ruleItem.waitFor({ state: "visible", timeout: 5000 });
-        await ruleItem.click();
+        await ruleItem.click({ force: true });
         await page.waitForTimeout(400);
 
         // Check canvas visibility
