@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import type {
+  GrayscaleMode,
+  SearchRegion,
+  WhiteBoxMarkingInput,
+} from "@/lib/vision/white-box-marking";
 import {
   getPatternShapePoints,
   isPointInPatternShape,
@@ -28,6 +32,8 @@ export interface Pin1CanvasProps {
   hasGreyscalePreview?: boolean;
   thresholdLuma?: number;
   polarity?: HolePolarityType;
+  /** Grayscale preview mode (spec 54 bits model). Defaults to threshold. */
+  greyscaleMode?: GrayscaleMode;
   /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
   patternShape?: ShapeType;
   dragState: RegionDrag | null;
@@ -41,20 +47,44 @@ function createThresholdPreview(
   source: WhiteBoxMarkingInput,
   threshold = 128,
   polarity = HolePolarityType.DarkIndentation,
+  mode: GrayscaleMode = "threshold",
 ): ImageData {
   const output = new ImageData(source.width, source.height);
   const data = output.data;
   const raw = source.rgba;
   const totalPixels = source.width * source.height;
 
+  // Stretch needs the frame's luma range first (darkest -> 0, brightest
+  // -> 255); threshold/one-bit compare against raw luma.
+  let minLuma = 255;
+  let maxLuma = 0;
+
+  if (mode === "stretch") {
+    for (let i = 0; i < totalPixels; i += 1) {
+      const idx = i * 4;
+      const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+
+      if (luma < minLuma) minLuma = luma;
+      if (luma > maxLuma) maxLuma = luma;
+    }
+  }
+
+  const stretchScale = maxLuma > minLuma ? 255 / (maxLuma - minLuma) : 1;
+
   for (let i = 0; i < totalPixels; i += 1) {
     const idx = i * 4;
-    const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+    let luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+
+    if (mode === "stretch" && maxLuma > minLuma) {
+      luma = Math.min(255, Math.max(0, Math.round((luma - minLuma) * stretchScale)));
+    }
+
     const isTarget =
       polarity === HolePolarityType.DarkIndentation ? luma <= threshold : luma >= threshold;
 
-    // Show continuous greyscale with active hole pixels highlighted in bright white
-    const val = isTarget ? 255 : luma;
+    // Threshold keeps the legacy behavior (target bright white, the rest
+    // continuous greyscale); one-bit reduces everything to pure 0/255.
+    const val = mode === "one-bit" ? (isTarget ? 255 : 0) : isTarget ? 255 : luma;
     data[idx] = val;
     data[idx + 1] = val;
     data[idx + 2] = val;
@@ -146,6 +176,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
           props.source,
           props.thresholdLuma ?? 128,
           props.polarity ?? HolePolarityType.DarkIndentation,
+          props.greyscaleMode ?? "threshold",
         );
         offCtx.putImageData(binData, 0, 0);
       } else {
@@ -301,6 +332,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.hasGreyscalePreview,
     props.thresholdLuma,
     props.polarity,
+    props.greyscaleMode,
     props.patternShape,
     isPatternShapeSelected,
   ]);

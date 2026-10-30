@@ -234,6 +234,8 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
             <div className="min-h-0 flex-1 overflow-y-auto">
             <BoxReviewPanel
               greyscaleLevel={model.greyscaleLevel}
+              greyscaleMode={model.greyscaleMode}
+              onGreyscaleModeChange={model.changeGreyscaleMode}
               marginPx={model.marginPx}
               detectedBoxes={model.detectedBoxes}
               excludedNumbers={model.excludedNumbers}

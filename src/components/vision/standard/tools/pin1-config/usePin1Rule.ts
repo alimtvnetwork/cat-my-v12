@@ -5,6 +5,7 @@ import { fetchBackend } from "@/lib/backend/http";
 import { HttpMethod } from "@/lib/constants";
 import { ShapeType } from "@/domain/vision/shapes";
 import {
+  type GrayscaleMode,
   type SearchRegion,
   type WhiteBoxMarkingInput,
   readImageUrl,
@@ -134,6 +135,10 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [thresholdLuma, setThresholdLuma] = useState<number>(
     typeof pin1Conf.thresholdLuma === "number" ? pin1Conf.thresholdLuma : 35,
   );
+  // Grayscale preview mode (spec 54 bits model). Threshold is the legacy
+  // behavior; stretch/one-bit change the preview bits only — detection
+  // still uses thresholdLuma, so a mode switch never re-runs detection.
+  const [greyscaleMode, setGreyscaleMode] = useState<GrayscaleMode>("threshold");
   const [minCircularity, setMinCircularity] = useState<number>(
     typeof pin1Conf.minCircularityPercent === "number" ? pin1Conf.minCircularityPercent : 45,
   );
@@ -511,6 +516,10 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     if (source) void executeDetection(source, searchRegion, { thresholdLuma: val });
   };
 
+  const changeGreyscaleMode = (mode: GrayscaleMode) => {
+    setGreyscaleMode(mode);
+  };
+
   const handlePolarityChange = (val: HolePolarityType) => {
     setPolarity(val);
 
@@ -883,6 +892,8 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     hasGreyscalePreview,
     patternShape,
     setPatternShape,
+    greyscaleMode,
+    changeGreyscaleMode,
     setIsCameraOpen,
     setDragState,
     handlePolarityChange,

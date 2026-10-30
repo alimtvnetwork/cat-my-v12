@@ -65,6 +65,7 @@ export function StandardPin1ConfigTool(
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
+            greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}

@@ -1,7 +1,7 @@
 import React from "react";
 import { Check, Eye, EyeOff, Loader2, Plus, Save, Target } from "lucide-react";
 import { GreyscaleSliderCard } from "@/components/vision/white-box/GreyscaleSliderCard";
-import type { SearchRegion } from "@/lib/vision/white-box-marking";
+import type { GrayscaleMode, SearchRegion } from "@/lib/vision/white-box-marking";
 import {
   HolePolarityType,
   type Pin1HoleItem,
@@ -25,6 +25,8 @@ export interface Pin1ReviewPanelProps {
   isSaving?: boolean;
   saveMessage?: string | null;
   actionButtonLabel?: string;
+  greyscaleMode?: GrayscaleMode;
+  onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
   onThresholdChange: (val: number) => void;
   onPolarityChange: (val: HolePolarityType) => void;
   onCircularityChange: (val: number) => void;
@@ -58,6 +60,8 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
         <GreyscaleSliderCard
           greyscaleLevel={props.thresholdLuma}
           onGreyscaleChange={props.onThresholdChange}
+          greyscaleMode={props.greyscaleMode}
+          onGreyscaleModeChange={props.onGreyscaleModeChange}
         />
 
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">

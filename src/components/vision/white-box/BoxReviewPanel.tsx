@@ -20,6 +20,8 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
         <GreyscaleSliderCard
           greyscaleLevel={props.greyscaleLevel}
           onGreyscaleChange={props.onGreyscaleChange}
+          greyscaleMode={props.greyscaleMode}
+          onGreyscaleModeChange={props.onGreyscaleModeChange}
         />
 
         <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">

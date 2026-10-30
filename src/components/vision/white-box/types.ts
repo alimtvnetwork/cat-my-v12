@@ -1,4 +1,10 @@
-import type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult } from "@/lib/vision/white-box-marking";
+import type {
+  GrayscaleMode,
+  SearchRegion,
+  WhiteBoxMark,
+  WhiteBoxMarkingInput,
+  WhiteBoxMarkingResult,
+} from "@/lib/vision/white-box-marking";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 
 export interface CanvasPoint {
@@ -87,6 +93,8 @@ export interface BackendResult {
 
 export interface BoxReviewPanelProps {
   greyscaleLevel: number;
+  greyscaleMode?: GrayscaleMode;
+  onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
   marginPx: number;
   detectedBoxes: readonly WhiteBoxMark[];
   excludedNumbers: ReadonlySet<number>;
