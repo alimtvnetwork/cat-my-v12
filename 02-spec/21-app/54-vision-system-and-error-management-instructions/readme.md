@@ -151,6 +151,13 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
     (ROI stays a plain region)? Saved shape values also changed from
     lowercase `"rectangle"` to ShapeType enum values (`"Rectangle"`,
     `"Circle"`, …); the reader accepts both, so old saves load fine.
+12. Stuck-camera permission prompt (spec 54 camera work): is the browser
+    camera permission prompt visible on the user's machine in fullscreen
+    --app mode, or does it hide behind the window (leaving "CONNECTING
+    CAMERA" forever)? Confirms whether the watchdog fix alone suffices.
+13. Tooltip card height (spec 54 simulation work): the pinned tooltip
+    now has `minHeight: 160`, so short steps render a taller card —
+    confirm acceptable.
 
 ## 6. Guardrails
 
@@ -344,6 +351,12 @@ Verified read-only against main. All paths relative.
   `facade.ts` + `store.ts` (listen to `storage` events / call
   `reload()`); `SaveCameraSetupModal.tsx` (reset effect depends on
   `open` only).
+- CORRECTION (wave 2, verified against code): the per-instance-facade
+  claim above was WRONG — `makeCameraFacade` has returned a
+  module-level singleton since the initial commit, and in-app saves
+  already notify every dropdown. The real gaps were cross-document
+  sync (fixed via a `storage` listener in `facade.ts`) and the modal
+  reset deps (fixed). See section 21 for the full correction.
 
 ### Cross-cutting note
 
@@ -1052,7 +1065,7 @@ state all present in the files).
   already in sync, subsequent pulls worked; sibling uncommitted edits
   never staged or touched.
 
-## 21. Wave 1 Completion — Hover / Simulation / Camera (31-Oct-25 ~02:25)
+## 21. Wave 2 Completion — Hover / Simulation / Camera (31-Oct-25 ~02:25)
 
 ### Menu hover — FIXED (2 files)
 
