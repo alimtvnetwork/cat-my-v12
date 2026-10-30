@@ -107,8 +107,10 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
 
 ## 5. MBUD — Matters to Be Discussed in the Morning (Ambiguities)
 
-1. Screenshot contents (above) — confirm each glitch visually once images
-   are in the spec assets folder.
+1. Screenshot contents — RESOLVED 31-Oct-25 ~02:10: all 12 images
+   extracted by parallel agents to `assets/screenshots/` and 4 key images
+   visually confirmed (see section 12). Remaining: confirm the other 8
+   images against their spec 04 descriptions in the morning.
 2. ROI lock interaction: double-click to unlock — confirm the exact gesture
    (double-click vs long-press vs lock toggle).
 3. Pattern numbering scheme: confirm numbering restarts per ROI or is global.
@@ -131,6 +133,17 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
    shell (Tauri/Electron) that provides a real window.desktopApi bridge.
    That is an architecture decision, not a bug fix, and is NOT started
    in this workstream.
+9. Frontend error-code registry alignment (spec 54 error work): the
+   swallowing-fix wave introduced frontend codes (E_PIN1_LOAD_TARGET,
+   E_PATTERN_MATCH_LOAD, E_WHITEBOX_LOAD_IMAGE, E_WHITEBOX_PRUNE_DUPLICATE,
+   E_WORKBENCH_LOAD_IMAGE, E_WORKBENCH_LOAD_FILE, E_WORKPIECE_CACHE_PIXELS,
+   plus JSON.parse codes) recorded as-is by buildCapturedError; they are
+   not yet in any backend code registry. Morning call: align them into
+   the backend registry or accept frontend-only codes.
+10. Stack truncation (spec 54 error work): AC-01 caps stacks at 40
+    frames, but the error SplitDB stores full stacks for step-by-step AI
+    fixing. Morning call: keep full stacks, or truncate at write/read
+    time per AC-01.
 
 ## 6. Guardrails
 
@@ -592,3 +605,200 @@ connects (this screenshot), (b) Radix Portal clipping claimed in spec
 04, (c) stale camera-facade instances / blank save-camera select
 (spec 54 section 9). All three go into the camera workstream; they are
 not competing explanations.
+
+## 13. Wave 1 Completion — Window Controls (31-Oct-25 ~02:10)
+
+Workstream COMPLETE, all changes on origin/main, spot-verified by the
+coordinator (shutdown route present, old reload crash path gone, MBUD
+item 8 present). Subtask 08 marked COMPLETE by the agent.
+
+- `BE/routes/shutdown.py` (new) — `POST /shutdown`, loopback-only
+  (403 otherwise), replies with the success envelope first, then
+  SIGTERM-exits the backend on a 0.5s timer (graceful path via the
+  existing SIGTERM handler, `os._exit(0)` fallback). Frontend bun
+  server deliberately NOT stopped here — the launcher owns that.
+- `BE/main.py` — shutdown router registered (2 lines).
+- `WindowControlButtons.tsx` (rewritten) — honest browser behavior:
+  minimize uses `desktopApi` if a future shell provides it, else a toast
+  saying minimize is unavailable in browser mode; maximize =
+  `desktopApi` or fullscreen toggle, rejections to the error store;
+  close = confirm dialog → `POST /shutdown` (3s abort timeout) →
+  `window.close()` attempt → guidance state ("close this browser
+  window now, Alt+F4 — the launcher stops the remaining services").
+  The old `window.location.href = "/"` reload crash path is GONE. Zero
+  swallowed catches remain in this file.
+- `StandardAppShell.tsx` — Exit menu item dispatches
+  `cat-vision:request-exit`, opening the same confirm dialog; no
+  duplicate exit logic. UiModeSwitch and Simulation button code
+  untouched.
+- `packaging/desktop/start.ps1` + `start.sh` — launcher supervises the
+  stack: keeps the browser PID, waits on it, then POSTs `/shutdown`
+  and stops backend + frontend. A 5s delegation guard skips teardown
+  when the browser exits immediately (handed off to an already-running
+  instance). Failed-start cleanup stops servers when the browser never
+  launches. macOS `open` path unchanged (no PID; teardown via in-app
+  Exit only).
+- `src/lib/version-info.ts` — claim corrected to "Browser window
+  controls (fullscreen toggle, guided app exit with backend shutdown)
+  in titlebar".
+- Commits: f293edea (shutdown endpoint), 65d248c0 (honest controls +
+  single Exit path), acd654b4 (merge syncing parallel agents, clean),
+  a74ec564 (launcher supervision), 63faee20 (claim + MBUD + subtask).
+- NOT verified at runtime (per program order: no builds/tests until
+  end of tunnel). Morning checklist: click each button in the installed
+  app, confirm Exit stops the backend, ports 8787/3000 free, no
+  orphaned `backend-server.exe`/`bun.exe` in Task Manager.
+- Shared-checkout note: one push was initially rejected
+  non-fast-forward (parallel agents landing between batches), resolved
+  with a clean merge; the agent verified its version-info + MBUD edits
+  landed intact via another agent's commit 8e86343b, and never staged
+  anyone else's files.
+
+## 14. Wave 1 Completion — Error Swallowing Fixes (31-Oct-25 ~02:11)
+
+Workstream COMPLETE, both batches on origin/main, spot-verified by the
+coordinator (0 "Ignored" hits across all 179 files in
+src/components/vision/ and 0 in workpiece-rule-analyzer.ts).
+
+- Batch 1 (e540d552, via merge acd654b4): direct
+  `useErrorStore.captureError` in non-render paths, guarded by the
+  existing `isCancelled` flag so unmount noise stays silent:
+  usePin1Rule.ts loadTarget → E_PIN1_LOAD_TARGET; usePatternMatchingRule.ts
+  match → E_PATTERN_MATCH_LOAD; useWhiteBoxMarking.ts image-load →
+  E_WHITEBOX_LOAD_IMAGE and duplicate-prune → E_WHITEBOX_PRUNE_DUPLICATE
+  (loop continues after capture); useStandardWorkbench.ts image-load →
+  E_WORKBENCH_LOAD_IMAGE and file-load → E_WORKBENCH_LOAD_FILE (file name
+  + size as context); VisualToolWorkpieceCanvas.tsx pixel-cache →
+  E_WORKPIECE_CACHE_PIXELS. Every capture carries triggerComponent,
+  triggerAction, and structured context per the spec 03-error-manage
+  contract.
+- Batch 2 (382067a2, HEAD at the time): JSON.parse catches, render-path
+  safe — VisualToolTuningModal.tsx collects failures via an out-param
+  from buildSettingsFromRule (runs inside useMemo) and captures in a
+  useEffect (no store mutation mid-render; context = field + ruleId +
+  payload length only, never raw content); workpiece-rule-analyzer.ts
+  parseBoxesFromParams 4 fields captured via a queueMicrotask-deferred
+  helper with a once-per-payload dedup Set (canvas must not flood the
+  bounded 50-entry history). Fallback behavior preserved everywhere
+  (box-list fallthrough order unchanged, no rethrows added).
+- Not touched, as ordered: history-facade.ts and WindowControlButtons.tsx
+  (other agents' files). No files deleted. Relative paths only.
+- Flagged follow-ups (not silently skipped): VisualToolTuningModal.tsx
+  `readSavedRegion` and workpiece-rule-analyzer.ts `parseStoredRegion`
+  still return null on corrupt JSON without capture — out of assigned
+  lines, left for a follow-up wave; new frontend error codes not yet in
+  any backend registry — recorded as MBUD item 9.
+- Parallel-work note: first pull --ff-only failed on divergence, merged
+  cleanly (no force-push, no rebase/amend); sibling untracked files and
+  uncommitted edits left alone.
+
+## 15. Wave 1 Completion — Error SplitDB + CLI Readout (31-Oct-25 ~02:12)
+
+Workstream COMPLETE, all 4 batches on origin/main, spot-verified by the
+coordinator (all 4 files present, migration header matches spec).
+
+- Batch 1 (9818a2b0): migration **0029** (next after 0028, as the spec
+  suggested) — `BE/db/migrations/task/0029_task_errors.sql`, `Error`
+  table, PascalCase columns (`ErrorId`, `CorrelationId`, `Code`,
+  `Level`, `Message`, `StackTrace`, `Endpoint`, `TriggerComponent`,
+  `SessionId`, `Details`, `CreatedAt`, `PersistedAt`), UNIQUE
+  `CorrelationId` (retried ingests are idempotent skips, not
+  duplicates), indexes on `CreatedAt`/`Code`, terminal `SchemaVersion`
+  row. Follows the `BE/tests/db/test_conventions.py` scanner rules
+  (BEGIN/COMMIT, `*At` INTEGER epoch, no cross-tier REFERENCES).
+  Writer `BE/app/db/writers/error.py`: batch insert, idempotent by
+  `CorrelationId`, validation → `E_BE_BAD_REQUEST`, DB failure →
+  `E_BE_INTERNAL` with the `bin/db-bootstrap.py` hint; AC-01 Details
+  redaction (password/token/secret/api-key/auth/bearer/credit/ssn/
+  private-key, recursive); full stacks kept, no 40-frame truncation
+  (MBUD item 10); `list_errors`/`get_error_by_correlation` readers
+  shared by route + CLI so they cannot drift.
+- Batch 2 (8e86343b): ingest route `BE/routes/errors.py` + router mount
+  in `BE/main.py` — `POST /errors` (single object, array, or `{items:
+  [...]}`; frontend `id` uuid not stored, `CorrelationId` is the
+  identity), `GET /errors` (limit 1-200 default 50, code/level/session/
+  correlation filters, newest first), `GET /errors/{correlationId}`
+  (full stack trace, 404 otherwise). Diagnostic fields fold into
+  `Details`; interaction traces stay in browser history.
+- Batch 3 (cf2e99a0): CLI `BE/cli/processing/commands/errors.py` +
+  registration + helptext — `processing-cli errors list` (filters, full
+  stacks), `errors show <correlationId>`, `errors export --format
+  json|csv` (shapes mirror the frontend serializers in
+  `src/lib/errors/export.ts`; browser-only `id` column empty
+  server-side). Two review catches fixed before commit: a
+  query-param/request-correlation shadowing bug in `GET /errors`, and
+  CSV export rewritten to the frontend column shape.
+- Batch 4 (bb8ad615): facade `src/lib/errors/history-facade.ts` —
+  `saveErrorHistory` now also syncs new entries to `POST /errors`,
+  Backend mode only (resolved from the persisted backend-mode store;
+  Seed mode skips by design, not by swallow). Load/save/clear/backend
+  failures are reported into the error store as synthetic errors with a
+  30s cooldown breaking the report loop; failures still logged every
+  time. The import cycle with `errorStore` is documented in the file
+  header.
+- NOT verified at runtime (per program order: no builds/tests until end
+  of tunnel; Python files syntax-checked only via `ast.parse`).
+  End-of-tunnel wave must exercise: `bin/db-bootstrap.py` applying
+  0029, `POST /errors` round-trip, `processing-cli errors list/show/
+  export`, and facade sync in Backend mode (recorded in subtask 09).
+- Email/Supabase bug-report path NOT built here — out of this
+  workstream's file ownership (greenfield modules for a later wave).
+- Shared-checkout note: sibling waves landed alongside without file
+  collisions; pull-before-commit caught two stale reads (sibling's
+  `shutdown_route` in `BE/main.py`, sibling's `ui` command in
+  processing `main.py`) — re-read and merged rather than overwritten.
+
+## 16. Wave 1 Completion — CLI-UI Element System (31-Oct-25 ~02:12)
+
+Workstream COMPLETE, 3 commits on origin/main, spot-verified by the
+coordinator (registry, CLI command, hook, TS mirror all present).
+
+- Backend — the AGM chain adapted to this stack (browser --app SPA +
+  Python backend on :8787, no Tauri bus, so the backend holds an
+  in-memory packet queue the browser polls):
+  `BE/ui_remote/registry.py` (single source of truth: 14 verified
+  entries, each with Id + visible name + XPath — window controls, exit
+  dialog, simulation player bar + dwell slider, greyscale slider,
+  camera select, workpiece canvas + results regions; no ids invented);
+  `BE/ui_remote/queue.py` (packet queue + JSONL audit trail outside the
+  repo tree); `BE/routes/ui_remote.py` (`GET /elements`, `POST
+  /packets`, `GET /pending`, `POST /results`, `GET /results/{id}`, `GET
+  /audit`, all in the Universal Envelope with registered `E_*` codes);
+  `BE/cli/processing/commands/ui_remote.py` (`processing-cli ui`).
+- Frontend: `src/lib/ui-remote/registry.ts` (generated mirror, never
+  hand-edited); `src/hooks/useUiRemoteControl.ts` (1-second poll; AGM
+  fallback chain getElementById → [data-ui-id] → [data-ui-name] →
+  [data-testid] → [title] → XPath; performs the action through the
+  same code path as a user click — real `el.click()`, native value
+  setter + input/change events for `set`; missing elements captured
+  into the error store as tracked warnings, never silent; navigation
+  via history `pushState` + `popstate`); `src/lib/ui-remote/README.md`
+  (usage doc); `03-ai-scripts/generate-ui-remote-registry.py`
+  (regenerates the TS mirror from Python).
+- Wiring (minimal): `BE/main.py` (router mount),
+  `BE/cli/processing/main.py` (`ui` registration),
+  `StandardAppShell.tsx` (one import + one hook call).
+- Commits: bddfd01d (backend), d9642ae7 (frontend), 354b1b30 (wiring);
+  one push rejected mid-flight (sibling landed first), merged and
+  re-pushed; sibling merge acd654b4 carried the backend batch.
+- Usage: `processing-cli ui ls` (local manifest read, no backend
+  needed); `processing-cli ui click ui-sim-next` (exit 0 = queued, NOT
+  performed); `processing-cli ui click ui-sim-next --wait` (non-zero on
+  failure/timeout); XPath clicks (targets starting with `/` or `(`);
+  `processing-cli ui set ui-greyscale-level 170 --wait`;
+  `processing-cli ui set ui-sim-dwell 2 --wait`;
+  `processing-cli ui audit --limit 20`.
+- NOT built (with reason): vision marking screen buttons
+  (WhiteBoxMarkingTool, Pin1Canvas, Pin1SettingsCard, PatternCanvas)
+  carry zero `data-testid` / `aria-label` / `id` attributes, so there
+  is nothing real to register — ids refused to be invented. The vision
+  workstream (wave 2) must add `data-ui-id` attributes; the registry is
+  extendable (one entry in `BE/ui_remote/registry.py` + rerun the
+  generator). Route scoping is `["*"]` for v1 (ids unique app-wide);
+  tighten per-screen once vision screens gain ids. Greyscale slider
+  XPath is structural (input has no id); a `data-ui-id` on
+  `GreyscaleSliderCard` would make it robust. No end-to-end click was
+  executed against a running app — first live `ui click --wait` run is
+  owed to the end-of-tunnel window.
+- Wave 1 is now fully complete: window controls + swallowing fixes +
+  error SplitDB/CLI + CLI-UI registry, all on origin/main.
