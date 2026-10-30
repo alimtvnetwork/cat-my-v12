@@ -214,7 +214,8 @@ def mark_downloaded(client: SupabaseClient, report_id: str) -> dict[str, Any]:
 def audit(limit: int = 50) -> list[dict[str, Any]]:
     """Most recent delivery audit lines, newest first."""
     try:
-        lines = open(audit_path(), encoding="utf-8").read().splitlines()
+        with open(audit_path(), encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
     except OSError:
         return []
 
