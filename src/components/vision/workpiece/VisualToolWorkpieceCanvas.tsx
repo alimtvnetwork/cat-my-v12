@@ -985,8 +985,14 @@ export function VisualToolWorkpieceCanvas({
   const [autoDetectedBoxesByRuleId, setAutoDetectedBoxesByRuleId] = useState<
     Record<string, WhiteBoxMark[]>
   >({});
-  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
-  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number; initialRoi: WorkpieceRoi } | null>(null);
+  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(
+    null,
+  );
+  const [dragStartPos, setDragStartPos] = useState<{
+    x: number;
+    y: number;
+    initialRoi: WorkpieceRoi;
+  } | null>(null);
   const [cursorHandleType, setCursorHandleType] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
   const [isMovingRoi, setIsMovingRoi] = useState(false);
   const [isDraggingPin1, setIsDraggingPin1] = useState(false);
@@ -2134,7 +2140,8 @@ export function VisualToolWorkpieceCanvas({
       const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
       const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
       const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
-      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
 
       const hit = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
 
@@ -2224,10 +2231,7 @@ export function VisualToolWorkpieceCanvas({
 
     // 3. Search Region body drag (move ROI)
     const isInsideRoi =
-      x >= roi.x &&
-      x <= roi.x + roi.width &&
-      y >= roi.y &&
-      y <= roi.y + roi.height;
+      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
     if (isEditable && onChangeRoi && isInsideRoi) {
       setIsMovingRoi(true);
@@ -2342,16 +2346,14 @@ export function VisualToolWorkpieceCanvas({
       const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
       const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
       const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
-      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
 
       const hover = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
       setCursorHandleType(hover);
 
       const isInside =
-        x >= roi.x &&
-        x <= roi.x + roi.width &&
-        y >= roi.y &&
-        y <= roi.y + roi.height;
+        x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
       setIsHoveringRoi(isInside && !hover);
     }
@@ -2412,14 +2414,7 @@ export function VisualToolWorkpieceCanvas({
     }
 
     return "default";
-  }, [
-    activeCornerHandle,
-    cursorHandleType,
-    isDraggingPin1,
-    isHoveringRoi,
-    isMovingRoi,
-    isPin1,
-  ]);
+  }, [activeCornerHandle, cursorHandleType, isDraggingPin1, isHoveringRoi, isMovingRoi, isPin1]);
 
   const visualRulesList = overlayRules.length > 0 ? overlayRules : [];
   const visualPassCount =

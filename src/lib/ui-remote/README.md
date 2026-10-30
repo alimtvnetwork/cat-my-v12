@@ -23,7 +23,7 @@ Never edit `src/lib/ui-remote/registry.ts` by hand.
 
 - `GET /ui-remote/elements?route=` — registry entries for a route.
 - `POST /ui-remote/packets` — enqueue `{ action, elementId?, xpath?,
-  route?, value?, actor? }`. Actions: click, scroll, focus, set, navigate.
+route?, value?, actor? }`. Actions: click, scroll, focus, set, navigate.
 - `GET /ui-remote/pending` — queued packets (polled by the hook).
 - `POST /ui-remote/results` — hook execution result per packet.
 - `GET /ui-remote/results/{packetId}` — queued or completed state.

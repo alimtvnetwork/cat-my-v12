@@ -89,4 +89,3 @@ export interface Pin1MarkingToolProps {
   onImageRegistered?: (imageRef: string) => void;
   hasCanvasOverlays?: boolean;
 }
-

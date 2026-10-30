@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Download, Loader2, X, Mail, Send, Settings, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  X,
+  Mail,
+  Send,
+  Settings,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
 import { IssueCategoryType, type BugReportSummary } from "@/lib/recorder/types";
@@ -19,9 +28,15 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [isExporting, setIsExporting] = useState(false);
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
-  const [telegramStatus, setTelegramStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+  const [telegramStatus, setTelegramStatus] = useState<{
+    isSuccess: boolean;
+    message: string;
+  } | null>(null);
   const [isSendingBugReport, setIsSendingBugReport] = useState(false);
-  const [bugReportStatus, setBugReportStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+  const [bugReportStatus, setBugReportStatus] = useState<{
+    isSuccess: boolean;
+    message: string;
+  } | null>(null);
 
   const [summary, setSummary] = useState<BugReportSummary>({
     title: "",
@@ -114,7 +129,8 @@ ${summary.actualBehavior || "N/A"}`;
     if (baseUrl === null) {
       setBugReportStatus({
         isSuccess: false,
-        message: "Backend is not connected (Seed mode) — run the app in Backend mode to send bug reports.",
+        message:
+          "Backend is not connected (Seed mode) — run the app in Backend mode to send bug reports.",
       });
 
       return;
@@ -137,7 +153,8 @@ ${summary.actualBehavior || "N/A"}`;
             }>;
           };
           const supabase = configBody.Results?.[0]?.supabase;
-          const isSupabaseUsable = supabase?.is_configured === true && supabase?.is_enabled === true;
+          const isSupabaseUsable =
+            supabase?.is_configured === true && supabase?.is_enabled === true;
           channels = isSupabaseUsable ? ["email", "supabase"] : ["email"];
           channelNote = isSupabaseUsable
             ? " via email + Supabase"

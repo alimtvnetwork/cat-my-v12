@@ -12,8 +12,12 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
   return (
     <aside className="flex h-full flex-col overflow-hidden bg-[#11161b] text-ca-ink">
       <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#2a3138] bg-[#151c23] px-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.14em]">Pattern Configuration</span>
-        <span className="rounded border border-[#303943] bg-[#0c1116] px-2 py-0.5 font-mono text-[10px] text-ca-ink-muted">T116</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+          Pattern Configuration
+        </span>
+        <span className="rounded border border-[#303943] bg-[#0c1116] px-2 py-0.5 font-mono text-[10px] text-ca-ink-muted">
+          T116
+        </span>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-3">
@@ -27,9 +31,7 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
         <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#303943] pb-2">
             <span className="text-xs font-semibold uppercase tracking-[0.12em]">Regions</span>
-            <span className="font-mono text-[10px] text-ca-ink-muted">
-              Search / Pattern / Mask
-            </span>
+            <span className="font-mono text-[10px] text-ca-ink-muted">Search / Pattern / Mask</span>
           </div>
 
           <div className="grid grid-cols-3 gap-1">
@@ -156,11 +158,17 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
             </span>
             {hasBoxes && (
               <div className="flex items-center gap-1 text-[10px]">
-                <button type="button" onClick={props.onIncludeAll} className="hover:text-ca-select">All</button>
+                <button type="button" onClick={props.onIncludeAll} className="hover:text-ca-select">
+                  All
+                </button>
                 <span>/</span>
-                <button type="button" onClick={props.onExcludeAll} className="hover:text-rose-400">None</button>
+                <button type="button" onClick={props.onExcludeAll} className="hover:text-rose-400">
+                  None
+                </button>
                 <span>/</span>
-                <button type="button" onClick={props.onInvert} className="hover:text-ca-select">Invert</button>
+                <button type="button" onClick={props.onInvert} className="hover:text-ca-select">
+                  Invert
+                </button>
               </div>
             )}
           </div>
@@ -178,7 +186,9 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
                 />
               ))
             ) : (
-              <p className="text-center py-4 text-[11px] text-ca-ink-muted">No boxes detected yet.</p>
+              <p className="text-center py-4 text-[11px] text-ca-ink-muted">
+                No boxes detected yet.
+              </p>
             )}
           </div>
         </div>

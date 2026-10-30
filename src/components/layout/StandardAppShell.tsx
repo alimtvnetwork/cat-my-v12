@@ -30,7 +30,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { WindowControlButtons, WINDOW_EXIT_REQUEST_EVENT } from "@/components/layout/WindowControlButtons";
+import {
+  WindowControlButtons,
+  WINDOW_EXIT_REQUEST_EVENT,
+} from "@/components/layout/WindowControlButtons";
 import { VersionInfoModal } from "@/components/layout/VersionInfoModal";
 import { APP_VERSION_INFO } from "@/lib/version-info";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
@@ -499,10 +502,7 @@ export function StandardAppShell({
         </div>
       </header>
 
-      <VersionInfoModal
-        isOpen={isVersionModalOpen}
-        onClose={() => setIsVersionModalOpen(false)}
-      />
+      <VersionInfoModal isOpen={isVersionModalOpen} onClose={() => setIsVersionModalOpen(false)} />
 
       {/* Action Strip (Rendered only when actions are supplied) */}
       {actions && (

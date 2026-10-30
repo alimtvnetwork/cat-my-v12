@@ -17,7 +17,12 @@ import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode } from "./types";
+import {
+  HolePolarityType,
+  type Pin1HoleItem,
+  type Pin1MatchResult,
+  type Pin1RegionEditMode,
+} from "./types";
 
 export interface Pin1CanvasProps {
   source: WhiteBoxMarkingInput | null;
@@ -127,9 +132,10 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     }
   }
 
-  const [internalLayerOrder, setInternalLayerOrder] = useState<
-    readonly ("search" | "package")[]
-  >(["search", "package"]);
+  const [internalLayerOrder, setInternalLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
   const layerOrder = props.layerOrder ?? internalLayerOrder;
 
   function setLayerOrder(next: readonly ("search" | "package")[]): void {
@@ -266,11 +272,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
     // ROI, drawn inscribed in the search region. Rectangle needs no
     // overlay — the region rect already is the shape.
-    if (
-      props.searchRegion &&
-      props.patternShape &&
-      props.patternShape !== ShapeType.Rectangle
-    ) {
+    if (props.searchRegion && props.patternShape && props.patternShape !== ShapeType.Rectangle) {
       drawPatternShapeOverlay(ctx, {
         region: props.searchRegion,
         shape: props.patternShape,
@@ -302,7 +304,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const hasRule = Boolean(props.registeredPin1);
       const isMatchedActiveHole = props.matchResult?.activeHole?.id === hole.id;
       const isPass = props.matchResult?.isPass ?? false;
-      const isPrimary = hasRule ? (isMatchedActiveHole && isPass) : (hole.isPrimaryPin1 && hole.isKept);
+      const isPrimary = hasRule ? isMatchedActiveHole && isPass : hole.isPrimaryPin1 && hole.isKept;
 
       const strokeColor = !hole.isKept
         ? "rgba(244, 63, 94, 0.45)"
@@ -351,7 +353,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const badgeX = hole.centerX + hole.radius + 6;
       const badgeY = hole.centerY - 7;
 
-      const isBadgeSuccess = !hasRule ? isPrimary : (isMatchedActiveHole && isPass);
+      const isBadgeSuccess = !hasRule ? isPrimary : isMatchedActiveHole && isPass;
       const isBadgeError = hasRule && isMatchedActiveHole && !isPass;
 
       ctx.fillStyle = isBadgeSuccess
@@ -372,7 +374,6 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
       ctx.restore();
     }
-
   }, [
     props.source,
     props.searchRegion,
@@ -406,7 +407,10 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
             return;
           }
 
-          if (props.regionEditMode === "pin" && registerPointAtEvent(event, props, canvasRef.current)) {
+          if (
+            props.regionEditMode === "pin" &&
+            registerPointAtEvent(event, props, canvasRef.current)
+          ) {
             return;
           }
 

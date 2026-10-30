@@ -54,8 +54,7 @@ export function useStandardWorkbench(props: UseStandardWorkbenchProps) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [dragState, setDragState] = useState<RegionDrag | null>(null);
 
-  const initialRegion =
-    parseSavedRegion(props.settings.searchRegion) ??
+  const initialRegion = parseSavedRegion(props.settings.searchRegion) ??
     props.defaultRegion ?? {
       x: 220,
       y: 120,
@@ -164,13 +163,10 @@ export function useStandardWorkbench(props: UseStandardWorkbenchProps) {
     [props],
   );
 
-  const handleCaptureFrame = useCallback(
-    (input: WhiteBoxMarkingInput) => {
-      setSource(input);
-      setIsCameraOpen(false);
-    },
-    [],
-  );
+  const handleCaptureFrame = useCallback((input: WhiteBoxMarkingInput) => {
+    setSource(input);
+    setIsCameraOpen(false);
+  }, []);
 
   const toggleFilteredPreview = useCallback(() => {
     setHasFilteredPreview((prev) => !prev);

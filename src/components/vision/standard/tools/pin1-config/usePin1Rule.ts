@@ -19,10 +19,7 @@ import { EditorRuleKindType, EditorToolFamilyType } from "@/lib/editor/types";
 import type { Rule, RuleId } from "@/lib/rules/model";
 import { syncRuleToBackend } from "@/lib/rules/backendSync";
 import { useErrorStore } from "@/lib/stores/errorStore";
-import {
-  detectRoundHolesInRegion,
-  evaluatePin1AgainstReference,
-} from "./round-hole-detector";
+import { detectRoundHolesInRegion, evaluatePin1AgainstReference } from "./round-hole-detector";
 import {
   HolePolarityType,
   Pin1JudgmentStatusType,
@@ -204,9 +201,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [message, setMessage] = useState("Load image to start.");
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [hasGreyscalePreview, setHasGreyscalePreview] = useState(
-    props?.hasCanvasOverlays ?? true,
-  );
+  const [hasGreyscalePreview, setHasGreyscalePreview] = useState(props?.hasCanvasOverlays ?? true);
 
   const getVisibleHoles = useCallback(
     (holes: Pin1HoleItem[]): Pin1HoleItem[] => {
@@ -218,24 +213,34 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
       if (registeredPin1) {
         const best = [...kept].sort((a, b) => {
-          const da = Math.hypot(a.centerX - registeredPin1.centerX, a.centerY - registeredPin1.centerY);
-          const db = Math.hypot(b.centerX - registeredPin1.centerX, b.centerY - registeredPin1.centerY);
+          const da = Math.hypot(
+            a.centerX - registeredPin1.centerX,
+            a.centerY - registeredPin1.centerY,
+          );
+          const db = Math.hypot(
+            b.centerX - registeredPin1.centerX,
+            b.centerY - registeredPin1.centerY,
+          );
 
           return da - db;
         })[0];
 
-        return holes.map((h) => ({
-          ...h,
-          isPrimaryPin1: h.id === best.id,
-        })).filter((h) => h.id === best.id);
+        return holes
+          .map((h) => ({
+            ...h,
+            isPrimaryPin1: h.id === best.id,
+          }))
+          .filter((h) => h.id === best.id);
       }
 
       const best = kept.find((h) => h.isPrimaryPin1) ?? kept[0];
 
-      return holes.map((h) => ({
-        ...h,
-        isPrimaryPin1: h.id === best.id,
-      })).filter((h) => h.id === best.id);
+      return holes
+        .map((h) => ({
+          ...h,
+          isPrimaryPin1: h.id === best.id,
+        }))
+        .filter((h) => h.id === best.id);
     },
     [registeredPin1],
   );
@@ -346,9 +351,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
   useEffect(() => {
     let isCancelled = false;
-    const explicitUrl =
-      (props as any)?.imageRef ||
-      (props?.settings as any)?.imageRef;
+    const explicitUrl = (props as any)?.imageRef || (props?.settings as any)?.imageRef;
 
     if (source !== null) {
       return;
@@ -528,7 +531,8 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
   const registerPin1AtPoint = useCallback(
     (point: { x: number; y: number }) => {
-      const radius = registeredPin1?.radius ?? Math.max(6, Math.round((minRadiusPx + maxRadiusPx) / 2));
+      const radius =
+        registeredPin1?.radius ?? Math.max(6, Math.round((minRadiusPx + maxRadiusPx) / 2));
       const nextPin1 = createRegisteredPin1Item({
         x: point.x,
         y: point.y,
@@ -556,7 +560,15 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       setMessage(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}.`);
       toast.success(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}`);
     },
-    [detectedHoles, maxRadiusPx, minRadiusPx, packageRegion, registeredPin1, searchRegion, tolerancePx],
+    [
+      detectedHoles,
+      maxRadiusPx,
+      minRadiusPx,
+      packageRegion,
+      registeredPin1,
+      searchRegion,
+      tolerancePx,
+    ],
   );
 
   const runDetection = useCallback(async () => {
@@ -628,7 +640,9 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     await executeDetection(input, activeSearchRegion);
 
     setIsCameraOpen(false);
-    setMessage("Captured frame from camera. Analyzing workpiece for circular Pin 1 fiducial hole...");
+    setMessage(
+      "Captured frame from camera. Analyzing workpiece for circular Pin 1 fiducial hole...",
+    );
   };
 
   const clearCanvas = () => {
@@ -920,4 +934,3 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     savePin1Rule,
   };
 }
-

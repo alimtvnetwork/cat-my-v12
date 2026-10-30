@@ -81,14 +81,15 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
   const isRotationEnabled = props.onRegionRotationChange !== undefined;
 
   const activeLayerId =
-    regionEditMode === "mask" && props.selectedMaskIndex !== null && props.selectedMaskIndex !== undefined
+    regionEditMode === "mask" &&
+    props.selectedMaskIndex !== null &&
+    props.selectedMaskIndex !== undefined
       ? `mask-${props.selectedMaskIndex}`
       : regionEditMode === "pattern"
         ? "pattern"
         : "roi";
   const isActiveHidden = hiddenLayerIds.has(activeLayerId);
-  const isLockedForDrag =
-    (regionEditMode === "search" && isSearchRegionLocked) || isActiveHidden;
+  const isLockedForDrag = (regionEditMode === "search" && isSearchRegionLocked) || isActiveHidden;
 
   const drag = useCanvasPointerDrag({
     source: props.source,
@@ -186,7 +187,11 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
 
     const searchRegion = props.searchRegion;
 
-    if (searchRegion !== null && searchRegion !== undefined && isPointInRegion(point, searchRegion)) {
+    if (
+      searchRegion !== null &&
+      searchRegion !== undefined &&
+      isPointInRegion(point, searchRegion)
+    ) {
       setContextMenu({
         x: e.clientX,
         y: e.clientY,
@@ -547,7 +552,13 @@ function drawEditableRegion(
   ctx: CanvasRenderingContext2D,
   region: SearchRegion,
   label: string,
-  tone: { stroke: string; fill: string; text: string; hasHandles: boolean; hasRotateHandle: boolean },
+  tone: {
+    stroke: string;
+    fill: string;
+    text: string;
+    hasHandles: boolean;
+    hasRotateHandle: boolean;
+  },
 ): void {
   ctx.save();
   ctx.strokeStyle = tone.stroke;

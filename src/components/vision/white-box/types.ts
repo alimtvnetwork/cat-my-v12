@@ -28,7 +28,11 @@ export interface CanvasLayer {
   zOrder: number;
 }
 
-export type LayerContextAction = "bring-forward" | "send-backward" | "toggle-lock" | "toggle-visibility";
+export type LayerContextAction =
+  | "bring-forward"
+  | "send-backward"
+  | "toggle-lock"
+  | "toggle-visibility";
 
 export interface LayersPanelProps {
   layers: readonly CanvasLayer[];

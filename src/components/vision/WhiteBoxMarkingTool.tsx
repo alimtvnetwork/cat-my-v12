@@ -15,10 +15,11 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
   const [regionOrder, setRegionOrder] = useState<readonly string[] | null>(null);
   const [layerRotations, setLayerRotations] = useState<Readonly<Record<string, number>>>({});
   const [selectedBoxLayerId, setSelectedBoxLayerId] = useState<string | null>(null);
-  const buttonLabel = props.actionButtonLabel ?? (props.settings ? "Apply Pattern" : "Save Pattern");
+  const buttonLabel =
+    props.actionButtonLabel ?? (props.settings ? "Apply Pattern" : "Save Pattern");
   const activeRegion =
     model.regionEditMode === "mask" && model.selectedMaskIndex !== null
-      ? model.maskRegions[model.selectedMaskIndex] ?? null
+      ? (model.maskRegions[model.selectedMaskIndex] ?? null)
       : model.regionEditMode === "pattern"
         ? model.patternRegion
         : model.searchRegion;
@@ -233,38 +234,38 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
             className="flex w-[400px] shrink-0 flex-col overflow-hidden rounded border border-[#2a3138] bg-[#11161b] shadow-sm"
           >
             <div className="min-h-0 flex-1 overflow-y-auto">
-            <BoxReviewPanel
-              greyscaleLevel={model.greyscaleLevel}
-              greyscaleMode={model.greyscaleMode}
-              onGreyscaleModeChange={model.changeGreyscaleMode}
-              marginPx={model.marginPx}
-              detectedBoxes={model.detectedBoxes}
-              excludedNumbers={model.excludedNumbers}
-              formulatedPattern={model.formulatedPattern}
-              searchRegion={model.searchRegion}
-              patternRegion={model.patternRegion}
-              maskRegions={model.maskRegions}
-              regionEditMode={model.regionEditMode}
-              selectedMaskIndex={model.selectedMaskIndex}
-              isSaving={model.isSaving}
-              saveMessage={model.saveMessage}
-              onGreyscaleChange={model.changeGreyscaleLevel}
-              onMarginChange={model.changeMarginPx}
-              onRegionEditModeChange={model.changeRegionEditMode}
-              onAddMaskRegion={model.addMaskRegion}
-              onAddPatternRegion={model.addPatternRegion}
-              onSelectMaskRegion={model.selectMaskRegion}
-              onDeleteMaskRegion={model.deleteMaskRegion}
-              onRemoveBox={model.removeBox}
-              onRestoreBox={model.restoreBox}
-              onToggleBox={model.toggleBox}
-              onIncludeAll={model.includeAllBoxes}
-              onExcludeAll={model.excludeAllBoxes}
-              onInvert={model.invertExclusions}
-              onApplyPattern={model.applyPatternGeometry}
-              actionButtonLabel={buttonLabel}
-              onCancel={props.onCancel}
-            />
+              <BoxReviewPanel
+                greyscaleLevel={model.greyscaleLevel}
+                greyscaleMode={model.greyscaleMode}
+                onGreyscaleModeChange={model.changeGreyscaleMode}
+                marginPx={model.marginPx}
+                detectedBoxes={model.detectedBoxes}
+                excludedNumbers={model.excludedNumbers}
+                formulatedPattern={model.formulatedPattern}
+                searchRegion={model.searchRegion}
+                patternRegion={model.patternRegion}
+                maskRegions={model.maskRegions}
+                regionEditMode={model.regionEditMode}
+                selectedMaskIndex={model.selectedMaskIndex}
+                isSaving={model.isSaving}
+                saveMessage={model.saveMessage}
+                onGreyscaleChange={model.changeGreyscaleLevel}
+                onMarginChange={model.changeMarginPx}
+                onRegionEditModeChange={model.changeRegionEditMode}
+                onAddMaskRegion={model.addMaskRegion}
+                onAddPatternRegion={model.addPatternRegion}
+                onSelectMaskRegion={model.selectMaskRegion}
+                onDeleteMaskRegion={model.deleteMaskRegion}
+                onRemoveBox={model.removeBox}
+                onRestoreBox={model.restoreBox}
+                onToggleBox={model.toggleBox}
+                onIncludeAll={model.includeAllBoxes}
+                onExcludeAll={model.excludeAllBoxes}
+                onInvert={model.invertExclusions}
+                onApplyPattern={model.applyPatternGeometry}
+                actionButtonLabel={buttonLabel}
+                onCancel={props.onCancel}
+              />
             </div>
             <div className="h-[240px] shrink-0">
               <LayersPanel
@@ -339,7 +340,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               {model.isProcessing ? "Processing" : "Run"}
             </button>
           </div>
-          
+
           <span className="font-mono text-xs text-ca-ink-muted">{model.message}</span>
         </div>
       </div>

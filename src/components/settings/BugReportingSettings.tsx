@@ -39,9 +39,7 @@ function resolveBackendUrl(): string {
     const raw = globalThis.localStorage?.getItem(BACKEND_STORAGE_KEY);
     if (!raw) return DEFAULT_BACKEND_URL;
     const parsed = JSON.parse(raw) as unknown;
-    const state = (parsed as { state?: unknown }).state as
-      | { baseUrl?: unknown }
-      | undefined;
+    const state = (parsed as { state?: unknown }).state as { baseUrl?: unknown } | undefined;
     const baseUrl = state?.baseUrl;
     return typeof baseUrl === "string" && baseUrl ? baseUrl : DEFAULT_BACKEND_URL;
   } catch {
@@ -135,7 +133,9 @@ export function BugReportingSettings(): React.JSX.Element | null {
       }
       setTestResult(view);
       if (!view.is_verified) {
-        setNotice("Tables missing: run BE/bug_reports/schema.sql in the Supabase dashboard SQL editor, then test again.");
+        setNotice(
+          "Tables missing: run BE/bug_reports/schema.sql in the Supabase dashboard SQL editor, then test again.",
+        );
       }
     } catch (err) {
       setNotice(`Endpoint test failed: ${String(err)}`);
@@ -194,7 +194,11 @@ export function BugReportingSettings(): React.JSX.Element | null {
               data-ui-id="bug-report-supabase-key"
               type="password"
               className="rounded-md border border-ca-border bg-ca-panel-2 px-hmi-3 py-hmi-2 text-hmi-body text-ca-ink"
-              placeholder={config?.supabase.has_key ? "Key already stored — leave blank to keep it" : "Paste anon or service key"}
+              placeholder={
+                config?.supabase.has_key
+                  ? "Key already stored — leave blank to keep it"
+                  : "Paste anon or service key"
+              }
               value={supabaseKey}
               onChange={(event) => setSupabaseKey(event.target.value)}
             />
@@ -255,9 +259,7 @@ export function BugReportingSettings(): React.JSX.Element | null {
         title="Bug Reports — Email"
         description="Reports go to the notifier address via go-email-reader, which owns the credentials. Nothing secret is stored in this app."
         statusLabel={
-          config?.email_sender_resolves && config?.email_notifier_resolves
-            ? "Ready"
-            : "Needs setup"
+          config?.email_sender_resolves && config?.email_notifier_resolves ? "Ready" : "Needs setup"
         }
       >
         <div className="flex flex-col gap-hmi-2 text-hmi-caption text-ca-ink-muted">

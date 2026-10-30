@@ -1,23 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  type PatternMatchResult,
-  type ReferenceBoxItem,
-} from "@/lib/vision/pattern-matcher";
+import { type PatternMatchResult, type ReferenceBoxItem } from "@/lib/vision/pattern-matcher";
 import {
   readImageFile,
   type SearchRegion,
   type WhiteBoxMarkingInput,
 } from "@/lib/vision/white-box-marking";
 import type { RegionDrag } from "@/components/vision/white-box/types";
-import {
-  evaluateChipPixelsReal,
-  getAtmelReferenceBoxes,
-} from "./atmel-chip-boxes";
-import {
-  CHIP_GOOD_DATA_URL,
-  CHIP_STM8_DATA_URL,
-} from "./chip-assets";
+import { evaluateChipPixelsReal, getAtmelReferenceBoxes } from "./atmel-chip-boxes";
+import { CHIP_GOOD_DATA_URL, CHIP_STM8_DATA_URL } from "./chip-assets";
 
 import type { PatternMatchingRuleProps } from "./types";
 import { useConveyorSimulation } from "./useConveyorSimulation";
@@ -186,9 +177,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
   useEffect(() => {
     let isCancelled = false;
-    const targetUrl =
-      (props as any)?.imageRef ||
-      (props.settings as any)?.imageRef;
+    const targetUrl = (props as any)?.imageRef || (props.settings as any)?.imageRef;
 
     if (!targetUrl || source !== null) {
       return;
@@ -275,8 +264,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   // Load Golden Atmel Sample
   const loadSampleAtmel = useCallback(async () => {
     try {
-      const { source: stdSource, searchRegion: stdRegion } =
-        await dataUrlToStandardImageInput(CHIP_GOOD_DATA_URL, true);
+      const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
+        CHIP_GOOD_DATA_URL,
+        true,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -302,8 +293,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   // Load New Device: STM8 Defective Sample
   const loadSampleStm8 = useCallback(async () => {
     try {
-      const { source: stdSource, searchRegion: stdRegion } =
-        await dataUrlToStandardImageInput(CHIP_STM8_DATA_URL, true);
+      const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
+        CHIP_STM8_DATA_URL,
+        true,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -335,8 +328,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
     setIsMatching(true);
 
-    const effectiveRegion =
-      searchRegion ?? createDefaultSearchRegion(source.width, source.height);
+    const effectiveRegion = searchRegion ?? createDefaultSearchRegion(source.width, source.height);
 
     if (!searchRegion) {
       setSearchRegion(effectiveRegion);
@@ -373,8 +365,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
     try {
       const bitmap = await createImageBitmap(file);
-      const { source: stdSource, searchRegion: stdRegion } =
-        await normalizeImageToStandardCanvas(bitmap, bitmap.width, bitmap.height, false);
+      const { source: stdSource, searchRegion: stdRegion } = await normalizeImageToStandardCanvas(
+        bitmap,
+        bitmap.width,
+        bitmap.height,
+        false,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -425,8 +421,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         imgData.data.set(input.rgba);
         offCtx.putImageData(imgData, 0, 0);
 
-        const { source: stdSource, searchRegion: stdRegion } =
-          await normalizeImageToStandardCanvas(offCanvas, input.width, input.height, false);
+        const { source: stdSource, searchRegion: stdRegion } = await normalizeImageToStandardCanvas(
+          offCanvas,
+          input.width,
+          input.height,
+          false,
+        );
 
         setSource(stdSource);
         setSearchRegion(stdRegion);
