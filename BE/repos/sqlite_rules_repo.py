@@ -182,13 +182,16 @@ class SqliteRulesRepo:
                 (committed.RuleSetId, committed.Name, committed.Version, is_enabled, payload_json),
             )
 
-    def save_rule_set(self, envelope: RuleSetEnvelope) -> RuleSetEnvelope:
+    def save_rule_set(self, envelope: RuleSetEnvelope | dict[str, Any]) -> RuleSetEnvelope:
         self._ensure_recipe_table()
+        if isinstance(envelope, dict):
+            envelope = parse_envelope(envelope)
+        rule_set_id = envelope.RuleSetId
         try:
-            prior_version = self._fetch_existing_version(envelope.RuleSetId)
+            prior_version = self._fetch_existing_version(rule_set_id)
             has_existing = prior_version is not None
             new_version = self._resolve_next_version(
-                envelope.Version, prior_version, envelope.RuleSetId
+                envelope.Version, prior_version, rule_set_id
             )
             committed = self._commit_envelope(envelope, new_version)
             self._upsert_recipe(committed, has_existing=has_existing)
@@ -196,7 +199,7 @@ class SqliteRulesRepo:
         except AppError as exc:
             _record_repo_failure(
                 operation="save_rule_set",
-                rule_set_id=envelope.RuleSetId,
+                rule_set_id=rule_set_id,
                 error=exc,
             )
             raise
@@ -208,7 +211,7 @@ class SqliteRulesRepo:
             )
             _record_repo_failure(
                 operation="save_rule_set",
-                rule_set_id=envelope.RuleSetId,
+                rule_set_id=rule_set_id,
                 error=wrapped,
             )
             raise wrapped from e

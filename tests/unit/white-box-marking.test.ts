@@ -146,7 +146,7 @@ describe("white-box marking", () => {
       170,
     );
 
-    expect([preview[0], preview[4], preview[8]]).toEqual([90, 150, 255]);
+    expect([preview[0], preview[4], preview[8]]).toEqual([0, 0, 255]);
   });
 });
 

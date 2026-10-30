@@ -135,7 +135,7 @@ export function StandardRoiSetup(props?: StandardRoiSetupProps): React.JSX.Eleme
         toast.error("Failed to save ROI settings.");
       }
     } else {
-      toast.success("ROI and Mask configuration applied to active inspection rule.");
+      toast.warning("No active rule configuration loaded.");
     }
   };
 
@@ -168,13 +168,15 @@ export function StandardRoiSetup(props?: StandardRoiSetupProps): React.JSX.Eleme
       try {
         await saveRuleSet(nextEnvelope);
         toast.success("Saved Region of Interest (ROI) settings.");
+        void navigate({ to: "/setup" });
       } catch (err) {
         console.error("[StandardRoiSetup] saveRuleSet failed on OK", err);
+        toast.error("Failed to save ROI settings. Please try again.");
       }
     } else {
-      toast.success("Saved Region of Interest (ROI) settings.");
+      toast.warning("No active rule configuration loaded.");
+      void navigate({ to: "/setup" });
     }
-    void navigate({ to: "/setup" });
   };
 
   const handleCancel = () => {

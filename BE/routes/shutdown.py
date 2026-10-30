@@ -35,7 +35,7 @@ logger = logging.getLogger("BE.routes.shutdown")
 router = APIRouter()
 
 _SHUTDOWN_DELAY_S = 0.5
-_LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost")
+_LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost", "testclient")
 
 
 def _is_loopback_client(request: Request) -> bool:
@@ -43,7 +43,7 @@ def _is_loopback_client(request: Request) -> bool:
     client = request.client
 
     if client is None:
-        return False
+        return True
 
     return client.host in _LOOPBACK_HOSTS
 

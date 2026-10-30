@@ -143,8 +143,8 @@ function RunPage() {
           }
         }
       })
-      .catch(() => {
-        /* ignore offline telemetry */
+      .catch((telemetryError: unknown) => {
+        console.warn("[Run] Telemetry offline or uninitialized:", telemetryError);
       });
   }, []);
 
@@ -344,7 +344,8 @@ function RunPage() {
             });
           }
         })
-        .catch(() => {
+        .catch((evalErr: unknown) => {
+          console.warn("[Run] Remote evaluation fallback to mock engine:", evalErr);
           // Graceful fallback for offline / mock mode
           const tick = useRunStore.getState().tick;
           const isOk = sample.isPass;
