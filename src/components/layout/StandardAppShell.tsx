@@ -361,7 +361,7 @@ export function StandardAppShell({
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
                             ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
-                            : "text-slate-300 hover:bg-white/10 hover:text-white",
+                            : "text-slate-300 hover:bg-white/10 hover:text-white border border-transparent",
                           isSimulationProjectTarget &&
                             "border border-amber-300 bg-amber-400/20 text-amber-100 ring-2 ring-amber-300/80 shadow-[0_0_20px_rgba(251,191,36,0.45)] animate-pulse",
                         )}
@@ -405,7 +405,7 @@ export function StandardAppShell({
                           "flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer transition-colors outline-none",
                           isCurrentActive
                             ? "bg-cyan-500/20 text-cyan-200 font-semibold border border-cyan-400/40 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
-                            : "text-slate-300 hover:bg-white/10 hover:text-white",
+                            : "text-slate-300 hover:bg-white/10 hover:text-white border border-transparent",
                         )}
                       >
                         <div className="flex min-w-0 items-center gap-2">

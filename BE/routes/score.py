@@ -74,8 +74,8 @@ def _load_image_bytes(url_or_data: str | None) -> bytes:
         if c.is_file():
             try:
                 return c.read_bytes()
-            except OSError:
-                pass
+            except OSError as err:
+                logger.debug("candidate_read_failed", extra={"path": str(c), "error": str(err)})
 
     if _DEFAULT_SAMPLE_PATH.exists():
         return _DEFAULT_SAMPLE_PATH.read_bytes()

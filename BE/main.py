@@ -60,8 +60,26 @@ def _setup_signals() -> None:
         signal.signal(signal.SIGTERM, _sigterm_handler)
 
 
+def _run_startup_migrations() -> None:
+    """Preflight startup migrations for root.db, task.db, and rules.db."""
+    try:
+        from BE.cli.common.doctor import _load_bootstrap_module
+        from BE.cli.common.paths import resolve_root
+
+        bootstrap = _load_bootstrap_module()
+        db_root = resolve_root("db", ensure=True)
+
+        for tier in ("root", "task", "rules"):
+            bootstrap._bootstrap_tier(tier, db_root, sys.stderr)
+
+        logger.info("db_migrations_applied", extra={"operation": "startup", "db_root": str(db_root)})
+    except Exception as exc:
+        logger.warning("db_migration_warning", extra={"operation": "startup", "error": str(exc)})
+
+
 @asynccontextmanager
 async def _app_lifespan(app: FastAPI):
+    _run_startup_migrations()
     yield
     logger.info("lifespan_shutdown", extra={"operation": "shutdown"})
     logging.shutdown()

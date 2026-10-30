@@ -33,7 +33,7 @@ _POLL_INTERVAL_S = 0.5
 def configure(parser: argparse.ArgumentParser) -> None:
     """CLI flags for the `ui` subcommand."""
 
-    parser.add_argument("action", choices=["ls", "click", "scroll", "navigate", "set", "audit", "result"])
+    parser.add_argument("action", choices=["ls", "click", "scroll", "navigate", "set", "audit", "result", "grayscale"])
     parser.add_argument("target", nargs="?", default=None, help="Element id, xpath, route, or packet id.")
     parser.add_argument("value", nargs="?", default=None, help="Value for `set` (and only for `set`).")
     parser.add_argument("--route", default=None, help="Screen route the element lives on.")
@@ -41,6 +41,10 @@ def configure(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--timeout", type=float, default=15.0, help="Seconds to wait with --wait.")
     parser.add_argument("--backend", default=None, help="Backend base URL (env UI_REMOTE_BACKEND_URL).")
     parser.add_argument("--limit", type=int, default=50, help="Audit entries for `audit`.")
+    parser.add_argument("--threshold", type=int, default=None, help="Grayscale threshold (0-255) for headless calibration.")
+    parser.add_argument("--bit-depth", choices=["1-bit", "2-bit", "8-bit"], default=None, help="Grayscale bit-depth mode.")
+    parser.add_argument("--contrast", type=int, default=None, help="Contrast enhancement factor (0-100).")
+    parser.add_argument("--tolerance", type=int, default=None, help="Grayscale tolerance window in pixels.")
 
 
 def _backend_url(ns: argparse.Namespace) -> str:
@@ -190,8 +194,71 @@ def _handle_action(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any
     return _wait_result(backend, queued["packetId"], ns.timeout)
 
 
+def _handle_grayscale(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
+    """Headless CLI tuning for grayscale bit-depth, threshold, and contrast parameters."""
+
+    params: dict[str, Any] = {}
+
+    if ns.threshold is not None:
+        params["threshold"] = max(0, min(255, ns.threshold))
+    elif ns.value is not None:
+        try:
+            params["threshold"] = max(0, min(255, int(ns.value)))
+        except ValueError:
+            pass
+
+    if ns.bit_depth is not None:
+        params["bitDepth"] = ns.bit_depth
+
+    if ns.contrast is not None:
+        params["contrast"] = max(0, min(100, ns.contrast))
+
+    if ns.tolerance is not None:
+        params["tolerance"] = max(0, ns.tolerance)
+
+    if not params:
+        params = {"threshold": 170, "bitDepth": "1-bit", "contrast": 0, "tolerance": 8}
+
+    backend = _backend_url(ns)
+    hasRemoteQueued = False
+
+    try:
+        packet: dict[str, Any] = {
+            "action": "grayscale",
+            "actor": "cli",
+            "parameters": params,
+            "route": ns.route or "/analyze",
+            "value": json.dumps(params),
+        }
+        _post_packet(backend, packet)
+        hasRemoteQueued = True
+    except Exception:
+        hasRemoteQueued = False
+
+    result = {
+        "action": "grayscale",
+        "actor": "cli",
+        "parameters": params,
+        "isHeadlessTuning": True,
+        "hasRemoteQueued": hasRemoteQueued,
+        "status": "applied",
+    }
+
+    context.logger.log(
+        "INFO",
+        "ui.grayscale_tuned",
+        f"Headless grayscale parameters tuned: threshold={params.get('threshold')}, bitDepth={params.get('bitDepth')}, contrast={params.get('contrast')}, tolerance={params.get('tolerance')}",
+        ctx=result,
+    )
+
+    return result
+
+
 def handle(ns: argparse.Namespace, context: SessionCtx) -> dict[str, Any]:
     """Dispatch one `ui` action; the dispatcher wraps the envelope."""
+
+    if ns.action == "grayscale":
+        return _handle_grayscale(ns, context)
 
     if ns.action == "ls":
         return _handle_ls(ns)

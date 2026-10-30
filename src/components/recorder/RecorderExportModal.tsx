@@ -1,12 +1,31 @@
 import React, { useState } from "react";
-import { Download, Loader2, X, Mail, Send, Settings, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  X,
+  Mail,
+  Send,
+  Settings,
+  CheckCircle2,
+  AlertCircle,
+  Cloud,
+  CloudUpload,
+} from "lucide-react";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
 import { IssueCategoryType, type BugReportSummary } from "@/lib/recorder/types";
 import { sendTelegramMessage } from "@/lib/recorder/telegram-service";
+import { useErrorStore } from "@/lib/stores/errorStore";
+import { useRulesStore } from "@/lib/editor/store/rules-slice";
+import {
+  uploadBugReportToSupabase,
+  type SupabaseUploadResult,
+} from "@/services/telemetry/supabase-client";
+import { dispatchBugReportEmail } from "@/services/telemetry/email-notifier";
 import { RecorderSummaryForm } from "./RecorderSummaryForm";
 import { RecorderTimelinePreview } from "./RecorderTimelinePreview";
 import { TelegramSettingsModal } from "./TelegramSettingsModal";
+import { SupabaseSettingsModal } from "@/components/telemetry/SupabaseSettingsModal";
 
 export function RecorderExportModal(): React.JSX.Element | null {
   const isExportModalOpen = useRecorderStore((s) => s.isExportModalOpen);
@@ -19,6 +38,10 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [telegramStatus, setTelegramStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
+  const [isUploadingSupabase, setIsUploadingSupabase] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseUploadResult | null>(null);
 
   const [summary, setSummary] = useState<BugReportSummary>({
     title: "",
@@ -44,7 +67,17 @@ export function RecorderExportModal(): React.JSX.Element | null {
     }
   };
 
-  const handleEmailReport = () => {
+  const handleEmailReport = async () => {
+    const splitDbErrors = useErrorStore.getState().history;
+    const activeRules = useRulesStore.getState().rules;
+
+    void dispatchBugReportEmail({
+      session,
+      summary,
+      splitDbErrors,
+      activeRecipeEnvelope: { rules: activeRules, rulesCount: activeRules.length },
+    });
+
     const subject = encodeURIComponent(`[Bug Report] ${summary.title || "Cat Vision UI Issue"}`);
     const bodyText = `Cat Vision (Cat I Vision) Bug Report
 --------------------------------------
@@ -98,6 +131,47 @@ ${summary.actualBehavior || "N/A"}`;
     }
   };
 
+  const handleUploadSupabase = async () => {
+    setIsUploadingSupabase(true);
+    setSupabaseStatus(null);
+
+    const splitDbErrors = useErrorStore.getState().history;
+    const activeRules = useRulesStore.getState().rules;
+    const canvasScreenshot =
+      session.screenshots.find((s) => s.source === "canvas")?.dataUrl ||
+      session.screenshots[0]?.dataUrl;
+
+    try {
+      const result = await uploadBugReportToSupabase({
+        session,
+        summary,
+        splitDbErrors,
+        activeRecipeEnvelope: { rules: activeRules, rulesCount: activeRules.length },
+        canvasScreenshot,
+        interactionTimeline: session.events,
+      });
+
+      setSupabaseStatus(result);
+
+      void dispatchBugReportEmail({
+        session,
+        summary,
+        splitDbErrors,
+        activeRecipeEnvelope: { rules: activeRules, rulesCount: activeRules.length },
+        ticketId: result.ticketId,
+      });
+
+      if (result.isSuccess && !result.isOfflineQueued) {
+        window.setTimeout(() => {
+          setExportModalOpen(false);
+          cancelRecording();
+        }, 2000);
+      }
+    } finally {
+      setIsUploadingSupabase(false);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -106,18 +180,28 @@ ${summary.actualBehavior || "N/A"}`;
             <div>
               <h2 className="text-base font-bold text-white">Export Activity & Bug Report</h2>
               <p className="text-xs text-slate-400">
-                Download ZIP, email support, or dispatch directly to Telegram chat.
+                Download ZIP, email support, or dispatch directly to Supabase cloud & Telegram.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => setIsSupabaseModalOpen(true)}
+                title="Configure Supabase Cloud"
+                className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-300 hover:text-white hover:bg-white/10"
+              >
+                <Cloud className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Supabase Setup</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setIsTelegramModalOpen(true)}
                 title="Configure Telegram Bot"
                 className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-300 hover:text-white hover:bg-white/10"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-3.5 w-3.5 text-sky-400" />
                 <span>Telegram Setup</span>
               </button>
 
@@ -134,6 +218,23 @@ ${summary.actualBehavior || "N/A"}`;
           <RecorderSummaryForm summary={summary} onChange={setSummary} />
 
           <RecorderTimelinePreview events={session.events} screenshots={session.screenshots} />
+
+          {supabaseStatus ? (
+            <div
+              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
+                supabaseStatus.isSuccess
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+              }`}
+            >
+              {supabaseStatus.isSuccess ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0" />
+              )}
+              <span>{supabaseStatus.message}</span>
+            </div>
+          ) : null}
 
           {telegramStatus ? (
             <div
@@ -197,6 +298,21 @@ ${summary.actualBehavior || "N/A"}`;
 
               <button
                 type="button"
+                disabled={isUploadingSupabase}
+                onClick={handleUploadSupabase}
+                title="Upload diagnostic bundle to Supabase cloud"
+                className="flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+              >
+                {isUploadingSupabase ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CloudUpload className="h-3.5 w-3.5" />
+                )}
+                <span>Upload to Cloud / Submit Ticket (Supabase)</span>
+              </button>
+
+              <button
+                type="button"
                 disabled={isExporting}
                 onClick={handleDownload}
                 className="flex items-center gap-1.5 rounded bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
@@ -212,6 +328,11 @@ ${summary.actualBehavior || "N/A"}`;
           </div>
         </div>
       </div>
+
+      <SupabaseSettingsModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
+      />
 
       <TelegramSettingsModal
         isOpen={isTelegramModalOpen}

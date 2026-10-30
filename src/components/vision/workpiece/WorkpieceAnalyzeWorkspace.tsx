@@ -37,6 +37,7 @@ import { sessionAnalysisBus } from "@/lib/editor/selection/session-analysis-bus"
 import { useWorkspaceSaveStore } from "./workspace-save-store";
 import { MAX_RECENT_IMAGE_SOURCES, useImageSourceRecentsStore } from "./image-source-recents-store";
 import { InspectionHierarchyTree } from "./InspectionHierarchyTree";
+import { PhotoshopLayersPanel, type VisionLayerItem } from "@/components/vision/layers";
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
@@ -158,7 +159,7 @@ export function WorkpieceAnalyzeWorkspace({
    * area shows only what the current session's run produced.
    */
   const [hasSessionAnalysis, setHasSessionAnalysis] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "source">("tree");
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"tree" | "layers" | "source">("tree");
   /** Rule id whose tool configuration is open inline (right viewport), if any. */
   const [configRuleId, setConfigRuleId] = useState<string | null>(null);
   const [evaluatingRuleId, setEvaluatingRuleId] = useState<string | null>(null);
@@ -293,6 +294,19 @@ export function WorkpieceAnalyzeWorkspace({
 
     return map;
   }, [projectAnalysisItems]);
+
+  const visionLayers: VisionLayerItem[] = useMemo(() => {
+    return projectOverlayRules.map((rule, idx) => ({
+      id: rule.id,
+      name: rule.name,
+      type: (rule.params?.toolCode === "T102" || rule.params?.toolCode === "T116" || rule.params?.toolCode === "T105" ? "pattern" : "roi"),
+      isVisible: !rule.isHidden,
+      isLocked: Boolean(rule.isLocked),
+      colorTag: "#22d3ee",
+      zIndex: rule.orderIndex ?? idx,
+      ruleId: rule.id,
+    }));
+  }, [projectOverlayRules]);
 
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
     if (searchRule && rules.some((r) => r.id === searchRule)) {
@@ -1307,32 +1321,57 @@ export function WorkpieceAnalyzeWorkspace({
             >
               {/* Tab switchers: Program vs Image Source */}
               <div className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-black/60 p-0.5">
-                <div className="grid w-full grid-cols-2 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
+                <div className="grid w-full grid-cols-3 gap-1 font-sans text-[11px] font-bold uppercase tracking-wider">
                   <button
                     type="button"
+                    id="btn-sidebar-tab-tree"
+                    data-automation-id="btn-sidebar-tab-tree"
+                    data-automation-name="Program Tree Tab"
+                    data-automation-xpath="//button[@id='btn-sidebar-tab-tree']"
                     data-tour="project-program-tab"
                     onClick={() => setActiveSidebarTab("tree")}
-                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                    className={`flex items-center justify-center gap-1 rounded-md px-1.5 py-1 transition ${
                       activeSidebarTab === "tree"
                         ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
                         : "text-white/60 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <FolderTree size={12} />
-                    <span>Program ({projectAnalysisItems.length})</span>
+                    <span>Program</span>
                   </button>
                   <button
                     type="button"
+                    id="btn-sidebar-tab-layers"
+                    data-automation-id="btn-sidebar-tab-layers"
+                    data-automation-name="Layers Stack Tab"
+                    data-automation-xpath="//button[@id='btn-sidebar-tab-layers']"
+                    data-tour="project-layers-tab"
+                    onClick={() => setActiveSidebarTab("layers")}
+                    className={`flex items-center justify-center gap-1 rounded-md px-1.5 py-1 transition ${
+                      activeSidebarTab === "layers"
+                        ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Layers size={12} />
+                    <span>Layers</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-sidebar-tab-source"
+                    data-automation-id="btn-sidebar-tab-source"
+                    data-automation-name="Image Source Tab"
+                    data-automation-xpath="//button[@id='btn-sidebar-tab-source']"
                     data-tour="project-image-source-tab"
                     onClick={() => setActiveSidebarTab("source")}
-                    className={`flex items-center justify-center gap-1.5 rounded-md px-2 py-1 transition ${
+                    className={`flex items-center justify-center gap-1 rounded-md px-1.5 py-1 transition ${
                       activeSidebarTab === "source"
                         ? "bg-[oklch(0.76_0.145_210)] text-[#0a0d14] shadow-sm font-bold"
                         : "text-white/60 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <Camera size={12} />
-                    <span>Image & Source</span>
+                    <span>Source</span>
                   </button>
                 </div>
                 <button
@@ -1369,6 +1408,21 @@ export function WorkpieceAnalyzeWorkspace({
                     onConfigureRule={handleOpenRuleConfig}
                     onUpdateCameraSettings={handleUpdateRuleCameraSettings}
                     onUpdateLightSettings={handleUpdateRuleLightSettings}
+                  />
+                </div>
+              ) : activeSidebarTab === "layers" ? (
+                <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden">
+                  <PhotoshopLayersPanel
+                    layers={visionLayers}
+                    selectedLayerId={activeRule?.id ?? null}
+                    onSelectLayer={(id) => handleSelectProjectRule(id)}
+                    onToggleVisibility={(id) => railHandlers.onToggleHidden(id)}
+                    onToggleLocked={(id) => railHandlers.onToggleLocked(id)}
+                    onBringToFront={(id) => railHandlers.onBringToFront(id)}
+                    onSendToBack={(id) => railHandlers.onSendToBack(id)}
+                    onMoveUp={(id) => railHandlers.onMove(id, "up")}
+                    onMoveDown={(id) => railHandlers.onMove(id, "down")}
+                    onDeleteLayer={(id) => railHandlers.onDelete(id)}
                   />
                 </div>
               ) : (

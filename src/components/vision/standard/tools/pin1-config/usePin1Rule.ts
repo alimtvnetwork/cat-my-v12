@@ -27,6 +27,7 @@ import {
   type Pin1HoleItem,
   type Pin1MatchResult,
   type Pin1RegionEditMode,
+  type Pin1ShapeType,
   type Pin1ToolProps,
 } from "./types";
 
@@ -125,6 +126,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     readRegion(pin1Conf.packageRegion ?? settings?.packageRegion),
   );
   const [regionEditMode, setRegionEditMode] = useState<Pin1RegionEditMode>("search");
+  const [shapeType, setShapeType] = useState<Pin1ShapeType>(pin1Conf.shapeType ?? "circle");
 
   const [dragState, setDragState] = useState<RegionDrag | null>(null);
   const [source, setSource] = useState<WhiteBoxMarkingInput | null>(null);
@@ -818,6 +820,8 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     searchRegion,
     packageRegion,
     regionEditMode,
+    shapeType,
+    setShapeType,
     dragState,
     polarity,
     thresholdLuma,

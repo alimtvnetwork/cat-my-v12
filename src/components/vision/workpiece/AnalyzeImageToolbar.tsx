@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -92,24 +97,6 @@ export function AnalyzeImageToolbar({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [isDropdownOpen]);
 
   // Inspect natural dimensions of current image
   useEffect(() => {
@@ -186,7 +173,7 @@ export function AnalyzeImageToolbar({
   }, []);
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.08] bg-black/60 px-3 py-2 backdrop-blur-md">
+    <div className="relative z-30 flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.08] bg-black/60 px-3 py-2 backdrop-blur-md">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -196,46 +183,54 @@ export function AnalyzeImageToolbar({
         onChange={handleFileChange}
       />
 
-      {/* Left: Source Selector Dropdown */}
-      <div className="relative flex items-center gap-2" ref={dropdownRef}>
+      {/* Left: Source Selector Dropdown with Radix Portal to prevent container clipping */}
+      <div className="flex items-center gap-2">
         <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-white/50">
           Source:
         </span>
 
-        <button
-          type="button"
-          data-tour="project-image-selector-dropdown"
-          onClick={() => setIsDropdownOpen((prev) => !prev)}
-          className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 font-sans text-xs font-semibold text-white shadow-sm transition hover:border-cyan-400/40 hover:bg-white/10 active:scale-95"
-        >
-          {isLiveCameraMode ? (
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  isLiveCameraReady
-                    ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]"
-                    : "bg-amber-400 animate-pulse"
-                }`}
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              id="btn-camera-source-dropdown"
+              data-automation-id="btn-camera-source-dropdown"
+              data-automation-name="Camera Source Dropdown"
+              data-automation-xpath="//button[@id='btn-camera-source-dropdown']"
+              data-tour="project-image-selector-dropdown"
+              className="flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 font-sans text-xs font-semibold text-white shadow-sm transition hover:border-cyan-400/40 hover:bg-white/10 active:scale-95"
+            >
+              {isLiveCameraMode ? (
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      isLiveCameraReady
+                        ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+                        : "bg-amber-400 animate-pulse"
+                    }`}
+                  />
+                  <Camera size={13} />
+                  <span>Live Camera</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-cyan-200">
+                  <FileImage size={13} className="text-cyan-400" />
+                  <span className="max-w-[200px] truncate">{activeLabel}</span>
+                </span>
+              )}
+
+              <ChevronDown
+                size={13}
+                className={`text-white/50 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
               />
-              <Camera size={13} />
-              <span>Live Camera</span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 text-cyan-200">
-              <FileImage size={13} className="text-cyan-400" />
-              <span className="max-w-[200px] truncate">{activeLabel}</span>
-            </span>
-          )}
+            </button>
+          </DropdownMenuTrigger>
 
-          <ChevronDown
-            size={13}
-            className={`text-white/50 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {/* Dropdown Menu */}
-        {isDropdownOpen ? (
-          <div className="absolute left-0 top-full z-[60] mt-1 w-80 rounded-xl border border-white/15 bg-[#0b0e14] p-1.5 shadow-2xl backdrop-blur-2xl">
+          <DropdownMenuContent
+            align="start"
+            sideOffset={6}
+            className="z-[999] w-80 rounded-xl border border-white/15 bg-[#0b0e14] p-1.5 shadow-2xl backdrop-blur-2xl text-white"
+          >
             {/* Live Camera Option */}
             <div className="border-b border-white/[0.08] pb-1 mb-1">
               <button
@@ -354,15 +349,19 @@ export function AnalyzeImageToolbar({
             <div className="border-t border-white/[0.08] mt-1.5 pt-1.5">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  fileInputRef.current?.click();
+                }}
                 className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/20 bg-white/[0.02] py-2 font-sans text-xs font-semibold text-cyan-300 transition hover:border-cyan-400/50 hover:bg-cyan-500/10 active:scale-95"
               >
                 <Plus size={13} />
                 <span>Upload New Image with Alias</span>
               </button>
             </div>
-          </div>
-        ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
         {/* Quick Presets Inline Buttons (hidden when Live Camera is active) */}
         {!isLiveCameraMode ? (

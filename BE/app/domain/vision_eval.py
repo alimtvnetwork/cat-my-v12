@@ -260,8 +260,8 @@ async def evaluate_grayscale_tolerance(
                 if smp_tile.shape != ref_tile.shape:
                     try:
                         smp_tile = cv2.resize(smp_tile, (ref_tile.shape[1], ref_tile.shape[0]))
-                    except Exception:
-                        pass
+                    except Exception as resize_err:
+                        logger.warning("slice_resize_failed", extra={"error": str(resize_err)})
 
                 best_slice_diff = 999.0
                 best_slice_angle = 0.0
@@ -279,8 +279,8 @@ async def evaluate_grayscale_tolerance(
                     )
                     if abs(shift_x) < 30 and abs(shift_y) < 30:
                         dx, dy = float(shift_x), float(shift_y)
-                except Exception:
-                    pass
+                except Exception as pc_err:
+                    logger.debug("phase_correlate_failed", extra={"error": str(pc_err)})
 
                 # Check small angular tilt adjustments (-3.0 to +3.0 degrees)
                 angles = [0.0] if (abs(dx) < 2 and abs(dy) < 2) else [-3.0, -1.5, 0.0, 1.5, 3.0]

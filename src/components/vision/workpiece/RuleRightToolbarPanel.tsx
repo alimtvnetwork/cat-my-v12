@@ -20,6 +20,10 @@ import {
   Type,
   X,
   XCircle,
+  Hexagon,
+  Square,
+  Circle,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import type { EditorRule } from "@/lib/editor/types";
@@ -173,6 +177,28 @@ function RuleRightToolbarPanelContent({
 
   const activeBoxCount =
     typeof rule.params?.activeBoxCount === "number" ? rule.params.activeBoxCount : 1;
+
+  const shapeType = String((rule.params as any)?.shapeType || "rectangle").toLowerCase();
+
+  const circleDiameter =
+    typeof (rule.params as any)?.diameterPx === "number"
+      ? (rule.params as any).diameterPx
+      : Math.round(Math.min(rule.width, rule.height));
+
+  const circularityTolerance =
+    typeof (rule.params as any)?.minCircularityPct === "number"
+      ? (rule.params as any).minCircularityPct
+      : 80;
+
+  const polygonVertexCount =
+    typeof (rule.params as any)?.vertexCount === "number"
+      ? (rule.params as any).vertexCount
+      : 6;
+
+  const isPatternRule =
+    toolCode === "T102" ||
+    rule.name.toLowerCase().includes("pattern") ||
+    rule.name.toLowerCase().includes("white box");
 
   const handleParamChange = useCallback(
     (key: string, value: any) => {
@@ -438,30 +464,87 @@ function RuleRightToolbarPanelContent({
 
           {/* Region Shape Selection */}
           <div className="space-y-1 pt-1 border-t border-white/10">
-            <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-              Region Shape
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                Region Shape
+              </span>
+              <span className="text-[9px] font-mono uppercase text-cyan-400">
+                {shapeType}
+              </span>
+            </div>
 
-            <div className="grid grid-cols-3 gap-1">
-              {(["rectangle", "square", "circle"] as const).map((shape) => {
-                const isSelected = (rule.params?.shapeType || "rectangle") === shape;
+            <div className="grid grid-cols-4 gap-1">
+              {(["rectangle", "square", "circle", "polygon"] as const).map((shape) => {
+                const isSelected = shapeType === shape;
 
                 return (
                   <button
                     key={shape}
                     type="button"
                     onClick={() => handleParamChange("shapeType", shape)}
-                    className={`rounded-md py-1 text-[10px] font-bold uppercase transition ${
+                    className={`flex items-center justify-center gap-1 rounded-md py-1 text-[10px] font-bold uppercase transition ${
                       isSelected
                         ? "border border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
                         : "border border-white/10 bg-white/5 text-white/50 hover:text-white"
                     }`}
                   >
-                    {shape}
+                    {shape === "rectangle" && <Square size={10} />}
+                    {shape === "square" && <Square size={10} className="scale-90" />}
+                    {shape === "circle" && <Circle size={10} />}
+                    {shape === "polygon" && <Hexagon size={10} />}
+                    <span>{shape.slice(0, 4)}</span>
                   </button>
                 );
               })}
             </div>
+
+            {/* Shape Specific Controls */}
+            {shapeType === "circle" ? (
+              <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/60">Circle Diameter (px)</span>
+                  <span className="font-mono font-bold text-cyan-300">{circleDiameter} px</span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={400}
+                  value={circleDiameter}
+                  onChange={(e) => handleParamChange("diameterPx", parseInt(e.target.value, 10))}
+                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                />
+
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/60">Min Circularity (%)</span>
+                  <span className="font-mono font-bold text-cyan-300">{circularityTolerance}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={30}
+                  max={100}
+                  value={circularityTolerance}
+                  onChange={(e) => handleParamChange("minCircularityPct", parseInt(e.target.value, 10))}
+                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                />
+              </div>
+            ) : null}
+
+            {shapeType === "polygon" ? (
+              <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-white/60">Polygon Vertices</span>
+                  <span className="font-mono font-bold text-cyan-300">{polygonVertexCount} Points</span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={12}
+                  value={polygonVertexCount}
+                  onChange={(e) => handleParamChange("vertexCount", parseInt(e.target.value, 10))}
+                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -625,7 +708,7 @@ function RuleRightToolbarPanelContent({
               <input
                 type="number"
                 min={1}
-                max={50}
+                max={60}
                 value={activeBoxCount}
                 onChange={(e) => {
                   const val = Math.max(1, parseInt(e.target.value, 10) || 1);
@@ -634,6 +717,21 @@ function RuleRightToolbarPanelContent({
                 className="w-16 rounded-md border border-white/15 bg-black/50 px-2 py-1 text-center font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
               />
             </div>
+
+            {isPatternRule ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleParamChange("activeBoxCount", 57);
+                  handleParamChange("has57PatternBoxes", true);
+                }}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-950/40 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300 hover:bg-emerald-900/50 transition"
+                title="Initialize 57 sequential pattern boxes inside ROI (ICOS Inspection System grounded)"
+              >
+                <Grid2X2 size={12} />
+                Set 57 Pattern Boxes (1..57)
+              </button>
+            ) : null}
 
             {onLaunchWorkbench ? (
               <button

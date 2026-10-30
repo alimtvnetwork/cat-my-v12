@@ -30,6 +30,7 @@ import {
   rgbaToBase64,
   base64ToRgba,
   markWhiteBoxes,
+  type GrayscaleBitDepth,
   type WhiteBoxMark,
   type WhiteBoxMarkingInput,
   type WhiteBoxMarkingResult,
@@ -67,6 +68,12 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const initialSettings = props?.settings as any;
   const [marginPx, setMarginPx] = useState(() => initialSettings?.marginPx ?? 8);
   const [greyscaleLevel, setGreyscaleLevel] = useState(() => initialSettings?.threshold ?? 170);
+  const [bitDepth, setBitDepth] = useState<GrayscaleBitDepth>(
+    () => initialSettings?.bitDepth ?? "1-bit",
+  );
+  const [contrastLevel, setContrastLevel] = useState<number>(
+    () => initialSettings?.contrastLevel ?? 0,
+  );
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() => {
     const sr = initialSettings?.searchRegion;
     if (!sr) return null;
@@ -446,6 +453,23 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMessage("Greyscale level changed. Click Process to re-detect.");
+  }
+
+  function changeBitDepth(depth: GrayscaleBitDepth): void {
+    setBitDepth(depth);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage(`Bit-depth mode changed to ${depth}. Click Process to re-detect.`);
+  }
+
+  function changeContrastLevel(value: number): void {
+    const nextVal = Math.max(0, Math.min(100, value));
+    setContrastLevel(nextVal);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage(`Contrast level changed to ${nextVal}%. Click Process to re-detect.`);
   }
 
   function changeMarginPx(value: number): void {
@@ -847,6 +871,8 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     excludedNumbers,
     marginPx,
     greyscaleLevel,
+    bitDepth,
+    contrastLevel,
     searchRegion,
     maskRegions,
     patternRegion,
@@ -871,6 +897,8 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     loadCapturedFrame,
     processRegion,
     changeGreyscaleLevel,
+    changeBitDepth,
+    changeContrastLevel,
     changeMarginPx,
     removeBox,
     restoreBox,

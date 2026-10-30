@@ -7,7 +7,7 @@ import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode } from "./types";
+import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode, type Pin1ShapeType } from "./types";
 
 export interface Pin1CanvasProps {
   source: WhiteBoxMarkingInput | null;
