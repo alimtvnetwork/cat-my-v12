@@ -45,6 +45,7 @@ import {
   type GuidedSimulationStateDetail,
 } from "@/components/guided-simulation/events";
 import { cn } from "@/lib/utils";
+import { useUiRemoteControl } from "@/hooks/useUiRemoteControl";
 
 export interface StandardAppShellProps {
   title?: string;
@@ -119,6 +120,8 @@ export function StandardAppShell({
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+
+  useUiRemoteControl();
 
   useEffect(() => {
     const onSimulationState = (event: Event) => {

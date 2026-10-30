@@ -37,6 +37,7 @@ from BE.routes import seed as seed_route
 from BE.routes import shutdown as shutdown_route
 from BE.routes import system as system_route
 from BE.routes import telemetry as telemetry_route
+from BE.routes import ui_remote as ui_remote_route
 from BE.routes import vision as vision_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
@@ -102,6 +103,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(errors_route.router)
     app.include_router(shutdown_route.router)
     app.include_router(vision_route.router)
+    app.include_router(ui_remote_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:

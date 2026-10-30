@@ -17,19 +17,25 @@ Status: IN PROGRESS — backend batch done (registry + packet queue + audit + ro
 - BE/routes/ui_remote.py — GET /elements, POST /packets, GET /pending,
   POST /results, GET /results/{id}, GET /audit (Universal Envelope).
 
-## Batch B — frontend (pending)
+## Batch B — frontend (committed)
 
-- src/lib/ui-remote/registry.ts — generated TS mirror (generator script).
-- src/hooks/useUiRemoteControl.ts — poll + fallback-chain resolve +
-  real el.click()/set + result report + error-store capture on miss.
+- src/lib/ui-remote/registry.ts — generated TS mirror (14 elements).
+- src/hooks/useUiRemoteControl.ts — 1s poll + AGM fallback-chain resolve +
+  real el.click()/native-setter set + result report + error-store capture
+  on miss. Select elements use the select value setter (fixed on review).
 - src/lib/ui-remote/README.md — end-to-end usage.
 - 03-ai-scripts/generate-ui-remote-registry.py — regen TS from Python.
 
-## Batch C — wiring (pending)
+## Batch C — wiring (committed)
 
 - BE/main.py — include ui_remote router.
 - BE/cli/processing/commands/ui_remote.py + main.py register — `ui` subcommand.
 - src/components/layout/StandardAppShell.tsx — mount the hook.
+
+Status: COMPLETE — registry, bridge, CLI, audit, and wiring all landed.
+Runtime verification (live click end to end) is pending the end-of-tunnel
+build-fix window per program order; no builds/tests were run in this
+workstream.
 
 ## Follow-ups (do NOT invent; needs vision workstream)
 

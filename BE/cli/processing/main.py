@@ -43,6 +43,7 @@ from BE.cli.processing.commands import batch as _batch
 from BE.cli.processing.commands import dry_run as _dry_run
 from BE.cli.processing.commands import evaluate as _evaluate
 from BE.cli.processing.commands import status as _status
+from BE.cli.processing.commands import ui_remote as _ui_remote
 from BE.cli.processing.commands import verify_bundle as _verify_bundle
 from BE.cli.processing.commands import watch as _watch
 
@@ -161,6 +162,12 @@ def build_dispatcher() -> Dispatcher:
         handler=_status.handle,
         configure=_status.configure,
         help="Read-only report of log/db/ipc/data roots and drop-dir pending counts (spec 75 §Subcommands).",
+    ))
+    d.register(Subcommand(
+        name="ui",
+        handler=_ui_remote.handle,
+        configure=_ui_remote.configure,
+        help="Drive the app UI from the CLI: ls/click/scroll/navigate/set/audit/result (spec 54).",
     ))
     return d
 
