@@ -15,6 +15,7 @@ export interface Pin1CanvasProps {
   packageRegion: SearchRegion | null;
   activeRegion: SearchRegion | null;
   regionEditMode: Pin1RegionEditMode;
+  shapeType?: Pin1ShapeType;
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1: Pin1HoleItem | null;
   matchResult: Pin1MatchResult | null;
