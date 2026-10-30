@@ -99,7 +99,11 @@ class LocalStorageCameraFacade implements CameraFacade {
     // store's snapshot, or every dropdown bound to it stays stale until a
     // full page reload. Storage events fire only in other documents, so
     // this never double-fires for this facade's own saves.
-    if (typeof window !== "undefined" && !this.isStorageListenerAttached) {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.addEventListener === "function" &&
+      !this.isStorageListenerAttached
+    ) {
       this.isStorageListenerAttached = true;
       window.addEventListener("storage", (event) => {
         if (event.key === null || event.key === CAMERA_LIBRARY_STORAGE_KEY) {
