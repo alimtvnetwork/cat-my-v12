@@ -327,6 +327,8 @@ export function WorkpieceAnalyzeWorkspace({
     videoRef: liveCameraVideoRef,
     isReady: isLiveCameraReady,
     errorText: liveCameraErrorText,
+    isPermissionPending: isLiveCameraPermissionPending,
+    retry: retryLiveCamera,
   } = useCameraStream(isLiveCameraMode);
 
   const shapeInputRef = useRef<HTMLInputElement>(null);
@@ -1709,6 +1711,16 @@ export function WorkpieceAnalyzeWorkspace({
                         {liveCameraErrorText ? (
                           <div className="absolute z-30 max-w-md rounded-xl border border-rose-500/30 bg-rose-950/70 p-4 text-center font-sans text-xs text-rose-100 shadow-xl backdrop-blur">
                             {liveCameraErrorText}
+                            {isLiveCameraPermissionPending ? (
+                              <button
+                                type="button"
+                                data-ui-id="ui-camera-retry"
+                                onClick={retryLiveCamera}
+                                className="mt-3 rounded-lg bg-emerald-400 px-4 py-2 font-sans text-xs font-bold uppercase tracking-wider text-black shadow transition hover:brightness-110 active:scale-95"
+                              >
+                                Retry Camera
+                              </button>
+                            ) : null}
                           </div>
                         ) : null}
                         {!isLiveCameraReady && !liveCameraErrorText ? (

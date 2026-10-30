@@ -39,6 +39,10 @@ export interface LayersPanelProps {
   onBringLayerForward?: (id: string) => void;
   onSendLayerBackward?: (id: string) => void;
   onToggleLayerLock?: (id: string) => void;
+  /** Per-layer reorder gate (spec 54 §22 follow-up): rows that are not
+   *  reorderable render disabled chevrons instead of dead buttons.
+   *  Defaults to reorderable for every layer. */
+  isLayerReorderable?: (layer: CanvasLayer) => boolean;
 }
 
 export interface RegionDrag {

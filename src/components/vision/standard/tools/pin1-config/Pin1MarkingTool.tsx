@@ -3,7 +3,7 @@ import { Binary, Camera, RefreshCw, Trash2, Upload } from "lucide-react";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
 import { LayersPanel } from "@/components/vision/white-box/LayersPanel";
 import type { CanvasLayer } from "@/components/vision/white-box/types";
-import { Pin1Canvas } from "./Pin1Canvas";
+import { Pin1Canvas, movePin1Layer } from "./Pin1Canvas";
 import { Pin1ReviewPanel } from "./Pin1ReviewPanel";
 import type { Pin1MarkingToolProps } from "./types";
 import { usePin1Rule } from "./usePin1Rule";
@@ -11,6 +11,14 @@ import { usePin1Rule } from "./usePin1Rule";
 export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Element {
   const model = usePin1Rule(props as any);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  // Pin1 canvas layer state, lifted here so the LayersPanel lock and
+  // reorder buttons drive the same state the canvas enforces (spec 54
+  // §22 follow-up; previously the panel offered no lock/reorder at all).
+  const [isSearchLocked, setIsSearchLocked] = useState(true);
+  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
   const buttonLabel = props.actionButtonLabel ?? "Save as Pin 1 Rule";
   const activeRegion =
     model.regionEditMode === "package"
@@ -20,10 +28,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         : model.searchRegion;
 
   // Layer stack, bottom to top: ROI, package region, numbered detected
-  // holes. The panel displays them top-first. Lock and reorder actions
-  // are deliberately NOT wired here: Pin1Canvas does not enforce them
-  // yet (follow-up wave owns Pin1Canvas.tsx), so the panel only offers
-  // selection and keep/exclude visibility for this tool.
+  // holes. The panel displays them top-first. Lock and reorder are wired
+  // to the Pin1Canvas state (spec 54 §22 follow-up): the ROI lock toggle
+  // and the search/package chevrons drive the canvas enforcement, and
+  // the panel reflects the live lock/order values.
   const layers = useMemo<CanvasLayer[]>(() => {
     const stack: CanvasLayer[] = [];
 
@@ -32,10 +40,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         id: "roi",
         kind: "roi",
         label: "ROI — Search Region",
-        isLocked: false,
+        isLocked: isSearchLocked,
         isVisible: true,
         rotationDeg: 0,
-        zOrder: 0,
+        zOrder: layerOrder.indexOf("search"),
       });
     }
 
@@ -47,7 +55,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         isLocked: false,
         isVisible: true,
         rotationDeg: 0,
-        zOrder: 1,
+        zOrder: layerOrder.indexOf("package"),
       });
     }
 
@@ -65,7 +73,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
     }
 
     return [...stack].sort((a, b) => b.zOrder - a.zOrder);
-  }, [model.searchRegion, model.packageRegion, model.detectedHoles]);
+  }, [model.searchRegion, model.packageRegion, model.detectedHoles, isSearchLocked, layerOrder]);
 
   const selectedLayerId =
     model.registeredPin1 !== null && model.registeredPin1 !== undefined
@@ -99,6 +107,31 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
       if (hole !== undefined) {
         model.toggleKeepHole(hole.id);
       }
+    }
+  }
+
+  function handleToggleLayerLock(id: string): void {
+    // The panel only renders the lock button for kind === "roi" rows,
+    // so this fires for the ROI only; package and holes have no lock
+    // model in Pin1Canvas.
+    if (id === "roi") {
+      setIsSearchLocked((prev) => !prev);
+    }
+  }
+
+  function handleBringLayerForward(id: string): void {
+    const layerId = id === "roi" ? "search" : id === "package" ? "package" : null;
+
+    if (layerId !== null) {
+      movePin1Layer(layerId, 1, layerOrder, setLayerOrder);
+    }
+  }
+
+  function handleSendLayerBackward(id: string): void {
+    const layerId = id === "roi" ? "search" : id === "package" ? "package" : null;
+
+    if (layerId !== null) {
+      movePin1Layer(layerId, -1, layerOrder, setLayerOrder);
     }
   }
 
@@ -149,6 +182,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             polarity={model.polarity}
             greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
+            isSearchLocked={isSearchLocked}
+            onSearchLockChange={setIsSearchLocked}
+            layerOrder={layerOrder}
+            onLayerOrderChange={setLayerOrder}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}
@@ -205,6 +242,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
               panelId="ui-pin1-layers-panel"
               onSelectLayer={handleSelectLayer}
               onToggleLayerVisibility={handleToggleLayerVisibility}
+              onToggleLayerLock={handleToggleLayerLock}
+              onBringLayerForward={handleBringLayerForward}
+              onSendLayerBackward={handleSendLayerBackward}
+              isLayerReorderable={(layer) => layer.id === "roi" || layer.id === "package"}
             />
           </div>
           </div>

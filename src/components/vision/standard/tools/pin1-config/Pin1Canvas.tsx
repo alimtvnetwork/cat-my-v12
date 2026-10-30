@@ -36,6 +36,14 @@ export interface Pin1CanvasProps {
   greyscaleMode?: GrayscaleMode;
   /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
   patternShape?: ShapeType;
+  /** ROI lock state, controlled by the parent when provided (spec 54 §22
+   *  follow-up: panel lock buttons drive the canvas). Defaults to locked. */
+  isSearchLocked?: boolean;
+  onSearchLockChange?: (isLocked: boolean) => void;
+  /** Search/package draw order, bottom to top, controlled by the parent
+   *  when provided (panel reorder buttons drive the canvas). */
+  layerOrder?: readonly ("search" | "package")[];
+  onLayerOrderChange?: (order: readonly ("search" | "package")[]) => void;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -105,11 +113,32 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   // move/resize, no replacement on outside click — until double-clicked
   // inside it. Right-click reorders the search/package layers. The lock
   // only engages once a region exists, so first creation is never blocked.
-  const [isSearchLocked, setIsSearchLocked] = useState(true);
-  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
-    "search",
-    "package",
-  ]);
+  // The parent (Pin1MarkingTool) may control both values so the
+  // LayersPanel buttons drive the same state; otherwise internal state
+  // is used, preserving the standalone-canvas behavior.
+  const [internalSearchLocked, setInternalSearchLocked] = useState(true);
+  const isSearchLocked = props.isSearchLocked ?? internalSearchLocked;
+
+  function setIsSearchLocked(next: boolean): void {
+    if (props.onSearchLockChange !== undefined) {
+      props.onSearchLockChange(next);
+    } else {
+      setInternalSearchLocked(next);
+    }
+  }
+
+  const [internalLayerOrder, setInternalLayerOrder] = useState<
+    readonly ("search" | "package")[]
+  >(["search", "package"]);
+  const layerOrder = props.layerOrder ?? internalLayerOrder;
+
+  function setLayerOrder(next: readonly ("search" | "package")[]): void {
+    if (props.onLayerOrderChange !== undefined) {
+      props.onLayerOrderChange(next);
+    } else {
+      setInternalLayerOrder(next);
+    }
+  }
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -527,7 +556,7 @@ function canvasPointFromPin1Event(
   };
 }
 
-function movePin1Layer(
+export function movePin1Layer(
   layerId: "search" | "package",
   delta: 1 | -1,
   layerOrder: readonly ("search" | "package")[],
