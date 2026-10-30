@@ -4,6 +4,7 @@ import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
 import { IssueCategoryType, type BugReportSummary } from "@/lib/recorder/types";
 import { sendTelegramMessage } from "@/lib/recorder/telegram-service";
+import { resolveBackendBaseUrl } from "@/lib/errors/history-facade";
 import { RecorderSummaryForm } from "./RecorderSummaryForm";
 import { RecorderTimelinePreview } from "./RecorderTimelinePreview";
 import { TelegramSettingsModal } from "./TelegramSettingsModal";
@@ -19,6 +20,8 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const [telegramStatus, setTelegramStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+  const [isSendingBugReport, setIsSendingBugReport] = useState(false);
+  const [bugReportStatus, setBugReportStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
 
   const [summary, setSummary] = useState<BugReportSummary>({
     title: "",
@@ -98,6 +101,110 @@ ${summary.actualBehavior || "N/A"}`;
     }
   };
 
+  // RECORD BUG -> POST /bug-reports (spec 54 wave 2: route + CLI ready,
+  // the button was the missing link). Delivery goes through the backend
+  // (email + Supabase) instead of the mailto/Telegram side channels.
+  // The route errors when Supabase is unconfigured even after email
+  // succeeds, so channels are chosen from GET /config first: email +
+  // Supabase when configured, email only otherwise. The modal stays
+  // open on success so the operator can still Download ZIP.
+  const handleSendBugReport = async () => {
+    const baseUrl = resolveBackendBaseUrl();
+
+    if (baseUrl === null) {
+      setBugReportStatus({
+        isSuccess: false,
+        message: "Backend is not connected (Seed mode) — run the app in Backend mode to send bug reports.",
+      });
+
+      return;
+    }
+
+    setIsSendingBugReport(true);
+    setBugReportStatus(null);
+
+    try {
+      let channels: string[] | undefined;
+      let channelNote = "";
+
+      try {
+        const configRes = await fetch(`${baseUrl}/bug-reports/config`);
+
+        if (configRes.ok) {
+          const configBody = (await configRes.json()) as {
+            Results?: Array<{
+              supabase?: { is_configured?: boolean; is_enabled?: boolean };
+            }>;
+          };
+          const supabase = configBody.Results?.[0]?.supabase;
+          const isSupabaseUsable = supabase?.is_configured === true && supabase?.is_enabled === true;
+          channels = isSupabaseUsable ? ["email", "supabase"] : ["email"];
+          channelNote = isSupabaseUsable
+            ? " via email + Supabase"
+            : " via email only (Supabase is not configured)";
+        }
+      } catch {
+        // Config unreadable: fall through to the route's default
+        // channels and surface whatever the route returns.
+      }
+
+      const messageParts = [
+        summary.description,
+        `Expected: ${summary.expectedBehavior || "N/A"}`,
+        `Actual: ${summary.actualBehavior || "N/A"}`,
+      ].filter((part) => part.length > 0);
+
+      const res = await fetch(`${baseUrl}/bug-reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: summary.title || "Untitled Bug",
+          message: messageParts.join("\n\n") || undefined,
+          trigger_component: "RecorderExportModal",
+          session_id: session.id,
+          reporter_context: {
+            category: summary.category,
+            initialRoute: session.initialRoute,
+            routeHistory: session.routeHistory,
+            eventCount: session.events.length,
+            screenshotCount: session.screenshots.length,
+          },
+          ...(channels !== undefined ? { channels } : {}),
+        }),
+      });
+
+      if (!res.ok) {
+        let detail = `POST /bug-reports -> ${res.status}`;
+
+        try {
+          const errBody = (await res.json()) as {
+            Errors?: Array<{ Message?: string }>;
+            Status?: { Message?: string };
+          };
+          detail = errBody.Errors?.[0]?.Message ?? errBody.Status?.Message ?? detail;
+        } catch {
+          // Keep the HTTP status detail.
+        }
+
+        setBugReportStatus({ isSuccess: false, message: detail });
+
+        return;
+      }
+
+      setBugReportStatus({
+        isSuccess: true,
+        message: `Bug report sent${channelNote}. You can still Download ZIP.`,
+      });
+    } catch (err) {
+      setBugReportStatus({
+        isSuccess: false,
+        message: err instanceof Error ? err.message : "Failed to send bug report.",
+      });
+    } finally {
+      setIsSendingBugReport(false);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -152,6 +259,23 @@ ${summary.actualBehavior || "N/A"}`;
             </div>
           ) : null}
 
+          {bugReportStatus ? (
+            <div
+              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
+                bugReportStatus.isSuccess
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+              }`}
+            >
+              {bugReportStatus.isSuccess ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0" />
+              )}
+              <span>{bugReportStatus.message}</span>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap items-center justify-between border-t border-slate-800 pt-3 gap-2">
             <button
               type="button"
@@ -193,6 +317,21 @@ ${summary.actualBehavior || "N/A"}`;
                   <Send className="h-3.5 w-3.5" />
                 )}
                 <span>Telegram</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSendingBugReport}
+                onClick={handleSendBugReport}
+                title="Send bug report via backend email + Supabase"
+                className="flex items-center gap-1.5 rounded border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-50"
+              >
+                {isSendingBugReport ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                <span>Send Bug Report</span>
               </button>
 
               <button
