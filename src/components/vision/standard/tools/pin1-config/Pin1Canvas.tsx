@@ -100,12 +100,30 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   // never consumes the event: the drag still runs, so region move/resize
   // behavior is unchanged.
   const [isPatternShapeSelected, setPatternShapeSelected] = useState(false);
+  // ROI lock + layer order (spec 54, mirroring the white-box canvas):
+  // the search region (ROI) is locked by default — selection-only, no
+  // move/resize, no replacement on outside click — until double-clicked
+  // inside it. Right-click reorders the search/package layers. The lock
+  // only engages once a region exists, so first creation is never blocked.
+  const [isSearchLocked, setIsSearchLocked] = useState(true);
+  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    layerId: "search" | "package";
+    layerLabel: string;
+    isLocked: boolean;
+  } | null>(null);
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: props.activeRegion,
     dragState: props.dragState,
     onSearchRegionChange: props.onSearchRegionChange,
     onDragStateChange: props.onDragStateChange,
+    isLocked: props.regionEditMode === "search" && isSearchLocked,
   });
 
   useEffect(() => {
@@ -192,22 +210,28 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       return;
     }
 
-    if (props.searchRegion) {
-      drawRegion(ctx, {
-        region: props.searchRegion,
-        label: "SEARCH REGION",
-        color: "#facc15",
-        isActive: props.regionEditMode === "search",
-      });
-    }
+    // Layer draw order follows layerOrder (bottom to top); right-click
+    // Bring Forward / Send Backward swaps the two region layers.
+    for (const layerId of layerOrder) {
+      if (layerId === "search" && props.searchRegion) {
+        drawRegion(ctx, {
+          region: props.searchRegion,
+          label: isSearchLocked ? "SEARCH REGION • LOCKED" : "SEARCH REGION",
+          color: "#facc15",
+          isActive: props.regionEditMode === "search",
+          showHandles: props.regionEditMode === "search" && !isSearchLocked,
+        });
+      }
 
-    if (props.packageRegion) {
-      drawRegion(ctx, {
-        region: props.packageRegion,
-        label: "PACKAGE REGION",
-        color: "#38bdf8",
-        isActive: props.regionEditMode === "package",
-      });
+      if (layerId === "package" && props.packageRegion) {
+        drawRegion(ctx, {
+          region: props.packageRegion,
+          label: "PACKAGE REGION",
+          color: "#38bdf8",
+          isActive: props.regionEditMode === "package",
+          showHandles: props.regionEditMode === "package",
+        });
+      }
     }
 
     // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
@@ -335,6 +359,8 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.greyscaleMode,
     props.patternShape,
     isPatternShapeSelected,
+    isSearchLocked,
+    layerOrder,
   ]);
 
   return (
@@ -345,6 +371,8 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
         width={STANDARD_CANVAS_WIDTH}
         height={STANDARD_CANVAS_HEIGHT}
         onPointerDown={(event) => {
+          setContextMenu(null);
+
           if (selectHoleAtPoint(event, props, canvasRef.current)) {
             return;
           }
@@ -360,10 +388,162 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
         onPointerMove={drag.handlePointerMove}
         onPointerUp={drag.handlePointerUp}
         onPointerCancel={drag.handlePointerUp}
+        onDoubleClick={(event) => {
+          if (!isSearchLocked || !props.searchRegion || canvasRef.current === null) {
+            return;
+          }
+
+          const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+          if (point === null) {
+            return;
+          }
+
+          const region = props.searchRegion;
+
+          if (
+            point.x >= region.x &&
+            point.y >= region.y &&
+            point.x <= region.x + region.width - 1 &&
+            point.y <= region.y + region.height - 1
+          ) {
+            setIsSearchLocked(false);
+          }
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+
+          if (canvasRef.current === null) {
+            return;
+          }
+
+          const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+          if (point === null) {
+            return;
+          }
+
+          // Hit-test topmost first (reverse draw order).
+          for (let i = layerOrder.length - 1; i >= 0; i -= 1) {
+            const layerId = layerOrder[i];
+            const region = layerId === "search" ? props.searchRegion : props.packageRegion;
+
+            if (
+              region !== null &&
+              region !== undefined &&
+              point.x >= region.x &&
+              point.y >= region.y &&
+              point.x <= region.x + region.width - 1 &&
+              point.y <= region.y + region.height - 1
+            ) {
+              setContextMenu({
+                x: event.clientX,
+                y: event.clientY,
+                layerId,
+                layerLabel: layerId === "search" ? "ROI — Search Region" : "Package Region",
+                isLocked: layerId === "search" && isSearchLocked,
+              });
+
+              return;
+            }
+          }
+
+          setContextMenu(null);
+        }}
         className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
       />
+      {contextMenu !== null && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
+          />
+          <div
+            className="fixed z-50 min-w-[200px] rounded border border-[#3c4650] bg-[#111820] py-1 shadow-[0_18px_60px_rgba(0,0,0,0.6)]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <div className="border-b border-[#242c35] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ca-ink">
+              {contextMenu.layerLabel}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, 1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Bring Forward
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, -1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Send Backward
+            </button>
+            {contextMenu.layerId === "search" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchLocked(!contextMenu.isLocked);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                {contextMenu.isLocked ? "Unlock ROI" : "Lock ROI"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function canvasPointFromPin1Event(
+  event: React.MouseEvent<HTMLCanvasElement>,
+  canvas: HTMLCanvasElement,
+): { x: number; y: number } | null {
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function movePin1Layer(
+  layerId: "search" | "package",
+  delta: 1 | -1,
+  layerOrder: readonly ("search" | "package")[],
+  setLayerOrder: (order: readonly ("search" | "package")[]) => void,
+): void {
+  const index = layerOrder.indexOf(layerId);
+  const target = index + delta;
+
+  if (index < 0 || target < 0 || target >= layerOrder.length) {
+    return;
+  }
+
+  const next = [...layerOrder];
+  next[index] = layerOrder[target];
+  next[target] = layerId;
+  setLayerOrder(next);
 }
 
 function registerPointAtEvent(
@@ -500,9 +680,10 @@ function drawRegion(
     label: string;
     color: string;
     isActive: boolean;
+    showHandles: boolean;
   },
 ): void {
-  const { region, label, color, isActive } = params;
+  const { region, label, color, isActive, showHandles } = params;
 
   ctx.save();
   ctx.strokeStyle = color;
@@ -513,7 +694,7 @@ function drawRegion(
   ctx.strokeRect(region.x, region.y, region.width, region.height);
   ctx.setLineDash([]);
 
-  if (isActive) {
+  if (showHandles) {
     ctx.fillStyle = color;
 
     for (const handle of regionHandles(region)) {
