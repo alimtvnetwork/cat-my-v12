@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { fetchBackend } from "@/lib/backend/http";
 import { HttpMethod } from "@/lib/constants";
+import { ShapeType } from "@/domain/vision/shapes";
 import {
   type SearchRegion,
   type WhiteBoxMarkingInput,
@@ -30,6 +31,27 @@ import {
   type Pin1ToolProps,
 } from "./types";
 
+/** Map a saved shape value to ShapeType. Accepts the enum values
+ *  ("Rectangle", "Circle", ...) and the legacy lowercase form ("rectangle")
+ *  the old save path wrote. Unknown values fall back to Rectangle. */
+function readShape(raw: unknown): ShapeType {
+  const value = typeof raw === "string" ? raw.toLowerCase() : "";
+
+  if (value === "circle") {
+    return ShapeType.Circle;
+  }
+
+  if (value === "ellipse") {
+    return ShapeType.Ellipse;
+  }
+
+  if (value === "polygon") {
+    return ShapeType.Polygon;
+  }
+
+  return ShapeType.Rectangle;
+}
+
 function readRegion(rawRegion: any): SearchRegion | null {
   const geometry = rawRegion?.geometry ?? rawRegion;
 
@@ -40,11 +62,18 @@ function readRegion(rawRegion: any): SearchRegion | null {
     typeof geometry.width === "number" &&
     typeof geometry.height === "number"
   ) {
+    const shapeRaw = geometry.shape ?? rawRegion?.shape;
+    const rotationRaw = geometry.rotationDeg ?? rawRegion?.rotationDeg;
+    const pointsRaw = geometry.points ?? rawRegion?.points;
+
     return {
       x: Math.round(geometry.x),
       y: Math.round(geometry.y),
       width: Math.round(geometry.width),
       height: Math.round(geometry.height),
+      ...(typeof shapeRaw === "string" ? { shape: readShape(shapeRaw) } : {}),
+      ...(typeof rotationRaw === "number" ? { rotationDeg: rotationRaw } : {}),
+      ...(Array.isArray(pointsRaw) ? { points: pointsRaw } : {}),
     };
   }
 
@@ -116,6 +145,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   );
   const [maxRadiusPx, setMaxRadiusPx] = useState<number>(
     typeof pin1Conf.maxRadiusPx === "number" ? pin1Conf.maxRadiusPx : 60,
+  );
+
+  // Pattern shape searched inside the ROI (spec 54). The ROI stays a plain
+  // region; the pattern takes the shape. Restored from the saved pin1Config
+  // first, then the saved search-region wrapper shape, for backward
+  // compatibility with saves that only carried the wrapper shape.
+  const [patternShape, setPatternShape] = useState<ShapeType>(() =>
+    readShape(
+      pin1Conf.patternShape ?? pin1Conf.searchRegion?.shape ?? settings?.searchRegion?.shape,
+    ),
   );
 
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() =>
@@ -374,7 +413,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       toolType: "Pin 1 Orientation Config",
       searchRegion: searchRegion
         ? {
-            shape: "rectangle",
+            shape: patternShape,
             geometry: {
               x: searchRegion.x,
               y: searchRegion.y,
@@ -391,6 +430,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        patternShape,
         angleToleranceDeg: 1.0,
         nominalAngleDeg: calculatePin1Angle(registeredPin1, packageRegion ?? searchRegion),
         registeredPin1,
@@ -412,19 +452,23 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     minRadiusPx,
     maxRadiusPx,
     tolerancePx,
+    patternShape,
     packageRegion,
     props?.onChange,
   ]);
 
   const handleSearchRegionChange = useCallback(
     (newRegion: SearchRegion | null) => {
-      setSearchRegion(newRegion);
+      // The drag geometry drops shape fields, so re-attach the pattern
+      // shape here — otherwise the first drag would silently reset it.
+      const shapedRegion = newRegion ? { ...newRegion, shape: patternShape } : null;
+      setSearchRegion(shapedRegion);
 
-      if (source && newRegion && newRegion.width > 5 && newRegion.height > 5) {
-        void executeDetection(source, newRegion);
+      if (source && shapedRegion && shapedRegion.width > 5 && shapedRegion.height > 5) {
+        void executeDetection(source, shapedRegion);
       }
     },
-    [source, executeDetection],
+    [source, executeDetection, patternShape],
   );
 
   const handlePackageRegionChange = useCallback((newRegion: SearchRegion | null) => {
@@ -678,6 +722,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        patternShape,
         angleToleranceDeg: 1.0,
         nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
         registeredPin1: primary,
@@ -696,6 +741,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
+        patternShape,
         angleToleranceDeg: 1.0,
         nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
         registeredPin1: primary,
@@ -808,6 +854,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     minRadiusPx,
     maxRadiusPx,
     tolerancePx,
+    patternShape,
     packageRegion,
     props,
     navigate,
@@ -834,6 +881,8 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     message,
     isCameraOpen,
     hasGreyscalePreview,
+    patternShape,
+    setPatternShape,
     setIsCameraOpen,
     setDragState,
     handlePolarityChange,
