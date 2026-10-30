@@ -211,6 +211,24 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.setLineDash([]);
 
       ctx.beginPath();
+      if (props.shapeType === "rectangle") {
+        const rw = hole.radius * 2.2;
+        const rh = hole.radius * 1.6;
+        ctx.strokeRect(hole.centerX - rw / 2, hole.centerY - rh / 2, rw, rh);
+        return;
+      }
+      if (props.shapeType === "square") {
+        const side = hole.radius * 2;
+        ctx.strokeRect(hole.centerX - side / 2, hole.centerY - side / 2, side, side);
+        return;
+      }
+      if (props.shapeType === "ring") {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hole.centerX, hole.centerY, Math.max(2, hole.radius * 0.55), 0, Math.PI * 2);
+        return;
+      }
       ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
       ctx.stroke();
 
