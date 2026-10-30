@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Binary, Camera, RefreshCw, Trash2, Upload } from "lucide-react";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
+import { LayersPanel } from "@/components/vision/white-box/LayersPanel";
+import type { CanvasLayer } from "@/components/vision/white-box/types";
 import { Pin1Canvas } from "./Pin1Canvas";
 import { Pin1ReviewPanel } from "./Pin1ReviewPanel";
 import type { Pin1MarkingToolProps } from "./types";
@@ -17,13 +19,99 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         ? null
         : model.searchRegion;
 
+  // Layer stack, bottom to top: ROI, package region, numbered detected
+  // holes. The panel displays them top-first. Lock and reorder actions
+  // are deliberately NOT wired here: Pin1Canvas does not enforce them
+  // yet (follow-up wave owns Pin1Canvas.tsx), so the panel only offers
+  // selection and keep/exclude visibility for this tool.
+  const layers = useMemo<CanvasLayer[]>(() => {
+    const stack: CanvasLayer[] = [];
+
+    if (model.searchRegion !== null) {
+      stack.push({
+        id: "roi",
+        kind: "roi",
+        label: "ROI — Search Region",
+        isLocked: false,
+        isVisible: true,
+        rotationDeg: 0,
+        zOrder: 0,
+      });
+    }
+
+    if (model.packageRegion !== null) {
+      stack.push({
+        id: "package",
+        kind: "pattern",
+        label: "Package Region",
+        isLocked: false,
+        isVisible: true,
+        rotationDeg: 0,
+        zOrder: 1,
+      });
+    }
+
+    for (const hole of model.detectedHoles) {
+      stack.push({
+        id: `hole-${hole.id}`,
+        kind: "box",
+        label: `#${hole.id}`,
+        number: hole.id,
+        isLocked: false,
+        isVisible: hole.isKept,
+        rotationDeg: 0,
+        zOrder: 100 + hole.id,
+      });
+    }
+
+    return [...stack].sort((a, b) => b.zOrder - a.zOrder);
+  }, [model.searchRegion, model.packageRegion, model.detectedHoles]);
+
+  const selectedLayerId =
+    model.registeredPin1 !== null && model.registeredPin1 !== undefined
+      ? `hole-${model.registeredPin1.id}`
+      : model.regionEditMode === "package"
+        ? "package"
+        : "roi";
+
+  function handleSelectLayer(id: string): void {
+    if (id.startsWith("hole-")) {
+      const hole = model.detectedHoles.find((item) => `hole-${item.id}` === id);
+
+      if (hole !== undefined) {
+        model.setPrimaryPin1Hole(hole.id);
+      }
+
+      return;
+    }
+
+    if (id === "package") {
+      model.setRegionEditMode("package");
+    } else {
+      model.setRegionEditMode("search");
+    }
+  }
+
+  function handleToggleLayerVisibility(id: string): void {
+    if (id.startsWith("hole-")) {
+      const hole = model.detectedHoles.find((item) => `hole-${item.id}` === id);
+
+      if (hole !== undefined) {
+        model.toggleKeepHole(hole.id);
+      }
+    }
+  }
+
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white font-sans select-none">
       <div className="flex h-full min-h-0 min-w-[1024px] flex-col">
         {/* Main Workspace */}
         <div className="flex min-h-0 flex-1">
           {/* Left: Canvas */}
-          <div className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]">
+          <div
+            data-ui-id="ui-pin1-canvas-wrap"
+            className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]"
+          >
             {/* Top-left absolute toolbar (Old HMI style over canvas) */}
             <div className="absolute top-2 left-2 z-10 flex gap-2">
               <button
@@ -72,6 +160,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             data-tour="rule-config-controls"
             className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]"
           >
+          <div className="min-h-0 flex-1 overflow-y-auto">
           <Pin1ReviewPanel
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
@@ -105,6 +194,16 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             onSaveRule={model.savePin1Rule}
             onCancel={props.onCancel}
           />
+          </div>
+          <div className="h-[240px] shrink-0">
+            <LayersPanel
+              layers={layers}
+              selectedLayerId={selectedLayerId}
+              panelId="ui-pin1-layers-panel"
+              onSelectLayer={handleSelectLayer}
+              onToggleLayerVisibility={handleToggleLayerVisibility}
+            />
+          </div>
           </div>
         </div>
 

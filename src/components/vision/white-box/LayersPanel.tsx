@@ -18,7 +18,7 @@ export function LayersPanel(props: LayersPanelProps): React.JSX.Element {
     <section
       data-ui-id={props.panelId}
       aria-label="Layers"
-      className="flex min-h-0 flex-col overflow-hidden border-t border-[#2a3138] bg-[#111820]"
+      className="flex h-full min-h-0 flex-col overflow-hidden border-t border-[#2a3138] bg-[#111820]"
     >
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-[#242c35] px-3">
         <span className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
