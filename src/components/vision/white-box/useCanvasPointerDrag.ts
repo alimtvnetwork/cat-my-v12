@@ -1,5 +1,10 @@
 import type { PointerEvent } from "react";
-import { canvasPointFromEvent, hitRegionHandle, regionForDrag } from "./pattern-geometry";
+import {
+  canvasPointFromEvent,
+  hitRegionHandle,
+  regionForDrag,
+  rotationAngleDeg,
+} from "./pattern-geometry";
 import type { RegionDrag, SearchRegion, WhiteBoxMarkingInput } from "./types";
 
 export interface CanvasPointerDragParams {
@@ -8,12 +13,26 @@ export interface CanvasPointerDragParams {
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
+  isLocked?: boolean;
+  isRotationEnabled?: boolean;
+  onRegionRotationChange?: (degrees: number) => void;
 }
 
 export function useCanvasPointerDrag(params: CanvasPointerDragParams) {
   function handlePointerDown(e: PointerEvent<HTMLCanvasElement>): void {
+    // A locked region is selection-only: no move, no resize, no rotate,
+    // and clicking outside it must NOT silently replace it.
+    if (params.searchRegion !== null && params.isLocked === true) {
+      params.onDragStateChange(null);
+
+      return;
+    }
+
     const point = canvasPointFromEvent(e);
-    const handle = params.searchRegion === null ? "new" : hitRegionHandle(params.searchRegion, point);
+    const handle =
+      params.searchRegion === null
+        ? "new"
+        : hitRegionHandle(params.searchRegion, point, params.isRotationEnabled ?? false);
     params.onDragStateChange({ handle, start: point, region: params.searchRegion });
 
     if (handle === "new") {
@@ -28,6 +47,16 @@ export function useCanvasPointerDrag(params: CanvasPointerDragParams) {
       return;
     }
 
+    if (params.dragState.handle === "rotate") {
+      if (params.dragState.region !== null && params.onRegionRotationChange) {
+        params.onRegionRotationChange(
+          rotationAngleDeg(params.dragState.region, canvasPointFromEvent(e)),
+        );
+      }
+
+      return;
+    }
+
     const width = params.source?.width ?? 960;
     const height = params.source?.height ?? 540;
 
@@ -38,6 +67,18 @@ export function useCanvasPointerDrag(params: CanvasPointerDragParams) {
 
   function handlePointerUp(e: PointerEvent<HTMLCanvasElement>): void {
     if (params.dragState === null) {
+      return;
+    }
+
+    if (params.dragState.handle === "rotate") {
+      if (params.dragState.region !== null && params.onRegionRotationChange) {
+        params.onRegionRotationChange(
+          rotationAngleDeg(params.dragState.region, canvasPointFromEvent(e)),
+        );
+      }
+
+      params.onDragStateChange(null);
+
       return;
     }
 

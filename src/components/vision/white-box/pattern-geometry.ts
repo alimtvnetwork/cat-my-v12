@@ -135,7 +135,15 @@ export function regionHandles(region: SearchRegion): Array<{ id: RegionHandle; x
   ];
 }
 
-export function hitRegionHandle(region: SearchRegion, point: CanvasPoint): RegionHandle | "new" {
+export function hitRegionHandle(
+  region: SearchRegion,
+  point: CanvasPoint,
+  isRotationEnabled = false,
+): RegionHandle | "new" {
+  if (isRotationEnabled && hitRotateHandle(region, point)) {
+    return "rotate";
+  }
+
   const handles = regionHandles(region);
 
   for (const handle of handles) {
@@ -179,6 +187,30 @@ export function resizeRegion(
   return regionFromPoints(width, height, { x: x0, y: y0 }, { x: x1, y: y1 });
 }
 
+export function rotateHandlePoint(region: SearchRegion): CanvasPoint {
+  const x0 = region.x;
+  const x1 = region.x + region.width - 1;
+  const xm = Math.round((x0 + x1) / 2);
+
+  return { x: xm, y: region.y - 24 };
+}
+
+export function hitRotateHandle(region: SearchRegion, point: CanvasPoint): boolean {
+  const handle = rotateHandlePoint(region);
+
+  return Math.abs(point.x - handle.x) <= 8 && Math.abs(point.y - handle.y) <= 8;
+}
+
+export function rotationAngleDeg(region: SearchRegion, point: CanvasPoint): number {
+  const cx = region.x + (region.width - 1) / 2;
+  const cy = region.y + (region.height - 1) / 2;
+  const rad = Math.atan2(point.y - cy, point.x - cx);
+  const deg = (rad * 180) / Math.PI + 90;
+  const normalized = ((deg % 360) + 360) % 360;
+
+  return Math.round(normalized);
+}
+
 export function regionForDrag(
   width: number,
   height: number,
@@ -187,6 +219,12 @@ export function regionForDrag(
 ): SearchRegion {
   if (drag.handle === "new" || drag.region === null) {
     return regionFromPoints(width, height, drag.start, current);
+  }
+
+  if (drag.handle === "rotate") {
+    // Rotation is carried by the drag callback (degrees), not by the
+    // axis-aligned region geometry, so the region itself is unchanged.
+    return clampRegion(width, height, drag.region);
   }
 
   const delta = { x: current.x - drag.start.x, y: current.y - drag.start.y };
