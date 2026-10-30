@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   drawRgbaToCanvas,
   toThresholdPreviewRgba,
@@ -6,7 +6,7 @@ import {
   STANDARD_CANVAS_HEIGHT,
 } from "@/lib/vision/white-box-marking";
 import { drawPatternBoxes, drawToleranceZones } from "./canvas-drawing";
-import { regionHandles } from "./pattern-geometry";
+import { canvasPointFromEvent, regionHandles, rotateHandlePoint } from "./pattern-geometry";
 import { useCanvasPointerDrag } from "./useCanvasPointerDrag";
 import type {
   FormulatedPatternGeometry,
@@ -35,19 +35,168 @@ export interface PatternCanvasProps {
   onSearchRegionChange?: (region: SearchRegion | null) => void;
   onDragStateChange?: (drag: RegionDrag | null) => void;
   hasOverlays?: boolean;
+  isSearchRegionLocked?: boolean;
+  onSearchRegionLockChange?: (isLocked: boolean) => void;
+  hiddenLayerIds?: ReadonlySet<string>;
+  layerOrder?: readonly string[] | null;
+  layerRotations?: Readonly<Record<string, number>>;
+  onRegionRotationChange?: (layerId: string, degrees: number) => void;
+  onBringLayerForward?: (layerId: string) => void;
+  onSendLayerBackward?: (layerId: string) => void;
+  onToggleLayerLock?: (layerId: string) => void;
+  onToggleLayerVisibility?: (layerId: string) => void;
+}
+
+interface LayerContextMenu {
+  x: number;
+  y: number;
+  layerId: string;
+  layerLabel: string;
+  isLocked: boolean;
+}
+
+interface RegionDrawSpec {
+  id: string;
+  region: SearchRegion;
+  label: string;
+  stroke: string;
+  fill: string;
+  text: string;
+  hasHandles: boolean;
+  hasRotateHandle: boolean;
+  rotationDeg: number;
 }
 
 export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [contextMenu, setContextMenu] = useState<LayerContextMenu | null>(null);
   const activeRegion = props.activeRegion ?? props.searchRegion ?? null;
   const regionEditMode = props.regionEditMode ?? "search";
+  const isSearchRegionLocked = props.isSearchRegionLocked ?? false;
+  const hiddenLayerIds = props.hiddenLayerIds ?? new Set<string>();
+  const layerRotations = props.layerRotations ?? {};
+  const isRotationEnabled = props.onRegionRotationChange !== undefined;
+
+  const activeLayerId =
+    regionEditMode === "mask" && props.selectedMaskIndex !== null && props.selectedMaskIndex !== undefined
+      ? `mask-${props.selectedMaskIndex}`
+      : regionEditMode === "pattern"
+        ? "pattern"
+        : "roi";
+  const isActiveHidden = hiddenLayerIds.has(activeLayerId);
+  const isLockedForDrag =
+    (regionEditMode === "search" && isSearchRegionLocked) || isActiveHidden;
+
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: activeRegion,
     dragState: props.dragState ?? null,
     onSearchRegionChange: (region) => props.onSearchRegionChange?.(region),
     onDragStateChange: (nextDrag) => props.onDragStateChange?.(nextDrag),
+    isLocked: isLockedForDrag,
+    isRotationEnabled,
+    onRegionRotationChange: (degrees) => props.onRegionRotationChange?.(activeLayerId, degrees),
   });
+
+  function handleDoubleClick(e: React.MouseEvent<HTMLCanvasElement>): void {
+    if (isSearchRegionLocked === false || props.onSearchRegionLockChange === undefined) {
+      return;
+    }
+
+    const region = props.searchRegion;
+
+    if (region === null || region === undefined) {
+      return;
+    }
+
+    const point = canvasPointFromEvent(e);
+    const isInside =
+      point.x >= region.x &&
+      point.y >= region.y &&
+      point.x <= region.x + region.width - 1 &&
+      point.y <= region.y + region.height - 1;
+
+    if (isInside) {
+      props.onSearchRegionLockChange(false);
+    }
+  }
+
+  function handleContextMenu(e: React.MouseEvent<HTMLCanvasElement>): void {
+    e.preventDefault();
+
+    const point = canvasPointFromEvent(e);
+
+    // Hit-test topmost first: pattern boxes, then masks (reverse draw
+    // order), then the pattern region, then the ROI at the bottom.
+    for (let i = props.detectedBoxes.length - 1; i >= 0; i -= 1) {
+      const box = props.detectedBoxes[i];
+
+      if (
+        point.x >= box.x &&
+        point.y >= box.y &&
+        point.x <= box.x + box.width - 1 &&
+        point.y <= box.y + box.height - 1
+      ) {
+        setContextMenu({
+          x: e.clientX,
+          y: e.clientY,
+          layerId: `box-${box.number}`,
+          layerLabel: `Pattern #${box.number}`,
+          isLocked: false,
+        });
+
+        return;
+      }
+    }
+
+    const masks = props.maskRegions ?? [];
+
+    for (let i = masks.length - 1; i >= 0; i -= 1) {
+      const region = masks[i];
+
+      if (isPointInRegion(point, region)) {
+        setContextMenu({
+          x: e.clientX,
+          y: e.clientY,
+          layerId: `mask-${i}`,
+          layerLabel: `Mask ${i + 1}`,
+          isLocked: false,
+        });
+
+        return;
+      }
+    }
+
+    const patternRegion = props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
+
+    if (patternRegion !== null && isPointInRegion(point, patternRegion)) {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        layerId: "pattern",
+        layerLabel: "Pattern Region",
+        isLocked: false,
+      });
+
+      return;
+    }
+
+    const searchRegion = props.searchRegion;
+
+    if (searchRegion !== null && searchRegion !== undefined && isPointInRegion(point, searchRegion)) {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        layerId: "roi",
+        layerLabel: "ROI — Search Region",
+        isLocked: isSearchRegionLocked,
+      });
+
+      return;
+    }
+
+    setContextMenu(null);
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -106,6 +255,90 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       return;
     }
 
+    // Layer draw order, bottom to top: the ROI is the base layer, the
+    // pattern region and masks sit above it, and the numbered pattern
+    // boxes are the top layers. A caller-supplied layerOrder (bottom to
+    // top) reorders the region layers; boxes always stay on top.
+    const regionDraws: RegionDrawSpec[] = [];
+    const activePatternRegion =
+      props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
+
+    if (props.searchRegion && hiddenLayerIds.has("roi") === false) {
+      regionDraws.push({
+        id: "roi",
+        region: props.searchRegion,
+        label: isSearchRegionLocked ? "SEARCH REGION • LOCKED" : "SEARCH REGION",
+        stroke:
+          regionEditMode === "search" ? "rgba(250, 204, 21, 0.96)" : "rgba(250, 204, 21, 0.58)",
+        fill: regionEditMode === "search" ? "rgba(250, 204, 21, 0.12)" : "rgba(250, 204, 21, 0.06)",
+        text: "#fef08a",
+        hasHandles: regionEditMode === "search" && isSearchRegionLocked === false,
+        hasRotateHandle:
+          regionEditMode === "search" && isSearchRegionLocked === false && isRotationEnabled,
+        rotationDeg: layerRotations["roi"] ?? 0,
+      });
+    }
+
+    if (activePatternRegion && hiddenLayerIds.has("pattern") === false) {
+      regionDraws.push({
+        id: "pattern",
+        region: activePatternRegion,
+        label: "PATTERN REGION",
+        stroke:
+          regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.98)" : "rgba(239, 68, 68, 0.62)",
+        fill: regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.14)" : "rgba(239, 68, 68, 0.07)",
+        text: "#fecaca",
+        hasHandles: regionEditMode === "pattern",
+        hasRotateHandle: regionEditMode === "pattern" && isRotationEnabled,
+        rotationDeg: layerRotations["pattern"] ?? 0,
+      });
+    }
+
+    for (const [index, region] of (props.maskRegions ?? []).entries()) {
+      if (hiddenLayerIds.has(`mask-${index}`)) {
+        continue;
+      }
+
+      const isSelected = regionEditMode === "mask" && props.selectedMaskIndex === index;
+
+      regionDraws.push({
+        id: `mask-${index}`,
+        region,
+        label: `MASK ${index + 1}`,
+        stroke: isSelected ? "rgba(34, 197, 94, 1)" : "rgba(34, 197, 94, 0.62)",
+        fill: isSelected ? "rgba(34, 197, 94, 0.14)" : "rgba(34, 197, 94, 0.07)",
+        text: "#bbf7d0",
+        hasHandles: isSelected,
+        hasRotateHandle: isSelected && isRotationEnabled,
+        rotationDeg: layerRotations[`mask-${index}`] ?? 0,
+      });
+    }
+
+    const order = props.layerOrder ?? null;
+
+    if (order !== null) {
+      regionDraws.sort((a, b) => {
+        const aIndex = order.indexOf(a.id);
+        const bIndex = order.indexOf(b.id);
+        const aRank = aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex;
+        const bRank = bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex;
+
+        return aRank - bRank;
+      });
+    }
+
+    for (const spec of regionDraws) {
+      drawRotatedRegion(ctx, spec.region, spec.rotationDeg, () => {
+        drawEditableRegion(ctx, spec.region, spec.label, {
+          stroke: spec.stroke,
+          fill: spec.fill,
+          text: spec.text,
+          hasHandles: spec.hasHandles,
+          hasRotateHandle: spec.hasRotateHandle,
+        });
+      });
+    }
+
     if (
       props.formulatedPattern &&
       props.formulatedPattern.toleranceZones.length > 0 &&
@@ -115,41 +348,11 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     }
 
     if (props.detectedBoxes.length > 0 && isCleanBase) {
-      drawPatternBoxes(ctx, props.detectedBoxes, props.excludedNumbers);
-    }
+      const visibleBoxes = props.detectedBoxes.filter(
+        (box) => hiddenLayerIds.has(`box-${box.number}`) === false,
+      );
 
-    const activePatternRegion =
-      props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
-
-    if (activePatternRegion) {
-      drawEditableRegion(ctx, activePatternRegion, "PATTERN REGION", {
-        stroke:
-          regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.98)" : "rgba(239, 68, 68, 0.62)",
-        fill: regionEditMode === "pattern" ? "rgba(239, 68, 68, 0.14)" : "rgba(239, 68, 68, 0.07)",
-        text: "#fecaca",
-        hasHandles: regionEditMode === "pattern",
-      });
-    }
-
-    for (const [index, region] of (props.maskRegions ?? []).entries()) {
-      const isSelected = regionEditMode === "mask" && props.selectedMaskIndex === index;
-
-      drawEditableRegion(ctx, region, `MASK ${index + 1}`, {
-        stroke: isSelected ? "rgba(34, 197, 94, 1)" : "rgba(34, 197, 94, 0.62)",
-        fill: isSelected ? "rgba(34, 197, 94, 0.14)" : "rgba(34, 197, 94, 0.07)",
-        text: "#bbf7d0",
-        hasHandles: isSelected,
-      });
-    }
-
-    if (props.searchRegion) {
-      drawEditableRegion(ctx, props.searchRegion, "SEARCH REGION", {
-        stroke:
-          regionEditMode === "search" ? "rgba(250, 204, 21, 0.96)" : "rgba(250, 204, 21, 0.58)",
-        fill: regionEditMode === "search" ? "rgba(250, 204, 21, 0.12)" : "rgba(250, 204, 21, 0.06)",
-        text: "#fef08a",
-        hasHandles: regionEditMode === "search",
-      });
+      drawPatternBoxes(ctx, visibleBoxes, props.excludedNumbers);
     }
   }, [
     props.result,
@@ -165,6 +368,10 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     props.regionEditMode,
     props.selectedMaskIndex,
     props.hasOverlays,
+    props.isSearchRegionLocked,
+    props.hiddenLayerIds,
+    props.layerOrder,
+    props.layerRotations,
     regionEditMode,
   ]);
 
@@ -178,23 +385,129 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
           </span>
         </div>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ca-ink-muted">
-          Drag ROI handles to tune
+          Double-click locked ROI to unlock • Right-click a layer for order
         </span>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:32px_32px] p-6">
         <canvas
           ref={canvasRef}
+          data-ui-id="ui-pattern-canvas"
           width={STANDARD_CANVAS_WIDTH}
           height={STANDARD_CANVAS_HEIGHT}
-          onPointerDown={drag.handlePointerDown}
+          onPointerDown={(e) => {
+            setContextMenu(null);
+            drag.handlePointerDown(e);
+          }}
           onPointerMove={drag.handlePointerMove}
           onPointerUp={drag.handlePointerUp}
           onPointerCancel={drag.handlePointerUp}
+          onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
           className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-[#4b5563] bg-black object-contain shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
         />
       </div>
+      {contextMenu !== null && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
+          />
+          <div
+            className="fixed z-50 min-w-[200px] rounded border border-[#3c4650] bg-[#111820] py-1 shadow-[0_18px_60px_rgba(0,0,0,0.6)]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <div className="border-b border-[#242c35] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ca-ink">
+              {contextMenu.layerLabel}
+            </div>
+            {props.onBringLayerForward !== undefined && (
+              <button
+                type="button"
+                onClick={() => {
+                  props.onBringLayerForward?.(contextMenu.layerId);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                Bring Forward
+              </button>
+            )}
+            {props.onSendLayerBackward !== undefined && (
+              <button
+                type="button"
+                onClick={() => {
+                  props.onSendLayerBackward?.(contextMenu.layerId);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                Send Backward
+              </button>
+            )}
+            {props.onToggleLayerLock !== undefined && contextMenu.layerId === "roi" && (
+              <button
+                type="button"
+                onClick={() => {
+                  props.onToggleLayerLock?.(contextMenu.layerId);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                {contextMenu.isLocked ? "Unlock Layer" : "Lock Layer"}
+              </button>
+            )}
+            {props.onToggleLayerVisibility !== undefined && (
+              <button
+                type="button"
+                onClick={() => {
+                  props.onToggleLayerVisibility?.(contextMenu.layerId);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                Hide Layer
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function isPointInRegion(point: { x: number; y: number }, region: SearchRegion): boolean {
+  return (
+    point.x >= region.x &&
+    point.y >= region.y &&
+    point.x <= region.x + region.width - 1 &&
+    point.y <= region.y + region.height - 1
+  );
+}
+
+function drawRotatedRegion(
+  ctx: CanvasRenderingContext2D,
+  region: SearchRegion,
+  rotationDeg: number,
+  draw: () => void,
+): void {
+  if (rotationDeg === 0) {
+    draw();
+
+    return;
+  }
+
+  const cx = region.x + (region.width - 1) / 2;
+  const cy = region.y + (region.height - 1) / 2;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate((rotationDeg * Math.PI) / 180);
+  ctx.translate(-cx, -cy);
+  draw();
+  ctx.restore();
 }
 
 function drawReadOnlyRegion(
@@ -223,7 +536,7 @@ function drawEditableRegion(
   ctx: CanvasRenderingContext2D,
   region: SearchRegion,
   label: string,
-  tone: { stroke: string; fill: string; text: string; hasHandles: boolean },
+  tone: { stroke: string; fill: string; text: string; hasHandles: boolean; hasRotateHandle: boolean },
 ): void {
   ctx.save();
   ctx.strokeStyle = tone.stroke;
@@ -242,6 +555,25 @@ function drawEditableRegion(
       ctx.lineWidth = 1;
       ctx.strokeRect(handle.x - 4, handle.y - 4, 8, 8);
     }
+  }
+
+  if (tone.hasRotateHandle) {
+    const rotatePoint = rotateHandlePoint(region);
+    const xm = Math.round((region.x + region.x + region.width - 1) / 2);
+
+    ctx.strokeStyle = tone.stroke;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(xm, region.y);
+    ctx.lineTo(rotatePoint.x, rotatePoint.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(rotatePoint.x, rotatePoint.y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = tone.stroke;
+    ctx.fill();
+    ctx.strokeStyle = "#0f172a";
+    ctx.stroke();
   }
 
   ctx.fillStyle = "rgba(15, 23, 42, 0.82)";
