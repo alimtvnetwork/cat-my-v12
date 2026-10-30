@@ -80,7 +80,7 @@ def test_recipe_table_presence_and_structure():
     assert "RuleSetId" in cols
     assert "Name" in cols
     assert "Version" in cols
-    assert "Enabled" in cols
+    assert "IsEnabled" in cols
     assert "PayloadJson" in cols
     assert "UpdatedAt" in cols
     assert "CreatedAt" in cols
@@ -109,7 +109,7 @@ def test_recipe_save_and_retrieve_roundtrip():
     rule_set_id = int(time.time() * 1000) % 900_000 + 100_000
 
     envelope = {
-        "SchemaVersion": "1.0",
+        "SchemaVersion": 1,
         "RuleSetId": rule_set_id,
         "Name": "Roundtrip Verification Recipe",
         "Version": 1,
@@ -126,9 +126,9 @@ def test_recipe_save_and_retrieve_roundtrip():
     loaded = repo.get_rule_set(rule_set_id)
 
     assert loaded is not None
-    assert loaded["RuleSetId"] == rule_set_id
-    assert loaded["Name"] == "Roundtrip Verification Recipe"
-    assert loaded["Enabled"] is True
+    assert loaded.RuleSetId == rule_set_id
+    assert loaded.Name == "Roundtrip Verification Recipe"
+    assert loaded.Enabled is True
 
 
 def test_recipe_update_version_auto_increment():
@@ -137,7 +137,7 @@ def test_recipe_update_version_auto_increment():
     rule_set_id = int(time.time() * 1000) % 900_000 + 200_000
 
     envelope_v1 = {
-        "SchemaVersion": "1.0",
+        "SchemaVersion": 1,
         "RuleSetId": rule_set_id,
         "Name": "Increment Recipe V1",
         "Version": 1,
@@ -145,32 +145,35 @@ def test_recipe_update_version_auto_increment():
         "Rules": [],
         "DraftMeta": {"ClientId": "c1", "UpdatedAt": "2026-10-31T00:00:00Z", "Origin": "server"},
     }
-    repo.save_rule_set(envelope_v1)
-
+    saved_v1 = repo.save_rule_set(envelope_v1)
     envelope_v2 = {
-        "SchemaVersion": "1.0",
+        "SchemaVersion": 1,
         "RuleSetId": rule_set_id,
         "Name": "Increment Recipe V2",
-        "Version": 1,
+        "Version": saved_v1.Version,
         "Enabled": True,
         "Rules": [],
         "DraftMeta": {"ClientId": "c1", "UpdatedAt": "2026-10-31T01:00:00Z", "Origin": "server"},
     }
-    repo.save_rule_set(envelope_v2)
+    saved_v2 = repo.save_rule_set(envelope_v2)
 
     loaded = repo.get_rule_set(rule_set_id)
 
     assert loaded is not None
-    assert loaded["Version"] >= 2
-    assert loaded["Name"] == "Increment Recipe V2"
+    assert loaded.Version > saved_v1.Version
+    assert loaded.Name == "Increment Recipe V2"
 
 
-def test_recipe_fetch_nonexistent_returns_none():
-    """Verify querying an unknown RuleSetId returns None safely without raising."""
+def test_recipe_fetch_nonexistent_raises_not_found():
+    """Verify querying an unknown RuleSetId raises AppError with E_BE_NOT_FOUND."""
+    from BE.errors.apperror import AppError
+    from BE.errors.codes import ErrorCode
+
     repo = SqliteRulesRepo()
-    loaded = repo.get_rule_set(999_999_888)
+    with pytest.raises(AppError) as exc_info:
+        repo.get_rule_set(999_999_888)
 
-    assert loaded is None
+    assert exc_info.value.code == ErrorCode.E_BE_NOT_FOUND
 
 
 def test_recipe_save_dict_envelope_coercion():
@@ -179,7 +182,7 @@ def test_recipe_save_dict_envelope_coercion():
     rule_set_id = int(time.time() * 1000) % 900_000 + 300_000
 
     raw_dict = {
-        "SchemaVersion": "1.0",
+        "SchemaVersion": 1,
         "RuleSetId": rule_set_id,
         "Name": "Raw Dict Recipe",
         "Version": 1,
@@ -212,7 +215,7 @@ def test_recipe_get_by_id_type_cast_safety():
     rule_set_id = int(time.time() * 1000) % 900_000 + 400_000
 
     envelope = {
-        "SchemaVersion": "1.0",
+        "SchemaVersion": 1,
         "RuleSetId": rule_set_id,
         "Name": "Cast Safety Recipe",
         "Version": 1,
@@ -225,7 +228,7 @@ def test_recipe_get_by_id_type_cast_safety():
     loaded = repo.get_rule_set(int(str(rule_set_id)))
 
     assert loaded is not None
-    assert loaded["RuleSetId"] == rule_set_id
+    assert loaded.RuleSetId == rule_set_id
 
 
 # ==============================================================================
@@ -452,8 +455,8 @@ def test_task_error_write_batch_errors():
     outcome = write_errors(
         conn,
         errors=[
-            {"CorrelationId": cid1, "Code": "E_BATCH_1", "Message": "Msg 1"},
-            {"CorrelationId": cid2, "Code": "E_BATCH_2", "Message": "Msg 2"},
+            {"CorrelationId": cid1, "Code": "E_BATCH_1", "Level": "error", "Message": "Msg 1"},
+            {"CorrelationId": cid2, "Code": "E_BATCH_2", "Level": "warn", "Message": "Msg 2"},
         ],
     )
 
@@ -466,9 +469,9 @@ def test_task_error_idempotency_skip_duplicate_cid():
     conn = get_task_conn()
     cid = f"idempotent-{uuid.uuid4().hex[:8]}"
 
-    write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_IDEMP", "Message": "First"}])
+    write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_IDEMP", "Level": "error", "Message": "First"}])
     retry_outcome = write_errors(
-        conn, errors=[{"CorrelationId": cid, "Code": "E_IDEMP", "Message": "Retry"}]
+        conn, errors=[{"CorrelationId": cid, "Code": "E_IDEMP", "Level": "error", "Message": "Retry"}]
     )
 
     assert retry_outcome.InsertedCount == 0
@@ -482,7 +485,7 @@ def test_task_error_filter_by_code():
 
     write_errors(
         conn,
-        errors=[{"CorrelationId": f"cid-{uuid.uuid4().hex[:8]}", "Code": unique_code, "Message": "Code match"}],
+        errors=[{"CorrelationId": f"cid-{uuid.uuid4().hex[:8]}", "Code": unique_code, "Level": "error", "Message": "Code match"}],
     )
 
     results = list_errors(conn, code=unique_code)
@@ -511,6 +514,7 @@ def test_task_error_filter_by_session_id():
             {
                 "CorrelationId": f"cid-sess-{uuid.uuid4().hex[:8]}",
                 "Code": "E_SESS_TEST",
+                "Level": "error",
                 "SessionId": unique_sess,
                 "Message": "Session test error",
             }
@@ -542,8 +546,9 @@ def test_task_error_details_json_serialization():
             {
                 "CorrelationId": cid,
                 "Code": "E_DETAILS",
+                "Level": "error",
                 "Message": "Details message",
-                "context": {"token": "redacted_val", "attempt": 3},
+                "details": {"customKey": "customVal", "attempt": 3},
             }
         ],
     )
@@ -551,9 +556,10 @@ def test_task_error_details_json_serialization():
     records = list_errors(conn, correlation_id=cid)
 
     assert len(records) == 1
-    details = records[0]["Details"]
+    raw_details = records[0]["Details"]
+    details = json.loads(raw_details) if isinstance(raw_details, str) else (raw_details or {})
     assert isinstance(details, dict)
-    assert details.get("context", {}).get("attempt") == 3
+    assert details.get("attempt") == 3
 
 
 # ==============================================================================
@@ -589,8 +595,8 @@ def test_fastapi_post_errors_batch_array(test_client: TestClient):
     res = test_client.post(
         "/errors",
         json=[
-            {"correlationId": cid1, "code": "E_BATCH_A", "message": "Batch error 1"},
-            {"correlationId": cid2, "code": "E_BATCH_B", "message": "Batch error 2"},
+            {"correlationId": cid1, "code": "E_BATCH_A", "level": "error", "message": "Batch error 1"},
+            {"correlationId": cid2, "code": "E_BATCH_B", "level": "error", "message": "Batch error 2"},
         ],
     )
 
@@ -604,7 +610,7 @@ def test_fastapi_post_errors_items_dictionary(test_client: TestClient):
 
     res = test_client.post(
         "/errors",
-        json={"items": [{"correlationId": cid, "code": "E_ITEMS_WRAP", "message": "Items wrap"}]},
+        json={"items": [{"correlationId": cid, "code": "E_ITEMS_WRAP", "level": "error", "message": "Items wrap"}]},
     )
 
     assert res.status_code == 200
@@ -617,13 +623,13 @@ def test_fastapi_post_errors_idempotency_skip(test_client: TestClient):
 
     res1 = test_client.post(
         "/errors",
-        json={"correlationId": cid, "code": "E_RETRY", "message": "Original"},
+        json={"correlationId": cid, "code": "E_RETRY", "level": "error", "message": "Original"},
     )
     assert res1.json()["Results"][0]["inserted"] == 1
 
     res2 = test_client.post(
         "/errors",
-        json={"correlationId": cid, "code": "E_RETRY", "message": "Retry"},
+        json={"correlationId": cid, "code": "E_RETRY", "level": "error", "message": "Retry"},
     )
     assert res2.json()["Results"][0]["inserted"] == 0
     assert res2.json()["Results"][0]["skipped"] == 1
@@ -652,15 +658,15 @@ def test_fastapi_get_errors_query_filter_code(test_client: TestClient):
     code = f"E_QUERY_{uuid.uuid4().hex[:6].upper()}"
     test_client.post(
         "/errors",
-        json={"correlationId": f"cid-q-{uuid.uuid4().hex[:8]}", "code": code, "message": "Filter test"},
+        json={"correlationId": f"cid-q-{uuid.uuid4().hex[:8]}", "code": code, "level": "error", "message": "Filter test"},
     )
 
     res = test_client.get(f"/errors?code={code}")
 
     assert res.status_code == 200
-    results = res.json()["Results"]
+    results = res.json()["Results"][0]["items"]
     assert len(results) >= 1
-    assert all(r["code"] == code for r in results)
+    assert all(r["Code"] == code for r in results)
 
 
 def test_fastapi_get_errors_query_filter_level(test_client: TestClient):
@@ -668,8 +674,8 @@ def test_fastapi_get_errors_query_filter_level(test_client: TestClient):
     res = test_client.get("/errors?level=error")
 
     assert res.status_code == 200
-    results = res.json()["Results"]
-    assert all(r["level"] == "error" for r in results)
+    results = res.json()["Results"][0]["items"]
+    assert all(r["Level"] == "error" for r in results)
 
 
 def test_fastapi_get_errors_query_filter_session(test_client: TestClient):
@@ -680,6 +686,7 @@ def test_fastapi_get_errors_query_filter_session(test_client: TestClient):
         json={
             "correlationId": f"cid-sess-q-{uuid.uuid4().hex[:8]}",
             "code": "E_SESS_Q",
+            "level": "error",
             "sessionId": sess,
             "message": "Session Q test",
         },
@@ -688,9 +695,9 @@ def test_fastapi_get_errors_query_filter_session(test_client: TestClient):
     res = test_client.get(f"/errors?session_id={sess}")
 
     assert res.status_code == 200
-    results = res.json()["Results"]
+    results = res.json()["Results"][0]["items"]
     assert len(results) >= 1
-    assert all(r["sessionId"] == sess for r in results)
+    assert all(r["SessionId"] == sess for r in results)
 
 
 def test_fastapi_get_errors_single_by_correlation_id(test_client: TestClient):
@@ -701,6 +708,7 @@ def test_fastapi_get_errors_single_by_correlation_id(test_client: TestClient):
         json={
             "correlationId": cid,
             "code": "E_SINGLE_GET",
+            "level": "error",
             "message": "Exact lookup test",
             "stackTrace": "Exact stack trace line",
         },
@@ -710,9 +718,9 @@ def test_fastapi_get_errors_single_by_correlation_id(test_client: TestClient):
 
     assert res.status_code == 200
     err = res.json()["Results"][0]
-    assert err["correlationId"] == cid
-    assert err["code"] == "E_SINGLE_GET"
-    assert err["stackTrace"] == "Exact stack trace line"
+    assert err["CorrelationId"] == cid
+    assert err["Code"] == "E_SINGLE_GET"
+    assert err["StackTrace"] == "Exact stack trace line"
 
 
 def test_fastapi_get_errors_single_not_found_404(test_client: TestClient):
@@ -758,7 +766,7 @@ def test_ui_remote_registry_simulation_control_ids():
 
     assert "ui-sim-previous" in ids
     assert "ui-sim-next" in ids
-    assert "ui-sim-take-over" in ids
+    assert "ui-sim-takeover" in ids
     assert "ui-sim-exit" in ids
 
 
@@ -859,16 +867,16 @@ def test_cli_errors_list_execution(mock_session_ctx: MagicMock):
     )
     result = cli_errors.handle(ns, mock_session_ctx)
 
-    assert "errors" in result
-    assert "count" in result
-    assert isinstance(result["errors"], list)
+    assert "items" in result
+    assert "total" in result
+    assert isinstance(result["items"], list)
 
 
 def test_cli_errors_show_execution(mock_session_ctx: MagicMock):
     """Verify processing-cli errors show <cid> returns single record."""
     conn = get_task_conn()
     cid = f"cli-show-{uuid.uuid4().hex[:8]}"
-    write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_SHOW", "Message": "Show msg"}])
+    write_errors(conn, errors=[{"CorrelationId": cid, "Code": "E_SHOW", "Level": "error", "Message": "Show msg"}])
 
     ns = argparse.Namespace(action="show", correlation_id=cid, db_root=None)
     result = cli_errors.handle(ns, mock_session_ctx)
@@ -932,6 +940,7 @@ def test_cli_ui_grayscale_tuning_execution(mock_session_ctx: MagicMock):
         bit_depth="1-bit",
         contrast=75,
         tolerance=5,
+        backend=None,
     )
     result = cli_ui.handle(ns, mock_session_ctx)
 
@@ -943,8 +952,8 @@ def test_cli_ui_grayscale_tuning_execution(mock_session_ctx: MagicMock):
 
 def test_cli_ui_click_enqueue_execution(mock_session_ctx: MagicMock):
     """Verify processing-cli ui click enqueues without remote backend connection."""
-    packet = enqueue_packet({"action": "click", "elementId": "ui-sim-take-over", "actor": "cli"})
+    packet = enqueue_packet({"action": "click", "elementId": "ui-sim-takeover", "actor": "cli"})
 
     assert packet["packetId"]
     assert packet["action"] == "click"
-    assert packet["elementId"] == "ui-sim-take-over"
+    assert packet["elementId"] == "ui-sim-takeover"
