@@ -1,6 +1,6 @@
 # Changelog
 
-## [v4.113.6] - 2026-10-30
+## [v4.113.8] - 2026-10-30
 
 ### Fixed
 - Release workflow: publish releases directly as public assets (draft: false) for immediate installer downloads
