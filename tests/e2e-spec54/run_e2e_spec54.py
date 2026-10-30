@@ -40,8 +40,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 VENV_BIN = Path.home() / ".venvs" / "catmy" / "bin"
-VPY = VENV_BIN / "python"
+VPY = VENV_BIN / "python" if (VENV_BIN / "python").exists() else Path(sys.executable)
 CLI = VENV_BIN / "processing-cli"
+HAS_CLI_BIN = CLI.exists()
 PORT = 18787
 BASE = f"http://127.0.0.1:{PORT}"
 
@@ -94,8 +95,9 @@ def http(method: str, path: str, payload: object = None, timeout: float = 10.0):
 
 
 def cli(*args: str, timeout: float = 60.0):
+    cmd = [str(CLI), *args] if HAS_CLI_BIN else [str(VPY), "-m", "BE.cli.processing.main", *args]
     proc = subprocess.run(
-        [str(CLI), *args], capture_output=True, text=True, timeout=timeout,
+        cmd, capture_output=True, text=True, timeout=timeout,
     )
     out = proc.stdout.strip()
     parsed: object = None
@@ -659,9 +661,8 @@ def group_k(backend_proc: subprocess.Popen) -> None:
 
 
 def main() -> int:
-    if not VPY.exists() or not CLI.exists():
-        print(f"FAIL: venv tools missing: {VPY} / {CLI}")
-        print("Run with the repo venv (has fastapi/uvicorn/pytest): ~/.venvs/catmy/bin/python")
+    if not VPY.exists():
+        print(f"FAIL: python interpreter missing: {VPY}")
         return 2
     keep_tmp = "--keep-tmp" in sys.argv
     tmp = Path(tempfile.mkdtemp(prefix="e2e-spec54-"))
