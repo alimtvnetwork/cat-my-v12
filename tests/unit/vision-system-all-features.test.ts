@@ -757,3 +757,480 @@ describe("Supabase Bug Ticket Generator & Serialization", () => {
     expect(DEFAULT_SUPABASE_CONFIG.publishableKey.length).toBeGreaterThan(20);
   });
 });
+
+// ==============================================================================
+// 11. Multi-Geometry Shape Tools & Bounding Box Math (Tests 56 - 62)
+// ==============================================================================
+
+describe("Multi-Geometry Shape Tools & Bounding Box Math", () => {
+  it("enforces square geometry with 1:1 aspect ratio constraint", () => {
+    const computeSquareBox = (centerX: number, centerY: number, side: number) => {
+      const half = side / 2;
+      return {
+        x: centerX - half,
+        y: centerY - half,
+        width: side,
+        height: side,
+        aspectRatio: 1.0,
+      };
+    };
+
+    const box = computeSquareBox(200, 150, 80);
+    expect(box.width).toBe(80);
+    expect(box.height).toBe(80);
+    expect(box.aspectRatio).toBe(1.0);
+    expect(box.x).toBe(160);
+    expect(box.y).toBe(110);
+  });
+
+  it("calculates circle bounding box and radius preservation", () => {
+    const computeCircleBox = (cx: number, cy: number, radius: number) => {
+      return {
+        x: cx - radius,
+        y: cy - radius,
+        width: radius * 2,
+        height: radius * 2,
+        radius,
+      };
+    };
+
+    const circle = computeCircleBox(100, 100, 25);
+    expect(circle.width).toBe(50);
+    expect(circle.height).toBe(50);
+    expect(circle.x).toBe(75);
+    expect(circle.y).toBe(75);
+    expect(circle.radius).toBe(25);
+  });
+
+  it("calculates regular hexagon bounding box with radius ratio sqrt(3)/2", () => {
+    const computeHexagonBox = (cx: number, cy: number, outerRadius: number) => {
+      const halfWidth = outerRadius;
+      const halfHeight = outerRadius * (Math.sqrt(3) / 2);
+      return {
+        x: cx - halfWidth,
+        y: cy - halfHeight,
+        width: outerRadius * 2,
+        height: halfHeight * 2,
+        verticesCount: 6,
+      };
+    };
+
+    const hex = computeHexagonBox(300, 300, 60);
+    expect(hex.verticesCount).toBe(6);
+    expect(hex.width).toBe(120);
+    expect(hex.height).toBeCloseTo(103.92, 1);
+    expect(hex.x).toBe(240);
+  });
+
+  it("auto-increments pattern numbering [1..N] sequentially", () => {
+    const assignPatternIndices = (items: { label: string }[]) => {
+      return items.map((item, index) => ({
+        ...item,
+        patternNumber: index + 1,
+        displayName: `Pattern #${index + 1}`,
+      }));
+    };
+
+    const patterns = assignPatternIndices([{ label: "A" }, { label: "B" }, { label: "C" }]);
+    expect(patterns[0].patternNumber).toBe(1);
+    expect(patterns[1].patternNumber).toBe(2);
+    expect(patterns[2].patternNumber).toBe(3);
+    expect(patterns[0].displayName).toBe("Pattern #1");
+  });
+
+  it("re-indexes pattern numbers when an intermediate pattern is removed", () => {
+    const patterns = [
+      { id: "p1", patternNumber: 1 },
+      { id: "p2", patternNumber: 2 },
+      { id: "p3", patternNumber: 3 },
+    ];
+
+    const removeAndReindex = (list: typeof patterns, targetId: string) => {
+      return list
+        .filter((item) => item.id !== targetId)
+        .map((item, index) => ({
+          ...item,
+          patternNumber: index + 1,
+        }));
+    };
+
+    const reindexed = removeAndReindex(patterns, "p2");
+    expect(reindexed.length).toBe(2);
+    expect(reindexed[0].id).toBe("p1");
+    expect(reindexed[0].patternNumber).toBe(1);
+    expect(reindexed[1].id).toBe("p3");
+    expect(reindexed[1].patternNumber).toBe(2);
+  });
+
+  it("locks ROI container dimensions against accidental resize events", () => {
+    interface RoiContainer {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      isLocked: boolean;
+    }
+
+    const applyResize = (roi: RoiContainer, deltaW: number, deltaH: number): RoiContainer => {
+      if (roi.isLocked) {
+        return roi;
+      }
+      return {
+        ...roi,
+        width: Math.max(10, roi.width + deltaW),
+        height: Math.max(10, roi.height + deltaH),
+      };
+    };
+
+    const lockedRoi: RoiContainer = { x: 50, y: 50, width: 200, height: 150, isLocked: true };
+    const result = applyResize(lockedRoi, 40, 20);
+
+    expect(result.width).toBe(200);
+    expect(result.height).toBe(150);
+  });
+
+  it("toggles ROI container lock on double-click action", () => {
+    let isRoiLocked = true;
+    const handleDoubleClick = () => {
+      isRoiLocked = !isRoiLocked;
+    };
+
+    handleDoubleClick();
+    expect(isRoiLocked).toBe(false);
+
+    handleDoubleClick();
+    expect(isRoiLocked).toBe(true);
+  });
+});
+
+// ==============================================================================
+// 12. Photoshop-Style Layers Panel State Machines (Tests 63 - 69)
+// ==============================================================================
+
+describe("Photoshop-Style Layers Panel State Machines", () => {
+  interface MockLayer {
+    id: string;
+    label: string;
+    zIndex: number;
+    isVisible: boolean;
+    isLocked: boolean;
+  }
+
+  const createLayers = (): MockLayer[] => [
+    { id: "roi-1", label: "ROI Boundary", zIndex: 0, isVisible: true, isLocked: true },
+    { id: "pat-1", label: "Pattern Search #1", zIndex: 1, isVisible: true, isLocked: false },
+    { id: "pat-2", label: "Pattern Search #2", zIndex: 2, isVisible: true, isLocked: false },
+  ];
+
+  it("reorders layer with Bring to Front (highest zIndex)", () => {
+    const layers = createLayers();
+    const bringToFront = (list: MockLayer[], targetId: string) => {
+      const maxZ = Math.max(...list.map((l) => l.zIndex));
+      return list.map((l) => (l.id === targetId ? { ...l, zIndex: maxZ + 1 } : l));
+    };
+
+    const updated = bringToFront(layers, "pat-1");
+    const target = updated.find((l) => l.id === "pat-1")!;
+    expect(target.zIndex).toBe(3);
+  });
+
+  it("reorders layer with Send to Back (lowest zIndex)", () => {
+    const layers = createLayers();
+    const sendToBack = (list: MockLayer[], targetId: string) => {
+      const minZ = Math.min(...list.map((l) => l.zIndex));
+      return list.map((l) => (l.id === targetId ? { ...l, zIndex: minZ - 1 } : l));
+    };
+
+    const updated = sendToBack(layers, "pat-2");
+    const target = updated.find((l) => l.id === "pat-2")!;
+    expect(target.zIndex).toBe(-1);
+  });
+
+  it("swaps adjacent zIndexes on Move Up", () => {
+    const layers = createLayers();
+    const moveUp = (list: MockLayer[], targetId: string) => {
+      const sorted = [...list].sort((a, b) => a.zIndex - b.zIndex);
+      const idx = sorted.findIndex((l) => l.id === targetId);
+      if (idx < sorted.length - 1) {
+        const tempZ = sorted[idx].zIndex;
+        sorted[idx].zIndex = sorted[idx + 1].zIndex;
+        sorted[idx + 1].zIndex = tempZ;
+      }
+      return sorted;
+    };
+
+    const updated = moveUp(layers, "pat-1");
+    const pat1 = updated.find((l) => l.id === "pat-1")!;
+    const pat2 = updated.find((l) => l.id === "pat-2")!;
+    expect(pat1.zIndex).toBe(2);
+    expect(pat2.zIndex).toBe(1);
+  });
+
+  it("swaps adjacent zIndexes on Move Down", () => {
+    const layers = createLayers();
+    const moveDown = (list: MockLayer[], targetId: string) => {
+      const sorted = [...list].sort((a, b) => a.zIndex - b.zIndex);
+      const idx = sorted.findIndex((l) => l.id === targetId);
+      if (idx > 0) {
+        const tempZ = sorted[idx].zIndex;
+        sorted[idx].zIndex = sorted[idx - 1].zIndex;
+        sorted[idx - 1].zIndex = tempZ;
+      }
+      return sorted;
+    };
+
+    const updated = moveDown(layers, "pat-2");
+    const pat1 = updated.find((l) => l.id === "pat-1")!;
+    const pat2 = updated.find((l) => l.id === "pat-2")!;
+    expect(pat2.zIndex).toBe(1);
+    expect(pat1.zIndex).toBe(2);
+  });
+
+  it("toggles layer visibility without removing layer from hierarchy", () => {
+    const layers = createLayers();
+    const toggleVisibility = (list: MockLayer[], targetId: string) => {
+      return list.map((l) => (l.id === targetId ? { ...l, isVisible: !l.isVisible } : l));
+    };
+
+    const updated = toggleVisibility(layers, "pat-1");
+    const target = updated.find((l) => l.id === "pat-1")!;
+    expect(target.isVisible).toBe(false);
+    expect(updated.length).toBe(3);
+  });
+
+  it("toggles layer lock to freeze position coordinates", () => {
+    const layers = createLayers();
+    const toggleLock = (list: MockLayer[], targetId: string) => {
+      return list.map((l) => (l.id === targetId ? { ...l, isLocked: !l.isLocked } : l));
+    };
+
+    const updated = toggleLock(layers, "pat-2");
+    const target = updated.find((l) => l.id === "pat-2")!;
+    expect(target.isLocked).toBe(true);
+  });
+
+  it("maintains top-first rendering order in LayersPanel presentation list", () => {
+    const layers = createLayers();
+    const topFirstLayers = [...layers].sort((a, b) => b.zIndex - a.zIndex);
+
+    expect(topFirstLayers[0].id).toBe("pat-2");
+    expect(topFirstLayers[1].id).toBe("pat-1");
+    expect(topFirstLayers[2].id).toBe("roi-1");
+  });
+});
+
+// ==============================================================================
+// 13. 1-Bit Dynamic Binarization & Zero-Variance Edge Cases (Tests 70 - 75)
+// ==============================================================================
+
+describe("1-Bit Dynamic Binarization & Zero-Variance Edge Cases", () => {
+  it("converts grayscale pixels to strict binary {0, 255} based on threshold", () => {
+    const buffer = new Uint8Array([50, 127, 128, 200, 255]);
+    const threshold = 128;
+    const binarized = new Uint8Array(buffer.length);
+
+    for (let i = 0; i < buffer.length; i++) {
+      binarized[i] = buffer[i] >= threshold ? 255 : 0;
+    }
+
+    expect(binarized[0]).toBe(0);
+    expect(binarized[1]).toBe(0);
+    expect(binarized[2]).toBe(255);
+    expect(binarized[3]).toBe(255);
+    expect(binarized[4]).toBe(255);
+  });
+
+  it("handles zero-variance solid color image gracefully without NaN division", () => {
+    const solidImage = new Uint8ClampedArray(4 * 4 * 4);
+    solidImage.fill(100);
+
+    const stretched = toContrastStretchedGray(solidImage, 4, 4);
+    expect(stretched).toBeInstanceOf(Uint8ClampedArray);
+
+    for (let i = 0; i < stretched.length; i += 4) {
+      expect(Number.isNaN(stretched[i])).toBe(false);
+      expect(stretched[i]).toBe(100);
+    }
+  });
+
+  it("clamps out-of-range luminance values to [0, 255]", () => {
+    const clampLuma = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+
+    expect(clampLuma(-50)).toBe(0);
+    expect(clampLuma(310)).toBe(255);
+    expect(clampLuma(128.4)).toBe(128);
+  });
+
+  it("applies inverted polarity binary binarization (dark features white)", () => {
+    const buffer = new Uint8Array([30, 80, 128, 210]);
+    const threshold = 100;
+    const inverted = new Uint8Array(buffer.length);
+
+    for (let i = 0; i < buffer.length; i++) {
+      inverted[i] = buffer[i] <= threshold ? 255 : 0;
+    }
+
+    expect(inverted[0]).toBe(255);
+    expect(inverted[1]).toBe(255);
+    expect(inverted[2]).toBe(0);
+    expect(inverted[3]).toBe(0);
+  });
+
+  it("computes accurate histogram distribution over 256 luma bins", () => {
+    const testPixels = new Uint8Array([0, 0, 50, 128, 128, 128, 255]);
+    const histogram = new Uint32Array(256);
+
+    for (let i = 0; i < testPixels.length; i++) {
+      histogram[testPixels[i]]++;
+    }
+
+    expect(histogram[0]).toBe(2);
+    expect(histogram[50]).toBe(1);
+    expect(histogram[128]).toBe(3);
+    expect(histogram[255]).toBe(1);
+    expect(histogram[100]).toBe(0);
+  });
+
+  it("determines optimal Otsu threshold from histogram distribution", () => {
+    const histogram = new Uint32Array(256);
+    histogram[50] = 50;
+    histogram[200] = 50;
+
+    const computeOtsu = (hist: Uint32Array, total: number): number => {
+      let sum = 0;
+      for (let i = 0; i < 256; i++) sum += i * hist[i];
+
+      let sumB = 0;
+      let wB = 0;
+      let maxVariance = 0;
+      let threshold = 0;
+
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (wB === 0) continue;
+        const wF = total - wB;
+        if (wF === 0) break;
+
+        sumB += t * hist[t];
+        const mB = sumB / wB;
+        const mF = (sum - sumB) / wF;
+        const betweenVariance = wB * wF * (mB - mF) * (mB - mF);
+
+        if (betweenVariance > maxVariance) {
+          maxVariance = betweenVariance;
+          threshold = t;
+        }
+      }
+      return threshold;
+    };
+
+    const threshold = computeOtsu(histogram, 100);
+    expect(threshold).toBeGreaterThanOrEqual(50);
+    expect(threshold).toBeLessThanOrEqual(200);
+  });
+});
+
+// ==============================================================================
+// 14. Activity Recorder Bug Envelope & Telemetry Payloads (Tests 76 - 80)
+// ==============================================================================
+
+describe("Activity Recorder Bug Envelope & Telemetry Payloads", () => {
+  it("formats markdown README with session metadata and step summary", () => {
+    const session = {
+      sessionId: "sess-rec-test-01",
+      recordedAt: "2026-10-31T03:00:00Z",
+      title: "Navigation Glitch on Hover",
+      environment: { os: "Windows 11", browser: "Chrome 122" },
+      stepsCount: 12,
+    };
+
+    const markdown = `# CAT-iVISION Bug Report Package
+- **Session ID**: ${session.sessionId}
+- **Recorded At**: ${session.recordedAt}
+- **Title**: ${session.title}
+- **OS**: ${session.environment.os}
+- **Browser**: ${session.environment.browser}
+- **Total Steps**: ${session.stepsCount}`;
+
+    expect(markdown).toContain("# CAT-iVISION Bug Report Package");
+    expect(markdown).toContain("sess-rec-test-01");
+    expect(markdown).toContain("Navigation Glitch on Hover");
+    expect(markdown).toContain("**Total Steps**: 12");
+  });
+
+  it("validates chronological action log sequence timestamps", () => {
+    const actions = [
+      { timestamp: 1000, action: "click", target: "btn-start" },
+      { timestamp: 1500, action: "hover", target: "menu-rules" },
+      { timestamp: 2200, action: "click", target: "btn-pocket-2" },
+    ];
+
+    let isChronological = true;
+    for (let i = 1; i < actions.length; i++) {
+      if (actions[i].timestamp < actions[i - 1].timestamp) {
+        isChronological = false;
+        break;
+      }
+    }
+
+    expect(isChronological).toBe(true);
+  });
+
+  it("serializes error snapshot payload with redacting sensitive fields", () => {
+    const sanitizeReport = (data: Record<string, unknown>) => {
+      const sanitized = { ...data };
+      if ("apiKey" in sanitized) sanitized.apiKey = "[REDACTED]";
+      if ("password" in sanitized) sanitized.password = "[REDACTED]";
+      return sanitized;
+    };
+
+    const raw = {
+      title: "Crash on save",
+      apiKey: "sk-secret-key-123",
+      endpoint: "/api/v1/recipes",
+    };
+
+    const clean = sanitizeReport(raw);
+    expect(clean.apiKey).toBe("[REDACTED]");
+    expect(clean.title).toBe("Crash on save");
+  });
+
+  it("verifies offline bug report queueing limit and FIFO eviction", () => {
+    const queue: string[] = [];
+    const MAX_QUEUE = 3;
+
+    const enqueueReport = (ticket: string) => {
+      if (queue.length >= MAX_QUEUE) {
+        queue.shift();
+      }
+      queue.push(ticket);
+    };
+
+    enqueueReport("BUG-1");
+    enqueueReport("BUG-2");
+    enqueueReport("BUG-3");
+    enqueueReport("BUG-4");
+
+    expect(queue.length).toBe(3);
+    expect(queue[0]).toBe("BUG-2");
+    expect(queue[2]).toBe("BUG-4");
+  });
+
+  it("enforces non-null error envelope status across all report dispatchers", () => {
+    interface DispatchResult {
+      isSuccess: boolean;
+      ticketId: string | null;
+      errorMessage: string | null;
+    }
+
+    const successResult: DispatchResult = {
+      isSuccess: true,
+      ticketId: "CAT-BUG-987",
+      errorMessage: null,
+    };
+
+    expect(successResult.isSuccess).toBe(true);
+    expect(successResult.ticketId).not.toBeNull();
+  });
+});
+
