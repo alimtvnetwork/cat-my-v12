@@ -36,6 +36,7 @@ export interface RuleRightToolbarPanelProps {
   isEvaluating?: boolean;
   onEvaluateSingleRule?: (ruleId: string) => void;
   onDeleteRule?: (ruleId: string) => void;
+  onLaunchWorkbench?: () => void;
 }
 
 function getToolIcon(code: string, name: string): LucideIcon {
@@ -90,6 +91,7 @@ function RuleRightToolbarPanelContent({
   isEvaluating = false,
   onEvaluateSingleRule,
   onDeleteRule,
+  onLaunchWorkbench,
 }: RuleRightToolbarPanelContentProps): React.JSX.Element {
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const ToolIcon = getToolIcon(toolCode, rule.name);
@@ -291,6 +293,18 @@ function RuleRightToolbarPanelContent({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Quick Launch Visual Workbench */}
+          {onLaunchWorkbench ? (
+            <button
+              type="button"
+              title="Open Full Visual Workbench"
+              onClick={onLaunchWorkbench}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-400/40 bg-cyan-500/10 text-cyan-300 transition hover:bg-cyan-500/20 hover:text-cyan-200"
+            >
+              <Sliders size={14} />
+            </button>
+          ) : null}
+
           {/* Quick Enable/Disable Toggle */}
           <button
             type="button"
@@ -526,6 +540,17 @@ function RuleRightToolbarPanelContent({
                 className="h-1.5 w-full cursor-pointer accent-cyan-400"
               />
             </div>
+
+            {onLaunchWorkbench ? (
+              <button
+                type="button"
+                onClick={onLaunchWorkbench}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-950/40 py-1.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300 hover:bg-cyan-900/50 transition"
+              >
+                <Sliders size={12} />
+                Tune in Visual Workbench
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
@@ -609,6 +634,17 @@ function RuleRightToolbarPanelContent({
                 className="w-16 rounded-md border border-white/15 bg-black/50 px-2 py-1 text-center font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
               />
             </div>
+
+            {onLaunchWorkbench ? (
+              <button
+                type="button"
+                onClick={onLaunchWorkbench}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-950/40 py-1.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300 hover:bg-cyan-900/50 transition"
+              >
+                <Sliders size={12} />
+                Tune in Visual Workbench
+              </button>
+            ) : null}
           </div>
         )}
       </div>

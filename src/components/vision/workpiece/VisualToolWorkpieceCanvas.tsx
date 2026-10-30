@@ -65,6 +65,7 @@ export interface VisualToolWorkpieceCanvasProps {
   onRunAnalysis?: () => void;
   isAnalyzing?: boolean;
   tapeStripResult?: TapeStripEvaluationResult | null;
+  onUpdateParams?: (params: Record<string, any>) => void;
 }
 
 function clampValue(val: number, min: number, max: number): number {
@@ -262,7 +263,25 @@ function drawGreyscaleSimulationPatternOverlay(
     }
   }
 
-  // 1. Zero-ROI: Enclosing envelope bounding box eliminated; render individual feature marks directly
+  // 1. Draw inner Pattern Region boundary envelope
+  ctx.save();
+  ctx.strokeStyle = isFail ? "#ef4444" : isPass ? "#10b981" : "#f43f5e";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(envX, envY, envW, envH);
+  ctx.setLineDash([]);
+
+  const envBadge = `PATTERN REGION · [${envW}×${envH}]`;
+  ctx.font = "bold 8px monospace";
+  const envBw = ctx.measureText(envBadge).width + 8;
+  ctx.fillStyle = "rgba(8, 12, 20, 0.85)";
+  ctx.fillRect(envX, envY - 14, envBw, 14);
+  ctx.strokeStyle = isFail ? "#ef4444" : isPass ? "#10b981" : "#f43f5e";
+  ctx.lineWidth = 0.8;
+  ctx.strokeRect(envX, envY - 14, envBw, 14);
+  ctx.fillStyle = isFail ? "#fca5a5" : isPass ? "#6ee7b7" : "#fda4af";
+  ctx.fillText(envBadge, envX + 4, envY - 3);
+  ctx.restore();
 
   // 2. Draw all individual character boxes with color-coded results
   for (const b of boxes) {
@@ -953,6 +972,7 @@ export function VisualToolWorkpieceCanvas({
   onRunAnalysis,
   isAnalyzing = false,
   tapeStripResult = null,
+  onUpdateParams,
 }: VisualToolWorkpieceCanvasProps): React.JSX.Element {
   const roi = useMemo(() => propRoi ?? { x: 0, y: 0, width: 960, height: 540 }, [propRoi]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -967,6 +987,30 @@ export function VisualToolWorkpieceCanvas({
   const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number; initialRoi: WorkpieceRoi } | null>(null);
   const [cursorHandleType, setCursorHandleType] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
+  const [isMovingRoi, setIsMovingRoi] = useState(false);
+  const [isDraggingPin1, setIsDraggingPin1] = useState(false);
+  const [isHoveringRoi, setIsHoveringRoi] = useState(false);
+
+  const imageMetrics = useMemo(() => {
+    const w = 960;
+    const h = 540;
+
+    if (!imageElement) {
+      return {
+        fit: { x: 0, y: 0, width: w, height: h },
+        sourceScaleX: 1,
+        sourceScaleY: 1,
+      };
+    }
+
+    const naturalW = imageElement.naturalWidth || imageElement.width || w;
+    const naturalH = imageElement.naturalHeight || imageElement.height || h;
+    const fit = getContainedDimensions(naturalW, naturalH, w, h);
+    const sourceScaleX = fit.width / naturalW;
+    const sourceScaleY = fit.height / naturalH;
+
+    return { fit, sourceScaleX, sourceScaleY };
+  }, [imageElement]);
 
   const imgSrc = imageRef || null;
 
@@ -1143,13 +1187,18 @@ export function VisualToolWorkpieceCanvas({
 
   const isPatternMatching =
     Boolean(toolName?.toLowerCase().includes("pattern")) ||
+    Boolean(toolName?.toLowerCase().includes("white box")) ||
     toolCode === "T102" ||
+    toolCode === "T116" ||
     toolCode === "greyscale_pattern_match";
 
   const isPin1 =
     Boolean(toolName?.toLowerCase().includes("pin 1")) ||
+    Boolean(toolName?.toLowerCase().includes("pin1")) ||
     toolCode === "T105" ||
-    toolCode === "pin1_config";
+    toolCode === "T117" ||
+    toolCode === "pin1_config" ||
+    toolCode === "pin1_orientation";
 
   const isCaliper =
     Boolean(toolName?.toLowerCase().includes("caliper")) ||
@@ -1342,9 +1391,15 @@ export function VisualToolWorkpieceCanvas({
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
 
-    // Analyze mode keeps the image clean until the user clicks Analyze:
-    // tapeStripResult is only set by an explicit analysis run.
-    if (isAnalyzeMode && !tapeStripResult && rulesToRender.length > 0) {
+    // Analyze mode keeps the image clean until the user clicks Analyze,
+    // unless a rule is currently selected or editable for inspection/tuning:
+    if (
+      isAnalyzeMode &&
+      !tapeStripResult &&
+      rulesToRender.length > 0 &&
+      !selectedRuleId &&
+      !isEditable
+    ) {
       return;
     }
 
@@ -1579,7 +1634,69 @@ export function VisualToolWorkpieceCanvas({
           ruleNameLower.includes("pitch") ||
           (isSelected && isCaliper);
 
-        // Zero-ROI: Render intrinsic features only, without artificial bounding box rectangles
+        // Render Search Region (ROI) bounding box for the active / selected rule
+        if (isSelected) {
+          const shapeType = String(
+            (rule.params as any)?.shapeType || (toolParams as any)?.shapeType || "rectangle",
+          ).toLowerCase();
+
+          ctx.save();
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([6, 4]);
+
+          if (shapeType === "circle") {
+            const rad = Math.min(ruleRoi.width, ruleRoi.height) / 2;
+
+            ctx.beginPath();
+            ctx.arc(
+              ruleRoi.x + ruleRoi.width / 2,
+              ruleRoi.y + ruleRoi.height / 2,
+              rad,
+              0,
+              Math.PI * 2,
+            );
+            ctx.stroke();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+          } else {
+            ctx.strokeRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
+          }
+
+          ctx.setLineDash([]);
+
+          // Search Region label badge
+          const labelPrefix = isRulePin1
+            ? "PIN 1 SEARCH REGION"
+            : isRulePattern
+              ? "PATTERN SEARCH REGION"
+              : `${rule.name.toUpperCase()} SEARCH REGION`;
+          const badgeText = `${labelPrefix} · [${Math.round(ruleRoi.width)}×${Math.round(ruleRoi.height)}]`;
+          ctx.font = "bold 9px monospace";
+          const tw = ctx.measureText(badgeText).width;
+          const badgeW = tw + 10;
+          const badgeH = 16;
+          const badgeY = Math.max(16, ruleRoi.y - 18);
+
+          ctx.fillStyle = "rgba(8, 12, 20, 0.9)";
+          ctx.fillRect(ruleRoi.x, badgeY, badgeW, badgeH);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(ruleRoi.x, badgeY, badgeW, badgeH);
+
+          ctx.fillStyle = strokeColor;
+          ctx.fillText(badgeText, ruleRoi.x + 5, badgeY + 11.5);
+
+          // 4 Corner drag handles
+          if (isEditable) {
+            drawCornerHandles(ctx, ruleRoi, strokeColor);
+          }
+
+          ctx.restore();
+        }
+
         let badgeX = ruleX;
         let badgeY = ruleY;
 
@@ -1971,23 +2088,33 @@ export function VisualToolWorkpieceCanvas({
     renderCanvas();
   }, [renderCanvas]);
 
-  function getCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
-    const canvas = canvasRef.current;
+  const getCanvasCoords = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } => {
+      const canvas = canvasRef.current;
 
-    if (!canvas) {
-      return { x: 0, y: 0 };
-    }
+      if (!canvas) {
+        return { x: 0, y: 0 };
+      }
 
-    const rect = canvas.getBoundingClientRect();
-    const isRectValid = rect.width > 0 && rect.height > 0;
-    const scaleX = isRectValid ? canvas.width / rect.width : 1;
-    const scaleY = isRectValid ? canvas.height / rect.height : 1;
+      const rect = canvas.getBoundingClientRect();
+      const isRectValid = rect.width > 0 && rect.height > 0;
+      const scaleX = isRectValid ? canvas.width / rect.width : 1;
+      const scaleY = isRectValid ? canvas.height / rect.height : 1;
 
-    return {
-      x: Math.round((clientX - rect.left) * scaleX),
-      y: Math.round((clientY - rect.top) * scaleY),
-    };
-  }
+      const rawX = (clientX - rect.left) * scaleX;
+      const rawY = (clientY - rect.top) * scaleY;
+
+      const { fit, sourceScaleX, sourceScaleY } = imageMetrics;
+      const localX = sourceScaleX > 0 ? (rawX - fit.x) / sourceScaleX : rawX;
+      const localY = sourceScaleY > 0 ? (rawY - fit.y) / sourceScaleY : rawY;
+
+      return {
+        x: Math.round(localX),
+        y: Math.round(localY),
+      };
+    },
+    [imageMetrics],
+  );
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
@@ -2011,7 +2138,59 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // 1. First priority: Check if user clicked on an individual pattern box (to toggle exclusion)
+    // 1. Pin 1 orientation: drag reticle or map new Pin 1 location
+    if (isPin1 && onUpdateParams) {
+      const currentPin1X =
+        (toolParams as any)?.pin1Config?.centerX ??
+        (toolParams as any)?.pin1Config?.registeredPin1?.centerX;
+      const currentPin1Y =
+        (toolParams as any)?.pin1Config?.centerY ??
+        (toolParams as any)?.pin1Config?.registeredPin1?.centerY;
+      const isReticleHit =
+        typeof currentPin1X === "number" &&
+        typeof currentPin1Y === "number" &&
+        Math.hypot(x - currentPin1X, y - currentPin1Y) <= 18;
+
+      if (isReticleHit) {
+        setIsDraggingPin1(true);
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+        return;
+      }
+
+      // If clicked inside search region or near the IC: map Pin 1 position
+      const isInsideSearchArea =
+        x >= roi.x - 20 &&
+        x <= roi.x + roi.width + 20 &&
+        y >= roi.y - 20 &&
+        y <= roi.y + roi.height + 20;
+
+      if (isInsideSearchArea) {
+        const nextPin1Config = {
+          ...((toolParams as any)?.pin1Config ?? {}),
+          centerX: x,
+          centerY: y,
+          registeredPin1: {
+            ...((toolParams as any)?.pin1Config?.registeredPin1 ?? {}),
+            x,
+            y,
+            centerX: x,
+            centerY: y,
+            radius: (toolParams as any)?.pin1Config?.radius ?? 11,
+          },
+        };
+
+        onUpdateParams({
+          ...toolParams,
+          pin1Config: nextPin1Config,
+          pin1ConfigJson: JSON.stringify(nextPin1Config),
+        });
+
+        return;
+      }
+    }
+
+    // 2. Pattern box toggle exclusion
     if (isPatternMatching && activeBoxesToDraw.length > 0) {
       const boxUnderCursor = activeBoxesToDraw.find(
         (b) => x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height,
@@ -2034,7 +2213,22 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // 2. Second priority: Check if user clicked on another rule to select it (skip locked rules)
+    // 3. Search Region body drag (move ROI)
+    const isInsideRoi =
+      x >= roi.x &&
+      x <= roi.x + roi.width &&
+      y >= roi.y &&
+      y <= roi.y + roi.height;
+
+    if (isEditable && onChangeRoi && isInsideRoi) {
+      setIsMovingRoi(true);
+      setDragStartPos({ x, y, initialRoi: { ...roi } });
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+      return;
+    }
+
+    // 4. Click other rule to select
     if (onSelectRule && overlayRules.length > 0) {
       const clickedRule = [...overlayRules]
         .reverse()
@@ -2058,6 +2252,44 @@ export function VisualToolWorkpieceCanvas({
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+
+    if (isDraggingPin1 && onUpdateParams) {
+      const nextPin1Config = {
+        ...((toolParams as any)?.pin1Config ?? {}),
+        centerX: x,
+        centerY: y,
+        registeredPin1: {
+          ...((toolParams as any)?.pin1Config?.registeredPin1 ?? {}),
+          x,
+          y,
+          centerX: x,
+          centerY: y,
+          radius: (toolParams as any)?.pin1Config?.radius ?? 11,
+        },
+      };
+
+      onUpdateParams({
+        ...toolParams,
+        pin1Config: nextPin1Config,
+        pin1ConfigJson: JSON.stringify(nextPin1Config),
+      });
+
+      return;
+    }
+
+    if (isMovingRoi && dragStartPos && onChangeRoi) {
+      const dx = x - dragStartPos.x;
+      const dy = y - dragStartPos.y;
+      const nextRoi = {
+        ...dragStartPos.initialRoi,
+        x: Math.max(0, dragStartPos.initialRoi.x + dx),
+        y: Math.max(0, dragStartPos.initialRoi.y + dy),
+      };
+
+      onChangeRoi(nextRoi);
+
+      return;
+    }
 
     if (activeCornerHandle && dragStartPos && onChangeRoi) {
       const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
@@ -2096,7 +2328,7 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
-    if (isEditable && !activeCornerHandle) {
+    if (isEditable && !activeCornerHandle && !isMovingRoi && !isDraggingPin1) {
       const handleHitRadius = 14;
       const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
       const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
@@ -2105,15 +2337,34 @@ export function VisualToolWorkpieceCanvas({
 
       const hover = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
       setCursorHandleType(hover);
+
+      const isInside =
+        x >= roi.x &&
+        x <= roi.x + roi.width &&
+        y >= roi.y &&
+        y <= roi.y + roi.height;
+
+      setIsHoveringRoi(isInside && !hover);
     }
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     if (activeCornerHandle) {
       setActiveCornerHandle(null);
-      setDragStartPos(null);
       (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     }
+
+    if (isMovingRoi) {
+      setIsMovingRoi(false);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
+
+    if (isDraggingPin1) {
+      setIsDraggingPin1(false);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
+
+    setDragStartPos(null);
   }
 
   const cursorStyle = useMemo(() => {
@@ -2135,8 +2386,31 @@ export function VisualToolWorkpieceCanvas({
       return "nesw-resize";
     }
 
+    if (isMovingRoi) {
+      return "grabbing";
+    }
+
+    if (isDraggingPin1) {
+      return "crosshair";
+    }
+
+    if (isHoveringRoi) {
+      return "move";
+    }
+
+    if (isPin1) {
+      return "crosshair";
+    }
+
     return "default";
-  }, [activeCornerHandle, cursorHandleType]);
+  }, [
+    activeCornerHandle,
+    cursorHandleType,
+    isDraggingPin1,
+    isHoveringRoi,
+    isMovingRoi,
+    isPin1,
+  ]);
 
   const visualRulesList = overlayRules.length > 0 ? overlayRules : [];
   const visualPassCount =

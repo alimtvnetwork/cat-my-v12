@@ -28,6 +28,7 @@ import { VisualToolWorkpieceCanvas } from "./index";
 import type { WorkpieceRoi } from "./VisualToolWorkpieceCanvas";
 import { AnalyzeImageToolbar } from "./AnalyzeImageToolbar";
 import { RuleRightToolbarPanel } from "./RuleRightToolbarPanel";
+import { VisualToolTuningModal } from "./VisualToolTuningModal";
 import { AddRulePanel } from "./AddRulePanel";
 import { AddRulesetPanel } from "./AddRulesetPanel";
 import { addRulePanelBus } from "@/lib/editor/selection/add-rule-panel-bus";
@@ -490,6 +491,16 @@ export function WorkpieceAnalyzeWorkspace({
   const handleCloseRuleConfig = useCallback(() => {
     setConfigRuleId(null);
   }, []);
+
+  const configRule = useMemo(() => {
+    if (!configRuleId) return null;
+
+    return (
+      rules.find((r) => r.id === configRuleId) ??
+      projectOverlayRules.find((r) => r.id === configRuleId) ??
+      null
+    );
+  }, [configRuleId, rules, projectOverlayRules]);
 
   // Tool tune requests (e.g. from a tool's own config screen) open the tool
   // configuration inline in this screen instead of navigating away.
@@ -1122,6 +1133,22 @@ export function WorkpieceAnalyzeWorkspace({
     [activeRule, railHandlers],
   );
 
+  const handleUpdateActiveRuleParams = useCallback(
+    (params: Record<string, any>) => {
+      if (!activeRule) {
+        return;
+      }
+
+      const updatedRule: EditorRule = {
+        ...activeRule,
+        params,
+      };
+
+      railHandlers.onUpdateRule(updatedRule);
+    },
+    [activeRule, railHandlers],
+  );
+
   const handleEvaluateSingleRule = useCallback(
     async (ruleId: string) => {
       const targetRule = projectOverlayRules.find((r) => r.id === ruleId);
@@ -1732,6 +1759,7 @@ export function WorkpieceAnalyzeWorkspace({
                         validationResultsMap={sessionValidationResults}
                         isAnalyzing={isAnalysisBusy}
                         tapeStripResult={tapeStripResult}
+                        onUpdateParams={handleUpdateActiveRuleParams}
                       />
                     )}
                   </div>
@@ -1743,6 +1771,7 @@ export function WorkpieceAnalyzeWorkspace({
                       ruleset={ruleOwnerById.get(activeRule.id) ?? ruleset}
                       onUpdateRule={railHandlers.onUpdateRule}
                       onToggleHidden={railHandlers.onToggleHidden}
+                      onLaunchWorkbench={() => setConfigRuleId(activeRule.id)}
                       onClose={() => {
                         setSelectedIds([]);
                         setConfigRuleId(null);
@@ -1800,6 +1829,22 @@ export function WorkpieceAnalyzeWorkspace({
           </div>
         </div>
       </div>
+
+      {configRule ? (
+        <VisualToolTuningModal
+          isOpen={Boolean(configRuleId)}
+          onClose={handleCloseRuleConfig}
+          rule={configRule}
+          onApplyRule={(updatedRule) => {
+            railHandlers.onUpdateRule(updatedRule);
+            handleCloseRuleConfig();
+          }}
+          imageRef={project.inspectionImageRef}
+          onImageRegistered={(newImg) => {
+            updateProjectInspectionImageRef(project.id, newImg);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
