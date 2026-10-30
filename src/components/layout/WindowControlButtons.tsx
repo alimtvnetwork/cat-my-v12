@@ -1,63 +1,98 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Minus, Square, X, AlertTriangle, LogOut } from "lucide-react";
-import { resolveBackendUrl } from "@/lib/data-source";
+import { toast } from "sonner";
+
+import { useBackendMode } from "@/lib/backend/mode";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import { getAutomationAttrs } from "@/utils/automation-registry";
+
+/**
+ * Window controls for the desktop app (spec 54 section 8, spec 04 section 2).
+ *
+ * Honest browser behavior: this app runs as a browser --app window
+ * (Edge/Chrome --app --start-fullscreen), or inside a desktop wrapper.
+ *
+ * - Minimize: When native bridge exists, minimizes. Otherwise informs user cleanly.
+ * - Maximize: Fullscreen toggle with error boundary capture.
+ * - Close: Requests backend shutdown (POST /shutdown), informs user cleanly,
+ *   never does window.location.href = "/" which reloads and read as crash.
+ *
+ * All controls are decorated with automation triad: Id, Name, and XPath.
+ */
+export const WINDOW_EXIT_REQUEST_EVENT = "cat-vision:request-exit";
+
+interface DesktopApi {
+  minimize?: () => void;
+  toggleMaximize?: () => void;
+  close?: () => void;
+}
+
+function readDesktopApi(): DesktopApi | undefined {
+  return (window as unknown as { desktopApi?: DesktopApi }).desktopApi;
+}
 
 export function WindowControlButtons(): React.JSX.Element {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
+  const [isShuttingDown, setIsShuttingDown] = useState(false);
+  const baseUrl = useBackendMode((s) => s.baseUrl);
+
+  useEffect(() => {
+    const openExitDialog = (): void => {
+      setIsExitDialogOpen(true);
+    };
+
+    window.addEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
+
+    return () => {
+      window.removeEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
+    };
+  }, []);
 
   const handleMinimize = useCallback(() => {
-    try {
-      const desktopApi = (window as unknown as { desktopApi?: { minimize?: () => void } }).desktopApi;
+    const desktopApi = readDesktopApi();
 
-      if (desktopApi?.minimize) {
-        desktopApi.minimize();
+    if (desktopApi?.minimize) {
+      desktopApi.minimize();
 
-        return;
-      }
-
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-
-      window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
-    } catch (err) {
-      console.warn("[WindowControls] minimize error", err);
+      return;
     }
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+
+    window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
+    toast.info("Minimize is not available in browser mode. Use your operating system window controls to minimize this window.");
   }, []);
 
   const handleToggleMaximize = useCallback(() => {
-    try {
-      const desktopApi = (window as unknown as { desktopApi?: { toggleMaximize?: () => void } }).desktopApi;
+    const desktopApi = readDesktopApi();
 
-      if (desktopApi?.toggleMaximize) {
-        desktopApi.toggleMaximize();
+    if (desktopApi?.toggleMaximize) {
+      desktopApi.toggleMaximize();
 
-        return;
-      }
-
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
-    } catch (err) {
-      console.warn("[WindowControls] maximize error", err);
+      return;
     }
+
+    const fullscreenRequest = document.fullscreenElement
+      ? document.exitFullscreen()
+      : document.documentElement.requestFullscreen();
+
+    fullscreenRequest.catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "toggleMaximize",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_FULLSCREEN",
+      );
+    });
   }, []);
 
-  const handleConfirmExit = useCallback(async () => {
-    setIsExiting(true);
-
-    try {
-      const shutdownUrl = resolveBackendUrl("/shutdown");
-      await fetch(shutdownUrl, { method: "POST" }).catch(() => {});
-    } catch {
-      // Backend shutdown attempt finished
-    }
-
-    const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
+  const handleConfirmExit = useCallback(() => {
+    const desktopApi = readDesktopApi();
 
     if (desktopApi?.close) {
       desktopApi.close();
@@ -65,14 +100,50 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
-    try {
-      window.close();
-    } catch {
-      // Browser prevented window.close
-    }
+    setIsShuttingDown(true);
 
+    const shutdownController = new AbortController();
+    const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
+
+    fetch(`${baseUrl}/shutdown`, {
+      method: "POST",
+      signal: shutdownController.signal,
+    })
+      .catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            endpoint: `${baseUrl}/shutdown`,
+            method: "POST",
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "confirmExit",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_SHUTDOWN",
+        );
+      })
+      .finally(() => {
+        window.clearTimeout(shutdownTimeout);
+
+        try {
+          window.close();
+        } catch (err: unknown) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "WindowControlButtons",
+              triggerAction: "confirmExit",
+              source: "WindowControlButtons",
+            },
+            "E_WINDOW_CLOSE",
+          );
+        }
+      });
+  }, [baseUrl]);
+
+  const handleDismissShutdown = useCallback(() => {
     setIsExitDialogOpen(false);
-    window.location.href = "/";
+    setIsShuttingDown(false);
   }, []);
 
   const minAttrs = getAutomationAttrs({
@@ -146,33 +217,58 @@ export function WindowControlButtons(): React.JSX.Element {
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-white">Exit Application?</h3>
+                <h3 className="text-sm font-bold text-white">
+                  {isShuttingDown ? "Shutting Down…" : "Exit Application?"}
+                </h3>
                 <p className="text-xs text-slate-400">
-                  Are you sure you want to close Cat Vision, Cat I Vision?
+                  {isShuttingDown
+                    ? "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
+                    : "Are you sure you want to close Cat Vision, Cat I Vision?"}
                 </p>
               </div>
             </div>
 
             <div className="mt-5 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                id="btn-dialog-exit-cancel"
-                onClick={() => setIsExitDialogOpen(false)}
-                className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
-              >
-                Cancel
-              </button>
+              {isShuttingDown ? (
+                <button
+                  type="button"
+                  id="btn-dialog-exit-dismiss"
+                  data-automation-id="btn-dialog-exit-dismiss"
+                  data-automation-name="Dismiss Shutdown"
+                  data-automation-xpath="//button[@id='btn-dialog-exit-dismiss']"
+                  onClick={handleDismissShutdown}
+                  className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                >
+                  Dismiss
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    id="btn-dialog-exit-cancel"
+                    data-automation-id="btn-dialog-exit-cancel"
+                    data-automation-name="Cancel Exit"
+                    data-automation-xpath="//button[@id='btn-dialog-exit-cancel']"
+                    onClick={() => setIsExitDialogOpen(false)}
+                    className="cursor-pointer rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
 
-              <button
-                type="button"
-                id="btn-dialog-exit-confirm"
-                disabled={isExiting}
-                onClick={handleConfirmExit}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span>{isExiting ? "Exiting..." : "Exit Now"}</span>
-              </button>
+                  <button
+                    type="button"
+                    id="btn-dialog-exit-confirm"
+                    data-automation-id="btn-dialog-exit-confirm"
+                    data-automation-name="Confirm Exit Now"
+                    data-automation-xpath="//button[@id='btn-dialog-exit-confirm']"
+                    onClick={handleConfirmExit}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Exit Now</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

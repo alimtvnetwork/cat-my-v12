@@ -26,6 +26,7 @@ from BE.routes import camera as camera_route
 from BE.routes import cli_config as cli_config_route
 from BE.routes import cli_doctor as cli_doctor_route
 from BE.routes import cli_observability as cli_observability_route
+from BE.routes import errors as errors_route
 from BE.routes import health as health_route
 from BE.routes import images as images_route
 from BE.routes import meta as meta_route
@@ -36,6 +37,7 @@ from BE.routes import seed as seed_route
 from BE.routes import shutdown as shutdown_route
 from BE.routes import system as system_route
 from BE.routes import telemetry as telemetry_route
+from BE.routes import ui_remote as ui_remote_route
 from BE.routes import vision as vision_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
@@ -98,8 +100,10 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+    app.include_router(errors_route.router)
     app.include_router(shutdown_route.router)
     app.include_router(vision_route.router)
+    app.include_router(ui_remote_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:

@@ -68,23 +68,42 @@ camera dropdown, and bug reporting via email + Supabase.
 
 ## 4. Evidence Links (Screenshots, User-Supplied)
 
-Recorded verbatim; image contents could NOT be extracted from this
-environment (prnt.sc pages expose no image via text fetch). The user is
-asked to drop the image files into the spec assets folder in the morning;
-URLs are preserved here for reference.
+UPDATE 31-Oct-25 ~02:10: the other agents DID extract all 12 screenshots.
+They are committed in the repo at `assets/screenshots/` (filenames =
+prnt.sc id + timestamp) and referenced by the parallel spec
+`02-spec/21-app/04-vision-system-and-error-management-instructions/`
+(11 md files, commits 1895dce7 + 6252e592). No prnt.sc download is
+needed anymore; the "drop the images" note below is superseded.
 
-- https://prnt.sc/pUuIGz0ih_ZZ
-- https://prnt.sc/wL_7nmmUJQPh
-- https://prnt.sc/wXoDp20hMNwJ
-- https://prnt.sc/rzcoeqtbFB8l
-- https://prnt.sc/9qwZWqYiKV95
-- https://prnt.sc/Os3MgbBIMHmT
-- https://prnt.sc/_lKsg1rvFRnI
-- Glitch menu: https://prnt.sc/RJPTx3RB8gDf
-- https://prnt.sc/j21Xbgbsy6bB
-- Pattern search point: https://prnt.sc/JA4FdRFDSKi2
-- https://prnt.sc/mr6_-1EdpFtG
-- Dropdown: https://prnt.sc/bg2jMNWxHjkn
+- `assets/screenshots/pUuIGz0ih_ZZ_20261031_014730.png` (window controls
+  visible in desktop shell while running pattern matching rules)
+- `assets/screenshots/wL_7nmmUJQPh_20261031_014811.png`
+- `assets/screenshots/wXoDp20hMNwJ_20261031_014811.png`
+- `assets/screenshots/rzcoeqtbFB8l_20261031_014810.png`
+- `assets/screenshots/9qwZWqYiKV95_20261031_014810.png`
+- `assets/screenshots/Os3MgbBIMHmT_20261031_014810.png` (titlebar window
+  controls inoperable in desktop application mode)
+- `assets/screenshots/_lKsg1rvFRnI_20261031_014810.png`
+- Glitch menu: `assets/screenshots/RJPTx3RB8gDf_20261031_014810.png`
+  (MENU dropdown open over dashboard; Navigation + System & Logs +
+  Exit Application)
+- `assets/screenshots/j21Xbgbsy6bB_20261031_014811.png`
+- Pattern search point: `assets/screenshots/JA4FdRFDSKi2_20261031_014811.png`
+  (OLD ICOS Inspection System 7.7c: red ROI rectangle on a chip image,
+  dozens of numbered blue pattern boxes inside it — the reference model)
+- `assets/screenshots/mr6_-1EdpFtG_20261031_014811.png` (CURRENT Pin 1
+  Orientation Config: ROI 100/59/307x279, REGION SHAPE buttons, Luminance
+  Threshold 188, Position Tolerance 12px, Expected Hole Diameter 24px,
+  TEST THIS RULE; error toast "Failed to save recipe: no such table:
+  Recipe"; warning "Res Mismatch: 392x273 (Calibrated: 960x540)")
+- Dropdown: `assets/screenshots/bg2jMNWxHjkn_20261031_014810.png`
+  (SOURCE: Live Camera selected, canvas black with "CONNECTING CAMERA"
+  — camera stuck connecting)
+
+Original prnt.sc URLs (for reference): pUuIGz0ih_ZZ, wL_7nmmUJQPh,
+wXoDp20hMNwJ, rzcoeqtbFB8l, 9qwZWqYiKV95, Os3MgbBIMHmT, _lKsg1rvFRnI,
+RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
+(all under https://prnt.sc/).
 
 ## 5. MBUD — Matters to Be Discussed in the Morning (Ambiguities)
 
@@ -102,6 +121,16 @@ URLs are preserved here for reference.
    both and let the morning call decide).
 7. Which simulation delay paths overshoot (timer stacking vs render block)
    — pending research report.
+8. Native shell decision (spec 54 window controls): true minimize and
+   true window-close are impossible from a browser --app window — JS
+   cannot minimize a window and cannot close a script-unopened window.
+   The implemented behavior is honest browser behavior (fullscreen
+   toggle for maximize, toast guidance for minimize, /shutdown +
+   launcher teardown for Exit). If the product must have real minimize
+   and real close, the morning decision is whether to adopt a native
+   shell (Tauri/Electron) that provides a real window.desktopApi bridge.
+   That is an architecture decision, not a bug fix, and is NOT started
+   in this workstream.
 
 ## 6. Guardrails
 
@@ -515,3 +544,51 @@ to that repo.
   `src-tauri/src/modules/error_db/` (db.rs, ops.rs, diagnostics.rs,
   types.rs), `src-tauri/src/modules/audit/` (UI audit trail),
   `src/services/emailService.ts` (notifier email).
+
+## 12. Screenshot Evidence — Visually Confirmed (31-Oct-25 ~02:10)
+
+All 12 extracted PNGs verified: valid, non-empty, committed at
+`assets/screenshots/`. Four key images opened and confirmed by eye:
+
+### Old system = the user's model, exactly (JA4FdRFDSKi2)
+
+ICOS Inspection System 7.7c: a RED ROI rectangle on a chip image, and
+inside it dozens of numbered blue pattern boxes (01, 02, 03...) — the
+ROI-then-numbered-pattern-search flow the user described. Left tree
+shows Setup / Calibrate / Component / Pin 1 / Data Matrix / Mark /
+Scratch / BGA / QFN. This is the reference the new system must recreate
+in modern form.
+
+### Current Pin 1 screen (mr6_-1EdpFtG) — two new findings
+
+- The three shape buttons DO exist in the current UI — but as REGION
+  SHAPE under REGION OF INTEREST (ROI): RECTANGLE / SQUARE / CIRCLE.
+  This refines the user's complaint: the picker is attached to the
+  WRONG object. Per the user's model the ROI stays a plain region and
+  the PATTERN takes the shape. Fix = move shape selection from ROI to
+  pattern search, not "add missing buttons".
+- Visible error toast: "Failed to save recipe: no such table: Recipe"
+  — a concrete SAVE failure (missing Recipe table bootstrap) that the
+  error-SplitDB work must capture; plus a "Res Mismatch: 392x273
+  (Calibrated: 960x540)" warning. Both belong in the validation/error
+  workstream.
+
+### Glitch menu (RJPTx3RB8gDf) — reconciliation note
+
+The MENU dropdown (Navigation: Home ACTIVE, Projects, Analyzer, Setup,
+Rules, Test, Run, Settings; System & Logs; Exit Application) overlays
+the dashboard cards. The parallel spec 04 attributes hover shift to a
+1-2px border change on menu items; spec 54 section 9 attributes header
+jumps to the UiModeSwitch hover-expand (~140px). These are DIFFERENT
+surfaces (dropdown items vs header bar) — both fixes are needed, not
+either/or.
+
+### Camera dropdown (bg2jMNWxHjkn) — reconciliation note
+
+SOURCE shows "Live Camera" selected, but the canvas is black with
+"CONNECTING CAMERA" — the camera is stuck connecting. Three distinct
+dropdown-area defects now stand side by side: (a) camera never
+connects (this screenshot), (b) Radix Portal clipping claimed in spec
+04, (c) stale camera-facade instances / blank save-camera select
+(spec 54 section 9). All three go into the camera workstream; they are
+not competing explanations.

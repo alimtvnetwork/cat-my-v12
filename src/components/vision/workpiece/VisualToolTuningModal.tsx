@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { X, Sliders, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { EditorRule } from "@/lib/editor/types";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import {
   createDefaultPatternSearchSettings,
   type PatternSearchSettings,
@@ -21,7 +22,17 @@ export interface VisualToolTuningModalProps {
   onImageRegistered?: (imageRef: string) => void;
 }
 
-function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSearchSettings {
+interface SavedRuleParseFailure {
+  field: string;
+  error: unknown;
+  payloadLength: number;
+}
+
+function buildSettingsFromRule(
+  rule: EditorRule,
+  imageRef?: string,
+  failures?: SavedRuleParseFailure[],
+): PatternSearchSettings {
   const base = createDefaultPatternSearchSettings(rule.id);
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const rawThresh = rule.params?.greyscaleLevel ?? rule.params?.threshold ?? 170;
@@ -37,8 +48,12 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   if (typeof rule.params?.constellationJson === "string") {
     try {
       referenceBoxes = JSON.parse(rule.params.constellationJson);
-    } catch {
-      // Ignored
+    } catch (err) {
+      failures?.push({
+        field: "constellationJson",
+        error: err,
+        payloadLength: rule.params.constellationJson.length,
+      });
     }
   }
 
@@ -47,8 +62,12 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   if (!pin1Config && typeof rule.params?.pin1ConfigJson === "string") {
     try {
       pin1Config = JSON.parse(rule.params.pin1ConfigJson);
-    } catch {
-      // Ignored
+    } catch (err) {
+      failures?.push({
+        field: "pin1ConfigJson",
+        error: err,
+        payloadLength: rule.params.pin1ConfigJson.length,
+      });
     }
   }
 
@@ -165,7 +184,34 @@ export function VisualToolTuningModal({
   imageRef,
   onImageRegistered,
 }: VisualToolTuningModalProps): React.JSX.Element | null {
-  const initialSettings = useMemo(() => buildSettingsFromRule(rule, imageRef), [rule, imageRef]);
+  const { settings: initialSettings, parseFailures } = useMemo(() => {
+    const failures: SavedRuleParseFailure[] = [];
+
+    const settings = buildSettingsFromRule(rule, imageRef, failures);
+
+    return { settings, parseFailures: failures };
+  }, [rule, imageRef]);
+
+  // Corrupt saved-rule JSON runs through buildSettingsFromRule inside
+  // useMemo (render phase), so the store capture is deferred to an effect:
+  // the error surfaces in history without mutating store state mid-render.
+  useEffect(() => {
+    for (const failure of parseFailures) {
+      useErrorStore.getState().captureError(
+        failure.error,
+        {
+          triggerComponent: "VisualToolTuningModal",
+          triggerAction: "parseSavedRuleJson",
+          context: {
+            field: failure.field,
+            ruleId: rule.id,
+            payloadLength: failure.payloadLength,
+          },
+        },
+        "E_TUNING_MODAL_PARSE_SAVED_JSON",
+      );
+    }
+  }, [parseFailures, rule.id]);
   const [settings, setSettings] = useState<PatternSearchSettings>(initialSettings);
   const [registeredImageRef, setRegisteredImageRef] = useState<string | undefined>(imageRef);
 

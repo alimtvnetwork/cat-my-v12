@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { WindowControlButtons } from "@/components/layout/WindowControlButtons";
+import { WindowControlButtons, WINDOW_EXIT_REQUEST_EVENT } from "@/components/layout/WindowControlButtons";
 import { VersionInfoModal } from "@/components/layout/VersionInfoModal";
 import { APP_VERSION_INFO } from "@/lib/version-info";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
@@ -45,6 +45,7 @@ import {
   type GuidedSimulationStateDetail,
 } from "@/components/guided-simulation/events";
 import { cn } from "@/lib/utils";
+import { useUiRemoteControl } from "@/hooks/useUiRemoteControl";
 
 export interface StandardAppShellProps {
   title?: string;
@@ -119,6 +120,8 @@ export function StandardAppShell({
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+
+  useUiRemoteControl();
 
   useEffect(() => {
     const onSimulationState = (event: Event) => {
@@ -284,7 +287,7 @@ export function StandardAppShell({
                 aria-expanded={isMenuOpen}
                 className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
               >
-                <Menu className="h-3.5 w-3.5 text-cyan-400 transition-transform group-hover:scale-110" />
+                <Menu className="h-3.5 w-3.5 text-cyan-400 transition-colors group-hover:text-cyan-300" />
                 <span>Menu</span>
                 <ChevronDown className="h-3 w-3 text-slate-400 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </button>
@@ -430,21 +433,9 @@ export function StandardAppShell({
               <DropdownMenuItem
                 onClick={() => {
                   setIsMenuOpen(false);
-                  const desktopApi = (window as unknown as { desktopApi?: { close?: () => void } }).desktopApi;
-
-                  if (desktopApi?.close) {
-                    desktopApi.close();
-
-                    return;
-                  }
-
-                  try {
-                    window.close();
-                  } catch {
-                    // Fallback
-                  }
-
-                  window.location.href = "/";
+                  // Single exit path (spec 54 section 8): the confirm dialog
+                  // and shutdown flow live only in WindowControlButtons.
+                  window.dispatchEvent(new CustomEvent(WINDOW_EXIT_REQUEST_EVENT));
                 }}
                 className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition-colors outline-none"
               >

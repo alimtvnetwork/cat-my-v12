@@ -12,6 +12,7 @@ import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export interface UseStandardWorkbenchProps {
   settings: PatternSearchSettings;
@@ -85,8 +86,18 @@ export function useStandardWorkbench(props: UseStandardWorkbenchProps) {
 
         setSource(imgInput);
       })
-      .catch(() => {
-        // Ignored fallback
+      .catch((err) => {
+        if (!isCancelled) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "useStandardWorkbench",
+              triggerAction: "loadWorkbenchImage",
+              context: { imageRefLength: effectiveImageRef.length },
+            },
+            "E_WORKBENCH_LOAD_IMAGE",
+          );
+        }
       });
 
     return () => {
@@ -138,8 +149,16 @@ export function useStandardWorkbench(props: UseStandardWorkbenchProps) {
           }
         };
         reader.readAsDataURL(file);
-      } catch {
-        // Ignored
+      } catch (err) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "useStandardWorkbench",
+            triggerAction: "loadFile",
+            context: { fileName: file.name, fileSize: file.size },
+          },
+          "E_WORKBENCH_LOAD_FILE",
+        );
       }
     },
     [props],

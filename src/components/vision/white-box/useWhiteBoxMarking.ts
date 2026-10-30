@@ -36,6 +36,7 @@ import {
   type SearchRegion,
 } from "@/lib/vision/white-box-marking";
 import { computePatternGeometry } from "./pattern-geometry";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import type {
   BackendResult,
   FormulatedPatternGeometry,
@@ -184,8 +185,18 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
           void processRegion(input, activeRegion);
         }
       })
-      .catch(() => {
-        // Ignored
+      .catch((err) => {
+        if (!isCancelled) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "useWhiteBoxMarking",
+              triggerAction: "loadInitialImage",
+              context: { targetUrlLength: targetUrl.length },
+            },
+            "E_WHITEBOX_LOAD_IMAGE",
+          );
+        }
       });
 
     return () => {
@@ -563,8 +574,16 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       for (const dup of duplicates) {
         try {
           await facade.remove(dup.id);
-        } catch {
-          // Ignored if referenced
+        } catch (err) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "useWhiteBoxMarking",
+              triggerAction: "pruneDuplicatePatternRule",
+              context: { duplicateRuleId: dup.id, targetRuleId },
+            },
+            "E_WHITEBOX_PRUNE_DUPLICATE",
+          );
         }
       }
 
