@@ -140,6 +140,10 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
    plus JSON.parse codes) recorded as-is by buildCapturedError; they are
    not yet in any backend code registry. Morning call: align them into
    the backend registry or accept frontend-only codes.
+10. Stack truncation (spec 54 error work): AC-01 caps stacks at 40
+    frames, but the error SplitDB stores full stacks for step-by-step AI
+    fixing. Morning call: keep full stacks, or truncate at write/read
+    time per AC-01.
 
 ## 6. Guardrails
 
@@ -687,3 +691,59 @@ src/components/vision/ and 0 in workpiece-rule-analyzer.ts).
 - Parallel-work note: first pull --ff-only failed on divergence, merged
   cleanly (no force-push, no rebase/amend); sibling untracked files and
   uncommitted edits left alone.
+
+## 15. Wave 1 Completion — Error SplitDB + CLI Readout (31-Oct-25 ~02:12)
+
+Workstream COMPLETE, all 4 batches on origin/main, spot-verified by the
+coordinator (all 4 files present, migration header matches spec).
+
+- Batch 1 (9818a2b0): migration **0029** (next after 0028, as the spec
+  suggested) — `BE/db/migrations/task/0029_task_errors.sql`, `Error`
+  table, PascalCase columns (`ErrorId`, `CorrelationId`, `Code`,
+  `Level`, `Message`, `StackTrace`, `Endpoint`, `TriggerComponent`,
+  `SessionId`, `Details`, `CreatedAt`, `PersistedAt`), UNIQUE
+  `CorrelationId` (retried ingests are idempotent skips, not
+  duplicates), indexes on `CreatedAt`/`Code`, terminal `SchemaVersion`
+  row. Follows the `BE/tests/db/test_conventions.py` scanner rules
+  (BEGIN/COMMIT, `*At` INTEGER epoch, no cross-tier REFERENCES).
+  Writer `BE/app/db/writers/error.py`: batch insert, idempotent by
+  `CorrelationId`, validation → `E_BE_BAD_REQUEST`, DB failure →
+  `E_BE_INTERNAL` with the `bin/db-bootstrap.py` hint; AC-01 Details
+  redaction (password/token/secret/api-key/auth/bearer/credit/ssn/
+  private-key, recursive); full stacks kept, no 40-frame truncation
+  (MBUD item 10); `list_errors`/`get_error_by_correlation` readers
+  shared by route + CLI so they cannot drift.
+- Batch 2 (8e86343b): ingest route `BE/routes/errors.py` + router mount
+  in `BE/main.py` — `POST /errors` (single object, array, or `{items:
+  [...]}`; frontend `id` uuid not stored, `CorrelationId` is the
+  identity), `GET /errors` (limit 1-200 default 50, code/level/session/
+  correlation filters, newest first), `GET /errors/{correlationId}`
+  (full stack trace, 404 otherwise). Diagnostic fields fold into
+  `Details`; interaction traces stay in browser history.
+- Batch 3 (cf2e99a0): CLI `BE/cli/processing/commands/errors.py` +
+  registration + helptext — `processing-cli errors list` (filters, full
+  stacks), `errors show <correlationId>`, `errors export --format
+  json|csv` (shapes mirror the frontend serializers in
+  `src/lib/errors/export.ts`; browser-only `id` column empty
+  server-side). Two review catches fixed before commit: a
+  query-param/request-correlation shadowing bug in `GET /errors`, and
+  CSV export rewritten to the frontend column shape.
+- Batch 4 (bb8ad615): facade `src/lib/errors/history-facade.ts` —
+  `saveErrorHistory` now also syncs new entries to `POST /errors`,
+  Backend mode only (resolved from the persisted backend-mode store;
+  Seed mode skips by design, not by swallow). Load/save/clear/backend
+  failures are reported into the error store as synthetic errors with a
+  30s cooldown breaking the report loop; failures still logged every
+  time. The import cycle with `errorStore` is documented in the file
+  header.
+- NOT verified at runtime (per program order: no builds/tests until end
+  of tunnel; Python files syntax-checked only via `ast.parse`).
+  End-of-tunnel wave must exercise: `bin/db-bootstrap.py` applying
+  0029, `POST /errors` round-trip, `processing-cli errors list/show/
+  export`, and facade sync in Backend mode (recorded in subtask 09).
+- Email/Supabase bug-report path NOT built here — out of this
+  workstream's file ownership (greenfield modules for a later wave).
+- Shared-checkout note: sibling waves landed alongside without file
+  collisions; pull-before-commit caught two stale reads (sibling's
+  `shutdown_route` in `BE/main.py`, sibling's `ui` command in
+  processing `main.py`) — re-read and merged rather than overwritten.
