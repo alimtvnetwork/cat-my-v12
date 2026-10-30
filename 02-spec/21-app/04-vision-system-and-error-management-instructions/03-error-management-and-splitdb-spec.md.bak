@@ -1,0 +1,498 @@
+# Error Management, Swallow Elimination, SplitDB Persistence & CLI Inspector Specification
+# Directory: 02-spec/21-app/04-vision-system-and-error-management-instructions/03-error-management-and-splitdb-spec.md
+# Status: Approved Architectural Contract
+
+## 1. Executive Summary & Problem Formulation
+
+In industrial computer vision and Human-Machine Interface (HMI) applications, silent error handling and unmonitored exceptions pose catastrophic operational risks. When an error is caught and discarded or replaced with a fake fallback value (such as `[]`, `null`, or `false`), the application enters an unverified, divergent runtime state. Operators see misleading empty dashboards, hardware device locks remain unresolved, and diagnostic root cause analysis becomes impossible.
+
+This specification establishes an uncompromising architectural standard for eliminating error swallowing across the entire **CAT Vision (CAT iVISION)** codebase, introducing a dedicated **SplitDB Error Persistence Database (`data/errors.db`)**, standardizing typed `Result<T, AppError>` envelopes, and delivering an interactive **CLI Error Inspector (`cat-cli errors`)** for rapid diagnostics.
+
+```mermaid
+flowchart TD
+    subgraph UI_And_Stores["Frontend UI & State Stores"]
+        CP["CameraPreview.tsx\n(Hardware Stream Acquisition)"]
+        RS["run-store.ts\n(Inspection Run Execution)"]
+        DS["data-source/store.ts\n(Backend/Seed Data Routing)"]
+        SV["savedViews.ts\n(Observability Saved Views)"]
+    end
+
+    subgraph Server_Functions["TanStack Start Server Proxies"]
+        CS["cliSessions.functions.ts\n(CLI JSONL Session Discovery)"]
+        CD["cliSession.functions.ts\n(Drill-Down Session Detail)"]
+        OS["sessions.functions.ts\n(Root-DB Session History)"]
+    end
+
+    subgraph Remediation_Layer["Unified Error Remediation & Result Pipeline"]
+        ResultEnv["Result<T, AppError>\n(Affirmative Booleans: isSuccess, hasError)"]
+        CLog["ClientLogger.error()\n(Structured JSON Breadcrumb)"]
+        ErrStore["useErrorStore.captureException()\n(Reactive UI Alert Banner)"]
+    end
+
+    subgraph Backend_SplitDB["FastAPI Backend & SplitDB (data/errors.db)"]
+        ErrRouter["POST /api/errors\n(FastAPI Ingestion Endpoint)"]
+        ConnFactory["BE/db/connections.py\n(Tier: errors -> data/errors.db)"]
+        ErrorLogTbl[("ErrorLog Table\n(PascalCase, UTC Integer Epoch)")]
+        BreadcrumbTbl[("ErrorBreadcrumb Table\n(Opaque Ref, JSON Payload)")]
+    end
+
+    subgraph CLI_Diagnostics["Developer & Operator Tooling"]
+        CLI_List["cat-cli errors list"]
+        CLI_Inspect["cat-cli errors inspect <uuid>"]
+        CLI_Tail["cat-cli errors tail -f"]
+        CLI_Resolve["cat-cli errors resolve <uuid>"]
+    end
+
+    CP -->|Propagate Rejection| ResultEnv
+    RS -->|Propagate Storage Failure| ResultEnv
+    DS -->|Propagate Quota Exhaustion| ResultEnv
+    SV -->|Propagate Parse Fault| ResultEnv
+    CS -->|Propagate Envelope Drift| ResultEnv
+    CD -->|Propagate 404/403/Transport| ResultEnv
+    OS -->|Propagate BE Outage| ResultEnv
+
+    ResultEnv --> CLog
+    ResultEnv --> ErrStore
+    ResultEnv -->|Async Ingest| ErrRouter
+
+    ErrRouter --> ConnFactory
+    ConnFactory --> ErrorLogTbl
+    ConnFactory --> BreadcrumbTbl
+
+    ErrorLogTbl --> CLI_List
+    ErrorLogTbl --> CLI_Inspect
+    ErrorLogTbl --> CLI_Tail
+    ErrorLogTbl --> CLI_Resolve
+```
+
+---
+
+## 2. Error Swallowing Audit & Remediation Matrix
+
+Worker 02 identified 7 critical files exhibiting dangerous error-swallowing antipatterns. Each pattern violates repository coding guidelines, masks real system faults, and must be refactored to use affirmative booleans (`isSuccess`, `hasError`) and structured error envelopes.
+
+| File Path | Legacy Anti-Pattern | Root Risk | Remediation Target |
+|:---|:---|:---|:---|
+| `src/lib/observability/cliSessions.functions.ts` | Catches 404, 403, `E_BE_UNAVAILABLE`, `E_BE_BAD_RESPONSE` and returns fake `{ items: [], total: 0 }`. | Operators assume no CLI sessions exist when the backend is crashed or unreachable. | Rethrow structured `EnvelopeError` or return typed `Result<CliSessionsPage, AppError>`; never fabricate empty state. |
+| `src/lib/observability/cliSession.functions.ts` | Catches transport errors and synthesizes dummy session summary with `Source: "unknown"`, `Records: []`, `SizeBytes: 0`. | UI renders a misleading "phantom" empty session page without alerting the user that the run ID was not found. | Throw `EnvelopeError` with HTTP status and code so the route boundary renders a 404/503 alert state. |
+| `src/lib/observability/sessions.functions.ts` | Catches `err.isMissingOrUnavailable` and returns empty page with `nextCursor: null`. | Masks database tier lag or connection failures in Root-DB. | Propagate error to boundary; return `ResultEnvelope<SessionsPage>` containing the actionable diagnostic error code. |
+| `src/lib/observability/savedViews.ts` | `safeRead()` returns `[]` on parse error; `safeWrite()` returns `false` on storage quota error; uses `{ ok: false }`. | Corrupt view data is silently lost; users do not know their filters failed to persist; `ok` violates boolean standards. | Replace `{ ok }` with `{ isSuccess, hasError }`; log structured breadcrumb; throw `StorageQuotaError` on write failures. |
+| `src/lib/stores/run-store.ts` | `facadeReadJson` & `facadeReadJsonWithMigration` return `null` on JSON parse fault; `facadeWriteJson` swallows async rejection. | Corrupt inspection run configurations reset to blank; writes fail silently during active production runs. | Capture error in `useErrorStore.captureException`; raise warning toast to operator; log to `ClientLogger`. |
+| `src/lib/data-source/store.ts` | `readInitial()`, `readInitialBaseUrl()`, `readInitialPersistRules()` catch all storage errors and return defaults. | Misconfigured base URLs silently default to mock/seed mode without user notice. | Emit structured `ClientLogger.warn` breadcrumbs and record fallback transitions in error telemetry. |
+| `src/components/hmi/CameraPreview.tsx` | `videoRef.current.play().catch(() => undefined)` and `.catch(() => setStatus("denied"))` discard native error objects. | Camera driver lockouts, DMA permission faults, and USB bus drops cannot be debugged. | Capture exact `DOMException` (e.g. `NotAllowedError`, `NotFoundError`, `AbortError`); pipe to `ClientLogger.error`. |
+
+---
+
+## 3. Strict Boolean Standard & Envelope Contract
+
+Per repository rules (`AGENTS.md` and `02-spec/02-coding-guidelines/`):
+- **Strict Boolean Standard**: Only affirmative `is` and `has` prefixes are permitted (e.g., `isSuccess`, `hasError`, `hasStackTrace`, `isResolved`, `isActive`).
+- **Forbidden Words**: Words like `can`, `should`, `was`, `ok`, `valid`, or naked booleans are strictly banned.
+- **Positive Framing Only**: Negative boolean names (such as `isNotAvailable`, `hasNoData`, `isUnresolved`) are forbidden. Use positive variables (`isAvailable`, `hasData`, `isResolved`) and invert with `!` only when necessary.
+
+### 3.1 TypeScript Result Envelope Contract
+
+Every client-side or server function performing fallible operations must return a discriminated union or standard `Result<T>` envelope:
+
+```typescript
+export interface AppErrorPayload {
+  errorCode: string;
+  message: string;
+  severity: "fatal" | "error" | "warning";
+  hasStackTrace: boolean;
+  stackTrace?: string;
+  context?: Record<string, unknown>;
+  timestamp: number;
+}
+
+export type Result<T> =
+  | {
+      isSuccess: true;
+      hasError: false;
+      value: T;
+      error: null;
+    }
+  | {
+      isSuccess: false;
+      hasError: true;
+      value: null;
+      error: AppErrorPayload;
+    };
+
+export function createSuccess<T>(value: T): Result<T> {
+  return {
+    isSuccess: true,
+    hasError: false,
+    value,
+    error: null,
+  };
+}
+
+export function createFailure<T>(error: AppErrorPayload): Result<T> {
+  return {
+    isSuccess: false,
+    hasError: true,
+    value: null,
+    error,
+  };
+}
+```
+
+---
+
+## 4. SplitDB Error Database (`data/errors.db`)
+
+In accordance with `02-spec/05-split-db-architecture/` and `BE/db/connections.py`, all errors, unhandled exceptions, and runtime diagnostic breadcrumbs are persisted in an isolated, dedicated database tier named `"errors"`.
+
+### 4.1 Database Architecture Rules
+1. **Physical Path**: Resolved via `BE.cli.common.paths.resolve_root('db') / 'errors.db'`.
+2. **Tier Isolation**: Tier `"errors"` is completely independent. No cross-tier joins, no cross-tier foreign keys, and no `ATTACH DATABASE` statements are permitted.
+3. **Engine Modes**: SQLite opened with `PRAGMA journal_mode=WAL;` and `PRAGMA foreign_keys=ON;`.
+4. **Naming Standards**:
+   - Every table name is `PascalCase` (e.g., `ErrorLog`, `ErrorBreadcrumb`).
+   - Every column name is `PascalCase` (e.g., `ErrorUuid`, `CreatedAt`, `HasStackTrace`). Underscores in schema names are prohibited.
+   - All timestamp columns use integer epoch seconds (`CreatedAt INTEGER NOT NULL`).
+   - All boolean flags are integers (`0` or `1`) prefixed strictly with `Has` or `Is` (e.g., `HasStackTrace`, `IsResolved`).
+
+### 4.2 SQL Migration Specification
+
+Migration script location: `BE/db/migrations/errors/001_create_error_tables.sql`.
+
+```sql
+-- Migration: 001_create_error_tables.sql
+-- Tier: errors (data/errors.db)
+-- Enforces SplitDB rules, PascalCase, UTC integer epoch, affirmative booleans.
+
+CREATE TABLE IF NOT EXISTS ErrorLog (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ErrorUuid TEXT NOT NULL UNIQUE,
+    CreatedAt INTEGER NOT NULL,
+    Source TEXT NOT NULL,
+    ErrorCode TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    StackTrace TEXT,
+    HasStackTrace INTEGER NOT NULL DEFAULT 0,
+    ContextJson TEXT,
+    Severity TEXT NOT NULL,
+    IsResolved INTEGER NOT NULL DEFAULT 0,
+    ResolvedAt INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS Idx_ErrorLog_CreatedAt ON ErrorLog(CreatedAt DESC);
+CREATE INDEX IF NOT EXISTS Idx_ErrorLog_ErrorCode ON ErrorLog(ErrorCode);
+CREATE INDEX IF NOT EXISTS Idx_ErrorLog_Source ON ErrorLog(Source);
+CREATE INDEX IF NOT EXISTS Idx_ErrorLog_IsResolved ON ErrorLog(IsResolved);
+
+CREATE TABLE IF NOT EXISTS ErrorBreadcrumb (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ErrorUuid TEXT NOT NULL,
+    CreatedAt INTEGER NOT NULL,
+    Category TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    DataJson TEXT,
+    Level TEXT NOT NULL,
+    FOREIGN KEY (ErrorUuid) REFERENCES ErrorLog(ErrorUuid) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS Idx_ErrorBreadcrumb_ErrorUuid ON ErrorBreadcrumb(ErrorUuid);
+CREATE INDEX IF NOT EXISTS Idx_ErrorBreadcrumb_CreatedAt ON ErrorBreadcrumb(CreatedAt ASC);
+```
+
+### 4.3 Python SplitDB Connection Integration
+
+Extend `BE/db/connections.py` to register the `"errors"` tier:
+
+```python
+# In BE/db/connections.py
+Tier = Literal["root", "task", "rules", "errors"]
+
+_DB_FILENAME: dict[Tier, str] = {
+    "root": "root.db",
+    "task": "task.db",
+    "rules": "rules.db",
+    "errors": "errors.db",
+}
+
+def get_errors_conn() -> sqlite3.Connection:
+    """Returns a fresh sqlite3.Connection to data/errors.db with WAL mode."""
+    return get_connection("errors")
+```
+
+---
+
+## 5. Backend REST API Endpoints
+
+The FastAPI backend exposes endpoints under `/api/errors` adhering strictly to the **Universal Response Envelope** (`{ Status, Results, Errors }`).
+
+### 5.1 POST `/api/errors`
+Receives client or worker error payloads, assigns a UUID, persists to `data/errors.db`, and stores attached breadcrumbs.
+
+- **Request Body**:
+```json
+{
+  "source": "web-ui",
+  "errorCode": "E_CAMERA_STREAM_DENIED",
+  "message": "NotAllowedError: Permission to access media device was denied by user",
+  "stackTrace": "Error: NotAllowedError\n    at CameraPreview.tsx:148:15",
+  "severity": "error",
+  "context": {
+    "route": "/hmi/camera-setup",
+    "cameraId": "daheng-usb-01",
+    "browser": "Chrome 123.0"
+  },
+  "breadcrumbs": [
+    {
+      "category": "navigation",
+      "message": "Navigated to /hmi/camera-setup",
+      "level": "info",
+      "createdAt": 1772412800
+    },
+    {
+      "category": "hardware",
+      "message": "Invoked navigator.mediaDevices.getUserMedia()",
+      "level": "info",
+      "createdAt": 1772412802
+    }
+  ]
+}
+```
+
+- **Response (Universal Envelope)**:
+```json
+{
+  "Status": "success",
+  "Results": [
+    {
+      "isSuccess": true,
+      "hasError": false,
+      "errorUuid": "err-9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+      "createdAt": 1772412803
+    }
+  ],
+  "Errors": []
+}
+```
+
+### 5.2 GET `/api/errors`
+Query stored errors with filtering, sorting, and pagination.
+
+- **Query Parameters**:
+  - `limit`: integer (1..200, default: 50)
+  - `offset`: integer (default: 0)
+  - `source`: optional string (`web-ui`, `worker-cli`, `processing-cli`)
+  - `severity`: optional string (`fatal`, `error`, `warning`)
+  - `unresolvedOnly`: boolean string (`true` / `false`)
+
+- **Response**:
+```json
+{
+  "Status": "success",
+  "Results": [
+    {
+      "items": [
+        {
+          "ErrorUuid": "err-9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+          "CreatedAt": 1772412803,
+          "Source": "web-ui",
+          "ErrorCode": "E_CAMERA_STREAM_DENIED",
+          "Message": "NotAllowedError: Permission to access media device was denied",
+          "Severity": "error",
+          "HasStackTrace": 1,
+          "IsResolved": 0
+        }
+      ],
+      "total": 1,
+      "limit": 50,
+      "offset": 0
+    }
+  ],
+  "Errors": []
+}
+```
+
+### 5.3 PATCH `/api/errors/{error_uuid}/resolve`
+Toggles the resolution state of an error.
+
+- **Response**:
+```json
+{
+  "Status": "success",
+  "Results": [
+    {
+      "isSuccess": true,
+      "hasError": false,
+      "errorUuid": "err-9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+      "isResolved": true,
+      "resolvedAt": 1772413100
+    }
+  ],
+  "Errors": []
+}
+```
+
+---
+
+## 6. CLI Error Inspector (`cat-cli errors`)
+
+To ensure developers and automated agents can inspect and triage errors without opening a web browser or SQLite client, `cat-cli` exposes a dedicated `errors` command module (`BE/cli/common/errors_inspector.py`).
+
+### 6.1 Command Reference
+
+```bash
+# 1. List recent errors in tabular format
+cat-cli errors list --limit 25 --unresolved-only
+
+# 2. Inspect an error with full colorized stack trace and breadcrumbs
+cat-cli errors inspect err-9f8e7d6c-5b4a-3210-fedc-ba9876543210
+
+# 3. Stream real-time errors as they occur (tail -f)
+cat-cli errors tail -n 10 -f
+
+# 4. Mark an error as resolved
+cat-cli errors resolve err-9f8e7d6c-5b4a-3210-fedc-ba9876543210
+```
+
+### 6.2 Inspection Output Format
+
+```text
+================================================================================
+🔍 ERROR INSPECTOR: err-9f8e7d6c-5b4a-3210-fedc-ba9876543210
+================================================================================
+Timestamp   : 2026-10-31 02:40:03 UTC (1772412803)
+Source      : web-ui
+Severity    : ERROR [Code: E_CAMERA_STREAM_DENIED]
+Status      : UNRESOLVED
+Message     : NotAllowedError: Permission to access media device was denied
+
+--- [ CONTEXT ] ----------------------------------------------------------------
+Route       : /hmi/camera-setup
+Camera ID   : daheng-usb-01
+Browser     : Chrome 123.0
+
+--- [ STEP-BY-STEP STACK TRACE ] ----------------------------------------------
+ 1. at CameraPreview.tsx:148:15 (CameraPreview.acquireStream)
+ 2. at CameraPreview.tsx:132:9  (useEffect.startStream)
+ 3. at react-dom.development.js:24456:12 (commitHookEffectListMount)
+
+--- [ ATTACHED BREADCRUMBS (2) ] -----------------------------------------------
+ [02:39:58] INFO    [navigation] Navigated to /hmi/camera-setup
+ [02:40:02] INFO    [hardware]   Invoked navigator.mediaDevices.getUserMedia()
+================================================================================
+```
+
+---
+
+## 7. Concrete Code Remediation Details
+
+### 7.1 Remediation: `src/lib/observability/cliSessions.functions.ts`
+
+```typescript
+// BEFORE (Swallows errors into fake empty state)
+} catch (err) {
+  const isEnvelope = err instanceof Error && (err.name === "EnvelopeError" || "responseStatus" in err);
+  const envErr = err as any;
+  if (isEnvelope && (envErr.responseStatus === 404 || envErr.code === "E_BE_UNAVAILABLE")) {
+    return { items: [], total: 0, limit: data.limit ?? 50 };
+  }
+  throw err;
+}
+
+// AFTER (Logs structured error and rethrows with envelope context)
+} catch (err) {
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  ClientLogger.error("[cliSessions.functions] Failed to fetch CLI sessions from backend", {
+    error: errorMessage,
+    source: data.source ?? "all",
+    limit: data.limit ?? 50,
+  });
+
+  // Re-throw so TanStack Router ErrorBoundary can render the server failure banner
+  throw new Error(`CLI_SESSIONS_FETCH_FAILED: ${errorMessage}`);
+}
+```
+
+### 7.2 Remediation: `src/lib/observability/savedViews.ts`
+
+```typescript
+// BEFORE (Returns { ok: false } and swallows parse/quota errors)
+function safeRead(): SavedView[] {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (e) {
+    ClientLogger.warn("[savedViews] read failed; treating as empty", { error: msg });
+    return [];
+  }
+}
+
+// AFTER (Affirmative booleans and Result envelope)
+export interface SavedViewResult {
+  isSuccess: boolean;
+  hasError: boolean;
+  views: SavedView[];
+  errorMessage?: string;
+}
+
+export function readSavedViewsResult(): SavedViewResult {
+  if (typeof window === "undefined") {
+    return { isSuccess: true, hasError: false, views: [] };
+  }
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { isSuccess: true, hasError: false, views: [] };
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error("Persisted saved views payload is not an array");
+    }
+    return { isSuccess: true, hasError: false, views: parsed };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    ClientLogger.error("[savedViews] Corrupt saved views storage detected", { error: message });
+    return { isSuccess: false, hasError: true, views: [], errorMessage: message };
+  }
+}
+```
+
+### 7.3 Remediation: `src/components/hmi/CameraPreview.tsx`
+
+```typescript
+// BEFORE (Swallows play rejection and discards acquisition error)
+videoRef.current.play().catch(() => undefined);
+// ...
+.catch(() => {
+  if (!isCancelled) setStatus("denied");
+});
+
+// AFTER (Extracts DOMException, logs structured event, notifies error boundary)
+videoRef.current.play().catch((err: unknown) => {
+  const msg = err instanceof Error ? err.message : String(err);
+  ClientLogger.warn("[CameraPreview] video.play() was interrupted or rejected", { error: msg });
+});
+// ...
+.catch((err: unknown) => {
+  if (isCancelled) return;
+  const errorObj = err instanceof DOMException ? err : new Error(String(err));
+  ClientLogger.error("[CameraPreview] Hardware camera stream acquisition failed", {
+    name: errorObj.name,
+    message: errorObj.message,
+    cameraId: selectedCameraId,
+  });
+  setErrorMessage(`${errorObj.name}: ${errorObj.message}`);
+  setStatus("denied");
+});
+```
+
+---
+
+## 8. Verification & Acceptance Criteria
+
+1. **Zero Error Swallowing**: A static analysis regex scan across `src/lib/observability/`, `src/lib/stores/`, and `src/components/hmi/` yields zero empty `catch {}` blocks or catch blocks returning fake `[]` / `null` / `false`.
+2. **SplitDB Compliance**:
+   - `data/errors.db` exists with WAL mode enabled.
+   - `ErrorLog` and `ErrorBreadcrumb` tables are created with PascalCase column names and UTC integer epoch timestamps.
+   - All boolean columns strictly use `Has` / `Is` prefix with non-null `0` or `1`.
+3. **CLI Error Inspector Functionality**:
+   - Running `cat-cli errors list` returns an exit code of `0` and a formatted table of logged exceptions.
+   - Running `cat-cli errors inspect <uuid>` displays the colorized step-by-step stack trace.
+4. **FastAPI Contract**: All error ingestion endpoints return responses wrapped in the Universal Response Envelope (`{ Status, Results, Errors }`).
