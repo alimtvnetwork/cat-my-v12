@@ -165,6 +165,9 @@ _STATUS: dict[ErrorCode, HTTPStatus] = {
     ErrorCode.E_BUG_SDK_LEAK: HTTPStatus.INTERNAL_SERVER_ERROR,
     ErrorCode.E_BUG_SILENT_SWALLOW: HTTPStatus.INTERNAL_SERVER_ERROR,
     ErrorCode.E_BUG_ENUM_ORPHAN: HTTPStatus.INTERNAL_SERVER_ERROR,
+    # Bug-report delivery failures are upstream-service failures.
+    ErrorCode.E_BUG_EMAIL_FAILED: HTTPStatus.BAD_GATEWAY,
+    ErrorCode.E_BUG_SUPABASE_FAILED: HTTPStatus.BAD_GATEWAY,
     # CLI (all surfaced through HTTP only when the API re-emits CLI failures;
     # preflight/host/checksum map to 424 Failed Dependency per spec 77 §4).
     ErrorCode.E_CLI_PREFLIGHT_FAILED: HTTPStatus.FAILED_DEPENDENCY,

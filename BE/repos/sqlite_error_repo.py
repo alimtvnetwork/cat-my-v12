@@ -28,7 +28,8 @@ class SqliteErrorRepo:
             self.conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS SystemError (
-                    ErrorId TEXT PRIMARY KEY,
+                    SystemErrorId INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ErrorId TEXT NOT NULL UNIQUE,
                     CorrelationId TEXT NOT NULL,
                     ErrorCode TEXT NOT NULL,
                     Severity TEXT NOT NULL DEFAULT 'ERROR',
@@ -36,7 +37,7 @@ class SqliteErrorRepo:
                     Message TEXT NOT NULL,
                     StackTrace TEXT NOT NULL,
                     ContextJson TEXT NOT NULL,
-                    IsResolved INTEGER NOT NULL DEFAULT 0,
+                    IsResolved INTEGER NOT NULL DEFAULT 0 CHECK (IsResolved IN (0, 1)),
                     CreatedAt INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
                 );
                 """
