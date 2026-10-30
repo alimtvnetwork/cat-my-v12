@@ -161,3 +161,59 @@ Verified read-only against main. All paths relative.
 (`vision-inspection-grid-roi-2.jpg`, `ui-feature-extraction-conditions.jpg`,
 `ui-inspection-region-rectangle*.jpg`, etc.). Unreferenced by code; usable
 as spec evidence for the ROI-then-numbered-pattern flow.
+
+## 8. Analysis Findings (Research Wave 1 — Window Controls)
+
+Verified read-only against main. All paths relative.
+
+### The app is NOT Tauri/Electron — ROOT CAUSE FOUND
+
+- The "desktop app" is a web SPA (React + TanStack Router, bun on :3000,
+  Python backend on :8787) launched by `packaging/desktop/start.ps1` /
+  `start.sh` inside the user's Edge/Chrome with `--app=<url>
+  --start-fullscreen`. No script injects anything into the page.
+- `src/components/layout/WindowControlButtons.tsx` is the only
+  window-control component (Minimize / Maximize / Close + "Exit
+  Application?" confirm dialog), mounted at `StandardAppShell.tsx:502`.
+- All three handlers read `window.desktopApi` — which is NEVER provided
+  anywhere: zero assignments, zero preload scripts, zero server injection.
+  `git log -S "desktopApi"` shows one commit (d25a24a1, 2026-10-30) that
+  introduced the consumers only. The provider was never written.
+- Yet `src/lib/version-info.ts:21` claims "Native window controls" as
+  shipped, and the spec `02-spec/21-app/03-app-bug-fixes-and-ui-
+  enhancements/02-ui-shell-and-window-controls-spec.md` promises desktop
+  minimize + clean exit. The promise was never wired to a real shell.
+
+### Per-button behavior (follows exactly from the missing bridge)
+
+1. **Minimize does nothing** — falls through to dispatching
+   `cat-vision:window-minimize`, and no listener for that event exists.
+2. **Maximize does nothing useful** — falls through to
+   `requestFullscreen()`/`exitFullscreen()`, fighting the
+   `--start-fullscreen` launch flag.
+3. **Close "crashes"** — `window.close()` is a browser-security no-op for
+   script-unopened windows, so it falls through to
+   `window.location.href = "/"`: a hard full-page reload that tears down
+   live camera streams, WebSockets, and in-flight IndexedDB writes. Then,
+   closing the browser natively orphans `backend-server.exe` and bun
+   (no Wait-Process, no /shutdown endpoint), so the next launch collides
+   on ports 8787/3000 — a second, delayed crash after every "close".
+
+### Fix targets
+
+- `packaging/desktop/start.ps1` + `start.sh` — real window-control bridge
+  (native shell injecting `window.desktopApi`, or replace the `--app`
+  launch); browser-process wait + backend teardown.
+- `WindowControlButtons.tsx` — real handlers against the bridge (or
+  honest browser fallbacks + backend shutdown call).
+- `StandardAppShell.tsx:431-447` — deduplicate the Exit menu item with
+  the button logic.
+- `BE/main.py` (or new route module) — `/shutdown` endpoint.
+- `src/lib/version-info.ts` — correct the "Native window controls" claim
+  until the bridge exists.
+
+### Runtime confirmation (morning, user's machine)
+
+Check Task Manager after an in-app "Exit" for orphaned
+`backend-server.exe`/`bun.exe`, and check `<install>/startup-error.log`
+on the next launch for a port-bind failure.
