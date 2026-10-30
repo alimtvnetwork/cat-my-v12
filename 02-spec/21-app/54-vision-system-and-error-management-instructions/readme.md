@@ -1182,3 +1182,75 @@ state all present in the files).
 - Process notes: shared-tree sync (pull/merge before each commit,
   targeted adds only, sibling uncommitted edits never staged);
   commits pushed and origin-verified via ls-remote after each batch.
+
+## 22. Wave 2.5 Completion — Integration Wiring (31-Oct-25 ~02:33)
+
+Workstream COMPLETE, 7 commits on origin/main, spot-verified by the
+coordinator (watchdog message, Send Bug Report button, and patternShape
+wiring all present in the files).
+
+- Stuck camera (993382b3): `useCameraStream.ts` — a 15s watchdog fires
+  if `getUserMedia` still pends, setting the error text to "Camera
+  permission still pending — allow camera access in the browser and
+  retry" (rendered by the existing error box, replacing the eternal
+  "CONNECTING CAMERA" spin). Readiness decoupled: `setIsReady(true)`
+  fires on stream acquisition, and a separate effect attaches
+  `srcObject` + `play()` — the old `if (videoRef.current)` gate that
+  stranded readiness is gone. A late permission grant clears the
+  watchdog message.
+- Pin1/grayscale parent wiring (905d9a2f, b6a06c36):
+  `StandardPin1ConfigTool.tsx` now passes `patternShape`/
+  `onPatternShapeChange` to the card and `patternShape` to the canvas
+  (the exact subtask-12 diffs): picker clicks change the saved shape
+  and the fuchsia overlay appears. `BoxReviewPanel.tsx` and
+  `Pin1ReviewPanel.tsx` pass `greyscaleMode`/`onGreyscaleModeChange`
+  to the slider card, fed from `useWhiteBoxMarking` and from a new
+  `greyscaleMode` state in `usePin1Rule` (the hook had no mode to
+  pass). `Pin1Canvas.tsx` honors the mode in its preview (stretch =
+  full-range luma stretch before the polarity test; one-bit = pure
+  0/255; threshold = legacy behavior byte-identical), passed from
+  both Pin1 parents.
+- White-box canvas mode (5a70a500): `PatternCanvas.tsx` takes a new
+  optional `greyscaleMode` prop and renders its base image via
+  `toGrayscalePreviewRgba` instead of `toThresholdPreviewRgba`
+  (threshold mode reproduces legacy output exactly);
+  `WhiteBoxMarkingTool.tsx` passes `model.greyscaleMode`. Note: the
+  subtask named `renderSelectedWhiteBoxMarks`, but no caller in `src`
+  uses it — the actual call site was `toThresholdPreviewRgba`, which
+  is what changed.
+- Pin1 canvas lock/reorder (4a355a24): `Pin1Canvas.tsx` — the search
+  ROI is locked by default (selection-only, no move/resize, no
+  replacement on outside click; the lock only engages once a region
+  exists, so first creation is never blocked). Double-click inside a
+  locked ROI unlocks it; a locked ROI draws no handles and is labeled
+  "SEARCH REGION • LOCKED". Right-click opens a context menu (topmost
+  hit first): Bring Forward / Send Backward swap the search/package
+  draw order, Lock/Unlock toggles the ROI lock. The package region
+  stays unlocked since it is edited right after "Add Package Region".
+- RECORD BUG button (a5d34adf): `RecorderExportModal.tsx` — a new
+  "Send Bug Report" button beside Telegram/Download ZIP POSTs to the
+  loopback backend (via a newly exported `resolveBackendBaseUrl` from
+  `history-facade.ts`) with title, description/expected/actual,
+  trigger component, session id, and reporter context. Channels are
+  chosen from GET /bug-reports/config first — email + Supabase when
+  configured, email only otherwise (the route errors on unconfigured
+  Supabase even after email succeeds, so this avoids misreporting).
+  Seed mode reports honestly instead of posting, and the modal stays
+  open on success so the operator can still Download ZIP. The recorder
+  files were free (clean tree, no in-flight edits), so this landed in
+  code, not as a patch note.
+- NOT wired (with reason): retry button in the camera UI — the hook
+  newly exposes `isPermissionPending` + `retry()`, but
+  `WorkpieceAnalyzeWorkspace.tsx` was outside this wave's files, so no
+  button renders yet (operators retry today by re-selecting Live
+  Camera; end-of-tunnel wave can wire `retry()` to a button in one
+  line; no auto-retry since browsers ignore repeated `getUserMedia`
+  calls while a prompt pends). Pin1 mode persistence — `greyscaleMode`
+  is component state, not saved to rules (white-box persists via
+  `initialSettings`; Pin1 has no equivalent) — follow-up if the morning
+  wants it saved. Pin1 panel lock/reorder buttons — canvas enforcement
+  landed first; `Pin1MarkingTool`'s LayersPanel buttons remain omitted
+  until a follow-up wires them to the canvas state. Rotation was not
+  added to Pin1 (no rotation model there).
+- NOT verified at runtime (per program order) — typecheck + live
+  exercise of all five items is owed to the end-of-tunnel wave.
