@@ -1,0 +1,74 @@
+[
+  {
+    "taskCode": "Task-01",
+    "title": "Preflight and Screenshot Extraction",
+    "assignedAgentRole": "Lead Orchestrator",
+    "ownedFiles": ["assets/screenshots/"]
+  },
+  {
+    "taskCode": "Task-02",
+    "title": "Spec Authoring and Bounded Subtask Planning",
+    "assignedAgentRole": "Wave 1 Spec Swarm",
+    "ownedFiles": ["02-spec/21-app/04-vision-system-and-error-management-instructions/", ".ai-memory/plans/pending/04-vision-system-and-error-management-instructions.md"]
+  },
+  {
+    "taskCode": "Task-03",
+    "title": "Top-Level Window Controls Fix (Minimize, Maximize, Close - No Crash)",
+    "assignedAgentRole": "Worker 01",
+    "ownedFiles": ["src/components/layout/", "src-tauri/"]
+  },
+  {
+    "taskCode": "Task-04",
+    "title": "Error Management, AppError Wrappers, SplitDB Logging and Bug Export",
+    "assignedAgentRole": "Worker 02",
+    "ownedFiles": ["src/utils/error/", "src/services/", "cli/"]
+  },
+  {
+    "taskCode": "Task-05",
+    "title": "UI Automation Identity System (Id, Name, XPath) and CLI Actuator",
+    "assignedAgentRole": "Worker 03",
+    "ownedFiles": ["src/components/", "cli/"]
+  },
+  {
+    "taskCode": "Task-06",
+    "title": "Menu Hover and Simulation Glitch RCA and Resolution",
+    "assignedAgentRole": "Worker 01",
+    "ownedFiles": ["src/components/layout/", "src/components/simulation/"]
+  },
+  {
+    "taskCode": "Task-07",
+    "title": "Pattern Pin 1 Configuration, Shape Tooling (Rect, Circle) and ROI Layers",
+    "assignedAgentRole": "Worker 02",
+    "ownedFiles": ["src/components/vision/", "src/services/vision/"]
+  },
+  {
+    "taskCode": "Task-08",
+    "title": "Photoshop-Style Layers Panel for ROI and Pattern Hierarchy",
+    "assignedAgentRole": "Worker 03",
+    "ownedFiles": ["src/components/vision/layers/"]
+  },
+  {
+    "taskCode": "Task-09",
+    "title": "Grayscale and Contrast Configuration, Bit Reductions and Visual Verification",
+    "assignedAgentRole": "Worker 01",
+    "ownedFiles": ["src/components/vision/", "src/utils/image/"]
+  },
+  {
+    "taskCode": "Task-10",
+    "title": "Camera Live Source Dropdown Fix and Simulation Delay Optimization",
+    "assignedAgentRole": "Worker 02",
+    "ownedFiles": ["src/components/vision/", "src/services/camera/"]
+  },
+  {
+    "taskCode": "Task-11",
+    "title": "Email Notification and Supabase Bug Reporting Integration",
+    "assignedAgentRole": "Worker 03",
+    "ownedFiles": ["src/services/telemetry/", "src/pages/Settings.tsx"]
+  },
+  {
+    "taskCode": "Task-12",
+    "title": "Multi-Agent Swarm Verification, End-to-End Tests and Atomic Release Delivery",
+    "assignedAgentRole": "Lead Orchestrator",
+    "ownedFiles": ["."]
+  }
+]
