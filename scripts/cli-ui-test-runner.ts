@@ -2,7 +2,28 @@ import { chromium, type Page, type Browser } from "playwright";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:5173";
+let BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
+
+async function probeActiveBaseUrl(): Promise<string> {
+  if (process.env.BASE_URL) {
+    return process.env.BASE_URL;
+  }
+  const candidatePorts = [3000, 5173, 5174, 8080];
+  for (const port of candidatePorts) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}`, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(800),
+      });
+      if (res.status < 500) {
+        return `http://127.0.0.1:${port}`;
+      }
+    } catch {
+      // try next candidate
+    }
+  }
+  return "http://127.0.0.1:3000";
+}
 function resolveChromePath(): string {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)) {
     return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
@@ -93,6 +114,7 @@ async function recordStep(
 }
 
 async function runCliUiTests(): Promise<void> {
+  BASE_URL = await probeActiveBaseUrl();
   console.log("=".repeat(75));
   console.log("🚀 CAT-iVISION CLI Headless UI Verification Runner (Alim Agenda)");
   console.log(`Target URL: ${BASE_URL}`);
