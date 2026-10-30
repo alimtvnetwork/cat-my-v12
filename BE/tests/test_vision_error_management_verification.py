@@ -41,11 +41,11 @@ from BE.main import app
 from BE.repos.sqlite_error_repo import SqliteErrorRepo
 from BE.repos.sqlite_rules_repo import SqliteRulesRepo
 from BE.ui_remote.queue import (
-    complete_packet,
-    enqueue_action,
-    fail_packet,
-    get_packet,
-    get_pending_packets,
+    audit as get_audit,
+    enqueue as enqueue_packet,
+    lookup as lookup_packet,
+    pending as get_pending,
+    resolve as resolve_packet,
 )
 from BE.ui_remote.registry import ELEMENTS, list_elements
 
@@ -776,51 +776,54 @@ def test_ui_remote_registry_xpath_syntactic_validity():
 
 
 def test_ui_remote_packet_enqueue_returns_valid_id():
-    """Verify enqueueing an action generates a valid packetId and pending status."""
-    packet = enqueue_action(action="click", element_id="ui-window-minimize", actor="test")
+    """Verify enqueueing an action generates a valid packetId and queued status."""
+    packet = enqueue_packet({"action": "click", "elementId": "ui-window-minimize", "actor": "test"})
 
     assert packet["packetId"]
     assert packet["action"] == "click"
     assert packet["elementId"] == "ui-window-minimize"
-    assert packet["status"] == "pending"
+    assert packet["status"] == "queued"
 
 
-def test_ui_remote_packet_lifecycle_complete_success():
-    """Verify completing a packet marks status as executed with result payload."""
-    packet = enqueue_action(action="click", element_id="ui-sim-next", actor="test")
+def test_ui_remote_packet_lifecycle_resolve_success():
+    """Verify resolving a packet marks status as done with result payload."""
+    packet = enqueue_packet({"action": "click", "elementId": "ui-sim-next", "actor": "test"})
     pid = packet["packetId"]
 
-    completed = complete_packet(pid, result={"clicked": True, "target": "ui-sim-next"})
+    completed = resolve_packet(pid, result={"performed": True, "target": "ui-sim-next"})
 
     assert completed is not None
-    assert completed["status"] == "executed"
-    assert completed["result"]["clicked"] is True
+    assert completed["status"] == "done"
+    assert completed["result"]["performed"] is True
 
 
-def test_ui_remote_packet_lifecycle_fail_with_reason():
-    """Verify failing a packet marks status as failed with error reason."""
-    packet = enqueue_action(action="click", element_id="ui-window-close", actor="test")
+def test_ui_remote_packet_lookup_pending_and_done():
+    """Verify looking up a queued or completed packet by ID."""
+    packet = enqueue_packet({"action": "click", "elementId": "ui-window-close", "actor": "test"})
     pid = packet["packetId"]
 
-    failed = fail_packet(pid, error="Element is disabled in modal state")
+    found_pending = lookup_packet(pid)
+    assert found_pending is not None
+    assert found_pending["status"] == "queued"
 
-    assert failed is not None
-    assert failed["status"] == "failed"
-    assert failed["error"] == "Element is disabled in modal state"
+    resolve_packet(pid, result={"performed": False, "error": "Element is disabled"})
+    found_done = lookup_packet(pid)
+    assert found_done is not None
+    assert found_done["status"] == "done"
+    assert found_done["result"]["error"] == "Element is disabled"
 
 
-def test_ui_remote_grayscale_packet_parameters():
-    """Verify queuing grayscale tuning packet carries threshold and bitDepth."""
-    packet = enqueue_action(
-        action="grayscale",
-        actor="cli",
-        parameters={"threshold": 175, "bitDepth": "1-bit", "contrast": 85},
-    )
+def test_ui_remote_audit_recording():
+    """Verify resolved packets are written to audit trail."""
+    packet = enqueue_packet({"action": "click", "elementId": "ui-sim-exit", "actor": "test"})
+    pid = packet["packetId"]
+    resolve_packet(pid, result={"performed": True})
 
-    assert packet["action"] == "grayscale"
-    assert packet["parameters"]["threshold"] == 175
-    assert packet["parameters"]["bitDepth"] == "1-bit"
-    assert packet["parameters"]["contrast"] == 85
+    entries = get_audit(limit=20)
+    assert isinstance(entries, list)
+    matching = [e for e in entries if e.get("packetId") == pid]
+    assert len(matching) == 1
+    assert matching[0]["status"] == "done" 
 
 
 # ==============================================================================
@@ -940,8 +943,7 @@ def test_cli_ui_grayscale_tuning_execution(mock_session_ctx: MagicMock):
 
 def test_cli_ui_click_enqueue_execution(mock_session_ctx: MagicMock):
     """Verify processing-cli ui click enqueues without remote backend connection."""
-    # When no remote backend running, queue action directly
-    packet = enqueue_action(action="click", element_id="ui-sim-take-over", actor="cli")
+    packet = enqueue_packet({"action": "click", "elementId": "ui-sim-take-over", "actor": "cli"})
 
     assert packet["packetId"]
     assert packet["action"] == "click"
