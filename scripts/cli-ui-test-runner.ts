@@ -373,10 +373,10 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
-        await dropdownBtn.click({ force: true });
-        await page.waitForTimeout(300);
+        await dropdownBtn.evaluate((el: HTMLElement) => el.click());
 
-        const liveCamOption = page.locator("text='Live Camera Feed'");
+        const liveCamOption = page.locator("text='Live Camera Feed'").first();
+        await liveCamOption.waitFor({ state: "visible", timeout: 5000 });
         const hasLiveCam = await liveCamOption.isVisible();
         if (!hasLiveCam) throw new Error("Live Camera Feed option not found in dropdown");
 
