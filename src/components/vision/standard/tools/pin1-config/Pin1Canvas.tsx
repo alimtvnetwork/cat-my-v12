@@ -1,5 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import {
+  getPatternShapePoints,
+  isPointInPatternShape,
+  tracePatternShapePath,
+} from "@/lib/vision/white-box-marking";
+import { ShapeType } from "@/domain/vision/shapes";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { regionHandles } from "@/components/vision/white-box/pattern-geometry";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
@@ -22,6 +28,8 @@ export interface Pin1CanvasProps {
   hasGreyscalePreview?: boolean;
   thresholdLuma?: number;
   polarity?: HolePolarityType;
+  /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
+  patternShape?: ShapeType;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -58,6 +66,10 @@ function createThresholdPreview(
 
 export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Clicking the pattern shape selects it (hit-tested, spec 54). Selection
+  // never consumes the event: the drag still runs, so region move/resize
+  // behavior is unchanged.
+  const [isPatternShapeSelected, setPatternShapeSelected] = useState(false);
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: props.activeRegion,
@@ -164,6 +176,21 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
         label: "PACKAGE REGION",
         color: "#38bdf8",
         isActive: props.regionEditMode === "package",
+      });
+    }
+
+    // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
+    // ROI, drawn inscribed in the search region. Rectangle needs no
+    // overlay — the region rect already is the shape.
+    if (
+      props.searchRegion &&
+      props.patternShape &&
+      props.patternShape !== ShapeType.Rectangle
+    ) {
+      drawPatternShapeOverlay(ctx, {
+        region: props.searchRegion,
+        shape: props.patternShape,
+        isSelected: isPatternShapeSelected,
       });
     }
 
@@ -274,12 +301,15 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.hasGreyscalePreview,
     props.thresholdLuma,
     props.polarity,
+    props.patternShape,
+    isPatternShapeSelected,
   ]);
 
   return (
     <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
       <canvas
         ref={canvasRef}
+        data-ui-id="ui-pin1-canvas"
         width={STANDARD_CANVAS_WIDTH}
         height={STANDARD_CANVAS_HEIGHT}
         onPointerDown={(event) => {
@@ -290,6 +320,8 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
           if (props.regionEditMode === "pin" && registerPointAtEvent(event, props, canvasRef.current)) {
             return;
           }
+
+          selectPatternShapeAtEvent(event, props, canvasRef.current, setPatternShapeSelected);
 
           drag.handlePointerDown(event);
         }}
@@ -358,6 +390,75 @@ function selectHoleAtPoint(
   }
 
   return false;
+}
+
+function drawPatternShapeOverlay(
+  ctx: CanvasRenderingContext2D,
+  params: {
+    region: SearchRegion;
+    shape: ShapeType;
+    isSelected: boolean;
+  },
+): void {
+  const { region, shape, isSelected } = params;
+  const shapedRegion: SearchRegion = { ...region, shape };
+
+  ctx.save();
+  ctx.strokeStyle = "#e879f9";
+  ctx.fillStyle = "#e879f9";
+  ctx.lineWidth = isSelected ? 3 : 2;
+  ctx.setLineDash([6, 4]);
+  tracePatternShapePath(ctx, shapedRegion);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Polygon vertices get markers so the shape reads as editable points.
+  if (shape === ShapeType.Polygon) {
+    for (const point of getPatternShapePoints(shapedRegion)) {
+      ctx.fillRect(point.x - 3, point.y - 3, 6, 6);
+    }
+  }
+
+  const label = `PATTERN SHAPE: ${shape.toUpperCase()}`;
+  const labelWidth = Math.max(120, ctx.measureText(label).width + 14);
+  ctx.fillStyle = isSelected ? "rgba(232, 121, 249, 0.95)" : "rgba(15, 23, 42, 0.82)";
+  ctx.fillRect(region.x, Math.max(0, region.y - 18), labelWidth, 16);
+  ctx.fillStyle = isSelected ? "#0f172a" : "#e879f9";
+  ctx.font = "bold 10px monospace";
+  ctx.fillText(label, region.x + 6, Math.max(11, region.y - 6));
+  ctx.restore();
+}
+
+function selectPatternShapeAtEvent(
+  event: React.PointerEvent<HTMLCanvasElement>,
+  props: Pin1CanvasProps,
+  canvas: HTMLCanvasElement | null,
+  setSelected: (isSelected: boolean) => void,
+): void {
+  const shape = props.patternShape ?? ShapeType.Rectangle;
+
+  if (canvas === null || shape === ShapeType.Rectangle || !props.searchRegion) {
+    setSelected(false);
+
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    setSelected(false);
+
+    return;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const point = {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+
+  setSelected(isPointInPatternShape(point, { ...props.searchRegion, shape }));
 }
 
 function drawRegion(

@@ -1,5 +1,6 @@
 import React from "react";
 import { ExternalLink, Sliders } from "lucide-react";
+import { ShapeType } from "@/domain/vision/shapes";
 import { HolePolarityType } from "./types";
 
 export interface Pin1SettingsCardProps {
@@ -10,12 +11,24 @@ export interface Pin1SettingsCardProps {
   expectedX?: number;
   expectedY?: number;
   expectedRadius?: number;
+  /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
+  patternShape?: ShapeType;
+  onPatternShapeChange?: (shape: ShapeType) => void;
   onToleranceChange: (val: number) => void;
   onCircularityChange?: (val: number) => void;
   onReconfigure: () => void;
 }
 
+const PATTERN_SHAPES: readonly ShapeType[] = [
+  ShapeType.Rectangle,
+  ShapeType.Circle,
+  ShapeType.Ellipse,
+  ShapeType.Polygon,
+];
+
 export function Pin1SettingsCard(props: Pin1SettingsCardProps): React.JSX.Element {
+  const activePatternShape = props.patternShape ?? ShapeType.Rectangle;
+
   return (
     <div className="rounded border border-ca-border bg-ca-panel p-3.5 shadow-sm space-y-3.5 text-xs font-sans">
       <div className="flex items-center gap-1.5 border-b border-ca-border pb-1.5 font-bold uppercase tracking-wide text-ca-ink">
@@ -56,6 +69,41 @@ export function Pin1SettingsCard(props: Pin1SettingsCardProps): React.JSX.Elemen
           />
         </div>
       )}
+
+      {/* 2b. Pattern Shape — the shape searched INSIDE the region of
+          interest (spec 54). The ROI itself stays a plain region; the
+          pattern takes the shape. Existing REGION SHAPE buttons on the
+          ROI are untouched; this picker is additive. */}
+      <div className="space-y-1">
+        <div className="flex justify-between text-ca-ink-muted">
+          <span>Pattern Shape</span>
+          <span className="font-mono font-bold text-ca-ink">{activePatternShape}</span>
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {PATTERN_SHAPES.map((shape) => {
+            const isActive = shape === activePatternShape;
+
+            return (
+              <button
+                key={shape}
+                type="button"
+                data-ui-id={`ui-pin1-pattern-shape-${shape.toLowerCase()}`}
+                onClick={() => props.onPatternShapeChange?.(shape)}
+                className={`rounded border px-1 py-1 text-[11px] font-semibold transition-colors ${
+                  isActive
+                    ? "border-fuchsia-400 bg-fuchsia-400/15 text-fuchsia-200"
+                    : "border-ca-border bg-ca-panel-2 text-ca-ink-muted hover:text-ca-ink"
+                }`}
+              >
+                {shape}
+              </button>
+            );
+          })}
+        </div>
+        <div className="text-[10px] text-ca-ink-muted/80 pt-0.5">
+          Shape of the pattern searched inside the region of interest.
+        </div>
+      </div>
 
       {/* 3. Registered Template Readout */}
       <div className="rounded bg-ca-panel-2 p-2.5 text-[11px] text-ca-ink-muted space-y-1.5 border border-ca-border">
