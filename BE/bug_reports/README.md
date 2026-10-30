@@ -40,7 +40,7 @@ non-zero exit / failure envelope.
   `~/workspace/go-email-reader/go-email-reader`. Missing binary =
   a setup error naming the install path, never a silent skip.
 - Setup (user's machine): install go-email-reader, `go-email-reader
-  add` an account, `go-email-reader notifier set --email <address>`.
+add` an account, `go-email-reader notifier set --email <address>`.
 
 ## Supabase (plain PostgREST, no SDK — AGM pattern)
 
@@ -70,7 +70,7 @@ non-zero exit / failure envelope.
 ## Routes (all loopback-only, like /shutdown)
 
 - `POST /bug-reports` — compose (from `correlation_id` or freeform)
-  + deliver via `channels`.
+  - deliver via `channels`.
 - `GET /bug-reports/pending?limit=` — Supabase pending queue.
 - `GET /bug-reports/config` — sanitized settings (no key).
 - `POST /bug-reports/config` — save settings (blank key keeps stored).
@@ -81,9 +81,9 @@ non-zero exit / failure envelope.
 - `processing-cli bug-reports pending [--limit N]`
 - `processing-cli bug-reports download <id> [--out FILE]`
 - `processing-cli bug-reports send --correlation-id CID [--to EMAIL]
-  [--from EMAIL] [--attach FILE ...]`
+[--from EMAIL] [--attach FILE ...]`
 
-## Codes (BE/errors/codes.py — the only place E_* literals live)
+## Codes (BE/errors/codes.py — the only place E\_\* literals live)
 
 - `E_BUG_EMAIL_FAILED`, `E_BUG_SUPABASE_FAILED` (new).
 - Validation → `E_BE_BAD_REQUEST`; unconfigured downstream →

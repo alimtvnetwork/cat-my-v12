@@ -33,6 +33,7 @@ export function LayersPanel(props: LayersPanelProps): React.JSX.Element {
           const isSelected = props.selectedLayerId === layer.id;
           const isTop = index === 0;
           const isBottom = index === props.layers.length - 1;
+          const isReorderable = props.isLayerReorderable?.(layer) ?? true;
 
           return (
             <li key={layer.id}>
@@ -90,7 +91,7 @@ export function LayersPanel(props: LayersPanelProps): React.JSX.Element {
                   <span className="flex shrink-0 flex-col">
                     <button
                       type="button"
-                      disabled={isTop}
+                      disabled={isTop || !isReorderable}
                       onClick={() => props.onBringLayerForward?.(layer.id)}
                       title={`Bring ${layer.label} forward`}
                       className="rounded p-0.5 text-ca-ink-muted hover:bg-[#2a3138] hover:text-white disabled:opacity-30"
@@ -99,7 +100,7 @@ export function LayersPanel(props: LayersPanelProps): React.JSX.Element {
                     </button>
                     <button
                       type="button"
-                      disabled={isBottom}
+                      disabled={isBottom || !isReorderable}
                       onClick={() => props.onSendLayerBackward?.(layer.id)}
                       title={`Send ${layer.label} backward`}
                       className="rounded p-0.5 text-ca-ink-muted hover:bg-[#2a3138] hover:text-white disabled:opacity-30"

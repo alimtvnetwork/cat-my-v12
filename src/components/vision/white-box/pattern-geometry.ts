@@ -20,7 +20,9 @@ export interface PatternComputeParams {
   imageHeight: number;
 }
 
-export function computePatternGeometry(params: PatternComputeParams): FormulatedPatternGeometry | null {
+export function computePatternGeometry(
+  params: PatternComputeParams,
+): FormulatedPatternGeometry | null {
   const activeBoxes = params.boxes.filter((b) => params.excludedNumbers.has(b.number) === false);
 
   if (activeBoxes.length === 0) {
@@ -115,7 +117,9 @@ export function clampRegion(width: number, height: number, region: SearchRegion)
   );
 }
 
-export function regionHandles(region: SearchRegion): Array<{ id: RegionHandle; x: number; y: number }> {
+export function regionHandles(
+  region: SearchRegion,
+): Array<{ id: RegionHandle; x: number; y: number }> {
   const x0 = region.x;
   const y0 = region.y;
   const x1 = region.x + region.width - 1;

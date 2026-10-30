@@ -1272,8 +1272,14 @@ export function VisualToolWorkpieceCanvas({
   const [autoDetectedBoxesByRuleId, setAutoDetectedBoxesByRuleId] = useState<
     Record<string, WhiteBoxMark[]>
   >({});
-  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
-  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number; initialRoi: WorkpieceRoi } | null>(null);
+  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(
+    null,
+  );
+  const [dragStartPos, setDragStartPos] = useState<{
+    x: number;
+    y: number;
+    initialRoi: WorkpieceRoi;
+  } | null>(null);
   const [cursorHandleType, setCursorHandleType] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
   const [isMovingRoi, setIsMovingRoi] = useState(false);
   const [isDraggingPin1, setIsDraggingPin1] = useState(false);
@@ -2443,7 +2449,8 @@ export function VisualToolWorkpieceCanvas({
       const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
       const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
       const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
-      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
 
       const hit = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
 
@@ -2648,16 +2655,14 @@ export function VisualToolWorkpieceCanvas({
       const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
       const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
       const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
-      const seHit = Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
 
       const hover = !isRoiLocked && (nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null);
       setCursorHandleType(hover ? hover : null);
 
       const isInside =
-        x >= roi.x &&
-        x <= roi.x + roi.width &&
-        y >= roi.y &&
-        y <= roi.y + roi.height;
+        x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
       const headerRect = getRoiHeaderRect(roi);
       const isHeaderHover =

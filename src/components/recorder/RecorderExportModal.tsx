@@ -38,9 +38,15 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [isExporting, setIsExporting] = useState(false);
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
-  const [telegramStatus, setTelegramStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+  const [telegramStatus, setTelegramStatus] = useState<{
+    isSuccess: boolean;
+    message: string;
+  } | null>(null);
   const [isSendingBugReport, setIsSendingBugReport] = useState(false);
-  const [bugReportStatus, setBugReportStatus] = useState<{ isSuccess: boolean; message: string } | null>(null);
+  const [bugReportStatus, setBugReportStatus] = useState<{
+    isSuccess: boolean;
+    message: string;
+  } | null>(null);
 
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const [isUploadingSupabase, setIsUploadingSupabase] = useState(false);
@@ -187,7 +193,8 @@ ${summary.actualBehavior || "N/A"}`;
     if (baseUrl === null) {
       setBugReportStatus({
         isSuccess: false,
-        message: "Backend is not connected (Seed mode) — run the app in Backend mode to send bug reports.",
+        message:
+          "Backend is not connected (Seed mode) — run the app in Backend mode to send bug reports.",
       });
 
       return;
@@ -210,7 +217,8 @@ ${summary.actualBehavior || "N/A"}`;
             }>;
           };
           const supabase = configBody.Results?.[0]?.supabase;
-          const isSupabaseUsable = supabase?.is_configured === true && supabase?.is_enabled === true;
+          const isSupabaseUsable =
+            supabase?.is_configured === true && supabase?.is_enabled === true;
           channels = isSupabaseUsable ? ["email", "supabase"] : ["email"];
           channelNote = isSupabaseUsable
             ? " via email + Supabase"

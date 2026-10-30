@@ -27,6 +27,8 @@ function resolveById(elementId: string): ResolvedElement | null {
   }
 
   const selectors = [
+    `[data-automation-id="${elementId}"]`,
+    `[data-automation-name="${elementId}"]`,
     `[data-ui-id="${elementId}"]`,
     `[data-ui-name="${elementId}"]`,
     `[data-testid="${elementId}"]`,
@@ -134,11 +136,15 @@ function performNavigate(packet: UiRemotePacket): void {
   }
 }
 
-async function reportResult(baseUrl: string, packetId: string, result: {
-  performed: boolean;
-  resolvedVia?: string | null;
-  error?: string | null;
-}): Promise<void> {
+async function reportResult(
+  baseUrl: string,
+  packetId: string,
+  result: {
+    performed: boolean;
+    resolvedVia?: string | null;
+    error?: string | null;
+  },
+): Promise<void> {
   await fetch(`${baseUrl}/ui-remote/results`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -182,7 +188,10 @@ export function useUiRemoteControl(): void {
         try {
           if (packet.action === "navigate") {
             performNavigate(packet);
-            await reportResult(baseUrl, packet.packetId, { performed: true, resolvedVia: "history" });
+            await reportResult(baseUrl, packet.packetId, {
+              performed: true,
+              resolvedVia: "history",
+            });
 
             continue;
           }

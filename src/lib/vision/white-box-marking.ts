@@ -732,13 +732,18 @@ export function getPatternShapePoints(region: SearchRegion): Array<{ x: number; 
   }
 
   if (shape === ShapeType.Circle || shape === ShapeType.Ellipse) {
-    const radiusX = shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.width / 2;
-    const radiusY = shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.height / 2;
+    const radiusX =
+      shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.width / 2;
+    const radiusY =
+      shape === ShapeType.Circle ? Math.min(region.width, region.height) / 2 : region.height / 2;
     const points: Array<{ x: number; y: number }> = [];
 
     for (let step = 0; step < 48; step += 1) {
       const angle = (step / 48) * Math.PI * 2;
-      const raw = { x: center.x + radiusX * Math.cos(angle), y: center.y + radiusY * Math.sin(angle) };
+      const raw = {
+        x: center.x + radiusX * Math.cos(angle),
+        y: center.y + radiusY * Math.sin(angle),
+      };
       points.push(rotatePointAroundCenter(raw, center, rotation));
     }
 
@@ -788,8 +793,7 @@ export function isPointInPatternShape(
       const xj = vertices[j].x;
       const yj = vertices[j].y;
       const crosses =
-        yi > local.y !== yj > local.y &&
-        local.x < ((xj - xi) * (local.y - yi)) / (yj - yi) + xi;
+        yi > local.y !== yj > local.y && local.x < ((xj - xi) * (local.y - yi)) / (yj - yi) + xi;
 
       if (crosses) {
         isInside = !isInside;

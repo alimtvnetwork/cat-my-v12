@@ -118,9 +118,7 @@ export function Pin1SettingsCard(props: Pin1SettingsCardProps): React.JSX.Elemen
         <div className="flex justify-between items-center">
           <span>Mark Polarity:</span>
           <span className="font-mono text-cyan-300">
-            {props.polarity === HolePolarityType.DarkIndentation
-              ? "Dark Indentation"
-              : "Light Dot"}
+            {props.polarity === HolePolarityType.DarkIndentation ? "Dark Indentation" : "Light Dot"}
           </span>
         </div>
         <div className="flex justify-between items-center">

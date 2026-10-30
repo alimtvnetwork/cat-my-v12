@@ -37,6 +37,14 @@ export interface Pin1CanvasProps {
   greyscaleMode?: GrayscaleMode;
   /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
   patternShape?: ShapeType;
+  /** ROI lock state, controlled by the parent when provided (spec 54 §22
+   *  follow-up: panel lock buttons drive the canvas). Defaults to locked. */
+  isSearchLocked?: boolean;
+  onSearchLockChange?: (isLocked: boolean) => void;
+  /** Search/package draw order, bottom to top, controlled by the parent
+   *  when provided (panel reorder buttons drive the canvas). */
+  layerOrder?: readonly ("search" | "package")[];
+  onLayerOrderChange?: (order: readonly ("search" | "package")[]) => void;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -106,11 +114,33 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   // move/resize, no replacement on outside click — until double-clicked
   // inside it. Right-click reorders the search/package layers. The lock
   // only engages once a region exists, so first creation is never blocked.
-  const [isSearchLocked, setIsSearchLocked] = useState(true);
-  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+  // The parent (Pin1MarkingTool) may control both values so the
+  // LayersPanel buttons drive the same state; otherwise internal state
+  // is used, preserving the standalone-canvas behavior.
+  const [internalSearchLocked, setInternalSearchLocked] = useState(true);
+  const isSearchLocked = props.isSearchLocked ?? internalSearchLocked;
+
+  function setIsSearchLocked(next: boolean): void {
+    if (props.onSearchLockChange !== undefined) {
+      props.onSearchLockChange(next);
+    } else {
+      setInternalSearchLocked(next);
+    }
+  }
+
+  const [internalLayerOrder, setInternalLayerOrder] = useState<readonly ("search" | "package")[]>([
     "search",
     "package",
   ]);
+  const layerOrder = props.layerOrder ?? internalLayerOrder;
+
+  function setLayerOrder(next: readonly ("search" | "package")[]): void {
+    if (props.onLayerOrderChange !== undefined) {
+      props.onLayerOrderChange(next);
+    } else {
+      setInternalLayerOrder(next);
+    }
+  }
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -238,11 +268,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
     // ROI, drawn inscribed in the search region. Rectangle needs no
     // overlay — the region rect already is the shape.
-    if (
-      props.searchRegion &&
-      props.patternShape &&
-      props.patternShape !== ShapeType.Rectangle
-    ) {
+    if (props.searchRegion && props.patternShape && props.patternShape !== ShapeType.Rectangle) {
       drawPatternShapeOverlay(ctx, {
         region: props.searchRegion,
         shape: props.patternShape,
@@ -274,7 +300,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const hasRule = Boolean(props.registeredPin1);
       const isMatchedActiveHole = props.matchResult?.activeHole?.id === hole.id;
       const isPass = props.matchResult?.isPass ?? false;
-      const isPrimary = hasRule ? (isMatchedActiveHole && isPass) : (hole.isPrimaryPin1 && hole.isKept);
+      const isPrimary = hasRule ? isMatchedActiveHole && isPass : hole.isPrimaryPin1 && hole.isKept;
 
       const strokeColor = !hole.isKept
         ? "rgba(244, 63, 94, 0.45)"
@@ -338,7 +364,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const badgeX = hole.centerX + hole.radius + 6;
       const badgeY = hole.centerY - 7;
 
-      const isBadgeSuccess = !hasRule ? isPrimary : (isMatchedActiveHole && isPass);
+      const isBadgeSuccess = !hasRule ? isPrimary : isMatchedActiveHole && isPass;
       const isBadgeError = hasRule && isMatchedActiveHole && !isPass;
 
       ctx.fillStyle = isBadgeSuccess
@@ -359,7 +385,6 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
       ctx.restore();
     }
-
   }, [
     props.source,
     props.searchRegion,
@@ -393,7 +418,10 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
             return;
           }
 
-          if (props.regionEditMode === "pin" && registerPointAtEvent(event, props, canvasRef.current)) {
+          if (
+            props.regionEditMode === "pin" &&
+            registerPointAtEvent(event, props, canvasRef.current)
+          ) {
             return;
           }
 
@@ -543,7 +571,7 @@ function canvasPointFromPin1Event(
   };
 }
 
-function movePin1Layer(
+export function movePin1Layer(
   layerId: "search" | "package",
   delta: 1 | -1,
   layerOrder: readonly ("search" | "package")[],

@@ -62,7 +62,9 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
-    toast.info("Minimize is not available in browser mode. Use your operating system window controls to minimize this window.");
+    toast.info(
+      "Minimize is not available in browser mode. Use your operating system window controls to minimize this window.",
+    );
   }, []);
 
   const handleToggleMaximize = useCallback(() => {

@@ -45,7 +45,8 @@ export const UI_REMOTE_ELEMENTS: UiRemoteElement[] = [
     id: "ui-window-maximize",
     name: "Window Layer or Maximize",
     kind: "button",
-    xpath: "//div[@data-testid='window-controls-bar']//button[@aria-label='Window Layer or Maximize']",
+    xpath:
+      "//div[@data-testid='window-controls-bar']//button[@aria-label='Window Layer or Maximize']",
     routes: ["*"],
     actions: ["click"],
     setRange: null,
@@ -278,6 +279,5 @@ export const UI_REMOTE_ELEMENTS: UiRemoteElement[] = [
 ];
 
 export function findUiRemoteElementById(id: string): UiRemoteElement | undefined {
-
   return UI_REMOTE_ELEMENTS.find((entry) => entry.id === id);
 }

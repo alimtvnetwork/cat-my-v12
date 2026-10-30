@@ -181,18 +181,38 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
           <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
             <span>Shape Measurement</span>
-            <span className={props.matchResult?.isPass ? "font-mono text-emerald-400" : "font-mono text-rose-300"}>
+            <span
+              className={
+                props.matchResult?.isPass ? "font-mono text-emerald-400" : "font-mono text-rose-300"
+              }
+            >
               {props.matchResult?.status ?? "Not Run"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-            <MeasurementReadout label="Pos X" value={props.matchResult?.activeHole?.centerX ?? primaryHole?.centerX} suffix="px" />
-            <MeasurementReadout label="Pos Y" value={props.matchResult?.activeHole?.centerY ?? primaryHole?.centerY} suffix="px" />
+            <MeasurementReadout
+              label="Pos X"
+              value={props.matchResult?.activeHole?.centerX ?? primaryHole?.centerX}
+              suffix="px"
+            />
+            <MeasurementReadout
+              label="Pos Y"
+              value={props.matchResult?.activeHole?.centerY ?? primaryHole?.centerY}
+              suffix="px"
+            />
             <MeasurementReadout label="Angle" value={props.matchResult?.angleDeg} suffix="deg" />
-            <MeasurementReadout label="Match" value={props.matchResult?.matchPercent ?? props.matchResult?.score} suffix="%" />
+            <MeasurementReadout
+              label="Match"
+              value={props.matchResult?.matchPercent ?? props.matchResult?.score}
+              suffix="%"
+            />
             <MeasurementReadout label="Scale" value={props.matchResult?.scale} />
-            <MeasurementReadout label="Offset" value={props.matchResult?.deltaDistance} suffix="px" />
+            <MeasurementReadout
+              label="Offset"
+              value={props.matchResult?.deltaDistance}
+              suffix="px"
+            />
           </div>
         </div>
 
@@ -206,7 +226,9 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
             <div className="flex items-center justify-between text-xs">
               <span className="text-ca-ink-muted">Polarity</span>
               <span className="font-mono text-ca-select">
-                {props.polarity === HolePolarityType.DarkIndentation ? "Dark Indentation" : "Light Dot"}
+                {props.polarity === HolePolarityType.DarkIndentation
+                  ? "Dark Indentation"
+                  : "Light Dot"}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 pt-0.5">
@@ -335,7 +357,11 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
                           : "text-rose-400 hover:text-emerald-400"
                       }`}
                     >
-                      {hole.isKept ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      {hole.isKept ? (
+                        <Eye className="h-3.5 w-3.5" />
+                      ) : (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
                 );

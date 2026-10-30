@@ -248,12 +248,41 @@ def _validate_and_prepare_errors(
     return [_prepare_error_row(e, i, seen_ids, now_epoch) for i, e in enumerate(error_list)]
 
 
+def _ensure_tables(conn: sqlite3.Connection) -> None:
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS Error (
+              ErrorId          INTEGER PRIMARY KEY AUTOINCREMENT,
+              CorrelationId    TEXT    NOT NULL,
+              Code             TEXT    NOT NULL,
+              Level            TEXT    NOT NULL CHECK (Level IN ('error', 'warn', 'info')),
+              Message          TEXT    NOT NULL,
+              StackTrace       TEXT,
+              Endpoint         TEXT,
+              TriggerComponent TEXT,
+              SessionId        TEXT,
+              Details          TEXT,
+              CreatedAt        INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER)),
+              PersistedAt      INTEGER NOT NULL DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
+            );
+            """
+        )
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS IdxError_CorrelationId ON Error (CorrelationId);")
+        conn.execute("CREATE INDEX IF NOT EXISTS IdxError_CreatedAt ON Error (CreatedAt);")
+        conn.execute("CREATE INDEX IF NOT EXISTS IdxError_Code ON Error (Code);")
+        conn.commit()
+    except sqlite3.Error as exc:
+        _log.warning("error._ensure_tables failed: %s", exc)
+
+
 def write_errors(
     conn: sqlite3.Connection,
     *,
     errors: Sequence[Mapping[str, Any]] | Iterable[Mapping[str, Any]],
     now_epoch: int | None = None,
 ) -> WriteBatchOutcome:
+    _ensure_tables(conn)
     persisted_at = int(now_epoch if now_epoch is not None else time.time())
     prepared = _validate_and_prepare_errors(errors, persisted_at)
 
@@ -376,6 +405,7 @@ def list_errors(
     session_id: str | None = None,
     correlation_id: str | None = None,
 ) -> list[dict[str, Any]]:
+    _ensure_tables(conn)
     if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1 or limit > _MAX_LIMIT:
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,
@@ -429,6 +459,7 @@ def get_error_by_correlation(
     conn: sqlite3.Connection,
     correlation_id: str,
 ) -> dict[str, Any] | None:
+    _ensure_tables(conn)
     if not isinstance(correlation_id, str) or not correlation_id:
         raise AppError(
             ErrorCode.E_BE_BAD_REQUEST,

@@ -186,9 +186,11 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         setSearchRegion(activeRegion);
 
         const initialBoxes: WhiteBoxMark[] =
-          Array.isArray(initialSettings?.referenceBoxes) && initialSettings.referenceBoxes.length > 0
+          Array.isArray(initialSettings?.referenceBoxes) &&
+          initialSettings.referenceBoxes.length > 0
             ? initialSettings.referenceBoxes
-            : Array.isArray(initialSettings?.constellation) && initialSettings.constellation.length > 0
+            : Array.isArray(initialSettings?.constellation) &&
+                initialSettings.constellation.length > 0
               ? initialSettings.constellation
               : [];
 
@@ -392,7 +394,9 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setSearchRegion(fullRegion);
     setDragState(null);
     setSaveMessage(null);
-    setMessage(`Captured frame (${input.width}×${input.height}). Detecting pattern elements across workpiece...`);
+    setMessage(
+      `Captured frame (${input.width}×${input.height}). Detecting pattern elements across workpiece...`,
+    );
     void processRegion(input, fullRegion);
   }
 
@@ -591,7 +595,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         ? ("draft-rule" as RuleId)
         : formattedRawId && formattedRawId !== "rule-logo-match"
           ? formattedRawId
-          : existingPatternRule?.id ?? defaultRuleId;
+          : (existingPatternRule?.id ?? defaultRuleId);
 
       const ruleName = canonicalRuleName;
 
@@ -792,7 +796,9 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         }
 
         toast.success(`Pattern calibrated (${formulatedPattern.activeBoxCount} boxes)!`);
-        setSaveMessage(`Calibrated (${formulatedPattern.activeBoxCount} boxes, ±${marginPx}px margin)!`);
+        setSaveMessage(
+          `Calibrated (${formulatedPattern.activeBoxCount} boxes, ±${marginPx}px margin)!`,
+        );
 
         return;
       }
