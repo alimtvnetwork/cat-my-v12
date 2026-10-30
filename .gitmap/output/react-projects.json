@@ -1,0 +1,19 @@
+[
+  {
+    "Project": {
+      "id": 0,
+      "repoId": 280,
+      "repoName": "cat-my-v12",
+      "projectTypeId": 3,
+      "projectType": "react",
+      "projectName": "tanstack_start_ts",
+      "absolutePath": "D:\\work\\cat-my",
+      "repoPath": "D:\\work\\cat-my",
+      "relativePath": ".",
+      "primaryIndicator": "package.json",
+      "detectedAt": ""
+    },
+    "GoMeta": null,
+    "Csharp": null
+  }
+]
