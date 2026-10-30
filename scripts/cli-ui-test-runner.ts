@@ -2,7 +2,7 @@ import { chromium, type Page, type Browser } from "playwright";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:3000";
+const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:5173";
 function resolveChromePath(): string {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)) {
     return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
@@ -217,7 +217,7 @@ async function runCliUiTests(): Promise<void> {
         // Return to home or ensure header visible
         const recorderBtn = page.locator("button:has-text('Record Bug')");
         await recorderBtn.waitFor({ state: "visible", timeout: 5000 });
-        await recorderBtn.click();
+        await recorderBtn.click({ force: true });
 
         // Floating HUD should appear
         const hud = page.locator("[data-recorder-hud='true']");
@@ -540,7 +540,7 @@ async function runCliUiTests(): Promise<void> {
         // Verify version badge
         const versionBadge = page.locator("[data-testid='version-badge-button']");
         await versionBadge.waitFor({ state: "visible", timeout: 5000 });
-        await versionBadge.click();
+        await versionBadge.click({ force: true });
         await page.waitForTimeout(500);
 
         // Version modal should open
