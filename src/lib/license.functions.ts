@@ -93,7 +93,7 @@ export interface ActivateResult {
 }
 
 export const activateLicense = createServerFn({ method: HttpMethod.Post })
-  .inputValidator((data: { record: string }) => {
+  .validator((data: { record: string }) => {
     if (!data || typeof data.record !== "string") throw new Error("record required");
 
     if (data.record.length > 32_768) throw new Error("record too large");

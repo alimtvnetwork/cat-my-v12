@@ -77,7 +77,7 @@ async function insertClone(params: {
 
 export const cloneRulesetReference = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => CloneInput.parse(data))
+  .validator((data) => CloneInput.parse(data))
   .handler(async ({ data, context }): Promise<CloneRulesetResult> => {
     const supabase = context.supabase as unknown as SupabaseClient;
     const result = await insertClone({
@@ -98,7 +98,7 @@ export const cloneRulesetReference = createServerFn({ method: HttpMethod.Post })
 
 export const cloneRulesetSnapshot = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => CloneInput.parse(data))
+  .validator((data) => CloneInput.parse(data))
   .handler(async ({ data, context }): Promise<CloneRulesetResult> => {
     const supabase = context.supabase as unknown as SupabaseClient;
     const result = await insertClone({

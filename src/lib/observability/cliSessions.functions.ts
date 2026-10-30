@@ -53,7 +53,7 @@ function beBaseUrl(): string {
 }
 
 export const getCliSessions = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) => InputSchema.parse(raw ?? {}))
+  .validator((raw) => InputSchema.parse(raw ?? {}))
   .handler(async ({ data }): Promise<CliSessionsPage> => {
     const qs = new URLSearchParams();
 

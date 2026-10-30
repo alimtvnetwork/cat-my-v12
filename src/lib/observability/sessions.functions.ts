@@ -70,7 +70,7 @@ function beBaseUrl(): string {
 }
 
 export const getObservabilitySessions = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) => InputSchema.parse(raw ?? {}))
+  .validator((raw) => InputSchema.parse(raw ?? {}))
   .handler(async ({ data }): Promise<SessionsPage> => {
     const qs = new URLSearchParams();
 

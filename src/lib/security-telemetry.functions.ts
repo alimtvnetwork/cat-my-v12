@@ -96,7 +96,7 @@ function newCorrelationId(): string {
 
 export const getDenialBurstWindow = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: GetDenialBurstWindowInput | undefined) => ({
+  .validator((data: GetDenialBurstWindowInput | undefined) => ({
     hours: clampHours(data?.hours),
   }))
   .handler(async ({ data, context }): Promise<GetDenialBurstWindowResult> => {

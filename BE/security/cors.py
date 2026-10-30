@@ -23,10 +23,14 @@ class DevPorts:
 
     VITE_PRIMARY: Final[int] = 5173
     VITE_SECONDARY: Final[int] = 5174
+    DEV_PORT_3000: Final[int] = 3000
+    DEV_PORT_8080: Final[int] = 8080
 
     ACTIVE_PORTS: Final[tuple[int, ...]] = (
         VITE_PRIMARY,
         VITE_SECONDARY,
+        DEV_PORT_3000,
+        DEV_PORT_8080,
     )
 
 

@@ -46,7 +46,7 @@ function beBaseUrl(): string {
 }
 
 export const getCliStatus = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})
