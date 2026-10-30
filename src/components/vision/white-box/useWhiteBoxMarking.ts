@@ -30,6 +30,7 @@ import {
   rgbaToBase64,
   base64ToRgba,
   markWhiteBoxes,
+  type GrayscaleMode,
   type WhiteBoxMark,
   type WhiteBoxMarkingInput,
   type WhiteBoxMarkingResult,
@@ -67,6 +68,13 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const initialSettings = props?.settings as any;
   const [marginPx, setMarginPx] = useState(() => initialSettings?.marginPx ?? 8);
   const [greyscaleLevel, setGreyscaleLevel] = useState(() => initialSettings?.threshold ?? 170);
+  // Grayscale preview mode (spec 54). Detection still uses greyscaleLevel
+  // as whiteThreshold; the mode only changes the preview bits.
+  const [greyscaleMode, setGreyscaleMode] = useState<GrayscaleMode>(() => {
+    const raw = initialSettings?.greyscaleMode;
+
+    return raw === "stretch" || raw === "one-bit" ? raw : "threshold";
+  });
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() => {
     const sr = initialSettings?.searchRegion;
     if (!sr) return null;
@@ -446,6 +454,14 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMessage("Greyscale level changed. Click Process to re-detect.");
+  }
+
+  function changeGreyscaleMode(mode: GrayscaleMode): void {
+    setGreyscaleMode(mode);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage("Greyscale mode changed. Click Process to re-detect.");
   }
 
   function changeMarginPx(value: number): void {
@@ -847,6 +863,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     excludedNumbers,
     marginPx,
     greyscaleLevel,
+    greyscaleMode,
     searchRegion,
     maskRegions,
     patternRegion,
@@ -871,6 +888,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     loadCapturedFrame,
     processRegion,
     changeGreyscaleLevel,
+    changeGreyscaleMode,
     changeMarginPx,
     removeBox,
     restoreBox,
