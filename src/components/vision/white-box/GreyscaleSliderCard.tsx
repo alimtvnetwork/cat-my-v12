@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { GrayscaleBitDepth } from "@/lib/vision/white-box-marking";
+import type { GrayscaleBitDepth, GrayscaleMode } from "@/lib/vision/white-box-marking";
 
 export interface GreyscaleSliderCardProps {
   greyscaleLevel: number;
@@ -9,6 +9,9 @@ export interface GreyscaleSliderCardProps {
   contrastLevel?: number;
   onContrastChange?: (val: number) => void;
   hasContrastSlider?: boolean;
+  /** Grayscale preview mode (spec 54). Defaults to "threshold" (legacy). */
+  greyscaleMode?: GrayscaleMode;
+  onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
 }
 
 interface BitDepthOption {
@@ -34,6 +37,13 @@ export function GreyscaleSliderCard(props: GreyscaleSliderCardProps): React.JSX.
   const handleBitDepthSelect = (depth: GrayscaleBitDepth): void => {
     setInternalBitDepth(depth);
     props.onBitDepthChange?.(depth);
+    if (depth === "1-bit") {
+      props.onGreyscaleModeChange?.("one-bit");
+    } else if (depth === "8-bit") {
+      props.onGreyscaleModeChange?.("stretch");
+    } else {
+      props.onGreyscaleModeChange?.("threshold");
+    }
   };
 
   const handleContrastSelect = (val: number): void => {
@@ -77,6 +87,7 @@ export function GreyscaleSliderCard(props: GreyscaleSliderCardProps): React.JSX.
               <button
                 key={option.id}
                 type="button"
+                data-ui-id={`ui-greyscale-mode-${option.id}`}
                 onClick={() => handleBitDepthSelect(option.id)}
                 className={`flex flex-col items-center rounded border px-1.5 py-1 text-center transition ${
                   isSelected
@@ -90,6 +101,9 @@ export function GreyscaleSliderCard(props: GreyscaleSliderCardProps): React.JSX.
               </button>
             );
           })}
+        </div>
+        <div className="text-[10px] text-ca-ink-muted/80 pt-0.5">
+          1-Bit and Stretch change the preview bits; detection still uses the threshold above.
         </div>
       </div>
 

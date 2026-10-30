@@ -66,6 +66,11 @@ function resolveBackendSyncTarget(): string | null {
     return null;
   }
 }
+/** Backend base URL for other loopback POST callers (bug reports).
+ *  Null in Seed mode or when no backend is configured. */
+export function resolveBackendBaseUrl(): string | null {
+  return resolveBackendSyncTarget();
+}
 function reportPersistenceFailure(operation: string, err: unknown): void {
   ClientLogger.error(`[errors/history] ${operation} failed`, err);
   const now = Date.now();

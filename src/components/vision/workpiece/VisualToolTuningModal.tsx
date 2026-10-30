@@ -72,13 +72,13 @@ function buildSettingsFromRule(
   }
 
   const savedSearchRegion =
-    readSavedRegion((rule.params as any)?.searchRegion) ??
-    readSavedRegion((rule.params as any)?.searchRegionJson) ??
-    readSavedRegion(pin1Config?.searchRegion);
+    readSavedRegion((rule.params as any)?.searchRegion, failures, "searchRegion") ??
+    readSavedRegion((rule.params as any)?.searchRegionJson, failures, "searchRegionJson") ??
+    readSavedRegion(pin1Config?.searchRegion, failures, "pin1Config.searchRegion");
   const savedPackageRegion =
-    readSavedRegion((rule.params as any)?.packageRegion) ??
-    readSavedRegion((rule.params as any)?.packageRegionJson) ??
-    readSavedRegion(pin1Config?.packageRegion);
+    readSavedRegion((rule.params as any)?.packageRegion, failures, "packageRegion") ??
+    readSavedRegion((rule.params as any)?.packageRegionJson, failures, "packageRegionJson") ??
+    readSavedRegion(pin1Config?.packageRegion, failures, "pin1Config.packageRegion");
   const tuningSearchRegion = savedSearchRegion ?? {
     x: rule.x,
     y: rule.y,
@@ -145,13 +145,25 @@ function buildSettingsFromRule(
 
 function readSavedRegion(
   rawRegion: unknown,
+  failures?: SavedRuleParseFailure[],
+  field?: string,
 ): { x: number; y: number; width: number; height: number } | null {
   let value = rawRegion;
 
   if (typeof rawRegion === "string") {
     try {
       value = JSON.parse(rawRegion);
-    } catch {
+    } catch (err) {
+      // Corrupt saved-region JSON must surface in the error store, never
+      // vanish: the caller collects the failure and captures it outside
+      // the render phase (buildSettingsFromRule via useEffect) or
+      // directly (event handlers like handleApplyPin1).
+      failures?.push({
+        field: field ?? "savedRegion",
+        error: err,
+        payloadLength: rawRegion.length,
+      });
+
       return null;
     }
   }
@@ -346,16 +358,37 @@ export function VisualToolTuningModal({
 
     const holeX = Number(rawHoleX);
     const holeY = Number(rawHoleY);
+
+    // handleApplyPin1 is an event handler, so corrupt-region failures are
+    // captured directly (no render-phase deferral needed, unlike
+    // buildSettingsFromRule which runs inside useMemo).
+    const regionFailures: SavedRuleParseFailure[] = [];
     const searchRegion =
-      readSavedRegion(configPayload?.searchRegion) ??
-      readSavedRegion(pin1Config?.searchRegion) ??
-      readSavedRegion((settings as any)?.searchRegion) ??
+      readSavedRegion(configPayload?.searchRegion, regionFailures, "searchRegion") ??
+      readSavedRegion(pin1Config?.searchRegion, regionFailures, "pin1Config.searchRegion") ??
+      readSavedRegion((settings as any)?.searchRegion, regionFailures, "settings.searchRegion") ??
       null;
     const packageRegion =
-      readSavedRegion(configPayload?.packageRegion) ??
-      readSavedRegion(pin1Config?.packageRegion) ??
-      readSavedRegion((settings as any)?.packageRegion) ??
+      readSavedRegion(configPayload?.packageRegion, regionFailures, "packageRegion") ??
+      readSavedRegion(pin1Config?.packageRegion, regionFailures, "pin1Config.packageRegion") ??
+      readSavedRegion((settings as any)?.packageRegion, regionFailures, "settings.packageRegion") ??
       null;
+
+    for (const failure of regionFailures) {
+      useErrorStore.getState().captureError(
+        failure.error,
+        {
+          triggerComponent: "VisualToolTuningModal",
+          triggerAction: "parseSavedRuleJson",
+          context: {
+            field: failure.field,
+            ruleId: rule.id,
+            payloadLength: failure.payloadLength,
+          },
+        },
+        "E_TUNING_MODAL_PARSE_SAVED_JSON",
+      );
+    }
     const enrichedPin1Config = {
       ...pin1Config,
       ...(searchRegion ? { searchRegion } : {}),

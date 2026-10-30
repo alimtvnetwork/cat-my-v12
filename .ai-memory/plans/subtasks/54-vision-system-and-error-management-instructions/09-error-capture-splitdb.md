@@ -67,3 +67,50 @@ See plan: .ai-memory/plans/pending/54-vision-system-and-error-management-instruc
   `workpiece-rule-analyzer.ts` `parseStoredRegion` return null on
   corrupt JSON without capture; other catches in the owned files use
   toasts or deliberate fallbacks, not silence.
+
+## Recipe-bootstrap agent — progress (separate section, same file)
+
+- Root cause (screenshot `assets/screenshots/mr6_-1EdpFtG_20261031_014811.png`,
+  confirmed by eye + code): clicking SAVE in Pin 1 config shows
+  "Failed to save recipe: no such table: Recipe". `BE/db/connections.py`
+  opens connections only and never runs DDL, so a backend started
+  against an unmigrated data dir gets an empty `root.db`;
+  `SqliteRulesRepo.save_rule_set` (`PUT /rules/{RuleSetId}` path) then
+  fails its first `SELECT Version FROM Recipe` with
+  `sqlite3.OperationalError: no such table: Recipe`, wrapped as
+  `AppError(E_BE_INTERNAL, "Failed to save recipe: ...")` → toast.
+  The migration exists (`BE/db/migrations/root/0020_recipes.sql`) but
+  nothing on the repo path ensured it was applied.
+- Fix (single file, `BE/repos/sqlite_rules_repo.py`, spec 04 §3.2
+  self-healing DDL): `_ensure_recipe_table(conn)` — sqlite_master probe
+  (one cheap query when the table exists), else `executescript` of DDL
+  mirroring 0020 exactly (table + `IdxRecipe_RuleSetId`, no
+  SchemaVersion write — bootstrap still owns that bookkeeping, and a
+  later bootstrap run re-applying 0020 is a no-op for the table).
+  Called in `__init__` (guarded: this repo is a module-level singleton,
+  so an import-time raise would take down the whole backend — the
+  failure is logged and the per-call ensure retries) and at the start
+  of `save_rule_set` + `get_rule_set`, so SAVE can never hit
+  "no such table" again even if the DB file is replaced mid-process.
+- Failure persistence (wave-1 error SplitDB/CLI readout, no swallow):
+  every failure on both paths is best-effort persisted via
+  `BE/app/db/writers/error.py:write_errors` (task conn, uuid
+  CorrelationId, `SqliteRulesRepo.<operation>` endpoint) before the
+  AppError is re-raised — readable via `processing-cli errors list /
+  show`. The persistence helper never raises: an unmigrated task.db
+  (no Error table yet) only logs, never masks the original error.
+  `get_rule_set` skips recording for routine `E_BE_NOT_FOUND` lookup
+  misses; all other failures are recorded. The envelope → frontend
+  capture → `POST /errors` sync path still fires as well.
+- NOT verified at runtime (per program order, no builds/tests in this
+  workstream): Python `ast.parse` only. End-of-tunnel wave must
+  exercise: fresh empty `root.db` + `save_rule_set` without
+  `bin/db-bootstrap.py` (spec 04 §3 test), then `processing-cli errors
+  list` showing any forced failure, then `bin/db-bootstrap.py` on top
+  of a self-healed DB (0020 must apply cleanly as a no-op).
+- NOT fixed (out of scope, flagged): the "Res Mismatch: 392x273
+  (Calibrated: 960x540)" warning visible in the same screenshot —
+  belongs to the validation workstream, not recipe persistence.
+- Files touched: only `BE/repos/sqlite_rules_repo.py` + this subtask
+  file. No frontend, packaging, migration, or route files touched. No
+  files deleted. Relative paths only.

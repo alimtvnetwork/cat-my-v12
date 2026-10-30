@@ -144,6 +144,20 @@ RJPTx3RB8gDf, j21Xbgbsy6bB, JA4FdRFDSKi2, mr6_-1EdpFtG, bg2jMNWxHjkn
     frames, but the error SplitDB stores full stacks for step-by-step AI
     fixing. Morning call: keep full stacks, or truncate at write/read
     time per AC-01.
+11. ROI-vs-pattern shape coexistence (spec 54 vision work): the current
+    UI's REGION SHAPE buttons (RECTANGLE / SQUARE / CIRCLE) set the ROI
+    shape, while the new wave-2 picker sets the PATTERN shape. Morning
+    call: keep both, or retire the ROI buttons per the user's model
+    (ROI stays a plain region)? Saved shape values also changed from
+    lowercase `"rectangle"` to ShapeType enum values (`"Rectangle"`,
+    `"Circle"`, …); the reader accepts both, so old saves load fine.
+12. Stuck-camera permission prompt (spec 54 camera work): is the browser
+    camera permission prompt visible on the user's machine in fullscreen
+    --app mode, or does it hide behind the window (leaving "CONNECTING
+    CAMERA" forever)? Confirms whether the watchdog fix alone suffices.
+13. Tooltip card height (spec 54 simulation work): the pinned tooltip
+    now has `minHeight: 160`, so short steps render a taller card —
+    confirm acceptable.
 
 ## 6. Guardrails
 
@@ -337,6 +351,12 @@ Verified read-only against main. All paths relative.
   `facade.ts` + `store.ts` (listen to `storage` events / call
   `reload()`); `SaveCameraSetupModal.tsx` (reset effect depends on
   `open` only).
+- CORRECTION (wave 2, verified against code): the per-instance-facade
+  claim above was WRONG — `makeCameraFacade` has returned a
+  module-level singleton since the initial commit, and in-app saves
+  already notify every dropdown. The real gaps were cross-document
+  sync (fixed via a `storage` listener in `facade.ts`) and the modal
+  reset deps (fixed). See section 21 for the full correction.
 
 ### Cross-cutting note
 
@@ -802,3 +822,363 @@ coordinator (registry, CLI command, hook, TS mirror all present).
   owed to the end-of-tunnel window.
 - Wave 1 is now fully complete: window controls + swallowing fixes +
   error SplitDB/CLI + CLI-UI registry, all on origin/main.
+
+## 17. Wave 2 Completion — ROI Lock + Pattern Layers + Layers Panel (31-Oct-25 ~02:20)
+
+Workstream COMPLETE, all batches on origin/main. NOT verified at
+runtime (per program order: no builds/tests until end of tunnel).
+End-of-tunnel wave must exercise: create ROI -> locked (outside click
+does not replace) -> double-click unlock -> move/resize/rotate ->
+right-click reorder/hide -> panel selection sync -> CLI scroll/focus
+of the new registry ids.
+
+- Types/geometry/hook: `CanvasLayer` (id, kind roi|pattern|mask|box,
+  label, number, isLocked, isVisible, rotationDeg, zOrder) +
+  `LayersPanelProps` in `white-box/types.ts`; `rotateHandlePoint` /
+  `hitRotateHandle` / `rotationAngleDeg` in `pattern-geometry.ts`
+  (`regionHandles()` unchanged so Pin1Canvas is unaffected; rotation
+  is opt-in); `useCanvasPointerDrag` gains `isLocked` (locked =
+  selection-only, no replacement on outside click),
+  `isRotationEnabled`, `onRegionRotationChange`.
+- `PatternCanvas`: draw order bottom to top (ROI -> pattern region ->
+  masks -> tolerance zones -> numbered boxes on top); locked ROI
+  label shows "SEARCH REGION • LOCKED" and draws no handles;
+  double-click inside a locked ROI unlocks it; right-click context
+  menu (topmost hit first) with Bring Forward / Send Backward /
+  Lock-Unlock (ROI only) / Hide Layer; rotate handle (stem + circle
+  above the active region) with rotation drawn via
+  ctx.translate/rotate; hidden layers skipped; `data-ui-id=
+  "ui-pattern-canvas"` on the canvas.
+- NEW `white-box/LayersPanel.tsx`: Photoshop-style, top-first rows,
+  kind badge, rotation degrees, lock icon, eye toggle, ROI lock
+  toggle, reorder chevrons; buttons render only when their callback
+  is provided; selection syncs with canvas selection via shared tool
+  model state.
+- Wiring: `WhiteBoxMarkingTool` (full: selection, visibility via
+  toggleBox for boxes / hidden set for regions, lock, reorder,
+  rotation; panel `ui-whitebox-layers-panel`; canvas container
+  `ui-whitebox-canvas`) and `Pin1MarkingTool` (selection + keep/exclude
+  visibility only; panel `ui-pin1-layers-panel`; canvas container
+  `ui-pin1-canvas-wrap`). Pin1 lock/reorder deliberately NOT wired:
+  Pin1Canvas cannot enforce them yet, and dead buttons would be fake
+  functionality — Pin1Canvas enforcement is a follow-up wave.
+- JSON capture (wave-1 batch-2 follow-up): `readSavedRegion` threads
+  a failures out-param (buildSettingsFromRule -> existing useEffect
+  capture, E_TUNING_MODAL_PARSE_SAVED_JSON; handleApplyPin1 captures
+  directly as an event handler); `parseStoredRegion` uses the shared
+  `captureCorruptSavedJson` helper (new `action` param),
+  E_ANALYZER_PARSE_SAVED_JSON. Field + payload length only, never raw
+  content. `parseStoredRegionList` silent catch left as-is (out of
+  assigned scope).
+- Registry: 5 new entries (`ui-pattern-canvas`,
+  `ui-whitebox-canvas`, `ui-whitebox-layers-panel`,
+  `ui-pin1-canvas-wrap`, `ui-pin1-layers-panel`), TS mirror
+  regenerated (27 elements total).
+- Known limits (honest, not skipped): rotation is a layer transform —
+  detection bounds stay axis-aligned until rotated matching exists;
+  pattern shape tools belong to the sibling wave-2 workstream;
+  box-layer reorder is not offered (boxes stay in number order on
+  top); no end-to-end click was executed against a running app.
+- Shared-checkout note: sibling waves landed alongside (pin1 shape
+  picker, bug-reporting settings, greyscale modes); one push rejected
+  non-fast-forward, resolved by pull/merge; only this workstream's
+  files were ever staged (targeted `git add`, never `git add -A`).
+  Sibling uncommitted edits were left alone throughout.
+
+## 18. Wave 2 Completion — Email + Supabase Bug Reporting (31-Oct-25 ~02:19)
+
+Workstream COMPLETE, 3 batches on origin/main. Greenfield: email and
+Supabase had 0 hits in src/BE before this work.
+
+- Batch 1: `BE/bug_reports/` core — `config.py` (resolution: explicit
+  > env > repo-secrets non-secret fields; Supabase settings file 0600
+  in app-data), `supabase_client.py` (stdlib PostgREST, AGM header
+  scheme, 15s timeout, URL normalization, classified errors, circuit
+  breaker), `schema.sql` (bug_reports + bug_attachments),
+  `email_sender.py` (delegates to the go-email-reader binary; never
+  touches passwords).
+- Batch 2: `BE/bug_reports/reports.py` (compose from Task-DB Error row
+  + email/Supabase delivery + tempdir JSONL audit),
+  `BE/routes/bug_reports.py` (loopback-only: POST /bug-reports,
+  GET /pending, GET/POST /config sanitized with blank-key-keeps-stored,
+  POST /test reachability + table verification),
+  `BE/cli/processing/commands/bug_reports.py` (`processing-cli
+  bug-reports pending/download/send`), wiring in `BE/main.py`,
+  `BE/cli/processing/main.py`, `BE/errors/codes.py`
+  (E_BUG_EMAIL_FAILED, E_BUG_SUPABASE_FAILED).
+- Batch 3: frontend `src/components/settings/BugReportingSettings.tsx`
+  (Supabase URL/key/role/enabled + test + email readiness + send-test),
+  `src/routes/settings/bug-reporting.tsx` (new route),
+  `src/components/settings/SettingsSidenav.tsx` (one nav entry),
+  `BE/bug_reports/README.md` (flow + setup + honest caveats),
+  subtask 14 marked COMPLETE.
+- Deliberate limits (not silently skipped): HTTP route never accepts
+  local attachment paths (bytes via CLI --attach + best-effort Storage
+  upload, else reference rows); Supabase key stored reversibly (0600),
+  same as AGM, stated in UI + README, never in git, never returned by
+  GET /config; RLS permissive policies commented out on purpose;
+  `openapi.snapshot.json` not regenerated (needs a running app);
+  RECORD BUG button wiring to POST /bug-reports NOT done (recorder
+  components outside this workstream's ownership — route + CLI ready
+  for that follow-up).
+- NOT verified at runtime (per program order: no builds/tests until
+  end of tunnel; Python files syntax-checked only via `ast.parse`).
+  End-of-tunnel wave must exercise: POST /bug-reports round-trip
+  (email + Supabase), pending/download/send CLI runs, settings UI
+  save/test/send-test flow, schema.sql applied + tables verified,
+  snapshot regen.
+
+## 19. Wave 2 Completion — Recipe SAVE Self-Healing DDL (31-Oct-25 ~02:17)
+Workstream COMPLETE, commit on origin/main, spot-verified by the
+coordinator (commit stat shows only the agent's 2 files;
+`_ensure_recipe_table` present in the repo file).
+
+- Screenshot confirmed by eye: `assets/screenshots/
+  mr6_-1EdpFtG_20261031_014811.png` — SAVE clicked, red toast
+  "Failed to save recipe: no such table: Recipe".
+- Root cause: `BE/db/connections.py` opens connections only and never
+  runs DDL (its own docstring says migration is `bin/db-bootstrap.py`'s
+  job); `sqlite3.connect()` silently creates an empty `root.db` on
+  first open. `SqliteRulesRepo` (PUT /rules/{RuleSetId} SAVE path)
+  trusted the schema; its first statement (`SELECT Version FROM Recipe
+  WHERE RuleSetId = ?`) raised `sqlite3.OperationalError: no such
+  table: Recipe` on any unmigrated data dir (fresh install, skipped/
+  failed bootstrap, backend run directly, test env). The generic
+  `except Exception` wrapped it as `AppError(E_BE_INTERNAL, "Failed to
+  save recipe: ...")` → frontend toast. The migration itself exists
+  (`BE/db/migrations/root/0020_recipes.sql`) — nothing on the repo
+  path ensured it was applied. Matches parallel spec 04 §3 exactly.
+- Fix (commit b066e6ad, `BE/repos/sqlite_rules_repo.py` +146/-6, spec
+  04 §3.2 "Recipe self-healing DDL"): `_ensure_recipe_table(conn)`
+  probes `sqlite_master` for `Recipe` (one cheap query when it
+  exists); if missing, runs DDL mirroring `0020_recipes.sql` exactly
+  (table + `IdxRecipe_RuleSetId`, no `SchemaVersion` write — bootstrap
+  still owns that bookkeeping, and a later bootstrap re-applying 0020
+  is a no-op). Called in `__init__` (guarded: the repo is a
+  module-level singleton, so an import-time raise would take down the
+  whole backend — failure is logged and the per-call ensure retries)
+  and at the start of `save_rule_set` + `get_rule_set`, so SAVE can
+  never hit "no such table" again even if the DB file is replaced
+  mid-process.
+- Failure persistence (wave-1 readout, no swallow): every failure on
+  both paths is best-effort persisted via
+  `BE/app/db/writers/error.py:write_errors` (task conn, uuid
+  `CorrelationId`, `SqliteRulesRepo.<operation>` endpoint) before the
+  `AppError` is re-raised — readable via `processing-cli errors list /
+  show`. The persistence helper never raises: an unmigrated `task.db`
+  (no Error table yet) only logs, never masks the original error.
+  `get_rule_set` skips recording for routine `E_BE_NOT_FOUND` lookup
+  misses. The envelope → frontend capture → `POST /errors` sync path
+  still fires as well.
+- SAVE behavior now with a missing table: fresh empty `root.db` + SAVE
+  → repo creates the table + index on the spot, save proceeds normally
+  (insert or version-checked update, unchanged logic). If the DDL
+  itself fails (e.g. unwritable DB dir), SAVE raises a clear `AppError`
+  ("Recipe table bootstrap failed: …; run python
+  bin/db-bootstrap.py"), recorded in the Error table when available
+  and surfaced through the envelope — never a bare toast, never a
+  swallowed catch.
+- NOT verified at runtime (per program order; `ast.parse` only).
+  End-of-tunnel wave must exercise: fresh empty `root.db` +
+  `save_rule_set` without `bin/db-bootstrap.py`, `processing-cli
+  errors list` showing a forced failure, and `bin/db-bootstrap.py` on
+  top of a self-healed DB (0020 must apply cleanly as a no-op).
+- Flagged for the validation wave (out of this workstream): the "Res
+  Mismatch: 392x273 (Calibrated: 960x540)" warning in the same
+  screenshot.
+- Shared-checkout note: a sibling's uncommitted edit to
+  `src/lib/vision/white-box-marking.ts` was left unstaged and untouched.
+
+## 20. Wave 2 Completion — Pin1 Pattern Shapes + Grayscale Bits (31-Oct-25 ~02:21)
+
+Workstream COMPLETE, 6 commits on origin/main, spot-verified by the
+coordinator (Pattern Shape picker, GrayscaleMode type, and patternShape
+state all present in the files).
+
+- Pin1 pattern shape — ROI stays plain, pattern takes the shape:
+  `src/lib/vision/white-box-marking.ts` — `SearchRegion` extended with
+  optional `shape` / `rotationDeg` / `points` (backward compatible;
+  `clampRegion` preserves them), plus `getPatternShapePoints`,
+  `isPointInPatternShape`, `tracePatternShapePath`. Rectangle fills
+  the bounds, circle is the inscribed circle, ellipse inscribed in the
+  bounds, polygon uses stored points or falls back to corners, with
+  rotation around the center.
+  `usePin1Rule.ts` — new `patternShape` state, restored from saved
+  `pin1Config.patternShape` then the saved wrapper shape (legacy
+  lowercase `"rectangle"` accepted). The hardcoded `shape:
+  "rectangle"` at save time is GONE — saves now write `shape:
+  patternShape` plus `patternShape` in `pin1Config`/`pin1ConfigJson`.
+  The drag handler re-attaches the shape so dragging cannot silently
+  reset it.
+  `Pin1SettingsCard.tsx` — Pattern Shape picker (Rectangle / Circle /
+  Ellipse / Polygon) with per-button `data-ui-id`. Existing REGION
+  SHAPE buttons untouched, as ordered.
+  `Pin1Canvas.tsx` — fuchsia pattern-shape overlay inscribed in the ROI
+  (label `PATTERN SHAPE: <SHAPE>`, vertex markers for polygon).
+  Clicking the shape hit-tests and selects it (thicker stroke) WITHOUT
+  consuming the event, so region move/resize behavior is unchanged.
+  Canvas carries `data-ui-id="ui-pin1-canvas"`.
+- Grayscale bits — dark darker, white whiter, down to black/white:
+  `GrayscaleMode` (`threshold` | `stretch` | `one-bit`),
+  `toContrastStretchedGray` (full-range linear stretch), `toOneBitGray`
+  (pure 0/255), `toGrayscalePreviewRgba`; `renderSelectedWhiteBoxMarks`
+  gained an optional mode param defaulting to `threshold`.
+  `toThresholdPreviewRgba` behavior unchanged (DefectCanvas /
+  PatternMatchCanvas / PatternCanvas depend on it).
+  `GreyscaleSliderCard.tsx` — mode button row (Threshold / Stretch /
+  1-Bit) placed AFTER the slider, so the existing
+  `ui-greyscale-level` XPath still matches. Backend detection still
+  uses the slider value as `whiteThreshold` in every mode.
+  `useWhiteBoxMarking.ts` — `greyscaleMode` state +
+  `changeGreyscaleMode`, both returned.
+- CLI-UI registry: 8 entries appended to `BE/ui_remote/registry.py`
+  (14 → 22): `ui-pin1-pattern-shape-rectangle/circle/ellipse/polygon`,
+  `ui-pin1-canvas`, `ui-greyscale-mode-threshold/stretch/one-bit`; TS
+  mirror regenerated. `ui-greyscale-level` verified still matching.
+- Commits: d0c57039 (geometry + modes), 41c59b1e (shape state),
+  53474ab9 (picker + overlay), 0e81a5c1 (mode control wiring),
+  8b12c389 (registry + mirror), 2a03a719 (subtask 12 complete).
+- NOT built (with reasons, recorded in subtask 12): parent-tool wiring
+  is outside this workstream's ownership — `StandardPin1ConfigTool.tsx`
+  must pass `patternShape`/`onPatternShapeChange` to the card and
+  `patternShape` to the canvas; `BoxReviewPanel.tsx` /
+  `Pin1ReviewPanel.tsx` must pass `greyscaleMode`/`onGreyscaleModeChange`
+  to the slider card. Until then the new controls render but are safe
+  no-ops (optional props, defaults Rectangle / threshold) and the
+  canvas overlay does not appear. Exact 2-line diffs are in the subtask
+  file. White-box canvas preview for stretch/1-bit needs the layers
+  agent to pass the mode to `renderSelectedWhiteBoxMarks` /
+  `toGrayscalePreviewRgba` (lib functions ready). Polygon point editing
+  not built (needs a point editor UI; points default to corners).
+  Detection stays rect-based (backend + local detector use bounding
+  rects; shape is a search/display contract, not a detection-region
+  change).
+- NOT verified at runtime (per program order; brace/paren balance
+  re-read only). End-of-tunnel wave must typecheck and exercise the
+  picker, overlay, mode buttons, and `processing-cli ui click/set` on
+  the new entries.
+- MBUD additions: ROI-vs-pattern shape coexistence (MBUD item 11);
+  saved shape enum values (reader accepts both old and new).
+- Process notes: one push rejected (sibling landed first), resolved
+  via shared-tree sync, no force-push; first pull --ff-only failed
+  with "Cannot fast-forward to multiple branches" while the tree was
+  already in sync, subsequent pulls worked; sibling uncommitted edits
+  never staged or touched.
+
+## 21. Wave 2 Completion — Hover / Simulation / Camera (31-Oct-25 ~02:25)
+
+### Menu hover — FIXED (2 files)
+
+- `src/components/ui-mode/UiModeSwitch.tsx`: labels now reserve a fixed
+  `w-[70px]` each and reveal by opacity only; the wrapper gap is fixed
+  (`gap-2`, no `group-hover:gap-2`). No width or gap property animates
+  on hover anymore, so header neighbors can never be pushed sideways.
+  The toggle knob still animates (transform only, no layout impact).
+- `src/components/layout/StandardAppShell.tsx` (menu items only; the
+  Exit item untouched): every nav menu item now carries a permanent
+  `border border-transparent`; the active variant changes only the
+  border COLOR (`border-cyan-400/40`), and the simulation-target
+  variant only its color (`border-amber-300`). Active/inactive rows are
+  now pixel-identical in layout — this was the spec-04 1-2px shift
+  (active rows had a border, inactive rows had none).
+- Same file (Simulation launcher button only): the label now uses a
+  grid stack — the longest label ("Loading Simulation...") renders
+  invisible in the same cell, reserving the width — so
+  Simulation / Simulation Running / Loading Simulation... swaps never
+  shift neighbors. No hardcoded pixel width; font-metric independent.
+
+### Simulation timing — FIXED (1 file)
+
+- `src/components/guided-simulation/ProjectCreationAnalysisTour.tsx`:
+  - Wall-clock dwell: elapsed is `Date.now() - stepStartedAt -
+    pausedTotal`, never tick-counted. The dwell clock starts at step
+    start, so target wait folds INTO the dwell instead of adding to it.
+    A 2s dwell now takes ~2s (previously target wait up to 2s + tick
+    drift + 700ms exit transition = 3-5s).
+  - Pause accounting: `togglePause` records pause spans and folds them
+    out of the dwell, so pausing no longer stretches or shrinks a step.
+  - Exit transition: the fixed 700ms timer is removed. `advance()` sets
+    the next step immediately and raises the transition hide, which
+    lifts in the next step's `beginStep` as soon as its target resolves
+    (never orphans over the old page, never waits a fixed delay).
+    `goToPrevious` keeps its deliberate 150ms env-settle delay.
+  - Tooltip flip: Joyride `floatingOptions` changed from
+    `flipOptions/shiftOptions` (padding bags, flip still enabled) to
+    `flip: false` + `shift: { padding: { top: 60, bottom: 120, left: 24,
+    right: 24 } }` per the spec-04 sibling research — the tooltip is
+    now pinned to its placement for every step, so the Next button
+    cannot jump when `runStepAction` moves targets. Shift padding is
+    preserved (bottom 120 clears the fixed player HUD bar).
+  - Tooltip card lock: `minHeight: 160` added to tooltip styles, so
+    content-length variation no longer moves the footer/Next button.
+    (Width was already fixed at 360.)
+  - NOT changed on purpose: `tour-placement.ts` + its test (per-step
+    `{ flipOptions: false }` for tall/side-panel steps) are retained
+    test-covered; the global `flip: false` subsumes them.
+  - NOT changed on purpose: `SimulationPlayerBar.tsx` — verified its
+    buttons change only colors on hover and `active:scale-95` is a
+    transform (no reflow), so the player-bar Next button is not a jump
+    source; changing `transition-all` would only degrade press
+    feedback. The reported simulation Next-button jump is the Joyride
+    tooltip button, fixed above.
+
+### Camera dropdown — FIXED (2 files) + 1 follow-up
+
+- Research correction: spec 9 claimed each `useCameraLibrary()` call
+  creates its own facade — WRONG for this codebase. `makeCameraFacade`
+  has returned a module-level singleton since the initial commit, and
+  `/setup/camera` also saves through it, so in-app saves already
+  notify every dropdown. The real staleness gaps were:
+  - `src/lib/camera/facade.ts`: no listener for out-of-band writes.
+    Added a `storage` event listener (registered once in
+    `ensureStore`): when the camera library key changes in another
+    document (second app window, seed, bundle import), the store
+    reloads and fans out to all hooks. Storage events never fire in
+    the writing document, so own saves never double-fire.
+  - `src/features/projects/modals/SaveCameraSetupModal.tsx`: the reset
+    effect depended on `[open, currentSettingId, all]`, so any library
+    refresh while the modal was open wiped the operator's draft. Deps
+    are now `[open]` only (with the repo-standard eslint-disable
+    comment); reset still runs on every open with open-time values.
+  - `useCameraLibrary.ts`: no change — verified correct (singleton
+    facade, cache invalidated by facade listeners, stable snapshot).
+- NOT changed: `WorkpieceAnalyzeWorkspace.tsx` camera wiring — verified
+  correct (hook called with `isLiveCameraMode`, ref attached to the
+  center-canvas video, status/error UI rendered).
+- FOLLOW-UP (exact file, not this wave): `src/components/vision/
+  white-box/useCameraStream.ts` — stuck "CONNECTING CAMERA"
+  (screenshot bg2jMNWxHjkn). `openCameraStream` itself is sound
+  (getUserMedia resolves or rejects with mapped codes), but the hook
+  has no timeout, no permission-pending state, and no retry: if the
+  browser permission prompt pends (or hides behind the fullscreen
+  --app window), the UI sits on "Connecting Camera" forever with no
+  guidance. Worse, `setIsReady(true)` runs only inside `if
+  (videoRef.current)` — if the ref is null at resolve time, readiness
+  is stranded false forever with a live stream and no error. Required
+  fix: a watchdog (e.g. 15s) that surfaces "camera permission still
+  pending — allow access and retry", decouple readiness from videoRef
+  presence (set ready on stream acquisition; attach srcObject in a
+  separate effect), and a retry affordance. Morning confirmation
+  needed: whether the permission prompt is visible on the user's
+  machine in fullscreen --app mode (MBUD addition).
+
+### Verification status + MBUD additions
+
+- NOT verified at runtime (per program order; edits re-read only).
+  End-of-tunnel wave must: hover the header and confirm zero pixel
+  movement; run a 2s-dwell simulation and time step advances; run a
+  save-camera flow across two app windows; and exercise the stuck
+  camera path after the `useCameraStream` follow-up.
+- FloatingOptions API-shape risk (flagged, not hidden): the
+  `flip: false` / `shift:` shape follows the spec-04 sibling research
+  for react-joyride 3.2; the previous `flipOptions`/`shiftOptions`
+  keys demonstrably did not stop flipping. If the end-of-tunnel
+  typecheck rejects the new keys, fall back to
+  `flipOptions: false` + `shiftOptions: { padding }` and re-verify
+  placement on the real machine.
+- MBUD additions: (a) stuck-camera permission-prompt visibility in
+  fullscreen --app mode; (b) tooltip `minHeight: 160` cosmetic
+  tradeoff (short steps render a taller card) — confirm acceptable.
+- Process notes: shared-tree sync (pull/merge before each commit,
+  targeted adds only, sibling uncommitted edits never staged);
+  commits pushed and origin-verified via ls-remote after each batch.

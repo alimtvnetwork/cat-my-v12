@@ -31,6 +31,7 @@ import {
   base64ToRgba,
   markWhiteBoxes,
   type GrayscaleBitDepth,
+  type GrayscaleMode,
   type WhiteBoxMark,
   type WhiteBoxMarkingInput,
   type WhiteBoxMarkingResult,
@@ -74,6 +75,11 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
   const [contrastLevel, setContrastLevel] = useState<number>(
     () => initialSettings?.contrastLevel ?? 0,
   );
+  const [greyscaleMode, setGreyscaleMode] = useState<GrayscaleMode>(() => {
+    const raw = initialSettings?.greyscaleMode;
+
+    return raw === "stretch" || raw === "one-bit" ? raw : "threshold";
+  });
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() => {
     const sr = initialSettings?.searchRegion;
     if (!sr) return null;
@@ -470,6 +476,13 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setDetectedBoxes([]);
     setExcludedNumbers(new Set());
     setMessage(`Contrast level changed to ${nextVal}%. Click Process to re-detect.`);
+
+  function changeGreyscaleMode(mode: GrayscaleMode): void {
+    setGreyscaleMode(mode);
+    setResult(null);
+    setDetectedBoxes([]);
+    setExcludedNumbers(new Set());
+    setMessage("Greyscale mode changed. Click Process to re-detect.");
   }
 
   function changeMarginPx(value: number): void {
@@ -873,6 +886,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     greyscaleLevel,
     bitDepth,
     contrastLevel,
+    greyscaleMode,
     searchRegion,
     maskRegions,
     patternRegion,
@@ -899,6 +913,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     changeGreyscaleLevel,
     changeBitDepth,
     changeContrastLevel,
+    changeGreyscaleMode,
     changeMarginPx,
     removeBox,
     restoreBox,

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { Binary, Camera, RefreshCw, Trash2, Upload } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Binary, Camera, Circle, Disc, Ratio, RefreshCw, Square, Trash2, Upload } from "lucide-react";
 import { CameraCaptureModal } from "@/components/vision/white-box/CameraCaptureModal";
+import { LayersPanel } from "@/components/vision/white-box/LayersPanel";
+import type { CanvasLayer } from "@/components/vision/white-box/types";
 import { Pin1Canvas } from "./Pin1Canvas";
 import { Pin1ReviewPanel } from "./Pin1ReviewPanel";
 import type { Pin1MarkingToolProps } from "./types";
@@ -17,15 +19,159 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         ? null
         : model.searchRegion;
 
+  // Layer stack, bottom to top: ROI, package region, numbered detected
+  // holes. The panel displays them top-first. Lock and reorder actions
+  // are deliberately NOT wired here: Pin1Canvas does not enforce them
+  // yet (follow-up wave owns Pin1Canvas.tsx), so the panel only offers
+  // selection and keep/exclude visibility for this tool.
+  const layers = useMemo<CanvasLayer[]>(() => {
+    const stack: CanvasLayer[] = [];
+
+    if (model.searchRegion !== null) {
+      stack.push({
+        id: "roi",
+        kind: "roi",
+        label: "ROI — Search Region",
+        isLocked: false,
+        isVisible: true,
+        rotationDeg: 0,
+        zOrder: 0,
+      });
+    }
+
+    if (model.packageRegion !== null) {
+      stack.push({
+        id: "package",
+        kind: "pattern",
+        label: "Package Region",
+        isLocked: false,
+        isVisible: true,
+        rotationDeg: 0,
+        zOrder: 1,
+      });
+    }
+
+    for (const hole of model.detectedHoles) {
+      stack.push({
+        id: `hole-${hole.id}`,
+        kind: "box",
+        label: `#${hole.id}`,
+        number: hole.id,
+        isLocked: false,
+        isVisible: hole.isKept,
+        rotationDeg: 0,
+        zOrder: 100 + hole.id,
+      });
+    }
+
+    return [...stack].sort((a, b) => b.zOrder - a.zOrder);
+  }, [model.searchRegion, model.packageRegion, model.detectedHoles]);
+
+  const selectedLayerId =
+    model.registeredPin1 !== null && model.registeredPin1 !== undefined
+      ? `hole-${model.registeredPin1.id}`
+      : model.regionEditMode === "package"
+        ? "package"
+        : "roi";
+
+  function handleSelectLayer(id: string): void {
+    if (id.startsWith("hole-")) {
+      const hole = model.detectedHoles.find((item) => `hole-${item.id}` === id);
+
+      if (hole !== undefined) {
+        model.setPrimaryPin1Hole(hole.id);
+      }
+
+      return;
+    }
+
+    if (id === "package") {
+      model.setRegionEditMode("package");
+    } else {
+      model.setRegionEditMode("search");
+    }
+  }
+
+  function handleToggleLayerVisibility(id: string): void {
+    if (id.startsWith("hole-")) {
+      const hole = model.detectedHoles.find((item) => `hole-${item.id}` === id);
+
+      if (hole !== undefined) {
+        model.toggleKeepHole(hole.id);
+      }
+    }
+  }
+
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white font-sans select-none">
       <div className="flex h-full min-h-0 min-w-[1024px] flex-col">
         {/* Main Workspace */}
         <div className="flex min-h-0 flex-1">
           {/* Left: Canvas */}
-          <div className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]">
+          <div
+            data-ui-id="ui-pin1-canvas-wrap"
+            className="relative flex min-h-0 flex-1 flex-col border-r border-[#333]"
+          >
             {/* Top-left absolute toolbar (Old HMI style over canvas) */}
-            <div className="absolute top-2 left-2 z-10 flex gap-2">
+            <div className="absolute top-2 left-2 z-10 flex items-center gap-2">
+              <div className="flex rounded border border-[#444] bg-[#222]/80 p-0.5 shadow">
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-rectangle"
+                  title="Rectangle Shape Tool"
+                  onClick={() => model.setShapeType("rectangle")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "rectangle"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Square className="h-3.5 w-3.5" />
+                  <span>Rect</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-circle"
+                  title="Circle Shape Tool"
+                  onClick={() => model.setShapeType("circle")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "circle"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Circle className="h-3.5 w-3.5" />
+                  <span>Circle</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-ring"
+                  title="Ring Shape Tool"
+                  onClick={() => model.setShapeType("ring")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "ring"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Disc className="h-3.5 w-3.5" />
+                  <span>Ring</span>
+                </button>
+                <button
+                  type="button"
+                  data-automation-id="pin1-shape-square"
+                  title="Square Shape Tool"
+                  onClick={() => model.setShapeType("square")}
+                  className={`px-2 py-1 text-xs font-bold rounded flex items-center gap-1 transition-colors ${
+                    model.shapeType === "square"
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400"
+                      : "text-neutral-300 hover:text-white hover:bg-neutral-800"
+                  }`}
+                >
+                  <Ratio className="h-3.5 w-3.5" />
+                  <span>Square</span>
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={model.toggleGreyscalePreview}
@@ -47,6 +193,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             </div>
 
             <Pin1Canvas
+            shapeType={model.shapeType}
             source={model.source}
             searchRegion={model.searchRegion}
             packageRegion={model.packageRegion}
@@ -59,6 +206,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
+            greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
@@ -72,6 +220,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             data-tour="rule-config-controls"
             className="flex w-[380px] shrink-0 flex-col bg-[#1e1e1e]"
           >
+          <div className="min-h-0 flex-1 overflow-y-auto">
           <Pin1ReviewPanel
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
@@ -88,6 +237,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             isSaving={model.isSaving}
             saveMessage={model.saveMessage}
             actionButtonLabel={buttonLabel}
+            shapeType={model.shapeType}
+            onShapeTypeChange={model.setShapeType}
+            greyscaleMode={model.greyscaleMode}
+            onGreyscaleModeChange={model.changeGreyscaleMode}
             onThresholdChange={model.handleThresholdChange}
             onPolarityChange={model.handlePolarityChange}
             onCircularityChange={model.setMinCircularity}
@@ -105,6 +258,16 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             onSaveRule={model.savePin1Rule}
             onCancel={props.onCancel}
           />
+          </div>
+          <div className="h-[240px] shrink-0">
+            <LayersPanel
+              layers={layers}
+              selectedLayerId={selectedLayerId}
+              panelId="ui-pin1-layers-panel"
+              onSelectLayer={handleSelectLayer}
+              onToggleLayerVisibility={handleToggleLayerVisibility}
+            />
+          </div>
           </div>
         </div>
 

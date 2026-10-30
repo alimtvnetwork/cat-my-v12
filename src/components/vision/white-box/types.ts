@@ -1,4 +1,10 @@
-import type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult } from "@/lib/vision/white-box-marking";
+import type {
+  GrayscaleMode,
+  SearchRegion,
+  WhiteBoxMark,
+  WhiteBoxMarkingInput,
+  WhiteBoxMarkingResult,
+} from "@/lib/vision/white-box-marking";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 
 export interface CanvasPoint {
@@ -6,8 +12,34 @@ export interface CanvasPoint {
   y: number;
 }
 
-export type RegionHandle = "move" | "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
+export type RegionHandle = "move" | "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se" | "rotate";
 export type PatternRegionEditMode = "search" | "pattern" | "mask";
+
+export type CanvasLayerKind = "roi" | "pattern" | "mask" | "box";
+
+export interface CanvasLayer {
+  id: string;
+  kind: CanvasLayerKind;
+  label: string;
+  number?: number;
+  isLocked: boolean;
+  isVisible: boolean;
+  rotationDeg: number;
+  zOrder: number;
+}
+
+export type LayerContextAction = "bring-forward" | "send-backward" | "toggle-lock" | "toggle-visibility";
+
+export interface LayersPanelProps {
+  layers: readonly CanvasLayer[];
+  selectedLayerId: string | null;
+  panelId: string;
+  onSelectLayer: (id: string) => void;
+  onToggleLayerVisibility?: (id: string) => void;
+  onBringLayerForward?: (id: string) => void;
+  onSendLayerBackward?: (id: string) => void;
+  onToggleLayerLock?: (id: string) => void;
+}
 
 export interface RegionDrag {
   handle: RegionHandle | "new";
@@ -61,6 +93,8 @@ export interface BackendResult {
 
 export interface BoxReviewPanelProps {
   greyscaleLevel: number;
+  greyscaleMode?: GrayscaleMode;
+  onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
   marginPx: number;
   detectedBoxes: readonly WhiteBoxMark[];
   excludedNumbers: ReadonlySet<number>;

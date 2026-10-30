@@ -65,10 +65,12 @@ export function StandardPin1ConfigTool(
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
+            greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}
+            patternShape={model.patternShape}
           />
 
           <div className="flex flex-col h-full border-l border-ca-border bg-ca-panel-2 p-2.5 overflow-y-auto gap-3">
@@ -89,6 +91,8 @@ export function StandardPin1ConfigTool(
               onToleranceChange={model.setTolerancePx}
               onCircularityChange={model.setMinCircularity}
               onReconfigure={handleReconfigure}
+              patternShape={model.patternShape}
+              onPatternShapeChange={model.setPatternShape}
             />
           </div>
         </div>

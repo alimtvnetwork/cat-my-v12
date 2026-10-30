@@ -1,5 +1,6 @@
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import { ShapeType } from "@/domain/vision/shapes";
 
 export enum HolePolarityType {
   DarkIndentation = "DarkIndentation",
@@ -39,6 +40,9 @@ export interface Pin1InspectionSettings {
   searchRegion?: SearchRegion | null;
   packageRegion?: SearchRegion | null;
   shapeType?: Pin1ShapeType;
+  /** Pattern shape searched inside the ROI (spec 54). The ROI itself
+   *  stays a plain region; the pattern takes the shape. */
+  patternShape?: ShapeType;
 }
 
 export interface Pin1MatchResult {
@@ -89,4 +93,3 @@ export interface Pin1MarkingToolProps {
   onImageRegistered?: (imageRef: string) => void;
   hasCanvasOverlays?: boolean;
 }
-

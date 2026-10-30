@@ -5,9 +5,9 @@ export function UiModeSwitch(): React.JSX.Element | null {
   const isStandard = mode === UiModeType.Standard;
 
   return (
-    <div className="group flex items-center gap-1 group-hover:gap-2 font-sans select-none transition-all">
+    <div className="group flex shrink-0 items-center gap-2 font-sans select-none">
       <span
-        className={`whitespace-nowrap text-xs overflow-hidden transition-all duration-200 max-w-0 opacity-0 group-hover:max-w-[70px] group-hover:opacity-100 ${
+        className={`w-[70px] whitespace-nowrap text-right text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
           isStandard ? "text-ca-ink-muted font-normal" : "text-ca-ink font-semibold"
         }`}
       >
@@ -30,7 +30,7 @@ export function UiModeSwitch(): React.JSX.Element | null {
       </button>
 
       <span
-        className={`whitespace-nowrap text-xs overflow-hidden transition-all duration-200 max-w-0 opacity-0 group-hover:max-w-[70px] group-hover:opacity-100 ${
+        className={`w-[70px] whitespace-nowrap text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${
           isStandard ? "text-ca-ink font-semibold" : "text-ca-ink-muted font-normal"
         }`}
       >

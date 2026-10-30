@@ -40,6 +40,7 @@ from BE.cli.common.dispatcher import Dispatcher, Subcommand
 from BE.cli.common.doctor import assert_healthy, run_preflight
 from BE.cli.common.session import SessionCtx
 from BE.cli.processing.commands import batch as _batch
+from BE.cli.processing.commands import bug_reports as _bug_reports
 from BE.cli.processing.commands import dry_run as _dry_run
 from BE.cli.processing.commands import errors as _errors
 from BE.cli.processing.commands import evaluate as _evaluate
@@ -175,6 +176,12 @@ def build_dispatcher() -> Dispatcher:
         handler=_errors.handle,
         configure=_errors.configure,
         help="List, show, or export Task-DB errors with stack traces (spec 54 §10).",
+    ))
+    d.register(Subcommand(
+        name="bug-reports",
+        handler=_bug_reports.handle,
+        configure=_bug_reports.configure,
+        help="Pending/download Supabase bug reports, or email a Task-DB error (spec 54).",
     ))
     return d
 

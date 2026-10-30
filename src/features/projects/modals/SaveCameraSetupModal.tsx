@@ -61,6 +61,9 @@ export function SaveCameraSetupModal({
   const [saving, setSaving] = useState(false);
 
   // Reset form state each time the modal opens so stale drafts do not leak.
+  // Deps are [open] only on purpose: `all` / `currentSettingId` changing
+  // while the modal is open (e.g. the library refreshing after a save)
+  // must never wipe the operator's in-progress draft.
   useEffect(() => {
     if (open) {
       setSourceId(currentSettingId ?? all[0]?.id ?? "");
@@ -70,7 +73,8 @@ export function SaveCameraSetupModal({
       setError(null);
       setSaving(false);
     }
-  }, [open, currentSettingId, all]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const source: CameraSetting | undefined = sourceId ? byId(sourceId) : undefined;
 

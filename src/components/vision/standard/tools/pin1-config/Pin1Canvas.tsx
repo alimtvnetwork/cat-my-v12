@@ -1,5 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import React, { useEffect, useRef, useState } from "react";
+import type {
+  GrayscaleMode,
+  SearchRegion,
+  WhiteBoxMarkingInput,
+} from "@/lib/vision/white-box-marking";
+import {
+  getPatternShapePoints,
+  isPointInPatternShape,
+  tracePatternShapePath,
+} from "@/lib/vision/white-box-marking";
+import { ShapeType } from "@/domain/vision/shapes";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { regionHandles } from "@/components/vision/white-box/pattern-geometry";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
@@ -23,6 +33,10 @@ export interface Pin1CanvasProps {
   hasGreyscalePreview?: boolean;
   thresholdLuma?: number;
   polarity?: HolePolarityType;
+  /** Grayscale preview mode (spec 54 bits model). Defaults to threshold. */
+  greyscaleMode?: GrayscaleMode;
+  /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
+  patternShape?: ShapeType;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -34,20 +48,44 @@ function createThresholdPreview(
   source: WhiteBoxMarkingInput,
   threshold = 128,
   polarity = HolePolarityType.DarkIndentation,
+  mode: GrayscaleMode = "threshold",
 ): ImageData {
   const output = new ImageData(source.width, source.height);
   const data = output.data;
   const raw = source.rgba;
   const totalPixels = source.width * source.height;
 
+  // Stretch needs the frame's luma range first (darkest -> 0, brightest
+  // -> 255); threshold/one-bit compare against raw luma.
+  let minLuma = 255;
+  let maxLuma = 0;
+
+  if (mode === "stretch") {
+    for (let i = 0; i < totalPixels; i += 1) {
+      const idx = i * 4;
+      const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+
+      if (luma < minLuma) minLuma = luma;
+      if (luma > maxLuma) maxLuma = luma;
+    }
+  }
+
+  const stretchScale = maxLuma > minLuma ? 255 / (maxLuma - minLuma) : 1;
+
   for (let i = 0; i < totalPixels; i += 1) {
     const idx = i * 4;
-    const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+    let luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+
+    if (mode === "stretch" && maxLuma > minLuma) {
+      luma = Math.min(255, Math.max(0, Math.round((luma - minLuma) * stretchScale)));
+    }
+
     const isTarget =
       polarity === HolePolarityType.DarkIndentation ? luma <= threshold : luma >= threshold;
 
-    // Show continuous greyscale with active hole pixels highlighted in bright white
-    const val = isTarget ? 255 : luma;
+    // Threshold keeps the legacy behavior (target bright white, the rest
+    // continuous greyscale); one-bit reduces everything to pure 0/255.
+    const val = mode === "one-bit" ? (isTarget ? 255 : 0) : isTarget ? 255 : luma;
     data[idx] = val;
     data[idx + 1] = val;
     data[idx + 2] = val;
@@ -59,12 +97,34 @@ function createThresholdPreview(
 
 export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Clicking the pattern shape selects it (hit-tested, spec 54). Selection
+  // never consumes the event: the drag still runs, so region move/resize
+  // behavior is unchanged.
+  const [isPatternShapeSelected, setPatternShapeSelected] = useState(false);
+  // ROI lock + layer order (spec 54, mirroring the white-box canvas):
+  // the search region (ROI) is locked by default — selection-only, no
+  // move/resize, no replacement on outside click — until double-clicked
+  // inside it. Right-click reorders the search/package layers. The lock
+  // only engages once a region exists, so first creation is never blocked.
+  const [isSearchLocked, setIsSearchLocked] = useState(true);
+  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    layerId: "search" | "package";
+    layerLabel: string;
+    isLocked: boolean;
+  } | null>(null);
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: props.activeRegion,
     dragState: props.dragState,
     onSearchRegionChange: props.onSearchRegionChange,
     onDragStateChange: props.onDragStateChange,
+    isLocked: props.regionEditMode === "search" && isSearchLocked,
   });
 
   useEffect(() => {
@@ -135,6 +195,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
           props.source,
           props.thresholdLuma ?? 128,
           props.polarity ?? HolePolarityType.DarkIndentation,
+          props.greyscaleMode ?? "threshold",
         );
         offCtx.putImageData(binData, 0, 0);
       } else {
@@ -150,21 +211,42 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       return;
     }
 
-    if (props.searchRegion) {
-      drawRegion(ctx, {
-        region: props.searchRegion,
-        label: "SEARCH REGION",
-        color: "#facc15",
-        isActive: props.regionEditMode === "search",
-      });
+    // Layer draw order follows layerOrder (bottom to top); right-click
+    // Bring Forward / Send Backward swaps the two region layers.
+    for (const layerId of layerOrder) {
+      if (layerId === "search" && props.searchRegion) {
+        drawRegion(ctx, {
+          region: props.searchRegion,
+          label: isSearchLocked ? "SEARCH REGION • LOCKED" : "SEARCH REGION",
+          color: "#facc15",
+          isActive: props.regionEditMode === "search",
+          showHandles: props.regionEditMode === "search" && !isSearchLocked,
+        });
+      }
+
+      if (layerId === "package" && props.packageRegion) {
+        drawRegion(ctx, {
+          region: props.packageRegion,
+          label: "PACKAGE REGION",
+          color: "#38bdf8",
+          isActive: props.regionEditMode === "package",
+          showHandles: props.regionEditMode === "package",
+        });
+      }
     }
 
-    if (props.packageRegion) {
-      drawRegion(ctx, {
-        region: props.packageRegion,
-        label: "PACKAGE REGION",
-        color: "#38bdf8",
-        isActive: props.regionEditMode === "package",
+    // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
+    // ROI, drawn inscribed in the search region. Rectangle needs no
+    // overlay — the region rect already is the shape.
+    if (
+      props.searchRegion &&
+      props.patternShape &&
+      props.patternShape !== ShapeType.Rectangle
+    ) {
+      drawPatternShapeOverlay(ctx, {
+        region: props.searchRegion,
+        shape: props.patternShape,
+        isSelected: isPatternShapeSelected,
       });
     }
 
@@ -215,22 +297,19 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
         const rw = hole.radius * 2.2;
         const rh = hole.radius * 1.6;
         ctx.strokeRect(hole.centerX - rw / 2, hole.centerY - rh / 2, rw, rh);
-        return;
-      }
-      if (props.shapeType === "square") {
+      } else if (props.shapeType === "square") {
         const side = hole.radius * 2;
         ctx.strokeRect(hole.centerX - side / 2, hole.centerY - side / 2, side, side);
-        return;
-      }
-      if (props.shapeType === "ring") {
+      } else if (props.shapeType === "ring") {
         ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(hole.centerX, hole.centerY, Math.max(2, hole.radius * 0.55), 0, Math.PI * 2);
-        return;
+        ctx.stroke();
+      } else {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
       }
-      ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
-      ctx.stroke();
 
       // Crosshair
       ctx.beginPath();
@@ -293,15 +372,23 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.hasGreyscalePreview,
     props.thresholdLuma,
     props.polarity,
+    props.greyscaleMode,
+    props.patternShape,
+    isPatternShapeSelected,
+    isSearchLocked,
+    layerOrder,
   ]);
 
   return (
     <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
       <canvas
         ref={canvasRef}
+        data-ui-id="ui-pin1-canvas"
         width={STANDARD_CANVAS_WIDTH}
         height={STANDARD_CANVAS_HEIGHT}
         onPointerDown={(event) => {
+          setContextMenu(null);
+
           if (selectHoleAtPoint(event, props, canvasRef.current)) {
             return;
           }
@@ -310,15 +397,169 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
             return;
           }
 
+          selectPatternShapeAtEvent(event, props, canvasRef.current, setPatternShapeSelected);
+
           drag.handlePointerDown(event);
         }}
         onPointerMove={drag.handlePointerMove}
         onPointerUp={drag.handlePointerUp}
         onPointerCancel={drag.handlePointerUp}
+        onDoubleClick={(event) => {
+          if (!isSearchLocked || !props.searchRegion || canvasRef.current === null) {
+            return;
+          }
+
+          const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+          if (point === null) {
+            return;
+          }
+
+          const region = props.searchRegion;
+
+          if (
+            point.x >= region.x &&
+            point.y >= region.y &&
+            point.x <= region.x + region.width - 1 &&
+            point.y <= region.y + region.height - 1
+          ) {
+            setIsSearchLocked(false);
+          }
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+
+          if (canvasRef.current === null) {
+            return;
+          }
+
+          const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+          if (point === null) {
+            return;
+          }
+
+          // Hit-test topmost first (reverse draw order).
+          for (let i = layerOrder.length - 1; i >= 0; i -= 1) {
+            const layerId = layerOrder[i];
+            const region = layerId === "search" ? props.searchRegion : props.packageRegion;
+
+            if (
+              region !== null &&
+              region !== undefined &&
+              point.x >= region.x &&
+              point.y >= region.y &&
+              point.x <= region.x + region.width - 1 &&
+              point.y <= region.y + region.height - 1
+            ) {
+              setContextMenu({
+                x: event.clientX,
+                y: event.clientY,
+                layerId,
+                layerLabel: layerId === "search" ? "ROI — Search Region" : "Package Region",
+                isLocked: layerId === "search" && isSearchLocked,
+              });
+
+              return;
+            }
+          }
+
+          setContextMenu(null);
+        }}
         className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
       />
+      {contextMenu !== null && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
+          />
+          <div
+            className="fixed z-50 min-w-[200px] rounded border border-[#3c4650] bg-[#111820] py-1 shadow-[0_18px_60px_rgba(0,0,0,0.6)]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <div className="border-b border-[#242c35] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ca-ink">
+              {contextMenu.layerLabel}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, 1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Bring Forward
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, -1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Send Backward
+            </button>
+            {contextMenu.layerId === "search" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchLocked(!contextMenu.isLocked);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                {contextMenu.isLocked ? "Unlock ROI" : "Lock ROI"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function canvasPointFromPin1Event(
+  event: React.MouseEvent<HTMLCanvasElement>,
+  canvas: HTMLCanvasElement,
+): { x: number; y: number } | null {
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function movePin1Layer(
+  layerId: "search" | "package",
+  delta: 1 | -1,
+  layerOrder: readonly ("search" | "package")[],
+  setLayerOrder: (order: readonly ("search" | "package")[]) => void,
+): void {
+  const index = layerOrder.indexOf(layerId);
+  const target = index + delta;
+
+  if (index < 0 || target < 0 || target >= layerOrder.length) {
+    return;
+  }
+
+  const next = [...layerOrder];
+  next[index] = layerOrder[target];
+  next[target] = layerId;
+  setLayerOrder(next);
 }
 
 function registerPointAtEvent(
@@ -379,6 +620,75 @@ function selectHoleAtPoint(
   return false;
 }
 
+function drawPatternShapeOverlay(
+  ctx: CanvasRenderingContext2D,
+  params: {
+    region: SearchRegion;
+    shape: ShapeType;
+    isSelected: boolean;
+  },
+): void {
+  const { region, shape, isSelected } = params;
+  const shapedRegion: SearchRegion = { ...region, shape };
+
+  ctx.save();
+  ctx.strokeStyle = "#e879f9";
+  ctx.fillStyle = "#e879f9";
+  ctx.lineWidth = isSelected ? 3 : 2;
+  ctx.setLineDash([6, 4]);
+  tracePatternShapePath(ctx, shapedRegion);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Polygon vertices get markers so the shape reads as editable points.
+  if (shape === ShapeType.Polygon) {
+    for (const point of getPatternShapePoints(shapedRegion)) {
+      ctx.fillRect(point.x - 3, point.y - 3, 6, 6);
+    }
+  }
+
+  const label = `PATTERN SHAPE: ${shape.toUpperCase()}`;
+  const labelWidth = Math.max(120, ctx.measureText(label).width + 14);
+  ctx.fillStyle = isSelected ? "rgba(232, 121, 249, 0.95)" : "rgba(15, 23, 42, 0.82)";
+  ctx.fillRect(region.x, Math.max(0, region.y - 18), labelWidth, 16);
+  ctx.fillStyle = isSelected ? "#0f172a" : "#e879f9";
+  ctx.font = "bold 10px monospace";
+  ctx.fillText(label, region.x + 6, Math.max(11, region.y - 6));
+  ctx.restore();
+}
+
+function selectPatternShapeAtEvent(
+  event: React.PointerEvent<HTMLCanvasElement>,
+  props: Pin1CanvasProps,
+  canvas: HTMLCanvasElement | null,
+  setSelected: (isSelected: boolean) => void,
+): void {
+  const shape = props.patternShape ?? ShapeType.Rectangle;
+
+  if (canvas === null || shape === ShapeType.Rectangle || !props.searchRegion) {
+    setSelected(false);
+
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    setSelected(false);
+
+    return;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const point = {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+
+  setSelected(isPointInPatternShape(point, { ...props.searchRegion, shape }));
+}
+
 function drawRegion(
   ctx: CanvasRenderingContext2D,
   params: {
@@ -386,9 +696,10 @@ function drawRegion(
     label: string;
     color: string;
     isActive: boolean;
+    showHandles: boolean;
   },
 ): void {
-  const { region, label, color, isActive } = params;
+  const { region, label, color, isActive, showHandles } = params;
 
   ctx.save();
   ctx.strokeStyle = color;
@@ -399,7 +710,7 @@ function drawRegion(
   ctx.strokeRect(region.x, region.y, region.width, region.height);
   ctx.setLineDash([]);
 
-  if (isActive) {
+  if (showHandles) {
     ctx.fillStyle = color;
 
     for (const handle of regionHandles(region)) {

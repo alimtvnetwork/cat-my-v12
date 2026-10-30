@@ -57,6 +57,10 @@ class ErrorCode(StrEnum):
     E_BUG_SILENT_SWALLOW = "E_BUG_SILENT_SWALLOW"
     E_BUG_ENUM_ORPHAN = "E_BUG_ENUM_ORPHAN"
 
+    # Bug reporting (E_BUG_*): delivery failures for spec 54 bug reports.
+    E_BUG_EMAIL_FAILED = "E_BUG_EMAIL_FAILED"
+    E_BUG_SUPABASE_FAILED = "E_BUG_SUPABASE_FAILED"
+
     # CLI boundary (E_CLI_*): worker/processing CLI preflight + host/asset checks.
     # Plan 90 Step 10, anchored in `02-spec/21-app/74-worker-cli.md`,
     # `02-spec/21-app/75-processing-cli.md`, `02-spec/21-app/77-cli-powershell-and-release.md`.
