@@ -188,6 +188,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               searchRegion={model.searchRegion}
               patternRegion={model.patternRegion}
               greyscaleLevel={model.greyscaleLevel}
+              greyscaleMode={model.greyscaleMode}
               detectedBoxes={model.detectedBoxes}
               excludedNumbers={model.excludedNumbers}
               formulatedPattern={model.formulatedPattern}

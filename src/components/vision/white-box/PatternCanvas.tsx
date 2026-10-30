@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   drawRgbaToCanvas,
-  toThresholdPreviewRgba,
+  toGrayscalePreviewRgba,
+  type GrayscaleMode,
   STANDARD_CANVAS_WIDTH,
   STANDARD_CANVAS_HEIGHT,
 } from "@/lib/vision/white-box-marking";
@@ -22,6 +23,8 @@ export interface PatternCanvasProps {
   source: WhiteBoxMarkingInput | null;
   result: WhiteBoxMarkingResult | null;
   greyscaleLevel: number;
+  /** Grayscale preview mode (spec 54 bits model). Defaults to threshold. */
+  greyscaleMode?: GrayscaleMode;
   detectedBoxes: readonly WhiteBoxMark[];
   excludedNumbers: ReadonlySet<number>;
   formulatedPattern: FormulatedPatternGeometry | null;
@@ -206,11 +209,18 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       ? {
           width: source.width,
           height: source.height,
-          // The base image is always the threshold preview: hasOverlays only
-          // gates the overlay drawing below. Switching the base to raw RGBA
-          // when overlays are off made the "Pattern Image" flip between raw
-          // and thresholded, and broke the greyscale slider's visible effect.
-          rgba: toThresholdPreviewRgba(source, props.greyscaleLevel),
+          // The base image is always the mode-aware grayscale preview:
+          // threshold keeps the legacy whiten-only behavior, stretch and
+          // one-bit implement the spec 54 bits model. hasOverlays only
+          // gates the overlay drawing below. Switching the base to raw
+          // RGBA when overlays are off made the "Pattern Image" flip
+          // between raw and thresholded, and broke the greyscale
+          // slider's visible effect.
+          rgba: toGrayscalePreviewRgba(
+            source,
+            props.greyscaleMode ?? "threshold",
+            props.greyscaleLevel,
+          ),
         }
       : props.result;
 
@@ -358,6 +368,7 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     props.result,
     props.source,
     props.greyscaleLevel,
+    props.greyscaleMode,
     props.detectedBoxes,
     props.excludedNumbers,
     props.formulatedPattern,
