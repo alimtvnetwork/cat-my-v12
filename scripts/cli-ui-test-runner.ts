@@ -1,3 +1,5 @@
+import { spawn, type ChildProcess } from "node:child_process";
+import * as os from "node:os";
 import { chromium, type Page, type Browser } from "playwright";
 import {
   runPatternSearchLogicCases,
@@ -54,6 +56,67 @@ function resolveChromePath(): string {
 }
 
 const CHROME_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || resolveChromePath();
+const CDP_PORT = 9333;
+let headlessProcess: ChildProcess | null = null;
+
+function resolveHeadlessShell(): string {
+  const candidates = [
+    "C:\\Users\\Administrator\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
+    CHROME_PATH,
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[0];
+}
+
+async function connectHeadlessBrowser(): Promise<Browser> {
+  const shell = resolveHeadlessShell();
+
+  if (!fs.existsSync(shell)) {
+    throw new Error(`Chromium executable not found at ${shell}`);
+  }
+
+  const userDataDir = path.join(os.tmpdir(), `cat-cli-cdp-${Date.now()}`);
+  fs.mkdirSync(userDataDir, { recursive: true });
+  headlessProcess = spawn(
+    shell,
+    [
+      "--headless=new",
+      `--remote-debugging-port=${CDP_PORT}`,
+      `--user-data-dir=${userDataDir}`,
+      "--no-sandbox",
+      "--disable-gpu",
+    ],
+    { stdio: "ignore" },
+  );
+
+  const deadline = Date.now() + 15000;
+  let isReady = false;
+
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
+
+      if (res.ok) {
+        isReady = true;
+        break;
+      }
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+
+  if (!isReady) {
+    throw new Error(`Headless Chrome did not open DevTools on port ${CDP_PORT}`);
+  }
+
+  return chromium.connectOverCDP(`http://127.0.0.1:${CDP_PORT}`);
+}
 const OUTPUT_DIR = path.resolve(process.cwd(), "reports/e2e-screenshots");
 
 interface StepResult {
@@ -132,22 +195,14 @@ async function runCliUiTests(): Promise<void> {
   console.log("=".repeat(75));
   console.log("🚀 CAT-iVISION CLI Headless UI Verification Runner (Alim Agenda)");
   console.log(`Target URL: ${BASE_URL}`);
-  console.log(`Chromium:   ${CHROME_PATH}`);
+  console.log(`Chromium:   ${resolveHeadlessShell()}`);
   console.log("=".repeat(75));
 
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  if (!fs.existsSync(CHROME_PATH)) {
-    throw new Error(`Chromium executable not found at ${CHROME_PATH}`);
-  }
-
-  const browser: Browser = await chromium.launch({
-    executablePath: CHROME_PATH,
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
-  });
+  const browser: Browser = await connectHeadlessBrowser();
 
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -613,6 +668,7 @@ async function runCliUiTests(): Promise<void> {
     }
   } finally {
     await browser.close();
+    headlessProcess?.kill();
   }
 
   // -------------------------------------------------------------

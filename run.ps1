@@ -149,7 +149,29 @@ try {
                 "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
             )
             $chromeFound = $false
+            $appNeedle = "--app=$FrontendBaseUrl"
+            $alreadyOpen = $false
 
+            try {
+                $existing = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+                    Where-Object { $_.Name -match '^(chrome|msedge|chromium)\.exe$' }
+
+                foreach ($proc in $existing) {
+                    if ($proc.CommandLine -and $proc.CommandLine.Contains($appNeedle)) {
+                        $alreadyOpen = $true
+                        break
+                    }
+                }
+            } catch {
+                $alreadyOpen = $false
+            }
+
+            if ($alreadyOpen) {
+                Write-Host "Inspection window or browser is already running. Skipping duplicate browser window."
+                $chromeFound = $true
+            }
+
+            if (-not $alreadyOpen) {
             foreach ($p in $chromePaths) {
                 if (Test-Path $p) {
                     $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
@@ -157,6 +179,7 @@ try {
                     $chromeFound = $true
                     break
                 }
+            }
             }
 
             if (-not $chromeFound) {

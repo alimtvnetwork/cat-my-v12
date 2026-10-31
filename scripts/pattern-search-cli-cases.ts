@@ -175,7 +175,7 @@ export function runPatternSearchLogicCases(): CliCaseResult[] {
     runCase("Launchers skip a second browser when the app window is open", () => {
       const powershell = fs.readFileSync("run.ps1", "utf8");
       const shell = fs.readFileSync("run.sh", "utf8");
-      const marker = "Inspection window is already open";
+      const marker = "Skipping duplicate browser window";
 
       assertCase(powershell.includes(marker), "run.ps1 does not skip an open window");
       assertCase(shell.includes(marker), "run.sh does not skip an open window");
