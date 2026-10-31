@@ -2,8 +2,8 @@
 
 Slug: pattern-search-and-ui-improvement - Task 14
 
-Status: IN PROGRESS (spec and plan done; final atomic commit after fix
-waves still pending).
+Status: DONE 31-Oct-26 — final atomic commit 04f88ad9 pushed (83 files,
+verified origin HEAD = 04f88ad9, tree clean).
 
 ## Scope
 
