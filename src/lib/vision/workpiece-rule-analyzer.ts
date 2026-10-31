@@ -14,6 +14,9 @@ import { filterPatternRgba, pinPatternRule } from "./pinned-pattern-geometry";
 import {
   DEFAULT_24_PATTERN_BOXES,
   markWhiteBoxes,
+  rec601Luma,
+  type GrayscaleMode,
+  type MatchPolarity,
   type SearchRegion,
   type WhiteBoxMark,
 } from "./white-box-marking";
@@ -516,10 +519,7 @@ function measureRegionLuma(
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
-      sum +=
-        0.299 * imageData.rgba[idx] +
-        0.587 * imageData.rgba[idx + 1] +
-        0.114 * imageData.rgba[idx + 2];
+      sum += rec601Luma(imageData.rgba[idx], imageData.rgba[idx + 1], imageData.rgba[idx + 2]);
       count += 1;
     }
   }
@@ -528,26 +528,6 @@ function measureRegionLuma(
     mean: count > 0 ? sum / count : 0,
     count,
   };
-}
-
-function measureBoxContrast(imageData: WorkpieceImageData, box: WhiteBoxMark): number {
-  const inner = measureRegionLuma(imageData, box);
-  const pad = Math.max(3, Math.round(Math.min(box.width, box.height) * 0.4));
-  const outer = measureRegionLuma(imageData, {
-    x: box.x - pad,
-    y: box.y - pad,
-    width: box.width + pad * 2,
-    height: box.height + pad * 2,
-  });
-  const ringCount = Math.max(0, outer.count - inner.count);
-
-  if (ringCount === 0) {
-    return 0;
-  }
-
-  const ringMean = (outer.mean * outer.count - inner.mean * inner.count) / ringCount;
-
-  return inner.mean - ringMean;
 }
 
 export function registerWorkpieceImageCache(key: string, data: WorkpieceImageData): void {
@@ -582,10 +562,7 @@ function meanLumaInRegion(
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
-      sum +=
-        0.299 * imageData.rgba[idx] +
-        0.587 * imageData.rgba[idx + 1] +
-        0.114 * imageData.rgba[idx + 2];
+      sum += rec601Luma(imageData.rgba[idx], imageData.rgba[idx + 1], imageData.rgba[idx + 2]);
       count += 1;
     }
   }
@@ -688,10 +665,7 @@ function measureBoxLumaAt(
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
-      sum +=
-        0.299 * imageData.rgba[idx] +
-        0.587 * imageData.rgba[idx + 1] +
-        0.114 * imageData.rgba[idx + 2];
+      sum += rec601Luma(imageData.rgba[idx], imageData.rgba[idx + 1], imageData.rgba[idx + 2]);
       count += 1;
     }
   }
@@ -1168,8 +1142,29 @@ export function evaluatePatternRule(
     savedPatternRegion ?? savedSearchRegion,
     imageData,
   );
-  const ruleBoxes = parseBoxesFromParams(rule.params, effectiveRegion);
+  let ruleBoxes = parseBoxesFromParams(rule.params, effectiveRegion);
   const hasAnyExpectedLuma = ruleBoxes.some((b) => typeof b.expectedLuma === "number");
+
+  // Spec 55: legacy boxes without expectedLuma are backfilled from the
+  // current image at their reference position instead of failing
+  // unconditionally. A backfilled reference is self-referential until
+  // the rule is re-taught, so the result carries a warning (and
+  // hasAnyExpectedLuma, previously computed but never read, now drives
+  // it). Backfill reads the same filtered image the verdict measures,
+  // so backfilled and measured values are directly comparable.
+  const lumaBackfilledCount = ruleBoxes.filter((b) => typeof b.expectedLuma !== "number").length;
+
+  if (lumaBackfilledCount > 0) {
+    ruleBoxes = ruleBoxes.map((b) =>
+      typeof b.expectedLuma === "number"
+        ? b
+        : { ...b, expectedLuma: Math.round(measureBoxLumaAt(imageData, b)) },
+    );
+  }
+
+  const lumaWarning = !hasAnyExpectedLuma
+    ? " Warning: no box carried a taught expectedLuma — references were backfilled from this image; re-teach to lock reference values."
+    : "";
 
   if (ruleBoxes.length === 0) {
     return {
@@ -1227,10 +1222,11 @@ export function evaluatePatternRule(
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
-      const luma =
-        0.299 * imageData.rgba[idx] +
-        0.587 * imageData.rgba[idx + 1] +
-        0.114 * imageData.rgba[idx + 2];
+      const luma = rec601Luma(
+        imageData.rgba[idx],
+        imageData.rgba[idx + 1],
+        imageData.rgba[idx + 2],
+      );
       sumL += luma;
       sumL2 += luma * luma;
       pixelCount += 1;
@@ -1294,6 +1290,17 @@ export function evaluatePatternRule(
         ? Number(rule.params.threshold)
         : adaptiveThreshold;
     const angleRangeDeg = Number(rule.params?.angleRangeDeg ?? 15);
+    // Spec 55: the positional stage reads the stored matching mode
+    // (default threshold) through the shared toMatchingGray plane, and
+    // polarity defaults to "both" (bright-first pairing, so bright
+    // rules behave exactly as before while dark markings become
+    // matchable). A stored polarity of "dark"/"bright" narrows it.
+    const storedMode = rule.params?.greyscaleMode;
+    const matchMode: GrayscaleMode =
+      storedMode === "stretch" || storedMode === "one-bit" ? storedMode : "threshold";
+    const storedPolarity = rule.params?.polarity;
+    const matchPolarity: MatchPolarity =
+      storedPolarity === "dark" ? "dark" : storedPolarity === "bright" ? "bright" : "both";
     const positionalMatch = matchConstellationPattern({
       targetRgba: imageData.rgba,
       targetWidth: imageData.width,
@@ -1304,6 +1311,8 @@ export function evaluatePatternRule(
       tolerancePx,
       minMatchPercent: minPercent,
       angleRangeDeg,
+      mode: matchMode,
+      polarity: matchPolarity,
     });
 
     let matchedCount = 0;
@@ -1325,9 +1334,10 @@ export function evaluatePatternRule(
       // matcher AND within luma tolerance of its expected greyscale. A
       // geometrically perfect constellation can no longer pass on luma
       // alone, and a luma-correct box at the wrong position can no
-      // longer pass either. A box with no expectedLuma has no reference
-      // to match against, so it is UNMATCHED — never auto-passed by
-      // substituting the measured luma as its own expected value.
+      // longer pass either. Boxes that arrived without expectedLuma
+      // were backfilled from the current image above, so every box
+      // reaching this point has a reference; a backfilled reference
+      // is self-referential until re-taught (see lumaWarning).
       const hasExpectedLuma = typeof b.expectedLuma === "number";
       const expectedLuma = hasExpectedLuma ? Number(b.expectedLuma) : undefined;
       const diff = hasExpectedLuma
@@ -1408,7 +1418,7 @@ export function evaluatePatternRule(
       return {
         status: ValidationStatusType.Pass,
         score: scoreFraction,
-        message: `${matchedCount}/${totalCount} pattern marks matched position and reference greyscale (${scorePct}% ≥ ${minPercent}%). ${opticalContext}: PASS.`,
+        message: `${matchedCount}/${totalCount} pattern marks matched position and reference greyscale (${scorePct}% ≥ ${minPercent}%). ${opticalContext}: PASS.${lumaWarning}`,
         stub: false,
         debug: {
           matchedCount,
@@ -1416,6 +1426,7 @@ export function evaluatePatternRule(
           scorePercent: scorePct,
           positionalMatchedCount,
           positionalScorePercent: positionalScorePct,
+          expectedLumaBackfilledCount: lumaBackfilledCount,
           resMismatch,
           offsetX: positionalMatch.offsetX,
           offsetY: positionalMatch.offsetY,
@@ -1438,7 +1449,7 @@ export function evaluatePatternRule(
     return {
       status: ValidationStatusType.Fail,
       score: scoreFraction,
-      message: `Pattern mismatch: ${failReason}. ${opticalContext}: FAIL.`,
+      message: `Pattern mismatch: ${failReason}. ${opticalContext}: FAIL.${lumaWarning}`,
       stub: false,
       debug: {
         matchedCount,
@@ -1446,6 +1457,7 @@ export function evaluatePatternRule(
         scorePercent: scorePct,
         positionalMatchedCount,
         positionalScorePercent: positionalScorePct,
+        expectedLumaBackfilledCount: lumaBackfilledCount,
         resMismatch,
         offsetX: positionalMatch.offsetX,
         offsetY: positionalMatch.offsetY,
