@@ -10,7 +10,13 @@ import { useWhiteBoxMarking } from "./white-box/useWhiteBoxMarking";
 export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.Element {
   const model = useWhiteBoxMarking(props);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [lockedLayerIds, setLockedLayerIds] = useState<ReadonlySet<string>>(new Set(["roi"]));
+  // Spec 55: a first-run tool with no saved region starts unlocked, so
+  // the full-frame ROI from the first image load is movable before the
+  // user learns the double-click gesture. A tool opened on an existing
+  // rule (saved region present at mount) keeps the spec 54 locked default.
+  const [lockedLayerIds, setLockedLayerIds] = useState<ReadonlySet<string>>(
+    () => new Set(model.searchRegion !== null ? ["roi"] : []),
+  );
   const [hiddenLayerIds, setHiddenLayerIds] = useState<ReadonlySet<string>>(new Set());
   const [regionOrder, setRegionOrder] = useState<readonly string[] | null>(null);
   const [layerRotations, setLayerRotations] = useState<Readonly<Record<string, number>>>({});
@@ -72,24 +78,54 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
         label: `#${String(box.number).padStart(2, "0")}`,
         number: box.number,
         isLocked: false,
-        isVisible:
-          model.excludedNumbers.has(box.number) === false &&
-          hiddenLayerIds.has(`box-${box.number}`) === false,
+        // Spec 55: hide is display-only. Exclusion (validation) stays in
+        // BoxReviewPanel via toggleBox; the panel eye must not change
+        // validation counts.
+        isVisible: hiddenLayerIds.has(`box-${box.number}`) === false,
         rotationDeg: 0,
         zOrder: 100 + box.number,
       });
     }
 
-    return [...stack].sort((a, b) => b.zOrder - a.zOrder);
+    // Spec 55: panel order derives from layerOrder (single truth with
+    // canvas draw order), not the static kind zOrder. Boxes draw on top
+    // of every region, so they stay first (highest number first), then
+    // region layers top-first (reverse draw order).
+    const order = regionOrder ?? [
+      "roi",
+      "pattern",
+      ...model.maskRegions.map((_, index) => `mask-${index}`),
+    ];
+
+    return [...stack].sort((a, b) => {
+      if (a.kind === "box" && b.kind !== "box") {
+        return -1;
+      }
+
+      if (a.kind !== "box" && b.kind === "box") {
+        return 1;
+      }
+
+      if (a.kind === "box" && b.kind === "box") {
+        return (b.number ?? 0) - (a.number ?? 0);
+      }
+
+      const aRank = order.indexOf(a.id);
+      const bRank = order.indexOf(b.id);
+      const aValue = aRank === -1 ? Number.POSITIVE_INFINITY : aRank;
+      const bValue = bRank === -1 ? Number.POSITIVE_INFINITY : bRank;
+
+      return bValue - aValue;
+    });
   }, [
     model.searchRegion,
     model.patternRegion,
     model.maskRegions,
     model.detectedBoxes,
-    model.excludedNumbers,
     lockedLayerIds,
     hiddenLayerIds,
     layerRotations,
+    regionOrder,
   ]);
 
   const defaultRegionOrder = useMemo(() => {
@@ -164,12 +200,8 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
   }
 
   function handleToggleLayerVisibility(id: string): void {
-    if (id.startsWith("box-")) {
-      model.toggleBox(Number(id.slice("box-".length)));
-
-      return;
-    }
-
+    // Hide is display-only for every layer kind, including boxes
+    // (spec 55: hide must never change validation counts).
     setHiddenLayerIds((prev) => toggleInSet(prev, id));
   }
 
@@ -277,6 +309,7 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
                 onBringLayerForward={(id) => moveRegionLayer(id, 1)}
                 onSendLayerBackward={(id) => moveRegionLayer(id, -1)}
                 onToggleLayerLock={(id) => setLockedLayerIds((prev) => toggleInSet(prev, id))}
+                isLayerReorderable={(layer) => layer.kind !== "box"}
               />
             </div>
           </div>
