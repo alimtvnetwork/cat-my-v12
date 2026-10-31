@@ -218,6 +218,87 @@ production caller, `PatternCanvas.tsx:224` (preview).
   referenced (a second golden table drifting from the live one);
   `toTwoBitGray` matching path effectively dormant (every real caller
   passes a threshold).
+
+## 10. UI / window / install / run analysis (31-Oct-25, verified by
+coordinator)
+
+Spec 54 re-verified in current code (not trusted from the spec):
+loopback POST /shutdown, single Exit path, launcher supervision + 5s
+delegation guard, hover fix, wall-clock dwell, camera watchdog +
+retry button. What remains:
+
+- Minimize/maximize/close are broken BY ARCHITECTURE, not by a bug.
+  No native shell exists (zero Tauri/Electron hits); the bridge
+  resolver probes `window.desktopApi` / `__TAURI__` / `electronAPI`
+  but nothing ever provides them. Coordinator-verified: minimize
+  exits fullscreen, dispatches an event nobody listens to, and shows
+  a toast saying minimize is unavailable in browser mode. Maximize
+  is a fullscreen toggle fighting the `--start-fullscreen` launch
+  flag. Close POSTs /shutdown then calls `window.close()`, a
+  browser-security no-op for script-unopened windows — the user must
+  still close the window by hand after every Exit. This is spec 54
+  MBUD 8 / spec 55 MBUD 5, still open, and it gates the rest: no SPA
+  code can create a real minimize button.
+- Menu drop-down delay has NO coded cause: stock Radix menu, ~150ms
+  animation, light content, no fetch/sleep on open. Ranked suspects
+  needing a profiler trace on the user's machine: (1) `isMenuOpen`
+  lives in StandardAppShell, so opening re-renders the shell AND its
+  children, including heavy vision canvases and the simulation
+  player; (2) main-thread contention during simulation/run; (3)
+  `backdrop-blur-xl` compositing cost in fullscreen `--app`.
+  Screenshot gap: the owner supplied the SAME link for menu glitch
+  and exit, so the two complaints cannot be separated from images.
+- Browser auto-open is structural: the "installed app" IS a browser
+  window (`--app=<frontend-url> --start-fullscreen` + dedicated
+  profile); the installer auto-launches it, and shortcuts point at
+  the launchers. Extra vectors: macOS `open "$FRONTEND_URL"` fallback
+  = a normal tab in the default browser with no profile, no
+  fullscreen, no supervision; <5s delegation leaves the backend
+  running with only a log line; the PS1 console window stays visible
+  all session (no `-WindowStyle Hidden`).
+- Version missing from the run UI is literally true: the badge
+  renders ONLY on the home route (`pathname === "/"` gate); on /run
+  and every tool page there is no version anywhere.
+  Coordinator-verified: `version-info.ts` hardcodes
+  `commitHash: "038f4b22"` (HEAD is now far past it) and imports
+  version.json inlined at build time, so the running UI lags bumps.
+  Three conflicting versions exist: version.json 4.113.9, BE
+  `__init__` 0.1.0 (served by GET /meta), FastAPI 1.0.0. Launchers
+  never print the version.
+- start.ps1 bugs: no already-running check (asymmetric with
+  start.sh) — a stale backend holding ports 8787/3000 masks the new
+  backend's bind failure because readiness polling succeeds against
+  the OLD backend; fully sequential startup (db-bootstrap → backend
+  → 60s poll → frontend → 60s poll → browser) though frontend does
+  not depend on backend; no version output.
+- start.sh bugs: trap is INT TERM only, NOT EXIT — coordinator
+  verified (`trap stop_own_services INT TERM`) — so a missing
+  browser on Linux or a failed readiness wait under `set -e` exits
+  leaving backend + frontend orphaned. Otherwise better than ps1
+  (it does reuse healthy services).
+- Run inefficiency, step by step: db-bootstrap runs synchronously,
+  then the backend runs THE SAME migrations a second time in its
+  lifespan before serving /healthz; then two sequential readiness
+  polls (up to 60s each) before the browser launches; then a fresh
+  profile cold start. Parallelizable without new architecture:
+  concurrent backend + frontend starts, exactly one migration pass,
+  parallel readiness waits with real health endpoints, healthy-service
+  reuse on both platforms, fail fast on port bind failure instead of
+  a 60s "did not become ready".
+- Fix list (priority order): (1) decide MBUD 5/6 (native shell vs
+  --app-only) — gates everything; (2) launcher parity + orphans +
+  hidden PS1 console + macOS --app launch; (3) version badge on all
+  routes, build-time commit hash, reconcile the three version
+  sources, launchers print version; (4) faster run per above;
+  (5) menu open (split menu state out of shell re-render, drop
+  backdrop-blur, add open-timing instrumentation); (6) close honesty
+  gap (say window.close() is a no-op, surface the delegation case as
+  a toast); (7) ports fail fast with "already in use by …".
+- Not verified here: `server/index.mjs` packaging artifact (absent
+  from this tree — check on the installed machine); menu latency
+  needs a profiler trace; spec 54 §13/§23 runtime checklist (button
+  clicks, orphans, ports free, camera prompt) still owed on the
+  user's machine.
 - Simulation's carrier-tape evaluator computes raw Rec.601 luma
   throughout; no threshold, stretch, or mode reaches it.
 - Fix list (priority order): (1) one shared `toMatchingGray(rgba,
