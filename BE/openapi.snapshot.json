@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "BE",
-    "version": "1.0.0"
+    "version": "4.113.9"
   },
   "paths": {
     "/system/status": {
@@ -2205,6 +2205,11 @@
             "minimum": 0.0,
             "title": "Thresholdluma",
             "default": 35
+          },
+          "GreyscaleMode": {
+            "type": "string",
+            "title": "Greyscalemode",
+            "default": "threshold"
           },
           "MinCircularityPercent": {
             "type": "integer",
