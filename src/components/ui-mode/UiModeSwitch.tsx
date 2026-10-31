@@ -37,7 +37,9 @@ export function UiModeSwitch(): React.JSX.Element | null {
         </TooltipTrigger>
         <TooltipContent
           side="bottom"
-          className="max-w-[260px] border border-white/15 bg-[#0f172a] px-3 py-2 text-left text-xs leading-snug text-slate-100"
+          align="end"
+          collisionPadding={12}
+          className="max-w-[240px] border border-white/15 bg-[#0f172a] px-3 py-2 text-left text-xs leading-snug text-slate-100"
         >
           {explanation}
         </TooltipContent>
