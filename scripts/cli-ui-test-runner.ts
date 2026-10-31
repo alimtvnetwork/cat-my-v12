@@ -579,6 +579,128 @@ async function runCliUiTests(): Promise<void> {
       "16_window_controls_and_version_modal",
     );
 
+    await recordStep(
+      "Window Controls",
+      "Maximize toggles fullscreen, or reports that the browser blocked it",
+      page,
+      async () => {
+        const startedAt = Date.now();
+        const maximize = page.locator("button[aria-label='Window Layer or Maximize']");
+
+        await maximize.waitFor({ state: "visible", timeout: 4000 });
+        await maximize.click();
+        await page.waitForTimeout(400);
+        const isFullscreen = Boolean(
+          await page.evaluate(() => Boolean(document.fullscreenElement)),
+        );
+        const bodyText = await page.locator("body").innerText();
+        const isBlocked = bodyText.includes("Fullscreen mode is not permitted");
+        const durationMs = Date.now() - startedAt;
+
+        if (!isFullscreen && !isBlocked) {
+          throw new Error("Maximize neither entered fullscreen nor reported that the browser blocked it");
+        }
+
+        if (durationMs > 2000) {
+          throw new Error(`Maximize took ${durationMs}ms`);
+        }
+
+        const label = isFullscreen
+          ? await page.locator("button[aria-label='Restore Window']").getAttribute("aria-label")
+          : "blocked";
+
+        return isFullscreen
+          ? `Entered fullscreen in ${durationMs}ms; control is now ${label}`
+          : `Browser blocked fullscreen in ${durationMs}ms and the page stayed open`;
+      },
+      "17_window_maximize",
+    );
+
+    await recordStep(
+      "Window Controls",
+      "Minimize leaves fullscreen without the browser-mode toast, or explains browser mode",
+      page,
+      async () => {
+        const startedAt = Date.now();
+        const wasFullscreen = Boolean(
+          await page.evaluate(() => Boolean(document.fullscreenElement)),
+        );
+        const minimize = page.locator("button[aria-label='Minimize Window']");
+
+        await minimize.click();
+        await page.waitForTimeout(400);
+        const isFullscreen = Boolean(
+          await page.evaluate(() => Boolean(document.fullscreenElement)),
+        );
+        const bodyText = await page.locator("body").innerText();
+        const hasBrowserToast = bodyText.includes("Minimize is not available in browser mode");
+        const durationMs = Date.now() - startedAt;
+
+        if (durationMs > 2000) {
+          throw new Error(`Minimize took ${durationMs}ms`);
+        }
+
+        await page.locator("[data-testid='window-controls-bar']").waitFor({
+          state: "visible",
+          timeout: 3000,
+        });
+
+        if (wasFullscreen) {
+          if (isFullscreen) {
+            throw new Error("Minimize left the page in fullscreen");
+          }
+
+          if (hasBrowserToast) {
+            throw new Error("Minimize showed the browser-mode toast while fullscreen was active");
+          }
+
+          return `Left fullscreen in ${durationMs}ms without the browser-mode toast`;
+        }
+
+        if (!hasBrowserToast) {
+          throw new Error("Windowed minimize did not explain that browser mode has no taskbar minimize");
+        }
+
+        return `Windowed minimize explained browser mode in ${durationMs}ms and the page stayed open`;
+      },
+      "18_window_minimize",
+    );
+
+    await recordStep(
+      "Window Controls",
+      "Close opens the exit dialog and Cancel returns to the workspace",
+      page,
+      async () => {
+        const startedAt = Date.now();
+        const close = page.locator("button[aria-label='Close Application']");
+
+        await close.click();
+        const dialog = page.locator("text=Exit Application?").first();
+
+        await dialog.waitFor({ state: "visible", timeout: 3000 });
+        await page.locator("button:has-text('Cancel')").click();
+        await page.waitForTimeout(300);
+        const isDialogStillOpen = await dialog.isVisible();
+        const durationMs = Date.now() - startedAt;
+
+        if (isDialogStillOpen) {
+          throw new Error("Cancel left the exit dialog open");
+        }
+
+        if (durationMs > 2000) {
+          throw new Error(`Close and cancel took ${durationMs}ms`);
+        }
+
+        await page.locator("button[aria-label='Minimize Window']").waitFor({
+          state: "visible",
+          timeout: 3000,
+        });
+
+        return `Exit dialog opened and Cancel closed it in ${durationMs}ms`;
+      },
+      "19_window_close_cancel",
+    );
+
     const patternUiCases = await runPatternSearchUiCases(page, BASE_URL);
 
     for (const patternCase of patternUiCases) {
