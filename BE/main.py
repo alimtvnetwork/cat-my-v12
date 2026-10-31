@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 
+from BE import __version__ as BE_VERSION
 from BE.config import Settings, get_settings
 from BE.errors.handlers import register_exception_handlers
 from BE.logging_config import configure_logging
@@ -148,7 +149,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(cfg.log_level)
     _setup_signals()
 
-    app = FastAPI(title="BE", version="1.0.0", lifespan=_app_lifespan)
+    app = FastAPI(title="BE", version=BE_VERSION, lifespan=_app_lifespan)
     _register_middlewares(app, cfg)
     register_exception_handlers(app)
     _register_routers(app)
