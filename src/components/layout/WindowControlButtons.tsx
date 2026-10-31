@@ -311,7 +311,7 @@ export function WindowControlButtons(): React.JSX.Element {
     <>
       <div
         data-testid="window-controls-bar"
-        className="flex items-center gap-0.5 border-l border-white/10 pl-2 ml-1"
+        className="flex items-center gap-1 border-l border-white/10 pl-2.5 ml-1.5"
       >
         <button
           type="button"
@@ -319,9 +319,9 @@ export function WindowControlButtons(): React.JSX.Element {
           aria-label="Minimize Window"
           onClick={handleMinimize}
           {...minAttrs}
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-white/10 hover:text-slate-100 active:scale-95 border border-transparent"
+          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-slate-400 transition-colors duration-150 hover:border-white/10 hover:bg-white/10 hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
         >
-          <Minus className="h-3.5 w-3.5" />
+          <Minus className="h-3.5 w-3.5 stroke-[2.2]" />
         </button>
 
         <button
@@ -330,9 +330,13 @@ export function WindowControlButtons(): React.JSX.Element {
           aria-label={isFullscreen ? "Restore Window" : "Window Layer or Maximize"}
           onClick={handleToggleMaximize}
           {...maxAttrs}
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-white/10 hover:text-slate-100 active:scale-95 border border-transparent"
+          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-slate-400 transition-colors duration-150 hover:border-white/10 hover:bg-white/10 hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
         >
-          {isFullscreen ? <Copy className="h-3 w-3" /> : <Square className="h-3 w-3" />}
+          {isFullscreen ? (
+            <Copy className="h-3.5 w-3.5 stroke-[1.8]" />
+          ) : (
+            <Square className="h-3.5 w-3.5 stroke-[1.8]" />
+          )}
         </button>
 
         <button
@@ -341,9 +345,9 @@ export function WindowControlButtons(): React.JSX.Element {
           aria-label="Close Application"
           onClick={requestExit}
           {...closeAttrs}
-          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-rose-600 hover:text-white active:scale-95 border border-transparent"
+          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent text-slate-400 transition-colors duration-150 hover:border-rose-500/40 hover:bg-rose-600 hover:text-white active:scale-95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-400"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5 stroke-[2.2]" />
         </button>
       </div>
 
