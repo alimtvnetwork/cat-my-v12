@@ -24,7 +24,7 @@ param(
     [switch]$NoShell
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 $Esc = [char]27
 $Reset = "$Esc[0m"
@@ -37,20 +37,27 @@ $White = "$Esc[97m"
 $Magenta = "$Esc[35m"
 $Red = "$Esc[31m"
 
+$SymCheck = [char]0x2713
+$SymAction = [char]0x26A1
+$SymInfo = [char]0x25CF
+$SymWarn = [char]0x26A0
+$SymDown = [char]0x2193
+$DivLine = [string]::new([char]0x2500, 76)
+
 function Write-StepOk([string]$Step, [string]$Message) {
-    Write-Host "  $($Green)✓$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+    Write-Host "  $Green$SymCheck$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
 }
 
 function Write-StepAction([string]$Step, [string]$Message) {
-    Write-Host "  $($Yellow)⚡$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+    Write-Host "  $Yellow$SymAction$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
 }
 
 function Write-StepInfo([string]$Step, [string]$Message) {
-    Write-Host "  $($Gray)●$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+    Write-Host "  $Gray$SymInfo$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
 }
 
 function Write-StepWarn([string]$Step, [string]$Message) {
-    Write-Host "  $($Yellow)⚠$($Reset) $($Yellow)$($Step.PadRight(12))$($Reset) $Message"
+    Write-Host "  $Yellow$SymWarn$Reset $Yellow$($Step.PadRight(12))$Reset $Message"
 }
 
 $FrontendHostIp = "127.0.0.1"
@@ -80,13 +87,13 @@ if (Test-Path "version.json") {
 }
 
 Write-Host ""
-Write-Host "  $($Cyan)[cat]$($Reset)  $($Bold)CAT iVISION$($Reset)  $($White)$appVersion$($Reset)  $($Gray)— Autonomous Industrial Inspection System$($Reset)"
-Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
-Write-Host "  $($Cyan)●$($Reset) $($Bold)Backend URL:$($Reset)    $BackendBaseUrl"
-Write-Host "  $($Cyan)●$($Reset) $($Bold)Frontend URL:$($Reset)   $FrontendBaseUrl"
-Write-Host "  $($Cyan)●$($Reset) $($Bold)Runtime Mode:$($Reset)   Industrial HMI (Chromium Embedded App)"
-Write-Host "  $($Cyan)●$($Reset) $($Bold)Active Branch:$($Reset)  $gitBranch"
-Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
+Write-Host "  $Cyan`[cat`]$Reset  $Bold`CAT iVISION$Reset  $White$appVersion$Reset  $Gray-- Autonomous Industrial Inspection System$Reset"
+Write-Host "  $Gray$DivLine$Reset"
+Write-Host "  $Cyan$SymInfo$Reset $Bold`Backend URL:$Reset    $BackendBaseUrl"
+Write-Host "  $Cyan$SymInfo$Reset $Bold`Frontend URL:$Reset   $FrontendBaseUrl"
+Write-Host "  $Cyan$SymInfo$Reset $Bold`Runtime Mode:$Reset   Industrial HMI (Chromium Embedded App)"
+Write-Host "  $Cyan$SymInfo$Reset $Bold`Active Branch:$Reset  $gitBranch"
+Write-Host "  $Gray$DivLine$Reset"
 Write-Host ""
 
 function Test-InspectionWindowOpen {
@@ -285,9 +292,9 @@ try {
     }
 
     Write-Host ""
-    Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
-    Write-Host "  $($Magenta)●$($Reset) $($Bold)Supervision Active$($Reset) $($Gray)(monitoring window & backend lifecycle)$($Reset)"
-    Write-Host "  $($Gray)  Press Ctrl+C or use in-app [✕] Exit to terminate all services cleanly$($Reset)"
+    Write-Host "  $Gray$DivLine$Reset"
+    Write-Host "  $Magenta$SymInfo$Reset $Bold`Supervision Active$Reset $Gray(monitoring window & backend lifecycle)$Reset"
+    Write-Host "  $Gray  Press Ctrl+C or use in-app Exit to terminate all services cleanly$Reset"
     Write-Host ""
 
     $isSupervised = $true
@@ -296,14 +303,14 @@ try {
 
         # Monitor browser process exit
         if ($chromeProcess -and $chromeProcess.HasExited) {
-            Write-Host "  $($Yellow)●$($Reset) $($Cyan)$('lifecycle'.PadRight(12))$($Reset) Browser window closed by user"
+            Write-Host "  $Yellow$SymInfo$Reset $Cyan$('lifecycle'.PadRight(12))$Reset Browser window closed by user"
             $isSupervised = $false
             break
         }
 
         # Monitor backend process exit
         if ($backendProcess -and $backendProcess.HasExited) {
-            Write-Host "  $($Yellow)●$($Reset) $($Cyan)$('lifecycle'.PadRight(12))$($Reset) Backend process exited (shutdown completed)"
+            Write-Host "  $Yellow$SymInfo$Reset $Cyan$('lifecycle'.PadRight(12))$Reset Backend process exited (shutdown completed)"
             $isSupervised = $false
             break
         }
@@ -311,12 +318,12 @@ try {
 }
 finally {
     Write-Host ""
-    Write-Host "  $($Yellow)↓$($Reset) $($Cyan)$('teardown'.PadRight(12))$($Reset) Gracefully terminating background processes..."
+    Write-Host "  $Yellow$SymDown$Reset $Cyan$('teardown'.PadRight(12))$Reset Gracefully terminating background processes..."
     foreach ($job in $jobs) {
         if ($job -and -not $job.HasExited) {
             Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
         }
     }
-    Write-Host "  $($Green)✓$($Reset) $($Cyan)$('complete'.PadRight(12))$($Reset) All services terminated cleanly."
+    Write-Host "  $Green$SymCheck$Reset $Cyan$('complete'.PadRight(12))$Reset All services terminated cleanly."
     Write-Host ""
 }
