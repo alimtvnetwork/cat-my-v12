@@ -29,6 +29,8 @@ describe("RecorderExportModal", () => {
     expect(screen.getByText("Export Activity & Bug Report")).not.toBeNull();
     expect(screen.getByText("Resume Recording")).not.toBeNull();
     expect(screen.getByText("Discard")).not.toBeNull();
+    expect(screen.getByText("Export ZIP")).not.toBeNull();
+    expect(screen.getByTitle("Choose Export Format")).not.toBeNull();
   });
 
   it("resumes recording when Resume Recording button is clicked", () => {
@@ -69,5 +71,39 @@ describe("RecorderExportModal", () => {
 
     rerender(<RecorderExportModal />);
     expect(screen.queryByText("Export Activity & Bug Report")).toBeNull();
+  });
+
+  it("opens unified export suite dropdown showing 7 options", () => {
+    useRecorderStore.getState().startRecording("/projects/1");
+    useRecorderStore.getState().stopRecording();
+
+    render(<RecorderExportModal />);
+
+    const dropdownToggle = screen.getByTitle("Choose Export Format");
+    fireEvent.click(dropdownToggle);
+
+    expect(screen.getByText("Unified Export Suite")).not.toBeNull();
+    expect(screen.getByText("Export ZIP Bundle")).not.toBeNull();
+    expect(screen.getByText("Copy as Prompt (V6)")).not.toBeNull();
+    expect(screen.getByText("Copy as Prompt (V7)")).not.toBeNull();
+    expect(screen.getByText("Direct Email")).not.toBeNull();
+    expect(screen.getByText("Save to Supabase")).not.toBeNull();
+    expect(screen.getByText("Save to Local Machine")).not.toBeNull();
+    expect(screen.getByText("Copy CLI Command")).not.toBeNull();
+  });
+
+  it("opens Direct Email modal when Direct Email is clicked from dropdown", () => {
+    useRecorderStore.getState().startRecording("/projects/1");
+    useRecorderStore.getState().stopRecording();
+
+    render(<RecorderExportModal />);
+
+    const dropdownToggle = screen.getByTitle("Choose Export Format");
+    fireEvent.click(dropdownToggle);
+
+    const emailBtn = screen.getByText("Direct Email");
+    fireEvent.click(emailBtn);
+
+    expect(screen.getByText("Direct Email Bug Dispatch")).not.toBeNull();
   });
 });

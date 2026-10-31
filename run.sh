@@ -6,6 +6,7 @@ BE_PORT=8787
 FE_PORT=5173
 BE_HOST="127.0.0.1"
 NO_SHELL=0
+PACKAGE_SHELL=0
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -14,14 +15,16 @@ while [[ "$#" -gt 0 ]]; do
         --fe-port) FE_PORT="$2"; shift ;;
         --host) BE_HOST="$2"; shift ;;
         --no-shell) NO_SHELL=1 ;;
+        --package-shell) PACKAGE_SHELL=1 ;;
         --help|-h)
             echo "Usage: ./run.sh [options]"
             echo "Options:"
-            echo "  --be-port PORT    Port for backend (default: 8787)"
-            echo "  --fe-port PORT    Port for frontend (default: 5173)"
-            echo "  --host IP         Host to bind backend (default: 127.0.0.1). WARNING: Do not use 0.0.0.0 in non-dev environments."
-            echo "  --no-shell        Skip launching Chromium shell"
-            echo "  --help, -h        Show this help message"
+            echo "  --be-port PORT      Port for backend (default: 8787)"
+            echo "  --fe-port PORT      Port for frontend (default: 5173)"
+            echo "  --host IP           Host to bind backend (default: 127.0.0.1). WARNING: Do not use 0.0.0.0 in non-dev environments."
+            echo "  --no-shell          Skip launching Chromium shell"
+            echo "  --package-shell     Package Chromium shell into public/app-shell.zip"
+            echo "  --help, -h          Show this help message"
             exit 0
             ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
@@ -36,14 +39,29 @@ PIDS=()
 
 # Cleanup function to kill child processes
 cleanup() {
+    trap - EXIT INT TERM
     echo ""
     echo "Shutting down..."
+
+    # Attempt fast graceful backend shutdown
+    curl -s -X POST "http://$BE_HOST:$BE_PORT/shutdown" --max-time 1 >/dev/null 2>&1 || true
+
     for pid in "${PIDS[@]}"; do
         if kill -0 "$pid" 2>/dev/null; then
-            kill "$pid" 2>/dev/null
+            kill -TERM -"$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
         fi
     done
-    wait 2>/dev/null
+
+    # Terminate child uvicorn processes if orphaned
+    pkill -f "uvicorn BE.main:app" 2>/dev/null || true
+
+    sleep 0.2
+    for pid in "${PIDS[@]}"; do
+        if kill -0 "$pid" 2>/dev/null; then
+            kill -KILL -"$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+        fi
+    done
+
     echo "Cleanup complete."
     exit 0
 }
@@ -81,8 +99,8 @@ if [ "$NO_SHELL" -eq 1 ]; then
 elif pgrep -af "chromium|chrome|msedge" 2>/dev/null | grep -E -- "--app=http://localhost:$FE_PORT" | grep -v -- "--type=" >/dev/null 2>&1; then
     echo "Inspection window or browser is already running. Skipping duplicate browser window."
 else
-    echo "Packaging Chromium shell..."
-    if [ -d "chromium-shell" ]; then
+    if [ "$PACKAGE_SHELL" -eq 1 ] && [ -d "chromium-shell" ]; then
+        echo "Packaging Chromium shell..."
         (cd chromium-shell && nix run nixpkgs#zip -- -r ../public/app-shell.zip . 2>/dev/null || echo "Warning: nix command failed or not found, skipping zip packaging.")
     fi
 

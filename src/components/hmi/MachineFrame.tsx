@@ -1,31 +1,45 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { defaultSampleUrl } from "@/lib/editor/sample-library";
 import { getReferenceImage, subscribe } from "@/lib/stores/reference-image-store";
 
 export interface MachineFrameProps {
   isLive?: boolean;
   live?: boolean;
+  activeFrameUrl?: string;
+  frameUrl?: string;
 }
 
 const PANEL_X = [118, 334, 550, 766, 982];
 
-export function MachineFrame({ isLive, live = false }: MachineFrameProps): React.JSX.Element | null {
+export const MachineFrame = memo(function MachineFrame({
+  isLive,
+  live = false,
+  activeFrameUrl,
+  frameUrl,
+}: MachineFrameProps): React.JSX.Element | null {
   const isRunningLive = isLive ?? live;
-  const [src, setSrc] = useState<string>(() => getReferenceImage() ?? defaultSampleUrl);
+  const directUrl = activeFrameUrl ?? frameUrl;
+  const [storeSrc, setStoreSrc] = useState<string>(() => getReferenceImage() ?? defaultSampleUrl);
 
   useEffect(() => {
+    if (directUrl) {
+      return;
+    }
+
     const unsubscribe = subscribe((next) => {
       const nextSrc = next ?? defaultSampleUrl;
-      setSrc((prev) => (prev === nextSrc ? prev : nextSrc));
+      setStoreSrc((prev) => (prev === nextSrc ? prev : nextSrc));
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [directUrl]);
+
+  const effectiveSrc = directUrl || storeSrc;
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-ca-viewport" aria-hidden="true">
       <img
-        src={src}
+        src={effectiveSrc}
         alt=""
         aria-hidden="true"
         decoding="async"
@@ -139,4 +153,4 @@ export function MachineFrame({ isLive, live = false }: MachineFrameProps): React
       </svg>
     </div>
   );
-}
+});

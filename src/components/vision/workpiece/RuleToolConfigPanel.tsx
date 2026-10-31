@@ -33,7 +33,8 @@ function readSavedRegion(geometry: any) {
 
 function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSearchSettings {
   const base = createDefaultPatternSearchSettings(rule.id);
-  const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
+  const defaultToolCode = rule.name.toLowerCase().includes("pattern search") ? "T116" : "T102";
+  const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : defaultToolCode;
   const rawThresh = rule.params?.greyscaleLevel ?? rule.params?.threshold ?? 170;
   const rawThreshNum = typeof rawThresh === "number" ? rawThresh : 170;
   const threshold = Number.isFinite(rawThreshNum)
@@ -453,7 +454,13 @@ export function RuleToolConfigPanel({
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
   const normalizedName = rule.name.toLowerCase();
 
+  const isPatternSearch =
+    toolCode === "T116" ||
+    toolCode === "PATTERN_SEARCH" ||
+    normalizedName.includes("pattern search");
+
   const hasStandardToolCode =
+    isPatternSearch ||
     toolCode === "T101" ||
     toolCode === "T104" ||
     toolCode === "T107" ||
@@ -464,12 +471,13 @@ export function RuleToolConfigPanel({
     toolCode === "T103" ||
     toolCode === "T106" ||
     toolCode === "T112" ||
-    toolCode === "M301";
+    toolCode === "M301" ||
+    toolCode === "T116";
 
   const isGreyscalePattern =
     !hasStandardToolCode &&
+    !isPatternSearch &&
     (toolCode === "T102" ||
-      toolCode === "T116" ||
       toolCode === "greyscale_pattern_match" ||
       normalizedName.includes("pattern match") ||
       normalizedName.includes("greyscale pattern") ||

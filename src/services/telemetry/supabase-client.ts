@@ -1,5 +1,37 @@
 import type { BugReportSummary, RecorderSession } from "@/lib/recorder/types";
 import { HttpMethod } from "@/lib/constants";
+import {
+  MAX_STORAGE_BYTES,
+  MAX_SUPABASE_QUOTA_BYTES,
+  DEFAULT_RETENTION_DAYS,
+  RETENTION_WINDOW_MS,
+  STORAGE_KEY,
+  OFFLINE_QUEUE_KEY,
+  USAGE_TRACKER_KEY,
+  getTrackedUsageBytes,
+  recordUsageBytesDelta,
+  fetchSupabaseStorageUsage,
+  pruneExpiredSupabaseRecords,
+  checkSupabaseQuota,
+  type SupabaseStorageStatus,
+  type SupabasePruningResult,
+  type SupabaseQuotaCheckResult,
+} from "./supabase-retention";
+
+export {
+  MAX_STORAGE_BYTES,
+  MAX_SUPABASE_QUOTA_BYTES,
+  DEFAULT_RETENTION_DAYS,
+  RETENTION_WINDOW_MS,
+  fetchSupabaseStorageUsage,
+  pruneExpiredSupabaseRecords,
+  checkSupabaseQuota,
+  type SupabaseStorageStatus,
+  type SupabasePruningResult,
+  type SupabaseQuotaCheckResult,
+};
+
+export const SUPABASE_RETENTION_DAYS = DEFAULT_RETENTION_DAYS;
 
 export interface SupabaseConfig {
   supabaseUrl: string;
@@ -16,9 +48,6 @@ export const DEFAULT_SUPABASE_CONFIG: SupabaseConfig = {
   isEnabled: true,
   hasAutoSync: true,
 };
-
-const STORAGE_KEY = "cat_vision_supabase_config";
-const OFFLINE_QUEUE_KEY = "cat_vision_offline_supabase_queue";
 
 export interface SupabaseBugReportPayload {
   session: RecorderSession;
@@ -41,6 +70,13 @@ export interface SupabaseTestResult {
   message: string;
 }
 
+export interface QuotaCheckResult {
+  isWithinQuota: boolean;
+  currentBytes: number;
+  maxBytes: number;
+  message?: string;
+}
+
 export function loadSupabaseConfig(): SupabaseConfig {
   if (typeof window === "undefined") {
     return DEFAULT_SUPABASE_CONFIG;
@@ -48,11 +84,13 @@ export function loadSupabaseConfig(): SupabaseConfig {
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+
     if (!raw) {
       return DEFAULT_SUPABASE_CONFIG;
     }
 
     const parsed = JSON.parse(raw);
+
     return {
       supabaseUrl: String(parsed.supabaseUrl ?? DEFAULT_SUPABASE_CONFIG.supabaseUrl).trim(),
       publishableKey: String(
@@ -82,10 +120,13 @@ export function getOfflineSupabaseQueueCount(): number {
 
   try {
     const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+
     if (!raw) {
       return 0;
     }
+
     const list = JSON.parse(raw);
+
     return Array.isArray(list) ? list.length : 0;
   } catch {
     return 0;
@@ -105,6 +146,32 @@ function enqueueOfflineReport(ticketId: string, record: unknown): void {
   } catch {
     // Local storage full or unavailable; safe ignore.
   }
+}
+
+export async function purgeExpiredSupabaseData(config: SupabaseConfig): Promise<number> {
+  const result = await pruneExpiredSupabaseRecords({
+    retentionDays: DEFAULT_RETENTION_DAYS,
+    config,
+  });
+
+  return result.deletedReportsCount + result.deletedAttachmentsCount;
+}
+
+export async function checkSupabaseStorageQuota(
+  config: SupabaseConfig,
+  additionalBytes: number,
+): Promise<QuotaCheckResult> {
+  const quota = await checkSupabaseQuota(additionalBytes, {
+    config,
+    hasAutoPrune: false,
+  });
+
+  return {
+    isWithinQuota: quota.isAllowed,
+    currentBytes: quota.currentUsageBytes,
+    maxBytes: quota.maxBytes,
+    message: quota.message,
+  };
 }
 
 export async function testSupabaseConnection(config: SupabaseConfig): Promise<SupabaseTestResult> {
@@ -147,6 +214,7 @@ export async function testSupabaseConnection(config: SupabaseConfig): Promise<Su
 function generateTicketId(): string {
   const stamp = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+
   return `CV-${stamp}-${rand}`;
 }
 
@@ -154,14 +222,16 @@ async function uploadArtifactFile(
   config: SupabaseConfig,
   ticketId: string,
   base64DataUrl: string,
-): Promise<boolean> {
+): Promise<{ isUploaded: boolean; byteLength: number }> {
   try {
     const base64Content = base64DataUrl.replace(/^data:image\/\w+;base64,/, "");
     const byteCharacters = atob(base64Content);
     const byteNumbers = new Array(byteCharacters.length);
+
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
+
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: "image/png" });
 
@@ -176,9 +246,10 @@ async function uploadArtifactFile(
       },
       body: blob,
     });
-    return res.ok;
+
+    return { isUploaded: res.ok, byteLength: byteArray.byteLength };
   } catch {
-    return false;
+    return { isUploaded: false, byteLength: 0 };
   }
 }
 
@@ -188,6 +259,19 @@ export async function uploadBugReportToSupabase(
   const config = loadSupabaseConfig();
   const ticketId = generateTicketId();
   const hasScreenshot = Boolean(payload.canvasScreenshot || payload.session.screenshots.length > 0);
+
+  // 1. Estimate upload payload size (screenshot binary + metadata)
+  const estimatedScreenshotBytes = payload.canvasScreenshot
+    ? Math.round(payload.canvasScreenshot.length * 0.75)
+    : 0;
+  const estimatedReportBytes = estimatedScreenshotBytes + 4096;
+
+  // 2. Pre-flight 14-day retention eviction and 450MB quota check
+  const quota = await checkSupabaseQuota(estimatedReportBytes, {
+    config,
+    hasAutoPrune: true,
+    retentionDays: SUPABASE_RETENTION_DAYS,
+  });
 
   const reportRecord = {
     ticket_id: ticketId,
@@ -205,8 +289,24 @@ export async function uploadBugReportToSupabase(
     created_at: new Date().toISOString(),
   };
 
+  // 3. Fallback to offline queue if quota exceeded after pruning
+  if (!quota.isAllowed) {
+    enqueueOfflineReport(ticketId, reportRecord);
+
+    return {
+      isSuccess: false,
+      isOfflineQueued: true,
+      ticketId,
+      message:
+        quota.message ||
+        "Supabase quota cap (450MB) reached. Older entries will be evicted via 14-day rolling cycle.",
+    };
+  }
+
+  // 4. Fallback to offline queue if Supabase is disabled in settings
   if (!config.isEnabled) {
     enqueueOfflineReport(ticketId, reportRecord);
+
     return {
       isSuccess: true,
       isOfflineQueued: true,
@@ -215,9 +315,20 @@ export async function uploadBugReportToSupabase(
     };
   }
 
+  // 5. Cloud upload of binary screenshots and PostgREST metadata row
   try {
+    let uploadedBytes = 0;
+
     if (payload.canvasScreenshot) {
-      await uploadArtifactFile(config, ticketId, payload.canvasScreenshot);
+      const artifactResult = await uploadArtifactFile(
+        config,
+        ticketId,
+        payload.canvasScreenshot,
+      );
+
+      if (artifactResult.isUploaded) {
+        uploadedBytes += artifactResult.byteLength;
+      }
     }
 
     const restUrl = `${config.supabaseUrl.replace(/\/+$/, "")}/rest/v1/bug_reports`;
@@ -233,16 +344,19 @@ export async function uploadBugReportToSupabase(
     });
 
     if (res.ok) {
+      recordUsageBytesDelta(uploadedBytes + 2048);
+
       return {
         isSuccess: true,
         isOfflineQueued: false,
         ticketId,
-        message: `Ticket ${ticketId} successfully submitted to Supabase!`,
+        message: `Ticket ${ticketId} successfully submitted to Supabase (Quota: <=450MB, 14-day rolling retention active).`,
       };
     }
 
-    // Network responded with non-2xx; queue for retry
+    // Network responded with non-2xx; queue for offline retry
     enqueueOfflineReport(ticketId, reportRecord);
+
     return {
       isSuccess: true,
       isOfflineQueued: true,
@@ -251,6 +365,7 @@ export async function uploadBugReportToSupabase(
     };
   } catch {
     enqueueOfflineReport(ticketId, reportRecord);
+
     return {
       isSuccess: true,
       isOfflineQueued: true,

@@ -76,8 +76,10 @@ export function StandardInspectionToolDispatcher(
     case "T101":
       return <StandardAreaTool {...props} />;
     case "T102":
-    case "T116":
       return <StandardGreyscalePatternMatchingTool {...props} />;
+    case "T116":
+    case "PATTERN_SEARCH":
+      return <StandardPatternSearch {...props} />;
     case "T103":
       return <StandardCodeReaderTool {...props} />;
     case "T104":
@@ -109,6 +111,20 @@ export function StandardInspectionToolDispatcher(
       return <StandardShapeTrax3Tool {...props} />;
     default:
       break;
+  }
+
+  const isPatternSearch =
+    toolCode === "T116" ||
+    toolCode === "PATTERN_SEARCH" ||
+    props.toolType?.toUpperCase() === "PATTERN_SEARCH" ||
+    props.toolType?.toLowerCase() === "pattern search" ||
+    props.toolType?.toLowerCase() === "pattern-search" ||
+    props.toolType?.toLowerCase() === "pattern_search" ||
+    props.ruleName?.toLowerCase().includes("pattern search") ||
+    Boolean((props.settings.params as any)?.toolCode && String((props.settings.params as any).toolCode).toUpperCase() === "T116");
+
+  if (isPatternSearch) {
+    return <StandardPatternSearch {...props} />;
   }
 
   // Phase 6: M301 Math Sandbox & Execution Gating (moved above the
@@ -179,6 +195,7 @@ export function StandardInspectionToolDispatcher(
     !combined.includes("barcode") &&
     !combined.includes("datamatrix") &&
     !combined.includes("qr") &&
+    !combined.includes("pattern search") &&
     toolCode !== "T101" &&
     toolCode !== "T104" &&
     toolCode !== "T107" &&
@@ -188,13 +205,13 @@ export function StandardInspectionToolDispatcher(
     toolCode !== "T111" &&
     toolCode !== "T112" &&
     toolCode !== "T103" &&
+    toolCode !== "T116" &&
+    toolCode !== "PATTERN_SEARCH" &&
     toolCode !== "M301" &&
     toolCode !== "M302" &&
     !(props.settings as any)?.isDefectReject &&
     (toolCode === "T102" ||
-      toolCode === "T116" ||
       combined.includes("t102") ||
-      combined.includes("t116") ||
       combined.includes("pattern match") ||
       combined.includes("greyscale pattern") ||
       combined.includes("grayscale pattern") ||

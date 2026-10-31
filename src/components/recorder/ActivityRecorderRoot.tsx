@@ -3,6 +3,7 @@ import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { startGlobalInterception, stopGlobalInterception } from "@/lib/recorder/event-interceptor";
 import { RecorderFloatingHud } from "./RecorderFloatingHud";
 import { RecorderExportModal } from "./RecorderExportModal";
+import { RecorderClickAnimation } from "./RecorderClickAnimation";
 
 export function ActivityRecorderRoot(): React.JSX.Element {
   const isRecording = useRecorderStore((s) => s.isRecording);
@@ -41,6 +42,7 @@ export function ActivityRecorderRoot(): React.JSX.Element {
     <>
       <RecorderFloatingHud />
       <RecorderExportModal />
+      <RecorderClickAnimation />
     </>
   );
 }

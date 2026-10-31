@@ -1296,7 +1296,9 @@ export function WorkpieceAnalyzeWorkspace({
     async (ruleId: string) => {
       const targetRule = projectOverlayRules.find((r) => r.id === ruleId);
 
-      if (!targetRule) return;
+      if (!targetRule) {
+        return;
+      }
 
       setEvaluatingRuleId(ruleId);
 
@@ -1322,10 +1324,6 @@ export function WorkpieceAnalyzeWorkspace({
         const pinnedRule = isPatternTarget
           ? pinPatternRule(targetRule, imgData.width, imgData.height)
           : targetRule;
-
-        if (isPatternTarget) {
-          railHandlers.onUpdateRule(pinnedRule);
-        }
 
         const result = await evaluateWorkpieceRuleReal(pinnedRule, imgData);
         const targetRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
@@ -1357,7 +1355,6 @@ export function WorkpieceAnalyzeWorkspace({
       isLiveCameraMode,
       project.inspectionImageRef,
       projectOverlayRules,
-      railHandlers,
       ruleOwnerById,
       ruleset,
     ],
@@ -2003,16 +2000,16 @@ export function WorkpieceAnalyzeWorkspace({
         {/* 5. Bottom status ticker */}
         <div
           data-tour="project-results"
-          className="flex shrink-0 items-center justify-between border-t border-white/[0.06] bg-black/40 py-1 px-3 text-[10px] text-white/40 select-none"
+          className="flex h-[22px] shrink-0 items-center justify-between border-t border-white/[0.06] bg-black/60 px-3 font-sans text-[9px] font-semibold tracking-wider text-white/40 uppercase select-none"
         >
           <div className="flex items-center gap-1.5 truncate">
             <span
               className={`h-1.5 w-1.5 shrink-0 rounded-full ${isAnalysisBusy ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.8)]"}`}
             />
             <span className="truncate">
-              {isAnalysisBusy ? "Inspection engine analyzing" : "Inspection engine ready"} ·{" "}
-              {isLiveCameraMode ? "live camera source" : "reference image source"} ·{" "}
-              {projectAnalysisItems.length} active rules · {APP_VERSION_INFO.version}
+              {isAnalysisBusy ? "ENGINE ANALYZING" : "ENGINE READY"} ·{" "}
+              {isLiveCameraMode ? "LIVE CAMERA" : "REF IMAGE"} ·{" "}
+              {projectAnalysisItems.length} ACTIVE RULES · {APP_VERSION_INFO.version}
             </span>
           </div>
 

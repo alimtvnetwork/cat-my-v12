@@ -48,15 +48,25 @@ export interface RuleRightToolbarPanelProps {
 function getToolIcon(code: string, name: string): LucideIcon {
   const normalized = `${code} ${name}`.toLowerCase();
 
-  if (normalized.includes("pin 1") || normalized.includes("pin1")) return CircleDot;
+  if (normalized.includes("pin 1") || normalized.includes("pin1")) {
+    return CircleDot;
+  }
 
-  if (normalized.includes("pattern") || code === "T102") return ScanSearch;
+  if (normalized.includes("pattern") || code === "T102") {
+    return ScanSearch;
+  }
 
-  if (normalized.includes("area") || normalized.includes("intensity")) return Grid2X2;
+  if (normalized.includes("area") || normalized.includes("intensity")) {
+    return Grid2X2;
+  }
 
-  if (normalized.includes("edge") || normalized.includes("lead")) return Activity;
+  if (normalized.includes("edge") || normalized.includes("lead")) {
+    return Activity;
+  }
 
-  if (normalized.includes("blob") || normalized.includes("bridge")) return Bug;
+  if (normalized.includes("blob") || normalized.includes("bridge")) {
+    return Bug;
+  }
 
   if (normalized.includes("void") || normalized.includes("circle") || code === "T111")
     return Crosshair;
@@ -67,7 +77,9 @@ function getToolIcon(code: string, name: string): LucideIcon {
   if (normalized.includes("qr") || normalized.includes("datamatrix") || code === "T103")
     return QrCode;
 
-  if (normalized.includes("ocr") || normalized.includes("marking") || code === "T106") return Type;
+  if (normalized.includes("ocr") || normalized.includes("marking") || code === "T106") {
+    return Type;
+  }
 
   if (normalized.includes("coating") || normalized.includes("color") || code === "T112")
     return PaintBucket;
@@ -129,7 +141,9 @@ function RuleRightToolbarPanelContent({
     (field: "x" | "y" | "width" | "height", rawValue: string) => {
       const parsed = parseInt(rawValue, 10);
 
-      if (isNaN(parsed)) return;
+      if (isNaN(parsed)) {
+        return;
+      }
 
       const safeValue =
         field === "width" || field === "height" ? Math.max(4, parsed) : Math.max(0, parsed);

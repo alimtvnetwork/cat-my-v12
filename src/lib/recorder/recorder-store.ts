@@ -8,12 +8,16 @@ import {
   type RecorderSession,
   RecorderStatusType,
 } from "./types";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 interface RecorderStoreState {
   status: RecorderStatusType;
   isRecording: boolean;
   isPaused: boolean;
   isExportModalOpen: boolean;
+  isHoverRecording: boolean;
+  isHoverRecordEnabled: boolean;
+  hoverTargetsCache: Set<string>;
   hasEvents: boolean;
   hasScreenshots: boolean;
   session: RecorderSession | null;
@@ -24,6 +28,13 @@ interface RecorderStoreState {
   pauseRecording: () => void;
   resumeRecording: () => void;
   cancelRecording: () => void;
+  toggleHoverRecord: () => void;
+  toggleHoverRecording: () => void;
+  setHoverRecordEnabled: (isEnabled: boolean) => void;
+  setHoverRecording: (isEnabled: boolean) => void;
+  hasRecordedHover: (key: string) => boolean;
+  markHoverRecorded: (key: string) => void;
+  clearHoverTargetsCache: () => void;
   addEvent: (params: AddEventParams) => void;
   addScreenshot: (params: AddScreenshotParams) => string;
   setExportModalOpen: (isOpen: boolean) => void;
@@ -44,6 +55,9 @@ function createEmptySession(initialRoute: string): RecorderSession {
     routeHistory: [initialRoute],
     initialRoute,
     finalRoute: initialRoute,
+    errors: [],
+    isHoverRecording: false,
+    isHoverRecordEnabled: false,
   };
 }
 
@@ -52,6 +66,9 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
   isRecording: false,
   isPaused: false,
   isExportModalOpen: false,
+  isHoverRecording: false,
+  isHoverRecordEnabled: false,
+  hoverTargetsCache: new Set<string>(),
   hasEvents: false,
   hasScreenshots: false,
   session: null,
@@ -65,6 +82,9 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
       isRecording: true,
       isPaused: false,
       isExportModalOpen: false,
+      isHoverRecording: false,
+      isHoverRecordEnabled: false,
+      hoverTargetsCache: new Set<string>(),
       hasEvents: false,
       hasScreenshots: false,
       session,
@@ -83,6 +103,18 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
     const durationMs = Date.now() - new Date(current.startedAt).getTime();
     const finalRoute = window.location.pathname;
 
+    const activeErrors = useErrorStore.getState().history.map((err) => ({
+      id: err.id,
+      code: err.code,
+      message: err.message,
+      level: err.level,
+      correlationId: err.correlationId,
+      triggerComponent: err.triggerComponent,
+      stackTrace: err.stackTrace,
+      createdAt: err.createdAt,
+      details: err.details,
+    }));
+
     set({
       status: RecorderStatusType.Idle,
       isRecording: false,
@@ -93,6 +125,9 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
         stoppedAt,
         durationMs,
         finalRoute,
+        errors: activeErrors,
+        isHoverRecording: get().isHoverRecordEnabled,
+        isHoverRecordEnabled: get().isHoverRecordEnabled,
       },
     });
   },
@@ -133,11 +168,47 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
       isRecording: false,
       isPaused: false,
       isExportModalOpen: false,
+      isHoverRecording: false,
+      isHoverRecordEnabled: false,
+      hoverTargetsCache: new Set<string>(),
       hasEvents: false,
       hasScreenshots: false,
       session: null,
       elapsedSec: 0,
     });
+  },
+
+  hasRecordedHover: (key: string) => {
+    return get().hoverTargetsCache.has(key);
+  },
+
+  markHoverRecorded: (key: string) => {
+    const updated = new Set(get().hoverTargetsCache);
+    updated.add(key);
+    set({ hoverTargetsCache: updated });
+  },
+
+  clearHoverTargetsCache: () => {
+    set({ hoverTargetsCache: new Set<string>() });
+  },
+
+  toggleHoverRecord: () => {
+    const current = get().isHoverRecordEnabled;
+    const next = !current;
+
+    set({ isHoverRecordEnabled: next, isHoverRecording: next });
+  },
+
+  toggleHoverRecording: () => {
+    get().toggleHoverRecord();
+  },
+
+  setHoverRecordEnabled: (isEnabled: boolean) => {
+    set({ isHoverRecordEnabled: isEnabled, isHoverRecording: isEnabled });
+  },
+
+  setHoverRecording: (isEnabled: boolean) => {
+    get().setHoverRecordEnabled(isEnabled);
   },
 
   addEvent: (params: AddEventParams) => {

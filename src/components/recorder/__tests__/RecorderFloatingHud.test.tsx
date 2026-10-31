@@ -54,4 +54,21 @@ describe("RecorderFloatingHud", () => {
     expect(useRecorderStore.getState().isRecording).toBe(false);
     expect(useRecorderStore.getState().isExportModalOpen).toBe(true);
   });
+
+  it("opens export dropdown and reveals all 7 export actions", () => {
+    useRecorderStore.getState().startRecording("/home");
+    render(<RecorderFloatingHud />);
+
+    const dropdownToggle = screen.getByTitle("Choose Export Format");
+    fireEvent.click(dropdownToggle);
+
+    expect(screen.getByText("Unified Export Suite")).not.toBeNull();
+    expect(screen.getByText("Export ZIP Bundle")).not.toBeNull();
+    expect(screen.getByText("Copy as Prompt (V6)")).not.toBeNull();
+    expect(screen.getByText("Copy as Prompt (V7)")).not.toBeNull();
+    expect(screen.getByText("Direct Email")).not.toBeNull();
+    expect(screen.getByText("Save to Supabase")).not.toBeNull();
+    expect(screen.getByText("Save to Local Machine")).not.toBeNull();
+    expect(screen.getByText("Copy CLI Command")).not.toBeNull();
+  });
 });

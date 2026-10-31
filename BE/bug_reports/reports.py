@@ -68,8 +68,23 @@ def compose_from_error_row(
     }
 
 
-def build_email_body(report: dict[str, Any]) -> str:
-    """Plain-text email body: fields first, full stack trace last."""
+def build_email_body(report: dict[str, Any], markdown_prompt: str | None = None) -> str:
+    """Plain-text or markdown prompt email body: prompt first if present, otherwise fields + stack trace."""
+    prompt = (
+        markdown_prompt
+        or report.get("markdown_prompt")
+        or report.get("prompt")
+        or report.get("ide_prompt")
+    )
+
+    if prompt:
+        body = str(prompt).strip()
+
+        if report.get("correlation_id") and "CorrelationId" not in body:
+            body += f"\n\n---\nCorrelationId: {report.get('correlation_id')}"
+
+        return body
+
     lines = [
         f"Bug report: {report.get('title')}",
         "",
@@ -86,6 +101,7 @@ def build_email_body(report: dict[str, Any]) -> str:
         "StackTrace:",
         str(report.get("stack_trace") or "(none)"),
     ]
+
     return "\n".join(lines)
 
 
@@ -95,15 +111,17 @@ def deliver_email(
     sender: str | None = None,
     recipient: str | None = None,
     attachments: list[Path] | None = None,
+    markdown_prompt: str | None = None,
 ) -> dict[str, Any]:
     """Send the report by email; audit + return the delivery record."""
     subject = f"[CAT iVISION bug] {report.get('title')}"
-    body = build_email_body(report)
+    body = build_email_body(report, markdown_prompt=markdown_prompt)
     result = email_sender.send_bug_report_email(
         subject, body, sender=sender, recipient=recipient, attachments=attachments
     )
     record = {"channel": "email", "correlation_id": report.get("correlation_id"), **result}
     _append_audit(record)
+
     return record
 
 

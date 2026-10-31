@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useRunStore } from "@/lib/stores/run-store";
 import { FlavorToggle } from "../theme/FlavorToggle";
 import { WindowMenu } from "../app-shell/WindowMenu";
+import { TopBarErrorButton } from "../errors/TopBarErrorButton";
 
 const LINKS = [
   { to: "/setup", label: "Setup", lockDuringRun: true },
@@ -64,6 +65,7 @@ export function GlobalNav(): React.JSX.Element | null {
         </span>
       )}
       <div className="ml-auto flex items-center gap-2 pl-4">
+        <TopBarErrorButton />
         <WindowMenu />
         <FlavorToggle />
       </div>

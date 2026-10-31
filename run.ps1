@@ -16,15 +16,29 @@ Host IP to bind the backend. Default is 127.0.0.1.
 
 .PARAMETER NoShell
 Skip packaging and launching the Chromium shell.
+
+.PARAMETER PackageShell
+Explicitly package the chromium-shell distribution zip (disabled by default in local dev).
 #>
 param(
     [int]$BePort = 8787,
     [int]$FePort = 5173,
     [string]$HostIp = "127.0.0.1",
-    [switch]$NoShell
+    [switch]$NoShell,
+    [switch]$PackageShell
 )
 
 $ErrorActionPreference = "Continue"
+
+# Console State Preservation setup
+$OriginalCursorVisible = $true
+try {
+    $OriginalCursorVisible = [System.Console]::CursorVisible
+} catch {}
+
+try {
+    [Console]::TreatControlCAsInput = $false
+} catch {}
 
 $Esc = [char]27
 $Reset = "$Esc[0m"
@@ -80,6 +94,44 @@ function Write-StepOk([string]$Step, [string]$Message) {
 
 function Write-StepInfo([string]$Step, [string]$Message) {
     Write-TreeNode $TreeBranch $SymInfo $Cyan $Step $Message
+}
+
+function Stop-ProcessTree([int]$ProcessId) {
+    if ($ProcessId -le 0 -or $ProcessId -eq $PID) { return }
+
+    try {
+        $proc = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+        if ($null -ne $proc) {
+            & taskkill.exe /F /T /PID $ProcessId 2>&1 | Out-Null
+        }
+    } catch {}
+}
+
+function Invoke-GracefulBackendShutdown([string]$HostIp, [int]$Port) {
+    $shutdownUrl = "http://$HostIp`:$Port/shutdown"
+    try {
+        $request = [System.Net.HttpWebRequest]::Create($shutdownUrl)
+        $request.Method = "POST"
+        $request.Timeout = 500
+        $response = $request.GetResponse()
+        $response.Close()
+        Start-Sleep -Milliseconds 80
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Free-PortIfBound([int]$Port) {
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        foreach ($conn in $connections) {
+            if ($conn.OwningProcess -gt 0 -and $conn.OwningProcess -ne $PID) {
+                Write-TreeSubNode "$TreePipe   $TreeBranch" $SymWarn $Yellow "port" "Releasing lingering process holding port $Port (PID $($conn.OwningProcess))..."
+                Stop-ProcessTree -ProcessId $conn.OwningProcess
+            }
+        }
+    } catch {}
 }
 
 $FrontendHostIp = "127.0.0.1"
@@ -160,8 +212,8 @@ try {
 
     # 1. Preflight
     Write-TreeNode $TreeBranch $SymAction $Yellow "preflight" "Purging stale build caches..."
-    if (Test-Path "BEe.egg-info") {
-        Remove-Item -Recurse -Force "BEe.egg-info" -ErrorAction SilentlyContinue
+    if (Test-Path "BE/be.egg-info") {
+        Remove-Item -Recurse -Force "BE/be.egg-info" -ErrorAction SilentlyContinue
     }
     if (-not (Test-Path $UvCacheDir)) {
         New-Item -ItemType Directory -Path $UvCacheDir | Out-Null
@@ -173,7 +225,7 @@ try {
     Write-TreeNode $TreeBranch $SymAction $Yellow "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
     $dbOutLog = Join-Path $LogDir "db-bootstrap.stdout.log"
     $dbErrLog = Join-Path $LogDir "db-bootstrap.stderr.log"
-    $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin\db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
+    $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin/db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
     if ($dbProc.ExitCode -ne 0) {
         Write-TreeSubNode "$TreePipe   $TreeLast" $SymWarn $Yellow "schemas" "Database bootstrap reported warnings/errors"
         Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $Gray$TreePipe       $_$Reset" }
@@ -186,7 +238,33 @@ try {
     $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort" -RedirectStandardOutput $BackendOutLog -RedirectStandardError $BackendErrLog
     $jobs += $backendProcess
 
-    .\scripts\dev\wait-for-http.ps1 -Url "$BackendBaseUrl/healthz" -TimeoutSec 60 | Out-Null
+    $backendDeadline = (Get-Date).AddSeconds(30)
+    $isBackendReady = $false
+    while ((Get-Date) -lt $backendDeadline) {
+        $hasBackendExited = $false
+        try {
+            $hasBackendExited = $backendProcess.HasExited
+        } catch {
+            $hasBackendExited = $false
+        }
+        if ($hasBackendExited) {
+            throw "Backend exited prematurely with code $($backendProcess.ExitCode). Check logs at $BackendErrLog"
+        }
+
+        try {
+            $response = Invoke-WebRequest -Uri "$BackendBaseUrl/healthz" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+            if ($response.StatusCode -lt 400) {
+                $isBackendReady = $true
+                break
+            }
+        } catch {
+            Start-Sleep -Milliseconds 100
+        }
+    }
+
+    if (-not $isBackendReady) {
+        throw "Timeout waiting for backend at $BackendBaseUrl/healthz"
+    }
     Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "listening" "Backend is healthy and listening on $BackendBaseUrl"
 
     # 4. Frontend
@@ -214,7 +292,7 @@ try {
     $isFrontendReady = $false
 
     try {
-        $existingFrontend = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        $existingFrontend = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
 
         if ($existingFrontend.StatusCode -lt 400) {
             $isFrontendReady = $true
@@ -245,18 +323,18 @@ try {
             }
 
             if ($hasFrontendExited) {
-                throw "Frontend exited with code $($frontendProcess.ExitCode) before $FrontendHealthUrl was ready. Free port $FePort and run .un.ps1 again."
+                throw "Frontend exited with code $($frontendProcess.ExitCode) before $FrontendHealthUrl was ready. Free port $FePort and run run.cmd or .\run.ps1 again."
             }
 
             try {
-                $frontendResponse = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+                $frontendResponse = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
 
                 if ($frontendResponse.StatusCode -lt 400) {
                     $isFrontendReady = $true
                     break
                 }
             } catch {
-                Start-Sleep -Seconds 1
+                Start-Sleep -Milliseconds 100
             }
         }
 
@@ -265,7 +343,7 @@ try {
         }
 
         try {
-            Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 15 | Out-Null
+            Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 5 | Out-Null
         } catch {}
         Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "vite" "Vite dev server is ready at $FrontendBaseUrl"
     }
@@ -279,13 +357,14 @@ try {
         $isAlreadyOpen = Test-InspectionWindowOpen -AppUrl $FrontendBaseUrl
 
         if ($isAlreadyOpen) {
-            Write-TreeSubNode "    $TreeLast" $SymCheck $Green "browser" "Inspection window is already running"
+            Write-TreeSubNode "    $TreeLast" $SymCheck $Green "browser" "Inspection window is already running. Skipping duplicate browser window."
         } else {
-            if (Test-Path "chromium-shell") {
+            if ($PackageShell -and (Test-Path "chromium-shell")) {
                 try {
                     $needsZip = $true
-                    if (Test-Path "publicpp-shell.zip") {
-                        $zipDate = (Get-Item "publicpp-shell.zip").LastWriteTime
+                    $zipPath = 'public/app-shell.zip'
+                    if (Test-Path $zipPath) {
+                        $zipDate = (Get-Item $zipPath).LastWriteTime
                         $newestFile = Get-ChildItem -Path "chromium-shell" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
                         if ($newestFile -and $newestFile.LastWriteTime -le $zipDate) {
                             $needsZip = $false
@@ -293,13 +372,13 @@ try {
                     }
 
                     if ($needsZip) {
-                        if (Test-Path "publicpp-shell.zip") {
-                            Remove-Item "publicpp-shell.zip" -Force
+                        if (Test-Path $zipPath) {
+                            Remove-Item $zipPath -Force
                         }
                         if (-not (Test-Path "public")) {
                             New-Item -ItemType Directory -Path "public" | Out-Null
                         }
-                        Compress-Archive -Path "chromium-shell\*" -DestinationPath "publicpp-shell.zip" -Force
+                        Compress-Archive -Path "chromium-shell/*" -DestinationPath $zipPath -Force
                     }
                 } catch {}
             }
@@ -374,14 +453,39 @@ try {
 finally {
     Write-TreeSection "teardown"
     Write-TreeNode $TreeBranch $SymDown $Yellow "stopping" "Gracefully terminating background processes..."
-    foreach ($job in $jobs) {
-        if ($job -and -not $job.HasExited) {
-            Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
+
+    # 1. Fast graceful backend shutdown attempt (500ms timeout)
+    Invoke-GracefulBackendShutdown -HostIp $HostIp -Port $BePort
+
+    # 2. Terminate tracked process trees
+    $processesToKill = @($backendProcess, $frontendProcess, $chromeProcess) + $jobs |
+        Where-Object { $_ -ne $null } |
+        Select-Object -Unique -Property Id
+
+    foreach ($proc in $processesToKill) {
+        if ($proc.Id -and $proc.Id -ne $PID) {
+            Stop-ProcessTree -ProcessId $proc.Id
         }
     }
-    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object { $_.CommandLine -like "*$FrontendBaseUrl*" -or $_.CommandLine -like "*.browser-profile*" } |
-        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+
+    # 3. Port release defense
+    Free-PortIfBound -Port $BePort
+    Free-PortIfBound -Port $FePort
+
+    # 4. Restore console state
+    try {
+        [System.Console]::CursorVisible = $true
+        [System.Console]::ResetColor()
+    } catch {}
+
+    try {
+        [Console]::Write("$([char]27)[0m$([char]27)[?25h")
+    } catch {}
+
+    try {
+        [Console]::TreatControlCAsInput = $false
+    } catch {}
+
     Write-TreeNode $TreeLast $SymCheck $Green "complete" "All services terminated cleanly."
     Write-Host ""
 }

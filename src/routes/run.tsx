@@ -21,10 +21,8 @@ import { useRunStore } from "@/lib/stores/run-store";
 import { formatIdentifierLabel } from "@/lib/display-labels";
 import { RunHistorySidebar } from "@/components/hmi/RunHistorySidebar";
 import { RunErrorDrawer } from "@/components/hmi/RunErrorDrawer";
-import { RunSkeleton } from "@/components/hmi/RunSkeleton";
 import { AppEvent, HttpMethod } from "@/lib/constants";
 import { fetchBackend } from "@/lib/backend/http";
-import { getReferenceImage, setReferenceImage } from "@/lib/stores/reference-image-store";
 import type { ScoreResponse } from "@/lib/vision/score-schema";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { toIntParam } from "@/lib/ids/int-alias";
@@ -80,12 +78,14 @@ function RunPage() {
   const pickedRulesets = useMemo<RuleSet[]>(() => {
     const ids = search.rulesetIds ?? [];
     const out: RuleSet[] = [];
+
     for (const id of ids) {
       const r = rulesetsById[id];
 
       if (!r) continue;
 
       if (canonicalProjectId && r.projectId !== canonicalProjectId) continue;
+
       out.push(r);
     }
 
@@ -110,14 +110,11 @@ function RunPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [activeFrameUrl, setActiveFrameUrl] = useState<string | undefined>(undefined);
 
-  // Hydrate persisted settings/history + stage first paint after mount.
+  // Hydrate persisted settings/history on mount.
   useEffect(() => {
     hydrate();
-    const id = window.setTimeout(() => setReady(true), 120);
-
-    return () => window.clearTimeout(id);
   }, [hydrate]);
 
   useEffect(() => {
@@ -131,11 +128,15 @@ function RunPage() {
     ]);
 
     // Hydrate telemetry summary from TaskDb (Day 7/8 Runtime Telemetry)
-    fetchBackend<{ total: number; ok: number; ng: number }>("/telemetry/summary")
+    fetchBackend<{ total: number; ok: number; ng: number }>("/telemetry/summary", {
+      headers: { "X-Suppress-Toast": "true" },
+    })
       .then((resp) => {
         const payload = resp.Results[0];
+
         if (payload && typeof payload.total === "number" && payload.total > 0) {
           const currentTotal = useRunStore.getState().counters.total;
+
           if (currentTotal === 0) {
             useRunStore.setState(() => ({
               counters: { total: payload.total, ok: payload.ok, ng: payload.ng },
@@ -144,7 +145,7 @@ function RunPage() {
         }
       })
       .catch((telemetryError: unknown) => {
-        console.warn("[Run] Telemetry offline or uninitialized:", telemetryError);
+        console.debug("[Run] Telemetry offline or uninitialized:", telemetryError);
       });
   }, []);
 
@@ -186,6 +187,7 @@ function RunPage() {
   };
   const doReset = () => {
     resetRun();
+    setActiveFrameUrl(undefined);
     push({ severity: StatusSeverityType.Info, message: "Counters reset" });
   };
 
@@ -236,7 +238,6 @@ function RunPage() {
     return () => window.removeEventListener(AppEvent.MenuCommand, onCmd as EventListener);
   }, []);
 
-
   // Carrier tape inspection sequence for live runtime HMI (Day 8 MVP)
   const RUN_SAMPLES = useMemo(
     () => [
@@ -269,6 +270,16 @@ function RunPage() {
     [],
   );
 
+  // Preload carrier tape samples to prevent frame-switch latency
+  useEffect(() => {
+    RUN_SAMPLES.forEach((s) => {
+      if (s.url) {
+        const img = new Image();
+        img.src = s.url;
+      }
+    });
+  }, [RUN_SAMPLES]);
+
   const sampleIndexRef = useRef(0);
   const isEvaluatingRef = useRef(false);
 
@@ -276,6 +287,7 @@ function RunPage() {
   // Replaces synthetic Math.random() with real backend /score events & image updates
   const frameDelay = useMemo(() => {
     const fps = Math.max(1, Math.min(10, settings.targetFps));
+
     return Math.round(1000 / fps);
   }, [settings.targetFps]);
 
@@ -285,16 +297,15 @@ function RunPage() {
       const sample = RUN_SAMPLES[sampleIndexRef.current % RUN_SAMPLES.length];
       sampleIndexRef.current += 1;
 
-      // Update HMI Viewport with active carrier tape frame only if changed
-      if (getReferenceImage() !== sample.url) {
-        setReferenceImage(sample.url);
-      }
+      // Update HMI Viewport with active carrier tape frame directly without global store thrashing
+      setActiveFrameUrl((prev) => (prev === sample.url ? prev : sample.url));
 
       isEvaluatingRef.current = true;
 
       // Run real deterministic backend inspection with decision trace
       fetchBackend<ScoreResponse>("/score", {
         method: HttpMethod.Post,
+        headers: { "X-Suppress-Toast": "true" },
         body: JSON.stringify({
           ruleType: "grayscale_tolerance",
           referenceImageUrl: SAMPLE_IMAGE_POCKET_1_FILLED,
@@ -325,6 +336,7 @@ function RunPage() {
                   ? StatusSeverityType.Warn
                   : StatusSeverityType.Ng;
               const slotMsg = `Slot ${s.slotIndex + 1} [${s.state}]: ${s.verdict} (${s.score}%) - ${s.reason || s.defect || ""}`;
+
               push({
                 severity: slotSeverity,
                 message: slotMsg,
@@ -343,15 +355,17 @@ function RunPage() {
           }
         })
         .catch((evalErr: unknown) => {
-          console.warn("[Run] Remote evaluation fallback to mock engine:", evalErr);
+          console.debug("[Run] Remote evaluation fallback to mock engine:", evalErr);
           // Graceful fallback for offline / mock mode
           const tick = useRunStore.getState().tick;
           const isOk = sample.isPass;
+
           tick(isOk ? "ok" : "ng", {
             tool: "Grayscale Match",
             reason: isOk ? "Sample passed" : "Defect detected",
             score: isOk ? 93.1 : 12.6,
           });
+
           push({
             severity: isOk ? StatusSeverityType.Ok : StatusSeverityType.Ng,
             message: `${isOk ? "OK" : "NG"} [${sample.name}] - Grayscale Match (${isOk ? "93.1%" : "12.6%"})`,
@@ -377,115 +391,114 @@ function RunPage() {
 
   const runBody = (
     <div className="flex flex-1 overflow-hidden">
-      {!ready ? (
-        <RunSkeleton />
-      ) : (
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex flex-wrap items-center gap-3 p-3.5 border-b border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/80 to-ca-bg/95 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_-4px_rgba(0,0,0,0.4)]">
-            <Counter variant={CounterVariantType.Total} value={counters.total} />
-            <Counter variant={CounterVariantType.Ok} value={counters.ok} />
-            <Counter
-              variant={CounterVariantType.Ng}
-              value={counters.ng}
-              data-testid="counter-ng"
-              aria-live="polite"
-            />
-            <div className="ml-auto flex items-center gap-3">
-              <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-32">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
-                  Yield Rate
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex flex-wrap items-center gap-3 p-3.5 border-b border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/80 to-ca-bg/95 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_4px_16px_-4px_rgba(0,0,0,0.4)]">
+          <Counter variant={CounterVariantType.Total} value={counters.total} />
+          <Counter variant={CounterVariantType.Ok} value={counters.ok} />
+          <Counter
+            variant={CounterVariantType.Ng}
+            value={counters.ng}
+            data-testid="counter-ng"
+            aria-live="polite"
+          />
+          <div className="ml-auto flex items-center gap-3">
+            <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-32">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+                Yield Rate
+              </span>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <span
+                  className={`font-mono text-xl font-black tabular-nums drop-shadow-[0_0_10px_currentColor] ${passRate >= 95 ? "text-ca-ok" : passRate >= 80 ? "text-ca-warn" : "text-ca-ng"}`}
+                >
+                  {passRate.toFixed(1)}%
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span
-                    className={`font-mono text-xl font-black tabular-nums drop-shadow-[0_0_10px_currentColor] ${passRate >= 95 ? "text-ca-ok" : passRate >= 80 ? "text-ca-warn" : "text-ca-ng"}`}
-                  >
-                    {passRate.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ca-border/70 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 shadow-[0_0_8px_currentColor] ${passRate >= 95 ? "bg-ca-ok" : passRate >= 80 ? "bg-ca-warn" : "bg-ca-ng"}`}
-                    style={{ width: `${passRate}%` }}
-                  />
-                </div>
               </div>
-              <RunThroughputCounter
-                isRunning={RunStatusType.isRunning(status)}
-                startedAt={startedAt}
-                total={counters.total}
-              />
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ca-border/70 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 shadow-[0_0_8px_currentColor] ${passRate >= 95 ? "bg-ca-ok" : passRate >= 80 ? "bg-ca-warn" : "bg-ca-ng"}`}
+                  style={{ width: `${passRate}%` }}
+                />
+              </div>
             </div>
+            <RunThroughputCounter
+              isRunning={RunStatusType.isRunning(status)}
+              startedAt={startedAt}
+              total={counters.total}
+            />
           </div>
-          <Viewport>
-            <MachineFrame isLive={RunStatusType.isRunning(status)} />
-            <ViewportImageControls />
-            {pickedRulesets.length > 0 ? (
-              <div className="pointer-events-auto absolute left-hmi-3 top-hmi-3 z-10 max-w-md rounded-xl border border-ca-border/80 bg-ca-panel/90 p-hmi-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-md">
-                <div className="flex items-center justify-between gap-hmi-2 border-b border-ca-border/50 pb-2 mb-2">
-                  <p className="font-display text-[11px] font-bold uppercase tracking-wider text-ca-ink">
-                    {project?.name ?? "Selected rule sets"}
-                  </p>
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-ca-ink-muted">
-                    {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
-                  </span>
-                </div>
-                <ul className="space-y-1.5">
-                  {pickedRulesets.map((r) => {
-                    const summary = summarizeOverrideChain(resolveOverrideChain(r, rulesetsById));
-
-                    return (
-                      <li
-                        key={r.id}
-                        className="flex items-center gap-hmi-2 rounded-lg border border-ca-border/60 bg-ca-panel-2/60 px-2.5 py-1.5"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-semibold text-ca-ink">{r.name}</p>
-                          <p className="truncate font-mono text-[10px] text-ca-ink-muted">
-                            {r.rules.length} rules, {summary}
-                          </p>
-                        </div>
-                        {projectId ? (
-                          <Link
-                            to="/projects/$projectId/rulesets/$rulesetId"
-                            params={{
-                              projectId,
-                              rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
-                            }}
-                            className="inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink hover:border-ca-select hover:bg-ca-panel-2 transition-colors"
-                            aria-label={`Edit ${r.name}`}
-                          >
-                            <Pencil aria-hidden size={11} /> Edit
-                          </Link>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
-            {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="rounded-xl border border-ca-border/80 bg-ca-panel/90 px-hmi-6 py-hmi-5 text-center shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md">
-                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-ca-primary/15 text-ca-primary border border-ca-primary/30">
-                    <span className="h-2 w-2 rounded-full bg-ca-primary animate-ping" />
-                  </div>
-                  <p className="font-display text-xs font-bold uppercase tracking-widest text-ca-ink">
-                    Ready to Inspect
-                  </p>
-                  <p className="mt-hmi-1 text-xs text-ca-ink-muted">
-                    Press{" "}
-                    <kbd className="rounded border border-ca-border/80 bg-ca-surface px-1.5 py-0.5 font-mono text-[11px] text-ca-ink">
-                      Space
-                    </kbd>{" "}
-                    or the Start button to begin.
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </Viewport>
-          <StatusLog entries={log} />
         </div>
-      )}
+        <Viewport isLive={RunStatusType.isRunning(status)}>
+          <MachineFrame
+            isLive={RunStatusType.isRunning(status)}
+            activeFrameUrl={activeFrameUrl}
+          />
+          <ViewportImageControls />
+          {pickedRulesets.length > 0 ? (
+            <div className="pointer-events-auto absolute left-hmi-3 top-14 z-10 max-w-md rounded-xl border border-ca-border/80 bg-ca-panel/90 p-hmi-3.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.55)] backdrop-blur-md">
+              <div className="flex items-center justify-between gap-hmi-2 border-b border-ca-border/50 pb-2 mb-2">
+                <p className="font-display text-[11px] font-bold uppercase tracking-wider text-ca-ink">
+                  {project?.name ?? "Selected rule sets"}
+                </p>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-ca-ink-muted">
+                  {expectedImages} image{expectedImages === 1 ? "" : "s"} expected
+                </span>
+              </div>
+              <ul className="space-y-1.5">
+                {pickedRulesets.map((r) => {
+                  const summary = summarizeOverrideChain(resolveOverrideChain(r, rulesetsById));
+
+                  return (
+                    <li
+                      key={r.id}
+                      className="flex items-center gap-hmi-2 rounded-lg border border-ca-border/60 bg-ca-panel-2/60 px-2.5 py-1.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-ca-ink">{r.name}</p>
+                        <p className="truncate font-mono text-[10px] text-ca-ink-muted">
+                          {r.rules.length} rules, {summary}
+                        </p>
+                      </div>
+                      {projectId ? (
+                        <Link
+                          to="/projects/$projectId/rulesets/$rulesetId"
+                          params={{
+                            projectId,
+                            rulesetId: toIntParam(IntAliasNamespaceType.Ruleset, r.id),
+                          }}
+                          className="inline-flex items-center gap-1 rounded-md border border-ca-border bg-ca-panel px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ca-ink hover:border-ca-select hover:bg-ca-panel-2 transition-colors"
+                          aria-label={`Edit ${r.name}`}
+                        >
+                          <Pencil aria-hidden size={11} /> Edit
+                        </Link>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+          {RunStatusType.isRunning(status) === false && counters.total === 0 ? (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="rounded-xl border border-ca-border/80 bg-ca-panel/90 px-hmi-6 py-hmi-5 text-center shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md">
+                <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-ca-primary/15 text-ca-primary border border-ca-primary/30">
+                  <span className="h-2 w-2 rounded-full bg-ca-primary animate-ping" />
+                </div>
+                <p className="font-display text-xs font-bold uppercase tracking-widest text-ca-ink">
+                  Ready to Inspect
+                </p>
+                <p className="mt-hmi-1 text-xs text-ca-ink-muted">
+                  Press{" "}
+                  <kbd className="rounded border border-ca-border/80 bg-ca-surface px-1.5 py-0.5 font-mono text-[11px] text-ca-ink">
+                    Space
+                  </kbd>{" "}
+                  or the Start button to begin.
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </Viewport>
+        <StatusLog entries={log} />
+      </div>
       {showHistory && hydrated ? (
         <div
           className="fixed inset-y-0 right-0 z-40 flex"

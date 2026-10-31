@@ -1,8 +1,14 @@
 import React from "react";
 import { GripHorizontal } from "lucide-react";
 import { Geometry } from "@/domain/vision/shapes";
-import { imageToScreen, clampRectToBounds, IMAGE_BOUNDS } from "@/lib/editor/coords";
+import { imageToScreen, screenToImage, clampRectToBounds, IMAGE_BOUNDS } from "@/lib/editor/coords";
 import { Viewport } from "@/lib/editor/types";
+import { recordRoiDragStart, recordRoiDragEnd } from "@/lib/recorder/event-interceptor";
+import {
+  beginRoiInteraction,
+  completeRoiInteraction,
+  type DragCoordinates,
+} from "../roi-recording-bridge";
 
 export interface RegionOverlayProps {
   color: string;
@@ -13,12 +19,14 @@ export interface RegionOverlayProps {
   isLocked?: boolean;
   label?: string;
   onSelect?: () => void;
+  /** Telemetry callback invoked on pointer drag/resize completion */
+  onDragTelemetry?: (telemetry: DragCoordinates) => void;
 }
 
 /**
- * RegionOverlay (Spec 83: Modern Design Layer Integration).
+ * RegionOverlay (Spec 83: Modern Design Layer Integration & Spec 87: ROI Telemetry).
  * Renders high-precision CAD-grade white/slate resize handles, a 20px top header grip bar,
- * and interior click-through (pointer-events-none on body) to prevent accidental drag hijacking.
+ * interior click-through, and bridges pointer operations into recorder telemetry.
  */
 export function RegionOverlay({
   color,
@@ -29,6 +37,7 @@ export function RegionOverlay({
   isLocked = false,
   label = "ROI",
   onSelect,
+  onDragTelemetry,
 }: RegionOverlayProps): React.JSX.Element | null {
   const x = geometry.x ?? 0;
   const y = geometry.y ?? 0;
@@ -55,23 +64,88 @@ export function RegionOverlay({
     const startX = e.clientX;
     const startY = e.clientY;
     const startGeom = { x, y, width, height };
+    let currentGeom = { ...startGeom };
+
+    const startImageCoords = screenToImage({ x: startX, y: startY }, viewport);
+
+    recordRoiDragStart({
+      action: "move",
+      roi: startGeom,
+      element: el,
+    });
+
+    const bridgeSession = beginRoiInteraction({
+      operationType: "roi-drag",
+      screenCoords: { x: startX, y: startY },
+      imageCoords: startImageCoords,
+      geometry: startGeom,
+      handleId: "header-drag",
+      element: el,
+      label,
+    });
 
     const onMove = (moveEv: PointerEvent) => {
       const dxImg = (moveEv.clientX - startX) / viewport.zoom;
       const dyImg = (moveEv.clientY - startY) / viewport.zoom;
 
-      onChange(
-        clampRectToBounds(
-          { ...startGeom, x: startGeom.x + dxImg, y: startGeom.y + dyImg },
-          IMAGE_BOUNDS,
-        ),
+      currentGeom = clampRectToBounds(
+        { ...startGeom, x: startGeom.x + dxImg, y: startGeom.y + dyImg },
+        IMAGE_BOUNDS,
       );
+
+      onChange(currentGeom);
     };
 
-    const onUp = () => {
+    const onUp = (upEv: PointerEvent) => {
       el.releasePointerCapture(e.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+
+      const endX = upEv.clientX;
+      const endY = upEv.clientY;
+      const endImageCoords = screenToImage({ x: endX, y: endY }, viewport);
+
+      recordRoiDragEnd({
+        action: "move",
+        startRoi: startGeom,
+        endRoi: currentGeom,
+        element: el,
+      });
+
+      if (bridgeSession) {
+        completeRoiInteraction({
+          session: bridgeSession,
+          screenCoords: { x: endX, y: endY },
+          imageCoords: endImageCoords,
+          finalGeometry: currentGeom,
+          element: el,
+        });
+
+        if (onDragTelemetry) {
+          const deltaX = Math.round(currentGeom.x - startGeom.x);
+          const deltaY = Math.round(currentGeom.y - startGeom.y);
+
+          onDragTelemetry({
+            startScreenX: Math.round(startX),
+            startScreenY: Math.round(startY),
+            endScreenX: Math.round(endX),
+            endScreenY: Math.round(endY),
+            startNaturalX: Math.round(startImageCoords.x),
+            startNaturalY: Math.round(startImageCoords.y),
+            endNaturalX: Math.round(endImageCoords.x),
+            endNaturalY: Math.round(endImageCoords.y),
+            deltaX,
+            deltaY,
+            startGeometry: startGeom,
+            endGeometry: currentGeom,
+            deltaWidth: 0,
+            deltaHeight: 0,
+            handleId: "header-drag",
+            xpath: bridgeSession.targetXPath,
+            startScreenshotId: bridgeSession.startScreenshotId,
+          });
+        }
+      }
     };
 
     window.addEventListener("pointermove", onMove);
@@ -93,6 +167,26 @@ export function RegionOverlay({
     const startX = e.clientX;
     const startY = e.clientY;
     const startGeom = { x, y, width, height };
+    let currentGeom = { ...startGeom };
+
+    const startImageCoords = screenToImage({ x: startX, y: startY }, viewport);
+
+    recordRoiDragStart({
+      action: "resize",
+      roi: startGeom,
+      element: el,
+      handle,
+    });
+
+    const bridgeSession = beginRoiInteraction({
+      operationType: "roi-resize",
+      screenCoords: { x: startX, y: startY },
+      imageCoords: startImageCoords,
+      geometry: startGeom,
+      handleId: `handle-${handle}`,
+      element: el,
+      label,
+    });
 
     const onMove = (moveEv: PointerEvent) => {
       const dxImg = (moveEv.clientX - startX) / viewport.zoom;
@@ -107,13 +201,16 @@ export function RegionOverlay({
         newX += dxImg;
         newW -= dxImg;
       }
+
       if (handle.includes("e")) {
         newW += dxImg;
       }
+
       if (handle.includes("n")) {
         newY += dyImg;
         newH -= dyImg;
       }
+
       if (handle.includes("s")) {
         newH += dyImg;
       }
@@ -122,18 +219,69 @@ export function RegionOverlay({
         newX += newW - 10;
         newW = 10;
       }
+
       if (newH < 10) {
         newY += newH - 10;
         newH = 10;
       }
 
-      onChange(clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, IMAGE_BOUNDS));
+      currentGeom = clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, IMAGE_BOUNDS);
+      onChange(currentGeom);
     };
 
-    const onUp = () => {
+    const onUp = (upEv: PointerEvent) => {
       el.releasePointerCapture(e.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+
+      const endX = upEv.clientX;
+      const endY = upEv.clientY;
+      const endImageCoords = screenToImage({ x: endX, y: endY }, viewport);
+
+      recordRoiDragEnd({
+        action: "resize",
+        startRoi: startGeom,
+        endRoi: currentGeom,
+        element: el,
+        handle,
+      });
+
+      if (bridgeSession) {
+        completeRoiInteraction({
+          session: bridgeSession,
+          screenCoords: { x: endX, y: endY },
+          imageCoords: endImageCoords,
+          finalGeometry: currentGeom,
+          element: el,
+        });
+
+        if (onDragTelemetry) {
+          const deltaX = Math.round(currentGeom.x - startGeom.x);
+          const deltaY = Math.round(currentGeom.y - startGeom.y);
+          const deltaWidth = Math.round(currentGeom.width - startGeom.width);
+          const deltaHeight = Math.round(currentGeom.height - startGeom.height);
+
+          onDragTelemetry({
+            startScreenX: Math.round(startX),
+            startScreenY: Math.round(startY),
+            endScreenX: Math.round(endX),
+            endScreenY: Math.round(endY),
+            startNaturalX: Math.round(startImageCoords.x),
+            startNaturalY: Math.round(startImageCoords.y),
+            endNaturalX: Math.round(endImageCoords.x),
+            endNaturalY: Math.round(endImageCoords.y),
+            deltaX,
+            deltaY,
+            startGeometry: startGeom,
+            endGeometry: currentGeom,
+            deltaWidth,
+            deltaHeight,
+            handleId: `handle-${handle}`,
+            xpath: bridgeSession.targetXPath,
+            startScreenshotId: bridgeSession.startScreenshotId,
+          });
+        }
+      }
     };
 
     window.addEventListener("pointermove", onMove);
@@ -168,17 +316,15 @@ export function RegionOverlay({
       data-testid="region-overlay"
     >
       {/* Draggable Interior Body */}
-      {active && (
-        <div
-          onPointerDown={handleHeaderPointerDown}
-          className={`absolute inset-0 ${
-            isLocked
-              ? "pointer-events-none"
-              : "pointer-events-auto cursor-move bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
-          }`}
-          data-testid="roi-interior-body"
-        />
-      )}
+      <div
+        onPointerDown={handleHeaderPointerDown}
+        style={{
+          pointerEvents: active && !isLocked ? "auto" : "none",
+          cursor: isLocked ? "default" : "move",
+        }}
+        className="absolute inset-0 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
+        data-testid="roi-interior-body"
+      />
 
       {/* 20px Header Grip Bar */}
       {active && (

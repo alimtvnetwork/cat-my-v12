@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Settings, Home, Camera, Sun, Info, Target, LayoutDashboard } from "lucide-react";
 import { FlavorToggle } from "../theme/FlavorToggle";
 import { WindowMenu } from "./WindowMenu";
+import { TopBarErrorButton } from "../errors/TopBarErrorButton";
 
 export function StandardAppShellNav(): React.JSX.Element | null {
   return (
@@ -48,6 +49,7 @@ export function StandardAppShellNav(): React.JSX.Element | null {
       </div>
 
       <div className="flex items-center gap-2">
+        <TopBarErrorButton />
         <WindowMenu />
         <FlavorToggle />
         <Link

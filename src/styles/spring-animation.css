@@ -1,0 +1,85 @@
+/* Magic Spring Click Ripple Animation */
+@keyframes recorderSpringPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.95;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0.85;
+    box-shadow: 0 0 24px rgba(6, 182, 212, 0.7), inset 0 0 12px rgba(6, 182, 212, 0.4);
+  }
+  65% {
+    transform: translate(-50%, -50%) scale(1.0);
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes recorderBadgePop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.0);
+    opacity: 0.95;
+  }
+  85% {
+    transform: scale(1.0);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.recorder-spring-container {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  overflow: hidden;
+  user-select: none;
+}
+
+.recorder-spring-pulse,
+.animate-recorder-spring {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  border: 2px solid #06b6d4;
+  background-color: rgba(6, 182, 212, 0.15);
+  animation: recorderSpringPulse 600ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+}
+
+.recorder-step-badge {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background-color: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(6, 182, 212, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(6, 182, 212, 0.5);
+  color: #22d3ee;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  animation: recorderBadgePop 600ms ease-out forwards;
+  pointer-events: none;
+}

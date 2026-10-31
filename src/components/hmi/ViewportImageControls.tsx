@@ -25,13 +25,16 @@ export function ViewportImageControls(): React.JSX.Element | null {
   // the editor with the same POV framing they left on.
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     try {
       const raw = window.localStorage.getItem(SAMPLE_SELECTION_STORAGE_KEY);
 
       if (!raw) return;
+
       const sample = library.find((s) => s.id === raw);
 
       if (!sample) return;
+
       setSelectedSampleId(sample.id);
       setReferenceImage(sample.url);
     } catch (err) {
@@ -56,11 +59,13 @@ export function ViewportImageControls(): React.JSX.Element | null {
     if (file.type.startsWith("image/") === false) return setError("Image files only.");
 
     if (file.size > MAX_BYTES) return setError("Max 4 MB.");
+
     const reader = new FileReader();
     reader.onload = () => {
       const r = typeof reader.result === "string" ? reader.result : null;
 
       if (!r) return setError("Could not read file.");
+
       try {
         setReferenceImage(r);
       } catch {
@@ -74,6 +79,7 @@ export function ViewportImageControls(): React.JSX.Element | null {
   async function openCamera(): Promise<void> {
     setError(null);
     setCameraOpen(true);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -100,13 +106,16 @@ export function ViewportImageControls(): React.JSX.Element | null {
     const video = videoRef.current;
 
     if (!video || video.videoWidth === 0) return;
+
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
 
     if (!ctx) return;
+
     ctx.drawImage(video, 0, 0);
+
     try {
       setReferenceImage(canvas.toDataURL("image/jpeg", 0.9));
       closeCamera();
@@ -121,16 +130,19 @@ export function ViewportImageControls(): React.JSX.Element | null {
 
   function pickSample(s: SampleImage): void {
     setError(null);
+
     try {
       setReferenceImage(s.url);
       setPovOpen(false);
       setSelectedSampleId(s.id);
+
       // Persist the pick so it survives refresh / editor reopen.
       try {
         window.localStorage.setItem(SAMPLE_SELECTION_STORAGE_KEY, s.id);
       } catch (err) {
         ClientLogger.warn("[viewport-camera] persist sample id failed", err);
       }
+
       // Sync POV-dependent slider values (brightness, contrast, exposure,
       // enhance, saturation, gain) so CameraPreview + capture pipeline
       // match the framing the operator just picked.
@@ -255,7 +267,7 @@ export function ViewportImageControls(): React.JSX.Element | null {
       </div>
       {error ? (
         <div
-          className="absolute right-3 top-14 z-10 rounded border border-ca-ng/50 bg-ca-panel/90 px-2 py-1 text-hmi-caption text-ca-ng"
+          className="absolute right-3 top-24 z-10 rounded border border-ca-ng/50 bg-ca-panel/90 px-2 py-1 text-hmi-caption text-ca-ng"
           role="alert"
         >
           {error}

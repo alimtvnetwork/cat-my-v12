@@ -19,7 +19,11 @@ function patternRule(): EditorRule {
 
 describe("pinPatternRule", () => {
   it("squares the ROI and stores the Atmel boxes on the current image", () => {
-    const pinned = pinPatternRule(patternRule(), 1046, 360);
+    const squareRule: EditorRule = {
+      ...patternRule(),
+      params: { ...patternRule().params, shapeType: "square" },
+    };
+    const pinned = pinPatternRule(squareRule, 1046, 360);
 
     expect(pinned.width).toBe(pinned.height);
     expect(pinned.width).toBe(174);
@@ -29,8 +33,30 @@ describe("pinPatternRule", () => {
     expect(pinned.params?.referenceBoxes.length).toBe(24);
   });
 
+  it("preserves rectangular width and height for rectangle or undefined shapeType", () => {
+    const undefinedShapePinned = pinPatternRule(patternRule(), 960, 540);
+
+    expect(undefinedShapePinned.width).toBe(930);
+    expect(undefinedShapePinned.height).toBe(174);
+    expect(undefinedShapePinned.params?.shapeType).toBe("rectangle");
+
+    const rectangleRule: EditorRule = {
+      ...patternRule(),
+      params: { ...patternRule().params, shapeType: "rectangle" },
+    };
+    const rectanglePinned = pinPatternRule(rectangleRule, 960, 540);
+
+    expect(rectanglePinned.width).toBe(930);
+    expect(rectanglePinned.height).toBe(174);
+    expect(rectanglePinned.params?.shapeType).toBe("rectangle");
+  });
+
   it("rebases a stored frame when the next image size differs", () => {
-    const first = pinPatternRule(patternRule(), 960, 540);
+    const squareRule: EditorRule = {
+      ...patternRule(),
+      params: { ...patternRule().params, shapeType: "square" },
+    };
+    const first = pinPatternRule(squareRule, 960, 540);
     const second = pinPatternRule(first, 480, 270);
 
     expect(second.params?.authoredFrameWidth).toBe(480);

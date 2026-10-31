@@ -36,6 +36,12 @@ import {
 } from "@/lib/vision/workpiece-rule-analyzer";
 import { useErrorStore } from "@/lib/stores/errorStore";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { recordRoiDragStart, recordRoiDragEnd } from "@/lib/recorder/event-interceptor";
+import {
+  beginRoiInteraction,
+  completeRoiInteraction,
+  type RoiInteractionSession,
+} from "../roi-recording-bridge";
 
 export interface WorkpieceRoi {
   x: number;
@@ -1328,6 +1334,7 @@ export function VisualToolWorkpieceCanvas({
   const [isHoveringRoi, setIsHoveringRoi] = useState(false);
   const [isRoiLocked, setIsRoiLocked] = useState(false);
   const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+  const roiBridgeSessionRef = useRef<RoiInteractionSession | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1742,7 +1749,7 @@ export function VisualToolWorkpieceCanvas({
     configuredBoxes.length === 0 && detectedBoxes.length === 0 && isPatternMatching;
 
   const handleDetectElements = useCallback(
-    (shouldNotify = false) => {
+    (hasNotification = false) => {
       if (!imageElement) {
         return;
       }
@@ -1777,7 +1784,7 @@ export function VisualToolWorkpieceCanvas({
       setDetectedBoxes(finalBoxes);
       setExcludedNumbers(new Set());
 
-      if (shouldNotify && onPatternBoxesChange) {
+      if (hasNotification && onPatternBoxesChange) {
         const constellation = finalBoxes.map((b) => ({
           boxNumber: b.number,
           x: b.x,
@@ -2699,6 +2706,24 @@ export function VisualToolWorkpieceCanvas({
       if (hit) {
         setActiveCornerHandle(hit);
         setDragStartPos({ x, y, initialRoi: { ...roi } });
+
+        recordRoiDragStart({
+          action: "resize",
+          roi: { ...roi },
+          element: canvasRef.current,
+          handle: hit,
+        });
+
+        roiBridgeSessionRef.current = beginRoiInteraction({
+          operationType: "roi-resize",
+          screenCoords: { x: e.clientX, y: e.clientY },
+          imageCoords: { x, y },
+          geometry: { ...roi },
+          handleId: `handle-${hit}`,
+          element: canvasRef.current,
+          label: toolName || "Workpiece ROI",
+        });
+
         (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 
         return;
@@ -2709,6 +2734,23 @@ export function VisualToolWorkpieceCanvas({
     if (isEditable && onChangeRoi && !isRoiLocked && (isInsideHeader || isInsideRoi)) {
       setIsMovingRoi(true);
       setDragStartPos({ x, y, initialRoi: { ...roi } });
+
+      recordRoiDragStart({
+        action: "move",
+        roi: { ...roi },
+        element: canvasRef.current,
+      });
+
+      roiBridgeSessionRef.current = beginRoiInteraction({
+        operationType: "roi-drag",
+        screenCoords: { x: e.clientX, y: e.clientY },
+        imageCoords: { x, y },
+        geometry: { ...roi },
+        handleId: isInsideHeader ? "header-drag" : "interior-body-drag",
+        element: canvasRef.current,
+        label: toolName || "Workpiece ROI",
+      });
+
       (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 
       return;
@@ -2954,11 +2996,58 @@ export function VisualToolWorkpieceCanvas({
     }
 
     if (activeCornerHandle) {
+      if (dragStartPos) {
+        recordRoiDragEnd({
+          action: "resize",
+          startRoi: dragStartPos.initialRoi,
+          endRoi: { ...roi },
+          element: canvasRef.current,
+          handle: activeCornerHandle,
+        });
+      }
+
+      if (roiBridgeSessionRef.current) {
+        const { x: endX, y: endY } = getCanvasCoords(e.clientX, e.clientY);
+
+        completeRoiInteraction({
+          session: roiBridgeSessionRef.current,
+          screenCoords: { x: e.clientX, y: e.clientY },
+          imageCoords: { x: endX, y: endY },
+          finalGeometry: { ...roi },
+          element: canvasRef.current,
+        });
+
+        roiBridgeSessionRef.current = null;
+      }
+
       setActiveCornerHandle(null);
       (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     }
 
     if (isMovingRoi) {
+      if (dragStartPos) {
+        recordRoiDragEnd({
+          action: "move",
+          startRoi: dragStartPos.initialRoi,
+          endRoi: { ...roi },
+          element: canvasRef.current,
+        });
+      }
+
+      if (roiBridgeSessionRef.current) {
+        const { x: endX, y: endY } = getCanvasCoords(e.clientX, e.clientY);
+
+        completeRoiInteraction({
+          session: roiBridgeSessionRef.current,
+          screenCoords: { x: e.clientX, y: e.clientY },
+          imageCoords: { x: endX, y: endY },
+          finalGeometry: { ...roi },
+          element: canvasRef.current,
+        });
+
+        roiBridgeSessionRef.current = null;
+      }
+
       setIsMovingRoi(false);
       (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
     }
@@ -2969,6 +3058,7 @@ export function VisualToolWorkpieceCanvas({
     }
 
     setDragStartPos(null);
+    roiBridgeSessionRef.current = null;
   }
 
   function handleDoubleClick(e: React.MouseEvent<HTMLCanvasElement>) {

@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 export interface ViewportProps {
   children?: ReactNode;
   overlay?: ReactNode;
+  isLive?: boolean;
 }
 
-export function Viewport({ children, overlay }: ViewportProps): React.JSX.Element | null {
+export function Viewport({ children, overlay, isLive = false }: ViewportProps): React.JSX.Element | null {
   return (
     <div className="relative flex-1 m-hmi-3 rounded-2xl bg-[#06090d] overflow-hidden border border-ca-border/90 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_12px_36px_-6px_rgba(0,0,0,0.7)]">
       {/* Background CAD Grid */}
@@ -33,6 +34,7 @@ export function Viewport({ children, overlay }: ViewportProps): React.JSX.Elemen
       <div className="absolute inset-0 flex items-center justify-center text-ca-ink-muted font-hmi text-hmi-body">
         {children}
       </div>
+
       {overlay ? <div className="absolute inset-0 pointer-events-none">{overlay}</div> : null}
 
       {/* Optical HUD corner brackets with diamond chamfers */}
@@ -45,15 +47,25 @@ export function Viewport({ children, overlay }: ViewportProps): React.JSX.Elemen
       <div className="pointer-events-none absolute top-3 left-3 flex items-center gap-2">
         <div className="inline-flex items-center gap-2 rounded-full border border-ca-border/80 bg-ca-panel/90 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ca-ink shadow-[0_2px_8px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.1)] backdrop-blur-xl">
           <span className="relative flex h-2 w-2 items-center justify-center" aria-hidden="true">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ca-ok opacity-75" />
-            <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-ca-ok shadow-[0_0_8px_var(--ca-ok)]" />
+            {isLive ? (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ca-ok opacity-75" />
+            ) : null}
+            <span
+              className={`relative inline-block h-1.5 w-1.5 rounded-full ${
+                isLive
+                  ? "bg-ca-ok shadow-[0_0_8px_var(--ca-ok)]"
+                  : "bg-ca-ink-muted/60"
+              }`}
+            />
           </span>
-          <span>CAM-01 · LIVE STREAM</span>
+          <span className={isLive ? "text-ca-ink" : "text-ca-ink-muted"}>
+            {isLive ? "CAM-01 · LIVE STREAM" : "CAM-01 · STANDBY"}
+          </span>
         </div>
       </div>
 
       {/* Telemetry Stream Info */}
-      <div className="pointer-events-none absolute top-3 right-3 hidden sm:flex items-center gap-2">
+      <div className="pointer-events-none absolute top-14 right-3 hidden sm:flex items-center gap-2">
         <span className="rounded-lg border border-ca-border/80 bg-ca-panel/90 px-2.5 py-1 font-mono text-[10px] font-semibold text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
           1920×1080 @ 60 FPS · 800µs
         </span>

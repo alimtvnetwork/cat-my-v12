@@ -22,6 +22,19 @@ export function generateAiInstructions(session: RecorderSession): string {
   const actual = summary?.actualBehavior || "Observed unexpected behavior.";
   const category = summary?.category || "Other";
 
+  const errorBlock =
+    session.errors && session.errors.length > 0
+      ? session.errors
+          .slice(0, 10)
+          .map(
+            (err) =>
+              `- [${String(err.code || "E_APP_UNKNOWN")}] **${String(err.message || "")}** (Trigger: \`${String(err.triggerComponent || "system")}\`)${
+                err.stackTrace ? `\n    Stack: ${String(err.stackTrace).split("\n")[0]}` : ""
+              }`,
+          )
+          .join("\n")
+      : "No runtime errors recorded in Split-DB.";
+
   return `# AI Bug Remediation Instructions
 
 ## 1. Issue Overview
@@ -49,6 +62,9 @@ ${session.events
 - Inspect \`vision/inspection-context.json\` for the active project parameters, rules, and tolerances.
 - Inspect the captured PNG files in \`screenshots/\` to see the visual state when the issue happened.
 - Search the codebase for the selectors/components identified in \`events.json\`.
+
+## 5. Active Diagnostic Errors (Split-DB SQLite)
+${errorBlock}
 `;
 }
 
