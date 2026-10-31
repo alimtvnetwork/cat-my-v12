@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type ReactNode } from "react";
+import React, { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Menu,
@@ -102,6 +102,21 @@ const AUX_NAV_ITEMS: NavigationItem[] = [
   { key: "ops", label: "Operations", href: "/ops", icon: Layers },
 ];
 
+// Spec 55 menu work: opening the menu flips shell state, which re-renders
+// the shell. The main content (heavy vision canvases, simulation player)
+// is memoized on the children element identity, so a menu open does not
+// re-render it — the route parent does not recreate the element on a
+// shell state change, so the memo bail-out holds.
+const ShellMainContent = memo(function ShellMainContent({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
+  return (
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden hmi-cad-grid-bg">{children}</main>
+  );
+});
+
 export function StandardAppShell({
   title,
   subtitle,
@@ -123,6 +138,7 @@ export function StandardAppShell({
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const menuOpenStartRef = useRef<number | null>(null);
 
   useUiRemoteControl();
 
@@ -143,6 +159,30 @@ export function StandardAppShell({
       window.removeEventListener(GUIDED_SIMULATION_STATE_EVENT, onSimulationState);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    // Spec 55 menu instrumentation: the next "menu is slow" complaint
+    // must come with a measured number. The start mark is set in
+    // onOpenChange (the user-click path); this effect runs after the
+    // open render, so the measure covers click → painted.
+    const startMs = menuOpenStartRef.current;
+
+    if (startMs !== null) {
+      const openMs = performance.now() - startMs;
+      performance.mark("cat-vision:menu-open-end");
+      performance.measure(
+        "cat-vision:menu-open",
+        "cat-vision:menu-open-start",
+        "cat-vision:menu-open-end",
+      );
+      console.debug(`[menu-timing] menu open took ${openMs.toFixed(1)}ms`);
+      menuOpenStartRef.current = null;
+    }
+  }, [isMenuOpen]);
 
   useEffect(() => {
     const onSimulationMenu = (event: Event) => {
@@ -251,9 +291,11 @@ export function StandardAppShell({
             maxHeight: density === "compact" ? "var(--header-h, 32px)" : "var(--header-h, 40px)",
           }}
         >
-          {/* Brand (home page only) — CAT logo mark & Cat Vision branding */}
-          {pathname === "/" ? (
-            <div className="flex items-center gap-1.5 shrink-0">
+          {/* Brand — CAT logo mark is home-page only, but the version
+              badge shows on EVERY route (spec 55: /run and all tool
+              pages previously showed no version anywhere). */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {pathname === "/" ? (
               <Link
                 to="/"
                 title="CAT iVISION Home"
@@ -264,24 +306,29 @@ export function StandardAppShell({
                   Cat Vision, Cat I Vision
                 </span>
               </Link>
+            ) : null}
 
-              <button
-                type="button"
-                data-testid="version-badge-button"
-                onClick={() => setIsVersionModalOpen(true)}
-                title={`Released ${APP_VERSION_INFO.releaseDate} — Click for release details`}
-                className="flex cursor-pointer items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-300 transition-all hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white active:scale-95 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
-              >
-                <span>{APP_VERSION_INFO.version}</span>
-              </button>
-            </div>
-          ) : null}
+            <button
+              type="button"
+              data-testid="version-badge-button"
+              onClick={() => setIsVersionModalOpen(true)}
+              title={`Released ${APP_VERSION_INFO.releaseDate} — Click for release details`}
+              className="flex cursor-pointer items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-300 transition-all hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white active:scale-95 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+            >
+              <span>{APP_VERSION_INFO.version}</span>
+            </button>
+          </div>
 
           {/* Dropdown Menu Trigger */}
           <DropdownMenu
             modal={false}
             open={isMenuOpen}
             onOpenChange={(isOpen) => {
+              if (isOpen) {
+                menuOpenStartRef.current = performance.now();
+                performance.mark("cat-vision:menu-open-start");
+              }
+
               if (!isOpen && isSimulationRunning && pathname === "/") {
                 return;
               }
@@ -321,7 +368,7 @@ export function StandardAppShell({
 
                 setIsMenuOpen(false);
               }}
-              className="w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl backdrop-blur-xl z-50 text-slate-200"
+              className="w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl z-50 text-slate-200"
             >
               <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate">Navigation</span>
@@ -517,10 +564,9 @@ export function StandardAppShell({
         </div>
       )}
 
-      {/* Main Content Area */}
-      <main className="flex min-h-0 flex-1 flex-col overflow-hidden hmi-cad-grid-bg">
-        {children}
-      </main>
+      {/* Main Content Area — memoized so a menu open does not re-render
+          heavy vision canvases (see ShellMainContent above). */}
+      <ShellMainContent>{children}</ShellMainContent>
     </div>
   );
 }

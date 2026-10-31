@@ -1,4 +1,5 @@
 import versionData from "../../version.json";
+import { COMMIT_HASH } from "./commit-hash.generated";
 
 export interface VersionInfo {
   name: string;
@@ -15,7 +16,7 @@ export const APP_VERSION_INFO: VersionInfo = {
   shortName: "CAT iVISION",
   version: `v${versionData.version}`,
   releaseDate: versionData.releaseDate,
-  commitHash: "038f4b22",
+  commitHash: COMMIT_HASH,
   buildTarget: "HMI Production Web & Desktop",
   highlights: [
     "Browser window controls (fullscreen toggle, guided app exit with backend shutdown) in titlebar",

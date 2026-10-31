@@ -72,6 +72,7 @@ function resolveDesktopBridge(): DesktopApi | undefined {
 export function WindowControlButtons(): React.JSX.Element {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
+  const [isCloseNoop, setIsCloseNoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const baseUrl = useBackendMode((s) => s.baseUrl);
 
@@ -187,12 +188,30 @@ export function WindowControlButtons(): React.JSX.Element {
             "E_WINDOW_CLOSE",
           );
         }
+
+        // window.close() is a browser-security no-op for windows not
+        // opened by a script: it neither throws nor closes. If this
+        // code is still running shortly after, the close did not
+        // happen — say so plainly instead of leaving the user staring
+        // at "Shutting Down…".
+        window.setTimeout(() => {
+          setIsCloseNoop(true);
+        }, 400);
       });
   }, [baseUrl]);
+
+  useEffect(() => {
+    if (isCloseNoop) {
+      toast.info(
+        "Browser blocked the automatic close — close this window yourself (Alt+F4 or the OS close button). Backend shutdown was already requested.",
+      );
+    }
+  }, [isCloseNoop]);
 
   const handleDismissShutdown = useCallback(() => {
     setIsExitDialogOpen(false);
     setIsShuttingDown(false);
+    setIsCloseNoop(false);
   }, []);
 
   const minAttrs = getAutomationAttrs({
@@ -272,7 +291,9 @@ export function WindowControlButtons(): React.JSX.Element {
                     </h3>
                     <p className="text-xs text-slate-400">
                       {isShuttingDown
-                        ? "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
+                        ? isCloseNoop
+                          ? "The browser blocked the automatic close — this window was not opened by a script, so window.close() did nothing. Close this window yourself (Alt+F4 or the OS close button). The backend has already been asked to stop; the launcher stops any remaining services when the window closes."
+                          : "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
                         : "Are you sure you want to close Cat Vision, Cat I Vision?"}
                     </p>
                   </div>
