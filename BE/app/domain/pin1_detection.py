@@ -30,6 +30,11 @@ class SearchRegion:
 class Pin1Options:
     polarity: HolePolarity = "DarkIndentation"
     threshold_luma: int = 35
+    # Matching-plane mode, mirroring the frontend greyscaleMode:
+    # "threshold" and "one-bit" both walk the raw-luma binary grid
+    # (they differ only in preview); "stretch" min-max stretches the
+    # luma plane before thresholding. Default "threshold".
+    greyscale_mode: str = "threshold"
     min_circularity_percent: int = 45
     min_radius_px: int = 3
     max_radius_px: int = 60
@@ -71,6 +76,13 @@ class Pin1Result:
     executionTimeMs: float
     angleDegrees: float = 0.0
     deltaAngleDegrees: float = 0.0
+    # Spec 55: the threshold actually used, whether the requested
+    # value was overridden, and the region mean it was judged
+    # against. A control whose value is discarded without notice is
+    # a bug — these fields are the notice.
+    effectiveThresholdLuma: int = 0
+    isThresholdOverridden: bool = False
+    thresholdRegionMeanLuma: float = 0.0
 
 
 @dataclass
@@ -96,9 +108,10 @@ def detect_pin1(
     started = time.perf_counter()
     opts = options or Pin1Options()
     rgba = _decode_rgba(width, height, rgba_base64)
-    holes = _detect_holes(rgba, width, height, opts)
+    holes, threshold_info = _detect_holes(rgba, width, height, opts)
     result = _evaluate_holes(holes, opts)
     elapsed = round((time.perf_counter() - started) * 1000, 2)
+    effective_threshold, is_overridden, region_mean = threshold_info
 
     return Pin1Result(
         isPass=result.isPass,
@@ -112,6 +125,9 @@ def detect_pin1(
         deltaY=result.deltaY,
         deltaDistance=result.deltaDistance,
         executionTimeMs=elapsed,
+        effectiveThresholdLuma=effective_threshold,
+        isThresholdOverridden=is_overridden,
+        thresholdRegionMeanLuma=round(region_mean, 1),
     )
 
 
@@ -154,18 +170,38 @@ def _luma(rgba: bytes, index: int) -> float:
     return 0.299 * rgba[pos] + 0.587 * rgba[pos + 1] + 0.114 * rgba[pos + 2]
 
 
+def _effective_threshold(
+    requested: int,
+    mean_luma: float,
+    polarity: HolePolarity,
+) -> tuple[int, bool]:
+    """Spec 55: the single Pin1 threshold rule, shared by the
+    pure-Python and cv2 paths (previously duplicated, silently, in
+    both). A DarkIndentation request at or above the region mean can
+    never match a dark hole, so it is replaced by 75% of the mean.
+    The replacement is REPORTED via the returned flag — the caller
+    surfaces it in Pin1Result — never discarded silently."""
+
+    if polarity == "DarkIndentation" and requested >= mean_luma:
+        return max(15, round(mean_luma * 0.75)), True
+
+    return requested, False
+
+
 def _binary_grid(
     rgba: bytes,
     width: int,
     height: int,
     opts: Pin1Options,
-) -> tuple[bytearray, list[float], tuple[int, int, int, int]]:
+) -> tuple[bytearray, list[float], tuple[int, int, int, int], tuple[int, bool, float]]:
     start_x, start_y, end_x, end_y = _bounds(width, height, opts.search_region)
     total = width * height
     binary = bytearray(total)
     lumas = [0.0] * total
     region_sum = 0.0
     region_count = 0
+    min_luma = 255.0
+    max_luma = 0.0
 
     for y in range(start_y, end_y):
         for x in range(start_x, end_x):
@@ -179,12 +215,33 @@ def _binary_grid(
             lumas[idx] = value
             region_sum += value
             region_count += 1
+            min_luma = min(min_luma, value)
+            max_luma = max(max_luma, value)
+
+    # Stretch mode: min-max stretch the luma plane before any
+    # threshold decision, mirroring the frontend toMatchingGray
+    # stretch plane. Threshold/one-bit modes use raw luma.
+    if opts.greyscale_mode == "stretch" and max_luma > min_luma:
+        stretched_sum = 0.0
+        stretched_count = 0
+
+        for y in range(start_y, end_y):
+            for x in range(start_x, end_x):
+                idx = y * width + x
+
+                if rgba[idx * BYTES_PER_RGBA_PIXEL + 3] < MIN_VISIBLE_ALPHA:
+                    continue
+
+                stretched = (lumas[idx] - min_luma) * 255.0 / (max_luma - min_luma)
+                lumas[idx] = stretched
+                stretched_sum += stretched
+                stretched_count += 1
+
+        region_sum = stretched_sum
+        region_count = stretched_count
 
     mean_luma = region_sum / region_count if region_count > 0 else 50
-    threshold = opts.threshold_luma
-
-    if opts.polarity == "DarkIndentation" and threshold >= mean_luma:
-        threshold = max(15, round(mean_luma * 0.75))
+    threshold, is_overridden = _effective_threshold(opts.threshold_luma, mean_luma, opts.polarity)
 
     for y in range(start_y, end_y):
         for x in range(start_x, end_x):
@@ -199,7 +256,7 @@ def _binary_grid(
             if has_target:
                 binary[idx] = 1
 
-    return binary, lumas, (start_x, start_y, end_x, end_y)
+    return binary, lumas, (start_x, start_y, end_x, end_y), (threshold, is_overridden, mean_luma)
 
 
 def _flood(
@@ -309,7 +366,7 @@ def _detect_holes_cv2(
     width: int,
     height: int,
     opts: Pin1Options,
-) -> tuple[Pin1Hole, ...]:
+) -> tuple[tuple[Pin1Hole, ...], tuple[int, bool, float]]:
     import cv2
     import numpy as np
 
@@ -318,11 +375,11 @@ def _detect_holes_cv2(
     roi_bgr = arr[start_y:end_y, start_x:end_x, :3]
     gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
 
-    mean_luma = float(np.mean(gray)) if gray.size > 0 else 50.0
-    threshold = opts.threshold_luma
+    if opts.greyscale_mode == "stretch":
+        gray = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
 
-    if opts.polarity == "DarkIndentation" and threshold >= mean_luma:
-        threshold = max(15, round(mean_luma * 0.75))
+    mean_luma = float(np.mean(gray)) if gray.size > 0 else 50.0
+    threshold, is_overridden = _effective_threshold(opts.threshold_luma, mean_luma, opts.polarity)
 
     thresh_type = cv2.THRESH_BINARY if opts.polarity == "LightDot" else cv2.THRESH_BINARY_INV
     _, binary = cv2.threshold(gray, threshold, 255, thresh_type)
@@ -395,16 +452,21 @@ def _detect_holes_cv2(
     if holes:
         holes[0] = Pin1Hole(**{**holes[0].__dict__, "isPrimaryPin1": True})
 
-    return tuple(holes)
+    return tuple(holes), (threshold, is_overridden, mean_luma)
 
 
-def _detect_holes(rgba: bytes, width: int, height: int, opts: Pin1Options) -> tuple[Pin1Hole, ...]:
+def _detect_holes(
+    rgba: bytes,
+    width: int,
+    height: int,
+    opts: Pin1Options,
+) -> tuple[tuple[Pin1Hole, ...], tuple[int, bool, float]]:
     try:
         return _detect_holes_cv2(rgba, width, height, opts)
     except Exception:
         pass
 
-    binary, lumas, bounds = _binary_grid(rgba, width, height, opts)
+    binary, lumas, bounds, threshold_info = _binary_grid(rgba, width, height, opts)
     start_x, start_y, end_x, end_y = bounds
     visited = bytearray(width * height)
     holes: list[Pin1Hole] = []
@@ -427,7 +489,7 @@ def _detect_holes(rgba: bytes, width: int, height: int, opts: Pin1Options) -> tu
     if holes:
         holes[0] = Pin1Hole(**{**holes[0].__dict__, "isPrimaryPin1": True})
 
-    return tuple(holes)
+    return tuple(holes), threshold_info
 
 
 def _hole_rank(hole: Pin1Hole) -> tuple[int, float, int]:
