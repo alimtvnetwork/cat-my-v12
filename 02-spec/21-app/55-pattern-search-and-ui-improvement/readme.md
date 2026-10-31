@@ -779,3 +779,68 @@ its surface tag). Items trace to §7–§10 findings unless marked
 198. [P2] [X] Layer accessibility (keyboard layer navigation). [PROPOSED]
 199. [P2] [X] Layer animation on reorder (smooth z transition). [PROPOSED]
 200. [P2] [X] Layer conflict resolver (teach vs sim geometry merge UI). [PROPOSED]
+
+## 13. Wave 3 completion — window/menu/browser/version/install/run
+(31-Oct-25, verified by coordinator: 3 commits on origin, HEAD
+27d4e2e3 at verification time; prebuild wiring 7ff856aa followed.)
+
+- Launcher parity + orphans: start.ps1 gained already-running
+  reuse checks for backend/frontend (a stale backend can no longer
+  mask a new bind failure) + combined Wait-AppServices polling both
+  every 250ms; start.sh trap is now EXIT INT TERM (coordinator
+  verified) with a LEAVE_SERVICES_RUNNING guard for the two
+  must-outlive paths (browser delegation, macOS open path); macOS
+  fallback replaced with per-app `open -n -a` --app + dedicated
+  profile (plain-tab open no longer exists); install.ps1 final
+  launch uses -WindowStyle Hidden.
+- Version everywhere, one source: badge moved out of the
+  `pathname === "/"` gate (coordinator verified: logo stays
+  home-only, badge button is outside the conditional) — shows on
+  /run and all tool pages; hardcoded commitHash 038f4b22 replaced by
+  a generated import (scripts/generate-commit-hash.mjs +
+  src/lib/commit-hash.generated.ts); BE __version__ = 4.113.9,
+  FastAPI version uses it, GET /meta serves it (old 0.1.0/1.0.0
+  gone; no in-repo FE code reads /meta today, but its docstring
+  claims a typed client gates features on it — external consumers
+  see the new value); both launchers print the version at startup
+  (from version.json in source layout, else GET /meta after backend
+  readiness in installed layout).
+- Faster run: backend + frontend start concurrently on both
+  launchers, 0.25s poll interval, 60s cap kept, process-death
+  fail-fast during waits; migration pass deleted from the LAUNCH
+  path only (backend lifespan runs the same _bootstrap_tier for
+  root/task/rules, which also covers backends started without the
+  launcher; db-bootstrap itself untouched, still used by CLI
+  preflight; tradeoff: a launch-time migration failure now surfaces
+  as a lifespan warning, not a hard launcher failure); port
+  fail-fast with "port 8787/3000 already in use by …" (TCP probe +
+  ss/lsof owner on sh, Test-PortHeld + Get-PortOwnerText on ps1).
+- Menu open: ShellMainContent memoized on children identity, so a
+  menu open no longer re-renders heavy vision canvases;
+  backdrop-blur-xl removed from menu content (header's kept);
+  open timing instrumented (cat-vision:menu-open-start mark +
+  `[menu-timing] menu open took Xms` log) — the next complaint
+  arrives with a measured number.
+- Close honesty gap: after POST /shutdown + window.close(), a
+  400ms timer sets isCloseNoop and the dialog states plainly that
+  the browser blocked the close and the user must close the window
+  themselves (Alt+F4/OS button), plus a toast with the same
+  remaining step. Minimize/maximize UNCHANGED (still browser-limited)
+  — no SPA code can fix them without the MBUD 5/6 native-shell
+  decision.
+- Commit-hash freshness, closed by coordinator (7ff856aa):
+  package.json `prebuild` now runs the generator, so every
+  `bun run build` — including the release workflow's Compile
+  Frontend step — refreshes the hash to the build commit. The
+  committed generated file is a dev fallback, always one commit
+  behind by construction; the built badge is fresh.
+- Delegation toast, closest correct behavior: a launcher cannot
+  toast into browser UI without a channel, so both launchers now
+  print a prominent multi-line delegation notice (console +
+  shutdown.log) alongside the Exit-flow toast/dialog. A true
+  launcher→UI toast needs a backend flag endpoint or the MBUD 5/6
+  native shell.
+- Verification: bash -n clean on start.sh; prettier clean on all
+  touched frontend files; PowerShell files re-read in full after
+  editing (no PowerShell on this VM — machine syntax check owed to
+  CI/end-of-tunnel). No builds or test runs per program order.
