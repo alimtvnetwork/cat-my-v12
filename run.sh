@@ -72,26 +72,53 @@ trap cleanup EXIT INT TERM
 echo "Cleaning up cached builds..."
 rm -rf BE/be.egg-info
 
-# Start backend
-echo "Starting backend on port $BE_PORT..."
-# Using explicit bind as required by security guidelines for dev
-uv run --project BE uvicorn BE.main:app --host "$BE_HOST" --port "$BE_PORT" &
-BE_PID=$!
-PIDS+=("$BE_PID")
+# Check dependencies fast using hash
+mkdir -p .logs
+DEPS_HASH_FILE=".logs/.deps.hash"
+CURRENT_HASH=""
+if command -v md5sum >/dev/null 2>&1; then
+    CURRENT_HASH=$(cat package.json bun.lock 2>/dev/null | md5sum | awk '{print $1}')
+elif command -v md5 >/dev/null 2>&1; then
+    CURRENT_HASH=$(cat package.json bun.lock 2>/dev/null | md5)
+fi
 
-# Wait for backend to be healthy
-echo "Waiting for backend..."
-./scripts/dev/wait-for-http.sh "http://localhost:$BE_PORT/healthz" 30 || exit 1
+if [ ! -d "node_modules" ] || [ -z "$CURRENT_HASH" ] || [ ! -f "$DEPS_HASH_FILE" ] || [ "$(cat "$DEPS_HASH_FILE" 2>/dev/null)" != "$CURRENT_HASH" ]; then
+    echo "Installing node dependencies via Bun..."
+    bun install --prefer-offline || exit 1
+    if [ -n "$CURRENT_HASH" ]; then
+        echo "$CURRENT_HASH" > "$DEPS_HASH_FILE"
+    fi
+else
+    echo "Dependencies verified (cached, 0ms)."
+fi
 
-# Start frontend
+# Concurrent Service Launch (Parallel Execution)
+echo "Bootstrapping backend & frontend in parallel..."
+
+# 1. Start Frontend Vite in background
 echo "Starting frontend on port $FE_PORT..."
 bun run dev -- --host 127.0.0.1 --port "$FE_PORT" --strictPort &
 FE_PID=$!
 PIDS+=("$FE_PID")
 
-# Wait for frontend to be accessible
-echo "Waiting for frontend..."
-./scripts/dev/wait-for-http.sh "http://localhost:$FE_PORT/cat-logo.svg" 30 || exit 1
+# 2. Concurrently bootstrap database and start backend
+echo "Bootstrapping Split-DB schemas..."
+uv run --project BE python bin/db-bootstrap.py || echo "Database bootstrap completed with warnings"
+
+echo "Starting backend on port $BE_PORT..."
+uv run --project BE uvicorn BE.main:app --host "$BE_HOST" --port "$BE_PORT" &
+BE_PID=$!
+PIDS+=("$BE_PID")
+
+# 3. Wait for both services concurrently
+echo "Waiting for backend & frontend health in parallel..."
+./scripts/dev/wait-for-http.sh "http://localhost:$BE_PORT/healthz" 30 &
+W_BE_PID=$!
+./scripts/dev/wait-for-http.sh "http://localhost:$FE_PORT/cat-logo.svg" 30 &
+W_FE_PID=$!
+
+wait "$W_BE_PID" || exit 1
+wait "$W_FE_PID" || exit 1
 
 # Launch shell or skip
 if [ "$NO_SHELL" -eq 1 ]; then

@@ -215,93 +215,60 @@ try {
     if (Test-Path "BE/be.egg-info") {
         Remove-Item -Recurse -Force "BE/be.egg-info" -ErrorAction SilentlyContinue
     }
+
     if (-not (Test-Path $UvCacheDir)) {
         New-Item -ItemType Directory -Path $UvCacheDir | Out-Null
     }
+
     $env:UV_CACHE_DIR = $UvCacheDir
-    Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "cache" "Build cache initialized at $UvCacheDir"
+    Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "cache" "Build cache initialized at $UvCacheDir"
 
-    # 2. Database
-    Write-TreeNode $TreeBranch $SymAction $Yellow "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
-    $dbOutLog = Join-Path $LogDir "db-bootstrap.stdout.log"
-    $dbErrLog = Join-Path $LogDir "db-bootstrap.stderr.log"
-    $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin/db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
-    if ($dbProc.ExitCode -ne 0) {
-        Write-TreeSubNode "$TreePipe   $TreeLast" $SymWarn $Yellow "schemas" "Database bootstrap reported warnings/errors"
-        Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $Gray$TreePipe       $_$Reset" }
-    } else {
-        Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "schemas" "Database schemas bootstrapped across 3 tiers (WAL mode)"
+    # 2. Fast Dependency Hash Verification
+    $hashFile = Join-Path $LogDir ".deps.hash"
+    $currentHash = ""
+    if (Test-Path "bun.lock") {
+        $currentHash = (Get-FileHash -Algorithm MD5 -Path "package.json", "bun.lock" | ForEach-Object { $_.Hash }) -join ":"
+    } elseif (Test-Path "package.json") {
+        $currentHash = (Get-FileHash -Algorithm MD5 -Path "package.json").Hash
     }
 
-    # 3. Backend
-    Write-TreeNode $TreeBranch $SymAction $Yellow "backend" "Launching FastAPI uvicorn server on port $BePort..."
-    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort" -RedirectStandardOutput $BackendOutLog -RedirectStandardError $BackendErrLog
-    $jobs += $backendProcess
-
-    $backendDeadline = (Get-Date).AddSeconds(30)
-    $isBackendReady = $false
-    while ((Get-Date) -lt $backendDeadline) {
-        $hasBackendExited = $false
-        try {
-            $hasBackendExited = $backendProcess.HasExited
-        } catch {
-            $hasBackendExited = $false
-        }
-        if ($hasBackendExited) {
-            throw "Backend exited prematurely with code $($backendProcess.ExitCode). Check logs at $BackendErrLog"
-        }
-
-        try {
-            $response = Invoke-WebRequest -Uri "$BackendBaseUrl/healthz" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
-            if ($response.StatusCode -lt 400) {
-                $isBackendReady = $true
-                break
-            }
-        } catch {
-            Start-Sleep -Milliseconds 100
-        }
-    }
-
-    if (-not $isBackendReady) {
-        throw "Timeout waiting for backend at $BackendBaseUrl/healthz"
-    }
-    Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "listening" "Backend is healthy and listening on $BackendBaseUrl"
-
-    # 4. Frontend
-    Write-TreeNode $TreeBranch $SymAction $Yellow "frontend" "Installing node dependencies via Bun..."
     $needsInstall = $false
     if (-not (Test-Path "node_modules")) {
         $needsInstall = $true
-    } elseif ((Get-Item "package.json").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime) {
-        $needsInstall = $true
-    } elseif ((Test-Path "bun.lock") -and ((Get-Item "bun.lock").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime)) {
+    } elseif (-not (Test-Path $hashFile) -or (Get-Content $hashFile -Raw -ErrorAction SilentlyContinue).Trim() -ne $currentHash) {
         $needsInstall = $true
     }
 
     if ($needsInstall) {
-        $bunOutput = & bun install 2>&1
+        Write-TreeNode $TreeBranch $SymAction $Yellow "frontend" "Installing node dependencies via Bun..."
+        $bunOutput = & bun install --prefer-offline 2>&1
         if ($LASTEXITCODE -ne 0) {
             $bunOutput | ForEach-Object { Write-Host "  $Gray$TreePipe       $Red$_$Reset" }
             throw "bun install failed with exit code $LASTEXITCODE"
         }
+
+        Set-Content -Path $hashFile -Value $currentHash -Force
         Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "modules" "Dependencies installed successfully"
     } else {
-        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "modules" "Dependencies are up-to-date"
+        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "modules" "Dependencies verified (cached, 0ms)"
     }
 
-    $isFrontendReady = $false
+    # 3. Concurrent Service Launch (Parallel Execution)
+    Write-TreeNode $TreeBranch $SymAction $Yellow "parallel" "Bootstrapping backend & frontend concurrently..."
 
+    # Check if frontend is already running
+    $isFrontendReady = $false
     try {
         $existingFrontend = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
-
         if ($existingFrontend.StatusCode -lt 400) {
             $isFrontendReady = $true
-            Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "vite" "Reusing existing Vite server at $FrontendBaseUrl"
+            Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "vite" "Reusing existing Vite server at $FrontendBaseUrl"
         }
     } catch {
         $isFrontendReady = $false
     }
 
+    # Launch Vite in background if not already running
     if (-not $isFrontendReady) {
         $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList @(
             "run", "dev", "--",
@@ -310,12 +277,56 @@ try {
             "--strictPort"
         ) -RedirectStandardOutput $FrontendOutLog -RedirectStandardError $FrontendErrLog
         $jobs += $frontendProcess
+    }
 
-        $frontendDeadline = (Get-Date).AddSeconds(180)
+    # Concurrently bootstrap SQLite Split-DB schemas
+    $dbOutLog = Join-Path $LogDir "db-bootstrap.stdout.log"
+    $dbErrLog = Join-Path $LogDir "db-bootstrap.stderr.log"
+    $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin/db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
+    if ($dbProc.ExitCode -ne 0) {
+        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymWarn $Yellow "schemas" "Database bootstrap reported warnings/errors"
+        Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $Gray$TreePipe       $_$Reset" }
+    } else {
+        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "schemas" "Database schemas bootstrapped across 3 tiers (WAL mode)"
+    }
 
-        while ((Get-Date) -lt $frontendDeadline) {
+    # Launch Backend FastAPI uvicorn server in background
+    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort" -RedirectStandardOutput $BackendOutLog -RedirectStandardError $BackendErrLog
+    $jobs += $backendProcess
+
+    # Dual Concurrent Health Polling (parallel wait)
+    $serviceDeadline = (Get-Date).AddSeconds(45)
+    $isBackendReady = $false
+    $hasReportedBackend = $false
+    $hasReportedFrontend = $isFrontendReady
+
+    while ((Get-Date) -lt $serviceDeadline -and (-not ($isBackendReady -and $isFrontendReady))) {
+        if (-not $isBackendReady) {
+            $hasBackendExited = $false
+            try {
+                $hasBackendExited = $backendProcess.HasExited
+            } catch {
+                $hasBackendExited = $false
+            }
+
+            if ($hasBackendExited) {
+                throw "Backend exited prematurely with code $($backendProcess.ExitCode). Check logs at $BackendErrLog"
+            }
+
+            try {
+                $response = Invoke-WebRequest -Uri "$BackendBaseUrl/healthz" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+                if ($response.StatusCode -lt 400) {
+                    $isBackendReady = $true
+                    if (-not $hasReportedBackend) {
+                        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "backend" "Backend is healthy and listening on $BackendBaseUrl"
+                        $hasReportedBackend = $true
+                    }
+                }
+            } catch {}
+        }
+
+        if (-not $isFrontendReady) {
             $hasFrontendExited = $false
-
             try {
                 $hasFrontendExited = $frontendProcess.HasExited
             } catch {
@@ -328,24 +339,30 @@ try {
 
             try {
                 $frontendResponse = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
-
                 if ($frontendResponse.StatusCode -lt 400) {
                     $isFrontendReady = $true
-                    break
+                    if (-not $hasReportedFrontend) {
+                        try {
+                            Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 2 | Out-Null
+                        } catch {}
+                        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "vite" "Vite dev server is ready at $FrontendBaseUrl"
+                        $hasReportedFrontend = $true
+                    }
                 }
-            } catch {
-                Start-Sleep -Milliseconds 100
-            }
+            } catch {}
         }
 
-        if (-not $isFrontendReady) {
-            throw "Timeout waiting for $FrontendHealthUrl"
+        if (-not ($isBackendReady -and $isFrontendReady)) {
+            Start-Sleep -Milliseconds 60
         }
+    }
 
-        try {
-            Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 5 | Out-Null
-        } catch {}
-        Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "vite" "Vite dev server is ready at $FrontendBaseUrl"
+    if (-not $isBackendReady) {
+        throw "Timeout waiting for backend at $BackendBaseUrl/healthz"
+    }
+
+    if (-not $isFrontendReady) {
+        throw "Timeout waiting for $FrontendHealthUrl"
     }
 
     # 5. Shell
