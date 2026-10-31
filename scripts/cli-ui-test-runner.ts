@@ -1,6 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
-import * as os from "node:os";
-import { chromium, type Page, type Browser } from "playwright";
+import { launchCdpBrowser, type CdpPage } from "./cdp-browser";
 import {
   runPatternSearchLogicCases,
   runPatternSearchUiCases,
@@ -31,92 +29,6 @@ async function probeActiveBaseUrl(): Promise<string> {
   }
   return "http://127.0.0.1:3000";
 }
-function resolveChromePath(): string {
-  if (
-    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH &&
-    fs.existsSync(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
-  ) {
-    return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
-  }
-  const candidates = [
-    "C:\\Users\\Administrator\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe",
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Users\\Administrator\\.antigravity_tools\\instances\\v3-7391\\home\\AppData\\Local\\ms-playwright\\chromium-1228\\chrome-win64\\chrome.exe",
-    "C:\\Users\\mohan\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
-  ];
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return candidates[0];
-}
-
-const CHROME_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || resolveChromePath();
-const CDP_PORT = 9333;
-let headlessProcess: ChildProcess | null = null;
-
-function resolveHeadlessShell(): string {
-  const candidates = [
-    "C:\\Users\\Administrator\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe",
-    CHROME_PATH,
-  ];
-
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  return candidates[0];
-}
-
-async function connectHeadlessBrowser(): Promise<Browser> {
-  const shell = resolveHeadlessShell();
-
-  if (!fs.existsSync(shell)) {
-    throw new Error(`Chromium executable not found at ${shell}`);
-  }
-
-  const userDataDir = path.join(os.tmpdir(), `cat-cli-cdp-${Date.now()}`);
-  fs.mkdirSync(userDataDir, { recursive: true });
-  headlessProcess = spawn(
-    shell,
-    [
-      "--headless=new",
-      `--remote-debugging-port=${CDP_PORT}`,
-      `--user-data-dir=${userDataDir}`,
-      "--no-sandbox",
-      "--disable-gpu",
-    ],
-    { stdio: "ignore" },
-  );
-
-  const deadline = Date.now() + 15000;
-  let isReady = false;
-
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
-
-      if (res.ok) {
-        isReady = true;
-        break;
-      }
-    } catch {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-  }
-
-  if (!isReady) {
-    throw new Error(`Headless Chrome did not open DevTools on port ${CDP_PORT}`);
-  }
-
-  return chromium.connectOverCDP(`http://127.0.0.1:${CDP_PORT}`);
-}
 const OUTPUT_DIR = path.resolve(process.cwd(), "reports/e2e-screenshots");
 
 interface StepResult {
@@ -133,7 +45,7 @@ const results: StepResult[] = [];
 async function recordStep(
   feature: string,
   step: string,
-  page: Page,
+  page: CdpPage,
   action: () => Promise<string | void>,
   screenshotName?: string,
 ): Promise<boolean> {
@@ -195,14 +107,14 @@ async function runCliUiTests(): Promise<void> {
   console.log("=".repeat(75));
   console.log("🚀 CAT-iVISION CLI Headless UI Verification Runner (Alim Agenda)");
   console.log(`Target URL: ${BASE_URL}`);
-  console.log(`Chromium:   ${resolveHeadlessShell()}`);
+  console.log("Chromium:   DevTools socket");
   console.log("=".repeat(75));
 
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  const browser: Browser = await connectHeadlessBrowser();
+  const browser = await launchCdpBrowser();
 
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -420,7 +332,10 @@ async function runCliUiTests(): Promise<void> {
       "Navigate to /analyze and verify top toolbar with preset buttons",
       page,
       async () => {
-        await page.goto(`${BASE_URL}/analyze`, { waitUntil: "domcontentloaded" });
+        await page.goto(
+          `${BASE_URL}/analyze?project=prj-smt-74hc595-line&ruleset=rs-smt-74hc-production`,
+          { waitUntil: "domcontentloaded" },
+        );
         await page.waitForTimeout(800);
 
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
@@ -466,14 +381,21 @@ async function runCliUiTests(): Promise<void> {
       page,
       async () => {
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
-        await dropdownBtn.click({ force: true });
+        const liveCamOption = page.locator("text=Live Camera Feed").first();
 
-        const liveCamOption = page.locator("text='Live Camera Feed'").first();
-        await liveCamOption.waitFor({ state: "visible", timeout: 5000 });
+        await page.keyboard.press("Escape");
+        await dropdownBtn.click();
+
+        try {
+          await liveCamOption.waitFor({ state: "visible", timeout: 1000 });
+        } catch {
+          await dropdownBtn.click();
+          await liveCamOption.waitFor({ state: "visible", timeout: 5000 });
+        }
         const hasLiveCam = await liveCamOption.isVisible();
         if (!hasLiveCam) throw new Error("Live Camera Feed option not found in dropdown");
 
-        const uploadOption = page.locator("text='Upload New Image with Alias'");
+        const uploadOption = page.locator("text=Upload New Image with Alias").first();
         const hasUpload = await uploadOption.isVisible();
         if (!hasUpload) throw new Error("Upload New Image with Alias option not found in dropdown");
 
@@ -668,7 +590,6 @@ async function runCliUiTests(): Promise<void> {
     }
   } finally {
     await browser.close();
-    headlessProcess?.kill();
   }
 
   // -------------------------------------------------------------

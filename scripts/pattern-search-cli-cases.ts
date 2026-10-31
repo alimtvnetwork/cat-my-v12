@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import type { Page } from "playwright";
+import type { CdpPage } from "./cdp-browser";
 import { EditorRuleKindType } from "@/lib/editor/types";
 import { APP_VERSION_INFO } from "@/lib/version-info";
 import { filterPatternRgba, pinPatternRule } from "@/lib/vision/pinned-pattern-geometry";
@@ -199,7 +199,7 @@ async function timed<T>(action: () => Promise<T>): Promise<{ value: T; durationM
   return { value, durationMs: Date.now() - startedAt };
 }
 
-export async function runPatternSearchUiCases(page: Page, baseUrl: string): Promise<CliCaseResult[]> {
+export async function runPatternSearchUiCases(page: CdpPage, baseUrl: string): Promise<CliCaseResult[]> {
   const results: CliCaseResult[] = [];
 
   const record = async (step: string, budgetMs: number, action: () => Promise<string>): Promise<void> => {
@@ -228,8 +228,10 @@ export async function runPatternSearchUiCases(page: Page, baseUrl: string): Prom
     }
   };
 
+  const analyzeUrl = `${baseUrl}/analyze?project=prj-smt-74hc595-line&ruleset=rs-smt-74hc-production`;
+
   await record("Analyze status line shows the app version", 8000, async () => {
-    await page.goto(`${baseUrl}/analyze`, { waitUntil: "domcontentloaded" });
+    await page.goto(analyzeUrl, { waitUntil: "domcontentloaded" });
     const version = APP_VERSION_INFO.version;
     const status = page.locator(`text=${version}`).first();
 
