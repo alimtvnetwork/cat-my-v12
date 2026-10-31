@@ -459,7 +459,7 @@ public static extern void SHChangeNotify(int wEventId, int uFlags, System.IntPtr
     Write-Host ''
 
     $launchArguments = '-NoProfile -ExecutionPolicy Bypass -File "' + (Join-Path $installDir 'start.ps1') + '"'
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $launchArguments -WorkingDirectory $installDir
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $launchArguments -WorkingDirectory $installDir -WindowStyle Hidden
     Write-Host '  CAT iVISION has been launched.' -ForegroundColor Green
     Write-Host ''
 
