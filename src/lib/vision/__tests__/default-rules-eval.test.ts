@@ -1,7 +1,66 @@
 import { describe, it, expect } from "vitest";
 import { loadWorkpieceImageData, evaluateWorkpieceRuleReal } from "../workpiece-rule-analyzer";
 import { DEFAULT_24_PATTERN_BOXES } from "../white-box-marking";
+import { markWhiteBoxes, type SearchRegion } from "../white-box-marking";
+import { filterPatternRgba } from "../pinned-pattern-geometry";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
+import type { WorkpieceImageData } from "../workpiece-rule-analyzer";
+
+// Spec 55 end-of-tunnel: taught from the photo, not the generic
+// DEFAULT grid (see the same helper in workpiece-rule-analyzer.test.ts
+// and test-all-catalog.test.ts). Box dims are clamped to >=4px exactly
+// as parseBoxesFromParams clamps them, so taught and measured luma
+// agree on thin components.
+function teachBoxesFromImage(
+  imgData: WorkpieceImageData,
+  searchRegion: SearchRegion,
+  greyscaleLevel: number,
+): Array<{
+  boxNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  area: number;
+  expectedLuma: number;
+}> {
+  const filtered = filterPatternRgba(imgData.rgba, imgData.width, imgData.height, greyscaleLevel);
+  const detected = markWhiteBoxes({
+    width: imgData.width,
+    height: imgData.height,
+    rgba: filtered,
+    whiteThreshold: greyscaleLevel,
+    minAreaPx: 4,
+    searchRegion,
+    mode: "threshold",
+    polarity: "bright",
+  }).boxes;
+
+  return detected.map((b, i) => {
+    const width = Math.max(4, Math.round(b.width));
+    const height = Math.max(4, Math.round(b.height));
+    let sum = 0;
+    let count = 0;
+
+    for (let y = b.y; y < b.y + height; y += 1) {
+      for (let x = b.x; x < b.x + width; x += 1) {
+        const idx = (y * imgData.width + x) * 4;
+        sum += 0.299 * filtered[idx] + 0.587 * filtered[idx + 1] + 0.114 * filtered[idx + 2];
+        count += 1;
+      }
+    }
+
+    return {
+      boxNumber: i + 1,
+      x: b.x,
+      y: b.y,
+      width,
+      height,
+      area: Math.max(16, Math.round(width * height)),
+      expectedLuma: count > 0 ? Math.round(sum / count) : 0,
+    };
+  });
+}
 
 describe("Default Rules Inspection Accuracy", () => {
   it("evaluates all 3 default analyze rules on Golden Filled pocket", async () => {
@@ -11,6 +70,14 @@ describe("Default Rules Inspection Accuracy", () => {
     if (!img) {
       return;
     }
+
+    // Pattern rule taught from the photo (r2's filter level is its
+    // threshold, 110, so teach at 110).
+    const taughtPatternBoxes = teachBoxesFromImage(
+      img,
+      { x: 100, y: 70, width: 760, height: 400 },
+      110,
+    );
 
     const r1: EditorRule = {
       id: "rule-pin1-orientation-01",
@@ -52,25 +119,17 @@ describe("Default Rules Inspection Accuracy", () => {
       params: {
         toolCode: "T116",
         toolType: "Greyscale Pattern Matching",
-        activeBoxCount: 24,
-        totalBoxCount: 24,
+        activeBoxCount: taughtPatternBoxes.length,
+        totalBoxCount: taughtPatternBoxes.length,
         threshold: 110,
-        // This synthetic reference setup measures ~12.7px offset on
-        // the golden filled pocket, so its tolerance must exceed
-        // that; the spec offset gate itself is enforced. (Same
-        // calibration as the catalog test's pattern override; the
-        // previous 12px value predates the ff90a53c rotation search
-        // and fails the golden rule by 0.73px.)
         tolerancePx: 15,
         marginPx: 8,
         minMatchPercent: 80,
-        lumaTolerance: 255,
+        lumaTolerance: 32,
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
         patternRegion: { x: 150, y: 100, width: 600, height: 300 },
-        referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
-        constellationJson: JSON.stringify(
-          DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
-        ),
+        referenceBoxes: taughtPatternBoxes,
+        constellationJson: JSON.stringify(taughtPatternBoxes),
       },
     };
 

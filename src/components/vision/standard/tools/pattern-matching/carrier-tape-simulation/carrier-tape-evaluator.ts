@@ -1,9 +1,9 @@
 import {
   ATMEL_24_BOX_DEFINITIONS,
   GOLDEN_ATMEL_LUMAS,
-  rec601Luma,
   type TaughtChipBox,
 } from "../atmel-chip-boxes";
+import { rec601Luma } from "@/lib/vision/white-box-marking";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,

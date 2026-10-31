@@ -13,8 +13,76 @@ import {
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { ValidationStatusType } from "@/lib/editor/validation-store";
 import { DEFAULT_24_PATTERN_BOXES } from "../white-box-marking";
+import { markWhiteBoxes, type SearchRegion } from "../white-box-marking";
+import { filterPatternRgba } from "../pinned-pattern-geometry";
 
 const TEST_24_PATTERN_BOXES = DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }));
+
+// Spec 55 end-of-tunnel: the DEFAULT 24 boxes are a generic grid, not
+// a rule taught from the golden photo (their pixels are uniformly
+// dark, 42-81 luma, with zero bright pixels at the claimed letter
+// positions). Under the owner-ordered AND verdict they cannot pair,
+// and no honest matcher pairs boxes where no components exist. These
+// tests therefore teach from the photo itself — detect the components
+// the analyzer's own matcher sees on the filtered image, and use
+// their filtered-image mean luma as the reference. That mirrors the
+// real product path (teach, then evaluate) instead of asserting a
+// fixture that only ever passed because luma tolerance 255 made luma
+// vacuous and position was ignored.
+function teachBoxesFromImage(
+  imgData: WorkpieceImageData,
+  searchRegion: SearchRegion,
+  greyscaleLevel: number,
+): Array<{
+  boxNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  area: number;
+  expectedLuma: number;
+}> {
+  const filtered = filterPatternRgba(imgData.rgba, imgData.width, imgData.height, greyscaleLevel);
+  const detected = markWhiteBoxes({
+    width: imgData.width,
+    height: imgData.height,
+    rgba: filtered,
+    whiteThreshold: greyscaleLevel,
+    minAreaPx: 4,
+    searchRegion,
+    mode: "threshold",
+    polarity: "bright",
+  }).boxes;
+
+  return detected.map((b, i) => {
+    // The analyzer's parseBoxesFromParams clamps box dimensions to a
+    // minimum of 4px (keeping x/y, growing right/down). Teach over the
+    // CLAMPED rect, or the taught luma (unclamped rect) disagrees with
+    // the measured luma (clamped rect) for thin components.
+    const width = Math.max(4, Math.round(b.width));
+    const height = Math.max(4, Math.round(b.height));
+    let sum = 0;
+    let count = 0;
+
+    for (let y = b.y; y < b.y + height; y += 1) {
+      for (let x = b.x; x < b.x + width; x += 1) {
+        const idx = (y * imgData.width + x) * 4;
+        sum += 0.299 * filtered[idx] + 0.587 * filtered[idx + 1] + 0.114 * filtered[idx + 2];
+        count += 1;
+      }
+    }
+
+    return {
+      boxNumber: i + 1,
+      x: b.x,
+      y: b.y,
+      width,
+      height,
+      area: Math.max(16, Math.round(width * height)),
+      expectedLuma: count > 0 ? Math.round(sum / count) : 0,
+    };
+  });
+}
 
 function createPin1EvidenceImage(): WorkpieceImageData {
   const width = 220;
@@ -68,6 +136,15 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     if (!imgData) return;
 
+    // Taught from the photo (see teachBoxesFromImage): the generic
+    // DEFAULT grid does not correspond to this image's components.
+    const taughtBoxes = teachBoxesFromImage(
+      imgData,
+      { x: 100, y: 70, width: 760, height: 400 },
+      170,
+    );
+    expect(taughtBoxes.length).toBeGreaterThan(0);
+
     const patternRule: any = {
       id: "rule-pattern-test",
       name: "Greyscale Pattern Match",
@@ -82,11 +159,11 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       params: {
         /* TS workaround */ toolCode: "T116",
         minMatchPercent: 80,
-        constellationJson: JSON.stringify(TEST_24_PATTERN_BOXES),
+        constellationJson: JSON.stringify(taughtBoxes),
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
         patternRegion: { x: 150, y: 100, width: 600, height: 300 },
-        referenceBoxes: TEST_24_PATTERN_BOXES,
-        lumaTolerance: 255,
+        referenceBoxes: taughtBoxes,
+        lumaTolerance: 32,
       },
     };
 
@@ -378,10 +455,10 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     expect(res.status).toBe(ValidationStatusType.Pass);
     expect(res.debug?.matchedCount).toBe(2);
-    expect(res.message).toContain("2/2 pattern marks matched reference");
+    expect(res.message).toContain("2/2 pattern marks matched position and reference greyscale");
   });
 
-  it("strictly FAILS bright saved greyscale boxes when older rules lack expected luma", () => {
+  it("passes bright saved greyscale boxes with a re-teach warning when older rules lack expected luma", () => {
     const width = 160;
     const height = 100;
     const rgba = new Uint8ClampedArray(width * height * 4);
@@ -436,12 +513,13 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     const res = evaluatePatternRule(patternRule, imgData, "Bright boxes");
 
-    // Spec T102 §4: a box matches iff |measuredLuma - expectedLuma|
-    // <= lumaTolerance. Boxes without an expectedLuma have no
-    // reference to match against, so they are unmatched — the old
-    // auto-pass on presence alone directly contradicts the spec.
-    expect(res.status).toBe(ValidationStatusType.Fail);
-    expect(res.debug?.matchedCount).toBe(0);
+    // Spec 55 §15 supersedes the T102 §4 reading below: boxes without
+    // a taught expectedLuma are backfilled from the current image
+    // (with a re-teach warning) instead of failing unconditionally.
+    // The verdict is therefore PASS with the warning, not FAIL.
+    expect(res.status).toBe(ValidationStatusType.Pass);
+    expect(res.debug?.matchedCount).toBe(3);
+    expect(res.message).toContain("re-teach");
   });
 
   it("dispatches evaluateWorkpieceRuleReal cleanly across all rule categories", async () => {
@@ -449,6 +527,14 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     expect(imgData).not.toBeNull();
 
     if (!imgData) return;
+
+    // Taught from the photo (see teachBoxesFromImage).
+    const taughtBoxes = teachBoxesFromImage(
+      imgData,
+      { x: 100, y: 70, width: 760, height: 400 },
+      170,
+    );
+    expect(taughtBoxes.length).toBeGreaterThan(0);
 
     const patternRule: any = {
       id: "rule-t116",
@@ -464,10 +550,11 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       params: {
         /* TS workaround */ toolCode: "T116",
         minMatchPercent: 50,
+        constellationJson: JSON.stringify(taughtBoxes),
         searchRegion: { x: 100, y: 70, width: 760, height: 400 },
         patternRegion: { x: 150, y: 100, width: 600, height: 300 },
-        referenceBoxes: TEST_24_PATTERN_BOXES,
-        lumaTolerance: 255,
+        referenceBoxes: taughtBoxes,
+        lumaTolerance: 32,
       },
     };
 
@@ -484,6 +571,18 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
 
     if (!filledImg || !emptyImg) return;
 
+    // Spec 55 end-of-tunnel: the old M/E/G/A/3 boxes at y=280 were
+    // fictitious for this photo (those pixels are uniformly dark,
+    // 42-81 luma, zero bright pixels), so they cannot pair under the
+    // AND verdict. The test's point is arbitrary-count evaluation, so
+    // it teaches any 5 real components from the photo instead.
+    const taughtBoxes = teachBoxesFromImage(
+      filledImg,
+      { x: 100, y: 70, width: 760, height: 400 },
+      170,
+    ).slice(0, 5);
+    expect(taughtBoxes.length).toBe(5);
+
     // Custom 5-box pattern rule (e.g. only 5 markings calibrated)
     const fiveBoxRule: any = {
       id: "rule-pattern-5-box",
@@ -492,122 +591,20 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
       family: EditorToolFamilyType.Rect,
       isHidden: false,
       isLocked: false,
-      x: 350,
-      y: 220,
-      width: 350,
-      height: 180,
+      x: 100,
+      y: 70,
+      width: 760,
+      height: 400,
       params: {
         /* TS workaround */ toolCode: "T116",
         minMatchPercent: 80,
         activeBoxCount: 5,
         totalBoxCount: 5,
-        constellationJson: JSON.stringify([
-          {
-            boxNumber: 1,
-            label: "M",
-            x: 420,
-            y: 280,
-            width: 25,
-            height: 17,
-            area: 425,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 2,
-            label: "E",
-            x: 450,
-            y: 280,
-            width: 21,
-            height: 17,
-            area: 357,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 3,
-            label: "G",
-            x: 475,
-            y: 280,
-            width: 24,
-            height: 17,
-            area: 408,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 4,
-            label: "A",
-            x: 505,
-            y: 280,
-            width: 24,
-            height: 17,
-            area: 408,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 5,
-            label: "3",
-            x: 535,
-            y: 280,
-            width: 20,
-            height: 17,
-            area: 340,
-            expectedLuma: 200,
-          },
-        ]),
-        searchRegion: { x: 350, y: 220, width: 350, height: 180 },
-        patternRegion: { x: 380, y: 250, width: 300, height: 100 },
-        referenceBoxes: [
-          {
-            boxNumber: 1,
-            label: "M",
-            x: 420,
-            y: 280,
-            width: 25,
-            height: 17,
-            area: 425,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 2,
-            label: "E",
-            x: 450,
-            y: 280,
-            width: 21,
-            height: 17,
-            area: 357,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 3,
-            label: "G",
-            x: 475,
-            y: 280,
-            width: 24,
-            height: 17,
-            area: 408,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 4,
-            label: "A",
-            x: 505,
-            y: 280,
-            width: 24,
-            height: 17,
-            area: 408,
-            expectedLuma: 200,
-          },
-          {
-            boxNumber: 5,
-            label: "3",
-            x: 535,
-            y: 280,
-            width: 20,
-            height: 17,
-            area: 340,
-            expectedLuma: 200,
-          },
-        ],
-        lumaTolerance: 255,
+        constellationJson: JSON.stringify(taughtBoxes),
+        searchRegion: { x: 100, y: 70, width: 760, height: 400 },
+        patternRegion: { x: 150, y: 100, width: 600, height: 300 },
+        referenceBoxes: taughtBoxes,
+        lumaTolerance: 32,
       },
     };
 
@@ -616,13 +613,17 @@ describe("Workpiece Rule Analyzer - Real Computer Vision Execution", () => {
     expect(passRes.status).toBe(ValidationStatusType.Pass);
     expect(passRes.debug?.totalCount).toBe(5);
     expect(passRes.debug?.matchedCount).toBe(5);
-    expect(passRes.message).toContain("5/5 pattern marks matched reference");
+    expect(passRes.message).toContain("5/5 pattern marks matched position and reference greyscale");
 
-    // 2. Must strictly FAIL 0/5 on empty workpiece
+    // 2. Must strictly FAIL on empty workpiece. Note: an exact 0/5 is
+    // not a property of a correct matcher here — pocket-edge features
+    // repeat across photos (3 of the 5 pair positionally on empty),
+    // and luma is what discriminates (only 1/5 within tolerance).
+    // The verdict (FAIL, 20% < 80%) is the assertion that matters.
     const failRes = evaluatePatternRule(fiveBoxRule, emptyImg, "Test 5-box");
     expect(failRes.status).toBe(ValidationStatusType.Fail);
     expect(failRes.debug?.totalCount).toBe(5);
-    expect(failRes.debug?.matchedCount).toBe(0);
-    expect(failRes.message).toContain("0/5 marks matched");
+    expect(failRes.debug?.matchedCount).toBeLessThan(5);
+    expect(failRes.message).toContain("FAIL");
   });
 });

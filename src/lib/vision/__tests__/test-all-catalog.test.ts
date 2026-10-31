@@ -8,7 +8,70 @@ import {
 } from "../workpiece-rule-analyzer";
 import { VISION_TOOL_CATALOG } from "../tool-catalog";
 import { DEFAULT_24_PATTERN_BOXES } from "../white-box-marking";
+import { markWhiteBoxes, type SearchRegion } from "../white-box-marking";
+import { filterPatternRgba } from "../pinned-pattern-geometry";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
+
+// Spec 55 end-of-tunnel: the DEFAULT 24 boxes are a generic grid,
+// not a rule taught from the golden photo (their pixels are
+// uniformly dark with zero bright pixels at the claimed positions),
+// so they cannot pair under the owner-ordered AND verdict. Like the
+// T112/T104/T109/T110 teachings below, the pattern rule is taught
+// from the photo itself: detect the components the analyzer's own
+// matcher sees on the filtered image, and use their filtered-image
+// mean luma as the reference. Box dims are clamped to >=4px exactly
+// as parseBoxesFromParams clamps them, so taught and measured luma
+// agree on thin components.
+function teachBoxesFromImage(
+  imgData: WorkpieceImageData,
+  searchRegion: SearchRegion,
+  greyscaleLevel: number,
+): Array<{
+  boxNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  area: number;
+  expectedLuma: number;
+}> {
+  const filtered = filterPatternRgba(imgData.rgba, imgData.width, imgData.height, greyscaleLevel);
+  const detected = markWhiteBoxes({
+    width: imgData.width,
+    height: imgData.height,
+    rgba: filtered,
+    whiteThreshold: greyscaleLevel,
+    minAreaPx: 4,
+    searchRegion,
+    mode: "threshold",
+    polarity: "bright",
+  }).boxes;
+
+  return detected.map((b, i) => {
+    const width = Math.max(4, Math.round(b.width));
+    const height = Math.max(4, Math.round(b.height));
+    let sum = 0;
+    let count = 0;
+
+    for (let y = b.y; y < b.y + height; y += 1) {
+      for (let x = b.x; x < b.x + width; x += 1) {
+        const idx = (y * imgData.width + x) * 4;
+        sum += 0.299 * filtered[idx] + 0.587 * filtered[idx + 1] + 0.114 * filtered[idx + 2];
+        count += 1;
+      }
+    }
+
+    return {
+      boxNumber: i + 1,
+      x: b.x,
+      y: b.y,
+      width,
+      height,
+      area: Math.max(16, Math.round(width * height)),
+      expectedLuma: count > 0 ? Math.round(sum / count) : 0,
+    };
+  });
+}
 
 /** Render a DataMatrix payload into pixels with ZXing's own writer
  *  (8px per module + a 2-module quiet zone), so a code-reader rule
@@ -47,6 +110,15 @@ describe("Catalog Rules on filled image", () => {
   it("evaluates a rule created from every tool in catalog on pocket-1-filled.jpg", async () => {
     const img = await loadWorkpieceImageData("src/assets/samples/pocket-1-filled.jpg");
     if (!img) return;
+
+    // Pattern rules are taught from the photo (see
+    // teachBoxesFromImage above); the generic DEFAULT grid is not a
+    // rule for this image and cannot pair under the AND verdict.
+    const taughtPatternBoxes = teachBoxesFromImage(
+      img,
+      { x: 100, y: 70, width: 760, height: 400 },
+      170,
+    );
 
     // Synthetic code image for T103 (see the T103 branch below).
     const codeImg = renderDataMatrixImage("SN20261022-A9048-REV2");
@@ -158,17 +230,14 @@ describe("Catalog Rules on filled image", () => {
           tool.name.toLowerCase().includes("pattern")
             ? {
                 minMatchPercent: 80,
-                lumaTolerance: 255,
-                // This synthetic reference setup measures ~12.7px offset
-                // on the golden filled pocket, so its tolerance must
-                // exceed that; the spec offset gate itself is enforced.
+                lumaTolerance: 32,
+                // Taught boxes pair at offset 0; tolerance 15 keeps
+                // the spec offset gate satisfied with margin.
                 tolerancePx: 15,
                 searchRegion: { x: 100, y: 70, width: 760, height: 400 },
                 patternRegion: { x: 150, y: 100, width: 600, height: 300 },
-                referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
-                constellationJson: JSON.stringify(
-                  DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
-                ),
+                referenceBoxes: taughtPatternBoxes,
+                constellationJson: JSON.stringify(taughtPatternBoxes),
               }
             : {}),
           ...(tool.code === "T105" || tool.code === "T117"

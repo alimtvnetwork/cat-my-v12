@@ -335,7 +335,7 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
       matched: new Map<number, number>(),
       matchedCount: 0,
       totalDistance: Number.POSITIVE_INFINITY,
-      rotatedBoxes: params.referenceBoxes,
+      rotatedBoxes: [...params.referenceBoxes],
     };
 
     for (const angleDeg of candidateAngles) {

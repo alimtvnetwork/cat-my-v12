@@ -169,10 +169,9 @@ type Component = { x0: number; y0: number; x1: number; y1: number; area: number 
 
 export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResult {
   assertRgba(input);
-  const hasThreshold = input.whiteThreshold !== undefined && input.whiteThreshold !== null;
   const polarity = input.polarity ?? "bright";
 
-  if (!hasThreshold) {
+  if (input.whiteThreshold === undefined || input.whiteThreshold === null) {
     const gray = toTwoBitGray(input.rgba);
     const boxes = findWhiteBoxes(
       gray,

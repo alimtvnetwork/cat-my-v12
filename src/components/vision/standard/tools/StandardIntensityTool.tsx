@@ -25,15 +25,20 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
   // settings.params.intensity, so the limits survive save/reload and
   // any evaluator reading the settings can use them. The local state
   // remains only as the control's display value, seeded from settings.
-  const intensityFromSettings = (params: Record<string, unknown> | undefined) => {
+  type IntensityMetric = "mean" | "std-dev" | "min-max" | "median";
+
+  const intensityFromSettings = (
+    params: Record<string, unknown> | undefined,
+  ): { metric: IntensityMetric; minIntensity: number; maxIntensity: number } => {
     const raw = params?.intensity;
     const record =
       raw !== null && typeof raw === "object" && !Array.isArray(raw)
         ? (raw as Record<string, unknown>)
         : {};
+    const rawMetric = record.metric;
     const metric =
-      record.metric === "std-dev" || record.metric === "min-max" || record.metric === "median"
-        ? record.metric
+      rawMetric === "std-dev" || rawMetric === "min-max" || rawMetric === "median"
+        ? rawMetric
         : "mean";
     const minIntensity = typeof record.minIntensity === "number" ? record.minIntensity : 80;
     const maxIntensity = typeof record.maxIntensity === "number" ? record.maxIntensity : 180;

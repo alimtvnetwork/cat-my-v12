@@ -1090,10 +1090,42 @@ export function evaluatePatternRule(
   imageData: WorkpieceImageData,
   opticalContext: string,
 ): ValidationResult {
+  // Spec 55 end-of-tunnel: pinning squares the rule ROI, which must
+  // NOT shrink a saved search region. A rectangular taught rule would
+  // otherwise lose every reference box outside the squared region at
+  // evaluation time (the golden catalog/default-rules fixtures fail
+  // exactly this way: 760x400 taught region squared to 400x400).
+  // A rule that already carries a saved search region evaluates over
+  // it as taught; pinning's square only applies when no saved region
+  // exists (a fresh canvas ROI, square by wave 1 anyway).
+  const savedSearchRegionBeforePin = rule.params?.searchRegion;
+
   const pinned = pinPatternRule(rule, imageData.width, imageData.height);
   const greyscaleLevel = Number(pinned.params?.greyscaleLevel ?? pinned.params?.threshold ?? 170);
 
+  // Spec 55 end-of-tunnel: the presence gate below is a RAW brightness
+  // gate ("is there a workpiece at all?"). The filtered (binarized)
+  // image must NOT feed it: on a binarized plane "mean luma" degrades
+  // to white-fraction x 255, so a dark package whose markings cover a
+  // small fraction of the region trips the gate even when the
+  // workpiece is plainly present (dark-package test: raw mean 36.4
+  // passes, filtered mean 25.0 fails the minPresenceLuma 25 gate).
+  // Matching stages keep reading the filtered image; only presence
+  // reads raw pixels, exactly as before the filter was introduced.
+  const rawImageRgba = imageData.rgba;
+
   rule = pinned;
+
+  if (savedSearchRegionBeforePin !== undefined && savedSearchRegionBeforePin !== null) {
+    rule = {
+      ...rule,
+      params: {
+        ...rule.params,
+        searchRegion: savedSearchRegionBeforePin,
+      },
+    };
+  }
+
   imageData = {
     ...imageData,
     rgba: filterPatternRgba(imageData.rgba, imageData.width, imageData.height, greyscaleLevel),
@@ -1222,11 +1254,7 @@ export function evaluatePatternRule(
   for (let y = startY; y < endY; y += 1) {
     for (let x = startX; x < endX; x += 1) {
       const idx = (y * imageData.width + x) * 4;
-      const luma = rec601Luma(
-        imageData.rgba[idx],
-        imageData.rgba[idx + 1],
-        imageData.rgba[idx + 2],
-      );
+      const luma = rec601Luma(rawImageRgba[idx], rawImageRgba[idx + 1], rawImageRgba[idx + 2]);
       sumL += luma;
       sumL2 += luma * luma;
       pixelCount += 1;
