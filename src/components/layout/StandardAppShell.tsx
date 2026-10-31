@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   WindowControlButtons,
@@ -516,39 +517,55 @@ export function StandardAppShell({
         <div className="flex h-full items-center gap-2 sm:gap-3 shrink-0 ml-2 flex-nowrap overflow-hidden">
           <UiModeSwitch />
           <RecorderLauncherButton />
-          <button
-            type="button"
-            data-tour="simulation-launcher"
-            onClick={() => {
-              if (isSimulationRunning || isSimulationLoading) {
-                return;
-              }
+          <TooltipProvider delayDuration={250}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  data-tour="simulation-launcher"
+                  aria-label={
+                    isSimulationLoading
+                      ? "Simulation is loading. The guided walkthrough is preparing the demo project."
+                      : isSimulationRunning
+                        ? "Simulation is running. The guided walkthrough is in progress."
+                        : "Start the guided simulation. It walks through a demo project, a ruleset, and a greyscale pattern."
+                  }
+                  onClick={() => {
+                    if (isSimulationRunning || isSimulationLoading) {
+                      return;
+                    }
 
-              setIsMenuOpen(false);
-              const detail: GuidedSimulationCommandDetail = { command: "start" };
-              window.dispatchEvent(new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }));
-            }}
-            disabled={isSimulationRunning || isSimulationLoading}
-            className="flex shrink-0 items-center gap-1.5 rounded px-2.5 sm:px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSimulationLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
-            ) : (
-              <PlayCircle className="h-3.5 w-3.5" />
-            )}
-            <span className="grid">
-              <span className="col-start-1 row-start-1 invisible whitespace-nowrap">
-                Loading Simulation...
-              </span>
-              <span className="col-start-1 row-start-1 whitespace-nowrap">
+                    setIsMenuOpen(false);
+                    const detail: GuidedSimulationCommandDetail = { command: "start" };
+                    window.dispatchEvent(
+                      new CustomEvent(GUIDED_SIMULATION_COMMAND_EVENT, { detail }),
+                    );
+                  }}
+                  disabled={isSimulationRunning || isSimulationLoading}
+                  className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSimulationLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
+                  ) : (
+                    <PlayCircle className="h-3.5 w-3.5" />
+                  )}
+                  <span>Simulation</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="end"
+                collisionPadding={12}
+                className="max-w-[240px] border border-white/15 bg-[#0f172a] px-3 py-2 text-left text-xs leading-snug text-slate-100"
+              >
                 {isSimulationLoading
-                  ? "Loading Simulation..."
+                  ? "Simulation is loading. The guided walkthrough is preparing the demo project."
                   : isSimulationRunning
-                    ? "Simulation Running"
-                    : "Simulation"}
-              </span>
-            </span>
-          </button>
+                    ? "Simulation is running. The guided walkthrough is in progress."
+                    : "Start the guided simulation. It walks through a demo project, a ruleset, and a greyscale pattern."}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <div className="h-4 w-px bg-ca-border" />
           <ThemeToggle />
           <WindowControlButtons />

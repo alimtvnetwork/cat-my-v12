@@ -26,6 +26,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ClientLogger } from "@/lib/observability/client-logger";
+import { copyText } from "@/lib/errors/copy-text";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -539,15 +541,15 @@ function CliSessionDrilldown() {
     const { __liveId: _omit, ...rest } = raw as Record<string, unknown> & { __liveId?: number };
     void _omit;
     const text = JSON.stringify(rest, null, 2);
-    try {
-      await navigator.clipboard.writeText(text);
+    const result = await copyText(text);
+
+    if (result.isCopied) {
       setCopiedKey(key);
-    } catch (err) {
-      // Do not swallow: per 02-spec/03-error-manage this is a UI-degraded state
-      // (typically insecure context / missing permission), not a wire error,
-      // so log it and surface an inline "copy failed" pill.
-      // eslint-disable-next-line no-console
-      console.warn("[cli-session-row-copy] clipboard write failed", { key, err });
+    } else {
+      ClientLogger.error("[cli-session-row-copy] clipboard write failed", {
+        key,
+        failureMessage: result.failureMessage,
+      });
       setCopiedKey(`err:${key}`);
     }
 

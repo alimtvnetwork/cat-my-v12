@@ -22,6 +22,7 @@ import {
 } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
+import { copyText } from "@/lib/errors/copy-text";
 import {
   Loader2,
   RefreshCw,
@@ -417,14 +418,17 @@ function SessionListPage() {
               // Read the live URL so it reflects `stripSearchParams` +
               // `retainSearchParams` exactly as a bookmarker would see it.
               const url = typeof window !== "undefined" ? window.location.href : "";
-              try {
-                await navigator.clipboard.writeText(url);
+              const result = await copyText(url);
+
+              if (result.isCopied) {
                 toast.success("View URL copied", { description: url });
-              } catch (e) {
-                const msg = e instanceof Error ? e.message : String(e);
-                console.warn("[observability.sessions] copy failed", { error: msg, url });
-                toast.error("Copy failed", { description: msg });
+
+                return;
               }
+
+              toast.error("Copy failed", {
+                description: `${result.failureMessage}\n${url}`,
+              });
             }}
             className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
             aria-label="Copy shareable URL for this view"

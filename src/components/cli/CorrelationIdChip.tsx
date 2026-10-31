@@ -26,6 +26,8 @@
  * already in use by `StatusPill` (Step 124). No hex, no bespoke colors.
  */
 import { useState } from "react";
+import { ClientLogger } from "@/lib/observability/client-logger";
+import { copyText } from "@/lib/errors/copy-text";
 import { Link } from "@tanstack/react-router";
 import { Copy, Check } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -43,36 +45,17 @@ export interface CorrelationIdChipProps {
 const SHORT_LEN = 8;
 
 async function copyToClipboard(text: string): Promise<boolean> {
-  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
+  const result = await copyText(text);
 
-      return true;
-    } catch (error) {
-      console.warn("[CorrelationIdChip.copyToClipboard] navigator.clipboard fallback", { error });
-    }
+  if (result.isCopied) {
+    return true;
   }
 
-  if (typeof document === "undefined") {
-    return false;
-  }
-  try {
-    const textAreaElement = document.createElement("textarea");
-    textAreaElement.value = text;
-    textAreaElement.setAttribute("readonly", "");
-    textAreaElement.style.position = "fixed";
-    textAreaElement.style.opacity = "0";
-    document.body.appendChild(textAreaElement);
-    textAreaElement.select();
-    const isSuccess = document.execCommand("copy");
-    document.body.removeChild(textAreaElement);
+  ClientLogger.error("[CorrelationIdChip.copyToClipboard] copy failed", {
+    failureMessage: result.failureMessage,
+  });
 
-    return isSuccess;
-  } catch (error) {
-    console.warn("[CorrelationIdChip.copyToClipboard] execCommand copy fallback", { error });
-
-    return false;
-  }
+  return false;
 }
 
 export function CorrelationIdChip({

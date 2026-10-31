@@ -86,9 +86,16 @@ export function AutoSeedFromFacade() {
           label: "Copy JSON",
           onClick: () => {
             const payload = input.json!;
-            void copyResetSummaryJson(payload).then((ok) => {
-              if (ok) toast.success("Reseed summary JSON copied");
-              else toast.error("Copy failed; JSON logged to console");
+            void copyResetSummaryJson(payload).then((result) => {
+              if (result.isCopied) {
+                toast.success("Reseed summary JSON copied");
+
+                return;
+              }
+
+              toast.error("Copy failed", {
+                description: `${result.failureMessage}\n${JSON.stringify(payload, null, 2)}`,
+              });
             });
           },
         }

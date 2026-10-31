@@ -43,6 +43,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useAppQuery } from "@/lib/wrappers/use-app-query";
 import { useState, useMemo } from "react";
+import { copyText } from "@/lib/errors/copy-text";
 import {
   Loader2,
   RefreshCw,
@@ -415,11 +416,13 @@ function CliIpcRoute() {
   };
 
   const copyJson = async (item: IpcItem, key: string) => {
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(item, null, 2));
+    const text = JSON.stringify(item, null, 2);
+    const result = await copyText(text);
+
+    if (result.isCopied) {
       setCopyStatus(`Copied ${key}`);
-    } catch {
-      setCopyStatus(`Copy failed for ${key}`);
+    } else {
+      setCopyStatus(`Copy failed for ${key}: ${result.failureMessage}`);
     }
 
     window.setTimeout(() => setCopyStatus(null), 1500);

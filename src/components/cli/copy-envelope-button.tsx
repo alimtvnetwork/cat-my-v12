@@ -28,6 +28,7 @@ import { PriorityType } from "@/components/cli/LiveRegion";
 import { useCallback, useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { copyText } from "@/lib/errors/copy-text";
 
 import { Button } from "@/components/ui/button";
 import { announce } from "@/components/cli/LiveRegion";
@@ -132,11 +133,15 @@ export function CopyEnvelopeButton({
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (clipboardError) {
-      ClientLogger.error("[CopyEnvelopeButton] clipboard write failed", clipboardError);
-      toast.error("Copy failed: clipboard denied");
+    const result = await copyText(text);
+
+    if (!result.isCopied) {
+      ClientLogger.error("[CopyEnvelopeButton] clipboard write failed", {
+        failureMessage: result.failureMessage,
+      });
+      toast.error("Copy failed", {
+        description: `${result.failureMessage}\n${text}`,
+      });
 
       return;
     }

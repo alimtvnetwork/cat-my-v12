@@ -10,6 +10,7 @@ import { AnnouncePriorityType } from "@/lib/a11y/announcer";
 
 import { toast } from "sonner";
 import { createElement } from "react";
+import { copyText, type CopyTextResult } from "./copy-text";
 
 import { useErrorStore } from "../stores/errorStore";
 import type { CapturedError } from "@/types/errors";
@@ -95,41 +96,41 @@ function buildCopyPayload(captured: CapturedError, label: string, message: strin
   return parts.join("\n");
 }
 
+function reportCopyResult(result: CopyTextResult, payload: string, correlationId: string): void {
+  if (result.isCopied) {
+    ClientLogger.info(`[notify] copied details cid=${correlationId}`);
+    toast.success("Copied error details");
+    announce(
+      `Copied error details for correlation id ${correlationId}`,
+      AnnouncePriorityType.Polite,
+    );
+
+    return;
+  }
+
+  ClientLogger.error("[notify] copy details failed", {
+    correlationId,
+    failureMessage: result.failureMessage,
+  });
+  toast.error("Copy failed", {
+    description: `${result.failureMessage}\n${payload}`,
+    duration: 12_000,
+  });
+  announce(
+    "Copy failed. The error details are in the notification so you can select them.",
+    AnnouncePriorityType.Assertive,
+  );
+}
+
 function copyDetailsChip(captured: CapturedError, label: string, message: string) {
   return {
     label: "Copy details",
     onClick: () => {
       const payload = buildCopyPayload(captured, label, message);
-      const nav = typeof navigator !== "undefined" ? navigator.clipboard : undefined;
 
-      if (nav?.writeText) {
-        nav.writeText(payload).then(
-          () => {
-            ClientLogger.info(`[notify] copied details cid=${captured.correlationId}`);
-            toast.success("Copied error details");
-            announce(
-              `Copied error details for correlation id ${captured.correlationId}`,
-              AnnouncePriorityType.Polite,
-            );
-          },
-          (e: unknown) => {
-            ClientLogger.error("[notify] clipboard writeText failed", e);
-            toast.error("Copy failed — see console for details");
-            announce("Copy failed. See console for details.", AnnouncePriorityType.Assertive);
-          },
-        );
-
-        return;
-      }
-
-      ClientLogger.info(
-        `[notify] clipboard unavailable, payload cid=${captured.correlationId}:\n${payload}`,
-      );
-      toast.error("Clipboard unavailable — details logged to console");
-      announce(
-        "Clipboard unavailable. Error details were logged to the console.",
-        AnnouncePriorityType.Assertive,
-      );
+      void copyText(payload).then((result) => {
+        reportCopyResult(result, payload, captured.correlationId);
+      });
     },
   };
 }

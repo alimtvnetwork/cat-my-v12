@@ -1,6 +1,7 @@
 import { ClientLogger } from "@/lib/observability/client-logger";
 import { toast } from "sonner";
 import type { CapturedError } from "@/types/errors";
+import { copyText } from "@/lib/errors/copy-text";
 
 export function formatTimestamp(iso: string): string {
   try {
@@ -11,13 +12,24 @@ export function formatTimestamp(iso: string): string {
 }
 
 export function copyJson(value: unknown, label: string): void {
-  try {
-    const text = JSON.stringify(value, null, 2);
-    void navigator.clipboard?.writeText(text);
-    ClientLogger.info(`[GlobalErrorModal] copied ${label} (${text.length} bytes)`);
-  } catch (err) {
-    ClientLogger.error("[GlobalErrorModal] copy failed", err);
-  }
+  const text = JSON.stringify(value, null, 2);
+
+  void copyText(text).then((result) => {
+    if (result.isCopied) {
+      ClientLogger.info(`[GlobalErrorModal] copied ${label} (${text.length} bytes)`);
+      toast.success(`Copied ${label}`);
+
+      return;
+    }
+
+    ClientLogger.error("[GlobalErrorModal] copy failed", {
+      label,
+      failureMessage: result.failureMessage,
+    });
+    toast.error("Copy failed", {
+      description: `${result.failureMessage}\n${text}`,
+    });
+  });
 }
 
 // Build a human-readable diagnostics bundle that always includes the
@@ -81,18 +93,24 @@ export function buildDiagnosticsText(err: CapturedError): string {
 
 export async function copyDiagnostics(err: CapturedError): Promise<void> {
   const text = buildDiagnosticsText(err);
-  try {
-    await navigator.clipboard?.writeText(text);
+  const result = await copyText(text);
+
+  if (result.isCopied) {
     ClientLogger.info(
       `[GlobalErrorModal] copied diagnostics cid=${err.correlationId} bytes=${text.length}`,
     );
     toast.success("Diagnostics copied", {
       description: `Correlation ID ${err.correlationId}`,
     });
-  } catch (e) {
-    ClientLogger.error("[GlobalErrorModal] copy diagnostics failed", e);
-    toast.error("Failed to copy diagnostics", {
-      description: e instanceof Error ? e.message : String(e),
-    });
+
+    return;
   }
+
+  ClientLogger.error("[GlobalErrorModal] copy diagnostics failed", {
+    correlationId: err.correlationId,
+    failureMessage: result.failureMessage,
+  });
+  toast.error("Copy failed", {
+    description: `${result.failureMessage}\n${text}`,
+  });
 }
