@@ -5,6 +5,8 @@ description: Autonomously discover, purge, and govern GitHub Actions storage, de
 
 # Zero-Storage Actions Purge & Storage Governance
 
+> **Invocation:** `@[zero-storage-actions-purge](file;.agents/skills/zero-storage-actions-purge)`
+
 Autonomously inspects repositories, identifies bloated GitHub Actions storage (artifacts and caches), eliminates excessive caching configurations in workflows, and executes multi-threaded API deletion of remote artifacts and caches to maintain zero storage footprint.
 
 ## Core Capabilities
@@ -19,7 +21,7 @@ Autonomously inspects repositories, identifies bloated GitHub Actions storage (a
 
 ## Workflow Execution Steps
 
-1. **Defensive Git Pull:** Run `git pull` on the target repository before modifying any workflows or scripts.
+1. **Defensive Git Pull:** Run `gitmap pull` (fallback `git pull`) on the target repository before modifying any workflows or scripts.
 2. **Audit & Fix Workflows:**
    - Scan `.github/workflows/` for missing `retention-days: 1` on `actions/upload-artifact`.
    - Remove redundant or massive object caches.

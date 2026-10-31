@@ -123,7 +123,11 @@ describe("ProjectOverview route smoke test", () => {
       </QueryClientProvider>,
     );
 
-    const sourceTabButton = screen.getByRole("button", { name: /Image & Source/i });
+    // The sidebar tab was renamed from "Image & Source" to "Source"
+    // (55c8ffbf, 2026-10-31); the tab identity is unchanged
+    // (data-automation-id btn-sidebar-tab-source, panel heading
+    // "Image & Camera Source" below).
+    const sourceTabButton = screen.getByRole("button", { name: "Source" });
     expect(sourceTabButton).toBeTruthy();
     fireEvent.click(sourceTabButton);
 

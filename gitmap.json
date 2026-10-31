@@ -1,0 +1,47 @@
+[
+  {
+    "id": 0,
+    "slug": "cat-my-v12",
+    "repoId": "github.com/alimtvnetwork/cat-my-v12",
+    "repoName": "cat-my-v12",
+    "httpsUrl": "https://github.com/alimtvnetwork/cat-my-v12.git",
+    "sshUrl": "git@github.com:alimtvnetwork/cat-my-v12.git",
+    "discoveredUrl": "git@github.com:alimtvnetwork/cat-my-v12.git",
+    "branch": "main",
+    "branchSource": "HEAD",
+    "relativePath": ".",
+    "absolutePath": "D:\\work\\cat-my",
+    "cloneInstruction": "git clone -b main git@github.com:alimtvnetwork/cat-my-v12.git .",
+    "notes": "",
+    "depth": 0,
+    "transport": "ssh",
+    "identifiedTransport": "ssh",
+    "primaryAlias": "cm",
+    "aliases": [
+      "cm"
+    ]
+  },
+  {
+    "id": 0,
+    "slug": "repo-cache",
+    "repoId": "repo-cache",
+    "repoName": "repo-cache",
+    "httpsUrl": "git@github.com:alimtvnetwork/repo-cache.git",
+    "sshUrl": "",
+    "discoveredUrl": "git@github.com:alimtvnetwork/repo-cache.git",
+    "branch": "main",
+    "branchSource": "",
+    "relativePath": "../repo-cache",
+    "absolutePath": "D:\\work\\repo-cache",
+    "cloneInstruction": "git clone git@github.com:alimtvnetwork/repo-cache.git ../repo-cache",
+    "notes": "companion:repo-cache",
+    "depth": 0,
+    "transport": "",
+    "identifiedTransport": "",
+    "primaryAlias": "rc",
+    "aliases": [
+      "companion:repo-cache",
+      "special:rc"
+    ]
+  }
+]

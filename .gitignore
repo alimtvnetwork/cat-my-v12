@@ -45,6 +45,7 @@ __pycache__/
 # Tests
 test-results/
 tests/reports/
+.browser-profile/
 .ai-memory/temp/
 temp-scripts/
 
@@ -90,7 +91,10 @@ artifacts/
 .gitmap/pull_errors.db
 antigravity-resume_task.json
 .antigravity_resume_task.json
+.antigravity_resume_task*.json
+.gitmap/data/
 antigravity_resume_task.json
 .antigravity-resume_task.json
-.gitmap/data/
 .ai-memory/temp-agents/
+reports/
+AGM_INSTANCE_STATUS.md

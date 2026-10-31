@@ -8,6 +8,7 @@ description: Autonomously orchestrate and apply concrete, surgical refactoring f
 > [!IMPORTANT]
 > Skill Version: 2.6.0
 > Synchronization: Main Meta-Repo & Connected Workspaces
+> **Invocation:** `@[execute-coding-guideline-fix](file;.cursor/skills/execute-coding-guideline-fix)`  
 >
 > **Top-Instruction Priority Mandate (Preamble Precedence):**
 > Whatever directives, constraints, checklists, or instructions are given before this section or prompt (including in the prompt preamble, header blocks, or incoming user request) are HIGHEST PRIORITY and MUST BE FOLLOWED as strictly NON-NEGOTIABLE. They supersede and strictly override any conflicting general advice, default conventions, or lower-level guidelines below.
@@ -61,7 +62,7 @@ Before executing any file searches, scans, spec writing, or code changes, you mu
    - In the EXACT SAME RESPONSE turn as your markdown output, you MUST immediately invoke the first tool call (e.g. `write_to_file` to initialize the planning spec or `run_command` for fast discovery).
    - NEVER emit the breakdown text without invoking a tool call. Emitting visible text without a tool call terminates the AI turn, causing the engine to close or hang the conversation while tasks remain pending.
    - TOTAL BAN ON WAITING FOR APPROVAL: Do not pause, do not wait for the user to reply, and do not ask "Should I proceed?". Override any planning mode stop directives. Proceed immediately into Phase 1B in the same turn.
-   - Format each task clearly with proper markdown indentation, vertical blank lines, task state (`State: [IN PROGRESS — EXECUTING IMMEDIATELY]`), and an explicit understanding indicator bracket (`Understood: [YES — ...]`).
+   - Format each task clearly with proper markdown indentation, vertical blank lines, task state (`State: [IN PROGRESS — EXECUTING IMMEDIATELY]`), explicit understanding indicator bracket (`Understood / AI Comprehension: [YES — ...]`), and Azure AI / Model Runtime Context.
 
 Line-by-Line Output Format Structure:
 ```markdown
@@ -69,13 +70,15 @@ Line-by-Line Output Format Structure:
 
 1. **Task-01: [Descriptive Task Title]**
    - **State:** `[IN PROGRESS — EXECUTING IMMEDIATELY]`
-   - **Understood:** `[YES]` — [Concise 1-sentence verification of user requirement, intent, and verified constraints]
+   - **Understood / AI Comprehension:** `[YES]` — [1–2 concise sentences proving deep understanding of intent, scope, and verified constraints; answering did the AI understand the requirements or not]
+   - **Azure AI / Model Runtime Context:** [Explicitly document Azure AI, Azure OpenAI, or local model endpoint context if applicable, or state 'N/A — Local CLI/GitMap']
    - **Actionable Scope:** [Precise technical deliverable and implementation scope]
    - **Target Files / Area:** `[relative/path/or/module]`
 
 2. **Task-02: [Descriptive Task Title]**
    - **State:** `[QUEUED — EXECUTING NOW WITHOUT USER PROMPT]`
-   - **Understood:** `[YES]` — [Concise 1-sentence verification of user requirement, intent, and verified constraints]
+   - **Understood / AI Comprehension:** `[YES]` — [1–2 concise sentences proving deep understanding of intent, scope, and verified constraints; answering did the AI understand the requirements or not]
+   - **Azure AI / Model Runtime Context:** [Explicitly document Azure AI, Azure OpenAI, or local model endpoint context if applicable, or state 'N/A — Local CLI/GitMap']
    - **Actionable Scope:** [Precise technical deliverable and implementation scope]
    - **Target Files / Area:** `[relative/path/or/module]`
 
@@ -145,7 +148,7 @@ When all subtasks for a parent task (`.ai-memory/plans/pending/xx-<slug>.md`) ar
 3. Delete the original granular `.md` files in `.ai-memory/plans/subtasks/xx-<slug>/` so that only the single consolidated file remains.
 4. Delete the original parent plan `.ai-memory/plans/pending/xx-<slug>.md`.
 5. Update `.ai-memory/plans/readme.md` to point to the newly consolidated completed file.
-6. Stage all modified files, consolidated plans, and memory records (`git add -A`), commit them in a single clean grouped atomic commit (`git commit -m "<summary>"`), and push to git (`git push origin <branch>`). Under no circumstances commit each file individually.
+6. Stage only the paths this task changed (`git add -- <paths>`). Use `gitmap cpf` or `gitmap cpb` only when `git status --porcelain` was clean before the task, because those commands stage every file. Under no circumstances commit each file individually.
 
 ---
 
@@ -255,5 +258,5 @@ To avoid 50-result tool truncation limits and eliminate multi-turn exploratory r
 
 ## Final Step Git Commit & Push Mandate (Strict Checklist)
 
-- [ ] **MANDATORY FINAL COMMIT & PUSH TO GIT (ANYHOW):** At the FINAL step of the turn, after all targeted files have been refactored, verified with targeted linters, and plans/subtasks consolidated, you MUST stage everything (`git add -A`), create a clean, descriptive conventional commit (`git commit -m "<summary>"`), and push directly to the remote repository (`git push origin <branch>`). Leaving uncommitted changes or unpushed commits on the active branch at the end of a turn is an immediate failure.
+- [ ] **MANDATORY FINAL COMMIT & PUSH TO GIT (ANYHOW):** At the FINAL step of the turn, after all targeted files have been refactored, verified with targeted linters, and plans/subtasks consolidated, you MUST stage only the paths this task changed (`git add -- <paths>`). Use `gitmap cpf` or `gitmap cpb` only when `git status --porcelain` was clean before the task, because those commands stage every file. Leaving uncommitted changes or unpushed commits on the active branch at the end of a turn is an immediate failure.
 - [ ] **TOTAL BAN ON PER-FILE COMMITS (DO NOT COMMIT EACH FILE INDIVIDUALLY):** You MUST NOT create separate git commits for each individual file as you edit them (e.g. running `git commit` after editing File 1, then committing again after File 2 is STRICTLY FORBIDDEN). Committing file-by-file pollutes git log history, creates subagent lock collisions, and breaks atomic rollback/bisectability. All modified files, test change caches, and plan records across the turn MUST be accumulated in the working tree and committed together in a SINGLE grouped atomic commit at the final step before pushing!

@@ -14,6 +14,8 @@ import {
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { copyText } from "@/lib/errors/copy-text";
+import { showToastError } from "@/lib/errors/notify";
 import { notifySuccess } from "@/lib/notify";
 import {
   DropdownMenu,
@@ -225,14 +227,20 @@ export function EditorTopBar({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onSelect={async () => {
-                  try {
-                    const url = typeof window !== "undefined" ? window.location.origin : "";
-                    await navigator.clipboard?.writeText(url);
-                    notifySuccess("Live URL copied to clipboard.");
-                  } catch {
-                    notifySuccess("Copy failed; check clipboard permissions.");
-                  }
+                onSelect={() => {
+                  const url = typeof window !== "undefined" ? window.location.origin : "";
+
+                  void copyText(url).then((result) => {
+                    if (result.isCopied) {
+                      notifySuccess("Live URL copied to clipboard.");
+
+                      return;
+                    }
+
+                    showToastError("Could not copy the live URL", new Error(result.failureMessage), {
+                      source: "EditorTopBar",
+                    });
+                  });
                 }}
               >
                 <LinkIcon aria-hidden size={14} />

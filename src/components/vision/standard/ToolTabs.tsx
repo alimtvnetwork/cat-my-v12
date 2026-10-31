@@ -1,5 +1,5 @@
 import React from "react";
-import { Maximize, Scan, Palette, Wand2 } from "lucide-react";
+import { Maximize, Scan, Palette, Wand2, Layers } from "lucide-react";
 
 export function ToolTabs({
   activeTab,
@@ -11,12 +11,13 @@ export function ToolTabs({
   const tabs = [
     { id: "Search Region", icon: Maximize, disabled: false },
     { id: "Pattern Region", icon: Scan, disabled: false },
+    { id: "Layers", icon: Layers, disabled: false },
     { id: "Extract Colors", icon: Palette, disabled: true },
     { id: "Image Enhance", icon: Wand2, disabled: false },
   ];
 
   return (
-    <div className="flex gap-2 p-2 bg-std-panel border-b border-std-border-dark">
+    <div className="flex gap-1.5 p-2 bg-std-panel border-b border-std-border-dark">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isSelected = activeTab === tab.id;
@@ -50,6 +51,7 @@ export function ToolTabs({
             onClick={() => setActiveTab(tab.id)}
             className={buttonClass}
             title={tab.disabled ? "Not available for this image type" : tab.id}
+            data-testid={`tab-${tab.id.toLowerCase().replace(/\s+/g, "-")}`}
           >
             <Icon className={`w-5 h-5 mb-1 ${iconClass}`} />
             <span className={`text-[10px] leading-tight text-center font-medium ${textClass}`}>

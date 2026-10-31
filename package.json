@@ -1,10 +1,11 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
-  "version": "4.112.17",
+  "version": "4.113.15",
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/generate-commit-hash.mjs",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
@@ -20,7 +21,8 @@
     "ci:v3": "bash scripts/ci-v3.sh",
     "visual:test": "bun x playwright test --config playwright.config.ts",
     "visual:update": "bun run tests/visual/capture-baselines.ts",
-    "e2e:pattern-search": "bash tests/e2e/run-pattern-search-e2e.sh"
+    "e2e:pattern-search": "bash tests/e2e/run-pattern-search-e2e.sh",
+    "test:alim-features": "bun run scripts/cli-ui-test-runner.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -61,6 +63,7 @@
     "@tanstack/react-virtual": "^3.14.7",
     "@tanstack/router-plugin": "^1.168.18",
     "@tanstack/zod-adapter": "^1.167.0",
+    "@zxing/library": "^0.23.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -82,6 +85,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
+    "tesseract.js": "^7.0.0",
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",

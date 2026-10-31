@@ -55,7 +55,7 @@ function beBaseUrl(): string {
 }
 
 export const listSamples = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) =>
+  .validator((raw) =>
     z
       .object({})
       .default({})
@@ -83,7 +83,7 @@ export const listSamples = createServerFn({ method: HttpMethod.Get })
  * `BE/routes/samples.py` L143.
  */
 export const getSample = createServerFn({ method: HttpMethod.Get })
-  .inputValidator((raw) => z.object({ sampleId: z.number().int().min(1) }).parse(raw))
+  .validator((raw) => z.object({ sampleId: z.number().int().min(1) }).parse(raw))
   .handler(async ({ data }): Promise<CatSampleWire> => {
     const url = `${beBaseUrl()}/samples/${data.sampleId}`;
     const env = await beFetch<CatSampleWire>(url);

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { RoiToolbar } from "@/components/vision/white-box/RoiToolbar";
 import {
   CARRIER_TAPE_HEIGHT,
   CARRIER_TAPE_WIDTH,
@@ -49,21 +50,21 @@ interface ChipOverlayGeometry {
 
 // Conveyor registration jitter (pronounced mechanical displacement per frame: moves up/down/left/right)
 const FRAME_JITTER_OFFSETS: readonly { dx: number; dy: number }[] = [
-  { dx: 0, dy: 0 },       // Frame 1: Baseline reference
-  { dx: 5, dy: -4 },      // Frame 2: Shifted right & up
-  { dx: -6, dy: 3 },      // Frame 3: Shifted left & down
-  { dx: 7, dy: 5 },       // Frame 4: Shifted right & down
-  { dx: -4, dy: -7 },     // Frame 5: Shifted left & up
-  { dx: 3, dy: 6 },       // Frame 6: Shifted right & down
-  { dx: -7, dy: -3 },     // Frame 7: Shifted left & up
-  { dx: 6, dy: -5 },      // Frame 8: Shifted right & up
-  { dx: -5, dy: 6 },      // Frame 9: Shifted left & down
-  { dx: 8, dy: -4 },      // Frame 10: Shifted right & up
-  { dx: -6, dy: 7 },      // Frame 11: Shifted left & down
-  { dx: 4, dy: 5 },       // Frame 12: Shifted right & down
-  { dx: -7, dy: -6 },     // Frame 13: Shifted left & up
-  { dx: 6, dy: -7 },      // Frame 14: Shifted right & up
-  { dx: -3, dy: 4 },      // Frame 15: Shifted left & down
+  { dx: 0, dy: 0 }, // Frame 1: Baseline reference
+  { dx: 5, dy: -4 }, // Frame 2: Shifted right & up
+  { dx: -6, dy: 3 }, // Frame 3: Shifted left & down
+  { dx: 7, dy: 5 }, // Frame 4: Shifted right & down
+  { dx: -4, dy: -7 }, // Frame 5: Shifted left & up
+  { dx: 3, dy: 6 }, // Frame 6: Shifted right & down
+  { dx: -7, dy: -3 }, // Frame 7: Shifted left & up
+  { dx: 6, dy: -5 }, // Frame 8: Shifted right & up
+  { dx: -5, dy: 6 }, // Frame 9: Shifted left & down
+  { dx: 8, dy: -4 }, // Frame 10: Shifted right & up
+  { dx: -6, dy: 7 }, // Frame 11: Shifted left & down
+  { dx: 4, dy: 5 }, // Frame 12: Shifted right & down
+  { dx: -7, dy: -6 }, // Frame 13: Shifted left & up
+  { dx: 6, dy: -7 }, // Frame 14: Shifted right & up
+  { dx: -3, dy: 4 }, // Frame 15: Shifted left & down
 ];
 
 export function CarrierTapeSimulationCanvas(
@@ -75,6 +76,7 @@ export function CarrierTapeSimulationCanvas(
     hasOverlays,
     selectedPocketIndex,
     tolerances,
+    onSelectPocket,
     onResultsAnalyzed,
     displayZoom,
     showGrid,
@@ -151,7 +153,8 @@ export function CarrierTapeSimulationCanvas(
       // 1. Draw discrete camera click snapshot for active frame
       drawCameraClickFrame(ctx, frame);
 
-      // 2. Camera strobe flash pulse effect
+      // 2. Camera strobe flash pulse effect (display only, over the
+      // displayed image — never part of analysis pixels)
       if (transition) {
         const elapsed = now - transition.startTime;
 
@@ -168,35 +171,48 @@ export function CarrierTapeSimulationCanvas(
         }
       }
 
+      ctx.restore();
+
+      // 3. Perform real computer vision analysis on an UN-TRANSLATED
+      // draw (spec 55): the offscreen bitmap has no jitter and no
+      // strobe flash, so crops at pocket.x/y are the true photo pocket
+      // pixels. (The old code read the shifted canvas and cropped at
+      // pocket+jitter — a second offset on top of the translate — and
+      // could also catch flash pixels.)
       // A strobe flash is active until its 85ms window elapses. Analysis
       // skips flash frames: getImageData would otherwise read
       // flash-whitened pixels and cache them as inspection results.
       const isTransitionActive = Boolean(
         transition && now - transition.startTime < transition.durationMs,
       );
-
-      // 3. Perform real computer vision analysis on active camera pixels
-      //    (only during analyzed phase — raw phase shows unprocessed image)
       let activeResults = frame.results;
       const deviceMeasurements: (DeviceMeasurement | null)[] = [null, null, null];
 
       if (isAnalyzing && tolerances && !isTransitionActive) {
         try {
-          const fullImageData = ctx.getImageData(0, 0, CARRIER_TAPE_WIDTH, CARRIER_TAPE_HEIGHT);
+          const offscreen = document.createElement("canvas");
+          offscreen.width = CARRIER_TAPE_WIDTH;
+          offscreen.height = CARRIER_TAPE_HEIGHT;
+          const offCtx = offscreen.getContext("2d", { willReadFrequently: true });
+
+          if (offCtx === null) {
+            throw new Error("offscreen canvas context unavailable");
+          }
+
+          drawCameraClickFrame(offCtx, frame);
+          const fullImageData = offCtx.getImageData(0, 0, CARRIER_TAPE_WIDTH, CARRIER_TAPE_HEIGHT);
           const realResults: PocketInspectionResult[] = [];
 
           for (let i = 0; i < 3; i += 1) {
             const pocket = frame.pockets[i];
-
-            // Extraction clamps to the backing store, while the overlays
-            // below assume the unclamped pocket plus jitter position.
-            // The two agree only while pockets plus jitter stay in
-            // bounds (true for all 15 built-in frames); if pocket
-            // geometry ever grows past the backing store, pass the
-            // clamped origin into the overlay path instead of widening
-            // this clamp silently.
-            const pX = Math.max(0, Math.min(CARRIER_TAPE_WIDTH - pocket.width, Math.round(pocket.x + jitter.dx)));
-            const pY = Math.max(0, Math.min(CARRIER_TAPE_HEIGHT - pocket.height, Math.round(pocket.y + jitter.dy)));
+            const pX = Math.max(
+              0,
+              Math.min(CARRIER_TAPE_WIDTH - pocket.width, Math.round(pocket.x)),
+            );
+            const pY = Math.max(
+              0,
+              Math.min(CARRIER_TAPE_HEIGHT - pocket.height, Math.round(pocket.y)),
+            );
 
             const pocketPixels = extractSubRegion(
               fullImageData,
@@ -234,7 +250,10 @@ export function CarrierTapeSimulationCanvas(
         }
       }
 
-      // 4. Draw real-time multi-device inspection overlays (analyzed phase only)
+      // 4. Draw real-time multi-device inspection overlays (analyzed phase
+      // only), OUTSIDE the translate block (spec 55): the overlay
+      // function shifts pocket geometry by the jitter itself, so
+      // overlays track the displayed image exactly.
       if (isAnalyzing && hasOverlays) {
         drawPocketInspectionOverlays(
           ctx,
@@ -243,10 +262,9 @@ export function CarrierTapeSimulationCanvas(
           deviceMeasurements,
           selectedPocketIndex,
           1.0,
+          jitter,
         );
       }
-
-      ctx.restore();
     };
 
     render();
@@ -259,6 +277,60 @@ export function CarrierTapeSimulationCanvas(
       }
     };
   }, [frame, isAnalyzing, hasOverlays, selectedPocketIndex, tolerances, onResultsAnalyzed]);
+
+  // Spec 55 frame-2 check (jitter +5,-4): displayed pocket 0 =
+  // (36+5, 68-4, 141, 152) = (41, 64, 141, 152); analysis crops the
+  // un-translated bitmap at (36, 68); overlays draw at (41, 64).
+  // All three agree exactly by construction.
+  const frameJitter = FRAME_JITTER_OFFSETS[(frame.frameNumber - 1) % FRAME_JITTER_OFFSETS.length];
+  const selectedPocket =
+    selectedPocketIndex !== null && selectedPocketIndex !== undefined
+      ? (frame.pockets[selectedPocketIndex] ?? null)
+      : null;
+  const selectedPocketRect =
+    selectedPocket === null
+      ? null
+      : {
+          x: selectedPocket.x + frameJitter.dx,
+          y: selectedPocket.y + frameJitter.dy,
+          width: selectedPocket.width,
+          height: selectedPocket.height,
+        };
+
+  function handleCanvasPointerDown(e: React.PointerEvent<HTMLCanvasElement>): void {
+    if (onSelectPocket === undefined) {
+      return;
+    }
+
+    const canvas = canvasRef.current;
+
+    if (canvas === null) {
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CARRIER_TAPE_WIDTH / rect.width;
+    const scaleY = CARRIER_TAPE_HEIGHT / rect.height;
+    const pointX = (e.clientX - rect.left) * scaleX;
+    const pointY = (e.clientY - rect.top) * scaleY;
+
+    for (let i = 0; i < 3; i += 1) {
+      const pocket = frame.pockets[i];
+      const px = pocket.x + frameJitter.dx;
+      const py = pocket.y + frameJitter.dy;
+
+      if (
+        pointX >= px &&
+        pointX <= px + pocket.width - 1 &&
+        pointY >= py &&
+        pointY <= py + pocket.height - 1
+      ) {
+        onSelectPocket(i);
+
+        return;
+      }
+    }
+  }
 
   return (
     <div
@@ -278,17 +350,53 @@ export function CarrierTapeSimulationCanvas(
           coordinates here are meaningful only inside this canvas. CSS scaling
           below is display-only and must never feed rule geometry or persisted
           rule state. */}
-      <canvas
-        ref={canvasRef}
-        width={CARRIER_TAPE_WIDTH}
-        height={CARRIER_TAPE_HEIGHT}
-        className="max-h-full max-w-full rounded border border-ca-border bg-black shadow-2xl"
-        style={
-          isSimZoomed
-            ? { width: `${690 * simZoomFactor}px`, height: "auto", maxWidth: "none" }
-            : { width: "min(100%, 690px)", height: "auto" }
-        }
-      />
+      <div
+        className="relative"
+        style={{ width: isSimZoomed ? `${690 * simZoomFactor}px` : "min(100%, 690px)" }}
+      >
+        <canvas
+          ref={canvasRef}
+          width={CARRIER_TAPE_WIDTH}
+          height={CARRIER_TAPE_HEIGHT}
+          onPointerDown={handleCanvasPointerDown}
+          className="block h-auto w-full max-h-full max-w-full rounded border border-ca-border bg-black shadow-2xl"
+          style={{
+            cursor: onSelectPocket !== undefined ? "pointer" : "default",
+            ...(isSimZoomed
+              ? { width: `${690 * simZoomFactor}px`, height: "auto", maxWidth: "none" }
+              : {}),
+          }}
+        />
+        <RoiToolbar
+          region={selectedPocketRect}
+          canvasWidth={CARRIER_TAPE_WIDTH}
+          canvasHeight={CARRIER_TAPE_HEIGHT}
+          label={
+            selectedPocketIndex !== null && selectedPocketIndex !== undefined
+              ? `POCKET ${selectedPocketIndex + 1}`
+              : "POCKET"
+          }
+        >
+          {onSelectPocket !== undefined &&
+            [0, 1, 2].map((index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => onSelectPocket(index)}
+                className={`rounded px-1.5 py-0.5 ${
+                  selectedPocketIndex === index ? "bg-cyan-500/40" : "bg-white/15 hover:bg-white/25"
+                }`}
+              >
+                {`P${index + 1}`}
+              </button>
+            ))}
+        </RoiToolbar>
+        {onSelectPocket !== undefined && selectedPocket === null && (
+          <div className="pointer-events-none absolute top-2 left-2 z-20 rounded bg-black/70 px-1.5 py-1 text-[11px] text-white">
+            Click a pocket to select
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -376,6 +484,11 @@ function drawPocketInspectionOverlays(
   deviceMeasurements: (DeviceMeasurement | null)[],
   selectedPocketIndex?: number | null,
   overlayAlpha = 1.0,
+  // Display jitter of the frame as drawn (spec 55): overlays are drawn
+  // OUTSIDE the translate block, so pocket geometry is shifted here to
+  // track the displayed image. Measurements stay crop-relative (they
+  // are relative to the pocket origin, which shifts with it).
+  jitter: { dx: number; dy: number } = { dx: 0, dy: 0 },
 ): void {
   if (overlayAlpha <= 0) {
     return;
@@ -385,7 +498,8 @@ function drawPocketInspectionOverlays(
   ctx.globalAlpha = Math.max(0, Math.min(1.0, overlayAlpha));
 
   for (let i = 0; i < 3; i += 1) {
-    const pocket = frame.pockets[i];
+    const rawPocket = frame.pockets[i];
+    const pocket = { ...rawPocket, x: rawPocket.x + jitter.dx, y: rawPocket.y + jitter.dy };
     const res = results[i] as PocketInspectionResult | undefined;
     const isSelected = selectedPocketIndex === i;
 
@@ -584,7 +698,10 @@ function drawPocketInspectionOverlays(
 
           // Offset & Angle telemetry badge
           const sign = res.rule1Pin1.angleDeg > 0 ? "+" : "";
-          const tolStr = res.rule1Pin1.angleToleranceDeg !== undefined ? ` (±${res.rule1Pin1.angleToleranceDeg.toFixed(1)}°)` : "";
+          const tolStr =
+            res.rule1Pin1.angleToleranceDeg !== undefined
+              ? ` (±${res.rule1Pin1.angleToleranceDeg.toFixed(1)}°)`
+              : "";
           const teleText = `Δ ${res.rule1Pin1.offsetPx.toFixed(1)}px | θ ${sign}${res.rule1Pin1.angleDeg.toFixed(1)}°${tolStr}`;
           ctx.font = "bold 7px monospace";
           const teleW = ctx.measureText(teleText).width + 6;

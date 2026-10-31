@@ -19,8 +19,10 @@ describe("Toaster", () => {
   it("configures compact stacking + right-aligned close", () => {
     renderToString(<Toaster />);
     expect(captured.props?.closeButton).toBe(true);
-    expect(captured.props?.visibleToasts).toBe(5);
+    expect(captured.props?.visibleToasts).toBe(3);
     expect(captured.props?.position).toBe("bottom-right");
+    expect(captured.props?.expand).toBe(false);
+    expect(captured.props?.duration).toBe(3500);
     const classNames = (
       captured.props?.toastOptions as {
         classNames: { toast: string; closeButton: string };

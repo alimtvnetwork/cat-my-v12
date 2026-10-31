@@ -43,6 +43,7 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `09-commit-and-multi-agent-code-fix` | [`09-commit-and-multi-agent-code-fix/06-insult-code-fix.md`](../01-prompts/09-commit-and-multi-agent-code-fix/06-insult-code-fix.md) | Strict Discipline Code Remediation — Quality Protocol (must follow) |
 | `09-commit-and-multi-agent-code-fix` | [`09-commit-and-multi-agent-code-fix/07-clean-artifacts-and-git-history.md`](../01-prompts/09-commit-and-multi-agent-code-fix/07-clean-artifacts-and-git-history.md) | Artifact Sanitization & Git History Preservation — Workflow (must follow) |
 | `09-commit-and-multi-agent-code-fix` | [`09-commit-and-multi-agent-code-fix/08-git-reconcile-and-resolve-conflict.md`](../01-prompts/09-commit-and-multi-agent-code-fix/08-git-reconcile-and-resolve-conflict.md) | Git Reconciliation & Mechanical Conflict Resolution — Workflow (must follow) |
+| `09-commit-and-multi-agent-code-fix` | [`09-commit-and-multi-agent-code-fix/09-commit-and-push-all-repos.md`](../01-prompts/09-commit-and-multi-agent-code-fix/09-commit-and-push-all-repos.md) | Multi-Repository Commit & Push Automation — Workflow (must follow) |
 | `10-ui-and-design` | [`10-ui-and-design/01-logo-create.md`](../01-prompts/10-ui-and-design/01-logo-create.md) | Logo Design & Branding Generation — Lovable Design Workflow |
 | `10-ui-and-design` | [`10-ui-and-design/02-react-ui-fixes-update.md`](../01-prompts/10-ui-and-design/02-react-ui-fixes-update.md) | React Component Modernization & Responsive Styling — Workflow (must follow) |
 | `10-ui-and-design` | [`10-ui-and-design/03-svg-logo.md`](../01-prompts/10-ui-and-design/03-svg-logo.md) | SVG Icon & Vector Graphic Creation — Design Workflow |
@@ -52,6 +53,7 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `10-ui-and-design` | [`10-ui-and-design/07-follow-ui-ux-design-system.md`](../01-prompts/10-ui-and-design/07-follow-ui-ux-design-system.md) | Follow UI/UX Design System Specification & Component Assembly |
 | `10-ui-and-design` | [`10-ui-and-design/08-create-slide-deck.md`](../01-prompts/10-ui-and-design/08-create-slide-deck.md) | Create Presentation Slide Deck & Live Builder System |
 | `10-ui-and-design` | [`10-ui-and-design/09-write-and-enhance-design-spec.md`](../01-prompts/10-ui-and-design/09-write-and-enhance-design-spec.md) | Write and Enhance a Design Spec That a Blind AI Can Follow |
+| `10-ui-and-design` | [`10-ui-and-design/10-blind-spec-creator-and-enhancer.md`](../01-prompts/10-ui-and-design/10-blind-spec-creator-and-enhancer.md) | Blind AI Specification Creator & Enhancer Protocol |
 | `10-ui-and-design` | [`10-ui-and-design/readme.md`](../01-prompts/10-ui-and-design/readme.md) | UI and Design Prompts Library |
 | `11-content-and-seo` | [`11-content-and-seo/01-jokes-ideas-generate.md`](../01-prompts/11-content-and-seo/01-jokes-ideas-generate.md) | Humor Generation & Content Ideation — Content Workflow (must follow) |
 | `11-content-and-seo` | [`11-content-and-seo/02-lowercase-readme-and-sequence.md`](../01-prompts/11-content-and-seo/02-lowercase-readme-and-sequence.md) | Lowercase Filename Enforcement & Sequence Re-Ordering — Workflow (must follow) |
@@ -69,13 +71,14 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `13-plan-audit` | [`13-plan-audit/02-plan-spec-steps-v2.md`](../01-prompts/13-plan-audit/02-plan-spec-steps-v2.md) | any uppercase character, space, or underscore in an authored path = FAIL |
 | `13-plan-audit` | [`13-plan-audit/03-audit-app-spec.md`](../01-prompts/13-plan-audit/03-audit-app-spec.md) | 1. the audited scope, with line counts |
 | `13-plan-audit` | [`13-plan-audit/04-fix-spec-from-audit.md`](../01-prompts/13-plan-audit/04-fix-spec-from-audit.md) | 04-fix-spec-from-audit.md |
-| `14-execute` | [`14-execute/01-execute-pending-tasks.md`](../01-prompts/14-execute/01-execute-pending-tasks.md) | 01-execute-pending-tasks.md |
+| `14-execute` | [`14-execute/01-execute-pending-tasks.md`](../01-prompts/14-execute/01-execute-pending-tasks.md) | [V6] Execute Pending Tasks N-Step Continuous Loop & Mandatory Multi-Agent Subagent Orchestration — Workflow (must follow) |
 | `14-execute` | [`14-execute/02-execute-parent-task-with-n-steps-v6.md`](../01-prompts/14-execute/02-execute-parent-task-with-n-steps-v6.md) | [V6] Parent Task N-Step Continuous Loop & Mandatory Multi-Agent Subagent Orchestration — Workflow (must follow) |
 | `14-execute` | [`14-execute/03-execute-batched-loop.md`](../01-prompts/14-execute/03-execute-batched-loop.md) | 03-execute-batched-loop.md |
 | `14-execute` | [`14-execute/04-execute-ai-instruction-writer.md`](../01-prompts/14-execute/04-execute-ai-instruction-writer.md) | 04-execute-ai-instruction-writer.md |
 | `14-execute` | [`14-execute/05-execute-batched-loop-wor.md`](../01-prompts/14-execute/05-execute-batched-loop-wor.md) | 05-execute-batched-loop-wor.md |
 | `14-execute` | [`14-execute/06-execute-batched-loop-v2.md`](../01-prompts/14-execute/06-execute-batched-loop-v2.md) | 06-execute-batched-loop-v2.md |
 | `14-execute` | [`14-execute/07-run.md`](../01-prompts/14-execute/07-run.md) | Run Script Orchestration — Execute Workflow (`run`) |
+| `14-execute` | [`14-execute/08-execute-with-e2e.md`](../01-prompts/14-execute/08-execute-with-e2e.md) | Execute with End-to-End (E2E) Testing & Automated Minor Release — [execute-with-e2e](file;.agents/skills/execute-with-e2e) |
 | `14-execute` | [`14-execute/readme.md`](../01-prompts/14-execute/readme.md) | Execution Prompts (`14-execute`) — Index & Catalog |
 | `15-cg-execute` | [`15-cg-execute/01-execute-coding-guideline-fix.md`](../01-prompts/15-cg-execute/01-execute-coding-guideline-fix.md) | Ledger: NN-<slug> |
 | `15-cg-execute` | [`15-cg-execute/02-error-management.md`](../01-prompts/15-cg-execute/02-error-management.md) | Ledger: NN-<slug> |
@@ -114,6 +117,8 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `15-cg-execute` | [`15-cg-execute/35-clean-work-artifacts-and-os-caches.md`](../01-prompts/15-cg-execute/35-clean-work-artifacts-and-os-caches.md) | Ledger: NN-<slug> |
 | `15-cg-execute` | [`15-cg-execute/36-variadic-and-spread-parameters.md`](../01-prompts/15-cg-execute/36-variadic-and-spread-parameters.md) | Ledger: NN-<slug> |
 | `15-cg-execute` | [`15-cg-execute/37-string-normalization-and-equalfoldany.md`](../01-prompts/15-cg-execute/37-string-normalization-and-equalfoldany.md) | Ledger: NN-<slug> |
+| `15-cg-execute` | [`15-cg-execute/38-map-dispatch-and-handler-lookup.md`](../01-prompts/15-cg-execute/38-map-dispatch-and-handler-lookup.md) | Ledger: NN-<slug> |
+| `15-cg-execute` | [`15-cg-execute/39-golang-pointers-and-mutation-reduction.md`](../01-prompts/15-cg-execute/39-golang-pointers-and-mutation-reduction.md) | Golang Pointers Reduction & Mutation Reduction — Value Semantics & Pure Immutability (slug: cg-golang-pointers-and-mutation-reduction, invoke: /golang-pointers-and-mutation-reduction) |
 | `15-cg-execute` | [`15-cg-execute/readme.md`](../01-prompts/15-cg-execute/readme.md) | Coding Guideline Execution Suite (`cg-execute`) — Index & Catalog (must follow) |
 | `16-ci-cd` | [`16-ci-cd/01-ci-cd-fix-tweak.md`](../01-prompts/16-ci-cd/01-ci-cd-fix-tweak.md) | CI/CD Fix Tweak with Targeted Smart Testing & RCA — Workflow (must follow) |
 | `16-ci-cd` | [`16-ci-cd/02-ci-cd-fix-with-release-tweak.md`](../01-prompts/16-ci-cd/02-ci-cd-fix-with-release-tweak.md) | Release-Triggered CI/CD Fix Tweak with Targeted Smart Testing — Workflow (must follow) |
@@ -187,8 +192,9 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `22-letterly` | [`22-letterly/06-cicd-fix-release-letterly.md`](../01-prompts/22-letterly/06-cicd-fix-release-letterly.md) | CI/CD Fix & Release Mode — Letterly Prompt Formatter |
 | `22-letterly` | [`22-letterly/07-mobile-cicd-fix-letterly.md`](../01-prompts/22-letterly/07-mobile-cicd-fix-letterly.md) | Mobile CI/CD Fix Mode — Letterly Prompt Formatter |
 | `22-letterly` | [`22-letterly/08-run-letterly.md`](../01-prompts/22-letterly/08-run-letterly.md) | Run Mode — Letterly Prompt Formatter |
-| `22-letterly` | [`22-letterly/09-execute-with-verification-letterly.md`](../01-prompts/22-letterly/09-execute-with-verification-letterly.md) | Execute N-Steps — Letterly Prompt Formatter |
+| `22-letterly` | [`22-letterly/09-execute-with-verification-letterly.md`](../01-prompts/22-letterly/09-execute-with-verification-letterly.md) | Execute with Verification Mode — Letterly Prompt Formatter |
 | `22-letterly` | [`22-letterly/10-execute-with-release-letterly.md`](../01-prompts/22-letterly/10-execute-with-release-letterly.md) | Execute with Release Mode — Letterly Prompt Formatter |
+| `22-letterly` | [`22-letterly/11-git-pull-first-letterly.md`](../01-prompts/22-letterly/11-git-pull-first-letterly.md) | Git Pull First — Letterly Prompt Formatter |
 | `22-letterly` | [`22-letterly/readme.md`](../01-prompts/22-letterly/readme.md) | Letterly Prompt Formatters (`22-letterly`) |
 | `23-cursor-prompts` | [`23-cursor-prompts/01-mobile-letterly-cursor.md`](../01-prompts/23-cursor-prompts/01-mobile-letterly-cursor.md) | Mobile Mode (Cursor) — Letterly Prompt Formatter |
 | `23-cursor-prompts` | [`23-cursor-prompts/02-desktop-letterly-cursor.md`](../01-prompts/23-cursor-prompts/02-desktop-letterly-cursor.md) | Desktop Mode (Cursor) — Letterly Prompt Formatter |
@@ -200,6 +206,7 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `23-cursor-prompts` | [`23-cursor-prompts/08-run-letterly-cursor.md`](../01-prompts/23-cursor-prompts/08-run-letterly-cursor.md) | Run Mode (Cursor) — Letterly Prompt Formatter |
 | `23-cursor-prompts` | [`23-cursor-prompts/09-execute-with-verification-letterly-cursor.md`](../01-prompts/23-cursor-prompts/09-execute-with-verification-letterly-cursor.md) | Execute with Verification Mode (Cursor) — Letterly Prompt Formatter |
 | `23-cursor-prompts` | [`23-cursor-prompts/10-execute-with-release-letterly-cursor.md`](../01-prompts/23-cursor-prompts/10-execute-with-release-letterly-cursor.md) | Execute with Release Mode (Cursor) — Letterly Prompt Formatter |
+| `23-cursor-prompts` | [`23-cursor-prompts/11-git-pull-first-letterly-cursor.md`](../01-prompts/23-cursor-prompts/11-git-pull-first-letterly-cursor.md) | Git Pull First (Cursor) — Letterly Prompt Formatter |
 | `23-cursor-prompts` | [`23-cursor-prompts/readme.md`](../01-prompts/23-cursor-prompts/readme.md) | Cursor Letterly Prompt Formatters (`23-cursor-prompts`) |
 | `24-sync` | [`24-sync/01-sync.md`](../01-prompts/24-sync/01-sync.md) | [V6] Full-Fleet Multi-Repository Synchronization & Canonical Mirroring Engine — Workflow (must follow) |
 | `24-sync` | [`24-sync/02-sync-other-codebase.md`](../01-prompts/24-sync/02-sync-other-codebase.md) | [V6] Multi-Repository Synchronization & Downstream Codebase Mirroring — Workflow (must follow) |
@@ -208,6 +215,24 @@ It is referenced from `.ai-memory/coding-guidelines.md` as a required read befor
 | `25-ai-verification` | [`25-ai-verification/readme.md`](../01-prompts/25-ai-verification/readme.md) | AI Verification Prompts (`25-ai-verification`) |
 | `26-gitmap` | [`26-gitmap/01-gitmap-core-engine.md`](../01-prompts/26-gitmap/01-gitmap-core-engine.md) | GitMap Core Engine & Autonomous Developer Automation — Canonical Specification (must follow) |
 | `26-gitmap` | [`26-gitmap/readme.md`](../01-prompts/26-gitmap/readme.md) | GitMap AI Training & Autonomous Automation Prompts (`26-gitmap`) |
+| `27-muse-prompts` | [`27-muse-prompts/01-muse-master-prompt.md`](../01-prompts/27-muse-prompts/01-muse-master-prompt.md) | [V6] MUSE MASTER ONBOARDING, FLEET ORCHESTRATION & AUTONOMOUS EXECUTION PROMPT — AGENT DIRECTIVE |
+| `27-muse-prompts` | [`27-muse-prompts/02-muse-generic.md`](../01-prompts/27-muse-prompts/02-muse-generic.md) | [V6] MUSE GENERIC MASTER ONBOARDING, GITMAP SUITE & AUTONOMOUS EXECUTION DIRECTIVE |
+| `27-muse-prompts` | [`27-muse-prompts/03-muse-standalone-master-prompt.md`](../01-prompts/27-muse-prompts/03-muse-standalone-master-prompt.md) | [V6] MUSE STANDALONE MASTER — pure native Git, no GitMap |
+| `27-muse-prompts` | [`27-muse-prompts/04-muse-universal-master-prompt.md`](../01-prompts/27-muse-prompts/04-muse-universal-master-prompt.md) | [V6] MUSE UNIVERSAL MASTER — 9-step onboarding for any repository |
+| `27-muse-prompts` | [`27-muse-prompts/05-muse-execute-in-a-step.md`](../01-prompts/27-muse-prompts/05-muse-execute-in-a-step.md) | Muse execute in a step — RUNNING or NOT RUNNING, ETA, five-minute status |
+| `27-muse-prompts` | [`27-muse-prompts/readme.md`](../01-prompts/27-muse-prompts/readme.md) | Muse Prompts (`27-muse-prompts`) — Index & Catalog |
+| `28-mastery-prompts` | [`28-mastery-prompts/01-mastery-bootstrap-prompt.md`](../01-prompts/28-mastery-prompts/01-mastery-bootstrap-prompt.md) | Mastery Bootstrap Prompt — foolproof standalone session starter |
+| `28-mastery-prompts` | [`28-mastery-prompts/readme.md`](../01-prompts/28-mastery-prompts/readme.md) | Mastery Prompts (`28-mastery-prompts`) — Index & Catalog |
+| `29-chat-management` | [`29-chat-management/01-chat-histories-reread-remove-and-recreate.md`](../01-prompts/29-chat-management/01-chat-histories-reread-remove-and-recreate.md) | Chat Histories: Re-read, Remove & Recreate (per-repo chats) |
+| `29-chat-management` | [`29-chat-management/readme.md`](../01-prompts/29-chat-management/readme.md) | 29 — Chat Management |
+| `30-improvements` | [`30-improvements/01-next-100-ui-improvements.md`](../01-prompts/30-improvements/01-next-100-ui-improvements.md) | Next 100 UI Improvements — Autonomous UI Discovery & Planning Flywheel (slug: `next-100-ui-improvements`, invoke: `/next-100-ui-improvements`) |
+| `30-improvements` | [`30-improvements/02-next-100-code-improvements.md`](../01-prompts/30-improvements/02-next-100-code-improvements.md) | Next 100 Code Improvements — Autonomous Code Quality & Guideline Flywheel (slug: `next-100-code-improvements`, invoke: `/next-100-code-improvements`) |
+| `30-improvements` | [`30-improvements/03-next-100-whole-system-improvements.md`](../01-prompts/30-improvements/03-next-100-whole-system-improvements.md) | Next 100 Whole System Improvements — Full-System Architecture & DX Flywheel (slug: `next-100-whole-system-improvements`, invoke: `/next-100-whole-system-improvements`) |
+| `30-improvements` | [`30-improvements/04-next-detail-out-100-improvements.md`](../01-prompts/30-improvements/04-next-detail-out-100-improvements.md) | Next Detail Out 100 Improvements — Multi-Step Detailing & Review-First Gate (slug: `next-detail-out-100-improvements`, invoke: `/next-detail-out-100-improvements`) |
+| `30-improvements` | [`30-improvements/05-next-100-ideas-for-improvements.md`](../01-prompts/30-improvements/05-next-100-ideas-for-improvements.md) | Next 100 Ideas for Improvements — Autonomous Ideation & Innovation Flywheel (slug: `next-100-ideas-for-improvements`, invoke: `/next-100-ideas-for-improvements`) |
+| `30-improvements` | [`30-improvements/06-check-pending-improvements.md`](../01-prompts/30-improvements/06-check-pending-improvements.md) | Check Pending Improvements — Operational Backlog Dashboard & Pending Count (slug: `check-pending-improvements`, invoke: `/check-pending-improvements`) |
+| `30-improvements` | [`30-improvements/07-implement-next-10-improvements.md`](../01-prompts/30-improvements/07-implement-next-10-improvements.md) | Implement Next 10 Improvements — Fast-Forward Implementation Engine & Coding Guideline Guardrails (slug: `implement-next-10-improvements`, invoke: `/implement-next-10-improvements`) |
+| `30-improvements` | [`30-improvements/readme.md`](../01-prompts/30-improvements/readme.md) | Improvements Prompts (`30-improvements`) — Index & Catalog |
 | `.` | [`readme.md`](../01-prompts/readme.md) | Prompt Architect: Canonical AI Prompts Library |
 
 ## Maintenance

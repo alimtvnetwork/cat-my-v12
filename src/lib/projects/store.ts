@@ -6,6 +6,53 @@ import { IntAliasNamespaceType } from "@/lib/ids/int-alias";
 // the raw maps.
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  SAMPLE_IMAGE_POCKET_2_FILLED,
+  SAMPLE_IMAGE_POCKET_5_PARTIAL,
+} from "@/lib/vision/sample-images";
+
+/** Legacy "/src/..." sample URLs -> bundled hashed URLs (see onRehydrateStorage). */
+const LEGACY_SAMPLE_IMAGE_URLS: Record<string, string> = {
+  "/src/assets/samples/pocket-1-filled.jpg": SAMPLE_IMAGE_POCKET_1_FILLED,
+  "/src/assets/samples/pocket-2-empty-mixed.jpg": SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  "/src/assets/samples/pocket-2-filled.jpg": SAMPLE_IMAGE_POCKET_2_FILLED,
+  "/src/assets/samples/pocket-5-partial.jpg": SAMPLE_IMAGE_POCKET_5_PARTIAL,
+};
+
+/**
+ * Rewrites persisted legacy "/src/assets/samples/..." image refs to the
+ * bundled hashed URLs so projects created before the fix keep working in
+ * the packaged exe build.
+ */
+function repairLegacySampleImageRefs(state: ProjectStoreState): void {
+  let changed = false;
+
+  for (const project of Object.values(state.projects ?? {})) {
+    const fixed = project.inspectionImageRef
+      ? LEGACY_SAMPLE_IMAGE_URLS[project.inspectionImageRef]
+      : undefined;
+
+    if (fixed) {
+      project.inspectionImageRef = fixed;
+      changed = true;
+    }
+  }
+
+  for (const ruleset of Object.values(state.rulesets ?? {})) {
+    const fixed = ruleset.imageRef ? LEGACY_SAMPLE_IMAGE_URLS[ruleset.imageRef] : undefined;
+
+    if (fixed) {
+      ruleset.imageRef = fixed;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    useProjectStore.setState({ projects: state.projects, rulesets: state.rulesets });
+  }
+}
 import type { EditorRule } from "@/lib/editor/types";
 import { createFacadeStateStorage } from "./facade";
 import { resolveIdParam as _resolveIdParam, seedIntParams } from "@/lib/ids/int-alias";
@@ -389,18 +436,17 @@ export const useProjectStore = create<ProjectStoreState>()(
       updateRulesetRules: (id, rules) => {
         const real = rid(id);
         set((state) => {
-          const targetKey =
-            state.rulesets[real]
-              ? real
-              : state.rulesets[id]
-                ? id
-                : Object.keys(state.rulesets).find(
-                    (k) =>
-                      k === id ||
-                      k === real ||
-                      state.rulesets[k]?.id === id ||
-                      state.rulesets[k]?.id === real,
-                  );
+          const targetKey = state.rulesets[real]
+            ? real
+            : state.rulesets[id]
+              ? id
+              : Object.keys(state.rulesets).find(
+                  (k) =>
+                    k === id ||
+                    k === real ||
+                    state.rulesets[k]?.id === id ||
+                    state.rulesets[k]?.id === real,
+                );
 
           if (!targetKey || !state.rulesets[targetKey]) {
             ClientLogger.warn("[projects/store] updateRulesetRules: unknown id", id);
@@ -417,18 +463,17 @@ export const useProjectStore = create<ProjectStoreState>()(
       updateRulesetImageRef: (id, imageRef) => {
         const real = rid(id);
         set((state) => {
-          const targetKey =
-            state.rulesets[real]
-              ? real
-              : state.rulesets[id]
-                ? id
-                : Object.keys(state.rulesets).find(
-                    (k) =>
-                      k === id ||
-                      k === real ||
-                      state.rulesets[k]?.id === id ||
-                      state.rulesets[k]?.id === real,
-                  );
+          const targetKey = state.rulesets[real]
+            ? real
+            : state.rulesets[id]
+              ? id
+              : Object.keys(state.rulesets).find(
+                  (k) =>
+                    k === id ||
+                    k === real ||
+                    state.rulesets[k]?.id === id ||
+                    state.rulesets[k]?.id === real,
+                );
 
           if (!targetKey || !state.rulesets[targetKey]) {
             ClientLogger.warn("[projects/store] updateRulesetImageRef: unknown id", id);
@@ -445,18 +490,17 @@ export const useProjectStore = create<ProjectStoreState>()(
       updateProjectInspectionImageRef: (id, imageRef) => {
         const real = pid(id);
         set((state) => {
-          const targetKey =
-            state.projects[real]
-              ? real
-              : state.projects[id]
-                ? id
-                : Object.keys(state.projects).find(
-                    (k) =>
-                      k === id ||
-                      k === real ||
-                      state.projects[k]?.id === id ||
-                      state.projects[k]?.id === real,
-                  );
+          const targetKey = state.projects[real]
+            ? real
+            : state.projects[id]
+              ? id
+              : Object.keys(state.projects).find(
+                  (k) =>
+                    k === id ||
+                    k === real ||
+                    state.projects[k]?.id === id ||
+                    state.projects[k]?.id === real,
+                );
 
           if (!targetKey || !state.projects[targetKey]) {
             ClientLogger.warn("[projects/store] updateProjectInspectionImageRef: unknown id", id);
@@ -838,6 +882,12 @@ export const useProjectStore = create<ProjectStoreState>()(
         }
 
         if (!state) return;
+
+        // One-time repair: sample images used to be referenced by plain
+        // "/src/assets/samples/*.jpg" URL strings, which resolve in vite dev
+        // but 404 in the packaged exe build (only build output is served).
+        // Rewrite any persisted legacy refs to the bundled hashed URLs.
+        repairLegacySampleImageRefs(state);
 
         if (Object.keys(state.projects ?? {}).length === 0) {
           useProjectStore.setState({

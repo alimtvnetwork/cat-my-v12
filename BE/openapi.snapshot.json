@@ -2,14 +2,12 @@
   "openapi": "3.1.0",
   "info": {
     "title": "BE",
-    "version": "1.0.0"
+    "version": "4.113.9"
   },
   "paths": {
     "/system/status": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Get Status",
         "operationId": "get_status_system_status_get",
         "responses": {
@@ -1531,6 +1529,183 @@
         }
       }
     },
+    "/errors": {
+      "post": {
+        "summary": "Ingest Errors",
+        "operationId": "ingest_errors_errors_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Errors Route",
+        "operationId": "list_errors_route_errors_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "1..200, default 50",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "1..200, default 50"
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "exact Code match",
+              "title": "Code"
+            },
+            "description": "exact Code match"
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "error | warn | info",
+              "title": "Level"
+            },
+            "description": "error | warn | info"
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "correlation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Correlation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/errors/{correlation_id}": {
+      "get": {
+        "summary": "Get Error Route",
+        "operationId": "get_error_route_errors__correlation_id__get",
+        "parameters": [
+          {
+            "name": "correlation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Correlation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shutdown": {
+      "post": {
+        "summary": "Post Shutdown",
+        "description": "Acknowledge the Exit request, then stop the backend process.",
+        "operationId": "post_shutdown_shutdown_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/vision/white-box-marking": {
       "post": {
         "summary": "Post White Box Marking",
@@ -1602,6 +1777,326 @@
           }
         }
       }
+    },
+    "/ui-remote/elements": {
+      "get": {
+        "summary": "List Ui Elements",
+        "description": "Registry elements for a route; all entries when route is empty.",
+        "operationId": "list_ui_elements_ui_remote_elements_get",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui-remote/packets": {
+      "post": {
+        "summary": "Post Packet",
+        "description": "Validate and enqueue one CLI action packet.",
+        "operationId": "post_packet_ui_remote_packets_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui-remote/pending": {
+      "get": {
+        "summary": "List Pending",
+        "description": "Queued packets for the frontend hook to perform.",
+        "operationId": "list_pending_ui_remote_pending_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui-remote/results": {
+      "post": {
+        "summary": "Post Result",
+        "description": "Record a hook execution result and audit the packet.",
+        "operationId": "post_result_ui_remote_results_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui-remote/results/{packet_id}": {
+      "get": {
+        "summary": "Get Result",
+        "description": "Completed or queued state for one packet.",
+        "operationId": "get_result_ui_remote_results__packet_id__get",
+        "parameters": [
+          {
+            "name": "packet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Packet Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui-remote/audit": {
+      "get": {
+        "summary": "List Audit",
+        "description": "Recent audited CLI-driven actions, newest last.",
+        "operationId": "list_audit_ui_remote_audit_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bug-reports": {
+      "post": {
+        "summary": "Post Bug Report",
+        "description": "Compose + deliver a bug report via email and/or Supabase.",
+        "operationId": "post_bug_report_bug_reports_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bug-reports/pending": {
+      "get": {
+        "summary": "Get Pending Reports",
+        "description": "Pending Supabase reports (developer download queue).",
+        "operationId": "get_pending_reports_bug_reports_pending_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bug-reports/config": {
+      "get": {
+        "summary": "Get Bug Report Config",
+        "description": "Sanitized settings (key never returned).",
+        "operationId": "get_bug_report_config_bug_reports_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post Bug Report Config",
+        "description": "Save Supabase settings (URL + key + role + enabled), 0600 file.",
+        "operationId": "post_bug_report_config_bug_reports_config_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bug-reports/test": {
+      "post": {
+        "summary": "Post Bug Report Test",
+        "description": "Endpoint reachability + table verification for stored settings.",
+        "operationId": "post_bug_report_test_bug_reports_test_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1618,6 +2113,66 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "PacketRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "elementId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elementid"
+          },
+          "xpath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xpath"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "cli"
+          }
+        },
+        "type": "object",
+        "required": ["action"],
+        "title": "PacketRequest"
       },
       "Pin1Request": {
         "properties": {
@@ -1646,6 +2201,11 @@
             "minimum": 0.0,
             "title": "Thresholdluma",
             "default": 35
+          },
+          "GreyscaleMode": {
+            "type": "string",
+            "title": "Greyscalemode",
+            "default": "threshold"
           },
           "MinCircularityPercent": {
             "type": "integer",
@@ -1706,12 +2266,45 @@
           }
         },
         "type": "object",
-        "required": [
-          "Width",
-          "Height",
-          "RgbaBase64"
-        ],
+        "required": ["Width", "Height", "RgbaBase64"],
         "title": "Pin1Request"
+      },
+      "ResultRequest": {
+        "properties": {
+          "packetId": {
+            "type": "string",
+            "title": "Packetid"
+          },
+          "performed": {
+            "type": "boolean",
+            "title": "Performed"
+          },
+          "resolvedVia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvedvia"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": ["packetId", "performed"],
+        "title": "ResultRequest"
       },
       "SearchRegionRequest": {
         "properties": {
@@ -1737,12 +2330,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "X",
-          "Y",
-          "Width",
-          "Height"
-        ],
+        "required": ["X", "Y", "Width", "Height"],
         "title": "SearchRegionRequest"
       },
       "ValidationError": {
@@ -1778,11 +2366,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "WhiteBoxRequest": {
@@ -1838,11 +2422,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "Width",
-          "Height",
-          "RgbaBase64"
-        ],
+        "required": ["Width", "Height", "RgbaBase64"],
         "title": "WhiteBoxRequest"
       }
     }

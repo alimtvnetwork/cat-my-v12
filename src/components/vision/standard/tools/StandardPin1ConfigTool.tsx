@@ -13,6 +13,14 @@ export function StandardPin1ConfigTool(
 ): React.JSX.Element {
   const model = usePin1Rule(props);
   const [hasOverlays, setHasOverlays] = useState(true);
+  // Spec 55: lift lock/order state here exactly as Pin1MarkingTool does,
+  // so the dispatcher canvas enforces the same lock and right-click
+  // reorder behavior (previously it ran on internal defaults only).
+  const [isSearchLocked, setIsSearchLocked] = useState(true);
+  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
   const activeRegion =
     model.regionEditMode === "package" ? model.packageRegion : model.searchRegion;
 
@@ -22,6 +30,14 @@ export function StandardPin1ConfigTool(
     }
   };
 
+  // Apply = rule creation: savePin1Rule (pin1-config/usePin1Rule)
+  // writes the taught rule — registered Pin 1 position (absolute
+  // centerX/centerY plus relativeX/relativeY, already relative to the
+  // search region, so the analyzer can prefer the relative form),
+  // nominalAngleDeg, angleToleranceDeg, thresholdLuma, tolerancePx and
+  // the search/package regions. It writes no preview verdict.
+  // Process is the separate Detect step (Pin1Header onDetect ->
+  // model.runDetection), which only sets local preview state.
   const handleApply = () => {
     void model.savePin1Rule();
   };
@@ -57,10 +73,16 @@ export function StandardPin1ConfigTool(
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
+            greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
+            isSearchLocked={isSearchLocked}
+            onSearchLockChange={setIsSearchLocked}
+            layerOrder={layerOrder}
+            onLayerOrderChange={setLayerOrder}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}
+            patternShape={model.patternShape}
           />
 
           <div className="flex flex-col h-full border-l border-ca-border bg-ca-panel-2 p-2.5 overflow-y-auto gap-3">
@@ -70,10 +92,12 @@ export function StandardPin1ConfigTool(
               tolerancePx={model.tolerancePx}
             />
 
-
             <Pin1SettingsCard
               polarity={model.polarity}
               thresholdLuma={model.thresholdLuma}
+              effectiveThresholdLuma={model.effectiveThresholdLuma}
+              isThresholdOverridden={model.isThresholdOverridden}
+              thresholdRegionMeanLuma={model.thresholdRegionMeanLuma}
               minCircularity={model.minCircularity}
               tolerancePx={model.tolerancePx}
               expectedX={model.registeredPin1?.centerX}
@@ -84,6 +108,8 @@ export function StandardPin1ConfigTool(
               onReconfigure={handleReconfigure}
               angleDatum={model.angleDatum}
               onAngleDatumChange={model.handleAngleDatumChange}
+              patternShape={model.patternShape}
+              onPatternShapeChange={model.setPatternShape}
             />
           </div>
         </div>

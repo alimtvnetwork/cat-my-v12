@@ -1,6 +1,10 @@
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { DEFAULT_24_PATTERN_BOXES } from "@/lib/vision/white-box-marking";
 import type { Project, RuleSet } from "./types";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+} from "@/lib/vision/sample-images";
 
 export const DEFAULT_SMT_PROJECT_ID = "prj-smt-74hc595-line";
 export const DEFAULT_SMT_RULESET_ID = "rs-smt-74hc-production";
@@ -37,7 +41,14 @@ export function createDefaultSmtRules(): EditorRule[] {
         searchRegion: { x: 180, y: 140, width: 140, height: 140 },
         packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         pin1Config: {
-          registeredPin1: { x: 249, y: 264, centerX: 249, centerY: 264, radius: 24, confidence: 1.0 },
+          registeredPin1: {
+            x: 249,
+            y: 264,
+            centerX: 249,
+            centerY: 264,
+            radius: 24,
+            confidence: 1.0,
+          },
           centerX: 249,
           centerY: 264,
           relativeX: 49.3,
@@ -260,7 +271,7 @@ export const DEFAULT_INITIAL_PROJECTS: Record<string, Project> = {
     rulesetIds: [DEFAULT_SMT_RULESET_ID, DEFAULT_SMT_EMPTY_GUARD_ID],
     deviceId: "DUT-74HC595D (SOP8)",
     cameraName: "Basler Ace GigE 4K (CH1)",
-    inspectionImageRef: "/src/assets/samples/pocket-1-filled.jpg",
+    inspectionImageRef: SAMPLE_IMAGE_POCKET_1_FILLED,
     categoryNames: ["Presence/Absence", "Flaw Detection", "Count/Measure", "ID/OCR"],
   },
 };
@@ -271,7 +282,7 @@ export const DEFAULT_INITIAL_RULESETS: Record<string, RuleSet> = {
     projectId: DEFAULT_SMT_PROJECT_ID,
     name: "Production Quality Inspection (12 Tools)",
     categoryName: "Presence/Absence",
-    imageRef: "/src/assets/samples/pocket-1-filled.jpg",
+    imageRef: SAMPLE_IMAGE_POCKET_1_FILLED,
     rules: createDefaultSmtRules(),
     overrideMode: "direct",
   },
@@ -280,7 +291,7 @@ export const DEFAULT_INITIAL_RULESETS: Record<string, RuleSet> = {
     projectId: DEFAULT_SMT_PROJECT_ID,
     name: "Tape Carrier Cavity & Empty Pocket Guard",
     categoryName: "Flaw Detection",
-    imageRef: "/src/assets/samples/pocket-2-empty-mixed.jpg",
+    imageRef: SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
     rules: createEmptyGuardRules(),
     overrideMode: "direct",
   },

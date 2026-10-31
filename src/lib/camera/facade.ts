@@ -75,6 +75,7 @@ function browserStorage(): WindowStorageLike | null {
 class LocalStorageCameraFacade implements CameraFacade {
   private store: CameraLibraryStore | null = null;
   private listeners = new Set<() => void>();
+  private isStorageListenerAttached = false;
   private resolveReferrers: CameraReferrerResolver = () => [];
 
   private ensureStore(): CameraLibraryStore | null {
@@ -92,6 +93,24 @@ class LocalStorageCameraFacade implements CameraFacade {
     this.store.subscribe(() => {
       for (const l of this.listeners) l();
     });
+
+    // Cross-document sync: another tab / window writing the library key
+    // directly (seed, bundle import, second app window) must refresh this
+    // store's snapshot, or every dropdown bound to it stays stale until a
+    // full page reload. Storage events fire only in other documents, so
+    // this never double-fires for this facade's own saves.
+    if (
+      typeof window !== "undefined" &&
+      typeof window.addEventListener === "function" &&
+      !this.isStorageListenerAttached
+    ) {
+      this.isStorageListenerAttached = true;
+      window.addEventListener("storage", (event) => {
+        if (event.key === null || event.key === CAMERA_LIBRARY_STORAGE_KEY) {
+          this.store?.reload();
+        }
+      });
+    }
 
     return this.store;
   }

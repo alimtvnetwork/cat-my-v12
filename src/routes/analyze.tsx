@@ -3,14 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 import { HmiShell } from "@/components/hmi";
-import {
-  WorkpieceAnalyzeWorkspace,
-} from "@/components/vision/workpiece";
+import { WorkpieceAnalyzeWorkspace, WorkspaceSaveButton } from "@/components/vision/workpiece";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import { useWorkpieceProject } from "@/hooks/useWorkpieceProject";
 import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { DEFAULT_24_PATTERN_BOXES } from "@/lib/vision/white-box-marking";
 import { useSitemapStateCacheStore } from "@/lib/stores/sitemap-state-cache-store";
+import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
+import { useRulesStore } from "@/lib/editor/store/rules-slice";
 
 export const Route = createFileRoute("/analyze")({
   head: () => ({
@@ -18,11 +18,14 @@ export const Route = createFileRoute("/analyze")({
       { title: "Control Automation — Inspection Analysis" },
       {
         name: "description",
-        content: "Live inspection hierarchy and workpiece analysis for circuit IC devices and rule sets.",
+        content:
+          "Live inspection hierarchy and workpiece analysis for circuit IC devices and rule sets.",
       },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): {
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
     project?: string;
     ruleset?: string;
     rule?: string;
@@ -61,7 +64,14 @@ function createDefaultRules(): EditorRule[] {
         packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         packageRegionJson: JSON.stringify({ x: 200, y: 160, width: 500, height: 300 }),
         pin1Config: {
-          registeredPin1: { x: 249, y: 264, centerX: 249, centerY: 264, radius: 24, confidence: 1.0 },
+          registeredPin1: {
+            x: 249,
+            y: 264,
+            centerX: 249,
+            centerY: 264,
+            radius: 24,
+            confidence: 1.0,
+          },
           centerX: 249,
           centerY: 264,
           relativeX: 49.3,
@@ -74,7 +84,14 @@ function createDefaultRules(): EditorRule[] {
           packageRegion: { x: 200, y: 160, width: 500, height: 300 },
         } as any,
         pin1ConfigJson: JSON.stringify({
-          registeredPin1: { x: 249, y: 264, centerX: 249, centerY: 264, radius: 24, confidence: 1.0 },
+          registeredPin1: {
+            x: 249,
+            y: 264,
+            centerX: 249,
+            centerY: 264,
+            radius: 24,
+            confidence: 1.0,
+          },
           centerX: 249,
           centerY: 264,
           relativeX: 49.3,
@@ -114,7 +131,9 @@ function createDefaultRules(): EditorRule[] {
         patternRegion: { x: 150, y: 100, width: 600, height: 300 },
         patternRegionJson: JSON.stringify({ x: 150, y: 100, width: 600, height: 300 }),
         referenceBoxes: DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
-        constellationJson: JSON.stringify(DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 }))),
+        constellationJson: JSON.stringify(
+          DEFAULT_24_PATTERN_BOXES.map((b) => ({ ...b, expectedLuma: 200 })),
+        ),
       },
     },
     {
@@ -206,6 +225,18 @@ function AnalyzeScreen(): React.JSX.Element {
     });
   }, [currentPathname, targetProject, targetRuleset, saveSnapshot]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).__CA_ANALYZE_API__ = {
+        updateRulesetRules,
+        targetRuleset,
+        targetProject,
+        useRulesStore,
+        openRule: (ruleId: string) => visualTunerBus.emit(ruleId),
+      };
+    }
+  }, [targetProject, targetRuleset, updateRulesetRules]);
+
   if (!targetProject || !targetRuleset) {
     return (
       <StandardAppShell
@@ -245,19 +276,16 @@ function AnalyzeScreen(): React.JSX.Element {
         activeNav="analyze"
         title={`Inspection Analysis — ${targetRuleset.name}`}
         subtitle={`Device: ${targetProject.deviceId || "Circuit IC"} · ${targetRuleset.rules?.length ?? 0} Rules Loaded`}
+        actions={<WorkspaceSaveButton />}
       >
-        <div className="flex flex-1 flex-col min-h-0 bg-[#111318]">
-          {workspace}
-        </div>
+        <div className="flex flex-1 flex-col min-h-0 bg-[#111318]">{workspace}</div>
       </StandardAppShell>
     );
   }
 
   return (
-    <HmiShell title={`Analyze — ${targetRuleset.name}`}>
-      <div className="flex flex-1 flex-col min-h-0 bg-ca-bg">
-        {workspace}
-      </div>
+    <HmiShell title={`Analyze — ${targetRuleset.name}`} headerActions={<WorkspaceSaveButton />}>
+      <div className="flex flex-1 flex-col min-h-0 bg-ca-bg">{workspace}</div>
     </HmiShell>
   );
 }

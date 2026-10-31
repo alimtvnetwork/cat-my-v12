@@ -66,6 +66,11 @@ export function StandardGreyscaleSimulationTool(
   // a single overlay pass that must not be split here; grid draws a dot
   // grid on the canvas wrapper. Defaults preserve today's display.
   const [viewModes, setViewModes] = useState({ regions: true, results: true, grid: false });
+  const [hasOverlays, setHasOverlays] = useState(true);
+  // Spec 55: the canvas's pocket selection is wired (previously the
+  // canvas accepted onSelectPocket but this, its only parent, never
+  // passed it, so selection could never work).
+  const [selectedPocketIndex, setSelectedPocketIndex] = useState<number | null>(null);
   const [selectedRuleId, setSelectedRuleId] = useState("rule-pin1");
   const [treeRules, setTreeRules] = useState<SimulationTreeRule[]>([
     {
@@ -223,16 +228,18 @@ export function StandardGreyscaleSimulationTool(
           <RotateCcw aria-hidden size={14} />
         </button>
 
+        {/* Overlays show only when BOTH the header switch (hasOverlays)
+            and the toolbar regions switch (viewModes.regions) are on. */}
         <button
           type="button"
-          onClick={() => setViewModes((s) => ({ ...s, regions: !s.regions }))}
+          onClick={() => setHasOverlays((prev) => !prev)}
           className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-2 py-hmi-1 text-hmi-caption font-semibold transition ${
-            viewModes.regions
+            hasOverlays && viewModes.regions
               ? "border-ca-select bg-ca-select/10 text-ca-select"
               : "border-ca-border bg-ca-panel text-ca-ink-muted"
           }`}
         >
-          {viewModes.regions ? <Eye aria-hidden size={14} /> : <EyeOff aria-hidden size={14} />}
+          {hasOverlays && viewModes.regions ? <Eye aria-hidden size={14} /> : <EyeOff aria-hidden size={14} />}
           Overlay
         </button>
 
@@ -310,9 +317,11 @@ export function StandardGreyscaleSimulationTool(
             <CarrierTapeSimulationCanvas
               frame={carrierSimulation.currentFrame}
               isAnalyzing={carrierSimulation.isAnalyzing}
-              hasOverlays={viewModes.regions}
+              hasOverlays={hasOverlays && viewModes.regions}
               displayZoom={props.settings?.view?.zoom}
               showGrid={viewModes.grid}
+              selectedPocketIndex={selectedPocketIndex}
+              onSelectPocket={setSelectedPocketIndex}
               tolerances={{
                 marginTolerancePx: carrierSimulation.marginTolerancePx,
                 angleToleranceDeg: carrierSimulation.angleToleranceDeg,
@@ -502,7 +511,9 @@ function Metric(props: {
 
   return (
     <div className="border-r border-ca-border/60 px-hmi-3 py-hmi-2 last:border-r-0">
-      <div className="font-mono text-[10px] uppercase tracking-wide text-ca-ink-muted">{props.label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-wide text-ca-ink-muted">
+        {props.label}
+      </div>
       <div className={`font-mono text-hmi-body font-bold ${toneClass}`}>{props.value}</div>
     </div>
   );

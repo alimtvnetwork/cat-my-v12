@@ -246,10 +246,11 @@ export interface FromEnvelopeOptions {
   categoryName?: string;
   /**
    * Optional override for the string ruleset id. If omitted, we reverse
-   * via `fromRulesetIntId`; if that alias is missing we fall back to a
-   * deterministic string derived from the integer id so the caller can
-   * always mount a route even for envelopes that were minted on a
-   * different device.
+   * via `fromRulesetIntId` (which falls back to the seeded default SMT
+   * ids on the server, e.g. int 1 -> rs-smt-74hc-production); if that
+   * alias is missing we fall back to a deterministic string derived
+   * from the integer id so the caller can always mount a route even
+   * for envelopes that were minted on a different device.
    */
   rulesetId?: string;
 }

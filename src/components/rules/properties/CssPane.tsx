@@ -2,6 +2,8 @@
 // generated styles. Derived from useRulesStore + KIND_COLOR so what the
 // operator copies matches what they see on canvas.
 import { useState } from "react";
+import { copyText } from "@/lib/errors/copy-text";
+import { showToastError } from "@/lib/errors/notify";
 import { PaneShell } from "./paneShell";
 import { PalettePlaceholder } from "../PropertiesPalette";
 import { useRulesStore } from "@/lib/editor/store/rules-slice";
@@ -50,13 +52,19 @@ export function CssPane(): React.JSX.Element | null {
       <button
         type="button"
         onClick={() => {
-          navigator.clipboard
-            ?.writeText(text)
-            .then(() => {
-              setCopied(true);
+          void copyText(text).then((result) => {
+            setCopied(result.isCopied);
+
+            if (result.isCopied) {
               setTimeout(() => setCopied(false), 1200);
-            })
-            .catch(() => setCopied(false));
+
+              return;
+            }
+
+            showToastError("Could not copy the CSS", new Error(result.failureMessage), {
+              source: "CssPane",
+            });
+          });
         }}
         className="ca-focus-fluid self-start rounded-sm border border-ca-border bg-ca-panel-2 px-hmi-2 py-0.5 text-[11px] hover:bg-ca-panel"
       >

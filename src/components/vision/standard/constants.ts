@@ -40,10 +40,10 @@ export const OCR_FONT_FAMILY_OPTIONS: readonly {
   { value: OcrFontFamilyType.Custom, label: "Custom Trained Font Dictionary" },
 ] as const;
 
-export const OCR_DEFAULT_CHARACTER_COUNT = 8;
+export const OCR_DEFAULT_CHARACTER_COUNT: number | null = null;
 export const OCR_MIN_CHARACTER_COUNT = 1;
 export const OCR_MAX_CHARACTER_COUNT = 64;
-export const OCR_DEFAULT_EXPECTED_FORMAT = "^[A-Z0-9]{8}$";
+export const OCR_DEFAULT_EXPECTED_FORMAT = "";
 export const OCR_DEFAULT_MIN_CONFIDENCE = 80;
 export const OCR_MIN_CONFIDENCE_PERCENT = 0;
 export const OCR_MAX_CONFIDENCE_PERCENT = 100;

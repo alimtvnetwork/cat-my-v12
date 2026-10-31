@@ -29,6 +29,7 @@ import { Maximize2, Minimize2, Search as SearchIcon, X } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { ModernMainNav } from "@/components/hmi/ModernMainNav";
+import { APP_VERSION_INFO } from "@/lib/version-info";
 
 export function HeaderBrand(): React.JSX.Element | null {
   return (
@@ -40,23 +41,31 @@ export function HeaderBrand(): React.JSX.Element | null {
         preload="intent"
         className="hmi-focus-ring group relative flex min-w-0 shrink items-center gap-2.5 rounded-xl border border-ca-border/80 bg-ca-panel/85 px-3 py-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/60 hover:bg-ca-panel-2 hover:shadow-[0_0_16px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
       >
-        <span className="relative flex h-3 w-3 items-center justify-center">
-          <span
-            aria-hidden
-            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ca-primary opacity-60 duration-1000"
-          />
-          <span
-            aria-hidden
-            className="relative inline-block h-2 w-2 rounded-full bg-ca-primary shadow-[0_0_10px_var(--ca-primary),0_0_3px_#fff]"
-          />
-        </span>
+        <img
+          src="/cat-logo.svg"
+          alt=""
+          aria-hidden
+          className="h-5 w-auto shrink-0"
+          draggable={false}
+        />
         <span className="hidden min-w-0 truncate text-hmi-body font-bold tracking-tight text-ca-ink sm:inline">
-          Control Automation
+          Cat Vision, Cat I Vision
         </span>
         <span className="text-hmi-body font-bold tracking-tight text-ca-ink sm:hidden" aria-hidden>
           CA
         </span>
       </Link>
+
+      <button
+        type="button"
+        data-testid="version-badge-button"
+        onClick={() => window.dispatchEvent(new CustomEvent("cat-vision:open-version-modal"))}
+        title={`Released ${APP_VERSION_INFO.releaseDate} — Click for release details`}
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-300 transition-all hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white active:scale-95 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+      >
+        <span>{APP_VERSION_INFO.version}</span>
+      </button>
+
       <HistoryNav />
     </div>
   );
@@ -284,7 +293,11 @@ function CommandPaletteTrigger() {
       aria-label="Open command palette"
       className="hmi-focus-ring group relative inline-flex h-7 items-center gap-2 rounded-full border border-ca-border/80 bg-ca-panel/85 px-3 text-hmi-caption text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 hover:text-ca-ink hover:shadow-[0_0_14px_-2px_color-mix(in_oklab,var(--ca-primary)_35%,transparent)]"
     >
-      <SearchIcon aria-hidden size={13} className="text-ca-ink-muted transition-colors duration-200 group-hover:text-ca-primary" />
+      <SearchIcon
+        aria-hidden
+        size={13}
+        className="text-ca-ink-muted transition-colors duration-200 group-hover:text-ca-primary"
+      />
       <span className="hidden sm:inline font-medium tracking-tight">Search</span>
       <kbd className="ml-1 hidden rounded-md border border-ca-border/80 bg-ca-panel px-1.5 py-[0.5px] text-[10px] font-mono font-semibold text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] transition-colors group-hover:border-ca-primary/40 group-hover:text-ca-primary sm:inline">
         {combo}

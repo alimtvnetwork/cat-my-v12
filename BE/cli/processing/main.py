@@ -40,9 +40,12 @@ from BE.cli.common.dispatcher import Dispatcher, Subcommand
 from BE.cli.common.doctor import assert_healthy, run_preflight
 from BE.cli.common.session import SessionCtx
 from BE.cli.processing.commands import batch as _batch
+from BE.cli.processing.commands import bug_reports as _bug_reports
 from BE.cli.processing.commands import dry_run as _dry_run
+from BE.cli.processing.commands import errors as _errors
 from BE.cli.processing.commands import evaluate as _evaluate
 from BE.cli.processing.commands import status as _status
+from BE.cli.processing.commands import ui_remote as _ui_remote
 from BE.cli.processing.commands import verify_bundle as _verify_bundle
 from BE.cli.processing.commands import watch as _watch
 
@@ -161,6 +164,24 @@ def build_dispatcher() -> Dispatcher:
         handler=_status.handle,
         configure=_status.configure,
         help="Read-only report of log/db/ipc/data roots and drop-dir pending counts (spec 75 §Subcommands).",
+    ))
+    d.register(Subcommand(
+        name="ui",
+        handler=_ui_remote.handle,
+        configure=_ui_remote.configure,
+        help="Drive the app UI from the CLI: ls/click/scroll/navigate/set/audit/result (spec 54).",
+    ))
+    d.register(Subcommand(
+        name="errors",
+        handler=_errors.handle,
+        configure=_errors.configure,
+        help="List, show, or export Task-DB errors with stack traces (spec 54 §10).",
+    ))
+    d.register(Subcommand(
+        name="bug-reports",
+        handler=_bug_reports.handle,
+        configure=_bug_reports.configure,
+        help="Pending/download Supabase bug reports, or email a Task-DB error (spec 54).",
     ))
     return d
 

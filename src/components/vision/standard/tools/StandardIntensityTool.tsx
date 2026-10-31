@@ -20,9 +20,66 @@ export interface StandardIntensityToolProps {
 }
 
 export function StandardIntensityTool(props: StandardIntensityToolProps): React.JSX.Element {
-  const [metric, setMetric] = useState<"mean" | "std-dev" | "min-max" | "median">("mean");
-  const [minIntensity, setMinIntensity] = useState<number>(80);
-  const [maxIntensity, setMaxIntensity] = useState<number>(180);
+  // Spec 55: these controls were local-only useState — moving them
+  // changed nothing downstream. They now read from and write to
+  // settings.params.intensity, so the limits survive save/reload and
+  // any evaluator reading the settings can use them. The local state
+  // remains only as the control's display value, seeded from settings.
+  type IntensityMetric = "mean" | "std-dev" | "min-max" | "median";
+
+  const intensityFromSettings = (
+    params: Record<string, unknown> | undefined,
+  ): { metric: IntensityMetric; minIntensity: number; maxIntensity: number } => {
+    const raw = params?.intensity;
+    const record =
+      raw !== null && typeof raw === "object" && !Array.isArray(raw)
+        ? (raw as Record<string, unknown>)
+        : {};
+    const rawMetric = record.metric;
+    const metric =
+      rawMetric === "std-dev" || rawMetric === "min-max" || rawMetric === "median"
+        ? rawMetric
+        : "mean";
+    const minIntensity = typeof record.minIntensity === "number" ? record.minIntensity : 80;
+    const maxIntensity = typeof record.maxIntensity === "number" ? record.maxIntensity : 180;
+
+    return { metric, minIntensity, maxIntensity };
+  };
+
+  const seeded = intensityFromSettings(props.settings.params);
+  const [metric, setMetric] = useState<"mean" | "std-dev" | "min-max" | "median">(
+    seeded.metric as "mean" | "std-dev" | "min-max" | "median",
+  );
+  const [minIntensity, setMinIntensity] = useState<number>(seeded.minIntensity);
+  const [maxIntensity, setMaxIntensity] = useState<number>(seeded.maxIntensity);
+
+  const updateIntensity = (patch: {
+    metric?: "mean" | "std-dev" | "min-max" | "median";
+    minIntensity?: number;
+    maxIntensity?: number;
+  }) => {
+    const next = { metric, minIntensity, maxIntensity, ...patch };
+
+    props.onChange((prev) => ({
+      ...prev,
+      params: { ...(prev.params ?? {}), intensity: next },
+    }));
+  };
+
+  const handleMetricChange = (next: "mean" | "std-dev" | "min-max" | "median") => {
+    setMetric(next);
+    updateIntensity({ metric: next });
+  };
+
+  const handleMinIntensityChange = (next: number) => {
+    setMinIntensity(next);
+    updateIntensity({ minIntensity: next });
+  };
+
+  const handleMaxIntensityChange = (next: number) => {
+    setMaxIntensity(next);
+    updateIntensity({ maxIntensity: next });
+  };
 
   const tabs: ToolTabItem[] = [
     {
@@ -44,7 +101,7 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setMetric(m)}
+                  onClick={() => handleMetricChange(m)}
                   className={`p-2 border text-center font-medium capitalize rounded ${
                     metric === m
                       ? "bg-ca-select text-ca-bg border-ca-select font-bold"
@@ -82,7 +139,7 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
                   min={0}
                   max={255}
                   value={minIntensity}
-                  onChange={(e) => setMinIntensity(Number(e.target.value))}
+                  onChange={(e) => handleMinIntensityChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>
@@ -93,7 +150,7 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
                   min={0}
                   max={255}
                   value={maxIntensity}
-                  onChange={(e) => setMaxIntensity(Number(e.target.value))}
+                  onChange={(e) => handleMaxIntensityChange(Number(e.target.value))}
                   className="w-full bg-ca-bg border border-ca-border px-2 py-1 font-mono rounded text-ca-ink"
                 />
               </div>

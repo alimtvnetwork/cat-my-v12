@@ -1,6 +1,8 @@
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ClientLogger } from "@/lib/observability/client-logger";
+import { copyText } from "@/lib/errors/copy-text";
 import type { CapturedError } from "@/types/errors";
 import { EnvelopeErrorPanel } from "./EnvelopeErrorPanel";
 import { SessionLinks } from "./SessionLinks";
@@ -28,12 +30,21 @@ export function OverviewTab({ err }: { err: CapturedError }) {
             size="sm"
             className="h-6 px-2 text-xs gap-1"
             onClick={() => {
-              try {
-                void navigator.clipboard?.writeText(err.correlationId);
-                ClientLogger.info(`[GlobalErrorModal] copied correlation id ${err.correlationId}`);
-              } catch (e) {
-                ClientLogger.error("[GlobalErrorModal] copy correlation id failed", e);
-              }
+              void copyText(err.correlationId).then((result) => {
+                if (result.isCopied) {
+                  ClientLogger.info(`[GlobalErrorModal] copied correlation id ${err.correlationId}`);
+                  toast.success("Copied correlation id");
+
+                  return;
+                }
+
+                ClientLogger.error("[GlobalErrorModal] copy correlation id failed", {
+                  failureMessage: result.failureMessage,
+                });
+                toast.error("Copy failed", {
+                  description: `${result.failureMessage}\n${err.correlationId}`,
+                });
+              });
             }}
             title="Copy correlation id"
           >

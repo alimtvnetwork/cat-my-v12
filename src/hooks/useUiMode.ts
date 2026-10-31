@@ -12,9 +12,14 @@ interface UiModeState {
   toggleMode: () => void;
 }
 
+function getInitialUiMode(): UiModeType {
+
+  return UiModeType.Standard;
+}
+
 export const useUiMode = create<UiModeState>()(
   (set, get) => ({
-    mode: UiModeType.Standard,
+    mode: getInitialUiMode(),
     setMode: (mode) => {
       set({ mode });
       const flavor = mode === UiModeType.Standard ? UiFlavorType.Standard : UiFlavorType.Modern;
@@ -50,3 +55,7 @@ export const useUiMode = create<UiModeState>()(
     },
   }),
 );
+
+if (typeof window !== "undefined") {
+  (window as unknown as { __useUiMode?: typeof useUiMode }).__useUiMode = useUiMode;
+}

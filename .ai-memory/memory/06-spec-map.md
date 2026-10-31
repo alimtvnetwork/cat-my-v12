@@ -32,6 +32,8 @@ Source: `02-spec/00-overview.md`, `02-spec/spec-index.md` (411 files, 13 categor
 | 23  | `23-app-db/`                       | App data model                |
 | 24  | `24-app-ui-design-system/`         | App UI tokens                 |
 
+- Module `02-spec/21-app/gitmap-update-and-branch-management/` (2026-10-19): GitMap sync, branch discovery, and merge/PR workflow for task `gitmap-update-and-branch-management`. Read when merging `origin/fix/18-oct-26-joy-multi-device-analyzer` into `main`.
+
 ## `.ai-memory/` inventory (Step 1)
 
 - 69 files total (manifest: `/tmp/lovable-manifest.txt`).

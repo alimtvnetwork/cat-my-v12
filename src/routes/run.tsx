@@ -31,6 +31,12 @@ import { toIntParam } from "@/lib/ids/int-alias";
 import { HtmlTagType } from "@/lib/enums/html";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
+import {
+  SAMPLE_IMAGE_POCKET_1_FILLED,
+  SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
+  SAMPLE_IMAGE_POCKET_2_FILLED,
+  SAMPLE_IMAGE_POCKET_5_PARTIAL,
+} from "@/lib/vision/sample-images";
 
 export const Route = createFileRoute("/run")({
   head: () => ({
@@ -137,8 +143,8 @@ function RunPage() {
           }
         }
       })
-      .catch(() => {
-        /* ignore offline telemetry */
+      .catch((telemetryError: unknown) => {
+        console.warn("[Run] Telemetry offline or uninitialized:", telemetryError);
       });
   }, []);
 
@@ -241,27 +247,27 @@ function RunPage() {
     () => [
       {
         name: "Pocket 1 (PASS)",
-        url: "/src/assets/samples/pocket-1-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_1_FILLED,
         isPass: true,
       },
       {
         name: "Pocket 2 (PASS)",
-        url: "/src/assets/samples/pocket-2-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_2_FILLED,
         isPass: true,
       },
       {
         name: "Empty Pocket (FAIL)",
-        url: "/src/assets/samples/pocket-2-empty-mixed.jpg",
+        url: SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
         isPass: false,
       },
       {
         name: "Pocket 1 (PASS)",
-        url: "/src/assets/samples/pocket-1-filled.jpg",
+        url: SAMPLE_IMAGE_POCKET_1_FILLED,
         isPass: true,
       },
       {
         name: "Partial Chip (FAIL)",
-        url: "/src/assets/samples/pocket-5-partial.jpg",
+        url: SAMPLE_IMAGE_POCKET_5_PARTIAL,
         isPass: false,
       },
     ],
@@ -293,7 +299,7 @@ function RunPage() {
         method: HttpMethod.Post,
         body: JSON.stringify({
           ruleType: "grayscale_tolerance",
-          referenceImageUrl: "/src/assets/samples/pocket-1-filled.jpg",
+          referenceImageUrl: SAMPLE_IMAGE_POCKET_1_FILLED,
           sampleImageUrl: sample.url,
           tolerance: 40,
           threshold: 0.8,
@@ -313,7 +319,20 @@ function RunPage() {
           const tick = useRunStore.getState().tick;
           tick(isOk ? "ok" : "ng", { tool, reason, score });
 
-          if (!isOk) {
+          if (payload?.hasMultiSlot && payload?.slots && payload.slots.length > 0) {
+            payload.slots.forEach((s) => {
+              const slotSeverity = s.isPass
+                ? StatusSeverityType.Ok
+                : s.state === "EMPTY"
+                  ? StatusSeverityType.Warn
+                  : StatusSeverityType.Ng;
+              const slotMsg = `Slot ${s.slotIndex + 1} [${s.state}]: ${s.verdict} (${s.score}%) - ${s.reason || s.defect || ""}`;
+              push({
+                severity: slotSeverity,
+                message: slotMsg,
+              });
+            });
+          } else if (!isOk) {
             push({
               severity: StatusSeverityType.Ng,
               message: `NG [${sample.name}] - ${tool}: ${reason}`,
@@ -325,7 +344,8 @@ function RunPage() {
             });
           }
         })
-        .catch(() => {
+        .catch((evalErr: unknown) => {
+          console.warn("[Run] Remote evaluation fallback to mock engine:", evalErr);
           // Graceful fallback for offline / mock mode
           const tick = useRunStore.getState().tick;
           const isOk = sample.isPass;
@@ -383,9 +403,13 @@ function RunPage() {
             />
             <div className="ml-auto flex items-center gap-3">
               <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-32">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">Yield Rate</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+                  Yield Rate
+                </span>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className={`font-mono text-xl font-black tabular-nums drop-shadow-[0_0_10px_currentColor] ${passRate >= 95 ? "text-ca-ok" : passRate >= 80 ? "text-ca-warn" : "text-ca-ng"}`}>
+                  <span
+                    className={`font-mono text-xl font-black tabular-nums drop-shadow-[0_0_10px_currentColor] ${passRate >= 95 ? "text-ca-ok" : passRate >= 80 ? "text-ca-warn" : "text-ca-ng"}`}
+                  >
                     {passRate.toFixed(1)}%
                   </span>
                 </div>
@@ -397,7 +421,9 @@ function RunPage() {
                 </div>
               </div>
               <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-28">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">Throughput</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+                  Throughput
+                </span>
                 <span className="font-mono text-xl font-black tabular-nums text-ca-ink mt-0.5">
                   {fps} <span className="text-[11px] text-ca-ink-muted font-normal">FPS</span>
                 </span>
@@ -651,7 +677,10 @@ function RunPage() {
           aria-label="Stop run (Space)"
           className="inline-flex items-center gap-2 rounded-xl border border-rose-400/50 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(239,68,68,0.5),inset_0_1px_0_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
         >
-          <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]" aria-hidden="true" />
+          <span
+            className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]"
+            aria-hidden="true"
+          />
           <span>Stop</span>
         </button>
       ) : (
@@ -661,7 +690,10 @@ function RunPage() {
           aria-label="Start run (Space)"
           className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/50 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(16,185,129,0.5),inset_0_1px_0_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
         >
-          <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]" aria-hidden="true" />
+          <span
+            className="h-2 w-2 rounded-full bg-white shadow-[0_0_6px_#fff]"
+            aria-hidden="true"
+          />
           <span>Start</span>
         </button>
       )}

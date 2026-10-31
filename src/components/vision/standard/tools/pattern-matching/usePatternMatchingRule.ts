@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  type PatternMatchResult,
-  type ReferenceBoxItem,
-} from "@/lib/vision/pattern-matcher";
+import { type PatternMatchResult, type ReferenceBoxItem } from "@/lib/vision/pattern-matcher";
 import {
   readImageFile,
   type SearchRegion,
@@ -15,6 +12,7 @@ import {
   readRecordedSpace,
   rectFromDomainGeometry,
 } from "@/domain/vision/coordinates";
+import { squareSearchRegion } from "@/lib/vision/pinned-pattern-geometry";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { migrateDetectionThresholds } from "@/domain/vision/pattern-search";
 import {
@@ -33,6 +31,7 @@ import {
   resolveMatcherSettings,
 } from "@/domain/vision/pattern-search";
 import { useConveyorSimulation } from "./useConveyorSimulation";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export const STANDARD_CANVAS_WIDTH = 960;
 export const STANDARD_CANVAS_HEIGHT = 540;
@@ -117,7 +116,7 @@ export function dataUrlToStandardImageInput(
           height: STANDARD_CANVAS_HEIGHT,
           rgba: new Uint8ClampedArray(STANDARD_CANVAS_WIDTH * STANDARD_CANVAS_HEIGHT * 4),
         },
-        searchRegion: { x: 280, y: 80, width: 400, height: 380 },
+        searchRegion: squareSearchRegion({ x: 280, y: 80, width: 380, height: 380 }),
       });
     };
 
@@ -135,20 +134,19 @@ export function createDefaultSearchRegion(width: number, height: number): Search
     };
   }
 
-  const targetW = Math.round(Math.min(width * 0.7, Math.max(140, width * 0.45)));
-  const targetH = Math.round(Math.min(height * 0.75, Math.max(148, targetW * (106 / 100))));
-  const boundedW = Math.round(Math.min(targetW, targetH * (100 / 106)));
-  const boundedH = Math.round(boundedW * (106 / 100));
+  const rawSide = Math.round(
+    Math.min(width * 0.7, Math.max(140, width * 0.45), height * 0.75, STANDARD_IMAGE_MAX_SIZE),
+  );
+  const side = Math.max(20, rawSide);
+  const x = Math.max(0, Math.round((width - side) / 2));
+  const y = Math.max(0, Math.round((height - side) / 2));
 
-  const x = Math.max(0, Math.round((width - boundedW) / 2));
-  const y = Math.max(0, Math.round((height - boundedH) / 2));
-
-  return {
+  return squareSearchRegion({
     x,
     y,
-    width: Math.min(width - x, boundedW),
-    height: Math.min(height - y, boundedH),
-  };
+    width: Math.min(width - x, side),
+    height: Math.min(height - y, side),
+  });
 }
 
 export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
@@ -170,21 +168,21 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     }
 
     if (sr.geometry && typeof sr.geometry.x === "number") {
-      return {
+      return squareSearchRegion({
         x: Math.round(sr.geometry.x),
         y: Math.round(sr.geometry.y),
         width: Math.round(sr.geometry.width),
         height: Math.round(sr.geometry.height),
-      };
+      });
     }
 
     if (typeof sr.x === "number") {
-      return {
+      return squareSearchRegion({
         x: Math.round(sr.x),
         y: Math.round(sr.y),
         width: Math.round(sr.width),
         height: Math.round(sr.height),
-      };
+      });
     }
 
     return null;
@@ -208,9 +206,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
   useEffect(() => {
     let isCancelled = false;
-    const targetUrl =
-      (props as any)?.imageRef ||
-      (props.settings as any)?.imageRef;
+    const targetUrl = (props as any)?.imageRef || (props.settings as any)?.imageRef;
 
     if (!targetUrl || source !== null) {
       return;
@@ -287,8 +283,18 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
         setMatchResult(result);
       })
-      .catch(() => {
-        // Ignored
+      .catch((err) => {
+        if (!isCancelled) {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              triggerComponent: "usePatternMatchingRule",
+              triggerAction: "loadTargetImage",
+              context: { targetUrlLength: targetUrl.length },
+            },
+            "E_PATTERN_MATCH_LOAD",
+          );
+        }
       });
 
     return () => {
@@ -299,15 +305,24 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   const handleSearchRegionChange = useCallback(
     (newRegion: SearchRegion | null) => {
       setSearchRegion(newRegion);
-      onChange((prev: any) => ({
-        ...prev,
-        searchRegion: newRegion
-          ? domainRegionFromFlat({
-              flat: newRegion,
-              prevShape: (prev as any)?.searchRegion?.shape,
-            })
-          : null,
-      }));
+      onChange((prev: any) => {
+        const originX = newRegion?.x ?? 0;
+        const originY = newRegion?.y ?? 0;
+        const scaleX = newRegion ? newRegion.width / 100 : 1;
+        const scaleY = newRegion ? newRegion.height / 100 : 1;
+
+        return {
+          ...prev,
+          searchRegion: newRegion
+            ? domainRegionFromFlat({
+                flat: newRegion,
+                prevShape: (prev as any)?.searchRegion?.shape,
+              })
+            : null,
+          searchRegionJson: newRegion ? JSON.stringify(newRegion) : undefined,
+          referenceBoxes: getAtmelReferenceBoxes(originX, originY, scaleX, scaleY),
+        };
+      });
 
       if (source && newRegion && newRegion.width > 5 && newRegion.height > 5) {
         const result = evaluateChipPixelsReal({
@@ -340,8 +355,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   // Load Golden Atmel Sample
   const loadSampleAtmel = useCallback(async () => {
     try {
-      const { source: stdSource, searchRegion: stdRegion } =
-        await dataUrlToStandardImageInput(CHIP_GOOD_DATA_URL, true);
+      const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
+        CHIP_GOOD_DATA_URL,
+        true,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -369,8 +386,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   // Load New Device: STM8 Defective Sample
   const loadSampleStm8 = useCallback(async () => {
     try {
-      const { source: stdSource, searchRegion: stdRegion } =
-        await dataUrlToStandardImageInput(CHIP_STM8_DATA_URL, true);
+      const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
+        CHIP_STM8_DATA_URL,
+        true,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -404,8 +423,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
     setIsMatching(true);
 
-    const effectiveRegion =
-      searchRegion ?? createDefaultSearchRegion(source.width, source.height);
+    const effectiveRegion = searchRegion
+      ? squareSearchRegion(searchRegion)
+      : createDefaultSearchRegion(source.width, source.height);
 
     if (!searchRegion) {
       setSearchRegion(effectiveRegion);
@@ -444,8 +464,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
     try {
       const bitmap = await createImageBitmap(file);
-      const { source: stdSource, searchRegion: stdRegion } =
-        await normalizeImageToStandardCanvas(bitmap, bitmap.width, bitmap.height, false);
+      const { source: stdSource, searchRegion: stdRegion } = await normalizeImageToStandardCanvas(
+        bitmap,
+        bitmap.width,
+        bitmap.height,
+        false,
+      );
 
       setSource(stdSource);
       setSearchRegion(stdRegion);
@@ -500,8 +524,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         imgData.data.set(input.rgba);
         offCtx.putImageData(imgData, 0, 0);
 
-        const { source: stdSource, searchRegion: stdRegion } =
-          await normalizeImageToStandardCanvas(offCanvas, input.width, input.height, false);
+        const { source: stdSource, searchRegion: stdRegion } = await normalizeImageToStandardCanvas(
+          offCanvas,
+          input.width,
+          input.height,
+          false,
+        );
 
         setSource(stdSource);
         setSearchRegion(stdRegion);
@@ -556,6 +584,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     greyscaleLevel,
     tolerancePx,
     minMatchPercent,
+    // Spec 55: the taught search is no longer dropped at the simulation
+    // boundary (the hook draws it and uses it as fallback capture
+    // origin; the crop evaluator itself runs in crop-pixel space).
+    searchRegion,
   });
 
   return {

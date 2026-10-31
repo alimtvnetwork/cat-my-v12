@@ -1,6 +1,7 @@
 import React from "react";
 import { ShapeType } from "@/domain/vision/shapes";
 import { PatternShapes, MaskShapes, DetectionColorType } from "@/domain/vision/pattern-search";
+import { useStandardToolContext } from "../StandardToolContext";
 
 export interface InspectionRegionGeometry {
   x?: number;
@@ -50,8 +51,8 @@ const defaultRegion: InspectionRegionData = {
 };
 
 export function InspectionRegionTab({
-  inspectionRegion = defaultRegion,
-  masks = [],
+  inspectionRegion,
+  masks,
   imageRegion,
   onChangeInspectionRegion,
   onChangeMasks,
@@ -60,20 +61,49 @@ export function InspectionRegionTab({
   onOk,
   onPreview,
 }: InspectionRegionTabProps): React.JSX.Element {
+  const context = useStandardToolContext();
+  const contextRegion: InspectionRegionData | undefined = context?.settings.searchRegion
+    ? {
+        shape: context.settings.searchRegion.shape,
+        geometry: context.settings.searchRegion.geometry,
+      }
+    : undefined;
+  const contextMasks: MaskRegionData[] | undefined = context?.settings.masks
+    ? context.settings.masks.map((m) => ({
+        shape: m.shape,
+        geometry: m.geometry,
+      }))
+    : undefined;
+
+  const resolvedInitialRegion = inspectionRegion ?? contextRegion ?? defaultRegion;
+  const resolvedInitialMasks = masks ?? contextMasks ?? [];
+
   const [internalRegion, setInternalRegion] =
-    React.useState<InspectionRegionData>(inspectionRegion);
-  const [internalMasks, setInternalMasks] = React.useState<MaskRegionData[]>(masks);
-  const activeRegion = inspectionRegion || internalRegion;
-  const activeMasks = masks || internalMasks;
+    React.useState<InspectionRegionData>(resolvedInitialRegion);
+  const [internalMasks, setInternalMasks] =
+    React.useState<MaskRegionData[]>(resolvedInitialMasks);
+
+  const activeRegion = inspectionRegion ?? contextRegion ?? internalRegion;
+  const activeMasks = masks ?? contextMasks ?? internalMasks;
 
   const handleRegionChange = (reg: InspectionRegionData) => {
     setInternalRegion(reg);
-    onChangeInspectionRegion?.(reg);
+
+    if (onChangeInspectionRegion) {
+      onChangeInspectionRegion(reg);
+    } else if (context) {
+      context.updateInspectionRegion(reg);
+    }
   };
 
   const handleMasksChange = (m: MaskRegionData[]) => {
     setInternalMasks(m);
-    onChangeMasks?.(m);
+
+    if (onChangeMasks) {
+      onChangeMasks(m);
+    } else if (context) {
+      context.updateMasks(m);
+    }
   };
 
   const [isRegionExpanded, setIsRegionExpanded] = React.useState(true);

@@ -21,6 +21,7 @@ import numpy as np
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from BE.app.domain.carrier_segmenter import segment_carrier_belt
 from BE.app.domain.vision_eval import (
     BoundingBox,
     ConfidenceResult,
@@ -37,6 +38,7 @@ from BE.app.domain.vision_eval import (
 from BE.app.domain.vision_preprocess import (
     apply_optical_settings,
     downsample_factor_for,
+    maybe_downsample,
     resize_by_factor,
 )
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
@@ -78,8 +80,8 @@ def _load_image_bytes(url_or_data: str | None) -> bytes:
         if c.is_file():
             try:
                 return c.read_bytes()
-            except OSError:
-                pass
+            except OSError as err:
+                logger.debug("candidate_read_failed", extra={"path": str(c), "error": str(err)})
 
     if _DEFAULT_SAMPLE_PATH.exists():
         return _DEFAULT_SAMPLE_PATH.read_bytes()
@@ -243,6 +245,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
     calibration_factor = float(body.get("calibrationFactor", 0.05))
     calibration_unit = str(body.get("calibrationUnit", "mm"))
     roi = _parse_roi(body.get("roi"))
+    search_padding = int(body.get("searchPadding") or body.get("tolerancePx") or 30)
 
     sample_param = body.get("sampleImageUrl") or body.get("referenceImageUrl")
     ref_bytes = _load_image_bytes(body.get("referenceImageUrl"))
@@ -399,9 +402,9 @@ async def evaluate_score(request: Request) -> JSONResponse:
             )
         else:
             # Convert the canonical ROI into each image's pixel space before
-            # slicing (spec 01 §7.3); the ±20px search window is expanded
+            # slicing; the search window (search_padding) is expanded
             # in sample space, after conversion, and clamped to the sample
-            # bounds (spec 01 §7.4). A fully out-of-bounds ROI is a FAIL
+            # bounds. A fully out-of-bounds ROI is a FAIL
             # verdict, not a short or empty slice.
             recorded_size = _roi_recorded_size(body.get("roi"))
             ref_roi = convert_roi_to_image(
@@ -417,10 +420,10 @@ async def evaluate_score(request: Request) -> JSONResponse:
             try:
                 tmpl_img = _clip_to_roi(ref_img, ref_roi)
                 search_roi = BoundingBox(
-                    x=max(0, smp_roi.x - 20),
-                    y=max(0, smp_roi.y - 20),
-                    width=min(smp_img.shape[1] - max(0, smp_roi.x - 20), smp_roi.width + 40),
-                    height=min(smp_img.shape[0] - max(0, smp_roi.y - 20), smp_roi.height + 40),
+                    x=max(0, smp_roi.x - search_padding),
+                    y=max(0, smp_roi.y - search_padding),
+                    width=min(smp_img.shape[1] - max(0, smp_roi.x - search_padding), smp_roi.width + search_padding * 2),
+                    height=min(smp_img.shape[0] - max(0, smp_roi.y - search_padding), smp_roi.height + search_padding * 2),
                 )
                 search_area = _clip_to_roi(smp_img, search_roi)
             except ValueError as exc:
@@ -544,13 +547,48 @@ async def evaluate_score(request: Request) -> JSONResponse:
 
     duration_ms = max(1, int((time.perf_counter() - start_time) * 1000))
 
+    # Multi-slot carrier belt segmentation & occupancy detection
+    slots_payload: list[dict[str, Any]] = []
+    has_multi_slot = False
+    overall_pass = bool(result.is_pass)
+
+    if smp_img is not None:
+        seg_res = segment_carrier_belt(
+            smp_img,
+            expected_slot_width=roi.width if roi is not None else None,
+        )
+
+        if seg_res.totalSlots > 1:
+            has_multi_slot = True
+
+            for s_item in seg_res.slots:
+                slot_pass = s_item.isOccupied and bool(result.is_pass)
+                slot_verdict = "PASS" if slot_pass else ("EMPTY" if not s_item.isOccupied else "FAIL")
+
+                if not slot_pass:
+                    overall_pass = False
+
+                slots_payload.append({
+                    "slotIndex": s_item.slotIndex,
+                    "state": s_item.state,
+                    "isOccupied": s_item.isOccupied,
+                    "isPass": slot_pass,
+                    "verdict": slot_verdict,
+                    "score": round(float(result.score if s_item.isOccupied else 0.0), 1),
+                    "reason": s_item.reason if not s_item.isOccupied else getattr(result, "reason", ""),
+                    "defect": "EMPTY_POCKET" if not s_item.isOccupied else (None if slot_pass else "DEVICE_DEFECT"),
+                })
+
     score_payload = {
-        "is_pass": bool(result.is_pass),
+        "is_pass": overall_pass,
         "confidence": round(float(result.score), 1),
         "label": str(result.label),
-        "verdict": getattr(result, "verdict", "PASS" if result.is_pass else "FAIL"),
+        "verdict": "PASS" if overall_pass else "FAIL",
         "reason": getattr(result, "reason", ""),
         "trace": getattr(result, "trace", None) or {},
+        "hasMultiSlot": has_multi_slot,
+        "totalSlots": len(slots_payload) if has_multi_slot else 1,
+        "slots": slots_payload,
         "calibration": {
             "factor": calibration_factor,
             "unit": calibration_unit,
@@ -623,6 +661,8 @@ async def evaluate_score(request: Request) -> JSONResponse:
             "confidence": score_payload["confidence"],
             "hasOptical": bool(cam_settings or light_settings),
             "downsampleFactor": treatment_factor,
+            "hasMultiSlot": has_multi_slot,
+            "totalSlots": len(slots_payload) if has_multi_slot else 1,
             "runId": score_payload.get("runId"),
         },
     )
@@ -635,11 +675,15 @@ async def evaluate_score(request: Request) -> JSONResponse:
     wire["verdict"] = score_payload["verdict"]
     wire["reason"] = score_payload["reason"]
     wire["trace"] = score_payload["trace"]
+    wire["hasMultiSlot"] = score_payload["hasMultiSlot"]
+    wire["totalSlots"] = score_payload["totalSlots"]
+    wire["slots"] = score_payload["slots"]
     wire["calibration"] = score_payload["calibration"]
     wire["optical"] = score_payload["optical"]
     wire["runId"] = score_payload.get("runId")
 
     return JSONResponse(content=wire, headers={CORRELATION_HEADER: cid})
+
 
 
 __all__ = ["router"]

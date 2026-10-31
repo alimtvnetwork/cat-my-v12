@@ -1,8 +1,417 @@
 # Changelog
 
+## [v4.113.15] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.14] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.13] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.12] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.11] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.10] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.9] - 2026-10-30
+
+### Fixed
+- Vision Canvas ROI Overlays: Restored interactive cyan dashed Search Region bounding box with 4 corner resize handles, translucent fill, and dimensional label badge on workpiece canvas.
+- Coordinate Space Hit Testing: Unified image metrics and inverse-transformed pointer coordinates, eliminating scaling and translation drift between canvas pixels and image coordinates.
+- Pin 1 Orientation Mapping: Enabled instant canvas click-to-map and real-time reticle dragging for Pin 1 fiducial registration.
+- Greyscale Pattern Matching: Restored enclosing pattern region boundary envelope around character constellation marks with labels and box numbers.
+- Canvas Early-Return Blocker: Eliminated premature early-return in analyze mode so active and selected inspection rules render immediately on the workpiece.
+
+### Added
+- Visual Tool Tuning Workbench: Embedded dedicated Visual Tool Tuning Modal directly into workspace with quick "Tune in Visual Workbench" buttons on Pin 1 and Greyscale parameter cards.
+- Multi-Channel Bug Report Export: Added Telegram Bot API integration and email draft dispatch alongside ZIP package downloads.
+- Desktop Window Management: Added minimize, maximize/restore, close window controls, and Exit application menu item.
+- App Rebranding: Updated titlebar branding to "Cat Vision, Cat I Vision" with clickable release notes modal.
+
+---
+
+## [v4.113.8] - 2026-10-30
+
+### Fixed
+- Release workflow: publish releases directly as public assets (draft: false) for immediate installer downloads
+- SSR hydration: resolve integer ID alias on server and align standard shell loading boundary to eliminate hydration mismatch
+- Simulation: eliminate joyride tooltip collision with floating player bar on ruleset creation steps 8 and 9
+- Simulation: add interactive pointer cursor, active click feedback, and high-contrast glassmorphic styling across player controls
+- Bug Recorder: fix resume recording trigger from diagnostic export modal
+
+### Added
+- Guided Simulation 2-tier HUD with step navigation (Prev/Next), pause/resume countdown, dwell time slider, and seamless Take Over
+- Direct right-hand toolbar parameters for Pin 1 and Greyscale inspection rules with permanent center-canvas focus
+- Image source quick-switch toolbar with presets (Pocket 1, Pocket 2, Pocket 5) and resolution mismatch detection
+- Rule enable/disable toggle with active 'OFF' indicator badge
+
+---
+
+## [v4.113.4] - 2026-10-29
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.3] - 2026-10-29
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.2] - 2026-10-29
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.1] - 2026-10-29
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.113.0] - 2026-10-29
+
+### Added
+
+- Alim meeting agenda - image selection, right toolbar, rule toggle, simulation take over, bug recorder
+
+---
+
+## [v4.112.54] - 2026-10-28
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.53] - 2026-10-27
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.52] - 2026-10-24
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.51] - 2026-10-24
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.50] - 2026-10-24
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.49] - 2026-10-24
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.48] - 2026-10-24
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.47] - 2026-10-23
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.46] - 2026-10-23
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.45] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.44] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.43] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.42] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.41] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.40] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.39] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.38] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.37] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.36] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.35] - 2026-10-22
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.34] - 2026-10-21
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.33] - 2026-10-19
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.32] - 2026-10-19
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.31] - 2026-10-19
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.30] - 2026-10-19
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.29] - 2026-10-18
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.28] - 2026-10-18
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.27] - 2026-10-18
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.26] - 2026-10-18
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.25] - 2026-10-18
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.24] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.23] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.22] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.21] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.20] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.19] - 2026-10-17
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
+## [v4.112.18] - 2026-10-16
+
+### Added
+
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
 ## [v4.112.17] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -10,6 +419,7 @@
 ## [v4.112.16] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -17,6 +427,7 @@
 ## [v4.112.15] - 2026-10-07
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -24,6 +435,7 @@
 ## [v4.112.14] - 2026-10-03
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -31,6 +443,7 @@
 ## [v4.112.13] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -38,6 +451,7 @@
 ## [v4.112.12] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -45,6 +459,7 @@
 ## [v4.112.11] - 2026-10-02
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -52,6 +467,7 @@
 ## [v4.112.10] - 2026-10-01
 
 ### Added
+
 - Synchronize prompts, skills, AI scripts, and coding guidelines
 
 ---
@@ -59,6 +475,7 @@
 ## [v4.112.9] - 2026-10-01
 
 ### Added
+
 - Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines
 
 ---

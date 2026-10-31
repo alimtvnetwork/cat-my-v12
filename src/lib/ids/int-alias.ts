@@ -24,11 +24,17 @@ type Persisted = Partial<Record<IntAliasNamespace, NsBucket>>;
 const STORAGE_KEY = "ca.intAlias.v1";
 
 function readStore(): Persisted {
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined") {
+    return {};
+  }
+
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
 
-    if (!raw) return {};
+    if (!raw) {
+      return {};
+    }
+
     const parsed = JSON.parse(raw);
 
     return (parsed && typeof parsed === "object" ? parsed : {}) as Persisted;
@@ -40,7 +46,10 @@ function readStore(): Persisted {
 }
 
 function writeStore(store: Persisted): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
+
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch (err) {
@@ -86,16 +95,36 @@ export function toIntParam(ns: IntAliasNamespace, realId: string | undefined | n
 
 /** Convert a URL param (int alias or legacy real id) back to the real id. */
 export function resolveIdParam(ns: IntAliasNamespace, param: string | undefined | null): string {
-  if (!param) return "";
+  if (!param) {
+    return "";
+  }
 
-  if (/^\d+$/.test(param) === false) return param; // legacy real id — pass through
+  if (/^\d+$/.test(param) === false) {
+    return param; // legacy real id — pass through
+  }
+
   const n = Number(param);
   const store = readStore();
   const b = store[ns];
 
-  if (!b) return param;
-  for (const [realId, alias] of Object.entries(b.map)) {
-    if (alias === n) return realId;
+  if (b) {
+    for (const [realId, alias] of Object.entries(b.map)) {
+      if (alias === n) {
+        return realId;
+      }
+    }
+  }
+
+  if (n === 1 && ns === IntAliasNamespaceType.Project) {
+    return "prj-smt-74hc595-line";
+  }
+
+  if (n === 1 && ns === IntAliasNamespaceType.Ruleset) {
+    return "rs-smt-74hc-production";
+  }
+
+  if (n === 2 && ns === IntAliasNamespaceType.Ruleset) {
+    return "rs-smt-74hc-empty-guard";
   }
 
   return param;

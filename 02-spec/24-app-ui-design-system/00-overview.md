@@ -95,7 +95,7 @@ Root cause of `/setup` regressions: `opacity-40` on non-actionable disabled `Too
 
 ## Cross-References
 
-- [Design System (Core)](../07-design-system/01-index.md) — Foundational design system spec
+- [Design System (Core)](../07-design-system/readme.md) — Foundational design system spec
 - [App](../21-app/04-overview.md) — App-specific features and workflows
 - [Consolidated Design System](../17-consolidated-guidelines/10-design-system.md) — Consolidated summary
 - [UI Improvements V2 Enhancement (reconciled status)](./99d-ui-improvements-v2-enhancement.md) - single source of truth for what the V2 stream shipped, what is pending, and what is ambiguous. Search token: `v2-enhancement`.

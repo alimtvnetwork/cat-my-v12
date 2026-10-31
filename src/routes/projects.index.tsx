@@ -43,9 +43,9 @@ import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
 
 function useProjectStoreHydrated(): boolean {
-  const [hydrated, setHydrated] = useState<boolean>(
-    () => useProjectStore.persist?.hasHydrated?.() ?? true,
-  );
+  // Initialize to false on both server and client so the first render
+  // matches during hydration; flip to true in the effect only.
+  const [hydrated, setHydrated] = useState<boolean>(false);
   useEffect(() => {
     const persistApi = useProjectStore.persist;
 
@@ -465,7 +465,9 @@ function ProjectsIndex() {
             />
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-medium text-ca-ink-muted uppercase tracking-wider">Sort:</span>
+            <span className="text-xs font-medium text-ca-ink-muted uppercase tracking-wider">
+              Sort:
+            </span>
             <select
               value={prefs.sort}
               onChange={(e) => setPrefs((p) => ({ ...p, sort: e.target.value as SortKey }))}
@@ -484,7 +486,10 @@ function ProjectsIndex() {
         {!hydrated ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-ca-border/60 bg-ca-panel/60 p-5 h-36 animate-pulse flex flex-col justify-between">
+              <div
+                key={i}
+                className="rounded-xl border border-ca-border/60 bg-ca-panel/60 p-5 h-36 animate-pulse flex flex-col justify-between"
+              >
                 <div className="h-4 bg-ca-border/50 rounded w-2/3" />
                 <div className="h-3 bg-ca-border/30 rounded w-1/3" />
               </div>
@@ -495,9 +500,12 @@ function ProjectsIndex() {
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-ca-primary/10 border border-ca-primary/20 text-ca-primary">
               <FolderOpen size={28} />
             </div>
-            <h2 className="text-base font-bold text-ca-ink uppercase tracking-wider mb-1 font-display">No Projects in Database</h2>
+            <h2 className="text-base font-bold text-ca-ink uppercase tracking-wider mb-1 font-display">
+              No Projects in Database
+            </h2>
             <p className="text-xs text-ca-ink-muted max-w-sm mb-6 leading-relaxed">
-              No vision inspection projects have been initialized yet. Create your first recipe to get started.
+              No vision inspection projects have been initialized yet. Create your first recipe to
+              get started.
             </p>
             <button
               onClick={openDialog}
@@ -509,7 +517,9 @@ function ProjectsIndex() {
           </div>
         ) : showNoMatch ? (
           <div className="flex flex-col items-center justify-center p-12 rounded-xl border border-ca-border/70 bg-ca-panel/50 text-center">
-            <span className="text-xs font-semibold text-ca-ink-muted uppercase tracking-wider">No matching projects found</span>
+            <span className="text-xs font-semibold text-ca-ink-muted uppercase tracking-wider">
+              No matching projects found
+            </span>
           </div>
         ) : (
           <>
@@ -539,9 +549,13 @@ function ProjectsIndex() {
                             {p.name}
                           </h2>
                           <div className="mt-1 flex items-center gap-2">
-                            <span className="font-mono text-[10px] text-ca-ink-muted">ID: {p.id.slice(0, 8)}</span>
+                            <span className="font-mono text-[10px] text-ca-ink-muted">
+                              ID: {p.id.slice(0, 8)}
+                            </span>
                             <span className="text-ca-border/60">·</span>
-                            <span className="font-mono text-[10px] text-ca-ink-muted">{new Date(p.createdAt).toLocaleDateString()}</span>
+                            <span className="font-mono text-[10px] text-ca-ink-muted">
+                              {new Date(p.createdAt).toISOString().slice(0, 10)}
+                            </span>
                           </div>
                         </Link>
                         {p.deviceId ? (
@@ -563,7 +577,10 @@ function ProjectsIndex() {
                       <div className="flex items-center gap-1">
                         <button
                           title="Rename"
-                          onClick={() => { setRowError(null); setRenameFor({ id: p.id, name: p.name }); }}
+                          onClick={() => {
+                            setRowError(null);
+                            setRenameFor({ id: p.id, name: p.name });
+                          }}
                           disabled={busy}
                           className="rounded-lg p-1.5 text-ca-ink-muted hover:text-ca-ink hover:bg-ca-panel-2 transition-colors disabled:opacity-40"
                         >
@@ -579,7 +596,10 @@ function ProjectsIndex() {
                         </button>
                         <button
                           title="Delete"
-                          onClick={() => { setRowError(null); setDeleteFor({ id: p.id, name: p.name }); }}
+                          onClick={() => {
+                            setRowError(null);
+                            setDeleteFor({ id: p.id, name: p.name });
+                          }}
                           disabled={busy}
                           className="rounded-lg p-1.5 text-ca-ink-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-40"
                         >
@@ -612,11 +632,16 @@ function ProjectsIndex() {
       {renameFor ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <form
-            onSubmit={(e) => { e.preventDefault(); commitRename(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              commitRename();
+            }}
             className="w-full max-w-sm rounded-2xl border border-ca-border/80 bg-ca-panel/95 p-6 shadow-2xl space-y-4"
           >
             <div className="border-b border-ca-border/60 pb-3">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-ca-ink font-display">Rename Project</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-ca-ink font-display">
+                Rename Project
+              </h2>
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-wider text-ca-ink-muted mb-1.5 block">
@@ -625,7 +650,9 @@ function ProjectsIndex() {
               <input
                 autoFocus
                 value={renameFor.name}
-                onChange={(e) => setRenameFor((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
+                onChange={(e) =>
+                  setRenameFor((prev) => (prev ? { ...prev, name: e.target.value } : prev))
+                }
                 className="w-full rounded-lg border border-ca-border/80 bg-ca-surface/80 px-3 py-2 text-sm text-ca-ink focus:border-ca-primary focus:ring-1 focus:ring-ca-primary/40 focus:outline-none"
               />
             </div>
@@ -652,10 +679,13 @@ function ProjectsIndex() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <div className="w-full max-w-sm rounded-2xl border border-rose-500/40 bg-ca-panel/95 p-6 shadow-2xl space-y-4">
             <div className="border-b border-rose-500/20 pb-3">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-rose-400 font-display">Delete Project?</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-rose-400 font-display">
+                Delete Project?
+              </h2>
             </div>
             <p className="text-xs text-ca-ink leading-relaxed">
-              <span className="font-bold text-rose-400">Warning:</span> This removes "{deleteFor.name}" and every ruleset it owns from this browser. This cannot be undone.
+              <span className="font-bold text-rose-400">Warning:</span> This removes "
+              {deleteFor.name}" and every ruleset it owns from this browser. This cannot be undone.
             </p>
             <div className="flex gap-2.5 pt-2 border-t border-ca-border/60">
               <button
@@ -721,7 +751,9 @@ function FleetKpiStrip({
           <span className="font-mono text-2xl font-black text-ca-ok tracking-tight drop-shadow-[0_0_8px_var(--ca-ok)]">
             {linkedCameraCount}
           </span>
-          <span className="text-[10px] font-mono font-semibold text-ca-ok uppercase tracking-wider">ONLINE</span>
+          <span className="text-[10px] font-mono font-semibold text-ca-ok uppercase tracking-wider">
+            ONLINE
+          </span>
         </div>
       </div>
 
@@ -739,9 +771,7 @@ function FleetKpiStrip({
           Yield Baseline
         </span>
         <div className="mt-1 flex items-baseline gap-2">
-          <span className="font-mono text-2xl font-black text-ca-ink tracking-tight">
-            99.5%
-          </span>
+          <span className="font-mono text-2xl font-black text-ca-ink tracking-tight">99.5%</span>
           <span className="text-[10px] font-mono text-ca-ink-muted">TARGET</span>
         </div>
       </div>

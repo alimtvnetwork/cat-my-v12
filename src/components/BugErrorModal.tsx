@@ -11,6 +11,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
  */
 import { useEffect, useState } from "react";
 import { AppEvent } from "@/lib/constants";
+import { copyText } from "@/lib/errors/copy-text";
 
 export type BugErrorDetail = {
   Code: string;
@@ -22,6 +23,7 @@ export type BugErrorDetail = {
 export function BugErrorModal(): React.JSX.Element | null {
   const [err, setErr] = useState<BugErrorDetail | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyFailureMessage, setCopyFailureMessage] = useState("");
 
   useEffect(() => {
     const onBug = (ev: Event) => {
@@ -30,6 +32,7 @@ export function BugErrorModal(): React.JSX.Element | null {
       if (!detail || typeof detail.Code !== "string") return;
       setErr(detail);
       setCopied(false);
+      setCopyFailureMessage("");
     };
     window.addEventListener(AppEvent.BugError, onBug as EventListener);
 
@@ -49,13 +52,18 @@ export function BugErrorModal(): React.JSX.Element | null {
   );
 
   const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(diag);
-      setCopied(true);
-    } catch (error) {
-      // Explicit surface - no silent swallow (spec 40 §3).
-      ClientLogger.error("ca:bug-error:copy-failed", { Code: err.Code, error });
+    const result = await copyText(diag);
+    setCopied(result.isCopied);
+    setCopyFailureMessage(result.isCopied ? "" : result.failureMessage);
+
+    if (result.isCopied) {
+      return;
     }
+
+    ClientLogger.error("ca:bug-error:copy-failed", {
+      Code: err.Code,
+      failureMessage: result.failureMessage,
+    });
   };
 
   return (
@@ -83,6 +91,11 @@ export function BugErrorModal(): React.JSX.Element | null {
             </div>
           ) : null}
         </div>
+        {copyFailureMessage.length > 0 ? (
+          <pre className="mt-3 max-h-32 overflow-auto rounded bg-muted p-2 font-mono text-xs whitespace-pre-wrap">
+            {`${copyFailureMessage}\n${diag}`}
+          </pre>
+        ) : null}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"

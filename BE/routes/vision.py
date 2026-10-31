@@ -37,6 +37,7 @@ class Pin1Request(BaseModel):
     RgbaBase64: str
     Polarity: str = "DarkIndentation"
     ThresholdLuma: int = Field(default=35, ge=0, le=255)
+    GreyscaleMode: str = "threshold"
     MinCircularityPercent: int = Field(default=45, ge=0, le=100)
     MinRadiusPx: int = Field(default=3, ge=1)
     MaxRadiusPx: int = Field(default=60, ge=1)
@@ -90,6 +91,7 @@ async def post_pin1_detection(request: Request, payload: Pin1Request) -> JSONRes
         options=Pin1Options(
             polarity="LightDot" if payload.Polarity == "LightDot" else "DarkIndentation",
             threshold_luma=payload.ThresholdLuma,
+            greyscale_mode=payload.GreyscaleMode,
             min_circularity_percent=payload.MinCircularityPercent,
             min_radius_px=payload.MinRadiusPx,
             max_radius_px=payload.MaxRadiusPx,

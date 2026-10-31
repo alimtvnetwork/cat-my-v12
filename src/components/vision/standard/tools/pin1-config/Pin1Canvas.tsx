@@ -1,13 +1,34 @@
-import React, { useEffect, useRef } from "react";
-import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
+import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import type {
+  GrayscaleMode,
+  SearchRegion,
+  WhiteBoxMarkingInput,
+} from "@/lib/vision/white-box-marking";
+import {
+  getPatternShapePoints,
+  invertGrayscaleRgba,
+  isPointInPatternShape,
+  toGrayscalePreviewRgba,
+  tracePatternShapePath,
+} from "@/lib/vision/white-box-marking";
+import { ShapeType } from "@/domain/vision/shapes";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { regionHandles } from "@/components/vision/white-box/pattern-geometry";
+import { RoiToolbar } from "@/components/vision/white-box/RoiToolbar";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
 import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import { HolePolarityType, type Pin1AngleDatum, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode } from "./types";
+import {
+  HolePolarityType,
+  type Pin1AngleDatum,
+  type Pin1HoleItem,
+  type Pin1MatchResult,
+  type Pin1RegionEditMode,
+  type Pin1ShapeType,
+} from "./types";
 import { computeLuma } from "./round-hole-detector";
 
 export interface Pin1CanvasProps {
@@ -16,6 +37,7 @@ export interface Pin1CanvasProps {
   packageRegion: SearchRegion | null;
   activeRegion: SearchRegion | null;
   regionEditMode: Pin1RegionEditMode;
+  shapeType?: Pin1ShapeType;
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1: Pin1HoleItem | null;
   matchResult: Pin1MatchResult | null;
@@ -24,6 +46,18 @@ export interface Pin1CanvasProps {
   thresholdLuma?: number;
   polarity?: HolePolarityType;
   angleDatum?: Pin1AngleDatum;
+  /** Grayscale preview mode (spec 54 bits model). Defaults to threshold. */
+  greyscaleMode?: GrayscaleMode;
+  /** Pattern shape searched inside the ROI (spec 54). Defaults to Rectangle. */
+  patternShape?: ShapeType;
+  /** ROI lock state, controlled by the parent when provided (spec 54 §22
+   *  follow-up: panel lock buttons drive the canvas). Defaults to locked. */
+  isSearchLocked?: boolean;
+  onSearchLockChange?: (isLocked: boolean) => void;
+  /** Search/package draw order, bottom to top, controlled by the parent
+   *  when provided (panel reorder buttons drive the canvas). */
+  layerOrder?: readonly ("search" | "package")[];
+  onLayerOrderChange?: (order: readonly ("search" | "package")[]) => void;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -60,12 +94,66 @@ function createThresholdPreview(
 
 export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Clicking the pattern shape selects it (hit-tested, spec 54). Selection
+  // never consumes the event: the drag still runs, so region move/resize
+  // behavior is unchanged.
+  const [isPatternShapeSelected, setPatternShapeSelected] = useState(false);
+  // ROI lock + layer order (spec 54, mirroring the white-box canvas):
+  // the search region (ROI) is locked by default — selection-only, no
+  // move/resize, no replacement on outside click — until double-clicked
+  // inside it. Right-click reorders the search/package layers. The lock
+  // only engages once a region exists, so first creation is never blocked.
+  // The parent (Pin1MarkingTool) may control both values so the
+  // LayersPanel buttons drive the same state; otherwise internal state
+  // is used, preserving the standalone-canvas behavior.
+  const [internalSearchLocked, setInternalSearchLocked] = useState(true);
+  const isSearchLocked = props.isSearchLocked ?? internalSearchLocked;
+
+  function setIsSearchLocked(next: boolean): void {
+    if (props.onSearchLockChange !== undefined) {
+      props.onSearchLockChange(next);
+    } else {
+      setInternalSearchLocked(next);
+    }
+  }
+
+  const [internalLayerOrder, setInternalLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
+  const layerOrder = props.layerOrder ?? internalLayerOrder;
+
+  function setLayerOrder(next: readonly ("search" | "package")[]): void {
+    if (props.onLayerOrderChange !== undefined) {
+      props.onLayerOrderChange(next);
+    } else {
+      setInternalLayerOrder(next);
+    }
+  }
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    layerId: "search" | "package";
+    layerLabel: string;
+    isLocked: boolean;
+  } | null>(null);
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: props.activeRegion,
     dragState: props.dragState,
     onSearchRegionChange: props.onSearchRegionChange,
     onDragStateChange: props.onDragStateChange,
+    isLocked: props.regionEditMode === "search" && isSearchLocked,
+    // Spec 55: square ROI on creation and resize; a locked drag reports
+    // itself instead of failing silently; package-region outside-click
+    // never silently replaces (search-mode ROI behavior preserved).
+    isSquareROI: true,
+    isReplaceAllowed: props.regionEditMode === "search",
+    onLockedDragAttempt: () => {
+      toast("Search region is locked — double-click inside it or press Unlock to edit.", {
+        id: "pin1-roi-locked-hint",
+      });
+    },
   });
 
   useEffect(() => {
@@ -106,7 +194,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.stroke();
     }
 
-    // 3. Render Image (Normal RGB or 2-bit Binarized preview)
+    // 3. Render Image (Normal RGB or grayscale preview)
     if (!props.source) {
       ctx.save();
       ctx.fillStyle = "#94a3b8";
@@ -132,10 +220,27 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
     if (offCtx) {
       if (props.hasGreyscalePreview) {
-        const binData = createThresholdPreview(
+        // Single threshold definition (spec 55): the preview comes
+        // from the shared toGrayscalePreviewRgba (threshold =
+        // binarize, stretch = continuous stretch, one-bit =
+        // bright-to-white) and polarity is a separate, explicit
+        // invert step — never baked into the mode. This deletes the
+        // old private whiten-only copy and the Pin1 1-bit inversion
+        // (dark-to-white for DarkIndentation is now the invert step,
+        // applied uniformly to every mode).
+        const previewRgba = toGrayscalePreviewRgba(
           props.source,
+          props.greyscaleMode ?? "threshold",
           props.thresholdLuma ?? 128,
-          props.polarity ?? HolePolarityType.DarkIndentation,
+        );
+        const finalRgba =
+          (props.polarity ?? HolePolarityType.DarkIndentation) === HolePolarityType.DarkIndentation
+            ? invertGrayscaleRgba(previewRgba)
+            : previewRgba;
+        const binData = new ImageData(
+          new Uint8ClampedArray(finalRgba),
+          props.source.width,
+          props.source.height,
         );
         offCtx.putImageData(binData, 0, 0);
       } else {
@@ -151,21 +256,38 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       return;
     }
 
-    if (props.searchRegion) {
-      drawRegion(ctx, {
-        region: props.searchRegion,
-        label: "SEARCH REGION",
-        color: "#facc15",
-        isActive: props.regionEditMode === "search",
-      });
+    // Layer draw order follows layerOrder (bottom to top); right-click
+    // Bring Forward / Send Backward swaps the two region layers.
+    for (const layerId of layerOrder) {
+      if (layerId === "search" && props.searchRegion) {
+        drawRegion(ctx, {
+          region: props.searchRegion,
+          label: isSearchLocked ? "SEARCH REGION • LOCKED" : "SEARCH REGION",
+          color: "#facc15",
+          isActive: props.regionEditMode === "search",
+          showHandles: props.regionEditMode === "search" && !isSearchLocked,
+        });
+      }
+
+      if (layerId === "package" && props.packageRegion) {
+        drawRegion(ctx, {
+          region: props.packageRegion,
+          label: "PACKAGE REGION",
+          color: "#38bdf8",
+          isActive: props.regionEditMode === "package",
+          showHandles: props.regionEditMode === "package",
+        });
+      }
     }
 
-    if (props.packageRegion) {
-      drawRegion(ctx, {
-        region: props.packageRegion,
-        label: "PACKAGE REGION",
-        color: "#38bdf8",
-        isActive: props.regionEditMode === "package",
+    // 4b. Pattern shape overlay (spec 54): the shape searched INSIDE the
+    // ROI, drawn inscribed in the search region. Rectangle needs no
+    // overlay — the region rect already is the shape.
+    if (props.searchRegion && props.patternShape && props.patternShape !== ShapeType.Rectangle) {
+      drawPatternShapeOverlay(ctx, {
+        region: props.searchRegion,
+        shape: props.patternShape,
+        isSelected: isPatternShapeSelected,
       });
     }
 
@@ -193,7 +315,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const hasRule = Boolean(props.registeredPin1);
       const isMatchedActiveHole = props.matchResult?.activeHole?.id === hole.id;
       const isPass = props.matchResult?.isPass ?? false;
-      const isPrimary = hasRule ? (isMatchedActiveHole && isPass) : (hole.isPrimaryPin1 && hole.isKept);
+      const isPrimary = hasRule ? isMatchedActiveHole && isPass : hole.isPrimaryPin1 && hole.isKept;
 
       const strokeColor = !hole.isKept
         ? "rgba(244, 63, 94, 0.45)"
@@ -212,8 +334,23 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.setLineDash([]);
 
       ctx.beginPath();
-      ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
-      ctx.stroke();
+      if (props.shapeType === "rectangle") {
+        const rw = hole.radius * 2.2;
+        const rh = hole.radius * 1.6;
+        ctx.strokeRect(hole.centerX - rw / 2, hole.centerY - rh / 2, rw, rh);
+      } else if (props.shapeType === "square") {
+        const side = hole.radius * 2;
+        ctx.strokeRect(hole.centerX - side / 2, hole.centerY - side / 2, side, side);
+      } else if (props.shapeType === "ring") {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hole.centerX, hole.centerY, Math.max(2, hole.radius * 0.55), 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        ctx.arc(hole.centerX, hole.centerY, hole.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       // Crosshair
       ctx.beginPath();
@@ -242,7 +379,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       const badgeX = hole.centerX + hole.radius + 6;
       const badgeY = hole.centerY - 7;
 
-      const isBadgeSuccess = !hasRule ? isPrimary : (isMatchedActiveHole && isPass);
+      const isBadgeSuccess = !hasRule ? isPrimary : isMatchedActiveHole && isPass;
       const isBadgeError = hasRule && isMatchedActiveHole && !isPass;
 
       ctx.fillStyle = isBadgeSuccess
@@ -284,7 +421,6 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
       ctx.restore();
     }
-
   }, [
     props.source,
     props.searchRegion,
@@ -298,32 +434,227 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.thresholdLuma,
     props.polarity,
     props.angleDatum,
+    props.greyscaleMode,
+    props.patternShape,
+    isPatternShapeSelected,
+    isSearchLocked,
+    layerOrder,
   ]);
 
   return (
     <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
-      <canvas
-        ref={canvasRef}
-        width={STANDARD_CANVAS_WIDTH}
-        height={STANDARD_CANVAS_HEIGHT}
-        onPointerDown={(event) => {
-          if (selectHoleAtPoint(event, props, canvasRef.current)) {
-            return;
-          }
+      <div className="relative aspect-video max-h-full max-w-full">
+        <canvas
+          ref={canvasRef}
+          data-ui-id="ui-pin1-canvas"
+          width={STANDARD_CANVAS_WIDTH}
+          height={STANDARD_CANVAS_HEIGHT}
+          onPointerDown={(event) => {
+            setContextMenu(null);
 
-          if (props.regionEditMode === "pin" && registerPointAtEvent(event, props, canvasRef.current)) {
-            return;
-          }
+            if (selectHoleAtPoint(event, props, canvasRef.current)) {
+              return;
+            }
 
-          drag.handlePointerDown(event);
-        }}
-        onPointerMove={drag.handlePointerMove}
-        onPointerUp={drag.handlePointerUp}
-        onPointerCancel={drag.handlePointerUp}
-        className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
-      />
+            if (
+              props.regionEditMode === "pin" &&
+              registerPointAtEvent(event, props, canvasRef.current)
+            ) {
+              return;
+            }
+
+            selectPatternShapeAtEvent(event, props, canvasRef.current, setPatternShapeSelected);
+
+            drag.handlePointerDown(event);
+          }}
+          onPointerMove={drag.handlePointerMove}
+          onPointerUp={drag.handlePointerUp}
+          onPointerCancel={drag.handlePointerUp}
+          onDoubleClick={(event) => {
+            if (!isSearchLocked || !props.searchRegion || canvasRef.current === null) {
+              return;
+            }
+
+            const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+            if (point === null) {
+              return;
+            }
+
+            const region = props.searchRegion;
+
+            if (
+              point.x >= region.x &&
+              point.y >= region.y &&
+              point.x <= region.x + region.width - 1 &&
+              point.y <= region.y + region.height - 1
+            ) {
+              setIsSearchLocked(false);
+            }
+          }}
+          onContextMenu={(event) => {
+            event.preventDefault();
+
+            if (canvasRef.current === null) {
+              return;
+            }
+
+            const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+            if (point === null) {
+              return;
+            }
+
+            // Hit-test topmost first (reverse draw order).
+            for (let i = layerOrder.length - 1; i >= 0; i -= 1) {
+              const layerId = layerOrder[i];
+              const region = layerId === "search" ? props.searchRegion : props.packageRegion;
+
+              if (
+                region !== null &&
+                region !== undefined &&
+                point.x >= region.x &&
+                point.y >= region.y &&
+                point.x <= region.x + region.width - 1 &&
+                point.y <= region.y + region.height - 1
+              ) {
+                setContextMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                  layerId,
+                  layerLabel: layerId === "search" ? "ROI — Search Region" : "Package Region",
+                  isLocked: layerId === "search" && isSearchLocked,
+                });
+
+                return;
+              }
+            }
+
+            setContextMenu(null);
+          }}
+          className="block aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
+        />
+        <RoiToolbar
+          region={
+            props.regionEditMode === "package"
+              ? props.packageRegion
+              : props.regionEditMode === "search"
+                ? props.searchRegion
+                : null
+          }
+          canvasWidth={STANDARD_CANVAS_WIDTH}
+          canvasHeight={STANDARD_CANVAS_HEIGHT}
+          label={
+            props.regionEditMode === "package"
+              ? "PACKAGE REGION"
+              : isSearchLocked
+                ? "SEARCH REGION • LOCKED"
+                : "SEARCH REGION"
+          }
+        >
+          {props.regionEditMode === "search" && (
+            <button
+              type="button"
+              onClick={() => setIsSearchLocked(!isSearchLocked)}
+              className="rounded bg-white/15 px-1.5 py-0.5 hover:bg-white/25"
+            >
+              {isSearchLocked ? "Unlock" : "Lock"}
+            </button>
+          )}
+        </RoiToolbar>
+      </div>
+      {contextMenu !== null && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setContextMenu(null);
+            }}
+          />
+          <div
+            className="fixed z-50 min-w-[200px] rounded border border-[#3c4650] bg-[#111820] py-1 shadow-[0_18px_60px_rgba(0,0,0,0.6)]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <div className="border-b border-[#242c35] px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ca-ink">
+              {contextMenu.layerLabel}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, 1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Bring Forward
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                movePin1Layer(contextMenu.layerId, -1, layerOrder, setLayerOrder);
+                setContextMenu(null);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+            >
+              Send Backward
+            </button>
+            {contextMenu.layerId === "search" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchLocked(!contextMenu.isLocked);
+                  setContextMenu(null);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs text-white hover:bg-[#2a3138]"
+              >
+                {contextMenu.isLocked ? "Unlock ROI" : "Lock ROI"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+}
+
+function canvasPointFromPin1Event(
+  event: React.MouseEvent<HTMLCanvasElement>,
+  canvas: HTMLCanvasElement,
+): { x: number; y: number } | null {
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+export function movePin1Layer(
+  layerId: "search" | "package",
+  delta: 1 | -1,
+  layerOrder: readonly ("search" | "package")[],
+  setLayerOrder: (order: readonly ("search" | "package")[]) => void,
+): void {
+  const index = layerOrder.indexOf(layerId);
+  const target = index + delta;
+
+  if (index < 0 || target < 0 || target >= layerOrder.length) {
+    return;
+  }
+
+  const next = [...layerOrder];
+  next[index] = layerOrder[target];
+  next[target] = layerId;
+  setLayerOrder(next);
 }
 
 function registerPointAtEvent(
@@ -384,6 +715,75 @@ function selectHoleAtPoint(
   return false;
 }
 
+function drawPatternShapeOverlay(
+  ctx: CanvasRenderingContext2D,
+  params: {
+    region: SearchRegion;
+    shape: ShapeType;
+    isSelected: boolean;
+  },
+): void {
+  const { region, shape, isSelected } = params;
+  const shapedRegion: SearchRegion = { ...region, shape };
+
+  ctx.save();
+  ctx.strokeStyle = "#e879f9";
+  ctx.fillStyle = "#e879f9";
+  ctx.lineWidth = isSelected ? 3 : 2;
+  ctx.setLineDash([6, 4]);
+  tracePatternShapePath(ctx, shapedRegion);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Polygon vertices get markers so the shape reads as editable points.
+  if (shape === ShapeType.Polygon) {
+    for (const point of getPatternShapePoints(shapedRegion)) {
+      ctx.fillRect(point.x - 3, point.y - 3, 6, 6);
+    }
+  }
+
+  const label = `PATTERN SHAPE: ${shape.toUpperCase()}`;
+  const labelWidth = Math.max(120, ctx.measureText(label).width + 14);
+  ctx.fillStyle = isSelected ? "rgba(232, 121, 249, 0.95)" : "rgba(15, 23, 42, 0.82)";
+  ctx.fillRect(region.x, Math.max(0, region.y - 18), labelWidth, 16);
+  ctx.fillStyle = isSelected ? "#0f172a" : "#e879f9";
+  ctx.font = "bold 10px monospace";
+  ctx.fillText(label, region.x + 6, Math.max(11, region.y - 6));
+  ctx.restore();
+}
+
+function selectPatternShapeAtEvent(
+  event: React.PointerEvent<HTMLCanvasElement>,
+  props: Pin1CanvasProps,
+  canvas: HTMLCanvasElement | null,
+  setSelected: (isSelected: boolean) => void,
+): void {
+  const shape = props.patternShape ?? ShapeType.Rectangle;
+
+  if (canvas === null || shape === ShapeType.Rectangle || !props.searchRegion) {
+    setSelected(false);
+
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    setSelected(false);
+
+    return;
+  }
+
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const point = {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+
+  setSelected(isPointInPatternShape(point, { ...props.searchRegion, shape }));
+}
+
 function drawRegion(
   ctx: CanvasRenderingContext2D,
   params: {
@@ -391,9 +791,10 @@ function drawRegion(
     label: string;
     color: string;
     isActive: boolean;
+    showHandles: boolean;
   },
 ): void {
-  const { region, label, color, isActive } = params;
+  const { region, label, color, isActive, showHandles } = params;
 
   ctx.save();
   ctx.strokeStyle = color;
@@ -404,7 +805,7 @@ function drawRegion(
   ctx.strokeRect(region.x, region.y, region.width, region.height);
   ctx.setLineDash([]);
 
-  if (isActive) {
+  if (showHandles) {
     ctx.fillStyle = color;
 
     for (const handle of regionHandles(region)) {

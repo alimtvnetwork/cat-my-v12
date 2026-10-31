@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PatternMatchResult, ReferenceBoxItem } from "@/lib/vision/pattern-matcher";
-import {
-  ALL_ATMEL_BOX_NUMBERS,
-  buildAccuratePatternMatchResult,
-  evaluateChipPixelsReal,
-} from "./atmel-chip-boxes";
+import type { SearchRegion } from "@/lib/vision/white-box-marking";
+import { evaluateChipPixelsReal } from "./atmel-chip-boxes";
 
 export type DeviceChipType = "atmel" | "stm8" | "empty";
 export type SimulationPhase = "capturing" | "evaluating" | "completed";
@@ -19,6 +16,8 @@ export interface CapturedPocketFrame {
   capturedAtMs: number;
   thumbnailDataUrl: string;
   imgData: ImageData | null;
+  /** Live-canvas crop rect the pixels came from, in canvas backing pixels (spec 55). */
+  captureOrigin?: { x: number; y: number; width: number; height: number };
 }
 
 export interface DeviceInspectionResult {
@@ -33,6 +32,10 @@ export interface DeviceInspectionResult {
   missingBoxNumbers: number[];
   executionTimeMs: number;
   hasDefect: boolean;
+  /** True when no frame was captured for this pocket: no pixels were evaluated and no verdict was synthesized (spec 55). */
+  hasNoFrame?: boolean;
+  /** Live-canvas crop rect the evaluated pixels came from, when captured. */
+  captureOrigin?: { x: number; y: number; width: number; height: number };
   matchResult: PatternMatchResult;
   thumbnailDataUrl?: string;
 }
@@ -42,6 +45,13 @@ export interface ConveyorSimulationOptions {
   greyscaleLevel: number;
   tolerancePx: number;
   minMatchPercent: number;
+  /**
+   * Taught search region in canvas backing pixels (spec 55). It is drawn
+   * as a taught-search outline and used as the fallback capture origin.
+   * It is NOT passed into the crop evaluator, which runs in crop-pixel
+   * space where canvas coordinates would sample out of bounds.
+   */
+  searchRegion?: SearchRegion | null;
   initialDeviceChipTypes?: DeviceChipType[];
   onMatchResultChange?: (result: PatternMatchResult | null) => void;
 }
@@ -53,6 +63,8 @@ const BASE_ENCODER_TICK = 484200;
 const DEFAULT_BELT_SPEED = 450;
 
 // The exact 20 boxes that fail machine vision evaluation on the STM8 chip (due to model mismatch)
+// NOTE (spec 55): the hook no longer synthesizes results from this list;
+// it survives only as documentation of the old scripted behavior.
 export const STM8_REAL_FAILED_BOX_NUMBERS: readonly number[] = [
   1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24,
 ] as const;
@@ -60,19 +72,19 @@ export const STM8_REAL_FAILED_BOX_NUMBERS: readonly number[] = [
 // 15 pockets: 8 Golden Atmel, 5 Wrong Part (STM8), 2 Empty Pockets (Missing Device)
 export const DEFAULT_BATCH_DEVICE_TYPES: readonly DeviceChipType[] = [
   "atmel", // Pocket #01 (Golden Atmel MEGA32U4 - PASS 100%)
-  "stm8",  // Pocket #02 (New Defective Device: STM8S208 - FAIL 22.6%)
+  "stm8", // Pocket #02 (New Defective Device: STM8S208 - FAIL 22.6%)
   "empty", // Pocket #03 (Empty Pocket / Missing Device - FAIL 0.0%)
   "atmel", // Pocket #04 (Golden Atmel MEGA32U4 - PASS 100%)
   "atmel", // Pocket #05 (Golden Atmel MEGA32U4 - PASS 100%)
-  "stm8",  // Pocket #06 (New Defective Device: STM8S208 - FAIL 22.6%)
+  "stm8", // Pocket #06 (New Defective Device: STM8S208 - FAIL 22.6%)
   "empty", // Pocket #07 (Empty Pocket / Missing Device - FAIL 0.0%)
   "atmel", // Pocket #08 (Golden Atmel MEGA32U4 - PASS 100%)
   "atmel", // Pocket #09 (Golden Atmel MEGA32U4 - PASS 100%)
-  "stm8",  // Pocket #10 (New Defective Device: STM8S208 - FAIL 22.6%)
+  "stm8", // Pocket #10 (New Defective Device: STM8S208 - FAIL 22.6%)
   "atmel", // Pocket #11 (Golden Atmel MEGA32U4 - PASS 100%)
   "atmel", // Pocket #12 (Golden Atmel MEGA32U4 - PASS 100%)
-  "stm8",  // Pocket #13 (New Defective Device: STM8S208 - FAIL 22.6%)
-  "stm8",  // Pocket #14 (New Defective Device: STM8S208 - FAIL 22.6%)
+  "stm8", // Pocket #13 (New Defective Device: STM8S208 - FAIL 22.6%)
+  "stm8", // Pocket #14 (New Defective Device: STM8S208 - FAIL 22.6%)
   "atmel", // Pocket #15 (Golden Atmel MEGA32U4 - PASS 100%)
 ] as const;
 
@@ -106,6 +118,7 @@ export interface UseConveyorSimulationReturn {
   inspectedCount: number;
   passedCount: number;
   failedCount: number;
+  noFrameCount: number;
   setIsSimulating: (simulating: boolean) => void;
   toggleSimulating: () => void;
   togglePlaying: () => void;
@@ -116,18 +129,23 @@ export interface UseConveyorSimulationReturn {
     pocketIndex: number,
     imgData: ImageData | null,
     dataUrl?: string,
+    captureOrigin?: { x: number; y: number; width: number; height: number },
   ) => void;
   evaluateAllCapturedPockets: () => void;
   executeTrueDeviceDetection: (
     deviceIndex: number,
     imgData: ImageData | null,
+    captureOrigin?: { x: number; y: number; width: number; height: number },
+    thumbnailDataUrl?: string,
   ) => void;
 }
 
-import { CHIP_GOOD_DATA_URL, CHIP_STM8_DATA_URL } from "./chip-assets";
-
-export function useConveyorSimulation(options: ConveyorSimulationOptions): UseConveyorSimulationReturn {
-  const [isSimulating, setIsSimulating] = useState<boolean>(true);
+export function useConveyorSimulation(
+  options: ConveyorSimulationOptions,
+): UseConveyorSimulationReturn {
+  // Spec 55: the live tool must not shadow live results — simulation
+  // starts OFF and is entered explicitly via the mode tabs.
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [phase, setPhase] = useState<SimulationPhase>("capturing");
   const [beltSpeedMmPerS, setBeltSpeedMmPerS] = useState<number>(DEFAULT_BELT_SPEED);
@@ -136,7 +154,10 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
 
   // Initialize 15-device batch (10 Atmel, 5 STM8, with Device #2 as STM8)
   const [deviceChipTypes, setDeviceChipTypes] = useState<DeviceChipType[]>(() => {
-    if (options.initialDeviceChipTypes && options.initialDeviceChipTypes.length === TOTAL_BATCH_DEVICES) {
+    if (
+      options.initialDeviceChipTypes &&
+      options.initialDeviceChipTypes.length === TOTAL_BATCH_DEVICES
+    ) {
       return options.initialDeviceChipTypes;
     }
 
@@ -173,9 +194,11 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
     setSelectedDeviceIndex(null);
     capturedPocketIndicesRef.current.clear();
 
-    const nextBatch = options.initialDeviceChipTypes && options.initialDeviceChipTypes.length === TOTAL_BATCH_DEVICES
-      ? options.initialDeviceChipTypes
-      : Array.from(DEFAULT_BATCH_DEVICE_TYPES);
+    const nextBatch =
+      options.initialDeviceChipTypes &&
+      options.initialDeviceChipTypes.length === TOTAL_BATCH_DEVICES
+        ? options.initialDeviceChipTypes
+        : Array.from(DEFAULT_BATCH_DEVICE_TYPES);
 
     setDeviceChipTypes(nextBatch);
     options.onMatchResultChange?.(null);
@@ -194,37 +217,14 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
     return () => clearInterval(interval);
   }, [isSimulating, isPlaying, beltSpeedMmPerS]);
 
-  // Phase 2: Evaluate all captured pockets using true greyscale pattern matching
+  // Phase 2: Evaluate captured pockets using true greyscale pattern matching.
+  // Pockets with no captured pixels are NEVER synthesized: they get an
+  // explicit no-frame result (spec 55). Empty pockets keep the
+  // definitional hasDevice:false verdict (no chip exists to capture).
   const evaluateAllCapturedPockets = useCallback(() => {
     setPhase("evaluating");
 
     const updatedFrames = [...capturedFramesRef.current];
-
-    for (let i = 0; i < TOTAL_BATCH_DEVICES; i += 1) {
-      if (!updatedFrames[i]) {
-        const chipType = deviceChipTypes[i] ?? "atmel";
-        const isEmpty = chipType === "empty";
-        const isStm8 = chipType === "stm8";
-        const thumbnailDataUrl = isEmpty
-          ? POCKET_EMPTY_DATA_URL
-          : isStm8
-          ? CHIP_STM8_DATA_URL
-          : CHIP_GOOD_DATA_URL;
-
-        updatedFrames[i] = {
-          pocketIndex: i,
-          pocketNumber: i + 1,
-          chipType,
-          capturedAtMs: performance.now(),
-          thumbnailDataUrl,
-          imgData: null,
-        };
-      }
-
-      capturedPocketIndicesRef.current.add(i);
-    }
-
-    setCapturedFrames(updatedFrames);
 
     const newResults: Array<DeviceInspectionResult | null> = Array.from(
       { length: TOTAL_BATCH_DEVICES },
@@ -235,12 +235,13 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
         const chipLabel = isEmpty
           ? "Empty Pocket (Missing Device)"
           : isStm8
-          ? "STM8S208 (New Device)"
-          : "Atmel MEGA32U4";
+            ? "STM8S208 (New Device)"
+            : "Atmel MEGA32U4";
         const frame = updatedFrames[i];
         const imgData = frame?.imgData ?? null;
 
         let matchResult: PatternMatchResult;
+        let hasNoFrame = false;
 
         if (isEmpty) {
           matchResult = evaluateChipPixelsReal({
@@ -254,32 +255,39 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
             targetRgba: imgData.data,
             targetWidth: imgData.width,
             targetHeight: imgData.height,
-            toleranceLuma: 22,
+            // Spec 55: the taught tolerance drives the matcher, not a
+            // hardcoded 22. The crop evaluator runs in crop-pixel space,
+            // so the taught canvas-space searchRegion is not passed here.
+            toleranceLuma: options.tolerancePx,
             minMatchPercent: options.minMatchPercent ?? 80,
           });
         } else {
-          const defectBoxes = isStm8 ? STM8_REAL_FAILED_BOX_NUMBERS : [];
-
-          // No-image fallback: no real pattern region exists here, so
-          // the default 100x100 region stands and box positions stay
-          // nominal. Score and pass come from the defect set only.
-          matchResult = buildAccuratePatternMatchResult({
-            chipX: 0,
-            chipY: 0,
-            hasDefect: isStm8,
-            defectBoxNumbers: defectBoxes,
-          });
+          hasNoFrame = true;
+          matchResult = {
+            isPass: false,
+            score: 0,
+            matchedCount: 0,
+            totalCount: options.referenceBoxes.length,
+            offsetX: 0,
+            offsetY: 0,
+            patternBounds: { x: 0, y: 0, width: 0, height: 0 },
+            boxResults: options.referenceBoxes.map((box) => ({
+              boxNumber: box.boxNumber,
+              referenceX: box.x,
+              referenceY: box.y,
+              matchedX: box.x,
+              matchedY: box.y,
+              width: box.width,
+              height: box.height,
+              isMatched: false,
+            })),
+            executionTimeMs: 0,
+          };
         }
 
         const missingBoxNumbers = matchResult.boxResults
           .filter((b) => !b.isMatched)
           .map((b) => b.boxNumber);
-
-        const fallbackThumbnail = isEmpty
-          ? POCKET_EMPTY_DATA_URL
-          : isStm8
-          ? CHIP_STM8_DATA_URL
-          : CHIP_GOOD_DATA_URL;
 
         const itemResult: DeviceInspectionResult = {
           deviceNumber: i + 1,
@@ -292,9 +300,12 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
           totalCount: matchResult.totalCount,
           missingBoxNumbers,
           executionTimeMs: matchResult.executionTimeMs,
-          hasDefect: !matchResult.isPass,
+          // No data is not a defect: no-frame rows are neither pass nor fail.
+          hasDefect: hasNoFrame ? false : !matchResult.isPass,
+          hasNoFrame,
+          captureOrigin: frame?.captureOrigin,
           matchResult,
-          thumbnailDataUrl: frame?.thumbnailDataUrl || fallbackThumbnail,
+          thumbnailDataUrl: frame?.thumbnailDataUrl,
         };
 
         return itemResult;
@@ -309,7 +320,12 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
 
   // Phase 1: Camera captures pocket frame first
   const capturePocket = useCallback(
-    (pocketIndex: number, imgData: ImageData | null, dataUrl?: string) => {
+    (
+      pocketIndex: number,
+      imgData: ImageData | null,
+      dataUrl?: string,
+      captureOrigin?: { x: number; y: number; width: number; height: number },
+    ) => {
       if (pocketIndex < 0 || pocketIndex >= TOTAL_BATCH_DEVICES) {
         return;
       }
@@ -323,10 +339,7 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
       const pocketNumber = pocketIndex + 1;
       const chipType = deviceChipTypes[pocketIndex] ?? "atmel";
       const isEmpty = chipType === "empty";
-      const isStm8 = chipType === "stm8";
-      const thumbnailDataUrl =
-        dataUrl ??
-        (isEmpty ? POCKET_EMPTY_DATA_URL : isStm8 ? CHIP_STM8_DATA_URL : CHIP_GOOD_DATA_URL);
+      const thumbnailDataUrl = dataUrl ?? (isEmpty ? POCKET_EMPTY_DATA_URL : "");
 
       const frame: CapturedPocketFrame = {
         pocketIndex,
@@ -335,7 +348,10 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
         capturedAtMs: performance.now(),
         thumbnailDataUrl,
         imgData,
+        captureOrigin,
       };
+
+      capturedFramesRef.current[pocketIndex] = frame;
 
       setCapturedFrames((prev) => {
         const next = [...prev];
@@ -354,7 +370,12 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
 
   // Execute true vision evaluation on a single device (compatible with tests and immediate triggers)
   const executeTrueDeviceDetection = useCallback(
-    (deviceIndex: number, imgData: ImageData | null) => {
+    (
+      deviceIndex: number,
+      imgData: ImageData | null,
+      captureOrigin?: { x: number; y: number; width: number; height: number },
+      thumbnailDataUrl?: string,
+    ) => {
       if (deviceIndex < 0 || deviceIndex >= TOTAL_BATCH_DEVICES) {
         return;
       }
@@ -368,10 +389,11 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
       const chipLabel = isEmpty
         ? "Empty Pocket (Missing Device)"
         : isStm8
-        ? "STM8S208 (New Device)"
-        : "Atmel MEGA32U4";
+          ? "STM8S208 (New Device)"
+          : "Atmel MEGA32U4";
 
       let matchResult: PatternMatchResult;
+      let hasNoFrame = false;
 
       if (isEmpty) {
         matchResult = evaluateChipPixelsReal({
@@ -385,32 +407,38 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
           targetRgba: imgData.data,
           targetWidth: imgData.width,
           targetHeight: imgData.height,
-          toleranceLuma: 22,
+          // Spec 55: the taught tolerance drives the matcher, not a
+          // hardcoded 22.
+          toleranceLuma: options.tolerancePx,
           minMatchPercent: options.minMatchPercent ?? 80,
         });
       } else {
-        const defectBoxes = isStm8 ? STM8_REAL_FAILED_BOX_NUMBERS : [];
-
-        // No-image fallback: no real pattern region exists here, so
-        // the default 100x100 region stands and box positions stay
-        // nominal. Score and pass come from the defect set only.
-        matchResult = buildAccuratePatternMatchResult({
-          chipX: 0,
-          chipY: 0,
-          hasDefect: isStm8,
-          defectBoxNumbers: defectBoxes,
-        });
+        hasNoFrame = true;
+        matchResult = {
+          isPass: false,
+          score: 0,
+          matchedCount: 0,
+          totalCount: options.referenceBoxes.length,
+          offsetX: 0,
+          offsetY: 0,
+          patternBounds: { x: 0, y: 0, width: 0, height: 0 },
+          boxResults: options.referenceBoxes.map((box) => ({
+            boxNumber: box.boxNumber,
+            referenceX: box.x,
+            referenceY: box.y,
+            matchedX: box.x,
+            matchedY: box.y,
+            width: box.width,
+            height: box.height,
+            isMatched: false,
+          })),
+          executionTimeMs: 0,
+        };
       }
 
       const missingBoxNumbers = matchResult.boxResults
         .filter((b) => !b.isMatched)
         .map((b) => b.boxNumber);
-
-      const thumbnailDataUrl = isEmpty
-        ? POCKET_EMPTY_DATA_URL
-        : isStm8
-        ? CHIP_STM8_DATA_URL
-        : CHIP_GOOD_DATA_URL;
 
       const newResult: DeviceInspectionResult = {
         deviceNumber,
@@ -423,9 +451,12 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
         totalCount: matchResult.totalCount,
         missingBoxNumbers,
         executionTimeMs: matchResult.executionTimeMs,
-        hasDefect: !matchResult.isPass,
+        // No data is not a defect: no-frame rows are neither pass nor fail.
+        hasDefect: hasNoFrame ? false : !matchResult.isPass,
+        hasNoFrame,
+        captureOrigin,
         matchResult,
-        thumbnailDataUrl,
+        thumbnailDataUrl: thumbnailDataUrl ?? (isEmpty ? POCKET_EMPTY_DATA_URL : undefined),
       };
 
       setDeviceResults((prev) => {
@@ -443,8 +474,12 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
 
   const completedResults = deviceResults.filter((r): r is DeviceInspectionResult => r !== null);
   const inspectedCount = completedResults.length;
-  const passedCount = completedResults.filter((r) => r.isPass).length;
-  const failedCount = inspectedCount - passedCount;
+  // No-frame rows are neither passes nor failures: they had no data.
+  const passedCount = completedResults.filter((r) => r.isPass && r.hasNoFrame !== true).length;
+  const failedCount = completedResults.filter(
+    (r) => r.isPass === false && r.hasNoFrame !== true,
+  ).length;
+  const noFrameCount = completedResults.filter((r) => r.hasNoFrame === true).length;
   const isBatchComplete = inspectedCount >= TOTAL_BATCH_DEVICES;
 
   const capturedCount = capturedFrames.filter((f): f is CapturedPocketFrame => f !== null).length;
@@ -453,8 +488,8 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
   // Active match result for currently selected or latest inspected device
   const activeMatchResult =
     selectedDeviceIndex !== null
-      ? deviceResults[selectedDeviceIndex]?.matchResult ?? null
-      : completedResults[completedResults.length - 1]?.matchResult ?? null;
+      ? (deviceResults[selectedDeviceIndex]?.matchResult ?? null)
+      : (completedResults[completedResults.length - 1]?.matchResult ?? null);
 
   return {
     isSimulating,
@@ -473,6 +508,7 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
     inspectedCount,
     passedCount,
     failedCount,
+    noFrameCount,
     setIsSimulating,
     toggleSimulating,
     togglePlaying,

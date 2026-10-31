@@ -18,6 +18,8 @@ import {
   Group as GroupIcon,
 } from "lucide-react";
 
+import { copyText } from "@/lib/errors/copy-text";
+import { showToastError } from "@/lib/errors/notify";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 import type { EditorRule, EditorRuleKind } from "@/lib/editor/types";
 import { editorKindLabel } from "@/lib/editor/tools";
@@ -429,10 +431,15 @@ export function SelectionOverlayContextMenu({
           icon={<GroupIcon size={14} />}
           label="Copy ID"
           onClick={() => {
-            if (typeof navigator !== "undefined" && navigator.clipboard) {
-              void navigator.clipboard.writeText(menuRule.id);
-            }
+            void copyText(menuRule.id).then((result) => {
+              if (result.isCopied) {
+                return;
+              }
 
+              showToastError("Could not copy the rule id", new Error(result.failureMessage), {
+                source: "SelectionOverlayContextMenu",
+              });
+            });
             onCloseContextMenu();
           }}
         />

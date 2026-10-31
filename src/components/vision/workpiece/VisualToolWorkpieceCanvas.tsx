@@ -12,12 +12,14 @@ import {
   AlertCircle,
   XCircle,
   ListChecks,
+  Loader2,
   ScanSearch,
+  Square,
+  Lock,
+  Unlock,
 } from "lucide-react";
-import {
-  markWhiteBoxes,
-  type WhiteBoxMark,
-} from "@/lib/vision/white-box-marking";
+import { markWhiteBoxes, getPatternBoxesForRegion, type WhiteBoxMark } from "@/lib/vision/white-box-marking";
+import { filterPatternRgba, pinPatternRule } from "@/lib/vision/pinned-pattern-geometry";
 import {
   drawPatternBoxes,
   drawFormulatedEnvelope,
@@ -32,6 +34,7 @@ import {
   type TapeStripEvaluationResult,
   type PocketEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import { useErrorStore } from "@/lib/stores/errorStore";
 
 export interface WorkpieceRoi {
   x: number;
@@ -41,7 +44,7 @@ export interface WorkpieceRoi {
 }
 
 export interface RuleValidationDetail {
-  status: "pass" | "fail" | "warn" | "pending";
+  status: "pass" | "fail" | "warn" | "pending" | "skipped";
   score?: number;
   message?: string;
 }
@@ -61,12 +64,16 @@ export interface VisualToolWorkpieceCanvasProps {
   onLaunchPatternTuner?: () => void;
   onPatternBoxesChange?: (boxes: WhiteBoxMark[], constellation: any[]) => void;
   actionSlot?: React.ReactNode;
-  validationStatus?: "pass" | "fail" | "warn" | "pending";
+  validationStatus?: "pass" | "fail" | "warn" | "pending" | "skipped";
   validationScore?: number;
   validationResultsMap?: Record<string, RuleValidationDetail>;
   onRunAnalysis?: () => void;
   isAnalyzing?: boolean;
   tapeStripResult?: TapeStripEvaluationResult | null;
+  onUpdateParams?: (params: Record<string, any>) => void;
+  onBringToFront?: (ruleId: string) => void;
+  onSendToBack?: (ruleId: string) => void;
+  onToggleLocked?: (ruleId: string) => void;
 }
 
 function clampValue(val: number, min: number, max: number): number {
@@ -111,7 +118,7 @@ function drawCompletePatternOverlay(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -133,10 +140,10 @@ function drawCompletePatternOverlay(
     drawToleranceZones(ctx, geometry.toleranceZones);
   }
 
-  drawPatternBoxes(ctx, boxes, excludedNumbers, status);
+  drawPatternBoxes(ctx, boxes, excludedNumbers, status === "skipped" ? "pending" : status);
 
   if (geometry) {
-    drawFormulatedEnvelope(ctx, geometry, status);
+    drawFormulatedEnvelope(ctx, geometry, status === "skipped" ? "pending" : status);
   }
 }
 
@@ -144,7 +151,7 @@ function drawRealBoxes(
   ctx: CanvasRenderingContext2D,
   boxes: readonly WhiteBoxMark[],
   excludedNumbers: ReadonlySet<number>,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   marginPx = 8,
   imageWidth = 960,
   imageHeight = 540,
@@ -164,7 +171,7 @@ function drawGreyscaleSimulationPatternOverlay(
   ctx: CanvasRenderingContext2D,
   ruleRoi: WorkpieceRoi,
   boxes: readonly WhiteBoxMark[],
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   boxResults?: any[],
   isAnalyzeMode = false,
@@ -224,10 +231,9 @@ function drawGreyscaleSimulationPatternOverlay(
   const totalCount = boxes.length;
 
   for (const b of boxes) {
-    const isMatched =
-      matchedBoxesMap.has(b.number)
-        ? Boolean(matchedBoxesMap.get(b.number))
-        : isPass || status === undefined;
+    const isMatched = matchedBoxesMap.has(b.number)
+      ? Boolean(matchedBoxesMap.get(b.number))
+      : isPass || status === undefined;
 
     if (isMatched) {
       matchedCount += 1;
@@ -265,14 +271,31 @@ function drawGreyscaleSimulationPatternOverlay(
     }
   }
 
-  // 1. Zero-ROI: Enclosing envelope bounding box eliminated; render individual feature marks directly
+  // 1. Draw inner Pattern Region boundary envelope
+  ctx.save();
+  ctx.strokeStyle = isFail ? "#ef4444" : isPass ? "#10b981" : "#f43f5e";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 3]);
+  ctx.strokeRect(envX, envY, envW, envH);
+  ctx.setLineDash([]);
+
+  const envBadge = `PATTERN REGION · [${envW}×${envH}]`;
+  ctx.font = "bold 8px monospace";
+  const envBw = ctx.measureText(envBadge).width + 8;
+  ctx.fillStyle = "rgba(8, 12, 20, 0.85)";
+  ctx.fillRect(envX, envY - 14, envBw, 14);
+  ctx.strokeStyle = isFail ? "#ef4444" : isPass ? "#10b981" : "#f43f5e";
+  ctx.lineWidth = 0.8;
+  ctx.strokeRect(envX, envY - 14, envBw, 14);
+  ctx.fillStyle = isFail ? "#fca5a5" : isPass ? "#6ee7b7" : "#fda4af";
+  ctx.fillText(envBadge, envX + 4, envY - 3);
+  ctx.restore();
 
   // 2. Draw all individual character boxes with color-coded results
   for (const b of boxes) {
-    const isMatched =
-      matchedBoxesMap.has(b.number)
-        ? Boolean(matchedBoxesMap.get(b.number))
-        : isPass || status === undefined;
+    const isMatched = matchedBoxesMap.has(b.number)
+      ? Boolean(matchedBoxesMap.get(b.number))
+      : isPass || status === undefined;
 
     if (isMatched) {
       ctx.strokeStyle = "#10b981";
@@ -317,7 +340,7 @@ function drawConstellationPattern(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
   boxCount: number,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   imageWidth = 960,
   imageHeight = 540,
 ): void {
@@ -352,15 +375,7 @@ function drawConstellationPattern(
     }
   }
 
-  drawCompletePatternOverlay(
-    ctx,
-    synthBoxes,
-    new Set(),
-    status,
-    8,
-    imageWidth,
-    imageHeight,
-  );
+  drawCompletePatternOverlay(ctx, synthBoxes, new Set(), status, 8, imageWidth, imageHeight);
 }
 
 function drawCornerBrackets(
@@ -403,7 +418,7 @@ function drawCornerBrackets(
 function drawPin1Reticle(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
   score?: number,
   pin1Config?: Record<string, any>,
   ruleResult?: any,
@@ -439,22 +454,22 @@ function drawPin1Reticle(
           ? regPin1Raw.y
           : undefined;
 
-  if (
-    typeof debugNomX === "number" &&
-    typeof debugNomY === "number"
-  ) {
+  if (typeof debugNomX === "number" && typeof debugNomY === "number") {
     nomX = debugNomX;
     nomY = debugNomY;
-  } else if (
-    typeof rawNomX === "number" &&
-    typeof rawNomY === "number"
-  ) {
+  } else if (typeof rawNomX === "number" && typeof rawNomY === "number") {
     nomX = rawNomX;
     nomY = rawNomY;
-  } else if (typeof pin1Config?.relativeX === "number" && typeof pin1Config?.relativeY === "number") {
+  } else if (
+    typeof pin1Config?.relativeX === "number" &&
+    typeof pin1Config?.relativeY === "number"
+  ) {
     nomX = Math.round(roi.x + (pin1Config.relativeX / 100) * roi.width);
     nomY = Math.round(roi.y + (pin1Config.relativeY / 100) * roi.height);
-  } else if (typeof regPin1Raw?.relativeX === "number" && typeof regPin1Raw?.relativeY === "number") {
+  } else if (
+    typeof regPin1Raw?.relativeX === "number" &&
+    typeof regPin1Raw?.relativeY === "number"
+  ) {
     nomX = Math.round(roi.x + (regPin1Raw.relativeX / 100) * roi.width);
     nomY = Math.round(roi.y + (regPin1Raw.relativeY / 100) * roi.height);
   }
@@ -571,7 +586,8 @@ function drawPin1Reticle(
 
   // Offset & Angle telemetry badge
   const sign = angleDeg >= 0 ? "+" : "";
-  const tolStr = ruleResult?.debug?.tolerancePx !== undefined ? ` (±${ruleResult.debug.tolerancePx}px)` : "";
+  const tolStr =
+    ruleResult?.debug?.tolerancePx !== undefined ? ` (±${ruleResult.debug.tolerancePx}px)` : "";
   const teleText = `Δ ${offsetPx.toFixed(1)}px | θ ${sign}${angleDeg.toFixed(1)}°${tolStr}`;
   ctx.font = "bold 7.5px monospace";
   const teleW = ctx.measureText(teleText).width + 8;
@@ -593,7 +609,7 @@ function drawPin1Reticle(
 function drawCaliperRuler(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
   const midY = roi.y + roi.height / 2;
@@ -621,12 +637,11 @@ function drawCaliperRuler(
 function drawDefectScanGrid(
   ctx: CanvasRenderingContext2D,
   roi: WorkpieceRoi,
-  status?: "pass" | "fail" | "warn" | "pending",
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
 ): void {
   const color = status === "fail" ? "#ef4444" : status === "pass" ? "#10b981" : "#00e5ff";
 
-  ctx.strokeStyle =
-    status === "fail" ? "rgba(239, 68, 68, 0.35)" : "rgba(16, 185, 129, 0.30)";
+  ctx.strokeStyle = status === "fail" ? "rgba(239, 68, 68, 0.35)" : "rgba(16, 185, 129, 0.30)";
   ctx.lineWidth = 1;
   ctx.setLineDash([2, 4]);
 
@@ -662,7 +677,7 @@ function drawRuleResultBadge(
   y: number,
   ruleName: string,
   toolCode: string,
-  status: "pass" | "fail" | "warn" | "pending" | undefined,
+  status: "pass" | "fail" | "warn" | "pending" | "skipped" | undefined,
   score: number | undefined,
   isSelected: boolean,
 ): void {
@@ -726,7 +741,7 @@ function drawDeviceRulePassBadges(
   regions: readonly any[],
   ruleLabel: string,
   rowIndex: number,
-  status: "pass" | "fail" | "warn" | "pending" | undefined,
+  status: "pass" | "fail" | "warn" | "pending" | "skipped" | undefined,
 ): void {
   if (status !== "pass") {
     return;
@@ -763,6 +778,52 @@ function drawDeviceRulePassBadges(
     ctx.fillText(label, badgeX + 7, badgeY + 11);
     ctx.restore();
   }
+}
+
+function drawAreaGateRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(16, 185, 129, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#10b981";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("AREA GATE (T101)", roi.x + 6, roi.y + 14);
+  ctx.restore();
+}
+
+function drawBlobInspectionRegion(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  status?: "pass" | "fail" | "warn" | "pending" | "skipped",
+): void {
+  const isFailed = status === "fail";
+  const strokeColor = isFailed ? "rgba(239, 68, 68, 0.85)" : "rgba(139, 92, 246, 0.85)";
+  const fillColor = isFailed ? "rgba(239, 68, 68, 0.15)" : "rgba(139, 92, 246, 0.15)";
+  const labelColor = isFailed ? "#ef4444" : "#8b5cf6";
+
+  ctx.save();
+  ctx.strokeStyle = strokeColor;
+  ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5;
+  ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+  ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+
+  ctx.fillStyle = labelColor;
+  ctx.font = "bold 9px monospace";
+  ctx.fillText("BLOB EXTRACTION (T109)", roi.x + 6, roi.y + 14);
+  ctx.restore();
 }
 
 function drawScanningLaser(ctx: CanvasRenderingContext2D, roi: WorkpieceRoi): void {
@@ -837,7 +898,11 @@ function drawFrameInspectionHud(
     ctx.fillText(`✖ FRAME RESULTS: FAIL (${failCount} REJECTED)`, hudX + 12, hudY + 15);
     ctx.fillStyle = "#94a3b8";
     ctx.font = "10px sans-serif";
-    ctx.fillText(`${passCount}/${totalRules} rules passed inspection limits.`, hudX + 12, hudY + 28);
+    ctx.fillText(
+      `${passCount}/${totalRules} rules passed inspection limits.`,
+      hudX + 12,
+      hudY + 28,
+    );
   } else {
     ctx.fillStyle = "#38bdf8";
     ctx.fillText(`FRAME READY (${totalRules} RULES)`, hudX + 12, hudY + 15);
@@ -903,37 +968,34 @@ function drawTapeStripInspectionHud(
   }
 }
 
-function drawPocketOverlay(
-  ctx: CanvasRenderingContext2D,
-  pocket: PocketEvaluationResult,
-): void {
+function drawPocketOverlay(ctx: CanvasRenderingContext2D, pocket: PocketEvaluationResult): void {
   const { x, y, width: w, height: h } = pocket.region;
 
   if (pocket.isEmpty) {
-    ctx.strokeStyle = "#ef4444";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = "rgba(245, 158, 11, 0.75)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
     ctx.strokeRect(x, y, w, h);
     ctx.setLineDash([]);
 
-    ctx.fillStyle = "rgba(239, 68, 68, 0.12)";
+    ctx.fillStyle = "rgba(245, 158, 11, 0.08)";
     ctx.fillRect(x, y, w, h);
 
-    const badgeW = 140;
+    const badgeW = 150;
     const badgeH = 20;
     const badgeX = x + Math.max(4, Math.round((w - badgeW) / 2));
     const badgeY = y + Math.max(4, Math.round((h - badgeH) / 2));
 
-    ctx.fillStyle = "rgba(239, 68, 68, 0.92)";
+    ctx.fillStyle = "rgba(30, 27, 24, 0.94)";
     ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
-    ctx.strokeStyle = "#ffffff";
+    ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 1;
     ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 10px monospace";
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "bold 9.5px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`⚠ POCKET #${pocket.pocketIndex}: EMPTY`, badgeX + badgeW / 2, badgeY + 14);
+    ctx.fillText(`⊘ POCKET #${pocket.pocketIndex}: EMPTY CAVITY`, badgeX + badgeW / 2, badgeY + 14);
     ctx.textAlign = "left";
 
     return;
@@ -946,9 +1008,7 @@ function drawPocketOverlay(
   ctx.lineWidth = 1.5;
   ctx.strokeRect(x, y, w, h);
 
-  const badgeText = isPass
-    ? `POCKET #${pocket.pocketIndex} ✔`
-    : `POCKET #${pocket.pocketIndex} ✖`;
+  const badgeText = isPass ? `POCKET #${pocket.pocketIndex} ✔` : `POCKET #${pocket.pocketIndex} ✖`;
   ctx.font = "bold 9px monospace";
   const tw = ctx.measureText(badgeText).width;
   const badgeW = tw + 10;
@@ -958,6 +1018,404 @@ function drawPocketOverlay(
   ctx.fillRect(x + 2, y + 2, badgeW, badgeH);
   ctx.fillStyle = isPass ? "#10b981" : "#ef4444";
   ctx.fillText(badgeText, x + 6, y + 13);
+
+  // Per-gap distances: a small dimension mark on each inter-pin gap, labeled in mm.
+  if (pocket.pinPitch && pocket.pinPitch.gaps.length > 0) {
+    const gaps = pocket.pinPitch.gaps;
+
+    ctx.font = "bold 7px monospace";
+    ctx.textAlign = "center";
+
+    gaps.forEach((gap, gapIndex) => {
+      const gx1 = x + gap.x1;
+      const gy1 = y + gap.y1;
+      const gx2 = x + gap.x2;
+      const gy2 = y + gap.y2;
+
+      ctx.strokeStyle = "rgba(34, 211, 238, 0.95)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(gx1, gy1);
+      ctx.lineTo(gx2, gy2);
+      ctx.stroke();
+
+      const label = `${gap.gapMm.toFixed(2)}mm`;
+      const labelW = ctx.measureText(label).width + 6;
+      const midX = (gx1 + gx2) / 2;
+      const midY = (gy1 + gy2) / 2;
+      // Alternate above / below the gap line so dense pins don't collide.
+      const labelY = gapIndex % 2 === 0 ? midY + 2 : midY - 13;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.fillRect(midX - labelW / 2, labelY, labelW, 11);
+      ctx.fillStyle = "#22d3ee";
+      ctx.fillText(label, midX, labelY + 8.5);
+    });
+
+    ctx.textAlign = "left";
+  }
+
+  // Chip width: dimension line below the device, width in mm underneath it.
+  if (pocket.deviceMeasurement) {
+    const dm = pocket.deviceMeasurement;
+    const dimX1 = x + dm.leftEdgePx;
+    const dimX2 = x + dm.rightEdgePx;
+    const dimY = y + dm.bottomEdgePx + 12;
+
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX2, dimY);
+    ctx.stroke();
+
+    const arrowLen = 5;
+
+    ctx.fillStyle = "#facc15";
+    ctx.beginPath();
+    ctx.moveTo(dimX1, dimY);
+    ctx.lineTo(dimX1 + arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX1 + arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(dimX2, dimY);
+    ctx.lineTo(dimX2 - arrowLen, dimY - 2.5);
+    ctx.lineTo(dimX2 - arrowLen, dimY + 2.5);
+    ctx.closePath();
+    ctx.fill();
+
+    const widthLabel = `${dm.widthMm.toFixed(2)}mm`;
+
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+
+    const labelW = ctx.measureText(widthLabel).width + 8;
+    const labelX = (dimX1 + dimX2) / 2;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(labelX - labelW / 2, dimY + 3, labelW, 12);
+    ctx.fillStyle = "#facc15";
+    ctx.fillText(widthLabel, labelX, dimY + 12);
+    ctx.textAlign = "left";
+  }
+}
+
+function drawCornerHandles(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  color = "#00e5ff",
+): void {
+  const size = 8;
+  const half = size / 2;
+  const corners = [
+    { x: roi.x, y: roi.y },
+    { x: roi.x + roi.width, y: roi.y },
+    { x: roi.x, y: roi.y + roi.height },
+    { x: roi.x + roi.width, y: roi.y + roi.height },
+  ];
+
+  ctx.fillStyle = "#0a0e17";
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  for (const c of corners) {
+    ctx.fillRect(c.x - half, c.y - half, size, size);
+    ctx.strokeRect(c.x - half, c.y - half, size, size);
+  }
+}
+
+export function getRoiHeaderRect(roi: WorkpieceRoi): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
+  const height = 22;
+  const width = Math.max(220, Math.min(roi.width, 380));
+  const x = roi.x;
+  const y = Math.max(0, roi.y - height);
+
+  return { x, y, width, height };
+}
+
+export function getPolygonVertices(
+  roi: WorkpieceRoi,
+  vertexCount = 6,
+): Array<{ x: number; y: number }> {
+  const count = Math.max(3, Math.min(12, vertexCount));
+  const cx = roi.x + roi.width / 2;
+  const cy = roi.y + roi.height / 2;
+  const rx = roi.width / 2;
+  const ry = roi.height / 2;
+  const vertices: Array<{ x: number; y: number }> = [];
+
+  for (let i = 0; i < count; i += 1) {
+    const angle = (i * 2 * Math.PI) / count - Math.PI / 2;
+    vertices.push({
+      x: Math.round(cx + rx * Math.cos(angle)),
+      y: Math.round(cy + ry * Math.sin(angle)),
+    });
+  }
+
+  return vertices;
+}
+
+export function drawCircleWithHandles(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  strokeColor: string,
+  fillColor: string,
+  isEditable: boolean,
+): void {
+  const cx = roi.x + roi.width / 2;
+  const cy = roi.y + roi.height / 2;
+  const rx = Math.max(6, roi.width / 2);
+  const ry = Math.max(6, roi.height / 2);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Diameter dimension line across center
+  ctx.beginPath();
+  ctx.setLineDash([3, 3]);
+  ctx.moveTo(cx - rx, cy);
+  ctx.lineTo(cx + rx, cy);
+  ctx.strokeStyle = "rgba(0, 229, 255, 0.6)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Diameter text
+  const diamText = `Ø ${Math.round(rx * 2)} px`;
+  ctx.font = "bold 8.5px monospace";
+  ctx.fillStyle = "#00e5ff";
+  ctx.textAlign = "center";
+  ctx.fillText(diamText, cx, cy - 4);
+  ctx.textAlign = "left";
+
+  // Circularity handles at 4 cardinal points
+  if (isEditable) {
+    const cardinalPoints = [
+      { x: cx, y: cy - ry },
+      { x: cx + rx, y: cy },
+      { x: cx, y: cy + ry },
+      { x: cx - rx, y: cy },
+    ];
+
+    for (const pt of cardinalPoints) {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#0a0e17";
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = strokeColor;
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+}
+
+export function drawPolygonWithVertices(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  vertices: Array<{ x: number; y: number }>,
+  strokeColor: string,
+  fillColor: string,
+  isEditable: boolean,
+): void {
+  if (vertices.length < 3) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+
+  for (let i = 1; i < vertices.length; i += 1) {
+    ctx.lineTo(vertices[i].x, vertices[i].y);
+  }
+
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Draw vertex points
+  if (isEditable) {
+    for (let i = 0; i < vertices.length; i += 1) {
+      const v = vertices[i];
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "#0a0e17";
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = strokeColor;
+      ctx.fill();
+
+      // Vertex label
+      ctx.font = "bold 7.5px monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(`V${i + 1}`, v.x + 5, v.y - 3);
+    }
+  }
+
+  ctx.restore();
+}
+
+export function drawRoiHeaderGrip(
+  ctx: CanvasRenderingContext2D,
+  roi: WorkpieceRoi,
+  labelPrefix: string,
+  isLocked: boolean,
+  color = "#00e5ff",
+): void {
+  const badgeText = `${labelPrefix} · [${Math.round(roi.width)}×${Math.round(roi.height)}]`;
+  const headerRect = getRoiHeaderRect(roi);
+  const badgeW = headerRect.width;
+  const badgeH = headerRect.height;
+  const badgeX = headerRect.x;
+  const badgeY = headerRect.y;
+
+  ctx.save();
+
+  // Background
+  ctx.fillStyle = "rgba(8, 14, 24, 0.95)";
+  ctx.fillRect(badgeX, badgeY, badgeW, badgeH);
+
+  // Border (Cyan #00e5ff)
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(badgeX, badgeY, badgeW, badgeH);
+
+  // Left Grip dots (drag indicator)
+  ctx.fillStyle = isLocked ? "rgba(148, 163, 184, 0.4)" : color;
+  const gripX = badgeX + 6;
+  const gripY = badgeY + 6;
+  for (let r = 0; r < 2; r += 1) {
+    for (let c = 0; c < 3; c += 1) {
+      ctx.fillRect(gripX + c * 3, gripY + r * 5, 1.8, 1.8);
+    }
+  }
+
+  // Label text
+  ctx.font = "bold 9px monospace";
+  ctx.fillStyle = color;
+  ctx.fillText(badgeText, badgeX + 20, badgeY + 14);
+
+  // Lock status tag on right
+  const lockTag = isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED · DRAG";
+  ctx.font = "bold 8px monospace";
+  ctx.fillStyle = isLocked ? "#f59e0b" : "#10b981";
+  ctx.fillText(lockTag, badgeX + badgeW - (isLocked ? 62 : 112), badgeY + 14);
+
+  ctx.restore();
+}
+
+export function generate57SequentialPatternBoxes(roi: WorkpieceRoi): WhiteBoxMark[] {
+  if ((roi as any)?.isEmpty) {
+    return [];
+  }
+
+  const boxes: WhiteBoxMark[] = [];
+  const padX = Math.max(6, Math.round(roi.width * 0.035));
+  const padY = Math.max(6, Math.round(roi.height * 0.045));
+  const usableW = Math.max(20, roi.width - padX * 2);
+  const usableH = Math.max(20, roi.height - padY * 2);
+
+  // Row 1 (Top header leads/pads): 15 boxes (1 to 15)
+  const topCount = 15;
+  const topSlotW = usableW / topCount;
+  const topBoxW = Math.max(6, Math.round(topSlotW * 0.78));
+  const topBoxH = Math.max(8, Math.round(usableH * 0.16));
+  const topY = Math.round(roi.y + padY);
+
+  for (let i = 0; i < topCount; i += 1) {
+    const num = i + 1;
+    const bx = Math.round(roi.x + padX + i * topSlotW + (topSlotW - topBoxW) / 2);
+
+    boxes.push({
+      number: num,
+      x: bx,
+      y: topY,
+      width: topBoxW,
+      height: topBoxH,
+      area: topBoxW * topBoxH,
+      label: `#${num}`,
+    });
+  }
+
+  // Middle rows: 30 boxes (16 to 45) in a structured 3-tier matrix
+  const midCols = 10;
+  const midRows = 3;
+  const midStartX = Math.round(roi.x + padX + usableW * 0.3);
+  const midSlotW = (usableW * 0.68) / midCols;
+  const midBoxW = Math.max(6, Math.round(midSlotW * 0.8));
+  const midBoxH = Math.max(6, Math.round(usableH * 0.14));
+  const midStartY = Math.round(roi.y + padY + topBoxH + usableH * 0.06);
+  const midRowGap = Math.max(2, Math.round(usableH * 0.04));
+
+  let midIdx = 0;
+  for (let r = 0; r < midRows; r += 1) {
+    for (let c = 0; c < midCols; c += 1) {
+      const num = 16 + midIdx;
+      const bx = Math.round(midStartX + c * midSlotW);
+      const by = Math.round(midStartY + r * (midBoxH + midRowGap));
+
+      boxes.push({
+        number: num,
+        x: bx,
+        y: by,
+        width: midBoxW,
+        height: midBoxH,
+        area: midBoxW * midBoxH,
+        label: `#${num}`,
+      });
+      midIdx += 1;
+    }
+  }
+
+  // Row 5 (Bottom lead pads): 12 boxes (46 to 57)
+  const botCount = 12;
+  const botStartX = Math.round(roi.x + padX + usableW * 0.3);
+  const botSlotW = (usableW * 0.68) / botCount;
+  const botBoxW = Math.max(6, Math.round(botSlotW * 0.8));
+  const botBoxH = Math.max(8, Math.round(usableH * 0.18));
+  const botY = Math.round(roi.y + roi.height - padY - botBoxH);
+
+  for (let i = 0; i < botCount; i += 1) {
+    const num = 46 + i;
+    const bx = Math.round(botStartX + i * botSlotW);
+
+    boxes.push({
+      number: num,
+      x: bx,
+      y: botY,
+      width: botBoxW,
+      height: botBoxH,
+      area: botBoxW * botBoxH,
+      label: `#${num}`,
+    });
+  }
+
+  return boxes;
 }
 
 export function VisualToolWorkpieceCanvas({
@@ -981,11 +1439,12 @@ export function VisualToolWorkpieceCanvas({
   onRunAnalysis,
   isAnalyzing = false,
   tapeStripResult = null,
+  onUpdateParams,
+  onBringToFront,
+  onSendToBack,
+  onToggleLocked,
 }: VisualToolWorkpieceCanvasProps): React.JSX.Element {
-  const roi = useMemo(
-    () => propRoi ?? { x: 0, y: 0, width: 960, height: 540 },
-    [propRoi],
-  );
+  const roi = useMemo(() => propRoi ?? { x: 0, y: 0, width: 960, height: 540 }, [propRoi]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
@@ -995,6 +1454,65 @@ export function VisualToolWorkpieceCanvas({
   const [autoDetectedBoxesByRuleId, setAutoDetectedBoxesByRuleId] = useState<
     Record<string, WhiteBoxMark[]>
   >({});
+  const [activeCornerHandle, setActiveCornerHandle] = useState<"nw" | "ne" | "sw" | "se" | null>(
+    null,
+  );
+  const [dragStartPos, setDragStartPos] = useState<{
+    x: number;
+    y: number;
+    initialRoi: WorkpieceRoi;
+  } | null>(null);
+  const [cursorHandleType, setCursorHandleType] = useState<"nw" | "ne" | "sw" | "se" | null>(null);
+  const [isMovingRoi, setIsMovingRoi] = useState(false);
+  const [isDraggingPin1, setIsDraggingPin1] = useState(false);
+  const [isHoveringRoi, setIsHoveringRoi] = useState(false);
+  const [isRoiLocked, setIsRoiLocked] = useState(false);
+  const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+
+  const selectedRule = useMemo(() => {
+    return overlayRules.find((r) => r.id === selectedRuleId);
+  }, [overlayRules, selectedRuleId]);
+
+  useEffect(() => {
+    if (selectedRule) {
+      setIsRoiLocked(Boolean(selectedRule.isLocked));
+    } else {
+      setIsRoiLocked(false);
+    }
+  }, [selectedRuleId, selectedRule?.isLocked]);
+
+  const occupiedTapePockets = useMemo(() => {
+    return tapeStripResult && tapeStripResult.totalPockets > 1
+      ? tapeStripResult.pockets.filter((p) => !p.isEmpty)
+      : [];
+  }, [tapeStripResult]);
+  const [canvasContextMenu, setCanvasContextMenu] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    ruleId?: string;
+  } | null>(null);
+
+  const imageMetrics = useMemo(() => {
+    const w = 960;
+    const h = 540;
+
+    if (!imageElement) {
+      return {
+        fit: { x: 0, y: 0, width: w, height: h },
+        sourceScaleX: 1,
+        sourceScaleY: 1,
+      };
+    }
+
+    const naturalW = imageElement.naturalWidth || imageElement.width || w;
+    const naturalH = imageElement.naturalHeight || imageElement.height || h;
+    const fit = getContainedDimensions(naturalW, naturalH, w, h);
+    const sourceScaleX = fit.width / naturalW;
+    const sourceScaleY = fit.height / naturalH;
+
+    return { fit, sourceScaleX, sourceScaleY };
+  }, [imageElement]);
 
   const imgSrc = imageRef || null;
 
@@ -1022,20 +1540,36 @@ export function VisualToolWorkpieceCanvas({
 
     const cacheLoadedPixels = (loadedImg: HTMLImageElement) => {
       try {
-        const w = 960;
-        const h = 540;
+        const naturalW = loadedImg.naturalWidth || loadedImg.width || 960;
+        const naturalH = loadedImg.naturalHeight || loadedImg.height || 540;
+        const isSinglePocket = naturalW / naturalH < 0.92;
+        const targetW = isSinglePocket ? 960 : naturalW;
+        const targetH = isSinglePocket ? 540 : naturalH;
         const offCanvas = document.createElement("canvas");
-        offCanvas.width = w;
-        offCanvas.height = h;
+        offCanvas.width = targetW;
+        offCanvas.height = targetH;
         const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
 
         if (offCtx) {
-          offCtx.drawImage(loadedImg, 0, 0, w, h);
-          const imgData = offCtx.getImageData(0, 0, w, h);
-          registerWorkpieceImageCache(imgSrc, { width: w, height: h, rgba: imgData.data });
+          offCtx.drawImage(loadedImg, 0, 0, targetW, targetH);
+          const imgData = offCtx.getImageData(0, 0, targetW, targetH);
+
+          registerWorkpieceImageCache(imgSrc, {
+            width: targetW,
+            height: targetH,
+            rgba: imgData.data,
+          });
         }
-      } catch {
-        // Ignored
+      } catch (err) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "VisualToolWorkpieceCanvas",
+            triggerAction: "cacheLoadedPixels",
+            context: { imageSrcLength: imgSrc.length },
+          },
+          "E_WORKPIECE_CACHE_PIXELS",
+        );
       }
     };
 
@@ -1159,17 +1693,123 @@ export function VisualToolWorkpieceCanvas({
   const activeBoxCount =
     typeof toolParams?.activeBoxCount === "number"
       ? toolParams.activeBoxCount
-    : parsedToolBoxes.length;
+      : parsedToolBoxes.length;
 
   const isPatternMatching =
     Boolean(toolName?.toLowerCase().includes("pattern")) ||
+    Boolean(toolName?.toLowerCase().includes("white box")) ||
     toolCode === "T102" ||
+    toolCode === "T116" ||
     toolCode === "greyscale_pattern_match";
+  const patternPinSignatureRef = useRef("");
+  const [patternToolbarPos, setPatternToolbarPos] = useState<{ left: number; top: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!isPatternMatching || !imageElement || !onUpdateParams) {
+      return;
+    }
+
+    const naturalW = imageElement.naturalWidth || 0;
+    const naturalH = imageElement.naturalHeight || 0;
+
+    if (naturalW < 2 || naturalH < 2) {
+      return;
+    }
+
+    const authoredW = Number(toolParams?.authoredFrameWidth ?? naturalW);
+    const authoredH = Number(toolParams?.authoredFrameHeight ?? naturalH);
+    const needsPin = parsedToolBoxes.length === 0;
+    const needsRebase = authoredW !== naturalW || authoredH !== naturalH;
+    const needsSquare = roi.width !== roi.height || String(toolParams?.shapeType ?? "") !== "square";
+
+    if (!needsPin && !needsRebase && !needsSquare) {
+      return;
+    }
+
+    const pinned = pinPatternRule(
+      {
+        id: "pattern-pin",
+        name: toolName ?? "pattern",
+        kind: "R" as EditorRule["kind"],
+        isHidden: false,
+        isLocked: false,
+        x: roi.x,
+        y: roi.y,
+        width: roi.width,
+        height: roi.height,
+        params: { ...(toolParams ?? {}) },
+      },
+      naturalW,
+      naturalH,
+    );
+    const boxCount = Array.isArray(pinned.params?.referenceBoxes)
+      ? pinned.params.referenceBoxes.length
+      : 0;
+    const nextSignature = `${naturalW}x${naturalH}:${pinned.x},${pinned.y},${pinned.width},${pinned.height}:${boxCount}`;
+
+    if (patternPinSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    patternPinSignatureRef.current = nextSignature;
+    onUpdateParams(pinned.params ?? {});
+  }, [
+    imageElement,
+    isPatternMatching,
+    onUpdateParams,
+    parsedToolBoxes.length,
+    roi.height,
+    roi.width,
+    roi.x,
+    roi.y,
+    toolName,
+    toolParams,
+  ]);
+
+  useEffect(() => {
+    if (!isPatternMatching || !imageElement) {
+      setPatternToolbarPos(null);
+
+      return;
+    }
+
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const naturalW = imageElement.naturalWidth || 0;
+    const naturalH = imageElement.naturalHeight || 0;
+
+    if (naturalW < 2 || naturalH < 2) {
+      setPatternToolbarPos(null);
+
+      return;
+    }
+
+    const fit = getContainedDimensions(
+      naturalW,
+      naturalH,
+      canvas.clientWidth || 960,
+      canvas.clientHeight || 540,
+    );
+
+    setPatternToolbarPos({
+      left: fit.x + (roi.x / Math.max(1, naturalW)) * fit.width + 4,
+      top: fit.y + (roi.y / Math.max(1, naturalH)) * fit.height + 4,
+    });
+  }, [imageElement, isPatternMatching, roi.height, roi.width, roi.x, roi.y]);
 
   const isPin1 =
     Boolean(toolName?.toLowerCase().includes("pin 1")) ||
+    Boolean(toolName?.toLowerCase().includes("pin1")) ||
     toolCode === "T105" ||
-    toolCode === "pin1_config";
+    toolCode === "T117" ||
+    toolCode === "pin1_config" ||
+    toolCode === "pin1_orientation";
 
   const isCaliper =
     Boolean(toolName?.toLowerCase().includes("caliper")) ||
@@ -1184,7 +1824,38 @@ export function VisualToolWorkpieceCanvas({
     return [];
   }, [parsedToolBoxes]);
 
-  const activeBoxesToDraw = configuredBoxes.length > 0 ? configuredBoxes : detectedBoxes;
+  const activeBoxesToDraw = useMemo(() => {
+    if (tapeStripResult && tapeStripResult.totalPockets > 1 && occupiedTapePockets.length === 0) {
+      return [];
+    }
+
+    if (configuredBoxes.length > 0) {
+      return configuredBoxes;
+    }
+
+    if (detectedBoxes.length > 0) {
+      return detectedBoxes;
+    }
+
+    if (isPatternMatching) {
+      const side = Math.max(4, Math.min(roi.width, roi.height));
+
+      return getPatternBoxesForRegion({
+        x: roi.x,
+        y: roi.y,
+        width: side,
+        height: side,
+      });
+    }
+
+    return [];
+  }, [configuredBoxes, detectedBoxes, isPatternMatching, occupiedTapePockets.length, roi, tapeStripResult]);
+
+  // Demo fallback boxes must not override an explicitly configured element
+  // count in the header label: when no real boxes exist, the label shows
+  // activeBoxCount (the rule's own count), not the 57 generated boxes.
+  const isGeneratedPatternBoxes =
+    configuredBoxes.length === 0 && detectedBoxes.length === 0 && isPatternMatching;
 
   const handleDetectElements = useCallback(
     (shouldNotify = false) => {
@@ -1192,29 +1863,26 @@ export function VisualToolWorkpieceCanvas({
         return;
       }
 
-      const w = 960;
-      const h = 540;
+      const naturalW = imageElement.naturalWidth || imageElement.width || 960;
+      const naturalH = imageElement.naturalHeight || imageElement.height || 540;
+      const isSinglePocket = naturalW / naturalH < 0.92;
+      const targetW = isSinglePocket ? 960 : naturalW;
+      const targetH = isSinglePocket ? 540 : naturalH;
       const offscreen = document.createElement("canvas");
-      offscreen.width = w;
-      offscreen.height = h;
+      offscreen.width = targetW;
+      offscreen.height = targetH;
       const offCtx = offscreen.getContext("2d");
 
       if (!offCtx) {
         return;
       }
 
-      const naturalW = imageElement.naturalWidth || imageElement.width || w;
-      const naturalH = imageElement.naturalHeight || imageElement.height || h;
-      const fit = getContainedDimensions(naturalW, naturalH, w, h);
-
-      offCtx.fillStyle = "#000000";
-      offCtx.fillRect(0, 0, w, h);
-      offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
-      const imgData = offCtx.getImageData(0, 0, w, h);
+      offCtx.drawImage(imageElement, 0, 0, targetW, targetH);
+      const imgData = offCtx.getImageData(0, 0, targetW, targetH);
 
       const result = markWhiteBoxes({
-        width: w,
-        height: h,
+        width: targetW,
+        height: targetH,
         rgba: imgData.data,
         whiteThreshold: thresholdLuma,
         searchRegion: roi,
@@ -1275,25 +1943,22 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
-    const w = 960;
-    const h = 540;
+    const naturalW = imageElement.naturalWidth || imageElement.width || 960;
+    const naturalH = imageElement.naturalHeight || imageElement.height || 540;
+    const isSinglePocket = naturalW / naturalH < 0.92;
+    const targetW = isSinglePocket ? 960 : naturalW;
+    const targetH = isSinglePocket ? 540 : naturalH;
     const offscreen = document.createElement("canvas");
-    offscreen.width = w;
-    offscreen.height = h;
+    offscreen.width = targetW;
+    offscreen.height = targetH;
     const offCtx = offscreen.getContext("2d");
 
     if (!offCtx) {
       return;
     }
 
-    const naturalW = imageElement.naturalWidth || imageElement.width || w;
-    const naturalH = imageElement.naturalHeight || imageElement.height || h;
-    const fit = getContainedDimensions(naturalW, naturalH, w, h);
-
-    offCtx.fillStyle = "#000000";
-    offCtx.fillRect(0, 0, w, h);
-    offCtx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
-    const imgData = offCtx.getImageData(0, 0, w, h);
+    offCtx.drawImage(imageElement, 0, 0, targetW, targetH);
+    const imgData = offCtx.getImageData(0, 0, targetW, targetH);
     const updates: Record<string, WhiteBoxMark[]> = {};
 
     for (const r of rulesNeedingDetection) {
@@ -1306,8 +1971,8 @@ export function VisualToolWorkpieceCanvas({
       };
 
       const res = markWhiteBoxes({
-        width: w,
-        height: h,
+        width: targetW,
+        height: targetH,
         rgba: imgData.data,
         whiteThreshold: thresh,
         searchRegion: ruleRegion,
@@ -1358,21 +2023,60 @@ export function VisualToolWorkpieceCanvas({
     const naturalW = imageElement.naturalWidth || imageElement.width || w;
     const naturalH = imageElement.naturalHeight || imageElement.height || h;
     const fit = getContainedDimensions(naturalW, naturalH, w, h);
+    const sourceScaleX = fit.width / naturalW;
+    const sourceScaleY = fit.height / naturalH;
 
     ctx.fillStyle = "#06080d";
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
 
-    if (tapeStripResult && tapeStripResult.totalPockets > 1) {
-      for (const pocket of tapeStripResult.pockets) {
-        drawPocketOverlay(ctx, pocket);
+    if (isPatternMatching && fit.width > 0 && fit.height > 0) {
+      try {
+        const frame = ctx.getImageData(fit.x, fit.y, fit.width, fit.height);
+        const filtered = filterPatternRgba(frame.data, fit.width, fit.height, thresholdLuma);
+
+        frame.data.set(filtered);
+        ctx.putImageData(frame, fit.x, fit.y);
+      } catch (err) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "VisualToolWorkpieceCanvas",
+            triggerAction: "applyPatternLuminance",
+          },
+          "E_PATTERN_LUMINANCE",
+        );
       }
     }
 
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
 
+    // Analyze mode keeps the image clean until the user clicks Analyze,
+    // unless a rule is currently selected or editable for inspection/tuning:
+    if (
+      isAnalyzeMode &&
+      !tapeStripResult &&
+      rulesToRender.length > 0 &&
+      !selectedRuleId &&
+      !isEditable
+    ) {
+      return;
+    }
+
     if (rulesToRender.length === 0) {
+      if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+        ctx.save();
+        ctx.translate(fit.x, fit.y);
+        ctx.scale(sourceScaleX, sourceScaleY);
+
+        for (const pocket of tapeStripResult.pockets) {
+          drawPocketOverlay(ctx, pocket);
+        }
+
+        ctx.restore();
+      }
+
       if (isAnalyzeMode) {
         ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
         ctx.fillRect(w / 2 - 220, h / 2 - 25, 440, 50);
@@ -1381,7 +2085,11 @@ export function VisualToolWorkpieceCanvas({
         ctx.fillStyle = "#94a3b8";
         ctx.font = "bold 13px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("No rules defined. Click 'Add rule from tools' to start inspection.", w / 2, h / 2 + 5);
+        ctx.fillText(
+          "No rules defined. Click 'Add rule from tools' to start inspection.",
+          w / 2,
+          h / 2 + 5,
+        );
         ctx.textAlign = "left";
 
         return;
@@ -1411,6 +2119,40 @@ export function VisualToolWorkpieceCanvas({
         validationScore,
         true,
       );
+
+      // Search region (ROI) bounding outline and corner-only handles
+      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
+
+      ctx.save();
+      ctx.strokeStyle = roiStroke;
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = roiFill;
+
+      if (shapeType === "circle") {
+        drawCircleWithHandles(ctx, roi, roiStroke, roiFill, isEditable);
+      } else if (shapeType === "polygon") {
+        const polyVertices = getPolygonVertices(roi, Number((toolParams as any)?.vertexCount) || 6);
+        drawPolygonWithVertices(ctx, roi, polyVertices, roiStroke, roiFill, isEditable);
+      } else {
+        ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+        ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+      }
+
+      if (isEditable && !isRoiLocked) {
+        drawCornerHandles(ctx, roi, roiStroke);
+      }
+
+      // Explicit top header grip handle
+      const singleLabelPrefix = isPin1
+        ? "PIN 1 SEARCH REGION"
+        : isPatternMatching
+          ? "PATTERN SEARCH REGION"
+          : toolName
+            ? `${toolName.toUpperCase()} SEARCH REGION`
+            : "PIN 1 SEARCH REGION";
+      drawRoiHeaderGrip(ctx, roi, singleLabelPrefix, isRoiLocked, roiStroke);
+
+      ctx.restore();
 
       if (isPatternMatching) {
         const effectiveRegion = roi;
@@ -1451,18 +2193,21 @@ export function VisualToolWorkpieceCanvas({
         validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)
       ) {
-        drawFrameInspectionHud(
-          ctx,
-          w,
-          1,
-          isPass ? 1 : 0,
-          isFailed ? 1 : 0,
-          Boolean(isAnalyzing),
-        );
+        drawFrameInspectionHud(ctx, w, 1, isPass ? 1 : 0, isFailed ? 1 : 0, Boolean(isAnalyzing));
       }
     } else {
       let totalPassCount = 0;
       let totalFailCount = 0;
+
+      ctx.save();
+      ctx.translate(fit.x, fit.y);
+      ctx.scale(sourceScaleX, sourceScaleY);
+
+      if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+        for (const pocket of tapeStripResult.pockets) {
+          drawPocketOverlay(ctx, pocket);
+        }
+      }
 
       for (let idx = 0; idx < rulesToRender.length; idx += 1) {
         const rule = rulesToRender[idx];
@@ -1473,20 +2218,42 @@ export function VisualToolWorkpieceCanvas({
 
         const isSelected = rule.id === selectedRuleId;
         const ruleResult = validationResultsMap?.[rule.id];
-        const status = ruleResult?.status ?? (isSelected ? validationStatus : undefined);
-        const score = ruleResult?.score ?? (isSelected ? validationScore : undefined);
+        const occupiedTapePockets =
+          tapeStripResult && tapeStripResult.totalPockets > 1
+            ? tapeStripResult.pockets.filter((p) => !p.isEmpty)
+            : [];
+        const tapePocketResults = occupiedTapePockets
+          .map((p) => p.ruleResults[rule.id])
+          .filter(Boolean);
+        const hasTapeFail = tapePocketResults.some((res) => res.status === "fail");
+        const tapeRuleStatus =
+          tapePocketResults.length > 0 ? (hasTapeFail ? "fail" : "pass") : undefined;
+        const tapeRuleScore =
+          tapePocketResults.length > 0
+            ? tapePocketResults.reduce((acc, curr) => acc + (curr.score ?? 0), 0) /
+              tapePocketResults.length
+            : undefined;
 
-        if (status === "pass") {
+        const effectiveStatus =
+          ruleResult?.status ?? tapeRuleStatus ?? (isSelected ? validationStatus : undefined);
+        const effectiveScore =
+          ruleResult?.score ?? tapeRuleScore ?? (isSelected ? validationScore : undefined);
+
+        if (isAnalyzeMode && !effectiveStatus && !isSelected && occupiedTapePockets.length === 0) {
+          continue;
+        }
+
+        if (effectiveStatus === "pass") {
           totalPassCount += 1;
         }
 
-        if (status === "fail") {
+        if (effectiveStatus === "fail") {
           totalFailCount += 1;
         }
 
-        const isFailed = status === "fail";
-        const isWarn = status === "warn";
-        const isPass = status === "pass";
+        const isFailed = effectiveStatus === "fail";
+        const isWarn = effectiveStatus === "warn";
+        const isPass = effectiveStatus === "pass";
 
         const strokeColor = isFailed
           ? "#ef4444"
@@ -1543,17 +2310,99 @@ export function VisualToolWorkpieceCanvas({
           ruleNameLower.includes("pitch") ||
           (isSelected && isCaliper);
 
-        // Zero-ROI: Render intrinsic features only, without artificial bounding box rectangles
+        // Render Search Region (ROI) bounding box for the active / selected rule
+        if (isSelected) {
+          const shapeType = String(
+            (rule.params as any)?.shapeType || (toolParams as any)?.shapeType || "rectangle",
+          ).toLowerCase();
+
+          ctx.save();
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([6, 4]);
+
+          const ruleStrokeColor = "#00e5ff";
+          ctx.strokeStyle = ruleStrokeColor;
+
+          if (shapeType === "circle") {
+            drawCircleWithHandles(ctx, ruleRoi, ruleStrokeColor, fillColor, isEditable);
+          } else if (shapeType === "polygon") {
+            const polyVertices = getPolygonVertices(
+              ruleRoi,
+              Number((rule.params as any)?.vertexCount) || 6,
+            );
+            drawPolygonWithVertices(
+              ctx,
+              ruleRoi,
+              polyVertices,
+              ruleStrokeColor,
+              fillColor,
+              isEditable,
+            );
+          } else {
+            ctx.strokeRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
+          }
+
+          ctx.setLineDash([]);
+
+          // Search Region label badge with top header grip handle
+          const labelPrefix = isRulePin1
+            ? "PIN 1 SEARCH REGION"
+            : isRulePattern
+              ? "PATTERN SEARCH REGION"
+              : `${rule.name.toUpperCase()} SEARCH REGION`;
+          drawRoiHeaderGrip(
+            ctx,
+            ruleRoi,
+            labelPrefix,
+            Boolean(rule.isLocked || isRoiLocked),
+            ruleStrokeColor,
+          );
+
+          // 4 Corner drag handles
+          if (isEditable && !rule.isLocked && !isRoiLocked) {
+            drawCornerHandles(ctx, ruleRoi, ruleStrokeColor);
+          }
+
+          ctx.restore();
+        }
+
         let badgeX = ruleX;
         let badgeY = ruleY;
 
         if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
           const ruleDebug = (ruleResult as any)?.debug;
-          const debugHoleX = ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
-          const debugHoleY = ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
-          const hX = debugHoleX ?? pinCfg?.centerX ?? pinCfg?.registeredPin1?.centerX ?? pinCfg?.registeredPin1?.x;
-          const hY = debugHoleY ?? pinCfg?.centerY ?? pinCfg?.registeredPin1?.centerY ?? pinCfg?.registeredPin1?.y;
+          const firstPocketRes = occupiedTapePockets[0]?.ruleResults[rule.id];
+          const firstHoleX =
+            firstPocketRes?.debug?.detectedHoleX ?? firstPocketRes?.debug?.nominalX;
+          const firstHoleY =
+            firstPocketRes?.debug?.detectedHoleY ?? firstPocketRes?.debug?.nominalY;
+
+          const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+            ? ruleDebug.multiDevicePin1
+            : Array.isArray((rule.params as any)?.multiDevicePin1)
+              ? (rule.params as any).multiDevicePin1
+              : [];
+          const firstMarker = multiDevicePin1[0];
+          const markerHoleX = firstMarker?.x ?? firstMarker?.centerX;
+          const markerHoleY = firstMarker?.y ?? firstMarker?.centerY;
+          const debugHoleX =
+            firstHoleX ?? markerHoleX ?? ruleDebug?.detectedHoleX ?? ruleDebug?.nominalX;
+          const debugHoleY =
+            firstHoleY ?? markerHoleY ?? ruleDebug?.detectedHoleY ?? ruleDebug?.nominalY;
+          const hX =
+            debugHoleX ??
+            pinCfg?.centerX ??
+            pinCfg?.registeredPin1?.centerX ??
+            pinCfg?.registeredPin1?.x;
+          const hY =
+            debugHoleY ??
+            pinCfg?.centerY ??
+            pinCfg?.registeredPin1?.centerY ??
+            pinCfg?.registeredPin1?.y;
 
           if (typeof hX === "number" && typeof hY === "number") {
             badgeX = Math.max(10, Math.round(hX - 60));
@@ -1567,144 +2416,322 @@ export function VisualToolWorkpieceCanvas({
           badgeY,
           rule.name,
           effectiveToolCode,
-          status,
-          score,
+          effectiveStatus,
+          effectiveScore,
           isSelected,
         );
 
+        const isRuleArea =
+          effectiveToolCode === "T101" ||
+          ruleNameLower.includes("area") ||
+          ruleNameLower.includes("pixel intensity");
+
+        const isRuleBlob =
+          effectiveToolCode === "T109" ||
+          ruleNameLower.includes("blob") ||
+          ruleNameLower.includes("bridge");
+
         const isRuleDefect =
+          effectiveToolCode === "T107" ||
+          effectiveToolCode === "T108" ||
           effectiveToolCode === "T118" ||
           ruleNameLower.includes("defect") ||
+          ruleNameLower.includes("scratch") ||
+          ruleNameLower.includes("crack") ||
+          ruleNameLower.includes("void") ||
+          ruleNameLower.includes("porosity") ||
           ruleNameLower.includes("flaw");
 
         if (isRulePattern) {
-          const effectiveRegion: WorkpieceRoi = { x: ruleX, y: ruleY, width: ruleW, height: ruleH };
-          const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
-          const boxResults = (ruleResult as any)?.debug?.boxResults;
-          const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
-          const multiDevicePassRegions = Array.isArray((ruleResult as any)?.debug?.multiDevicePassRegions)
-            ? (ruleResult as any).debug.multiDevicePassRegions
-            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
-              ? (rule.params as any).multiDevicePassRegions
-              : [];
-          const ruleBoxes =
-            Array.isArray(boxResults) && boxResults.length > 0
+          if (occupiedTapePockets.length > 0) {
+            const multiDevicePassRegions = occupiedTapePockets.map((p) => ({
+              label: `Pocket #${p.pocketIndex}`,
+              region: p.region,
+            }));
+
+            for (const pocket of occupiedTapePockets) {
+              const pRes = pocket.ruleResults[rule.id];
+              const pStatus = pRes?.status ?? effectiveStatus;
+              const pScore = pRes?.score ?? effectiveScore;
+              const pBoxResults = (pRes as any)?.debug?.boxResults;
+              const pBoxes =
+                Array.isArray(pBoxResults) && pBoxResults.length > 0
+                  ? pBoxResults.map((br: any) => ({
+                      number: br.boxNumber,
+                      label: br.label,
+                      x: br.matchedX ?? br.referenceX,
+                      y: br.matchedY ?? br.referenceY,
+                      width: br.width,
+                      height: br.height,
+                      area: br.width * br.height,
+                    }))
+                  : parseBoxesFromParams((pRes as any)?.params ?? rule.params, pocket.region);
+
+              const characterBoxesFallback =
+                pBoxes.length === 0 && Array.isArray((pocket as any).characterBoxes)
+                  ? ((pocket as any).characterBoxes as any[]).map((b: any) => ({
+                      number: b.number ?? b.boxNumber,
+                      label: b.label ?? b.character,
+                      x: b.x ?? b.referenceX,
+                      y: b.y ?? b.referenceY,
+                      width: b.width,
+                      height: b.height,
+                      area: b.width * b.height,
+                    }))
+                  : [];
+
+              const finalBoxes = pBoxes.length > 0 ? pBoxes : characterBoxesFallback;
+
+              drawGreyscaleSimulationPatternOverlay(
+                ctx,
+                pocket.region,
+                finalBoxes,
+                pStatus as "pass" | "fail" | "warn" | "pending" | "skipped",
+                pScore,
+                pBoxResults,
+                isAnalyzeMode,
+                false,
+              );
+            }
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
+          } else if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+            // Carrier tape active with no occupied pockets: never generate synthetic 57 boxes across empty pockets.
+          } else {
+            const effectiveRegion: WorkpieceRoi = {
+              x: ruleX,
+              y: ruleY,
+              width: ruleW,
+              height: ruleH,
+            };
+            const ruleBoxesFromParams = parseBoxesFromParams(rule.params, effectiveRegion);
+            const boxResults = (ruleResult as any)?.debug?.boxResults;
+            const isSkipped = Boolean((ruleResult as any)?.debug?.isSkipped);
+            const multiDevicePassRegions = Array.isArray(
+              (ruleResult as any)?.debug?.multiDevicePassRegions,
+            )
+              ? (ruleResult as any).debug.multiDevicePassRegions
+              : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+                ? (rule.params as any).multiDevicePassRegions
+                : [];
+            const ruleBoxes =
+              Array.isArray(boxResults) && boxResults.length > 0
                 ? boxResults.map((br: any) => ({
                     number: br.boxNumber,
+                    label: br.label,
                     x: br.matchedX ?? br.referenceX,
                     y: br.matchedY ?? br.referenceY,
                     width: br.width,
                     height: br.height,
                     area: br.width * br.height,
                   }))
-              : ruleBoxesFromParams.length > 0
-                ? ruleBoxesFromParams
-                : isSelected && activeBoxesToDraw.length > 0
-                  ? activeBoxesToDraw
-                  : [];
+                : ruleBoxesFromParams.length > 0
+                  ? ruleBoxesFromParams
+                  : isSelected && activeBoxesToDraw.length > 0
+                    ? activeBoxesToDraw
+                    : [];
 
-          drawGreyscaleSimulationPatternOverlay(
-            ctx,
-            effectiveRegion,
-            ruleBoxes,
-            status,
-            score,
-            boxResults,
-            isAnalyzeMode,
-            isSkipped,
-          );
-          drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, status);
+            drawGreyscaleSimulationPatternOverlay(
+              ctx,
+              effectiveRegion,
+              ruleBoxes,
+              effectiveStatus,
+              effectiveScore,
+              boxResults,
+              isAnalyzeMode,
+              isSkipped,
+            );
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R2", 1, effectiveStatus);
+          }
         } else if (isRulePin1) {
           const pinCfg = (rule.params as any)?.pin1Config;
-          const ruleDebug = (ruleResult as any)?.debug;
-          const multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
-            ? ruleDebug.multiDevicePin1
-            : Array.isArray((rule.params as any)?.multiDevicePin1)
-              ? (rule.params as any).multiDevicePin1
-              : [];
-          const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
-            ? ruleDebug.multiDevicePassRegions
-            : Array.isArray((rule.params as any)?.multiDevicePassRegions)
-              ? (rule.params as any).multiDevicePassRegions
-              : multiDevicePin1.map((marker: any) => ({
-                  label: marker.label,
-                  region: marker.packageRegion,
-                }));
 
-          if (multiDevicePin1.length > 0) {
-            for (const marker of multiDevicePin1) {
-              const markerX = Number(marker.x ?? marker.centerX);
-              const markerY = Number(marker.y ?? marker.centerY);
-              const markerRadius = Number(marker.radius ?? pinCfg?.radius ?? 11);
+          if (occupiedTapePockets.length > 0) {
+            const multiDevicePassRegions = occupiedTapePockets.map((p) => ({
+              label: `Pocket #${p.pocketIndex}`,
+              region: p.region,
+            }));
 
-              if (!Number.isFinite(markerX) || !Number.isFinite(markerY)) {
-                continue;
+            for (const pocket of occupiedTapePockets) {
+              const pRes = pocket.ruleResults[rule.id];
+              const pStatus = pRes?.status ?? effectiveStatus;
+              const pScore = pRes?.score ?? effectiveScore;
+              const pDebug = pRes?.debug;
+              const pocketPinX =
+                typeof (pocket as any).pinX === "number" ? (pocket as any).pinX : undefined;
+              const pocketPinY =
+                typeof (pocket as any).pinY === "number" ? (pocket as any).pinY : undefined;
+              const rawHoleX = pDebug?.detectedHoleX ?? pDebug?.nominalX;
+              const rawHoleY = pDebug?.detectedHoleY ?? pDebug?.nominalY;
+              const isHoleInPocket =
+                typeof rawHoleX === "number" &&
+                rawHoleX >= pocket.region.x - 10 &&
+                rawHoleX <= pocket.region.x + pocket.region.width + 10;
+              const holeX = isHoleInPocket ? rawHoleX : (pocketPinX ?? rawHoleX);
+              const holeY = isHoleInPocket ? rawHoleY : (pocketPinY ?? rawHoleY);
+
+              if (typeof holeX === "number" && typeof holeY === "number") {
+                const markerRoi: WorkpieceRoi = {
+                  x: Math.max(0, Math.round(holeX - 25)),
+                  y: Math.max(0, Math.round(holeY - 25)),
+                  width: 50,
+                  height: 50,
+                };
+
+                const markerPinCfg = {
+                  ...(pinCfg ?? {}),
+                  centerX: holeX,
+                  centerY: holeY,
+                  radius: pinCfg?.radius ?? 11,
+                  registeredPin1: {
+                    x: holeX,
+                    y: holeY,
+                    centerX: holeX,
+                    centerY: holeY,
+                    radius: pinCfg?.radius ?? 11,
+                  },
+                  packageRegion: pocket.region,
+                };
+
+                const markerResult = {
+                  status: pStatus,
+                  score: pScore,
+                  debug: {
+                    ...(pDebug ?? {}),
+                    nominalX: holeX,
+                    nominalY: holeY,
+                    detectedHoleX: holeX,
+                    detectedHoleY: holeY,
+                    hasPin1Found: pStatus === "pass",
+                  },
+                } as any;
+
+                drawPin1Reticle(
+                  ctx,
+                  markerRoi,
+                  pStatus as "pass" | "fail" | "warn" | "pending" | "skipped",
+                  pScore,
+                  markerPinCfg,
+                  markerResult,
+                  isAnalyzeMode,
+                );
               }
+            }
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
+          } else if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+            // Carrier tape active with no occupied pockets: never generate synthetic 57 boxes across empty pockets.
+          } else {
+            const ruleDebug = (ruleResult as any)?.debug;
+            let multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
+              ? ruleDebug.multiDevicePin1
+              : Array.isArray((rule.params as any)?.multiDevicePin1)
+                ? (rule.params as any).multiDevicePin1
+                : [];
+            // Fallback: construct from tapeStripResult pockets (scripted tour)
+            if (multiDevicePin1.length === 0 && tapeStripResult?.pockets) {
+              const pocketPins = tapeStripResult.pockets
+                .filter((pk: any) => !pk.isEmpty && typeof pk.pinX === "number" && typeof pk.pinY === "number")
+                .map((pk: any, idx: number) => ({
+                  id: `pocket-${idx + 1}`,
+                  label: `Device ${idx + 1}`,
+                  x: pk.pinX,
+                  y: pk.pinY,
+                  radius: 11,
+                  packageRegion: pk.region,
+                }));
+              if (pocketPins.length > 0) {
+                multiDevicePin1 = pocketPins;
+              }
+            }
+            const multiDevicePassRegions = Array.isArray(ruleDebug?.multiDevicePassRegions)
+              ? ruleDebug.multiDevicePassRegions
+              : Array.isArray((rule.params as any)?.multiDevicePassRegions)
+                ? (rule.params as any).multiDevicePassRegions
+                : multiDevicePin1.map((marker: any) => ({
+                    label: marker.label,
+                    region: marker.packageRegion,
+                  }));
 
-              const markerRoi: WorkpieceRoi = {
-                x: Math.max(0, Math.round(markerX - 25)),
-                y: Math.max(0, Math.round(markerY - 25)),
-                width: 50,
-                height: 50,
-              };
-              const markerPinCfg = {
-                ...(pinCfg ?? {}),
-                centerX: markerX,
-                centerY: markerY,
-                radius: markerRadius,
-                registeredPin1: {
-                  x: markerX,
-                  y: markerY,
+            if (multiDevicePin1.length > 0) {
+              for (const marker of multiDevicePin1) {
+                const markerX = Number(marker.x ?? marker.centerX);
+                const markerY = Number(marker.y ?? marker.centerY);
+                const markerRadius = Number(marker.radius ?? pinCfg?.radius ?? 11);
+
+                if (!Number.isFinite(markerX) || !Number.isFinite(markerY)) {
+                  continue;
+                }
+
+                const markerRoi: WorkpieceRoi = {
+                  x: Math.max(0, Math.round(markerX - 25)),
+                  y: Math.max(0, Math.round(markerY - 25)),
+                  width: 50,
+                  height: 50,
+                };
+                const markerPinCfg = {
+                  ...(pinCfg ?? {}),
                   centerX: markerX,
                   centerY: markerY,
                   radius: markerRadius,
-                },
-                ...(marker.packageRegion ? { packageRegion: marker.packageRegion } : {}),
-              };
-              const markerResult = {
-                ...(ruleResult ?? {}),
-                debug: {
-                  ...(ruleDebug ?? {}),
-                  nominalX: markerX,
-                  nominalY: markerY,
-                  detectedHoleX: markerX,
-                  detectedHoleY: markerY,
-                  hasPin1Found: true,
-                },
-              } as any;
+                  registeredPin1: {
+                    x: markerX,
+                    y: markerY,
+                    centerX: markerX,
+                    centerY: markerY,
+                    radius: markerRadius,
+                  },
+                  ...(marker.packageRegion ? { packageRegion: marker.packageRegion } : {}),
+                };
+                const markerResult = {
+                  ...(ruleResult ?? {}),
+                  debug: {
+                    ...(ruleDebug ?? {}),
+                    nominalX: markerX,
+                    nominalY: markerY,
+                    detectedHoleX: markerX,
+                    detectedHoleY: markerY,
+                    hasPin1Found: true,
+                  },
+                } as any;
 
+                drawPin1Reticle(
+                  ctx,
+                  markerRoi,
+                  effectiveStatus,
+                  effectiveScore,
+                  markerPinCfg,
+                  markerResult,
+                  isAnalyzeMode,
+                );
+              }
+            } else {
               drawPin1Reticle(
                 ctx,
-                markerRoi,
-                status,
-                score,
-                markerPinCfg,
-                markerResult,
+                ruleRoi,
+                effectiveStatus,
+                effectiveScore,
+                pinCfg,
+                ruleResult,
                 isAnalyzeMode,
               );
             }
-            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, status);
-          } else {
-            drawPin1Reticle(
-              ctx,
-              ruleRoi,
-              status,
-              score,
-              pinCfg,
-              ruleResult,
-              isAnalyzeMode,
-            );
+            drawDeviceRulePassBadges(ctx, multiDevicePassRegions, "R1", 0, effectiveStatus);
           }
         } else if (isRuleCaliper) {
-          drawCaliperRuler(ctx, ruleRoi, status);
+          drawCaliperRuler(ctx, ruleRoi, effectiveStatus);
         } else if (isRuleDefect) {
-          drawDefectScanGrid(ctx, ruleRoi, status);
+          drawDefectScanGrid(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleArea) {
+          drawAreaGateRegion(ctx, ruleRoi, effectiveStatus);
+        } else if (isRuleBlob) {
+          drawBlobInspectionRegion(ctx, ruleRoi, effectiveStatus);
         }
 
         if (isAnalyzing && isSelected) {
           drawScanningLaser(ctx, ruleRoi);
         }
       }
+
+      ctx.restore();
 
       if (
         isAnalyzeMode ||
@@ -1735,6 +2762,7 @@ export function VisualToolWorkpieceCanvas({
     isPatternMatching,
     isPin1,
     isCaliper,
+    toolParams,
     isEditable,
     overlayRules,
     selectedRuleId,
@@ -1753,28 +2781,133 @@ export function VisualToolWorkpieceCanvas({
     renderCanvas();
   }, [renderCanvas]);
 
-  function getCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
-    const canvas = canvasRef.current;
+  const getCanvasCoords = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } => {
+      const canvas = canvasRef.current;
 
-    if (!canvas) {
-      return { x: 0, y: 0 };
-    }
+      if (!canvas) {
+        return { x: 0, y: 0 };
+      }
 
-    const rect = canvas.getBoundingClientRect();
-    const isRectValid = rect.width > 0 && rect.height > 0;
-    const scaleX = isRectValid ? canvas.width / rect.width : 1;
-    const scaleY = isRectValid ? canvas.height / rect.height : 1;
+      const rect = canvas.getBoundingClientRect();
+      const isRectValid = rect.width > 0 && rect.height > 0;
+      const scaleX = isRectValid ? canvas.width / rect.width : 1;
+      const scaleY = isRectValid ? canvas.height / rect.height : 1;
 
-    return {
-      x: Math.round((clientX - rect.left) * scaleX),
-      y: Math.round((clientY - rect.top) * scaleY),
-    };
-  }
+      const rawX = (clientX - rect.left) * scaleX;
+      const rawY = (clientY - rect.top) * scaleY;
+
+      const { fit, sourceScaleX, sourceScaleY } = imageMetrics;
+      const localX = sourceScaleX > 0 ? (rawX - fit.x) / sourceScaleX : rawX;
+      const localY = sourceScaleY > 0 ? (rawY - fit.y) / sourceScaleY : rawY;
+
+      return {
+        x: Math.round(localX),
+        y: Math.round(localY),
+      };
+    },
+    [imageMetrics],
+  );
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    const headerRect = getRoiHeaderRect(roi);
 
-    // 1. First priority: Check if user clicked on an individual pattern box (to toggle exclusion)
+    const isInsideHeader =
+      x >= headerRect.x &&
+      x <= headerRect.x + headerRect.width &&
+      y >= headerRect.y &&
+      y <= headerRect.y + headerRect.height;
+
+    const isInsideRoi =
+      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
+
+    // 0. Corner handles hit test (NW, NE, SW, SE) - strictly on 4 corners (unlocked only)
+    if (isEditable && onChangeRoi && !isRoiLocked) {
+      const handleHitRadius = 14;
+      const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
+      const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
+      const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+
+      const hit = nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null;
+
+      if (hit) {
+        setActiveCornerHandle(hit);
+        setDragStartPos({ x, y, initialRoi: { ...roi } });
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+        return;
+      }
+    }
+
+    // Moving ROI requires unlocked state AND dragging by explicit top header grip handle!
+    if (isEditable && onChangeRoi && !isRoiLocked && isInsideHeader) {
+      setIsMovingRoi(true);
+      setDragStartPos({ x, y, initialRoi: { ...roi } });
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+      return;
+    }
+
+    // 1. Pin 1 orientation: drag reticle or map new Pin 1 location
+    if (isPin1 && onUpdateParams) {
+      const currentPin1X =
+        (toolParams as any)?.pin1Config?.centerX ??
+        (toolParams as any)?.pin1Config?.registeredPin1?.centerX;
+      const currentPin1Y =
+        (toolParams as any)?.pin1Config?.centerY ??
+        (toolParams as any)?.pin1Config?.registeredPin1?.centerY;
+      const isReticleHit =
+        typeof currentPin1X === "number" &&
+        typeof currentPin1Y === "number" &&
+        Math.hypot(x - currentPin1X, y - currentPin1Y) <= 18;
+
+      if (isReticleHit) {
+        setIsDraggingPin1(true);
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+        return;
+      }
+
+      // If clicked inside search region or near the IC: map Pin 1 position
+      const isInsideSearchArea =
+        x >= roi.x - 20 &&
+        x <= roi.x + roi.width + 20 &&
+        y >= roi.y - 20 &&
+        y <= roi.y + roi.height + 20;
+
+      // Branch deliberately disabled by the parallel spec-54 work (click-to-
+      // set Pin1 center is superseded by the marking tool); kept, not
+      // deleted, so it can be re-enabled. Lint suppression is intentional.
+      // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
+      if (false && isInsideSearchArea) {
+        const nextPin1Config = {
+          ...((toolParams as any)?.pin1Config ?? {}),
+          centerX: x,
+          centerY: y,
+          registeredPin1: {
+            ...((toolParams as any)?.pin1Config?.registeredPin1 ?? {}),
+            x,
+            y,
+            centerX: x,
+            centerY: y,
+            radius: (toolParams as any)?.pin1Config?.radius ?? 11,
+          },
+        };
+
+        onUpdateParams?.({
+          ...toolParams,
+          pin1Config: nextPin1Config,
+          pin1ConfigJson: JSON.stringify(nextPin1Config),
+        });
+
+        return;
+      }
+    }
+
+    // 2. Pattern box toggle exclusion
     if (isPatternMatching && activeBoxesToDraw.length > 0) {
       const boxUnderCursor = activeBoxesToDraw.find(
         (b) => x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height,
@@ -1797,11 +2930,21 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // 2. Second priority: Check if user clicked on another rule to select it
+    // 3. Search Region interior body drag eliminated:
+    // Clicking inside a locked ROI does NOT move the ROI (allowing user to click on or place patterns inside it).
+
+    // 4. Click other rule to select
     if (onSelectRule && overlayRules.length > 0) {
-      const clickedRule = [...overlayRules].reverse().find(
-        (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
-      );
+      const clickedRule = [...overlayRules]
+        .reverse()
+        .find(
+          (r) =>
+            !r.isHidden &&
+            x >= r.x &&
+            x <= r.x + r.width &&
+            y >= r.y &&
+            y <= r.y + r.height,
+        );
 
       if (clickedRule) {
         onSelectRule(clickedRule.id);
@@ -1811,17 +2954,220 @@ export function VisualToolWorkpieceCanvas({
     }
   }
 
-  function handlePointerMove(_e: React.PointerEvent<HTMLCanvasElement>) {
-    // Zero-ROI: manual ROI dragging is disabled
+  function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+
+    if (isDraggingPin1 && onUpdateParams) {
+      const nextPin1Config = {
+        ...((toolParams as any)?.pin1Config ?? {}),
+        centerX: x,
+        centerY: y,
+        registeredPin1: {
+          ...((toolParams as any)?.pin1Config?.registeredPin1 ?? {}),
+          x,
+          y,
+          centerX: x,
+          centerY: y,
+          radius: (toolParams as any)?.pin1Config?.radius ?? 11,
+        },
+      };
+
+      onUpdateParams({
+        ...toolParams,
+        pin1Config: nextPin1Config,
+        pin1ConfigJson: JSON.stringify(nextPin1Config),
+      });
+
+      return;
+    }
+
+    if (isMovingRoi && dragStartPos && onChangeRoi) {
+      const dx = x - dragStartPos.x;
+      const dy = y - dragStartPos.y;
+      const nextRoi = {
+        ...dragStartPos.initialRoi,
+        x: Math.max(0, dragStartPos.initialRoi.x + dx),
+        y: Math.max(0, dragStartPos.initialRoi.y + dy),
+      };
+
+      onChangeRoi(nextRoi);
+
+      return;
+    }
+
+    if (activeCornerHandle && dragStartPos && onChangeRoi) {
+      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
+      const nextRoi = { ...dragStartPos.initialRoi };
+
+      if (activeCornerHandle === "se") {
+        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
+        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+      } else if (activeCornerHandle === "nw") {
+        const dx = x - dragStartPos.initialRoi.x;
+        const dy = y - dragStartPos.initialRoi.y;
+        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
+        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
+        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
+        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+      } else if (activeCornerHandle === "ne") {
+        const dy = y - dragStartPos.initialRoi.y;
+        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
+        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
+        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+      } else if (activeCornerHandle === "sw") {
+        const dx = x - dragStartPos.initialRoi.x;
+        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
+        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
+        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+      }
+
+      if (shapeType === "square") {
+        const side = Math.max(nextRoi.width, nextRoi.height);
+        nextRoi.width = side;
+        nextRoi.height = side;
+      }
+
+      onChangeRoi(nextRoi);
+
+      return;
+    }
+
+    if (isEditable && !activeCornerHandle && !isMovingRoi && !isDraggingPin1) {
+      const handleHitRadius = 14;
+      const nwHit = Math.hypot(x - roi.x, y - roi.y) <= handleHitRadius;
+      const neHit = Math.hypot(x - (roi.x + roi.width), y - roi.y) <= handleHitRadius;
+      const swHit = Math.hypot(x - roi.x, y - (roi.y + roi.height)) <= handleHitRadius;
+      const seHit =
+        Math.hypot(x - (roi.x + roi.width), y - (roi.y + roi.height)) <= handleHitRadius;
+
+      const hover =
+        !isRoiLocked && (nwHit ? "nw" : neHit ? "ne" : swHit ? "sw" : seHit ? "se" : null);
+      setCursorHandleType(hover ? hover : null);
+
+      const isInside =
+        x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
+
+      const headerRect = getRoiHeaderRect(roi);
+      const isHeaderHover =
+        x >= headerRect.x &&
+        x <= headerRect.x + headerRect.width &&
+        y >= headerRect.y &&
+        y <= headerRect.y + headerRect.height;
+
+      setIsHoveringHeader(isHeaderHover);
+      setIsHoveringRoi(isInside && !hover && !isRoiLocked);
+    }
   }
 
-  function handlePointerUp(_e: React.PointerEvent<HTMLCanvasElement>) {
-    // Zero-ROI: manual ROI dragging is disabled
+  function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (activeCornerHandle) {
+      setActiveCornerHandle(null);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
+
+    if (isMovingRoi) {
+      setIsMovingRoi(false);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
+
+    if (isDraggingPin1) {
+      setIsDraggingPin1(false);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    }
+
+    setDragStartPos(null);
+  }
+
+  function handleDoubleClick(e: React.MouseEvent<HTMLCanvasElement>) {
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    const headerRect = getRoiHeaderRect(roi);
+
+    const isInsideHeader =
+      x >= headerRect.x &&
+      x <= headerRect.x + headerRect.width &&
+      y >= headerRect.y &&
+      y <= headerRect.y + headerRect.height;
+
+    const isInsideRoi =
+      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
+
+    // Double-clicking the ROI header unlocks/locks the ROI
+    if (isInsideHeader || isInsideRoi) {
+      setIsRoiLocked((prev) => !prev);
+      if (selectedRuleId && onToggleLocked) {
+        onToggleLocked(selectedRuleId);
+      }
+    }
+  }
+
+  function handleContextMenu(e: React.MouseEvent<HTMLCanvasElement>) {
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+
+    const clickedRule = [...overlayRules]
+      .reverse()
+      .find(
+        (r) => !r.isHidden && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height,
+      );
+
+    setCanvasContextMenu({
+      isOpen: true,
+      x: e.clientX,
+      y: e.clientY,
+      ruleId: clickedRule?.id,
+    });
   }
 
   const cursorStyle = useMemo(() => {
+    if (
+      activeCornerHandle === "nw" ||
+      activeCornerHandle === "se" ||
+      cursorHandleType === "nw" ||
+      cursorHandleType === "se"
+    ) {
+      return "nwse-resize";
+    }
+
+    if (
+      activeCornerHandle === "ne" ||
+      activeCornerHandle === "sw" ||
+      cursorHandleType === "ne" ||
+      cursorHandleType === "sw"
+    ) {
+      return "nesw-resize";
+    }
+
+    if (isMovingRoi) {
+      return "grabbing";
+    }
+
+    if (isDraggingPin1) {
+      return "crosshair";
+    }
+
+    if (isHoveringHeader) {
+      return isRoiLocked ? "pointer" : "grab";
+    }
+
+    if (isHoveringRoi) {
+      return isRoiLocked ? "default" : "move";
+    }
+
+    if (isPin1) {
+      return "crosshair";
+    }
+
     return "default";
-  }, []);
+  }, [
+    activeCornerHandle,
+    cursorHandleType,
+    isDraggingPin1,
+    isHoveringHeader,
+    isHoveringRoi,
+    isMovingRoi,
+    isPin1,
+    isRoiLocked,
+  ]);
 
   const visualRulesList = overlayRules.length > 0 ? overlayRules : [];
   const visualPassCount =
@@ -1865,23 +3211,29 @@ export function VisualToolWorkpieceCanvas({
   return (
     <div className="flex min-h-0 h-full w-full select-none flex-col overflow-hidden rounded border border-ca-border bg-[#0c1014]">
       {/* Top HUD Controls (Consolidated Slim Status Bar) */}
+      {/* Fixed height, single row: the HUD must never wrap to a second line
+          when the selected rule changes, or the viewport below it (and the
+          displayed image) resizes with it. Overflow scrolls horizontally. */}
       <div className="border-b border-ca-border bg-[#11161b] text-xs">
-        <div className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1.5">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
+        <div className="flex h-11 flex-nowrap items-center justify-between gap-1.5 overflow-hidden px-3 py-1.5">
+          <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
+            <span className="flex shrink-0 items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-ca-ink">
               <ScanSearch size={14} className="text-ca-select" />
               {isAnalyzeMode ? "Analysis:" : "Inspection:"}
             </span>
-            <span className={`rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}>
+            <span
+              data-tour="project-analysis-canvas-status"
+              className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[11px] font-bold uppercase ${frameStatusClass}`}
+            >
               {isAnalyzeMode
                 ? `${frameStatusLabel} · ${visualPassCount}/${visualTotalCount}`
-                : (toolName || "Autonomous Tool Inspection")}
+                : toolName || "Autonomous Tool Inspection"}
             </span>
             {isPatternMatching && (
-              <span className="rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
+              <span className="shrink-0 rounded border border-ca-border/70 bg-[#0b0f12] px-1.5 py-0.5 font-mono text-[11px] text-ca-ink-muted">
                 {(() => {
                   const count =
-                    activeBoxesToDraw.length > 0
+                    !isGeneratedPatternBoxes && activeBoxesToDraw.length > 0
                       ? activeBoxesToDraw.length
                       : activeBoxCount > 0
                         ? activeBoxCount
@@ -1892,12 +3244,12 @@ export function VisualToolWorkpieceCanvas({
               </span>
             )}
             {isPin1 && (
-              <span className="rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400">
+              <span className="shrink-0 rounded border border-cyan-500/40 bg-cyan-950/30 px-1.5 py-0.5 font-mono text-[11px] text-cyan-400">
                 Pin 1 Reticle Calibrated
               </span>
             )}
             {isAnalyzeMode && overlayRules.length > 0 && (
-              <div className="flex items-center gap-1 pl-1">
+              <div className="flex shrink-0 flex-nowrap items-center gap-1 pl-1">
                 {overlayRules.map((r, i) => {
                   const res = validationResultsMap?.[r.id];
                   const isSelected = r.id === selectedRuleId;
@@ -1931,7 +3283,7 @@ export function VisualToolWorkpieceCanvas({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {!isAnalyzeMode && isPatternMatching && (
               <button
                 type="button"
@@ -2010,6 +3362,7 @@ export function VisualToolWorkpieceCanvas({
       >
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
+        <div className="relative inline-flex max-h-full max-w-full">
         <canvas
           ref={canvasRef}
           width={960}
@@ -2017,6 +3370,12 @@ export function VisualToolWorkpieceCanvas({
           tabIndex={isEditable ? 0 : -1}
           role="img"
           aria-label="Workpiece Inspection Canvas"
+          id="canvas-workpiece-inspection"
+          data-automation-id="canvas-workpiece-inspection"
+          data-automation-name="Workpiece Inspection Canvas"
+          data-automation-xpath="//canvas[@id='canvas-workpiece-inspection']"
+          onDoubleClick={handleDoubleClick}
+          onContextMenu={handleContextMenu}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -2029,14 +3388,145 @@ export function VisualToolWorkpieceCanvas({
           }}
           className="relative aspect-video max-h-full max-w-full rounded-sm border border-ca-border/80 object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.55)] outline-none transition-transform duration-75 focus:ring-1 focus:ring-ca-select"
         />
+        {isPatternMatching && patternToolbarPos ? (
+          <div
+            className="pointer-events-auto absolute z-20 flex items-center gap-1 rounded border border-cyan-400/40 bg-[#0b0e14]/90 p-1"
+            style={{ left: patternToolbarPos.left, top: patternToolbarPos.top }}
+          >
+            <button
+              type="button"
+              title="Square ROI"
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => {
+                const side = Math.max(4, Math.min(roi.width, roi.height));
+                const region = { x: roi.x, y: roi.y, width: side, height: side };
+
+                onUpdateParams?.({
+                  ...(toolParams ?? {}),
+                  shapeType: "square",
+                  searchRegion: region,
+                });
+              }}
+            >
+              <Square size={14} />
+            </button>
+            <button
+              type="button"
+              title={isRoiLocked ? "Unlock ROI" : "Lock ROI"}
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => {
+                setIsRoiLocked((value) => !value);
+                if (selectedRuleId && onToggleLocked) {
+                  onToggleLocked(selectedRuleId);
+                }
+              }}
+            >
+              {isRoiLocked ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
+            <button
+              type="button"
+              title="Detect elements"
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => handleDetectElements(true)}
+            >
+              <ScanSearch size={14} />
+            </button>
+          </div>
+        ) : null}
+        </div>
+
+        {/* Canvas Right-Click Context Menu */}
+        {canvasContextMenu?.isOpen ? (
+          <div
+            style={{ top: `${canvasContextMenu.y}px`, left: `${canvasContextMenu.x}px` }}
+            className="fixed z-50 min-w-44 rounded-lg border border-white/15 bg-[#0f172a]/95 p-1 text-xs text-white shadow-2xl backdrop-blur-md select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {canvasContextMenu.ruleId ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canvasContextMenu.ruleId) {
+                      onBringToFront?.(canvasContextMenu.ruleId);
+                    }
+                    setCanvasContextMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-[#00e5ff]/20 hover:text-[#00e5ff]"
+                >
+                  <span>Bring to Front</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canvasContextMenu.ruleId) {
+                      onSendToBack?.(canvasContextMenu.ruleId);
+                    }
+                    setCanvasContextMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-[#00e5ff]/20 hover:text-[#00e5ff]"
+                >
+                  <span>Send to Back</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (canvasContextMenu.ruleId) {
+                      onToggleLocked?.(canvasContextMenu.ruleId);
+                    }
+                    setCanvasContextMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-white/10"
+                >
+                  <span>Toggle Rule Lock</span>
+                </button>
+                <div className="my-1 border-t border-white/10" />
+              </>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsRoiLocked((prev) => !prev);
+                setCanvasContextMenu(null);
+              }}
+              className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-white/10"
+            >
+              <span>{isRoiLocked ? "🔓 Unlock ROI Header" : "🔒 Lock ROI"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCanvasContextMenu(null)}
+              className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-white/50 hover:bg-white/10 hover:text-white"
+            >
+              <span>Close Menu</span>
+            </button>
+          </div>
+        ) : null}
+
+        {isAnalyzing ? (
+          <div
+            data-testid="visual-analysis-loading"
+            className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/45 backdrop-blur-[1px]"
+          >
+            <div className="flex items-center gap-3 rounded-lg border border-cyan-400/40 bg-[#07131a]/95 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider text-cyan-200 shadow-[0_16px_50px_rgba(0,0,0,0.55),0_0_24px_rgba(34,211,238,0.18)]">
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+              Analyzing image…
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Dedicated Visual Analysis Results Area (Separated from image, NOT on the image) */}
       {(validationStatus ||
         (validationResultsMap && Object.keys(validationResultsMap).length > 0)) && (
         <section
+          data-tour="project-analysis-results"
           aria-label="Visual Analysis Results"
-          className="flex max-h-24 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-1.5 font-mono text-xs shadow-inner"
+          className="flex max-h-32 shrink-0 flex-col gap-1.5 overflow-y-auto border-t border-ca-border/80 bg-[#10161b] p-2 font-mono text-xs shadow-inner"
         >
           {(() => {
             const rulesList = visualRulesList;

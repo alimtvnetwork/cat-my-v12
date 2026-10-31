@@ -26,11 +26,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="bottom-right"
       offset={16}
       gap={6}
-      visibleToasts={5}
-      expand
+      visibleToasts={3}
+      expand={false}
+      duration={3500}
       closeButton
       toastOptions={{
         unstyled: true,
+        duration: 3500,
         classNames: {
           toast: base,
           title: "font-medium leading-tight text-xs",

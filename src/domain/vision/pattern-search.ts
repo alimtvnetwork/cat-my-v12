@@ -50,6 +50,7 @@ export interface PatternSearchSettings {
   };
   view: { source: ImageSourceType; rendering: RenderModeType; zoom: number };
   imageRef?: string;
+  params?: Record<string, unknown>;
 }
 
 export const createDefaultPatternSearchSettings = (id: string): PatternSearchSettings => ({
@@ -92,6 +93,7 @@ export const createDefaultPatternSearchSettings = (id: string): PatternSearchSet
     rendering: RenderModeType.Normal,
     zoom: 40,
   },
+  params: {},
 });
 
 export interface ResizeHandles {
@@ -154,6 +156,22 @@ export const ShapeCatalog: Record<ShapeType, PatternShape> = {
     serialize: (geom) => JSON.stringify(geom),
     deserialize: (data) => JSON.parse(data),
   },
+  [ShapeType.Polygon]: {
+    id: ShapeType.Polygon,
+    label: "Polygon",
+    icon: "Hexagon",
+    defaultGeometry: {
+      points: [
+        { x: 50, y: 50 },
+        { x: 150, y: 50 },
+        { x: 150, y: 150 },
+        { x: 50, y: 150 },
+      ],
+    },
+    handles: {},
+    serialize: (geom) => JSON.stringify(geom),
+    deserialize: (data) => JSON.parse(data),
+  },
   [ShapeType.None]: {
     id: ShapeType.None,
     label: "None",
@@ -169,6 +187,7 @@ export const PatternShapes = [
   ShapeCatalog[ShapeType.Rectangle],
   ShapeCatalog[ShapeType.Circle],
   ShapeCatalog[ShapeType.Ellipse],
+  ShapeCatalog[ShapeType.Polygon],
 ];
 
 export const MaskShapes: MaskShape[] = [
@@ -176,6 +195,7 @@ export const MaskShapes: MaskShape[] = [
   ShapeCatalog[ShapeType.Rectangle],
   ShapeCatalog[ShapeType.Circle],
   ShapeCatalog[ShapeType.Ellipse],
+  ShapeCatalog[ShapeType.Polygon],
 ];
 
 export interface DetectionThresholds {

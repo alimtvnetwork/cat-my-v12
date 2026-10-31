@@ -131,7 +131,7 @@ PIDS+=("$BE_PID")
 
 # Start frontend
 echo "Starting frontend on port $FE_PORT..."
-bun run dev -- --host 127.0.0.1 --port "$FE_PORT" &
+bun run dev -- --host 127.0.0.1 --port "$FE_PORT" --strictPort &
 FE_PID=$!
 PIDS+=("$FE_PID")
 
@@ -146,6 +146,7 @@ SKIP_SHELL=0
 SKIP_REASON=""
 if [ "$NO_SHELL" -eq 1 ]; then SKIP_SHELL=1; SKIP_REASON="--no-shell"; fi
 if [ "$SKIP_SHELL" -eq 0 ] && [ "$OPEN_BROWSER" = "false" ]; then SKIP_SHELL=1; SKIP_REASON="run.config.json openBrowser=false"; fi
+if [ "$SKIP_SHELL" -eq 0 ] && pgrep -af "chromium|chrome|msedge" 2>/dev/null | grep -E -- "--app=http://localhost:$FE_PORT" | grep -v -- "--type=" >/dev/null 2>&1; then SKIP_SHELL=1; SKIP_REASON="browser already running"; fi
 if [ "$SKIP_SHELL" -eq 0 ]; then
     echo "Packaging Chromium shell..."
     if [ -d "chromium-shell" ]; then
@@ -161,15 +162,19 @@ if [ "$SKIP_SHELL" -eq 0 ]; then
     echo "Launching Chromium shell..."
     # The requirement: Chromium shell pointing at http://localhost:$FE_PORT with query ?backend=http://localhost:$BE_PORT
     URL="http://localhost:$FE_PORT?backend=http://localhost:$BE_PORT"
-    
+    PROFILE_DIR="$(pwd)/.browser-profile"
+
     if command -v chromium &> /dev/null; then
-        chromium --app="$URL" &
+        chromium --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
     elif command -v chromium-browser &> /dev/null; then
-        chromium-browser --app="$URL" &
+        chromium-browser --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
     elif command -v google-chrome &> /dev/null; then
-        google-chrome --app="$URL" &
+        google-chrome --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
+        PIDS+=("$!")
+    elif command -v msedge &> /dev/null; then
+        msedge --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
     else
         echo "Chromium/Chrome not found in PATH. Please open: $URL"

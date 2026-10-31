@@ -185,7 +185,8 @@ def start_stream(handle: DahengHandle, on_frame: Callable[[FrameEnvelope], None]
                     frame_id=raw_image.get_frame_id()
                 )
                 on_frame(env)
-            except Exception:
+            except Exception as cap_err:
+                logger.error("capture_thread_aborted", extra={"error": str(cap_err)})
                 break
 
     t = threading.Thread(target=_capture_thread, daemon=True)

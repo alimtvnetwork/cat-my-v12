@@ -5,6 +5,8 @@ description: Autonomously discover, stage, commit, and push all Git repositories
 
 # Multi-Repository Commit & Push Orchestrator
 
+> **Invocation:** `@[commit-and-push-all-repos](file;.agents/skills/commit-and-push-all-repos)`
+
 Autonomously scans the entire workspace root directory (e.g. `D:\work` on Windows or `~/git-work` on POSIX/Linux), audits working tree status across dozens of Git repositories, excludes non-owned tools/shells, pools remote updates, stages dirty files, authors atomic conventional commits, and pushes to remote tracking branches with a strict "No Push = Not Done" completion invariant.
 
 ## Core Capabilities
@@ -19,7 +21,7 @@ Autonomously scans the entire workspace root directory (e.g. `D:\work` on Window
    - Non-destructive and safe: skips detached HEAD states to prevent orphan commit branches.
 
 3. **Pre-Commit Pooling / Pulling:**
-   - Non-destructively pulls latest remote changes (`git pull origin <branch> --no-rebase`) prior to committing dirty changes to incorporate upstream updates cleanly and eliminate merge conflicts.
+   - Non-destructively pulls latest remote changes (`gitmap pull`, fallback `gitmap pull` (fallback `git pull origin <branch> --no-rebase`)) prior to committing dirty changes to incorporate upstream updates cleanly and eliminate merge conflicts.
    - Configurable override via `--no-pull` for offline or isolated runs.
 
 4. **Atomic Conventional Commits:**

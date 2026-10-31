@@ -1,7 +1,9 @@
-import React, { useCallback, useMemo, useState } from "react";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { X, Sliders, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { EditorRule } from "@/lib/editor/types";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import {
   createDefaultPatternSearchSettings,
   type PatternSearchSettings,
@@ -21,12 +23,24 @@ export interface VisualToolTuningModalProps {
   onImageRegistered?: (imageRef: string) => void;
 }
 
-function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSearchSettings {
+interface SavedRuleParseFailure {
+  field: string;
+  error: unknown;
+  payloadLength: number;
+}
+
+function buildSettingsFromRule(
+  rule: EditorRule,
+  imageRef?: string,
+  failures?: SavedRuleParseFailure[],
+): PatternSearchSettings {
   const base = createDefaultPatternSearchSettings(rule.id);
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const rawThresh = rule.params?.greyscaleLevel ?? rule.params?.threshold ?? 170;
   const rawThreshNum = typeof rawThresh === "number" ? rawThresh : 170;
-  const threshold = Number.isFinite(rawThreshNum) ? Math.max(0, Math.min(255, Math.round(rawThreshNum))) : 170;
+  const threshold = Number.isFinite(rawThreshNum)
+    ? Math.max(0, Math.min(255, Math.round(rawThreshNum)))
+    : 170;
   const marginPx = typeof rule.params?.marginPx === "number" ? rule.params.marginPx : 8;
   const tolPx = typeof rule.params?.tolerancePx === "number" ? rule.params.tolerancePx : 8;
 
@@ -35,8 +49,12 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   if (typeof rule.params?.constellationJson === "string") {
     try {
       referenceBoxes = JSON.parse(rule.params.constellationJson);
-    } catch {
-      // Ignored
+    } catch (err) {
+      failures?.push({
+        field: "constellationJson",
+        error: err,
+        payloadLength: rule.params.constellationJson.length,
+      });
     }
   }
 
@@ -45,19 +63,23 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   if (!pin1Config && typeof rule.params?.pin1ConfigJson === "string") {
     try {
       pin1Config = JSON.parse(rule.params.pin1ConfigJson);
-    } catch {
-      // Ignored
+    } catch (err) {
+      failures?.push({
+        field: "pin1ConfigJson",
+        error: err,
+        payloadLength: rule.params.pin1ConfigJson.length,
+      });
     }
   }
 
   const savedSearchRegion =
-    readSavedRegion((rule.params as any)?.searchRegion) ??
-    readSavedRegion((rule.params as any)?.searchRegionJson) ??
-    readSavedRegion(pin1Config?.searchRegion);
+    readSavedRegion((rule.params as any)?.searchRegion, failures, "searchRegion") ??
+    readSavedRegion((rule.params as any)?.searchRegionJson, failures, "searchRegionJson") ??
+    readSavedRegion(pin1Config?.searchRegion, failures, "pin1Config.searchRegion");
   const savedPackageRegion =
-    readSavedRegion((rule.params as any)?.packageRegion) ??
-    readSavedRegion((rule.params as any)?.packageRegionJson) ??
-    readSavedRegion(pin1Config?.packageRegion);
+    readSavedRegion((rule.params as any)?.packageRegion, failures, "packageRegion") ??
+    readSavedRegion((rule.params as any)?.packageRegionJson, failures, "packageRegionJson") ??
+    readSavedRegion(pin1Config?.packageRegion, failures, "pin1Config.packageRegion");
   const tuningSearchRegion = savedSearchRegion ?? {
     x: rule.x,
     y: rule.y,
@@ -65,9 +87,35 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
     height: rule.height,
   };
 
+  const ruleParams = { ...(rule.params ?? {}) };
+  const initialJudgmentItems = (ruleParams.judgmentItems as unknown[] | undefined) ?? [
+    {
+      id: "j1",
+      name: "Measured Value",
+      unit: "px",
+      lowerLimit: 0,
+      measured: 50,
+      upperLimit: 100,
+      status: "PASS",
+    },
+    {
+      id: "j2",
+      name: "Correlation / Score",
+      unit: "%",
+      lowerLimit: 70,
+      measured: 94.2,
+      upperLimit: 100,
+      status: "PASS",
+    },
+  ];
+
   return {
     ...base,
     name: rule.name,
+    params: {
+      ...ruleParams,
+      judgmentItems: initialJudgmentItems,
+    },
     searchRegion: {
       shape: ShapeType.Rectangle,
       geometry: tuningSearchRegion,
@@ -96,13 +144,27 @@ function buildSettingsFromRule(rule: EditorRule, imageRef?: string): PatternSear
   };
 }
 
-function readSavedRegion(rawRegion: unknown): { x: number; y: number; width: number; height: number } | null {
+function readSavedRegion(
+  rawRegion: unknown,
+  failures?: SavedRuleParseFailure[],
+  field?: string,
+): { x: number; y: number; width: number; height: number } | null {
   let value = rawRegion;
 
   if (typeof rawRegion === "string") {
     try {
       value = JSON.parse(rawRegion);
-    } catch {
+    } catch (err) {
+      // Corrupt saved-region JSON must surface in the error store, never
+      // vanish: the caller collects the failure and captures it outside
+      // the render phase (buildSettingsFromRule via useEffect) or
+      // directly (event handlers like handleApplyPin1).
+      failures?.push({
+        field: field ?? "savedRegion",
+        error: err,
+        payloadLength: rawRegion.length,
+      });
+
       return null;
     }
   }
@@ -135,30 +197,70 @@ export function VisualToolTuningModal({
   imageRef,
   onImageRegistered,
 }: VisualToolTuningModalProps): React.JSX.Element | null {
-  const initialSettings = useMemo(() => buildSettingsFromRule(rule, imageRef), [rule, imageRef]);
+  const { settings: initialSettings, parseFailures } = useMemo(() => {
+    const failures: SavedRuleParseFailure[] = [];
+
+    const settings = buildSettingsFromRule(rule, imageRef, failures);
+
+    return { settings, parseFailures: failures };
+  }, [rule, imageRef]);
+
+  // Corrupt saved-rule JSON runs through buildSettingsFromRule inside
+  // useMemo (render phase), so the store capture is deferred to an effect:
+  // the error surfaces in history without mutating store state mid-render.
+  useEffect(() => {
+    for (const failure of parseFailures) {
+      useErrorStore.getState().captureError(
+        failure.error,
+        {
+          triggerComponent: "VisualToolTuningModal",
+          triggerAction: "parseSavedRuleJson",
+          context: {
+            field: failure.field,
+            ruleId: rule.id,
+            payloadLength: failure.payloadLength,
+          },
+        },
+        "E_TUNING_MODAL_PARSE_SAVED_JSON",
+      );
+    }
+  }, [parseFailures, rule.id]);
   const [settings, setSettings] = useState<PatternSearchSettings>(initialSettings);
   const [registeredImageRef, setRegisteredImageRef] = useState<string | undefined>(imageRef);
 
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "";
   const normalizedName = rule.name.toLowerCase();
 
+  const hasStandardToolCode =
+    toolCode === "T101" ||
+    toolCode === "T104" ||
+    toolCode === "T107" ||
+    toolCode === "T108" ||
+    toolCode === "T109" ||
+    toolCode === "T110" ||
+    toolCode === "T111" ||
+    toolCode === "T103" ||
+    toolCode === "T106" ||
+    toolCode === "T112" ||
+    toolCode === "M301";
+
   const isGreyscalePattern =
-    toolCode === "T102" ||
-    toolCode === "T116" ||
-    toolCode === "greyscale_pattern_match" ||
-    normalizedName.includes("pattern match") ||
-    normalizedName.includes("greyscale pattern") ||
-    normalizedName.includes("white box");
+    !hasStandardToolCode &&
+    (toolCode === "T102" ||
+      toolCode === "T116" ||
+      toolCode === "greyscale_pattern_match" ||
+      normalizedName.includes("pattern match") ||
+      normalizedName.includes("greyscale pattern") ||
+      normalizedName.includes("white box"));
 
   const isPin1 =
-    toolCode === "T103" ||
-    toolCode === "T105" ||
-    toolCode === "T117" ||
-    toolCode === "pin1_config" ||
-    toolCode === "pin1_orientation" ||
-    normalizedName.includes("orientation") ||
-    normalizedName.includes("pin 1") ||
-    normalizedName.includes("pin1");
+    !hasStandardToolCode &&
+    (toolCode === "T105" ||
+      toolCode === "T117" ||
+      toolCode === "pin1_config" ||
+      toolCode === "pin1_orientation" ||
+      normalizedName.includes("pin 1") ||
+      normalizedName.includes("pin1"));
 
   const effectiveImageRef = registeredImageRef || imageRef;
   const handleImageRegistered = useCallback(
@@ -179,7 +281,9 @@ export function VisualToolTuningModal({
 
   function handleApplyPattern(pattern: FormulatedPatternGeometry): void {
     const rawThresh = Number((settings as any).threshold ?? (rule.params as any)?.threshold ?? 170);
-    const threshold = Number.isFinite(rawThresh) ? Math.max(0, Math.min(255, Math.round(rawThresh))) : 170;
+    const threshold = Number.isFinite(rawThresh)
+      ? Math.max(0, Math.min(255, Math.round(rawThresh)))
+      : 170;
     const searchRegion = {
       x: pattern.searchRegion.x,
       y: pattern.searchRegion.y,
@@ -255,16 +359,37 @@ export function VisualToolTuningModal({
 
     const holeX = Number(rawHoleX);
     const holeY = Number(rawHoleY);
+
+    // handleApplyPin1 is an event handler, so corrupt-region failures are
+    // captured directly (no render-phase deferral needed, unlike
+    // buildSettingsFromRule which runs inside useMemo).
+    const regionFailures: SavedRuleParseFailure[] = [];
     const searchRegion =
-      readSavedRegion(configPayload?.searchRegion) ??
-      readSavedRegion(pin1Config?.searchRegion) ??
-      readSavedRegion((settings as any)?.searchRegion) ??
+      readSavedRegion(configPayload?.searchRegion, regionFailures, "searchRegion") ??
+      readSavedRegion(pin1Config?.searchRegion, regionFailures, "pin1Config.searchRegion") ??
+      readSavedRegion((settings as any)?.searchRegion, regionFailures, "settings.searchRegion") ??
       null;
     const packageRegion =
-      readSavedRegion(configPayload?.packageRegion) ??
-      readSavedRegion(pin1Config?.packageRegion) ??
-      readSavedRegion((settings as any)?.packageRegion) ??
+      readSavedRegion(configPayload?.packageRegion, regionFailures, "packageRegion") ??
+      readSavedRegion(pin1Config?.packageRegion, regionFailures, "pin1Config.packageRegion") ??
+      readSavedRegion((settings as any)?.packageRegion, regionFailures, "settings.packageRegion") ??
       null;
+
+    for (const failure of regionFailures) {
+      useErrorStore.getState().captureError(
+        failure.error,
+        {
+          triggerComponent: "VisualToolTuningModal",
+          triggerAction: "parseSavedRuleJson",
+          context: {
+            field: failure.field,
+            ruleId: rule.id,
+            payloadLength: failure.payloadLength,
+          },
+        },
+        "E_TUNING_MODAL_PARSE_SAVED_JSON",
+      );
+    }
     const enrichedPin1Config = {
       ...pin1Config,
       ...(searchRegion ? { searchRegion } : {}),
@@ -306,12 +431,13 @@ export function VisualToolTuningModal({
 
   function handleApplyStandardTool(): void {
     const rawRegion = settings.searchRegion;
-    const geom = (rawRegion as any)?.geometry ?? rawRegion ?? {
-      x: rule.x,
-      y: rule.y,
-      width: rule.width,
-      height: rule.height,
-    };
+    const geom = (rawRegion as any)?.geometry ??
+      rawRegion ?? {
+        x: rule.x,
+        y: rule.y,
+        width: rule.width,
+        height: rule.height,
+      };
 
     const ruleX = Number(geom.x ?? rule.x);
     const ruleY = Number(geom.y ?? rule.y);
@@ -323,6 +449,17 @@ export function VisualToolTuningModal({
     const updatedParams = {
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
+      searchRegion: {
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      },
+      searchRegionJson: JSON.stringify({
+        shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
+        geometry: geom,
+      }),
+      ...(settings.masks
+        ? { masks: settings.masks, masksJson: JSON.stringify(settings.masks) }
+        : {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
       ...(effectiveImageRef ? { imageRef: effectiveImageRef } : {}),
       x: ruleX,
@@ -383,6 +520,9 @@ export function VisualToolTuningModal({
             onChange={setSettings}
             onOk={handleApplyStandardTool}
             onCancel={onClose}
+            imageRef={effectiveImageRef}
+            onImageRegistered={handleImageRegistered}
+            actionButtonLabel="OK - Apply & Return"
           />
         )}
       </div>

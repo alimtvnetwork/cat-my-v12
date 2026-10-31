@@ -7,6 +7,7 @@ import {
   CHIP_STM8_DATA_URL,
 } from "@/components/vision/standard/tools/pattern-matching/chip-assets";
 import {
+  ATMEL_24_BOX_DEFINITIONS,
   evaluateChipPixelsReal,
   getAtmelReferenceBoxes,
   GOLDEN_ATMEL_LUMAS,
@@ -24,6 +25,51 @@ import {
   TOTAL_STM8_COUNT,
   useConveyorSimulation,
 } from "@/components/vision/standard/tools/pattern-matching/useConveyorSimulation";
+
+// Spec 55 end-of-tunnel: the old tests asserted SYNTHESIZED scores
+// (the wave-1 no-frame-honesty change deleted that fabrication), so
+// evaluation tests now supply real pixel buffers. The golden Atmel
+// buffer fills each box rect with its golden luma (rects do not
+// overlap at scale 1, so each box measures exactly), and the STM8
+// buffer is the repo's own bright-white mismatched convention
+// (240 vs. golden max 159.9 — no box within tolerance 8).
+function buildAtmelGoldenImageData(): ImageData {
+  const width = 100;
+  const height = 100;
+  const data = new Uint8ClampedArray(width * height * 4);
+  data.fill(45);
+
+  ATMEL_24_BOX_DEFINITIONS.forEach((def, idx) => {
+    const luma = Math.round(GOLDEN_ATMEL_LUMAS[idx] ?? 45);
+    const x0 = Math.round(def.relX);
+    const y0 = Math.round(def.relY);
+    const w = Math.max(1, Math.round(def.width));
+    const h = Math.max(1, Math.round(def.height));
+
+    for (let y = y0; y < y0 + h; y += 1) {
+      for (let x = x0; x < x0 + w; x += 1) {
+        const p = (y * width + x) * 4;
+        data[p] = luma;
+        data[p + 1] = luma;
+        data[p + 2] = luma;
+        data[p + 3] = 255;
+      }
+    }
+  });
+
+  // jsdom here does not provide ImageData; the hook only reads
+  // .data/.width/.height, so a plain object is a faithful stand-in.
+  return { data, width, height } as ImageData;
+}
+
+function buildWhiteImageData(): ImageData {
+  const width = 100;
+  const height = 100;
+  const data = new Uint8ClampedArray(width * height * 4);
+  data.fill(240);
+
+  return { data, width, height } as ImageData;
+}
 
 describe("conveyor simulation chip assets", () => {
   it("exports valid embedded base64 data URLs for good Atmel and transparent STM8 chips", () => {
@@ -123,12 +169,8 @@ describe("evaluateChipPixelsReal genuine vision evaluation", () => {
     for (const box of result.boxResults) {
       expect(box.matchedX).toBeGreaterThanOrEqual(searchRegion.x);
       expect(box.matchedY).toBeGreaterThanOrEqual(searchRegion.y);
-      expect(box.matchedX + box.width).toBeLessThanOrEqual(
-        searchRegion.x + searchRegion.width,
-      );
-      expect(box.matchedY + box.height).toBeLessThanOrEqual(
-        searchRegion.y + searchRegion.height,
-      );
+      expect(box.matchedX + box.width).toBeLessThanOrEqual(searchRegion.x + searchRegion.width);
+      expect(box.matchedY + box.height).toBeLessThanOrEqual(searchRegion.y + searchRegion.height);
     }
   });
 
@@ -169,7 +211,10 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
       }),
     );
 
-    expect(result.current.isSimulating).toBe(true);
+    // Spec 55 wave 1 (section 14): the live tool must not shadow live
+    // results — simulation starts OFF and is entered explicitly via
+    // the mode tabs. isPlaying still defaults true.
+    expect(result.current.isSimulating).toBe(false);
     expect(result.current.isPlaying).toBe(true);
     expect(result.current.deviceResults.length).toBe(TOTAL_BATCH_DEVICES);
     expect(result.current.deviceResults.length).toBe(15);
@@ -193,7 +238,7 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
     act(() => {
       result.current.toggleSimulating();
     });
-    expect(result.current.isSimulating).toBe(false);
+    expect(result.current.isSimulating).toBe(true);
 
     act(() => {
       result.current.setIsSimulating(true);
@@ -214,9 +259,21 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
   it("evaluates Atmel chips as 100% Pass, STM8 as Fail, and Empty Pockets as 0% Fail", () => {
     // Deterministic batch layout: Slot 0 is Atmel, Slot 1 is STM8, Slot 2 is Empty
     const mockBatch: DeviceChipType[] = [
-      "atmel", "stm8", "empty", "atmel", "stm8",
-      "atmel", "empty", "atmel", "stm8", "atmel",
-      "stm8", "atmel", "atmel", "stm8", "atmel",
+      "atmel",
+      "stm8",
+      "empty",
+      "atmel",
+      "stm8",
+      "atmel",
+      "empty",
+      "atmel",
+      "stm8",
+      "atmel",
+      "stm8",
+      "atmel",
+      "atmel",
+      "stm8",
+      "atmel",
     ];
 
     const { result } = renderHook(() =>
@@ -229,9 +286,10 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
       }),
     );
 
-    // Evaluate Slot 0 (Atmel MEGA32U4 - Golden part)
+    // Evaluate Slot 0 (Atmel MEGA32U4 - Golden part) with a real
+    // golden-luma buffer: true evaluation gives exactly 100%/24.
     act(() => {
-      result.current.executeTrueDeviceDetection(0, null);
+      result.current.executeTrueDeviceDetection(0, buildAtmelGoldenImageData());
     });
 
     expect(result.current.inspectedCount).toBe(1);
@@ -247,9 +305,12 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
     expect(dev1?.matchedCount).toBe(24);
     expect(dev1?.missingBoxNumbers).toEqual([]);
 
-    // Evaluate Slot 1 (STM8S208 - New Device, wrong part model)
+    // Evaluate Slot 1 (STM8S208 - New Device, wrong part model) with
+    // a real bright-white buffer: no golden luma is within tolerance
+    // 8 of 240, so true evaluation gives 0 matched (the old 4/16.7/20
+    // numbers were fabricated synthesis, deleted by wave 1).
     act(() => {
-      result.current.executeTrueDeviceDetection(1, null);
+      result.current.executeTrueDeviceDetection(1, buildWhiteImageData());
     });
 
     expect(result.current.inspectedCount).toBe(2);
@@ -261,9 +322,9 @@ describe("useConveyorSimulation hook (15-Device Batch)", () => {
     expect(dev2?.deviceNumber).toBe(2);
     expect(dev2?.chipType).toBe("stm8");
     expect(dev2?.isPass).toBe(false);
-    expect(dev2?.missingBoxNumbers.length).toBe(20);
-    expect(dev2?.matchedCount).toBe(4);
-    expect(dev2?.score).toBe(16.7);
+    expect(dev2?.missingBoxNumbers.length).toBe(24);
+    expect(dev2?.matchedCount).toBe(0);
+    expect(dev2?.score).toBe(0);
 
     // Evaluate Slot 2 (Empty Pocket - Missing component)
     act(() => {
@@ -394,9 +455,21 @@ describe("normalizeImageToStandardCanvas (Standard Centered Inspection)", () => 
 describe("useConveyorSimulation Two-Phase Workflow (Capture then Evaluate)", () => {
   it("executes Phase 1 sequential capture followed by Phase 2 true greyscale evaluation", () => {
     const mockBatch: DeviceChipType[] = [
-      "atmel", "stm8", "empty", "atmel", "stm8",
-      "atmel", "empty", "atmel", "stm8", "atmel",
-      "stm8", "atmel", "atmel", "stm8", "atmel",
+      "atmel",
+      "stm8",
+      "empty",
+      "atmel",
+      "stm8",
+      "atmel",
+      "empty",
+      "atmel",
+      "stm8",
+      "atmel",
+      "stm8",
+      "atmel",
+      "atmel",
+      "stm8",
+      "atmel",
     ];
 
     const { result } = renderHook(() =>
@@ -414,9 +487,9 @@ describe("useConveyorSimulation Two-Phase Workflow (Capture then Evaluate)", () 
     expect(result.current.capturedCount).toBe(0);
     expect(result.current.inspectedCount).toBe(0);
 
-    // Capture pocket #0 (Atmel)
+    // Capture pocket #0 (Atmel) with a real golden frame
     act(() => {
-      result.current.capturePocket(0, null);
+      result.current.capturePocket(0, buildAtmelGoldenImageData(), CHIP_GOOD_DATA_URL);
     });
 
     expect(result.current.capturedCount).toBe(1);
@@ -425,9 +498,9 @@ describe("useConveyorSimulation Two-Phase Workflow (Capture then Evaluate)", () 
     expect(result.current.capturedFrames[0]?.chipType).toBe("atmel");
     expect(result.current.capturedFrames[0]?.thumbnailDataUrl).toBeTruthy();
 
-    // Capture pocket #1 (STM8)
+    // Capture pocket #1 (STM8) with a real white frame
     act(() => {
-      result.current.capturePocket(1, null);
+      result.current.capturePocket(1, buildWhiteImageData(), CHIP_STM8_DATA_URL);
     });
 
     expect(result.current.capturedCount).toBe(2);
@@ -444,7 +517,31 @@ describe("useConveyorSimulation Two-Phase Workflow (Capture then Evaluate)", () 
     // Still in Phase 1 (not completed)
     expect(result.current.phase).toBe("capturing");
 
-    // Trigger batch evaluation (Phase 2)
+    // Capture the remaining 12 pockets with real frames. Under wave-1
+    // no-frame honesty, uncaptured pockets evaluate to NO FRAME, not
+    // to synthesized passes — so the batch counts below only hold
+    // when every pocket carries a real frame.
+    const atmelFrame = buildAtmelGoldenImageData();
+    const stm8Frame = buildWhiteImageData();
+
+    for (let i = 3; i < mockBatch.length; i += 1) {
+      const chipType = mockBatch[i];
+
+      act(() => {
+        if (chipType === "empty") {
+          result.current.capturePocket(i, null);
+        } else if (chipType === "atmel") {
+          result.current.capturePocket(i, atmelFrame, CHIP_GOOD_DATA_URL);
+        } else {
+          result.current.capturePocket(i, stm8Frame, CHIP_STM8_DATA_URL);
+        }
+      });
+    }
+
+    expect(result.current.capturedCount).toBe(15);
+
+    // Trigger batch evaluation (Phase 2) — capturing all 15 already
+    // auto-evaluated; this recomputes the same verdicts.
     act(() => {
       result.current.evaluateAllCapturedPockets();
     });
@@ -460,11 +557,12 @@ describe("useConveyorSimulation Two-Phase Workflow (Capture then Evaluate)", () 
     expect(res1?.score).toBe(100);
     expect(res1?.thumbnailDataUrl).toBeTruthy();
 
-    // Check Device #2 (STM8 Defect)
+    // Check Device #2 (STM8 Defect) — true evaluation of the white
+    // buffer gives 0 matched, not the old fabricated 4/16.7/20.
     const res2 = result.current.deviceResults[1];
     expect(res2?.isPass).toBe(false);
-    expect(res2?.score).toBe(16.7);
-    expect(res2?.missingBoxNumbers.length).toBe(20);
+    expect(res2?.score).toBe(0);
+    expect(res2?.missingBoxNumbers.length).toBe(24);
     expect(res2?.thumbnailDataUrl).toBeTruthy();
 
     // Check Device #3 (Empty Pocket Defect)

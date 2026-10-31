@@ -10,7 +10,8 @@ def test_package_imports() -> None:
     from BE.routes import health, meta, rules, samples
     from BE.sdk_facade import SDK_FACADE_VERSION, camera, storage
 
-    assert BE.__version__ == "0.1.0"
+    # Spec 55 §13: BE version unified to the app version (was 0.1.0).
+    assert BE.__version__ == "4.113.9"
     assert SDK_FACADE_VERSION == "0.3.0-protocol"
     for mod in (
         config, envelope, main, apperror, codes, handlers,

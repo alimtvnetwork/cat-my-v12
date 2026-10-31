@@ -102,11 +102,21 @@ export function dispatchMenuCommand(command: string): void {
 }
 
 export function requestAppFullscreen(): void {
-  const root = document.documentElement;
-  root
-    .requestFullscreen()
-    .then(() => ClientLogger.info("[top-menu] fullscreen requested"))
-    .catch((error: unknown) => ClientLogger.error("[top-menu] fullscreen failed", error));
+  // Use native Win32 window maximize/restore loopback to avoid the browser Esc prompt
+  fetch("/window/maximize", { method: "POST" })
+    .then(() => ClientLogger.info("[top-menu] native window maximize toggled"))
+    .catch(() => {
+      // Fallback for standalone browser environments without backend
+      const root = document.documentElement;
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else {
+        root
+          .requestFullscreen()
+          .then(() => ClientLogger.info("[top-menu] fullscreen requested"))
+          .catch((error: unknown) => ClientLogger.error("[top-menu] fullscreen failed", error));
+      }
+    });
 }
 
 export function openHelpDocs(): void {

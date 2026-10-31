@@ -4,6 +4,7 @@ import {
   VISION_TOOL_CATALOG,
   InspectionCategoryType,
   getVisionToolsByCategory,
+  getVisionToolDisplayName,
   findVisionTool,
   type VisionToolDefinition,
 } from "@/lib/vision/tool-catalog";
@@ -222,7 +223,7 @@ export function AddRuleFromToolModal({
                         {tool.code}
                       </div>
                       <div className="text-xs font-bold text-ca-ink text-center leading-snug">
-                        {tool.name}
+                        {getVisionToolDisplayName(tool)}
                       </div>
                     </button>
                   ))}
@@ -239,7 +240,7 @@ export function AddRuleFromToolModal({
                       {selectedTool.code}
                     </div>
                     <h2 className="text-lg font-bold text-ca-ink mb-4 leading-tight">
-                      {selectedTool.name}
+                      {getVisionToolDisplayName(selectedTool)}
                     </h2>
                     <p className="text-xs text-ca-ink-muted leading-relaxed mb-4">
                       {selectedTool.description}

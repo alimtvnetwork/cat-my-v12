@@ -64,7 +64,7 @@ describe("VisualToolWorkpieceCanvas", () => {
       },
     ];
 
-    render(
+    const { container } = render(
       <VisualToolWorkpieceCanvas
         roi={{ x: 100, y: 100, width: 200, height: 200 }}
         toolCode="T102"
@@ -83,6 +83,7 @@ describe("VisualToolWorkpieceCanvas", () => {
     expect(screen.getByText(/\[2\] Pin 1 Orientation Config:/i)).toBeTruthy();
     expect(screen.getByText(/PASS 100%/i)).toBeTruthy();
     expect(screen.getByText(/PASS 99%/i)).toBeTruthy();
+    expect(container.querySelector("[data-tour='project-analysis-results']")).toBeTruthy();
   });
 
   it("renders visual analysis HUD and verdict when validationStatus is provided", () => {
@@ -180,6 +181,34 @@ describe("VisualToolWorkpieceCanvas", () => {
     expect(canvasElement).toBeTruthy();
     expect(resultsRegion.contains(canvasElement)).toBe(false);
     expect(canvasElement?.parentElement?.contains(resultsRegion)).toBe(false);
+  });
+
+  it("shows loading while analysis is running and keeps results outside the image", () => {
+    render(
+      <VisualToolWorkpieceCanvas
+        imageRef="/inspection.png"
+        isAnalyzeMode={true}
+        isAnalyzing={true}
+        overlayRules={[
+          {
+            id: "r-1",
+            name: "Pin 1 Orientation",
+            kind: "C" as any,
+            isHidden: false,
+            isLocked: false,
+            x: 100,
+            y: 100,
+            width: 120,
+            height: 120,
+            params: { toolCode: "T117" },
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("visual-analysis-loading")).toBeTruthy();
+    expect(screen.getByText(/Analyzing image/i)).toBeTruthy();
+    expect(screen.queryByRole("region", { name: /Visual Analysis Results/i })).toBeNull();
   });
 
   it("does not render manual ROI coordinates or numeric inputs in editable mode", () => {

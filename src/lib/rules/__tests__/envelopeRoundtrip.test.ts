@@ -91,8 +91,13 @@ describe("envelope round-trip", () => {
     const { envelope } = projectRulesetToEnvelope(rs);
     const back = envelopeToProjectRuleset(envelope, { projectId: "p-1" });
     // With localStorage unavailable (node env) the alias round-trip
-    // falls back to the deterministic `rs-{intId}` form so the caller
-    // can still mount a route. Assert on the pattern, not the input id.
-    expect(back.id).toMatch(/^rs-\d+$/);
+    // falls back to the SSR default: int alias 1 in the ruleset
+    // namespace resolves to the seeded default SMT ruleset (774a68b7,
+    // 2026-10-29: server-side int-alias resolution so deep links to
+    // /1 mount the demo ruleset). The caller still gets a usable
+    // string id and can mount a route; the deterministic `rs-{intId}`
+    // form only applies to aliases without an SSR fallback (int >= 3
+    // for rulesets).
+    expect(back.id).toBe("rs-smt-74hc-production");
   });
 });

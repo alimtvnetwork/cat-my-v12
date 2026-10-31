@@ -354,6 +354,7 @@ async def evaluate_grayscale_tolerance(
 
         if hasattr(ref_clipped, "shape") and hasattr(smp_clipped, "shape"):
             import cv2
+            best_angle = 0.0
 
             # Tape-only behaviour lives behind tape_mode: pocket slicing
             # and phase-correlation alignment never run in the generic
@@ -406,22 +407,90 @@ async def evaluate_grayscale_tolerance(
                         diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
                         mean_diff = float(np.mean(diff))
             else:
-                k_pockets = 1
+                from BE.app.domain.vision_preprocess import normalize_illumination_clahe
 
-                if ref_clipped.shape != smp_clipped.shape:
+                # Equalize lighting between reference and sample ROI
+                ref_norm = normalize_illumination_clahe(ref_clipped)
+                smp_norm = normalize_illumination_clahe(smp_clipped)
+
+                ref_ar = ref_norm.shape[1] / max(1, ref_norm.shape[0])
+                smp_ar = smp_norm.shape[1] / max(1, smp_norm.shape[0])
+                k_pockets = max(1, round(smp_ar / max(0.01, ref_ar)))
+
+                def _evaluate_slice(ref_tile: np.ndarray, smp_tile: np.ndarray) -> tuple[float, float]:
+                    if smp_tile.shape != ref_tile.shape:
+                        try:
+                            smp_tile = cv2.resize(smp_tile, (ref_tile.shape[1], ref_tile.shape[0]))
+                        except Exception as resize_err:
+                            logger.warning("slice_resize_failed", extra={"error": str(resize_err)})
+
+                    best_slice_diff = 999.0
+                    best_slice_angle = 0.0
+                    h_tile, w_tile = ref_tile.shape[:2]
+                    center = (w_tile / 2.0, h_tile / 2.0)
+                    margin_y = int(h_tile * 0.08)
+                    margin_x = int(w_tile * 0.08)
+
+                    # Translational shift via phase correlation
+                    dx, dy = 0.0, 0.0
                     try:
-                        smp_clipped = cv2.resize(smp_clipped, (ref_clipped.shape[1], ref_clipped.shape[0]))
-                    except Exception:
-                        pass
-                diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
-                mean_diff = float(np.mean(diff))
+                        (shift_x, shift_y), _ = cv2.phaseCorrelate(
+                            ref_tile.astype(np.float32),
+                            smp_tile.astype(np.float32),
+                        )
+                        if abs(shift_x) < 30 and abs(shift_y) < 30:
+                            dx, dy = float(shift_x), float(shift_y)
+                    except Exception as pc_err:
+                        logger.debug("phase_correlate_failed", extra={"error": str(pc_err)})
+
+                    # Check small angular tilt adjustments (-3.0 to +3.0 degrees)
+                    angles = [0.0] if (abs(dx) < 2 and abs(dy) < 2) else [-3.0, -1.5, 0.0, 1.5, 3.0]
+
+                    for angle in angles:
+                        rot_mat = cv2.getRotationMatrix2D(center, angle, 1.0)
+                        rot_mat[0, 2] -= dx
+                        rot_mat[1, 2] -= dy
+                        aligned = cv2.warpAffine(smp_tile, rot_mat, (w_tile, h_tile))
+
+                        if margin_y > 0 and margin_x > 0:
+                            diff_val = float(np.mean(np.abs(
+                                ref_tile[margin_y:-margin_y, margin_x:-margin_x].astype(np.float32)
+                                - aligned[margin_y:-margin_y, margin_x:-margin_x].astype(np.float32)
+                            )))
+                        else:
+                            diff_val = float(np.mean(np.abs(ref_tile.astype(np.float32) - aligned.astype(np.float32))))
+
+                        if diff_val < best_slice_diff:
+                            best_slice_diff = diff_val
+                            best_slice_angle = angle
+
+                    return best_slice_diff, best_slice_angle
+
+                best_angle = 0.0
+
+                if k_pockets > 1:
+                    pocket_w = smp_norm.shape[1] // k_pockets
+                    best_diff = 999.0
+                    for p_idx in range(k_pockets):
+                        slice_img = smp_norm[:, p_idx * pocket_w : (p_idx + 1) * pocket_w]
+                        diff_res, angle_res = _evaluate_slice(ref_norm, slice_img)
+
+                        if diff_res < best_diff:
+                            best_diff = diff_res
+                            best_angle = angle_res
+
+                    mean_diff = best_diff
+                else:
+                    mean_diff, best_angle = _evaluate_slice(ref_norm, smp_norm)
         else:
             mean_diff = 0.0
+            best_angle = 0.0
 
         effective_tol = tolerance if tolerance > 0 else 40
         score = max(0.0, min(100.0, 100.0 - (mean_diff / effective_tol * 100.0)))
         is_pass = score >= threshold * 100.0
         verdict = "PASS" if is_pass else "FAIL"
+
         if is_pass:
             reason = f"Mean grayscale deviation {mean_diff:.1f} within tolerance {effective_tol} (match {score:.1f}% >= {threshold * 100.0:.0f}%)"
         else:
@@ -430,12 +499,14 @@ async def evaluate_grayscale_tolerance(
         trace = {
             "metric": "mean_grayscale_diff",
             "measured": round(mean_diff, 2),
+            "rotation_correction_deg": round(best_angle, 1),
             "tolerance": effective_tol,
             "threshold_pct": round(threshold * 100.0, 1),
             "score_pct": round(score, 1),
             "pockets_detected": k_pockets if "k_pockets" in locals() else 1,
             "decision": verdict,
         }
+
         return ConfidenceResult(
             score=score,
             is_pass=is_pass,

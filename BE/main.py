@@ -17,15 +17,18 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 
+from BE import __version__ as BE_VERSION
 from BE.config import Settings, get_settings
 from BE.errors.handlers import register_exception_handlers
 from BE.logging_config import configure_logging
 from BE.middleware.rate_limit import RateLimitMiddleware
 from BE.middleware.request_id import RequestIdMiddleware
+from BE.routes import bug_reports as bug_reports_route
 from BE.routes import camera as camera_route
 from BE.routes import cli_config as cli_config_route
 from BE.routes import cli_doctor as cli_doctor_route
 from BE.routes import cli_observability as cli_observability_route
+from BE.routes import errors as errors_route
 from BE.routes import health as health_route
 from BE.routes import images as images_route
 from BE.routes import meta as meta_route
@@ -33,8 +36,10 @@ from BE.routes import rules as rules_route
 from BE.routes import samples as samples_route
 from BE.routes import score as score_route
 from BE.routes import seed as seed_route
+from BE.routes import shutdown as shutdown_route
 from BE.routes import system as system_route
 from BE.routes import telemetry as telemetry_route
+from BE.routes import ui_remote as ui_remote_route
 from BE.routes import vision as vision_route
 from BE.routes.observability import ipc as observability_ipc_route
 from BE.routes.observability import logs as observability_logs_route
@@ -57,8 +62,26 @@ def _setup_signals() -> None:
         signal.signal(signal.SIGTERM, _sigterm_handler)
 
 
+def _run_startup_migrations() -> None:
+    """Preflight startup migrations for root.db, task.db, and rules.db."""
+    try:
+        from BE.cli.common.doctor import _load_bootstrap_module
+        from BE.cli.common.paths import resolve_root
+
+        bootstrap = _load_bootstrap_module()
+        db_root = resolve_root("db", ensure=True)
+
+        for tier in ("root", "task", "rules"):
+            bootstrap._bootstrap_tier(tier, db_root, sys.stderr)
+
+        logger.info("db_migrations_applied", extra={"operation": "startup", "db_root": str(db_root)})
+    except Exception as exc:
+        logger.warning("db_migration_warning", extra={"operation": "startup", "error": str(exc)})
+
+
 @asynccontextmanager
 async def _app_lifespan(app: FastAPI):
+    _run_startup_migrations()
     yield
     logger.info("lifespan_shutdown", extra={"operation": "shutdown"})
     logging.shutdown()
@@ -97,7 +120,11 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(observability_retention_route.router)
     app.include_router(cli_config_route.router)
     app.include_router(cli_doctor_route.router)
+    app.include_router(errors_route.router)
+    app.include_router(shutdown_route.router)
     app.include_router(vision_route.router)
+    app.include_router(ui_remote_route.router)
+    app.include_router(bug_reports_route.router)
 
 
 def _log_startup(app: FastAPI, cfg: Settings) -> None:
@@ -122,7 +149,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(cfg.log_level)
     _setup_signals()
 
-    app = FastAPI(title="BE", version="1.0.0", lifespan=_app_lifespan)
+    app = FastAPI(title="BE", version=BE_VERSION, lifespan=_app_lifespan)
     _register_middlewares(app, cfg)
     register_exception_handlers(app)
     _register_routers(app)

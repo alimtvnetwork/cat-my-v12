@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Camera, Zap, Sun, Keyboard, KeyRound, LayoutGrid } from "lucide-react";
+import { Camera, Zap, Sun, Keyboard, KeyRound, LayoutGrid, Bug } from "lucide-react";
 
 // Left rail navigation for the Settings hub. Uses `aria-current="page"` for the
 // active leaf so assistive tech announces the current subsection consistently
@@ -11,6 +11,7 @@ const ITEMS = [
   { to: "/settings/lighting", label: "Lighting", Icon: Sun, exact: false },
   { to: "/settings/shortcuts", label: "Shortcuts", Icon: Keyboard, exact: false },
   { to: "/settings/license", label: "License", Icon: KeyRound, exact: false },
+  { to: "/settings/bug-reporting", label: "Bug Reports", Icon: Bug, exact: false },
 ] as const;
 
 export function SettingsSidenav(): React.JSX.Element | null {

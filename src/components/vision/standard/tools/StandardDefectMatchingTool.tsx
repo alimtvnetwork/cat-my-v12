@@ -18,8 +18,37 @@ export function StandardDefectMatchingTool(props: DefectToolProps): React.JSX.El
     }
   };
 
+  // Apply = rule creation. Previously this re-ran Match (a preview)
+  // and wrote nothing, so clicking Apply never actually saved a rule.
+  // It now writes TEACH params only — the taught reference boxes
+  // (absolute teach-image pixels, kept for legacy rules) plus a
+  // region-relative copy (referenceBoxesRelativeToSearchRegion), the
+  // greyscale threshold, tolerance and minimum match percent — and
+  // then closes. The preview match result (score / defect verdict) is
+  // deliberately NOT written: the analyzer re-matches on every
+  // analysis image. Process stays the separate Match step
+  // (DefectMatchHeader onMatch -> model.runMatch), local state only.
   const handleApply = () => {
-    model.runMatch();
+    const region = model.searchRegion;
+    const referenceBoxesRelativeToSearchRegion = region
+      ? model.referenceBoxes.map((box) => ({
+          ...box,
+          x: box.x - region.x,
+          y: box.y - region.y,
+        }))
+      : [];
+
+    props.onChange((prev) => ({
+      ...prev,
+      referenceBoxes: model.referenceBoxes,
+      constellation: model.referenceBoxes,
+      constellationJson: JSON.stringify(model.referenceBoxes),
+      referenceBoxesRelativeToSearchRegion,
+      threshold: model.greyscaleLevel,
+      greyscaleLevel: model.greyscaleLevel,
+      tolerancePx: model.tolerancePx,
+      minMatchPercent: model.minMatchPercent,
+    }));
     props.onOk?.();
   };
 

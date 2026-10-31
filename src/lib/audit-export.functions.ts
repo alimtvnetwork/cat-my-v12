@@ -96,7 +96,7 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 
 export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ExportAuditBundleInputSchema.parse(input))
+  .validator((input: unknown) => ExportAuditBundleInputSchema.parse(input))
   .handler(async ({ data, context }): Promise<ExportAuditBundleResult> => {
     const correlationId = newCorrelationId();
 
@@ -350,7 +350,7 @@ export const exportAuditBundle = createServerFn({ method: HttpMethod.Post })
 
 export const createAuditBundleDownloadUrl = createServerFn({ method: HttpMethod.Post })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => CreateAuditBundleDownloadUrlInputSchema.parse(input))
+  .validator((input: unknown) => CreateAuditBundleDownloadUrlInputSchema.parse(input))
   .handler(async ({ data, context }): Promise<CreateAuditBundleDownloadUrlResult> => {
     const correlationBytes = new Uint8Array(6);
     crypto.getRandomValues(correlationBytes);

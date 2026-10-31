@@ -19,11 +19,12 @@
 from pathlib import Path
 
 
-ENTRY_SCRIPT = str(Path("bin") / "retention-run.py")
+REPO_ROOT = Path(SPECPATH).resolve().parents[1]
+ENTRY_SCRIPT = str(REPO_ROOT / "bin" / "retention-run.py")
 
 a = Analysis(
     [ENTRY_SCRIPT],
-    pathex=[str(Path(".").resolve())],
+    pathex=[str(REPO_ROOT)],
     binaries=[],
     datas=[],
     hiddenimports=[],

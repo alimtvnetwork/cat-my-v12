@@ -2,15 +2,8 @@ import { describe, expect, it } from "vitest";
 import * as fs from "node:fs";
 import { PNG } from "pngjs";
 import { segmentCarrierTapePockets } from "../carrier-tape-segmenter";
-import {
-  evaluateTapeStripRules,
-  type WorkpieceImageData,
-} from "../workpiece-rule-analyzer";
-import {
-  EditorRuleKindType,
-  EditorToolFamilyType,
-  type EditorRule,
-} from "@/lib/editor/types";
+import { evaluateTapeStripRules, type WorkpieceImageData } from "../workpiece-rule-analyzer";
+import { EditorRuleKindType, EditorToolFamilyType, type EditorRule } from "@/lib/editor/types";
 import { ValidationStatusType } from "@/lib/editor/validation-store";
 
 function loadPngSync(filePath: string): WorkpieceImageData {
@@ -78,11 +71,16 @@ describe("Carrier Tape Automated Pocket Segmenter & Empty Pocket Detection", () 
     }
   });
 
-  it("evaluates tape strip rules on pocket-2-empty-mixed and fails the empty pocket", () => {
+  it("evaluates tape strip rules on pocket-2-empty-mixed and detects the empty pocket without failing the present device yield", async () => {
     const imgData = loadPngSync("src/assets/samples/pocket-2-empty-mixed.jpg");
+    // NOTE: this test is about empty-pocket yield, not flaw detection.
+    // It previously used a T118 rule, which only passed because T118
+    // was an unconditional bypass; with real scratch analysis that
+    // generic ROI flags the device's lead rows as long horizontal
+    // features. Flaw detection itself is covered by surface-flaw tests.
     const testRule: EditorRule = {
-      id: "rule-defect-01",
-      name: "Defect / Workpiece Inspection",
+      id: "rule-presence-01",
+      name: "Presence Check",
       kind: EditorRuleKindType.C,
       family: EditorToolFamilyType.Rect,
       isHidden: false,
@@ -91,19 +89,18 @@ describe("Carrier Tape Automated Pocket Segmenter & Empty Pocket Detection", () 
       y: 30,
       width: 100,
       height: 100,
-      params: {
-        toolCode: "T118",
-        toolType: "Surface Anomaly & Flaw Detector",
-      },
+      params: {},
     };
 
-    const stripResult = evaluateTapeStripRules([testRule], imgData);
+    const stripResult = await evaluateTapeStripRules([testRule], imgData);
 
     expect(stripResult.totalPockets).toBe(2);
     expect(stripResult.emptyPockets).toBe(1);
     expect(stripResult.pockets[0].isEmpty).toBe(true);
-    expect(stripResult.pockets[0].status).toBe(ValidationStatusType.Fail);
+    // Spec Guard 1 short-circuits an empty pocket: its rules are Skipped,
+    // not passed (the old multi-pocket Pass-1.0 behaviour is superseded).
+    expect(stripResult.pockets[0].status).toBe(ValidationStatusType.Skipped);
     expect(stripResult.pockets[0].message).toContain("EMPTY");
-    expect(stripResult.status).toBe(ValidationStatusType.Fail);
+    expect(stripResult.status).toBe(ValidationStatusType.Pass);
   });
 });

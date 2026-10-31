@@ -11,21 +11,32 @@ export function useRootBootOrchestrator() {
   useCliHotkeys();
 
   useEffect(() => {
-    let isModernMode = false;
+    let urlMode: UiModeType | null = null;
 
     try {
       const params = new URLSearchParams(window.location.search);
-      isModernMode = params.get("mode") === "modern";
+      const modeParam = params.get("mode");
+
+      if (modeParam === "modern") {
+        urlMode = UiModeType.Modern;
+      } else if (modeParam === "standard") {
+        urlMode = UiModeType.Standard;
+      }
     } catch {
       /* ignore storage/url parse errors */
     }
 
-    if (isModernMode) {
-      useUiMode.getState().setMode(UiModeType.Modern);
-      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Modern);
-    } else {
-      useUiMode.getState().setMode(UiModeType.Standard);
-      useUiPrefsStore.getState().setUiFlavor(UiFlavorType.Standard);
+    if (urlMode !== null) {
+      if (useUiMode.getState().mode !== urlMode) {
+        useUiMode.getState().setMode(urlMode);
+      }
+
+      const targetFlavor =
+        urlMode === UiModeType.Standard ? UiFlavorType.Standard : UiFlavorType.Modern;
+
+      if (useUiPrefsStore.getState().uiFlavor !== targetFlavor) {
+        useUiPrefsStore.getState().setUiFlavor(targetFlavor);
+      }
     }
 
     void import("@/lib/data-source/url-bootstrap").then((m) => m.applyDataSourceFromUrl());

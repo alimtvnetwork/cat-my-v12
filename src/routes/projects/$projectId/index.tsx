@@ -17,8 +17,10 @@ interface ProjectOverviewSearch {
 
 export const Route = createFileRoute("/projects/$projectId/")({
   validateSearch: (search: Record<string, unknown>): ProjectOverviewSearch => {
-    const ruleset = typeof search.ruleset === "string" && search.ruleset.length > 0 ? search.ruleset : undefined;
-    const rule = typeof search.rule === "string" && search.rule.length > 0 ? search.rule : undefined;
+    const ruleset =
+      typeof search.ruleset === "string" && search.ruleset.length > 0 ? search.ruleset : undefined;
+    const rule =
+      typeof search.rule === "string" && search.rule.length > 0 ? search.rule : undefined;
 
     return { ruleset, rule };
   },
@@ -100,12 +102,39 @@ function ProjectOverview() {
   );
 }
 
-function OverviewError() {
+function OverviewError({ error, reset }: { error?: Error; reset?: () => void }) {
+  useEffect(() => {
+    if (error) {
+      console.error("[projects/$projectId/index] overview error", error);
+    }
+  }, [error]);
+
   return (
     <div className="flex h-full items-center justify-center bg-[#07090e] p-8">
       <div className="max-w-md rounded-2xl border border-rose-500/20 bg-rose-500/5 p-8 text-center backdrop-blur-xl">
-        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-rose-400">Error loading project overview</h2>
-        <p className="text-xs text-white/60">Please try again or return to the projects database.</p>
+        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-rose-400">
+          Error loading project overview
+        </h2>
+        <p className="text-xs text-white/60">
+          {error?.message || "Please try again or return to the projects database."}
+        </p>
+        <div className="mt-4 flex justify-center gap-3">
+          {reset ? (
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-lg bg-ca-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-black transition hover:brightness-110"
+            >
+              Try Again
+            </button>
+          ) : null}
+          <Link
+            to="/projects"
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10"
+          >
+            All Projects
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -115,8 +144,12 @@ function OverviewNotFound() {
   return (
     <div className="flex h-full items-center justify-center bg-[#07090e] p-8">
       <div className="max-w-md rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center backdrop-blur-xl">
-        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-white">Project Overview Not Found</h2>
-        <p className="text-xs text-white/60">The project overview could not be located in this session.</p>
+        <h2 className="mb-2 text-lg font-bold uppercase tracking-wider text-white">
+          Project Overview Not Found
+        </h2>
+        <p className="text-xs text-white/60">
+          The project overview could not be located in this session.
+        </p>
       </div>
     </div>
   );

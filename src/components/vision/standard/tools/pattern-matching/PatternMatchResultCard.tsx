@@ -9,15 +9,9 @@ import {
   RotateCcw,
   Zap,
 } from "lucide-react";
-import {
-  CHIP_GOOD_DATA_URL,
-  CHIP_STM8_DATA_URL,
-} from "./chip-assets";
+import { CHIP_GOOD_DATA_URL, CHIP_STM8_DATA_URL } from "./chip-assets";
 import type { PatternMatchResultCardProps } from "./types";
-import {
-  POCKET_EMPTY_DATA_URL,
-  TOTAL_BATCH_DEVICES,
-} from "./useConveyorSimulation";
+import { POCKET_EMPTY_DATA_URL, TOTAL_BATCH_DEVICES } from "./useConveyorSimulation";
 
 export function PatternMatchResultCard(props: PatternMatchResultCardProps): React.JSX.Element {
   const isSimulating = props.simulation?.isSimulating ?? false;
@@ -32,6 +26,7 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
       inspectedCount,
       passedCount,
       failedCount,
+      noFrameCount,
       isBatchComplete,
       phase,
       selectedDeviceIndex,
@@ -46,10 +41,16 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
     const isPhaseCompleted = phase === "completed";
 
     const emptyDefects = deviceResults.filter((r) => r?.chipType === "empty").length;
-    const stm8Defects = deviceResults.filter((r) => r?.chipType === "stm8").length;
+    // A no-frame row is not a defect: it had no data, so it counts
+    // neither as a wrong part nor as a failure.
+    const stm8Defects = deviceResults.filter(
+      (r) => r?.chipType === "stm8" && r?.hasNoFrame !== true,
+    ).length;
 
+    // Yield counts only devices that actually produced a verdict.
+    const yieldDenominator = inspectedCount - noFrameCount;
     const yieldPercent =
-      inspectedCount > 0 ? Math.round((passedCount / inspectedCount) * 1000) / 10 : 100;
+      yieldDenominator > 0 ? Math.round((passedCount / yieldDenominator) * 1000) / 10 : 100;
 
     return (
       <div className="flex flex-col h-full rounded border border-ca-border bg-ca-panel shadow-md overflow-hidden">
@@ -78,8 +79,8 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
               {isPhaseCompleted
                 ? "EVALUATION COMPLETE"
                 : isPhaseCapturing
-                ? `CAPTURING ${capturedCount}/${TOTAL_BATCH_DEVICES}`
-                : "ANALYZING..."}
+                  ? `CAPTURING ${capturedCount}/${TOTAL_BATCH_DEVICES}`
+                  : "ANALYZING..."}
             </span>
           </div>
 
@@ -98,14 +99,11 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
             <div className="w-full bg-ca-bg h-2 rounded-full overflow-hidden border border-ca-border">
               <div
                 className={`h-full transition-all duration-300 ${
-                  isPhaseCapturing
-                    ? "bg-cyan-500"
-                    : "bg-gradient-to-r from-cyan-500 to-emerald-500"
+                  isPhaseCapturing ? "bg-cyan-500" : "bg-gradient-to-r from-cyan-500 to-emerald-500"
                 }`}
                 style={{
                   width: `${
-                    ((isPhaseCapturing ? capturedCount : inspectedCount) /
-                      TOTAL_BATCH_DEVICES) *
+                    ((isPhaseCapturing ? capturedCount : inspectedCount) / TOTAL_BATCH_DEVICES) *
                     100
                   }%`,
                 }}
@@ -126,7 +124,7 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
           )}
 
           {/* Counters Banner */}
-          <div className="grid grid-cols-4 gap-1 pt-1 text-center font-mono text-[10px]">
+          <div className="grid grid-cols-5 gap-1 pt-1 text-center font-mono text-[10px]">
             <div className="rounded p-1 border border-ca-border bg-ca-bg/60">
               <span className="text-ca-ink-muted block text-[9px]">TOTAL</span>
               <span className="font-extrabold text-ca-ink">{TOTAL_BATCH_DEVICES}</span>
@@ -142,6 +140,10 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
             <div className="rounded p-1 border border-amber-500/30 bg-amber-950/20 text-amber-400">
               <span className="block text-[9px] text-amber-500/80">EMPTY</span>
               <span className="font-extrabold">{emptyDefects}</span>
+            </div>
+            <div className="rounded p-1 border border-slate-500/30 bg-slate-950/20 text-slate-400">
+              <span className="block text-[9px] text-slate-500/80">NO FRAME</span>
+              <span className="font-extrabold">{noFrameCount}</span>
             </div>
           </div>
         </div>
@@ -160,14 +162,20 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
               const hasPassed = devResult.isPass;
               const isEmpty = devResult.chipType === "empty";
               const isStm8 = devResult.chipType === "stm8";
+              // Spec 55: a no-frame row must never show a chip-asset
+              // thumbnail — no pixels were captured, so there is no
+              // thumbnail to show.
+              const hasNoFrame = devResult.hasNoFrame === true;
               const thumbUrl =
                 devResult.thumbnailDataUrl ||
                 capturedFrame?.thumbnailDataUrl ||
-                (isEmpty
-                  ? POCKET_EMPTY_DATA_URL
-                  : isStm8
-                  ? CHIP_STM8_DATA_URL
-                  : CHIP_GOOD_DATA_URL);
+                (hasNoFrame
+                  ? ""
+                  : isEmpty
+                    ? POCKET_EMPTY_DATA_URL
+                    : isStm8
+                      ? CHIP_STM8_DATA_URL
+                      : CHIP_GOOD_DATA_URL);
 
               return (
                 <button
@@ -177,24 +185,36 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
                   className={`w-full text-left rounded p-2 border transition-all flex items-center gap-2.5 ${
                     isSelected
                       ? "ring-2 ring-cyan-400 border-cyan-400 bg-cyan-950/30"
-                      : hasPassed
-                      ? "border-emerald-500/40 bg-emerald-950/15 hover:bg-emerald-950/25"
-                      : isEmpty
-                      ? "border-amber-500/50 bg-amber-950/20 hover:bg-amber-950/30"
-                      : "border-rose-500/50 bg-rose-950/20 hover:bg-rose-950/30"
+                      : hasNoFrame
+                        ? "border-slate-500/40 bg-slate-950/15 hover:bg-slate-950/25"
+                        : hasPassed
+                          ? "border-emerald-500/40 bg-emerald-950/15 hover:bg-emerald-950/25"
+                          : isEmpty
+                            ? "border-amber-500/50 bg-amber-950/20 hover:bg-amber-950/30"
+                            : "border-rose-500/50 bg-rose-950/20 hover:bg-rose-950/30"
                   }`}
                 >
                   {/* Pocket Captured Image Thumbnail */}
-                  <img
-                    src={thumbUrl}
-                    alt={pocketTag}
-                    className="h-10 w-10 rounded border border-ca-border/80 bg-black/80 object-contain shrink-0 shadow-inner"
-                  />
+                  {thumbUrl ? (
+                    <img
+                      src={thumbUrl}
+                      alt={pocketTag}
+                      className="h-10 w-10 rounded border border-ca-border/80 bg-black/80 object-contain shrink-0 shadow-inner"
+                    />
+                  ) : (
+                    <span className="h-10 w-10 rounded border border-slate-500/50 bg-black/80 shrink-0 shadow-inner flex items-center justify-center text-[8px] font-bold text-slate-400 text-center leading-tight">
+                      NO
+                      <br />
+                      FRAME
+                    </span>
+                  )}
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-ca-ink flex items-center gap-1.5 truncate">
-                        {hasPassed ? (
+                        {hasNoFrame ? (
+                          <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        ) : hasPassed ? (
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                         ) : (
                           <AlertCircle
@@ -211,18 +231,26 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className="font-mono text-xs font-black">
-                          {devResult.score.toFixed(1)}%
+                          {hasNoFrame ? "—" : `${devResult.score.toFixed(1)}%`}
                         </span>
                         <span
                           className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
-                            hasPassed
-                              ? "bg-emerald-600 text-white"
-                              : isEmpty
-                              ? "bg-amber-600 text-white"
-                              : "bg-rose-600 text-white"
+                            hasNoFrame
+                              ? "bg-slate-600 text-white"
+                              : hasPassed
+                                ? "bg-emerald-600 text-white"
+                                : isEmpty
+                                  ? "bg-amber-600 text-white"
+                                  : "bg-rose-600 text-white"
                           }`}
                         >
-                          {hasPassed ? "PASS" : isEmpty ? "EMPTY" : "FAIL"}
+                          {hasNoFrame
+                            ? "NO FRAME"
+                            : hasPassed
+                              ? "PASS"
+                              : isEmpty
+                                ? "EMPTY"
+                                : "FAIL"}
                         </span>
                       </div>
                     </div>
@@ -231,24 +259,40 @@ export function PatternMatchResultCard(props: PatternMatchResultCardProps): Reac
                       <span>
                         Matched: {devResult.matchedCount} / {devResult.totalCount} marks
                       </span>
-                      <span className="text-cyan-400">{devResult.executionTimeMs}ms</span>
+                      <span className="text-cyan-400">
+                        {hasNoFrame ? "—" : `${devResult.executionTimeMs}ms`}
+                      </span>
                     </div>
 
-                    {!hasPassed && (
-                      <div
-                        className={`mt-1 text-[9.5px] font-mono px-1.5 py-0.5 rounded flex items-center justify-between border ${
-                          isEmpty
-                            ? "text-amber-300 bg-amber-950/40 border-amber-800/40"
-                            : "text-rose-300 bg-rose-950/40 border-rose-800/40"
-                        }`}
-                      >
-                        <span>
-                          {isEmpty
-                            ? "Defect: Empty Pocket (Missing Component)"
-                            : "Defect: Wrong Part Model (STM8S208)"}
-                        </span>
-                        <span>Missing: {devResult.missingBoxNumbers.length} marks</span>
+                    {devResult.captureOrigin && (
+                      <div className="mt-0.5 text-[10px] font-mono text-ca-ink-muted">
+                        Crop origin: ({devResult.captureOrigin.x}, {devResult.captureOrigin.y}){" "}
+                        {devResult.captureOrigin.width}×{devResult.captureOrigin.height} px
                       </div>
+                    )}
+
+                    {hasNoFrame ? (
+                      <div className="mt-1 text-[9.5px] font-mono px-1.5 py-0.5 rounded flex items-center justify-between border text-slate-300 bg-slate-950/40 border-slate-800/40">
+                        <span>No frame captured — no evaluation ran</span>
+                        <span>Run the conveyor to capture</span>
+                      </div>
+                    ) : (
+                      !hasPassed && (
+                        <div
+                          className={`mt-1 text-[9.5px] font-mono px-1.5 py-0.5 rounded flex items-center justify-between border ${
+                            isEmpty
+                              ? "text-amber-300 bg-amber-950/40 border-amber-800/40"
+                              : "text-rose-300 bg-rose-950/40 border-rose-800/40"
+                          }`}
+                        >
+                          <span>
+                            {isEmpty
+                              ? "Defect: Empty Pocket (Missing Component)"
+                              : "Defect: Wrong Part Model (STM8S208)"}
+                          </span>
+                          <span>Missing: {devResult.missingBoxNumbers.length} marks</span>
+                        </div>
+                      )
                     )}
                   </div>
                 </button>

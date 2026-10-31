@@ -5,6 +5,8 @@ description: Autonomously synchronize canonical prompts (01-prompts/), Antigravi
 
 # Prompts, Skills & AI Scripts Multi-Repository Synchronizer
 
+> **Invocation:** `@[prompts-and-skills-sync](file;.agents/skills/prompts-and-skills-sync)`
+
 > **[/goal](slashCommand:goal)** Propagate canonical prompt templates, Antigravity skills, and AI automation scripts across all connected target repositories, ensuring 100% parity and hygiene.
 > **[/learn](slashCommand:learn)** Execute `03-ai-scripts/38-sync-prompts-skills-scripts.py` safely with git pre-checks, branch status verification, and automated downstream commits.
 
@@ -62,7 +64,8 @@ For each target repository, execute this mandatory safety & release sequence:
 ### Step 1: Pre-Flight Pull & Safety Backup Branch
 ```bash
 git checkout main
-git pull origin main
+gitmap pull
+# Fallback if gitmap CLI unavailable: git pull origin main
 # Create and immediately push safety backup branch
 $ts = Get-Date -Format "yyyyMMdd-HHmmss"
 git branch "backup/sync-$ts"
@@ -81,10 +84,10 @@ python 03-ai-scripts/38-sync-prompts-skills-scripts.py
 ```
 
 ### Step 4: Atomic Commit
+Stage and commit using GitMap chore verb:
 ```bash
-git add 01-prompts/ .agents/skills/ 03-ai-scripts/ .agents/scripts/
-git commit -m "chore(sync): update prompts v1/v2, skills, and ai scripts"
-git push origin feat/sync-prompts-v1-v2-skills
+gitmap cpc "SYNC - update prompts v1-v2, skills, and ai scripts"
+# (Fallback if gitmap unavailable: git add 01-prompts/ .agents/skills/ 03-ai-scripts/ .agents/scripts/ && git commit -m "chore(sync): update prompts v1/v2, skills, and ai scripts" && git push origin feat/sync-prompts-v1-v2-skills)
 ```
 
 ### Step 5: Full Release Ceremony

@@ -12,6 +12,8 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // tooling can key on top-level fields. Version-bump the `schema`
 // field if you change field semantics.
 
+import type { CopyTextResult } from "@/lib/errors/copy-text";
+import { copyText } from "@/lib/errors/copy-text";
 import type { SeedRunReport, SeederResult } from "./orchestrator";
 
 export const RESET_SUMMARY_JSON_SCHEMA = "seed.reset-summary/v1";
@@ -124,33 +126,9 @@ export function emitResetSummaryJson(payload: ResetSummaryJson): string {
   return text;
 }
 
-/** Best-effort clipboard write; swallows unsupported-environment errors. */
-export async function copyResetSummaryJson(payload: ResetSummaryJson): Promise<boolean> {
+/** Clipboard write for the reseed summary. Returns the shared copy result. */
+export async function copyResetSummaryJson(payload: ResetSummaryJson): Promise<CopyTextResult> {
   const text = JSON.stringify(payload, null, 2);
-  try {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
 
-      return true;
-    }
-  } catch {
-    // fall through to the DOM fallback
-  }
-
-  try {
-    if (typeof document === "undefined") return false;
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-
-    return ok;
-  } catch {
-    return false;
-  }
+  return copyText(text);
 }
