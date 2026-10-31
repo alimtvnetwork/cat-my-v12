@@ -108,6 +108,92 @@ export function regionFromPoints(
   return { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
 }
 
+/**
+ * Square region from a fixed corner toward a free point (spec 55:
+ * the ROI is square). The side is the larger drag axis, clamped so
+ * the square stays inside the canvas; when the fixed corner leaves no
+ * room in the drag direction, the side shrinks to fit. regionFromPoints
+ * stays the free-rectangle primitive (move/clamp paths must preserve
+ * shape); creation and resize go through here via regionForDrag.
+ */
+export function squareRegionFromPoints(
+  width: number,
+  height: number,
+  fixed: CanvasPoint,
+  free: CanvasPoint,
+): SearchRegion {
+  const limitX = Math.max(0, width - 1);
+  const limitY = Math.max(0, height - 1);
+  const fx = Math.max(0, Math.min(limitX, fixed.x));
+  const fy = Math.max(0, Math.min(limitY, fixed.y));
+  const dx = free.x - fx;
+  const dy = free.y - fy;
+  const sx = dx < 0 ? -1 : 1;
+  const sy = dy < 0 ? -1 : 1;
+  const fitX = sx > 0 ? limitX - fx + 1 : fx + 1;
+  const fitY = sy > 0 ? limitY - fy + 1 : fy + 1;
+  const side = Math.max(1, Math.min(Math.max(Math.abs(dx), Math.abs(dy)) + 1, fitX, fitY));
+  const x0 = Math.min(fx, fx + sx * (side - 1));
+  const y0 = Math.min(fy, fy + sy * (side - 1));
+
+  return { x: x0, y: y0, width: side, height: side };
+}
+
+/**
+ * Square an existing region, keeping the given corner fixed and
+ * extending the shorter side to match the longer one (clamped to the
+ * canvas). Corner handles keep their opposite corner; edge handles
+ * keep their opposite edge's top-left anchor (east/south) or
+ * bottom-left / top-right anchor (north/west).
+ */
+export function squareRegion(
+  width: number,
+  height: number,
+  region: SearchRegion,
+  fixedCorner: "nw" | "ne" | "sw" | "se",
+): SearchRegion {
+  const side = Math.max(region.width, region.height);
+  const x0 = region.x;
+  const y0 = region.y;
+  const x1 = region.x + region.width - 1;
+  const y1 = region.y + region.height - 1;
+  const anchorX = fixedCorner === "nw" || fixedCorner === "sw" ? x0 : x1;
+  const anchorY = fixedCorner === "nw" || fixedCorner === "ne" ? y0 : y1;
+  const sx = fixedCorner === "nw" || fixedCorner === "sw" ? 1 : -1;
+  const sy = fixedCorner === "nw" || fixedCorner === "ne" ? 1 : -1;
+
+  return squareRegionFromPoints(
+    width,
+    height,
+    { x: anchorX, y: anchorY },
+    { x: anchorX + sx * (side - 1), y: anchorY + sy * (side - 1) },
+  );
+}
+
+function fixedCornerForHandle(handle: RegionHandle): "nw" | "ne" | "sw" | "se" {
+  if (handle === "nw") {
+    return "se";
+  }
+
+  if (handle === "ne") {
+    return "sw";
+  }
+
+  if (handle === "sw") {
+    return "ne";
+  }
+
+  if (handle === "w") {
+    return "ne";
+  }
+
+  if (handle === "n") {
+    return "sw";
+  }
+
+  return "nw";
+}
+
 export function clampRegion(width: number, height: number, region: SearchRegion): SearchRegion {
   return regionFromPoints(
     width,
@@ -220,8 +306,13 @@ export function regionForDrag(
   height: number,
   drag: RegionDrag,
   current: CanvasPoint,
+  isSquare = false,
 ): SearchRegion {
   if (drag.handle === "new" || drag.region === null) {
+    if (isSquare) {
+      return squareRegionFromPoints(width, height, drag.start, current);
+    }
+
     return regionFromPoints(width, height, drag.start, current);
   }
 
@@ -239,7 +330,13 @@ export function regionForDrag(
     return clampRegion(width, height, moved);
   }
 
-  return resizeRegion(width, height, drag.region, drag.handle, delta);
+  const resized = resizeRegion(width, height, drag.region, drag.handle, delta);
+
+  if (isSquare) {
+    return squareRegion(width, height, resized, fixedCornerForHandle(drag.handle));
+  }
+
+  return resized;
 }
 
 export function canvasPointFromEvent(e: {
