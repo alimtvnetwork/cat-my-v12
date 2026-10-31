@@ -1,4 +1,4 @@
-﻿﻿<#
+﻿<#
 .SYNOPSIS
 Professional HMI launcher for CAT iVISION (GitMap CLI Grade).
 
