@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import type {
   GrayscaleMode,
   SearchRegion,
@@ -12,12 +13,19 @@ import {
 import { ShapeType } from "@/domain/vision/shapes";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { regionHandles } from "@/components/vision/white-box/pattern-geometry";
+import { RoiToolbar } from "@/components/vision/white-box/RoiToolbar";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
 import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode, type Pin1ShapeType } from "./types";
+import {
+  HolePolarityType,
+  type Pin1HoleItem,
+  type Pin1MatchResult,
+  type Pin1RegionEditMode,
+  type Pin1ShapeType,
+} from "./types";
 
 export interface Pin1CanvasProps {
   source: WhiteBoxMarkingInput | null;
@@ -155,6 +163,16 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     onSearchRegionChange: props.onSearchRegionChange,
     onDragStateChange: props.onDragStateChange,
     isLocked: props.regionEditMode === "search" && isSearchLocked,
+    // Spec 55: square ROI on creation and resize; a locked drag reports
+    // itself instead of failing silently; package-region outside-click
+    // never silently replaces (search-mode ROI behavior preserved).
+    isSquareROI: true,
+    isReplaceAllowed: props.regionEditMode === "search",
+    onLockedDragAttempt: () => {
+      toast("Search region is locked — double-click inside it or press Unlock to edit.", {
+        id: "pin1-roi-locked-hint",
+      });
+    },
   });
 
   useEffect(() => {
@@ -406,96 +424,126 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
   return (
     <div className="flex h-full flex-1 items-center justify-center overflow-auto border-r border-ca-border bg-ca-bg p-3 select-none">
-      <canvas
-        ref={canvasRef}
-        data-ui-id="ui-pin1-canvas"
-        width={STANDARD_CANVAS_WIDTH}
-        height={STANDARD_CANVAS_HEIGHT}
-        onPointerDown={(event) => {
-          setContextMenu(null);
+      <div className="relative aspect-video max-h-full max-w-full">
+        <canvas
+          ref={canvasRef}
+          data-ui-id="ui-pin1-canvas"
+          width={STANDARD_CANVAS_WIDTH}
+          height={STANDARD_CANVAS_HEIGHT}
+          onPointerDown={(event) => {
+            setContextMenu(null);
 
-          if (selectHoleAtPoint(event, props, canvasRef.current)) {
-            return;
-          }
-
-          if (
-            props.regionEditMode === "pin" &&
-            registerPointAtEvent(event, props, canvasRef.current)
-          ) {
-            return;
-          }
-
-          selectPatternShapeAtEvent(event, props, canvasRef.current, setPatternShapeSelected);
-
-          drag.handlePointerDown(event);
-        }}
-        onPointerMove={drag.handlePointerMove}
-        onPointerUp={drag.handlePointerUp}
-        onPointerCancel={drag.handlePointerUp}
-        onDoubleClick={(event) => {
-          if (!isSearchLocked || !props.searchRegion || canvasRef.current === null) {
-            return;
-          }
-
-          const point = canvasPointFromPin1Event(event, canvasRef.current);
-
-          if (point === null) {
-            return;
-          }
-
-          const region = props.searchRegion;
-
-          if (
-            point.x >= region.x &&
-            point.y >= region.y &&
-            point.x <= region.x + region.width - 1 &&
-            point.y <= region.y + region.height - 1
-          ) {
-            setIsSearchLocked(false);
-          }
-        }}
-        onContextMenu={(event) => {
-          event.preventDefault();
-
-          if (canvasRef.current === null) {
-            return;
-          }
-
-          const point = canvasPointFromPin1Event(event, canvasRef.current);
-
-          if (point === null) {
-            return;
-          }
-
-          // Hit-test topmost first (reverse draw order).
-          for (let i = layerOrder.length - 1; i >= 0; i -= 1) {
-            const layerId = layerOrder[i];
-            const region = layerId === "search" ? props.searchRegion : props.packageRegion;
+            if (selectHoleAtPoint(event, props, canvasRef.current)) {
+              return;
+            }
 
             if (
-              region !== null &&
-              region !== undefined &&
+              props.regionEditMode === "pin" &&
+              registerPointAtEvent(event, props, canvasRef.current)
+            ) {
+              return;
+            }
+
+            selectPatternShapeAtEvent(event, props, canvasRef.current, setPatternShapeSelected);
+
+            drag.handlePointerDown(event);
+          }}
+          onPointerMove={drag.handlePointerMove}
+          onPointerUp={drag.handlePointerUp}
+          onPointerCancel={drag.handlePointerUp}
+          onDoubleClick={(event) => {
+            if (!isSearchLocked || !props.searchRegion || canvasRef.current === null) {
+              return;
+            }
+
+            const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+            if (point === null) {
+              return;
+            }
+
+            const region = props.searchRegion;
+
+            if (
               point.x >= region.x &&
               point.y >= region.y &&
               point.x <= region.x + region.width - 1 &&
               point.y <= region.y + region.height - 1
             ) {
-              setContextMenu({
-                x: event.clientX,
-                y: event.clientY,
-                layerId,
-                layerLabel: layerId === "search" ? "ROI — Search Region" : "Package Region",
-                isLocked: layerId === "search" && isSearchLocked,
-              });
+              setIsSearchLocked(false);
+            }
+          }}
+          onContextMenu={(event) => {
+            event.preventDefault();
 
+            if (canvasRef.current === null) {
               return;
             }
-          }
 
-          setContextMenu(null);
-        }}
-        className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
-      />
+            const point = canvasPointFromPin1Event(event, canvasRef.current);
+
+            if (point === null) {
+              return;
+            }
+
+            // Hit-test topmost first (reverse draw order).
+            for (let i = layerOrder.length - 1; i >= 0; i -= 1) {
+              const layerId = layerOrder[i];
+              const region = layerId === "search" ? props.searchRegion : props.packageRegion;
+
+              if (
+                region !== null &&
+                region !== undefined &&
+                point.x >= region.x &&
+                point.y >= region.y &&
+                point.x <= region.x + region.width - 1 &&
+                point.y <= region.y + region.height - 1
+              ) {
+                setContextMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                  layerId,
+                  layerLabel: layerId === "search" ? "ROI — Search Region" : "Package Region",
+                  isLocked: layerId === "search" && isSearchLocked,
+                });
+
+                return;
+              }
+            }
+
+            setContextMenu(null);
+          }}
+          className="block aspect-video max-h-full max-w-full cursor-crosshair rounded border border-ca-border bg-black object-contain shadow-md"
+        />
+        <RoiToolbar
+          region={
+            props.regionEditMode === "package"
+              ? props.packageRegion
+              : props.regionEditMode === "search"
+                ? props.searchRegion
+                : null
+          }
+          canvasWidth={STANDARD_CANVAS_WIDTH}
+          canvasHeight={STANDARD_CANVAS_HEIGHT}
+          label={
+            props.regionEditMode === "package"
+              ? "PACKAGE REGION"
+              : isSearchLocked
+                ? "SEARCH REGION • LOCKED"
+                : "SEARCH REGION"
+          }
+        >
+          {props.regionEditMode === "search" && (
+            <button
+              type="button"
+              onClick={() => setIsSearchLocked(!isSearchLocked)}
+              className="rounded bg-white/15 px-1.5 py-0.5 hover:bg-white/25"
+            >
+              {isSearchLocked ? "Unlock" : "Lock"}
+            </button>
+          )}
+        </RoiToolbar>
+      </div>
       {contextMenu !== null && (
         <>
           <div

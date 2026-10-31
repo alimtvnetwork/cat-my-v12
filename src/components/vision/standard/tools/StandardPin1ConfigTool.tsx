@@ -13,6 +13,14 @@ export function StandardPin1ConfigTool(
 ): React.JSX.Element {
   const model = usePin1Rule(props);
   const [hasOverlays, setHasOverlays] = useState(true);
+  // Spec 55: lift lock/order state here exactly as Pin1MarkingTool does,
+  // so the dispatcher canvas enforces the same lock and right-click
+  // reorder behavior (previously it ran on internal defaults only).
+  const [isSearchLocked, setIsSearchLocked] = useState(true);
+  const [layerOrder, setLayerOrder] = useState<readonly ("search" | "package")[]>([
+    "search",
+    "package",
+  ]);
   const activeRegion =
     model.regionEditMode === "package" ? model.packageRegion : model.searchRegion;
 
@@ -67,6 +75,10 @@ export function StandardPin1ConfigTool(
             polarity={model.polarity}
             greyscaleMode={model.greyscaleMode}
             dragState={model.dragState}
+            isSearchLocked={isSearchLocked}
+            onSearchLockChange={setIsSearchLocked}
+            layerOrder={layerOrder}
+            onLayerOrderChange={setLayerOrder}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
             onSelectHole={model.setPrimaryPin1Hole}

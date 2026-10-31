@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import type { SearchRegion, WhiteBoxMarkingInput } from "@/lib/vision/white-box-marking";
 import type { RegionDrag } from "@/components/vision/white-box/types";
-import { regionHandles } from "@/components/vision/white-box/pattern-geometry";
+import {
+  canvasPointFromEvent,
+  regionHandles,
+} from "@/components/vision/white-box/pattern-geometry";
+import { RoiToolbar } from "@/components/vision/white-box/RoiToolbar";
 import { useCanvasPointerDrag } from "@/components/vision/white-box/useCanvasPointerDrag";
 import {
   STANDARD_CANVAS_HEIGHT,
@@ -22,12 +27,16 @@ export interface StandardWorkbenchCanvasProps {
   onDragStateChange: (drag: RegionDrag | null) => void;
   onToggleFilteredPreview: () => void;
   onResetRegion?: () => void;
+  /** Optional lock (spec 55: workbench adopts the lock model). Absent = unlocked, as before. */
+  isSearchRegionLocked?: boolean;
+  onSearchRegionLockChange?: (isLocked: boolean) => void;
   createFilteredImageData?: (source: WhiteBoxMarkingInput) => ImageData;
   renderCustomOverlays?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
 }
 
 export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isSearchRegionLocked = props.isSearchRegionLocked ?? false;
 
   const drag = useCanvasPointerDrag({
     source: props.source,
@@ -35,7 +44,39 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
     dragState: props.dragState,
     onSearchRegionChange: props.onSearchRegionChange,
     onDragStateChange: props.onDragStateChange,
+    isLocked: isSearchRegionLocked,
+    // Spec 55: square ROI on creation and resize; a locked drag reports
+    // itself instead of failing silently.
+    isSquareROI: true,
+    onLockedDragAttempt: () => {
+      toast("Inspection ROI is locked — double-click inside it or press Unlock to edit.", {
+        id: "workbench-roi-locked-hint",
+      });
+    },
   });
+
+  function handleDoubleClick(e: React.MouseEvent<HTMLCanvasElement>): void {
+    if (isSearchRegionLocked === false || props.onSearchRegionLockChange === undefined) {
+      return;
+    }
+
+    const region = props.searchRegion;
+
+    if (region === null) {
+      return;
+    }
+
+    const point = canvasPointFromEvent(e);
+    const isInside =
+      point.x >= region.x &&
+      point.y >= region.y &&
+      point.x <= region.x + region.width - 1 &&
+      point.y <= region.y + region.height - 1;
+
+    if (isInside) {
+      props.onSearchRegionLockChange(false);
+    }
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -136,18 +177,22 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
       ctx.fillStyle = strokeColor;
       ctx.font = "bold 10px monospace";
       ctx.fillText(
-        `INSPECTION ROI [${region.width}x${region.height}]`,
+        isSearchRegionLocked
+          ? `INSPECTION ROI • LOCKED [${region.width}x${region.height}]`
+          : `INSPECTION ROI [${region.width}x${region.height}]`,
         region.x + 4,
         Math.max(14, region.y - 6),
       );
 
-      // 8 Resize Handles
-      for (const handle of regionHandles(region)) {
-        ctx.fillStyle = strokeColor;
-        ctx.fillRect(handle.x - 4, handle.y - 4, 8, 8);
-        ctx.strokeStyle = "#080b0f";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(handle.x - 4, handle.y - 4, 8, 8);
+      // 8 Resize Handles (hidden while locked, mirroring the teach canvas)
+      if (isSearchRegionLocked === false) {
+        for (const handle of regionHandles(region)) {
+          ctx.fillStyle = strokeColor;
+          ctx.fillRect(handle.x - 4, handle.y - 4, 8, 8);
+          ctx.strokeStyle = "#080b0f";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(handle.x - 4, handle.y - 4, 8, 8);
+        }
       }
 
       ctx.restore();
@@ -159,6 +204,7 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
     props.hasOverlays,
     props.createFilteredImageData,
     props.renderCustomOverlays,
+    isSearchRegionLocked,
   ]);
 
   return (
@@ -180,7 +226,7 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
             }`}
           />
           {props.hasFilteredPreview
-            ? props.filterModeLabel ?? "FILTERED (Algorithm Mask)"
+            ? (props.filterModeLabel ?? "FILTERED (Algorithm Mask)")
             : "RAW (RGB Image)"}
         </button>
 
@@ -218,15 +264,34 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
 
       {/* Main Interactive Canvas */}
       <div className="flex h-full w-full items-center justify-center p-2">
-        <canvas
-          ref={canvasRef}
-          width={STANDARD_CANVAS_WIDTH}
-          height={STANDARD_CANVAS_HEIGHT}
-          onPointerDown={drag.handlePointerDown}
-          onPointerMove={drag.handlePointerMove}
-          onPointerUp={drag.handlePointerUp}
-          className="aspect-video h-full max-h-full w-full max-w-full rounded border border-[#1e2630] object-contain shadow-2xl cursor-crosshair touch-none"
-        />
+        <div className="relative aspect-video h-full max-h-full w-full max-w-full">
+          <canvas
+            ref={canvasRef}
+            width={STANDARD_CANVAS_WIDTH}
+            height={STANDARD_CANVAS_HEIGHT}
+            onPointerDown={drag.handlePointerDown}
+            onPointerMove={drag.handlePointerMove}
+            onPointerUp={drag.handlePointerUp}
+            onDoubleClick={handleDoubleClick}
+            className="block aspect-video h-full max-h-full w-full max-w-full rounded border border-[#1e2630] object-contain shadow-2xl cursor-crosshair touch-none"
+          />
+          <RoiToolbar
+            region={props.searchRegion}
+            canvasWidth={STANDARD_CANVAS_WIDTH}
+            canvasHeight={STANDARD_CANVAS_HEIGHT}
+            label={isSearchRegionLocked ? "INSPECTION ROI • LOCKED" : "INSPECTION ROI"}
+          >
+            {props.onSearchRegionLockChange !== undefined && (
+              <button
+                type="button"
+                onClick={() => props.onSearchRegionLockChange?.(!isSearchRegionLocked)}
+                className="rounded bg-white/15 px-1.5 py-0.5 hover:bg-white/25"
+              >
+                {isSearchRegionLocked ? "Unlock" : "Lock"}
+              </button>
+            )}
+          </RoiToolbar>
+        </div>
       </div>
     </div>
   );

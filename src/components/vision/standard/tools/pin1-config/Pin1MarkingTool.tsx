@@ -29,6 +29,10 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
     "search",
     "package",
   ]);
+  // Spec 55: hole hide is display-only, separate from keep (validation).
+  // Hidden holes are filtered out of the canvas only; the review panel
+  // keeps the full list with keep toggles.
+  const [hiddenHoleIds, setHiddenHoleIds] = useState<ReadonlySet<number>>(new Set());
   const buttonLabel = props.actionButtonLabel ?? "Save as Pin 1 Rule";
   const activeRegion =
     model.regionEditMode === "package"
@@ -76,14 +80,22 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
         label: `#${hole.id}`,
         number: hole.id,
         isLocked: false,
-        isVisible: hole.isKept,
+        // Spec 55: hide is display-only; keep (validation) is untouched.
+        isVisible: hiddenHoleIds.has(hole.id) === false,
         rotationDeg: 0,
         zOrder: 100 + hole.id,
       });
     }
 
     return [...stack].sort((a, b) => b.zOrder - a.zOrder);
-  }, [model.searchRegion, model.packageRegion, model.detectedHoles, isSearchLocked, layerOrder]);
+  }, [
+    model.searchRegion,
+    model.packageRegion,
+    model.detectedHoles,
+    isSearchLocked,
+    layerOrder,
+    hiddenHoleIds,
+  ]);
 
   const selectedLayerId =
     model.registeredPin1 !== null && model.registeredPin1 !== undefined
@@ -111,12 +123,22 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
   }
 
   function handleToggleLayerVisibility(id: string): void {
+    // Spec 55: the panel eye hides a hole from the canvas only; keep
+    // (validation) is toggled in the review panel, never here.
     if (id.startsWith("hole-")) {
-      const hole = model.detectedHoles.find((item) => `hole-${item.id}` === id);
+      const holeId = Number(id.slice("hole-".length));
 
-      if (hole !== undefined) {
-        model.toggleKeepHole(hole.id);
-      }
+      setHiddenHoleIds((prev) => {
+        const next = new Set(prev);
+
+        if (next.has(holeId)) {
+          next.delete(holeId);
+        } else {
+          next.add(holeId);
+        }
+
+        return next;
+      });
     }
   }
 
@@ -242,7 +264,9 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
               packageRegion={model.packageRegion}
               activeRegion={activeRegion}
               regionEditMode={model.regionEditMode}
-              detectedHoles={model.detectedHoles}
+              detectedHoles={model.detectedHoles.filter(
+                (hole) => hiddenHoleIds.has(hole.id) === false,
+              )}
               registeredPin1={model.registeredPin1}
               matchResult={model.matchResult}
               hasOverlays={props.hasCanvasOverlays ?? true}
