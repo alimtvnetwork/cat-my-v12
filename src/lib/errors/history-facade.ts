@@ -72,6 +72,25 @@ function resolveBackendSyncTarget(): string | null {
 export function resolveBackendBaseUrl(): string | null {
   return resolveBackendSyncTarget();
 }
+
+/** Configured backend base URL for settings display, or the loopback
+ *  default when nothing is configured. Unlike `resolveBackendBaseUrl`
+ *  (null outside backend mode, for sync gating), this always returns a
+ *  usable URL: settings UI shows and tests against it. Single owner of
+ *  the `app.backend.baseUrl` key so settings surfaces never read
+ *  localStorage directly (facade single-seam ratchet, spec 21 §52). */
+export function resolveConfiguredBackendUrl(): string {
+  try {
+    const raw = globalThis.localStorage?.getItem(BACKEND_STORAGE_KEY);
+    if (!raw) return DEFAULT_BACKEND_URL;
+    const parsed = JSON.parse(raw) as unknown;
+    const state = (parsed as { state?: unknown }).state as { baseUrl?: unknown } | undefined;
+    const baseUrl = state?.baseUrl;
+    return typeof baseUrl === "string" && baseUrl.length > 0 ? baseUrl : DEFAULT_BACKEND_URL;
+  } catch {
+    return DEFAULT_BACKEND_URL;
+  }
+}
 function reportPersistenceFailure(operation: string, err: unknown): void {
   ClientLogger.error(`[errors/history] ${operation} failed`, err);
   const now = Date.now();

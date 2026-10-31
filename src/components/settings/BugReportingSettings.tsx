@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bug, Mail, Database } from "lucide-react";
 import { HttpMethod } from "@/lib/constants";
+import { resolveConfiguredBackendUrl } from "@/lib/errors/history-facade";
 import { SettingsCard } from "./SettingsCard";
 
 // Spec 54: Bug Reporting settings (email + Supabase delivery).
@@ -11,8 +12,6 @@ import { SettingsCard } from "./SettingsCard";
 // ship with this UI. Email credentials live in go-email-reader's own
 // RSA-encrypted store; this UI only shows whether a sender and a
 // notifier resolve, never a password.
-const BACKEND_STORAGE_KEY = "app.backend.baseUrl";
-const DEFAULT_BACKEND_URL = "http://127.0.0.1:8787";
 
 interface SupabaseConfigView {
   is_configured: boolean;
@@ -36,16 +35,10 @@ interface TestResultView {
 }
 
 function resolveBackendUrl(): string {
-  try {
-    const raw = globalThis.localStorage?.getItem(BACKEND_STORAGE_KEY);
-    if (!raw) return DEFAULT_BACKEND_URL;
-    const parsed = JSON.parse(raw) as unknown;
-    const state = (parsed as { state?: unknown }).state as { baseUrl?: unknown } | undefined;
-    const baseUrl = state?.baseUrl;
-    return typeof baseUrl === "string" && baseUrl ? baseUrl : DEFAULT_BACKEND_URL;
-  } catch {
-    return DEFAULT_BACKEND_URL;
-  }
+  // Backend URL resolution lives in the error history facade (single
+  // owner of the backend URL key); settings UI never reads browser
+  // storage directly (facade single-seam ratchet, spec 21 §52).
+  return resolveConfiguredBackendUrl();
 }
 
 function unwrapResults<T>(payload: unknown): T | null {

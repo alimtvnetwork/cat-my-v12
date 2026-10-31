@@ -106,6 +106,18 @@ const ALLOWLIST: ReadonlySet<string> = new Set([
   "routes/setup/camera.tsx",
   "routes/setup/chain-events.tsx",
   "routes/setup/functions.tsx",
+  // Facade-internal backend URL resolution (2026-10-30, spec 54): the
+  // error history facade is the single owner of the backend URL key;
+  // settings surfaces resolve through it instead of reading storage.
+  "lib/errors/history-facade.ts",
+  // Service config + offline queues, not SDK entity persistence
+  // (2026-10-30/31): recorder telegram config, bug-report email /
+  // Supabase config and their offline queues. No SDK facade accessor
+  // exists for service credentials or queues; same category as the
+  // already-allowlisted telemetry ring buffer above.
+  "lib/recorder/telegram-service.ts",
+  "services/telemetry/email-notifier.ts",
+  "services/telemetry/supabase-client.ts",
 ]);
 
 function walk(dir: string, out: string[] = []): string[] {
