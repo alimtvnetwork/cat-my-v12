@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Professional HMI launcher for CAT iVISION (GitMap CLI Grade).
+Professional HMI launcher for CAT iVISION (GitMap CLI Grade Tree View).
 
 .DESCRIPTION
 Starts the backend FastAPI server and Vite frontend, supervises the Chromium shell window lifecycle, and cleans up child processes gracefully.
@@ -45,20 +45,41 @@ $SymDown = [char]0x2193
 $DivLine = [string]::new([char]0x2500, 76)
 $CatBadge = "[cat]"
 
-function Write-StepOk([string]$Step, [string]$Message) {
-    Write-Host "  $Green$SymCheck$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
+$TreeBranch = "$([char]0x251C)$([char]0x2500)$([char]0x2500)"  # ├──
+$TreeLast   = "$([char]0x2514)$([char]0x2500)$([char]0x2500)"  # └──
+$TreePipe   = "$([char]0x2502)"                                # │
+
+function Write-TreeSection([string]$Title, [string]$Tag = "") {
+    Write-Host ""
+    if ($Tag) {
+        Write-Host "  $Cyan$SymInfo$Reset  $Bold$Title$Reset  $Gray($Tag)$Reset"
+    } else {
+        Write-Host "  $Cyan$SymInfo$Reset  $Bold$Title$Reset"
+    }
+}
+
+function Write-TreeNode([string]$Prefix, [string]$Icon, [string]$IconColor, [string]$Step, [string]$Message) {
+    Write-Host "  $Gray$Prefix$Reset $IconColor$Icon$Reset  $Cyan$($Step.PadRight(10))$Reset $Message"
+}
+
+function Write-TreeSubNode([string]$Prefix, [string]$Icon, [string]$IconColor, [string]$Step, [string]$Message) {
+    Write-Host "  $Gray$Prefix$Reset $IconColor$Icon$Reset  $White$($Step.PadRight(10))$Reset $Gray$Message$Reset"
+}
+
+function Write-TreeRow([string]$Prefix, [string]$Label, [string]$Value) {
+    Write-Host "  $Gray$Prefix$Reset $White$($Label.PadRight(10))$Reset : $Cyan$Value$Reset"
 }
 
 function Write-StepAction([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymAction$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
+    Write-TreeNode $TreeBranch $SymAction $Yellow $Step $Message
+}
+
+function Write-StepOk([string]$Step, [string]$Message) {
+    Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green $Step $Message
 }
 
 function Write-StepInfo([string]$Step, [string]$Message) {
-    Write-Host "  $Cyan$SymInfo$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
-}
-
-function Write-StepWarn([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymWarn$Reset  $Yellow$($Step.PadRight(12))$Reset  $Message"
+    Write-TreeNode $TreeBranch $SymInfo $Cyan $Step $Message
 }
 
 $FrontendHostIp = "127.0.0.1"
@@ -90,7 +111,7 @@ try {
     if ($branchOutput) { $gitBranch = $branchOutput.Trim() }
 } catch {}
 
-$appVersion = "v4.113.13"
+$appVersion = "v4.113.15"
 if (Test-Path "version.json") {
     try {
         $vJson = Get-Content "version.json" -Raw | ConvertFrom-Json
@@ -106,7 +127,6 @@ Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Frontend URL:').PadRight(16))$Reset
 Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Runtime Mode:').PadRight(16))$Reset Industrial HMI (Chromium Embedded App)"
 Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Active Branch:').PadRight(16))$Reset $gitBranch"
 Write-Host "  $Gray$DivLine$Reset"
-Write-Host ""
 
 function Test-InspectionWindowOpen {
     param([string]$AppUrl)
@@ -136,36 +156,41 @@ function Test-InspectionWindowOpen {
 }
 
 try {
-    Write-StepAction "preflight" "Purging stale build caches..."
-    if (Test-Path "BE\be.egg-info") {
-        Remove-Item -Recurse -Force "BE\be.egg-info" -ErrorAction SilentlyContinue
+    Write-TreeSection "services bootstrap"
+
+    # 1. Preflight
+    Write-TreeNode $TreeBranch $SymAction $Yellow "preflight" "Purging stale build caches..."
+    if (Test-Path "BEe.egg-info") {
+        Remove-Item -Recurse -Force "BEe.egg-info" -ErrorAction SilentlyContinue
     }
     if (-not (Test-Path $UvCacheDir)) {
         New-Item -ItemType Directory -Path $UvCacheDir | Out-Null
     }
     $env:UV_CACHE_DIR = $UvCacheDir
-    Write-StepOk "preflight" "Build cache initialized at $UvCacheDir"
+    Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "cache" "Build cache initialized at $UvCacheDir"
 
-    Write-StepAction "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
+    # 2. Database
+    Write-TreeNode $TreeBranch $SymAction $Yellow "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
     $dbOutLog = Join-Path $LogDir "db-bootstrap.stdout.log"
     $dbErrLog = Join-Path $LogDir "db-bootstrap.stderr.log"
     $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin\db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
     if ($dbProc.ExitCode -ne 0) {
-        Write-StepWarn "database" "Database bootstrap reported warnings/errors"
-        Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "       $Gray$_$Reset" }
+        Write-TreeSubNode "$TreePipe   $TreeLast" $SymWarn $Yellow "schemas" "Database bootstrap reported warnings/errors"
+        Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  $Gray$TreePipe       $_$Reset" }
     } else {
-        Write-StepOk "database" "Database schemas bootstrapped and migrations verified"
+        Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "schemas" "Database schemas bootstrapped across 3 tiers (WAL mode)"
     }
 
-    Write-StepAction "backend" "Launching FastAPI uvicorn server on port $BePort..."
+    # 3. Backend
+    Write-TreeNode $TreeBranch $SymAction $Yellow "backend" "Launching FastAPI uvicorn server on port $BePort..."
     $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort" -RedirectStandardOutput $BackendOutLog -RedirectStandardError $BackendErrLog
     $jobs += $backendProcess
 
-    Write-StepInfo "backend" "Waiting for health probe at $BackendBaseUrl/healthz..."
     .\scripts\dev\wait-for-http.ps1 -Url "$BackendBaseUrl/healthz" -TimeoutSec 60 | Out-Null
-    Write-StepOk "backend" "Backend is healthy and listening on $BackendBaseUrl"
+    Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "listening" "Backend is healthy and listening on $BackendBaseUrl"
 
-    # Dependency check for frontend
+    # 4. Frontend
+    Write-TreeNode $TreeBranch $SymAction $Yellow "frontend" "Installing node dependencies via Bun..."
     $needsInstall = $false
     if (-not (Test-Path "node_modules")) {
         $needsInstall = $true
@@ -176,15 +201,14 @@ try {
     }
 
     if ($needsInstall) {
-        Write-StepAction "frontend" "Installing node dependencies via Bun..."
         $bunOutput = & bun install 2>&1
         if ($LASTEXITCODE -ne 0) {
-            $bunOutput | ForEach-Object { Write-Host "       $Red$_$Reset" }
+            $bunOutput | ForEach-Object { Write-Host "  $Gray$TreePipe       $Red$_$Reset" }
             throw "bun install failed with exit code $LASTEXITCODE"
         }
-        Write-StepOk "frontend" "Dependencies installed successfully"
+        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "modules" "Dependencies installed successfully"
     } else {
-        Write-StepOk "frontend" "Dependencies are up-to-date"
+        Write-TreeSubNode "$TreePipe   $TreeBranch" $SymCheck $Green "modules" "Dependencies are up-to-date"
     }
 
     $isFrontendReady = $false
@@ -194,14 +218,13 @@ try {
 
         if ($existingFrontend.StatusCode -lt 400) {
             $isFrontendReady = $true
-            Write-StepOk "frontend" "Reusing existing Vite server at $FrontendBaseUrl"
+            Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "vite" "Reusing existing Vite server at $FrontendBaseUrl"
         }
     } catch {
         $isFrontendReady = $false
     }
 
     if (-not $isFrontendReady) {
-        Write-StepAction "frontend" "Starting Vite dev server on port $FePort..."
         $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList @(
             "run", "dev", "--",
             "--host", $FrontendHostIp,
@@ -210,7 +233,6 @@ try {
         ) -RedirectStandardOutput $FrontendOutLog -RedirectStandardError $FrontendErrLog
         $jobs += $frontendProcess
 
-        Write-StepInfo "frontend" "Waiting for frontend probe at $FrontendHealthUrl..."
         $frontendDeadline = (Get-Date).AddSeconds(180)
 
         while ((Get-Date) -lt $frontendDeadline) {
@@ -223,7 +245,7 @@ try {
             }
 
             if ($hasFrontendExited) {
-                throw "Frontend exited with code $($frontendProcess.ExitCode) before $FrontendHealthUrl was ready. Free port $FePort and run .\run.ps1 again."
+                throw "Frontend exited with code $($frontendProcess.ExitCode) before $FrontendHealthUrl was ready. Free port $FePort and run .un.ps1 again."
             }
 
             try {
@@ -241,29 +263,29 @@ try {
         if (-not $isFrontendReady) {
             throw "Timeout waiting for $FrontendHealthUrl"
         }
-        Write-StepOk "frontend" "Vite dev server is ready at $FrontendBaseUrl"
 
-        Write-StepInfo "frontend" "Warming up Vite application bundle..."
         try {
             Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 15 | Out-Null
-            Write-StepOk "frontend" "Vite application bundle warmed up"
         } catch {}
+        Write-TreeSubNode "$TreePipe   $TreeLast" $SymCheck $Green "vite" "Vite dev server is ready at $FrontendBaseUrl"
     }
 
+    # 5. Shell
     if ($NoShell) {
-        Write-StepInfo "shell" "Running in -NoShell mode. Skipping browser launch."
+        Write-TreeNode $TreeLast $SymInfo $Cyan "shell" "Running in -NoShell mode. Skipping browser launch."
     } else {
+        Write-TreeNode $TreeLast $SymAction $Yellow "shell" "Launching Chromium embedded app window..."
         $userDataDir = Join-Path (Get-Location) ".browser-profile"
         $isAlreadyOpen = Test-InspectionWindowOpen -AppUrl $FrontendBaseUrl
 
         if ($isAlreadyOpen) {
-            Write-StepOk "shell" "Inspection window is already running. Skipping duplicate browser window."
+            Write-TreeSubNode "    $TreeLast" $SymCheck $Green "browser" "Inspection window is already running"
         } else {
             if (Test-Path "chromium-shell") {
                 try {
                     $needsZip = $true
-                    if (Test-Path "public\app-shell.zip") {
-                        $zipDate = (Get-Item "public\app-shell.zip").LastWriteTime
+                    if (Test-Path "publicpp-shell.zip") {
+                        $zipDate = (Get-Item "publicpp-shell.zip").LastWriteTime
                         $newestFile = Get-ChildItem -Path "chromium-shell" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
                         if ($newestFile -and $newestFile.LastWriteTime -le $zipDate) {
                             $needsZip = $false
@@ -271,21 +293,17 @@ try {
                     }
 
                     if ($needsZip) {
-                        if (Test-Path "public\app-shell.zip") {
-                            Remove-Item "public\app-shell.zip" -Force
+                        if (Test-Path "publicpp-shell.zip") {
+                            Remove-Item "publicpp-shell.zip" -Force
                         }
                         if (-not (Test-Path "public")) {
                             New-Item -ItemType Directory -Path "public" | Out-Null
                         }
-                        Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
-                        Write-StepOk "shell" "Chromium shell extension packaged"
+                        Compress-Archive -Path "chromium-shell\*" -DestinationPath "publicpp-shell.zip" -Force
                     }
-                } catch {
-                    Write-StepWarn "shell" "Extension packaging skipped ($($_.Exception.Message))"
-                }
+                } catch {}
             }
 
-            Write-StepAction "shell" "Launching Chromium embedded app window..."
             $chromeArgs = @(
                 "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
                 '--start-maximized',
@@ -308,21 +326,28 @@ try {
                     $chromeFound = $true
                     $browserPidFile = Join-Path $LogDir "browser.pid"
                     Set-Content -Path $browserPidFile -Value $chromeProcess.Id -Force
-                    Write-StepOk "shell" "Launched browser app using $p (PID $($chromeProcess.Id))"
+                    Write-TreeSubNode "    $TreeLast" $SymCheck $Green "browser" "Launched browser app using Chrome (PID $($chromeProcess.Id))"
                     break
                 }
             }
 
             if (-not $chromeFound) {
-                Write-StepWarn "shell" "Chrome/Edge not found in default paths. Open manually: $FrontendBaseUrl`?backend=$BackendBaseUrl"
+                Write-TreeSubNode "    $TreeLast" $SymWarn $Yellow "browser" "Chrome/Edge not found in default paths. Open manually: $FrontendBaseUrl`?backend=$BackendBaseUrl"
             }
         }
     }
 
     Write-Host ""
     Write-Host "  $Gray$DivLine$Reset"
-    Write-Host "  $Magenta$SymInfo$Reset  $Bold`Supervision Active$Reset  $Gray(monitoring window & backend lifecycle)$Reset"
-    Write-Host "  $Gray     Press Ctrl+C or use in-app Exit to terminate all services cleanly$Reset"
+    Write-TreeSection "Supervision Active" "monitoring window & backend lifecycle"
+    Write-TreeRow $TreeBranch "Backend" $BackendBaseUrl
+    Write-TreeRow $TreeBranch "Frontend" $FrontendBaseUrl
+    if ($chromeProcess) {
+        Write-TreeRow $TreeBranch "Process" "Chrome (PID $($chromeProcess.Id))"
+    } else {
+        Write-TreeRow $TreeBranch "Mode" "Headless (-NoShell)"
+    }
+    Write-TreeRow $TreeLast "Control" "$Gray`Press Ctrl+C or use in-app Exit to terminate cleanly$Reset"
     Write-Host ""
 
     $isSupervised = $true
@@ -331,22 +356,24 @@ try {
 
         # Monitor browser process exit
         if ($chromeProcess -and $chromeProcess.HasExited) {
-            Write-Host "  $Yellow$SymInfo$Reset  $Cyan$('lifecycle'.PadRight(12))$Reset  Browser window closed by user"
+            Write-TreeSection "lifecycle event"
+            Write-TreeNode $TreeLast $SymInfo $Yellow "exit" "Browser window closed by user"
             $isSupervised = $false
             break
         }
 
         # Monitor backend process exit
         if ($backendProcess -and $backendProcess.HasExited) {
-            Write-Host "  $Yellow$SymInfo$Reset  $Cyan$('lifecycle'.PadRight(12))$Reset  Backend process exited (shutdown completed)"
+            Write-TreeSection "lifecycle event"
+            Write-TreeNode $TreeLast $SymInfo $Yellow "exit" "Backend process exited (shutdown completed)"
             $isSupervised = $false
             break
         }
     }
 }
 finally {
-    Write-Host ""
-    Write-Host "  $Yellow$SymDown$Reset  $Cyan$('teardown'.PadRight(12))$Reset  Gracefully terminating background processes..."
+    Write-TreeSection "teardown"
+    Write-TreeNode $TreeBranch $SymDown $Yellow "stopping" "Gracefully terminating background processes..."
     foreach ($job in $jobs) {
         if ($job -and -not $job.HasExited) {
             Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
@@ -355,6 +382,6 @@ finally {
     Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
         Where-Object { $_.CommandLine -like "*$FrontendBaseUrl*" -or $_.CommandLine -like "*.browser-profile*" } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-    Write-Host "  $Green$SymCheck$Reset  $Cyan$('complete'.PadRight(12))$Reset  All services terminated cleanly."
+    Write-TreeNode $TreeLast $SymCheck $Green "complete" "All services terminated cleanly."
     Write-Host ""
 }

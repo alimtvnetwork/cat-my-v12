@@ -113,7 +113,8 @@ export function WindowControlButtons(): React.JSX.Element {
   const [isShuttingDown, setIsShuttingDown] = useState(false);
   const [isCloseNoop, setIsCloseNoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const baseUrl = useBackendMode((s) => s.baseUrl);
+  const rawBaseUrl = useBackendMode((s) => s.baseUrl);
+  const baseUrl = rawBaseUrl || "http://127.0.0.1:8787";
 
   useEffect(() => {
     const handleFullscreenChange = (): void => {
@@ -127,8 +128,6 @@ export function WindowControlButtons(): React.JSX.Element {
     };
   }, []);
 
-  const effectiveBackendUrl = baseUrl || "http://127.0.0.1:8787";
-
   const handleMinimize = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
 
@@ -140,7 +139,7 @@ export function WindowControlButtons(): React.JSX.Element {
 
     const headers = { "Content-Type": "application/json" };
     // Try effective backend URL and local Vite proxy concurrently
-    fetch(`${effectiveBackendUrl}/window/minimize`, {
+    fetch(`${baseUrl}/window/minimize`, {
       method: HttpMethod.Post,
       headers,
     })
@@ -154,7 +153,7 @@ export function WindowControlButtons(): React.JSX.Element {
           useErrorStore.getState().captureError(
             err,
             {
-              endpoint: `${effectiveBackendUrl}/window/minimize`,
+              endpoint: `${baseUrl}/window/minimize`,
               method: HttpMethod.Post,
               triggerComponent: "WindowControlButtons",
               triggerAction: "minimize",
@@ -182,7 +181,7 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
-  }, [effectiveBackendUrl]);
+  }, [baseUrl]);
 
   const handleToggleMaximize = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -195,7 +194,7 @@ export function WindowControlButtons(): React.JSX.Element {
 
     // Toggle via native backend Win32 loopback API (SW_RESTORE / SW_MAXIMIZE)
     // Avoid document.documentElement.requestFullscreen() which causes the "To exit full screen, press Esc" banner!
-    fetch(`${effectiveBackendUrl}/window/maximize`, {
+    fetch(`${baseUrl}/window/maximize`, {
       method: HttpMethod.Post,
     })
       .then(async (res) => {
@@ -231,7 +230,7 @@ export function WindowControlButtons(): React.JSX.Element {
         useErrorStore.getState().captureError(
           new Error("Native window maximize failed"),
           {
-            endpoint: `${effectiveBackendUrl}/window/maximize`,
+            endpoint: `${baseUrl}/window/maximize`,
             method: HttpMethod.Post,
             triggerComponent: "WindowControlButtons",
             triggerAction: "toggleMaximize",
@@ -240,7 +239,7 @@ export function WindowControlButtons(): React.JSX.Element {
           "E_WINDOW_MAXIMIZE",
         );
       });
-  }, [effectiveBackendUrl]);
+  }, [baseUrl]);
 
   const handleConfirmExit = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -258,15 +257,39 @@ export function WindowControlButtons(): React.JSX.Element {
     const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 2000);
 
     // Fire window close AND server shutdown in parallel so both window and server terminate instantly
-    const closePromise = fetch(`${effectiveBackendUrl}/window/close`, {
+    const closePromise = fetch(`${baseUrl}/window/close`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          endpoint: `${baseUrl}/window/close`,
+          method: HttpMethod.Post,
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "close",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_CLOSE",
+      );
+    });
 
-    const shutdownPromise = fetch(`${effectiveBackendUrl}/shutdown`, {
+    const shutdownPromise = fetch(`${baseUrl}/shutdown`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          endpoint: `${baseUrl}/shutdown`,
+          method: HttpMethod.Post,
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "shutdown",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_SHUTDOWN",
+      );
+    });
 
     // Also fire via Vite proxy
     fetch(`/window/close`, { method: HttpMethod.Post, signal: shutdownController.signal }).catch(() => {});
