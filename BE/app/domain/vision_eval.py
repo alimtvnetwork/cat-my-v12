@@ -246,6 +246,7 @@ async def evaluate_grayscale_tolerance(
 
         if hasattr(ref_clipped, "shape") and hasattr(smp_clipped, "shape"):
             import cv2
+
             from BE.app.domain.vision_preprocess import normalize_illumination_clahe
 
             # Equalize lighting between reference and sample ROI

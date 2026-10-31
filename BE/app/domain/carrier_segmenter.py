@@ -51,10 +51,7 @@ def _check_cavity_occupancy(
         return False, 0.0, "Empty or invalid slot frame"
 
     if cv2 is not None:
-        if len(slot_img.shape) == 3:
-            gray = cv2.cvtColor(slot_img, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = slot_img
+        gray = cv2.cvtColor(slot_img, cv2.COLOR_BGR2GRAY) if len(slot_img.shape) == 3 else slot_img
 
         # Cavity center ROI (avoid tape edge borders)
         h, w = gray.shape[:2]

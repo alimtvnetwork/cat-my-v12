@@ -21,6 +21,7 @@ import numpy as np
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from BE.app.domain.carrier_segmenter import segment_carrier_belt
 from BE.app.domain.vision_eval import (
     BoundingBox,
     ConfidenceResult,
@@ -33,7 +34,6 @@ from BE.app.domain.vision_eval import (
     evaluate_grayscale_tolerance,
     evaluate_pattern_match,
 )
-from BE.app.domain.carrier_segmenter import segment_carrier_belt
 from BE.app.domain.vision_preprocess import apply_optical_settings, maybe_downsample
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
