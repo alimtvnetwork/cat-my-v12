@@ -122,6 +122,15 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     }
     return null;
   });
+  // Spec 55 derivation restoration: true ONLY when the user actually
+  // drew the pattern region in this session (add/drag). A region
+  // restored from saved settings is not drawn — old saves, tour/demo
+  // scripts, and hardcoded fallbacks never override the derived
+  // region. The flag persists through teach so a drawn region
+  // survives reload.
+  const [isPatternRegionDrawn, setIsPatternRegionDrawn] = useState<boolean>(
+    () => initialSettings?.patternRegionDrawn === true,
+  );
   const [maskRegions, setMaskRegions] = useState<SearchRegion[]>(() => {
     const rawMaskRegions = initialSettings?.maskRegions;
 
@@ -224,9 +233,10 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       return null;
     }
 
-    const boxesForPattern = patternRegion
-      ? detectedBoxes.filter((box) => isBoxInsideRegion(box, patternRegion))
-      : detectedBoxes;
+    const boxesForPattern =
+      isPatternRegionDrawn && patternRegion
+        ? detectedBoxes.filter((box) => isBoxInsideRegion(box, patternRegion))
+        : detectedBoxes;
 
     return computePatternGeometry({
       boxes: boxesForPattern,
@@ -234,11 +244,21 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       marginPx,
       searchRegion,
       patternRegion,
+      isPatternRegionDrawn,
       maskRegions,
       imageWidth: source.width,
       imageHeight: source.height,
     });
-  }, [detectedBoxes, excludedNumbers, marginPx, maskRegions, patternRegion, searchRegion, source]);
+  }, [
+    detectedBoxes,
+    excludedNumbers,
+    marginPx,
+    maskRegions,
+    patternRegion,
+    isPatternRegionDrawn,
+    searchRegion,
+    source,
+  ]);
 
   useEffect(() => {
     if (!props?.onSettingsChange || !formulatedPattern) {
@@ -260,10 +280,11 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       marginPx: formulatedPattern.marginPx,
       searchRegion: formulatedPattern.searchRegion,
       patternRegion: formulatedPattern.patternRegion,
+      patternRegionDrawn: isPatternRegionDrawn,
       maskRegions: formulatedPattern.maskRegions,
       constellationJson: JSON.stringify(formulatedPattern.referenceBoxes),
     }));
-  }, [formulatedPattern, props?.onSettingsChange]);
+  }, [formulatedPattern, isPatternRegionDrawn, props?.onSettingsChange]);
 
   function changeRegionEditMode(mode: PatternRegionEditMode): void {
     setRegionEditMode(mode);
@@ -285,6 +306,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     };
 
     setPatternRegion(nextRegion);
+    setIsPatternRegionDrawn(true);
     setRegionEditMode("pattern");
   }
 
@@ -336,6 +358,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
 
     if (regionEditMode === "pattern") {
       setPatternRegion(region);
+      setIsPatternRegionDrawn(region !== null);
 
       return;
     }
@@ -371,6 +394,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setExcludedNumbers(new Set());
     setMaskRegions([]);
     setPatternRegion(null);
+    setIsPatternRegionDrawn(false);
     setSelectedMaskIndex(null);
     setRegionEditMode("search");
     const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
@@ -388,6 +412,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     setExcludedNumbers(new Set());
     setMaskRegions([]);
     setPatternRegion(null);
+    setIsPatternRegionDrawn(false);
     setSelectedMaskIndex(null);
     setRegionEditMode("search");
     const fullRegion: SearchRegion = { x: 0, y: 0, width: input.width, height: input.height };
@@ -727,6 +752,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         toolId: "tool-greyscale-pattern-matching",
         type: "pattern_match",
         threshold: greyscaleLevel,
+        greyscaleMode,
         marginPx,
         tolerancePx: formulatedPattern.tolerancePx,
         activeBoxCount: formulatedPattern.activeBoxCount,
@@ -745,6 +771,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
           shape: ShapeType.Rectangle,
           geometry: patternRegionGeometry,
         },
+        patternRegionDrawn: isPatternRegionDrawn,
         maskRegions,
         region: {
           x: formulatedPattern.x,
@@ -767,6 +794,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
       const ruleParams: Record<string, any> = {
         threshold: greyscaleLevel,
         greyscaleLevel,
+        greyscaleMode,
         lumaTolerance: 32,
         marginPx,
         tolerancePx: formulatedPattern.tolerancePx,
@@ -775,6 +803,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
         minMatchPercent: 100,
         searchRegion: computedSearchGeometry,
         patternRegion: patternRegionGeometry,
+        patternRegionDrawn: isPatternRegionDrawn,
         maskRegions,
         referenceBoxes,
         constellation,
@@ -897,6 +926,7 @@ export function useWhiteBoxMarking(props?: WhiteBoxToolProps) {
     searchRegion,
     maskRegions,
     patternRegion,
+    isPatternRegionDrawn,
     regionEditMode,
     selectedMaskIndex,
     dragState,

@@ -65,6 +65,13 @@ export interface AnalyzeImageToolbarProps {
   onRemoveRecent?: (id: string) => void;
   calibratedWidth?: number;
   calibratedHeight?: number;
+  /** Saved pattern-box state for the active rule (spec 55: never a
+   *  silent empty rule). "taught" = boxes persisted at teach;
+   *  "derived" = boxes derived from the region because teach saved
+   *  none; "none" = no boxes at all. When absent, no badge renders
+   *  (the parent has not wired the active rule through yet). */
+  savedPatternBoxCount?: number | null;
+  savedPatternBoxSource?: "taught" | "derived" | "none";
 }
 
 interface ImageDimensionState {
@@ -84,6 +91,8 @@ export function AnalyzeImageToolbar({
   onRemoveRecent,
   calibratedWidth = 960,
   calibratedHeight = 540,
+  savedPatternBoxCount = null,
+  savedPatternBoxSource,
 }: AnalyzeImageToolbarProps): React.JSX.Element {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -364,6 +373,30 @@ export function AnalyzeImageToolbar({
 
       {/* Right: Resolution Readout & Advisory Warning Badge */}
       <div className="flex items-center gap-2">
+        {savedPatternBoxSource !== undefined ? (
+          savedPatternBoxSource === "taught" ? (
+            <div className="flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-950/30 px-2 py-1 font-sans text-[10px] font-semibold text-emerald-300">
+              <CheckCircle2 size={11} className="text-emerald-400" />
+              <span>Pattern boxes: {savedPatternBoxCount ?? 0} saved</span>
+            </div>
+          ) : savedPatternBoxSource === "derived" ? (
+            <div
+              title="Teach saved no pattern boxes, so Test This Rule derives boxes from the region. Re-teach to lock the boxes the canvas shows."
+              className="flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-950/50 px-2 py-1 font-sans text-[10px] font-bold text-amber-200 shadow-sm"
+            >
+              <AlertTriangle size={12} className="text-amber-400 shrink-0" />
+              <span>Pattern boxes: {savedPatternBoxCount ?? 0} derived (not taught)</span>
+            </div>
+          ) : (
+            <div
+              title="The active rule has no pattern boxes. Test This Rule will fail as unconfigured until boxes are taught."
+              className="flex items-center gap-1.5 rounded-md border border-rose-500/40 bg-rose-950/50 px-2 py-1 font-sans text-[10px] font-bold text-rose-200 shadow-sm"
+            >
+              <AlertTriangle size={12} className="text-rose-400 shrink-0" />
+              <span>No saved pattern boxes</span>
+            </div>
+          )
+        ) : null}
         {isLiveCameraMode ? (
           <div className="flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-950/40 px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider text-emerald-300">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

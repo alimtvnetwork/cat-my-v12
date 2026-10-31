@@ -15,6 +15,12 @@ export interface PatternComputeParams {
   tolerancePx?: number;
   searchRegion?: SearchRegion | null;
   patternRegion?: SearchRegion | null;
+  /** True only when the user actually drew the pattern region (spec
+   *  55: 9fa1cc62 derivation restoration). A region restored from
+   *  saved settings, a tour/demo script, or a hardcoded fallback is
+   *  NOT drawn — the derived region wins for those. When absent or
+   *  false, derivation always wins. */
+  isPatternRegionDrawn?: boolean;
   maskRegions?: readonly SearchRegion[];
   imageWidth: number;
   imageHeight: number;
@@ -70,6 +76,17 @@ export function computePatternGeometry(
     height: Math.max(1, Math.min(params.imageHeight, maxY) - Math.max(0, minY)),
   };
 
+  // Spec 55 derivation restoration (9fa1cc62 semantics): the region
+  // derives from the detected boxes BY DEFAULT. An explicit
+  // user-drawn region overrides only when the caller proves the user
+  // actually drew it (isPatternRegionDrawn); a saved, scripted, or
+  // fallback region never overrides derivation, and tour/demo
+  // geometry can therefore never persist as a user rule through here.
+  const patternRegion =
+    params.isPatternRegionDrawn === true && params.patternRegion
+      ? params.patternRegion
+      : computedPatternRegion;
+
   return {
     x: clampedX,
     y: clampedY,
@@ -81,7 +98,7 @@ export function computePatternGeometry(
       width: Math.max(1, boundedMaxX - clampedX),
       height: Math.max(1, boundedMaxY - clampedY),
     },
-    patternRegion: params.patternRegion ?? computedPatternRegion,
+    patternRegion,
     maskRegions: [...(params.maskRegions ?? [])],
     marginPx: params.marginPx,
     tolerancePx: tolerance,
