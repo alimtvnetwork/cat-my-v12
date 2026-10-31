@@ -75,6 +75,8 @@ $BackendOutLog = Join-Path $LogDir "backend.stdout.log"
 $BackendErrLog = Join-Path $LogDir "backend.stderr.log"
 $FrontendOutLog = Join-Path $LogDir "frontend.stdout.log"
 $FrontendErrLog = Join-Path $LogDir "frontend.stderr.log"
+$BackendLog = $BackendOutLog
+$FrontendLog = $FrontendOutLog
 
 $jobs = @()
 $chromeProcess = $null
@@ -315,7 +317,7 @@ try {
 
     $isSupervised = $true
     while ($isSupervised) {
-        Start-Sleep -Milliseconds 800
+        Start-Sleep -Milliseconds 150
 
         # Monitor browser process exit
         if ($chromeProcess -and $chromeProcess.HasExited) {
@@ -340,6 +342,9 @@ finally {
             Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
         }
     }
+    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -like "*$FrontendBaseUrl*" -or $_.CommandLine -like "*.browser-profile*" } |
+        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
     Write-Host "  $Green$SymCheck$Reset  $Cyan$('complete'.PadRight(12))$Reset  All services terminated cleanly."
     Write-Host ""
 }

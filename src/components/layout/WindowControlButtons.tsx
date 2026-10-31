@@ -140,6 +140,10 @@ export function WindowControlButtons(): React.JSX.Element {
       method: HttpMethod.Post,
     }).catch(() => {});
 
+    fetch(`/window/minimize`, {
+      method: HttpMethod.Post,
+    }).catch(() => {});
+
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
 
@@ -159,6 +163,10 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     fetch(`${baseUrl}/window/maximize`, {
+      method: HttpMethod.Post,
+    }).catch(() => {});
+
+    fetch(`/window/maximize`, {
       method: HttpMethod.Post,
     }).catch(() => {});
 
@@ -186,52 +194,57 @@ export function WindowControlButtons(): React.JSX.Element {
     const shutdownController = new AbortController();
     const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
 
-    fetch(`${baseUrl}/window/close`, {
+    // Fire window close AND server shutdown in parallel so both window and server terminate instantly
+    const closePromise = fetch(`${baseUrl}/window/close`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    })
-      .catch(() => {
-        fetch(`${baseUrl}/shutdown`, {
+    }).catch(() => {});
+
+    const shutdownPromise = fetch(`${baseUrl}/shutdown`, {
+      method: HttpMethod.Post,
+      signal: shutdownController.signal,
+    }).catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          endpoint: `${baseUrl}/shutdown`,
           method: HttpMethod.Post,
-          signal: shutdownController.signal,
-        }).catch((err: unknown) => {
-          useErrorStore.getState().captureError(
-            err,
-            {
-              endpoint: `${baseUrl}/shutdown`,
-              method: HttpMethod.Post,
-              triggerComponent: "WindowControlButtons",
-              triggerAction: "confirmExit",
-              source: "WindowControlButtons",
-            },
-            "E_WINDOW_SHUTDOWN",
-          );
-        });
-      })
-      .finally(() => {
-        window.clearTimeout(shutdownTimeout);
-        window.dispatchEvent(new CustomEvent(WINDOW_EXITED_EVENT));
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "confirmExit",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_SHUTDOWN",
+      );
+    });
 
-        try {
-          window.opener = null;
-          window.open("", "_self");
-          window.close();
-        } catch (err: unknown) {
-          useErrorStore.getState().captureError(
-            err,
-            {
-              triggerComponent: "WindowControlButtons",
-              triggerAction: "confirmExit",
-              source: "WindowControlButtons",
-            },
-            "E_WINDOW_CLOSE",
-          );
-        }
+    // Also fire via Vite proxy
+    fetch(`/window/close`, { method: HttpMethod.Post }).catch(() => {});
+    fetch(`/shutdown`, { method: HttpMethod.Post }).catch(() => {});
 
-        window.setTimeout(() => {
-          setIsCloseNoop(true);
-        }, 500);
-      });
+    Promise.allSettled([closePromise, shutdownPromise]).finally(() => {
+      window.clearTimeout(shutdownTimeout);
+      window.dispatchEvent(new CustomEvent(WINDOW_EXITED_EVENT));
+
+      try {
+        window.opener = null;
+        window.open("", "_self");
+        window.close();
+      } catch (err: unknown) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "confirmExit",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_CLOSE",
+        );
+      }
+
+      window.setTimeout(() => {
+        setIsCloseNoop(true);
+      }, 300);
+    });
   }, [baseUrl]);
 
   const requestExit = useCallback(() => {

@@ -35,7 +35,7 @@ logger = logging.getLogger("BE.routes.shutdown")
 
 router = APIRouter()
 
-_SHUTDOWN_DELAY_S = 0.5
+_SHUTDOWN_DELAY_S = 0.05
 _LOOPBACK_HOSTS = ("127.0.0.1", "::1", "localhost", "testclient")
 
 
@@ -50,13 +50,11 @@ def _is_loopback_client(request: Request) -> bool:
 
 
 def _initiate_shutdown() -> None:
-    """Exit this process. SIGTERM first (graceful, see BE/main.py)."""
+    """Exit this process immediately."""
     logger.info("shutdown_initiated", extra={"operation": "POST /shutdown"})
-
     try:
-        os.kill(os.getpid(), signal.SIGTERM)
+        os._exit(0)
     except Exception:
-        logger.warning("shutdown_sigterm_failed", extra={"operation": "POST /shutdown"})
         os._exit(0)
 
 
@@ -80,6 +78,9 @@ WINDOW_TITLE_KEYWORDS = (
     "projects",
     "ng events",
     "hmi",
+    "5173",
+    "cat",
+    "vision",
 )
 
 
@@ -118,7 +119,9 @@ def _minimize_window() -> bool:
 
     try:
         import ctypes
-        ctypes.windll.user32.ShowWindow(hwnd, 6)
+        ctypes.windll.user32.ShowWindow(hwnd, 11)  # SW_FORCEMINIMIZE
+        ctypes.windll.user32.ShowWindow(hwnd, 6)   # SW_MINIMIZE
+        ctypes.windll.user32.CloseWindow(hwnd)
         return True
     except Exception:
         return False
@@ -140,15 +143,31 @@ def _toggle_maximize_window() -> bool:
 
 def _close_window() -> bool:
     hwnd = _find_window_hwnd()
-    if not hwnd:
-        return False
+    if hwnd:
+        try:
+            import ctypes
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+        except Exception:
+            pass
 
-    try:
-        import ctypes
-        ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
-        return True
-    except Exception:
-        return False
+    if sys.platform == "win32":
+        try:
+            import subprocess
+            subprocess.Popen(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-Command",
+                    "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*.browser-profile*' -or $_.CommandLine -like '*5173*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=0x08000000,
+            )
+        except Exception:
+            pass
+
+    return True
 
 
 @router.post("/window/minimize")
