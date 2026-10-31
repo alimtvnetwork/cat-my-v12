@@ -166,6 +166,151 @@ pockets + "missing saved pattern boxes" together suggest placement
 and search run in an uncalibrated coordinate space and against
 unsaved geometry — not a matcher quality problem.
 
+## 8. Pattern search root-cause analysis (31-Oct-25, verified by
+coordinator)
+
+Headline: THERE IS NO SINGLE SHARED LAYER, COORDINATE, OR SEARCH
+MODEL. Four canvases implement four different models, three "pattern
+search" engines disagree, and teach geometry, runtime geometry, and
+simulation geometry live in different coordinate spaces that are
+never unified. Simulation did not break a working editor — it added
+display-only canvases alongside a teach canvas that spec 54 then
+locked, while the known display-vs-evaluation geometry mismatch was
+deliberately deferred. Every reported symptom is a different face of
+that split.
+
+History chain (verified: commit bcaa5f81 "Ui redesigend and
+simulation", 2026-10-14, PR #8; parent 9fa1cc62 "UI fixed v1",
+2026-10-10, is the last pre-simulation state and the semantics
+baseline — derived region wins, simulation geometry never persists
+as a user rule; do NOT revert to it). In bcaa5f81 the pattern region
+stopped being derived from detected boxes and became an input
+override (`patternRegion: params.patternRegion ??
+computedPatternRegion`, pattern-geometry.ts:84, confirmed by
+coordinator); detection is now filtered by it (center containment);
+the fallback is a hardcoded centered box; the guided-simulation tour
+(DEVICE_LAYOUTS, confirmed at ProjectCreationAnalysisTour.tsx:132)
+scripts geometry for one 1042x403 analyzer image and persists demo
+rules into the real project store with fabricated Pass results.
+Later "precise positions" commits re-tuned constants instead of
+restoring derivation or adding a frame mapping.
+
+Root-cause chain (each link evidenced by the analysis wave):
+1. Simulation replaces search with fixed geometry. The conveyor
+   simulation draws a chip on 960x540, then "captures" it by drawing
+   the chip asset ALONE into a fresh 140-wide canvas
+   (PatternMatchCanvas.tsx:94+, confirmed by coordinator) —
+   discarding the drawn position entirely. The carrier-tape
+   simulation draws with jitter, then crops an already-shifted
+   bitmap with a second jitter offset (double jitter, up to 8px x /
+   7px y; only frame 1, jitter 0,0, is correct).
+2. The taught search is dropped at the simulation boundary.
+   `usePatternMatchingRule.ts:474` creates the simulation with taught
+   referenceBoxes, but `useConveyorSimulation.ts:41-48` declares the
+   options (referenceBoxes, greyscaleLevel, tolerancePx,
+   minMatchPercent — declaration confirmed by coordinator) and never
+   reads them. The conveyor evaluator uses hardcoded toleranceLuma
+   22 and no searchRegion.
+3. Three engines, three verdicts: workbench analyzer = constellation
+   matching; standard tool = fixed golden-template luma only (never
+   calls the matcher); simulations = yet another luma rule plus
+   scripted fallbacks. "Search goes in different ways" is
+   structural.
+4. The analyzer discards its own positional verdict and recomputes
+   pass/fail purely from luma — a geometrically perfect constellation
+   can fail and a wrong one can pass on luma alone.
+5. Preview and match see different images (see §9): mode-aware
+   preview vs continuous Rec.601 + threshold matching; teach luma
+   from raw RGBA while the user views the transformed preview; the
+   UI slider is explicitly not read by the analyzer, which computes
+   its own invisible adaptive threshold (localMean + 10) and never
+   reports it.
+6. The pattern path has NO polarity handling — the only vision path
+   without it. `findWhiteBoxes` is strictly whiten-only; dark-on-light
+   markings are invisible, so the constellation matches whatever
+   bright blobs exist (tape, glare, background).
+7. The layer model was never ported to simulation. The carrier-tape
+   simulation canvas has ZERO pointer handlers (confirmed by
+   coordinator: 0 onPointer hits) and its onSelectPocket prop is
+   never passed by its only parent. The conveyor canvas disables all
+   pointer handlers while simulating, and simulation defaults ON.
+   Meanwhile the teach canvas locks its ROI by default with a silent
+   no-op drag — so "cannot move / cannot create" is true in
+   simulation (no editor exists) and confusingly silent in teach.
+8. Coordinate spaces were never unified, and unification was
+   DELIBERATELY DEFERRED. Regions are stored in source-image pixels
+   but painted on stretched 960x540 frames; the loader stretches
+   portrait images to 960x540; the standard tool stretches every
+   upload to 960x540; the carrier photo is forced to 512x288.
+   Commit 27262b06 (2026-10-17, "revert workpiece letterbox - rules
+   calibrated to stretched pixels", confirmed by coordinator)
+   records that rules are calibrated to stretched pixels and
+   unification "needs a rule re-tuning pass" — recorded as a known
+   issue and never done. The Res Mismatch warning is display-only;
+   neither simulation path checks or compensates for it.
+9. "Mentioned but not respected", quoted: spec 54 §7 (outside-click
+   replaces ROI — fixed only for the locked ROI, pattern/mask
+   replacement and both simulation canvases untouched); spec 55 §7
+   early pattern (uncalibrated space + unsaved geometry — the
+   matcher was tuned while plumbing stayed split); commit 27262b06
+   + CI spec ("unifying display/eval geometry needs a rule re-tuning
+   pass", marked NOT CHANGED deliberately).
+10. George release: NOT FOUND in any repo record (branches, tags,
+    PRs, full history — the only "George" hits are spec 55 itself,
+    confirmed by coordinator). Must not be assumed. Nearest
+    candidates the owner may mean: Mohana Selvan SV's v4.113.x line
+    (v4.113.9, 2026-10-30, workpiece canvas restoration) — but the
+    repo never calls Mohana "George". MBUD 10 stays open on the
+    George side; the verified baseline is 9fa1cc62 semantics.
+11. Spec 54 interaction: ROI lock converts jumps into silent
+    cannot-create/cannot-move for users who don't know double-click;
+    LayersPanel exists only in teach, so users expect it where it is
+    absent; panel/draw/hit-test orders are three different truths
+    (panel static kind zOrder, draw layerOrder with boxes always on
+    top, hit-test hardcoded boxes→masks→pattern→ROI ignoring
+    layerOrder); box reorder silently no-ops and box hide = exclude
+    (changing validation counts); pattern/mask replacement survives
+    spec 54; first-run full-frame ROI is immediately locked; Pin1
+    dispatcher tool has lock enforcement with no panel (panel wiring
+    landed only in Pin1MarkingTool); NO square enforcement anywhere
+    (`regionFromPoints` is a free rectangle); workbench canvas
+    bypasses the lock model entirely (no lock parameter).
+12. P0 fix list (in order): (1) capture the canvas, not the asset
+    (crop the live canvas at trigger time, carry the crop origin);
+    (2) fix carrier double jitter (analyse un-translated draw, draw
+    overlays outside the translate block; verify frame 2, not just
+    frame 1); (3) add polarity to the pattern path (both threshold
+    directions, or a polarity param mirroring Pin1); (4) make the
+    slider real (feed greyscaleLevel/threshold into the analyzer and
+    report the effective threshold) or remove it; (5) stop the
+    analyzer discarding positional evidence (one coherent verdict:
+    positional AND luma, both reported); (6) simulation must not
+    shadow live results (default isSimulating false in the live
+    tool; never synthesize results when no frame exists — report "no
+    frame captured"); (7) give simulation canvases an input path or
+    stop implying editability; (8) make the white-box lock
+    discoverable and non-silent (toast/hint + on-canvas Unlock).
+    P1/P2 (25 items total in the analysis report): one explicit
+    coordinate space (stretched 960x540 recommended since rules are
+    already calibrated to it), unified marking geometry, routing
+    simulation evaluation through constellation matching, size/shape
+    gating + non-max suppression, image-pipeline fixes (cache
+    aliasing, letterboxing vs stretch), teach/analyse on the same
+    image, panel order deriving from layerOrder, hide vs exclude
+    separation, unified validation gates, dispatcher Pin1 lock state,
+    carrier rotation handling, robust capture, clock/calibration
+    honesty, dead-code deletion, square ROI enforcement once the
+    canonical space is fixed.
+13. Open questions needing runtime/owner answers (do not block the
+    fix waves, but they set priority): which surface the owner
+    actually uses when patterns land wrong (dispatcher carrier-tape
+    sim vs orphaned conveyor canvas with no importer vs guided tour);
+    whether George = Mohana's v4.113.x line; natural pixel sizes of
+    chip sprites and preview photos (full-sprite vs body-inset box
+    geometry unmeasured); the real calibrated field of view
+    (mm/px in 960x540 space); live-UI behavior (never exercised
+    live, per spec 54 §23).
+
 ## 9. Grayscale + luminance analysis (31-Oct-25, verified by coordinator)
 
 Verdict: spec 54's three grayscale modes (threshold / stretch / 1-bit)
