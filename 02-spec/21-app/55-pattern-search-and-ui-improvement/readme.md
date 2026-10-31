@@ -119,9 +119,11 @@ spec 54's fix is confirmed working, say so and move on.
 - 9. Grayscale + luminance analysis (conversion path, dead features).
 - 10. UI / window / install / run analysis (menu delay, browser
     auto-open, version display, PS1/shell, run efficiency).
-- 11. 100 improvement possibilities (enumerated, prioritized).
+- 11. 100 improvement possibilities (enumerated, prioritized — complete:
+  100 items, P0 40 / P1 35 / P2 25, 97 evidenced / 3 [PROPOSED]).
 - 12. 200 pattern-search layering possibilities (enumerated,
-    prioritized).
+    prioritized — complete: 200 items, P0 70 / P1 70 / P2 60, 122
+    evidenced / 78 [PROPOSED], counted separately per surface).
 - 13+. Implementation wave completions (one section per wave).
 - End. End-of-tunnel report (build, tests, E2E, CI, remaining gaps).
 
@@ -456,3 +458,324 @@ retry button. What remains:
   in the analyzer; (6) wire or delete the dead luminance features and
   the second golden table; (7) reconcile threshold scales (35 vs 170)
   and document each tool's slider end.
+
+## 11. 100 improvement possibilities (enumerated, prioritized)
+
+One line each, P0 first. Area tags: PS pattern search, GS grayscale,
+LY layers, SEL selection/validation, WIN window controls, MENU menu,
+BRW browser auto-open, VER version display, INST installers, RUN run
+speed, SIM simulation. Every item traces to a finding in §7–§10
+(surface/file named in the item) unless marked [PROPOSED].
+
+1. [P0] [PS] Capture the live canvas at trigger time and carry the crop origin — sim patterns land wrong (PatternMatchCanvas).
+2. [P0] [PS] Fix carrier double jitter: analyse the un-translated draw, draw overlays outside the translate block, verify frame 2 not just frame 1.
+3. [P0] [PS] Route simulation evaluation through taught referenceBoxes — useConveyorSimulation declares but never reads them.
+4. [P0] [PS] Remove hardcoded toleranceLuma 22 in the conveyor evaluator; use the taught tolerancePx.
+5. [P0] [PS] Give the conveyor evaluator the taught searchRegion instead of none.
+6. [P0] [PS] One coherent verdict: positional AND luma, both reported — stop the analyzer discarding its positional evidence.
+7. [P0] [PS] Add polarity to the pattern path: both threshold directions, or a polarity param mirroring Pin1.
+8. [P0] [PS] Make findWhiteBoxes polarity-aware so dark-on-light markings can become candidates.
+9. [P0] [GS] One shared toMatchingGray(rgba, mode, threshold) feeding every matcher, or label mode buttons preview-only.
+10. [P0] [GS] Feed greyscaleLevel/threshold into the analyzer and report the effective threshold — the slider must be real.
+11. [P0] [GS] Stop the silent Pin1 threshold override (frontend round-hole-detector.ts AND backend pin1_detection.py); surface the effective value.
+12. [P0] [GS] Collapse to one threshold implementation; polarity as a separate explicit invert.
+13. [P0] [GS] Fix Pin1 1-bit DarkIndentation vs white-box 1-bit polarity opposition (dark→white vs bright→white).
+14. [P0] [LY] Give simulation canvases an input path or stop implying editability — carrier sim has zero pointer handlers.
+15. [P0] [LY] Make the white-box lock discoverable: toast/hint + on-canvas Unlock; end the silent no-op drag.
+16. [P0] [LY] Enforce square ROI on creation and resize (MBUD 1 decision gates the exact form).
+17. [P0] [LY] Restore pattern toolbars/icons inside the ROI on all canvases.
+18. [P0] [LY] Unify panel order, draw order, and hit-test order into one layerOrder truth.
+19. [P0] [LY] Separate hide from exclude: box hide must not change validation counts.
+20. [P0] [LY] Fix box reorder silently no-opping.
+21. [P0] [SEL] Fix simulation selection: wire onSelectPocket in the carrier sim parent; enable pointer handlers or gate edit mode explicitly.
+22. [P0] [SEL] Fix pattern/mask replacement surviving spec 54 (outside-click replacement).
+23. [P0] [SEL] First-run full-frame ROI must not be immediately locked, or must show an unlock affordance.
+24. [P0] [WIN] Decide MBUD 5 (native shell vs --app-only) — it gates all window work.
+25. [P0] [WIN] Close honesty: window.close() is a browser no-op — surface it, and surface the delegation case as a toast.
+26. [P0] [INST] Launcher parity: start.ps1 gets an already-running check like start.sh.
+27. [P0] [INST] Fail fast on port bind failure instead of a 60s "did not become ready" (stale backend masking).
+28. [P0] [RUN] Exactly one migration pass — db-bootstrap and the backend currently run migrations twice.
+29. [P0] [RUN] Concurrent backend + frontend starts with parallel readiness waits on real health endpoints.
+30. [P0] [BRW] macOS open fallback must use --app + dedicated profile, not a plain default-browser tab.
+31. [P0] [BRW] PS1 console window hidden all session (-WindowStyle Hidden).
+32. [P0] [BRW] Sub-5s delegation must surface a toast, not just a log line.
+33. [P0] [VER] Version badge on all routes, not only home — remove the pathname === "/" gate.
+34. [P0] [VER] Build-time commit hash instead of hardcoded 038f4b22 in version-info.ts.
+35. [P0] [VER] Reconcile the three version sources (version.json 4.113.9, BE __init__ 0.1.0, FastAPI 1.0.0).
+36. [P0] [PS] Simulation must not shadow live results: default isSimulating false in the live tool; no synthesized results without a frame ("no frame captured").
+37. [P0] [PS] Replace the Atmel fixed golden table with the taught constellation, or scope that tool to Atmel-only.
+38. [P0] [GS] Dark-marking positional path + expectedLuma backfill so legacy rules can match at all.
+39. [P0] [PS] Fix the "missing saved pattern boxes" failure: teach must persist boxes before analysis runs; surface the missing-box state in UI, not only as a toast.
+40. [P0] [PS] Declare one canonical coordinate space (stretched 960x540 recommended — rules are already calibrated to it) and run the rule re-tuning pass from 27262b06.
+41. [P1] [PS] Size/shape gating + non-max suppression in constellation matching.
+42. [P1] [PS] Teach and analyse on the same image (image-pipeline cache aliasing fix).
+43. [P1] [PS] Letterboxing vs stretch applied consistently (loader, standard tool, carrier photo).
+44. [P1] [GS] Reconcile threshold scales (35 vs 170) and document each tool's slider end.
+45. [P1] [GS] Wire or delete dead luminance features (luminance-quantizer engine, toTwoBitGray, ATMEL_24_MARKING_OFFSETS second golden table).
+46. [P1] [GS] Wire or delete applyLuminanceFilter (zero production callers, only its own test).
+47. [P1] [GS] StandardIntensityTool metric/limits must persist to settings, not local useState only.
+48. [P1] [GS] Share the preview path: toGrayscalePreviewRgba has exactly one production caller (PatternCanvas).
+49. [P1] [LY] Panel order derives from layerOrder — kill the static kind zOrder.
+50. [P1] [LY] Workbench canvas adopts the lock model (today it bypasses it entirely).
+51. [P1] [LY] Pin1 dispatcher tool lock state wired to a panel (panel wiring landed only in Pin1MarkingTool).
+52. [P1] [LY] Pattern/mask layers get lock semantics matching the ROI.
+53. [P1] [LY] Box-layer reorder UI (boxes stay in number order today).
+54. [P1] [MENU] Split menu state out of StandardAppShell re-render — opening must not re-render vision canvases and the simulation player.
+55. [P1] [MENU] Drop backdrop-blur-xl in fullscreen --app menus.
+56. [P1] [MENU] Add menu open-timing instrumentation; profiler trace on the user's machine.
+57. [P1] [WIN] Minimize honesty: remove the event nobody listens to; toast states the browser-mode limitation or the native-shell plan.
+58. [P1] [WIN] Maximize: stop the fullscreen toggle fighting the --start-fullscreen launch flag.
+59. [P1] [INST] start.sh trap on EXIT, not only INT TERM (orphans on failed readiness / missing browser under set -e).
+60. [P1] [INST] Healthy-service reuse on both platforms (start.ps1 parity with start.sh).
+61. [P1] [RUN] Launchers print the version at startup.
+62. [P1] [RUN] Fresh-profile cold start cost: warm the dedicated profile or document the cost.
+63. [P1] [BRW] Decide MBUD 6: is browser launch ever wanted on run, or must run stay inside the installed shell always?
+64. [P1] [VER] GET /meta version reconciled with version.json; launchers print version.
+65. [P1] [PS] Carrier rotation handling in simulation evaluation.
+66. [P1] [PS] Robust capture: capture failure reports, never silently falls back to the asset.
+67. [P1] [PS] Clock/calibration honesty: simulation timestamps vs real capture time labeled.
+68. [P1] [PS] Guided-tour demo rules must not persist into the real project store; fabricated Pass results removed.
+69. [P1] [PS] Guided-tour geometry must not script the 1042x403 analyzer image as canonical.
+70. [P1] [SEL] Unified validation gates across teach, runtime, and simulation.
+71. [P1] [SEL] Identify the surface the owner actually uses when patterns land wrong (dispatcher carrier-tape sim vs orphaned conveyor canvas vs guided tour).
+72. [P1] [PS] Pattern region derivation restored: derived region wins over input override (9fa1cc62 semantics).
+73. [P1] [PS] Detection filtering by patternRegion center containment documented or removed.
+74. [P1] [PS] Hardcoded centered-box fallback replaced with a derived region or an explicit empty state.
+75. [P1] [GS] Document Rec.601 as canonical; remove Rec.709/average confusion from UI copy.
+76. [P2] [PS] Dead-code deletion: orphaned conveyor canvas with no importer — wire it or delete it.
+77. [P2] [PS] Natural pixel sizes of chip sprites measured; full-sprite vs body-inset box geometry documented.
+78. [P2] [PS] Real calibrated field of view (mm/px in 960x540 space) measured and recorded.
+79. [P2] [GS] Gamma linearization evaluation: is sRGB→linear worth it for matching?
+80. [P2] [LY] Rotated detection bounds (axis-aligned today) — record as a limitation or implement.
+81. [P2] [LY] Polygon point editing for pattern shapes (points default to corners today).
+82. [P2] [LY] Pin1 rotation model (none exists) — record or implement.
+83. [P2] [MENU] Menu animation (~150ms Radix) measured against the profiler; reduce only if it is blamed.
+84. [P2] [WIN] server/index.mjs packaging artifact: verify presence on the installed machine.
+85. [P2] [INST] Installer coverage decision MBUD 8 (Windows-only vs Windows + Linux + macOS).
+86. [P2] [RUN] Readiness poll intervals tuned (60s ceilings → adaptive backoff).
+87. [P2] [BRW] Dedicated profile creation idempotent; stale profile cleanup.
+88. [P2] [VER] About panel with version + commit + build date on all routes.
+89. [P2] [PS] Search direction/mode legitimacy per MBUD 3 (rotation/scale tolerance documented).
+90. [P2] [PS] Res Mismatch warning becomes compensating, not display-only (or documented as display-only).
+91. [P2] [SEL] Selection affordances: selected-layer outline visible on all canvases.
+92. [P2] [SEL] Validation messages name the failing gate (geometry vs luma vs count).
+93. [P2] [GS] Otsu/percentile stretch evaluation for an auto-threshold option.
+94. [P2] [GS] 2-bit quantize mode: wire or delete.
+95. [P2] [LY] Layer count/overflow guard: #1–#59 box overflow across pockets prevented.
+96. [P2] [LY] Pocket-scoped vs global box numbering decision (spec 54 MBUD 3).
+97. [P2] [PS] Conveyor vs carrier-tape engine consolidation plan (one matcher, two renderers).
+98. [P2] [RUN] Telemetry of startup step timings (bootstrap/backend/frontend/browser) to a log. [PROPOSED]
+99. [P2] [MENU] Menu content virtualization if the profiler shows content cost (not suspected today). [PROPOSED]
+100. [P2] [PS] Regression suite: golden-image pattern-search fixtures pinning teach/runtime/sim verdicts together. [PROPOSED]
+
+## 12. 200 pattern-search layering possibilities (enumerated, prioritized)
+
+One line each, P0 first. Surface tags: TEACH white-box teach canvas,
+PIN1 Pin1 canvas, BENCH workbench analyzer canvas, CARR carrier-tape
+simulation canvas, CONV conveyor simulation canvas, TOUR guided tour,
+DISP dispatcher, PANEL layer panels, COORD coordinate spaces,
+X cross-cutting. The same defect class is counted separately per
+surface where it appears in multiple places (stated in the item via
+its surface tag). Items trace to §7–§10 findings unless marked
+[PROPOSED] (a genuine new opportunity, not a found defect).
+
+1. [P0] [TEACH] Panel order, draw order, and hit-test order unified to one layerOrder (today three different truths).
+2. [P0] [TEACH] Hit-test honors layerOrder instead of hardcoded boxes→masks→pattern→ROI.
+3. [P0] [TEACH] Locked ROI drag is a silent no-op — add toast/hint + on-canvas Unlock affordance.
+4. [P0] [TEACH] Outside-click no longer replaces a locked ROI; when unlocked, replacement requires explicit intent.
+5. [P0] [TEACH] Pattern layer replacement on outside click removed; pattern edits only via pattern handles.
+6. [P0] [TEACH] Mask layer replacement on outside click removed; masks edit only via mask handles.
+7. [P0] [TEACH] Box reorder wired (today silently no-ops); drag or Bring Forward/Send Backward changes draw + hit order.
+8. [P0] [PIN1] Pin1 canvas lock/reorder enforcement parity with white-box, verified end to end (canvas landed in spec 54 wave 2.5).
+9. [P0] [PIN1] Pin1MarkingTool LayersPanel buttons wired to canvas lock/reorder state (canvas first, panel omitted).
+10. [P0] [PIN1] Pin1 search ROI locked by default with a visible LOCKED label; double-click unlocks.
+11. [P0] [PIN1] Pin1 package region lock semantics defined (stays unlocked after Add Package Region — document or change).
+12. [P0] [PIN1] Pin1 pattern-shape overlay hit-test must not hijack ROI drag.
+13. [P0] [PIN1] Pin1 grayscale mode layer: preview mode must reach detection or be labeled preview-only.
+14. [P0] [PIN1] Pin1 dispatcher tool lock state exposed to a panel (currently panel-less enforcement).
+15. [P0] [BENCH] Workbench canvas adopts the lock model (today bypasses it entirely — no lock parameter).
+16. [P0] [BENCH] Analyzer draw order (ROI→pattern→masks→zones→boxes-on-top) replaced by layerOrder.
+17. [P0] [BENCH] Analyzer hit-test order matches its draw order.
+18. [P0] [BENCH] Analyzer boxes spanning pockets (#1–#59 overflow) constrained to pocket scope.
+19. [P0] [BENCH] Analyzer pattern boxes drawn from saved geometry only; unsaved geometry never rendered as results.
+20. [P0] [BENCH] Analyzer ROI squareness enforced at draw time.
+21. [P0] [BENCH] Analyzer "missing saved pattern boxes" state rendered on canvas, not only as a toast.
+22. [P0] [CARR] Carrier sim canvas gains pointer handlers (today zero) or an explicit non-editable badge.
+23. [P0] [CARR] onSelectPocket wired by its only parent (today never passed).
+24. [P0] [CARR] Carrier sim overlays drawn outside the jitter translate block (double-jitter fix).
+25. [P0] [CARR] Carrier sim analysis runs on the un-translated draw, not the shifted crop.
+26. [P0] [CARR] Carrier sim ROI/pattern layers drawn in the same space as analysis (no second jitter offset).
+27. [P0] [CARR] Carrier sim layer visibility toggles exist (ROI/pattern/boxes separately).
+28. [P0] [CARR] Carrier sim pattern toolbar/icons rendered inside the ROI, or the sim labeled read-only.
+29. [P0] [CONV] Conveyor capture crops the live canvas at trigger time and carries the crop origin.
+30. [P0] [CONV] Conveyor pointer handlers re-enabled when not simulating, or edit mode made explicit.
+31. [P0] [CONV] Conveyor sim defaults to not simulating in the live tool (isSimulating false).
+32. [P0] [CONV] Conveyor sim never synthesizes results without a frame — "no frame captured" state.
+33. [P0] [CONV] Conveyor sim layer order matches teach canvas layer order.
+34. [P0] [CONV] Conveyor sim taught referenceBoxes actually read by the evaluator.
+35. [P0] [CONV] Orphaned conveyor canvas (no importer) wired or deleted — no third hidden layer model.
+36. [P0] [TOUR] Guided-tour geometry never persists into the real project store.
+37. [P0] [TOUR] Guided-tour fabricated Pass results removed; tour verdicts labeled demo-only.
+38. [P0] [TOUR] Tour DEVICE_LAYOUTS geometry scoped to its 1042x403 demo image, never treated as canonical.
+39. [P0] [TOUR] Tour pattern boxes drawn as a demo overlay layer, visually distinct from user layers.
+40. [P0] [TOUR] Tour layer edits (if any) sandboxed; exiting the tour restores user geometry.
+41. [P0] [TOUR] Tour ROI squareness enforced same as the teach canvas.
+42. [P0] [TOUR] Tour completion clears demo layers instead of leaving them in the project.
+43. [P0] [DISP] Dispatcher carrier-tape sim surface identified and its layer model documented.
+44. [P0] [DISP] Dispatcher sim layers (ROI/pattern/boxes) share teach layerOrder.
+45. [P0] [DISP] Dispatcher sim selection works (pocket select via canvas, not only buttons).
+46. [P0] [DISP] Dispatcher sim pattern placement uses taught geometry, not scripted geometry.
+47. [P0] [DISP] Dispatcher sim lock state visible (locked ROI labeled, unlock gesture works).
+48. [P0] [DISP] Dispatcher sim boxes constrained to the selected pocket.
+49. [P0] [DISP] Dispatcher sim pattern toolbar/icons present inside the ROI.
+50. [P0] [PANEL] LayersPanel order derives from layerOrder (kill static kind zOrder).
+51. [P0] [PANEL] LayersPanel exists in simulation surfaces, or sim labeled panel-less.
+52. [P0] [PANEL] Panel selection syncs to canvas selection bidirectionally.
+53. [P0] [PANEL] Panel visibility toggle changes draw only, never validation counts.
+54. [P0] [PANEL] Panel lock toggle changes canvas lock state (both directions).
+55. [P0] [PANEL] Panel reorder changes draw order AND hit-test order atomically.
+56. [P0] [PANEL] BoxReviewPanel/Pin1ReviewPanel layer state syncs with canvas (grayscale mode precedent).
+57. [P0] [COORD] Canonical space declared: stretched 960x540 (rules already calibrated to it).
+58. [P0] [COORD] Source-pixel regions mapped to the stretched frame at draw time (single transform).
+59. [P0] [COORD] Portrait loader stretch documented; letterbox-vs-stretch decision applied.
+60. [P0] [COORD] Standard tool upload stretch to 960x540 mapped through the same transform.
+61. [P0] [COORD] Carrier photo 512x288 forced size mapped through the same transform.
+62. [P0] [COORD] 140-wide conveyor capture crop origin carried into layer coordinates.
+63. [P0] [COORD] Res Mismatch warning becomes a compensating transform or is documented display-only.
+64. [P0] [X] One shared layer model type used by all four canvases (no per-canvas reinvention).
+65. [P0] [X] Teach geometry, runtime geometry, and simulation geometry stored in separate namespaces, never mixed.
+66. [P0] [X] Simulation geometry never persists as a user rule (9fa1cc62 semantics restored).
+67. [P0] [X] Pattern region derivation restored: derived region wins over input override.
+68. [P0] [X] Hide vs exclude separated globally: hide affects draw only, exclude affects validation.
+69. [P0] [X] Box hide in every surface changes draw only (audit all surfaces).
+70. [P0] [X] Square ROI enforcement once the canonical space is fixed (all surfaces).
+71. [P1] [TEACH] Rotate handle rotates the pattern layer with bounds recomputed (axis-aligned today).
+72. [P1] [TEACH] Resize handles respect the square constraint when enabled.
+73. [P1] [TEACH] Layer grouping: ROI+pattern+masks move as a group when grouped. [PROPOSED]
+74. [P1] [TEACH] Layer opacity controls for overlays (tape/glare readability). [PROPOSED]
+75. [P1] [TEACH] Active-layer highlight distinct from the selection outline.
+76. [P1] [TEACH] Layer delete with confirmation; deleting an ROI deletes dependent pattern/masks or warns.
+77. [P1] [TEACH] Layer duplicate (pattern/mask) for multi-pocket teach. [PROPOSED]
+78. [P1] [PIN1] Pin1 rotation model added (none exists) or rotation explicitly unsupported.
+79. [P1] [PIN1] Pin1 polygon point editing (points default to corners today).
+80. [P1] [PIN1] Pin1 pattern-shape layer z-order vs search ROI defined.
+81. [P1] [PIN1] Pin1 hole badges layer above the pattern overlay, never hidden by it.
+82. [P1] [PIN1] Pin1 registered-reticle layer toggle. [PROPOSED]
+83. [P1] [PIN1] Pin1 detected-hole layer selection syncs with the list panel.
+84. [P1] [PIN1] Pin1 grayscale preview layer composited under overlays, never over them.
+85. [P1] [BENCH] Bench zone layers (zones vs masks) draw order defined.
+86. [P1] [BENCH] Bench numbered-box layer order follows box number, not insertion.
+87. [P1] [BENCH] Bench pattern region dashed outline distinct from the ROI outline.
+88. [P1] [BENCH] Bench rejected-workpiece overlay layer (toast + canvas tint) consistent.
+89. [P1] [BENCH] Bench grayscale parameter panel values reflected in the canvas preview layer.
+90. [P1] [BENCH] Bench layer visibility persists across analysis runs. [PROPOSED]
+91. [P1] [BENCH] Bench canvas layer state survives image switch (source dropdown).
+92. [P1] [CARR] Carrier pocket layer per pocket (boxes scoped per pocket, not global).
+93. [P1] [CARR] Carrier strip layer vs pocket layer separation.
+94. [P1] [CARR] Carrier sim jitter visualization layer (show the applied offset for debug). [PROPOSED]
+95. [P1] [CARR] Carrier sim frame-2 verification layer (not just frame 1).
+96. [P1] [CARR] Carrier sim tape-sprocket layer excluded from pattern matching.
+97. [P1] [CARR] Carrier sim layer creation allowed in paused sim (edit-while-paused mode). [PROPOSED]
+98. [P1] [CARR] Carrier sim layer edits in pause do not leak into live rules.
+99. [P1] [CONV] Conveyor chip-asset layer vs captured-frame layer separation.
+100. [P1] [CONV] Conveyor overlay layer drawn from captured frame coordinates.
+101. [P1] [CONV] Conveyor sim pattern layer uses the taught searchRegion.
+102. [P1] [CONV] Conveyor sim tolerance layer: taught tolerancePx visualized as a match band.
+103. [P1] [CONV] Conveyor sim minMatchPercent visualized as a threshold band.
+104. [P1] [CONV] Conveyor sim greyscaleLevel visualized (effective threshold reported).
+105. [P1] [CONV] Conveyor sim layer state resets on new capture (no stale boxes).
+106. [P1] [TOUR] Tour overlay layer z-order above user layers, clearly badged DEMO.
+107. [P1] [TOUR] Tour step highlight layer (current step element outlined).
+108. [P1] [TOUR] Tour demo boxes numbered separately from user box numbering.
+109. [P1] [TOUR] Tour image layer fixed to its demo asset (no user image bleed).
+110. [P1] [TOUR] Tour layer persistence explicitly disabled (no save path).
+111. [P1] [TOUR] Tour exit restores pre-tour layer visibility.
+112. [P1] [TOUR] Tour pattern toolbar shown, or the tour labeled toolbar-less. [PROPOSED]
+113. [P1] [DISP] Dispatcher tool layer model shared with the standard tool (no fork).
+114. [P1] [DISP] Dispatcher pocket buttons sync with canvas pocket layer selection.
+115. [P1] [DISP] Dispatcher strip image layer vs pocket layer separation.
+116. [P1] [DISP] Dispatcher pattern layer per pocket (strip-wide search forbidden).
+117. [P1] [DISP] Dispatcher sim layer edits require an explicit edit mode toggle.
+118. [P1] [DISP] Dispatcher sim validation counts exclude hidden layers.
+119. [P1] [DISP] Dispatcher sim ROI squareness enforced same as teach.
+120. [P1] [PANEL] Panel shows layer kind icons (ROI/pattern/mask/box/zone) consistently.
+121. [P1] [PANEL] Panel drag-reorder implemented (today buttons only, where implemented). [PROPOSED]
+122. [P1] [PANEL] Panel layer count badge (e.g. boxes 59) with overflow warning.
+123. [P1] [PANEL] Panel search/filter for layers when box count is large. [PROPOSED]
+124. [P1] [PANEL] Panel layer rename (custom labels for masks/patterns). [PROPOSED]
+125. [P1] [PANEL] Panel undo for layer reorder/hide/delete. [PROPOSED]
+126. [P1] [PANEL] Panel state persists per project (visibility + order). [PROPOSED]
+127. [P1] [COORD] Display→source transform unit-tested per surface (CSS px vs canvas px vs source px).
+128. [P1] [COORD] DevicePixelRatio handled in hit-testing (canvas backing store vs CSS size).
+129. [P1] [COORD] Zoom/pan transform (if any) composed with layer coordinates. [PROPOSED]
+130. [P1] [COORD] Calibration (mm/px) recorded per canonical space, not per image.
+131. [P1] [COORD] Rule re-tuning pass migrates legacy stretched-pixel rules to the canonical space.
+132. [P1] [COORD] Migration report: which rules moved, by how many px.
+133. [P1] [COORD] Non-960x540 uploads normalized before teach (no silent stretch).
+134. [P1] [X] Layer model versioned in saved rules (order + visibility + lock).
+135. [P1] [X] Layer state migration for legacy rules (no layerOrder → default order). [PROPOSED]
+136. [P1] [X] Layer validation gate names the failing layer in messages.
+137. [P1] [X] Layer change events logged for debugging (who moved what, when). [PROPOSED]
+138. [P1] [X] Layer model shared type enforced by lint (no ad-hoc layer objects).
+139. [P1] [X] Teach/runtime/sim layer diff view for debugging (what differs, where). [PROPOSED]
+140. [P1] [X] Layered screenshot export (canvas + layer list) for bug reports. [PROPOSED]
+141. [P2] [TEACH] Snap-to-grid for layer moves (optional, off by default). [PROPOSED]
+142. [P2] [TEACH] Layer alignment guides (align pattern to ROI edges). [PROPOSED]
+143. [P2] [TEACH] Multi-select layers (shift-click) for group move. [PROPOSED]
+144. [P2] [TEACH] Layer keyboard nudging (arrow keys move the selected layer 1px). [PROPOSED]
+145. [P2] [TEACH] Layer copy/paste across pockets. [PROPOSED]
+146. [P2] [TEACH] Layer templates (save an ROI+pattern+mask set as a template). [PROPOSED]
+147. [P2] [PIN1] Pin1 layer opacity slider for the pattern overlay. [PROPOSED]
+148. [P2] [PIN1] Pin1 layer blend mode toggle (for glare-heavy images). [PROPOSED]
+149. [P2] [PIN1] Pin1 hole-layer filter (show only kept / only primary). [PROPOSED]
+150. [P2] [PIN1] Pin1 reticle layer color customization. [PROPOSED]
+151. [P2] [PIN1] Pin1 layer export (ROI+shape as JSON). [PROPOSED]
+152. [P2] [PIN1] Pin1 layer import validation (reject out-of-frame geometry). [PROPOSED]
+153. [P2] [BENCH] Bench layer timeline (layer state per analysis run). [PROPOSED]
+154. [P2] [BENCH] Bench diff layer (teach vs runtime geometry side by side). [PROPOSED]
+155. [P2] [BENCH] Bench heatmap layer for match scores. [PROPOSED]
+156. [P2] [BENCH] Bench layer screenshot with annotations for reports. [PROPOSED]
+157. [P2] [BENCH] Bench layer preset per product (load a layer set by product). [PROPOSED]
+158. [P2] [BENCH] Bench layer audit log (which layer changed a verdict). [PROPOSED]
+159. [P2] [CARR] Carrier sim slow-motion layer stepping (frame-by-frame layer view). [PROPOSED]
+160. [P2] [CARR] Carrier sim layer ghosting (previous frame overlay at low opacity). [PROPOSED]
+161. [P2] [CARR] Carrier sim pocket-index layer labels. [PROPOSED]
+162. [P2] [CARR] Carrier sim sprocket-hole layer toggle. [PROPOSED]
+163. [P2] [CARR] Carrier sim layer recording (export layer states per frame). [PROPOSED]
+164. [P2] [CARR] Carrier sim layer A/B (compare two layer sets). [PROPOSED]
+165. [P2] [CONV] Conveyor sim capture-history layer (past captures as thumbnails). [PROPOSED]
+166. [P2] [CONV] Conveyor sim match-score overlay layer. [PROPOSED]
+167. [P2] [CONV] Conveyor sim trigger-line layer (capture line visualization). [PROPOSED]
+168. [P2] [CONV] Conveyor sim belt-speed layer annotation. [PROPOSED]
+169. [P2] [CONV] Conveyor sim layer snapshot on trigger. [PROPOSED]
+170. [P2] [CONV] Conveyor sim layer replay (re-run evaluation on a saved frame). [PROPOSED]
+171. [P2] [TOUR] Tour layer walkthrough (each step highlights one layer). [PROPOSED]
+172. [P2] [TOUR] Tour skip-to-layer step navigation. [PROPOSED]
+173. [P2] [TOUR] Tour demo layer reset button. [PROPOSED]
+174. [P2] [TOUR] Tour layer quiz (identify ROI vs pattern layer). [PROPOSED]
+175. [P2] [TOUR] Tour layer state checkpoint/restore. [PROPOSED]
+176. [P2] [TOUR] Tour layer localization (labels per locale). [PROPOSED]
+177. [P2] [DISP] Dispatcher sim layer favorites (pin frequent layer sets). [PROPOSED]
+178. [P2] [DISP] Dispatcher sim layer compare (teach vs sim geometry). [PROPOSED]
+179. [P2] [DISP] Dispatcher sim layer grid overlay. [PROPOSED]
+180. [P2] [DISP] Dispatcher sim layer ruler (px/mm scale). [PROPOSED]
+181. [P2] [DISP] Dispatcher sim layer print layout (for paper SOP). [PROPOSED]
+182. [P2] [DISP] Dispatcher sim layer voice labels (accessibility). [PROPOSED]
+183. [P2] [PANEL] Panel layer color coding by kind. [PROPOSED]
+184. [P2] [PANEL] Panel collapsible layer groups. [PROPOSED]
+185. [P2] [PANEL] Panel layer visibility presets (all / teach-only / results-only). [PROPOSED]
+186. [P2] [PANEL] Panel layer sort (by kind / name / z-order). [PROPOSED]
+187. [P2] [PANEL] Panel layer duplication button. [PROPOSED]
+188. [P2] [PANEL] Panel layer lock-all / unlock-all. [PROPOSED]
+189. [P2] [COORD] Coordinate-space badge on canvas (shows current space + scale). [PROPOSED]
+190. [P2] [COORD] Coordinate readout on hover (source px + canonical px). [PROPOSED]
+191. [P2] [COORD] Transform debugger overlay (draw source frame bounds). [PROPOSED]
+192. [P2] [COORD] Per-image calibration override (when FOV differs). [PROPOSED]
+193. [P2] [COORD] Transform regression fixtures (golden transforms pinned). [PROPOSED]
+194. [P2] [COORD] Coordinate-space migration dry-run report. [PROPOSED]
+195. [P2] [X] Layer model documentation page (kinds, orders, semantics). [PROPOSED]
+196. [P2] [X] Layer model JSON schema + validation on load. [PROPOSED]
+197. [P2] [X] Layer telemetry (which layers users touch most). [PROPOSED]
+198. [P2] [X] Layer accessibility (keyboard layer navigation). [PROPOSED]
+199. [P2] [X] Layer animation on reorder (smooth z transition). [PROPOSED]
+200. [P2] [X] Layer conflict resolver (teach vs sim geometry merge UI). [PROPOSED]
