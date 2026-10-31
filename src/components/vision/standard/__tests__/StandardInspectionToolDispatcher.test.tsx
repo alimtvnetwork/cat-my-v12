@@ -69,7 +69,13 @@ describe("StandardInspectionToolDispatcher", () => {
     });
   });
 
-  it("dispatches T110 to Edge Pitch when ruleName specifies pitch", () => {
+  it("dispatches T110 to Edge Width even when ruleName specifies pitch (exact-code-first)", () => {
+    // Exact-code-first routing (ff90a53c, 2026-10-26): an explicit
+    // toolCode always wins over name-substring inference, so a T110
+    // rule named "pitch check" still mounts its own dedicated tool.
+    // Consistent with the toolCases table above (T110 -> "Edge Width");
+    // pitch-by-name routing still applies to non-code toolTypes
+    // (e.g. toolType "edge-pitch" -> Edge Pitch).
     render(
       <StandardInspectionToolDispatcher
         toolType="T110"
@@ -79,7 +85,7 @@ describe("StandardInspectionToolDispatcher", () => {
       />,
     );
 
-    expect(screen.getAllByText(/Edge Pitch/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Edge Width/i).length).toBeGreaterThan(0);
   });
 
   it("dispatches to Area Tool via settings.params.toolCode", () => {
@@ -88,12 +94,7 @@ describe("StandardInspectionToolDispatcher", () => {
       params: { toolCode: "T101" },
     };
 
-    render(
-      <StandardInspectionToolDispatcher
-        settings={areaSettings}
-        onChange={onChange}
-      />,
-    );
+    render(<StandardInspectionToolDispatcher settings={areaSettings} onChange={onChange} />);
 
     expect(screen.getAllByText(/Area/i).length).toBeGreaterThan(0);
   });
