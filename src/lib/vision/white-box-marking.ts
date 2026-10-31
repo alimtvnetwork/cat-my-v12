@@ -416,9 +416,16 @@ export function renderSelectedWhiteBoxMarks(
   const rgba =
     whiteThreshold === undefined
       ? grayToRgba(toTwoBitGray(input.rgba))
-      : (typeof optionsOrMode === "string" && (optionsOrMode === "threshold" || optionsOrMode === "stretch" || optionsOrMode === "one-bit"))
+      : typeof optionsOrMode === "string" &&
+          (optionsOrMode === "threshold" ||
+            optionsOrMode === "stretch" ||
+            optionsOrMode === "one-bit")
         ? toGrayscalePreviewRgba(input, optionsOrMode, whiteThreshold)
-        : toThresholdPreviewRgba(input, whiteThreshold, optionsOrMode as ThresholdPreviewOptions | GrayscaleBitDepth | undefined);
+        : toThresholdPreviewRgba(
+            input,
+            whiteThreshold,
+            optionsOrMode as ThresholdPreviewOptions | GrayscaleBitDepth | undefined,
+          );
   drawBoxes(rgba, input.width, input.height, boxes);
 
   return { width: input.width, height: input.height, rgba, boxes };
@@ -701,7 +708,16 @@ function findWhiteBoxes(
         const isCandidate = isDark ? gray[index] <= threshold : gray[index] >= threshold;
 
         if (!isCandidate || localSeen[index] === 1) continue;
-        const component = walkComponent(gray, localSeen, width, height, index, threshold, region, isDark);
+        const component = walkComponent(
+          gray,
+          localSeen,
+          width,
+          height,
+          index,
+          threshold,
+          region,
+          isDark,
+        );
 
         if (component.area >= minArea && looksLikeMarking(component, region)) {
           found.push(toBox(found.length + 1, component, gray, width, height, region));
