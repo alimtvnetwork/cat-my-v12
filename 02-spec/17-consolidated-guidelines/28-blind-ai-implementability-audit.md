@@ -212,7 +212,7 @@ The user's `mem://` files contain critical operational rules (axios pinning, git
 
 - [`22-gap-analysis.md`](./22-gap-analysis.md) — formal coverage scoring (97.6/100 build-fresh; this audit reframes for live-modify scenario)
 - [`27-folder-mapping.md`](./27-folder-mapping.md) — bidirectional source-folder index
-- [`99-consistency-report.md`](./readme.md) — file inventory and validation history
+- [`99-consistency-report.md`](./99-consistency-report.md) — file inventory and validation history
 
 ---
 

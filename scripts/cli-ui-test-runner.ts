@@ -1,4 +1,8 @@
 import { chromium, type Page, type Browser } from "playwright";
+import {
+  runPatternSearchLogicCases,
+  runPatternSearchUiCases,
+} from "./pattern-search-cli-cases";
 import * as fs from "node:fs";
 import { HttpMethod } from "@/lib/constants";
 import * as path from "node:path";
@@ -118,6 +122,12 @@ async function recordStep(
 }
 
 async function runCliUiTests(): Promise<void> {
+  for (const logicCase of runPatternSearchLogicCases()) {
+    results.push(logicCase);
+    const mark = logicCase.isPassed ? "✓ PASS" : "✗ FAIL";
+    console.log(`[${mark}] [${logicCase.feature}] ${logicCase.step} (${logicCase.durationMs}ms): ${logicCase.details}`);
+  }
+
   BASE_URL = await probeActiveBaseUrl();
   console.log("=".repeat(75));
   console.log("🚀 CAT-iVISION CLI Headless UI Verification Runner (Alim Agenda)");
@@ -360,16 +370,16 @@ async function runCliUiTests(): Promise<void> {
 
         const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
         await dropdownBtn.waitFor({ state: "visible", timeout: 8000 });
+        await dropdownBtn.click();
 
-        const pocket1 = page.locator("button:has-text('Pocket 1')").first();
-        const pocket2 = page.locator("button:has-text('Pocket 2')").first();
-        const pocket5 = page.locator("button:has-text('Pocket 5')").first();
+        const pocket2 = page.locator("text=Pocket 2 [Empty Defect]").first();
+        const pocket5 = page.locator("text=Pocket 5 [Strip]").first();
 
-        if (!(await pocket1.isVisible())) throw new Error("Preset 'Pocket 1' not visible");
-        if (!(await pocket2.isVisible())) throw new Error("Preset 'Pocket 2' not visible");
-        if (!(await pocket5.isVisible())) throw new Error("Preset 'Pocket 5' not visible");
+        await pocket2.waitFor({ state: "visible", timeout: 5000 });
+        await pocket5.waitFor({ state: "visible", timeout: 5000 });
+        await page.keyboard.press("Escape");
 
-        return "Top toolbar visible with presets: Pocket 1, Pocket 2, and Pocket 5";
+        return "One source menu holds Pocket 2 and Pocket 5; they are not a second inline row";
       },
       "08_analyze_image_toolbar_presets",
     );
@@ -379,7 +389,9 @@ async function runCliUiTests(): Promise<void> {
       "Switch preset to Pocket 2 and check resolution status",
       page,
       async () => {
-        const pocket2 = page.locator("button:has-text('Pocket 2')").first();
+        const dropdownBtn = page.locator("[data-tour='project-image-selector-dropdown']");
+        await dropdownBtn.click();
+        const pocket2 = page.locator("text=Pocket 2 [Empty Defect]").first();
         await pocket2.click();
         await page.waitForTimeout(400);
 
@@ -589,6 +601,16 @@ async function runCliUiTests(): Promise<void> {
       },
       "16_window_controls_and_version_modal",
     );
+
+    const patternUiCases = await runPatternSearchUiCases(page, BASE_URL);
+
+    for (const patternCase of patternUiCases) {
+      results.push(patternCase);
+      const mark = patternCase.isPassed ? "✓ PASS" : "✗ FAIL";
+      console.log(
+        `[${mark}] [${patternCase.feature}] ${patternCase.step} (${patternCase.durationMs}ms): ${patternCase.details}`,
+      );
+    }
   } finally {
     await browser.close();
   }
