@@ -155,7 +155,7 @@ export function StandardHomeView({
 
   return (
     <StandardAppShell activeNav="home">
-      <div className="flex-1 overflow-auto hmi-cad-grid-bg p-4 text-[#f8fafc]">
+      <div className="flex-1 overflow-auto hmi-cad-grid-bg p-4 text-ca-ink">
         <div className="grid min-h-full grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="flex min-w-0 flex-col gap-4">
             <h1 className="sr-only">Home</h1>
@@ -168,20 +168,20 @@ export function StandardHomeView({
           </section>
 
           <aside className="flex min-w-0 flex-col gap-4">
-            <section className="rounded-xl hmi-machined-card bg-[#0e1420]/95 overflow-hidden">
-              <div className="border-b border-white/[0.08] bg-[#121927] px-3.5 py-2.5">
-                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-[#f8fafc]">
+            <section className="rounded-xl hmi-machined-card bg-ca-panel/95 overflow-hidden">
+              <div className="border-b border-ca-border bg-ca-panel-2 px-3.5 py-2.5">
+                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
                   Active & Recent Programs
                 </h2>
               </div>
               <div className="space-y-2 p-3">
                 {displayProjects.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-[#222938] bg-[#0c1017] p-6 text-center">
-                    <FolderKanban size={24} className="mx-auto mb-3 text-[#64748b]" />
-                    <p className="text-xs font-semibold uppercase text-[#f8fafc]">
+                  <div className="rounded-lg border border-dashed border-ca-border bg-ca-bg p-6 text-center">
+                    <FolderKanban size={24} className="mx-auto mb-3 text-ca-ink-muted" />
+                    <p className="text-xs font-semibold uppercase text-ca-ink">
                       No program loaded
                     </p>
-                    <p className="mt-1 text-xs text-[#94a3b8]">
+                    <p className="mt-1 text-xs text-ca-ink-muted">
                       Create a project to start inspection setup.
                     </p>
                   </div>
@@ -193,13 +193,13 @@ export function StandardHomeView({
               </div>
             </section>
 
-            <section className="rounded-xl hmi-machined-card bg-[#0e1420]/95 overflow-hidden">
-              <div className="border-b border-white/[0.08] bg-[#121927] px-3.5 py-2.5">
-                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-[#f8fafc]">
+            <section className="rounded-xl hmi-machined-card bg-ca-panel/95 overflow-hidden">
+              <div className="border-b border-ca-border bg-ca-panel-2 px-3.5 py-2.5">
+                <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ca-ink">
                   Line Readiness
                 </h2>
               </div>
-              <div className="grid grid-cols-2 gap-px bg-[#1e293b]/70">
+              <div className="grid grid-cols-2 gap-px bg-ca-border/40">
                 <StatusCell
                   label="Vision Engine"
                   value="Active (60 FPS)"
@@ -229,7 +229,7 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
   return (
     <article
       data-tour={workflow.id === "projects" ? "home-project-workflow" : undefined}
-      className={`group relative min-h-[220px] overflow-hidden rounded-xl hmi-machined-card bg-[#0e1420]/95 p-4 backdrop-blur-md transition-all duration-200 hover:border-[#334460] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_12px_32px_-8px_rgba(0,0,0,0.7)] ${tone.border}`}
+      className={`group relative min-h-[220px] overflow-hidden rounded-xl hmi-machined-card bg-ca-panel/95 p-4 backdrop-blur-md transition-all duration-200 hover:border-[#334460] hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_12px_32px_-8px_rgba(0,0,0,0.7)] ${tone.border}`}
     >
       <div
         aria-hidden
@@ -237,13 +237,13 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
       />
       <div className="relative flex h-full flex-col justify-between">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.08] bg-[#141b2b] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-transform duration-200 group-hover:scale-105">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-ca-border bg-ca-panel-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-transform duration-200 group-hover:scale-105">
             <Icon size={20} className={tone.icon} />
           </div>
           <Link
             to={workflow.to}
             data-testid="standard-home-workflow-enter"
-            className="group/enter item-pad-cta inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-gradient-to-b from-[#182335] to-[#101724] text-[10px] font-bold uppercase leading-none tracking-wider text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_2px_6px_rgba(0,0,0,0.5)] transition-all hover:border-[oklch(0.76_0.145_210/0.8)] hover:text-[oklch(0.76_0.145_210)] hover:shadow-[0_0_12px_rgba(34,211,238,0.25)] active:scale-[0.98]"
+            className="group/enter item-pad-cta inline-flex items-center gap-2 rounded-md border border-ca-border bg-gradient-to-b from-ca-panel-2 to-ca-panel text-[10px] font-bold uppercase leading-none tracking-wider text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),0_2px_6px_rgba(0,0,0,0.5)] transition-all hover:border-[oklch(0.76_0.145_210/0.8)] hover:text-[oklch(0.76_0.145_210)] hover:shadow-[0_0_12px_rgba(34,211,238,0.25)] active:scale-[0.98]"
           >
             <span className="leading-none">Enter</span>
             <ArrowRight
@@ -254,10 +254,10 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
         </div>
 
         <div className="mt-4">
-          <h2 className="text-xl font-black uppercase tracking-wider text-[#f8fafc]">
+          <h2 className="text-xl font-black uppercase tracking-wider text-ca-ink">
             {workflow.label}
           </h2>
-          <p className="mt-1 text-xs text-[#94a3b8] leading-relaxed">{workflow.description}</p>
+          <p className="mt-1 text-xs text-ca-ink-muted leading-relaxed">{workflow.description}</p>
           <div className="mt-4 grid grid-cols-2 gap-2" data-testid="standard-home-quick-actions">
             {workflow.quickActions.map((action) => {
               const ActionIcon = action.icon;
@@ -266,16 +266,16 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
                 <Link
                   key={action.label}
                   to={action.to as any}
-                  className="group/qa item-pad-chip relative flex items-center justify-between rounded-md border border-white/[0.07] bg-[#131a29]/90 text-xs font-semibold leading-none text-[#f8fafc] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-[#1a2337] hover:shadow-[0_2px_12px_-2px_oklch(0.76_0.145_210/0.3)]"
+                  className="group/qa item-pad-chip relative flex items-center justify-between rounded-md border border-ca-border bg-ca-panel/90 text-xs font-semibold leading-none text-ca-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-ca-panel-2 hover:shadow-[0_2px_12px_-2px_oklch(0.76_0.145_210/0.3)]"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`h-2.5 w-0.5 rounded-full shrink-0 ${tone.pip}`} />
-                    <ActionIcon size={14} className="shrink-0 text-[#94a3b8]" />
+                    <ActionIcon size={14} className="shrink-0 text-ca-ink-muted" />
                     <span className="truncate uppercase font-medium">{action.label}</span>
                   </span>
                   <ArrowRight
                     size={11}
-                    className="shrink-0 text-[#94a3b8] transition-colors group-hover/qa:text-cyan-300"
+                    className="shrink-0 text-ca-ink-muted transition-colors group-hover/qa:text-cyan-300"
                   />
                 </Link>
               );
@@ -296,20 +296,20 @@ function ProjectRow({
     <Link
       to="/projects/$projectId"
       params={{ projectId: project.projectId }}
-      className="block rounded-lg border border-white/[0.06] bg-[#0c121c] p-3 transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-[#131b2a]"
+      className="block rounded-lg border border-ca-border bg-ca-bg p-3 transition hover:border-[oklch(0.76_0.145_210/0.6)] hover:bg-ca-panel-2"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
             <span className="relative inline-block h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
           </span>
-          <span className="truncate text-sm font-bold uppercase text-[#f8fafc]">
+          <span className="truncate text-sm font-bold uppercase text-ca-ink">
             {project.name}
           </span>
         </div>
-        <ArrowRight size={13} className="shrink-0 text-[#94a3b8]" />
+        <ArrowRight size={13} className="shrink-0 text-ca-ink-muted" />
       </div>
-      <div className="mt-1 flex items-center justify-between gap-2 pl-4 text-[10px] font-mono uppercase text-[#94a3b8]">
+      <div className="mt-1 flex items-center justify-between gap-2 pl-4 text-[10px] font-mono uppercase text-ca-ink-muted">
         <span>ID {project.projectId.slice(0, 6)}</span>
         <span suppressHydrationWarning>
           {new Date(project.openedAt).toISOString().slice(0, 10)}
@@ -334,8 +334,8 @@ function StatusCell({
   const isCyan = variant === "cyan";
 
   return (
-    <div className="bg-[#0b1018] p-3 transition-colors hover:bg-[#0e1420]">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-[#94a3b8]">{label}</div>
+    <div className="bg-ca-bg p-3 transition-colors hover:bg-ca-panel">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-ca-ink-muted">{label}</div>
       <div className="mt-1.5 flex items-center gap-2">
         {isGood ? (
           <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
@@ -357,7 +357,7 @@ function StatusCell({
         )}
         <span
           className={`text-xs font-mono font-bold uppercase tracking-tight truncate ${
-            isGood ? (isCyan ? "text-cyan-300" : "text-emerald-400") : "text-[#cbd5e1]"
+            isGood ? (isCyan ? "text-cyan-300" : "text-emerald-400") : "text-ca-ink-muted"
           }`}
         >
           {value}

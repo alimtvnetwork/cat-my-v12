@@ -21,7 +21,7 @@ export enum ApplyThemeClassResolvedType {
 import { useEffect } from "react";
 import { useUiPrefsStore, type ThemeVariant, type UiFlavor } from "@/lib/stores/ui-prefs-store";
 
-function resolveTheme(theme: ThemeVariant): ApplyThemeClassResolvedType {
+export function resolveTheme(theme: ThemeVariant): ApplyThemeClassResolvedType {
   if (theme === "system") {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return ApplyThemeClassResolvedType.Dark;

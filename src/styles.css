@@ -499,6 +499,25 @@ html[data-ui-flavor="standard"],
  * `--ca-bg`) instead of the near-black chrome used in dark mode.
  */
 html.light {
+  /* Standard-shell surfaces. These tokens are otherwise defined only
+     inside `.dark`, so a light session left the home grid on the dark
+     blueprint color. */
+  --std-bg: oklch(0.97 0.004 248);
+  --std-chrome: oklch(0.99 0.003 248);
+  --std-panel: oklch(0.985 0.004 248);
+  --std-panel-header: oklch(0.945 0.006 248);
+  --std-accent-active: oklch(0.55 0.14 210);
+  --std-primary-action: oklch(0.5 0.14 210);
+  --std-primary-action-text: oklch(0.99 0.003 248);
+  --std-secondary-action: oklch(0.93 0.006 248);
+  --std-text: oklch(0.2 0.02 248);
+  --std-text-muted: oklch(0.46 0.02 248);
+  --std-readout-bg: oklch(1 0 0);
+  --std-readout-text: oklch(0.22 0.04 220);
+  --std-border: oklch(0.86 0.008 248);
+  --std-border-light: oklch(0.94 0.004 248);
+  --std-border-dark: oklch(0.78 0.01 248);
+
   /* HMI chrome / surfaces */
   --ca-bg: oklch(0.985 0.003 248);
   --ca-panel: oklch(0.965 0.005 248);

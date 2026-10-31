@@ -14,6 +14,11 @@ import { RootShellLayout } from "../lib/boot/root-shell-layout";
 import { useRootBootOrchestrator } from "./useRootBootOrchestrator";
 import { RootErrorBoundary } from "./RootErrorBoundary";
 import { ProjectCreationAnalysisTour } from "@/components/guided-simulation/ProjectCreationAnalysisTour";
+import {
+  ApplyThemeClassResolvedType,
+  resolveTheme,
+} from "@/components/theme/ThemeController";
+import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 
 function NotFoundComponent() {
   return (
@@ -94,8 +99,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const theme = useUiPrefsStore((state) => state.theme);
+  const resolved = resolveTheme(theme);
+  const isLight = resolved === ApplyThemeClassResolvedType.Light;
+
   return (
-    <html lang="en" className="dark" data-theme="dark" style={{ colorScheme: "dark" }}>
+    <html
+      lang="en"
+      className={isLight ? "light" : "dark"}
+      data-theme={resolved}
+      style={{ colorScheme: resolved }}
+    >
       <head>
         <HeadContent />
       </head>

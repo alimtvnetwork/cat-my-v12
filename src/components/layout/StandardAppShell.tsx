@@ -274,7 +274,7 @@ export function StandardAppShell({
         data-app-shell="true"
         data-density={density}
         className={cn(
-          "flex items-center justify-between border-b border-white/[0.08] bg-[#0c0f17]/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl flex-nowrap overflow-hidden",
+          "flex items-center justify-between border-b border-ca-border bg-ca-chrome/95 px-3 sm:px-4 shrink-0 select-none z-30 min-w-0 shadow-sm backdrop-blur-xl flex-nowrap overflow-hidden",
           density === "compact"
             ? "h-[33px] min-h-[33px] max-h-[33px]"
             : "h-[41px] min-h-[41px] max-h-[41px]",
@@ -300,10 +300,10 @@ export function StandardAppShell({
               <Link
                 to="/"
                 title="CAT iVISION Home"
-                className="group flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 hover:border-cyan-400/40 hover:bg-white/[0.08] transition-all cursor-pointer select-none shrink-0"
+                className="group flex items-center gap-2 rounded-md border border-ca-border bg-ca-panel/60 px-2 py-1 hover:border-cyan-400/40 hover:bg-ca-panel-2 transition-all cursor-pointer select-none shrink-0"
               >
                 <img src="/cat-logo.svg" alt="CAT" className="h-6 w-auto" draggable={false} />
-                <span className="hidden sm:inline text-xs font-bold tracking-tight text-white">
+                <span className="hidden sm:inline text-xs font-bold tracking-tight text-ca-ink">
                   Cat Vision, Cat I Vision
                 </span>
               </Link>
@@ -342,7 +342,7 @@ export function StandardAppShell({
                 type="button"
                 data-tour="standard-menu-trigger"
                 aria-expanded={isMenuOpen}
-                className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-200 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
+                className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-ca-border bg-ca-panel/60 hover:bg-ca-panel-2 hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-ca-ink transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
               >
                 <Menu className="h-3.5 w-3.5 text-cyan-400 transition-colors group-hover:text-cyan-300" />
                 <span>Menu</span>
@@ -369,7 +369,7 @@ export function StandardAppShell({
 
                 setIsMenuOpen(false);
               }}
-              className="w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-white/15 bg-[#0c1017]/95 p-1.5 shadow-2xl z-50 text-slate-200"
+              className="w-56 max-w-[calc(100vw-2rem)] rounded-lg border border-ca-border bg-ca-panel/95 p-1.5 shadow-2xl z-50 text-ca-ink"
             >
               <DropdownMenuLabel className="px-2 py-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate">Navigation</span>

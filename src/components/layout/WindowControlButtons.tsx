@@ -5,6 +5,8 @@ import { Minus, Square, Copy, X, AlertTriangle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 import { useBackendMode } from "@/lib/backend/mode";
+import { useRecorderStore } from "@/lib/recorder/recorder-store";
+import { getRunLock, RunLockStateType } from "@/lib/rpc/guards";
 import { useErrorStore } from "@/lib/stores/errorStore";
 import { getAutomationAttrs } from "@/utils/automation-registry";
 
@@ -72,27 +74,55 @@ function resolveDesktopBridge(): DesktopApi | undefined {
   return undefined;
 }
 
+function readRunningWorkLabel(): string {
+  if (typeof document === "undefined") {
+    return "";
+  }
+
+  const parts: string[] = [];
+  const root = document.documentElement;
+  const isSimulationActive =
+    root.dataset.guidedSimulationRunning === "true" ||
+    root.dataset.guidedSimulationLoading === "true";
+
+  if (isSimulationActive) {
+    parts.push("the guided simulation");
+  }
+
+  if (useRecorderStore.getState().isRecording) {
+    parts.push("a bug recording");
+  }
+
+  if (RunLockStateType.isRunning(getRunLock())) {
+    parts.push("an inspection run");
+  }
+
+  return parts.join(" and ");
+}
+
+function exitPrompt(runningWorkLabel: string): string {
+  const lead = `${runningWorkLabel.charAt(0).toUpperCase()}${runningWorkLabel.slice(1)}`;
+  const verb = runningWorkLabel.includes(" and ") ? "are" : "is";
+
+  return `${lead} ${verb} still running. Close Cat Vision anyway?`;
+}
+
 export function WindowControlButtons(): React.JSX.Element {
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
+  const [runningWorkLabel, setRunningWorkLabel] = useState("");
   const [isShuttingDown, setIsShuttingDown] = useState(false);
   const [isCloseNoop, setIsCloseNoop] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const baseUrl = useBackendMode((s) => s.baseUrl);
 
   useEffect(() => {
-    const openExitDialog = (): void => {
-      setIsExitDialogOpen(true);
-    };
-
     const handleFullscreenChange = (): void => {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
 
-    window.addEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
-      window.removeEventListener(WINDOW_EXIT_REQUEST_EVENT, openExitDialog);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
@@ -206,6 +236,27 @@ export function WindowControlButtons(): React.JSX.Element {
       });
   }, [baseUrl]);
 
+  const requestExit = useCallback(() => {
+    const runningLabel = readRunningWorkLabel();
+
+    if (runningLabel.length === 0) {
+      handleConfirmExit();
+
+      return;
+    }
+
+    setRunningWorkLabel(runningLabel);
+    setIsExitDialogOpen(true);
+  }, [handleConfirmExit]);
+
+  useEffect(() => {
+    window.addEventListener(WINDOW_EXIT_REQUEST_EVENT, requestExit);
+
+    return () => {
+      window.removeEventListener(WINDOW_EXIT_REQUEST_EVENT, requestExit);
+    };
+  }, [requestExit]);
+
   useEffect(() => {
     if (isCloseNoop) {
       toast.info(
@@ -292,7 +343,7 @@ export function WindowControlButtons(): React.JSX.Element {
           type="button"
           title="Exit application"
           aria-label="Close Application"
-          onClick={() => setIsExitDialogOpen(true)}
+          onClick={requestExit}
           {...closeAttrs}
           className="flex h-7 w-7 cursor-pointer items-center justify-center rounded text-slate-400 transition hover:bg-rose-600 hover:text-white active:scale-95 border border-transparent"
         >
@@ -322,7 +373,7 @@ export function WindowControlButtons(): React.JSX.Element {
                         ? isCloseNoop
                           ? "The browser blocked the automatic close — this window was not opened by a script, so window.close() did nothing. Close this window yourself (Alt+F4 or the OS close button). The backend has already been asked to stop; the launcher stops any remaining services when the window closes."
                           : "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
-                        : "Are you sure you want to close Cat Vision, Cat I Vision?"}
+                        : exitPrompt(runningWorkLabel)}
                     </p>
                   </div>
                 </div>
