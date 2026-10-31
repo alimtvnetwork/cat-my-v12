@@ -168,7 +168,7 @@ When implementing **any** rule from the consolidated section:
 
 - [`readme.md`](./readme.md) — file inventory and scoring
 - [`22-gap-analysis.md`](./22-gap-analysis.md) — formal gap analysis and implementability scores
-- [`99-consistency-report.md`](./99-consistency-report.md) — validation history
+- [`99-consistency-report.md`](./readme.md) — validation history
 - `../01-spec-authoring-guide/02-folder-structure.md` — canonical folder structure rules
 
 ---
