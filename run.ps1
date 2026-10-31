@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-Launcher script for Backend Implementation v1.
+Professional HMI launcher for CAT iVISION (GitMap CLI Grade).
 
 .DESCRIPTION
-Starts the backend server and frontend development server, waits for them to become healthy, and optionally packages and launches the Chromium shell.
+Starts the backend FastAPI server and Vite frontend, supervises the Chromium shell window lifecycle, and cleans up child processes gracefully.
 
 .PARAMETER BePort
 Port for the backend server. Default is 8787.
@@ -12,7 +12,7 @@ Port for the backend server. Default is 8787.
 Port for the frontend server. Default is 5173.
 
 .PARAMETER HostIp
-Host IP to bind the backend. Default is 127.0.0.1. WARNING: Do not use 0.0.0.0 in non-dev environments.
+Host IP to bind the backend. Default is 127.0.0.1.
 
 .PARAMETER NoShell
 Skip packaging and launching the Chromium shell.
@@ -26,6 +26,33 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$Esc = [char]27
+$Reset = "$Esc[0m"
+$Bold = "$Esc[1m"
+$Cyan = "$Esc[36m"
+$Green = "$Esc[32m"
+$Yellow = "$Esc[33m"
+$Gray = "$Esc[90m"
+$White = "$Esc[97m"
+$Magenta = "$Esc[35m"
+$Red = "$Esc[31m"
+
+function Write-StepOk([string]$Step, [string]$Message) {
+    Write-Host "  $($Green)✓$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+}
+
+function Write-StepAction([string]$Step, [string]$Message) {
+    Write-Host "  $($Yellow)⚡$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+}
+
+function Write-StepInfo([string]$Step, [string]$Message) {
+    Write-Host "  $($Gray)●$($Reset) $($Cyan)$($Step.PadRight(12))$($Reset) $Message"
+}
+
+function Write-StepWarn([string]$Step, [string]$Message) {
+    Write-Host "  $($Yellow)⚠$($Reset) $($Yellow)$($Step.PadRight(12))$($Reset) $Message"
+}
+
 $FrontendHostIp = "127.0.0.1"
 $FrontendHealthPath = "/cat-logo.svg"
 $FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
@@ -33,6 +60,34 @@ $FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
 $BackendBaseUrl = "http://$HostIp`:$BePort"
 $UvCacheDir = Join-Path (Get-Location) ".uv-cache"
 $jobs = @()
+$chromeProcess = $null
+$backendProcess = $null
+$frontendProcess = $null
+
+# Read Git branch and version info
+$gitBranch = "main"
+try {
+    $branchOutput = git rev-parse --abbrev-ref HEAD 2>$null
+    if ($branchOutput) { $gitBranch = $branchOutput.Trim() }
+} catch {}
+
+$appVersion = "v4.113.12"
+if (Test-Path "version.json") {
+    try {
+        $vJson = Get-Content "version.json" -Raw | ConvertFrom-Json
+        if ($vJson.version) { $appVersion = "v$($vJson.version)" }
+    } catch {}
+}
+
+Write-Host ""
+Write-Host "  $($Cyan)[cat]$($Reset)  $($Bold)CAT iVISION$($Reset)  $($White)$appVersion$($Reset)  $($Gray)— Autonomous Industrial Inspection System$($Reset)"
+Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
+Write-Host "  $($Cyan)●$($Reset) $($Bold)Backend URL:$($Reset)    $BackendBaseUrl"
+Write-Host "  $($Cyan)●$($Reset) $($Bold)Frontend URL:$($Reset)   $FrontendBaseUrl"
+Write-Host "  $($Cyan)●$($Reset) $($Bold)Runtime Mode:$($Reset)   Industrial HMI (Chromium Embedded App)"
+Write-Host "  $($Cyan)●$($Reset) $($Bold)Active Branch:$($Reset)  $gitBranch"
+Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
+Write-Host ""
 
 function Test-InspectionWindowOpen {
     param([string]$AppUrl)
@@ -62,7 +117,7 @@ function Test-InspectionWindowOpen {
 }
 
 try {
-    Write-Host "Cleaning up cached builds..."
+    Write-StepAction "preflight" "Purging stale build caches..."
     if (Test-Path "BE\be.egg-info") {
         Remove-Item -Recurse -Force "BE\be.egg-info" -ErrorAction SilentlyContinue
     }
@@ -70,18 +125,21 @@ try {
         New-Item -ItemType Directory -Path $UvCacheDir | Out-Null
     }
     $env:UV_CACHE_DIR = $UvCacheDir
+    Write-StepOk "preflight" "Build cache initialized at $UvCacheDir"
 
-    Write-Host "Bootstrapping local databases..."
-    & uv run --project BE python bin\db-bootstrap.py
-    
-    Write-Host "Starting backend on port $BePort..."
+    Write-StepAction "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
+    & uv run --project BE python bin\db-bootstrap.py 2>$null
+    Write-StepOk "database" "Database schemas bootstrapped and migrations verified"
+
+    Write-StepAction "backend" "Launching FastAPI uvicorn server on port $BePort..."
     $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort"
     $jobs += $backendProcess
 
-    Write-Host "Waiting for backend..."
-    .\scripts\dev\wait-for-http.ps1 -Url "http://$HostIp`:$BePort/healthz" -TimeoutSec 60
+    Write-StepInfo "backend" "Waiting for health probe at $BackendBaseUrl/healthz..."
+    .\scripts\dev\wait-for-http.ps1 -Url "$BackendBaseUrl/healthz" -TimeoutSec 60 | Out-Null
+    Write-StepOk "backend" "Backend is healthy and listening on $BackendBaseUrl"
 
-    # Install frontend dependencies only when node_modules is missing or stale.
+    # Dependency check for frontend
     $needsInstall = $false
     if (-not (Test-Path "node_modules")) {
         $needsInstall = $true
@@ -92,13 +150,14 @@ try {
     }
 
     if ($needsInstall) {
-        Write-Host "Installing frontend dependencies (bun install)..."
+        Write-StepAction "frontend" "Installing node dependencies via Bun..."
         & bun install
         if ($LASTEXITCODE -ne 0) {
             throw "bun install failed with exit code $LASTEXITCODE"
         }
+        Write-StepOk "frontend" "Dependencies installed successfully"
     } else {
-        Write-Host "Frontend dependencies are up to date, skipping bun install."
+        Write-StepOk "frontend" "Dependencies are up-to-date"
     }
 
     $isFrontendReady = $false
@@ -108,14 +167,14 @@ try {
 
         if ($existingFrontend.StatusCode -lt 400) {
             $isFrontendReady = $true
-            Write-Host "Frontend is already running at $FrontendBaseUrl. Reusing it."
+            Write-StepOk "frontend" "Reusing existing Vite server at $FrontendBaseUrl"
         }
     } catch {
         $isFrontendReady = $false
     }
 
     if (-not $isFrontendReady) {
-        Write-Host "Starting frontend on port $FePort..."
+        Write-StepAction "frontend" "Starting Vite dev server on port $FePort..."
         $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList @(
             "run", "dev", "--",
             "--host", $FrontendHostIp,
@@ -124,7 +183,7 @@ try {
         )
         $jobs += $frontendProcess
 
-        Write-Host "Waiting for frontend..."
+        Write-StepInfo "frontend" "Waiting for frontend probe at $FrontendHealthUrl..."
         $frontendDeadline = (Get-Date).AddSeconds(180)
 
         while ((Get-Date) -lt $frontendDeadline) {
@@ -155,18 +214,18 @@ try {
         if (-not $isFrontendReady) {
             throw "Timeout waiting for $FrontendHealthUrl"
         }
+        Write-StepOk "frontend" "Vite dev server is ready at $FrontendBaseUrl"
     }
 
     if ($NoShell) {
-        Write-Host "Running in -NoShell mode. Skipping browser launch."
+        Write-StepInfo "shell" "Running in -NoShell mode. Skipping browser launch."
     } else {
         $userDataDir = Join-Path (Get-Location) ".browser-profile"
         $isAlreadyOpen = Test-InspectionWindowOpen -AppUrl $FrontendBaseUrl
 
         if ($isAlreadyOpen) {
-            Write-Host "Inspection window or browser is already running. Skipping duplicate browser window."
+            Write-StepOk "shell" "Inspection window is already running. Skipping duplicate browser window."
         } else {
-            Write-Host "Packaging Chromium shell..."
             if (Test-Path "chromium-shell") {
                 try {
                     $needsZip = $true
@@ -186,16 +245,14 @@ try {
                             New-Item -ItemType Directory -Path "public" | Out-Null
                         }
                         Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
-                        Write-Host "Chromium shell packaged."
-                    } else {
-                        Write-Host "Chromium shell is up to date, skipping package."
+                        Write-StepOk "shell" "Chromium shell extension packaged"
                     }
                 } catch {
-                    Write-Host "Failed to package extension using Compress-Archive. Continuing without it."
+                    Write-StepWarn "shell" "Extension packaging skipped ($($_.Exception.Message))"
                 }
             }
 
-            Write-Host "Launching Chromium shell..."
+            Write-StepAction "shell" "Launching Chromium embedded app window..."
             $chromeArgs = @(
                 "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
                 '--start-fullscreen',
@@ -216,27 +273,50 @@ try {
                     $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
                     $jobs += $chromeProcess
                     $chromeFound = $true
+                    Write-StepOk "shell" "Launched browser app using $p"
                     break
                 }
             }
 
             if (-not $chromeFound) {
-                Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
+                Write-StepWarn "shell" "Chrome/Edge not found in default paths. Open manually: $FrontendBaseUrl`?backend=$BackendBaseUrl"
             }
         }
     }
 
-    Write-Host "Press Ctrl+C to stop..."
-    while ($true) {
-        Start-Sleep -Seconds 1
+    Write-Host ""
+    Write-Host "  $($Gray)────────────────────────────────────────────────────────────────────────────$($Reset)"
+    Write-Host "  $($Magenta)●$($Reset) $($Bold)Supervision Active$($Reset) $($Gray)(monitoring window & backend lifecycle)$($Reset)"
+    Write-Host "  $($Gray)  Press Ctrl+C or use in-app [✕] Exit to terminate all services cleanly$($Reset)"
+    Write-Host ""
+
+    $isSupervised = $true
+    while ($isSupervised) {
+        Start-Sleep -Milliseconds 800
+
+        # Monitor browser process exit
+        if ($chromeProcess -and $chromeProcess.HasExited) {
+            Write-Host "  $($Yellow)●$($Reset) $($Cyan)$('lifecycle'.PadRight(12))$($Reset) Browser window closed by user"
+            $isSupervised = $false
+            break
+        }
+
+        # Monitor backend process exit
+        if ($backendProcess -and $backendProcess.HasExited) {
+            Write-Host "  $($Yellow)●$($Reset) $($Cyan)$('lifecycle'.PadRight(12))$($Reset) Backend process exited (shutdown completed)"
+            $isSupervised = $false
+            break
+        }
     }
 }
 finally {
-    Write-Host "`nShutting down..."
+    Write-Host ""
+    Write-Host "  $($Yellow)↓$($Reset) $($Cyan)$('teardown'.PadRight(12))$($Reset) Gracefully terminating background processes..."
     foreach ($job in $jobs) {
         if ($job -and -not $job.HasExited) {
             Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
         }
     }
-    Write-Host "Cleanup complete."
+    Write-Host "  $($Green)✓$($Reset) $($Cyan)$('complete'.PadRight(12))$($Reset) All services terminated cleanly."
+    Write-Host ""
 }

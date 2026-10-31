@@ -861,6 +861,36 @@ def test_shutdown_endpoint_loopback_authorized(test_client: TestClient):
     assert body["Results"][0]["status"] == "shutting_down"
 
 
+def test_window_minimize_endpoint(test_client: TestClient):
+    """Verify POST /window/minimize returns 200 with isMinimized boolean."""
+    res = test_client.post("/window/minimize")
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["Status"]["IsSuccess"] is True
+    assert "isMinimized" in body["Results"][0]
+
+
+def test_window_maximize_endpoint(test_client: TestClient):
+    """Verify POST /window/maximize returns 200 with isMaximized boolean."""
+    res = test_client.post("/window/maximize")
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["Status"]["IsSuccess"] is True
+    assert "isMaximized" in body["Results"][0]
+
+
+def test_window_close_endpoint(test_client: TestClient):
+    """Verify POST /window/close returns 200 with isClosed boolean."""
+    res = test_client.post("/window/close")
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["Status"]["IsSuccess"] is True
+    assert body["Results"][0]["isClosed"] is True
+
+
 # ==============================================================================
 # 8. CLI Command Dispatchers (Tests 49 - 55)
 # ==============================================================================

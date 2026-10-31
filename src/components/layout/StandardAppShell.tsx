@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useRef, useState, type ReactNode } from "react";
+import React, { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Menu,
@@ -342,7 +342,7 @@ export function StandardAppShell({
                 type="button"
                 data-tour="standard-menu-trigger"
                 aria-expanded={isMenuOpen}
-                className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-ca-border bg-ca-panel/60 hover:bg-ca-panel-2 hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-ca-ink transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
+                className="group flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-ca-border bg-ca-panel/60 hover:bg-ca-panel-2 hover:border-cyan-400/40 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-ca-ink transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 cursor-pointer select-none"
               >
                 <Menu className="h-3.5 w-3.5 text-cyan-400 transition-colors group-hover:text-cyan-300" />
                 <span>Menu</span>
@@ -351,8 +351,10 @@ export function StandardAppShell({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
+              side="bottom"
               align="start"
-              collisionPadding={16}
+              sideOffset={4}
+              avoidCollisions={false}
               onPointerDownOutside={(e) => {
                 if (isSimulationRunning && pathname === "/") {
                   e.preventDefault();
@@ -502,7 +504,7 @@ export function StandardAppShell({
                 </div>
 
                 <span className="text-[9px] font-mono uppercase tracking-wider text-rose-400/80 bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-700/60 font-semibold">
-                  Alt+F4
+                  Exit
                 </span>
               </DropdownMenuItem>
             </DropdownMenuContent>

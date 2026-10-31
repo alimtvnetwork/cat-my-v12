@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 import os
 import signal
+import sys
 import threading
 
 from fastapi import APIRouter, Request
@@ -66,6 +67,100 @@ def _schedule_shutdown() -> None:
     timer.start()
 
 
+def _find_window_hwnd() -> int | None:
+    if sys.platform != "win32":
+        return None
+
+    try:
+        import ctypes
+        target_hwnd: list[int] = []
+
+        def enum_cb(hwnd: int, _: int) -> bool:
+            if ctypes.windll.user32.IsWindowVisible(hwnd):
+                length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
+                if length > 0:
+                    buf = ctypes.create_unicode_buffer(length + 1)
+                    ctypes.windll.user32.GetWindowTextW(hwnd, buf, length + 1)
+                    if "Cat Vision" in buf.value or "CAT iVISION" in buf.value:
+                        target_hwnd.append(hwnd)
+                        return False
+            return True
+
+        cb = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(enum_cb)
+        ctypes.windll.user32.EnumWindows(cb, 0)
+        return target_hwnd[0] if target_hwnd else None
+    except Exception:
+        return None
+
+
+def _minimize_window() -> bool:
+    hwnd = _find_window_hwnd()
+    if not hwnd:
+        return False
+
+    try:
+        import ctypes
+        ctypes.windll.user32.ShowWindow(hwnd, 6)
+        return True
+    except Exception:
+        return False
+
+
+def _toggle_maximize_window() -> bool:
+    hwnd = _find_window_hwnd()
+    if not hwnd:
+        return False
+
+    try:
+        import ctypes
+        is_zoomed = ctypes.windll.user32.IsZoomed(hwnd)
+        ctypes.windll.user32.ShowWindow(hwnd, 9 if is_zoomed else 3)
+        return True
+    except Exception:
+        return False
+
+
+def _close_window() -> bool:
+    hwnd = _find_window_hwnd()
+    if not hwnd:
+        return False
+
+    try:
+        import ctypes
+        ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+        return True
+    except Exception:
+        return False
+
+
+@router.post("/window/minimize")
+async def post_window_minimize(request: Request) -> JSONResponse:
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    success_status = _minimize_window()
+    payload = {"isMinimized": success_status}
+    envelope = success(payload, requested_at=str(request.url))
+    return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
+
+
+@router.post("/window/maximize")
+async def post_window_maximize(request: Request) -> JSONResponse:
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    success_status = _toggle_maximize_window()
+    payload = {"isMaximized": success_status}
+    envelope = success(payload, requested_at=str(request.url))
+    return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
+
+
+@router.post("/window/close")
+async def post_window_close(request: Request) -> JSONResponse:
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    _close_window()
+    _schedule_shutdown()
+    payload = {"isClosed": True}
+    envelope = success(payload, requested_at=str(request.url))
+    return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
+
+
 @router.post("/shutdown")
 async def post_shutdown(request: Request) -> JSONResponse:
     """Acknowledge the Exit request, then stop the backend process."""
@@ -96,6 +191,7 @@ async def post_shutdown(request: Request) -> JSONResponse:
             "subject_id": None,
         },
     )
+    _close_window()
     _schedule_shutdown()
     payload = {"status": "shutting_down"}
     envelope = success(payload, requested_at=str(request.url))

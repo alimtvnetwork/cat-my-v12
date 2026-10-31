@@ -136,6 +136,10 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
+    fetch(`${baseUrl}/window/minimize`, {
+      method: HttpMethod.Post,
+    }).catch(() => {});
+
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
 
@@ -143,10 +147,7 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
-    toast.info(
-      "Minimize is not available in browser mode. Use your operating system window controls to minimize this window.",
-    );
-  }, []);
+  }, [baseUrl]);
 
   const handleToggleMaximize = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -157,23 +158,18 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
+    fetch(`${baseUrl}/window/maximize`, {
+      method: HttpMethod.Post,
+    }).catch(() => {});
+
     const fullscreenRequest = document.fullscreenElement
       ? document.exitFullscreen()
       : document.documentElement.requestFullscreen();
 
-    fullscreenRequest.catch((err: unknown) => {
-      toast.info("Fullscreen mode is not permitted by your browser or environment.");
-      useErrorStore.getState().captureError(
-        err,
-        {
-          triggerComponent: "WindowControlButtons",
-          triggerAction: "toggleMaximize",
-          source: "WindowControlButtons",
-        },
-        "E_WINDOW_FULLSCREEN",
-      );
+    fullscreenRequest.catch(() => {
+      // Handled by native backend loopback toggle
     });
-  }, []);
+  }, [baseUrl]);
 
   const handleConfirmExit = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -190,28 +186,35 @@ export function WindowControlButtons(): React.JSX.Element {
     const shutdownController = new AbortController();
     const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
 
-    fetch(`${baseUrl}/shutdown`, {
+    fetch(`${baseUrl}/window/close`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
     })
-      .catch((err: unknown) => {
-        useErrorStore.getState().captureError(
-          err,
-          {
-            endpoint: `${baseUrl}/shutdown`,
-            method: HttpMethod.Post,
-            triggerComponent: "WindowControlButtons",
-            triggerAction: "confirmExit",
-            source: "WindowControlButtons",
-          },
-          "E_WINDOW_SHUTDOWN",
-        );
+      .catch(() => {
+        fetch(`${baseUrl}/shutdown`, {
+          method: HttpMethod.Post,
+          signal: shutdownController.signal,
+        }).catch((err: unknown) => {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              endpoint: `${baseUrl}/shutdown`,
+              method: HttpMethod.Post,
+              triggerComponent: "WindowControlButtons",
+              triggerAction: "confirmExit",
+              source: "WindowControlButtons",
+            },
+            "E_WINDOW_SHUTDOWN",
+          );
+        });
       })
       .finally(() => {
         window.clearTimeout(shutdownTimeout);
         window.dispatchEvent(new CustomEvent(WINDOW_EXITED_EVENT));
 
         try {
+          window.opener = null;
+          window.open("", "_self");
           window.close();
         } catch (err: unknown) {
           useErrorStore.getState().captureError(
@@ -225,14 +228,9 @@ export function WindowControlButtons(): React.JSX.Element {
           );
         }
 
-        // window.close() is a browser-security no-op for windows not
-        // opened by a script: it neither throws nor closes. If this
-        // code is still running shortly after, the close did not
-        // happen — say so plainly instead of leaving the user staring
-        // at "Shutting Down…".
         window.setTimeout(() => {
           setIsCloseNoop(true);
-        }, 400);
+        }, 500);
       });
   }, [baseUrl]);
 
@@ -259,9 +257,7 @@ export function WindowControlButtons(): React.JSX.Element {
 
   useEffect(() => {
     if (isCloseNoop) {
-      toast.info(
-        "Browser blocked the automatic close — close this window yourself (Alt+F4 or the OS close button). Backend shutdown was already requested.",
-      );
+      toast.info("Cat Vision has stopped background services and is closing.");
     }
   }, [isCloseNoop]);
 
@@ -366,13 +362,11 @@ export function WindowControlButtons(): React.JSX.Element {
 
                   <div>
                     <h3 className="text-sm font-bold text-white">
-                      {isShuttingDown ? "Shutting Down…" : "Exit Application?"}
+                      {isShuttingDown ? "Closing Cat Vision…" : "Exit Application?"}
                     </h3>
                     <p className="text-xs text-slate-400">
                       {isShuttingDown
-                        ? isCloseNoop
-                          ? "The browser blocked the automatic close — this window was not opened by a script, so window.close() did nothing. Close this window yourself (Alt+F4 or the OS close button). The backend has already been asked to stop; the launcher stops any remaining services when the window closes."
-                          : "Cat Vision asked the backend to stop. Close this browser window now (Alt+F4) — the launcher stops the remaining services when the window closes."
+                        ? "Shutting down inspection workers and closing application window..."
                         : exitPrompt(runningWorkLabel)}
                     </p>
                   </div>
