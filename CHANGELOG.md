@@ -1,5 +1,12 @@
 # Changelog
 
+## [v4.113.10] - 2026-10-31
+
+### Added
+- Synchronize prompts, skills, AI scripts, and coding guidelines
+
+---
+
 ## [v4.113.9] - 2026-10-30
 
 ### Fixed
@@ -33,7 +40,6 @@
 - Rule enable/disable toggle with active 'OFF' indicator badge
 
 ---
-
 
 ## [v4.113.4] - 2026-10-29
 
