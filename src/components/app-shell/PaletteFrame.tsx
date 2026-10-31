@@ -35,8 +35,38 @@ export function PaletteFrame({ id, title, children }: PaletteFrameProps): React.
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
+  // Defect 2 (spec 03 §1.2): hidden used to render nothing, so a hidden
+  // palette had no in-panel restore path — recovery depended on the Window
+  // menu (the other panel system, which has no palette entries) or Reset
+  // Layout. The palette now renders a one-row strip in its own slot with a
+  // Show button that docks it again. VISUAL CHANGE, flagged: a hidden
+  // palette occupies one header-height row instead of collapsing to
+  // nothing; docked / minimized / maximized rendering is untouched.
   if (state.mode === "hidden") {
-    return null;
+    return (
+      <section
+        aria-label={title}
+        data-palette-id={id}
+        data-palette-mode="hidden"
+        className="flex min-h-0 flex-col overflow-hidden rounded-md border border-ca-border bg-ca-panel"
+      >
+        <header
+          className="flex items-center justify-between border-b border-ca-border bg-ca-chrome/60 px-2"
+          style={{ height: "var(--menu-item-h)" }}
+        >
+          <span className="truncate text-hmi-body font-medium text-ca-chrome-ink">{title}</span>
+          <button
+            type="button"
+            aria-label={`Show ${title}`}
+            title={`Show ${title}`}
+            onClick={() => setState(id, { mode: PaletteModeType.Docked })}
+            className="hmi-focus-ring inline-flex h-6 items-center rounded-sm px-2 text-hmi-body text-ca-ink hover:bg-ca-select/40"
+          >
+            Show
+          </button>
+        </header>
+      </section>
+    );
   }
 
   const toggleMax = () =>

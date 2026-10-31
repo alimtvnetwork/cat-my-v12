@@ -107,12 +107,16 @@ export function regionFromPoints(
 }
 
 export function clampRegion(width: number, height: number, region: SearchRegion): SearchRegion {
-  return regionFromPoints(
+  const next = regionFromPoints(
     width,
     height,
     { x: region.x, y: region.y },
     { x: region.x + region.width - 1, y: region.y + region.height - 1 },
   );
+
+  // Drag/resize must not silently drop the display shape: a region drawn
+  // as square/circle/poly keeps its outline while its bounding rect moves.
+  return region.shape === undefined ? next : { ...next, shape: region.shape };
 }
 
 export function regionHandles(region: SearchRegion): Array<{ id: RegionHandle; x: number; y: number }> {
@@ -176,7 +180,9 @@ export function resizeRegion(
   if (handle.includes("n")) y0 += delta.y;
   if (handle.includes("s")) y1 += delta.y;
 
-  return regionFromPoints(width, height, { x: x0, y: y0 }, { x: x1, y: y1 });
+  const next = regionFromPoints(width, height, { x: x0, y: y0 }, { x: x1, y: y1 });
+
+  return region.shape === undefined ? next : { ...next, shape: region.shape };
 }
 
 export function regionForDrag(

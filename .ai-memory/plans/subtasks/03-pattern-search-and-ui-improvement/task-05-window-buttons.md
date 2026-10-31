@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 05
 
-Status: PENDING (spec done, fix not started).
+Status: PARTIAL (window controls landed 31-Oct-26; minimize deliberately not rendered — no web API can minimize and spec forbids fake shims; real minimize awaits AI-01 shell decision with hook point left; maximize fullscreen toggle + close with fallback chip in titlebar-parts.tsx; E2E browser verification UNVERIFIED, no browser on VM).
 
 ## Spec
 

@@ -26,7 +26,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from BE.app.jsonl_rotator import read_pair
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.jsonl_rotator import read_pair  # noqa: E402
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:

@@ -4,23 +4,26 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 8;
 const MIN_VISIBLE_PX = 64;
 
+// Legacy editor frame (Space A). The editor shell owns this space for
+// editor-authored rules. Pattern-search UI must pass actual image bounds
+// instead of relying on this constant (spec 01 §3).
 export const IMAGE_BOUNDS: EditorRect = { x: 0, y: 0, width: 1280, height: 720 };
 
-export function imageToScreen(point: EditorPoint, viewport: Viewport, dpr = 1): EditorPoint {
-  const scale = dpr > 0 ? 1 : 1;
+export function imageToScreen(point: EditorPoint, viewport: Viewport, _dpr = 1): EditorPoint {
+  // DPR is intentionally excluded from coordinate math (backing store only); _dpr is retained for call-site compatibility and ignored.
 
   return {
-    x: viewport.panX + point.x * viewport.zoom * scale,
-    y: viewport.panY + point.y * viewport.zoom * scale,
+    x: viewport.panX + point.x * viewport.zoom,
+    y: viewport.panY + point.y * viewport.zoom,
   };
 }
 
-export function screenToImage(point: EditorPoint, viewport: Viewport, dpr = 1): EditorPoint {
-  const scale = dpr > 0 ? 1 : 1;
+export function screenToImage(point: EditorPoint, viewport: Viewport, _dpr = 1): EditorPoint {
+  // DPR is intentionally excluded from coordinate math (backing store only); _dpr is retained for call-site compatibility and ignored.
 
   return {
-    x: (point.x / scale - viewport.panX) / viewport.zoom,
-    y: (point.y / scale - viewport.panY) / viewport.zoom,
+    x: (point.x - viewport.panX) / viewport.zoom,
+    y: (point.y - viewport.panY) / viewport.zoom,
   };
 }
 

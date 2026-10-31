@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 06
 
-Status: PENDING (spec done, fix not started).
+Status: DONE — wave 4 diff-verified 31-Oct-26 (DB-bootstrap skip via read-only --check watermark in both scripts, closing the ps1/sh drift; parallel backend+frontend waits via multi-URL wait helpers, 1s→500ms/0.5s polls; launcher fixes intact; no new config keys). E2E must still measure before/after (warm skip line, cold bootstrap, combined-wait timeout naming pending service) + confirm cold-start adequacy of the 30s config timeout (pair now shares T instead of 2T sequential).
 
 ## Spec
 

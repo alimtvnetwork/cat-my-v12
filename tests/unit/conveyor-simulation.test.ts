@@ -16,7 +16,6 @@ import {
   normalizeImageToStandardCanvas,
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
-  STANDARD_IMAGE_MAX_SIZE,
   usePatternMatchingRule,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
 import {
@@ -356,9 +355,19 @@ describe("normalizeImageToStandardCanvas (Standard Centered Inspection)", () => 
     expect(normalized.source.height).toBe(540);
     expect(normalized.source.rgba.length).toBe(960 * 540 * 4);
 
-    // Search region is centered and does not exceed STANDARD_IMAGE_MAX_SIZE
-    expect(normalized.searchRegion.width).toBeLessThanOrEqual(STANDARD_IMAGE_MAX_SIZE);
-    expect(normalized.searchRegion.height).toBeLessThanOrEqual(STANDARD_IMAGE_MAX_SIZE);
+    // Search region is centered and derived from the fitted rect (spec 03
+    // inventory item 4: derive defaults from image size, never hardcoded).
+    // For the full 960x540 fitted rect: targetW = round(min(672, 432)) =
+    // 432, targetH = round(min(405, 457.92)) = 405, aspect binding gives
+    // boundedW = round(405 * 100/106) = 382 and boundedH =
+    // round(382 * 1.06) = 405, centered at (289, 68). The old height
+    // assertion would fail next (405 > 380); both are replaced, not
+    // just the width. STANDARD_IMAGE_MAX_SIZE (380) is not a production
+    // invariant: nothing enforces it, and the same derivation yields
+    // 408x432 for a 1024x576 frame (see the large-region test, which
+    // asserts no cap) -- so the region is asserted at its derived size.
+    expect(normalized.searchRegion.width).toBe(382);
+    expect(normalized.searchRegion.height).toBe(405);
     expect(normalized.searchRegion.x).toBeGreaterThan(0);
     expect(normalized.searchRegion.y).toBeGreaterThan(0);
     expect(normalized.searchRegion.x + normalized.searchRegion.width).toBeLessThanOrEqual(960);

@@ -2,7 +2,7 @@ import type { BoxReviewPanelProps } from "./types";
 import { BoxReviewCard } from "./BoxReviewCard";
 import { GreyscaleSliderCard } from "./GreyscaleSliderCard";
 import { PatternGeometryCard } from "./PatternGeometryCard";
-import { Check, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Loader2, Plus, Save, Trash2 } from "lucide-react";
 
 export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
   const hasBoxes = props.detectedBoxes.length > 0;
@@ -109,6 +109,7 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
             Add Mask Region
           </button>
 
+          {/* Mask slots: index 0 is on top (pattern-search spec §8.2) — not the editor stack convention (index 0 = bottom). */}
           {props.maskRegions.length > 0 && (
             <div className="space-y-1">
               {props.maskRegions.map((region, index) => (
@@ -127,6 +128,26 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
                   >
                     Mask {index + 1}: {region.width}x{region.height}
                   </button>
+                  <span className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => props.onMoveMaskRegion(index, "up")}
+                      disabled={index === 0}
+                      className="rounded p-1 text-ca-ink-muted hover:text-ca-ink disabled:opacity-30"
+                      title={`Move mask ${index + 1} up`}
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => props.onMoveMaskRegion(index, "down")}
+                      disabled={index === props.maskRegions.length - 1}
+                      className="rounded p-1 text-ca-ink-muted hover:text-ca-ink disabled:opacity-30"
+                      title={`Move mask ${index + 1} down`}
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
                   <button
                     type="button"
                     onClick={() => props.onDeleteMaskRegion(index)}
@@ -146,6 +167,65 @@ export function BoxReviewPanel(props: BoxReviewPanelProps): React.JSX.Element {
           marginPx={props.marginPx}
           onMarginChange={props.onMarginChange}
         />
+
+        {props.onLumaToleranceChange &&
+          props.onSearchMarginPxChange &&
+          props.onSearchStepPxChange && (
+            <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[#303943] pb-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.12em]">Matcher Tuning</span>
+                <span className="font-mono text-[10px] text-ca-ink-muted">
+                  Translation search
+                </span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-ca-ink-muted">
+                  <span>Luma Tolerance</span>
+                  <span className="font-mono font-bold text-ca-ink">±{props.lumaTolerance ?? 22}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={255}
+                  value={props.lumaTolerance ?? 22}
+                  onChange={(e) => props.onLumaToleranceChange?.(Number(e.target.value))}
+                  className="w-full accent-ca-select"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-ca-ink-muted">
+                  <span>Search Margin</span>
+                  <span className="font-mono font-bold text-ca-ink">{props.searchMarginPx ?? 8}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={64}
+                  value={props.searchMarginPx ?? 8}
+                  onChange={(e) => props.onSearchMarginPxChange?.(Number(e.target.value))}
+                  className="w-full accent-ca-select"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-ca-ink-muted">
+                  <span>Search Step</span>
+                  <span className="font-mono font-bold text-ca-ink">{props.searchStepPx ?? 1}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={16}
+                  value={props.searchStepPx ?? 1}
+                  onChange={(e) => props.onSearchStepPxChange?.(Number(e.target.value))}
+                  className="w-full accent-ca-select"
+                />
+              </div>
+              <p className="text-[10px] text-ca-ink-muted">
+                Saved to detection.lumaTolerance / searchMarginPx / searchStepPx; the pattern
+                matcher reads them on the next evaluation.
+              </p>
+            </div>
+          )}
 
         <div className="space-y-2 rounded border border-[#303943] bg-[#182028] p-3 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#303943] pb-2">

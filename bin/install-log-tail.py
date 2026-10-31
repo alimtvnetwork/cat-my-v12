@@ -20,9 +20,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from BE.app.install_log_rotator import read_archive_entries
-from BE.app.install_manifest import read_manifest
-from BE.errors.apperror import AppError
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.install_log_rotator import read_archive_entries  # noqa: E402
+from BE.app.install_manifest import read_manifest  # noqa: E402
+from BE.errors.apperror import AppError  # noqa: E402
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:

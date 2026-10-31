@@ -131,3 +131,20 @@ setup() {
   rm -rf "${tmp}"
   [ "${status}" -eq 6 ]
 }
+
+# ---------- spec 03 §7.2: venv bootstrap + version resolution -----------
+
+@test "static: bootstraps a missing default venv from python3 (explicit PYTHON_EXE still fails fast)" {
+  grep -q 'python3 -m venv' "${INSTALL_SH}"
+  grep -q 'PYTHON_EXE_IS_EXPLICIT' "${INSTALL_SH}"
+}
+
+@test "static: resolves APP_VERSION from version.json when unset" {
+  grep -q 'version.json' "${INSTALL_SH}"
+}
+
+@test "static: missing APP_BINARIES_DIR names the expected layout and remedy" {
+  grep -q 'APP_BINARIES_DIR is required' "${INSTALL_SH}"
+  grep -q 'SHA256SUMS.txt covering them' "${INSTALL_SH}"
+  grep -q 'APP_BINARIES_DIR=<dir>' "${INSTALL_SH}"
+}

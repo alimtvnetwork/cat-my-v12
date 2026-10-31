@@ -26,6 +26,7 @@ from BE.app.domain.vision_eval import (
     ConfidenceResult,
     _check_color_area,
     _clip_to_roi,
+    convert_roi_to_image,
     _match_pattern,
     _measure_blob_area,
     _measure_edge_width,
@@ -33,7 +34,11 @@ from BE.app.domain.vision_eval import (
     evaluate_grayscale_tolerance,
     evaluate_pattern_match,
 )
-from BE.app.domain.vision_preprocess import apply_optical_settings, maybe_downsample
+from BE.app.domain.vision_preprocess import (
+    apply_optical_settings,
+    downsample_factor_for,
+    resize_by_factor,
+)
 from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
 from BE.errors.apperror import AppError
 from BE.errors.codes import ErrorCode
@@ -81,19 +86,142 @@ def _load_image_bytes(url_or_data: str | None) -> bytes:
     return np.full((128, 128, 3), 128, dtype=np.uint8).tobytes()
 
 
-def _parse_roi(raw_roi: Any) -> BoundingBox | None:
-    if not isinstance(raw_roi, dict):
+def _box_from_circle_geometry(values: Any) -> BoundingBox | None:
+    """Bounding box of a circle domain region (centre plus radius)."""
+    if not isinstance(values, dict):
         return None
     try:
-        x = int(raw_roi["x"])
-        y = int(raw_roi["y"])
-        w = int(raw_roi["width"])
-        h = int(raw_roi["height"])
+        cx = int(values.get("x", values.get("X")))
+        cy = int(values.get("y", values.get("Y")))
+        radius = int(values.get("radius", values.get("Radius")))
+        if radius > 0:
+            return BoundingBox(x=cx - radius, y=cy - radius, width=radius * 2, height=radius * 2)
+    except (KeyError, ValueError, TypeError):
+        pass
+    return None
+
+
+def _box_from_dict(values: Any) -> BoundingBox | None:
+    """Read a rectangle from flat or shape-model casing. None if unusable."""
+    if not isinstance(values, dict):
+        return None
+    try:
+        x = int(values.get("x", values.get("X")))
+        y = int(values.get("y", values.get("Y")))
+        w = int(values.get("width", values.get("Width")))
+        h = int(values.get("height", values.get("Height")))
         if w > 0 and h > 0:
             return BoundingBox(x=x, y=y, width=w, height=h)
     except (KeyError, ValueError, TypeError):
         pass
     return None
+
+
+def _parse_roi(raw_roi: Any) -> BoundingBox | None:
+    """Parse a canonical-space ROI (spec 01 §7.1).
+
+    Accepts the geometryJson envelope (preferred) and, during migration,
+    a flat {x, y, width, height} payload. A flat payload carrying
+    ImageWidth/ImageHeight stamp keys parses as flat (the stamps only
+    record the space it was drawn against). Flat input is dual-parsed and
+    the conversion is logged; flat-only intake is a migration shim, not
+    the contract. The domain {shape, geometry} form is accepted directly:
+    RECTANGLE and ELLIPSE yield their bounding box, CIRCLE yields its
+    bounding box from centre plus radius; None and other shape kinds
+    return None (treated as missing ROI, as before for unparseable input).
+    """
+    if not isinstance(raw_roi, dict):
+        return None
+    envelope = raw_roi.get("geometryJson")
+    if isinstance(envelope, dict):
+        kind = str(envelope.get("ShapeKind") or envelope.get("shapeKind") or envelope.get("shape") or "RECTANGLE").upper()
+        if kind == "CIRCLE":
+            return _box_from_circle_geometry(envelope.get("geometry"))
+        if kind != "RECTANGLE" and kind != "ELLIPSE":
+            return None
+        box = _box_from_dict(envelope.get("geometry"))
+        if box is not None:
+            logger.info(
+                "score_roi_envelope_accepted",
+                extra={"roi_source": "envelope"},
+            )
+        return box
+    if "ImageWidth" in raw_roi or "ImageHeight" in raw_roi or "geometry" in raw_roi:
+        geometry = raw_roi.get("geometry")
+        if isinstance(geometry, dict):
+            kind = str(raw_roi.get("ShapeKind") or raw_roi.get("shapeKind") or raw_roi.get("shape") or "RECTANGLE").upper()
+            if kind == "CIRCLE":
+                return _box_from_circle_geometry(geometry)
+            if kind != "RECTANGLE" and kind != "ELLIPSE":
+                return None
+            box = _box_from_dict(geometry)
+            if box is not None:
+                logger.info(
+                    "score_roi_envelope_accepted",
+                    extra={"roi_source": "envelope"},
+                )
+            return box
+        # No geometry sub-dict: a flat payload carrying stamp keys (the
+        # form _roi_recorded_size already accepts). Fall through to flat
+        # parsing below instead of reporting missing_roi (F5).
+    box = _box_from_dict(raw_roi)
+    if box is not None:
+        logger.info(
+            "score_roi_flat_migration",
+            extra={"roi_source": "flat"},
+        )
+    return box
+
+
+def _roi_recorded_size(raw_roi: Any) -> tuple[int, int] | None:
+    """Recorded image dimensions a canonical ROI was drawn against, if any."""
+    if not isinstance(raw_roi, dict):
+        return None
+    envelope = raw_roi.get("geometryJson")
+    if not isinstance(envelope, dict):
+        envelope = raw_roi
+    try:
+        width = int(envelope.get("ImageWidth", envelope.get("imageWidth")))
+        height = int(envelope.get("ImageHeight", envelope.get("imageHeight")))
+        if width > 0 and height > 0:
+            return (width, height)
+    except (KeyError, ValueError, TypeError):
+        pass
+    return None
+
+
+def _per_image_rois(
+    roi: BoundingBox | None,
+    recorded_size: tuple[int, int] | None,
+    treatment_factor: float,
+    ref_size: tuple[int, int] | None,
+    smp_size: tuple[int, int] | None,
+) -> tuple[BoundingBox | None, BoundingBox | None]:
+    """Convert one canonical ROI into each treated image's pixel space (spec 01 §7.3).
+
+    The stored ROI was already rescaled by treatment_factor above, so
+    the recorded space in treated terms is recorded_size * treatment_factor.
+    Each image gets its own conversion, because the reference and the
+    sample may differ in size. When the recorded space is unknown both
+    images share the ROI (the pre-existing behavior).
+    """
+    if roi is None or recorded_size is None:
+        return (roi, roi)
+    recorded_treated = (
+        max(1, int(round(recorded_size[0] * treatment_factor))),
+        max(1, int(round(recorded_size[1] * treatment_factor))),
+    )
+    ref_roi = (
+        convert_roi_to_image(roi, recorded_size=recorded_treated, image_size=ref_size)
+        if ref_size is not None
+        else roi
+    )
+    smp_roi = (
+        convert_roi_to_image(roi, recorded_size=recorded_treated, image_size=smp_size)
+        if smp_size is not None
+        else roi
+    )
+    return (ref_roi, smp_roi)
 
 
 @router.post("")
@@ -109,8 +237,9 @@ async def evaluate_score(request: Request) -> JSONResponse:
         raise AppError(ErrorCode.E_BE_BAD_REQUEST, "JSON body must be an object")
 
     rule_type = str(body.get("ruleType", "grayscale_tolerance"))
+    # Pass mark (0-1 fraction), not a grayscale threshold: the grayscale
+    # keys live in detection (resolved below).
     threshold = float(body.get("threshold", 0.8))
-    tolerance = int(body.get("tolerance", 40))
     calibration_factor = float(body.get("calibrationFactor", 0.05))
     calibration_unit = str(body.get("calibrationUnit", "mm"))
     roi = _parse_roi(body.get("roi"))
@@ -122,6 +251,23 @@ async def evaluate_score(request: Request) -> JSONResponse:
     rule_obj = body.get("rule") or body.get("Rule")
     if not isinstance(rule_obj, dict):
         rule_obj = {}
+
+    detection = body.get("detection") or rule_obj.get("detection") or {}
+
+    if not isinstance(detection, dict):
+        detection = {}
+
+    # Shared default mirrors PatternSearchSettings detection.lumaTolerance
+    # (22). The backend has no cross-language shared module, so the value
+    # is mirrored here, not invented. The value must stay positive:
+    # evaluate_grayscale_tolerance falls back to 40 on 0, which would
+    # silently loosen a strict rule.
+    try:
+        luma_tolerance = int(detection.get("lumaTolerance", 22))
+    except (TypeError, ValueError):
+        luma_tolerance = 22
+
+    luma_tolerance = max(1, min(255, luma_tolerance))
 
     cam_settings = (
         body.get("cameraSettings")
@@ -137,15 +283,76 @@ async def evaluate_score(request: Request) -> JSONResponse:
     )
 
     smp_img: np.ndarray | None = None
+    ref_img: np.ndarray | None = None
     if smp_bytes and cv2 is not None:
         smp_arr = np.frombuffer(smp_bytes, dtype=np.uint8)
         smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_COLOR)
 
-        if smp_img is not None:
-            smp_img = maybe_downsample(smp_img)
+    if ref_bytes and cv2 is not None:
+        ref_arr = np.frombuffer(ref_bytes, dtype=np.uint8)
+        ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_COLOR)
 
-            if cam_settings or light_settings:
-                smp_img = apply_optical_settings(smp_img, cam_settings, light_settings)
+    # Symmetric treatment (spec 02 §4): the sample and the reference receive
+    # the SAME downsample factor and the SAME optical settings, or neither
+    # (when cv2 is unavailable nothing is decoded and both stay raw). The
+    # treated values are committed only if the treated reference encodes
+    # back to bytes, so a failed encode cannot leave an asymmetric pair.
+    treatment_factor = 1.0
+
+    if smp_img is not None and ref_img is not None:
+        factor = min(
+            downsample_factor_for(smp_img),
+            downsample_factor_for(ref_img),
+        )
+
+        treated_smp = smp_img
+        treated_ref = ref_img
+
+        if factor < 1.0:
+            treated_smp = resize_by_factor(treated_smp, factor)
+            treated_ref = resize_by_factor(treated_ref, factor)
+
+        if cam_settings or light_settings:
+            treated_smp = apply_optical_settings(treated_smp, cam_settings, light_settings)
+            treated_ref = apply_optical_settings(treated_ref, cam_settings, light_settings)
+
+        ok, ref_png = cv2.imencode(".png", treated_ref)
+
+        if ok:
+            smp_img = treated_smp
+            ref_bytes = ref_png.tobytes()
+            treatment_factor = factor
+
+            if factor < 1.0 and roi is not None:
+                roi = BoundingBox(
+                    x=int(round(roi.x * factor)),
+                    y=int(round(roi.y * factor)),
+                    width=max(1, int(round(roi.width * factor))),
+                    height=max(1, int(round(roi.height * factor))),
+                )
+
+    # Per-image ROI conversion for the grayscale evaluator (spec 01 §7.3):
+    # the canonical ROI is converted into each treated image's pixel
+    # space, because the reference and the sample may differ in size.
+    # The pattern_match branch below does its own conversion and does
+    # not use these values. When the recorded space is unknown both
+    # images share the ROI (the pre-existing behavior).
+    roi_recorded_size = _roi_recorded_size(body.get("roi"))
+    gray_ref_size: tuple[int, int] | None = None
+    gray_smp_size: tuple[int, int] | None = None
+
+    if cv2 is not None:
+        gray_ref_decoded = cv2.imdecode(np.frombuffer(ref_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
+
+        if gray_ref_decoded is not None:
+            gray_ref_size = (gray_ref_decoded.shape[1], gray_ref_decoded.shape[0])
+
+    if smp_img is not None:
+        gray_smp_size = (smp_img.shape[1], smp_img.shape[0])
+
+    gray_ref_roi, gray_smp_roi = _per_image_rois(
+        roi, roi_recorded_size, treatment_factor, gray_ref_size, gray_smp_size
+    )
 
     start_time = time.perf_counter()
     result: ConfidenceResult
@@ -164,8 +371,11 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reference_bytes=ref_bytes,
                 sample_bytes=smp_img if smp_img is not None else smp_bytes,
                 roi=roi,
-                tolerance=tolerance,
+                ref_roi=gray_ref_roi,
+                smp_roi=gray_smp_roi,
+                tolerance=luma_tolerance,
                 threshold=threshold,
+                tape_mode=bool(body.get("tapeMode", False)),
             )
     elif rule_type == "pattern_match":
         ref_arr = np.frombuffer(ref_bytes, dtype=np.uint8)
@@ -188,15 +398,41 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reason="Pattern inspection is not configured: missing saved search ROI.",
             )
         else:
-            tmpl_img = _clip_to_roi(ref_img, roi)
-            search_roi = BoundingBox(
-                x=max(0, roi.x - 20),
-                y=max(0, roi.y - 20),
-                width=min(smp_img.shape[1] - max(0, roi.x - 20), roi.width + 40),
-                height=min(smp_img.shape[0] - max(0, roi.y - 20), roi.height + 40),
+            # Convert the canonical ROI into each image's pixel space before
+            # slicing (spec 01 §7.3); the ±20px search window is expanded
+            # in sample space, after conversion, and clamped to the sample
+            # bounds (spec 01 §7.4). A fully out-of-bounds ROI is a FAIL
+            # verdict, not a short or empty slice.
+            recorded_size = _roi_recorded_size(body.get("roi"))
+            ref_roi = convert_roi_to_image(
+                roi,
+                recorded_size=recorded_size,
+                image_size=(ref_img.shape[1], ref_img.shape[0]),
             )
-            search_area = _clip_to_roi(smp_img, search_roi)
-            result = _match_pattern(search_area, tmpl_img, threshold=threshold)
+            smp_roi = convert_roi_to_image(
+                roi,
+                recorded_size=recorded_size,
+                image_size=(smp_img.shape[1], smp_img.shape[0]),
+            )
+            try:
+                tmpl_img = _clip_to_roi(ref_img, ref_roi)
+                search_roi = BoundingBox(
+                    x=max(0, smp_roi.x - 20),
+                    y=max(0, smp_roi.y - 20),
+                    width=min(smp_img.shape[1] - max(0, smp_roi.x - 20), smp_roi.width + 40),
+                    height=min(smp_img.shape[0] - max(0, smp_roi.y - 20), smp_roi.height + 40),
+                )
+                search_area = _clip_to_roi(smp_img, search_roi)
+            except ValueError as exc:
+                result = ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
+            else:
+                result = _match_pattern(search_area, tmpl_img, threshold=threshold)
     elif rule_type == "shape_track":
         if smp_img is None:
             result = ConfidenceResult(
@@ -207,8 +443,18 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reason="Failed to decode sample image",
             )
         else:
-            clipped = _clip_to_roi(smp_img, roi)
-            result = _track_shapes(clipped, threshold=threshold)
+            try:
+                clipped = _clip_to_roi(smp_img, roi)
+            except ValueError as exc:
+                result = ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
+            else:
+                result = _track_shapes(clipped, threshold=threshold)
     elif rule_type == "color_area":
         if smp_img is None:
             result = ConfidenceResult(
@@ -219,8 +465,18 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reason="Failed to decode sample image",
             )
         else:
-            clipped = _clip_to_roi(smp_img, roi)
-            result = _check_color_area(clipped, (0, 30, 30), (180, 255, 255), threshold=threshold)
+            try:
+                clipped = _clip_to_roi(smp_img, roi)
+            except ValueError as exc:
+                result = ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
+            else:
+                result = _check_color_area(clipped, (0, 30, 30), (180, 255, 255), threshold=threshold)
     elif rule_type in ("blob_area", "blob", "defect"):
         if smp_img is None:
             result = ConfidenceResult(
@@ -231,12 +487,22 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reason="Failed to decode sample image",
             )
         else:
-            clipped = _clip_to_roi(smp_img, roi)
-            result = _measure_blob_area(
-                clipped,
-                calibration_factor=calibration_factor,
-                unit=calibration_unit,
-            )
+            try:
+                clipped = _clip_to_roi(smp_img, roi)
+            except ValueError as exc:
+                result = ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
+            else:
+                result = _measure_blob_area(
+                    clipped,
+                    calibration_factor=calibration_factor,
+                    unit=calibration_unit,
+                )
     elif rule_type in ("edge_width", "profile_width", "edge_pitch"):
         if smp_img is None:
             result = ConfidenceResult(
@@ -247,20 +513,33 @@ async def evaluate_score(request: Request) -> JSONResponse:
                 reason="Failed to decode sample image",
             )
         else:
-            clipped = _clip_to_roi(smp_img, roi)
-            result = _measure_edge_width(
-                clipped,
-                calibration_factor=calibration_factor,
-                unit=calibration_unit,
-            )
+            try:
+                clipped = _clip_to_roi(smp_img, roi)
+            except ValueError as exc:
+                result = ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
+            else:
+                result = _measure_edge_width(
+                    clipped,
+                    calibration_factor=calibration_factor,
+                    unit=calibration_unit,
+                )
     else:
         # Default fallback to grayscale tolerance
         result = await evaluate_grayscale_tolerance(
             reference_bytes=ref_bytes,
             sample_bytes=smp_img if smp_img is not None else smp_bytes,
             roi=roi,
-            tolerance=tolerance,
+            ref_roi=gray_ref_roi,
+            smp_roi=gray_smp_roi,
+            tolerance=luma_tolerance,
             threshold=threshold,
+            tape_mode=bool(body.get("tapeMode", False)),
         )
 
     duration_ms = max(1, int((time.perf_counter() - start_time) * 1000))
@@ -343,6 +622,7 @@ async def evaluate_score(request: Request) -> JSONResponse:
             "is_pass": score_payload["is_pass"],
             "confidence": score_payload["confidence"],
             "hasOptical": bool(cam_settings or light_settings),
+            "downsampleFactor": treatment_factor,
             "runId": score_payload.get("runId"),
         },
     )

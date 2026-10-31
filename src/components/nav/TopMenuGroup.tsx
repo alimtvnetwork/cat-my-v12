@@ -1,8 +1,13 @@
-import { ReactElement } from "react";
+import { memo, useCallback, type ReactElement } from "react";
 import { MenubarMenu, MenubarContent } from "@/components/ui/menubar";
 import { MenubarItemRow } from "./TopMenuRows";
 import { isActionEntry, isGroupActive } from "./TopMenuUtils";
-import { MenuGroup, MenuTriggerWithMnemonic } from "./TopMenuBar";
+import {
+  MenuGroup,
+  MenuTriggerWithMnemonic,
+  clearMenuTrigger,
+  recordMenuContentMounted,
+} from "./TopMenuBar";
 
 interface TopMenuGroupProps {
   group: MenuGroup;
@@ -11,16 +16,28 @@ interface TopMenuGroupProps {
   isHydrated: boolean;
 }
 
-export function TopMenuGroup({
+function TopMenuGroupInner({
   group,
   pathname,
   running,
   isHydrated,
 }: TopMenuGroupProps): ReactElement {
+  const contentRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (node) {
+        recordMenuContentMounted(group.id);
+      } else {
+        clearMenuTrigger(group.id);
+      }
+    },
+    [group.id],
+  );
+
   return (
     <MenubarMenu>
       <MenuTriggerWithMnemonic group={group} groupActive={isGroupActive(group, pathname)} />
       <MenubarContent
+        ref={contentRef}
         align="start"
         sideOffset={6}
         className="min-w-[14rem] border-ca-border bg-ca-panel p-1.5 text-ca-ink shadow-hmi-panel"
@@ -44,3 +61,6 @@ export function TopMenuGroup({
     </MenubarMenu>
   );
 }
+
+export const TopMenuGroup = memo(TopMenuGroupInner);
+TopMenuGroup.displayName = "TopMenuGroup";

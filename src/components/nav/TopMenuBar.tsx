@@ -2,7 +2,7 @@ import { ClientLogger } from "@/lib/observability/client-logger";
 // TopMenuBar: global dropdown menu bar shown in the app titlebar.
 // Purpose: Dexter-style grouped HMI command surface for core workflows.
 import { RunStatusType } from "@/types/run/RunStatus";
-import { useEffect, useMemo, type ReactElement } from "react";
+import { memo, useEffect, useMemo, type ReactElement } from "react";
 import { Link, useHydrated, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Check, LayoutTemplate, Menu as MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -17,7 +17,6 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { useRunStore } from "@/lib/stores/run-store";
-import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { MenuGroupIdType } from "@/lib/enums/menu-group-id-type";
 import { MenuShortcutType } from "@/lib/enums/menu-shortcut-type";
 import { useMenuShortcuts, type MenuShortcutBinding } from "@/hooks/useMenuShortcuts";
@@ -191,7 +190,57 @@ export const GROUPS: MenuGroup[] = [
   },
 ];
 
-export function TopMenuBar(): React.JSX.Element | null {
+// Menu-open timing probe (Task 08): open request to first paint was
+// UNMEASURED, so the probe records trigger-to-mount and trigger-to-paint
+// per menu group. Enabled in dev builds, or in any build when
+// localStorage `ca:menu-timing` is "1". E2E (Task 13) reads the
+// `[top-menu timing]` console lines to attribute open latency before
+// any cause is claimed. Zero log output when disabled.
+const MENU_TIMING_FLAG = "ca:menu-timing";
+const menuTriggerAt = new Map<string, number>();
+
+export function isMenuTimingEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (import.meta.env.DEV) return true;
+  try {
+    return window.localStorage.getItem(MENU_TIMING_FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function recordMenuTrigger(groupId: string): void {
+  if (isMenuTimingEnabled()) {
+    menuTriggerAt.set(groupId, performance.now());
+  }
+}
+
+export function recordMenuContentMounted(groupId: string): void {
+  if (!isMenuTimingEnabled()) {
+    return;
+  }
+  const triggerAt = menuTriggerAt.get(groupId);
+  const mountedAt = performance.now();
+  menuTriggerAt.delete(groupId);
+  const triggerToMountMs =
+    triggerAt === undefined ? null : Math.round((mountedAt - triggerAt) * 10) / 10;
+  requestAnimationFrame(() => {
+    const paintedAt = performance.now();
+    const triggerToPaintMs =
+      triggerAt === undefined ? null : Math.round((paintedAt - triggerAt) * 10) / 10;
+    ClientLogger.info("[top-menu timing] menu opened", {
+      groupId,
+      triggerToMountMs,
+      triggerToPaintMs,
+    });
+  });
+}
+
+export function clearMenuTrigger(groupId: string): void {
+  menuTriggerAt.delete(groupId);
+}
+
+function TopMenuBarInner(): React.JSX.Element | null {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const running = useRunStore((s) => RunStatusType.isRunning(s.status));
@@ -248,3 +297,6 @@ export function TopMenuBar(): React.JSX.Element | null {
     </>
   );
 }
+
+export const TopMenuBar = memo(TopMenuBarInner);
+TopMenuBar.displayName = "TopMenuBar";

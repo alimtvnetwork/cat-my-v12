@@ -2,3 +2,8 @@
 # Plan 88 Step 29: sdk directory is binary safe
 sdk/** -text -diff -merge
 
+# Pattern-search fix: shell scripts must stay LF so they remain executable
+# on Unix checkouts (core.autocrlf would otherwise restore CRLF).
+*.sh text eol=lf
+*.bats text eol=lf
+

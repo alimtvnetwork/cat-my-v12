@@ -59,6 +59,7 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             hasGreyscalePreview={model.hasGreyscalePreview}
             thresholdLuma={model.thresholdLuma}
             polarity={model.polarity}
+            angleDatum={model.angleDatum}
             dragState={model.dragState}
             onSearchRegionChange={model.handleActiveRegionChange}
             onDragStateChange={model.setDragState}
@@ -79,6 +80,8 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             searchRegion={model.searchRegion}
             packageRegion={model.packageRegion}
             regionEditMode={model.regionEditMode}
+            angleDatum={model.angleDatum}
+            onAngleDatumChange={model.handleAngleDatumChange}
             detectedHoles={model.detectedHoles}
             registeredPin1={model.registeredPin1}
             matchResult={model.matchResult}
@@ -87,12 +90,12 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             actionButtonLabel={buttonLabel}
             onThresholdChange={model.handleThresholdChange}
             onPolarityChange={model.handlePolarityChange}
-            onCircularityChange={model.setMinCircularity}
+            onCircularityChange={model.handleCircularityChange}
             onRadiusRangeChange={(minR, maxR) => {
               model.setMinRadiusPx(minR);
               model.setMaxRadiusPx(maxR);
             }}
-            onToleranceChange={model.setTolerancePx}
+            onToleranceChange={model.handleToleranceChange}
             onRegionEditModeChange={model.setRegionEditMode}
             onAddPackageRegion={model.addPackageRegion}
             onToggleKeepHole={model.toggleKeepHole}

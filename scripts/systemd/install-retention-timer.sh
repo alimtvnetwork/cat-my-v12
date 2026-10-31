@@ -75,7 +75,7 @@ do_install() {
     systemctl --user daemon-reload || { echo "[4] daemon-reload failed" >&2; exit 4; }
     systemctl --user enable --now "$TIMER_NAME" || { echo "[4] enable --now failed" >&2; exit 4; }
     echo "[ok] $TIMER_NAME installed and started."
-    echo "[hint] run 'loginctl enable-linger $USER' to start at boot before login."
+    echo "[hint] run 'loginctl enable-linger ${USER:-$(id -un)}' to start at boot before login."
 }
 
 do_uninstall() {

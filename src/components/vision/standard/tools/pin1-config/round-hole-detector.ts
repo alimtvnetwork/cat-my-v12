@@ -2,6 +2,7 @@ import type { SearchRegion } from "@/lib/vision/white-box-marking";
 import {
   HolePolarityType,
   Pin1JudgmentStatusType,
+  type Pin1AngleDatum,
   type Pin1HoleItem,
   type Pin1MatchResult,
 } from "./types";
@@ -30,8 +31,46 @@ interface ComponentBounds {
   sumLuma: number;
 }
 
-function getLuminance(r: number, g: number, b: number): number {
+export function computeLuma(r: number, g: number, b: number): number {
   return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+export function clampPin1Threshold(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 35;
+  }
+
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+export function clampPin1Circularity(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 45;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+export function clampPin1Tolerance(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 25;
+  }
+
+  return Math.max(0, Math.round(value));
+}
+
+export function resolvePin1RadiusRange(
+  minRadius: unknown,
+  maxRadius: unknown,
+): { minRadiusPx: number; maxRadiusPx: number } {
+  const minRadiusPx =
+    typeof minRadius === "number" && Number.isFinite(minRadius) ? Math.max(0, Math.round(minRadius)) : 3;
+  const maxRadiusPx =
+    typeof maxRadius === "number" && Number.isFinite(maxRadius)
+      ? Math.max(minRadiusPx, Math.round(maxRadius))
+      : Math.max(minRadiusPx, 60);
+
+  return { minRadiusPx, maxRadiusPx };
 }
 
 function resolveSearchBounds(
@@ -70,7 +109,7 @@ function buildBinaryGrid(params: DetectRoundHolesParams): {
 } {
   const { targetRgba, targetWidth, targetHeight, polarity, thresholdLuma } = params;
   const pol = polarity ?? HolePolarityType.DarkIndentation;
-  const thresh = thresholdLuma ?? 80;
+  const thresh = clampPin1Threshold(thresholdLuma);
   const bounds = resolveSearchBounds(targetWidth, targetHeight, params.searchRegion);
   const total = targetWidth * targetHeight;
   const binary = new Uint8Array(total);
@@ -89,7 +128,7 @@ function buildBinaryGrid(params: DetectRoundHolesParams): {
         continue;
       }
 
-      const luma = getLuminance(
+      const luma = computeLuma(
         targetRgba[pixelIdx],
         targetRgba[pixelIdx + 1],
         targetRgba[pixelIdx + 2],
@@ -271,10 +310,19 @@ function processCandidate(
 
 export function detectRoundHolesInRegion(params: DetectRoundHolesParams): Pin1HoleItem[] {
   const { targetWidth, targetHeight } = params;
-  const minCirc = params.minCircularityPercent ?? 45;
-  const minR = params.minRadiusPx ?? 2;
-  const maxR = params.maxRadiusPx ?? 60;
-  const { binary, lumas, bounds } = buildBinaryGrid(params);
+  const minCirc = clampPin1Circularity(params.minCircularityPercent);
+  const { minRadiusPx: minR, maxRadiusPx: maxR } = resolvePin1RadiusRange(
+    params.minRadiusPx,
+    params.maxRadiusPx,
+  );
+  const resolvedParams = {
+    ...params,
+    thresholdLuma: clampPin1Threshold(params.thresholdLuma),
+    minCircularityPercent: minCirc,
+    minRadiusPx: minR,
+    maxRadiusPx: maxR,
+  };
+  const { binary, lumas, bounds } = buildBinaryGrid(resolvedParams);
   const visited = new Uint8Array(targetWidth * targetHeight);
   const holes: Pin1HoleItem[] = [];
   let nextId = 1;
@@ -340,6 +388,7 @@ export interface EvaluatePin1Params {
   registeredPin1?: Pin1HoleItem | null;
   searchRegion?: SearchRegion | null;
   packageRegion?: SearchRegion | null;
+  angleDatum?: Pin1AngleDatum;
   tolerancePx?: number;
 }
 
@@ -347,7 +396,10 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
   const start = performance.now();
   const { detectedHoles, registeredPin1, searchRegion, packageRegion } = params;
   const tolerance = params.tolerancePx ?? 10;
-  const angleRegion = packageRegion ?? searchRegion ?? null;
+  const angleRegion =
+    params.angleDatum === "search"
+      ? (searchRegion ?? packageRegion ?? null)
+      : (packageRegion ?? searchRegion ?? null);
   const packageCenterX = angleRegion
     ? Math.round(angleRegion.x + angleRegion.width / 2)
     : registeredPin1?.centerX ?? 0;

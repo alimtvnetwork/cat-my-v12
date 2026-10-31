@@ -19,6 +19,10 @@ export function StatusBar(): React.JSX.Element | null {
   const ok = counters.ok;
   const ng = counters.ng;
   const isRunning = RunStatusType.isRunning(status);
+  // Build-time version from version.json (vite.config.ts defines
+  // import.meta.env.VITE_APP_VERSION). "unknown" means the define did
+  // not apply and is itself a build defect signal.
+  const appVersion = import.meta.env.VITE_APP_VERSION ?? "unknown";
 
   return (
     <footer
@@ -44,6 +48,15 @@ export function StatusBar(): React.JSX.Element | null {
             aria-label="Active program"
           >
             {programName}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 rounded-md border border-ca-border/60 bg-ca-panel/50 px-2.5 py-0.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-ca-ink-muted">VER</span>
+          <span
+            className="hmi-tabular font-mono text-[11px] font-semibold text-ca-ink"
+            aria-label="App version"
+          >
+            {appVersion}
           </span>
         </div>
       </div>

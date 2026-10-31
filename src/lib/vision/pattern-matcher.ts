@@ -49,6 +49,8 @@ export interface PatternMatchResult {
   patternBounds: { x: number; y: number; width: number; height: number };
   boxResults: BoxMatchItem[];
   executionTimeMs: number;
+  uniformScaleApplied?: boolean;
+  constellationScale?: number;
 }
 
 interface OffsetCandidate {

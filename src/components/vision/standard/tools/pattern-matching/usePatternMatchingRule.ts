@@ -9,7 +9,14 @@ import {
   type SearchRegion,
   type WhiteBoxMarkingInput,
 } from "@/lib/vision/white-box-marking";
+import {
+  fitInside,
+  migrateStoredRegionToWorking,
+  readRecordedSpace,
+  rectFromDomainGeometry,
+} from "@/domain/vision/coordinates";
 import type { RegionDrag } from "@/components/vision/white-box/types";
+import { migrateDetectionThresholds } from "@/domain/vision/pattern-search";
 import {
   evaluateChipPixelsReal,
   getAtmelReferenceBoxes,
@@ -20,11 +27,15 @@ import {
 } from "./chip-assets";
 
 import type { PatternMatchingRuleProps } from "./types";
+import {
+  domainRegionFromFlat,
+  parseRegionInput,
+  resolveMatcherSettings,
+} from "@/domain/vision/pattern-search";
 import { useConveyorSimulation } from "./useConveyorSimulation";
 
 export const STANDARD_CANVAS_WIDTH = 960;
 export const STANDARD_CANVAS_HEIGHT = 540;
-export const STANDARD_IMAGE_MAX_SIZE = 380;
 
 export async function normalizeImageToStandardCanvas(
   imageSource: CanvasImageSource,
@@ -37,12 +48,8 @@ export async function normalizeImageToStandardCanvas(
   canvas.height = STANDARD_CANVAS_HEIGHT;
   const ctx = canvas.getContext("2d");
 
-  const searchRegion: SearchRegion = {
-    x: 350,
-    y: 220,
-    width: 350,
-    height: 180,
-  };
+  // Default region is derived from the fitted image rect below, never
+  // hardcoded: the old 350/220/350/180 constant assumed a 960x540 source.
 
   if (!ctx) {
     return {
@@ -51,22 +58,41 @@ export async function normalizeImageToStandardCanvas(
         height: STANDARD_CANVAS_HEIGHT,
         rgba: new Uint8ClampedArray(STANDARD_CANVAS_WIDTH * STANDARD_CANVAS_HEIGHT * 4),
       },
-      searchRegion,
+      searchRegion: createDefaultSearchRegion(STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT),
     };
   }
 
-  // Draw image to fill standard 960x540 canvas (identical to Workpiece Canvas)
-  ctx.drawImage(imageSource, 0, 0, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT);
+  // Aspect-preserving fit into the standard 960x540 working buffer (spec
+  // 01 §4.1): the image is letterboxed, never stretched, and the recorded
+  // transform maps working-space coordinates back to canonical space.
+  const fit = fitInside(
+    { width: origW, height: origH },
+    { width: STANDARD_CANVAS_WIDTH, height: STANDARD_CANVAS_HEIGHT },
+  );
+
+  ctx.drawImage(imageSource, fit.offsetX, fit.offsetY, fit.drawWidth, fit.drawHeight);
 
   const imgData = ctx.getImageData(0, 0, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT);
+  const defaultRegion = createDefaultSearchRegion(fit.drawWidth, fit.drawHeight);
 
   return {
     source: {
       width: STANDARD_CANVAS_WIDTH,
       height: STANDARD_CANVAS_HEIGHT,
       rgba: imgData.data,
+      sourceWidth: origW,
+      sourceHeight: origH,
+      scaleX: fit.scale,
+      scaleY: fit.scale,
+      offsetX: fit.offsetX,
+      offsetY: fit.offsetY,
     },
-    searchRegion,
+    searchRegion: {
+      x: defaultRegion.x + fit.offsetX,
+      y: defaultRegion.y + fit.offsetY,
+      width: defaultRegion.width,
+      height: defaultRegion.height,
+    },
   };
 }
 
@@ -128,16 +154,13 @@ export function createDefaultSearchRegion(width: number, height: number): Search
 export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   const { settings: rawSettings, onChange } = props;
   const settings = rawSettings as any;
-  const minMatchPercent = settings?.minMatchPercent ?? 80;
+  const matcherSettings = resolveMatcherSettings(settings);
+  const minMatchPercent = matcherSettings.minMatchPercent;
+  const lumaTolerance = matcherSettings.lumaTolerance;
+  const searchMarginPx = matcherSettings.searchMarginPx;
+  const searchStepPx = matcherSettings.searchStepPx;
   const tolerancePx = settings?.tolerancePx ?? settings?.marginPx ?? 8;
-  const rawThreshold =
-    settings?.threshold ??
-    settings?.WhiteThreshold ??
-    settings?.whiteThreshold ??
-    settings?.greyscaleLevel ??
-    settings?.params?.threshold ??
-    settings?.params?.WhiteThreshold;
-  const greyscaleLevel = typeof rawThreshold === "number" ? rawThreshold : 170;
+  const greyscaleLevel = migrateDetectionThresholds(settings).greyscaleThreshold;
 
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() => {
     const sr = settings?.searchRegion;
@@ -201,16 +224,64 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
         setSource(stdSource);
 
-        if (!searchRegion) {
+        // §4.4 settings-load migration: a stored search region was drawn
+        // against some earlier image (or, unstamped, in Space B buffer
+        // coordinates). Convert it through canonical space for the image
+        // just loaded, then into this image's working buffer. The stored
+        // settings are never mutated, so a later load re-derives from the
+        // pristine stored values and can never double-convert.
+        const storedRaw = (props.settings as any)?.searchRegion;
+        const storedParsed = storedRaw ? parseRegionInput(storedRaw) : null;
+        const storedRect = storedParsed ? rectFromDomainGeometry(storedParsed.geometry) : null;
+        const nativeWidth = stdSource.sourceWidth ?? stdSource.width;
+        const nativeHeight = stdSource.sourceHeight ?? stdSource.height;
+        let effectiveRegion: SearchRegion;
+
+        if (storedRect && nativeWidth > 0 && nativeHeight > 0) {
+          const migration = migrateStoredRegionToWorking({
+            stored: storedRect,
+            recorded: readRecordedSpace(storedRaw),
+            image: { width: nativeWidth, height: nativeHeight },
+            working: {
+              sourceWidth: nativeWidth,
+              sourceHeight: nativeHeight,
+              scaleX: stdSource.scaleX ?? 1,
+              scaleY: stdSource.scaleY ?? 1,
+              offsetX: stdSource.offsetX ?? 0,
+              offsetY: stdSource.offsetY ?? 0,
+              aspectPreserved: true,
+            },
+            workingSize: { width: stdSource.width, height: stdSource.height },
+          });
+
+          if (migration.isFlagged) {
+            // Flagged means the region must not be evaluated at a guessed
+            // position: fall back to the default region for this image.
+            console.warn(`[pattern-search] searchRegion migration flagged: ${migration.log}`);
+            setSearchRegion(stdRegion);
+            effectiveRegion = stdRegion;
+          } else {
+            console.info(
+              `[pattern-search] searchRegion migrated from ${migration.sourceSpace}: ${migration.log}`,
+            );
+            setSearchRegion(migration.working);
+            effectiveRegion = migration.working;
+          }
+        } else if (!searchRegion) {
           setSearchRegion(stdRegion);
+          effectiveRegion = stdRegion;
+        } else {
+          effectiveRegion = searchRegion;
         }
 
         const result = evaluateChipPixelsReal({
           targetRgba: stdSource.rgba,
           targetWidth: stdSource.width,
           targetHeight: stdSource.height,
-          searchRegion: searchRegion ?? stdRegion,
-          toleranceLuma: 22,
+          searchRegion: effectiveRegion,
+          toleranceLuma: lumaTolerance,
+          searchMarginPx,
+          searchStepPx,
           minMatchPercent,
         });
 
@@ -230,8 +301,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       setSearchRegion(newRegion);
       onChange((prev: any) => ({
         ...prev,
-        searchRegion: newRegion,
-        searchRegionJson: newRegion ? JSON.stringify(newRegion) : undefined,
+        searchRegion: newRegion
+          ? domainRegionFromFlat({
+              flat: newRegion,
+              prevShape: (prev as any)?.searchRegion?.shape,
+            })
+          : null,
       }));
 
       if (source && newRegion && newRegion.width > 5 && newRegion.height > 5) {
@@ -240,14 +315,16 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           targetWidth: source.width,
           targetHeight: source.height,
           searchRegion: newRegion,
-          toleranceLuma: 22,
+          toleranceLuma: lumaTolerance,
+          searchMarginPx,
+          searchStepPx,
           minMatchPercent,
         });
 
         setMatchResult(result);
       }
     },
-    [source, minMatchPercent, onChange],
+    [source, minMatchPercent, lumaTolerance, searchMarginPx, searchStepPx, onChange],
   );
 
   const clearCanvas = useCallback(() => {
@@ -257,7 +334,6 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     onChange((prev: any) => ({
       ...prev,
       searchRegion: null,
-      searchRegionJson: undefined,
     }));
   }, [onChange]);
 
@@ -275,7 +351,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: lumaTolerance,
+        searchMarginPx,
+        searchStepPx,
         minMatchPercent,
       });
 
@@ -286,7 +364,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     } catch {
       toast.error("Failed to load Golden Atmel sample");
     }
-  }, [minMatchPercent]);
+  }, [minMatchPercent, lumaTolerance, searchMarginPx, searchStepPx]);
 
   // Load New Device: STM8 Defective Sample
   const loadSampleStm8 = useCallback(async () => {
@@ -302,7 +380,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: lumaTolerance,
+        searchMarginPx,
+        searchStepPx,
         minMatchPercent,
       });
 
@@ -313,7 +393,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     } catch {
       toast.error("Failed to load STM8 sample");
     }
-  }, [minMatchPercent]);
+  }, [minMatchPercent, lumaTolerance, searchMarginPx, searchStepPx]);
 
   const runMatch = useCallback(async () => {
     if (!source) {
@@ -337,7 +417,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       targetWidth: source.width,
       targetHeight: source.height,
       searchRegion: effectiveRegion,
-      toleranceLuma: 22,
+      toleranceLuma: lumaTolerance,
+      searchMarginPx,
+      searchStepPx,
       minMatchPercent,
     });
 
@@ -353,7 +435,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         `Pattern Match FAIL: ${result.score}% (${result.matchedCount}/${result.totalCount} boxes matched).`,
       );
     }
-  }, [source, searchRegion, minMatchPercent]);
+  }, [source, searchRegion, minMatchPercent, lumaTolerance, searchMarginPx, searchStepPx]);
 
   const loadFile = async (file: File | undefined) => {
     if (!file) {
@@ -373,7 +455,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: lumaTolerance,
+        searchMarginPx,
+        searchStepPx,
         minMatchPercent,
       });
 
@@ -392,7 +476,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: input.width,
         targetHeight: input.height,
         searchRegion: region,
-        toleranceLuma: 22,
+        toleranceLuma: lumaTolerance,
+        searchMarginPx,
+        searchStepPx,
         minMatchPercent,
       });
 
@@ -425,7 +511,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           targetWidth: stdSource.width,
           targetHeight: stdSource.height,
           searchRegion: stdRegion,
-          toleranceLuma: 22,
+          toleranceLuma: lumaTolerance,
+          searchMarginPx,
+          searchStepPx,
           minMatchPercent,
         });
 
@@ -448,7 +536,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   const changeMinPercent = (val: number) => {
     onChange((prev: any) => ({
       ...prev,
-      minMatchPercent: val,
+      detection: {
+        ...((prev as any)?.detection ?? {}),
+        minMatchPercent: val,
+      },
     }));
   };
 

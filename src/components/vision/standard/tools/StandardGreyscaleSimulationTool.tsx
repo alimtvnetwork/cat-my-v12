@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { InspectionHierarchyTree } from "@/components/vision/workpiece/InspectionHierarchyTree";
+import { StandardImageToolbar } from "../StandardImageToolbar";
 import {
   DEFAULT_RULE_CAMERA_SETTINGS,
   DEFAULT_RULE_LIGHT_SETTINGS,
@@ -30,6 +31,7 @@ import { CarrierTapeResultPanel } from "./pattern-matching/carrier-tape-simulati
 import { CarrierTapeSimulationCanvas } from "./pattern-matching/carrier-tape-simulation/CarrierTapeSimulationCanvas";
 import { useCarrierTapeSimulation } from "./pattern-matching/carrier-tape-simulation/useCarrierTapeSimulation";
 import type { PatternMatchingRuleProps } from "./pattern-matching/types";
+import { migrateDetectionThresholds } from "@/domain/vision/pattern-search";
 
 interface SimulationTreeRule {
   id: string;
@@ -45,14 +47,25 @@ const builtInSimulationRuleIds = new Set(["rule-pin1", "rule-pattern"]);
 export function StandardGreyscaleSimulationTool(
   props: PatternMatchingRuleProps,
 ): React.JSX.Element {
+  // Initial import from the rule's canonical threshold (spec 02 §7.3):
+  // after mount the simulation value stays sim-local and never writes
+  // back to rule settings. The sim pass bar (initialMinMatchPercent 80)
+  // is likewise sim-local and deliberately differs from the shared rule
+  // default (detection.minMatchPercent 40): tuning one never changes
+  // the other, and neither writes to the other.
   const carrierSimulation = useCarrierTapeSimulation({
     initialMarginTolerancePx: 8,
     initialAngleToleranceDeg: 1.0,
     initialMinMatchPercent: 80,
-    initialGreyscaleLevel: 170,
+    initialGreyscaleLevel: migrateDetectionThresholds(props.settings).greyscaleThreshold,
   });
 
-  const [hasOverlays, setHasOverlays] = useState(true);
+  // Toolbar view modes (local to this tool): regions drives the canvas
+  // overlay pass; results drives the tool-level result readouts (metrics
+  // + result panel) because the canvas draws region + result graphics in
+  // a single overlay pass that must not be split here; grid draws a dot
+  // grid on the canvas wrapper. Defaults preserve today's display.
+  const [viewModes, setViewModes] = useState({ regions: true, results: true, grid: false });
   const [selectedRuleId, setSelectedRuleId] = useState("rule-pin1");
   const [treeRules, setTreeRules] = useState<SimulationTreeRule[]>([
     {
@@ -110,6 +123,36 @@ export function StandardGreyscaleSimulationTool(
     if (selectedRuleId === ruleId) {
       setSelectedRuleId("rule-pin1");
     }
+  };
+  const handleReorderRule = (ruleId: string, direction: "up" | "down") => {
+    // Sim-local order only: treeRules never leaves this tool, and the
+    // selection is by rule id, so it survives the swap. Ends are no-ops.
+    setTreeRules((prev) => {
+      const index = prev.findIndex((rule) => rule.id === ruleId);
+
+      if (index === -1) {
+        return prev;
+      }
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= prev.length) {
+        return prev;
+      }
+
+      const moved = prev[index];
+      const target = prev[targetIndex];
+
+      if (moved === undefined || target === undefined) {
+        return prev;
+      }
+
+      const next = [...prev];
+      next[index] = target;
+      next[targetIndex] = moved;
+
+      return next;
+    });
   };
   const handleUpdateCameraSettings = (ruleId: string, cameraSettings: RuleCameraSettings) => {
     setTreeRules((prev) =>
@@ -182,14 +225,14 @@ export function StandardGreyscaleSimulationTool(
 
         <button
           type="button"
-          onClick={() => setHasOverlays((prev) => !prev)}
+          onClick={() => setViewModes((s) => ({ ...s, regions: !s.regions }))}
           className={`inline-flex items-center gap-hmi-2 rounded-sm border px-hmi-2 py-hmi-1 text-hmi-caption font-semibold transition ${
-            hasOverlays
+            viewModes.regions
               ? "border-ca-select bg-ca-select/10 text-ca-select"
               : "border-ca-border bg-ca-panel text-ca-ink-muted"
           }`}
         >
-          {hasOverlays ? <Eye aria-hidden size={14} /> : <EyeOff aria-hidden size={14} />}
+          {viewModes.regions ? <Eye aria-hidden size={14} /> : <EyeOff aria-hidden size={14} />}
           Overlay
         </button>
 
@@ -211,6 +254,22 @@ export function StandardGreyscaleSimulationTool(
         </button>
       </div>
 
+      {/* Image toolbar: the settings dispatcher already arrives as
+          props.onChange from the dispatcher — no dispatcher change was
+          needed, only this wiring. Zoom drives the canvas display scale;
+          regions drives the overlay pass; results drives the readouts
+          below; grid draws dots on the canvas wrapper. Source/Rendering
+          write shared settings.view state exactly as in Standard; the sim
+          keeps its own sim-local tuning values and never writes back.
+          Refresh is intentionally unwired: the toolbar then resets zoom
+          to 100 (its built-in fallback) instead of faking a re-run. */}
+      <StandardImageToolbar
+        settings={props.settings}
+        setSettings={props.onChange}
+        viewModes={viewModes}
+        setViewModes={setViewModes}
+      />
+
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-hmi-4 overflow-hidden p-hmi-4 lg:grid-cols-[360px_minmax(0,1fr)_380px] xl:grid-cols-[380px_minmax(0,1fr)_420px]">
         <aside className="flex min-h-0 flex-col overflow-hidden rounded-md border border-ca-border bg-ca-panel">
           <div className="min-h-0 flex-1 overflow-y-auto p-hmi-3">
@@ -220,6 +279,7 @@ export function StandardGreyscaleSimulationTool(
               onSelectRule={setSelectedRuleId}
               onAddRule={handleAddRule}
               onDeleteRule={handleDeleteRule}
+              onReorderRule={handleReorderRule}
               onUpdateCameraSettings={handleUpdateCameraSettings}
               onUpdateLightSettings={handleUpdateLightSettings}
             />
@@ -250,7 +310,9 @@ export function StandardGreyscaleSimulationTool(
             <CarrierTapeSimulationCanvas
               frame={carrierSimulation.currentFrame}
               isAnalyzing={carrierSimulation.isAnalyzing}
-              hasOverlays={hasOverlays}
+              hasOverlays={viewModes.regions}
+              displayZoom={props.settings?.view?.zoom}
+              showGrid={viewModes.grid}
               tolerances={{
                 marginTolerancePx: carrierSimulation.marginTolerancePx,
                 angleToleranceDeg: carrierSimulation.angleToleranceDeg,
@@ -261,13 +323,15 @@ export function StandardGreyscaleSimulationTool(
             />
           </div>
 
-          <div className="grid shrink-0 grid-cols-2 border-t border-ca-border/60 bg-ca-panel-2 md:grid-cols-5">
-            <Metric label="Yield" value={`${stats.yieldPercent}%`} tone={stats.yieldPercent >= 95 ? "good" : "bad"} />
-            <Metric label="Devices" value={String(stats.devicePockets)} />
-            <Metric label="Passed" value={String(stats.passedPockets)} tone="good" />
-            <Metric label="Failed" value={String(stats.failedPockets)} tone={stats.failedPockets > 0 ? "bad" : "muted"} />
-            <Metric label="Rule 2 Skips" value={String(stats.rule2SkippedCount)} tone="warn" />
-          </div>
+          {viewModes.results ? (
+            <div className="grid shrink-0 grid-cols-2 border-t border-ca-border/60 bg-ca-panel-2 md:grid-cols-5">
+              <Metric label="Yield" value={`${stats.yieldPercent}%`} tone={stats.yieldPercent >= 95 ? "good" : "bad"} />
+              <Metric label="Devices" value={String(stats.devicePockets)} />
+              <Metric label="Passed" value={String(stats.passedPockets)} tone="good" />
+              <Metric label="Failed" value={String(stats.failedPockets)} tone={stats.failedPockets > 0 ? "bad" : "muted"} />
+              <Metric label="Rule 2 Skips" value={String(stats.rule2SkippedCount)} tone="warn" />
+            </div>
+          ) : null}
         </div>
 
         <aside className="flex min-h-0 flex-col overflow-hidden rounded-md border border-ca-border bg-ca-panel">
@@ -345,7 +409,7 @@ export function StandardGreyscaleSimulationTool(
               onChange={carrierSimulation.setMinMatchPercent}
             />
 
-            <CarrierTapeResultPanel simulation={carrierSimulation} />
+            {viewModes.results ? <CarrierTapeResultPanel simulation={carrierSimulation} /> : null}
             </section>
           </div>
         </aside>
@@ -360,6 +424,7 @@ function SimulationRulesTree(props: {
   onSelectRule: (id: string) => void;
   onAddRule: () => void;
   onDeleteRule: (id: string) => void;
+  onReorderRule: (ruleId: string, direction: "up" | "down") => void;
   onUpdateCameraSettings: (ruleId: string, settings: RuleCameraSettings) => void;
   onUpdateLightSettings: (ruleId: string, settings: RuleLightSettings) => void;
 }): React.JSX.Element {
@@ -369,6 +434,7 @@ function SimulationRulesTree(props: {
     onSelectRule,
     onAddRule,
     onDeleteRule,
+    onReorderRule,
     onUpdateCameraSettings,
     onUpdateLightSettings,
   } = props;
@@ -413,6 +479,7 @@ function SimulationRulesTree(props: {
       onSelectRule={onSelectRule}
       onAddRuleClick={onAddRule}
       onDeleteRule={onDeleteRule}
+      onReorderRule={onReorderRule}
       onUpdateCameraSettings={onUpdateCameraSettings}
       onUpdateLightSettings={onUpdateLightSettings}
     />

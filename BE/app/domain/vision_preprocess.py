@@ -131,34 +131,55 @@ def apply_optical_settings(
     return res
 
 
-def maybe_downsample(
+def downsample_factor_for(
     image: np.ndarray,
     max_pixels: int = MAX_PIXELS_BEFORE_DOWNSAMPLE,
-) -> np.ndarray:
-    """Downsample image if it exceeds `max_pixels` to speed up evaluation."""
+) -> float:
+    """Return the scale factor maybe_downsample would apply (1.0 if none)."""
     if image is None:
-        return image
+        return 1.0
 
     h, w = image.shape[:2]
     total = h * w
 
     if total <= max_pixels:
+        return 1.0
+
+    return (max_pixels / total) ** 0.5
+
+
+def resize_by_factor(image: np.ndarray, factor: float) -> np.ndarray:
+    """Resize by a scale factor with the same interpolation as maybe_downsample."""
+    if image is None or factor >= 1.0:
         return image
 
-    scale = (max_pixels / total) ** 0.5
-    new_w = max(1, int(w * scale))
-    new_h = max(1, int(h * scale))
+    h, w = image.shape[:2]
+    new_w = max(1, int(w * factor))
+    new_h = max(1, int(h * factor))
 
     if cv2 is not None:
-        downsampled = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    else:
-        downsampled = image[:: int(1 / scale) or 1, :: int(1 / scale) or 1]
+        return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    return image[:: int(1 / factor) or 1, :: int(1 / factor) or 1]
+
+
+def maybe_downsample(
+    image: np.ndarray,
+    max_pixels: int = MAX_PIXELS_BEFORE_DOWNSAMPLE,
+) -> np.ndarray:
+    """Downsample image if it exceeds `max_pixels` to speed up evaluation."""
+    scale = downsample_factor_for(image, max_pixels)
+
+    if scale >= 1.0:
+        return image
+
+    downsampled = resize_by_factor(image, scale)
 
     logger.info(
         "vision_downsample",
         extra={
-            "original_wh": (w, h),
-            "downsampled_wh": (new_w, new_h),
+            "original_wh": (image.shape[1], image.shape[0]),
+            "downsampled_wh": (downsampled.shape[1], downsampled.shape[0]),
             "scale": round(scale, 3),
         },
     )

@@ -20,6 +20,8 @@ export function StandardCanvas({
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [renderImageRef, setRenderImageRef] = useState(settings.imageRef || defaultWorkpieceFilledSample);
+  // Canonical image bounds: actual image dimensions once loaded; IMAGE_BOUNDS is the pre-load fallback only.
+  const [imageSize, setImageSize] = useState(IMAGE_BOUNDS);
 
   const zoomFactor = settings.view.zoom / 100;
   const viewport: Viewport = { panX, panY, zoom: zoomFactor };
@@ -33,7 +35,9 @@ export function StandardCanvas({
       const rect = el.getBoundingClientRect();
       const anchorScreen = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
-      const newZoom = Math.max(0.1, Math.min(5, zoomFactor * Math.exp(-e.deltaY * 0.0015)));
+      // Spec 35 ZoomPercent 5-800, in factor terms (0.05-8). The old
+      // 0.1-5 clamp silently refused the spec's outer zoom range.
+      const newZoom = Math.max(0.05, Math.min(8, zoomFactor * Math.exp(-e.deltaY * 0.0015)));
 
       const anchorImage = screenToImage(anchorScreen, viewport);
 
@@ -114,13 +118,13 @@ export function StandardCanvas({
           position: "absolute",
           left: panX,
           top: panY,
-          width: IMAGE_BOUNDS.width * zoomFactor,
-          height: IMAGE_BOUNDS.height * zoomFactor,
+          width: imageSize.width * zoomFactor,
+          height: imageSize.height * zoomFactor,
           backgroundColor: "#333",
           backgroundImage: `url("${renderImageRef}")`,
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          backgroundSize: "100% 100%",
+          backgroundSize: "contain",
         }}
       >
         <img
@@ -129,7 +133,13 @@ export function StandardCanvas({
           alt="Registered reference"
           draggable={false}
           onError={() => setRenderImageRef(defaultWorkpieceFilledSample)}
-          className="h-full w-full select-none object-fill opacity-100"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              setImageSize({ x: 0, y: 0, width: img.naturalWidth, height: img.naturalHeight });
+            }
+          }}
+          className="h-full w-full select-none object-contain opacity-100"
         />
         {hasGrid ? (
           <div
@@ -149,8 +159,8 @@ export function StandardCanvas({
               position: "absolute",
               left: panX,
               top: panY,
-              width: IMAGE_BOUNDS.width * zoomFactor,
-              height: IMAGE_BOUNDS.height * zoomFactor,
+              width: imageSize.width * zoomFactor,
+              height: imageSize.height * zoomFactor,
               border: "2px solid yellow",
               pointerEvents: "none",
             }}
@@ -162,6 +172,7 @@ export function StandardCanvas({
             onChange={updateSearchRegion}
             viewport={viewport}
             active={true}
+            bounds={imageSize}
           />
 
           <RegionOverlay
@@ -170,6 +181,7 @@ export function StandardCanvas({
             onChange={updatePatternRegion}
             viewport={viewport}
             active={true}
+            bounds={imageSize}
           />
 
           {settings.masks.map(
@@ -182,6 +194,7 @@ export function StandardCanvas({
                   onChange={(geom) => updateMaskRegion(i, geom)}
                   viewport={viewport}
                   active={true}
+                  bounds={imageSize}
                 />
               ),
           )}

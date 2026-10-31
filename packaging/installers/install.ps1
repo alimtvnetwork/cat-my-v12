@@ -89,6 +89,12 @@ $EXIT_USAGE               = 2
 
 
 $RepoRoot   = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# F2 fix (spec 03 fix wave): bin scripts are invoked by absolute path,
+# so script-path execution puts bin/ (not the repo root) on sys.path
+# and `from BE...` imports fail. Prepend the derived repo root to
+# PYTHONPATH (preserving any existing value) so every python
+# invocation below resolves the BE package. (Process-scoped only.)
+if ($env:PYTHONPATH) { $env:PYTHONPATH = "$RepoRoot;$env:PYTHONPATH" } else { $env:PYTHONPATH = $RepoRoot }
 $VenvPython = Join-Path $RepoRoot '.venv/Scripts/python.exe'
 
 if (-not $InstallRoot) { $InstallRoot = $RepoRoot }
@@ -96,9 +102,62 @@ if (-not (Test-Path -LiteralPath $InstallRoot)) {
     New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 }
 
+# Venv bootstrap (spec 03 §7.2 item 1): a missing venv is created from
+# a system python and given pydantic + fastapi, the third-party
+# imports on the installer path (pydantic for the BE envelope, fastapi
+# via the envelope's request-id import chain, hit when db-bootstrap /
+# retention-run emit their success envelope) instead of failing deep in the
+# renderer/doctor. When pip cannot install (offline machine) and system
+# python already imports BE.envelope, the install proceeds under it with
+# a warning; otherwise exit 9530 names the two commands that fix it.
 if (-not (Test-Path -LiteralPath $VenvPython)) {
-    [Console]::Error.WriteLine("[9530] venv python missing: $VenvPython")
-    exit $EXIT_PLAN_FAILED
+    $bootstrapPython = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $bootstrapPython) { $bootstrapPython = Get-Command python3 -ErrorAction SilentlyContinue }
+    $bootstrapOk = $false
+    if ($bootstrapPython) {
+        Write-Host "[installer] venv python missing; bootstrapping $RepoRoot/.venv"
+        & $bootstrapPython.Source -m venv (Join-Path $RepoRoot '.venv')
+        if ($LASTEXITCODE -eq 0) {
+            $freshVenvPython = Join-Path $RepoRoot '.venv/Scripts/python.exe'
+            & $freshVenvPython -m pip install 'pydantic>=2.9' 'fastapi>=0.115'
+            if ($LASTEXITCODE -eq 0) {
+                $VenvPython = $freshVenvPython
+                $bootstrapOk = $true
+            }
+        }
+        if (-not $bootstrapOk) {
+            & $bootstrapPython.Source -c "import sys; sys.path.insert(0, r'''$RepoRoot'''); import BE.envelope, BE.middleware.request_id" 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "[installer] warning: venv bootstrap could not install pydantic/fastapi; using system python (BE.envelope + request-id imports cleanly)"
+                $VenvPython = $bootstrapPython.Source
+                $bootstrapOk = $true
+            }
+        }
+    }
+    if (-not $bootstrapOk) {
+        [Console]::Error.WriteLine("[9530] venv python missing: $VenvPython (fix with: python -m venv .venv; .venv/Scripts/python.exe -m pip install pydantic fastapi)")
+        exit $EXIT_PLAN_FAILED
+    }
+}
+
+# App version resolution (spec 03 §5.2): an install must never record
+# "unknown" when the release-owned version.json is readable. An explicit
+# -AppVersion or $env:APP_VERSION always wins; an unreadable version.json
+# keeps "unknown" with a warning (the upgrade planner rejects unparseable
+# values loudly).
+if (-not $PSBoundParameters.ContainsKey('AppVersion') -and -not $env:APP_VERSION) {
+    $versionFile = Join-Path $RepoRoot 'version.json'
+    try {
+        $versionFromFile = (Get-Content -LiteralPath $versionFile -Raw | ConvertFrom-Json).version
+        if ($versionFromFile) {
+            $AppVersion = $versionFromFile
+            Write-Host "[installer] AppVersion resolved from version.json: $AppVersion"
+        } else {
+            Write-Host "[installer] warning: version.json has no version field; recording 'unknown'"
+        }
+    } catch {
+        Write-Host "[installer] warning: could not read $versionFile; recording 'unknown'"
+    }
 }
 
 $phase = if ($PSCmdlet.ParameterSetName -eq 'Uninstall') { 'uninstall' } else { 'install' }
@@ -114,6 +173,8 @@ $phase = if ($PSCmdlet.ParameterSetName -eq 'Uninstall') { 'uninstall' } else { 
 # and the tampered-exe path (exit 9533) without invoking the doctor.
 if ($phase -eq 'install' -and -not $BinariesDir) {
     [Console]::Error.WriteLine("[2] -BinariesDir / APP_BINARIES_DIR is required for -Install (Plan 90 Step 125)")
+    [Console]::Error.WriteLine("    Expected layout: a directory holding the release onefile artefacts (db-bootstrap.exe, retention-run.exe) plus SHA256SUMS.txt covering them.")
+    [Console]::Error.WriteLine("    Produce it with the release workflow artefacts download, then re-run with -BinariesDir <dir>.")
     exit $EXIT_USAGE
 }
 if ($BinariesDir) {
@@ -158,6 +219,12 @@ if ($doctorExit -eq 21) {
     exit $EXIT_DOCTOR_BLOCKED
 } elseif ($doctorExit -eq 20 -and -not $ForceWarn) {
     [Console]::Error.WriteLine("[9532] doctor reported warnings; re-run with -ForceWarn to proceed")
+    exit $EXIT_DOCTOR_BLOCKED
+} elseif ($doctorExit -ne 0) {
+    # Doctor contract (bin/install-doctor.py): 0 ok, 20 warnings,
+    # 21 errors, 2 usage, 3 plan failure. Any other exit (e.g. 1 on
+    # crash) means preflight never ran -- refuse rather than tolerate it.
+    [Console]::Error.WriteLine("[9532] doctor failed unexpectedly (exit $doctorExit); refusing to proceed")
     exit $EXIT_DOCTOR_BLOCKED
 }
 

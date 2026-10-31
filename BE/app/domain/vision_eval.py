@@ -37,18 +37,76 @@ class ConfidenceResult:
 
 
 def _clip_to_roi(image: np.ndarray, roi: BoundingBox | None) -> np.ndarray:
-    """Clip image to ROI bounding box. Returns full image if no ROI."""
+    """Clip image to ROI bounding box, clamped to image bounds.
+
+    Returns full image if no ROI. A fully out-of-bounds ROI raises
+    ValueError instead of silently yielding a short or empty slice
+    (spec 01 §7.2); callers map it to a FAIL verdict.
+    """
     if roi is None:
         return image
-    y1 = roi.y
-    y2 = roi.y + roi.height
-    x1 = roi.x
-    x2 = roi.x + roi.width
+    height = image.shape[0]
+    width = image.shape[1]
+    x1 = max(0, roi.x)
+    y1 = max(0, roi.y)
+    x2 = min(width, roi.x + roi.width)
+    y2 = min(height, roi.y + roi.height)
+    if x2 <= x1 or y2 <= y1:
+        raise ValueError(
+            f"ROI fully outside image bounds: roi=({roi.x},{roi.y},{roi.width},{roi.height}) "
+            f"image=({width}x{height})"
+        )
     return image[y1:y2, x1:x2]
 
 
+def convert_roi_to_image(
+    roi: BoundingBox | None,
+    *,
+    recorded_size: tuple[int, int] | None,
+    image_size: tuple[int, int],
+) -> BoundingBox | None:
+    """Scale a canonical-space ROI into an image's pixel space (spec 01 §7.3).
+
+    recorded_size is the (width, height) the ROI was drawn against; None
+    means unknown, in which case the ROI is returned unchanged and the
+    caller's clamp still applies. image_size is the target image's
+    (width, height). Identical sizes return the ROI unchanged.
+    """
+    if roi is None:
+        return None
+    if recorded_size is None:
+        return roi
+    recorded_width, recorded_height = recorded_size
+    image_width, image_height = image_size
+    if recorded_width <= 0 or recorded_height <= 0 or image_width <= 0 or image_height <= 0:
+        logger.warning(
+            "roi_convert_invalid_dims",
+            extra={
+                "recorded": f"{recorded_width}x{recorded_height}",
+                "image": f"{image_width}x{image_height}",
+            },
+        )
+        return roi
+    if recorded_width == image_width and recorded_height == image_height:
+        return roi
+    scale_x = image_width / recorded_width
+    scale_y = image_height / recorded_height
+    return BoundingBox(
+        x=round(roi.x * scale_x),
+        y=round(roi.y * scale_y),
+        width=max(1, round(roi.width * scale_x)) if roi.width > 0 else roi.width,
+        height=max(1, round(roi.height * scale_y)) if roi.height > 0 else roi.height,
+    )
+
+
 def _to_grayscale(image: np.ndarray) -> np.ndarray:
-    """Convert BGR/RGB image to grayscale."""
+    """Convert a BGR image to grayscale using BT.601.
+
+    Contract: input channels are OpenCV BGR order (as produced by
+    cv2.imdecode with IMREAD_COLOR), matching the cv2 COLOR_BGR2GRAY
+    path. The numpy fallback indexes channels as BGR (channel 2 is
+    red) so both paths agree up to rounding: cv2's fixed-point kernel and the fallback's float computation with round-half-even differ by exactly ±1 on round-boundary pixels (about 0.1% of pixels on random images, about a quarter of exact round-boundary pixels), never more. The fallback is BGR-correct; only the rounding differs.
+    """
     if len(image.shape) == 2:
         return image
     try:
@@ -56,8 +114,14 @@ def _to_grayscale(image: np.ndarray) -> np.ndarray:
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     except ImportError:
         import numpy as np
+
         if image.shape[2] >= 3:
-            return (0.299 * image[:, :, 0] + 0.587 * image[:, :, 1] + 0.114 * image[:, :, 2]).astype(np.uint8)
+            blue = image[:, :, 0].astype(np.float32)
+            green = image[:, :, 1].astype(np.float32)
+            red = image[:, :, 2].astype(np.float32)
+
+            return np.round(0.299 * red + 0.587 * green + 0.114 * blue).astype(np.uint8)
+
         return image[:, :, 0]
 
 
@@ -205,15 +269,48 @@ async def evaluate_grayscale_tolerance(
     roi: BoundingBox | None,
     tolerance: int,
     threshold: float,
+    tape_mode: bool = False,
+    ref_roi: BoundingBox | None = None,
+    smp_roi: BoundingBox | None = None,
 ) -> ConfidenceResult:
-    """Compare grayscale histograms with tolerance."""
+    """Compare grayscale histograms with tolerance.
+
+    Tape pocket slicing and phase-correlation alignment run only when
+    tape_mode is set. The generic evaluator never slices and never
+    shifts the window: it resizes only when shapes differ and compares
+    plain mean absolute difference.
+    ref_roi / smp_roi override roi per image when given (spec 01 §7.3:
+    each image's ROI is converted to that image's pixel space by the
+    caller). A fully out-of-bounds ROI returns a FAIL roi_out_of_bounds
+    verdict instead of raising, so no caller sees an uncaught ValueError.
+    Decode is unified: reference bytes, sample bytes, and 3-channel
+    sample arrays all convert through COLOR decode plus BGR2GRAY, so
+    byte-identical inputs score 100% (a direct IMREAD_GRAYSCALE decode
+    differs from cvtColor by +-1 on round-boundary pixels).
+    """
     import numpy as np
 
     def _run() -> ConfidenceResult:
         try:
             import cv2
-            ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
-            ref_img = cv2.imdecode(ref_arr, cv2.IMREAD_GRAYSCALE)
+
+            def _decode_gray(raw: bytes):
+                # Single decode path for every input: COLOR decode plus
+                # BGR2GRAY. A direct IMREAD_GRAYSCALE decode differs from
+                # this path by exactly +-1 on round-boundary pixels, so
+                # mixing the two capped byte-identical inputs at 97.7%
+                # instead of 100% (F4). All inputs go through cvtColor.
+                decoded = cv2.imdecode(np.frombuffer(raw, dtype=np.uint8), cv2.IMREAD_COLOR)
+
+                if decoded is None:
+                    return None
+
+                if len(decoded.shape) == 3:
+                    return cv2.cvtColor(decoded, cv2.COLOR_BGR2GRAY)
+
+                return decoded
+
+            ref_img = _decode_gray(reference_bytes)
 
             if isinstance(sample_bytes, np.ndarray):
                 if len(sample_bytes.shape) == 3:
@@ -221,8 +318,7 @@ async def evaluate_grayscale_tolerance(
                 else:
                     smp_img = sample_bytes
             else:
-                smp_arr = np.frombuffer(sample_bytes, dtype=np.uint8)
-                smp_img = cv2.imdecode(smp_arr, cv2.IMREAD_GRAYSCALE)
+                smp_img = _decode_gray(sample_bytes)
         except ImportError:
             ref_arr = np.frombuffer(reference_bytes, dtype=np.uint8)
 
@@ -238,59 +334,87 @@ async def evaluate_grayscale_tolerance(
             return ConfidenceResult(score=0.0, is_pass=False, label="decode_error")
 
         if roi is not None and hasattr(ref_img, "ndim") and ref_img.ndim >= 2:
-            ref_clipped = _clip_to_roi(ref_img, roi)
-            smp_clipped = _clip_to_roi(smp_img, roi)
+            effective_ref_roi = ref_roi if ref_roi is not None else roi
+            effective_smp_roi = smp_roi if smp_roi is not None else roi
+
+            try:
+                ref_clipped = _clip_to_roi(ref_img, effective_ref_roi)
+                smp_clipped = _clip_to_roi(smp_img, effective_smp_roi)
+            except ValueError as exc:
+                return ConfidenceResult(
+                    score=0.0,
+                    is_pass=False,
+                    label="roi_out_of_bounds",
+                    verdict="FAIL",
+                    reason=str(exc),
+                )
         else:
             ref_clipped = ref_img
             smp_clipped = smp_img
 
         if hasattr(ref_clipped, "shape") and hasattr(smp_clipped, "shape"):
             import cv2
-            ref_ar = ref_clipped.shape[1] / max(1, ref_clipped.shape[0])
-            smp_ar = smp_clipped.shape[1] / max(1, smp_clipped.shape[0])
-            k_pockets = max(1, round(smp_ar / max(0.01, ref_ar)))
 
-            if k_pockets > 1:
-                # Multi-pocket tape strip: evaluate best matching pocket in strip
-                pocket_w = smp_clipped.shape[1] // k_pockets
-                best_diff = 999.0
-                for p_idx in range(k_pockets):
-                    slice_img = smp_clipped[:, p_idx * pocket_w : (p_idx + 1) * pocket_w]
-                    slice_resized = cv2.resize(slice_img, (ref_clipped.shape[1], ref_clipped.shape[0]))
-                    try:
-                        (dx, dy), _ = cv2.phaseCorrelate(ref_clipped.astype(np.float32), slice_resized.astype(np.float32))
-                        if abs(dx) < 25 and abs(dy) < 25:
-                            M = np.float32([[1, 0, -dx], [0, 1, -dy]])
-                            slice_aligned = cv2.warpAffine(slice_resized, M, (ref_clipped.shape[1], ref_clipped.shape[0]))
-                            my, mx = int(ref_clipped.shape[0] * 0.08), int(ref_clipped.shape[1] * 0.08)
-                            d = float(np.mean(np.abs(ref_clipped[my:-my, mx:-mx].astype(np.float32) - slice_aligned[my:-my, mx:-mx].astype(np.float32))))
-                        else:
+            # Tape-only behaviour lives behind tape_mode: pocket slicing
+            # and phase-correlation alignment never run in the generic
+            # evaluator, where they slice arbitrary images and shift the
+            # window.
+            if tape_mode:
+                ref_ar = ref_clipped.shape[1] / max(1, ref_clipped.shape[0])
+                smp_ar = smp_clipped.shape[1] / max(1, smp_clipped.shape[0])
+                k_pockets = max(1, round(smp_ar / max(0.01, ref_ar)))
+
+                if k_pockets > 1:
+                    # Multi-pocket tape strip: evaluate best matching pocket in strip
+                    pocket_w = smp_clipped.shape[1] // k_pockets
+                    best_diff = 999.0
+                    for p_idx in range(k_pockets):
+                        slice_img = smp_clipped[:, p_idx * pocket_w : (p_idx + 1) * pocket_w]
+                        slice_resized = cv2.resize(slice_img, (ref_clipped.shape[1], ref_clipped.shape[0]))
+                        try:
+                            (dx, dy), _ = cv2.phaseCorrelate(ref_clipped.astype(np.float32), slice_resized.astype(np.float32))
+                            if abs(dx) < 25 and abs(dy) < 25:
+                                M = np.float32([[1, 0, -dx], [0, 1, -dy]])
+                                slice_aligned = cv2.warpAffine(slice_resized, M, (ref_clipped.shape[1], ref_clipped.shape[0]))
+                                my, mx = int(ref_clipped.shape[0] * 0.08), int(ref_clipped.shape[1] * 0.08)
+                                d = float(np.mean(np.abs(ref_clipped[my:-my, mx:-mx].astype(np.float32) - slice_aligned[my:-my, mx:-mx].astype(np.float32))))
+                            else:
+                                d = float(np.mean(np.abs(ref_clipped.astype(np.float32) - slice_resized.astype(np.float32))))
+                        except Exception:
                             d = float(np.mean(np.abs(ref_clipped.astype(np.float32) - slice_resized.astype(np.float32))))
+                        if d < best_diff:
+                            best_diff = d
+                    mean_diff = best_diff
+                else:
+                    if ref_clipped.shape != smp_clipped.shape:
+                        try:
+                            smp_clipped = cv2.resize(smp_clipped, (ref_clipped.shape[1], ref_clipped.shape[0]))
+                        except Exception:
+                            pass
+                    # Optional phase correlation alignment for small conveyor shifts
+                    try:
+                        (dx, dy), _ = cv2.phaseCorrelate(ref_clipped.astype(np.float32), smp_clipped.astype(np.float32))
+                        if 0 < abs(dx) < 20 and 0 < abs(dy) < 20:
+                            M = np.float32([[1, 0, -dx], [0, 1, -dy]])
+                            smp_aligned = cv2.warpAffine(smp_clipped, M, (ref_clipped.shape[1], ref_clipped.shape[0]))
+                            my, mx = int(ref_clipped.shape[0] * 0.08), int(ref_clipped.shape[1] * 0.08)
+                            mean_diff = float(np.mean(np.abs(ref_clipped[my:-my, mx:-mx].astype(np.float32) - smp_aligned[my:-my, mx:-mx].astype(np.float32))))
+                        else:
+                            diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
+                            mean_diff = float(np.mean(diff))
                     except Exception:
-                        d = float(np.mean(np.abs(ref_clipped.astype(np.float32) - slice_resized.astype(np.float32))))
-                    if d < best_diff:
-                        best_diff = d
-                mean_diff = best_diff
+                        diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
+                        mean_diff = float(np.mean(diff))
             else:
+                k_pockets = 1
+
                 if ref_clipped.shape != smp_clipped.shape:
                     try:
                         smp_clipped = cv2.resize(smp_clipped, (ref_clipped.shape[1], ref_clipped.shape[0]))
                     except Exception:
                         pass
-                # Optional phase correlation alignment for small conveyor shifts
-                try:
-                    (dx, dy), _ = cv2.phaseCorrelate(ref_clipped.astype(np.float32), smp_clipped.astype(np.float32))
-                    if 0 < abs(dx) < 20 and 0 < abs(dy) < 20:
-                        M = np.float32([[1, 0, -dx], [0, 1, -dy]])
-                        smp_aligned = cv2.warpAffine(smp_clipped, M, (ref_clipped.shape[1], ref_clipped.shape[0]))
-                        my, mx = int(ref_clipped.shape[0] * 0.08), int(ref_clipped.shape[1] * 0.08)
-                        mean_diff = float(np.mean(np.abs(ref_clipped[my:-my, mx:-mx].astype(np.float32) - smp_aligned[my:-my, mx:-mx].astype(np.float32))))
-                    else:
-                        diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
-                        mean_diff = float(np.mean(diff))
-                except Exception:
-                    diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
-                    mean_diff = float(np.mean(diff))
+                diff = np.abs(ref_clipped.astype(np.float32) - smp_clipped.astype(np.float32))
+                mean_diff = float(np.mean(diff))
         else:
             mean_diff = 0.0
 

@@ -10,6 +10,7 @@ import {
   type ReferenceBoxItem,
   type BoxMatchItem,
 } from "./pattern-matcher";
+import { migrateDetectionThresholds } from "@/domain/vision/pattern-search";
 import {
   markWhiteBoxes,
   type SearchRegion,
@@ -808,8 +809,10 @@ export function evaluatePatternRule(
       height: b.height,
       area: b.area,
     }));
-    const thresholdValue =
-      typeof rule.params?.threshold === "number" ? Number(rule.params.threshold) : 170;
+    // Canonical threshold first (spec 02 §3.2); legacy params.threshold
+    // stays as migration fallback. params.lumaTolerance is untouched:
+    // it is the analyzer's own measurement (default 32).
+    const thresholdValue = migrateDetectionThresholds(rule.params).greyscaleThreshold;
     const positionalMatch = matchConstellationPattern({
       targetRgba: imageData.rgba,
       targetWidth: imageData.width,

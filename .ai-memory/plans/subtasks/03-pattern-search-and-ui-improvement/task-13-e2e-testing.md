@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 13
 
-Status: PENDING (fix waves not started).
+Status: DONE 31-Oct-26 — E2E run + fix wave fully verified on VM: build green, bundle version define present (4.112.17, no literal VITE_APP_VERSION), vitest quartet 47/47, bats clean-machine E2E green (install doctor launch uninstall); F1-F7 fixed (duplicate helper, installer sys.path, docstring, decode unification, flat+stamps parse, wait usage error, layout-slice tests). UNVERIFIED (environment-blocked, not failed): browser-rendered UI, run.ps1/install.ps1 (no pwsh), golden-sample photo pass (no fixture; provenance open), menu-delay cause (needs browser probe run).
 
 ## Scope
 

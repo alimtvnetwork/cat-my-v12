@@ -13,6 +13,13 @@ export enum Pin1JudgmentStatusType {
   Misoriented = "Misoriented",
 }
 
+export type Pin1AngleDatum = "package" | "search";
+
+export interface Pin1SettingsNamespace {
+  thresholdLuma: number; // canonical pin-one threshold key (spec 02 §3.2); pin-one-only, never folded into detection.greyscaleThreshold
+  angleDatum?: Pin1AngleDatum;
+}
+
 export interface Pin1HoleItem {
   id: number;
   centerX: number;
@@ -30,7 +37,8 @@ export interface Pin1HoleItem {
 
 export interface Pin1InspectionSettings {
   polarity: HolePolarityType;
-  thresholdLuma: number;
+  thresholdLuma: number; // legacy flat key; readers prefer settings.pin1.thresholdLuma, writers keep both in sync
+  angleDatum?: Pin1AngleDatum; // which region centre is the angle origin; "package" falls back to search centre when no package region exists
   minCircularityPercent: number;
   minRadiusPx: number;
   maxRadiusPx: number;

@@ -5,6 +5,13 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { readFileSync } from "node:fs";
+
+// Build-time version injection (spec 03 §5.2): the injected value must
+// equal version.json at build time. version.json / package.json parity
+// is enforced by .agents/scripts/14-version-sync-checker.py — never
+// hand-edit a version field outside the release process.
+const appVersion = (JSON.parse(readFileSync(new URL("./version.json", import.meta.url), "utf-8")) as { version: string }).version;
 
 export default defineConfig({
   tanstackStart: {
@@ -13,6 +20,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    define: {
+      "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
+    },
     optimizeDeps: {
       include: [
         "react",
@@ -25,7 +35,8 @@ export default defineConfig({
         "@radix-ui/react-tooltip",
         "@radix-ui/react-slot",
         "@radix-ui/react-dropdown-menu",
-        "@radix-ui/react-select"
+        "@radix-ui/react-select",
+        "@radix-ui/react-menubar"
       ],
     },
     server: {

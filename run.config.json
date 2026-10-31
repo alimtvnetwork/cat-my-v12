@@ -8,6 +8,7 @@
   "openBrowser": true,
   "defaultMode": "seed",
   "healthPath": "/healthz",
+  "feHealthPath": "/",
   "logDir": ".logs/launcher",
   "healthTimeoutSeconds": 30,
   "commands": {

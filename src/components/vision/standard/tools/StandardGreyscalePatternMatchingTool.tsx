@@ -2,6 +2,7 @@ import React from "react";
 import { WhiteBoxMarkingTool } from "../../WhiteBoxMarkingTool";
 import type { PatternMatchingRuleProps } from "./pattern-matching/types";
 import type { FormulatedPatternGeometry } from "../../white-box/types";
+import { migrateDetectionThresholds } from "@/domain/vision/pattern-search";
 
 export function StandardGreyscalePatternMatchingTool(
   props: PatternMatchingRuleProps,
@@ -13,7 +14,11 @@ export function StandardGreyscalePatternMatchingTool(
       constellation: pattern.referenceBoxes,
       tolerancePx: pattern.tolerancePx,
       marginPx: pattern.marginPx,
-      threshold: pattern.threshold ?? (prev as any)?.threshold,
+      detection: {
+        ...((prev as any)?.detection ?? {}),
+        greyscaleThreshold:
+          pattern.threshold ?? migrateDetectionThresholds(prev).greyscaleThreshold,
+      },
     }));
 
     props.onOk?.();

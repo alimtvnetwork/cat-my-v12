@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 03
 
-Status: PENDING (spec done, fix not started).
+Status: PARTIAL — wave 2 done (diagnosis + mask reorder + sim treeRules reorder); wave 3 done panel-restore (panel-chrome Show strip + validated load + window-menu Palettes section + unhideDock, all diff-verified 31-Oct-26); remaining: toolbar render in greyscale/sim tools (wave 4) + editor DnD minor findings (diagnose-only).
 
 ## Spec
 

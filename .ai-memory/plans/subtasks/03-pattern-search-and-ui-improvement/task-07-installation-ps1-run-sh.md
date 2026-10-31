@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 07
 
-Status: PENDING (spec done, fix not started).
+Status: DONE — wave 3 diff-verified 31-Oct-26 (launcher + installer both done; run.sh carries both workers' edits, exit codes 2–9 / 9530–9536 all present, installer_path.py untouched). E2E run itself pending under Task 13 (clean-machine test written, not run).
 
 ## Spec
 

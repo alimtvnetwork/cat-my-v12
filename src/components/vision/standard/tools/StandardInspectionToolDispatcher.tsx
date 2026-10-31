@@ -1,5 +1,10 @@
 import React from "react";
-import { PatternSearchSettings } from "@/domain/vision/pattern-search";
+import {
+  isStandardToolType,
+  migrateLegacyToolType,
+  PatternSearchSettings,
+  StandardToolType,
+} from "@/domain/vision/pattern-search";
 import { StandardPatternSearch } from "../StandardPatternSearch";
 import { StandardAreaTool } from "./StandardAreaTool";
 import { StandardShapeTrax3Tool } from "./StandardShapeTrax3Tool";
@@ -38,196 +43,180 @@ export interface StandardInspectionToolDispatcherProps {
   onPreview?: () => void;
 }
 
+type ResolvedTool =
+  | { type: StandardToolType; raw: string }
+  | { type: "unknown"; raw: string };
+
+// Resolve a rule to its explicit tool type. Precedence: an explicit enum
+// value on the saved rule (prop) wins, then an enum value on the edited
+// settings, then the legacy migration (old name-sniffing outcome), then
+// the default pattern-search screen when no explicit type exists at all.
+// A present-but-unrecognised explicit type resolves to "unknown" and
+// renders an explicit unknown state, never a guessed tool.
+function resolveToolType(params: {
+  toolType?: string;
+  ruleName?: string;
+  settings: PatternSearchSettings;
+}): ResolvedTool {
+  const settingsRecord = params.settings as any;
+  const propType = params.toolType;
+  const settingsType = settingsRecord?.toolType;
+
+  if (isStandardToolType(propType)) {
+    return { type: propType, raw: propType };
+  }
+
+  if (isStandardToolType(settingsType)) {
+    return { type: settingsType, raw: settingsType };
+  }
+
+  const migrated = migrateLegacyToolType({
+    toolType: propType ?? settingsType,
+    type: settingsRecord?.type,
+    name: params.ruleName,
+    isDefectReject: settingsRecord?.isDefectReject,
+    constellation: settingsRecord?.constellation,
+    pin1Config: settingsRecord?.pin1Config,
+  });
+
+  if (migrated !== null) {
+    return {
+      type: migrated,
+      raw: propType ?? settingsType ?? settingsRecord?.type ?? "",
+    };
+  }
+
+  const hasExplicitType =
+    (typeof propType === "string" && propType.length > 0) ||
+    (typeof settingsType === "string" && settingsType.length > 0) ||
+    (typeof settingsRecord?.type === "string" && settingsRecord.type.length > 0);
+
+  if (hasExplicitType) {
+    return {
+      type: "unknown",
+      raw: propType ?? settingsType ?? settingsRecord?.type ?? "",
+    };
+  }
+
+  return { type: StandardToolType.PatternSearch, raw: "" };
+}
+
+function UnknownToolTypeState(props: { raw: string; ruleName?: string }): React.JSX.Element {
+  return (
+    <div
+      className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center"
+      data-testid="unknown-tool-type"
+    >
+      <div className="text-ca-ink font-medium">Unknown tool type</div>
+      <div className="text-ca-ink-muted text-sm">
+        This rule carries a tool type the editor does not recognise: {props.raw || "(empty)"}
+      </div>
+      {props.ruleName ? (
+        <div className="text-ca-ink-muted text-sm">Rule: {props.ruleName}</div>
+      ) : null}
+      <div className="text-ca-ink-muted text-sm">
+        Assign a valid tool type to this rule to edit it.
+      </div>
+    </div>
+  );
+}
+
 export function StandardInspectionToolDispatcher(
   props: StandardInspectionToolDispatcherProps,
 ): React.JSX.Element {
-  const normalized = (
-    props.toolType ||
-    props.ruleName ||
-    (props.settings as any)?.toolType ||
-    (props.settings as any)?.type ||
-    ""
-  ).toLowerCase();
+  const resolved = React.useMemo(
+    () =>
+      resolveToolType({
+        toolType: props.toolType,
+        ruleName: props.ruleName,
+        settings: props.settings,
+      }),
+    [props.toolType, props.ruleName, props.settings],
+  );
 
-  const isDefectMatch =
-    normalized.includes("defect match") ||
-    normalized.includes("flaw match") ||
-    (props.settings as any)?.toolType === "Defect Matching" ||
-    (props.settings as any)?.type === "defect_match" ||
-    Boolean((props.settings as any)?.isDefectReject);
+  const writeBackKeyRef = React.useRef<string | null>(null);
 
-  if (isDefectMatch) {
-    return <StandardDefectMatchingTool {...props} />;
-  }
+  // Migration write-back: stamp the migrated enum onto settings once per
+  // rule, so the next open resolves without migration. Guarded by rule
+  // id plus resolved type, and by a no-op return when settings already
+  // carry the value, so it can never loop.
+  React.useEffect(() => {
+    if (resolved.type === "unknown" || props.onChange === undefined) {
+      return;
+    }
 
-  const isGreyscaleSimulation =
-    normalized.includes("greyscle simulation") ||
-    normalized.includes("greyscale simulation") ||
-    normalized.includes("carrier tape") ||
-    normalized.includes("carrier-tape") ||
-    (props.settings as any)?.toolType === "Greyscle simulation" ||
-    (props.settings as any)?.type === "greyscale_simulation";
+    const current = (props.settings as any)?.toolType;
 
-  if (isGreyscaleSimulation) {
-    return <StandardGreyscaleSimulationTool {...props} />;
-  }
+    if (current === resolved.type) {
+      return;
+    }
 
-  const isGreyscalePattern =
-    !normalized.includes("logo") &&
-    !normalized.includes("defect") &&
-    !normalized.includes("flaw") &&
-    !(props.settings as any)?.isDefectReject &&
-    (normalized.includes("pattern match") ||
-      normalized.includes("greyscale pattern") ||
-      normalized.includes("grayscale pattern") ||
-      normalized.includes("white box") ||
-      normalized.includes("24 box") ||
-      normalized.includes("31 box") ||
-      normalized.includes("2-bit") ||
-      normalized.includes("light pattern") ||
-      (props.settings as any)?.type === "pattern_match" ||
-      Boolean((props.settings as any)?.constellation));
+    const isLegacyValue =
+      typeof current !== "string" || current.length === 0 || !isStandardToolType(current);
 
-  if (isGreyscalePattern) {
-    return <StandardGreyscalePatternMatchingTool {...props} />;
-  }
+    if (!isLegacyValue) {
+      return;
+    }
 
-  const isPin1 =
-    normalized.includes("pin1") ||
-    normalized.includes("pin 1") ||
-    normalized.includes("pin-1") ||
-    (props.settings as any)?.type === "pin1_config" ||
-    Boolean((props.settings as any)?.pin1Config);
+    const key = `${props.settings.id}:${resolved.type}`;
 
-  if (isPin1) {
-    return <StandardPin1ConfigTool {...props} />;
-  }
+    if (writeBackKeyRef.current === key) {
+      return;
+    }
 
-  // 1. Area Tool
-  if (normalized.includes("area")) {
-    return <StandardAreaTool {...props} />;
-  }
+    writeBackKeyRef.current = key;
+    console.info(
+      `[dispatcher] migrated tool type for rule ${props.settings.id}: ${String(current)} -> ${resolved.type}`,
+    );
+    props.onChange((prev) => {
+      if ((prev as any)?.toolType === resolved.type) {
+        return prev;
+      }
 
-  // 2. ShapeTrax3
-  if (
-    normalized.includes("shape") ||
-    normalized.includes("trax") ||
-    normalized.includes("contour")
-  ) {
-    return <StandardShapeTrax3Tool {...props} />;
-  }
+      return { ...prev, toolType: resolved.type };
+    });
+  }, [resolved, props.settings, props.onChange]);
 
-  // 3. Profile Width
-  if (
-    normalized.includes("profile") &&
-    (normalized.includes("width") ||
-      normalized.includes("caliper") ||
-      normalized.includes("thickness"))
-  ) {
-    return <StandardProfileWidthTool {...props} />;
+  switch (resolved.type) {
+    case StandardToolType.DefectMatching:
+      return <StandardDefectMatchingTool {...props} />;
+    case StandardToolType.GreyscaleSimulation:
+      return <StandardGreyscaleSimulationTool {...props} />;
+    case StandardToolType.GreyscalePattern:
+      return <StandardGreyscalePatternMatchingTool {...props} />;
+    case StandardToolType.Pin1Config:
+      return <StandardPin1ConfigTool {...props} />;
+    case StandardToolType.Area:
+      return <StandardAreaTool {...props} />;
+    case StandardToolType.ShapeTrax3:
+      return <StandardShapeTrax3Tool {...props} />;
+    case StandardToolType.ProfileWidth:
+      return <StandardProfileWidthTool {...props} />;
+    case StandardToolType.ProfilePosition:
+      return <StandardProfilePositionTool {...props} />;
+    case StandardToolType.EdgePitch:
+      return <StandardEdgePitchTool {...props} />;
+    case StandardToolType.EdgePairs:
+      return <StandardEdgePairsTool {...props} />;
+    case StandardToolType.EdgeWidth:
+      return <StandardEdgeWidthTool {...props} />;
+    case StandardToolType.EdgePosition:
+      return <StandardEdgePositionTool {...props} />;
+    case StandardToolType.Defect:
+      return <StandardDefectTool {...props} />;
+    case StandardToolType.GrayscaleBlob:
+      return <StandardGrayscaleBlobTool {...props} />;
+    case StandardToolType.Blob:
+      return <StandardBlobTool {...props} />;
+    case StandardToolType.Intensity:
+      return <StandardIntensityTool {...props} />;
+    case StandardToolType.Ocr2:
+      return <StandardOcr2Tool {...props} />;
+    case StandardToolType.CodeReader:
+      return <StandardCodeReaderTool {...props} />;
+    case StandardToolType.PatternSearch:
+      return <StandardPatternSearch {...props} />;
+    default:
+      return <UnknownToolTypeState raw={resolved.raw} ruleName={props.ruleName} />;
   }
-
-  // 4. Profile Position
-  if (normalized.includes("profile")) {
-    return <StandardProfilePositionTool {...props} />;
-  }
-
-  // 5. Edge Pitch
-  if (
-    normalized.includes("pitch") ||
-    normalized.includes("comb") ||
-    normalized.includes("connector")
-  ) {
-    return <StandardEdgePitchTool {...props} />;
-  }
-
-  // 6. Edge Pairs
-  if (normalized.includes("pair")) {
-    return <StandardEdgePairsTool {...props} />;
-  }
-
-  // 7. Edge Width
-  if (
-    normalized.includes("width") ||
-    normalized.includes("gap") ||
-    normalized.includes("caliper")
-  ) {
-    return <StandardEdgeWidthTool {...props} />;
-  }
-
-  // 8. Edge Position
-  if (
-    normalized.includes("edge") ||
-    normalized.includes("position") ||
-    normalized.includes("pin") ||
-    normalized.includes("line")
-  ) {
-    return <StandardEdgePositionTool {...props} />;
-  }
-
-  // 9. Defect
-  if (
-    normalized.includes("defect") ||
-    normalized.includes("scratch") ||
-    normalized.includes("flaw") ||
-    normalized.includes("stain")
-  ) {
-    return <StandardDefectTool {...props} />;
-  }
-  if (
-    normalized.includes("greyscale pattern") ||
-    normalized.includes("grayscale pattern") ||
-    normalized.includes("2-bit") ||
-    normalized.includes("light pattern")
-  ) {
-    return <StandardGreyscalePatternMatchingTool {...props} />;
-  }
-  // 10. Grayscale Blob
-  if (
-    (normalized.includes("gray") || normalized.includes("grey")) &&
-    (normalized.includes("blob") || normalized.includes("particle"))
-  ) {
-    return <StandardGrayscaleBlobTool {...props} />;
-  }
-  // 11. Binary Blob
-  if (
-    normalized.includes("blob") ||
-    normalized.includes("particle") ||
-    normalized.includes("count")
-  ) {
-    return <StandardBlobTool {...props} />;
-  }
-  // 12. Intensity / Brightness
-  if (
-    normalized.includes("intensity") ||
-    normalized.includes("brightness") ||
-    normalized.includes("luminance") ||
-    normalized.includes("mean")
-  ) {
-    return <StandardIntensityTool {...props} />;
-  }
-  // 13. OCR2
-  if (
-    normalized.includes("ocr") ||
-    normalized.includes("text") ||
-    normalized.includes("font") ||
-    normalized.includes("char") ||
-    normalized.includes("string")
-  ) {
-    return <StandardOcr2Tool {...props} />;
-  }
-  // 14. 1D / 2D Code Reader
-  if (
-    normalized.includes("code") ||
-    normalized.includes("barcode") ||
-    normalized.includes("qr") ||
-    normalized.includes("matrix") ||
-    normalized.includes("datamatrix") ||
-    normalized.includes("1d")
-  ) {
-    return <StandardCodeReaderTool {...props} />;
-  }
-
-  // 15. Default: Standard Pattern Search
-  return <StandardPatternSearch {...props} />;
 }

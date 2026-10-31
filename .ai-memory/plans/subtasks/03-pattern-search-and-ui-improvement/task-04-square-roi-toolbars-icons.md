@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 04
 
-Status: PENDING (spec done, fix not started). BLOCKED on one open
+Status: PARTIAL — wave 4 toolbar half diff-verified 31-Oct-26 (toolbar rendered in greyscale + sim tools, zoom plumbed + clamp reconciled to 5–800, viewModes mapped, shape buttons/outlines session-only, SQUA is not square enforcement, RegionOverlay untouched); square ROI enforcement still BLOCKED on user scope answer. BLOCKED on one open
 question: square ROI scope (see below).
 
 ## Spec

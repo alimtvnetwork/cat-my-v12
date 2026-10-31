@@ -16,6 +16,7 @@ import type {
   WhiteBoxMarkingInput,
   WhiteBoxMarkingResult,
   PatternRegionEditMode,
+  WhiteBoxRegionShape,
 } from "./types";
 
 export interface PatternCanvasProps {
@@ -34,12 +35,43 @@ export interface PatternCanvasProps {
   dragState?: RegionDrag | null;
   onSearchRegionChange?: (region: SearchRegion | null) => void;
   onDragStateChange?: (drag: RegionDrag | null) => void;
+  // Toolbar plumbing (optional; absent = standalone canvas, unchanged behavior):
+  // viewZoom is the toolbar zoom percent (clamped 5-800 here); viewModes
+  // gates region/result/grid layers (defaults preserve today's drawing:
+  // regions + results on, grid on). regionShape + onRegionShapeChange
+  // render the RECT/SQUA/CIRC/POLY buttons in the header; absent = no buttons.
+  viewZoom?: number;
+  viewModes?: { regions: boolean; results: boolean; grid: boolean };
+  regionShape?: WhiteBoxRegionShape;
+  onRegionShapeChange?: (shape: WhiteBoxRegionShape) => void;
 }
 
 export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const activeRegion = props.activeRegion ?? props.searchRegion ?? null;
   const regionEditMode = props.regionEditMode ?? "search";
+  // Toolbar plumbing: zoom is a display size only (see the canvas style
+  // below); viewModes gate the drawn layers; shape buttons select the
+  // outline of the region being edited. Defaults preserve today's drawing.
+  const zoomPercent = Math.max(5, Math.min(800, props.viewZoom ?? 100));
+  const zoomFactor = zoomPercent / 100;
+  const isZoomed = zoomFactor !== 1;
+  const showRegions = props.viewModes?.regions ?? true;
+  const showResults = props.viewModes?.results ?? true;
+  const showGrid = props.viewModes?.grid ?? true;
+  const activeShape = props.regionShape ?? "rect";
+  const shapeLabels: Record<WhiteBoxRegionShape, string> = {
+    rect: "RECT",
+    square: "SQUA",
+    circle: "CIRC",
+    poly: "POLY",
+  };
+  const shapeTitles: Record<WhiteBoxRegionShape, string> = {
+    rect: "Rectangle outline",
+    square: "Square outline (display only; bounding box unchanged)",
+    circle: "Ellipse outline inscribed in the bounding box",
+    poly: "Polygon outline through the bounding-box corners",
+  };
   const drag = useCanvasPointerDrag({
     source: props.source,
     searchRegion: activeRegion,
@@ -95,24 +127,30 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
       return;
     }
 
+    // Working-space render: this canvas shows the 960x540 working buffer,
+    // not canonical space. Region coordinates drawn here are working-space
+    // coordinates; map them through the recorded transform (spec 01 §4.1)
+    // before treating them as canonical geometry.
     drawRgbaToCanvas(canvas, STANDARD_CANVAS_WIDTH, STANDARD_CANVAS_HEIGHT, image.rgba);
 
     if (
       props.formulatedPattern &&
       props.formulatedPattern.toleranceZones.length > 0 &&
-      isCleanBase
+      isCleanBase &&
+      showResults
     ) {
       drawToleranceZones(ctx, props.formulatedPattern.toleranceZones);
     }
 
-    if (props.detectedBoxes.length > 0 && isCleanBase) {
+    if (props.detectedBoxes.length > 0 && isCleanBase && showResults) {
       drawPatternBoxes(ctx, props.detectedBoxes, props.excludedNumbers);
     }
 
     const activePatternRegion = props.patternRegion ?? props.formulatedPattern?.patternRegion ?? null;
+    const visiblePatternRegion = showRegions ? activePatternRegion : null;
 
-    if (activePatternRegion) {
-      drawEditableRegion(ctx, activePatternRegion, "PATTERN REGION", {
+    if (visiblePatternRegion) {
+      drawEditableRegion(ctx, visiblePatternRegion, "PATTERN REGION", {
         stroke:
           regionEditMode === "pattern"
             ? "rgba(239, 68, 68, 0.98)"
@@ -123,10 +161,10 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
             : "rgba(239, 68, 68, 0.07)",
         text: "#fecaca",
         hasHandles: regionEditMode === "pattern",
-      });
+      }, visiblePatternRegion.shape ?? "rect");
     }
 
-    for (const [index, region] of (props.maskRegions ?? []).entries()) {
+    for (const [index, region] of (showRegions ? (props.maskRegions ?? []) : []).entries()) {
       const isSelected = regionEditMode === "mask" && props.selectedMaskIndex === index;
 
       drawEditableRegion(ctx, region, `MASK ${index + 1}`, {
@@ -134,10 +172,10 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
         fill: isSelected ? "rgba(34, 197, 94, 0.14)" : "rgba(34, 197, 94, 0.07)",
         text: "#bbf7d0",
         hasHandles: isSelected,
-      });
+      }, region.shape ?? "rect");
     }
 
-    if (props.searchRegion) {
+    if (props.searchRegion && showRegions) {
       drawEditableRegion(ctx, props.searchRegion, "SEARCH REGION", {
         stroke:
           regionEditMode === "search"
@@ -149,7 +187,7 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
             : "rgba(250, 204, 21, 0.06)",
         text: "#fef08a",
         hasHandles: regionEditMode === "search",
-      });
+      }, props.searchRegion.shape ?? "rect");
     }
   }, [
     props.result,
@@ -164,6 +202,7 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
     props.maskRegions,
     props.regionEditMode,
     props.selectedMaskIndex,
+    props.viewModes,
   ]);
 
   return (
@@ -175,11 +214,38 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
             Pattern Image
           </span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ca-ink-muted">
-          Drag ROI handles to tune
-        </span>
+        <div className="flex items-center gap-2">
+          {props.onRegionShapeChange ? (
+            <div className="flex items-center gap-1" role="group" aria-label="Region shape">
+              {(["rect", "square", "circle", "poly"] as const).map((shape) => (
+                <button
+                  key={shape}
+                  type="button"
+                  onClick={() => props.onRegionShapeChange?.(shape)}
+                  className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                    activeShape === shape
+                      ? "border-ca-select bg-ca-select/15 text-ca-ink"
+                      : "border-[#2a3138] text-ca-ink-muted hover:text-ca-ink"
+                  }`}
+                  title={shapeTitles[shape]}
+                >
+                  {shapeLabels[shape]}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ca-ink-muted">
+            Drag ROI handles to tune
+          </span>
+        </div>
       </div>
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:32px_32px] p-6">
+      <div
+        className={`flex min-h-0 flex-1 items-center justify-center overflow-auto p-6 ${
+          showGrid
+            ? "bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:32px_32px]"
+            : ""
+        }`}
+      >
         <canvas
           ref={canvasRef}
           width={STANDARD_CANVAS_WIDTH}
@@ -188,6 +254,20 @@ export function PatternCanvas(props: PatternCanvasProps): React.JSX.Element {
           onPointerMove={drag.handlePointerMove}
           onPointerUp={drag.handlePointerUp}
           onPointerCancel={drag.handlePointerUp}
+          // Zoom is display size only, never a transform: the backing store
+          // stays 960x540, so canvasPointFromEvent — which maps through
+          // getBoundingClientRect — keeps returning exact buffer
+          // coordinates at any zoom. No pan: the wrapper scrolls.
+          style={
+            isZoomed
+              ? {
+                  width: `${STANDARD_CANVAS_WIDTH * zoomFactor}px`,
+                  height: `${STANDARD_CANVAS_HEIGHT * zoomFactor}px`,
+                  maxWidth: "none",
+                  maxHeight: "none",
+                }
+              : undefined
+          }
           className="aspect-video max-h-full max-w-full cursor-crosshair rounded border border-[#4b5563] bg-black object-contain shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
         />
       </div>
@@ -222,14 +302,63 @@ function drawEditableRegion(
   region: SearchRegion,
   label: string,
   tone: { stroke: string; fill: string; text: string; hasHandles: boolean },
+  shape: WhiteBoxRegionShape = "rect",
 ): void {
   ctx.save();
   ctx.strokeStyle = tone.stroke;
   ctx.fillStyle = tone.fill;
   ctx.lineWidth = 2;
   ctx.setLineDash([6, 4]);
-  ctx.fillRect(region.x, region.y, region.width, region.height);
-  ctx.strokeRect(region.x, region.y, region.width, region.height);
+
+  // Shape changes only the drawn outline. Handles always sit on the
+  // bounding-rect corners and edit the bounding rect; evaluation uses
+  // the rect geometry (the backend reduces shapes to bounding boxes).
+  // This is display shape, not square enforcement: no region is forced square.
+  if (shape === "square") {
+    const side = Math.min(region.width, region.height);
+    const squareX = region.x + (region.width - side) / 2;
+    const squareY = region.y + (region.height - side) / 2;
+
+    ctx.fillRect(squareX, squareY, side, side);
+    ctx.strokeRect(squareX, squareY, side, side);
+  } else if (shape === "circle") {
+    ctx.beginPath();
+    ctx.ellipse(
+      region.x + region.width / 2,
+      region.y + region.height / 2,
+      region.width / 2,
+      region.height / 2,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+    ctx.stroke();
+  } else if (shape === "poly") {
+    ctx.beginPath();
+    ctx.moveTo(region.x, region.y);
+    ctx.lineTo(region.x + region.width, region.y);
+    ctx.lineTo(region.x + region.width, region.y + region.height);
+    ctx.lineTo(region.x, region.y + region.height);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Vertex dots distinguish the polygon outline from the plain rect.
+    for (const corner of [
+      { x: region.x, y: region.y },
+      { x: region.x + region.width, y: region.y },
+      { x: region.x + region.width, y: region.y + region.height },
+      { x: region.x, y: region.y + region.height },
+    ]) {
+      ctx.fillStyle = tone.stroke;
+      ctx.fillRect(corner.x - 3, corner.y - 3, 6, 6);
+    }
+  } else {
+    ctx.fillRect(region.x, region.y, region.width, region.height);
+    ctx.strokeRect(region.x, region.y, region.width, region.height);
+  }
+
   ctx.setLineDash([]);
   ctx.fillStyle = tone.stroke;
 

@@ -65,6 +65,20 @@ Describe 'install.ps1 - static contract' {
         $script:Source | Should -Match 'install-upgrade-plan\.py'
         $script:Source | Should -Match 'install-record\.py'
     }
+
+    It 'bootstraps a missing venv from system python (spec 03 §7.2 item 1)' {
+        $script:Source | Should -Match '-m venv'
+        $script:Source | Should -Match 'pip install'
+    }
+
+    It 'resolves -AppVersion from version.json when unset (spec 03 §5.2)' {
+        $script:Source | Should -Match 'version\.json'
+    }
+
+    It 'missing -BinariesDir names the expected layout and remedy' {
+        $script:Source | Should -Match 'SHA256SUMS\.txt covering them'
+        $script:Source | Should -Match '-BinariesDir <dir>'
+    }
 }
 
 Describe 'install.ps1 - runtime guardrails (no venv required)' {

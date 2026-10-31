@@ -22,8 +22,12 @@ import json
 import sys
 from pathlib import Path
 
-from BE.app.installer_doctor import DoctorSeverity, render_human, run_doctor
-from BE.app.installer_plan import (
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.installer_doctor import DoctorSeverity, render_human, run_doctor  # noqa: E402
+from BE.app.installer_plan import (  # noqa: E402
     InstallerPhase,
     InstallerPlatform,
     plan_install_actions,

@@ -25,6 +25,7 @@ import { ModernPatternSearch } from "@/components/vision/modern/ModernPatternSea
 
 import {
   createDefaultPatternSearchSettings,
+  migrateDetectionThresholds,
   PatternSearchSettings,
 } from "@/domain/vision/pattern-search";
 import { AppError } from "@/lib/errors/AppError";
@@ -40,13 +41,12 @@ function buildSettingsFromRule(rule: Rule | undefined, fallbackId: string): Patt
   const condAny = cond as any;
   const ruleAny = rule as any;
 
-  const rawThreshold =
-    condAny.threshold ??
-    condAny.WhiteThreshold ??
-    condAny.whiteThreshold ??
-    condAny.greyscaleLevel ??
-    ruleAny?.params?.threshold ??
-    ruleAny?.params?.WhiteThreshold;
+  // Single threshold resolution (spec 02 §3.2): the canonical detection
+  // key wins, legacy keys are migration input only.
+  const resolvedThresholds = migrateDetectionThresholds({
+    ...cond,
+    params: ruleAny?.params,
+  });
 
   const referenceBoxes =
     condAny.referenceBoxes ??
@@ -62,7 +62,10 @@ function buildSettingsFromRule(rule: Rule | undefined, fallbackId: string): Patt
     ...defaultSettings,
     ...cond,
     name: cond.name ?? rule?.name ?? defaultSettings.name,
-    ...(typeof rawThreshold === "number" ? { threshold: rawThreshold } : {}),
+    // In-memory bridge for tools not yet migrated (the defect family
+    // reads threshold): the value is the resolved canonical value, never
+    // a second resolution. Saved payloads carry detection; see onOk.
+    threshold: resolvedThresholds.greyscaleThreshold,
     ...(referenceBoxes ? { referenceBoxes } : {}),
     ...(constellation ? { constellation } : {}),
     ...(typeof condAny.tolerancePx === "number" ? { tolerancePx: condAny.tolerancePx } : {}),
@@ -125,6 +128,8 @@ function buildSettingsFromRule(rule: Rule | undefined, fallbackId: string): Patt
     detection: {
       ...defaultSettings.detection,
       ...(cond.detection ?? {}),
+      greyscaleThreshold: resolvedThresholds.greyscaleThreshold,
+      lumaTolerance: resolvedThresholds.lumaTolerance,
     },
     imageRegion: {
       ...defaultSettings.imageRegion,
@@ -333,12 +338,7 @@ function RuleEditorRoute() {
         Array.isArray(constellation) && constellation.length !== 31
           ? constellation.length
           : 24;
-      const rawThreshold =
-        cond.threshold ??
-        cond.WhiteThreshold ??
-        cond.whiteThreshold ??
-        cond.greyscaleLevel ??
-        170;
+      const rawThreshold = migrateDetectionThresholds(cond).greyscaleThreshold;
 
       const geom = settings.patternRegion?.geometry;
       const patternBounds =
@@ -359,7 +359,7 @@ function RuleEditorRoute() {
           activeBoxCount: boxCount,
           totalBoxCount: boxCount,
           tolerancePx: typeof cond.tolerancePx === "number" ? cond.tolerancePx : 8,
-          threshold: typeof rawThreshold === "number" ? rawThreshold : 170,
+          threshold: rawThreshold,
           constellation,
           searchRegion: settings.searchRegion,
           patternBounds,

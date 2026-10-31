@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 10
 
-Status: PENDING (spec done, fix not started).
+Status: DONE — wave 2 diff-verified 31-Oct-26 (angle datum end to end, entry validation, shared BT.601 luma, Rule 1→2 skip logging, pin1.thresholdLuma/angleDatum persistence); hardening 31-Oct-26 closed both residuals (backend route AngleDatum mapping wired, SettingsCard datum selector wired via StandardPin1ConfigTool). Follow-up: ConfigTool still passes raw tolerance/circularity setters (second surface with the MarkingTool gap) + BE mirror preview/quantization divergence (report-only).
 
 ## Spec
 

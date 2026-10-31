@@ -1,4 +1,4 @@
-import type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult } from "@/lib/vision/white-box-marking";
+import type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult, WhiteBoxRegionShape } from "@/lib/vision/white-box-marking";
 import type { PatternSearchSettings } from "@/domain/vision/pattern-search";
 
 export interface CanvasPoint {
@@ -74,11 +74,21 @@ export interface BoxReviewPanelProps {
   actionButtonLabel?: string;
   onGreyscaleChange: (val: number) => void;
   onMarginChange: (val: number) => void;
+  // Matcher tuning (optional): the card renders only when all three
+  // change handlers are provided, so surfaces without a settings
+  // dispatcher see no change. Bounds match resolveMatcherSettings.
+  lumaTolerance?: number;
+  searchMarginPx?: number;
+  searchStepPx?: number;
+  onLumaToleranceChange?: (val: number) => void;
+  onSearchMarginPxChange?: (val: number) => void;
+  onSearchStepPxChange?: (val: number) => void;
   onRegionEditModeChange: (mode: PatternRegionEditMode) => void;
   onAddMaskRegion: () => void;
   onAddPatternRegion: () => void;
   onSelectMaskRegion: (index: number) => void;
   onDeleteMaskRegion: (index: number) => void;
+  onMoveMaskRegion: (index: number, direction: "up" | "down") => void;
   onRemoveBox: (num: number) => void;
   onRestoreBox: (num: number) => void;
   onToggleBox: (num: number) => void;
@@ -89,4 +99,4 @@ export interface BoxReviewPanelProps {
   onCancel?: () => void;
 }
 
-export type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult };
+export type { SearchRegion, WhiteBoxMark, WhiteBoxMarkingInput, WhiteBoxMarkingResult, WhiteBoxRegionShape };

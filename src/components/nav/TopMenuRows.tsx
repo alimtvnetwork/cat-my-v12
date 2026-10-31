@@ -5,7 +5,7 @@ import { type Entry, type ActionEntry } from "./TopMenuBar";
 import { ACTION_HANDLERS } from "./TopMenuActionHandlers";
 import { isActionEntry } from "./TopMenuUtils";
 
-export function MenubarActionRow({
+function MenubarActionRowInner({
   item,
   isHydrated,
 }: {
@@ -32,7 +32,7 @@ export function MenubarActionRow({
   );
 }
 
-export function MenubarItemRow({
+function MenubarItemRowInner({
   item,
   active,
   locked,
@@ -82,3 +82,8 @@ export function MenubarItemRow({
     </MenubarItem>
   );
 }
+
+export const MenubarActionRow = React.memo(MenubarActionRowInner);
+MenubarActionRow.displayName = "MenubarActionRow";
+export const MenubarItemRow = React.memo(MenubarItemRowInner);
+MenubarItemRow.displayName = "MenubarItemRow";

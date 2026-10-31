@@ -66,6 +66,134 @@ interface PaletteStore {
   hydrate: () => void;
   set: (id: PaletteId, patch: Partial<PaletteState>) => void;
   reset: () => void;
+  // Bridge contract (spec 03 §1.2 defect 1) for the Window menu worker
+  // (WindowMenu / WindowMenubarGroup own the workspace system): palette
+  // ids intentionally overlap workspace registry titles but are distinct
+  // panels — workspace "tools" is the icon ribbon, palette "Tools" is the
+  // rule-kind palette; workspace "layers" is the layer stack, palette
+  // "layers" has no frame; "userFunctions" exists only here. Call restore
+  // / restoreHidden from the Window menu so a palette hidden in this
+  // store gains a restore path in the other system. No third store: both
+  // systems keep their own state, these actions are the seam.
+  restore: (id: PaletteId) => void;
+  restoreHidden: () => void;
+}
+
+// Defect 3 (spec 03 §1.2): persisted layout is untrusted input. A stale
+// or corrupted `ca-hmi:palette.layout.v1` used to merge straight over the
+// defaults, so an off-screen floating palette or an unknown mode survived
+// every restart until Reset Layout. Every field below is validated on
+// load; an invalid field falls back to its default with a logged warning,
+// and a valid user layout passes through untouched. Hidden is a valid mode
+// and is never discarded here (its restore path is the PaletteFrame strip).
+function isPaletteMode(value: unknown): value is PaletteMode {
+  return (
+    typeof value === "string" &&
+    (Object.values(PaletteModeType) as string[]).includes(value)
+  );
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function sanitizePaletteGeometry(
+  fallback: PaletteState,
+  stored: Partial<PaletteState>,
+): Pick<PaletteState, "x" | "y" | "w" | "h"> {
+  const x = isFiniteNumber(stored.x) ? stored.x : fallback.x;
+  const y = isFiniteNumber(stored.y) ? stored.y : fallback.y;
+  const w = isFiniteNumber(stored.w) && stored.w > 0 ? stored.w : fallback.w;
+  const h = isFiniteNumber(stored.h) && stored.h > 0 ? stored.h : fallback.h;
+
+  if (stored.x !== undefined && x !== stored.x) {
+    ClientLogger.warn("[palette-store] discarding invalid palette geometry", {
+      panelId: fallback.id,
+      field: "x",
+      value: stored.x,
+    });
+  }
+
+  if (stored.y !== undefined && y !== stored.y) {
+    ClientLogger.warn("[palette-store] discarding invalid palette geometry", {
+      panelId: fallback.id,
+      field: "y",
+      value: stored.y,
+    });
+  }
+
+  if (stored.w !== undefined && w !== stored.w) {
+    ClientLogger.warn("[palette-store] discarding invalid palette geometry", {
+      panelId: fallback.id,
+      field: "w",
+      value: stored.w,
+    });
+  }
+
+  if (stored.h !== undefined && h !== stored.h) {
+    ClientLogger.warn("[palette-store] discarding invalid palette geometry", {
+      panelId: fallback.id,
+      field: "h",
+      value: stored.h,
+    });
+  }
+
+  return { x, y, w, h };
+}
+
+function sanitizePaletteEntry(
+  fallback: PaletteState,
+  stored: Partial<PaletteState> | undefined,
+): PaletteState {
+  if (stored === undefined || stored === null || typeof stored !== "object") {
+    return { ...fallback };
+  }
+
+  let mode = fallback.mode;
+
+  if (stored.mode !== undefined) {
+    if (isPaletteMode(stored.mode)) {
+      mode = stored.mode;
+    } else {
+      ClientLogger.warn("[palette-store] discarding unknown palette mode", {
+        panelId: fallback.id,
+        mode: stored.mode,
+      });
+
+      mode = fallback.mode;
+    }
+  }
+
+  const geometry = sanitizePaletteGeometry(fallback, stored);
+  let rectX = geometry.x;
+  let rectY = geometry.y;
+
+  // Only floating geometry is positional: docked / minimized / maximized
+  // frames ignore x/y, so an off-screen x/y there is inert and kept.
+  if (mode === PaletteModeType.Floating && typeof window !== "undefined") {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const isOffScreen =
+      rectX >= viewportWidth ||
+      rectY >= viewportHeight ||
+      rectX + geometry.w <= 0 ||
+      rectY + geometry.h <= 0;
+
+    if (isOffScreen) {
+      ClientLogger.warn("[palette-store] resetting off-screen floating palette", {
+        panelId: fallback.id,
+        x: rectX,
+        y: rectY,
+        w: geometry.w,
+        h: geometry.h,
+      });
+
+      rectX = fallback.x;
+      rectY = fallback.y;
+    }
+  }
+
+  return { id: fallback.id, mode, x: rectX, y: rectY, w: geometry.w, h: geometry.h };
 }
 
 function mergeStates(
@@ -74,8 +202,17 @@ function mergeStates(
   const merged: Record<PaletteId, PaletteState> = { ...DEFAULTS };
 
   if (!loaded) return merged;
+
+  if (typeof loaded === "object" && Array.isArray(loaded) === false) {
+    for (const key of Object.keys(loaded)) {
+      if ((Object.keys(DEFAULTS) as string[]).includes(key) === false) {
+        ClientLogger.warn("[palette-store] discarding unknown palette id", { panelId: key });
+      }
+    }
+  }
+
   for (const k of Object.keys(DEFAULTS) as PaletteId[]) {
-    merged[k] = { ...DEFAULTS[k], ...(loaded[k] ?? {}), id: k };
+    merged[k] = sanitizePaletteEntry(DEFAULTS[k], loaded[k]);
   }
 
   return merged;
@@ -130,6 +267,26 @@ export const usePaletteStore = create<PaletteStore>()(
       reset: () => {
         set({ states: { ...DEFAULTS } });
         ClientLogger.info("[palette-store] layout reset to defaults");
+      },
+      restore: (id) => {
+        set({
+          states: {
+            ...get().states,
+            [id]: { ...get().states[id], mode: PaletteModeType.Docked, id },
+          },
+        });
+      },
+      restoreHidden: () => {
+        const states = get().states;
+        const next: Record<PaletteId, PaletteState> = { ...states };
+
+        for (const k of Object.keys(states) as PaletteId[]) {
+          if (states[k].mode === PaletteModeType.Hidden) {
+            next[k] = { ...states[k], mode: PaletteModeType.Docked };
+          }
+        }
+
+        set({ states: next });
       },
     }),
     {

@@ -1,11 +1,11 @@
-import { useEffect, type ReactElement } from "react";
+import { memo, useEffect, type ReactElement } from "react";
 import { MenubarTrigger } from "@/components/ui/menubar";
 import { ClientLogger } from "@/lib/observability/client-logger";
 import { MenuGroupIdType } from "@/lib/enums/menu-group-id-type";
 import { registerShortcut } from "@/lib/shortcuts/registry";
 import { ShortcutScopeBaseType } from "@/lib/shortcuts/scopes";
 import { useAriaKeyshortcuts } from "@/lib/shortcuts/useAriaKeyshortcuts";
-import { GROUPS, type MenuGroup } from "./TopMenuBar";
+import { GROUPS, recordMenuTrigger, type MenuGroup } from "./TopMenuBar";
 
 /**
  * Plan 100 Phase F step 52: Alt-mnemonic map for the top menu bar.
@@ -89,7 +89,7 @@ export function useAltMnemonicOpen(): void {
  * pulled from the shortcut registry so screen readers announce the
  * Alt+<letter> mnemonic alongside the visible underline.
  */
-export function MenuTriggerWithMnemonic({
+function MenuTriggerWithMnemonicInner({
   group,
   groupActive,
 }: {
@@ -97,10 +97,15 @@ export function MenuTriggerWithMnemonic({
   groupActive: boolean;
 }): ReactElement {
   const aria = useAriaKeyshortcuts(`menubar.open.${group.id}`);
+  const handleTrigger = (): void => {
+    recordMenuTrigger(group.id);
+  };
 
   return (
     <MenubarTrigger
       data-group={group.id}
+      onPointerDown={handleTrigger}
+      onClick={handleTrigger}
       data-active={groupActive ? "true" : "false"}
       data-testid="topnav-trigger"
       aria-label={groupActive ? `${group.label} menu, current section` : `${group.label} menu`}
@@ -117,3 +122,6 @@ export function MenuTriggerWithMnemonic({
     </MenubarTrigger>
   );
 }
+
+export const MenuTriggerWithMnemonic = memo(MenuTriggerWithMnemonicInner);
+MenuTriggerWithMnemonic.displayName = "MenuTriggerWithMnemonic";

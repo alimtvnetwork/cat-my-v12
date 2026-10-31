@@ -30,7 +30,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from BE.app.installer_path import (
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.installer_path import (  # noqa: E402
     LinkPlatform,
     apply_link_install,
     apply_link_uninstall,
@@ -38,8 +42,8 @@ from BE.app.installer_path import (
     default_link_dir,
     plan_link_actions,
 )
-from BE.errors.apperror import AppError
-from BE.errors.codes import ErrorCode
+from BE.errors.apperror import AppError  # noqa: E402
+from BE.errors.codes import ErrorCode  # noqa: E402
 
 EXIT_OK = 0
 EXIT_USAGE = 2

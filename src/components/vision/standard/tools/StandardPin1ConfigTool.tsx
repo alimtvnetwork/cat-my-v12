@@ -79,9 +79,11 @@ export function StandardPin1ConfigTool(
               expectedX={model.registeredPin1?.centerX}
               expectedY={model.registeredPin1?.centerY}
               expectedRadius={model.registeredPin1?.radius}
-              onToleranceChange={model.setTolerancePx}
-              onCircularityChange={model.setMinCircularity}
+              onToleranceChange={model.handleToleranceChange}
+              onCircularityChange={model.handleCircularityChange}
               onReconfigure={handleReconfigure}
+              angleDatum={model.angleDatum}
+              onAngleDatumChange={model.handleAngleDatumChange}
             />
           </div>
         </div>

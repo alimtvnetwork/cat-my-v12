@@ -17,12 +17,17 @@ import { EditorRuleKindType, EditorToolFamilyType } from "@/lib/editor/types";
 import type { Rule, RuleId } from "@/lib/rules/model";
 import { syncRuleToBackend } from "@/lib/rules/backendSync";
 import {
+  clampPin1Circularity,
+  clampPin1Threshold,
+  clampPin1Tolerance,
   detectRoundHolesInRegion,
   evaluatePin1AgainstReference,
+  resolvePin1RadiusRange,
 } from "./round-hole-detector";
 import {
   HolePolarityType,
   Pin1JudgmentStatusType,
+  type Pin1AngleDatum,
   type Pin1HoleItem,
   type Pin1MatchResult,
   type Pin1RegionEditMode,
@@ -81,14 +86,51 @@ function createRegisteredPin1Item(params: {
   };
 }
 
-function calculatePin1Angle(point: Pin1HoleItem, region: SearchRegion | null): number {
+function resolvePin1ThresholdLuma(settings: any): number {
+  const canonical = settings?.pin1?.thresholdLuma;
+  const legacy = settings?.pin1Config?.thresholdLuma;
+
+  return clampPin1Threshold(canonical ?? legacy);
+}
+
+function resolvePin1AngleDatum(settings: any): Pin1AngleDatum {
+  const saved = settings?.pin1?.angleDatum ?? settings?.pin1Config?.angleDatum;
+
+  if (saved === "package" || saved === "search") {
+    return saved;
+  }
+
+  return settings?.pin1Config?.packageRegion ?? settings?.packageRegion ? "package" : "search";
+}
+
+function angleCenter(
+  searchRegion: SearchRegion | null,
+  packageRegion: SearchRegion | null,
+  angleDatum: Pin1AngleDatum,
+): { x: number; y: number } | null {
+  const region =
+    angleDatum === "search" ? (searchRegion ?? packageRegion) : (packageRegion ?? searchRegion);
+
   if (!region) {
+    return null;
+  }
+
+  return { x: region.x + region.width / 2, y: region.y + region.height / 2 };
+}
+
+function calculatePin1Angle(
+  point: Pin1HoleItem,
+  searchRegion: SearchRegion | null,
+  packageRegion: SearchRegion | null,
+  angleDatum: Pin1AngleDatum,
+): number {
+  const center = angleCenter(searchRegion, packageRegion, angleDatum);
+
+  if (!center) {
     return 0;
   }
 
-  const centerX = region.x + region.width / 2;
-  const centerY = region.y + region.height / 2;
-  const angle = (Math.atan2(point.centerY - centerY, point.centerX - centerX) * 180) / Math.PI;
+  const angle = (Math.atan2(point.centerY - center.y, point.centerX - center.x) * 180) / Math.PI;
 
   return Math.round(angle * 10) / 10;
 }
@@ -101,20 +143,20 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [polarity, setPolarity] = useState<HolePolarityType>(
     pin1Conf.polarity ?? HolePolarityType.DarkIndentation,
   );
-  const [thresholdLuma, setThresholdLuma] = useState<number>(
-    typeof pin1Conf.thresholdLuma === "number" ? pin1Conf.thresholdLuma : 35,
+  const [thresholdLuma, setThresholdLuma] = useState<number>(() =>
+    resolvePin1ThresholdLuma(settings),
   );
-  const [minCircularity, setMinCircularity] = useState<number>(
-    typeof pin1Conf.minCircularityPercent === "number" ? pin1Conf.minCircularityPercent : 45,
+  const [minCircularity, setMinCircularity] = useState<number>(() =>
+    clampPin1Circularity(pin1Conf.minCircularityPercent),
   );
-  const [tolerancePx, setTolerancePx] = useState<number>(
-    typeof pin1Conf.tolerancePx === "number" ? pin1Conf.tolerancePx : 25,
+  const [tolerancePx, setTolerancePx] = useState<number>(() =>
+    clampPin1Tolerance(pin1Conf.tolerancePx),
   );
   const [minRadiusPx, setMinRadiusPx] = useState<number>(
-    typeof pin1Conf.minRadiusPx === "number" ? pin1Conf.minRadiusPx : 3,
+    () => resolvePin1RadiusRange(pin1Conf.minRadiusPx, pin1Conf.maxRadiusPx).minRadiusPx,
   );
   const [maxRadiusPx, setMaxRadiusPx] = useState<number>(
-    typeof pin1Conf.maxRadiusPx === "number" ? pin1Conf.maxRadiusPx : 60,
+    () => resolvePin1RadiusRange(pin1Conf.minRadiusPx, pin1Conf.maxRadiusPx).maxRadiusPx,
   );
 
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() =>
@@ -124,6 +166,9 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     readRegion(pin1Conf.packageRegion ?? settings?.packageRegion),
   );
   const [regionEditMode, setRegionEditMode] = useState<Pin1RegionEditMode>("search");
+  const [angleDatum, setAngleDatum] = useState<Pin1AngleDatum>(() =>
+    resolvePin1AngleDatum(settings),
+  );
 
   const [dragState, setDragState] = useState<RegionDrag | null>(null);
   const [source, setSource] = useState<WhiteBoxMarkingInput | null>(null);
@@ -194,17 +239,30 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   );
 
   const localDetection = useCallback(
-    (inputSource: WhiteBoxMarkingInput, region: SearchRegion | null) => {
+    (
+      inputSource: WhiteBoxMarkingInput,
+      region: SearchRegion | null,
+      overrides?: {
+        polarity?: HolePolarityType;
+        thresholdLuma?: number;
+        minCircularityPercent?: number;
+        minRadiusPx?: number;
+        maxRadiusPx?: number;
+        tolerancePx?: number;
+        packageRegion?: SearchRegion | null;
+        angleDatum?: Pin1AngleDatum;
+      },
+    ) => {
       const holes = detectRoundHolesInRegion({
         targetRgba: inputSource.rgba,
         targetWidth: inputSource.width,
         targetHeight: inputSource.height,
         searchRegion: region,
-        polarity,
-        thresholdLuma,
-        minCircularityPercent: minCircularity,
-        minRadiusPx,
-        maxRadiusPx,
+        polarity: overrides?.polarity ?? polarity,
+        thresholdLuma: overrides?.thresholdLuma ?? thresholdLuma,
+        minCircularityPercent: overrides?.minCircularityPercent ?? minCircularity,
+        minRadiusPx: overrides?.minRadiusPx ?? minRadiusPx,
+        maxRadiusPx: overrides?.maxRadiusPx ?? maxRadiusPx,
       });
 
       const visibleHoles = getVisibleHoles(holes);
@@ -214,8 +272,9 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         detectedHoles: visibleHoles,
         registeredPin1,
         searchRegion: region,
-        packageRegion,
-        tolerancePx,
+        packageRegion: overrides?.packageRegion ?? packageRegion,
+        angleDatum: overrides?.angleDatum ?? angleDatum,
+        tolerancePx: overrides?.tolerancePx ?? tolerancePx,
       });
 
       setMatchResult(res);
@@ -232,6 +291,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       tolerancePx,
       getVisibleHoles,
       packageRegion,
+      angleDatum,
     ],
   );
 
@@ -242,8 +302,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       overrides?: {
         polarity?: HolePolarityType;
         thresholdLuma?: number;
+        minCircularityPercent?: number;
+        minRadiusPx?: number;
+        maxRadiusPx?: number;
+        tolerancePx?: number;
+        packageRegion?: SearchRegion | null;
+        angleDatum?: Pin1AngleDatum;
       },
     ): Promise<{ holes: Pin1HoleItem[]; res: Pin1MatchResult }> => {
+      const requestPackageRegion = overrides?.packageRegion ?? packageRegion;
+
       try {
         const envelope = await fetchBackend<Pin1MatchResult>("vision/pin1-detection", {
           method: HttpMethod.Post,
@@ -254,19 +322,20 @@ export function usePin1Rule(props?: Pin1ToolProps) {
             RgbaBase64: rgbaToBase64(inputSource.rgba),
             Polarity: overrides?.polarity ?? polarity,
             ThresholdLuma: overrides?.thresholdLuma ?? thresholdLuma,
-            MinCircularityPercent: minCircularity,
-            MinRadiusPx: minRadiusPx,
-            MaxRadiusPx: maxRadiusPx,
-            TolerancePx: tolerancePx,
+            MinCircularityPercent: overrides?.minCircularityPercent ?? minCircularity,
+            MinRadiusPx: overrides?.minRadiusPx ?? minRadiusPx,
+            MaxRadiusPx: overrides?.maxRadiusPx ?? maxRadiusPx,
+            TolerancePx: overrides?.tolerancePx ?? tolerancePx,
+            AngleDatum: overrides?.angleDatum ?? angleDatum,
             SearchRegion: region
               ? { X: region.x, Y: region.y, Width: region.width, Height: region.height }
               : null,
-            PackageRegion: packageRegion
+            PackageRegion: requestPackageRegion
               ? {
-                  X: packageRegion.x,
-                  Y: packageRegion.y,
-                  Width: packageRegion.width,
-                  Height: packageRegion.height,
+                  X: requestPackageRegion.x,
+                  Y: requestPackageRegion.y,
+                  Width: requestPackageRegion.width,
+                  Height: requestPackageRegion.height,
                 }
               : null,
             RegisteredPin1: registeredPin1,
@@ -280,7 +349,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
         return { holes, res: visibleRes };
       } catch {
-        return localDetection(inputSource, region);
+        return localDetection(inputSource, region, overrides);
       }
     },
     [
@@ -371,15 +440,20 @@ export function usePin1Rule(props?: Pin1ToolProps) {
           }
         : prev?.searchRegion,
       packageRegion,
+      pin1: {
+        thresholdLuma,
+        angleDatum,
+      },
       pin1Config: {
         polarity,
         thresholdLuma,
+        angleDatum,
         minCircularityPercent: minCircularity,
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
         angleToleranceDeg: 1.0,
-        nominalAngleDeg: calculatePin1Angle(registeredPin1, packageRegion ?? searchRegion),
+        nominalAngleDeg: calculatePin1Angle(registeredPin1, searchRegion, packageRegion, angleDatum),
         registeredPin1,
         searchRegion,
         packageRegion,
@@ -400,6 +474,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     maxRadiusPx,
     tolerancePx,
     packageRegion,
+    angleDatum,
     props?.onChange,
   ]);
 
@@ -414,9 +489,16 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     [source, executeDetection],
   );
 
-  const handlePackageRegionChange = useCallback((newRegion: SearchRegion | null) => {
-    setPackageRegion(newRegion);
-  }, []);
+  const handlePackageRegionChange = useCallback(
+    (newRegion: SearchRegion | null) => {
+      setPackageRegion(newRegion);
+
+      if (source && searchRegion && searchRegion.width > 5 && searchRegion.height > 5) {
+        void executeDetection(source, searchRegion, { packageRegion: newRegion });
+      }
+    },
+    [source, searchRegion, executeDetection],
+  );
 
   const handleActiveRegionChange = useCallback(
     (newRegion: SearchRegion | null) => {
@@ -449,15 +531,53 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   }, [registeredPin1, source]);
 
   const handleThresholdChange = (val: number) => {
-    setThresholdLuma(val);
+    const nextThresholdLuma = clampPin1Threshold(val);
+    setThresholdLuma(nextThresholdLuma);
 
-    if (source) void executeDetection(source, searchRegion, { thresholdLuma: val });
+    if (source) {
+      void executeDetection(source, searchRegion, { thresholdLuma: nextThresholdLuma });
+    }
   };
 
   const handlePolarityChange = (val: HolePolarityType) => {
     setPolarity(val);
 
     if (source) void executeDetection(source, searchRegion, { polarity: val });
+  };
+
+  const handleCircularityChange = (val: number) => {
+    const nextCircularity = clampPin1Circularity(val);
+    setMinCircularity(nextCircularity);
+
+    if (source) {
+      void executeDetection(source, searchRegion, { minCircularityPercent: nextCircularity });
+    }
+  };
+
+  const handleRadiusRangeChange = (minR: number, maxR: number) => {
+    const nextRange = resolvePin1RadiusRange(minR, maxR);
+    setMinRadiusPx(nextRange.minRadiusPx);
+    setMaxRadiusPx(nextRange.maxRadiusPx);
+
+    if (source) {
+      void executeDetection(source, searchRegion, {
+        minRadiusPx: nextRange.minRadiusPx,
+        maxRadiusPx: nextRange.maxRadiusPx,
+      });
+    }
+  };
+
+  const handleToleranceChange = (val: number) => {
+    const nextTolerance = clampPin1Tolerance(val);
+    setTolerancePx(nextTolerance);
+
+    if (source) void executeDetection(source, searchRegion, { tolerancePx: nextTolerance });
+  };
+
+  const handleAngleDatumChange = (datum: Pin1AngleDatum) => {
+    setAngleDatum(datum);
+
+    if (source) void executeDetection(source, searchRegion, { angleDatum: datum });
   };
 
   const registerPin1AtPoint = useCallback(
@@ -480,6 +600,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         registeredPin1: nextPin1,
         searchRegion,
         packageRegion,
+        angleDatum,
         tolerancePx,
       });
 
@@ -490,7 +611,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       setMessage(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}.`);
       toast.success(`Registered Pin 1 point at ${nextPin1.centerX}, ${nextPin1.centerY}`);
     },
-    [detectedHoles, maxRadiusPx, minRadiusPx, packageRegion, registeredPin1, searchRegion, tolerancePx],
+    [detectedHoles, maxRadiusPx, minRadiusPx, packageRegion, registeredPin1, searchRegion, tolerancePx, angleDatum],
   );
 
   const runDetection = useCallback(async () => {
@@ -588,6 +709,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
           registeredPin1,
           searchRegion,
           packageRegion,
+          angleDatum,
           tolerancePx,
         });
 
@@ -599,11 +721,39 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   };
 
   const includeAllHoles = () => {
-    setDetectedHoles((prev) => prev.map((h) => ({ ...h, isKept: true })));
+    const updated = detectedHoles.map((h) => ({ ...h, isKept: true }));
+    setDetectedHoles(updated);
+
+    if (source) {
+      const res = evaluatePin1AgainstReference({
+        detectedHoles: updated,
+        registeredPin1,
+        searchRegion,
+        packageRegion,
+        angleDatum,
+        tolerancePx,
+      });
+
+      setMatchResult(res);
+    }
   };
 
   const excludeAllHoles = () => {
-    setDetectedHoles((prev) => prev.map((h) => ({ ...h, isKept: false })));
+    const updated = detectedHoles.map((h) => ({ ...h, isKept: false }));
+    setDetectedHoles(updated);
+
+    if (source) {
+      const res = evaluatePin1AgainstReference({
+        detectedHoles: updated,
+        registeredPin1,
+        searchRegion,
+        packageRegion,
+        angleDatum,
+        tolerancePx,
+      });
+
+      setMatchResult(res);
+    }
   };
 
   const setPrimaryPin1Hole = (holeId: number) => {
@@ -625,6 +775,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
           registeredPin1: nextPin1,
           searchRegion,
           packageRegion,
+          angleDatum,
           tolerancePx,
         });
 
@@ -658,15 +809,20 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       type: "pin1_config",
       searchRegion,
       packageRegion,
+      pin1: {
+        thresholdLuma,
+        angleDatum,
+      },
       pin1Config: {
         polarity,
         thresholdLuma,
+        angleDatum,
         minCircularityPercent: minCircularity,
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
         angleToleranceDeg: 1.0,
-        nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
+        nominalAngleDeg: calculatePin1Angle(primary, searchRegion, packageRegion, angleDatum),
         registeredPin1: primary,
         searchRegion,
         packageRegion,
@@ -679,12 +835,13 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       pin1ConfigJson: JSON.stringify({
         polarity,
         thresholdLuma,
+        angleDatum,
         minCircularityPercent: minCircularity,
         minRadiusPx,
         maxRadiusPx,
         tolerancePx,
         angleToleranceDeg: 1.0,
-        nominalAngleDeg: calculatePin1Angle(primary, packageRegion ?? searchRegion),
+        nominalAngleDeg: calculatePin1Angle(primary, searchRegion, packageRegion, angleDatum),
         registeredPin1: primary,
         searchRegion,
         packageRegion,
@@ -796,6 +953,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     maxRadiusPx,
     tolerancePx,
     packageRegion,
+    angleDatum,
     props,
     navigate,
   ]);
@@ -825,6 +983,11 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     setDragState,
     handlePolarityChange,
     handleThresholdChange,
+    handleCircularityChange,
+    handleRadiusRangeChange,
+    handleToleranceChange,
+    handleAngleDatumChange,
+    angleDatum,
     setMinCircularity,
     setMinRadiusPx,
     setMaxRadiusPx,

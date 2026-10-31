@@ -169,3 +169,69 @@ export function getPanel(id: string): PanelDef | undefined {
 export function isPanelId(id: string): boolean {
   return PANEL_INDEX.has(id);
 }
+
+/**
+ * Plan 88 Steps 5 + 7: registry of right-rail panels (Preview / Layers /
+ * Properties + the five Properties subsections) whose hide/close controls
+ * were added via CollapsiblePanelSection. Kept here (not in WindowMenu)
+ * so WindowMenu and WindowMenubarGroup share one list: a rail panel added
+ * in one menu appears in the other, and neither menu can drift.
+ */
+export interface RailPanelItem {
+  storageKey: string;
+  title: string;
+}
+
+export const RAIL_PANELS: readonly RailPanelItem[] = [
+  { storageKey: "inspector.main", title: "Inspector" },
+  { storageKey: "properties.position", title: "Properties: Position" },
+  { storageKey: "properties.size", title: "Properties: Size" },
+  { storageKey: "properties.acceptance", title: "Properties: Acceptance" },
+  { storageKey: "properties.mask", title: "Properties: Mask" },
+  { storageKey: "properties.focus", title: "Properties: Focus" },
+  { storageKey: "properties.kind", title: "Properties: Kind" },
+];
+
+/**
+ * Window-menu visibility for a workspace panel. A panel counts as visible
+ * only when it is open, not minimized, and not docked to the Hidden slot:
+ * a Hidden-docked panel renders nowhere (stale persisted state is the
+ * only path that produces one, since no UI action sets Hidden), so
+ * showing it checked would lie about what the operator sees. Both Window
+ * menus use this so their checkmarks cannot drift apart.
+ */
+export interface PanelVisibilityState {
+  open: boolean;
+  minimized: boolean;
+  dock: DockSlotType;
+}
+
+export function isPanelVisible(state: PanelVisibilityState | undefined): boolean {
+  if (state === undefined) {
+    return false;
+  }
+
+  return state.open && !state.minimized && DockSlotType.isHidden(state.dock) === false;
+}
+
+/**
+ * Palettes the Window menus offer as a bridge into the palette system
+ * (spec 03 section 1.2 defect 1). Palette ids overlap workspace registry
+ * titles but are distinct panels: workspace "tools" is the icon ribbon
+ * while palette "Tools" is the rule-kind palette, and "userFunctions"
+ * exists only in the palette store. Only the framed palettes are listed:
+ * palette "layers" and "preview" have no PaletteFrame consumer, so a menu
+ * entry for them would promise a visible effect that does not exist.
+ * Ids are plain strings here on purpose (panel-registry stays free of a
+ * runtime import of the palette store); menus cast to PaletteId when
+ * calling restore/set, and the values must match PaletteIdType.
+ */
+export interface PaletteMenuItem {
+  id: string;
+  title: string;
+}
+
+export const PALETTE_MENU_ITEMS: readonly PaletteMenuItem[] = [
+  { id: "tools", title: "Tools" },
+  { id: "userFunctions", title: "User Functions" },
+];

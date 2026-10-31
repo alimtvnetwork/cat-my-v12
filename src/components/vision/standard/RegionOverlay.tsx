@@ -1,7 +1,7 @@
 import React from "react";
 import { Geometry } from "@/domain/vision/shapes";
 import { imageToScreen, clampRectToBounds, IMAGE_BOUNDS } from "@/lib/editor/coords";
-import { Viewport } from "@/lib/editor/types";
+import { Viewport, EditorRect } from "@/lib/editor/types";
 
 export function RegionOverlay({
   color,
@@ -9,12 +9,14 @@ export function RegionOverlay({
   onChange,
   viewport,
   active,
+  bounds = IMAGE_BOUNDS,
 }: {
   color: string;
   geometry: Geometry;
   onChange: (g: Geometry) => void;
   viewport: Viewport;
   active?: boolean;
+  bounds?: EditorRect;
 }): React.JSX.Element | null {
   const x = geometry.x ?? 0;
   const y = geometry.y ?? 0;
@@ -51,7 +53,7 @@ export function RegionOverlay({
       onChange(
         clampRectToBounds(
           { ...startGeom, x: startGeom.x + dxImg, y: startGeom.y + dyImg },
-          IMAGE_BOUNDS,
+          bounds,
         ),
       );
     };
@@ -109,7 +111,7 @@ export function RegionOverlay({
         newH = -newH;
       }
 
-      onChange(clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, IMAGE_BOUNDS));
+      onChange(clampRectToBounds({ x: newX, y: newY, width: newW, height: newH }, bounds));
     };
 
     const onUp = () => {

@@ -14,6 +14,7 @@
 //   - Parts are pure: props in, JSX out; no store subscriptions here so
 //     Titlebar can decide when/how to re-render.
 
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { GlobalSitemapBar } from "@/components/sitemap/GlobalSitemapBar";
@@ -24,7 +25,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { FlavorToggle } from "@/components/theme/FlavorToggle";
 import { KeyboardModeIndicator } from "@/components/hmi/KeyboardModeIndicator";
 import { AddressBar } from "@/components/shell/AddressBar";
-import { Search as SearchIcon } from "lucide-react";
+import { Maximize2, Minimize2, Search as SearchIcon, X } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
 import { ModernMainNav } from "@/components/hmi/ModernMainNav";
@@ -110,6 +111,150 @@ export function HeaderActions({ right }: HeaderActionsProps): React.JSX.Element 
       <HeaderDensityToggle />
       <KeyboardModeIndicator />
       {right}
+      <WindowControls />
+    </div>
+  );
+}
+
+/**
+ * Window controls for the browser shell (spec file 03 section 1.3, AI-01 open).
+ *
+ * As-built truth: this app runs in a browser launched with --app=<url>,
+ * which strips OS window chrome. There is no Tauri/Electron shell and no
+ * window-control IPC, so this component renders only what the web
+ * platform can actually do - never a dead-button shim:
+ *
+ * - Full screen toggle: the Fullscreen API is the working maximize /
+ *   restore equivalent in a browser. State tracks `fullscreenchange`,
+ *   so API exits (including Esc) resync the icon.
+ * - Close: `window.close()` first. Browsers ignore it for windows not
+ *   opened by script (the launcher opens this window), so when the
+ *   window is still alive a beat later, a dismissible hint says so and
+ *   names the real close path (OS window control / tab close) instead
+ *   of pretending the button worked.
+ * - Minimize: deliberately absent. No web API can minimize a window;
+ *   rendering a Minus button that does nothing would reproduce the
+ *   reported defect with prettier chrome. When AI-01 picks a real shell,
+ *   its IPC contract wires in here (spec section 13 allows a new
+ *   shell-IPC module) and a real minimize button joins this cluster.
+ *
+ * Local React state only; no store subscriptions, so HeaderActions
+ * stays a pure composition and only this leaf re-renders on state
+ * change.
+ */
+function WindowControls(): React.JSX.Element {
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(
+    () => typeof document !== "undefined" && document.fullscreenElement !== null,
+  );
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const isMac =
+    typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
+  useEffect(() => {
+    const handleFullscreenChange = (): void => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+
+    return () => {
+
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleFullscreenToggle = (): void => {
+
+    if (document.fullscreenElement !== null) {
+      document.exitFullscreen().catch(() => {
+        setHintMessage("Exit full screen was blocked by the browser.");
+      });
+
+      return;
+    }
+
+    document.documentElement.requestFullscreen().catch(() => {
+      setHintMessage("Full screen was blocked by the browser.");
+    });
+  };
+
+  const handleClose = (): void => {
+    window.close();
+
+    // A window the launcher opened is not script-closable, so close()
+    // above is usually ignored. If this timer still fires, the window
+    // survived: say so and name the real close path.
+    closeTimerRef.current = window.setTimeout(() => {
+      setHintMessage(
+        isMac
+          ? "Browser blocked close - use Cmd+W or the tab close button."
+          : "Browser blocked close - use Alt+F4 or the tab close button.",
+      );
+    }, 300);
+  };
+
+  const handleDismissHint = (): void => {
+    setHintMessage(null);
+  };
+
+  return (
+    <div
+      role="group"
+      aria-label="Window controls"
+      data-testid="window-controls"
+      className="flex shrink-0 items-center gap-1"
+    >
+      <button
+        type="button"
+        data-testid="window-fullscreen-toggle"
+        onClick={handleFullscreenToggle}
+        title={isFullscreen ? "Exit full screen" : "Full screen"}
+        aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
+        className="hmi-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-ca-border/80 bg-ca-panel/85 text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 hover:text-ca-ink"
+      >
+        {isFullscreen ? (
+          <Minimize2 aria-hidden size={14} />
+        ) : (
+          <Maximize2 aria-hidden size={14} />
+        )}
+      </button>
+      <button
+        type="button"
+        data-testid="window-close"
+        onClick={handleClose}
+        title="Close window"
+        aria-label="Close window"
+        className="hmi-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-ca-border/80 bg-ca-panel/85 text-ca-ink-muted shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_8px_-2px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-ca-primary/50 hover:bg-ca-panel-2 hover:text-ca-ink"
+      >
+        <X aria-hidden size={14} />
+      </button>
+      {hintMessage !== null ? (
+        <span
+          data-testid="window-close-hint"
+          className="inline-flex max-w-64 items-center gap-1 rounded-full border border-ca-border/80 bg-ca-panel px-2 py-1 text-hmi-caption text-ca-ink-muted"
+        >
+          <span className="truncate">{hintMessage}</span>
+          <button
+            type="button"
+            onClick={handleDismissHint}
+            title="Dismiss"
+            aria-label="Dismiss window hint"
+            className="hmi-focus-ring inline-flex shrink-0 items-center justify-center rounded-full hover:text-ca-ink"
+          >
+            <X aria-hidden size={12} />
+          </button>
+        </span>
+      ) : null}
     </div>
   );
 }

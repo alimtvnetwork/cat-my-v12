@@ -197,10 +197,24 @@ export function useCarrierTapeSimulation(options: UseCarrierTapeSimulationOption
 
   const handleFrameResultsAnalyzed = useCallback(
     (results: [PocketInspectionResult, PocketInspectionResult, PocketInspectionResult]) => {
-      setLiveAnalyzedMap((prev) => ({
-        ...prev,
-        [currentFrameIndex]: results,
-      }));
+      setLiveAnalyzedMap((prev) => {
+        const prevResults = prev[currentFrameIndex];
+
+        // Analysis output is deterministic for fixed pixels plus
+        // tolerances, so identical JSON means identical results.
+        // Returning the previous map reference bails React out of a
+        // re-render; without this, every report creates a new frame
+        // identity, retriggers the canvas effect, and re-analyzes
+        // identical pixels for the whole analyzed phase.
+        if (prevResults && JSON.stringify(prevResults) === JSON.stringify(results)) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [currentFrameIndex]: results,
+        };
+      });
     },
     [currentFrameIndex],
   );

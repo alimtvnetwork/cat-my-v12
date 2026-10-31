@@ -44,6 +44,11 @@ class Pin1Request(BaseModel):
     SearchRegion: SearchRegionRequest | None = None
     PackageRegion: SearchRegionRequest | None = None
     RegisteredPin1: dict[str, object] | None = None
+    # Angle datum: 'package' | 'search'. Anything else (including an
+    # omitted value) falls back inside detect_pin1: package region
+    # present -> 'package', else 'search'. Deliberately not a Literal:
+    # a 422 here would be worse than the backend's graceful fallback.
+    AngleDatum: str | None = None
 
 
 @router.post("/white-box-marking")
@@ -92,6 +97,7 @@ async def post_pin1_detection(request: Request, payload: Pin1Request) -> JSONRes
             search_region=_to_search_region(payload.SearchRegion),
             package_region=_to_search_region(payload.PackageRegion),
             registered_pin1=payload.RegisteredPin1,
+            angle_datum=payload.AngleDatum,
         ),
     )
     body = asdict(result)

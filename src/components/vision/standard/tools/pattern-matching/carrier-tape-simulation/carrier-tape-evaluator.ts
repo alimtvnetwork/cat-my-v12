@@ -1,4 +1,5 @@
 import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxes";
+import { computeLuma } from "../../pin1-config/round-hole-detector";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
@@ -20,40 +21,13 @@ const FALLBACK_CHIP_CENTER_Y = 76.0;
 const FALLBACK_MARKING_WIDTH = 58.0;
 const FALLBACK_MARKING_HEIGHT = 44.0;
 
-// Expected relative positions of 24 laser marking features on the Atmel chip body (normalized -1..1 from center)
-const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedLuma: number }[] = [
-  // Row 1: "MEGA32U4"
-  { relX: -0.42, relY: -0.28, expectedLuma: 87 },
-  { relX: -0.30, relY: -0.28, expectedLuma: 97 },
-  { relX: -0.18, relY: -0.28, expectedLuma: 82 },
-  { relX: -0.06, relY: -0.28, expectedLuma: 52 },
-  { relX: 0.06, relY: -0.28, expectedLuma: 40 },
-  { relX: 0.18, relY: -0.28, expectedLuma: 41 },
-  { relX: 0.30, relY: -0.28, expectedLuma: 55 },
-  { relX: 0.42, relY: -0.28, expectedLuma: 50 },
-
-  // Row 2: "-AU"
-  { relX: -0.35, relY: -0.08, expectedLuma: 79 },
-  { relX: -0.20, relY: -0.08, expectedLuma: 101 },
-  { relX: -0.05, relY: -0.08, expectedLuma: 89 },
-  { relX: 0.10, relY: -0.08, expectedLuma: 32 },
-
-  // Row 3: "1035E KR"
-  { relX: -0.38, relY: 0.12, expectedLuma: 50 },
-  { relX: -0.26, relY: 0.12, expectedLuma: 35 },
-  { relX: -0.14, relY: 0.12, expectedLuma: 31 },
-  { relX: -0.02, relY: 0.12, expectedLuma: 34 },
-  { relX: 0.10, relY: 0.12, expectedLuma: 36 },
-  { relX: 0.22, relY: 0.12, expectedLuma: 45 },
-  { relX: 0.34, relY: 0.12, expectedLuma: 28 },
-
-  // Row 4: "0G3455"
-  { relX: -0.36, relY: 0.32, expectedLuma: 29 },
-  { relX: -0.22, relY: 0.32, expectedLuma: 48 },
-  { relX: -0.08, relY: 0.32, expectedLuma: 27 },
-  { relX: 0.06, relY: 0.32, expectedLuma: 37 },
-  { relX: 0.20, relY: 0.32, expectedLuma: 39 },
-];
+// Sim box convention (single convention, spec 01 section 6): chip-box
+// positions are PERCENTAGES of the marking size, via
+// ATMEL_24_BOX_DEFINITIONS. analyzeRule2PatternReal measures with those
+// percentages and the canvas draws with the same percentages, so
+// measurement and display agree. (A centre-relative -1..1 table lived
+// here; it had zero callers, so it was removed rather than left as a
+// second convention to drift back in.)
 
 export function evaluatePocket(
   pocket: PocketDef,
@@ -87,7 +61,14 @@ export function evaluatePocket(
     : evaluateRule1Pin1Synthetic(pocket, tolerances);
 
   // Short-circuiting: If Rule 1 fails, do NOT evaluate Rule 2 (greyscale-pattern-match-24-box)!
+  // The skip is logged, never silent, and the result marks Rule 2 as
+  // NOT RUN (isSkipped), distinct from a Rule 2 failure (failedRuleIndex
+  // stays 1, below). Rule 2's isPass:false here means "no result", not
+  // "Rule 2 failed" — readers must check isSkipped first.
   if (!rule1.isPass) {
+    console.warn(
+      `[carrier-tape-evaluator] Pocket ${pocket.pocketIndex}: Rule 1 FAILED (${rule1.failureReason ?? "Pin 1 validation failed"}) — Rule 2 NOT RUN (skipped, not failed).`,
+    );
     const skippedRule2: Rule2PatternResult = {
       isPass: false,
       isSkipped: true,
@@ -95,7 +76,7 @@ export function evaluatePocket(
       matchedCount: 0,
       totalCount: 24,
       minMatchPercent: tolerances.minMatchPercent,
-      failureReason: `Rule 2 (${RULE_2_NAME}) skipped due to Rule 1 failure`,
+      failureReason: `Rule 2 (${RULE_2_NAME}) skipped due to Rule 1 failure; Rule 2 did not run and is not a Rule 2 failure`,
       boxResults: [],
     };
 
@@ -240,7 +221,7 @@ export function analyzeRule1Pin1Real(
               const pIdx = ((py + iy) * width + (px + ix)) * 4;
 
               if (rgba[pIdx + 3] >= 128) {
-                innerSum += 0.299 * rgba[pIdx] + 0.587 * rgba[pIdx + 1] + 0.114 * rgba[pIdx + 2];
+                innerSum += computeLuma(rgba[pIdx], rgba[pIdx + 1], rgba[pIdx + 2]);
                 innerCount += 1;
               }
             }
@@ -265,7 +246,7 @@ export function analyzeRule1Pin1Real(
               const pIdx = ((py + ry) * width + (px + rx)) * 4;
 
               if (rgba[pIdx + 3] >= 128) {
-                ringSum += 0.299 * rgba[pIdx] + 0.587 * rgba[pIdx + 1] + 0.114 * rgba[pIdx + 2];
+                ringSum += computeLuma(rgba[pIdx], rgba[pIdx + 1], rgba[pIdx + 2]);
                 ringCount += 1;
               }
             }

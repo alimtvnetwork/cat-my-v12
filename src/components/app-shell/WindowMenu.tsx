@@ -2,9 +2,13 @@
  * Plan 65 steps 15-16 (SS-03): Window menu.
  *
  * A dropdown listing every registered panel with a checkmark reflecting
- * `open && !minimized`. Selecting a panel toggles its open state. Two
+ * `isPanelVisible` (open, not minimized, not Hidden-docked). Selecting a
+ * panel opens, restores, or toggles it; a Hidden-docked panel re-opens to
+ * its default dock. A "Palettes" section bridges into the palette system
+ * (restore/hide for the framed palettes plus "Restore hidden palettes"),
+ * and a "Rail panels" section hides/restores right-rail sections. Two
  * house-keeping commands sit at the bottom: "Collapse Other Panels"
- * (keeps only the last-focused open panel open) and "Reset Workspace
+ * (keeps only the last-focused visible panel open) and "Reset Workspace
  * Layout" (drops persisted state back to defaults).
  *
  * Reads and writes go through `useWorkspaceLayoutStore` so the same
@@ -24,30 +28,23 @@ import {
   DropdownMenuSubContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PANELS } from "@/lib/workspace/panel-registry";
+import {
+  PANELS,
+  RAIL_PANELS,
+  PALETTE_MENU_ITEMS,
+  isPanelVisible,
+} from "@/lib/workspace/panel-registry";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
 import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
+import { DockSlotType } from "@/lib/enums/ui";
+import {
+  usePaletteStore,
+  PaletteModeType,
+  type PaletteId,
+} from "@/lib/stores/palette-store";
 import { useLayoutPresetsStore } from "@/lib/workspace/layout-presets";
 import { useRailPanelState } from "@/hooks/useRailPanelState";
 
-// Plan 88 Steps 5 + 7: registry of right-rail panels (Preview / Layers /
-// Properties + the five Properties subsections) whose hide/close controls
-// were added via CollapsiblePanelSection. Kept co-located so future rail
-// panels only need one edit.
-interface RailPanelItem {
-  storageKey: string;
-  title: string;
-}
-
-const RAIL_PANELS: RailPanelItem[] = [
-  { storageKey: "inspector.main", title: "Inspector" },
-  { storageKey: "properties.position", title: "Properties: Position" },
-  { storageKey: "properties.size", title: "Properties: Size" },
-  { storageKey: "properties.acceptance", title: "Properties: Acceptance" },
-  { storageKey: "properties.mask", title: "Properties: Mask" },
-  { storageKey: "properties.focus", title: "Properties: Focus" },
-  { storageKey: "properties.kind", title: "Properties: Kind" },
-];
 import {
   Dialog,
   DialogContent,
@@ -68,6 +65,10 @@ export function WindowMenu(): React.JSX.Element | null {
   const restorePanel = useWorkspaceLayoutStore((s) => s.restorePanel);
   const resetLayout = useWorkspaceLayoutStore((s) => s.resetLayout);
   const collapseOthers = useWorkspaceLayoutStore((s) => s.collapseOthers);
+  const palettes = usePaletteStore((s) => s.states);
+  const setPalette = usePaletteStore((s) => s.set);
+  const restorePalette = usePaletteStore((s) => s.restore);
+  const restoreHiddenPalettes = usePaletteStore((s) => s.restoreHidden);
   const applyLayoutSnapshot = useWorkspaceLayoutStore((s) => s.applyLayoutSnapshot);
 
   const presets = useLayoutPresetsStore((s) => s.presets);
@@ -128,7 +129,7 @@ export function WindowMenu(): React.JSX.Element | null {
           <DropdownMenuLabel>Panels</DropdownMenuLabel>
           {PANELS.map((p) => {
             const state = panels[p.id];
-            const visible = !!state?.open && !state.minimized;
+            const visible = isPanelVisible(state);
 
             return (
               <DropdownMenuItem
@@ -137,7 +138,7 @@ export function WindowMenu(): React.JSX.Element | null {
                   e.preventDefault();
                   const s = panels[p.id];
 
-                  if (!s?.open) openPanel(p.id);
+                  if (!s?.open || DockSlotType.isHidden(s?.dock)) openPanel(p.id);
                   else if (s.minimized) restorePanel(p.id);
                   else togglePanel(p.id);
                 }}
@@ -149,6 +150,56 @@ export function WindowMenu(): React.JSX.Element | null {
               </DropdownMenuItem>
             );
           })}
+          <DropdownMenuSeparator />
+          {/* Bridge into the palette system (spec 03 section 1.2 defect 1):
+            the Window menu is the second restore path for hidden palettes
+            (the first is the PaletteFrame Show strip). Palette ids are
+            distinct from workspace panels despite overlapping titles:
+            "Tools" here is the rule-kind palette, not the icon ribbon,
+            and palette "layers"/"preview" have no frame, so they are not
+            listed. A hidden or minimized palette restores via restore();
+            a visible palette hides via set(), which the same entry
+            reverses, so hiding through the menu is never a dead end. */}
+          <DropdownMenuLabel>Palettes</DropdownMenuLabel>
+          {PALETTE_MENU_ITEMS.map((item) => {
+            const palette = palettes[item.id as PaletteId];
+            const isPaletteHidden = palette?.mode === PaletteModeType.Hidden;
+            const isPaletteMinimized = palette?.mode === PaletteModeType.Minimized;
+            const isPaletteVisible =
+              palette !== undefined && !isPaletteHidden && !isPaletteMinimized;
+
+            return (
+              <DropdownMenuItem
+                key={item.id}
+                data-testid={`window-menu-palette-${item.id}`}
+                onSelect={(e) => {
+                  e.preventDefault();
+
+                  if (isPaletteHidden || isPaletteMinimized) restorePalette(item.id as PaletteId);
+                  else setPalette(item.id as PaletteId, { mode: PaletteModeType.Hidden });
+                }}
+              >
+                <span className="mr-2 inline-flex w-4 justify-center">
+                  {isPaletteVisible ? <Check aria-hidden size={14} /> : null}
+                </span>
+                <span className="flex-1">{item.title}</span>
+                {isPaletteHidden ? (
+                  <span className="ml-2 text-xs text-muted-foreground">Hidden</span>
+                ) : null}
+                {isPaletteMinimized ? (
+                  <span className="ml-2 text-xs text-muted-foreground">Minimized</span>
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              restoreHiddenPalettes();
+            }}
+          >
+            Restore hidden palettes
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           {/* Plan 88 Step 8: restore rail panels that Step 5's hide/close
             controls sent to display:none. State comes from
@@ -248,7 +299,7 @@ export function WindowMenu(): React.JSX.Element | null {
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
-              const firstOpen = PANELS.find((p) => panels[p.id]?.open && !panels[p.id].minimized);
+              const firstOpen = PANELS.find((p) => isPanelVisible(panels[p.id]));
 
               if (firstOpen) collapseOthers(firstOpen.id);
             }}

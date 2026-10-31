@@ -34,15 +34,19 @@ import json
 import sys
 from pathlib import Path
 
-from BE.app.install_log_rotator import (
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.install_log_rotator import (  # noqa: E402
     DEFAULT_ARCHIVE_MAX_BYTES,
     DEFAULT_MAX_ACTIONS,
     rotate_manifest,
 )
-from BE.app.install_manifest import ManifestActionRecord, record_action, record_binary
-from BE.app.installer_signing import compute_binary_signature
-from BE.errors.apperror import AppError
-from BE.errors.codes import ErrorCode
+from BE.app.install_manifest import ManifestActionRecord, record_action, record_binary  # noqa: E402
+from BE.app.installer_signing import compute_binary_signature  # noqa: E402
+from BE.errors.apperror import AppError  # noqa: E402
+from BE.errors.codes import ErrorCode  # noqa: E402
 
 
 # --- argparse ---------------------------------------------------------

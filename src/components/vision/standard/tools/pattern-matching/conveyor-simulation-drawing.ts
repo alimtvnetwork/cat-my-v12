@@ -531,26 +531,36 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
       !isEmpty && (isSelected || (isInspected && Math.abs(pocketX - inspectX) < 70));
 
     if (isViewingInspection) {
-      const accurateMatch =
-        inspectedResult?.matchResult ??
-        (isStm8
-          ? buildAccuratePatternMatchResult({
-              chipX: cx1,
-              chipY: cy1,
-              hasDefect: true,
-              defectBoxNumbers: STM8_REAL_FAILED_BOX_NUMBERS,
-            })
-          : buildAccuratePatternMatchResult({
-              chipX: cx1,
-              chipY: cy1,
-              hasDefect: false,
-              defectBoxNumbers: [],
-            }));
-
+      // The pattern region is the chip body: box percentages are
+      // percentages of bodyW/bodyH from the body origin, so the result
+      // carries real region dims instead of the default 100x100. The
+      // drawn boxes below are recomputed from the same body geometry,
+      // so display is unchanged; only the result object's positions
+      // become meaningful.
       const bodyX = cx1 + Math.round((SIM_CHIP_WIDTH * 9) / 140);
       const bodyY = cy1 + Math.round((SIM_CHIP_HEIGHT * 10) / 148);
       const bodyW = Math.round((SIM_CHIP_WIDTH * 122) / 140);
       const bodyH = Math.round((SIM_CHIP_HEIGHT * 122) / 148);
+
+      const accurateMatch =
+        inspectedResult?.matchResult ??
+        (isStm8
+          ? buildAccuratePatternMatchResult({
+              chipX: bodyX,
+              chipY: bodyY,
+              regionWidth: bodyW,
+              regionHeight: bodyH,
+              hasDefect: true,
+              defectBoxNumbers: STM8_REAL_FAILED_BOX_NUMBERS,
+            })
+          : buildAccuratePatternMatchResult({
+              chipX: bodyX,
+              chipY: bodyY,
+              regionWidth: bodyW,
+              regionHeight: bodyH,
+              hasDefect: false,
+              defectBoxNumbers: [],
+            }));
 
       const scaleX = bodyW / 100;
       const scaleY = bodyH / 100;

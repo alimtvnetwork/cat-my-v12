@@ -260,6 +260,9 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
         } else {
           const defectBoxes = isStm8 ? STM8_REAL_FAILED_BOX_NUMBERS : [];
 
+          // No-image fallback: no real pattern region exists here, so
+          // the default 100x100 region stands and box positions stay
+          // nominal. Score and pass come from the defect set only.
           matchResult = buildAccuratePatternMatchResult({
             chipX: 0,
             chipY: 0,
@@ -388,6 +391,9 @@ export function useConveyorSimulation(options: ConveyorSimulationOptions): UseCo
       } else {
         const defectBoxes = isStm8 ? STM8_REAL_FAILED_BOX_NUMBERS : [];
 
+        // No-image fallback: no real pattern region exists here, so
+        // the default 100x100 region stands and box positions stay
+        // nominal. Score and pass come from the defect set only.
         matchResult = buildAccuratePatternMatchResult({
           chipX: 0,
           chipY: 0,

@@ -38,7 +38,9 @@ export function StandardImageToolbar({
       ...s,
       view: {
         ...(s?.view ?? { source: ImageSourceType.Camera, rendering: RenderModeType.Normal, zoom: 100 }),
-        zoom: Math.max(10, Math.min(500, (s?.view?.zoom ?? 100) + delta)),
+        // Spec 21-app/35 ZoomPercent 5-800: the toolbar clamp matches the spec range
+        // (was 10-500; StandardCanvas wheel zoom already uses 0.05-8). Do not narrow it back.
+        zoom: Math.max(5, Math.min(800, (s?.view?.zoom ?? 100) + delta)),
       },
     }));
   };

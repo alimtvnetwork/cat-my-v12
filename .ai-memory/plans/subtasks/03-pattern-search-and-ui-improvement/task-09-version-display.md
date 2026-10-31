@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 09
 
-Status: PENDING (spec done, fix not started).
+Status: DONE — wave 3 diff-verified 31-Oct-26 (VER pill in StatusBar left cluster, VITE_APP_VERSION injected from version.json at build time, version.json untouched at 4.112.17); caveats for parent: define-through-Lovable-wrapper unverified until build (E2E must assert chip value; "unknown" = define failed), and StatusBar defaults hidden on fresh installs (showStatusBar default in ui-prefs-store, outside box) so the chip is not visible on every fresh launch until toggled — needs a default decision, not a silent flip.
 
 ## Spec
 

@@ -39,11 +39,26 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PYTHON_EXE="${PYTHON_EXE:-$REPO_ROOT/.venv/bin/python}"
+# F2 fix (spec 03 fix wave): bin scripts are invoked by absolute path,
+# so script-path execution puts bin/ (not the repo root) on sys.path
+# and `from BE...` imports fail even when run from the repo root.
+# Export the derived repo root on PYTHONPATH (preserving any existing
+# value) so every python invocation below resolves the BE package.
+export PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}"
+# PYTHON_EXE is explicit only when the caller exported it; otherwise
+# the default venv path is bootstrapped on demand (spec 03 §7.2 item 1).
+if [ -n "${PYTHON_EXE:-}" ]; then
+    PYTHON_EXE_IS_EXPLICIT=1
+else
+    PYTHON_EXE_IS_EXPLICIT=0
+    PYTHON_EXE="$REPO_ROOT/.venv/bin/python"
+fi
 INTERVAL_HOURS="${APP_RETENTION_INTERVAL_HOURS:-24}"
 RETENTION_DAYS="${APP_RETENTION_DAYS:-30}"
 INSTALL_ROOT="${APP_INSTALL_ROOT:-$REPO_ROOT}"
-APP_VERSION_STR="${APP_VERSION:-unknown}"
+# APP_VERSION_STR is resolved after the python check below (spec 03
+# §5.2): explicit APP_VERSION wins, else version.json, else "unknown".
+APP_VERSION_STR=""
 BINARIES_DIR="${APP_BINARIES_DIR:-}"
 
 usage() {
@@ -51,6 +66,8 @@ usage() {
 Usage: $0 --install | --uninstall [--force-warn] [--verify-only]
 Env overrides: APP_RETENTION_INTERVAL_HOURS, APP_RETENTION_DAYS,
                APP_INSTALL_ROOT, APP_VERSION, APP_BINARIES_DIR, PYTHON_EXE
+A missing default .venv is bootstrapped from system python3 (spec 03
+§7.2 item 1); an explicit PYTHON_EXE is never bootstrapped.
 Note: APP_BINARIES_DIR is REQUIRED for --install (Plan 90 Step 125
       removed the skip fallback so every install goes through the
       SHA256SUMS cross-check).
@@ -76,7 +93,52 @@ for arg in "$@"; do
 done
 [ -n "$phase" ] || { usage; exit 2; }
 
+# Venv bootstrap (spec 03 §7.2 item 1): a missing default venv is
+# created from system python3 and given pydantic + fastapi, the
+# third-party imports on the installer path. Pydantic serves the BE
+# envelope; fastapi enters via the envelope's request-id import
+# (BE/envelope.py -> BE/middleware/request_id.py), hit when
+# db-bootstrap / retention-run emit their success envelope, so a
+# pydantic-only venv dies on the report, not on the work itself.
+# instead of failing deep in the renderer/doctor. An explicitly
+# provided PYTHON_EXE is never bootstrapped: a pinned interpreter
+# that is missing stays a fail-fast exit 3. When pip cannot install
+# (offline machine) and system python3 already imports BE.envelope,
+# the install proceeds under it with a warning; otherwise exit 3
+# names the two commands that fix the machine.
+if [ ! -x "$PYTHON_EXE" ]; then
+    if [ "$PYTHON_EXE_IS_EXPLICIT" -eq 0 ] && command -v python3 >/dev/null 2>&1; then
+        echo "[installer] venv python missing; bootstrapping $REPO_ROOT/.venv from python3" >&2
+        if python3 -m venv "$REPO_ROOT/.venv" >&2 && "$REPO_ROOT/.venv/bin/python" -m pip install "pydantic>=2.9" "fastapi>=0.115" >&2; then
+            PYTHON_EXE="$REPO_ROOT/.venv/bin/python"
+        elif (cd "$REPO_ROOT" && python3 -c "import BE.envelope, BE.middleware.request_id" 2>/dev/null); then
+            echo "[installer] warning: venv bootstrap could not install pydantic/fastapi; using system python3 (BE.envelope + request-id imports cleanly)" >&2
+            PYTHON_EXE="$(command -v python3)"
+        else
+            echo "[3] venv bootstrap failed; fix the machine with: python3 -m venv $REPO_ROOT/.venv && $REPO_ROOT/.venv/bin/python -m pip install \"pydantic>=2.9\" \"fastapi>=0.115\"" >&2
+            exit 3
+        fi
+    else
+        echo "[3] python missing: $PYTHON_EXE" >&2
+        exit 3
+    fi
+fi
 [ -x "$PYTHON_EXE" ] || { echo "[3] python missing: $PYTHON_EXE" >&2; exit 3; }
+
+# App version resolution (spec 03 §5.2): an install must never record
+# "unknown" when the release-owned version.json is readable. An explicit
+# APP_VERSION always wins; an unreadable version.json keeps "unknown"
+# with a warning (the upgrade planner rejects unparseable values loudly).
+if [ -n "${APP_VERSION:-}" ]; then
+    APP_VERSION_STR="$APP_VERSION"
+else
+    APP_VERSION_STR="$(REPO_ROOT="$REPO_ROOT" "$PYTHON_EXE" -c 'import json, os; print(json.load(open(os.path.join(os.environ["REPO_ROOT"], "version.json")))["version"])' 2>/dev/null || echo unknown)"
+    if [ "$APP_VERSION_STR" = "unknown" ]; then
+        echo "[installer] warning: could not read a version from $REPO_ROOT/version.json; recording 'unknown'" >&2
+    else
+        echo "[installer] APP_VERSION resolved from version.json: $APP_VERSION_STR" >&2
+    fi
+fi
 
 mkdir -p "$INSTALL_ROOT"
 
@@ -91,6 +153,8 @@ mkdir -p "$INSTALL_ROOT"
 # invoking the doctor / plan / manifest recorder.
 if [ "$phase" = "install" ] && [ -z "$BINARIES_DIR" ]; then
     echo "[2] APP_BINARIES_DIR is required for --install (Plan 90 Step 125)" >&2
+    echo "    Expected layout: a directory holding the release onefile artefacts (db-bootstrap, retention-run) plus SHA256SUMS.txt covering them." >&2
+    echo "    Produce it with the release workflow artefacts download, then re-run with APP_BINARIES_DIR=<dir>." >&2
     exit 2
 fi
 if [ -n "$BINARIES_DIR" ]; then
@@ -131,6 +195,13 @@ if [ "$doctor_exit" -eq 21 ]; then
     exit 5
 elif [ "$doctor_exit" -eq 20 ] && [ "$force_warn" -eq 0 ]; then
     echo "[5] doctor reported warnings; re-run with --force-warn to proceed" >&2
+    exit 5
+elif [ "$doctor_exit" -ne 0 ]; then
+    # Doctor contract (bin/install-doctor.py): 0 ok, 20 warnings,
+    # 21 errors, 2 usage, 3 plan failure. Any other exit (e.g. 1 on
+    # crash) means preflight never ran, so proceeding would skip the
+    # preflight gate entirely -- refuse rather than tolerate it.
+    echo "[5] doctor failed unexpectedly (exit $doctor_exit); refusing to proceed" >&2
     exit 5
 fi
 
@@ -205,10 +276,22 @@ for a in json.loads(sys.argv[1]): print(a)" "$args_json")
     started_at=$(date -u +%Y-%m-%dT%H:%M:%S+00:00)
     started_ms=$(date -u +%s%3N)
     set +e
+    # F2 follow-up (found while verifying the install): an action with
+    # no args must receive zero arguments, not one empty string.
+    # "${args[@]:-}" expands to "" for an empty array, which argparse
+    # rejects as an unrecognized argument (db-bootstrap takes no args).
+    # Branch on element count so the empty case passes no arguments;
+    # the runner array itself is never empty, so this is set -u safe
+    # on every bash version the script already requires (mapfile).
     if [[ "$script" == *.py ]]; then
-        "$PYTHON_EXE" "$script_path" "${args[@]:-}"
+        runner=("$PYTHON_EXE" "$script_path")
     else
-        bash "$script_path" "${args[@]:-}"
+        runner=(bash "$script_path")
+    fi
+    if [ "${#args[@]}" -gt 0 ]; then
+        "${runner[@]}" "${args[@]}"
+    else
+        "${runner[@]}"
     fi
     child_exit=$?
     set -e

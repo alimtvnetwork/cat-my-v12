@@ -204,6 +204,16 @@ detection.lumaTolerance        // 0–255, default 22
   the same two keys, read from the request / rule settings, never from
   a local default. A backend default that disagrees with the frontend
   default is a bug, not a fallback.
+- **Amendment 31-Oct-26 (adjudicated from implementation evidence):**
+  `record.toleranceLuma` is **dead**, not a legacy key. The old matcher
+  hardcoded 22 at every call site and never read it from a saved record,
+  and no writer in the repo persists it into rule settings (every
+  `toleranceLuma:` site is a matcher call arg or a sim-local literal).
+  `resolveMatcherSettings` therefore does NOT fall back to it: absence
+  of `detection.lumaTolerance` means the default 22. This corrects
+  §3.3's migration list — `toleranceLuma` is not migrated; a saved
+  record carrying it keeps its `detection.lumaTolerance` (or the
+  default) and the stale key is inert.
 
 ### 3.3 Migration rule
 

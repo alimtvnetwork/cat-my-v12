@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Final, Literal
 
 from BE.errors.apperror import AppError
@@ -37,6 +37,7 @@ class Pin1Options:
     angle_tolerance_deg: float = 1.0
     search_region: SearchRegion | None = None
     package_region: SearchRegion | None = None
+    angle_datum: Literal["package", "search"] | None = None
     registered_pin1: dict[str, object] | None = None
 
 
@@ -69,6 +70,8 @@ class Pin1Result:
     deltaY: int
     deltaDistance: float
     executionTimeMs: float
+    angleDeg: float = 0.0
+    angleDatum: str = "search"
 
 
 @dataclass
@@ -93,6 +96,22 @@ def detect_pin1(
 ) -> Pin1Result:
     started = time.perf_counter()
     opts = options or Pin1Options()
+    # Entry-time alignment with the frontend clamps (spec 02 §3.2/§9):
+    # pin1.thresholdLuma is 0-255 (default 35, pin-one-only), circularity
+    # 0-100, tolerance >= 0. Evaluation never re-clamps or re-defaults.
+    opts = replace(
+        opts,
+        threshold_luma=max(0, min(255, round(opts.threshold_luma))),
+        min_circularity_percent=max(0, min(100, round(opts.min_circularity_percent))),
+        tolerance_px=max(0, opts.tolerance_px),
+    )
+
+    if opts.angle_datum not in ("package", "search"):
+        opts = replace(
+            opts,
+            angle_datum="package" if opts.package_region is not None else "search",
+        )
+
     rgba = _decode_rgba(width, height, rgba_base64)
     holes = _detect_holes(rgba, width, height, opts)
     result = _evaluate_holes(holes, opts)
@@ -109,6 +128,8 @@ def detect_pin1(
         deltaX=result.deltaX,
         deltaY=result.deltaY,
         deltaDistance=result.deltaDistance,
+        angleDeg=result.angleDeg,
+        angleDatum=result.angleDatum,
         executionTimeMs=elapsed,
     )
 
@@ -149,6 +170,8 @@ def _bounds(width: int, height: int, region: SearchRegion | None) -> tuple[int, 
 def _luma(rgba: bytes, index: int) -> float:
     pos = index * BYTES_PER_RGBA_PIXEL
 
+    # BT.601, identical coefficients to frontend computeLuma (spec 02 §2.1);
+    # a language boundary, not a second formula.
     return 0.299 * rgba[pos] + 0.587 * rgba[pos + 1] + 0.114 * rgba[pos + 2]
 
 
@@ -351,8 +374,33 @@ def _registered_xy(opts: Pin1Options) -> tuple[int, int] | None:
     return None
 
 
+def _angle_center(opts: Pin1Options, datum: str) -> tuple[int, int] | None:
+    region = opts.package_region if datum == "package" else opts.search_region
+
+    if region is None:
+        region = opts.search_region if datum == "package" else opts.package_region
+
+    if region is None:
+        return None
+
+    return round(region.x + region.width / 2), round(region.y + region.height / 2)
+
+
+def _angle_deg(center: tuple[int, int] | None, hole: Pin1Hole | None) -> float:
+    if center is None or hole is None:
+        return 0.0
+
+    return round((math.atan2(hole.centerY - center[1], hole.centerX - center[0]) * 180) / math.pi, 1)
+
+
 def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Result:
     registered = _registered_xy(opts)
+    datum = (
+        opts.angle_datum
+        if opts.angle_datum in ("package", "search")
+        else ("package" if opts.package_region is not None else "search")
+    )
+    center = _angle_center(opts, datum)
 
     if registered is None:
         primary = holes[0] if holes else None
@@ -369,6 +417,8 @@ def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Resul
             deltaX=0,
             deltaY=0,
             deltaDistance=0,
+            angleDeg=_angle_deg(center, primary),
+            angleDatum=datum,
             executionTimeMs=0,
         )
 
@@ -401,6 +451,8 @@ def _evaluate_holes(holes: tuple[Pin1Hole, ...], opts: Pin1Options) -> Pin1Resul
         deltaX=best.centerX - expected_x if best is not None else 0,
         deltaY=best.centerY - expected_y if best is not None else 0,
         deltaDistance=round(best_distance, 1) if best is not None else 0,
+        angleDeg=_angle_deg(center, best),
+        angleDatum=datum,
         executionTimeMs=0,
     )
 

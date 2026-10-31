@@ -1,14 +1,35 @@
 import { useState } from "react";
 import { Camera, RefreshCw, Upload } from "lucide-react";
 import { BoxReviewPanel } from "./white-box/BoxReviewPanel";
+import { StandardImageToolbar } from "./standard/StandardImageToolbar";
 import { CameraCaptureModal } from "./white-box/CameraCaptureModal";
 import { PatternCanvas } from "./white-box/PatternCanvas";
 import type { WhiteBoxToolProps } from "./white-box/types";
 import { useWhiteBoxMarking } from "./white-box/useWhiteBoxMarking";
+import { resolveMatcherSettings } from "@/domain/vision/pattern-search";
 
 export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.Element {
   const model = useWhiteBoxMarking(props);
+  // Matcher tuning (pattern tool only): values resolve from settings via
+  // the single matcher intake; writes go to detection.* through the same
+  // settings dispatcher the formulated-pattern effect uses. Surfaces
+  // without settings/a dispatcher pass nothing and the panel hides the card.
+  const matcherSettings = props.settings ? resolveMatcherSettings(props.settings) : null;
+  const handleMatcherChange =
+    (key: "lumaTolerance" | "searchMarginPx" | "searchStepPx") => (val: number) => {
+      props.onSettingsChange?.((prev: any) => ({
+        ...prev,
+        detection: {
+          ...((prev as any)?.detection ?? {}),
+          [key]: val,
+        },
+      }));
+    };
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  // Toolbar view modes (local to this tool, like StandardPatternSearch's):
+  // regions/results gate the canvas layers, grid gates the container grid.
+  // Defaults preserve today's drawing (all on, grid included).
+  const [viewModes, setViewModes] = useState({ regions: true, results: true, grid: true });
   const buttonLabel = props.actionButtonLabel ?? (props.settings ? "Apply Pattern" : "Save Pattern");
   const activeRegion =
     model.regionEditMode === "mask" && model.selectedMaskIndex !== null
@@ -20,6 +41,21 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#080b0f] text-white font-sans select-none">
       <div className="flex h-full min-h-0 min-w-[1024px] flex-col">
+        {/* Image toolbar (only when the tool runs with rule settings):
+            same gating as the Matcher Tuning card — surfaces without a
+            settings dispatcher see no change. Source/Rendering write the
+            shared settings.view state exactly as in Standard; only zoom
+            and viewModes have white-box canvas consumers in this pass.
+            Refresh is intentionally unwired: the toolbar then resets zoom
+            to 100 (its built-in fallback) instead of faking a re-run. */}
+        {props.settings && props.onSettingsChange ? (
+          <StandardImageToolbar
+            settings={props.settings}
+            setSettings={props.onSettingsChange}
+            viewModes={viewModes}
+            setViewModes={setViewModes}
+          />
+        ) : null}
         {/* Main Workspace (Left Canvas + Right Panel) */}
         <div className="flex min-h-0 flex-1 gap-2 p-2 pb-0">
           {/* Left: Canvas */}
@@ -40,6 +76,10 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               selectedMaskIndex={model.selectedMaskIndex}
               onSearchRegionChange={model.changeActiveCanvasRegion}
               onDragStateChange={model.setDragState}
+              viewZoom={props.settings?.view?.zoom}
+              viewModes={viewModes}
+              regionShape={model.regionShape}
+              onRegionShapeChange={model.changeRegionShape}
             />
           </div>
           
@@ -60,11 +100,18 @@ export function WhiteBoxMarkingTool(props: WhiteBoxToolProps = {}): React.JSX.El
               saveMessage={model.saveMessage}
               onGreyscaleChange={model.changeGreyscaleLevel}
               onMarginChange={model.changeMarginPx}
+              lumaTolerance={matcherSettings?.lumaTolerance}
+              searchMarginPx={matcherSettings?.searchMarginPx}
+              searchStepPx={matcherSettings?.searchStepPx}
+              onLumaToleranceChange={props.onSettingsChange ? handleMatcherChange("lumaTolerance") : undefined}
+              onSearchMarginPxChange={props.onSettingsChange ? handleMatcherChange("searchMarginPx") : undefined}
+              onSearchStepPxChange={props.onSettingsChange ? handleMatcherChange("searchStepPx") : undefined}
               onRegionEditModeChange={model.changeRegionEditMode}
               onAddMaskRegion={model.addMaskRegion}
               onAddPatternRegion={model.addPatternRegion}
               onSelectMaskRegion={model.selectMaskRegion}
               onDeleteMaskRegion={model.deleteMaskRegion}
+              onMoveMaskRegion={model.moveMaskRegion}
               onRemoveBox={model.removeBox}
               onRestoreBox={model.restoreBox}
               onToggleBox={model.toggleBox}

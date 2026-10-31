@@ -4,6 +4,7 @@ import { GreyscaleSliderCard } from "@/components/vision/white-box/GreyscaleSlid
 import type { SearchRegion } from "@/lib/vision/white-box-marking";
 import {
   HolePolarityType,
+  type Pin1AngleDatum,
   type Pin1HoleItem,
   type Pin1MatchResult,
   type Pin1RegionEditMode,
@@ -19,6 +20,8 @@ export interface Pin1ReviewPanelProps {
   searchRegion: SearchRegion | null;
   packageRegion: SearchRegion | null;
   regionEditMode: Pin1RegionEditMode;
+  angleDatum?: Pin1AngleDatum;
+  onAngleDatumChange?: (datum: Pin1AngleDatum) => void;
   detectedHoles: readonly Pin1HoleItem[];
   registeredPin1: Pin1HoleItem | null;
   matchResult: Pin1MatchResult | null;
@@ -45,6 +48,15 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
   const primaryHole =
     props.detectedHoles.find((h) => h.isPrimaryPin1 && h.isKept) ?? props.registeredPin1;
   const label = props.actionButtonLabel ?? "Save as Pin 1 Rule";
+  const hasValidThreshold = props.thresholdLuma >= 0 && props.thresholdLuma <= 255;
+  const hasValidCircularity = props.minCircularity >= 0 && props.minCircularity <= 100;
+  const hasValidTolerance = props.tolerancePx >= 0;
+  const hasValidRadiusRange =
+    props.minRadiusPx >= 0 && props.maxRadiusPx >= props.minRadiusPx;
+  const hasValidInputs =
+    hasValidThreshold && hasValidCircularity && hasValidTolerance && hasValidRadiusRange;
+  const angleDatum = props.angleDatum ?? "search";
+  const hasPackageDatumFallback = angleDatum === "package" && !props.packageRegion;
 
   return (
     <aside className="flex h-full flex-col overflow-hidden border-l border-ca-border bg-ca-panel text-ca-ink">
@@ -117,6 +129,85 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
               Add Package Region
             </button>
           )}
+        </div>
+
+        {/* Angle datum + entry validation */}
+        <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
+          <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
+            <span>Angle Datum &amp; Entry Validation</span>
+            <span className="font-mono text-[11px] text-ca-ink-muted">
+              {hasValidInputs ? "Inputs valid" : "Check inputs"}
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-ca-ink-muted">Angle origin</span>
+              <span className="font-mono text-ca-select">
+                {angleDatum === "package" ? "Package centre" : "Search centre"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+              <button
+                type="button"
+                onClick={() => props.onAngleDatumChange?.("package")}
+                className={`rounded border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                  angleDatum === "package"
+                    ? "border-ca-select bg-ca-select/20 text-ca-select"
+                    : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-panel-2"
+                }`}
+              >
+                Package centre
+              </button>
+              <button
+                type="button"
+                onClick={() => props.onAngleDatumChange?.("search")}
+                className={`rounded border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                  angleDatum === "search"
+                    ? "border-ca-select bg-ca-select/20 text-ca-select"
+                    : "border-ca-border bg-ca-panel text-ca-ink hover:bg-ca-panel-2"
+                }`}
+              >
+                Search centre
+              </button>
+            </div>
+            {hasPackageDatumFallback && (
+              <p className="text-[11px] text-ca-ink-muted">
+                No package region: angle falls back to the search centre.
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Threshold</span>
+              <span className={hasValidThreshold ? "text-ca-ink" : "text-rose-400"}>
+                {props.thresholdLuma} / 255 {hasValidThreshold ? "OK" : "Check"}
+              </span>
+            </div>
+            <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Circularity</span>
+              <span className={hasValidCircularity ? "text-ca-ink" : "text-rose-400"}>
+                {props.minCircularity}% {hasValidCircularity ? "OK" : "Check"}
+              </span>
+            </div>
+            <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Tolerance</span>
+              <span className={hasValidTolerance ? "text-ca-ink" : "text-rose-400"}>
+                ±{props.tolerancePx}px {hasValidTolerance ? "OK" : "Check"}
+              </span>
+            </div>
+            <div className="rounded border border-ca-border/60 bg-ca-panel/80 p-1.5">
+              <span className="text-[10px] text-ca-ink-muted block uppercase">Radius range</span>
+              <span className={hasValidRadiusRange ? "text-ca-ink" : "text-rose-400"}>
+                {props.minRadiusPx}–{props.maxRadiusPx}px {hasValidRadiusRange ? "OK" : "Check"}
+              </span>
+            </div>
+          </div>
+          <p className="text-[11px] text-ca-ink-muted">
+            Threshold, circularity and tolerance are clamped at entry (0–255, 0–100%,
+            ≥0px), not at evaluation.
+          </p>
         </div>
 
         {/* 2. Pin 1 Fiducial Geometry Card */}

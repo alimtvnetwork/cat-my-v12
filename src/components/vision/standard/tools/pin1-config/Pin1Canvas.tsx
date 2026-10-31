@@ -7,7 +7,8 @@ import {
   STANDARD_CANVAS_HEIGHT,
   STANDARD_CANVAS_WIDTH,
 } from "@/components/vision/standard/tools/pattern-matching/usePatternMatchingRule";
-import { HolePolarityType, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode } from "./types";
+import { HolePolarityType, type Pin1AngleDatum, type Pin1HoleItem, type Pin1MatchResult, type Pin1RegionEditMode } from "./types";
+import { computeLuma } from "./round-hole-detector";
 
 export interface Pin1CanvasProps {
   source: WhiteBoxMarkingInput | null;
@@ -22,6 +23,7 @@ export interface Pin1CanvasProps {
   hasGreyscalePreview?: boolean;
   thresholdLuma?: number;
   polarity?: HolePolarityType;
+  angleDatum?: Pin1AngleDatum;
   dragState: RegionDrag | null;
   onSearchRegionChange: (region: SearchRegion | null) => void;
   onDragStateChange: (drag: RegionDrag | null) => void;
@@ -41,7 +43,7 @@ function createThresholdPreview(
 
   for (let i = 0; i < totalPixels; i += 1) {
     const idx = i * 4;
-    const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
+    const luma = Math.round(computeLuma(raw[idx], raw[idx + 1], raw[idx + 2]));
     const isTarget =
       polarity === HolePolarityType.DarkIndentation ? luma <= threshold : luma >= threshold;
 
@@ -259,6 +261,27 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.fillStyle = isBadgeSuccess || isBadgeError ? "#ffffff" : "#e2e8f0";
       ctx.fillText(labelText, badgeX + 4, badgeY + 10);
 
+      // Delta/theta telemetry next to the detected ring, for the matched
+      // active hole only (spec 02 §9: re-evaluation result, operator-visible).
+      const telemetryMatch = props.matchResult;
+
+      if (isMatchedActiveHole && telemetryMatch && typeof telemetryMatch.angleDeg === "number") {
+        const telemetryText = `Δx=${telemetryMatch.deltaX}px Δy=${telemetryMatch.deltaY}px Δ=${telemetryMatch.deltaDistance}px θ=${telemetryMatch.angleDeg}°${props.angleDatum ? ` (${props.angleDatum})` : ""}`;
+        ctx.font = "bold 9px monospace";
+        const telemetryMetrics = ctx.measureText(telemetryText);
+        const telemetryW = telemetryMetrics.width + 8;
+        const telemetryX = badgeX;
+        const telemetryY = badgeY + 15;
+
+        ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+        ctx.fillRect(telemetryX, telemetryY, telemetryW, 14);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(telemetryX, telemetryY, telemetryW, 14);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillText(telemetryText, telemetryX + 4, telemetryY + 10);
+      }
+
       ctx.restore();
     }
 
@@ -274,6 +297,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
     props.hasGreyscalePreview,
     props.thresholdLuma,
     props.polarity,
+    props.angleDatum,
   ]);
 
   return (

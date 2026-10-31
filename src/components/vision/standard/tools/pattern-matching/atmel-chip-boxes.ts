@@ -47,7 +47,6 @@ export const ATMEL_24_BOX_DEFINITIONS: readonly AtmelBoxDefinition[] = [
 ] as const;
 
 export const ATMEL_BOX_DEFINITIONS = ATMEL_24_BOX_DEFINITIONS;
-export const ATMEL_31_BOX_DEFINITIONS = ATMEL_24_BOX_DEFINITIONS;
 
 export const DEFECT_BOX_NUMBERS = [8, 9, 10, 23, 24] as const;
 
@@ -55,25 +54,70 @@ export const ALL_ATMEL_BOX_NUMBERS: readonly number[] = ATMEL_24_BOX_DEFINITIONS
   (def) => def.boxNumber,
 );
 
+export interface ConstellationLayoutParams {
+  originX: number;
+  originY: number;
+  regionWidth: number;
+  regionHeight: number;
+}
+
+export interface ConstellationBox {
+  boxNumber: number;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+// Single uniform-scale layout for the 24-box constellation. relX/relY
+// are percentages of the pattern region. When the region is not square
+// the constellation uses the smaller of the two scales, centred in the
+// region, and the caller records that choice in its result. Different X
+// and Y scales are never applied silently.
+export function computeConstellationLayout(params: ConstellationLayoutParams): {
+  boxes: ConstellationBox[];
+  scale: number;
+} {
+  const scaleX = params.regionWidth / 100;
+  const scaleY = params.regionHeight / 100;
+  const scale = Math.min(scaleX, scaleY);
+  const centeredX = params.originX + (params.regionWidth - scale * 100) / 2;
+  const centeredY = params.originY + (params.regionHeight - scale * 100) / 2;
+
+  const boxes = ATMEL_24_BOX_DEFINITIONS.map((def) => ({
+    boxNumber: def.boxNumber,
+    label: def.label,
+    x: Math.round(centeredX + def.relX * scale),
+    y: Math.round(centeredY + def.relY * scale),
+    width: Math.max(1, Math.round(def.width * scale)),
+    height: Math.max(1, Math.round(def.height * scale)),
+  }));
+
+  return { boxes, scale };
+}
+
 export function getAtmelReferenceBoxes(
   originX = 0,
   originY = 0,
   scaleX = 1,
   scaleY = 1,
 ): ReferenceBoxItem[] {
-  return ATMEL_24_BOX_DEFINITIONS.map((def) => {
-    const width = Math.max(1, Math.round(def.width * scaleX));
-    const height = Math.max(1, Math.round(def.height * scaleY));
-
-    return {
-      boxNumber: def.boxNumber,
-      x: Math.round(originX + def.relX * scaleX),
-      y: Math.round(originY + def.relY * scaleY),
-      width,
-      height,
-      area: width * height,
-    };
+  const layout = computeConstellationLayout({
+    originX,
+    originY,
+    regionWidth: scaleX * 100,
+    regionHeight: scaleY * 100,
   });
+
+  return layout.boxes.map((box) => ({
+    boxNumber: box.boxNumber,
+    x: box.x,
+    y: box.y,
+    width: box.width,
+    height: box.height,
+    area: box.width * box.height,
+  }));
 }
 
 export function buildAccuratePatternMatchResult(params: {
@@ -82,9 +126,18 @@ export function buildAccuratePatternMatchResult(params: {
   hasDefect: boolean;
   defectBoxNumbers?: readonly number[];
   executionTimeMs?: number;
+  regionWidth?: number;
+  regionHeight?: number;
 }): PatternMatchResult {
-  const { chipX, chipY, hasDefect, defectBoxNumbers = DEFECT_BOX_NUMBERS, executionTimeMs = 3.8 } =
-    params;
+  const {
+    chipX,
+    chipY,
+    hasDefect,
+    defectBoxNumbers = DEFECT_BOX_NUMBERS,
+    executionTimeMs = 3.8,
+    regionWidth = 100,
+    regionHeight = 100,
+  } = params;
 
   const defectSet = hasDefect ? new Set(defectBoxNumbers) : new Set<number>();
   const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
@@ -96,29 +149,39 @@ export function buildAccuratePatternMatchResult(params: {
 
   let matchedCount = 0;
 
-  const boxResults: BoxMatchItem[] = ATMEL_24_BOX_DEFINITIONS.map((def) => {
-    const isMatched = !defectSet.has(def.boxNumber);
+  // One convention: percentages of the pattern region, via the shared
+  // layout. regionWidth/regionHeight default to 100, which reproduces the
+  // previous raw-pixel output exactly for existing callers.
+  const layout = computeConstellationLayout({
+    originX: chipX,
+    originY: chipY,
+    regionWidth,
+    regionHeight,
+  });
+
+  const boxResults: BoxMatchItem[] = layout.boxes.map((box) => {
+    const isMatched = !defectSet.has(box.boxNumber);
 
     if (isMatched) {
       matchedCount += 1;
     }
 
-    const boxX = chipX + def.relX;
-    const boxY = chipY + def.relY;
+    const boxX = box.x;
+    const boxY = box.y;
 
     minX = Math.min(minX, boxX);
     minY = Math.min(minY, boxY);
-    maxX = Math.max(maxX, boxX + def.width);
-    maxY = Math.max(maxY, boxY + def.height);
+    maxX = Math.max(maxX, boxX + box.width);
+    maxY = Math.max(maxY, boxY + box.height);
 
     return {
-      boxNumber: def.boxNumber,
+      boxNumber: box.boxNumber,
       referenceX: boxX,
       referenceY: boxY,
       matchedX: boxX,
       matchedY: boxY,
-      width: def.width,
-      height: def.height,
+      width: box.width,
+      height: box.height,
       isMatched,
     };
   });
@@ -163,6 +226,8 @@ export interface EvaluateChipPixelsParams {
   toleranceLuma?: number;
   minMatchPercent?: number;
   hasDevice?: boolean;
+  searchMarginPx?: number;
+  searchStepPx?: number;
 }
 
 export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): PatternMatchResult {
@@ -177,8 +242,10 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     chipWidth,
     chipHeight,
     toleranceLuma = 22,
-    minMatchPercent = 80,
+    minMatchPercent = 40,
     hasDevice = true,
+    searchMarginPx = 8,
+    searchStepPx = 1,
   } = params;
 
   const originX = Math.round(
@@ -203,28 +270,25 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
         : (chipHeight ?? (chipY !== undefined ? 100 : targetHeight)),
     ),
   );
-  const scaleX = effectiveW / 100;
-  const scaleY = effectiveH / 100;
+  const layout = computeConstellationLayout({
+    originX,
+    originY,
+    regionWidth: effectiveW,
+    regionHeight: effectiveH,
+  });
 
   if (!hasDevice) {
     const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
-    const emptyBoxes: BoxMatchItem[] = ATMEL_24_BOX_DEFINITIONS.map((def) => {
-      const boxX = Math.round(originX + def.relX * scaleX);
-      const boxY = Math.round(originY + def.relY * scaleY);
-      const boxW = Math.max(1, Math.round(def.width * scaleX));
-      const boxH = Math.max(1, Math.round(def.height * scaleY));
-
-      return {
-        boxNumber: def.boxNumber,
-        referenceX: boxX,
-        referenceY: boxY,
-        matchedX: boxX,
-        matchedY: boxY,
-        width: boxW,
-        height: boxH,
-        isMatched: false,
-      };
-    });
+    const emptyBoxes: BoxMatchItem[] = layout.boxes.map((box) => ({
+      boxNumber: box.boxNumber,
+      referenceX: box.x,
+      referenceY: box.y,
+      matchedX: box.x,
+      matchedY: box.y,
+      width: box.width,
+      height: box.height,
+      isMatched: false,
+    }));
 
     return {
       isPass: false,
@@ -236,68 +300,133 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
       patternBounds: { x: originX, y: originY, width: effectiveW, height: effectiveH },
       boxResults: emptyBoxes,
       executionTimeMs: 1.0,
+      uniformScaleApplied: true,
+      constellationScale: layout.scale,
     };
   }
 
-  let matchedCount = 0;
+  const margin = Math.min(64, Math.max(0, Math.round(searchMarginPx)));
+  const step = Math.min(16, Math.max(1, Math.round(searchStepPx)));
+
+  // Score the constellation at one candidate offset. Mean luma per box
+  // against the golden lumas; a box passes when its deviation is within
+  // detection.lumaTolerance.
+  const scoreAtOffset = (
+    dx: number,
+    dy: number,
+  ): { matched: number; totalDelta: number; boxes: BoxMatchItem[] } => {
+    let matched = 0;
+    let totalDelta = 0;
+
+    const boxes = layout.boxes.map((box, idx) => {
+      const boxX = box.x + dx;
+      const boxY = box.y + dy;
+      let sum = 0;
+      let count = 0;
+
+      for (let r = boxY; r < boxY + box.height; r += 1) {
+        for (let c = boxX; c < boxX + box.width; c += 1) {
+          if (r >= 0 && r < targetHeight && c >= 0 && c < targetWidth) {
+            const pixelIdx = (r * targetWidth + c) * 4;
+            const red = targetRgba[pixelIdx];
+            const green = targetRgba[pixelIdx + 1];
+            const blue = targetRgba[pixelIdx + 2];
+            sum += 0.299 * red + 0.587 * green + 0.114 * blue;
+            count += 1;
+          }
+        }
+      }
+
+      const measuredLuma = count > 0 ? sum / count : 0;
+      const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
+      const lumaDelta = Math.abs(measuredLuma - expectedLuma);
+      const isMatched = lumaDelta <= toleranceLuma;
+
+      if (isMatched) {
+        matched += 1;
+      }
+
+      totalDelta += lumaDelta;
+
+      return {
+        boxNumber: box.boxNumber,
+        referenceX: box.x,
+        referenceY: box.y,
+        matchedX: boxX,
+        matchedY: boxY,
+        width: box.width,
+        height: box.height,
+        isMatched,
+        measuredLuma,
+        expectedLuma,
+        lumaDelta,
+      };
+    });
+
+    return { matched, totalDelta, boxes };
+  };
+
+  // Coarse-to-fine translation search within +/-margin. Best wins on
+  // matched-box count, then lowest total luma deviation, then smallest
+  // offset magnitude. The zero offset is always evaluated.
+  const coarseStep = Math.max(2, step * 2);
+  let bestDx = 0;
+  let bestDy = 0;
+  let bestMatched = -1;
+  let bestTotalDelta = Number.POSITIVE_INFINITY;
+  let bestBoxes: BoxMatchItem[] = [];
+
+  const considerOffset = (dx: number, dy: number): void => {
+    const scored = scoreAtOffset(dx, dy);
+    const isBetter =
+      scored.matched > bestMatched ||
+      (scored.matched === bestMatched && scored.totalDelta < bestTotalDelta) ||
+      (scored.matched === bestMatched &&
+        scored.totalDelta === bestTotalDelta &&
+        Math.abs(dx) + Math.abs(dy) < Math.abs(bestDx) + Math.abs(bestDy));
+
+    if (isBetter) {
+      bestDx = dx;
+      bestDy = dy;
+      bestMatched = scored.matched;
+      bestTotalDelta = scored.totalDelta;
+      bestBoxes = scored.boxes;
+    }
+  };
+
+  for (let dy = -margin; dy <= margin; dy += coarseStep) {
+    for (let dx = -margin; dx <= margin; dx += coarseStep) {
+      considerOffset(dx, dy);
+    }
+  }
+
+  considerOffset(0, 0);
+
+  for (let dy = bestDy - coarseStep; dy <= bestDy + coarseStep; dy += step) {
+    for (let dx = bestDx - coarseStep; dx <= bestDx + coarseStep; dx += step) {
+      if (Math.abs(dx) <= margin && Math.abs(dy) <= margin) {
+        considerOffset(dx, dy);
+      }
+    }
+  }
+
+  const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
+  const matchedCount = bestMatched < 0 ? 0 : bestMatched;
+  const score = Math.round((matchedCount / totalCount) * 1000) / 10;
+  const isPass = score >= minMatchPercent;
+  const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
+
   let minX = Number.POSITIVE_INFINITY;
   let minY = Number.POSITIVE_INFINITY;
   let maxX = Number.NEGATIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
 
-
-  const boxResults: BoxMatchItem[] = ATMEL_24_BOX_DEFINITIONS.map((def, idx) => {
-    const boxX = Math.round(originX + def.relX * scaleX);
-    const boxY = Math.round(originY + def.relY * scaleY);
-    const boxW = Math.max(1, Math.round(def.width * scaleX));
-    const boxH = Math.max(1, Math.round(def.height * scaleY));
-
-    let sum = 0;
-    let count = 0;
-
-    for (let r = boxY; r < boxY + boxH; r += 1) {
-      for (let c = boxX; c < boxX + boxW; c += 1) {
-        if (r >= 0 && r < targetHeight && c >= 0 && c < targetWidth) {
-          const pixelIdx = (r * targetWidth + c) * 4;
-          const red = targetRgba[pixelIdx];
-          const green = targetRgba[pixelIdx + 1];
-          const blue = targetRgba[pixelIdx + 2];
-          sum += 0.299 * red + 0.587 * green + 0.114 * blue;
-          count += 1;
-        }
-      }
-    }
-
-    const measuredLuma = count > 0 ? sum / count : 0;
-    const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
-    const diff = Math.abs(measuredLuma - expectedLuma);
-    const isMatched = diff <= toleranceLuma;
-
-    if (isMatched) {
-      matchedCount += 1;
-    }
-
-    minX = Math.min(minX, boxX);
-    minY = Math.min(minY, boxY);
-    maxX = Math.max(maxX, boxX + boxW);
-    maxY = Math.max(maxY, boxY + boxH);
-
-    return {
-      boxNumber: def.boxNumber,
-      referenceX: boxX,
-      referenceY: boxY,
-      matchedX: boxX,
-      matchedY: boxY,
-      width: boxW,
-      height: boxH,
-      isMatched,
-    };
-  });
-
-  const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
-  const score = Math.round((matchedCount / totalCount) * 1000) / 10;
-  const isPass = score >= minMatchPercent;
-  const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
+  for (const box of bestBoxes) {
+    minX = Math.min(minX, box.matchedX);
+    minY = Math.min(minY, box.matchedY);
+    maxX = Math.max(maxX, box.matchedX + box.width);
+    maxY = Math.max(maxY, box.matchedY + box.height);
+  }
 
   const patternBounds = {
     x: minX === Number.POSITIVE_INFINITY ? originX : minX - 4,
@@ -311,10 +440,12 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     score,
     matchedCount,
     totalCount,
-    offsetX: 0,
-    offsetY: 0,
+    offsetX: bestDx,
+    offsetY: bestDy,
     patternBounds,
-    boxResults,
+    boxResults: bestBoxes,
     executionTimeMs: elapsed > 0 ? elapsed : 3.8,
+    uniformScaleApplied: true,
+    constellationScale: layout.scale,
   };
 }

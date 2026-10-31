@@ -22,14 +22,18 @@ import json
 import sys
 from pathlib import Path
 
-from BE.app.install_manifest import read_manifest
-from BE.app.installer_upgrade import (
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from BE.app.install_manifest import read_manifest  # noqa: E402
+from BE.app.installer_upgrade import (  # noqa: E402
     UpgradePolicy,
     backup_manifest,
     plan_upgrade,
 )
-from BE.errors.apperror import AppError
-from BE.errors.codes import ErrorCode
+from BE.errors.apperror import AppError  # noqa: E402
+from BE.errors.codes import ErrorCode  # noqa: E402
 
 
 def _parse(argv: list[str] | None) -> argparse.Namespace:

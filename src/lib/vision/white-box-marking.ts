@@ -1,3 +1,5 @@
+import { fitInside } from "@/domain/vision/coordinates";
+
 export interface WhiteBoxMark {
   number: number;
   label?: string;
@@ -13,17 +15,33 @@ export interface WhiteBoxMark {
   relHeight?: number;
 }
 
+// Outline shape for the white-box canvas shape buttons (RECT/SQUA/CIRC/POLY).
+export type WhiteBoxRegionShape = "rect" | "square" | "circle" | "poly";
+
 export interface SearchRegion {
   x: number;
   y: number;
   width: number;
   height: number;
+  // Display-only outline shape for the white-box canvas. It never changes
+  // evaluation geometry: the matcher and the backend both reduce regions to
+  // their bounding box, and the formulated-pattern write-back does not persist
+  // it (domain ShapeType is preserved separately via prevShape). Absent means "rect".
+  shape?: WhiteBoxRegionShape;
 }
 
 export interface WhiteBoxMarkingInput {
   width: number;
   height: number;
   rgba: Uint8ClampedArray;
+  // Recorded canonical-to-working transform (spec 01 §4.1). Absent means
+  // identity: the buffer is already in canonical space.
+  sourceWidth?: number;
+  sourceHeight?: number;
+  scaleX?: number;
+  scaleY?: number;
+  offsetX?: number;
+  offsetY?: number;
   whiteThreshold?: number | null;
   minAreaPx?: number | null;
   searchRegion?: SearchRegion;
@@ -169,9 +187,14 @@ export function toThresholdPreviewRgba(input: WhiteBoxMarkingInput, whiteThresho
   const gray = toContinuousGray(input.rgba);
   const threshold = clampByte(whiteThreshold);
 
+  // True binary threshold (spec 02 §2.3): the preview must show exactly
+  // what the matcher measures. Pixels at or above the threshold become
+  // 255; pixels below become 0 (they previously kept their gray value).
   for (let index = 0; index < gray.length; index += 1) {
     if (gray[index] >= threshold) {
       gray[index] = 255;
+    } else {
+      gray[index] = 0;
     }
   }
 
@@ -261,10 +284,25 @@ export async function readImageFile(
     throw new Error("2d canvas context unavailable");
   }
 
-  context.drawImage(bitmap, 0, 0, width, height);
+  const fit = fitInside(
+    { width: bitmap.width, height: bitmap.height },
+    { width, height },
+  );
+
+  context.drawImage(bitmap, fit.offsetX, fit.offsetY, fit.drawWidth, fit.drawHeight);
   const image = context.getImageData(0, 0, width, height);
 
-  return { width, height, rgba: image.data };
+  return {
+    width,
+    height,
+    rgba: image.data,
+    sourceWidth: bitmap.width,
+    sourceHeight: bitmap.height,
+    scaleX: fit.scale,
+    scaleY: fit.scale,
+    offsetX: fit.offsetX,
+    offsetY: fit.offsetY,
+  };
 }
 
 function readImageFileViaDataUrl(
@@ -341,9 +379,24 @@ export async function readImageUrl(
           return;
         }
 
-        context.drawImage(img, 0, 0, width, height);
+        const fit = fitInside(
+          { width: img.naturalWidth, height: img.naturalHeight },
+          { width, height },
+        );
+
+        context.drawImage(img, fit.offsetX, fit.offsetY, fit.drawWidth, fit.drawHeight);
         const image = context.getImageData(0, 0, width, height);
-        resolve({ width, height, rgba: image.data });
+        resolve({
+          width,
+          height,
+          rgba: image.data,
+          sourceWidth: img.naturalWidth,
+          sourceHeight: img.naturalHeight,
+          scaleX: fit.scale,
+          scaleY: fit.scale,
+          offsetX: fit.offsetX,
+          offsetY: fit.offsetY,
+        });
       } catch (err) {
         reject(err);
       }
@@ -378,6 +431,12 @@ export function toContinuousGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
   return gray;
 }
 
+// Four-level quantization, kept for one documented caller: the
+// no-threshold white-box detection path (markWhiteBoxes without a
+// threshold, plus autoThreshold, which counts these four levels).
+// It is NOT a third threshold semantic for the threshold slider:
+// the slider's semantic is the binary threshold in
+// toThresholdPreviewRgba above.
 function toTwoBitGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
   const gray = new Uint8ClampedArray(rgba.length / RGBA_STRIDE);
   for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {

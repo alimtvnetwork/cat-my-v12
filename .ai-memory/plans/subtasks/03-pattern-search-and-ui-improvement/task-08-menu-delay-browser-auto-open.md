@@ -2,7 +2,7 @@
 
 Slug: pattern-search-and-ui-improvement - Task 08
 
-Status: PENDING (spec done, fix not started).
+Status: PARTIAL — wave 3 menu part diff-verified 31-Oct-26 (timing probe + memo chain in TopMenuBar/Group/Rows/Mnemonics; cause NOT proven — no live timings observed on headless VM, E2E must run probe sim idle vs running); browser-auto-open part pending launcher worker.
 
 ## Spec
 

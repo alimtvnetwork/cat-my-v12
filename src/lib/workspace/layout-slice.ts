@@ -196,6 +196,23 @@ function assertKnownPanel(id: string, caller: string): boolean {
 }
 
 /**
+ * A Hidden-docked panel renders nowhere, and no UI action sets the Hidden
+ * dock: it only arrives via stale persisted state. Any action whose
+ * purpose is "make this panel visible" (open, restore, toggle-on, the
+ * collapse-others survivor) must therefore move it back to its registry
+ * default dock instead of leaving it hidden. The Window menus rely on
+ * this: their restore path is open/restore, not Reset Layout.
+ */
+function unhideDock(state: PanelState, id: string): PanelState {
+  if (DockSlotType.isHidden(state.dock) === false) return state;
+  const def = getPanel(id);
+
+  if (def === undefined) return state;
+
+  return { ...state, dock: def.defaultDock };
+}
+
+/**
  * Wrap a `StateStorage` so a `setItem` rejection surfaces as
  * `E_LAYOUT_PERSIST_FAILED` instead of a silent swallow inside zustand
  * `persist`. The in-memory state stays consistent because zustand mutates
@@ -245,14 +262,15 @@ export const layoutReducers = {
   toggle(panels: Record<string, PanelState>, id: string): Record<string, PanelState> {
     if (assertKnownPanel(id, "togglePanel") === false) return panels;
     const current = panels[id];
+    const next = { ...current, open: !current.open };
 
-    return { ...panels, [id]: { ...current, open: !current.open } };
+    return { ...panels, [id]: next.open ? unhideDock(next, id) : next };
   },
   open(panels: Record<string, PanelState>, id: string): Record<string, PanelState> {
     if (assertKnownPanel(id, "openPanel") === false) return panels;
     const current = panels[id];
 
-    return { ...panels, [id]: { ...current, open: true, minimized: false } };
+    return { ...panels, [id]: unhideDock({ ...current, open: true, minimized: false }, id) };
   },
   close(panels: Record<string, PanelState>, id: string): Record<string, PanelState> {
     if (assertKnownPanel(id, "closePanel") === false) return panels;
@@ -288,14 +306,19 @@ export const layoutReducers = {
   restore(panels: Record<string, PanelState>, id: string): Record<string, PanelState> {
     if (assertKnownPanel(id, "restorePanel") === false) return panels;
 
-    return { ...panels, [id]: { ...panels[id], minimized: false, open: true } };
+    return {
+      ...panels,
+      [id]: unhideDock({ ...panels[id], minimized: false, open: true }, id),
+    };
   },
   collapseOthers(panels: Record<string, PanelState>, keepId: string): Record<string, PanelState> {
     if (assertKnownPanel(keepId, "collapseOthers") === false) return panels;
     const next: Record<string, PanelState> = {};
     for (const [id, state] of Object.entries(panels)) {
       next[id] =
-        id === keepId ? { ...state, open: true, minimized: false } : { ...state, minimized: true };
+        id === keepId
+          ? unhideDock({ ...state, open: true, minimized: false }, id)
+          : { ...state, minimized: true };
     }
 
     return next;
@@ -304,6 +327,10 @@ export const layoutReducers = {
    * Merge a persisted snapshot with defaults. Prunes ids that are not in the
    * registry (a panel got renamed/removed) and fills in ids added since the
    * snapshot. Emits `E_PANEL_UNKNOWN_ID` once per pruned id for observability.
+   * A persisted dock that is not a DockSlotType value falls back to the
+   * panel default with `W_PANEL_DOCK_INVALID`. A persisted Hidden dock is
+   * a valid value and is kept: the menu restore path (open/restore
+   * un-hiding) recovers it, so merge must not silently rewrite it.
    */
   merge(persisted: Record<string, unknown> | undefined): Record<string, PanelState> {
     const defaults = buildDefaultPanels();
@@ -326,7 +353,29 @@ export const layoutReducers = {
       }
 
       if (value && typeof value === "object") {
-        out[id] = { ...defaults[id], ...(value as Partial<PanelState>) };
+        const next = { ...defaults[id], ...(value as Partial<PanelState>) };
+        const rawDock = (value as Partial<PanelState>).dock;
+
+        if (
+          rawDock !== undefined &&
+          (Object.values(DockSlotType) as string[]).includes(rawDock) === false
+        ) {
+          reportError(
+            ErrorSourceType.Manual,
+            new Error(
+              `W_PANEL_DOCK_INVALID: pruning invalid persisted dock '${rawDock}' for panel '${id}'`,
+            ),
+            {
+              code: "W_PANEL_DOCK_INVALID",
+              panelId: id,
+              caller: "layout-slice.merge",
+              knownIds: PANEL_IDS,
+            },
+          );
+          next.dock = defaults[id].dock;
+        }
+
+        out[id] = next;
       }
     }
 

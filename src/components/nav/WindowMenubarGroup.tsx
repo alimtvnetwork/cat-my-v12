@@ -7,8 +7,20 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { PANELS } from "@/lib/workspace/panel-registry";
+import {
+  PANELS,
+  RAIL_PANELS,
+  PALETTE_MENU_ITEMS,
+  isPanelVisible,
+} from "@/lib/workspace/panel-registry";
+import { DockSlotType } from "@/lib/enums/ui";
+import {
+  usePaletteStore,
+  PaletteModeType,
+  type PaletteId,
+} from "@/lib/stores/palette-store";
 import { useWorkspaceLayoutStore } from "@/lib/workspace/layout-slice";
+import { useRailPanelState } from "@/hooks/useRailPanelState";
 import {
   type PanelMap,
   type PanelToggle,
@@ -23,6 +35,15 @@ export function WindowMenubarGroup(): React.JSX.Element | null {
   const restorePanel = useWorkspaceLayoutStore((s) => s.restorePanel);
   const resetLayout = useWorkspaceLayoutStore((s) => s.resetLayout);
   const collapseOthers = useWorkspaceLayoutStore((s) => s.collapseOthers);
+  const palettes = usePaletteStore((s) => s.states);
+  const setPalette = usePaletteStore((s) => s.set);
+  const restorePalette = usePaletteStore((s) => s.restore);
+  const restoreHiddenPalettes = usePaletteStore((s) => s.restoreHidden);
+  const {
+    isHidden: isRailPanelHidden,
+    hidePanel: hideRailPanel,
+    restorePanel: restoreRailPanel,
+  } = useRailPanelState();
 
   return (
     <MenubarMenu>
@@ -44,18 +65,78 @@ export function WindowMenubarGroup(): React.JSX.Element | null {
           <MenubarItem
             key={panel.id}
             className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2"
-            onSelect={() =>
-              toggleWindowPanel(panel.id, panels, openPanel, restorePanel, togglePanel)
-            }
+            onSelect={() => {
+              const s = panels[panel.id];
+
+              if (!s?.open || DockSlotType.isHidden(s?.dock)) openPanel(panel.id);
+              else toggleWindowPanel(panel.id, panels, openPanel, restorePanel, togglePanel);
+            }}
           >
             <span className="inline-flex w-4 justify-center">
-              {panels[panel.id]?.open && !panels[panel.id].minimized ? (
-                <Check aria-hidden size={14} />
-              ) : null}
+              {isPanelVisible(panels[panel.id]) ? <Check aria-hidden size={14} /> : null}
             </span>
             <span>{panel.title}</span>
           </MenubarItem>
         ))}
+        <MenubarSeparator className="bg-ca-border" />
+        {PALETTE_MENU_ITEMS.map((item) => {
+          const palette = palettes[item.id as PaletteId];
+          const isPaletteHidden = palette?.mode === PaletteModeType.Hidden;
+          const isPaletteMinimized = palette?.mode === PaletteModeType.Minimized;
+          const isPaletteVisible =
+            palette !== undefined && !isPaletteHidden && !isPaletteMinimized;
+
+          return (
+            <MenubarItem
+              key={item.id}
+              data-testid={`window-menu-palette-${item.id}`}
+              className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2"
+              onSelect={() => {
+                if (isPaletteHidden || isPaletteMinimized) restorePalette(item.id as PaletteId);
+                else setPalette(item.id as PaletteId, { mode: PaletteModeType.Hidden });
+              }}
+            >
+              <span className="inline-flex w-4 justify-center">
+                {isPaletteVisible ? <Check aria-hidden size={14} /> : null}
+              </span>
+              <span className="flex-1">{item.title}</span>
+              {isPaletteHidden ? (
+                <span className="ml-2 text-xs text-ca-chrome-ink/60">Hidden</span>
+              ) : null}
+              {isPaletteMinimized ? (
+                <span className="ml-2 text-xs text-ca-chrome-ink/60">Minimized</span>
+              ) : null}
+            </MenubarItem>
+          );
+        })}
+        <MenubarItem
+          className="flex cursor-pointer items-center rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2"
+          onSelect={restoreHiddenPalettes}
+        >
+          Restore hidden palettes
+        </MenubarItem>
+        <MenubarSeparator className="bg-ca-border" />
+        {RAIL_PANELS.map((rp) => {
+          const hidden = isRailPanelHidden(rp.storageKey);
+
+          return (
+            <MenubarItem
+              key={rp.storageKey}
+              data-testid={`window-menu-rail-${rp.storageKey}`}
+              className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2"
+              onSelect={() => {
+                if (hidden) restoreRailPanel(rp.storageKey);
+                else hideRailPanel(rp.storageKey);
+              }}
+            >
+              <span className="inline-flex w-4 justify-center">
+                {hidden ? null : <Check aria-hidden size={14} />}
+              </span>
+              <span className="flex-1">{rp.title}</span>
+              {hidden ? <span className="ml-2 text-xs text-ca-chrome-ink/60">Hidden</span> : null}
+            </MenubarItem>
+          );
+        })}
         <MenubarSeparator className="bg-ca-border" />
         <MenubarItem
           className="flex cursor-pointer items-center rounded-md px-3 py-2 text-[0.9rem] text-ca-ink hover:bg-ca-panel-2"

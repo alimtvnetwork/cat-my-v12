@@ -18,6 +18,13 @@ export interface CarrierTapeSimulationCanvasProps {
   frame: CarrierTapeFrame;
   isAnalyzing: boolean;
   hasOverlays: boolean;
+  // Toolbar plumbing (optional; absent = today's display, unchanged):
+  // displayZoom is the toolbar zoom percent (clamped 5-800 here) applied
+  // as CSS display size only — Space C coordinates never change, and it
+  // must never feed rule geometry or persisted rule state. showGrid draws
+  // a dot grid on the wrapper (display-only, like StandardCanvas's grid).
+  displayZoom?: number;
+  showGrid?: boolean;
   selectedPocketIndex?: number | null;
   tolerances?: MultiRuleToleranceParams;
   onSelectPocket?: (pocketIndex: number) => void;
@@ -69,7 +76,15 @@ export function CarrierTapeSimulationCanvas(
     selectedPocketIndex,
     tolerances,
     onResultsAnalyzed,
+    displayZoom,
+    showGrid,
   } = props;
+
+  // 100% = today's 690px display cap (not buffer 1:1 — the 512 buffer is
+  // already upscaled to at most 690px today). Zoom scales that reference;
+  // at 100% the style below is identical to today's.
+  const simZoomFactor = Math.max(5, Math.min(800, displayZoom ?? 100)) / 100;
+  const isSimZoomed = simZoomFactor !== 1;
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const prevFrameRef = useRef<CarrierTapeFrame>(frame);
@@ -121,7 +136,12 @@ export function CarrierTapeSimulationCanvas(
       const transition = transitionRef.current;
       const jitter = FRAME_JITTER_OFFSETS[(frame.frameNumber - 1) % FRAME_JITTER_OFFSETS.length];
 
-      // Clear canvas background
+      // Clear the full backing store BEFORE the jitter translate: a fill
+      // inside the translate would leave up-to-8px stale strips on the
+      // opposite edges from the previous frame. Image and overlays stay
+      // inside the same translate below, because overlay positions use
+      // nominal pocket coords plus buffer-relative measurements and only
+      // track the jittered device through that shared transform.
       ctx.fillStyle = "#0c0d10";
       ctx.fillRect(0, 0, CARRIER_TAPE_WIDTH, CARRIER_TAPE_HEIGHT);
 
@@ -148,18 +168,33 @@ export function CarrierTapeSimulationCanvas(
         }
       }
 
+      // A strobe flash is active until its 85ms window elapses. Analysis
+      // skips flash frames: getImageData would otherwise read
+      // flash-whitened pixels and cache them as inspection results.
+      const isTransitionActive = Boolean(
+        transition && now - transition.startTime < transition.durationMs,
+      );
+
       // 3. Perform real computer vision analysis on active camera pixels
       //    (only during analyzed phase — raw phase shows unprocessed image)
       let activeResults = frame.results;
       const deviceMeasurements: (DeviceMeasurement | null)[] = [null, null, null];
 
-      if (isAnalyzing && tolerances) {
+      if (isAnalyzing && tolerances && !isTransitionActive) {
         try {
           const fullImageData = ctx.getImageData(0, 0, CARRIER_TAPE_WIDTH, CARRIER_TAPE_HEIGHT);
           const realResults: PocketInspectionResult[] = [];
 
           for (let i = 0; i < 3; i += 1) {
             const pocket = frame.pockets[i];
+
+            // Extraction clamps to the backing store, while the overlays
+            // below assume the unclamped pocket plus jitter position.
+            // The two agree only while pockets plus jitter stay in
+            // bounds (true for all 15 built-in frames); if pocket
+            // geometry ever grows past the backing store, pass the
+            // clamped origin into the overlay path instead of widening
+            // this clamp silently.
             const pX = Math.max(0, Math.min(CARRIER_TAPE_WIDTH - pocket.width, Math.round(pocket.x + jitter.dx)));
             const pY = Math.max(0, Math.min(CARRIER_TAPE_HEIGHT - pocket.height, Math.round(pocket.y + jitter.dy)));
 
@@ -226,18 +261,43 @@ export function CarrierTapeSimulationCanvas(
   }, [frame, isAnalyzing, hasOverlays, selectedPocketIndex, tolerances, onResultsAnalyzed]);
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 items-start justify-center overflow-hidden bg-ca-bg px-2 pb-2 pt-1 select-none">
+    <div
+      className={`flex h-full min-h-0 min-w-0 flex-1 items-start justify-center ${
+        isSimZoomed ? "overflow-auto" : "overflow-hidden"
+      } bg-ca-bg px-2 pb-2 pt-1 select-none`}
+      style={
+        showGrid
+          ? {
+              backgroundImage: "radial-gradient(rgba(255,255,255,0.22) 1px, transparent 1px)",
+              backgroundSize: `${20 * simZoomFactor}px ${20 * simZoomFactor}px`,
+            }
+          : undefined
+      }
+    >
+      {/* Space C (512x288) is sim-local (spec 01 §6): pocket, chip, and overlay
+          coordinates here are meaningful only inside this canvas. CSS scaling
+          below is display-only and must never feed rule geometry or persisted
+          rule state. */}
       <canvas
         ref={canvasRef}
         width={CARRIER_TAPE_WIDTH}
         height={CARRIER_TAPE_HEIGHT}
         className="max-h-full max-w-full rounded border border-ca-border bg-black shadow-2xl"
-        style={{ width: "min(100%, 690px)", height: "auto" }}
+        style={
+          isSimZoomed
+            ? { width: `${690 * simZoomFactor}px`, height: "auto", maxWidth: "none" }
+            : { width: "min(100%, 690px)", height: "auto" }
+        }
       />
     </div>
   );
 }
 
+// Out-of-bounds contract: only the in-bounds span of each row is copied.
+// Uncovered margins stay zero (explicit black), never bleed from adjacent
+// rows and never read outside the source buffer. The caller clamps pocket
+// origins, so margins are empty in practice; a zero margin means missing
+// data, not a measured black pixel.
 function extractSubRegion(
   source: ImageData,
   sx: number,
@@ -247,15 +307,29 @@ function extractSubRegion(
 ): Uint8ClampedArray {
   const dest = new Uint8ClampedArray(sw * sh * 4);
   const srcWidth = source.width;
+  const srcHeight = source.height;
   const srcData = source.data;
 
   for (let y = 0; y < sh; y += 1) {
-    const srcRow = (sy + y) * srcWidth * 4;
-    const destRow = y * sw * 4;
-    const startByte = srcRow + sx * 4;
-    const endByte = startByte + sw * 4;
+    const srcY = sy + y;
 
-    dest.set(srcData.subarray(startByte, endByte), destRow);
+    if (srcY < 0 || srcY >= srcHeight) {
+      continue;
+    }
+
+    const copyX0 = Math.max(0, sx);
+    const copyX1 = Math.min(srcWidth, sx + sw);
+
+    if (copyX0 >= copyX1) {
+      continue;
+    }
+
+    const srcRow = srcY * srcWidth * 4;
+    const destRow = y * sw * 4;
+    const startByte = srcRow + copyX0 * 4;
+    const endByte = srcRow + copyX1 * 4;
+
+    dest.set(srcData.subarray(startByte, endByte), destRow + (copyX0 - sx) * 4);
   }
 
   return dest;
