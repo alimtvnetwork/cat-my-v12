@@ -53,6 +53,10 @@ export function StandardGreyscaleSimulationTool(
   });
 
   const [hasOverlays, setHasOverlays] = useState(true);
+  // Spec 55: the canvas's pocket selection is wired (previously the
+  // canvas accepted onSelectPocket but this, its only parent, never
+  // passed it, so selection could never work).
+  const [selectedPocketIndex, setSelectedPocketIndex] = useState<number | null>(null);
   const [selectedRuleId, setSelectedRuleId] = useState("rule-pin1");
   const [treeRules, setTreeRules] = useState<SimulationTreeRule[]>([
     {
@@ -148,7 +152,11 @@ export function StandardGreyscaleSimulationTool(
               : "border-emerald-600 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50"
           }`}
         >
-          {carrierSimulation.isPlaying ? <Pause aria-hidden size={14} /> : <Play aria-hidden size={14} />}
+          {carrierSimulation.isPlaying ? (
+            <Pause aria-hidden size={14} />
+          ) : (
+            <Play aria-hidden size={14} />
+          )}
           {carrierSimulation.isPlaying ? "Pause" : "Run"}
         </button>
 
@@ -235,11 +243,16 @@ export function StandardGreyscaleSimulationTool(
                   : "border-rose-700/70 bg-rose-950/40 text-rose-300"
               }`}
             >
-              {activeStatus === "PASS" ? <CheckCircle2 aria-hidden size={13} /> : <XCircle aria-hidden size={13} />}
+              {activeStatus === "PASS" ? (
+                <CheckCircle2 aria-hidden size={13} />
+              ) : (
+                <XCircle aria-hidden size={13} />
+              )}
               {activeStatus}
             </span>
             <span className="font-mono text-hmi-caption text-ca-ink-muted">
-              Current frame: {activePassCount} pass, {activeFailCount} fail, {activeEmptyCount} empty
+              Current frame: {activePassCount} pass, {activeFailCount} fail, {activeEmptyCount}{" "}
+              empty
             </span>
             <span className="ml-auto font-mono text-hmi-caption text-ca-ink-muted">
               Progress {frameProgress}%
@@ -251,6 +264,8 @@ export function StandardGreyscaleSimulationTool(
               frame={carrierSimulation.currentFrame}
               isAnalyzing={carrierSimulation.isAnalyzing}
               hasOverlays={hasOverlays}
+              selectedPocketIndex={selectedPocketIndex}
+              onSelectPocket={setSelectedPocketIndex}
               tolerances={{
                 marginTolerancePx: carrierSimulation.marginTolerancePx,
                 angleToleranceDeg: carrierSimulation.angleToleranceDeg,
@@ -262,10 +277,18 @@ export function StandardGreyscaleSimulationTool(
           </div>
 
           <div className="grid shrink-0 grid-cols-2 border-t border-ca-border/60 bg-ca-panel-2 md:grid-cols-5">
-            <Metric label="Yield" value={`${stats.yieldPercent}%`} tone={stats.yieldPercent >= 95 ? "good" : "bad"} />
+            <Metric
+              label="Yield"
+              value={`${stats.yieldPercent}%`}
+              tone={stats.yieldPercent >= 95 ? "good" : "bad"}
+            />
             <Metric label="Devices" value={String(stats.devicePockets)} />
             <Metric label="Passed" value={String(stats.passedPockets)} tone="good" />
-            <Metric label="Failed" value={String(stats.failedPockets)} tone={stats.failedPockets > 0 ? "bad" : "muted"} />
+            <Metric
+              label="Failed"
+              value={String(stats.failedPockets)}
+              tone={stats.failedPockets > 0 ? "bad" : "muted"}
+            />
             <Metric label="Rule 2 Skips" value={String(stats.rule2SkippedCount)} tone="warn" />
           </div>
         </div>
@@ -285,67 +308,67 @@ export function StandardGreyscaleSimulationTool(
                 <Sliders aria-hidden size={15} className="mt-1 text-ca-select" />
               </div>
 
-            <div className="rounded-sm border border-ca-border bg-ca-panel-2 p-hmi-3">
-              <div className="mb-hmi-2 flex items-center justify-between text-hmi-caption">
-                <span className="font-semibold text-ca-ink">Inspection Pace</span>
-                <Gauge aria-hidden size={14} className="text-ca-ink-muted" />
+              <div className="rounded-sm border border-ca-border bg-ca-panel-2 p-hmi-3">
+                <div className="mb-hmi-2 flex items-center justify-between text-hmi-caption">
+                  <span className="font-semibold text-ca-ink">Inspection Pace</span>
+                  <Gauge aria-hidden size={14} className="text-ca-ink-muted" />
+                </div>
+                <div className="grid grid-cols-3 gap-hmi-1">
+                  {(["slow", "normal", "fast"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => carrierSimulation.changeSpeedMode(mode)}
+                      className={`rounded-sm border px-hmi-2 py-hmi-1 text-hmi-caption font-semibold capitalize transition ${
+                        carrierSimulation.speedMode === mode
+                          ? "border-ca-select bg-ca-select text-ca-bg"
+                          : "border-ca-border bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-hmi-1">
-                {(["slow", "normal", "fast"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => carrierSimulation.changeSpeedMode(mode)}
-                    className={`rounded-sm border px-hmi-2 py-hmi-1 text-hmi-caption font-semibold capitalize transition ${
-                      carrierSimulation.speedMode === mode
-                        ? "border-ca-select bg-ca-select text-ca-bg"
-                        : "border-ca-border bg-ca-panel text-ca-ink-muted hover:text-ca-ink"
-                    }`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <SliderControl
-              label="Greyscale Level"
-              value={carrierSimulation.greyscaleLevel}
-              min={0}
-              max={255}
-              step={1}
-              suffix=""
-              onChange={carrierSimulation.setGreyscaleLevel}
-            />
-            <SliderControl
-              label="Pin 1 Angle Tolerance"
-              value={carrierSimulation.angleToleranceDeg}
-              min={0}
-              max={10}
-              step={0.5}
-              suffix="deg"
-              onChange={carrierSimulation.setAngleToleranceDeg}
-            />
-            <SliderControl
-              label="Position Tolerance"
-              value={carrierSimulation.marginTolerancePx}
-              min={2}
-              max={20}
-              step={1}
-              suffix="px"
-              onChange={carrierSimulation.setMarginTolerancePx}
-            />
-            <SliderControl
-              label="Pattern Match Minimum"
-              value={carrierSimulation.minMatchPercent}
-              min={50}
-              max={100}
-              step={1}
-              suffix="%"
-              onChange={carrierSimulation.setMinMatchPercent}
-            />
+              <SliderControl
+                label="Greyscale Level"
+                value={carrierSimulation.greyscaleLevel}
+                min={0}
+                max={255}
+                step={1}
+                suffix=""
+                onChange={carrierSimulation.setGreyscaleLevel}
+              />
+              <SliderControl
+                label="Pin 1 Angle Tolerance"
+                value={carrierSimulation.angleToleranceDeg}
+                min={0}
+                max={10}
+                step={0.5}
+                suffix="deg"
+                onChange={carrierSimulation.setAngleToleranceDeg}
+              />
+              <SliderControl
+                label="Position Tolerance"
+                value={carrierSimulation.marginTolerancePx}
+                min={2}
+                max={20}
+                step={1}
+                suffix="px"
+                onChange={carrierSimulation.setMarginTolerancePx}
+              />
+              <SliderControl
+                label="Pattern Match Minimum"
+                value={carrierSimulation.minMatchPercent}
+                min={50}
+                max={100}
+                step={1}
+                suffix="%"
+                onChange={carrierSimulation.setMinMatchPercent}
+              />
 
-            <CarrierTapeResultPanel simulation={carrierSimulation} />
+              <CarrierTapeResultPanel simulation={carrierSimulation} />
             </section>
           </div>
         </aside>
@@ -435,7 +458,9 @@ function Metric(props: {
 
   return (
     <div className="border-r border-ca-border/60 px-hmi-3 py-hmi-2 last:border-r-0">
-      <div className="font-mono text-[10px] uppercase tracking-wide text-ca-ink-muted">{props.label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-wide text-ca-ink-muted">
+        {props.label}
+      </div>
       <div className={`font-mono text-hmi-body font-bold ${toneClass}`}>{props.value}</div>
     </div>
   );
