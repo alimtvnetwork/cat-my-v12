@@ -124,3 +124,44 @@ spec 54's fix is confirmed working, say so and move on.
     prioritized).
 - 13+. Implementation wave completions (one section per wave).
 - End. End-of-tunnel report (build, tests, E2E, CI, remaining gaps).
+
+## 7. Screenshot confirmations (31-Oct-25, commit 33c93544)
+
+9 unique images extracted from the 10 owner links (TYziH2M8bS0v
+supplied twice: menu glitch + exit). All verified PNGs.
+
+- 73ZlAL4m8xuv (1148x628): analysis stuck on "SCANNING 0/2" with an
+  "ANALYZING IMAGE..." spinner; Rule 2 Grayscale Pattern (T102)
+  PENDING; ROI 49/158, 930x174, RECT — a non-square ROI, confirming
+  the squareness complaint with a concrete example.
+- dk5te8WiGgP6 (1256x539): wide teal pattern-search region spanning
+  multiple carrier pockets instead of one target area — the
+  misplaced-pattern evidence in one frame.
+- o8WD6e5hEeXV (1610x873): full analysis view, REJECT 0/2, FAIL 0.0%,
+  "2/2 rules FAILED, Workpiece REJECTED" toast, plus Res Mismatch
+  1042x403 vs calibrated 960x540.
+- pIwgGiDJeNgB (1580x766): same reject view, toast reading "Rule 2:
+  Greyscale Pattern Matching FAILED: Pattern inspection is not
+  configured: missing saved pattern boxes" — the search fails for
+  lack of saved boxes, not for lack of a match.
+- TvS6NS8cnebo (602x198): close crop of that failure toast, including
+  "Camera: 20.0ms, 0.0dB | Light: CH1 @ 80%: FAIL".
+- TustaDh6yYPl (1630x853): Pocket 2 [Empty Defect] at Res Mismatch
+  392x373 vs 960x540, with numbered pattern boxes #1–#59 overflowing
+  a single pocket image; ROI marked LOCKED.
+- NTvwm5-V03gZ (1599x865): owner-annotated (red boxes) Pocket 5
+  [Strip] view: source dropdown, pocket buttons, full strip image
+  flagged; pattern boxes overlaid across pockets.
+- 9XRhmb31cI_S (1363x546): grayscale tool parameters panel:
+  Threshold 151, Tolerance +/-8 px, Search Margin 8 px, Active Target
+  Count 1, with the dashed pattern region over the strip.
+- TYziH2M8bS0v (1378x711): owner-annotated (red boxes) open source
+  dropdown: "Live Camera Feed" presets (Pocket 1 Golden, Pocket 2
+  Defect, Pocket 5 Carrier Tape) plus "Upload New Image with Alias";
+  top bar shows SIMULATION, 04:31, 84 evts / 83 snaps.
+
+Early pattern (for the root-cause wave to prove or refute): res
+mismatch (1042x403, 392x373 vs calibrated 960x540) + boxes spanning
+pockets + "missing saved pattern boxes" together suggest placement
+and search run in an uncalibrated coordinate space and against
+unsaved geometry — not a matcher quality problem.
