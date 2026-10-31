@@ -12,6 +12,11 @@ import {
 
 export interface Pin1ReviewPanelProps {
   thresholdLuma: number;
+  /** Effective threshold after the shared override rule (spec 55 wave 2).
+      Falls back to thresholdLuma when no detection ran yet. */
+  effectiveThresholdLuma?: number;
+  isThresholdOverridden?: boolean;
+  thresholdRegionMeanLuma?: number | null;
   polarity: HolePolarityType;
   minCircularity: number;
   minRadiusPx: number;
@@ -59,12 +64,23 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {props.isThresholdOverridden && (
+          <div className="rounded border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-[11px] text-amber-300">
+            Using {props.effectiveThresholdLuma ?? props.thresholdLuma} instead — your value exceeds
+            the region mean
+            {typeof props.thresholdRegionMeanLuma === "number"
+              ? ` (${Math.round(props.thresholdRegionMeanLuma)} × 75%)`
+              : ""}
+            , so it could never match a dark hole.
+          </div>
+        )}
         {/* 1. Exact Greyscale Slider Card */}
         <GreyscaleSliderCard
           greyscaleLevel={props.thresholdLuma}
           onGreyscaleChange={props.onThresholdChange}
           greyscaleMode={props.greyscaleMode}
           onGreyscaleModeChange={props.onGreyscaleModeChange}
+          isModeReal
         />
 
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
@@ -130,7 +146,9 @@ export function Pin1ReviewPanel(props: Pin1ReviewPanelProps): React.JSX.Element 
         <div className="rounded border border-ca-border bg-ca-panel-2 p-3 space-y-2">
           <div className="flex items-center justify-between border-b border-ca-border pb-1 font-semibold uppercase text-xs">
             <span>Fiducial Shape Tool</span>
-            <span className="font-mono text-[11px] text-cyan-400 uppercase">{props.shapeType ?? "circle"}</span>
+            <span className="font-mono text-[11px] text-cyan-400 uppercase">
+              {props.shapeType ?? "circle"}
+            </span>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
             {(["circle", "rectangle", "ring", "square"] as const).map((shape) => (

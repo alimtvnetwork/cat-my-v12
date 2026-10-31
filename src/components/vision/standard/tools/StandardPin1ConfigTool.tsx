@@ -95,6 +95,9 @@ export function StandardPin1ConfigTool(
             <Pin1SettingsCard
               polarity={model.polarity}
               thresholdLuma={model.thresholdLuma}
+              effectiveThresholdLuma={model.effectiveThresholdLuma}
+              isThresholdOverridden={model.isThresholdOverridden}
+              thresholdRegionMeanLuma={model.thresholdRegionMeanLuma}
               minCircularity={model.minCircularity}
               tolerancePx={model.tolerancePx}
               expectedX={model.registeredPin1?.centerX}

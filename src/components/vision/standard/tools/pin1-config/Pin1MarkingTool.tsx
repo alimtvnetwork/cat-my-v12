@@ -294,6 +294,9 @@ export function Pin1MarkingTool(props: Pin1MarkingToolProps = {}): React.JSX.Ele
             <div className="min-h-0 flex-1 overflow-y-auto">
               <Pin1ReviewPanel
                 thresholdLuma={model.thresholdLuma}
+                effectiveThresholdLuma={model.effectiveThresholdLuma}
+                isThresholdOverridden={model.isThresholdOverridden}
+                thresholdRegionMeanLuma={model.thresholdRegionMeanLuma}
                 polarity={model.polarity}
                 minCircularity={model.minCircularity}
                 minRadiusPx={model.minRadiusPx}

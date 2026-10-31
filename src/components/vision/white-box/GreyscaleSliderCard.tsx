@@ -12,6 +12,9 @@ export interface GreyscaleSliderCardProps {
   /** Grayscale preview mode (spec 54). Defaults to "threshold" (legacy). */
   greyscaleMode?: GrayscaleMode;
   onGreyscaleModeChange?: (mode: GrayscaleMode) => void;
+  /** True when mode buttons feed detection (Pin 1, spec 55 wave 2); false
+      means preview-only (white-box marking, backend has no mode input). */
+  isModeReal?: boolean;
 }
 
 interface BitDepthOption {
@@ -103,7 +106,11 @@ export function GreyscaleSliderCard(props: GreyscaleSliderCardProps): React.JSX.
           })}
         </div>
         <div className="text-[10px] text-ca-ink-muted/80 pt-0.5">
-          1-Bit and Stretch change the preview bits; detection still uses the threshold above.
+          {props.isModeReal
+            ? "Mode buttons feed detection and re-run it on change."
+            : "Mode buttons are preview-only: 1-Bit and Stretch change the preview bits; detection still uses the threshold above."}{" "}
+          Scale note: white-box marking lives at the bright end (default 170), Pin 1&apos;s slider
+          at the dark end (default 35) — values are not interchangeable between tools.
         </div>
       </div>
 
