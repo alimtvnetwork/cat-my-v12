@@ -1267,6 +1267,9 @@ export function evaluatePatternRule(
           width: b.width,
           height: b.height,
           isMatched: false,
+          // No constellation ran on this branch, so no box is
+          // positionally paired either (spec 55 reporting).
+          isPositionMatched: false,
         })),
       },
     };
@@ -1304,6 +1307,7 @@ export function evaluatePatternRule(
     });
 
     let matchedCount = 0;
+    let positionalMatchedCount = 0;
     const boxResults: BoxMatchItem[] = ruleBoxes.map((b) => {
       const positionalBox = positionalMatch.boxResults.find(
         (candidate) => candidate.boxNumber === b.number,
@@ -1316,18 +1320,21 @@ export function evaluatePatternRule(
         width: b.width,
         height: b.height,
       });
-      // Spec T102 §4: a box matches iff |measuredLuma - expectedLuma|
-      // <= lumaTolerance. Position/presence evidence must NOT loosen
-      // this (no OR with positional or presence matches), and a box
-      // with no expectedLuma has no reference to match against, so it
-      // is UNMATCHED — never auto-passed by substituting the measured
-      // luma as its own expected value.
+      // Spec 55 (supersedes the T102 §4 luma-only reading): a box
+      // matches iff it is BOTH positionally paired by the constellation
+      // matcher AND within luma tolerance of its expected greyscale. A
+      // geometrically perfect constellation can no longer pass on luma
+      // alone, and a luma-correct box at the wrong position can no
+      // longer pass either. A box with no expectedLuma has no reference
+      // to match against, so it is UNMATCHED — never auto-passed by
+      // substituting the measured luma as its own expected value.
       const hasExpectedLuma = typeof b.expectedLuma === "number";
       const expectedLuma = hasExpectedLuma ? Number(b.expectedLuma) : undefined;
       const diff = hasExpectedLuma
         ? Math.abs(measuredLuma - Number(b.expectedLuma))
         : Number.POSITIVE_INFINITY;
       const hasLumaMatch = hasExpectedLuma && diff <= lumaTolerance;
+      const isPositionMatched = positionalBox?.isPositionMatched === true;
       const hasMaskHit = maskRegions.some(
         (region) =>
           measuredX >= region.x &&
@@ -1335,10 +1342,16 @@ export function evaluatePatternRule(
           measuredX + b.width <= region.x + region.width &&
           measuredY + b.height <= region.y + region.height,
       );
-      const isMatched = hasMaskHit ? false : hasLumaMatch;
+      const isMatched = hasMaskHit ? false : isPositionMatched && hasLumaMatch;
 
       if (isMatched) {
         matchedCount += 1;
+      }
+
+      // Positional evidence is reported independently of the mask veto:
+      // a mask-hit box is still positionally paired, just excluded.
+      if (isPositionMatched) {
+        positionalMatchedCount += 1;
       }
 
       return {
@@ -1351,6 +1364,7 @@ export function evaluatePatternRule(
         width: b.width,
         height: b.height,
         isMatched,
+        isPositionMatched,
         measuredLuma,
         expectedLuma,
         lumaDelta: hasExpectedLuma ? diff : undefined,
@@ -1358,6 +1372,19 @@ export function evaluatePatternRule(
     });
 
     const scorePct = Math.round((matchedCount / totalCount) * 1000) / 10;
+    const positionalScorePct = Math.round((positionalMatchedCount / totalCount) * 1000) / 10;
+    // Spec 55: the canonical coordinate space is the stretched 960x540
+    // canvas rules are calibrated to. Regions taught in that space and
+    // applied to a differently-sized image are clamped, not rescaled;
+    // full rescaling compensation needs the deferred rule re-tuning
+    // pass, so the mismatch is surfaced here with the exact
+    // compensation factors instead of silently adjusted.
+    const resMismatch = {
+      canonicalSpace: { width: 960, height: 540 },
+      imageSpace: { width: imageData.width, height: imageData.height },
+      resScale: { x: imageData.width / 960, y: imageData.height / 540 },
+      isResMismatch: imageData.width !== 960 || imageData.height !== 540,
+    };
     // Spec T102 §5: PASS also requires the constellation offset
     // magnitude sqrt(dx^2 + dy^2) <= tolerancePx, not just the score.
     // The offset gate applies ONLY when tolerancePx is explicitly
@@ -1381,12 +1408,15 @@ export function evaluatePatternRule(
       return {
         status: ValidationStatusType.Pass,
         score: scoreFraction,
-        message: `${matchedCount}/${totalCount} pattern marks matched reference greyscale (${scorePct}% ≥ ${minPercent}%). ${opticalContext}: PASS.`,
+        message: `${matchedCount}/${totalCount} pattern marks matched position and reference greyscale (${scorePct}% ≥ ${minPercent}%). ${opticalContext}: PASS.`,
         stub: false,
         debug: {
           matchedCount,
           totalCount,
           scorePercent: scorePct,
+          positionalMatchedCount,
+          positionalScorePercent: positionalScorePct,
+          resMismatch,
           offsetX: positionalMatch.offsetX,
           offsetY: positionalMatch.offsetY,
           offsetMagnitude,
@@ -1403,7 +1433,7 @@ export function evaluatePatternRule(
 
     const failReason = !isOffsetPass
       ? `constellation offset ${offsetMagnitude.toFixed(1)}px exceeds tolerance ${tolerancePx}px`
-      : `only ${matchedCount}/${totalCount} greyscale references matched (${scorePct}% < ${minPercent}%)`;
+      : `only ${matchedCount}/${totalCount} marks matched position and greyscale (${positionalMatchedCount} positional, ${scorePct}% < ${minPercent}%)`;
 
     return {
       status: ValidationStatusType.Fail,
@@ -1414,6 +1444,9 @@ export function evaluatePatternRule(
         matchedCount,
         totalCount,
         scorePercent: scorePct,
+        positionalMatchedCount,
+        positionalScorePercent: positionalScorePct,
+        resMismatch,
         offsetX: positionalMatch.offsetX,
         offsetY: positionalMatch.offsetY,
         offsetMagnitude,

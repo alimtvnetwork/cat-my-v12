@@ -15,6 +15,12 @@ export interface ConstellationMatchParams {
   targetHeight: number;
   referenceBoxes: readonly ReferenceBoxItem[];
   referencePatternBox?: { x: number; y: number; width: number; height: number };
+  /**
+   * Search region in TARGET-IMAGE space (spec 55 canonical space: the
+   * stretched 960x540 canvas when the caller passes canvas images).
+   * matchedX/matchedY are returned in this same space — no second
+   * coordinate space is involved anywhere in this matcher.
+   */
   searchRegion?: SearchRegion;
   threshold?: number;
   tolerancePx?: number;
@@ -40,6 +46,14 @@ export interface BoxMatchItem {
   width: number;
   height: number;
   isMatched: boolean;
+  /**
+   * Positional evidence, independent of any luma verdict (spec 55):
+   * true when a candidate box paired with this reference box, false
+   * when matchedX/matchedY are fallback expected positions. Consumers
+   * that AND positional and luma evidence (the workpiece analyzer)
+   * read this, not isMatched, for the positional half.
+   */
+  isPositionMatched?: boolean;
   measuredLuma?: number;
   expectedLuma?: number;
   lumaDelta?: number;
@@ -391,6 +405,7 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
         width: cand.width,
         height: cand.height,
         isMatched: true,
+        isPositionMatched: true,
       });
     } else {
       boxResults.push({
@@ -402,6 +417,7 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
         width: ref.width,
         height: ref.height,
         isMatched: false,
+        isPositionMatched: false,
       });
     }
   }
