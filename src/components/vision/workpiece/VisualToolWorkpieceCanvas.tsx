@@ -1164,6 +1164,10 @@ export function drawRoiHeaderGrip(
 }
 
 export function generate57SequentialPatternBoxes(roi: WorkpieceRoi): WhiteBoxMark[] {
+  if ((roi as any)?.isEmpty) {
+    return [];
+  }
+
   const boxes: WhiteBoxMark[] = [];
   const padX = Math.max(6, Math.round(roi.width * 0.035));
   const padY = Math.max(6, Math.round(roi.height * 0.045));
@@ -1298,6 +1302,24 @@ export function VisualToolWorkpieceCanvas({
   const [isHoveringRoi, setIsHoveringRoi] = useState(false);
   const [isRoiLocked, setIsRoiLocked] = useState(false);
   const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+
+  const selectedRule = useMemo(() => {
+    return overlayRules.find((r) => r.id === selectedRuleId);
+  }, [overlayRules, selectedRuleId]);
+
+  useEffect(() => {
+    if (selectedRule) {
+      setIsRoiLocked(Boolean(selectedRule.isLocked));
+    } else {
+      setIsRoiLocked(false);
+    }
+  }, [selectedRuleId, selectedRule?.isLocked]);
+
+  const occupiedTapePockets = useMemo(() => {
+    return tapeStripResult && tapeStripResult.totalPockets > 1
+      ? tapeStripResult.pockets.filter((p) => !p.isEmpty)
+      : [];
+  }, [tapeStripResult]);
   const [canvasContextMenu, setCanvasContextMenu] = useState<{
     isOpen: boolean;
     x: number;
@@ -1637,6 +1659,10 @@ export function VisualToolWorkpieceCanvas({
   }, [parsedToolBoxes]);
 
   const activeBoxesToDraw = useMemo(() => {
+    if (tapeStripResult && tapeStripResult.totalPockets > 1 && occupiedTapePockets.length === 0) {
+      return [];
+    }
+
     if (configuredBoxes.length > 0) {
       return configuredBoxes;
     }
@@ -1657,7 +1683,7 @@ export function VisualToolWorkpieceCanvas({
     }
 
     return [];
-  }, [configuredBoxes, detectedBoxes, isPatternMatching, roi]);
+  }, [configuredBoxes, detectedBoxes, isPatternMatching, occupiedTapePockets.length, roi, tapeStripResult]);
 
   // Demo fallback boxes must not override an explicitly configured element
   // count in the header label: when no real boxes exist, the label shows
@@ -2277,6 +2303,8 @@ export function VisualToolWorkpieceCanvas({
                 false,
               );
             }
+          } else if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+            // Carrier tape active with no occupied pockets: never generate synthetic 57 boxes across empty pockets.
           } else {
             const effectiveRegion: WorkpieceRoi = {
               x: ruleX,
@@ -2396,6 +2424,8 @@ export function VisualToolWorkpieceCanvas({
                 );
               }
             }
+          } else if (tapeStripResult && tapeStripResult.totalPockets > 1) {
+            // Carrier tape active with no occupied pockets: never generate synthetic 57 boxes across empty pockets.
           } else {
             const ruleDebug = (ruleResult as any)?.debug;
             let multiDevicePin1 = Array.isArray(ruleDebug?.multiDevicePin1)
@@ -2406,7 +2436,7 @@ export function VisualToolWorkpieceCanvas({
             // Fallback: construct from tapeStripResult pockets (scripted tour)
             if (multiDevicePin1.length === 0 && tapeStripResult?.pockets) {
               const pocketPins = tapeStripResult.pockets
-                .filter((pk: any) => typeof pk.pinX === "number" && typeof pk.pinY === "number")
+                .filter((pk: any) => !pk.isEmpty && typeof pk.pinX === "number" && typeof pk.pinY === "number")
                 .map((pk: any, idx: number) => ({
                   id: `pocket-${idx + 1}`,
                   label: `Device ${idx + 1}`,
@@ -2596,11 +2626,6 @@ export function VisualToolWorkpieceCanvas({
     const isInsideRoi =
       x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
 
-    // Clicking outside locks the ROI
-    if (!isInsideRoi && !isInsideHeader) {
-      setIsRoiLocked(true);
-    }
-
     // 0. Corner handles hit test (NW, NE, SW, SE) - strictly on 4 corners (unlocked only)
     if (isEditable && onChangeRoi && !isRoiLocked) {
       const handleHitRadius = 14;
@@ -2719,7 +2744,6 @@ export function VisualToolWorkpieceCanvas({
         .find(
           (r) =>
             !r.isHidden &&
-            !r.isLocked &&
             x >= r.x &&
             x <= r.x + r.width &&
             y >= r.y &&
@@ -2874,8 +2898,9 @@ export function VisualToolWorkpieceCanvas({
     // Double-clicking the ROI header unlocks/locks the ROI
     if (isInsideHeader || isInsideRoi) {
       setIsRoiLocked((prev) => !prev);
-    } else {
-      setIsRoiLocked(true);
+      if (selectedRuleId && onToggleLocked) {
+        onToggleLocked(selectedRuleId);
+      }
     }
   }
 
@@ -3193,7 +3218,12 @@ export function VisualToolWorkpieceCanvas({
               type="button"
               title={isRoiLocked ? "Unlock ROI" : "Lock ROI"}
               className="rounded p-1 text-cyan-200 hover:bg-white/10"
-              onClick={() => setIsRoiLocked((value) => !value)}
+              onClick={() => {
+                setIsRoiLocked((value) => !value);
+                if (selectedRuleId && onToggleLocked) {
+                  onToggleLocked(selectedRuleId);
+                }
+              }}
             >
               {isRoiLocked ? <Lock size={14} /> : <Unlock size={14} />}
             </button>

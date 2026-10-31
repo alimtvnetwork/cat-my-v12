@@ -10,6 +10,8 @@ import {
   type SearchRegion,
 } from "@/lib/vision/white-box-marking";
 
+export { rec601Luma };
+
 export interface AtmelBoxDefinition {
   boxNumber: number;
   label: string;

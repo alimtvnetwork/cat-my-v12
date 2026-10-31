@@ -198,7 +198,7 @@ export function AnalyzeImageToolbar({
           Source:
         </span>
 
-        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenu modal={false} open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"

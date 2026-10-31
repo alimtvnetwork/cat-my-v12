@@ -301,8 +301,8 @@ export function RuleToolConfigPanel({
     applyRuleToStore(nextRule);
   }
 
-  function handleApplyStandardTool(): void {
-    const rawRegion = (settings as any).searchRegion;
+  function handleApplyStandardTool(configPayload?: any): void {
+    const rawRegion = configPayload?.searchRegion ?? (settings as any).searchRegion;
     const geom = (rawRegion as any)?.geometry ??
       rawRegion ?? {
         x: rule?.x ?? 0,
@@ -316,11 +316,90 @@ export function RuleToolConfigPanel({
     const ruleW = Number(geom.width ?? rule?.width);
     const ruleH = Number(geom.height ?? rule?.height);
 
-    const pin1Config = (settings as any)?.pin1Config;
+    const pin1Config = configPayload?.pin1Config ?? (settings as any)?.pin1Config;
+
+    const refBoxes =
+      configPayload?.referenceBoxes ??
+      (settings as any)?.referenceBoxes ??
+      (settings as any)?.params?.referenceBoxes ??
+      (rule.params as any)?.referenceBoxes ??
+      configPayload?.constellation ??
+      (settings as any)?.constellation ??
+      (settings as any)?.params?.constellation ??
+      (rule.params as any)?.constellation ??
+      [];
+
+    const constellation =
+      configPayload?.constellation ??
+      (settings as any)?.constellation ??
+      (settings as any)?.params?.constellation ??
+      (rule.params as any)?.constellation ??
+      refBoxes;
+
+    const patternBoxes =
+      configPayload?.patternBoxes ??
+      (settings as any)?.patternBoxes ??
+      (settings as any)?.params?.patternBoxes ??
+      (rule.params as any)?.patternBoxes ??
+      refBoxes;
+
+    const refBoxesJson =
+      typeof configPayload?.referenceBoxesJson === "string"
+        ? configPayload.referenceBoxesJson
+        : typeof (settings as any)?.referenceBoxesJson === "string"
+          ? (settings as any).referenceBoxesJson
+          : typeof (settings as any)?.params?.referenceBoxesJson === "string"
+            ? (settings as any).params.referenceBoxesJson
+            : typeof (rule.params as any)?.referenceBoxesJson === "string"
+              ? (rule.params as any).referenceBoxesJson
+              : refBoxes.length > 0
+                ? JSON.stringify(refBoxes)
+                : undefined;
+
+    const constellationJson =
+      typeof configPayload?.constellationJson === "string"
+        ? configPayload.constellationJson
+        : typeof (settings as any)?.constellationJson === "string"
+          ? (settings as any).constellationJson
+          : typeof (settings as any)?.params?.constellationJson === "string"
+            ? (settings as any).params.constellationJson
+            : typeof (rule.params as any)?.constellationJson === "string"
+              ? (rule.params as any).constellationJson
+              : constellation.length > 0
+                ? JSON.stringify(constellation)
+                : undefined;
+
+    const relativeBoxes =
+      configPayload?.referenceBoxesRelativeToPatternRegion ??
+      (settings as any)?.referenceBoxesRelativeToPatternRegion ??
+      (settings as any)?.params?.referenceBoxesRelativeToPatternRegion ??
+      (rule.params as any)?.referenceBoxesRelativeToPatternRegion;
+
+    const relativeBoxesJson =
+      typeof configPayload?.referenceBoxesRelativeToPatternRegionJson === "string"
+        ? configPayload.referenceBoxesRelativeToPatternRegionJson
+        : typeof (settings as any)?.referenceBoxesRelativeToPatternRegionJson === "string"
+          ? (settings as any).referenceBoxesRelativeToPatternRegionJson
+          : typeof (settings as any)?.params?.referenceBoxesRelativeToPatternRegionJson === "string"
+            ? (settings as any).params.referenceBoxesRelativeToPatternRegionJson
+            : typeof (rule.params as any)?.referenceBoxesRelativeToPatternRegionJson === "string"
+              ? (rule.params as any).referenceBoxesRelativeToPatternRegionJson
+              : relativeBoxes
+                ? JSON.stringify(relativeBoxes)
+                : undefined;
+
+    const rawPatternRegion =
+      configPayload?.patternRegion ??
+      (settings as any)?.patternRegion ??
+      (settings as any)?.params?.patternRegion ??
+      (rule.params as any)?.patternRegion;
+
+    const patternRegion = (rawPatternRegion as any)?.geometry ?? rawPatternRegion;
 
     const updatedParams = {
       ...(rule.params ?? {}),
       ...((settings as any).params ?? {}),
+      ...(configPayload?.params ?? {}),
       searchRegion: {
         shape: (settings.searchRegion as any)?.shape ?? ShapeType.Rectangle,
         geometry: geom,
@@ -334,6 +413,25 @@ export function RuleToolConfigPanel({
         : {}),
       ...(pin1Config ? { pin1Config, pin1ConfigJson: JSON.stringify(pin1Config) } : {}),
       ...((settings as any)?.imageRef ? { imageRef: (settings as any).imageRef } : {}),
+      ...(refBoxes.length > 0 ? { referenceBoxes: refBoxes } : {}),
+      ...(refBoxesJson ? { referenceBoxesJson: refBoxesJson } : {}),
+      ...(constellation.length > 0 ? { constellation } : {}),
+      ...(constellationJson ? { constellationJson } : {}),
+      ...(patternBoxes.length > 0 ? { patternBoxes } : {}),
+      ...(relativeBoxes ? { referenceBoxesRelativeToPatternRegion: relativeBoxes } : {}),
+      ...(relativeBoxesJson ? { referenceBoxesRelativeToPatternRegionJson: relativeBoxesJson } : {}),
+      ...(patternRegion
+        ? {
+            patternRegion: {
+              shape: (rawPatternRegion as any)?.shape ?? ShapeType.Rectangle,
+              geometry: patternRegion,
+            },
+            patternRegionJson: JSON.stringify({
+              shape: (rawPatternRegion as any)?.shape ?? ShapeType.Rectangle,
+              geometry: patternRegion,
+            }),
+          }
+        : {}),
       x: ruleX,
       y: ruleY,
       width: ruleW,

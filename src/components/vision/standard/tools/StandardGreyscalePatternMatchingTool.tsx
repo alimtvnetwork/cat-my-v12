@@ -26,21 +26,42 @@ export function StandardGreyscalePatternMatchingTool(
       y: box.y - patternRegion.y,
     }));
 
-    props.onChange((prev) => ({
-      ...prev,
+    const patternPayload = {
       referenceBoxes: pattern.referenceBoxes,
+      referenceBoxesJson: JSON.stringify(pattern.referenceBoxes),
       constellation: pattern.referenceBoxes,
       constellationJson: JSON.stringify(pattern.referenceBoxes),
+      patternBoxes: pattern.referenceBoxes,
+      patternBoxesJson: JSON.stringify(pattern.referenceBoxes),
       referenceBoxesRelativeToPatternRegion,
+      referenceBoxesRelativeToPatternRegionJson: JSON.stringify(
+        referenceBoxesRelativeToPatternRegion,
+      ),
       patternRegion: { shape: ShapeType.Rectangle, geometry: patternRegion },
+      patternRegionJson: JSON.stringify(patternRegion),
       searchRegion: { shape: ShapeType.Rectangle, geometry: pattern.searchRegion },
+      searchRegionJson: JSON.stringify(pattern.searchRegion),
       tolerancePx: pattern.tolerancePx,
       marginPx: pattern.marginPx,
-      threshold: pattern.threshold ?? (prev as any)?.threshold,
-      greyscaleLevel: pattern.threshold ?? (prev as any)?.threshold,
+      threshold: pattern.threshold ?? (props.settings as any)?.threshold,
+      greyscaleLevel: pattern.threshold ?? (props.settings as any)?.threshold,
+      activeBoxCount: pattern.activeBoxCount,
+      totalBoxCount: pattern.totalBoxCount,
+    };
+
+    props.onChange((prev) => ({
+      ...prev,
+      ...patternPayload,
+      referenceBoxes: pattern.referenceBoxes,
+      constellation: pattern.referenceBoxes,
+      patternBoxes: pattern.referenceBoxes,
+      params: {
+        ...((prev as any)?.params ?? {}),
+        ...patternPayload,
+      },
     }));
 
-    props.onOk?.();
+    (props.onOk as any)?.(patternPayload);
   };
 
   return (

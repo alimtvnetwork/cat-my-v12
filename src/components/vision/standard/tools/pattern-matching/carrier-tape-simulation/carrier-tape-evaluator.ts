@@ -197,8 +197,8 @@ export function analyzeRule1Pin1Real(
   let minCoreLuma = Number.POSITIVE_INFINITY;
 
   for (const q of quadrantCenters) {
-    for (let dy = -6; dy <= 6; dy += 1) {
-      for (let dx = -6; dx <= 6; dx += 1) {
+    for (let dy = -16; dy <= 16; dy += 1) {
+      for (let dx = -16; dx <= 16; dx += 1) {
         const px = Math.round(q.targetX + dx);
         const py = Math.round(q.targetY + dy);
 

@@ -36,6 +36,7 @@ function resolveDesktopBridge(): DesktopApi | undefined {
   }
 
   const direct = (window as unknown as { desktopApi?: DesktopApi }).desktopApi;
+
   if (direct) {
     return direct;
   }
@@ -53,6 +54,7 @@ function resolveDesktopBridge(): DesktopApi | undefined {
       };
     }
   ).__TAURI__?.window?.getCurrent?.();
+
   if (tauriWindow) {
     return {
       minimize: () => tauriWindow.minimize?.(),
@@ -62,6 +64,7 @@ function resolveDesktopBridge(): DesktopApi | undefined {
   }
 
   const electronApi = (window as unknown as { electronAPI?: DesktopApi }).electronAPI;
+
   if (electronApi) {
     return electronApi;
   }
@@ -129,6 +132,7 @@ export function WindowControlButtons(): React.JSX.Element {
       : document.documentElement.requestFullscreen();
 
     fullscreenRequest.catch((err: unknown) => {
+      toast.info("Fullscreen mode is not permitted by your browser or environment.");
       useErrorStore.getState().captureError(
         err,
         {
@@ -215,6 +219,28 @@ export function WindowControlButtons(): React.JSX.Element {
     setIsShuttingDown(false);
     setIsCloseNoop(false);
   }, []);
+
+  useEffect(() => {
+    if (!isExitDialogOpen) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (!isShuttingDown) {
+          setIsExitDialogOpen(false);
+        } else {
+          handleDismissShutdown();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isExitDialogOpen, isShuttingDown, handleDismissShutdown]);
 
   const minAttrs = getAutomationAttrs({
     id: "btn-window-minimize",

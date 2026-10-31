@@ -191,7 +191,7 @@ export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResu
   // the plane. Threshold/one-bit planes are binarized, so walking them
   // with the same threshold yields exactly the historical bright
   // components; stretch is the mode that newly reaches matching.
-  const gray = toMatchingGray(input.rgba, input.mode ?? "threshold", input.whiteThreshold);
+  const gray = toMatchingGray(input.rgba, input.mode ?? "threshold", input.whiteThreshold ?? 170);
   const boxes = findWhiteBoxes(
     gray,
     input.width,

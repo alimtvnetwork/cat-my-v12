@@ -351,6 +351,8 @@ export function useConveyorSimulation(
         captureOrigin,
       };
 
+      capturedFramesRef.current[pocketIndex] = frame;
+
       setCapturedFrames((prev) => {
         const next = [...prev];
         next[pocketIndex] = frame;

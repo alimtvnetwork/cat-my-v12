@@ -114,9 +114,38 @@ export function computeLuminancePercentiles(
   };
 }
 
+export const LUMA_BT709_RED = 0.2126;
+export const LUMA_BT709_GREEN = 0.7152;
+export const LUMA_BT709_BLUE = 0.0722;
+
+const SRGB_TO_LINEAR_LUT = new Float64Array(256);
+
+for (let i = 0; i < 256; i++) {
+  const norm = i / 255;
+  SRGB_TO_LINEAR_LUT[i] = norm <= 0.04045 ? norm / 12.92 : Math.pow((norm + 0.055) / 1.055, 2.4);
+}
+
+export function rgbToBt709Luminance(r: number, g: number, b: number): number {
+  const rIdx = Math.max(0, Math.min(255, Math.round(r)));
+  const gIdx = Math.max(0, Math.min(255, Math.round(g)));
+  const bIdx = Math.max(0, Math.min(255, Math.round(b)));
+
+  const rLin = SRGB_TO_LINEAR_LUT[rIdx];
+  const gLin = SRGB_TO_LINEAR_LUT[gIdx];
+  const bLin = SRGB_TO_LINEAR_LUT[bIdx];
+
+  const yLin = LUMA_BT709_RED * rLin + LUMA_BT709_GREEN * gLin + LUMA_BT709_BLUE * bLin;
+
+  if (yLin <= 0.0031308) {
+    return Math.max(0, Math.min(255, Math.round(yLin * 12.92 * 255)));
+  }
+
+  return Math.max(0, Math.min(255, Math.round((1.055 * Math.pow(yLin, 1 / 2.4) - 0.055) * 255)));
+}
+
 /**
- * Transforms an RGBA pixel buffer in-place using ITU-R BT.601 luminance extraction,
- * dynamic contrast stretching, polarity-aware binary thresholding, or 2-bit quantization.
+ * Transforms an RGBA pixel buffer in-place using ITU-R BT.709 luminance extraction with linear gamma expansion,
+ * dynamic contrast stretching, polarity-aware binary thresholding, or adaptive 2-bit quantization.
  */
 export function applyLuminanceFilter(params: LuminanceFilterParams): void {
   const {
@@ -136,13 +165,13 @@ export function applyLuminanceFilter(params: LuminanceFilterParams): void {
   const pixelCount = width * height;
   const lumaArray = new Uint8Array(pixelCount);
 
-  // Stage 1: ITU-R BT.601 luminance extraction: Y = 0.299 R + 0.587 G + 0.114 B
+  // Stage 1: ITU-R BT.709 luminance extraction with linear gamma expansion: Y = 0.2126 R + 0.7152 G + 0.0722 B
   for (let i = 0; i < pixelCount; i++) {
     const offset = i * 4;
     const r = pixelBuffer[offset];
     const g = pixelBuffer[offset + 1];
     const b = pixelBuffer[offset + 2];
-    lumaArray[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    lumaArray[i] = rgbToBt709Luminance(r, g, b);
   }
 
   // Stage 2: Dynamic Contrast Stretching (2nd to 98th percentile)
@@ -159,6 +188,12 @@ export function applyLuminanceFilter(params: LuminanceFilterParams): void {
     stretchedArray[i] = Math.max(0, Math.min(255, stretched));
   }
 
+  // Adaptive breaks for 2-bit quantization to prevent crushing mid-tones and dark plastic markings
+  const otsuStretched = Math.round(((percentiles.otsuThreshold - p2) / range) * 255);
+  const break1 = Math.max(48, Math.min(200, otsuStretched));
+  const break0 = Math.max(24, Math.round(break1 * 0.5));
+  const break2 = Math.min(235, Math.round(break1 + (255 - break1) * 0.5));
+
   // Stage 3 & 4: Application of filter type
   for (let i = 0; i < pixelCount; i++) {
     const offset = i * 4;
@@ -174,11 +209,12 @@ export function applyLuminanceFilter(params: LuminanceFilterParams): void {
       }
     } else if (filterType === "quantize2bit") {
       // 2-bit quantization partitions luminance into 4 discrete bands: [0, 85, 170, 255]
-      if (yVal < 64) {
+      // Using adaptive breaks to avoid crushing mid-tones and dark markings
+      if (yVal < break0) {
         outputVal = 0;
-      } else if (yVal < 128) {
+      } else if (yVal < break1) {
         outputVal = 85;
-      } else if (yVal < 192) {
+      } else if (yVal < break2) {
         outputVal = 170;
       } else {
         outputVal = 255;

@@ -73,10 +73,14 @@ PIDS+=("$FE_PID")
 
 # Wait for frontend to be accessible
 echo "Waiting for frontend..."
-./scripts/dev/wait-for-http.sh "http://localhost:$FE_PORT/" 30 || exit 1
+./scripts/dev/wait-for-http.sh "http://localhost:$FE_PORT/cat-logo.svg" 30 || exit 1
 
 # Launch shell or skip
-if [ "$NO_SHELL" -eq 0 ]; then
+if [ "$NO_SHELL" -eq 1 ]; then
+    echo "Running in --no-shell mode. Skipping browser launch."
+elif pgrep -af "chromium|chrome|msedge" 2>/dev/null | grep -E "(--app=http://localhost:$FE_PORT|\.browser-profile)" >/dev/null 2>&1; then
+    echo "Inspection window or browser is already running. Skipping duplicate browser window."
+else
     echo "Packaging Chromium shell..."
     if [ -d "chromium-shell" ]; then
         (cd chromium-shell && nix run nixpkgs#zip -- -r ../public/app-shell.zip . 2>/dev/null || echo "Warning: nix command failed or not found, skipping zip packaging.")
@@ -85,12 +89,9 @@ if [ "$NO_SHELL" -eq 0 ]; then
     echo "Launching Chromium shell..."
     # The requirement: Chromium shell pointing at http://localhost:$FE_PORT with query ?backend=http://localhost:$BE_PORT
     URL="http://localhost:$FE_PORT?backend=http://localhost:$BE_PORT"
-    
     PROFILE_DIR="$(pwd)/.browser-profile"
-    
-    if pgrep -af "chromium|chrome" 2>/dev/null | grep -F -- "--app=$URL" >/dev/null 2>&1; then
-        echo "Inspection window is already open. Skipping a second browser."
-    elif command -v chromium &> /dev/null; then
+
+    if command -v chromium &> /dev/null; then
         chromium --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
     elif command -v chromium-browser &> /dev/null; then
@@ -99,11 +100,12 @@ if [ "$NO_SHELL" -eq 0 ]; then
     elif command -v google-chrome &> /dev/null; then
         google-chrome --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
+    elif command -v msedge &> /dev/null; then
+        msedge --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
+        PIDS+=("$!")
     else
         echo "Chromium/Chrome not found in PATH. Please open: $URL"
     fi
-else
-    echo "Running in --no-shell mode."
 fi
 
 echo "Press Ctrl+C to stop..."

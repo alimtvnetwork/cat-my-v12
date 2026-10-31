@@ -6,6 +6,7 @@ import {
   type SearchRegion,
   type WhiteBoxMarkingInput,
 } from "@/lib/vision/white-box-marking";
+import { squareSearchRegion } from "@/lib/vision/pinned-pattern-geometry";
 import type { RegionDrag } from "@/components/vision/white-box/types";
 import { evaluateChipPixelsReal, getAtmelReferenceBoxes } from "./atmel-chip-boxes";
 import { CHIP_GOOD_DATA_URL, CHIP_STM8_DATA_URL } from "./chip-assets";
@@ -29,12 +30,14 @@ export async function normalizeImageToStandardCanvas(
   canvas.height = STANDARD_CANVAS_HEIGHT;
   const ctx = canvas.getContext("2d");
 
-  const searchRegion: SearchRegion = {
-    x: 350,
-    y: 220,
-    width: 350,
-    height: 180,
+  const defaultSide = 240;
+  const rawSearchRegion: SearchRegion = {
+    x: Math.round((STANDARD_CANVAS_WIDTH - defaultSide) / 2),
+    y: Math.round((STANDARD_CANVAS_HEIGHT - defaultSide) / 2),
+    width: defaultSide,
+    height: defaultSide,
   };
+  const searchRegion: SearchRegion = squareSearchRegion(rawSearchRegion);
 
   if (!ctx) {
     return {
@@ -83,7 +86,7 @@ export function dataUrlToStandardImageInput(
           height: STANDARD_CANVAS_HEIGHT,
           rgba: new Uint8ClampedArray(STANDARD_CANVAS_WIDTH * STANDARD_CANVAS_HEIGHT * 4),
         },
-        searchRegion: { x: 280, y: 80, width: 400, height: 380 },
+        searchRegion: squareSearchRegion({ x: 280, y: 80, width: 380, height: 380 }),
       });
     };
 
@@ -101,20 +104,19 @@ export function createDefaultSearchRegion(width: number, height: number): Search
     };
   }
 
-  const targetW = Math.round(Math.min(width * 0.7, Math.max(140, width * 0.45)));
-  const targetH = Math.round(Math.min(height * 0.75, Math.max(148, targetW * (106 / 100))));
-  const boundedW = Math.round(Math.min(targetW, targetH * (100 / 106)));
-  const boundedH = Math.round(boundedW * (106 / 100));
+  const rawSide = Math.round(
+    Math.min(width * 0.7, Math.max(140, width * 0.45), height * 0.75, STANDARD_IMAGE_MAX_SIZE),
+  );
+  const side = Math.max(20, rawSide);
+  const x = Math.max(0, Math.round((width - side) / 2));
+  const y = Math.max(0, Math.round((height - side) / 2));
 
-  const x = Math.max(0, Math.round((width - boundedW) / 2));
-  const y = Math.max(0, Math.round((height - boundedH) / 2));
-
-  return {
+  return squareSearchRegion({
     x,
     y,
-    width: Math.min(width - x, boundedW),
-    height: Math.min(height - y, boundedH),
-  };
+    width: Math.min(width - x, side),
+    height: Math.min(height - y, side),
+  });
 }
 
 export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
@@ -139,21 +141,21 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     }
 
     if (sr.geometry && typeof sr.geometry.x === "number") {
-      return {
+      return squareSearchRegion({
         x: Math.round(sr.geometry.x),
         y: Math.round(sr.geometry.y),
         width: Math.round(sr.geometry.width),
         height: Math.round(sr.geometry.height),
-      };
+      });
     }
 
     if (typeof sr.x === "number") {
-      return {
+      return squareSearchRegion({
         x: Math.round(sr.x),
         y: Math.round(sr.y),
         width: Math.round(sr.width),
         height: Math.round(sr.height),
-      };
+      });
     }
 
     return null;
@@ -336,7 +338,9 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
 
     setIsMatching(true);
 
-    const effectiveRegion = searchRegion ?? createDefaultSearchRegion(source.width, source.height);
+    const effectiveRegion = searchRegion
+      ? squareSearchRegion(searchRegion)
+      : createDefaultSearchRegion(source.width, source.height);
 
     if (!searchRegion) {
       setSearchRegion(effectiveRegion);

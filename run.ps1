@@ -27,7 +27,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $FrontendHostIp = "127.0.0.1"
-$FrontendHealthPath = "/setup"
+$FrontendHealthPath = "/cat-logo.svg"
 $FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
 $FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
 $BackendBaseUrl = "http://$HostIp`:$BePort"
@@ -81,53 +81,11 @@ try {
     Write-Host "Waiting for frontend..."
     .\scripts\dev\wait-for-http.ps1 -Url $FrontendHealthUrl -TimeoutSec 180
 
-    if (-not $NoShell) {
-        Write-Host "Packaging Chromium shell..."
-        if (Test-Path "chromium-shell") {
-            try {
-                $needsZip = $true
-                if (Test-Path "public\app-shell.zip") {
-                    $zipDate = (Get-Item "public\app-shell.zip").LastWriteTime
-                    $newestFile = Get-ChildItem -Path "chromium-shell" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-                    if ($newestFile -and $newestFile.LastWriteTime -le $zipDate) {
-                        $needsZip = $false
-                    }
-                }
-                
-                if ($needsZip) {
-                    if (Test-Path "public\app-shell.zip") {
-                        Remove-Item "public\app-shell.zip" -Force
-                    }
-                    if (-not (Test-Path "public")) {
-                        New-Item -ItemType Directory -Path "public" | Out-Null
-                    }
-                    Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
-                    Write-Host "Chromium shell packaged."
-                } else {
-                    Write-Host "Chromium shell is up to date, skipping package."
-                }
-            } catch {
-                Write-Host "Failed to package extension using Compress-Archive. Continuing without it."
-            }
-        }
-
-        Write-Host "Launching Chromium shell..."
-        $userDataDir = Join-Path (Get-Location) ".browser-profile"
-        $chromeArgs = @(
-            "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
-            '--start-fullscreen',
-            "--user-data-dir=$userDataDir",
-            '--no-first-run',
-            '--no-default-browser-check'
-        )
-        $chromePaths = @(
-            "C:\Program Files\Google\Chrome\Application\chrome.exe",
-            "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-            "C:\Program Files\Chromium\Application\chrome.exe",
-            "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-        )
-        $chromeFound = $false
+    if ($NoShell) {
+        Write-Host "Running in -NoShell mode. Skipping browser launch."
+    } else {
         $appNeedle = "--app=$FrontendBaseUrl"
+        $userDataDir = Join-Path (Get-Location) ".browser-profile"
         $alreadyOpen = $false
 
         try {
@@ -135,7 +93,7 @@ try {
                 Where-Object { $_.Name -match '^(chrome|msedge|chromium)\.exe$' }
 
             foreach ($proc in $existing) {
-                if ($proc.CommandLine -and $proc.CommandLine.Contains($appNeedle)) {
+                if ($proc.CommandLine -and ($proc.CommandLine.Contains($appNeedle) -or $proc.CommandLine.Contains(".browser-profile"))) {
                     $alreadyOpen = $true
                     break
                 }
@@ -145,26 +103,66 @@ try {
         }
 
         if ($alreadyOpen) {
-            Write-Host "Inspection window is already open. Skipping a second browser."
-            $chromeFound = $true
-        }
+            Write-Host "Inspection window or browser is already running. Skipping duplicate browser window."
+        } else {
+            Write-Host "Packaging Chromium shell..."
+            if (Test-Path "chromium-shell") {
+                try {
+                    $needsZip = $true
+                    if (Test-Path "public\app-shell.zip") {
+                        $zipDate = (Get-Item "public\app-shell.zip").LastWriteTime
+                        $newestFile = Get-ChildItem -Path "chromium-shell" -Recurse | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+                        if ($newestFile -and $newestFile.LastWriteTime -le $zipDate) {
+                            $needsZip = $false
+                        }
+                    }
 
-        if (-not $alreadyOpen) {
-        foreach ($p in $chromePaths) {
-            if (Test-Path $p) {
-                $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
-                $jobs += $chromeProcess
-                $chromeFound = $true
-                break
+                    if ($needsZip) {
+                        if (Test-Path "public\app-shell.zip") {
+                            Remove-Item "public\app-shell.zip" -Force
+                        }
+                        if (-not (Test-Path "public")) {
+                            New-Item -ItemType Directory -Path "public" | Out-Null
+                        }
+                        Compress-Archive -Path "chromium-shell\*" -DestinationPath "public\app-shell.zip" -Force
+                        Write-Host "Chromium shell packaged."
+                    } else {
+                        Write-Host "Chromium shell is up to date, skipping package."
+                    }
+                } catch {
+                    Write-Host "Failed to package extension using Compress-Archive. Continuing without it."
+                }
+            }
+
+            Write-Host "Launching Chromium shell..."
+            $chromeArgs = @(
+                "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
+                '--start-fullscreen',
+                "--user-data-dir=$userDataDir",
+                '--no-first-run',
+                '--no-default-browser-check'
+            )
+            $chromePaths = @(
+                "C:\Program Files\Google\Chrome\Application\chrome.exe",
+                "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                "C:\Program Files\Chromium\Application\chrome.exe",
+                "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+            )
+            $chromeFound = $false
+
+            foreach ($p in $chromePaths) {
+                if (Test-Path $p) {
+                    $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
+                    $jobs += $chromeProcess
+                    $chromeFound = $true
+                    break
+                }
+            }
+
+            if (-not $chromeFound) {
+                Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
             }
         }
-        }
-
-        if (-not $chromeFound) {
-            Write-Host "Chrome/Edge not found in default paths. Please open $FrontendBaseUrl`?backend=$BackendBaseUrl"
-        }
-    } else {
-        Write-Host "Running in --no-shell mode."
     }
 
     Write-Host "Press Ctrl+C to stop..."

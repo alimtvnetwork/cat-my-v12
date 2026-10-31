@@ -47,7 +47,9 @@ export function StandardIntensityTool(props: StandardIntensityToolProps): React.
   };
 
   const seeded = intensityFromSettings(props.settings.params);
-  const [metric, setMetric] = useState<"mean" | "std-dev" | "min-max" | "median">(seeded.metric);
+  const [metric, setMetric] = useState<"mean" | "std-dev" | "min-max" | "median">(
+    seeded.metric as "mean" | "std-dev" | "min-max" | "median",
+  );
   const [minIntensity, setMinIntensity] = useState<number>(seeded.minIntensity);
   const [maxIntensity, setMaxIntensity] = useState<number>(seeded.maxIntensity);
 

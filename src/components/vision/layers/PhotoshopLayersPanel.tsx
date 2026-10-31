@@ -17,6 +17,7 @@ import {
   Shield,
   Palette,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import type { PhotoshopLayersPanelProps, VisionLayerItem, VisionLayerType } from "./types";
 
@@ -51,6 +52,10 @@ interface ContextMenuState {
   layerId: string;
 }
 
+export interface PhotoshopLayersPanelPropsWithRegion extends PhotoshopLayersPanelProps {
+  onCreateRegion?: () => void;
+}
+
 export function PhotoshopLayersPanel({
   layers,
   selectedLayerId,
@@ -63,7 +68,8 @@ export function PhotoshopLayersPanel({
   onMoveDown,
   onDeleteLayer,
   onDuplicateLayer,
-}: PhotoshopLayersPanelProps): React.JSX.Element {
+  onCreateRegion,
+}: PhotoshopLayersPanelPropsWithRegion): React.JSX.Element {
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     isOpen: false,
     x: 0,
@@ -129,8 +135,23 @@ export function PhotoshopLayersPanel({
           </span>
         </div>
 
-        <div className="flex items-center gap-1 text-[10px] text-white/40">
-          <span>Photoshop-Style</span>
+        <div className="flex items-center gap-1.5">
+          {onCreateRegion ? (
+            <button
+              type="button"
+              data-testid="btn-new-region-header"
+              onClick={onCreateRegion}
+              className="flex items-center gap-1 rounded border border-[#00e5ff]/30 bg-[#00e5ff]/10 px-2 py-0.5 font-sans text-[10px] font-semibold text-[#00e5ff] hover:border-[#00e5ff]/60 hover:bg-[#00e5ff]/20 active:scale-95 transition"
+              title="New Region / Rectangle Rule"
+            >
+              <Plus size={11} />
+              <span>New Region</span>
+            </button>
+          ) : null}
+
+          <div className="flex items-center gap-1 text-[10px] text-white/40">
+            <span>Photoshop-Style</span>
+          </div>
         </div>
       </div>
 
@@ -281,6 +302,20 @@ export function PhotoshopLayersPanel({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* New Region / Rectangle */}
+          {onCreateRegion ? (
+            <button
+              type="button"
+              data-testid="btn-new-region-rectangle"
+              onClick={onCreateRegion}
+              className="flex h-7 items-center gap-1 rounded border border-[#00e5ff]/30 bg-[#00e5ff]/10 px-2 font-sans text-[10px] font-semibold text-[#00e5ff] hover:border-[#00e5ff]/60 hover:bg-[#00e5ff]/20 active:scale-95 transition"
+              title="New Region / Rectangle"
+            >
+              <Square size={12} className="text-[#00e5ff]" />
+              <span>New Region</span>
+            </button>
+          ) : null}
+
           {/* Duplicate Layer */}
           {onDuplicateLayer ? (
             <button

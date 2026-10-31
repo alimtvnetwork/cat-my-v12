@@ -324,7 +324,7 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     matched: Map<number, number>;
     matchedCount: number;
     totalDistance: number;
-    rotatedBoxes: ReferenceBoxItem[];
+    rotatedBoxes: readonly ReferenceBoxItem[];
   }
 
   const runRotationSearch = (candidateBoxes: readonly WhiteBoxMark[]): RotationCandidate => {

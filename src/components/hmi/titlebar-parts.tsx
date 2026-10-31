@@ -25,6 +25,7 @@ import { KeyboardModeIndicator } from "@/components/hmi/KeyboardModeIndicator";
 import { Search as SearchIcon } from "lucide-react";
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { useUiPrefsStore } from "@/lib/stores/ui-prefs-store";
+import { APP_VERSION_INFO } from "@/lib/version-info";
 
 export function HeaderBrand(): React.JSX.Element | null {
   return (
@@ -50,6 +51,17 @@ export function HeaderBrand(): React.JSX.Element | null {
           CA
         </span>
       </Link>
+
+      <button
+        type="button"
+        data-testid="version-badge-button"
+        onClick={() => window.dispatchEvent(new CustomEvent("cat-vision:open-version-modal"))}
+        title={`Released ${APP_VERSION_INFO.releaseDate} — Click for release details`}
+        className="flex cursor-pointer items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-300 transition-all hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-white active:scale-95 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+      >
+        <span>{APP_VERSION_INFO.version}</span>
+      </button>
+
       <HistoryNav />
     </div>
   );

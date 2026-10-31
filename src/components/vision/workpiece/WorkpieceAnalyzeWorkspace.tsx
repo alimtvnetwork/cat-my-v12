@@ -49,6 +49,8 @@ import {
   type RuleLightSettings,
   DEFAULT_RULE_CAMERA_SETTINGS,
   DEFAULT_RULE_LIGHT_SETTINGS,
+  EditorRuleKindType,
+  EditorToolFamilyType,
 } from "@/lib/editor/types";
 import {
   useValidationStore,
@@ -411,6 +413,49 @@ export function WorkpieceAnalyzeWorkspace({
     },
     [ruleset],
   );
+
+  const handleCreateQuickRoiRule = useCallback(() => {
+    const targetRuleset = ruleset;
+
+    if (!targetRuleset) {
+      handleOpenAddRule();
+
+      return;
+    }
+
+    const currentRules = targetRuleset.rules ?? rules;
+    const ruleIndex = currentRules.length + 1;
+    const newRuleId = `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const newRuleName = `Region ${ruleIndex} (ROI)`;
+
+    const newRule: EditorRule = {
+      id: newRuleId,
+      name: newRuleName,
+      kind: EditorRuleKindType.R,
+      family: EditorToolFamilyType.Rect,
+      categoryName: "Area & Boundary",
+      isHidden: false,
+      isLocked: false,
+      x: 80 + ((ruleIndex * 20) % 200),
+      y: 80 + ((ruleIndex * 20) % 150),
+      width: 160,
+      height: 120,
+      params: {
+        toolCode: "T101",
+        category: "Area & Boundary",
+      },
+    };
+
+    const nextRules = [...currentRules, newRule];
+    updateRulesetRules(targetRuleset.id, nextRules);
+
+    if (targetRuleset.id === ruleset?.id) {
+      useRulesStore.getState().replaceAll(nextRules, [newRuleId], []);
+    }
+
+    setSelectedIds([newRuleId]);
+    toast.success(`Created "${newRuleName}"`);
+  }, [handleOpenAddRule, rules, ruleset, updateRulesetRules]);
 
   const handleStartAddRuleset = useCallback(
     (initialName?: string) => {
@@ -1104,11 +1149,16 @@ export function WorkpieceAnalyzeWorkspace({
         const ownerRuleset = ruleOwnerById.get(id) ?? ruleset;
 
         if (!ownerRuleset) return;
+
         const ownerRules = ownerRuleset.id === ruleset?.id ? rules : (ownerRuleset.rules ?? []);
         const idx = ownerRules.findIndex((r) => r.id === id);
+
         if (idx === -1) return;
-        const targetIdx = dir === "up" ? idx - 1 : idx + 1;
+
+        const targetIdx = dir === "up" ? idx + 1 : idx - 1;
+
         if (targetIdx < 0 || targetIdx >= ownerRules.length) return;
+
         const next = [...ownerRules];
         const [moved] = next.splice(idx, 1);
         next.splice(targetIdx, 0, moved);
@@ -1463,6 +1513,7 @@ export function WorkpieceAnalyzeWorkspace({
                     onMoveUp={(id) => railHandlers.onReorder(id, "up")}
                     onMoveDown={(id) => railHandlers.onReorder(id, "down")}
                     onDeleteLayer={(id) => railHandlers.onDelete(id)}
+                    onCreateRegion={handleCreateQuickRoiRule}
                   />
                 </div>
               ) : (

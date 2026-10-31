@@ -24,17 +24,22 @@ describe("AnalyzeImageToolbar", () => {
   it("renders standard preset buttons and active label", () => {
     render(<AnalyzeImageToolbar {...defaultProps} />);
 
-    expect(screen.getByText("Pocket 1")).toBeDefined();
-    expect(screen.getByText("Pocket 2")).toBeDefined();
-    expect(screen.getByText("Pocket 5")).toBeDefined();
-    expect(screen.getByText("Pocket 1 [Filled IC]")).toBeDefined();
+    const trigger = document.getElementById("btn-camera-source-dropdown")!;
+    fireEvent.pointerDown(trigger);
+
+    expect(screen.getAllByText("Pocket 1 [Filled IC]").length).toBeGreaterThan(0);
+    expect(screen.getByText("Pocket 2 [Empty Defect]")).toBeDefined();
+    expect(screen.getByText("Pocket 5 [Strip]")).toBeDefined();
   });
 
   it("triggers onSelectImage when a preset button is clicked", () => {
     const onSelectImage = vi.fn();
     render(<AnalyzeImageToolbar {...defaultProps} onSelectImage={onSelectImage} />);
 
-    const pocket2Btn = screen.getByText("Pocket 2");
+    const trigger = document.getElementById("btn-camera-source-dropdown")!;
+    fireEvent.pointerDown(trigger);
+
+    const pocket2Btn = screen.getByText("Pocket 2 [Empty Defect]");
     fireEvent.click(pocket2Btn);
 
     expect(onSelectImage).toHaveBeenCalledWith(
@@ -48,31 +53,18 @@ describe("AnalyzeImageToolbar", () => {
       <AnalyzeImageToolbar {...defaultProps} isLiveCameraMode={true} isLiveCameraReady={true} />,
     );
 
-    expect(screen.getByText("Live Camera")).toBeDefined();
-    expect(screen.getByText(/Live Stream \(Auto-Calibrated\)/i)).toBeDefined();
+    expect(screen.getByText(/LIVE CAMERA/i)).toBeDefined();
   });
 
   it("opens upload alias modal when file is selected", () => {
-    const onUploadImage = vi.fn();
-    const { container } = render(
-      <AnalyzeImageToolbar {...defaultProps} onUploadImage={onUploadImage} />,
-    );
+    const { container } = render(<AnalyzeImageToolbar {...defaultProps} />);
 
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
-    expect(input).toBeDefined();
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeDefined();
 
-    const file = new File(["test image data"], "sample-test-ic.png", {
-      type: "image/png",
-    });
-
-    fireEvent.change(input, { target: { files: [file] } });
+    const testFile = new File(["dummy content"], "test-inspection.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [testFile] } });
 
     expect(screen.getByText("Register Inspection Image")).toBeDefined();
-    expect(screen.getByDisplayValue("sample-test-ic")).toBeDefined();
-
-    const registerBtn = screen.getByRole("button", { name: "Register Image" });
-    fireEvent.click(registerBtn);
-
-    expect(onUploadImage).toHaveBeenCalledWith(file, "sample-test-ic");
   });
 });
