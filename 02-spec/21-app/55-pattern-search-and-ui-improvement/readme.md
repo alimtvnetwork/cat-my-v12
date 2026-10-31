@@ -165,3 +165,68 @@ mismatch (1042x403, 392x373 vs calibrated 960x540) + boxes spanning
 pockets + "missing saved pattern boxes" together suggest placement
 and search run in an uncalibrated coordinate space and against
 unsaved geometry — not a matcher quality problem.
+
+## 9. Grayscale + luminance analysis (31-Oct-25, verified by coordinator)
+
+Verdict: spec 54's three grayscale modes (threshold / stretch / 1-bit)
+are DISPLAY-ONLY everywhere. No matcher takes a mode as input. Every
+matcher re-derives its own grayscale from raw RGBA with Rec.601 and
+ignores the mode buttons — the user changes what they SEE while
+matching input never changes. Coordinator-verified: `markWhiteBoxes`
+takes `whiteThreshold` only (white-box-marking.ts:153); the Pin1 hook
+admits it in a comment ("stretch/one-bit change the preview bits
+only — detection still uses thresholdLuma, so a mode switch never
+re-runs detection"); `applyLuminanceFilter` has zero production
+callers (only its own test); `toGrayscalePreviewRgba` has exactly one
+production caller, `PatternCanvas.tsx:224` (preview).
+
+- All production conversions are Rec.601 on raw sRGB bytes, no gamma
+  linearization: Y = 0.299R + 0.587G + 0.114B. No Rec.709, no simple
+  average anywhere in production. MBUD 4 answer: Rec.601 is canonical
+  de facto (frontend and backend agree exactly); the fix is modes
+  reaching matchers, not new weights.
+- "Threshold" now means three different things: white-box threshold =
+  true binarization 0/255 (commit 55c8ffbf changed it from whiten-only
+  via `applyGrayscaleBitDepthContrast`, so spec 54 §20/§22 claims about
+  "unchanged" legacy output are stale); Pin1 threshold = whiten-only on
+  continuous gray (private copy in Pin1Canvas); Pin1 1-bit with
+  DarkIndentation = dark→white, OPPOSITE to white-box 1-bit
+  bright→white. White-box stretch = continuous stretch; Pin1 stretch =
+  stretch then polarity-binarize.
+- Pin1 silent threshold override (frontend round-hole-detector.ts AND
+  backend pin1_detection.py, identical): with DarkIndentation, if the
+  user's thresholdLuma >= region mean luma it is silently replaced by
+  max(15, round(mean x 0.75)). The slider value is not the value used.
+  Pin1 default thresholdLuma is 35 (dark-only) vs marking default 170.
+- Atmel chip matcher is not a search: it compares each box's mean raw
+  luma against hardcoded GOLDEN_ATMEL_LUMAS (24 constants from one
+  golden sample) at fixed relative positions. No template correlation,
+  no taught reference, no grayscale control affects its verdict.
+  `greyscaleLevel` is computed but never passed to it.
+- Taught-pattern analyzer genuinely searches (translation + rotation
+  in 5-degree steps), but: (a) its positional stage is bright-only
+  (`findWhiteBoxes` skips every pixel below threshold), so dark
+  markings can never become candidates; (b) boxes with no stored
+  `expectedLuma` never match, by design — legacy rules fail
+  permanently. Saved threshold/greyscaleLevel from teach only feed the
+  positional threshold; no mode is stored or read.
+- Dead / decorative luminance features: the whole
+  luminance-quantizer.ts engine (percentile stretch, Otsu, 2-bit
+  quantize, polarity invert, offscreen buffer); StandardIntensityTool
+  metric/limits are local useState only, never written to settings;
+  `ATMEL_24_MARKING_OFFSETS` golden table defined but never
+  referenced (a second golden table drifting from the live one);
+  `toTwoBitGray` matching path effectively dormant (every real caller
+  passes a threshold).
+- Simulation's carrier-tape evaluator computes raw Rec.601 luma
+  throughout; no threshold, stretch, or mode reaches it.
+- Fix list (priority order): (1) one shared `toMatchingGray(rgba,
+  mode, threshold)` entry feeding every matcher, or label mode buttons
+  preview-only; (2) collapse to one threshold implementation, polarity
+  as a separate explicit invert; (3) stop silently overriding Pin1's
+  threshold (surface the effective value); (4) replace the Atmel fixed
+  golden table with the taught constellation or scope that tool to
+  Atmel-only; (5) dark-marking positional path + expectedLuma backfill
+  in the analyzer; (6) wire or delete the dead luminance features and
+  the second golden table; (7) reconcile threshold scales (35 vs 170)
+  and document each tool's slider end.
