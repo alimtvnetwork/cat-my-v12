@@ -200,7 +200,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           targetWidth: stdSource.width,
           targetHeight: stdSource.height,
           searchRegion: searchRegion ?? stdRegion,
-          toleranceLuma: 22,
+          toleranceLuma: tolerancePx,
           minMatchPercent,
         });
 
@@ -248,7 +248,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           targetWidth: source.width,
           targetHeight: source.height,
           searchRegion: newRegion,
-          toleranceLuma: 22,
+          toleranceLuma: tolerancePx,
           minMatchPercent,
         });
 
@@ -285,7 +285,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: tolerancePx,
         minMatchPercent,
       });
 
@@ -314,7 +314,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: tolerancePx,
         minMatchPercent,
       });
 
@@ -348,7 +348,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       targetWidth: source.width,
       targetHeight: source.height,
       searchRegion: effectiveRegion,
-      toleranceLuma: 22,
+      toleranceLuma: tolerancePx,
       minMatchPercent,
     });
 
@@ -388,7 +388,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: stdSource.width,
         targetHeight: stdSource.height,
         searchRegion: stdRegion,
-        toleranceLuma: 22,
+        toleranceLuma: tolerancePx,
         minMatchPercent,
       });
 
@@ -407,7 +407,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         targetWidth: input.width,
         targetHeight: input.height,
         searchRegion: region,
-        toleranceLuma: 22,
+        toleranceLuma: tolerancePx,
         minMatchPercent,
       });
 
@@ -444,7 +444,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           targetWidth: stdSource.width,
           targetHeight: stdSource.height,
           searchRegion: stdRegion,
-          toleranceLuma: 22,
+          toleranceLuma: tolerancePx,
           minMatchPercent,
         });
 
@@ -484,6 +484,10 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     greyscaleLevel,
     tolerancePx,
     minMatchPercent,
+    // Spec 55: the taught search is no longer dropped at the simulation
+    // boundary (the hook draws it and uses it as fallback capture
+    // origin; the crop evaluator itself runs in crop-pixel space).
+    searchRegion,
   });
 
   return {

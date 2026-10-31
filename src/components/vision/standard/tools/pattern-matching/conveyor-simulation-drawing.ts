@@ -1,18 +1,10 @@
-import {
-  ALL_ATMEL_BOX_NUMBERS,
-  ATMEL_24_BOX_DEFINITIONS,
-  buildAccuratePatternMatchResult,
-} from "./atmel-chip-boxes";
-import {
-  drawMatchEnvelope,
-  drawMatchedBoxItems,
-} from "./pattern-match-canvas-drawing";
+import type { SearchRegion } from "@/lib/vision/white-box-marking";
+import { drawMatchEnvelope, drawMatchedBoxItems } from "./pattern-match-canvas-drawing";
 import {
   type CapturedPocketFrame,
   type DeviceChipType,
   type DeviceInspectionResult,
   type SimulationPhase,
-  STM8_REAL_FAILED_BOX_NUMBERS,
 } from "./useConveyorSimulation";
 
 export interface ConveyorRenderParams {
@@ -29,8 +21,16 @@ export interface ConveyorRenderParams {
   chipStm8Img: HTMLImageElement | null;
   phase?: SimulationPhase;
   capturedFrames?: Array<CapturedPocketFrame | null>;
-  onDeviceAtInspection?: (deviceIndex: number) => void;
-  onCapturePocket?: (deviceIndex: number) => void;
+  /** Taught search region in canvas backing pixels, drawn as a dashed labeled outline when provided. */
+  taughtSearchRegion?: SearchRegion | null;
+  onDeviceAtInspection?: (
+    deviceIndex: number,
+    chipRect: { x: number; y: number; width: number; height: number },
+  ) => void;
+  onCapturePocket?: (
+    deviceIndex: number,
+    chipRect: { x: number; y: number; width: number; height: number },
+  ) => void;
 }
 
 export const SIM_X_INSPECT = 700;
@@ -40,6 +40,22 @@ export const SIM_POCKET_HEIGHT = 200;
 export const SIM_CHIP_WIDTH = 138;
 export const SIM_CHIP_HEIGHT = 146;
 export const TOTAL_DEVICES = 15;
+
+/**
+ * Camera reticle rect in canvas backing pixels (spec 55: single source
+ * of truth shared by the drawing and the canvas toolbar overlay).
+ */
+export function getConveyorReticleRect(
+  width: number,
+  height: number,
+): { x: number; y: number; width: number; height: number } {
+  return {
+    x: Math.floor(width / 2) - 110,
+    y: Math.floor(height / 2) - 110,
+    width: 220,
+    height: 220,
+  };
+}
 
 export function drawConveyorSimulation(params: ConveyorRenderParams): void {
   const {
@@ -109,7 +125,11 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
   ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
   ctx.lineWidth = 1;
 
-  for (let tx = -textureSpacing + textureOffset; tx < width + textureSpacing; tx += textureSpacing) {
+  for (
+    let tx = -textureSpacing + textureOffset;
+    tx < width + textureSpacing;
+    tx += textureSpacing
+  ) {
     ctx.beginPath();
     ctx.moveTo(tx, by1 + 48);
     ctx.lineTo(tx, by2 - 48);
@@ -221,16 +241,17 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
   ctx.stroke();
 
   // Camera Lens Center Reticle [ + ]
+  const reticleRect = getConveyorReticleRect(width, height);
   ctx.strokeStyle = "rgba(0, 229, 255, 0.9)";
   ctx.lineWidth = 2;
-  ctx.strokeRect(inspectX - 110, centerY - 110, 220, 220);
+  ctx.strokeRect(reticleRect.x, reticleRect.y, reticleRect.width, reticleRect.height);
 
   // Reticle Corner Guides
   const rSize = 16;
-  const rx1 = inspectX - 110;
-  const ry1 = centerY - 110;
-  const rx2 = inspectX + 110;
-  const ry2 = centerY + 110;
+  const rx1 = reticleRect.x;
+  const ry1 = reticleRect.y;
+  const rx2 = reticleRect.x + reticleRect.width;
+  const ry2 = reticleRect.y + reticleRect.height;
   ctx.strokeStyle = "#00e5ff";
   ctx.lineWidth = 3;
   // Top-left
@@ -307,6 +328,14 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
     const px1 = pocketX - SIM_POCKET_WIDTH / 2;
     const py1 = centerY - SIM_POCKET_HEIGHT / 2;
 
+    // Chip rect, computed once (spec 55): section B draws here, the
+    // trigger crops here, and section D maps evaluated boxes back
+    // through it. The trigger used to fire here, before the chip was
+    // drawn, so the crop read the previous frame's chip.
+    const cx1 = pocketX - SIM_CHIP_WIDTH / 2;
+    const cy1 = centerY - SIM_CHIP_HEIGHT / 2 + 8; // slight offset for pocket tag
+    const chipRect = { x: cx1, y: cy1, width: SIM_CHIP_WIDTH, height: SIM_CHIP_HEIGHT };
+
     const inspectedResult = deviceResults[i];
     const isInspected = inspectedResult !== null && inspectedResult !== undefined;
     const isSelected = selectedDeviceIndex === i;
@@ -321,28 +350,12 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
       ctx.fillRect(inspectX - 90, by1 + 46, 180, beltH - 92);
 
       // Radial strobe glow
-      const flash = ctx.createRadialGradient(
-        inspectX,
-        centerY,
-        20,
-        inspectX,
-        centerY,
-        180,
-      );
+      const flash = ctx.createRadialGradient(inspectX, centerY, 20, inspectX, centerY, 180);
       flash.addColorStop(0, "rgba(255, 255, 255, 0.8)");
       flash.addColorStop(0.3, "rgba(0, 229, 255, 0.4)");
       flash.addColorStop(1, "rgba(0, 0, 0, 0)");
       ctx.fillStyle = flash;
       ctx.fillRect(inspectX - 180, centerY - 180, 360, 360);
-    }
-
-    // Trigger pocket capture once pocket center enters optical trigger zone
-    if (isUnderCamera && pocketX >= inspectX - 5 && pocketX <= inspectX + 5) {
-      if (params.onCapturePocket) {
-        params.onCapturePocket(i);
-      } else if (params.onDeviceAtInspection) {
-        params.onDeviceAtInspection(i);
-      }
     }
 
     // A. Recessed Molded Pocket Compartment ("pocket where device will be")
@@ -373,10 +386,12 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
     ctx.strokeStyle = isSelected
       ? "#00e5ff"
       : isInspected
-      ? inspectedResult.isPass
-        ? "rgba(16, 185, 129, 0.6)"
-        : "rgba(244, 63, 94, 0.7)"
-      : "#262c38";
+        ? inspectedResult.isPass
+          ? "rgba(16, 185, 129, 0.6)"
+          : inspectedResult.hasNoFrame === true
+            ? "rgba(100, 116, 139, 0.6)"
+            : "rgba(244, 63, 94, 0.7)"
+        : "#262c38";
     ctx.lineWidth = isSelected ? 2.5 : 1.5;
     ctx.beginPath();
     ctx.roundRect(px1, py1, SIM_POCKET_WIDTH, SIM_POCKET_HEIGHT, 12);
@@ -399,9 +414,6 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
     ctx.fillText(pocketTag, pocketX, py1 + 15);
 
     // B. IC Device Seated Inside the Pocket or Empty Pocket Nest
-    const cx1 = pocketX - SIM_CHIP_WIDTH / 2;
-    const cy1 = centerY - SIM_CHIP_HEIGHT / 2 + 8; // slight offset for pocket tag
-
     if (isEmpty) {
       // Empty Pocket Nest ("sometimes pocket can be empty")
       ctx.fillStyle = "#06080a";
@@ -454,10 +466,23 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
       ctx.strokeStyle = isInspected
         ? inspectedResult.isPass
           ? "rgba(16, 185, 129, 0.85)"
-          : "rgba(244, 63, 94, 0.9)"
+          : inspectedResult.hasNoFrame === true
+            ? "rgba(100, 116, 139, 0.85)"
+            : "rgba(244, 63, 94, 0.9)"
         : "rgba(255, 255, 255, 0.08)";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(cx1, cy1, SIM_CHIP_WIDTH, SIM_CHIP_HEIGHT);
+    }
+
+    // Trigger pocket capture AFTER the chip is drawn this frame (so the
+    // live-canvas crop reads the just-drawn chip) and BEFORE badges, so
+    // badge pixels never pollute the crop.
+    if (isUnderCamera && pocketX >= inspectX - 5 && pocketX <= inspectX + 5) {
+      if (params.onCapturePocket) {
+        params.onCapturePocket(i, chipRect);
+      } else if (params.onDeviceAtInspection) {
+        params.onDeviceAtInspection(i, chipRect);
+      }
     }
 
     // C. Pocket Status & Inspection Badges
@@ -488,16 +513,25 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
         ctx.fillText("✗ EMPTY POCKET (0.0%)", pocketX, py1 + SIM_POCKET_HEIGHT - 10);
       } else {
         const hasPassed = inspectedResult.isPass;
-        const badgeText = hasPassed
-          ? `✓ PASS 100%`
-          : `✗ REJECT (${inspectedResult.score.toFixed(1)}%)`;
-        const badgeBg = hasPassed ? "rgba(5, 150, 105, 0.95)" : "rgba(225, 29, 72, 0.95)";
+        const hasNoFrame = inspectedResult.hasNoFrame === true;
+        // No data is not a defect: a no-frame pocket reports NO FRAME,
+        // never a REJECT badge over missing data.
+        const badgeText = hasNoFrame
+          ? "NO FRAME CAPTURED"
+          : hasPassed
+            ? `✓ PASS 100%`
+            : `✗ REJECT (${inspectedResult.score.toFixed(1)}%)`;
+        const badgeBg = hasNoFrame
+          ? "rgba(51, 65, 85, 0.95)"
+          : hasPassed
+            ? "rgba(5, 150, 105, 0.95)"
+            : "rgba(225, 29, 72, 0.95)";
         const badgeW = 126;
         const badgeH = 18;
 
         ctx.fillStyle = badgeBg;
         ctx.fillRect(pocketX - badgeW / 2, py1 + SIM_POCKET_HEIGHT - 22, badgeW, badgeH);
-        ctx.strokeStyle = hasPassed ? "#34d399" : "#fb7185";
+        ctx.strokeStyle = hasNoFrame ? "#94a3b8" : hasPassed ? "#34d399" : "#fb7185";
         ctx.lineWidth = 1;
         ctx.strokeRect(pocketX - badgeW / 2, py1 + SIM_POCKET_HEIGHT - 22, badgeW, badgeH);
 
@@ -527,82 +561,78 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
     ctx.textAlign = "start";
 
     // D. True Machine Vision Box Overlays (Only for populated devices)
+    // Spec 55: evaluated boxes are drawn with ONE transform from the
+    // capture origin into canvas space — no resynthesis from golden box
+    // definitions, and nothing is drawn for unevaluated or no-frame
+    // pockets. With live-canvas crops the origin is the drawn chip rect
+    // itself, so this is a pure translation; the scale branch covers
+    // crops taken at any other size.
     const isViewingInspection =
       !isEmpty && (isSelected || (isInspected && Math.abs(pocketX - inspectX) < 70));
 
     if (isViewingInspection) {
-      const accurateMatch =
-        inspectedResult?.matchResult ??
-        (isStm8
-          ? buildAccuratePatternMatchResult({
-              chipX: cx1,
-              chipY: cy1,
-              hasDefect: true,
-              defectBoxNumbers: STM8_REAL_FAILED_BOX_NUMBERS,
-            })
-          : buildAccuratePatternMatchResult({
-              chipX: cx1,
-              chipY: cy1,
-              hasDefect: false,
-              defectBoxNumbers: [],
-            }));
+      const inspectedMatch = inspectedResult?.matchResult ?? null;
 
-      const bodyX = cx1 + Math.round((SIM_CHIP_WIDTH * 9) / 140);
-      const bodyY = cy1 + Math.round((SIM_CHIP_HEIGHT * 10) / 148);
-      const bodyW = Math.round((SIM_CHIP_WIDTH * 122) / 140);
-      const bodyH = Math.round((SIM_CHIP_HEIGHT * 122) / 148);
-
-      const scaleX = bodyW / 100;
-      const scaleY = bodyH / 100;
-
-      let bMinX = Number.POSITIVE_INFINITY;
-      let bMinY = Number.POSITIVE_INFINITY;
-      let bMaxX = Number.NEGATIVE_INFINITY;
-      let bMaxY = Number.NEGATIVE_INFINITY;
-
-      const adjustedBoxes = accurateMatch.boxResults.map((b) => {
-        const def = ATMEL_24_BOX_DEFINITIONS[b.boxNumber - 1];
-        const baseRelX = def ? def.relX : b.referenceX;
-        const baseRelY = def ? def.relY : b.referenceY;
-        const baseW = def ? def.width : b.width;
-        const baseH = def ? def.height : b.height;
-        const relX = Math.round(baseRelX * scaleX);
-        const relY = Math.round(baseRelY * scaleY);
-        const boxW = Math.max(2, Math.round(baseW * scaleX));
-        const boxH = Math.max(2, Math.round(baseH * scaleY));
-        const finalX = bodyX + relX;
-        const finalY = bodyY + relY;
-
-        bMinX = Math.min(bMinX, finalX);
-        bMinY = Math.min(bMinY, finalY);
-        bMaxX = Math.max(bMaxX, finalX + boxW);
-        bMaxY = Math.max(bMaxY, finalY + boxH);
-
-        return {
+      if (inspectedMatch !== null && inspectedResult?.hasNoFrame !== true) {
+        const origin = capturedFrames[i]?.captureOrigin ?? chipRect;
+        const scaleX = SIM_CHIP_WIDTH / origin.width;
+        const scaleY = SIM_CHIP_HEIGHT / origin.height;
+        const mappedBoxes = inspectedMatch.boxResults.map((b) => ({
           ...b,
-          width: boxW,
-          height: boxH,
-          referenceX: finalX,
-          referenceY: finalY,
-          matchedX: finalX,
-          matchedY: finalY,
-        };
-      });
+          matchedX: origin.x + b.matchedX * scaleX,
+          matchedY: origin.y + b.matchedY * scaleY,
+          referenceX: origin.x + b.referenceX * scaleX,
+          referenceY: origin.y + b.referenceY * scaleY,
+        }));
 
-      const adjustedMatch = {
-        ...accurateMatch,
-        patternBounds: {
-          x: bMinX - 4,
-          y: bMinY - 4,
-          width: Math.max(1, bMaxX - bMinX + 8),
-          height: Math.max(1, bMaxY - bMinY + 8),
-        },
-        boxResults: adjustedBoxes,
-      };
+        if (mappedBoxes.length > 0) {
+          let bMinX = Number.POSITIVE_INFINITY;
+          let bMinY = Number.POSITIVE_INFINITY;
+          let bMaxX = Number.NEGATIVE_INFINITY;
+          let bMaxY = Number.NEGATIVE_INFINITY;
 
-      drawMatchEnvelope(ctx, adjustedMatch);
-      drawMatchedBoxItems(ctx, adjustedBoxes);
+          for (const box of mappedBoxes) {
+            bMinX = Math.min(bMinX, box.matchedX);
+            bMinY = Math.min(bMinY, box.matchedY);
+            bMaxX = Math.max(bMaxX, box.matchedX + box.width);
+            bMaxY = Math.max(bMaxY, box.matchedY + box.height);
+          }
+
+          drawMatchEnvelope(ctx, {
+            ...inspectedMatch,
+            patternBounds: {
+              x: bMinX - 4,
+              y: bMinY - 4,
+              width: Math.max(1, bMaxX - bMinX + 8),
+              height: Math.max(1, bMaxY - bMinY + 8),
+            },
+          });
+          drawMatchedBoxItems(ctx, mappedBoxes);
+        }
+      }
     }
+  }
+
+  // Taught search region outline (spec 55): the region the user taught,
+  // in the same canvas space as everything else.
+  if (params.taughtSearchRegion) {
+    const taught = params.taughtSearchRegion;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(250, 204, 21, 0.9)";
+    ctx.fillStyle = "rgba(250, 204, 21, 0.06)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.fillRect(taught.x, taught.y, taught.width, taught.height);
+    ctx.strokeRect(taught.x, taught.y, taught.width, taught.height);
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+    ctx.fillRect(taught.x, Math.max(0, taught.y - 18), 130, 16);
+    ctx.fillStyle = "#fef08a";
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "start";
+    ctx.fillText("TAUGHT SEARCH", taught.x + 6, Math.max(11, taught.y - 6));
+    ctx.restore();
   }
 
   // 6. Top Industrial HUD Bar
@@ -627,8 +657,8 @@ export function drawConveyorSimulation(params: ConveyorRenderParams): void {
   const titleText = isPhaseCompleted
     ? "HORIZONTAL POCKET CONVEYOR - 15/15 EVALUATED"
     : phase === "evaluating"
-    ? "HORIZONTAL POCKET CONVEYOR - EVALUATING POCKETS..."
-    : "HORIZONTAL POCKET CONVEYOR - PHASE 1: SEQUENTIAL POCKET CAPTURE";
+      ? "HORIZONTAL POCKET CONVEYOR - EVALUATING POCKETS..."
+      : "HORIZONTAL POCKET CONVEYOR - PHASE 1: SEQUENTIAL POCKET CAPTURE";
   ctx.fillText(titleText, 28, 20);
 
   ctx.fillStyle = "#00e5ff";
