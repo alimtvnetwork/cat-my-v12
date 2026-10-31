@@ -1,4 +1,14 @@
-import type { ReactNode } from "react";
+import React, { useState } from "react";
+import {
+  Lock,
+  Unlock,
+  Square,
+  Circle,
+  Shield,
+  FlipHorizontal,
+  Crop,
+  Sliders,
+} from "lucide-react";
 
 export interface RoiToolbarRegion {
   x: number;
@@ -7,44 +17,199 @@ export interface RoiToolbarRegion {
   height: number;
 }
 
+export type RoiShapeType = "rectangle" | "square" | "circle";
+
 export interface RoiToolbarProps {
   region: RoiToolbarRegion | null;
   canvasWidth: number;
   canvasHeight: number;
   label: string;
-  children?: ReactNode;
+  isLocked?: boolean;
+  onToggleLock?: () => void;
+  shape?: RoiShapeType;
+  onShapeChange?: (shape: RoiShapeType) => void;
+  isMaskEnabled?: boolean;
+  onToggleMask?: () => void;
+  isInverted?: boolean;
+  onToggleInvert?: () => void;
+  onCrop?: () => void;
+  opacity?: number;
+  onOpacityChange?: (opacity: number) => void;
+  children?: React.ReactNode;
 }
 
 /**
- * Toolbar anchored to a canvas region (spec 55: pattern search toolbar
- * and icons must render inside/attached to the ROI surface). Positions
- * in percent of the canvas so it tracks the region exactly at any
- * display size. The bar sits just above the region's top edge, falling
- * back inside the region when it starts near the top edge. The
- * container is pointer-events-none so it never blocks canvas drags;
- * buttons inside re-enable pointer events.
+ * Floating Toolbar anchored to a canvas region (Spec 83: Modern Design Layer Integration).
+ * Tracks region in percentage coordinates so it remains pinned at any viewport resolution.
+ * Flips inside if near the top boundary. Houses high-density action controls.
  */
-export function RoiToolbar(props: RoiToolbarProps): ReactNode {
-  if (props.region === null || props.canvasWidth <= 0 || props.canvasHeight <= 0) {
+export function RoiToolbar({
+  region,
+  canvasWidth,
+  canvasHeight,
+  label,
+  isLocked = false,
+  onToggleLock,
+  shape = "rectangle",
+  onShapeChange,
+  isMaskEnabled = false,
+  onToggleMask,
+  isInverted = false,
+  onToggleInvert,
+  onCrop,
+  opacity = 100,
+  onOpacityChange,
+  children,
+}: RoiToolbarProps): React.JSX.Element | null {
+  const [hasSliderOpen, setHasSliderOpen] = useState(false);
+
+  if (region === null || canvasWidth <= 0 || canvasHeight <= 0) {
     return null;
   }
 
-  const leftPct = (props.region.x / props.canvasWidth) * 100;
-  const aboveTopPct = ((props.region.y - 30) / props.canvasHeight) * 100;
-  const insideTopPct = (props.region.y / props.canvasHeight) * 100;
-  const topPct = props.region.y >= 30 ? aboveTopPct : insideTopPct;
+  const leftPct = (region.x / canvasWidth) * 100;
+  const aboveTopPct = ((region.y - 34) / canvasHeight) * 100;
+  const insideTopPct = (region.y / canvasHeight) * 100;
+  const topPct = region.y >= 34 ? aboveTopPct : insideTopPct;
+
+  const cycleShape = () => {
+    if (!onShapeChange) {
+      return;
+    }
+
+    if (shape === "rectangle") {
+      onShapeChange("square");
+    } else if (shape === "square") {
+      onShapeChange("circle");
+    } else {
+      onShapeChange("rectangle");
+    }
+  };
 
   return (
     <div
-      className="pointer-events-none absolute z-20 flex items-center gap-1 rounded bg-black/70 px-1.5 py-1 text-[11px] text-white"
+      className="pointer-events-none absolute z-30 flex items-center gap-1.5 rounded-md bg-slate-950/90 border border-slate-700/80 px-2 py-1 text-[11px] text-white shadow-xl backdrop-blur-sm"
       style={{ left: `${leftPct}%`, top: `${topPct}%` }}
       data-testid="roi-toolbar"
     >
-      <span className="font-medium whitespace-nowrap">
-        {props.label} • {props.region.width}×{props.region.height}
+      {/* Label and Geometry Badge */}
+      <span className="font-mono font-medium text-slate-300 whitespace-nowrap pr-1 border-r border-slate-700/80">
+        {label} • {Math.round(region.width)}×{Math.round(region.height)}
       </span>
 
-      <span className="pointer-events-auto flex items-center gap-1">{props.children}</span>
+      {/* Interactive Controls Strip */}
+      <div className="pointer-events-auto flex items-center gap-1">
+        {/* Lock / Unlock Toggle */}
+        {onToggleLock && (
+          <button
+            type="button"
+            onClick={onToggleLock}
+            title={isLocked ? "Unlock ROI Position" : "Lock ROI Position"}
+            className={`p-1 rounded transition-colors ${
+              isLocked
+                ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+            data-testid="btn-toggle-lock"
+          >
+            {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
+          </button>
+        )}
+
+        {/* Shape Selector */}
+        {onShapeChange && (
+          <button
+            type="button"
+            onClick={cycleShape}
+            title={`Current Shape: ${shape}. Click to cycle.`}
+            className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            data-testid="btn-shape-selector"
+          >
+            {shape === "circle" ? <Circle size={12} /> : <Square size={12} />}
+          </button>
+        )}
+
+        {/* Mask Toggle */}
+        {onToggleMask && (
+          <button
+            type="button"
+            onClick={onToggleMask}
+            title={isMaskEnabled ? "Disable Mask" : "Enable Mask Overlay"}
+            className={`p-1 rounded transition-colors ${
+              isMaskEnabled
+                ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+            data-testid="btn-toggle-mask"
+          >
+            <Shield size={12} />
+          </button>
+        )}
+
+        {/* Invert Polarity Toggle */}
+        {onToggleInvert && (
+          <button
+            type="button"
+            onClick={onToggleInvert}
+            title={isInverted ? "Normal Polarity" : "Inverted Polarity"}
+            className={`p-1 rounded transition-colors ${
+              isInverted
+                ? "bg-sky-500/20 text-sky-400 hover:bg-sky-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+            data-testid="btn-toggle-invert"
+          >
+            <FlipHorizontal size={12} />
+          </button>
+        )}
+
+        {/* Crop Template */}
+        {onCrop && (
+          <button
+            type="button"
+            onClick={onCrop}
+            title="Crop & Extract Pattern Template"
+            className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            data-testid="btn-crop-template"
+          >
+            <Crop size={12} />
+          </button>
+        )}
+
+        {/* Opacity Slider Toggle */}
+        {onOpacityChange && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setHasSliderOpen((prev) => !prev)}
+              title={`Opacity: ${opacity}%`}
+              className={`p-1 rounded transition-colors ${
+                hasSliderOpen ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+              data-testid="btn-opacity-slider"
+            >
+              <Sliders size={12} />
+            </button>
+
+            {hasSliderOpen && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 flex items-center gap-2 rounded bg-slate-900 border border-slate-700 px-2 py-1 shadow-lg z-50">
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  step={5}
+                  value={opacity}
+                  onChange={(e) => onOpacityChange(Number(e.target.value))}
+                  className="w-16 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400"
+                />
+                <span className="font-mono text-[9px] text-slate-300 min-w-[24px]">{opacity}%</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {children}
+      </div>
     </div>
   );
 }

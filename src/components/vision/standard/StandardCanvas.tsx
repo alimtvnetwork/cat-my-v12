@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { PatternSearchSettings } from "@/domain/vision/pattern-search";
 import { Geometry, ShapeType } from "@/domain/vision/shapes";
 import { imageToScreen, clampRectToBounds, IMAGE_BOUNDS, screenToImage } from "@/lib/editor/coords";
 import { Viewport } from "@/lib/editor/types";
 import { defaultWorkpieceFilledSample } from "@/lib/vision/workpiece-rule-analyzer";
+import { RoiToolbar, type RoiShapeType, type RoiToolbarRegion } from "@/components/vision/white-box/RoiToolbar";
 
 import { RegionOverlay } from "./RegionOverlay";
 
@@ -21,6 +22,12 @@ export function StandardCanvas({
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
+
+  // Modern In-ROI and Handle States (Spec 83)
+  const [activeRegionId, setActiveRegionId] = useState<string>("search");
+  const [isRoiLocked, setIsRoiLocked] = useState<boolean>(false);
+  const [roiShape, setRoiShape] = useState<RoiShapeType>("rectangle");
+  const [roiOpacity, setRoiOpacity] = useState<number>(100);
 
   const zoomFactor = settings.view.zoom / 100;
   const viewport: Viewport = { panX, panY, zoom: zoomFactor };
@@ -238,23 +245,26 @@ export function StandardCanvas({
             edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(ex, ey - 8);
-          ctx.lineTo(ex, ey + 8);
+          ctx.arc(ex, ey, 4, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.fillStyle =
-            edge.polarity === "dark-to-light" ? "#34d399" : "#fbbf24";
           ctx.beginPath();
-          ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.moveTo(ex - 6, ey);
+          ctx.lineTo(ex + 6, ey);
+          ctx.moveTo(ex, ey - 6);
+          ctx.lineTo(ex, ey + 6);
+          ctx.stroke();
         }
 
-        if (debugCaliper.edges.length >= 2) {
-          const first = debugCaliper.edges[0];
-          const last = debugCaliper.edges[debugCaliper.edges.length - 1];
-          const x1 = first.canvasCoordinate.x * zoomFactor;
-          const x2 = last.canvasCoordinate.x * zoomFactor;
-          const yPos = (first.canvasCoordinate.y - 14) * zoomFactor;
+        if (
+          debugCaliper.edges.length >= 2 &&
+          typeof debugCaliper.measuredWidthPx === "number"
+        ) {
+          const e1 = debugCaliper.edges[0];
+          const e2 = debugCaliper.edges[1];
+          const x1 = Math.min(e1.canvasCoordinate.x, e2.canvasCoordinate.x) * zoomFactor;
+          const x2 = Math.max(e1.canvasCoordinate.x, e2.canvasCoordinate.x) * zoomFactor;
+          const yPos = e1.canvasCoordinate.y * zoomFactor;
 
           ctx.strokeStyle = "#38bdf8";
           ctx.lineWidth = 1.5;
@@ -309,27 +319,22 @@ export function StandardCanvas({
 
       const anchorImage = screenToImage(anchorScreen, viewport);
 
-      const newPanX = anchorScreen.x - anchorImage.x * newZoom;
-      const newPanY = anchorScreen.y - anchorImage.y * newZoom;
+      setPanX(anchorScreen.x - anchorImage.x * newZoom);
+      setPanY(anchorScreen.y - anchorImage.y * newZoom);
 
-      setPanX(newPanX);
-      setPanY(newPanY);
-
-      setSettings((s) => ({
-        ...s,
-        view: { ...s.view, zoom: Math.round(newZoom * 100) },
-      }));
+      setSettings((s) => ({ ...s, view: { ...s.view, zoom: Math.round(newZoom * 100) } }));
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
-  }, [setSettings, zoomFactor, viewport]);
+  }, [panX, panY, zoomFactor, viewport, setSettings]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
       e.preventDefault();
       const el = e.currentTarget as HTMLElement;
       el.setPointerCapture(e.pointerId);
+
       const startX = e.clientX;
       const startY = e.clientY;
       const startPanX = panX;
@@ -370,11 +375,47 @@ export function StandardCanvas({
   const showRegions = viewModes?.regions ?? true;
   const hasGrid = viewModes?.grid ?? false;
 
+  // Active Region Readouts for Floating In-ROI Toolbar
+  const activeToolbarInfo = useMemo(() => {
+    if (activeRegionId === "pattern") {
+      const g = settings.patternRegion.geometry;
+      const screenTL = imageToScreen({ x: g.x ?? 0, y: g.y ?? 0 }, viewport);
+      return {
+        region: {
+          x: screenTL.x,
+          y: screenTL.y,
+          width: Math.max(10, (g.width ?? 100) * zoomFactor),
+          height: Math.max(10, (g.height ?? 100) * zoomFactor),
+        },
+        label: "PATTERN TEMPLATE",
+      };
+    }
+
+    const g = settings.searchRegion.geometry;
+    const screenTL = imageToScreen({ x: g.x ?? 0, y: g.y ?? 0 }, viewport);
+    return {
+      region: {
+        x: screenTL.x,
+        y: screenTL.y,
+        width: Math.max(10, (g.width ?? 100) * zoomFactor),
+        height: Math.max(10, (g.height ?? 100) * zoomFactor),
+      },
+      label: "SEARCH REGION",
+    };
+  }, [
+    activeRegionId,
+    settings.patternRegion.geometry,
+    settings.searchRegion.geometry,
+    viewport,
+    zoomFactor,
+  ]);
+
   return (
     <div
       ref={canvasRef}
       className="flex-1 bg-neutral-900 relative overflow-hidden touch-none select-none"
       onPointerDown={handlePointerDown}
+      data-testid="standard-canvas-container"
     >
       <div
         style={{
@@ -416,25 +457,46 @@ export function StandardCanvas({
               top: panY,
               width: IMAGE_BOUNDS.width * zoomFactor,
               height: IMAGE_BOUNDS.height * zoomFactor,
-              border: "2px solid yellow",
+              border: "1px solid rgba(148, 163, 184, 0.35)",
               pointerEvents: "none",
             }}
           />
 
-          <RegionOverlay
-            color="blue"
-            geometry={settings.searchRegion.geometry}
-            onChange={updateSearchRegion}
-            viewport={viewport}
-            active={true}
+          {/* In-Canvas Floating ROI Toolbar pinned to Active Region */}
+          <RoiToolbar
+            region={activeToolbarInfo.region}
+            canvasWidth={canvasRef.current?.clientWidth ?? (IMAGE_BOUNDS.width * zoomFactor)}
+            canvasHeight={canvasRef.current?.clientHeight ?? (IMAGE_BOUNDS.height * zoomFactor)}
+            label={activeToolbarInfo.label}
+            isLocked={isRoiLocked}
+            onToggleLock={() => setIsRoiLocked((prev) => !prev)}
+            shape={roiShape}
+            onShapeChange={setRoiShape}
+            isMaskEnabled={settings.masks.some((m) => m.shape !== ShapeType.None)}
+            opacity={roiOpacity}
+            onOpacityChange={setRoiOpacity}
           />
 
           <RegionOverlay
-            color="#00ff00"
+            color="#00e5ff"
+            geometry={settings.searchRegion.geometry}
+            onChange={updateSearchRegion}
+            viewport={viewport}
+            active={activeRegionId === "search"}
+            isLocked={isRoiLocked}
+            label="SEARCH REGION"
+            onSelect={() => setActiveRegionId("search")}
+          />
+
+          <RegionOverlay
+            color="#10b981"
             geometry={settings.patternRegion.geometry}
             onChange={updatePatternRegion}
             viewport={viewport}
-            active={true}
+            active={activeRegionId === "pattern"}
+            isLocked={isRoiLocked}
+            label="PATTERN TEMPLATE"
+            onSelect={() => setActiveRegionId("pattern")}
           />
 
           {settings.masks.map(
@@ -442,11 +504,14 @@ export function StandardCanvas({
               mask.shape !== ShapeType.None && (
                 <RegionOverlay
                   key={i}
-                  color="red"
+                  color="#f59e0b"
                   geometry={mask.geometry}
                   onChange={(geom) => updateMaskRegion(i, geom)}
                   viewport={viewport}
-                  active={true}
+                  active={activeRegionId === `mask-${i}`}
+                  isLocked={isRoiLocked}
+                  label={`MASK #${i + 1}`}
+                  onSelect={() => setActiveRegionId(`mask-${i}`)}
                 />
               ),
           )}

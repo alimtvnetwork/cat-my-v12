@@ -11,9 +11,9 @@ Version: `1.0.0`
 
 | File | Status | Description |
 | --- | --- | --- |
-| `01-research-and-rca-spec.md` | Complete | Research and 4-part Root Cause Analysis investigating PhotoshopLayersPanel, RegionOverlay, RoiToolbar, and PatternMatchCanvas interaction conflicts. |
-| `02-architecture-spec.md` | Complete | Unified layer stack architecture, coordinate transformation pipeline, event bubbling/propagation model, and floating toolbar anchoring contracts. |
-| `03-100-modern-design-layer-improvements-spec.md` | Complete | EXACTLY 100 concrete, grounded improvements across 5 categories (MOD-LAY-001 to MOD-LAY-100) covering handles, toolbars, layer sync, drag isolation, and rendering. |
+| `01-architecture-spec.md` | Complete | Core architectural overview, unified Photoshop layer stack, 5-tier z-stacking model, hierarchical ROI container, coordinate spaces, and event isolation. |
+| `02-root-cause-analysis-spec.md` | Complete | Forensic 4-part Root Cause Analysis investigating visual degradation, neon magenta handles (`#ff00ff`), handle collisions, missing layer drag-and-drop, and ROI toolbar deficiencies. |
+| `03-100-modern-design-layer-improvements-spec.md` | In Progress / Complete | Catalog of 100 concrete, grounded improvements across 5 categories (MOD-LAY-001 to MOD-LAY-100) covering handles, toolbars, layer sync, drag isolation, and rendering. |
 | `04-implementation-guide-spec.md` | Complete | Step-by-step engineering blueprints with drop-in code implementations for `RegionOverlay.tsx`, `RoiToolbar.tsx`, `PhotoshopLayersPanel.tsx`, and `PatternMatchCanvas.tsx`. |
 | `readme.md` | Complete | Master specification index, directory manifest, architectural standards, and status rollup. |
 
@@ -21,19 +21,21 @@ Version: `1.0.0`
 
 ## 2. Document Index
 
-### 2.1 `01-research-and-rca-spec.md`
-Establishes the comparative analysis and Root Cause Analysis:
-- Disconnect between modern Photoshop layer semantics and standard vision ROI primitives.
-- Pointer event hijacking in `RegionOverlay.tsx` where whole-body capture blocked interior interactions.
-- Aesthetic degradation caused by neon magenta handles (`#ff00ff`) vs high-contrast CAD standards.
-- Static mode handle suppression in `PatternMatchCanvas.tsx` leading to interactive state mismatch.
+### 2.1 `01-architecture-spec.md`
+Establishes the architectural model for modern layer integration:
+- Unification of `PhotoshopLayersPanel.tsx` with standard vision inspection workbenches.
+- Strict 5-tier z-stacking order: Base Image ($Z_0$) $\prec$ Search ROI ($Z_1$) $\prec$ Pattern Templates ($Z_2$) $\prec$ Feature Markers ($Z_3$) $\prec$ Mask Overlays ($Z_4$).
+- Hierarchical ROI coordinate container and clipping mask mathematics.
+- 20px header drag grip bar (`⋮⋮`) with event separation protocol.
+- In-ROI floating action toolbar (`RoiToolbar.tsx`) anchoring mathematics.
 
-### 2.2 `02-architecture-spec.md`
-Defines the unified system architecture:
-- Layer hierarchy and z-index compositing model across camera image, ROI bounds, template masks, and overlay badges.
-- In-canvas floating toolbar positioning mathematics with collision-aware flip boundary (`y < 34px`).
-- Pointer capture isolation protocol ensuring that interior canvas actions (masking, sub-pixel tuning) never trigger container dragging.
-- State bridge specification connecting Zustand store, local tool parameters, and Photoshop layer metadata.
+### 2.2 `02-root-cause-analysis-spec.md`
+Provides comprehensive forensic 4-part Root Cause Analysis:
+- Visual degradation caused by raw neon magenta (`#ff00ff`) handles without borders or corner radius.
+- Unconditional `active={true}` passing in `StandardCanvas.tsx` causing handle collisions across multiple regions.
+- Missing layer drag-and-drop management and disconnected parameter tabs in `StandardPatternSearch.tsx`.
+- Passive read-only behavior of `RoiToolbar.tsx` lacking quick-action buttons (Lock, Shape, Mask, Invert, Crop, Opacity).
+- Suppression of interactive resize handles in static inspection mode within `PatternMatchCanvas.tsx`.
 
 ### 2.3 `03-100-modern-design-layer-improvements-spec.md`
 Catalogs 100 prioritized, concrete engineering improvements across 5 distinct categories (20 improvements per category):
