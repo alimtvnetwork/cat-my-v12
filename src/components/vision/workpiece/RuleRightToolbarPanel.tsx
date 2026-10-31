@@ -129,10 +129,17 @@ function RuleRightToolbarPanelContent({
 
       const safeValue =
         field === "width" || field === "height" ? Math.max(4, parsed) : Math.max(0, parsed);
+      const isSquare = String(rule.params?.shapeType ?? "") === "square";
+      const side =
+        field === "width" || field === "height"
+          ? Math.max(4, Math.min(safeValue, field === "width" ? rule.height : rule.width))
+          : safeValue;
 
       const nextRule: EditorRule = {
         ...rule,
-        [field]: safeValue,
+        ...(isSquare && (field === "width" || field === "height")
+          ? { width: side, height: side }
+          : { [field]: safeValue }),
       };
 
       onUpdateRule(nextRule);
@@ -206,9 +213,12 @@ function RuleRightToolbarPanelContent({
         ...(rule.params ?? {}),
         [key]: value,
       };
+      const isSquareShape = key === "shapeType" && value === "square";
+      const side = Math.max(4, Math.min(rule.width, rule.height));
 
       const nextRule: EditorRule = {
         ...rule,
+        ...(isSquareShape ? { width: side, height: side } : {}),
         params: nextParams,
       };
 

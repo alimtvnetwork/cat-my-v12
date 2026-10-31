@@ -62,6 +62,8 @@ import {
   evaluateTapeStripRules,
   type TapeStripEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
+import { pinPatternRule } from "@/lib/vision/pinned-pattern-geometry";
+import { APP_VERSION_INFO } from "@/lib/version-info";
 import {
   evaluateRuleGatingDecision,
   createSkippedValidationResult,
@@ -1160,8 +1162,23 @@ export function WorkpieceAnalyzeWorkspace({
         return;
       }
 
+      const region = params.searchRegion;
+      const hasRegion =
+        region &&
+        typeof region.x === "number" &&
+        typeof region.y === "number" &&
+        typeof region.width === "number" &&
+        typeof region.height === "number";
       const updatedRule: EditorRule = {
         ...activeRule,
+        ...(hasRegion
+          ? {
+              x: region.x,
+              y: region.y,
+              width: region.width,
+              height: region.height,
+            }
+          : {}),
         params,
       };
 
@@ -1190,7 +1207,22 @@ export function WorkpieceAnalyzeWorkspace({
           return;
         }
 
-        const result = await evaluateWorkpieceRuleReal(targetRule, imgData);
+        const toolCode = String(targetRule.params?.toolCode ?? "");
+        const ruleName = targetRule.name.toLowerCase();
+        const isPatternTarget =
+          toolCode === "T102" ||
+          toolCode === "T116" ||
+          ruleName.includes("pattern") ||
+          ruleName.includes("white box");
+        const pinnedRule = isPatternTarget
+          ? pinPatternRule(targetRule, imgData.width, imgData.height)
+          : targetRule;
+
+        if (isPatternTarget) {
+          railHandlers.onUpdateRule(pinnedRule);
+        }
+
+        const result = await evaluateWorkpieceRuleReal(pinnedRule, imgData);
         const targetRuleset = ruleOwnerById.get(ruleId) ?? ruleset;
 
         if (targetRuleset) {
@@ -1220,6 +1252,7 @@ export function WorkpieceAnalyzeWorkspace({
       isLiveCameraMode,
       project.inspectionImageRef,
       projectOverlayRules,
+      railHandlers,
       ruleOwnerById,
       ruleset,
     ],
@@ -1871,7 +1904,7 @@ export function WorkpieceAnalyzeWorkspace({
             <span>
               {isAnalysisBusy ? "Inspection engine analyzing" : "Inspection engine ready"} ·{" "}
               {isLiveCameraMode ? "live camera source" : "reference image source"} ·{" "}
-              {projectAnalysisItems.length} active rules
+              {projectAnalysisItems.length} active rules · {APP_VERSION_INFO.version}
             </span>
           </div>
           <div className="flex items-center gap-2.5">

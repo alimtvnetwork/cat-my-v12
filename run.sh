@@ -88,7 +88,9 @@ if [ "$NO_SHELL" -eq 0 ]; then
     
     PROFILE_DIR="$(pwd)/.browser-profile"
     
-    if command -v chromium &> /dev/null; then
+    if pgrep -af "chromium|chrome" 2>/dev/null | grep -F -- "--app=$URL" >/dev/null 2>&1; then
+        echo "Inspection window is already open. Skipping a second browser."
+    elif command -v chromium &> /dev/null; then
         chromium --app="$URL" --start-fullscreen --user-data-dir="$PROFILE_DIR" --no-first-run --no-default-browser-check &
         PIDS+=("$!")
     elif command -v chromium-browser &> /dev/null; then

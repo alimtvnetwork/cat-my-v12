@@ -10,6 +10,7 @@ import {
   type ReferenceBoxItem,
   type BoxMatchItem,
 } from "./pattern-matcher";
+import { filterPatternRgba, pinPatternRule } from "./pinned-pattern-geometry";
 import {
   DEFAULT_24_PATTERN_BOXES,
   markWhiteBoxes,
@@ -1115,6 +1116,15 @@ export function evaluatePatternRule(
   imageData: WorkpieceImageData,
   opticalContext: string,
 ): ValidationResult {
+  const pinned = pinPatternRule(rule, imageData.width, imageData.height);
+  const greyscaleLevel = Number(pinned.params?.greyscaleLevel ?? pinned.params?.threshold ?? 170);
+
+  rule = pinned;
+  imageData = {
+    ...imageData,
+    rgba: filterPatternRgba(imageData.rgba, imageData.width, imageData.height, greyscaleLevel),
+  };
+
   const minPercent = Number(rule.params?.minMatchPercent ?? 80);
   const minPresenceLuma = Number(rule.params?.minPresenceLuma ?? 45);
   const tolerancePx = Number(rule.params?.tolerancePx ?? 8);

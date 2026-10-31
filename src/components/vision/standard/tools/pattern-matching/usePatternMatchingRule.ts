@@ -228,11 +228,19 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
   const handleSearchRegionChange = useCallback(
     (newRegion: SearchRegion | null) => {
       setSearchRegion(newRegion);
-      onChange((prev: any) => ({
-        ...prev,
-        searchRegion: newRegion,
-        searchRegionJson: newRegion ? JSON.stringify(newRegion) : undefined,
-      }));
+      onChange((prev: any) => {
+        const originX = newRegion?.x ?? 0;
+        const originY = newRegion?.y ?? 0;
+        const scaleX = newRegion ? newRegion.width / 100 : 1;
+        const scaleY = newRegion ? newRegion.height / 100 : 1;
+
+        return {
+          ...prev,
+          searchRegion: newRegion,
+          searchRegionJson: newRegion ? JSON.stringify(newRegion) : undefined,
+          referenceBoxes: getAtmelReferenceBoxes(originX, originY, scaleX, scaleY),
+        };
+      });
 
       if (source && newRegion && newRegion.width > 5 && newRegion.height > 5) {
         const result = evaluateChipPixelsReal({

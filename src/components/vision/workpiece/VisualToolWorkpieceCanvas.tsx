@@ -14,8 +14,12 @@ import {
   ListChecks,
   Loader2,
   ScanSearch,
+  Square,
+  Lock,
+  Unlock,
 } from "lucide-react";
-import { markWhiteBoxes, type WhiteBoxMark } from "@/lib/vision/white-box-marking";
+import { markWhiteBoxes, getPatternBoxesForRegion, type WhiteBoxMark } from "@/lib/vision/white-box-marking";
+import { filterPatternRgba, pinPatternRule } from "@/lib/vision/pinned-pattern-geometry";
 import {
   drawPatternBoxes,
   drawFormulatedEnvelope,
@@ -1292,7 +1296,7 @@ export function VisualToolWorkpieceCanvas({
   const [isMovingRoi, setIsMovingRoi] = useState(false);
   const [isDraggingPin1, setIsDraggingPin1] = useState(false);
   const [isHoveringRoi, setIsHoveringRoi] = useState(false);
-  const [isRoiLocked, setIsRoiLocked] = useState(true);
+  const [isRoiLocked, setIsRoiLocked] = useState(false);
   const [isHoveringHeader, setIsHoveringHeader] = useState(false);
   const [canvasContextMenu, setCanvasContextMenu] = useState<{
     isOpen: boolean;
@@ -1509,6 +1513,107 @@ export function VisualToolWorkpieceCanvas({
     toolCode === "T102" ||
     toolCode === "T116" ||
     toolCode === "greyscale_pattern_match";
+  const patternPinSignatureRef = useRef("");
+  const [patternToolbarPos, setPatternToolbarPos] = useState<{ left: number; top: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!isPatternMatching || !imageElement || !onUpdateParams) {
+      return;
+    }
+
+    const naturalW = imageElement.naturalWidth || 0;
+    const naturalH = imageElement.naturalHeight || 0;
+
+    if (naturalW < 2 || naturalH < 2) {
+      return;
+    }
+
+    const authoredW = Number(toolParams?.authoredFrameWidth ?? naturalW);
+    const authoredH = Number(toolParams?.authoredFrameHeight ?? naturalH);
+    const needsPin = parsedToolBoxes.length === 0;
+    const needsRebase = authoredW !== naturalW || authoredH !== naturalH;
+    const needsSquare = roi.width !== roi.height || String(toolParams?.shapeType ?? "") !== "square";
+
+    if (!needsPin && !needsRebase && !needsSquare) {
+      return;
+    }
+
+    const pinned = pinPatternRule(
+      {
+        id: "pattern-pin",
+        name: toolName ?? "pattern",
+        kind: "R" as EditorRule["kind"],
+        isHidden: false,
+        isLocked: false,
+        x: roi.x,
+        y: roi.y,
+        width: roi.width,
+        height: roi.height,
+        params: { ...(toolParams ?? {}) },
+      },
+      naturalW,
+      naturalH,
+    );
+    const boxCount = Array.isArray(pinned.params?.referenceBoxes)
+      ? pinned.params.referenceBoxes.length
+      : 0;
+    const nextSignature = `${naturalW}x${naturalH}:${pinned.x},${pinned.y},${pinned.width},${pinned.height}:${boxCount}`;
+
+    if (patternPinSignatureRef.current === nextSignature) {
+      return;
+    }
+
+    patternPinSignatureRef.current = nextSignature;
+    onUpdateParams(pinned.params ?? {});
+  }, [
+    imageElement,
+    isPatternMatching,
+    onUpdateParams,
+    parsedToolBoxes.length,
+    roi.height,
+    roi.width,
+    roi.x,
+    roi.y,
+    toolName,
+    toolParams,
+  ]);
+
+  useEffect(() => {
+    if (!isPatternMatching || !imageElement) {
+      setPatternToolbarPos(null);
+
+      return;
+    }
+
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const naturalW = imageElement.naturalWidth || 0;
+    const naturalH = imageElement.naturalHeight || 0;
+
+    if (naturalW < 2 || naturalH < 2) {
+      setPatternToolbarPos(null);
+
+      return;
+    }
+
+    const fit = getContainedDimensions(
+      naturalW,
+      naturalH,
+      canvas.clientWidth || 960,
+      canvas.clientHeight || 540,
+    );
+
+    setPatternToolbarPos({
+      left: fit.x + (roi.x / Math.max(1, naturalW)) * fit.width + 4,
+      top: fit.y + (roi.y / Math.max(1, naturalH)) * fit.height + 4,
+    });
+  }, [imageElement, isPatternMatching, roi.height, roi.width, roi.x, roi.y]);
 
   const isPin1 =
     Boolean(toolName?.toLowerCase().includes("pin 1")) ||
@@ -1541,7 +1646,14 @@ export function VisualToolWorkpieceCanvas({
     }
 
     if (isPatternMatching) {
-      return generate57SequentialPatternBoxes(roi);
+      const side = Math.max(4, Math.min(roi.width, roi.height));
+
+      return getPatternBoxesForRegion({
+        x: roi.x,
+        y: roi.y,
+        width: side,
+        height: side,
+      });
     }
 
     return [];
@@ -1725,6 +1837,25 @@ export function VisualToolWorkpieceCanvas({
     ctx.fillStyle = "#06080d";
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(imageElement, fit.x, fit.y, fit.width, fit.height);
+
+    if (isPatternMatching && fit.width > 0 && fit.height > 0) {
+      try {
+        const frame = ctx.getImageData(fit.x, fit.y, fit.width, fit.height);
+        const filtered = filterPatternRgba(frame.data, fit.width, fit.height, thresholdLuma);
+
+        frame.data.set(filtered);
+        ctx.putImageData(frame, fit.x, fit.y);
+      } catch (err) {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "VisualToolWorkpieceCanvas",
+            triggerAction: "applyPatternLuminance",
+          },
+          "E_PATTERN_LUMINANCE",
+        );
+      }
+    }
 
     const rulesToRender = overlayRules.length > 0 ? overlayRules : [];
     const activeDisplayRoi = roi;
@@ -3010,6 +3141,7 @@ export function VisualToolWorkpieceCanvas({
       >
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
+        <div className="relative inline-flex max-h-full max-w-full">
         <canvas
           ref={canvasRef}
           width={960}
@@ -3035,6 +3167,47 @@ export function VisualToolWorkpieceCanvas({
           }}
           className="relative aspect-video max-h-full max-w-full rounded-sm border border-ca-border/80 object-contain shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_rgba(0,0,0,0.55)] outline-none transition-transform duration-75 focus:ring-1 focus:ring-ca-select"
         />
+        {isPatternMatching && patternToolbarPos ? (
+          <div
+            className="pointer-events-auto absolute z-20 flex items-center gap-1 rounded border border-cyan-400/40 bg-[#0b0e14]/90 p-1"
+            style={{ left: patternToolbarPos.left, top: patternToolbarPos.top }}
+          >
+            <button
+              type="button"
+              title="Square ROI"
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => {
+                const side = Math.max(4, Math.min(roi.width, roi.height));
+                const region = { x: roi.x, y: roi.y, width: side, height: side };
+
+                onUpdateParams?.({
+                  ...(toolParams ?? {}),
+                  shapeType: "square",
+                  searchRegion: region,
+                });
+              }}
+            >
+              <Square size={14} />
+            </button>
+            <button
+              type="button"
+              title={isRoiLocked ? "Unlock ROI" : "Lock ROI"}
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => setIsRoiLocked((value) => !value)}
+            >
+              {isRoiLocked ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
+            <button
+              type="button"
+              title="Detect elements"
+              className="rounded p-1 text-cyan-200 hover:bg-white/10"
+              onClick={() => handleDetectElements(true)}
+            >
+              <ScanSearch size={14} />
+            </button>
+          </div>
+        ) : null}
+        </div>
 
         {/* Canvas Right-Click Context Menu */}
         {canvasContextMenu?.isOpen ? (

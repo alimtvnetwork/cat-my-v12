@@ -105,6 +105,8 @@ export function WindowControlButtons(): React.JSX.Element {
 
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
+
+      return;
     }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
