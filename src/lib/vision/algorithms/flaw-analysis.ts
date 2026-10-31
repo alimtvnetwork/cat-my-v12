@@ -451,6 +451,23 @@ export function analyzeScratchCracks(
   const skeleton = zhangSuenThinning(binary, width, height);
   const components = connectedComponents8Way(skeleton, width, height);
 
+  // Dark-defect polarity: this tool targets dark defects (its spec
+  // cases are dark lines on a bright field), but Sobel magnitude is
+  // polarity-blind, so on real device images it also traces bright
+  // structural edges — lead edges, tape bands, markings — as
+  // "cracks". A skeleton whose pixels are on average brighter than
+  // the ROI mean traces such a bright structure, not a dark crack,
+  // so it is not counted. A genuine dark scratch skeletonizes on
+  // its mid-luma transition pixels, still darker than its bright
+  // field, so the spec cases keep passing.
+  let roiLumaSum = 0;
+
+  for (let i = 0; i < width * height; i += 1) {
+    roiLumaSum += luminance[i];
+  }
+
+  const roiMeanLuma = roiLumaSum / Math.max(1, width * height);
+
   const defects: ScratchCrackDefect[] = [];
 
   for (const component of components) {
@@ -466,7 +483,16 @@ export function analyzeScratchCracks(
 
     const length = skeletonDiameter(componentMask, width, height);
 
-    if (length >= options.minCrackLengthPx) {
+    let skeletonLumaSum = 0;
+
+    for (const idx of component.pixels) {
+      skeletonLumaSum += luminance[idx];
+    }
+
+    const skeletonMeanLuma = skeletonLumaSum / Math.max(1, component.pixels.length);
+    const isDarkDefect = skeletonMeanLuma < roiMeanLuma;
+
+    if (length >= options.minCrackLengthPx && isDarkDefect) {
       defects.push({ length, boundingBox: component.boundingBox });
     }
   }
