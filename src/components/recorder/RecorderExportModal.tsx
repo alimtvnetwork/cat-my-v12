@@ -18,7 +18,7 @@ import { RecorderTimelinePreview } from "./RecorderTimelinePreview";
 import { TelegramSettingsModal } from "./TelegramSettingsModal";
 import { SupabaseSettingsModal } from "@/components/telemetry/SupabaseSettingsModal";
 import { RecorderExportDropdown } from "./RecorderExportDropdown";
-import { EmailExportModal } from "./EmailExportModal";
+import { RecorderEmailModal } from "./RecorderEmailModal";
 
 export function RecorderExportModal(): React.JSX.Element | null {
   const isExportModalOpen = useRecorderStore((s) => s.isExportModalOpen);
@@ -324,7 +324,7 @@ ${summary.actualBehavior || "N/A"}`;
         </div>
       </div>
 
-      <EmailExportModal
+      <RecorderEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
         session={session}

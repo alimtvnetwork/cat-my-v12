@@ -10,7 +10,7 @@ import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { captureManualScreenshotWithNote } from "@/lib/recorder/event-interceptor";
 import { IssueCategoryType, RecorderActorType, RecorderEventType, type BugReportSummary } from "@/lib/recorder/types";
 import { RecorderExportDropdown } from "./RecorderExportDropdown";
-import { EmailExportModal } from "./EmailExportModal";
+import { RecorderEmailModal } from "./RecorderEmailModal";
 import { RecorderNoteInput } from "./RecorderNoteInput";
 
 export function RecorderFloatingHud(): React.JSX.Element | null {
@@ -121,7 +121,7 @@ export function RecorderFloatingHud(): React.JSX.Element | null {
         )}
       </div>
 
-      <EmailExportModal
+      <RecorderEmailModal
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
         session={session}
