@@ -1,4 +1,10 @@
 import { isAppError } from "../errors/AppError";
+import {
+  type AuthenticJsStackFrame,
+  captureAuthenticJsStack,
+} from "../recorder/diagnostics-sanitizer";
+
+export { captureAuthenticJsStack, type AuthenticJsStackFrame };
 
 export enum LogLevelType {
   Info = "Info",
@@ -44,12 +50,14 @@ export class ClientLogger {
         Name: contextOrError.name,
         Message: contextOrError.message,
         Cause: contextOrError.cause,
+        AuthenticStack: captureAuthenticJsStack(contextOrError),
       };
     } else if (contextOrError instanceof Error) {
       finalContext = {
         Name: contextOrError.name,
         Message: contextOrError.message,
         Stack: contextOrError.stack,
+        AuthenticStack: captureAuthenticJsStack(contextOrError),
       };
     } else if (contextOrError !== undefined && contextOrError !== null) {
       finalContext =
@@ -66,6 +74,13 @@ export class ClientLogger {
     }
 
     return finalContext;
+  }
+
+  static captureAuthenticStack(
+    errorOrUnknown?: unknown,
+    skipFrames = 1,
+  ): AuthenticJsStackFrame[] {
+    return captureAuthenticJsStack(errorOrUnknown, skipFrames);
   }
 
   static info(message: string, context?: unknown, ...args: unknown[]): void {

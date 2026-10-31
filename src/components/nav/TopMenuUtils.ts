@@ -105,16 +105,11 @@ export function requestAppFullscreen(): void {
   // Use native Win32 window maximize/restore loopback to avoid the browser Esc prompt
   fetch("/window/maximize", { method: "POST" })
     .then(() => ClientLogger.info("[top-menu] native window maximize toggled"))
-    .catch(() => {
-      // Fallback for standalone browser environments without backend
-      const root = document.documentElement;
+    .catch((error: unknown) => {
+      ClientLogger.warn("[top-menu] native window maximize failed, checking browser fullscreen", error);
+
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
-      } else {
-        root
-          .requestFullscreen()
-          .then(() => ClientLogger.info("[top-menu] fullscreen requested"))
-          .catch((error: unknown) => ClientLogger.error("[top-menu] fullscreen failed", error));
       }
     });
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Camera,
+  ListTree,
   MessageSquare,
   Pause,
   Play,
@@ -23,6 +24,7 @@ export function RecorderFloatingHud(): React.JSX.Element | null {
   const stopRecording = useRecorderStore((s) => s.stopRecording);
   const cancelRecording = useRecorderStore((s) => s.cancelRecording);
   const addEvent = useRecorderStore((s) => s.addEvent);
+  const openEventExplorer = useRecorderStore((s) => s.openEventExplorer);
 
   const [isNoteInputVisible, setIsNoteInputVisible] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -86,6 +88,16 @@ export function RecorderFloatingHud(): React.JSX.Element | null {
           >
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Note</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openEventExplorer}
+            title="Explore Recorded Events Stream"
+            className="flex items-center gap-1 rounded bg-slate-800 px-2 py-0.5 hover:bg-slate-700 text-sky-300"
+          >
+            <ListTree className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Events</span>
           </button>
 
           <button

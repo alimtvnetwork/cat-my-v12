@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { RecorderExportModal } from "../RecorderExportModal";
@@ -20,17 +20,24 @@ describe("RecorderExportModal", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders modal when recording is stopped and export modal is open", () => {
+  it("renders modal when recording is stopped and export modal is open with max-h-[90vh]", () => {
     useRecorderStore.getState().startRecording("/projects/1");
     useRecorderStore.getState().stopRecording();
 
-    render(<RecorderExportModal />);
+    const { container } = render(<RecorderExportModal />);
 
     expect(screen.getByText("Export Activity & Bug Report")).not.toBeNull();
     expect(screen.getByText("Resume Recording")).not.toBeNull();
     expect(screen.getByText("Discard")).not.toBeNull();
     expect(screen.getByText("Export ZIP")).not.toBeNull();
     expect(screen.getByTitle("Choose Export Format")).not.toBeNull();
+
+    const modalDialog = container.querySelector(".max-h-\\[90vh\\]");
+    expect(modalDialog).not.toBeNull();
+    expect(modalDialog?.classList.contains("flex-col")).toBe(true);
+
+    const scrollableBody = container.querySelector(".overflow-y-auto");
+    expect(scrollableBody).not.toBeNull();
   });
 
   it("resumes recording when Resume Recording button is clicked", () => {
@@ -73,11 +80,11 @@ describe("RecorderExportModal", () => {
     expect(screen.queryByText("Export Activity & Bug Report")).toBeNull();
   });
 
-  it("opens unified export suite dropdown showing 7 options", () => {
+  it("opens upward unified export suite dropdown showing 8 options including session folder path", () => {
     useRecorderStore.getState().startRecording("/projects/1");
     useRecorderStore.getState().stopRecording();
 
-    render(<RecorderExportModal />);
+    const { container } = render(<RecorderExportModal />);
 
     const dropdownToggle = screen.getByTitle("Choose Export Format");
     fireEvent.click(dropdownToggle);
@@ -89,7 +96,42 @@ describe("RecorderExportModal", () => {
     expect(screen.getByText("Direct Email")).not.toBeNull();
     expect(screen.getByText("Save to Supabase")).not.toBeNull();
     expect(screen.getByText("Save to Local Machine")).not.toBeNull();
+    expect(screen.getByText("Copy Session Folder Path")).not.toBeNull();
     expect(screen.getByText("Copy CLI Command")).not.toBeNull();
+
+    // Verify upward placement classes
+    const menu = container.querySelector("[role='menu']");
+    expect(menu).not.toBeNull();
+    expect(menu?.className).toContain("bottom-full");
+    expect(menu?.className).toContain("mb-2");
+    expect(menu?.className).toContain("w-[360px]");
+  });
+
+  it("copies local session folder path when Copy Session Folder Path is clicked", async () => {
+    useRecorderStore.getState().startRecording("/projects/1");
+    useRecorderStore.getState().stopRecording();
+
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    });
+
+    render(<RecorderExportModal />);
+
+    const dropdownToggle = screen.getByTitle("Choose Export Format");
+    fireEvent.click(dropdownToggle);
+
+    const folderBtn = screen.getByText("Copy Session Folder Path");
+    fireEvent.click(folderBtn);
+
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalled();
+      const payload = writeTextMock.mock.calls[0][0];
+      expect(payload).toContain(".logs/recorded-bugs/");
+      expect(payload).toContain("execute-parent-task-with-n-steps-v6");
+    });
   });
 
   it("opens Direct Email modal when Direct Email is clicked from dropdown", async () => {

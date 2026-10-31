@@ -9,6 +9,14 @@ export enum RecorderActorType {
   System = "system",
 }
 
+export enum InspectionPhaseType {
+  Preprocessing = "preprocessing",
+  PatternSearch = "pattern_search",
+  EdgeDetection = "edge_detection",
+  DefectCheck = "defect_check",
+  ValidationGating = "validation_gating",
+}
+
 export enum RecorderEventType {
   Click = "click",
   Input = "input",
@@ -20,6 +28,7 @@ export enum RecorderEventType {
   UserNote = "user_note",
   Hover = "hover",
   RoiDrag = "roi_drag",
+  AnalysisStep = "analysis_step",
 }
 
 export enum IssueCategoryType {
@@ -229,3 +238,49 @@ export interface AddScreenshotParams {
   dataUrl: string;
   source: "manual" | "step" | "canvas";
 }
+
+export type EventExplorerCategoryType =
+  | "all"
+  | "error"
+  | "analysis"
+  | "recording"
+  | "simulation"
+  | "interaction";
+
+export interface AnalysisStepMetric {
+  metricName: string;
+  metricValue: number;
+  unit: string;
+  threshold: number;
+  isPassed: boolean;
+}
+
+export interface AnalysisStepTelemetry {
+  phase: InspectionPhaseType;
+  phaseIndex: number;
+  stepName: string;
+  ruleId: string;
+  ruleName: string;
+  durationMs: number;
+  isPassed: boolean;
+  isGated: boolean;
+  confidenceScore: number;
+  metrics: AnalysisStepMetric[];
+  rawDetails: Record<string, unknown>;
+}
+
+export interface RecordAnalysisStepParams {
+  phase: InspectionPhaseType;
+  stepName: string;
+  ruleId?: string;
+  ruleName?: string;
+  durationMs: number;
+  isPassed: boolean;
+  isGated?: boolean;
+  confidenceScore?: number;
+  metrics?: AnalysisStepMetric[];
+  screenshotTitle?: string;
+  targetCanvas?: HTMLCanvasElement | null;
+  rawDetails?: Record<string, unknown>;
+}
+

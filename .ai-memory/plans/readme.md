@@ -2,6 +2,7 @@
 
 ## Active & Pending Tasks Register
 
+- 2026-10-31 — [`pending/88-snap-24-event-20-ui-and-functionality-issues.md`](pending/88-snap-24-event-20-ui-and-functionality-issues.md) — Snap 24 Event 20 UI and Functionality Issues: enforce ROI as rectangle, allocate multi-shape palette to Pattern Search, resolve canvas selection hit-test deadlock, record 5 analysis phases with full screenshots, implement Antigravity Tools Event Explorer modal, author authentic GitMap Letterly V6/V7 prompts, fix export dropdown & modal scrolling, copy ZIP/folder paths to clipboard, and sanitize diagnostics with authentic function stack traces.
 - 2026-10-31 — [`pending/87-cat-product-recording-feature-enhancement.md`](pending/87-cat-product-recording-feature-enhancement.md) — CAT Product Recording Feature Enhancement: automatic Letterly V6/V7 prompt generation, multi-action export dropdown (ZIP, Copy V6, Copy V7, Direct Email, Supabase 450MB/14-day retention), local binary-adjacent snapshot storage, deep UI telemetry (CSS box metrics, computed colors, distance, XPath, spring click animation), intelligent hover deduplication, ROI drag/resize coordinates, top bar error model visibility, and local runner optimization (zero zip overhead, clean terminal teardown).
 
 ## Recent Completed Tasks Register

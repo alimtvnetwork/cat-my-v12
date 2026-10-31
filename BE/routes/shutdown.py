@@ -173,13 +173,16 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
             if not user32.IsWindowVisible(hwnd):
                 return True
 
+            is_iconic = bool(user32.IsIconic(hwnd))
             rect = w.RECT()
             if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
                 return True
 
             width = rect.right - rect.left
             height = rect.bottom - rect.top
-            if width < 300 or height < 200:
+
+            # Minimized windows have rect (-32000, -32000); only check size threshold if not iconic
+            if not is_iconic and (width < 300 or height < 200):
                 return True
 
             cbuf = ctypes.create_unicode_buffer(256)
@@ -214,8 +217,8 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
                 user32.GetWindowTextW(hwnd, tbuf, tlen + 1)
                 title = tbuf.value.lower()
 
-            # Window title heuristic for CAT HMI
-            if any(k in title for k in ("cat", "vision", "5173", "inspection", "industrial")):
+            # Window title heuristic for CAT HMI and Control Automation
+            if any(k in title for k in ("cat", "vision", "5173", "inspection", "industrial", "control", "automation", "run", "smt")):
                 target.append((hwnd, current_pid))
                 return False
 
@@ -240,10 +243,38 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
         return None, None
 
 
+def _record_window_error(code: str, message: str, exc: Exception | None = None) -> None:
+    try:
+        import traceback
+        import uuid
+        from BE.db.connections import get_task_conn
+        from BE.app.db.writers import error as error_writer
+
+        stack = traceback.format_exc() if exc is not None else "".join(traceback.format_stack())
+        rec = {
+            "CorrelationId": f"win-{uuid.uuid4().hex[:8]}",
+            "Code": code,
+            "Level": "error",
+            "Message": message,
+            "StackTrace": stack,
+            "TriggerComponent": "WindowControls",
+            "Endpoint": "/window",
+        }
+        conn = get_task_conn()
+        try:
+            error_writer.write_errors(conn, [rec])
+        finally:
+            conn.close()
+    except Exception as log_err:
+        logger.warning(f"Failed to record window error to Split-DB: {log_err}")
+
+
 def _minimize_window() -> bool:
     hwnd, pid = _find_window_hwnd()
+
     if not hwnd:
         logger.warning("minimize_window_not_found")
+        _record_window_error("E_WINDOW_MINIMIZE_NOT_FOUND", "Window handle not found for minimize")
         return False
 
     try:
@@ -259,35 +290,55 @@ def _minimize_window() -> bool:
         return True
     except Exception as exc:
         logger.error(f"minimize_window_failed: {exc}", exc_info=True)
+        _record_window_error("E_WINDOW_MINIMIZE_FAILED", str(exc), exc)
         return False
 
 
 def _toggle_maximize_window() -> bool:
     hwnd, pid = _find_window_hwnd()
+
     if not hwnd:
         logger.warning("toggle_maximize_window_not_found")
+        _record_window_error("E_WINDOW_MAXIMIZE_NOT_FOUND", "Window handle not found for toggle maximize")
         return False
 
     try:
         import ctypes
         user32 = ctypes.windll.user32
         is_zoomed = bool(user32.IsZoomed(hwnd))
-        # Toggle: restore (9, SC_RESTORE = 0xF120) if zoomed, maximize (3, SC_MAXIMIZE = 0xF030) if normal
-        next_action = 9 if is_zoomed else 3
-        sys_cmd = 0xF120 if is_zoomed else 0xF030
+        is_iconic = bool(user32.IsIconic(hwnd))
+
+        # Toggle: restore (9, SC_RESTORE = 0xF120) if zoomed or iconic, maximize (3, SC_MAXIMIZE = 0xF030) if normal
+        next_action = 9 if (is_zoomed or is_iconic) else 3
+        sys_cmd = 0xF120 if (is_zoomed or is_iconic) else 0xF030
+
         user32.PostMessageW(hwnd, 0x0112, sys_cmd, 0)
         user32.ShowWindowAsync(hwnd, next_action)
         user32.ShowWindow(hwnd, next_action)
-        new_state = not is_zoomed
+        new_state = not (is_zoomed or is_iconic)
         logger.info("toggle_maximize_window_success", extra={"hwnd": hwnd, "pid": pid, "is_maximized": new_state})
         return new_state
     except Exception as exc:
         logger.error(f"toggle_maximize_window_failed: {exc}", exc_info=True)
+        _record_window_error("E_WINDOW_MAXIMIZE_FAILED", str(exc), exc)
         return False
 
 
 def _close_window() -> bool:
     hwnd, pid = _find_window_hwnd()
+
+    # Fallback to recorded browser PID if find_window_hwnd did not yield a PID
+    effective_pid = pid
+    if not effective_pid:
+        pid_file = Path(".logs/browser.pid")
+        if pid_file.exists():
+            try:
+                content = pid_file.read_text(encoding="utf-8").strip()
+                if content.isdigit():
+                    effective_pid = int(content)
+            except Exception:
+                pass
+
     if hwnd:
         try:
             import ctypes
@@ -324,7 +375,7 @@ def _close_window() -> bool:
             except Exception:
                 pass
 
-    t = threading.Thread(target=_async_terminate, args=(pid,), daemon=True)
+    t = threading.Thread(target=_async_terminate, args=(effective_pid,), daemon=True)
     t.start()
     return True
 

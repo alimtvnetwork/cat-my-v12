@@ -15,6 +15,7 @@ interface RecorderStoreState {
   isRecording: boolean;
   isPaused: boolean;
   isExportModalOpen: boolean;
+  isEventExplorerOpen: boolean;
   isHoverRecording: boolean;
   isHoverRecordEnabled: boolean;
   hoverTargetsCache: Set<string>;
@@ -28,6 +29,9 @@ interface RecorderStoreState {
   pauseRecording: () => void;
   resumeRecording: () => void;
   cancelRecording: () => void;
+  openEventExplorer: () => void;
+  closeEventExplorer: () => void;
+  setEventExplorerOpen: (isOpen: boolean) => void;
   toggleHoverRecord: () => void;
   toggleHoverRecording: () => void;
   setHoverRecordEnabled: (isEnabled: boolean) => void;
@@ -66,6 +70,7 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
   isRecording: false,
   isPaused: false,
   isExportModalOpen: false,
+  isEventExplorerOpen: false,
   isHoverRecording: false,
   isHoverRecordEnabled: false,
   hoverTargetsCache: new Set<string>(),
@@ -168,6 +173,7 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
       isRecording: false,
       isPaused: false,
       isExportModalOpen: false,
+      isEventExplorerOpen: false,
       isHoverRecording: false,
       isHoverRecordEnabled: false,
       hoverTargetsCache: new Set<string>(),
@@ -176,6 +182,18 @@ export const useRecorderStore = create<RecorderStoreState>((set, get) => ({
       session: null,
       elapsedSec: 0,
     });
+  },
+
+  openEventExplorer: () => {
+    set({ isEventExplorerOpen: true });
+  },
+
+  closeEventExplorer: () => {
+    set({ isEventExplorerOpen: false });
+  },
+
+  setEventExplorerOpen: (isOpen: boolean) => {
+    set({ isEventExplorerOpen: isOpen });
   },
 
   hasRecordedHover: (key: string) => {

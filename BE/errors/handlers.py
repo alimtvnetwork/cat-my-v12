@@ -50,12 +50,41 @@ def _json(body: dict, status: int, correlation_id: str) -> JSONResponse:
     )
 
 
-def _stack_frames(exc: BaseException) -> list[str]:
-    """Compact `file:line function` frames for `Errors.Backend`."""
-    return [
-        f"{f.filename}:{f.lineno} {f.name}"
-        for f in traceback.extract_tb(exc.__traceback__)
-    ]
+def _authentic_stack_frames(exc: BaseException) -> list[str]:
+    """Extract clean, qualified module and function frames for backend errors.
+
+    Filters out virtualenv and internal framework boilerplate while retaining
+    exact project source lines formatted as: 'BE/package/module.py:line in func_name()'
+    """
+    frames: list[str] = []
+    tb = traceback.extract_tb(exc.__traceback__)
+
+    for frame in tb:
+        filename = frame.filename.replace("\\", "/")
+
+        # Isolate project-relative path
+        if "/BE/" in filename:
+            filename = "BE/" + filename.split("/BE/", 1)[1]
+        elif filename.startswith("BE/"):
+            pass
+        elif "site-packages" in filename or ".venv" in filename or "lib/python" in filename:
+            # Skip third-party framework frames unless it is the direct error origin
+            continue
+
+        frames.append(f"{filename}:{frame.lineno} in {frame.name}()")
+
+    if not frames and tb:
+        # Fallback to the final frame if all preceding were filtered
+        last = tb[-1]
+        last_filename = last.filename.replace("\\", "/")
+        if "/BE/" in last_filename:
+            last_filename = "BE/" + last_filename.split("/BE/", 1)[1]
+        frames.append(f"{last_filename}:{last.lineno} in {last.name}()")
+
+    return frames
+
+
+_stack_frames = _authentic_stack_frames
 
 
 async def handler_app_error(request: Request, exc: AppError) -> JSONResponse:
@@ -78,7 +107,7 @@ async def handler_app_error(request: Request, exc: AppError) -> JSONResponse:
             severity="WARNING" if exc.http_status.value < 500 else "ERROR",
             subsystem="BACKEND_APP_ERROR",
             message=exc.message,
-            stack_trace="\n".join(_stack_frames(exc)),
+            stack_trace="\n".join(_authentic_stack_frames(exc)),
             context={
                 "operation": _operation(request),
                 "url": _requested_at(request),
@@ -90,7 +119,7 @@ async def handler_app_error(request: Request, exc: AppError) -> JSONResponse:
 
     envelope = exc.to_envelope(
         requested_at=_requested_at(request),
-        backend_frames=_stack_frames(exc) if not get_settings().is_prod else None,
+        backend_frames=_authentic_stack_frames(exc) if not get_settings().is_prod else None,
     )
     return _json(envelope.to_wire(), exc.http_status.value, correlation_id)
 
@@ -152,7 +181,7 @@ async def handler_unhandled(request: Request, exc: Exception) -> JSONResponse:
         message=_safe_message(exc),
         requested_at=_requested_at(request),
         http_status=default_http_status(code).value,
-        backend_frames=_stack_frames(exc) if not get_settings().is_prod else None,
+        backend_frames=_authentic_stack_frames(exc) if not get_settings().is_prod else None,
     )
     return _json(envelope.to_wire(), default_http_status(code).value, correlation_id)
 
@@ -170,6 +199,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
 
 __all__ = [
+    "_authentic_stack_frames",
     "handler_app_error",
     "handler_unhandled",
     "handler_validation",

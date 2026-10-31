@@ -243,30 +243,41 @@ export function WorkpieceAnalyzeWorkspace({
   );
 
   useEffect(() => {
-    if (!rulesetId) return;
+    if (!rulesetId) {
+      return;
+    }
+
     const numericId = toIntId(rulesetId);
     let isCancelled = false;
 
-    // Check draft store first, then server for active version
-    getDraft(numericId).then((draft) => {
-      if (!isCancelled && draft && draft.Version > savedVersionRef.current) {
-        updateSavedVersion(draft.Version);
-      }
-    }).catch(() => {});
+    // Reset saved version to ruleset's baseline when switching ruleset
+    updateSavedVersion(ruleset?.version ?? 0);
 
-    loadRuleSet(numericId, { suppressCapture: true }).then((serverEnv) => {
-      if (!isCancelled && serverEnv && serverEnv.Version > savedVersionRef.current) {
-        updateSavedVersion(serverEnv.Version);
-      }
-    }).catch(() => {});
+    // Check draft store first, then server for active version
+    getDraft(numericId)
+      .then((draft) => {
+        if (!isCancelled && draft && typeof draft.Version === "number") {
+          updateSavedVersion(draft.Version);
+        }
+      })
+      .catch(() => {});
+
+    loadRuleSet(numericId, { suppressCapture: true })
+      .then((serverEnv) => {
+        if (!isCancelled && serverEnv && typeof serverEnv.Version === "number") {
+          updateSavedVersion(serverEnv.Version);
+        }
+      })
+      .catch(() => {});
 
     return () => {
       isCancelled = true;
     };
-  }, [rulesetId, updateSavedVersion]);
+  }, [rulesetId, ruleset?.version, updateSavedVersion]);
 
   const handleSaveRuleSet = useCallback(async () => {
     setSaving(true);
+
     try {
       const envelope = getEnvelope();
       const committed = await saveRuleSet(envelope);
@@ -281,11 +292,14 @@ export function WorkpieceAnalyzeWorkspace({
         try {
           const envelope = getEnvelope();
           const freshServerEnv = await loadRuleSet(envelope.RuleSetId, { suppressCapture: true });
-          if (freshServerEnv) {
+
+          if (freshServerEnv && typeof freshServerEnv.Version === "number") {
             updateSavedVersion(freshServerEnv.Version);
             const retryEnvelope = { ...envelope, Version: freshServerEnv.Version };
             const committed = await saveRuleSet(retryEnvelope);
             onSaved(committed);
+            toast.success("Rule set synchronized and saved successfully.");
+
             return;
           }
         } catch (retryErr) {
@@ -1967,6 +1981,9 @@ export function WorkpieceAnalyzeWorkspace({
                         isAnalyzing={isAnalysisBusy}
                         tapeStripResult={tapeStripResult}
                         onUpdateParams={handleUpdateActiveRuleParams}
+                        onToggleLocked={railHandlers.onToggleLocked}
+                        onBringToFront={railHandlers.onBringToFront}
+                        onSendToBack={railHandlers.onSendToBack}
                       />
                     )}
                   </div>

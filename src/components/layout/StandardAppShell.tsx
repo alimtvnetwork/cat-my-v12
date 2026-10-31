@@ -31,6 +31,7 @@ import {
 import { UiModeSwitch } from "@/components/ui-mode/UiModeSwitch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { TopBarErrorButton } from "@/components/errors/TopBarErrorButton";
 import {
   WindowControlButtons,
   WINDOW_EXIT_REQUEST_EVENT,
@@ -569,6 +570,7 @@ export function StandardAppShell({
             </Tooltip>
           </TooltipProvider>
           <div className="h-4 w-px bg-ca-border" />
+          <TopBarErrorButton />
           <ThemeToggle />
           <WindowControlButtons />
         </div>

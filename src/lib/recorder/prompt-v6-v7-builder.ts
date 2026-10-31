@@ -41,7 +41,7 @@ export interface TelemetryStepSummary {
   screenshotRef?: PromptImageRef;
 }
 
-export interface SplitDbErrorSummary {
+export interface SplitDbErrorEntry {
   code?: string;
   message?: string;
   triggerComponent?: string;
@@ -50,9 +50,24 @@ export interface SplitDbErrorSummary {
   stackTraceSnippet?: string;
 }
 
-export interface PromptOptions {
+export type SplitDbErrorSummary = SplitDbErrorEntry;
+
+export interface LetterlyPromptOptions {
   summary?: BugReportSummary;
-  splitDbErrors?: SplitDbErrorSummary[];
+  splitDbErrors?: SplitDbErrorEntry[];
+  baseDir?: string;
+  isTimeRestricted?: boolean;
+  targetTimezone?: string;
+  botAgentName?: string;
+}
+
+export type PromptOptions = LetterlyPromptOptions;
+
+export interface PromptBuilderParams {
+  session: RecorderSession;
+  options?: LetterlyPromptOptions;
+  summary?: BugReportSummary;
+  splitDbErrors?: SplitDbErrorEntry[];
   baseDir?: string;
   isTimeRestricted?: boolean;
   targetTimezone?: string;
@@ -65,7 +80,7 @@ export interface BuildPromptParams {
   options?: PromptOptions;
 }
 
-function sanitizeIdentifier(text: string): string {
+export function sanitizeIdentifier(text: string): string {
   const sanitized = text
     .toLowerCase()
     .replace(/[^a-z0-9_]+/g, "_")
@@ -75,81 +90,65 @@ function sanitizeIdentifier(text: string): string {
   return sanitized || "item";
 }
 
-function escapeTableCell(text: string | null | undefined): string {
-  if (!text) {
-    return "-";
+export function sanitizeSlug(title: string): string {
+  const withoutPrefix = title
+    .toLowerCase()
+    .replace(/^(\d{1,3}[-_.\s]+)+/, "");
+
+  const cleaned = withoutPrefix
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+
+  return cleaned || "task";
+}
+
+export function formatRouteNavigationPath(routes: readonly string[]): string {
+  if (!routes || routes.length === 0) {
+    return "From /";
   }
 
-  return text.replace(/\|/g, "\\|").replace(/[\r\n]+/g, " ").trim();
+  const filtered = routes.filter((r) => Boolean(r && r.trim()));
+
+  if (filtered.length === 0) {
+    return "From /";
+  }
+
+  if (filtered.length === 1) {
+    return `From ${filtered[0]}`;
+  }
+
+  return `From ${filtered.join(" -> ")}`;
+}
+
+export function formatDiagnosticEvidenceLink(
+  snapTitle: string,
+  index: number,
+  eventType: string,
+  sessionId: string,
+  baseDir?: string,
+): string {
+  const seq = String(index + 1).padStart(2, "0");
+  const instance = sanitizeIdentifier(eventType || "snap");
+  const desc = sanitizeIdentifier(snapTitle || `step_${seq}`);
+  const safeFileName = `${seq}_${instance}_${desc}.png`;
+  const folder = baseDir || `.logs/recorded-bugs/${sessionId}`;
+  const relativePath = `${folder}/screenshots/${safeFileName}`;
+
+  return `[${seq}-${instance}-${desc}](file;${relativePath})`;
 }
 
 export function formatIdeImageLink(ref: PromptImageRef): string {
   const seq = String(ref.sequenceNumber).padStart(2, "0");
   const instance = sanitizeIdentifier(ref.instanceId || "inst01");
   const desc = sanitizeIdentifier(ref.actionDescriptor || "snapshot");
-  const tagLabel = `${seq}_${instance}_${desc}`;
-  const path = ref.absolutePath || ref.relativePath || `${tagLabel}.png`;
+  const tagLabel = `${seq}-${instance}-${desc}`;
+  const path = ref.relativePath || ref.absolutePath || `${tagLabel}.png`;
 
-  return `[${tagLabel}](file:;${path})`;
+  return `[${tagLabel}](file;${path})`;
 }
 
-function formatNonAssetWarning(): string {
-  return `> [!CRITICAL]
-> **Ephemeral Visual Learning Only (Strict Non-Asset Rule):**
-> IMPORTANT: The attached snapshot images are for learning purposes only to understand UI behavior and geometry. NEVER save or commit these images into codebase assets or git repository. Analyze the bug, understand it, formulate your fix, and forget the images. Leave image artifacts strictly in their local binary-adjacent runtime directory (\`.logs/recorded-bugs/<session_id>/\` or \`bug-reports/<seq>-<date>/\`).`;
-}
-
-function formatAiComprehensionGate(): string {
-  return `> [!IMPORTANT]
-> **Mandatory Turn-1 AI Comprehension Gate (Zero Code Edits Without Prior Proof):**
-> In your VERY FIRST response turn upon receiving this prompt, you MUST output a comprehensive comprehension block in visible chat before executing any code changes or tool modifications:
-> 1. **Visual & Telemetry Diagnosis**: State what you observed across the step sequence, element geometries, and visual diffs.
-> 2. **Root Cause Hypothesis**: Articulate why the failure occurred based on the bundled Split-DB errors and DOM state.
-> 3. **Exact Remediation Plan**: Detail which source files will be touched and what logic will change.
-> 4. **Clarification Protocol**: If any telemetry point or user action is ambiguous, ASK clarifying questions immediately before taking action.
-> Code editing is STRICTLY FORBIDDEN until this comprehension block is articulated.`;
-}
-
-function formatMandatoryPillars(params: {
-  title: string;
-  sessionId: string;
-  initialRoute: string;
-  finalRoute: string;
-  eventCount: number;
-  screenshotCount: number;
-  targetComponents: string[];
-}): string {
-  const targets = params.targetComponents.length > 0
-    ? params.targetComponents.slice(0, 5).join(", ")
-    : "Active UI viewports and interactive elements";
-
-  return `### 🧠 Deep Comprehension & Understood Mandate (Phase 1A Turn 1)
-
-#### Pillar 1: Strategic Intent & Systems Reasoning
-- Overarching architectural goal: Isolate the root cause of reported defect "${params.title}" in session \`${params.sessionId}\`, rectify faulty component logic or state transitions, and restore verified expected behavior.
-- System reasoning: Telemetry reveals interaction sequence from route \`${params.initialRoute}\` to \`${params.finalRoute}\` with ${params.eventCount} user actions and ${params.screenshotCount} snapshots. Downstream event handlers and state slices must be synchronized without introducing regressions.
-
-#### Pillar 2: Explicit Scope Boundaries (In-Scope vs. Excluded / Deferred)
-- **In-Scope:** Remediation of failing components identified in telemetry (targets: \`${targets}\`), Split-DB error resolution, and local verification.
-- **Excluded / Deferred:** Unrelated routing rewrites, global styling overhauls, or premature external API modifications.
-
-#### Pillar 3: Non-Negotiable Constraints & Negative Guardrails Ingestion
-- Ephemeral snapshot invariant: NEVER copy, move, import, or commit diagnostic screenshots into codebase assets (\`assets/\`, \`src/assets/\`, \`public/assets/\`).
-- Zero builds & tests: No full build runs (\`go build\`, \`npm run build\`, \`vite build\`) or general test suites (\`pytest\`, \`npm test\`) unless explicitly commanded.
-- Strict relative Git paths: All referenced codebase files must use relative paths from repository root.
-- GitMap hyphen commit: Single atomic commit using \`gitmap cpf "<module> - <summary>"\`.
-- Zero raw searches: Strictly avoid \`rg\`, \`ripgrep\`, \`grep\`, \`Select-String\`.
-
-#### Pillar 4: Blast Radius & Dependency Topology
-- Impacted Subsystems: Components and hooks registered under telemetry actions (\`${targets}\`), state stores (\`useRecorderStore\`, \`useErrorStore\`, \`useRulesStore\`), and backend endpoints (\`/bug-reports\`).
-- Containment Strategy: Disjoint file modifications with micro-batching (5-8 files), verifying each change without cross-component contamination.
-
-#### Pillar 5: Multi-Agent Concurrency Topology
-- Tree Swarm Structure: Lead Orchestrator (Root Node) -> Branch Coordinators (Subtask Owners) -> Leaf Workers & Dynamic Assistants.
-- Concurrency Parameters: \`A = 3\` agents, \`H = 2\` hands, System Concurrency Capacity = 6 operations.`;
-}
-
-function resolveImageRefs(
+export function resolveImageRefs(
   session: RecorderSession,
   baseDir?: string,
 ): PromptImageRef[] {
@@ -173,7 +172,19 @@ function resolveImageRefs(
   });
 }
 
-function formatTelemetryTable(session: RecorderSession, imageRefs: PromptImageRef[]): string {
+function escapeTableCell(text: string | null | undefined): string {
+  if (!text) {
+    return "-";
+  }
+
+  return text.replace(/\|/g, "\\|").replace(/[\r\n]+/g, " ").trim();
+}
+
+export function formatTelemetryTable(
+  session: RecorderSession,
+  imageRefs: PromptImageRef[],
+  baseDir?: string,
+): string {
   if (session.events.length === 0) {
     return "_No user interaction events recorded in this session._";
   }
@@ -182,7 +193,8 @@ function formatTelemetryTable(session: RecorderSession, imageRefs: PromptImageRe
     const stepNum = idx + 1;
     const seq = String(stepNum).padStart(2, "0");
     const elapsed = `${evt.elapsedMs}ms`;
-    const actionTarget = `${evt.eventType.toUpperCase()} on \`${escapeTableCell(evt.targetComponent || "N/A")}\``;
+    const targetComp = escapeTableCell(evt.targetComponent || "N/A");
+    const actionTarget = `${evt.eventType.toUpperCase()} on \`${targetComp}\``;
 
     const nav = evt.telemetry?.navigationPath
       ? `${evt.telemetry.navigationPath.fromRoute} -> ${evt.telemetry.navigationPath.toRoute}`
@@ -228,6 +240,14 @@ function formatTelemetryTable(session: RecorderSession, imageRefs: PromptImageRe
 
       if (matchedRef) {
         snapshotLink = formatIdeImageLink(matchedRef);
+      } else {
+        snapshotLink = formatDiagnosticEvidenceLink(
+          evt.description || `event_${seq}`,
+          idx,
+          evt.eventType,
+          session.id,
+          baseDir,
+        );
       }
     }
 
@@ -241,7 +261,7 @@ function formatTelemetryTable(session: RecorderSession, imageRefs: PromptImageRe
   ].join("\n");
 }
 
-function formatSplitDbErrors(errors?: SplitDbErrorSummary[]): string {
+export function formatSplitDbErrors(errors?: SplitDbErrorEntry[]): string {
   if (!errors || errors.length === 0) {
     return "> [OK] No runtime or Split-DB errors logged during this recording.";
   }
@@ -260,7 +280,7 @@ function formatSplitDbErrors(errors?: SplitDbErrorSummary[]): string {
   return items.join("\n");
 }
 
-function formatScreenshotsSection(imageRefs: PromptImageRef[]): string {
+export function formatScreenshotsSection(imageRefs: PromptImageRef[]): string {
   if (imageRefs.length === 0) {
     return "> No visual snapshots recorded for this session.";
   }
@@ -276,336 +296,308 @@ function formatScreenshotsSection(imageRefs: PromptImageRef[]): string {
 
 export function generateV6LetterlyPrompt(
   session: RecorderSession,
-  options?: PromptOptions,
+  options?: LetterlyPromptOptions,
 ): string {
   const summary = options?.summary || session.summary;
   const title = summary?.title || `Recorded Issue: ${session.id}`;
-  const category = summary?.category || "ui_glitch";
+  const slug = sanitizeSlug(title);
   const expected = summary?.expectedBehavior || "Expected normal operation without visual or logical glitches.";
   const actual = summary?.actualBehavior || "Unexpected defect observed during user interaction.";
   const description = summary?.description || "Session recorded with interaction steps and diagnostic evidence.";
-  const durationSec = Math.round(session.durationMs / 1000);
+  const baseDir = options?.baseDir;
   const finalRoute = session.finalRoute || session.initialRoute;
 
-  const targetComponents = Array.from(
-    new Set(
-      session.events
-        .map((e) => e.targetComponent)
-        .filter((c): c is string => Boolean(c) && c !== "User Annotation"),
-    ),
-  );
+  const routes = session.routeHistory && session.routeHistory.length > 0
+    ? session.routeHistory
+    : [session.initialRoute, finalRoute];
+  const navPath = formatRouteNavigationPath(routes);
 
-  const imageRefs = resolveImageRefs(session, options?.baseDir);
-  const telemetryTable = formatTelemetryTable(session, imageRefs);
+  const imageRefs = resolveImageRefs(session, baseDir);
+  const telemetryTable = formatTelemetryTable(session, imageRefs, baseDir);
   const effectiveSplitDbErrors =
     options?.splitDbErrors && options.splitDbErrors.length > 0
       ? options.splitDbErrors
-      : ((session.errors || []) as SplitDbErrorSummary[]);
+      : ((session.errors || []) as SplitDbErrorEntry[]);
   const errorBlock = formatSplitDbErrors(effectiveSplitDbErrors);
   const screenshotsBlock = formatScreenshotsSection(imageRefs);
-  const nonAssetWarning = formatNonAssetWarning();
-  const comprehensionGate = formatAiComprehensionGate();
-  const mandatoryPillars = formatMandatoryPillars({
-    title,
-    sessionId: session.id,
-    initialRoute: session.initialRoute,
-    finalRoute,
-    eventCount: session.events.length,
-    screenshotCount: session.screenshots.length,
-    targetComponents,
+
+  const actionableItems: string[] = [
+    `1. Git pull BEFORE starting any work — first try \`gitmap pull <repo path>\` (or run \`gitmap pull\` in repository folder); if that fails, fall back to regular \`git pull\` and resolve merge conflicts so the repository is up to date and clean before starting.`,
+    `2. Write spec under 02-spec/21-app/XX-${slug}/ and enqueue plan task in .ai-memory/plans/pending/XX-${slug}.md (subtasks in .ai-memory/plans/subtasks/XX-${slug}/) first (XX is sequence 01, 02).`,
+    `3. Search codebase exclusively via GitMap (gitmap aum search, gitmap find, gitmap cat, gitmap ps, gitmap py, gitmap llm train); TOTAL BAN on rg, ripgrep, grep, git grep, Select-String.`,
+    `4. Strictly use relative Git paths (02-spec/..., .ai-memory/..., src/...); only add relative paths, never add absolute paths during work or on the release page and in release notes.`,
+    `5. IMPORTANT: The attached snapshot images are for learning purposes only to understand UI behavior and geometry. NEVER save, copy, move, or commit snapshot images into codebase assets (assets/, src/assets/, public/assets/). Leave image artifacts strictly in runtime logs (.logs/recorded-bugs/${session.id}/). Analyze the bug, formulate your fix, and discard/forget the images.`,
+    `6. Enforce SQL repository pattern and enum-driven actions per @[sql-repository-pattern-and-enum-actions](file;.agents/skills/sql-repository-pattern-and-enum-actions): all SQL isolated behind repository interfaces, operations dispatched by exhaustive enum switch with complete util methods (String, Parse, IsValid, All), and strongly-typed AppError envelopes.`,
+  ];
+
+  let currentItemIndex = 7;
+
+  session.events.forEach((evt, idx) => {
+    const seq = String(idx + 1).padStart(2, "0");
+    const elapsed = `+${evt.elapsedMs}ms`;
+    const actor = evt.actor;
+    const eventType = evt.eventType.toUpperCase();
+    const target = evt.targetComponent || "N/A";
+    const route = evt.route || session.initialRoute;
+    const xpathVal = (evt.telemetry?.xpath || evt.xpath || (evt.details?.xpath as string) || evt.selector || "N/A").replace(/\|/g, "\\|");
+    const coordsVal = evt.coordinates ? `(${evt.coordinates.x}, ${evt.coordinates.y})` : "-";
+    const evidenceLink = evt.hasScreenshot
+      ? formatDiagnosticEvidenceLink(evt.description || `event_${seq}`, idx, evt.eventType, session.id, baseDir)
+      : "None";
+
+    let extraDetails = "";
+
+    if (evt.telemetry?.boundingRect) {
+      extraDetails += ` Bounds: ${evt.telemetry.boundingRect.width}x${evt.telemetry.boundingRect.height}.`;
+    }
+
+    if (evt.telemetry?.componentDetails?.color) {
+      extraDetails += ` Color: ${evt.telemetry.componentDetails.color}.`;
+    }
+
+    actionableItems.push(
+      `${currentItemIndex}. Interaction Step ${seq} (${elapsed}): ${actor} performed ${eventType} on \`${target}\` at route \`${route}\`. XPath: \`${xpathVal}\`. Coords: ${coordsVal}.${extraDetails} Diagnostic Evidence: ${evidenceLink}.`,
+    );
+
+    currentItemIndex += 1;
   });
 
-  const titleSlug = sanitizeIdentifier(title);
+  if (effectiveSplitDbErrors.length > 0) {
+    const errSummaries = effectiveSplitDbErrors
+      .slice(0, 5)
+      .map((e) => `[${e.code || "ERR"}] ${e.message || "Unknown"} (Trigger: ${e.triggerComponent || "N/A"})`)
+      .join("; ");
 
-  return `# [V6] Bug Remediation & UI Telemetry Diagnostic Task: ${title}
+    actionableItems.push(
+      `${currentItemIndex}. Resolve active runtime and Split-DB errors recorded during session: ${errSummaries}.`,
+    );
 
-\`\`\`text
-N = 400 (Total self-loop steps budget — editable top-header parameter, default: 400)
-A = 3   (MANDATORY number of spawned autonomous subagents running concurrently via invoke_subagent, default: 3)
-H = 2   (Operational hands per agent: dual-task batch capacity & parallel tool dispatch, default: 2)
-C = 30  (Tool calls per worker before it must report, default: 30)
+    currentItemIndex += 1;
+  }
 
-System Concurrency Capacity = A × H = 3 agents × 2 hands = 6 concurrent subtask operations
-Tree Hierarchy = Lead Orchestrator (Root Node) -> Branch Coordinators (Subtask Owners) -> Leaf Workers & Dynamic Joining Assistants
-PHASE_1_BUDGET = 100     (Steps 1 .. 100: Planning, Discovery Subagents, Up-Front Brain & Roadmap Creation, Lean Subtasks)
-PHASE_2_BUDGET = 150     (Steps 101 .. 250: Intermediate Archival, Sanitization, Prerequisite Refactoring, Intermediate Checkpoints)
-PHASE_3_BUDGET = 150     (Steps 251 .. 400: Tree Swarm Parallel Execution, Dynamic Join Capacity Saturation, Targeted Quality Linting, Fleet Sync, Atomic Push)
-WAVES = ceil(subtasks / (A x H))
-\`\`\`
+  actionableItems.push(
+    `${currentItemIndex}. Commit and finalize all verified fixes atomically via GitMap: \`gitmap cpf "recorder - resolve ${slug}"\`.`,
+  );
 
-> [!IMPORTANT]
-> **Prompt Version:** 6.0.0
-> **Runtime:** Google Antigravity 2.0 (IDE and CLI)
-> **Canonical Prompt Specification:** \`01-prompts/14-execute/02-execute-parent-task-with-n-steps-v6.md\`
-> **Session ID:** \`${session.id}\`
-> **Category:** \`${category}\`
-> **Initial Route:** \`${session.initialRoute}\`
-> **Final Route:** \`${finalRoute}\`
->
-> **Top-Instruction Priority Mandate (Above Precedence / Preamble Precedence):**
-> Whatever directives, constraints, checklists, or user instructions are given ABOVE this prompt (including in the user preamble, header blocks, or incoming user request above) are HIGHEST PRIORITY and MUST BE FOLLOWED as strictly NON-NEGOTIABLE. They supersede and strictly override any conflicting general advice, default conventions, or lower-level guidelines below.
+  return `# ${title}: high priority instruction, non-negotiable task
 
-${nonAssetWarning}
-
-${comprehensionGate}
-
-[/goal](slashCommand;goal) Autonomously diagnose, isolate root cause, and resolve the reported bug "${title}" across components observed during session \`${session.id}\`. Author an up-front Brain roadmap in \`.ai-memory/plans/\`, spawn A=3 subagents with H=2 hands (Capacity=6) across disjoint file boundaries, verify fix against the recorded timeline, and finish with one atomic GitMap commit (\`gitmap cpf "<module> - <summary>"\`).
-
-${mandatoryPillars}
-
-### 📋 Verified Task Breakdown (6-Part Schema)
-- **Task-01: Root Cause Isolation & Diagnostic Analysis**
-  - **Understood / AI Comprehension:** \`[YES]\` — Deep analysis of captured events, element geometries, and error traces.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Isolate failure mechanism in observed UI components.
-  - **Scope Boundaries:** Affected UI components vs unaffected parent shells.
-  - **Active Constraints:** Non-asset ephemeral learning, zero full builds/tests, relative paths.
-  - **Verification Strategy:** Targeted file checks and exit 0 validation.
-
-- **Task-02: Surgical UI & State Remediation**
-  - **Understood / AI Comprehension:** \`[YES]\` — Precise bugfix without introducing state regressions.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Apply minimal surgical diff to resolve defect.
-  - **Scope Boundaries:** Bounded 5-8 files micro-batch.
-  - **Active Constraints:** Positive booleans, compound keys, vertical line gaps.
-  - **Verification Strategy:** File-scoped linters and syntax verification.
-
-- **Task-03: Verification, Hygiene & GitMap Atomic Commit**
-  - **Understood / AI Comprehension:** \`[YES]\` — Verify zero asset pollution and stage atomic commit.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Finalize changes and execute GitMap commit.
-  - **Scope Boundaries:** Modified repository files only.
-  - **Active Constraints:** Single atomic hyphen commit, zero raw git commands.
-  - **Verification Strategy:** Git diffstat and clean working tree check.
-
-## 1. Incident Overview
-- **Session ID**: \`${session.id}\`
-- **Category**: \`${category}\`
-- **Duration**: ${durationSec}s (${session.durationMs}ms)
-- **Initial Route**: \`${session.initialRoute}\`
-- **Final Route**: \`${finalRoute}\`
-- **Total Events**: ${session.events.length}
-- **Total Screenshots**: ${session.screenshots.length}
-
-## 2. Problem Statement
-### Description
 ${description}
 
-### Expected Behavior
-${expected}
+**Navigation Path:** ${navPath}
+**Observed Behavior:** ${actual}
+**Expected Behavior:** ${expected}
 
-### Actual Behavior
-${actual}
+## task: ${title}
+## slug: ${slug}
 
-## 3. Visual Evidence & Screenshots (IDE Encapsulation Standard)
-All screenshots are encapsulated using IDE file links located adjacent to the runtime binary:
-${screenshotsBlock}
+# Actionable Items Must Follow Non-Negotiable
 
-## 4. UI Telemetry & Step Action Matrix
+${actionableItems.join("\n")}
+
+## Sequential Event Timeline & UI Telemetry
+
 ${telemetryTable}
 
-## 5. Active Diagnostic Errors (Split-DB SQLite & Runtime)
+## Visual Evidence & Diagnostic Screenshots
+
+${screenshotsBlock}
+
+## Active Split-DB & Runtime Diagnostics
+
 ${errorBlock}
 
-## 6. CLI Verification Command
+## CLI Telemetry Command
+
 \`\`\`pwsh
 python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
 \`\`\`
 
-## 7. Execution Directives
-- Commit changes using GitMap atomic hyphen format:
-\`\`\`pwsh
-gitmap cpf "recorder - fix ${titleSlug}"
-\`\`\`
-- Ephemeral Visual Invariant: Never save screenshots into \`assets/\` or source tree.
+## Must follow and spawn agent using
+
+@[execute-parent-task-with-n-steps-v6](file;.agents/skills/execute-parent-task-with-n-steps-v6)
+
+## Additional Instructions
+
+- [/plan](slashCommand;plan) first before doing work for improved work or less friction, faster execution for AI and coding without errors and following Coding Guidelines.
+- [/learn](slashCommand;learn) from @[gitmap](file;.agents/skills/gitmap) skill to leverage GitMap high-speed search, toolchain discovery, and caching.
+- Track in-flight file touches and prevent write collisions using GitMap RC Heatmap (\`gitmap rc heatmap status\` / \`gitmap rc heatmap tree\` / \`gitmap rc heatmap live\` / \`gitmap rc heatmap sync\`).
+- Only add relative paths, never add absolute paths during work; this must be respected on release page and in release notes as well.
 `;
 }
 
 export function generateV7LetterlyPrompt(
   session: RecorderSession,
-  options?: PromptOptions,
+  options?: LetterlyPromptOptions,
 ): string {
   const summary = options?.summary || session.summary;
   const title = summary?.title || `Recorded Issue: ${session.id}`;
-  const category = summary?.category || "ui_glitch";
+  const slug = sanitizeSlug(title);
   const expected = summary?.expectedBehavior || "Expected normal operation without visual or logical glitches.";
   const actual = summary?.actualBehavior || "Unexpected defect observed during user interaction.";
   const description = summary?.description || "Session recorded with interaction steps and diagnostic evidence.";
-  const durationSec = Math.round(session.durationMs / 1000);
+  const baseDir = options?.baseDir;
   const finalRoute = session.finalRoute || session.initialRoute;
-  const routeHistoryStr = session.routeHistory.length > 0
-    ? session.routeHistory.join(" -> ")
-    : `${session.initialRoute} -> ${finalRoute}`;
 
   const isTimeRestricted = Boolean(options?.isTimeRestricted);
   const resolvedTimezone = options?.targetTimezone || "UTC";
   const botAgentName = options?.botAgentName || "muse";
 
-  const targetComponents = Array.from(
-    new Set(
-      session.events
-        .map((e) => e.targetComponent)
-        .filter((c): c is string => Boolean(c) && c !== "User Annotation"),
-    ),
-  );
+  const routes = session.routeHistory && session.routeHistory.length > 0
+    ? session.routeHistory
+    : [session.initialRoute, finalRoute];
+  const navPath = formatRouteNavigationPath(routes);
 
-  const imageRefs = resolveImageRefs(session, options?.baseDir);
-  const telemetryTable = formatTelemetryTable(session, imageRefs);
+  const imageRefs = resolveImageRefs(session, baseDir);
+  const telemetryTable = formatTelemetryTable(session, imageRefs, baseDir);
   const effectiveSplitDbErrors =
     options?.splitDbErrors && options.splitDbErrors.length > 0
       ? options.splitDbErrors
-      : ((session.errors || []) as SplitDbErrorSummary[]);
+      : ((session.errors || []) as SplitDbErrorEntry[]);
   const errorBlock = formatSplitDbErrors(effectiveSplitDbErrors);
   const screenshotsBlock = formatScreenshotsSection(imageRefs);
-  const nonAssetWarning = formatNonAssetWarning();
-  const comprehensionGate = formatAiComprehensionGate();
-  const mandatoryPillars = formatMandatoryPillars({
-    title,
-    sessionId: session.id,
-    initialRoute: session.initialRoute,
-    finalRoute,
-    eventCount: session.events.length,
-    screenshotCount: session.screenshots.length,
-    targetComponents,
-  });
-
-  const titleSlug = sanitizeIdentifier(title);
 
   const operatingModeName = isTimeRestricted
     ? "Option 1: Time-Restricted Mode (Dynamic Waiting Protocol)"
     : "Option 2: Unrestricted Mode (Continuous Autonomous Loop)";
 
-  const windowPolicyDesc = isTimeRestricted
-    ? "Weekday morning window (< 08:00 AM) enforced via --auto-window; weekend 24h unconstrained."
-    : "Continuous autonomous loop without time-of-day restriction.";
+  const actionableItems: string[] = [
+    `1. Git pull BEFORE starting any work — first try \`gitmap pull <repo path>\` (or run \`gitmap pull\` in repository folder); if that fails, fall back to regular \`git pull\` and resolve merge conflicts so the repository is up to date and clean before starting.`,
+    `2. Write spec under 02-spec/21-app/XX-${slug}/ and enqueue plan task in .ai-memory/plans/pending/XX-${slug}.md (subtasks in .ai-memory/plans/subtasks/XX-${slug}/) first (XX is sequence 01, 02).`,
+    `3. Search codebase exclusively via GitMap (gitmap aum search, gitmap find, gitmap cat, gitmap ps, gitmap py, gitmap llm train); TOTAL BAN on rg, ripgrep, grep, git grep, Select-String.`,
+    `4. Strictly use relative Git paths (02-spec/..., .ai-memory/..., src/...); only add relative paths, never add absolute paths during work or on the release page and in release notes.`,
+    `5. IMPORTANT: The attached snapshot images are for learning purposes only to understand UI behavior and geometry. NEVER save, copy, move, or commit snapshot images into codebase assets (assets/, src/assets/, public/assets/). Leave image artifacts strictly in runtime logs (.logs/recorded-bugs/${session.id}/). Analyze the bug, formulate your fix, and discard/forget the images.`,
+    `6. Use \`gitmap\` AI agents to enter data.`,
+    `7. Task completion includes committing and pushing to Git.`,
+    `8. Give every Task-NN in confirmed task breakdown a \`Slug:\` sub-item derived from root slug (\`${slug} - Task NN\`) so GitMap can create and verify subtasks.`,
+    `9. Execute via V7 Master Engine per @[execute-parent-task-with-n-steps-v7](file;.agents/skills/execute-parent-task-with-n-steps-v7): Option 1 (Time-Restricted commits before 08:00 AM weekdays/anytime weekends via \`--tz\`, \`--schedule\`, \`--auto-window\`) or Option 2 (Unrestricted commits); configure bot identity via \`gitmap autobot\` when commanded.`,
+    `10. Enforce time-restricted recommits per @[gitmap-time-restriction](file;.agents/skills/gitmap-time-restriction) using \`gitmap\` semantic commit verbs without polluting git history.`,
+    `11. Enforce SQL repository pattern and enum-driven actions per @[sql-repository-pattern-and-enum-actions](file;.agents/skills/sql-repository-pattern-and-enum-actions): all SQL isolated behind repository interfaces, operations dispatched by exhaustive enum switch with complete util methods (String, Parse, IsValid, All), and strongly-typed AppError envelopes.`,
+  ];
 
-  return `# [V7] Autonomous Bug Remediation Engine: ${title}
+  let currentItemIndex = 12;
 
-\`\`\`text
-N = 400 (Total self-loop steps budget — editable top-header parameter, default: 400)
-A = 3   (MANDATORY number of spawned autonomous subagents running concurrently via invoke_subagent, default: 3)
-H = 2   (Operational hands per agent: dual-task batch capacity & parallel tool dispatch, default: 2)
-C = 30  (Tool calls per worker before it must report, default: 30)
+  session.events.forEach((evt, idx) => {
+    const seq = String(idx + 1).padStart(2, "0");
+    const elapsed = `+${evt.elapsedMs}ms`;
+    const actor = evt.actor;
+    const eventType = evt.eventType.toUpperCase();
+    const target = evt.targetComponent || "N/A";
+    const route = evt.route || session.initialRoute;
+    const xpathVal = (evt.telemetry?.xpath || evt.xpath || (evt.details?.xpath as string) || evt.selector || "N/A").replace(/\|/g, "\\|");
+    const coordsVal = evt.coordinates ? `(${evt.coordinates.x}, ${evt.coordinates.y})` : "-";
+    const evidenceLink = evt.hasScreenshot
+      ? formatDiagnosticEvidenceLink(evt.description || `event_${seq}`, idx, evt.eventType, session.id, baseDir)
+      : "None";
 
-System Concurrency Capacity = A × H = 3 agents × 2 hands = 6 concurrent subtask operations
-Tree Hierarchy = Lead Orchestrator (Root Node) -> Branch Coordinators (Subtask Owners) -> Leaf Workers & Dynamic Joining Assistants
-PHASE_1_BUDGET = 100     (Steps 1 .. 100: Planning, Discovery Subagents, Up-Front Brain & Roadmap Creation, Lean Subtasks)
-PHASE_2_BUDGET = 150     (Steps 101 .. 250: Intermediate Archival, Sanitization, Prerequisite Refactoring, Intermediate Checkpoints)
-PHASE_3_BUDGET = 150     (Steps 251 .. 400: Tree Swarm Parallel Execution, Dynamic Join Capacity Saturation, Targeted Quality Linting, Fleet Sync, Atomic Push)
-WAVES = ceil(subtasks / (A x H))
-\`\`\`
+    let extraDetails = "";
 
-> [!IMPORTANT]
-> **Prompt Version:** 7.0.0
-> **Runtime:** Google Antigravity 2.0 (IDE and CLI)
-> **Canonical Prompt Specification:** \`01-prompts/14-execute/02-execute-parent-task-with-n-steps-v7.md\`
-> **Session ID:** \`${session.id}\`
-> **Target Issue:** ${title}
->
-> **Top-Instruction Priority Mandate (Above Precedence / Preamble Precedence):**
-> Whatever directives, constraints, checklists, or user instructions are given ABOVE this prompt (including in the user preamble, header blocks, or incoming user request above) are HIGHEST PRIORITY and MUST BE FOLLOWED as strictly NON-NEGOTIABLE. They supersede and strictly override any conflicting general advice, default conventions, or lower-level guidelines below.
+    if (evt.telemetry?.boundingRect) {
+      extraDetails += ` Bounds: ${evt.telemetry.boundingRect.width}x${evt.telemetry.boundingRect.height}.`;
+    }
 
-${nonAssetWarning}
+    if (evt.telemetry?.componentDetails?.color) {
+      extraDetails += ` Color: ${evt.telemetry.componentDetails.color}.`;
+    }
 
-${comprehensionGate}
+    actionableItems.push(
+      `${currentItemIndex}. Interaction Step ${seq} (${elapsed}): ${actor} performed ${eventType} on \`${target}\` at route \`${route}\`. XPath: \`${xpathVal}\`. Coords: ${coordsVal}.${extraDetails} Diagnostic Evidence: ${evidenceLink}.`,
+    );
 
-## 🌟 Operating Mode Configuration
-- **Active Mode**: ${operatingModeName} (\`isTimeRestricted: ${isTimeRestricted}\`)
-- **Timezone Hierarchy**: CLI flag \`--tz\` -> Preamble -> Split-DB \`commit_timezone\` -> Host local (\`${resolvedTimezone}\`)
-- **Window Policy**: ${windowPolicyDesc}
-- **AI Automation Bot Persona**: \`gitmap automation bot - ${botAgentName} - runs autonomously <info@rgitmap.com>\`
+    currentItemIndex += 1;
+  });
 
-[/goal](slashCommand;goal) Autonomously orchestrate and execute the bug remediation for "${title}" end-to-end: Enforce AI bot author identity (\`gitmap automation bot - ${botAgentName} - runs autonomously <info@rgitmap.com>\`), spawn A=3 subagents with H=2 hands (Capacity=6) across disjoint file boxes using GitMap telemetry as primary, enforce coding guidelines to 100%, and finish with one atomic GitMap commit (\`gitmap cpf "<module> - <summary>"\`).
+  if (effectiveSplitDbErrors.length > 0) {
+    const errSummaries = effectiveSplitDbErrors
+      .slice(0, 5)
+      .map((e) => `[${e.code || "ERR"}] ${e.message || "Unknown"} (Trigger: ${e.triggerComponent || "N/A"})`)
+      .join("; ");
 
-${mandatoryPillars}
+    actionableItems.push(
+      `${currentItemIndex}. Resolve active runtime and Split-DB errors recorded during session: ${errSummaries}.`,
+    );
 
-### 📋 Verified Task Breakdown (6-Part Schema)
-- **Task-01: Root Cause Isolation & Telemetry Verification**
-  - **Understood / AI Comprehension:** \`[YES]\` — Systematic analysis of route transitions, DOM metrics, and Split-DB logs.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Pinpoint failure mechanism across observed components.
-  - **Scope Boundaries:** Targeted components vs untouched systems.
-  - **Active Constraints:** Non-asset ephemeral learning, zero full builds/tests, relative paths.
-  - **Verification Strategy:** File-scoped linters and exit 0 telemetry commands.
+    currentItemIndex += 1;
+  }
 
-- **Task-02: Surgical UI & State Remediation**
-  - **Understood / AI Comprehension:** \`[YES]\` — Apply minimal surgical fix adhering to positive booleans and compound keys.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Apply clean fix resolving the defect.
-  - **Scope Boundaries:** Micro-batch of 5-8 files.
-  - **Active Constraints:** Zero asset pollution, positive booleans, vertical line gaps.
-  - **Verification Strategy:** Fast file-scoped syntax and linter checks.
+  actionableItems.push(
+    `${currentItemIndex}. Commit and finalize all verified fixes atomically via GitMap: \`gitmap cpf "recorder - resolve ${slug}"\`.`,
+  );
 
-- **Task-03: Verification, Telemetry & GitMap Atomic Commit**
-  - **Understood / AI Comprehension:** \`[YES]\` — Finalize changes and execute GitMap commit under bot identity.
-  - **Azure AI / Model Runtime Context:** N/A — Local CLI/GitMap
-  - **Intent & Technical Deliverables:** Atomic hyphen commit via GitMap.
-  - **Scope Boundaries:** Modified repository files only.
-  - **Active Constraints:** GitMap cpf format with hyphen, no colons in message argument.
-  - **Verification Strategy:** GitMap status and clean working tree.
+  return `# ${title}: high priority instruction, non-negotiable task
 
-## 1. Incident Overview
-- **Session ID**: \`${session.id}\`
-- **Category**: \`${category}\`
-- **Initial Route**: \`${session.initialRoute}\`
-- **Final Route**: \`${finalRoute}\`
-- **Route Transitions**: \`${routeHistoryStr}\`
-- **Duration**: ${durationSec}s (${session.durationMs}ms)
-- **Recorded Events**: ${session.events.length}
-- **Captured Screenshots**: ${session.screenshots.length}
-
-## 2. Problem Statement
-### Description
 ${description}
 
-### Expected vs. Actual
-- **Expected**: ${expected}
-- **Actual**: ${actual}
+**Navigation Path:** ${navPath}
+**Observed Behavior:** ${actual}
+**Expected Behavior:** ${expected}
 
-## 3. Visual Evidence (IDE Encapsulation Standard)
-All screenshots are encapsulated using IDE file links located adjacent to the runtime binary:
-${screenshotsBlock}
+## task: ${title}
+## slug: ${slug}
 
-## 4. UI Telemetry & Step Action Matrix
+# Actionable Items Must Follow Non-Negotiable
+
+${actionableItems.join("\n")}
+
+## Operating Mode & Bot Identity
+
+- **Active Mode**: ${operatingModeName} (\`isTimeRestricted: ${isTimeRestricted}\`)
+- **Configured Timezone**: \`${resolvedTimezone}\`
+- **AI Automation Bot Persona**: \`gitmap automation bot - ${botAgentName} - runs autonomously <info@rgitmap.com>\`
+
+## Sequential Event Timeline & UI Telemetry
+
 ${telemetryTable}
 
-## 5. Active Diagnostic Errors (Split-DB SQLite & Runtime)
+## Visual Evidence & Diagnostic Screenshots
+
+${screenshotsBlock}
+
+## Active Split-DB & Runtime Diagnostics
+
 ${errorBlock}
 
-## 6. CLI Diagnostics & Telemetry Commands
+## CLI Telemetry Command
+
 \`\`\`pwsh
 python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
 gitmap pe -t
 \`\`\`
 
-## 7. GitMap Atomic Commit Directive
-Finish with one hyphen-separated atomic commit:
-\`\`\`pwsh
-gitmap cpf "recorder - resolve ${titleSlug}"
-\`\`\`
+## Must follow and spawn agent using
+
+@[execute-parent-task-with-n-steps-v7](file;.agents/skills/execute-parent-task-with-n-steps-v7)
+
+## Additional Instructions
+
+- [/plan](slashCommand;plan) first before doing work for improved work or less friction, faster execution for AI and coding without errors and following Coding Guidelines.
+- [/learn](slashCommand;learn) from @[gitmap](file;.agents/skills/gitmap) skill to leverage GitMap high-speed search, toolchain discovery, and caching.
+- Track in-flight file touches and prevent write collisions using GitMap RC Heatmap (\`gitmap rc heatmap status\` / \`gitmap rc heatmap tree\` / \`gitmap rc heatmap live\` / \`gitmap rc heatmap sync\`).
+- Only add relative paths, never add absolute paths during work; this must be respected on release page and in release notes as well.
 `;
 }
 
 // Aliases for compatibility
 export const buildV6LetterlyPrompt = generateV6LetterlyPrompt;
 export const buildV7LetterlyPrompt = generateV7LetterlyPrompt;
-export const buildV6Prompt = (params: {
-  session: RecorderSession;
-  summary?: BugReportSummary;
-  splitDbErrors?: SplitDbErrorSummary[];
-  baseDir?: string;
-}): string => generateV6LetterlyPrompt(params.session, {
-  summary: params.summary,
-  splitDbErrors: params.splitDbErrors,
-  baseDir: params.baseDir,
-});
-export const buildV7Prompt = (params: {
-  session: RecorderSession;
-  summary?: BugReportSummary;
-  splitDbErrors?: SplitDbErrorSummary[];
-  baseDir?: string;
-}): string => generateV7LetterlyPrompt(params.session, {
-  summary: params.summary,
-  splitDbErrors: params.splitDbErrors,
-  baseDir: params.baseDir,
-});
+
+export const buildV6Prompt = (params: PromptBuilderParams): string => {
+  return generateV6LetterlyPrompt(params.session, {
+    summary: params.summary || params.options?.summary,
+    splitDbErrors: params.splitDbErrors || params.options?.splitDbErrors,
+    baseDir: params.baseDir || params.options?.baseDir,
+    isTimeRestricted: params.isTimeRestricted || params.options?.isTimeRestricted,
+    targetTimezone: params.targetTimezone || params.options?.targetTimezone,
+    botAgentName: params.botAgentName || params.options?.botAgentName,
+  });
+};
+
+export const buildV7Prompt = (params: PromptBuilderParams): string => {
+  return generateV7LetterlyPrompt(params.session, {
+    summary: params.summary || params.options?.summary,
+    splitDbErrors: params.splitDbErrors || params.options?.splitDbErrors,
+    baseDir: params.baseDir || params.options?.baseDir,
+    isTimeRestricted: params.isTimeRestricted || params.options?.isTimeRestricted,
+    targetTimezone: params.targetTimezone || params.options?.targetTimezone,
+    botAgentName: params.botAgentName || params.options?.botAgentName,
+  });
+};

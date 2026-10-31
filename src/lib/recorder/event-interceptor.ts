@@ -863,3 +863,6 @@ export function stopGlobalInterception(): void {
     cleanupHandlers = null;
   }
 }
+
+export { recordAnalysisStep } from "./analysis-telemetry";
+

@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Cloud,
+  ListTree,
   Loader2,
 } from "lucide-react";
 import { HttpMethod } from "@/lib/constants";
@@ -25,6 +26,7 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const session = useRecorderStore((s) => s.session);
   const cancelRecording = useRecorderStore((s) => s.cancelRecording);
   const resumeRecording = useRecorderStore((s) => s.resumeRecording);
+  const openEventExplorer = useRecorderStore((s) => s.openEventExplorer);
 
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
   const [isSendingTelegram, setIsSendingTelegram] = useState(false);
@@ -185,8 +187,8 @@ ${summary.actualBehavior || "N/A"}`;
   return (
     <>
       <div className="fixed inset-0 z-[10060] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div className="relative w-full max-w-xl rounded-xl border border-slate-700 bg-[#0f172a] p-5 shadow-2xl flex flex-col gap-4 text-slate-100 animate-in fade-in zoom-in-95">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="relative w-full max-w-xl max-h-[90vh] rounded-xl border border-slate-700 bg-[#0f172a] p-5 shadow-2xl flex flex-col text-slate-100 animate-in fade-in zoom-in-95">
+          <div className="shrink-0 flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
             <div>
               <h2 className="text-base font-bold text-white">Export Activity & Bug Report</h2>
               <p className="text-xs text-slate-400">
@@ -225,45 +227,47 @@ ${summary.actualBehavior || "N/A"}`;
             </div>
           </div>
 
-          <RecorderSummaryForm summary={summary} onChange={setSummary} />
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <RecorderSummaryForm summary={summary} onChange={setSummary} />
 
-          <RecorderTimelinePreview events={session.events} screenshots={session.screenshots} />
+            <RecorderTimelinePreview events={session.events} screenshots={session.screenshots} />
 
-          {telegramStatus ? (
-            <div
-              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
-                telegramStatus.isSuccess
-                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
-              }`}
-            >
-              {telegramStatus.isSuccess ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-              ) : (
-                <AlertCircle className="h-4 w-4 shrink-0" />
-              )}
-              <span>{telegramStatus.message}</span>
-            </div>
-          ) : null}
+            {telegramStatus ? (
+              <div
+                className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
+                  telegramStatus.isSuccess
+                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+                }`}
+              >
+                {telegramStatus.isSuccess ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                )}
+                <span>{telegramStatus.message}</span>
+              </div>
+            ) : null}
 
-          {bugReportStatus ? (
-            <div
-              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
-                bugReportStatus.isSuccess
-                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
-              }`}
-            >
-              {bugReportStatus.isSuccess ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-              ) : (
-                <AlertCircle className="h-4 w-4 shrink-0" />
-              )}
-              <span>{bugReportStatus.message}</span>
-            </div>
-          ) : null}
+            {bugReportStatus ? (
+              <div
+                className={`flex items-center gap-2 rounded-lg p-2.5 text-xs ${
+                  bugReportStatus.isSuccess
+                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    : "border border-rose-500/30 bg-rose-500/10 text-rose-300"
+                }`}
+              >
+                {bugReportStatus.isSuccess ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                )}
+                <span>{bugReportStatus.message}</span>
+              </div>
+            ) : null}
+          </div>
 
-          <div className="flex flex-wrap items-center justify-between border-t border-slate-800 pt-3 gap-2">
+          <div className="shrink-0 flex flex-wrap items-center justify-between border-t border-slate-800 pt-3 mt-4 gap-2">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -283,6 +287,16 @@ ${summary.actualBehavior || "N/A"}`;
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={openEventExplorer}
+                title="Explore and Filter All Recorded Events (Antigravity Tools Pattern)"
+                className="flex items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20"
+              >
+                <ListTree className="h-3.5 w-3.5" />
+                <span>Events</span>
+              </button>
+
               <button
                 type="button"
                 disabled={isSendingTelegram}
@@ -313,10 +327,11 @@ ${summary.actualBehavior || "N/A"}`;
                 <span>Send Bug Report</span>
               </button>
 
-              {/* Multi-Action Export Dropdown: ZIP, V6, V7, Email, Local Disk, Supabase, CLI */}
+              {/* Multi-Action Export Dropdown: ZIP, V6, V7, Email, Local Disk, Supabase, Folder, CLI */}
               <RecorderExportDropdown
                 session={session}
                 summary={summary}
+                placement="top"
                 onOpenEmailModal={() => setIsEmailModalOpen(true)}
               />
             </div>

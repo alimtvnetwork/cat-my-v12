@@ -8,6 +8,7 @@ import {
   HardDrive,
   CloudUpload,
   Terminal,
+  FolderCode,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ export interface RecorderExportDropdownProps {
   onPrimaryClick?: () => void;
   className?: string;
   isCompact?: boolean;
+  placement?: "top" | "bottom";
 }
 
 interface DropdownItem {
@@ -56,6 +58,7 @@ export function RecorderExportDropdown({
   onPrimaryClick,
   className = "",
   isCompact = false,
+  placement = "top",
 }: RecorderExportDropdownProps): React.JSX.Element {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -69,9 +72,13 @@ export function RecorderExportDropdown({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      const target = event.target as Node;
+
+      if (containerRef.current && containerRef.current.contains(target)) {
+        return;
       }
+
+      setIsDropdownOpen(false);
     }
 
     if (isDropdownOpen) {
@@ -83,13 +90,38 @@ export function RecorderExportDropdown({
     };
   }, [isDropdownOpen]);
 
+  const executeItemAction = async (item: DropdownItem): Promise<void> => {
+    try {
+      await item.action();
+    } finally {
+      setIsDropdownOpen(false);
+    }
+  };
+
   const handleExportZip = async (): Promise<void> => {
     setIsExportingZip(true);
 
     try {
       toast.info("Generating ZIP bundle with snapshots and telemetry...");
-      await exportSessionToZip(session, summary);
-      toast.success("ZIP bundle exported successfully!");
+      const result = await exportSessionToZip(session, summary);
+
+      const clipboardPayload = [
+        `# Bug Report Archive: ${result.filename}`,
+        `Archive Path: ${result.downloadPath}`,
+        "",
+        "## PowerShell Extraction Command:",
+        result.extractionCommand,
+        "",
+        "## AI Execution Directive:",
+        result.aiInstructions,
+      ].join("\n");
+
+      try {
+        await navigator.clipboard.writeText(clipboardPayload);
+        toast.success("ZIP exported! Download path & extraction command copied to clipboard.");
+      } catch {
+        toast.success(`ZIP exported to ${result.filename}!`);
+      }
     } catch (err) {
       toast.error(`ZIP export failed: ${String(err)}`);
     } finally {
@@ -248,6 +280,24 @@ export function RecorderExportDropdown({
     }
   };
 
+  const handleCopyLocalFolderPath = async (): Promise<void> => {
+    const relPath = `.logs/recorded-bugs/${session.id}/`;
+    const instruction = [
+      `# Local Session Directory: ${relPath}`,
+      `Inspect telemetry in \`${relPath}session.json\` and screenshots in \`${relPath}screenshots/\`.`,
+      `Execute diagnosis using @[execute-parent-task-with-n-steps-v6](file;.agents/skills/execute-parent-task-with-n-steps-v6).`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(instruction);
+      toast.success(`Copied local session path (${relPath}) to clipboard!`);
+    } catch {
+      toast.info(relPath);
+    } finally {
+      setIsDropdownOpen(false);
+    }
+  };
+
   const handleCopyCliCommand = async (): Promise<void> => {
     const cmd = `python -m BE.cli.processing.main errors list --session-id ${session.id} --trace`;
 
@@ -325,12 +375,22 @@ export function RecorderExportDropdown({
       isLoading: isSavingLocal,
     },
     {
+      id: "folder",
+      label: "Copy Session Folder Path",
+      sublabel: "Directory for local AI agents (.logs/recorded-bugs/...)",
+      shortcut: "Ctrl+L",
+      icon: FolderCode,
+      iconColor: "text-amber-400",
+      action: handleCopyLocalFolderPath,
+      isLoading: false,
+    },
+    {
       id: "cli",
       label: "Copy CLI Command",
       sublabel: "Query errors in SQLite via terminal",
       shortcut: "Ctrl+C",
       icon: Terminal,
-      iconColor: "text-amber-400",
+      iconColor: "text-yellow-400",
       action: handleCopyCliCommand,
       isLoading: false,
     },
@@ -373,10 +433,14 @@ export function RecorderExportDropdown({
       const currentItem = items[activeIndex];
 
       if (currentItem) {
-        void currentItem.action();
+        void executeItemAction(currentItem);
       }
     }
   };
+
+  const placementClasses = placement === "bottom"
+    ? "top-full mt-2"
+    : "bottom-full mb-2";
 
   return (
     <div
@@ -425,11 +489,11 @@ export function RecorderExportDropdown({
           ref={menuRef}
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-[#0e131f] p-1.5 shadow-2xl backdrop-blur-xl z-[10060] animate-in fade-in zoom-in-95"
+          className={`absolute right-0 ${placementClasses} w-[360px] rounded-xl border border-slate-700 bg-[#0e131f] p-1.5 shadow-2xl backdrop-blur-xl z-[10070] animate-in fade-in zoom-in-95`}
         >
           <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 mb-1 flex items-center justify-between">
             <span>Unified Export Suite</span>
-            <span className="text-[9px] text-slate-500 font-mono">7 options</span>
+            <span className="text-[9px] text-slate-500 font-mono">{items.length} options</span>
           </div>
 
           <div className="flex flex-col gap-0.5">
@@ -442,7 +506,7 @@ export function RecorderExportDropdown({
                   key={item.id}
                   role="menuitem"
                   type="button"
-                  onClick={() => void item.action()}
+                  onClick={() => void executeItemAction(item)}
                   onMouseEnter={() => setActiveIndex(index)}
                   disabled={item.isLoading}
                   className={`flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors disabled:opacity-50 ${

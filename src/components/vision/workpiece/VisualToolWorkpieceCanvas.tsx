@@ -1132,26 +1132,12 @@ export function drawRoiHeaderGrip(
   const badgeH = headerRect.height;
   const badgeX = headerRect.x;
   const badgeY = headerRect.y;
+  const badgeW = headerRect.width;
 
   ctx.save();
   ctx.font = "bold 8px monospace";
-  const lockTag = isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED · DRAG";
-  const lockTagW = ctx.measureText(lockTag).width + 12;
-
-  // Shorten label cleanly if overly long to prevent text collision
-  let cleanLabel = labelPrefix;
-  if (cleanLabel.length > 28) {
-    cleanLabel = cleanLabel.replace(" SEARCH REGION", "");
-    if (cleanLabel.length > 26) {
-      cleanLabel = cleanLabel.slice(0, 24) + "…";
-    }
-  }
-
-  ctx.font = "bold 9px monospace";
-  const dimsText = `[${Math.round(roi.width)}×${Math.round(roi.height)}]`;
-  const badgeText = `${cleanLabel} · ${dimsText}`;
-  const textW = ctx.measureText(badgeText).width;
-  const badgeW = Math.max(headerRect.width, textW + lockTagW + 32);
+  const lockTag = isLocked ? "🔒 LOCKED" : "🔓 DRAG";
+  const lockTagW = ctx.measureText(lockTag).width + 10;
 
   // Background
   ctx.fillStyle = "rgba(8, 14, 24, 0.95)";
@@ -1166,16 +1152,35 @@ export function drawRoiHeaderGrip(
   ctx.fillStyle = isLocked ? "rgba(148, 163, 184, 0.4)" : color;
   const gripX = badgeX + 6;
   const gripY = badgeY + 6;
+
   for (let r = 0; r < 2; r += 1) {
     for (let c = 0; c < 3; c += 1) {
       ctx.fillRect(gripX + c * 3, gripY + r * 5, 1.8, 1.8);
     }
   }
 
-  // Label text
+  // Available width for label text
+  const labelStartX = badgeX + 20;
+  const availLabelWidth = Math.max(40, badgeW - lockTagW - 28);
+
   ctx.font = "bold 9px monospace";
+  const dimsText = `[${Math.round(roi.width)}×${Math.round(roi.height)}]`;
+  let displayLabel = labelPrefix.replace(" SEARCH REGION", "").trim();
+  let badgeText = `${displayLabel} · ${dimsText}`;
+
+  while (displayLabel.length > 3 && ctx.measureText(badgeText).width > availLabelWidth) {
+    displayLabel = displayLabel.slice(0, -1);
+    badgeText = `${displayLabel}… · ${dimsText}`;
+  }
+
+  // Draw clipped label text
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(labelStartX, badgeY, availLabelWidth, badgeH);
+  ctx.clip();
   ctx.fillStyle = color;
-  ctx.fillText(badgeText, badgeX + 20, badgeY + 14);
+  ctx.fillText(badgeText, labelStartX, badgeY + 14);
+  ctx.restore();
 
   // Lock status tag on right
   ctx.font = "bold 8px monospace";
@@ -1999,23 +2004,13 @@ export function VisualToolWorkpieceCanvas({
             ? "rgba(16, 185, 129, 0.14)"
             : "rgba(0, 229, 255, 0.12)";
 
-      // Search region (ROI) bounding outline and corner-only handles
-      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
-
+      // Search region (ROI) bounding outline and corner-only handles (strictly rectangular)
       ctx.save();
       ctx.strokeStyle = roiStroke;
       ctx.lineWidth = 1.5;
       ctx.fillStyle = roiFill;
-
-      if (shapeType === "circle") {
-        drawCircleWithHandles(ctx, roi, roiStroke, roiFill, isEditable);
-      } else if (shapeType === "polygon") {
-        const polyVertices = getPolygonVertices(roi, Number((toolParams as any)?.vertexCount) || 6);
-        drawPolygonWithVertices(ctx, roi, polyVertices, roiStroke, roiFill, isEditable);
-      } else {
-        ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
-        ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
-      }
+      ctx.fillRect(roi.x, roi.y, roi.width, roi.height);
+      ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
 
       if (isEditable && !isRoiLocked) {
         drawCornerHandles(ctx, roi, roiStroke);
@@ -2042,6 +2037,23 @@ export function VisualToolWorkpieceCanvas({
             : ruleBoxesFromParams.length > 0
               ? ruleBoxesFromParams
               : [];
+
+        const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
+
+        if (shapeType === "circle") {
+          const diam = Number((toolParams as any)?.diameterPx) || Math.min(roi.width, roi.height);
+          const templateRoi: WorkpieceRoi = {
+            x: Math.round(roi.x + (roi.width - diam) / 2),
+            y: Math.round(roi.y + (roi.height - diam) / 2),
+            width: Math.round(diam),
+            height: Math.round(diam),
+          };
+          drawCircleWithHandles(ctx, templateRoi, "#00e5ff", "rgba(0, 229, 255, 0.08)", false);
+        } else if (shapeType === "polygon") {
+          const vCount = Number((toolParams as any)?.vertexCount) || 6;
+          const polyVertices = getPolygonVertices(roi, vCount);
+          drawPolygonWithVertices(ctx, roi, polyVertices, "#00e5ff", "rgba(0, 229, 255, 0.08)", false);
+        }
 
         drawGreyscaleSimulationPatternOverlay(
           ctx,
@@ -2190,10 +2202,6 @@ export function VisualToolWorkpieceCanvas({
 
         // Render Search Region (ROI) bounding box for the active / selected rule
         if (isSelected) {
-          const shapeType = String(
-            (rule.params as any)?.shapeType || (toolParams as any)?.shapeType || "rectangle",
-          ).toLowerCase();
-
           ctx.save();
           ctx.strokeStyle = strokeColor;
           ctx.lineWidth = 2.0;
@@ -2202,26 +2210,10 @@ export function VisualToolWorkpieceCanvas({
           const ruleStrokeColor = "#00e5ff";
           ctx.strokeStyle = ruleStrokeColor;
 
-          if (shapeType === "circle") {
-            drawCircleWithHandles(ctx, ruleRoi, ruleStrokeColor, fillColor, isEditable);
-          } else if (shapeType === "polygon") {
-            const polyVertices = getPolygonVertices(
-              ruleRoi,
-              Number((rule.params as any)?.vertexCount) || 6,
-            );
-            drawPolygonWithVertices(
-              ctx,
-              ruleRoi,
-              polyVertices,
-              ruleStrokeColor,
-              fillColor,
-              isEditable,
-            );
-          } else {
-            ctx.strokeRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
-            ctx.fillStyle = fillColor;
-            ctx.fillRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
-          }
+          // Enforce rectangular boundary regardless of tool shapeType
+          ctx.strokeRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
+          ctx.fillStyle = fillColor;
+          ctx.fillRect(ruleRoi.x, ruleRoi.y, ruleRoi.width, ruleRoi.height);
 
           ctx.setLineDash([]);
 
@@ -2310,6 +2302,35 @@ export function VisualToolWorkpieceCanvas({
           ruleNameLower.includes("flaw");
 
         if (isRulePattern) {
+          const ruleShapeType = String(
+            (rule.params as any)?.shapeType || (toolParams as any)?.shapeType || "rectangle",
+          ).toLowerCase();
+
+          if (ruleShapeType === "circle") {
+            const diam =
+              Number((rule.params as any)?.diameterPx ?? (toolParams as any)?.diameterPx) ||
+              Math.min(ruleRoi.width, ruleRoi.height);
+            const templateRoi: WorkpieceRoi = {
+              x: Math.round(ruleRoi.x + (ruleRoi.width - diam) / 2),
+              y: Math.round(ruleRoi.y + (ruleRoi.height - diam) / 2),
+              width: Math.round(diam),
+              height: Math.round(diam),
+            };
+            drawCircleWithHandles(ctx, templateRoi, "#00e5ff", "rgba(0, 229, 255, 0.08)", false);
+          } else if (ruleShapeType === "polygon") {
+            const vCount =
+              Number((rule.params as any)?.vertexCount ?? (toolParams as any)?.vertexCount) || 6;
+            const polyVertices = getPolygonVertices(ruleRoi, vCount);
+            drawPolygonWithVertices(
+              ctx,
+              ruleRoi,
+              polyVertices,
+              "#00e5ff",
+              "rgba(0, 229, 255, 0.08)",
+              false,
+            );
+          }
+
           if (occupiedTapePockets.length > 0) {
             const multiDevicePassRegions = occupiedTapePockets.map((p) => ({
               label: `Pocket #${p.pocketIndex}`,
@@ -2730,8 +2751,8 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // Moving ROI requires unlocked state: drag from top header or interior ROI body
-    if (isEditable && onChangeRoi && !isRoiLocked && (isInsideHeader || isInsideRoi)) {
+    // 2. Dedicated Top Header Grip Bar (20px) - Dragging top header ALWAYS moves active rule
+    if (isEditable && onChangeRoi && !isRoiLocked && isInsideHeader) {
       setIsMovingRoi(true);
       setDragStartPos({ x, y, initialRoi: { ...roi } });
 
@@ -2746,7 +2767,7 @@ export function VisualToolWorkpieceCanvas({
         screenCoords: { x: e.clientX, y: e.clientY },
         imageCoords: { x, y },
         geometry: { ...roi },
-        handleId: isInsideHeader ? "header-drag" : "interior-body-drag",
+        handleId: "header-drag",
         element: canvasRef.current,
         label: toolName || "Workpiece ROI",
       });
@@ -2756,7 +2777,30 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
-    // 1. Pin 1 orientation: drag reticle or map new Pin 1 location
+    // 3. Rule Selection Overlap Check (Unblock Deadlocks)
+    // Check if cursor clicked on a DIFFERENT rule in overlayRules.
+    // Reverse iteration picks topmost rendered rule.
+    if (onSelectRule && overlayRules.length > 0) {
+      const clickedOtherRule = [...overlayRules]
+        .reverse()
+        .find(
+          (r) =>
+            !r.isHidden &&
+            r.id !== selectedRuleId &&
+            x >= r.x &&
+            x <= r.x + r.width &&
+            y >= r.y &&
+            y <= r.y + r.height,
+        );
+
+      if (clickedOtherRule) {
+        onSelectRule(clickedOtherRule.id);
+
+        return;
+      }
+    }
+
+    // 4. Feature reticles: Pin 1 reticle drag, Pattern box toggle
     if (isPin1 && onUpdateParams) {
       const currentPin1X =
         (toolParams as any)?.pin1Config?.centerX ??
@@ -2775,44 +2819,8 @@ export function VisualToolWorkpieceCanvas({
 
         return;
       }
-
-      // If clicked inside search region or near the IC: map Pin 1 position
-      const isInsideSearchArea =
-        x >= roi.x - 20 &&
-        x <= roi.x + roi.width + 20 &&
-        y >= roi.y - 20 &&
-        y <= roi.y + roi.height + 20;
-
-      // Branch deliberately disabled by the parallel spec-54 work (click-to-
-      // set Pin1 center is superseded by the marking tool); kept, not
-      // deleted, so it can be re-enabled. Lint suppression is intentional.
-      // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
-      if (false && isInsideSearchArea) {
-        const nextPin1Config = {
-          ...((toolParams as any)?.pin1Config ?? {}),
-          centerX: x,
-          centerY: y,
-          registeredPin1: {
-            ...((toolParams as any)?.pin1Config?.registeredPin1 ?? {}),
-            x,
-            y,
-            centerX: x,
-            centerY: y,
-            radius: (toolParams as any)?.pin1Config?.radius ?? 11,
-          },
-        };
-
-        onUpdateParams?.({
-          ...toolParams,
-          pin1Config: nextPin1Config,
-          pin1ConfigJson: JSON.stringify(nextPin1Config),
-        });
-
-        return;
-      }
     }
 
-    // 2. Pattern box toggle exclusion
     if (isPatternMatching && activeBoxesToDraw.length > 0) {
       const boxUnderCursor = activeBoxesToDraw.find(
         (b) => x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height,
@@ -2835,27 +2843,31 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // 3. Search Region interior body drag eliminated:
-    // Clicking inside a locked ROI does NOT move the ROI (allowing user to click on or place patterns inside it).
+    // 5. Active Rule Interior Body Drag Fallback
+    // Only reached if click is inside the active rule and not on another rule or feature
+    if (isEditable && onChangeRoi && !isRoiLocked && isInsideRoi) {
+      setIsMovingRoi(true);
+      setDragStartPos({ x, y, initialRoi: { ...roi } });
 
-    // 4. Click other rule to select
-    if (onSelectRule && overlayRules.length > 0) {
-      const clickedRule = [...overlayRules]
-        .reverse()
-        .find(
-          (r) =>
-            !r.isHidden &&
-            x >= r.x &&
-            x <= r.x + r.width &&
-            y >= r.y &&
-            y <= r.y + r.height,
-        );
+      recordRoiDragStart({
+        action: "move",
+        roi: { ...roi },
+        element: canvasRef.current,
+      });
 
-      if (clickedRule) {
-        onSelectRule(clickedRule.id);
+      roiBridgeSessionRef.current = beginRoiInteraction({
+        operationType: "roi-drag",
+        screenCoords: { x: e.clientX, y: e.clientY },
+        imageCoords: { x, y },
+        geometry: { ...roi },
+        handleId: "interior-body-drag",
+        element: canvasRef.current,
+        label: toolName || "Workpiece ROI",
+      });
 
-        return;
-      }
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+      return;
     }
   }
 
@@ -2902,22 +2914,34 @@ export function VisualToolWorkpieceCanvas({
     if (isMovingRoi && dragStartPos && onChangeRoi) {
       const dx = x - dragStartPos.x;
       const dy = y - dragStartPos.y;
-      const initial = dragStartPos.initialRoi;
-      const maxAllowedX = Math.max(0, naturalW - initial.width);
-      const maxAllowedY = Math.max(0, naturalH - initial.height);
-      const nextRoi = {
-        ...initial,
-        x: Math.round(Math.max(0, Math.min(maxAllowedX, initial.x + dx))),
-        y: Math.round(Math.max(0, Math.min(maxAllowedY, initial.y + dy))),
-      };
 
-      onChangeRoi(nextRoi);
+      // Zero-delta short circuit: prevent jitter and accidental reset
+      if (dx === 0 && dy === 0) {
+        return;
+      }
+
+      const initial = dragStartPos.initialRoi;
+      const maxAllowedX =
+        naturalW > initial.width ? naturalW - initial.width : Math.max(0, initial.x);
+      const maxAllowedY =
+        naturalH > initial.height ? naturalH - initial.height : Math.max(0, initial.y);
+
+      const targetX = initial.x + dx;
+      const targetY = initial.y + dy;
+
+      const clampedX = Math.round(Math.max(0, Math.min(maxAllowedX, targetX)));
+      const clampedY = Math.round(Math.max(0, Math.min(maxAllowedY, targetY)));
+
+      onChangeRoi({
+        ...initial,
+        x: clampedX,
+        y: clampedY,
+      });
 
       return;
     }
 
     if (activeCornerHandle && dragStartPos && onChangeRoi) {
-      const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
       const initial = dragStartPos.initialRoi;
       const nextRoi = { ...initial };
 
@@ -2945,13 +2969,6 @@ export function VisualToolWorkpieceCanvas({
         nextRoi.width = (initial.x + initial.width) - clampedX;
         nextRoi.height = Math.min(naturalH - initial.y, rawH);
         nextRoi.x = clampedX;
-      }
-
-      if (shapeType === "square" || shapeType === "circle" || shapeType === "polygon") {
-        const maxSide = Math.min(naturalW - nextRoi.x, naturalH - nextRoi.y);
-        const side = Math.max(16, Math.min(maxSide, Math.max(nextRoi.width, nextRoi.height)));
-        nextRoi.width = side;
-        nextRoi.height = side;
       }
 
       onChangeRoi(nextRoi);
@@ -3071,12 +3088,10 @@ export function VisualToolWorkpieceCanvas({
       y >= headerRect.y &&
       y <= headerRect.y + headerRect.height;
 
-    const isInsideRoi =
-      x >= roi.x && x <= roi.x + roi.width && y >= roi.y && y <= roi.y + roi.height;
-
-    // Double-clicking the ROI header unlocks/locks the ROI
-    if (isInsideHeader || isInsideRoi) {
+    // Strictly require double-click on the top header grip bar; body double-click is ignored
+    if (isInsideHeader) {
       setIsRoiLocked((prev) => !prev);
+
       if (selectedRuleId && onToggleLocked) {
         onToggleLocked(selectedRuleId);
       }

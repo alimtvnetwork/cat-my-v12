@@ -137,6 +137,20 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "exitFullscreen",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_FULLSCREEN",
+        );
+      });
+    }
+
     const headers = { "Content-Type": "application/json" };
     // Try effective backend URL and local Vite proxy concurrently
     fetch(`${baseUrl}/window/minimize`, {
@@ -161,24 +175,9 @@ export function WindowControlButtons(): React.JSX.Element {
             },
             "E_WINDOW_MINIMIZE",
           );
+          toast.error("Failed to minimize window. Background service may be unreachable.");
         });
       });
-
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch((err: unknown) => {
-        useErrorStore.getState().captureError(
-          err,
-          {
-            triggerComponent: "WindowControlButtons",
-            triggerAction: "exitFullscreen",
-            source: "WindowControlButtons",
-          },
-          "E_WINDOW_FULLSCREEN",
-        );
-      });
-
-      return;
-    }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
   }, [baseUrl]);

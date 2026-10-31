@@ -99,10 +99,10 @@ export const MachineFrame = memo(function MachineFrame({
                 height="84"
                 rx="2"
                 fill="none"
-                stroke={i === 2 ? "var(--ca-primary)" : "var(--ca-border)"}
-                strokeWidth={i === 2 ? "2" : "1.5"}
-                strokeDasharray={i === 2 ? "none" : "4 2"}
-                opacity={i === 2 ? 0.9 : 0.6}
+                stroke={isRunningLive && i === 2 ? "var(--ca-primary)" : "var(--ca-border)"}
+                strokeWidth={isRunningLive && i === 2 ? "2" : "1.5"}
+                strokeDasharray={isRunningLive && i === 2 ? "none" : "4 2"}
+                opacity={isRunningLive && i === 2 ? 0.9 : 0.5}
               />
               <circle cx={x - 42} cy="306" r="29" fill="var(--ca-viewport)" opacity="0.92" />
               <circle

@@ -9,6 +9,9 @@ export interface ExportZipResult {
   isSuccess: boolean;
   filename: string;
   blobSize: number;
+  downloadPath: string;
+  extractionCommand: string;
+  aiInstructions: string;
 }
 
 function getDiagnostics(): Record<string, unknown> {
@@ -97,9 +100,35 @@ export async function exportSessionToZip(
 
   triggerBrowserDownload(blob, filename);
 
+  const downloadPath = `C:\\Users\\Administrator\\Downloads\\${filename}`;
+  const extractionCommand = `Expand-Archive -Path "${downloadPath}" -DestinationPath ".logs/recorded-bugs/${session.id}/" -Force`;
+  const aiInstructions = `Follow @[execute-parent-task-with-n-steps-v6] and review .logs/recorded-bugs/${session.id}/AI_BUG_REPORT.md to diagnose and resolve this defect.`;
+
+  const clipboardPayload = [
+    `# Bug Report Archive: ${filename}`,
+    `Archive Path: ${downloadPath}`,
+    "",
+    "## PowerShell Extraction Command:",
+    extractionCommand,
+    "",
+    "## AI Execution Directive:",
+    aiInstructions,
+  ].join("\n");
+
+  if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+    try {
+      void navigator.clipboard.writeText(clipboardPayload);
+    } catch {
+      // Ignore clipboard restrictions in non-interactive/unfocused environments
+    }
+  }
+
   return {
     isSuccess: true,
     filename,
     blobSize: blob.size,
+    downloadPath,
+    extractionCommand,
+    aiInstructions,
   };
 }

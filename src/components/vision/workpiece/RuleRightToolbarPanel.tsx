@@ -147,17 +147,10 @@ function RuleRightToolbarPanelContent({
 
       const safeValue =
         field === "width" || field === "height" ? Math.max(4, parsed) : Math.max(0, parsed);
-      const isSquare = String(rule.params?.shapeType ?? "") === "square";
-      const side =
-        field === "width" || field === "height"
-          ? Math.max(4, Math.min(safeValue, field === "width" ? rule.height : rule.width))
-          : safeValue;
 
       const nextRule: EditorRule = {
         ...rule,
-        ...(isSquare && (field === "width" || field === "height")
-          ? { width: side, height: side }
-          : { [field]: safeValue }),
+        [field]: safeValue,
       };
 
       onUpdateRule(nextRule);
@@ -231,12 +224,9 @@ function RuleRightToolbarPanelContent({
         ...(rule.params ?? {}),
         [key]: value,
       };
-      const isSquareShape = key === "shapeType" && value === "square";
-      const side = Math.max(4, Math.min(rule.width, rule.height));
 
       const nextRule: EditorRule = {
         ...rule,
-        ...(isSquareShape ? { width: side, height: side } : {}),
         params: nextParams,
       };
 
@@ -489,91 +479,6 @@ function RuleRightToolbarPanelContent({
               />
             </div>
           </div>
-
-          {/* Region Shape Selection */}
-          <div className="space-y-1 pt-1 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
-                Region Shape
-              </span>
-              <span className="text-[9px] font-mono uppercase text-cyan-400">
-                {shapeType}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-4 gap-1">
-              {(["rectangle", "square", "circle", "polygon"] as const).map((shape) => {
-                const isSelected = shapeType === shape;
-
-                return (
-                  <button
-                    key={shape}
-                    type="button"
-                    onClick={() => handleParamChange("shapeType", shape)}
-                    className={`flex items-center justify-center gap-1 rounded-md py-1 text-[10px] font-bold uppercase transition ${
-                      isSelected
-                        ? "border border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
-                        : "border border-white/10 bg-white/5 text-white/50 hover:text-white"
-                    }`}
-                  >
-                    {shape === "rectangle" && <Square size={10} />}
-                    {shape === "square" && <Square size={10} className="scale-90" />}
-                    {shape === "circle" && <Circle size={10} />}
-                    {shape === "polygon" && <Hexagon size={10} />}
-                    <span>{shape.slice(0, 4)}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Shape Specific Controls */}
-            {shapeType === "circle" ? (
-              <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-white/60">Circle Diameter (px)</span>
-                  <span className="font-mono font-bold text-cyan-300">{circleDiameter} px</span>
-                </div>
-                <input
-                  type="range"
-                  min={10}
-                  max={400}
-                  value={circleDiameter}
-                  onChange={(e) => handleParamChange("diameterPx", parseInt(e.target.value, 10))}
-                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
-                />
-
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-white/60">Min Circularity (%)</span>
-                  <span className="font-mono font-bold text-cyan-300">{circularityTolerance}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={30}
-                  max={100}
-                  value={circularityTolerance}
-                  onChange={(e) => handleParamChange("minCircularityPct", parseInt(e.target.value, 10))}
-                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
-                />
-              </div>
-            ) : null}
-
-            {shapeType === "polygon" ? (
-              <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-white/60">Polygon Vertices</span>
-                  <span className="font-mono font-bold text-cyan-300">{polygonVertexCount} Points</span>
-                </div>
-                <input
-                  type="range"
-                  min={3}
-                  max={12}
-                  value={polygonVertexCount}
-                  onChange={(e) => handleParamChange("vertexCount", parseInt(e.target.value, 10))}
-                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
-                />
-              </div>
-            ) : null}
-          </div>
         </div>
 
         {/* Tool Parameters & Tuning */}
@@ -667,10 +572,100 @@ function RuleRightToolbarPanelContent({
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-bold uppercase tracking-wider text-white/80 text-[11px]">
-                Tool Parameters
+                {isPatternRule ? "Pattern Search Parameters (T102)" : "Tool Parameters"}
               </span>
-              <Sliders size={13} className="text-cyan-400" />
+              {isPatternRule ? (
+                <ScanSearch size={13} className="text-cyan-400" />
+              ) : (
+                <Sliders size={13} className="text-cyan-400" />
+              )}
             </div>
+
+            {/* Pattern Template Shape Selector */}
+            {isPatternRule ? (
+              <div className="space-y-1.5 pt-1 border-t border-white/10">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">
+                    Pattern Match Shape
+                  </span>
+                  <span className="text-[9px] font-mono uppercase text-cyan-400">
+                    {shapeType}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1">
+                  {(["rectangle", "square", "circle", "polygon"] as const).map((shape) => {
+                    const isSelected = shapeType === shape;
+
+                    return (
+                      <button
+                        key={shape}
+                        type="button"
+                        onClick={() => handleParamChange("shapeType", shape)}
+                        className={`flex items-center justify-center gap-1 rounded-md py-1 text-[10px] font-bold uppercase transition ${
+                          isSelected
+                            ? "border border-cyan-400/50 bg-cyan-500/20 text-cyan-200"
+                            : "border border-white/10 bg-white/5 text-white/50 hover:text-white"
+                        }`}
+                      >
+                        {shape === "rectangle" && <Square size={10} />}
+                        {shape === "square" && <Square size={10} className="scale-90" />}
+                        {shape === "circle" && <Circle size={10} />}
+                        {shape === "polygon" && <Hexagon size={10} />}
+                        <span>{shape.slice(0, 4)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {shapeType === "circle" ? (
+                  <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-white/60">Circle Diameter (px)</span>
+                      <span className="font-mono font-bold text-cyan-300">{circleDiameter} px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={400}
+                      value={circleDiameter}
+                      onChange={(e) => handleParamChange("diameterPx", parseInt(e.target.value, 10))}
+                      className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                    />
+
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-white/60">Min Circularity (%)</span>
+                      <span className="font-mono font-bold text-cyan-300">{circularityTolerance}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={30}
+                      max={100}
+                      value={circularityTolerance}
+                      onChange={(e) => handleParamChange("minCircularityPct", parseInt(e.target.value, 10))}
+                      className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                    />
+                  </div>
+                ) : null}
+
+                {shapeType === "polygon" ? (
+                  <div className="space-y-2 pt-2 border-t border-white/10 mt-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-white/60">Polygon Vertices</span>
+                      <span className="font-mono font-bold text-cyan-300">{polygonVertexCount} Points</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={3}
+                      max={12}
+                      value={polygonVertexCount}
+                      onChange={(e) => handleParamChange("vertexCount", parseInt(e.target.value, 10))}
+                      className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Greyscale / Threshold Slider */}
             <div className="space-y-1">

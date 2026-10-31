@@ -29,6 +29,7 @@ import { toIntParam } from "@/lib/ids/int-alias";
 import { HtmlTagType } from "@/lib/enums/html";
 import { useUiMode, UiModeType } from "@/hooks/useUiMode";
 import { StandardAppShell } from "@/components/layout/StandardAppShell";
+import { APP_VERSION_INFO } from "@/lib/version-info";
 import {
   SAMPLE_IMAGE_POCKET_1_FILLED,
   SAMPLE_IMAGE_POCKET_2_EMPTY_MIXED,
@@ -713,6 +714,28 @@ function RunPage() {
       </button>
     </div>
   );
+
+  if (!hydrated) {
+    return (
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#0b0f19] text-slate-100 font-mono select-none">
+        <div className="relative mb-6 flex items-center justify-center">
+          <div className="h-16 w-16 animate-spin rounded-full border-2 border-cyan-500/20 border-t-cyan-400 shadow-[0_0_24px_rgba(6,182,212,0.3)]" />
+          <div className="absolute h-8 w-8 rounded-full bg-cyan-500/10 backdrop-blur-sm animate-pulse" />
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-bold tracking-widest text-lg text-cyan-400">CAT iVISION</span>
+          <span className="rounded-full border border-cyan-500/30 bg-cyan-950/60 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
+            {APP_VERSION_INFO.version}
+          </span>
+        </div>
+
+        <p className="text-xs tracking-wider uppercase text-slate-400 animate-pulse">
+          Initializing Inspection Engine & Restoring Split-DB Session...
+        </p>
+      </div>
+    );
+  }
 
   if (mode === UiModeType.Standard) {
     return (

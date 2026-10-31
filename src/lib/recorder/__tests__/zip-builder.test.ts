@@ -53,7 +53,7 @@ describe("zip-builder", () => {
     ],
   };
 
-  it("builds a valid zip with all required markdown, json, and screenshot files", async () => {
+  it("builds a valid zip with all required markdown, json, and screenshot files, plus path telemetry", async () => {
     // Mock URL.createObjectURL and link.click in jsdom
     const originalCreateObjectUrl = window.URL.createObjectURL;
     const originalRevokeObjectUrl = window.URL.revokeObjectURL;
@@ -66,6 +66,11 @@ describe("zip-builder", () => {
     expect(result.isSuccess).toBe(true);
     expect(result.filename).toMatch(/^cat-bug-report-.*\.zip$/);
     expect(result.blobSize).toBeGreaterThan(0);
+    expect(result.downloadPath).toContain("C:\\Users\\Administrator\\Downloads\\");
+    expect(result.downloadPath).toContain(result.filename);
+    expect(result.extractionCommand).toContain("Expand-Archive");
+    expect(result.extractionCommand).toContain(".logs/recorded-bugs/rec-zip-test/");
+    expect(result.aiInstructions).toContain("execute-parent-task-with-n-steps-v6");
 
     window.URL.createObjectURL = originalCreateObjectUrl;
     window.URL.revokeObjectURL = originalRevokeObjectUrl;
