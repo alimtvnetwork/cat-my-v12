@@ -16,6 +16,7 @@ Version: `1.0.0`
 | `03-100-system-and-ui-improvements-spec.md` | Complete | 100 prioritized system, window control, menu performance, and ergonomics improvements across 5 categories (SYS-UI-001 to SYS-UI-100). |
 | `04-200-pattern-search-and-layering-improvements-spec.md` | Complete | EXACTLY 200 grounded, concrete pattern search, ROI geometry, carrier tape simulation, and layering improvements across 10 categories (PAT-LAY-001 to PAT-LAY-200). |
 | `05-implementation-guide-spec.md` | Complete | Step-by-step code modification blueprints with before/after snippets for 9 core codebase components. |
+| `06-e2e-verification-and-cli-cases-spec.md` | Complete | End-to-end verification and headless CLI test suite specification covering all 32 cases (100% green). |
 | `readme.md` | Complete | Directory manifest, document index, architectural standards, and status rollup. |
 
 ---
