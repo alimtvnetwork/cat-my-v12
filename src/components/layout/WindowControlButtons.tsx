@@ -136,16 +136,42 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
+    const headers = { "Content-Type": "application/json" };
     fetch(`${baseUrl}/window/minimize`, {
       method: HttpMethod.Post,
-    }).catch(() => {});
-
-    fetch(`/window/minimize`, {
-      method: HttpMethod.Post,
-    }).catch(() => {});
+      headers,
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Window minimize request failed with status ${res.status}`);
+        }
+      })
+      .catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            endpoint: `${baseUrl}/window/minimize`,
+            method: HttpMethod.Post,
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "minimize",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_MINIMIZE",
+        );
+      });
 
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "exitFullscreen",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_FULLSCREEN",
+        );
+      });
 
       return;
     }
@@ -162,21 +188,49 @@ export function WindowControlButtons(): React.JSX.Element {
       return;
     }
 
+    // Toggle via native backend Win32 loopback API (SW_RESTORE / SW_MAXIMIZE)
+    // Avoid document.documentElement.requestFullscreen() which causes the "To exit full screen, press Esc" banner!
     fetch(`${baseUrl}/window/maximize`, {
       method: HttpMethod.Post,
-    }).catch(() => {});
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          try {
+            const data = await res.json();
+            if (data?.Results?.[0]?.isMaximized !== undefined) {
+              setIsFullscreen(Boolean(data.Results[0].isMaximized));
+            } else if (data?.isMaximized !== undefined) {
+              setIsFullscreen(Boolean(data.isMaximized));
+            } else {
+              setIsFullscreen((prev) => !prev);
+            }
+          } catch {
+            setIsFullscreen((prev) => !prev);
+          }
+        } else {
+          throw new Error(`Window maximize request failed with status ${res.status}`);
+        }
+      })
+      .catch((err: unknown) => {
+        useErrorStore.getState().captureError(
+          err,
+          {
+            endpoint: `${baseUrl}/window/maximize`,
+            method: HttpMethod.Post,
+            triggerComponent: "WindowControlButtons",
+            triggerAction: "toggleMaximize",
+            source: "WindowControlButtons",
+          },
+          "E_WINDOW_MAXIMIZE",
+        );
 
-    fetch(`/window/maximize`, {
-      method: HttpMethod.Post,
-    }).catch(() => {});
-
-    const fullscreenRequest = document.fullscreenElement
-      ? document.exitFullscreen()
-      : document.documentElement.requestFullscreen();
-
-    fullscreenRequest.catch(() => {
-      // Handled by native backend loopback toggle
-    });
+        // Standalone browser fallback without backend only
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      });
   }, [baseUrl]);
 
   const handleConfirmExit = useCallback(() => {
@@ -198,7 +252,19 @@ export function WindowControlButtons(): React.JSX.Element {
     const closePromise = fetch(`${baseUrl}/window/close`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      useErrorStore.getState().captureError(
+        err,
+        {
+          endpoint: `${baseUrl}/window/close`,
+          method: HttpMethod.Post,
+          triggerComponent: "WindowControlButtons",
+          triggerAction: "closeWindow",
+          source: "WindowControlButtons",
+        },
+        "E_WINDOW_CLOSE",
+      );
+    });
 
     const shutdownPromise = fetch(`${baseUrl}/shutdown`, {
       method: HttpMethod.Post,
@@ -218,8 +284,8 @@ export function WindowControlButtons(): React.JSX.Element {
     });
 
     // Also fire via Vite proxy
-    fetch(`/window/close`, { method: HttpMethod.Post }).catch(() => {});
-    fetch(`/shutdown`, { method: HttpMethod.Post }).catch(() => {});
+    fetch(`/window/close`, { method: HttpMethod.Post, signal: shutdownController.signal }).catch(() => {});
+    fetch(`/shutdown`, { method: HttpMethod.Post, signal: shutdownController.signal }).catch(() => {});
 
     Promise.allSettled([closePromise, shutdownPromise]).finally(() => {
       window.clearTimeout(shutdownTimeout);

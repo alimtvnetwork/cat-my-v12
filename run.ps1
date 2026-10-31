@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Professional HMI launcher for CAT iVISION (GitMap CLI Grade).
 
@@ -50,15 +50,15 @@ function Write-StepOk([string]$Step, [string]$Message) {
 }
 
 function Write-StepAction([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymAction$Reset $Cyan$($Step.PadRight(12))$Reset  $Message"
+    Write-Host "  $Yellow$SymAction$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
 }
 
 function Write-StepInfo([string]$Step, [string]$Message) {
-    Write-Host "  $Gray$SymInfo$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
+    Write-Host "  $Cyan$SymInfo$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
 }
 
 function Write-StepWarn([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymWarn$Reset $Yellow$($Step.PadRight(12))$Reset  $Message"
+    Write-Host "  $Yellow$SymWarn$Reset  $Yellow$($Step.PadRight(12))$Reset  $Message"
 }
 
 $FrontendHostIp = "127.0.0.1"
@@ -147,10 +147,12 @@ try {
     Write-StepOk "preflight" "Build cache initialized at $UvCacheDir"
 
     Write-StepAction "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
-    $dbOutput = & uv run --project BE python bin\db-bootstrap.py 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    $dbOutLog = Join-Path $LogDir "db-bootstrap.stdout.log"
+    $dbErrLog = Join-Path $LogDir "db-bootstrap.stderr.log"
+    $dbProc = Start-Process -NoNewWindow -PassThru -Wait -FilePath "uv" -ArgumentList "run --project BE python bin\db-bootstrap.py" -RedirectStandardOutput $dbOutLog -RedirectStandardError $dbErrLog
+    if ($dbProc.ExitCode -ne 0) {
         Write-StepWarn "database" "Database bootstrap reported warnings/errors"
-        $dbOutput | ForEach-Object { Write-Host "       $Gray$_$Reset" }
+        Get-Content $dbErrLog -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "       $Gray$_$Reset" }
     } else {
         Write-StepOk "database" "Database schemas bootstrapped and migrations verified"
     }
@@ -280,7 +282,7 @@ try {
             Write-StepAction "shell" "Launching Chromium embedded app window..."
             $chromeArgs = @(
                 "--app=$FrontendBaseUrl`?backend=$BackendBaseUrl",
-                '--start-fullscreen',
+                '--start-maximized',
                 "--user-data-dir=$userDataDir",
                 '--no-first-run',
                 '--no-default-browser-check'

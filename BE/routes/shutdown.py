@@ -25,11 +25,13 @@ import os
 import signal
 import sys
 import threading
+import traceback
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
-from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success
+from BE.envelope import CORRELATION_HEADER, ensure_correlation_id, success, failure
+from BE.errors.apperror import AppError
 
 logger = logging.getLogger("BE.routes.shutdown")
 
@@ -65,6 +67,12 @@ def _schedule_shutdown() -> None:
     timer.start()
 
 
+# Win32 ShowWindow command constants
+SW_MAXIMIZE = 3
+SW_MINIMIZE = 6
+SW_RESTORE = 9
+SW_FORCEMINIMIZE = 11
+
 WINDOW_TITLE_KEYWORDS = (
     "cat vision",
     "cat ivision",
@@ -81,88 +89,178 @@ WINDOW_TITLE_KEYWORDS = (
     "5173",
     "cat",
     "vision",
+    "cat-my",
 )
 
 
-def _find_window_hwnd() -> int | None:
+def _find_window_hwnd() -> tuple[int | None, int | None]:
+    """Find the top-level Chromium embedded HMI window HWND and owning PID."""
     if sys.platform != "win32":
-        return None
+        return None, None
 
     try:
         import ctypes
         import ctypes.wintypes as w
-        target_hwnd: list[int] = []
+
+        user32 = ctypes.windll.user32
+        user32.GetWindowTextLengthW.argtypes = [w.HWND]
+        user32.GetWindowTextLengthW.restype = ctypes.c_int
+        user32.GetWindowTextW.argtypes = [w.HWND, w.LPWSTR, ctypes.c_int]
+        user32.GetWindowTextW.restype = ctypes.c_int
+        user32.GetClassNameW.argtypes = [w.HWND, w.LPWSTR, ctypes.c_int]
+        user32.GetClassNameW.restype = ctypes.c_int
+        user32.IsWindowVisible.argtypes = [w.HWND]
+        user32.IsWindowVisible.restype = w.BOOL
+        user32.GetWindowRect.argtypes = [w.HWND, ctypes.POINTER(w.RECT)]
+        user32.GetWindowRect.restype = w.BOOL
+        user32.GetWindowThreadProcessId.argtypes = [w.HWND, ctypes.POINTER(w.DWORD)]
+        user32.GetWindowThreadProcessId.restype = w.DWORD
+        user32.IsZoomed.argtypes = [w.HWND]
+        user32.IsZoomed.restype = w.BOOL
+        user32.ShowWindow.argtypes = [w.HWND, ctypes.c_int]
+        user32.ShowWindow.restype = w.BOOL
+        user32.PostMessageW.argtypes = [w.HWND, w.UINT, w.WPARAM, w.LPARAM]
+        user32.PostMessageW.restype = w.BOOL
+        user32.CloseWindow.argtypes = [w.HWND]
+        user32.CloseWindow.restype = w.BOOL
+
+        # Attach current thread to the interactive desktop station (Session 1 WinSta0\Default)
+        hdesk = user32.OpenDesktopW("default", 0, False, 0x01FF)
+        if hdesk:
+            user32.SetThreadDesktop(hdesk)
+
+        target: list[tuple[int, int]] = []
 
         def enum_cb(hwnd: int, _: int) -> bool:
-            if ctypes.windll.user32.IsWindowVisible(hwnd):
-                length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
-                if length > 0:
-                    buf = ctypes.create_unicode_buffer(length + 1)
-                    ctypes.windll.user32.GetWindowTextW(hwnd, buf, length + 1)
-                    title_lower = buf.value.lower()
-                    if any(k in title_lower for k in WINDOW_TITLE_KEYWORDS):
-                        target_hwnd.append(hwnd)
-                        return False
+            if not user32.IsWindowVisible(hwnd):
+                return True
+
+            rect = w.RECT()
+            if not user32.GetWindowRect(hwnd, ctypes.byref(rect)):
+                return True
+
+            width = rect.right - rect.left
+            height = rect.bottom - rect.top
+            if width < 300 or height < 200:
+                return True
+
+            cbuf = ctypes.create_unicode_buffer(256)
+            user32.GetClassNameW(hwnd, cbuf, 256)
+            cls_name = cbuf.value
+
+            tlen = user32.GetWindowTextLengthW(hwnd)
+            title = ""
+            if tlen > 0:
+                tbuf = ctypes.create_unicode_buffer(tlen + 1)
+                user32.GetWindowTextW(hwnd, tbuf, tlen + 1)
+                title = tbuf.value.lower()
+
+            pid = w.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+
+            is_candidate = False
+            if cls_name == "Chrome_WidgetWin_1":
+                if any(k in title for k in WINDOW_TITLE_KEYWORDS):
+                    is_candidate = True
+                elif "5173" in title or "cat" in title or "vision" in title:
+                    is_candidate = True
+            elif any(k in title for k in WINDOW_TITLE_KEYWORDS):
+                is_candidate = True
+
+            if is_candidate:
+                target.append((hwnd, pid.value))
+                return False
+
             return True
 
-        enum_proc = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)(enum_cb)
-        ctypes.windll.user32.EnumWindows(enum_proc, 0)
-        return target_hwnd[0] if target_hwnd else None
-    except Exception:
-        return None
+        WNDENUMPROC = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)
+        cb = WNDENUMPROC(enum_cb)
+
+        if hdesk:
+            user32.EnumDesktopWindows(hdesk, cb, 0)
+        if not target:
+            user32.EnumWindows(cb, 0)
+
+        if target:
+            return target[0]
+
+        return None, None
+    except Exception as exc:
+        logger.error(f"find_window_hwnd_failed: {exc}", exc_info=True)
+        return None, None
 
 
 def _minimize_window() -> bool:
-    hwnd = _find_window_hwnd()
+    hwnd, pid = _find_window_hwnd()
     if not hwnd:
+        logger.warning("minimize_window_not_found")
         return False
 
     try:
         import ctypes
-        ctypes.windll.user32.ShowWindow(hwnd, 11)  # SW_FORCEMINIMIZE
-        ctypes.windll.user32.ShowWindow(hwnd, 6)   # SW_MINIMIZE
-        ctypes.windll.user32.CloseWindow(hwnd)
+        user32 = ctypes.windll.user32
+        user32.ShowWindow(hwnd, 11)  # SW_FORCEMINIMIZE
+        user32.ShowWindow(hwnd, 6)   # SW_MINIMIZE
+        user32.CloseWindow(hwnd)
+        logger.info("minimize_window_success", extra={"hwnd": hwnd, "pid": pid})
         return True
-    except Exception:
+    except Exception as exc:
+        logger.error(f"minimize_window_failed: {exc}", exc_info=True)
         return False
 
 
 def _toggle_maximize_window() -> bool:
-    hwnd = _find_window_hwnd()
+    hwnd, pid = _find_window_hwnd()
     if not hwnd:
+        logger.warning("toggle_maximize_window_not_found")
         return False
 
     try:
         import ctypes
-        is_zoomed = ctypes.windll.user32.IsZoomed(hwnd)
-        ctypes.windll.user32.ShowWindow(hwnd, 9 if is_zoomed else 3)
-        return True
-    except Exception:
+        user32 = ctypes.windll.user32
+        is_zoomed = bool(user32.IsZoomed(hwnd))
+        # Toggle: restore (9) if zoomed, maximize (3) if normal
+        next_action = 9 if is_zoomed else 3
+        user32.ShowWindow(hwnd, next_action)
+        new_state = not is_zoomed
+        logger.info("toggle_maximize_window_success", extra={"hwnd": hwnd, "pid": pid, "is_maximized": new_state})
+        return new_state
+    except Exception as exc:
+        logger.error(f"toggle_maximize_window_failed: {exc}", exc_info=True)
         return False
 
 
 def _close_window() -> bool:
-    hwnd = _find_window_hwnd()
+    hwnd, pid = _find_window_hwnd()
     if hwnd:
         try:
             import ctypes
             ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(f"post_wm_close_failed: {exc}")
 
+    # Immediately terminate browser process tree (<10ms)
+    if pid and sys.platform == "win32":
+        try:
+            import subprocess
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                timeout=1.0,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception as exc:
+            logger.warning(f"taskkill_pid_failed: {exc}")
+
+    # Secondary sweep for any process matching our profile
     if sys.platform == "win32":
         try:
             import subprocess
-            subprocess.Popen(
-                [
-                    "powershell",
-                    "-NoProfile",
-                    "-Command",
-                    "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*.browser-profile*' -or $_.CommandLine -like '*5173*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
-                ],
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "chrome.exe", "/FI", "WINDOWTITLE eq CAT*"],
+                timeout=1.0,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=0x08000000,
             )
         except Exception:
             pass
