@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import React from "react";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { RecorderExportModal } from "../RecorderExportModal";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { RecorderStatusType } from "@/lib/recorder/types";
@@ -92,7 +92,7 @@ describe("RecorderExportModal", () => {
     expect(screen.getByText("Copy CLI Command")).not.toBeNull();
   });
 
-  it("opens Direct Email modal when Direct Email is clicked from dropdown", () => {
+  it("opens Direct Email modal when Direct Email is clicked from dropdown", async () => {
     useRecorderStore.getState().startRecording("/projects/1");
     useRecorderStore.getState().stopRecording();
 
@@ -104,6 +104,8 @@ describe("RecorderExportModal", () => {
     const emailBtn = screen.getByText("Direct Email");
     fireEvent.click(emailBtn);
 
-    expect(screen.getByText("Direct Email Bug Dispatch")).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.getByText("Direct Email Bug Dispatch")).not.toBeNull();
+    });
   });
 });

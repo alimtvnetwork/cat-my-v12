@@ -61,6 +61,7 @@ _MAX_LIMIT = 200
 def _is_loopback_client(request: Request) -> bool:
     """True when the caller connects from this machine only."""
     client = request.client
+
     return client is not None and client.host in _LOOPBACK_HOSTS
 
 
@@ -72,6 +73,7 @@ def _reject_non_loopback(request: Request) -> JSONResponse | None:
         return None
 
     logger.warning("bug_reports_rejected_non_loopback", extra={"operation": "bug-reports"})
+
     return JSONResponse(
         status_code=403,
         content={"detail": "bug reporting is only available from this machine"},
@@ -177,6 +179,7 @@ def _resolve_attachments(payload: dict[str, Any], report: dict[str, Any]) -> lis
 
             if p.exists() and p.is_file():
                 resolved.append(p)
+
         elif isinstance(item, dict):
             item_path = item.get("path") or item.get("filePath") or item.get("relPath")
 
@@ -185,6 +188,7 @@ def _resolve_attachments(payload: dict[str, Any], report: dict[str, Any]) -> lis
 
                 if p.exists() and p.is_file():
                     resolved.append(p)
+
             elif item.get("data") or item.get("dataUrl") or item.get("dataUri") or item.get("base64"):
                 data_str = (
                     item.get("data")
@@ -254,6 +258,7 @@ async def post_bug_report(request: Request) -> JSONResponse:
     attachments = _resolve_attachments(payload, report)
 
     client = None
+
     if "supabase" in channels:
         client = client_from_config(bug_config.load_supabase_config())
 
@@ -288,6 +293,7 @@ async def post_bug_report(request: Request) -> JSONResponse:
         {"report": report, "deliveries": deliveries},
         requested_at=str(request.url),
     )
+
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
@@ -320,6 +326,7 @@ async def get_pending_reports(
         raise AppError(ErrorCode.E_BUG_SUPABASE_FAILED, str(error), {}) from error
 
     envelope = success(rows, requested_at=str(request.url), total_records=len(rows))
+
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
@@ -339,6 +346,7 @@ async def get_bug_report_config(request: Request) -> JSONResponse:
         "go_email_reader_bin": bug_config.resolve_go_email_reader_bin(),
     }
     envelope = success(payload, requested_at=str(request.url))
+
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
@@ -383,6 +391,7 @@ async def post_bug_report_config(request: Request) -> JSONResponse:
     envelope = success(
         bug_config.sanitized_supabase_config(stored), requested_at=str(request.url)
     )
+
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
@@ -412,6 +421,7 @@ async def post_bug_report_test(request: Request) -> JSONResponse:
 
     payload = {"is_reachable": probe["is_reachable"], **tables}
     envelope = success(payload, requested_at=str(request.url))
+
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
@@ -451,6 +461,7 @@ async def post_bug_report_local(request: Request) -> JSONResponse:
 
     def _sanitize_token(text: Any, default: str) -> str:
         cleaned = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in str(text).lower()).strip("_-")
+
         return cleaned[:35] or default
 
     saved_images: list[dict[str, str]] = []
@@ -571,6 +582,7 @@ async def post_bug_report_local(request: Request) -> JSONResponse:
     timeline_table = (
         "| Step | Elapsed | Action & Target | Route | XPath | Snapshot Link |\n"
         "|---|---|---|---|---|---|\n" + "\n".join(event_rows)
+
         if event_rows
         else "_No events captured in timeline._"
     )
@@ -751,6 +763,7 @@ async def post_bug_report_local(request: Request) -> JSONResponse:
         "savedImages": saved_images,
         "idePrompt": v6_content,
     }
+
     return JSONResponse(
         content=success(payload, requested_at=str(request.url)).to_wire(),
         headers={CORRELATION_HEADER: correlation_id},

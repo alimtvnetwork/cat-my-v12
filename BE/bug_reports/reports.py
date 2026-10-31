@@ -52,6 +52,7 @@ def compose_from_error_row(
     code = row.get("Code") or "unknown"
     message = row.get("Message") or ""
     title = f"{code}: {message[:80]}" if message else str(code)
+
     return {
         "correlation_id": row.get("CorrelationId"),
         "title": title,
@@ -145,6 +146,7 @@ def _storage_upload(
         with urllib.request.urlopen(request, timeout=client._timeout) as response:
             response.read()
     except Exception:  # noqa: BLE001 - degraded to reference row below
+
         return None
 
     return f"{bucket}/{path}"
@@ -221,6 +223,7 @@ def deliver_supabase(
         "attachments": attachment_results,
     }
     _append_audit(record)
+
     return record
 
 
