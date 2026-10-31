@@ -19,7 +19,8 @@
     "guidelines:check": "bun run format:check && bun run typecheck:strict && bun run lint",
     "ci:v3": "bash scripts/ci-v3.sh",
     "visual:test": "bun x playwright test --config playwright.config.ts",
-    "visual:update": "bun run tests/visual/capture-baselines.ts"
+    "visual:update": "bun run tests/visual/capture-baselines.ts",
+    "e2e:pattern-search": "bash tests/e2e/run-pattern-search-e2e.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
