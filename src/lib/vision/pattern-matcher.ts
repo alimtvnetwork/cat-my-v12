@@ -1,4 +1,10 @@
-import { markWhiteBoxes, type SearchRegion, type WhiteBoxMark } from "./white-box-marking";
+import {
+  markWhiteBoxes,
+  type GrayscaleMode,
+  type MatchPolarity,
+  type SearchRegion,
+  type WhiteBoxMark,
+} from "./white-box-marking";
 
 export interface ReferenceBoxItem {
   boxNumber: number;
@@ -25,6 +31,13 @@ export interface ConstellationMatchParams {
   threshold?: number;
   tolerancePx?: number;
   minMatchPercent?: number;
+  /** Matching conversion mode (spec 55): fed to the shared
+   *  toMatchingGray plane. Defaults to "threshold". */
+  mode?: GrayscaleMode;
+  /** Marking polarity (spec 55): "bright" is historical, "dark"
+   *  matches dark-on-light markings, "both" unions both candidate
+   *  sets. Defaults to "bright" (behavior-preserving). */
+  polarity?: MatchPolarity;
   /**
    * Bounded rotation search window in degrees (spec T102 angleRangeDeg).
    * When absent or 0, only the unrotated constellation is tried.
@@ -71,6 +84,12 @@ export interface PatternMatchResult {
   executionTimeMs: number;
   /** Rotation (deg) of the winning constellation, 0 when unrotated. Optional so other PatternMatchResult producers are unaffected. */
   rotationDeg?: number;
+  /** Which reference the verdict compared against (spec 55): "taught"
+   *  when the caller supplied taught boxes, "golden-fallback" when a
+   *  hardcoded golden table stood in. Absent for matchers that do not
+   *  distinguish (e.g. the constellation matcher, which always takes
+   *  caller-supplied boxes). */
+  matchSource?: "taught" | "golden-fallback";
 }
 
 interface OffsetCandidate {
@@ -230,44 +249,52 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     rawThreshold >= 30 && rawThreshold <= 245 ? Math.round(rawThreshold) : 170;
   const minCandidateArea = 4;
 
-  let markingResult = markWhiteBoxes({
-    width: params.targetWidth,
-    height: params.targetHeight,
-    rgba: params.targetRgba,
-    whiteThreshold: effectiveThreshold,
-    minAreaPx: minCandidateArea,
-    searchRegion: targetRegion,
-  });
-
-  // If searchRegion misses boxes, fall back to searching constellation-bounded region instead of unconstrained full image
-  if (markingResult.boxes.length < totalCount && params.referenceBoxes.length > 0) {
-    const refMinX = Math.min(...params.referenceBoxes.map((b) => b.x));
-    const refMinY = Math.min(...params.referenceBoxes.map((b) => b.y));
-    const refMaxX = Math.max(...params.referenceBoxes.map((b) => b.x + b.width));
-    const refMaxY = Math.max(...params.referenceBoxes.map((b) => b.y + b.height));
-
-    const boundedRegion: SearchRegion = {
-      x: Math.max(0, refMinX - 8),
-      y: Math.max(0, refMinY),
-      width: Math.min(params.targetWidth - Math.max(0, refMinX - 8), refMaxX - refMinX + 16),
-      height: Math.min(params.targetHeight - Math.max(0, refMinY), refMaxY - refMinY + 8),
-    };
-
-    const boundedResult = markWhiteBoxes({
+  // Candidate detection per walk direction (spec 55 polarity). The
+  // bounded-region fallback from the original flow is preserved per
+  // direction, so a dark search is never starved by a bright miss.
+  const detectCandidates = (direction: "bright" | "dark"): WhiteBoxMark[] => {
+    let markingResult = markWhiteBoxes({
       width: params.targetWidth,
       height: params.targetHeight,
       rgba: params.targetRgba,
       whiteThreshold: effectiveThreshold,
       minAreaPx: minCandidateArea,
-      searchRegion: boundedRegion,
+      searchRegion: targetRegion,
+      mode: params.mode ?? "threshold",
+      polarity: direction,
     });
 
-    if (boundedResult.boxes.length > markingResult.boxes.length) {
-      markingResult = boundedResult;
-    }
-  }
+    if (markingResult.boxes.length < totalCount && params.referenceBoxes.length > 0) {
+      const refMinX = Math.min(...params.referenceBoxes.map((b) => b.x));
+      const refMinY = Math.min(...params.referenceBoxes.map((b) => b.y));
+      const refMaxX = Math.max(...params.referenceBoxes.map((b) => b.x + b.width));
+      const refMaxY = Math.max(...params.referenceBoxes.map((b) => b.y + b.height));
 
-  const candidateBoxes = markingResult.boxes;
+      const boundedRegion: SearchRegion = {
+        x: Math.max(0, refMinX - 8),
+        y: Math.max(0, refMinY),
+        width: Math.min(params.targetWidth - Math.max(0, refMinX - 8), refMaxX - refMinX + 16),
+        height: Math.min(params.targetHeight - Math.max(0, refMinY), refMaxY - refMinY + 8),
+      };
+
+      const boundedResult = markWhiteBoxes({
+        width: params.targetWidth,
+        height: params.targetHeight,
+        rgba: params.targetRgba,
+        whiteThreshold: effectiveThreshold,
+        minAreaPx: minCandidateArea,
+        searchRegion: boundedRegion,
+        mode: params.mode ?? "threshold",
+        polarity: direction,
+      });
+
+      if (boundedResult.boxes.length > markingResult.boxes.length) {
+        markingResult = boundedResult;
+      }
+    }
+
+    return markingResult.boxes;
+  };
 
   // Bounded rotation search: rotate expected box centres about the
   // constellation centroid by candidate angles within angleRangeDeg
@@ -300,92 +327,169 @@ export function matchConstellationPattern(params: ConstellationMatchParams): Pat
     rotatedBoxes: ReferenceBoxItem[];
   }
 
-  let bestRotation: RotationCandidate | null = null;
-
-  for (const angleDeg of candidateAngles) {
-    const rad = (angleDeg * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    const rotatedBoxes: ReferenceBoxItem[] = params.referenceBoxes.map((b) => {
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      const relX = cx - centroidX;
-      const relY = cy - centroidY;
-      const rotCx = centroidX + relX * cos - relY * sin;
-      const rotCy = centroidY + relX * sin + relY * cos;
-
-      return { ...b, x: rotCx - b.width / 2, y: rotCy - b.height / 2 };
-    });
-
-    const offset = findBestOffset(rotatedBoxes, candidateBoxes, tolerance);
-
-    interface PairCandidate {
-      refIndex: number;
-      candIndex: number;
-      dist: number;
-    }
-
-    const candidatePairs: PairCandidate[] = [];
-
-    for (let r = 0; r < rotatedBoxes.length; r += 1) {
-      const ref = rotatedBoxes[r];
-      const expectedCenterX = ref.x + offset.dx + ref.width / 2;
-      const expectedCenterY = ref.y + offset.dy + ref.height / 2;
-
-      for (let c = 0; c < candidateBoxes.length; c += 1) {
-        const cand = candidateBoxes[c];
-        const candCenterX = cand.x + cand.width / 2;
-        const candCenterY = cand.y + cand.height / 2;
-        const distX = Math.abs(candCenterX - expectedCenterX);
-        const distY = Math.abs(candCenterY - expectedCenterY);
-
-        if (distX <= tolerance && distY <= tolerance) {
-          candidatePairs.push({ refIndex: r, candIndex: c, dist: distX + distY });
-        }
-      }
-    }
-
-    candidatePairs.sort((a, b) => a.dist - b.dist);
-
-    const matched = new Map<number, number>();
-    const matchedCands = new Set<number>();
-    let pairDistance = 0;
-
-    for (const pair of candidatePairs) {
-      if (!matched.has(pair.refIndex) && !matchedCands.has(pair.candIndex)) {
-        matched.set(pair.refIndex, pair.candIndex);
-        matchedCands.add(pair.candIndex);
-        pairDistance += pair.dist;
-      }
-    }
-
-    const totalDistance = pairDistance + (rotatedBoxes.length - matched.size) * tolerance * 4;
-    const candidate: RotationCandidate = {
-      angleDeg,
-      dx: offset.dx,
-      dy: offset.dy,
-      matched,
-      matchedCount: matched.size,
-      totalDistance,
-      rotatedBoxes,
+  const runRotationSearch = (candidateBoxes: readonly WhiteBoxMark[]): RotationCandidate => {
+    let bestRotation: RotationCandidate = {
+      angleDeg: 0,
+      dx: 0,
+      dy: 0,
+      matched: new Map<number, number>(),
+      matchedCount: 0,
+      totalDistance: Number.POSITIVE_INFINITY,
+      rotatedBoxes: params.referenceBoxes,
     };
 
-    if (
-      bestRotation === null ||
-      candidate.matchedCount > bestRotation.matchedCount ||
-      (candidate.matchedCount === bestRotation.matchedCount &&
-        candidate.totalDistance < bestRotation.totalDistance) ||
-      (candidate.matchedCount === bestRotation.matchedCount &&
-        candidate.totalDistance === bestRotation.totalDistance &&
-        Math.abs(candidate.angleDeg) < Math.abs(bestRotation.angleDeg))
-    ) {
-      bestRotation = candidate;
+    for (const angleDeg of candidateAngles) {
+      const rad = (angleDeg * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const rotatedBoxes: ReferenceBoxItem[] = params.referenceBoxes.map((b) => {
+        const cx = b.x + b.width / 2;
+        const cy = b.y + b.height / 2;
+        const relX = cx - centroidX;
+        const relY = cy - centroidY;
+        const rotCx = centroidX + relX * cos - relY * sin;
+        const rotCy = centroidY + relX * sin + relY * cos;
+
+        return { ...b, x: rotCx - b.width / 2, y: rotCy - b.height / 2 };
+      });
+
+      const offset = findBestOffset(rotatedBoxes, candidateBoxes, tolerance);
+
+      interface PairCandidate {
+        refIndex: number;
+        candIndex: number;
+        dist: number;
+      }
+
+      const candidatePairs: PairCandidate[] = [];
+
+      for (let r = 0; r < rotatedBoxes.length; r += 1) {
+        const ref = rotatedBoxes[r];
+        const expectedCenterX = ref.x + offset.dx + ref.width / 2;
+        const expectedCenterY = ref.y + offset.dy + ref.height / 2;
+
+        for (let c = 0; c < candidateBoxes.length; c += 1) {
+          const cand = candidateBoxes[c];
+          const candCenterX = cand.x + cand.width / 2;
+          const candCenterY = cand.y + cand.height / 2;
+          const distX = Math.abs(candCenterX - expectedCenterX);
+          const distY = Math.abs(candCenterY - expectedCenterY);
+
+          if (distX <= tolerance && distY <= tolerance) {
+            candidatePairs.push({ refIndex: r, candIndex: c, dist: distX + distY });
+          }
+        }
+      }
+
+      candidatePairs.sort((a, b) => a.dist - b.dist);
+
+      const matched = new Map<number, number>();
+      const matchedCands = new Set<number>();
+      let pairDistance = 0;
+
+      for (const pair of candidatePairs) {
+        if (!matched.has(pair.refIndex) && !matchedCands.has(pair.candIndex)) {
+          matched.set(pair.refIndex, pair.candIndex);
+          matchedCands.add(pair.candIndex);
+          pairDistance += pair.dist;
+        }
+      }
+
+      const totalDistance = pairDistance + (rotatedBoxes.length - matched.size) * tolerance * 4;
+      const candidate: RotationCandidate = {
+        angleDeg,
+        dx: offset.dx,
+        dy: offset.dy,
+        matched,
+        matchedCount: matched.size,
+        totalDistance,
+        rotatedBoxes,
+      };
+
+      if (
+        candidate.matchedCount > bestRotation.matchedCount ||
+        (candidate.matchedCount === bestRotation.matchedCount &&
+          candidate.totalDistance < bestRotation.totalDistance) ||
+        (candidate.matchedCount === bestRotation.matchedCount &&
+          candidate.totalDistance === bestRotation.totalDistance &&
+          Math.abs(candidate.angleDeg) < Math.abs(bestRotation.angleDeg))
+      ) {
+        bestRotation = candidate;
+      }
     }
+
+    return bestRotation;
+  };
+
+  // Polarity combination (spec 55): bright pairs first, so a dark blob
+  // can never steal a bright mark's pairing; dark candidates only fill
+  // references bright could not pair. When bright pairs nothing and
+  // dark pairs something, the dark constellation wins wholesale (a
+  // dark-marking rule, not a bright rule with noise).
+  const requestedPolarity = params.polarity ?? "bright";
+  let candidateBoxes: readonly WhiteBoxMark[];
+  let bestRotation: RotationCandidate;
+
+  if (requestedPolarity === "dark") {
+    candidateBoxes = detectCandidates("dark");
+    bestRotation = runRotationSearch(candidateBoxes);
+  } else if (requestedPolarity === "both") {
+    const brightCandidates = detectCandidates("bright");
+    const darkCandidates = detectCandidates("dark");
+    const brightBest = runRotationSearch(brightCandidates);
+    const darkBest = runRotationSearch(darkCandidates);
+
+    if (brightBest.matchedCount === 0 && darkBest.matchedCount > 0) {
+      candidateBoxes = darkCandidates;
+      bestRotation = darkBest;
+    } else {
+      const combined = [...brightCandidates, ...darkCandidates];
+      const matched = new Map<number, number>(brightBest.matched);
+      const usedDark = new Set<number>();
+
+      for (let r = 0; r < params.referenceBoxes.length; r += 1) {
+        if (matched.has(r)) {
+          continue;
+        }
+
+        const ref = brightBest.rotatedBoxes[r];
+        const expectedCenterX = ref.x + brightBest.dx + ref.width / 2;
+        const expectedCenterY = ref.y + brightBest.dy + ref.height / 2;
+        let bestIdx = -1;
+        let bestDist = Number.POSITIVE_INFINITY;
+
+        for (let c = 0; c < darkCandidates.length; c += 1) {
+          if (usedDark.has(c)) {
+            continue;
+          }
+
+          const cand = darkCandidates[c];
+          const distX = Math.abs(cand.x + cand.width / 2 - expectedCenterX);
+          const distY = Math.abs(cand.y + cand.height / 2 - expectedCenterY);
+
+          if (distX <= tolerance && distY <= tolerance && distX + distY < bestDist) {
+            bestDist = distX + distY;
+            bestIdx = c;
+          }
+        }
+
+        if (bestIdx >= 0) {
+          matched.set(r, brightCandidates.length + bestIdx);
+          usedDark.add(bestIdx);
+        }
+      }
+
+      candidateBoxes = combined;
+      bestRotation = { ...brightBest, matched, matchedCount: matched.size };
+    }
+  } else {
+    candidateBoxes = detectCandidates("bright");
+    bestRotation = runRotationSearch(candidateBoxes);
   }
 
-  const bestOffset = { dx: bestRotation?.dx ?? 0, dy: bestRotation?.dy ?? 0 };
-  const matchedRefIndices = bestRotation?.matched ?? new Map<number, number>();
-  const rotatedBoxes = bestRotation?.rotatedBoxes ?? params.referenceBoxes;
+  const bestOffset = { dx: bestRotation.dx, dy: bestRotation.dy };
+  const matchedRefIndices = bestRotation.matched;
+  const rotatedBoxes = bestRotation.rotatedBoxes;
 
   const boxResults: BoxMatchItem[] = [];
 

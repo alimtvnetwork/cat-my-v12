@@ -28,10 +28,21 @@ export interface SearchRegion {
   points?: Array<{ x: number; y: number }>;
 }
 
-/** Grayscale preview mode (spec 54): threshold keeps legacy whiten-only
- *  behavior; stretch applies a full-range contrast stretch (dark darker,
- *  white whiter); one-bit reduces every pixel to pure black or white. */
+/** Grayscale conversion mode, defined once (spec 55): "threshold"
+ *  binarizes (bright pixels become white), "stretch" applies a
+ *  continuous full-range contrast stretch, "one-bit" reduces every
+ *  pixel to pure black or white with bright mapping to white. The
+ *  three modes share one definition for preview AND matching (see
+ *  toMatchingGray); polarity is never baked into a mode — it is a
+ *  separate, explicit step applied by the caller (walk direction in
+ *  findWhiteBoxes, invert step in previews). */
 export type GrayscaleMode = "threshold" | "stretch" | "one-bit";
+
+/** Which side of the threshold counts as a marking (spec 55).
+ *  "bright" is the historical behavior (laser-etched bright marks on
+ *  a dark body); "dark" matches dark-on-light markings; "both" unions
+ *  the two candidate sets so a rule matches either polarity. */
+export type MatchPolarity = "bright" | "dark" | "both";
 
 export interface WhiteBoxMarkingInput {
   width: number;
@@ -40,6 +51,12 @@ export interface WhiteBoxMarkingInput {
   whiteThreshold?: number | null;
   minAreaPx?: number | null;
   searchRegion?: SearchRegion;
+  /** Matching conversion mode (spec 55). Defaults to "threshold"
+   *  when a threshold is given; the no-threshold auto path is
+   *  unaffected. */
+  mode?: GrayscaleMode;
+  /** Marking polarity (spec 55). Defaults to "bright". */
+  polarity?: MatchPolarity;
 }
 
 export interface WhiteBoxMarkingResult {
@@ -153,7 +170,29 @@ type Component = { x0: number; y0: number; x1: number; y1: number; area: number 
 export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResult {
   assertRgba(input);
   const hasThreshold = input.whiteThreshold !== undefined && input.whiteThreshold !== null;
-  const gray = hasThreshold ? toContinuousGray(input.rgba) : toTwoBitGray(input.rgba);
+  const polarity = input.polarity ?? "bright";
+
+  if (!hasThreshold) {
+    const gray = toTwoBitGray(input.rgba);
+    const boxes = findWhiteBoxes(
+      gray,
+      input.width,
+      input.height,
+      input.whiteThreshold,
+      input.minAreaPx,
+      input.searchRegion,
+      "bright",
+    );
+
+    return renderWhiteBoxMarks(input.width, input.height, gray, boxes);
+  }
+
+  // Single shared matching conversion (spec 55): the mode plane is
+  // polarity-neutral; polarity is the walk direction, never baked into
+  // the plane. Threshold/one-bit planes are binarized, so walking them
+  // with the same threshold yields exactly the historical bright
+  // components; stretch is the mode that newly reaches matching.
+  const gray = toMatchingGray(input.rgba, input.mode ?? "threshold", input.whiteThreshold);
   const boxes = findWhiteBoxes(
     gray,
     input.width,
@@ -161,6 +200,7 @@ export function markWhiteBoxes(input: WhiteBoxMarkingInput): WhiteBoxMarkingResu
     input.whiteThreshold,
     input.minAreaPx,
     input.searchRegion,
+    polarity,
   );
 
   return renderWhiteBoxMarks(input.width, input.height, gray, boxes);
@@ -176,12 +216,6 @@ export function renderWhiteBoxMarks(
   drawBoxes(marked, width, height, boxes);
 
   return { width, height, rgba: marked, boxes };
-}
-
-export function toTwoBitGrayRgba(input: WhiteBoxMarkingInput): Uint8ClampedArray {
-  assertRgba(input);
-
-  return grayToRgba(toTwoBitGray(input.rgba));
 }
 
 export type GrayscaleBitDepth = "1-bit" | "2-bit" | "8-bit";
@@ -314,9 +348,9 @@ export function toOneBitGray(rgba: Uint8ClampedArray, threshold: number): Uint8C
   return gray;
 }
 
-/** Mode-aware grayscale preview. "threshold" preserves the legacy
- *  whiten-only behavior exactly; "stretch" and "one-bit" implement the
- *  spec 54 bits model. Existing callers keep "threshold" by default. */
+/** Mode-aware grayscale preview. "threshold" binarizes (bright pixels
+ *  become white); "stretch" and "one-bit" implement the spec 54 bits
+ *  model. Existing callers keep "threshold" by default. */
 export function toGrayscalePreviewRgba(
   input: WhiteBoxMarkingInput,
   mode: GrayscaleMode,
@@ -333,6 +367,43 @@ export function toGrayscalePreviewRgba(
   }
 
   return toThresholdPreviewRgba(input, whiteThreshold);
+}
+
+/** Single shared matching conversion (spec 55): every matcher reads
+ *  its gray plane through here, so a mode button and the matcher can
+ *  no longer disagree about the image. "threshold" and "one-bit" both
+ *  binarize with bright mapping to white (they coincide by definition
+ *  in the matching plane); "stretch" is the continuous full-range
+ *  stretch. The plane is polarity-neutral — polarity is applied by
+ *  the caller as a separate step (walk direction in findWhiteBoxes,
+ *  invert step in previews), never baked into the conversion. */
+export function toMatchingGray(
+  rgba: Uint8ClampedArray,
+  mode: GrayscaleMode,
+  threshold: number,
+): Uint8ClampedArray {
+  if (mode === "stretch") {
+    return toContrastStretchedGray(rgba);
+  }
+
+  return toOneBitGray(rgba, threshold);
+}
+
+/** Explicit polarity invert step (spec 55): dark targets become white
+ *  and bright targets become black. Applied AFTER the mode conversion,
+ *  never inside it, so the mode definition stays single. */
+export function invertGrayscaleRgba(rgba: Uint8ClampedArray): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(rgba.length);
+
+  for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {
+    const val = 255 - rgba[index + RED_OFFSET];
+    out[index + RED_OFFSET] = val;
+    out[index + GREEN_OFFSET] = val;
+    out[index + BLUE_OFFSET] = val;
+    out[index + ALPHA_OFFSET] = rgba[index + ALPHA_OFFSET];
+  }
+
+  return out;
 }
 
 export function renderSelectedWhiteBoxMarks(
@@ -563,16 +634,20 @@ function assertRgba(input: WhiteBoxMarkingInput): void {
   if (input.rgba.length !== expected) throw new Error(`rgba length mismatch: ${input.rgba.length}`);
 }
 
+/** Single Rec.601 luma definition (spec 55): every luma read in the
+ *  vision pipeline — matchers, analyzer, teach — uses these weights,
+ *  so no second weight set can drift in. */
+export function rec601Luma(r: number, g: number, b: number): number {
+  return LUMA_RED_WEIGHT * r + LUMA_GREEN_WEIGHT * g + LUMA_BLUE_WEIGHT * b;
+}
+
 export function toContinuousGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
   const gray = new Uint8ClampedArray(rgba.length / RGBA_STRIDE);
 
   for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {
-    const lum =
-      LUMA_RED_WEIGHT * rgba[index + RED_OFFSET] +
-      LUMA_GREEN_WEIGHT * rgba[index + GREEN_OFFSET] +
-      LUMA_BLUE_WEIGHT * rgba[index + BLUE_OFFSET];
-
-    gray[index / RGBA_STRIDE] = clampByte(lum);
+    gray[index / RGBA_STRIDE] = clampByte(
+      rec601Luma(rgba[index + RED_OFFSET], rgba[index + GREEN_OFFSET], rgba[index + BLUE_OFFSET]),
+    );
   }
 
   return gray;
@@ -581,11 +656,9 @@ export function toContinuousGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
 function toTwoBitGray(rgba: Uint8ClampedArray): Uint8ClampedArray {
   const gray = new Uint8ClampedArray(rgba.length / RGBA_STRIDE);
   for (let index = 0; index < rgba.length; index += RGBA_STRIDE) {
-    const lum =
-      LUMA_RED_WEIGHT * rgba[index + RED_OFFSET] +
-      LUMA_GREEN_WEIGHT * rgba[index + GREEN_OFFSET] +
-      LUMA_BLUE_WEIGHT * rgba[index + BLUE_OFFSET];
-    gray[index / RGBA_STRIDE] = quantize(lum);
+    gray[index / RGBA_STRIDE] = quantize(
+      rec601Luma(rgba[index + RED_OFFSET], rgba[index + GREEN_OFFSET], rgba[index + BLUE_OFFSET]),
+    );
   }
   return gray;
 }
@@ -608,6 +681,7 @@ function findWhiteBoxes(
   whiteThreshold: number | null | undefined,
   minAreaPx: number | null | undefined,
   searchRegion: SearchRegion | undefined,
+  polarity: MatchPolarity = "bright",
 ): WhiteBoxMark[] {
   const seen = new Uint8Array(width * height);
   const boxes: WhiteBoxMark[] = [];
@@ -615,18 +689,58 @@ function findWhiteBoxes(
   if (region.width <= 0 || region.height <= 0) return [];
   const threshold = whiteThreshold ?? autoThreshold(gray, width, region);
   const minArea = minAreaPx ?? autoMinArea(region);
-  for (let y = region.y; y < region.y + region.height; y += 1) {
-    for (let x = region.x; x < region.x + region.width; x += 1) {
-      const index = y * width + x;
-      if (gray[index] < threshold || seen[index] === 1) continue;
-      const component = walkComponent(gray, seen, width, height, index, threshold, region);
-      if (component.area >= minArea && looksLikeMarking(component, region)) {
-        boxes.push(toBox(boxes.length + 1, component, gray, width, height, region));
+  const isDarkWalk = polarity === "dark" || polarity === "both";
+
+  const collect = (isDark: boolean): WhiteBoxMark[] => {
+    const found: WhiteBoxMark[] = [];
+    const localSeen = isDark ? new Uint8Array(width * height) : seen;
+
+    for (let y = region.y; y < region.y + region.height; y += 1) {
+      for (let x = region.x; x < region.x + region.width; x += 1) {
+        const index = y * width + x;
+        const isCandidate = isDark ? gray[index] <= threshold : gray[index] >= threshold;
+
+        if (!isCandidate || localSeen[index] === 1) continue;
+        const component = walkComponent(gray, localSeen, width, height, index, threshold, region, isDark);
+
+        if (component.area >= minArea && looksLikeMarking(component, region)) {
+          found.push(toBox(found.length + 1, component, gray, width, height, region));
+        }
       }
     }
+
+    return found;
+  };
+
+  if (polarity === "both") {
+    const brightBoxes = collect(false);
+    const darkBoxes = collect(true);
+
+    boxes.push(...brightBoxes);
+
+    for (const darkBox of darkBoxes) {
+      const isDuplicate = boxes.some((existing) => isSameMarking(existing, darkBox));
+
+      if (!isDuplicate) {
+        boxes.push(darkBox);
+      }
+    }
+  } else {
+    boxes.push(...collect(isDarkWalk));
   }
 
   return boxes.sort(readingOrder).map((box, index) => ({ ...box, number: index + 1 }));
+}
+
+/** Two detections of the same physical mark (one per walk direction)
+ *  overlap heavily; keep one so "both" never double-counts a mark. */
+function isSameMarking(a: WhiteBoxMark, b: WhiteBoxMark): boolean {
+  const overlapX = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+  const overlapY = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+  const overlapArea = overlapX * overlapY;
+  const smallerArea = Math.min(a.area, b.area);
+
+  return smallerArea > 0 && overlapArea / smallerArea > 0.5;
 }
 
 function autoThreshold(gray: Uint8ClampedArray, width: number, region: SearchRegion): number {
@@ -841,6 +955,7 @@ function walkComponent(
   start: number,
   whiteThreshold: number,
   region: SearchRegion,
+  isDark = false,
 ): Component {
   const stack = [start];
   let x0 = start % width;
@@ -858,7 +973,7 @@ function walkComponent(
     y0 = Math.min(y0, y);
     x1 = Math.max(x1, x);
     y1 = Math.max(y1, y);
-    pushNeighbors(gray, seen, stack, width, height, current, whiteThreshold, region);
+    pushNeighbors(gray, seen, stack, width, height, current, whiteThreshold, region, isDark);
   }
   return { x0, y0, x1, y1, area };
 }
@@ -872,6 +987,7 @@ function pushNeighbors(
   current: number,
   threshold: number,
   region: SearchRegion,
+  isDark = false,
 ): void {
   const x = current % width;
   const y = Math.floor(current / width);
@@ -886,7 +1002,9 @@ function pushNeighbors(
       )
         continue;
       const ni = ny * width + nx;
-      if (seen[ni] === 0 && gray[ni] >= threshold) {
+      const isCandidate = isDark ? gray[ni] <= threshold : gray[ni] >= threshold;
+
+      if (seen[ni] === 0 && isCandidate) {
         seen[ni] = 1;
         stack.push(ni);
       }
