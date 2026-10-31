@@ -844,3 +844,131 @@ its surface tag). Items trace to §7–§10 findings unless marked
   touched frontend files; PowerShell files re-read in full after
   editing (no PowerShell on this VM — machine syntax check owed to
   CI/end-of-tunnel). No builds or test runs per program order.
+
+## 14. Wave 1 completion — pattern search + layers + ROI square
+(31-Oct-25, verified by coordinator: 6 commits on origin, HEAD
+33863ed0; tree clean. Coordinator verified: isSimulating default
+false, squareRegionFromPoints at pattern-geometry.ts:119, zero
+`toleranceLuma: 22` sites in the rule hook, captureOrigin present.)
+
+- Conveyor capture: onCapturePocket/onDeviceAtInspection now
+  `ctx.getImageData()` the just-drawn chip rect and pass
+  captureOrigin through; the asset-alone 140-wide fresh-canvas path
+  is deleted. Capture failure yields null pixels + origin (→
+  no-frame result), never an asset fallback. Trigger moved to after
+  chip draw (it previously fired pre-draw, capturing the previous
+  frame's chip) and before badges.
+- Carrier double jitter: analysis reads an un-translated offscreen
+  draw (no jitter, no strobe flash) cropped at pocket.x/y; overlays
+  moved outside the translate(jitter) block with jitter-shifted
+  pocket geometry. Frame-2 verification: displayed pocket 0 =
+  (41,64,141,152), analysis crop (36,68), overlays (41,64) — exact
+  agreement. Honest caveat from the wave: code review could not
+  reproduce a literal double-shift in the old math (old crop at
+  pocket+jitter on a shifted canvas was arguably correct) — the new
+  structure removes all ambiguity either way.
+- Taught search through simulation: hook accepts searchRegion
+  (drawn as a "TAUGHT SEARCH" outline, used as fallback capture
+  origin) + tolerancePx + greyscaleLevel + referenceBoxes; the rule
+  hook passes searchRegion and all 8 `toleranceLuma: 22` sites now
+  use taught tolerancePx (coordinator verified zero remain).
+  BEHAVIOR CHANGE, flagged: default matching tightens 22 → 8 luma
+  unless the user raises the tolerance slider. Taught searchRegion
+  is deliberately NOT passed into the crop evaluator (it runs in
+  crop-pixel space; canvas coords would sample out of bounds), and
+  taught greyscaleLevel has no input on the Atmel evaluator (it
+  takes toleranceLuma, not a threshold) — accepted, stored, flagged
+  for the shared-toMatchingGray wave.
+- Simulation must not shadow live results: isSimulating default
+  true → false (mode tabs still enter it explicitly); uncaptured
+  non-empty pockets get explicit hasNoFrame results (score 0,
+  isPass false, hasDefect false, unmatched reference boxes) — never
+  synthesized from defect lists; the result card renders NO FRAME
+  rows (no fake thumbnail, neutral styling, no defect text) + a NO
+  FRAME counter, and yield excludes no-frame rows.
+  STM8_REAL_FAILED_BOX_NUMBERS survives only as a documented legacy
+  export; both synthesis call sites are gone.
+- One coherent analyzer verdict: per-box verdict is now
+  isPositionMatched && hasLumaMatch (mask veto preserved);
+  BoxMatchItem gains isPositionMatched; debug reports
+  positionalMatchedCount, positionalScorePercent, per-box flags.
+  Tension surfaced, not hidden: the old comment claimed T102 §4
+  requires luma-only matching; spec 55 (newer owner order) orders
+  AND. Comment updated to cite spec 55.
+- One canonical space (stretched 960x540):
+  getConveyorReticleRect() is the single reticle source (drawing +
+  canvas toolbar); section-D golden-definition resynthesis deleted
+  — evaluated matchedX/matchedY map once through captureOrigin
+  (pure translation for live crops, scale branch for other crop
+  sizes); analyzer debug gains resMismatch (canonical 960x540 vs
+  image space + exact resScale factors). Full rescaling
+  compensation NOT implemented — needs the deferred rule re-tuning
+  pass decision (27262b06); the toolbar owning the Res Mismatch
+  warning (AnalyzeImageToolbar) was outside this wave's files.
+- Layers, single truth: hit-test follows layerOrder (boxes on top,
+  regions reversed draw order) via shared sortByLayerOrder; menu
+  Bring/Send gated to region layers only (box rows can no longer
+  silently no-op); panel order derives from layerOrder (was static
+  kind zOrder); box eye = hide only (hiddenLayerIds), exclusion
+  stays in BoxReviewPanel (toggleBox); box chevrons disabled via
+  existing isLayerReorderable; Pin1 same hide≠exclude split via
+  hiddenHoleIds (canvas gets filtered holes; review panel keeps
+  full list + keep toggles); dispatcher Pin1 tool lifts
+  isSearchLocked + layerOrder into the canvas, mirroring
+  Pin1MarkingTool; workbench canvas gains optional
+  isSearchRegionLocked/onSearchRegionLockChange (backward
+  compatible); pattern/mask outside-click never replaces
+  (isReplaceAllowed = mode === "search" in white-box + Pin1;
+  search-mode ROI replacement preserved); locked drags toast
+  (deduped sonner id) + on-canvas Unlock button; first-run
+  white-box tool with no saved region starts UNLOCKED (existing
+  rule with a saved region keeps the spec 54 locked default).
+  layers/* and LayersPanel.tsx unchanged by decision — they already
+  render parent order and support disabled chevrons.
+- Square ROI: squareRegionFromPoints + squareRegion +
+  fixedCornerForHandle in pattern-geometry.ts; regionForDrag takes
+  opt-in isSquare (creation + resize square, move/rotate preserve
+  shape); regionFromPoints stays the free-rectangle primitive
+  (move/clamp paths must preserve shape) — recorded mapping, not a
+  silent change. All owned canvases pass isSquareROI: true
+  (white-box, Pin1, workbench, conveyor static mode). Recorded, NOT
+  silently changed: normalizeImageToStandardCanvas defaults,
+  createDefaultSearchRegion small-image full-frame branch, and
+  white-box loadFile/loadCapturedFrame full-frame regions —
+  sampling/processing defaults existing behavior depends on;
+  squaring them without verification would change evaluator
+  geometry. Defect-matching canvases NOT squared (opt-in flag;
+  outside this wave's ownership). No existing rule was found to
+  depend on a non-square interactive ROI beyond those defaults.
+- Toolbars inside the ROI: new shared white-box/RoiToolbar.tsx
+  (percent-anchored, pointer-events-none except buttons). Wired on:
+  white-box (active region + Lock/Unlock), Pin1 (search/package +
+  Lock/Unlock), workbench (inspection ROI + Lock/Unlock), conveyor
+  static mode (taught search region) and sim mode (camera reticle),
+  carrier (selected pocket + P1/P2/P3 quick-select + click-to-select
+  hint). StandardGreyscaleSimulationTool now passes
+  selectedPocketIndex/onSelectPocket — its only parent previously
+  never passed them, so selection could never work.
+- Left open, with reason: polarity + shared toMatchingGray (§8 P0
+  #3, §9 fix #1) — luma/conversion code was explicitly out of this
+  wave's ownership; "missing saved pattern boxes" persistence
+  (teach persistence in useWhiteBoxMarking, surfacing in
+  AnalyzeImageToolbar — both outside ownership; note: parallel
+  commit c5a9c1bf "save painted pattern boxes so Test This Rule
+  reads the ROI the canvas shows" may partially address this —
+  wave 2 must check it before duplicating); pattern-region
+  derivation restoration (9fa1cc62 semantics — computePatternGeometry
+  keeps input-override semantics); full res-mismatch compensation
+  (needs re-tuning decision). Test-expectation flags for
+  end-of-tunnel: analyzer AND-verdict may move
+  workpiece-rule-analyzer.test.ts expectations; isSimulating flip
+  may affect tests assuming auto-play (none found by search);
+  dark-marking rules may now fail positionally until the polarity
+  wave lands (positional stage is bright-only today).
+- Verification: all 18 changed files within assigned ownership;
+  git status clean after each push; each batch pulled --ff-only
+  first; grep-verified no toleranceLuma 22 remains in rule/simulation
+  hooks, no buildAccuratePatternMatchResult import remains in hook
+  or drawing, drawConveyorSimulation has exactly one caller;
+  boolean names use is/has prefixes only. No builds/tests per
+  program order.
