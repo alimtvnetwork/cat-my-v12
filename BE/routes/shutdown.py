@@ -67,12 +67,29 @@ def _schedule_shutdown() -> None:
     timer.start()
 
 
+WINDOW_TITLE_KEYWORDS = (
+    "cat vision",
+    "cat ivision",
+    "control automation",
+    "pick a workflow",
+    "inspection",
+    "rules",
+    "setup",
+    "trial run",
+    "diagnostics",
+    "projects",
+    "ng events",
+    "hmi",
+)
+
+
 def _find_window_hwnd() -> int | None:
     if sys.platform != "win32":
         return None
 
     try:
         import ctypes
+        import ctypes.wintypes as w
         target_hwnd: list[int] = []
 
         def enum_cb(hwnd: int, _: int) -> bool:
@@ -81,13 +98,14 @@ def _find_window_hwnd() -> int | None:
                 if length > 0:
                     buf = ctypes.create_unicode_buffer(length + 1)
                     ctypes.windll.user32.GetWindowTextW(hwnd, buf, length + 1)
-                    if "Cat Vision" in buf.value or "CAT iVISION" in buf.value:
+                    title_lower = buf.value.lower()
+                    if any(k in title_lower for k in WINDOW_TITLE_KEYWORDS):
                         target_hwnd.append(hwnd)
                         return False
             return True
 
-        cb = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)(enum_cb)
-        ctypes.windll.user32.EnumWindows(cb, 0)
+        enum_proc = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)(enum_cb)
+        ctypes.windll.user32.EnumWindows(enum_proc, 0)
         return target_hwnd[0] if target_hwnd else None
     except Exception:
         return None

@@ -1,4 +1,4 @@
-<#
+﻿﻿<#
 .SYNOPSIS
 Professional HMI launcher for CAT iVISION (GitMap CLI Grade).
 
@@ -43,21 +43,22 @@ $SymInfo = [char]0x25CF
 $SymWarn = [char]0x26A0
 $SymDown = [char]0x2193
 $DivLine = [string]::new([char]0x2500, 76)
+$CatBadge = "[cat]"
 
 function Write-StepOk([string]$Step, [string]$Message) {
-    Write-Host "  $Green$SymCheck$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
+    Write-Host "  $Green$SymCheck$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
 }
 
 function Write-StepAction([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymAction$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
+    Write-Host "  $Yellow$SymAction$Reset $Cyan$($Step.PadRight(12))$Reset  $Message"
 }
 
 function Write-StepInfo([string]$Step, [string]$Message) {
-    Write-Host "  $Gray$SymInfo$Reset $Cyan$($Step.PadRight(12))$Reset $Message"
+    Write-Host "  $Gray$SymInfo$Reset  $Cyan$($Step.PadRight(12))$Reset  $Message"
 }
 
 function Write-StepWarn([string]$Step, [string]$Message) {
-    Write-Host "  $Yellow$SymWarn$Reset $Yellow$($Step.PadRight(12))$Reset $Message"
+    Write-Host "  $Yellow$SymWarn$Reset $Yellow$($Step.PadRight(12))$Reset  $Message"
 }
 
 $FrontendHostIp = "127.0.0.1"
@@ -66,6 +67,15 @@ $FrontendBaseUrl = "http://$FrontendHostIp`:$FePort"
 $FrontendHealthUrl = "$FrontendBaseUrl$FrontendHealthPath"
 $BackendBaseUrl = "http://$HostIp`:$BePort"
 $UvCacheDir = Join-Path (Get-Location) ".uv-cache"
+$LogDir = Join-Path (Get-Location) ".logs"
+if (-not (Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir | Out-Null
+}
+$BackendOutLog = Join-Path $LogDir "backend.stdout.log"
+$BackendErrLog = Join-Path $LogDir "backend.stderr.log"
+$FrontendOutLog = Join-Path $LogDir "frontend.stdout.log"
+$FrontendErrLog = Join-Path $LogDir "frontend.stderr.log"
+
 $jobs = @()
 $chromeProcess = $null
 $backendProcess = $null
@@ -78,7 +88,7 @@ try {
     if ($branchOutput) { $gitBranch = $branchOutput.Trim() }
 } catch {}
 
-$appVersion = "v4.113.12"
+$appVersion = "v4.113.13"
 if (Test-Path "version.json") {
     try {
         $vJson = Get-Content "version.json" -Raw | ConvertFrom-Json
@@ -87,12 +97,12 @@ if (Test-Path "version.json") {
 }
 
 Write-Host ""
-Write-Host "  $Cyan`[cat`]$Reset  $Bold`CAT iVISION$Reset  $White$appVersion$Reset  $Gray-- Autonomous Industrial Inspection System$Reset"
+Write-Host "  $Cyan$CatBadge$Reset  $Bold`CAT iVISION$Reset  $White$appVersion$Reset  $Gray-- Autonomous Industrial Inspection System$Reset"
 Write-Host "  $Gray$DivLine$Reset"
-Write-Host "  $Cyan$SymInfo$Reset $Bold`Backend URL:$Reset    $BackendBaseUrl"
-Write-Host "  $Cyan$SymInfo$Reset $Bold`Frontend URL:$Reset   $FrontendBaseUrl"
-Write-Host "  $Cyan$SymInfo$Reset $Bold`Runtime Mode:$Reset   Industrial HMI (Chromium Embedded App)"
-Write-Host "  $Cyan$SymInfo$Reset $Bold`Active Branch:$Reset  $gitBranch"
+Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Backend URL:').PadRight(16))$Reset $BackendBaseUrl"
+Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Frontend URL:').PadRight(16))$Reset $FrontendBaseUrl"
+Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Runtime Mode:').PadRight(16))$Reset Industrial HMI (Chromium Embedded App)"
+Write-Host "  $Cyan$SymInfo$Reset  $Bold$($('Active Branch:').PadRight(16))$Reset $gitBranch"
 Write-Host "  $Gray$DivLine$Reset"
 Write-Host ""
 
@@ -135,11 +145,16 @@ try {
     Write-StepOk "preflight" "Build cache initialized at $UvCacheDir"
 
     Write-StepAction "database" "Bootstrapping SQLite Split-DB schemas (root, task, rules)..."
-    & uv run --project BE python bin\db-bootstrap.py 2>$null
-    Write-StepOk "database" "Database schemas bootstrapped and migrations verified"
+    $dbOutput = & uv run --project BE python bin\db-bootstrap.py 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-StepWarn "database" "Database bootstrap reported warnings/errors"
+        $dbOutput | ForEach-Object { Write-Host "       $Gray$_$Reset" }
+    } else {
+        Write-StepOk "database" "Database schemas bootstrapped and migrations verified"
+    }
 
     Write-StepAction "backend" "Launching FastAPI uvicorn server on port $BePort..."
-    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort"
+    $backendProcess = Start-Process -NoNewWindow -PassThru -FilePath "uv" -ArgumentList "run --project BE uvicorn BE.main:app --host $HostIp --port $BePort" -RedirectStandardOutput $BackendOutLog -RedirectStandardError $BackendErrLog
     $jobs += $backendProcess
 
     Write-StepInfo "backend" "Waiting for health probe at $BackendBaseUrl/healthz..."
@@ -158,8 +173,9 @@ try {
 
     if ($needsInstall) {
         Write-StepAction "frontend" "Installing node dependencies via Bun..."
-        & bun install
+        $bunOutput = & bun install 2>&1
         if ($LASTEXITCODE -ne 0) {
+            $bunOutput | ForEach-Object { Write-Host "       $Red$_$Reset" }
             throw "bun install failed with exit code $LASTEXITCODE"
         }
         Write-StepOk "frontend" "Dependencies installed successfully"
@@ -187,7 +203,7 @@ try {
             "--host", $FrontendHostIp,
             "--port", "$FePort",
             "--strictPort"
-        )
+        ) -RedirectStandardOutput $FrontendOutLog -RedirectStandardError $FrontendErrLog
         $jobs += $frontendProcess
 
         Write-StepInfo "frontend" "Waiting for frontend probe at $FrontendHealthUrl..."
@@ -293,8 +309,8 @@ try {
 
     Write-Host ""
     Write-Host "  $Gray$DivLine$Reset"
-    Write-Host "  $Magenta$SymInfo$Reset $Bold`Supervision Active$Reset $Gray(monitoring window & backend lifecycle)$Reset"
-    Write-Host "  $Gray  Press Ctrl+C or use in-app Exit to terminate all services cleanly$Reset"
+    Write-Host "  $Magenta$SymInfo$Reset  $Bold`Supervision Active$Reset  $Gray(monitoring window & backend lifecycle)$Reset"
+    Write-Host "  $Gray     Press Ctrl+C or use in-app Exit to terminate all services cleanly$Reset"
     Write-Host ""
 
     $isSupervised = $true
@@ -303,14 +319,14 @@ try {
 
         # Monitor browser process exit
         if ($chromeProcess -and $chromeProcess.HasExited) {
-            Write-Host "  $Yellow$SymInfo$Reset $Cyan$('lifecycle'.PadRight(12))$Reset Browser window closed by user"
+            Write-Host "  $Yellow$SymInfo$Reset  $Cyan$('lifecycle'.PadRight(12))$Reset  Browser window closed by user"
             $isSupervised = $false
             break
         }
 
         # Monitor backend process exit
         if ($backendProcess -and $backendProcess.HasExited) {
-            Write-Host "  $Yellow$SymInfo$Reset $Cyan$('lifecycle'.PadRight(12))$Reset Backend process exited (shutdown completed)"
+            Write-Host "  $Yellow$SymInfo$Reset  $Cyan$('lifecycle'.PadRight(12))$Reset  Backend process exited (shutdown completed)"
             $isSupervised = $false
             break
         }
@@ -318,12 +334,12 @@ try {
 }
 finally {
     Write-Host ""
-    Write-Host "  $Yellow$SymDown$Reset $Cyan$('teardown'.PadRight(12))$Reset Gracefully terminating background processes..."
+    Write-Host "  $Yellow$SymDown$Reset  $Cyan$('teardown'.PadRight(12))$Reset  Gracefully terminating background processes..."
     foreach ($job in $jobs) {
         if ($job -and -not $job.HasExited) {
             Stop-Process -Id $job.Id -Force -ErrorAction SilentlyContinue
         }
     }
-    Write-Host "  $Green$SymCheck$Reset $Cyan$('complete'.PadRight(12))$Reset All services terminated cleanly."
+    Write-Host "  $Green$SymCheck$Reset  $Cyan$('complete'.PadRight(12))$Reset  All services terminated cleanly."
     Write-Host ""
 }
