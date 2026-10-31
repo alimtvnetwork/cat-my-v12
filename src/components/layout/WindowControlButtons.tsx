@@ -319,7 +319,7 @@ export function WindowControlButtons(): React.JSX.Element {
         setIsCloseNoop(true);
       }, 300);
     });
-  }, [effectiveBackendUrl]);
+  }, [baseUrl]);
 
   const requestExit = useCallback(() => {
     const runningLabel = readRunningWorkLabel();

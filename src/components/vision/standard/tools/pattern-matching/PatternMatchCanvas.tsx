@@ -19,7 +19,7 @@ export function PatternMatchCanvas(props: PatternMatchCanvasProps): React.JSX.El
   const chipStm8ImgRef = useRef<HTMLImageElement | null>(null);
 
   const [isLocked, setIsLocked] = useState(false);
-  const [shape, setShape] = useState<RoiShapeType>("square");
+  const [shape, setShape] = useState<RoiShapeType>("rectangle");
   const [opacity, setOpacity] = useState(100);
 
   const isSimulating = props.simulation?.isSimulating ?? false;

@@ -12,6 +12,7 @@ import {
   CloudUpload,
   Copy,
   HardDrive,
+  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { HttpMethod } from "@/lib/constants";
@@ -57,12 +58,35 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [supabaseStatus, setSupabaseStatus] = useState<SupabaseUploadResult | null>(null);
 
   const [isSavingLocal, setIsSavingLocal] = useState(false);
+  const [summary, setSummary] = useState<BugReportSummary>({
+    title: "",
+    description: "",
+    category: IssueCategoryType.UiGlitch,
+    expectedBehavior: "",
+    actualBehavior: "",
+  });
+
+  if (!isExportModalOpen || !session) {
+    return null;
+  }
 
   const handleCopyIdePrompt = async () => {
+    // Attempt local disk save first so references exist
+    await handleSaveLocalDisk();
+
     const splitDbErrors = useErrorStore.getState().history;
     const errorsBlock = splitDbErrors.slice(0, 5).map((e) => 
       `- [${e.code}] ${e.message} (Trigger: ${e.triggerComponent || "N/A"})${e.stackTrace ? `\n  Stack: ${e.stackTrace.split("\n")[0]}` : ""}`
     ).join("\n");
+
+    const screenshotsBlock = session.screenshots.map((snap, idx) => {
+      const rawLabel = snap.title || snap.id || `step-${String(idx + 1).padStart(2, "0")}`;
+      const safeLabel = rawLabel.replace(/[^a-zA-Z0-9_\-.]/g, "_").replace(/^_+|_+$/g, "").slice(0, 80) || `step-${String(idx + 1).padStart(2, "0")}`;
+      const fileName = safeLabel.endsWith(".png") ? safeLabel : `${safeLabel}.png`;
+      const relPath = `.logs/recorded-bugs/${session.id}/screenshots/${fileName}`;
+
+      return `- **${fileName}**: @[file;${relPath}]`;
+    }).join("\n");
 
     const promptText = `# Bug Report: ${summary.title || "Untitled Issue"}
 - **Category**: ${summary.category}
@@ -79,6 +103,9 @@ ${summary.expectedBehavior || "N/A"}
 
 ### Actual Behavior
 ${summary.actualBehavior || "N/A"}
+
+## Screenshots & Visual Evidence (Antigravity Format)
+${screenshotsBlock || "No screenshots captured"}
 
 ## Recent Diagnostic Errors (Split-DB)
 ${errorsBlock || "None recorded"}
@@ -97,9 +124,21 @@ python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
     }
   };
 
+  const handleCopyCliCommand = async () => {
+    const cmd = `python -m BE.cli.processing.main errors list --session-id ${session.id} --trace`;
+
+    try {
+      await navigator.clipboard.writeText(cmd);
+      toast.success(`Copied CLI command: ${cmd}`);
+    } catch {
+      toast.info(cmd);
+    }
+  };
+
   const handleSaveLocalDisk = async () => {
     setIsSavingLocal(true);
-    const effectiveUrl = baseUrl || "http://127.0.0.1:8787";
+    const effectiveUrl = resolveBackendBaseUrl() || "http://127.0.0.1:8787";
+
     try {
       const payload = {
         session_id: session.id,
@@ -127,11 +166,14 @@ python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
         const data = await res.json();
         const savedDir = data?.Results?.[0]?.savedDir || ".logs/recorded-bugs";
         toast.success(`Saved bug report and ${session.screenshots.length} screenshots to ${savedDir}!`);
+
         if (data?.Results?.[0]?.idePrompt) {
           try {
             await navigator.clipboard.writeText(data.Results[0].idePrompt);
             toast.info("Copied IDE Prompt with local file links to clipboard!");
-          } catch {}
+          } catch {
+            // Clipboard permission or unsupported
+          }
         }
       } else {
         toast.error("Failed to save bug report to local disk");
@@ -142,18 +184,6 @@ python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
       setIsSavingLocal(false);
     }
   };
-
-  const [summary, setSummary] = useState<BugReportSummary>({
-    title: "",
-    description: "",
-    category: IssueCategoryType.UiGlitch,
-    expectedBehavior: "",
-    actualBehavior: "",
-  });
-
-  if (!isExportModalOpen || !session) {
-    return null;
-  }
 
   const handleDownload = async () => {
     setIsExporting(true);
@@ -532,6 +562,31 @@ ${summary.actualBehavior || "N/A"}`;
                   <CloudUpload className="h-3.5 w-3.5" />
                 )}
                 <span>Upload to Cloud / Submit Ticket (Supabase)</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSendingBugReport || isUploadingSupabase}
+                onClick={handleSendBugReport}
+                title="Send bug report directly to backend (POST /bug-reports)"
+                className="flex items-center gap-1.5 rounded border border-indigo-500/40 bg-indigo-500/15 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/25 disabled:opacity-50"
+              >
+                {isSendingBugReport ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Send className="h-3.5 w-3.5" />
+                )}
+                <span>Send Bug Report</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyCliCommand}
+                title="Copy terminal command to inspect SQLite database errors for this session"
+                className="flex items-center gap-1.5 rounded border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/25"
+              >
+                <Terminal className="h-3.5 w-3.5" />
+                <span>Copy CLI Command</span>
               </button>
 
               <button

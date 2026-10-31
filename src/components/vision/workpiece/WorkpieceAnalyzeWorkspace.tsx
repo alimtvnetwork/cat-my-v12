@@ -10,7 +10,6 @@ import {
   Layers,
   Grid2X2,
   PaintBucket,
-  Play,
   Plus,
   QrCode,
   Ruler,
@@ -41,6 +40,7 @@ import { PhotoshopLayersPanel, type VisionLayerItem } from "@/components/vision/
 import { useCameraStream } from "@/components/vision/white-box/useCameraStream";
 import { visualTunerBus } from "@/lib/editor/selection/visual-tuner-bus";
 import { saveRuleSet } from "@/lib/rules/saveRuleSet";
+import { useErrorStore } from "@/lib/stores/errorStore";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import { getFreshRuleset, updateRulesetRulesInStore } from "@/hooks/useWorkpieceProject";
 import {
@@ -1990,6 +1990,8 @@ export function WorkpieceAnalyzeWorkspace({
                       isEvaluating={evaluatingRuleId === activeRule.id}
                       onEvaluateSingleRule={handleEvaluateSingleRule}
                       onDeleteRule={railHandlers.onDelete}
+                      onRunAllAnalysis={handleManualRunAnalysis}
+                      isAnalysisBusy={isAnalysisBusy}
                     />
                   ) : null}
                 </div>
@@ -1998,45 +2000,34 @@ export function WorkpieceAnalyzeWorkspace({
           </div>
         </div>
 
-        {/* 5. Bottom action bar */}
+        {/* 5. Bottom status ticker */}
         <div
           data-tour="project-results"
-          className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-black/40 px-4 py-2.5 shadow-[0_4px_24px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl"
+          className="flex shrink-0 items-center justify-between border-t border-white/[0.06] bg-black/40 py-1 px-3 text-[10px] text-white/40 select-none"
         >
-          <div className="flex items-center gap-2 font-sans text-[11px] uppercase tracking-wider text-white/50">
+          <div className="flex items-center gap-1.5 truncate">
             <span
-              className={`h-2 w-2 rounded-full ${isAnalysisBusy ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"}`}
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${isAnalysisBusy ? "bg-amber-400 animate-ping" : "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.8)]"}`}
             />
-            <span>
+            <span className="truncate">
               {isAnalysisBusy ? "Inspection engine analyzing" : "Inspection engine ready"} ·{" "}
               {isLiveCameraMode ? "live camera source" : "reference image source"} ·{" "}
               {projectAnalysisItems.length} active rules · {APP_VERSION_INFO.version}
             </span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
-              className="sr-only"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
 
-                if (file) void onImportImage(file);
-                e.target.value = "";
-              }}
-            />
-            <button
-              type="button"
-              data-tour="project-run-analysis"
-              onClick={handleManualRunAnalysis}
-              disabled={isAnalysisBusy}
-              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-1.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(16,185,129,0.45)] transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
-            >
-              <Play size={14} className={isAnalysisBusy ? "animate-spin" : "fill-black"} />
-              {isAnalysisBusy ? "Running..." : "Run"}
-            </button>
-          </div>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+
+              if (file) void onImportImage(file);
+              e.target.value = "";
+            }}
+          />
         </div>
       </div>
 

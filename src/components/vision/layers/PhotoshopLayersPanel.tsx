@@ -168,6 +168,9 @@ export function PhotoshopLayersPanel({
               key={layer.id}
               onClick={() => onSelectLayer(layer.id)}
               onContextMenu={(e) => handleContextMenu(e, layer.id)}
+              style={{
+                marginLeft: layer.depth ? `${layer.depth * 14}px` : undefined,
+              }}
               className={`group flex items-center justify-between rounded-lg border px-2 py-1.5 text-xs transition cursor-pointer ${
                 isSelected
                   ? "border-[#00e5ff]/50 bg-[#00e5ff]/10 text-white shadow-[0_0_12px_rgba(0,229,255,0.15)]"

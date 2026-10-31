@@ -32,6 +32,8 @@ export interface StandardWorkbenchCanvasProps {
   onSearchRegionLockChange?: (isLocked: boolean) => void;
   createFilteredImageData?: (source: WhiteBoxMarkingInput) => ImageData;
   renderCustomOverlays?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void;
+  isSquareROI?: boolean;
+  shape?: string;
 }
 
 export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): React.JSX.Element {
@@ -47,7 +49,7 @@ export function StandardWorkbenchCanvas(props: StandardWorkbenchCanvasProps): Re
     isLocked: isSearchRegionLocked,
     // Spec 55: square ROI on creation and resize; a locked drag reports
     // itself instead of failing silently.
-    isSquareROI: true,
+    isSquareROI: props.isSquareROI ?? (props.shape === "square"),
     onLockedDragAttempt: () => {
       toast("Inspection ROI is locked — double-click inside it or press Unlock to edit.", {
         id: "workbench-roi-locked-hint",

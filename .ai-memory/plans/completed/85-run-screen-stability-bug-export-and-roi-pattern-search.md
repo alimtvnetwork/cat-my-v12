@@ -3,7 +3,7 @@
 - **Task**: Run Screen Stability, Bug Export Dropdown & ROI Pattern Search
 - **Slug**: `run-screen-stability-bug-export-and-roi-pattern-search`
 - **Owner**: GitMap Autonomous Engineering
-- **Status**: Active / In Progress
+- **Status**: COMPLETED / VERIFIED
 - **Target Branch**: `main`
 - **Spec Directory**: `02-spec/21-app/85-run-screen-stability-bug-export-and-roi-pattern-search/`
 

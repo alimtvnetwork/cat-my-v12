@@ -167,6 +167,19 @@ export function RegionOverlay({
       className="group"
       data-testid="region-overlay"
     >
+      {/* Draggable Interior Body */}
+      {active && (
+        <div
+          onPointerDown={handleHeaderPointerDown}
+          className={`absolute inset-0 ${
+            isLocked
+              ? "pointer-events-none"
+              : "pointer-events-auto cursor-move bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
+          }`}
+          data-testid="roi-interior-body"
+        />
+      )}
+
       {/* 20px Header Grip Bar */}
       {active && (
         <div

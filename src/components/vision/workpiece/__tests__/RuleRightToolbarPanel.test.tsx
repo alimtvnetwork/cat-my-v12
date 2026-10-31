@@ -103,6 +103,16 @@ describe("RuleRightToolbarPanel", () => {
     expect(onEvaluate).toHaveBeenCalledWith("rule-101");
   });
 
+  it("triggers onRunAllAnalysis when Run Full Inspection button is clicked", () => {
+    const onRunAll = vi.fn();
+    render(<RuleRightToolbarPanel {...defaultProps} onRunAllAnalysis={onRunAll} />);
+
+    const runBtn = screen.getByRole("button", { name: "Run Full Inspection" });
+    fireEvent.click(runBtn);
+
+    expect(onRunAll).toHaveBeenCalled();
+  });
+
   it("displays validation score badge when result is provided", () => {
     render(
       <RuleRightToolbarPanel

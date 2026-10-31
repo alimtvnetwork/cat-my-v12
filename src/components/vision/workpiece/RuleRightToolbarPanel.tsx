@@ -41,6 +41,8 @@ export interface RuleRightToolbarPanelProps {
   onEvaluateSingleRule?: (ruleId: string) => void;
   onDeleteRule?: (ruleId: string) => void;
   onLaunchWorkbench?: () => void;
+  onRunAllAnalysis?: () => void;
+  isAnalysisBusy?: boolean;
 }
 
 function getToolIcon(code: string, name: string): LucideIcon {
@@ -96,6 +98,8 @@ function RuleRightToolbarPanelContent({
   onEvaluateSingleRule,
   onDeleteRule,
   onLaunchWorkbench,
+  onRunAllAnalysis,
+  isAnalysisBusy = false,
 }: RuleRightToolbarPanelContentProps): React.JSX.Element {
   const toolCode = typeof rule.params?.toolCode === "string" ? rule.params.toolCode : "T102";
   const ToolIcon = getToolIcon(toolCode, rule.name);
@@ -759,14 +763,27 @@ function RuleRightToolbarPanelContent({
 
       {/* Bottom Sticky Action Bar */}
       <div className="shrink-0 border-t border-white/[0.08] bg-black/50 p-3 space-y-2">
+        {onRunAllAnalysis ? (
+          <button
+            type="button"
+            data-tour="project-run-analysis"
+            onClick={onRunAllAnalysis}
+            disabled={isAnalysisBusy}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 py-2.5 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-emerald-500/25 transition hover:brightness-110 active:scale-95 disabled:opacity-50"
+          >
+            <Play size={13} className={isAnalysisBusy ? "animate-spin" : "fill-black"} />
+            {isAnalysisBusy ? "Running Inspection..." : "Run Full Inspection"}
+          </button>
+        ) : null}
+
         {onEvaluateSingleRule ? (
           <button
             type="button"
             onClick={() => onEvaluateSingleRule(rule.id)}
-            disabled={isEvaluating}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2 font-sans text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-emerald-500/20 transition hover:brightness-110 active:scale-95 disabled:opacity-50"
+            disabled={isEvaluating || isAnalysisBusy}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] py-2 font-sans text-xs font-bold uppercase tracking-wider text-white hover:bg-white/[0.1] transition active:scale-95 disabled:opacity-50"
           >
-            <Play size={13} className={isEvaluating ? "animate-spin" : "fill-black"} />
+            <Play size={13} className={isEvaluating ? "animate-spin" : "fill-white"} />
             {isEvaluating ? "Evaluating..." : "Test This Rule"}
           </button>
         ) : null}

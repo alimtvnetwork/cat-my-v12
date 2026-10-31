@@ -28,8 +28,12 @@ Supabase failure -> ``E_BUG_SUPABASE_FAILED``.
 
 from __future__ import annotations
 
+import base64
+import json
 import logging
+from pathlib import Path
 from typing import Any
+import uuid
 
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
@@ -301,6 +305,7 @@ async def post_bug_report_test(request: Request) -> JSONResponse:
 
 
 @router.post("/local")
+@router.post("/save-local")
 async def post_bug_report_local(request: Request) -> JSONResponse:
     """Save bug report session and screenshots directly to local disk (.logs/recorded-bugs/<id>/)."""
     correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
@@ -313,63 +318,102 @@ async def post_bug_report_local(request: Request) -> JSONResponse:
     except Exception as exc:
         raise AppError(ErrorCode.E_BE_BAD_REQUEST, "Invalid JSON body", {"Error": str(exc)})
 
-    import uuid
-    import base64
-    session_id = body.get("session_id") or f"bug-{uuid.uuid4().hex[:8]}"
+    session_id = body.get("session_id") or body.get("sessionId") or f"bug-{uuid.uuid4().hex[:8]}"
     out_dir = Path(".logs/recorded-bugs") / session_id
     out_dir.mkdir(parents=True, exist_ok=True)
     screenshots_dir = out_dir / "screenshots"
-    screenshots_dir.mkdir(exist_ok=True)
+    screenshots_dir.mkdir(parents=True, exist_ok=True)
 
     saved_images: list[dict[str, str]] = []
     screenshots = body.get("screenshots") or []
     for idx, snap in enumerate(screenshots, 1):
-        data_uri = snap.get("dataUri") or snap.get("data") or ""
-        label = snap.get("label") or f"step-{idx:02d}"
-        file_name = f"{label}.png"
+        data_uri = snap.get("dataUrl") or snap.get("dataUri") or snap.get("data") or ""
+        raw_label = snap.get("title") or snap.get("label") or snap.get("id") or f"step-{idx:02d}"
+        clean_chars = [c if c.isalnum() or c in ("-", "_", ".") else "_" for c in str(raw_label)]
+        clean_label = "".join(clean_chars).strip("._")[:80] or f"step-{idx:02d}"
+        file_name = clean_label if clean_label.endswith(".png") else f"{clean_label}.png"
         img_path = screenshots_dir / file_name
+
         if "," in data_uri:
             data_uri = data_uri.split(",", 1)[1]
+
         try:
-            img_bytes = base64.b64decode(data_uri)
-            img_path.write_bytes(img_bytes)
+            if data_uri:
+                img_bytes = base64.b64decode(data_uri)
+                img_path.write_bytes(img_bytes)
+
             abs_url = f"file:///{img_path.resolve().as_posix()}"
-            saved_images.append({"name": file_name, "path": str(img_path), "fileUrl": abs_url})
-        except Exception:
-            pass
+            rel_file_path = f".logs/recorded-bugs/{session_id}/screenshots/{file_name}"
+            saved_images.append({
+                "name": file_name,
+                "path": str(img_path),
+                "relPath": rel_file_path,
+                "fileUrl": abs_url,
+                "antigravityTag": f"@[file;{rel_file_path}]",
+            })
+        except Exception as write_err:
+            logger.warning("Failed to save screenshot %s: %s", file_name, write_err)
 
     # Save summary metadata
     meta_path = out_dir / "metadata.json"
     meta_path.write_text(json.dumps(body, indent=2), encoding="utf-8")
 
-    # Save Markdown prompt file for IDE
+    # Format Antigravity / IDE prompt Markdown
     md_path = out_dir / "prompt.md"
     summary = body.get("summary") or {}
-    md_content = f"""# Bug Report: {summary.get('title') or 'Untitled Issue'}
-- **Session ID**: `{session_id}`
-- **Category**: {summary.get('category') or 'UiGlitch'}
-- **Initial Route**: {body.get('initialRoute') or '/'}
+    title = summary.get("title") or body.get("title") or "Recorded Bug Report"
+    category = summary.get("category") or "UiGlitch"
+    initial_route = body.get("initialRoute") or "/"
 
-## Description
-{summary.get('description') or 'No description provided.'}
+    md_lines = [
+        f"# Bug Report: {title}",
+        f"- **Session ID**: `{session_id}`",
+        f"- **Category**: `{category}`",
+        f"- **Initial Route**: `{initial_route}`",
+        "",
+        "## Description",
+        summary.get("description") or "No description provided.",
+        "",
+        "### Expected Behavior",
+        summary.get("expectedBehavior") or "N/A",
+        "",
+        "### Actual Behavior",
+        summary.get("actualBehavior") or "N/A",
+        "",
+        "## Screenshots & Visual Evidence",
+        "Referenced using Antigravity AI file attachments format:",
+        "",
+    ]
 
-### Expected Behavior
-{summary.get('expectedBehavior') or 'N/A'}
-
-### Actual Behavior
-{summary.get('actualBehavior') or 'N/A'}
-
-## Screenshots & Local Artifacts
-"""
     for img in saved_images:
-        md_content += f"- ![{img['name']}]({img['fileUrl']})\n"
+        md_lines.append(f"- **{img['name']}**: {img['antigravityTag']}")
+        md_lines.append(f"  ![{img['name']}]({img['fileUrl']})")
 
-    md_content += f"""
-## Terminal Inspection Command
-```pwsh
-python -m BE.cli.processing.main errors list --session-id {session_id} --trace
-```
-"""
+    events = body.get("events") or []
+    if events:
+        md_lines.extend([
+            "",
+            f"## Event Timeline ({len(events)} events)",
+            "| # | Time | Type | Description | Target |",
+            "|---|------|------|-------------|--------|",
+        ])
+        for e_idx, ev in enumerate(events[:30], 1):
+            ts = ev.get("timestamp") or ev.get("time") or ""
+            kind = ev.get("type") or ev.get("kind") or ""
+            desc = (ev.get("description") or ev.get("label") or "").replace("|", "\\|")
+            tgt = (ev.get("target") or "").replace("|", "\\|")
+            md_lines.append(f"| {e_idx} | {ts} | `{kind}` | {desc} | `{tgt}` |")
+
+    md_lines.extend([
+        "",
+        "## CLI Diagnostic & SQLite Inspection",
+        "Query error traces and session telemetry directly from the SQLite database:",
+        "```pwsh",
+        f"python -m BE.cli.processing.main errors list --session-id {session_id} --trace",
+        "```",
+    ])
+
+    md_content = "\n".join(md_lines) + "\n"
     md_path.write_text(md_content, encoding="utf-8")
 
     payload = {

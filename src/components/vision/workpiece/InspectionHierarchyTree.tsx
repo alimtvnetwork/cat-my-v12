@@ -25,6 +25,7 @@ import {
 import { PhotoshopLayersPanel } from "../layers/PhotoshopLayersPanel";
 import type { VisionLayerItem, VisionLayerType } from "../layers/types";
 import { ToolInspectionGraphic } from "@/components/vision/ToolInspectionGraphic";
+import { getPatternBoxesForRegion } from "@/lib/vision/white-box-marking";
 import { VISION_TOOL_CATALOG } from "@/lib/vision/tool-catalog";
 import type { Project, RuleSet } from "@/lib/projects/types";
 import {
@@ -166,6 +167,9 @@ export function InspectionHierarchyTree({
       list.push({
         id: rule.id,
         ruleId: rule.id,
+        parentId: "layer-master-roi",
+        depth: 1,
+        isExpanded: true,
         name: rule.name,
         type: layerType,
         isVisible: !rule.isHidden,
@@ -174,6 +178,38 @@ export function InspectionHierarchyTree({
         zIndex: 30 + idx * 10,
         details: `${toolCode || "RULE"} · [${Math.round(rule.width)}×${Math.round(rule.height)}]`,
       });
+
+      if (isPattern) {
+        const rawBoxes =
+          (rule.params as any)?.referenceBoxes ??
+          (rule.params as any)?.patternBoxes ??
+          (rule.params as any)?.constellation;
+        const boxes =
+          Array.isArray(rawBoxes) && rawBoxes.length > 0
+            ? rawBoxes
+            : getPatternBoxesForRegion({
+                x: rule.x,
+                y: rule.y,
+                width: rule.width,
+                height: rule.height,
+              });
+
+        boxes.forEach((box: any, bIdx: number) => {
+          list.push({
+            id: `${rule.id}-box-${bIdx + 1}`,
+            ruleId: rule.id,
+            parentId: rule.id,
+            depth: 2,
+            name: `Template Box #${bIdx + 1} (${box.type ?? "feature"})`,
+            type: "pattern",
+            isVisible: !rule.isHidden,
+            isLocked: Boolean(rule.isLocked),
+            colorTag: "#34d399",
+            zIndex: 30 + idx * 10 + bIdx + 1,
+            details: `[${Math.round(box.x)},${Math.round(box.y)}] ${Math.round(box.width)}×${Math.round(box.height)}`,
+          });
+        });
+      }
     });
 
     return list;
@@ -727,6 +763,29 @@ function RuleNode({
   onDropOnRow,
 }: RuleNodeProps) {
   const toolCode = resolveRuleToolCode(rule);
+  const isPattern = toolCode === "T102" || rule.name.toLowerCase().includes("pattern");
+
+  const patternBoxes = useMemo(() => {
+    if (!isPattern) {
+      return [];
+    }
+
+    const raw =
+      (rule.params as any)?.referenceBoxes ??
+      (rule.params as any)?.patternBoxes ??
+      (rule.params as any)?.constellation;
+
+    if (Array.isArray(raw) && raw.length > 0) {
+      return raw;
+    }
+
+    return getPatternBoxesForRegion({
+      x: rule.x,
+      y: rule.y,
+      width: rule.width,
+      height: rule.height,
+    });
+  }, [isPattern, rule.params, rule.x, rule.y, rule.width, rule.height]);
   const cameraSettings =
     rule.cameraSettings ?? (rule.params as any)?.cameraSettings ?? DEFAULT_RULE_CAMERA_SETTINGS;
   const lightSettings =
@@ -904,6 +963,31 @@ function RuleNode({
 
       {isExpanded ? (
         <div className="ml-4 space-y-1 border-l border-ca-border/40 py-0.5 pl-2">
+          {isPattern && patternBoxes.length > 0 ? (
+            <div className="my-1 ml-1 space-y-1 rounded border border-emerald-500/30 bg-emerald-950/20 p-1.5 text-xs">
+              <div className="flex items-center justify-between text-[10px] font-semibold text-emerald-400">
+                <span>Pattern Template Boxes ({patternBoxes.length})</span>
+                <span className="font-mono text-[9px] text-emerald-300/70">T102 ROI Child</span>
+              </div>
+
+              <div className="max-h-36 space-y-0.5 overflow-y-auto pr-1 [scrollbar-color:rgba(16,185,129,0.3)_transparent] [scrollbar-width:thin]">
+                {patternBoxes.map((box: any, bIdx: number) => (
+                  <div
+                    key={bIdx}
+                    className="flex items-center justify-between rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white/70"
+                  >
+                    <span className="text-emerald-300">
+                      Box #{bIdx + 1} ({box.type ?? "feature"})
+                    </span>
+                    <span className="text-white/40">
+                      {Math.round(box.width)}×{Math.round(box.height)} at ({Math.round(box.x)}, {Math.round(box.y)})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <CameraSettingsPanel
             rule={rule}
             settings={cameraSettings}

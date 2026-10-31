@@ -13,7 +13,14 @@ export function MachineFrame({ isLive, live = false }: MachineFrameProps): React
   const isRunningLive = isLive ?? live;
   const [src, setSrc] = useState<string>(() => getReferenceImage() ?? defaultSampleUrl);
 
-  useEffect(() => subscribe((next) => setSrc(next ?? defaultSampleUrl)), []);
+  useEffect(() => {
+    const unsubscribe = subscribe((next) => {
+      const nextSrc = next ?? defaultSampleUrl;
+      setSrc((prev) => (prev === nextSrc ? prev : nextSrc));
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-ca-viewport" aria-hidden="true">
@@ -21,7 +28,8 @@ export function MachineFrame({ isLive, live = false }: MachineFrameProps): React
         src={src}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-70 filter contrast-[1.05]"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover opacity-70 filter contrast-[1.05] transition-opacity duration-150 ease-out"
       />
 
       {/* Cyber-industrial vignette gradient */}

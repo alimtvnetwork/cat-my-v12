@@ -24,7 +24,7 @@ import { RunErrorDrawer } from "@/components/hmi/RunErrorDrawer";
 import { RunSkeleton } from "@/components/hmi/RunSkeleton";
 import { AppEvent, HttpMethod } from "@/lib/constants";
 import { fetchBackend } from "@/lib/backend/http";
-import { setReferenceImage } from "@/lib/stores/reference-image-store";
+import { getReferenceImage, setReferenceImage } from "@/lib/stores/reference-image-store";
 import type { ScoreResponse } from "@/lib/vision/score-schema";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { toIntParam } from "@/lib/ids/int-alias";
@@ -106,7 +106,7 @@ function RunPage() {
   const setError = useRunStore((s) => s.setError);
   const [log, setLog] = useState<StatusLogEntry[]>([]);
   const [confirmStop, setConfirmStop] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
+
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -236,11 +236,6 @@ function RunPage() {
     return () => window.removeEventListener(AppEvent.MenuCommand, onCmd as EventListener);
   }, []);
 
-  // Tick a wall clock while running so the elapsed timer updates.
-  // Gated on tab visibility: no point re-rendering the counter 2Hz while
-  // the user is on another tab. On tab focus the hook fires immediately
-  // so the displayed elapsed time snaps to the true wall clock.
-  useVisibleInterval(() => setNow(Date.now()), 500, RunStatusType.isRunning(status));
 
   // Carrier tape inspection sequence for live runtime HMI (Day 8 MVP)
   const RUN_SAMPLES = useMemo(
@@ -290,8 +285,11 @@ function RunPage() {
       const sample = RUN_SAMPLES[sampleIndexRef.current % RUN_SAMPLES.length];
       sampleIndexRef.current += 1;
 
-      // Update HMI Viewport with active carrier tape frame
-      setReferenceImage(sample.url);
+      // Update HMI Viewport with active carrier tape frame only if changed
+      if (getReferenceImage() !== sample.url) {
+        setReferenceImage(sample.url);
+      }
+
       isEvaluatingRef.current = true;
 
       // Run real deterministic backend inspection with decision trace
@@ -367,16 +365,7 @@ function RunPage() {
     RunStatusType.isRunning(status),
   );
 
-  const elapsedMs = RunStatusType.isRunning(status) && startedAt ? now - startedAt : 0;
-  const elapsed = useMemo(() => {
-    const s = Math.floor(elapsedMs / 1000);
-    const mm = String(Math.floor(s / 60)).padStart(2, "0");
-    const ss = String(s % 60).padStart(2, "0");
-
-    return `${mm}:${ss}`;
-  }, [elapsedMs]);
   const passRate = counters.total > 0 ? (counters.ok / counters.total) * 100 : 0;
-  const fps = elapsedMs > 500 ? (counters.total / (elapsedMs / 1000)).toFixed(1) : "0.0";
 
   const statusTone = RunStatusType.isRunning(status)
     ? "bg-ca-ok/15 text-ca-ok border-ca-ok/40"
@@ -420,14 +409,11 @@ function RunPage() {
                   />
                 </div>
               </div>
-              <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-28">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
-                  Throughput
-                </span>
-                <span className="font-mono text-xl font-black tabular-nums text-ca-ink mt-0.5">
-                  {fps} <span className="text-[11px] text-ca-ink-muted font-normal">FPS</span>
-                </span>
-              </div>
+              <RunThroughputCounter
+                isRunning={RunStatusType.isRunning(status)}
+                startedAt={startedAt}
+                total={counters.total}
+              />
             </div>
           </div>
           <Viewport>
@@ -735,11 +721,10 @@ function RunPage() {
       title="Run"
       headerActions={
         <div className="flex items-center gap-hmi-3 text-xs">
-          {RunStatusType.isRunning(status) ? (
-            <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
-              {elapsed}
-            </span>
-          ) : null}
+          <RunElapsedTimer
+            isRunning={RunStatusType.isRunning(status)}
+            startedAt={startedAt}
+          />
           <span
             role="status"
             aria-live="polite"
@@ -796,5 +781,57 @@ function RunPage() {
       {runBody}
       {runOverlays}
     </HmiShell>
+  );
+}
+
+interface RunElapsedTimerProps {
+  isRunning: boolean;
+  startedAt: number | null;
+}
+
+function RunElapsedTimer({ isRunning, startedAt }: RunElapsedTimerProps): React.JSX.Element | null {
+  const [now, setNow] = useState(() => Date.now());
+
+  useVisibleInterval(() => setNow(Date.now()), 1000, isRunning);
+
+  if (!isRunning || !startedAt) {
+    return null;
+  }
+
+  const elapsedMs = Math.max(0, now - startedAt);
+  const s = Math.floor(elapsedMs / 1000);
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+
+  return (
+    <span className="font-mono tabular-nums text-ca-ink-muted" aria-label="Elapsed">
+      {mm}:{ss}
+    </span>
+  );
+}
+
+interface RunThroughputCounterProps {
+  isRunning: boolean;
+  startedAt: number | null;
+  total: number;
+}
+
+function RunThroughputCounter({ isRunning, startedAt, total }: RunThroughputCounterProps): React.JSX.Element {
+  const [now, setNow] = useState(() => Date.now());
+
+  useVisibleInterval(() => setNow(Date.now()), 1000, isRunning);
+
+  const elapsedMs = isRunning && startedAt ? Math.max(0, now - startedAt) : 0;
+  const fps = elapsedMs > 500 ? (total / (elapsedMs / 1000)).toFixed(1) : "0.0";
+
+  return (
+    <div className="group relative flex flex-col items-end rounded-2xl border border-ca-border/80 bg-gradient-to-b from-ca-panel/95 via-ca-panel/75 to-ca-bg/95 px-4 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_4px_16px_-4px_rgba(0,0,0,0.5)] backdrop-blur-xl min-w-28">
+      <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-ca-ink-muted">
+        Throughput
+      </span>
+      <span className="font-mono text-xl font-black tabular-nums text-ca-ink mt-0.5">
+        {fps} <span className="text-[11px] text-ca-ink-muted font-normal">FPS</span>
+      </span>
+    </div>
   );
 }

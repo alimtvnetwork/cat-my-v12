@@ -10,6 +10,9 @@ export interface VisionLayerItem {
   zIndex: number;
   ruleId?: string;
   details?: string;
+  parentId?: string;
+  depth?: number;
+  isExpanded?: boolean;
 }
 
 export interface PhotoshopLayersPanelProps {

@@ -35,6 +35,7 @@ import {
   type PocketEvaluationResult,
 } from "@/lib/vision/workpiece-rule-analyzer";
 import { useErrorStore } from "@/lib/stores/errorStore";
+import { KeyboardKeyType } from "@/types/ui/KeyboardKeyType";
 
 export interface WorkpieceRoi {
   x: number;
@@ -1298,6 +1299,16 @@ export function VisualToolWorkpieceCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [panX, setPanX] = useState<number>(0);
+  const [panY, setPanY] = useState<number>(0);
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const [panStart, setPanStart] = useState<{
+    x: number;
+    y: number;
+    startPanX: number;
+    startPanY: number;
+  } | null>(null);
+  const [isSpacePressed, setIsSpacePressed] = useState<boolean>(false);
   const [detectedBoxes, setDetectedBoxes] = useState<WhiteBoxMark[]>([]);
   const [excludedNumbers, setExcludedNumbers] = useState<Set<number>>(new Set());
   const [autoDetectedBoxesByRuleId, setAutoDetectedBoxesByRuleId] = useState<
@@ -1317,6 +1328,33 @@ export function VisualToolWorkpieceCanvas({
   const [isHoveringRoi, setIsHoveringRoi] = useState(false);
   const [isRoiLocked, setIsRoiLocked] = useState(false);
   const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (KeyboardKeyType.isSpace(e.key) && !e.repeat) {
+        const activeTag = document.activeElement?.tagName;
+
+        if (activeTag !== "INPUT" && activeTag !== "TEXTAREA") {
+          e.preventDefault();
+          setIsSpacePressed(true);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (KeyboardKeyType.isSpace(e.key)) {
+        setIsSpacePressed(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const selectedRule = useMemo(() => {
     return overlayRules.find((r) => r.id === selectedRuleId);
@@ -1571,10 +1609,8 @@ export function VisualToolWorkpieceCanvas({
     const authoredH = Number(toolParams?.authoredFrameHeight ?? naturalH);
     const needsPin = parsedToolBoxes.length === 0;
     const needsRebase = authoredW !== naturalW || authoredH !== naturalH;
-    const isSquareType = String(toolParams?.shapeType ?? "") === "square";
-    const needsSquare = isSquareType && roi.width !== roi.height;
 
-    if (!needsPin && !needsRebase && !needsSquare) {
+    if (!needsPin && !needsRebase) {
       return;
     }
 
@@ -1688,13 +1724,11 @@ export function VisualToolWorkpieceCanvas({
     }
 
     if (isPatternMatching) {
-      const side = Math.max(4, Math.min(roi.width, roi.height));
-
       return getPatternBoxesForRegion({
         x: roi.x,
         y: roi.y,
-        width: side,
-        height: side,
+        width: Math.max(4, roi.width),
+        height: Math.max(4, roi.height),
       });
     }
 
@@ -2630,6 +2664,15 @@ export function VisualToolWorkpieceCanvas({
   );
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (e.button === 1 || (isSpacePressed && e.button === 0)) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY, startPanX: panX, startPanY: panY });
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+
+      return;
+    }
+
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
     const headerRect = getRoiHeaderRect(roi);
 
@@ -2775,6 +2818,16 @@ export function VisualToolWorkpieceCanvas({
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (isPanning && panStart) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+
+      setPanX(Math.round(panStart.startPanX + dx));
+      setPanY(Math.round(panStart.startPanY + dy));
+
+      return;
+    }
+
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
 
     if (isDraggingPin1 && onUpdateParams) {
@@ -2852,7 +2905,7 @@ export function VisualToolWorkpieceCanvas({
         nextRoi.x = clampedX;
       }
 
-      if (shapeType === "square") {
+      if (shapeType === "square" || shapeType === "circle" || shapeType === "polygon") {
         const maxSide = Math.min(naturalW - nextRoi.x, naturalH - nextRoi.y);
         const side = Math.max(16, Math.min(maxSide, Math.max(nextRoi.width, nextRoi.height)));
         nextRoi.width = side;
@@ -2892,6 +2945,14 @@ export function VisualToolWorkpieceCanvas({
   }
 
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (isPanning) {
+      setIsPanning(false);
+      setPanStart(null);
+      (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+
+      return;
+    }
+
     if (activeCornerHandle) {
       setActiveCornerHandle(null);
       (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
@@ -2951,6 +3012,14 @@ export function VisualToolWorkpieceCanvas({
   }
 
   const cursorStyle = useMemo(() => {
+    if (isPanning) {
+      return "grabbing";
+    }
+
+    if (isSpacePressed) {
+      return "grab";
+    }
+
     if (
       activeCornerHandle === "nw" ||
       activeCornerHandle === "se" ||
@@ -2997,7 +3066,9 @@ export function VisualToolWorkpieceCanvas({
     isHoveringHeader,
     isHoveringRoi,
     isMovingRoi,
+    isPanning,
     isPin1,
+    isSpacePressed,
     isRoiLocked,
   ]);
 
@@ -3161,7 +3232,11 @@ export function VisualToolWorkpieceCanvas({
               </button>
               <button
                 type="button"
-                onClick={() => setZoomLevel(1)}
+                onClick={() => {
+                  setZoomLevel(1);
+                  setPanX(0);
+                  setPanY(0);
+                }}
                 className="border-l border-ca-border p-1 text-ca-ink-muted hover:text-ca-ink"
                 title="Reset Zoom"
               >
@@ -3213,7 +3288,7 @@ export function VisualToolWorkpieceCanvas({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           style={{
-            transform: `scale(${zoomLevel})`,
+            transform: `translate(${panX}px, ${panY}px) scale(${zoomLevel})`,
             transformOrigin: "center center",
             cursor: cursorStyle,
             touchAction: "none",
@@ -3223,7 +3298,7 @@ export function VisualToolWorkpieceCanvas({
         {isPatternMatching && patternToolbarPos ? (
           <div
             className="pointer-events-auto absolute z-20 flex items-center gap-1 rounded border border-cyan-400/40 bg-[#0b0e14]/90 p-1"
-            style={{ left: patternToolbarPos.left, top: patternToolbarPos.top }}
+            style={{ left: patternToolbarPos.left + panX, top: patternToolbarPos.top + panY }}
           >
             <button
               type="button"

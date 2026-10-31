@@ -24,6 +24,7 @@ export async function normalizeImageToStandardCanvas(
   origW: number,
   origH: number,
   isChipSample = false,
+  shapeType?: string,
 ): Promise<{ source: WhiteBoxMarkingInput; searchRegion: SearchRegion }> {
   const canvas = document.createElement("canvas");
   canvas.width = STANDARD_CANVAS_WIDTH;
@@ -37,7 +38,8 @@ export async function normalizeImageToStandardCanvas(
     width: defaultSide,
     height: defaultSide,
   };
-  const searchRegion: SearchRegion = squareSearchRegion(rawSearchRegion);
+  const searchRegion: SearchRegion =
+    shapeType === "square" ? squareSearchRegion(rawSearchRegion) : rawSearchRegion;
 
   if (!ctx) {
     return {
@@ -68,6 +70,7 @@ export async function normalizeImageToStandardCanvas(
 export function dataUrlToStandardImageInput(
   dataUrl: string,
   isChipSample = false,
+  shapeType?: string,
 ): Promise<{ source: WhiteBoxMarkingInput; searchRegion: SearchRegion }> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -75,7 +78,13 @@ export function dataUrlToStandardImageInput(
     img.onload = async () => {
       const origW = img.naturalWidth || img.width || 140;
       const origH = img.naturalHeight || img.height || 148;
-      const result = await normalizeImageToStandardCanvas(img, origW, origH, isChipSample);
+      const result = await normalizeImageToStandardCanvas(
+        img,
+        origW,
+        origH,
+        isChipSample,
+        shapeType,
+      );
       resolve(result);
     };
 
@@ -86,7 +95,10 @@ export function dataUrlToStandardImageInput(
           height: STANDARD_CANVAS_HEIGHT,
           rgba: new Uint8ClampedArray(STANDARD_CANVAS_WIDTH * STANDARD_CANVAS_HEIGHT * 4),
         },
-        searchRegion: squareSearchRegion({ x: 280, y: 80, width: 380, height: 380 }),
+        searchRegion:
+          shapeType === "square"
+            ? squareSearchRegion({ x: 280, y: 80, width: 380, height: 380 })
+            : { x: 280, y: 80, width: 380, height: 380 },
       });
     };
 
@@ -94,7 +106,11 @@ export function dataUrlToStandardImageInput(
   });
 }
 
-export function createDefaultSearchRegion(width: number, height: number): SearchRegion {
+export function createDefaultSearchRegion(
+  width: number,
+  height: number,
+  shapeType?: string,
+): SearchRegion {
   if (width <= 200 && height <= 200) {
     return {
       x: 0,
@@ -111,12 +127,14 @@ export function createDefaultSearchRegion(width: number, height: number): Search
   const x = Math.max(0, Math.round((width - side) / 2));
   const y = Math.max(0, Math.round((height - side) / 2));
 
-  return squareSearchRegion({
+  const rawRegion: SearchRegion = {
     x,
     y,
     width: Math.min(width - x, side),
     height: Math.min(height - y, side),
-  });
+  };
+
+  return shapeType === "square" ? squareSearchRegion(rawRegion) : rawRegion;
 }
 
 export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
@@ -133,6 +151,11 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     settings?.params?.WhiteThreshold;
   const greyscaleLevel = typeof rawThreshold === "number" ? rawThreshold : 170;
 
+  const shapeType = String(
+    settings?.searchRegion?.shape ?? settings?.shapeType ?? settings?.shape ?? "rectangle",
+  ).toLowerCase();
+  const isSquare = shapeType === "square";
+
   const [searchRegion, setSearchRegion] = useState<SearchRegion | null>(() => {
     const sr = settings?.searchRegion;
 
@@ -141,21 +164,25 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     }
 
     if (sr.geometry && typeof sr.geometry.x === "number") {
-      return squareSearchRegion({
+      const region: SearchRegion = {
         x: Math.round(sr.geometry.x),
         y: Math.round(sr.geometry.y),
         width: Math.round(sr.geometry.width),
         height: Math.round(sr.geometry.height),
-      });
+      };
+
+      return isSquare ? squareSearchRegion(region) : region;
     }
 
     if (typeof sr.x === "number") {
-      return squareSearchRegion({
+      const region: SearchRegion = {
         x: Math.round(sr.x),
         y: Math.round(sr.y),
         width: Math.round(sr.width),
         height: Math.round(sr.height),
-      });
+      };
+
+      return isSquare ? squareSearchRegion(region) : region;
     }
 
     return null;
@@ -277,6 +304,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
         CHIP_GOOD_DATA_URL,
         true,
+        shapeType,
       );
 
       setSource(stdSource);
@@ -306,6 +334,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       const { source: stdSource, searchRegion: stdRegion } = await dataUrlToStandardImageInput(
         CHIP_STM8_DATA_URL,
         true,
+        shapeType,
       );
 
       setSource(stdSource);
@@ -339,8 +368,8 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
     setIsMatching(true);
 
     const effectiveRegion = searchRegion
-      ? squareSearchRegion(searchRegion)
-      : createDefaultSearchRegion(source.width, source.height);
+      ? (isSquare ? squareSearchRegion(searchRegion) : searchRegion)
+      : createDefaultSearchRegion(source.width, source.height, shapeType);
 
     if (!searchRegion) {
       setSearchRegion(effectiveRegion);
@@ -382,6 +411,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         bitmap.width,
         bitmap.height,
         false,
+        shapeType,
       );
 
       setSource(stdSource);
@@ -403,7 +433,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
       const input = await readImageFile(file);
       setSource(input);
 
-      const region = createDefaultSearchRegion(input.width, input.height);
+      const region = createDefaultSearchRegion(input.width, input.height, shapeType);
       setSearchRegion(region);
 
       const result = evaluateChipPixelsReal({
@@ -438,6 +468,7 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
           input.width,
           input.height,
           false,
+          shapeType,
         );
 
         setSource(stdSource);
@@ -455,12 +486,12 @@ export function usePatternMatchingRule(props: PatternMatchingRuleProps) {
         setMatchResult(result);
       } else {
         setSource(input);
-        const region = createDefaultSearchRegion(input.width, input.height);
+        const region = createDefaultSearchRegion(input.width, input.height, shapeType);
         setSearchRegion(region);
       }
     } catch {
       setSource(input);
-      const region = createDefaultSearchRegion(input.width, input.height);
+      const region = createDefaultSearchRegion(input.width, input.height, shapeType);
       setSearchRegion(region);
     }
 
