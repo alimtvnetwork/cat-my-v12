@@ -1,4 +1,5 @@
-import type { SearchRegion } from "@/lib/vision/white-box-marking";
+import type { GrayscaleMode, SearchRegion } from "@/lib/vision/white-box-marking";
+import { toMatchingGray } from "@/lib/vision/white-box-marking";
 import {
   HolePolarityType,
   Pin1JudgmentStatusType,
@@ -16,6 +17,11 @@ export interface DetectRoundHolesParams {
   minCircularityPercent?: number;
   minRadiusPx?: number;
   maxRadiusPx?: number;
+  /** Matching conversion mode (spec 55). "stretch" converts the luma
+   *  plane through the shared toMatchingGray before thresholding;
+   *  "threshold"/"one-bit"/absent keep raw-luma thresholding, which
+   *  is exactly equivalent to thresholding the binarized plane. */
+  greyscaleMode?: GrayscaleMode;
 }
 
 interface ComponentBounds {
@@ -51,11 +57,7 @@ function resolveSearchBounds(
   return { startX, startY, endX, endY };
 }
 
-function isPixelActive(
-  luma: number,
-  threshold: number,
-  polarity: HolePolarityType,
-): boolean {
+function isPixelActive(luma: number, threshold: number, polarity: HolePolarityType): boolean {
   if (polarity === HolePolarityType.LightDot) {
     return luma >= threshold;
   }
@@ -63,19 +65,11 @@ function isPixelActive(
   return luma <= threshold;
 }
 
-function buildBinaryGrid(params: DetectRoundHolesParams): {
-  binary: Uint8Array;
-  lumas: Float32Array;
-  bounds: { startX: number; startY: number; endX: number; endY: number };
-} {
-  const { targetRgba, targetWidth, targetHeight, polarity, thresholdLuma } = params;
-  const pol = polarity ?? HolePolarityType.DarkIndentation;
-  const thresh = thresholdLuma ?? 80;
-  const bounds = resolveSearchBounds(targetWidth, targetHeight, params.searchRegion);
-  const total = targetWidth * targetHeight;
-  const binary = new Uint8Array(total);
-  const lumas = new Float32Array(total);
-
+function computeRegionMeanLuma(
+  targetRgba: Uint8ClampedArray,
+  targetWidth: number,
+  bounds: { startX: number; startY: number; endX: number; endY: number },
+): number {
   let sumRegionLuma = 0;
   let countRegionLuma = 0;
 
@@ -89,26 +83,90 @@ function buildBinaryGrid(params: DetectRoundHolesParams): {
         continue;
       }
 
-      const luma = getLuminance(
+      sumRegionLuma += getLuminance(
         targetRgba[pixelIdx],
         targetRgba[pixelIdx + 1],
         targetRgba[pixelIdx + 2],
       );
-
-      lumas[idx] = luma;
-      sumRegionLuma += luma;
       countRegionLuma += 1;
     }
   }
 
-  const meanRegionLuma = countRegionLuma > 0 ? sumRegionLuma / countRegionLuma : 50;
+  return countRegionLuma > 0 ? sumRegionLuma / countRegionLuma : 50;
+}
+
+/** Single effective-threshold rule (spec 55), shared by the frontend
+ *  detector and the backend (pin1_detection.py): with DarkIndentation,
+ *  a requested threshold at or above the region mean can never match
+ *  a dark hole, so it is replaced by 75% of the mean (floored at 15).
+ *  The replacement is now RETURNED, never silent: callers surface it
+ *  in the UI ("using 75% of mean because your value exceeds it"). */
+export function resolveEffectivePin1Threshold(params: {
+  targetRgba: Uint8ClampedArray;
+  targetWidth: number;
+  targetHeight: number;
+  searchRegion?: SearchRegion | null;
+  polarity?: HolePolarityType;
+  thresholdLuma?: number;
+}): { effectiveThresholdLuma: number; isThresholdOverridden: boolean; regionMeanLuma: number } {
+  const pol = params.polarity ?? HolePolarityType.DarkIndentation;
+  const thresh = params.thresholdLuma ?? 80;
+  const bounds = resolveSearchBounds(params.targetWidth, params.targetHeight, params.searchRegion);
+  const meanRegionLuma = computeRegionMeanLuma(params.targetRgba, params.targetWidth, bounds);
   const isDarkIndentation = pol === HolePolarityType.DarkIndentation;
   const isThreshAboveBackground = thresh >= meanRegionLuma;
+  const isThresholdOverridden = isDarkIndentation && isThreshAboveBackground;
+  const effectiveThresholdLuma = isThresholdOverridden
+    ? Math.max(15, Math.round(meanRegionLuma * 0.75))
+    : thresh;
 
-  const effectiveThresh =
-    isDarkIndentation && isThreshAboveBackground
-      ? Math.max(15, Math.round(meanRegionLuma * 0.75))
-      : thresh;
+  return { effectiveThresholdLuma, isThresholdOverridden, regionMeanLuma: meanRegionLuma };
+}
+
+function buildBinaryGrid(params: DetectRoundHolesParams): {
+  binary: Uint8Array;
+  lumas: Float32Array;
+  bounds: { startX: number; startY: number; endX: number; endY: number };
+} {
+  const { targetRgba, targetWidth, targetHeight, polarity, thresholdLuma } = params;
+  const pol = polarity ?? HolePolarityType.DarkIndentation;
+  const bounds = resolveSearchBounds(targetWidth, targetHeight, params.searchRegion);
+  const total = targetWidth * targetHeight;
+  const binary = new Uint8Array(total);
+  const lumas = new Float32Array(total);
+  const { effectiveThresholdLuma: effectiveThresh } = resolveEffectivePin1Threshold({
+    targetRgba,
+    targetWidth,
+    targetHeight,
+    searchRegion: params.searchRegion,
+    polarity: pol,
+    thresholdLuma,
+  });
+
+  // Stretch mode converts through the shared toMatchingGray plane so
+  // detection thresholds the stretched image the user sees; other
+  // modes keep raw luma (equivalent to the binarized plane).
+  const stretchedPlane =
+    params.greyscaleMode === "stretch"
+      ? toMatchingGray(targetRgba, "stretch", thresholdLuma ?? 80)
+      : null;
+
+  for (let y = bounds.startY; y < bounds.endY; y += 1) {
+    for (let x = bounds.startX; x < bounds.endX; x += 1) {
+      const idx = y * targetWidth + x;
+      const pixelIdx = idx * 4;
+      const alpha = targetRgba[pixelIdx + 3];
+
+      if (alpha < 128) {
+        continue;
+      }
+
+      lumas[idx] =
+        stretchedPlane !== null
+          ? stretchedPlane[idx]
+          : getLuminance(targetRgba[pixelIdx], targetRgba[pixelIdx + 1], targetRgba[pixelIdx + 2]);
+    }
+  }
 
   for (let y = bounds.startY; y < bounds.endY; y += 1) {
     for (let x = bounds.startX; x < bounds.endX; x += 1) {
@@ -350,10 +408,10 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
   const angleRegion = packageRegion ?? searchRegion ?? null;
   const packageCenterX = angleRegion
     ? Math.round(angleRegion.x + angleRegion.width / 2)
-    : registeredPin1?.centerX ?? 0;
+    : (registeredPin1?.centerX ?? 0);
   const packageCenterY = angleRegion
     ? Math.round(angleRegion.y + angleRegion.height / 2)
-    : registeredPin1?.centerY ?? 0;
+    : (registeredPin1?.centerY ?? 0);
 
   if (!registeredPin1) {
     const primary = detectedHoles.find((h) => h.isPrimaryPin1 && h.isKept) ?? null;
@@ -370,7 +428,12 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
       deltaY: 0,
       deltaDistance: 0,
       angleDeg: primary
-        ? Math.round(((Math.atan2(primary.centerY - packageCenterY, primary.centerX - packageCenterX) * 180) / Math.PI) * 10) / 10
+        ? Math.round(
+            ((Math.atan2(primary.centerY - packageCenterY, primary.centerX - packageCenterX) *
+              180) /
+              Math.PI) *
+              10,
+          ) / 10
         : 0,
       matchPercent: primary ? primary.circularity : 0,
       scale: 1,
@@ -430,13 +493,16 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
   const score = hasHole && bestMatch ? bestMatch.circularity : 0;
   const angleDeg =
     hasHole && bestMatch
-      ? Math.round(((Math.atan2(bestMatch.centerY - packageCenterY, bestMatch.centerX - packageCenterX) * 180) / Math.PI) * 10) / 10
+      ? Math.round(
+          ((Math.atan2(bestMatch.centerY - packageCenterY, bestMatch.centerX - packageCenterX) *
+            180) /
+            Math.PI) *
+            10,
+        ) / 10
       : 0;
   const registeredDiameter = Math.max(1, registeredPin1.diameter ?? registeredPin1.radius * 2);
   const scale =
-    hasHole && bestMatch
-      ? Math.round((bestMatch.diameter / registeredDiameter) * 1000) / 1000
-      : 0;
+    hasHole && bestMatch ? Math.round((bestMatch.diameter / registeredDiameter) * 1000) / 1000 : 0;
 
   return {
     isPass: isWithinTolerance,
@@ -455,5 +521,4 @@ export function evaluatePin1AgainstReference(params: EvaluatePin1Params): Pin1Ma
     packageRegion: angleRegion,
     executionTimeMs: Math.round((performance.now() - start) * 100) / 100,
   };
-
 }

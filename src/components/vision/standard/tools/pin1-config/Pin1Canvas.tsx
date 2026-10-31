@@ -7,7 +7,9 @@ import type {
 } from "@/lib/vision/white-box-marking";
 import {
   getPatternShapePoints,
+  invertGrayscaleRgba,
   isPointInPatternShape,
+  toGrayscalePreviewRgba,
   tracePatternShapePath,
 } from "@/lib/vision/white-box-marking";
 import { ShapeType } from "@/domain/vision/shapes";
@@ -58,57 +60,6 @@ export interface Pin1CanvasProps {
   onDragStateChange: (drag: RegionDrag | null) => void;
   onSelectHole?: (id: number) => void;
   onRegisterPoint?: (point: { x: number; y: number }) => void;
-}
-
-function createThresholdPreview(
-  source: WhiteBoxMarkingInput,
-  threshold = 128,
-  polarity = HolePolarityType.DarkIndentation,
-  mode: GrayscaleMode = "threshold",
-): ImageData {
-  const output = new ImageData(source.width, source.height);
-  const data = output.data;
-  const raw = source.rgba;
-  const totalPixels = source.width * source.height;
-
-  // Stretch needs the frame's luma range first (darkest -> 0, brightest
-  // -> 255); threshold/one-bit compare against raw luma.
-  let minLuma = 255;
-  let maxLuma = 0;
-
-  if (mode === "stretch") {
-    for (let i = 0; i < totalPixels; i += 1) {
-      const idx = i * 4;
-      const luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
-
-      if (luma < minLuma) minLuma = luma;
-      if (luma > maxLuma) maxLuma = luma;
-    }
-  }
-
-  const stretchScale = maxLuma > minLuma ? 255 / (maxLuma - minLuma) : 1;
-
-  for (let i = 0; i < totalPixels; i += 1) {
-    const idx = i * 4;
-    let luma = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2]);
-
-    if (mode === "stretch" && maxLuma > minLuma) {
-      luma = Math.min(255, Math.max(0, Math.round((luma - minLuma) * stretchScale)));
-    }
-
-    const isTarget =
-      polarity === HolePolarityType.DarkIndentation ? luma <= threshold : luma >= threshold;
-
-    // Threshold keeps the legacy behavior (target bright white, the rest
-    // continuous greyscale); one-bit reduces everything to pure 0/255.
-    const val = mode === "one-bit" ? (isTarget ? 255 : 0) : isTarget ? 255 : luma;
-    data[idx] = val;
-    data[idx + 1] = val;
-    data[idx + 2] = val;
-    data[idx + 3] = 255;
-  }
-
-  return output;
 }
 
 export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
@@ -213,7 +164,7 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
       ctx.stroke();
     }
 
-    // 3. Render Image (Normal RGB or 2-bit Binarized preview)
+    // 3. Render Image (Normal RGB or grayscale preview)
     if (!props.source) {
       ctx.save();
       ctx.fillStyle = "#94a3b8";
@@ -239,11 +190,27 @@ export function Pin1Canvas(props: Pin1CanvasProps): React.JSX.Element {
 
     if (offCtx) {
       if (props.hasGreyscalePreview) {
-        const binData = createThresholdPreview(
+        // Single threshold definition (spec 55): the preview comes
+        // from the shared toGrayscalePreviewRgba (threshold =
+        // binarize, stretch = continuous stretch, one-bit =
+        // bright-to-white) and polarity is a separate, explicit
+        // invert step — never baked into the mode. This deletes the
+        // old private whiten-only copy and the Pin1 1-bit inversion
+        // (dark-to-white for DarkIndentation is now the invert step,
+        // applied uniformly to every mode).
+        const previewRgba = toGrayscalePreviewRgba(
           props.source,
-          props.thresholdLuma ?? 128,
-          props.polarity ?? HolePolarityType.DarkIndentation,
           props.greyscaleMode ?? "threshold",
+          props.thresholdLuma ?? 128,
+        );
+        const finalRgba =
+          (props.polarity ?? HolePolarityType.DarkIndentation) === HolePolarityType.DarkIndentation
+            ? invertGrayscaleRgba(previewRgba)
+            : previewRgba;
+        const binData = new ImageData(
+          new Uint8ClampedArray(finalRgba),
+          props.source.width,
+          props.source.height,
         );
         offCtx.putImageData(binData, 0, 0);
       } else {

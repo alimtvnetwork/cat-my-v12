@@ -19,7 +19,11 @@ import { EditorRuleKindType, EditorToolFamilyType } from "@/lib/editor/types";
 import type { Rule, RuleId } from "@/lib/rules/model";
 import { syncRuleToBackend } from "@/lib/rules/backendSync";
 import { useErrorStore } from "@/lib/stores/errorStore";
-import { detectRoundHolesInRegion, evaluatePin1AgainstReference } from "./round-hole-detector";
+import {
+  detectRoundHolesInRegion,
+  evaluatePin1AgainstReference,
+  resolveEffectivePin1Threshold,
+} from "./round-hole-detector";
 import {
   HolePolarityType,
   Pin1JudgmentStatusType,
@@ -133,10 +137,21 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   const [thresholdLuma, setThresholdLuma] = useState<number>(
     typeof pin1Conf.thresholdLuma === "number" ? pin1Conf.thresholdLuma : 35,
   );
-  // Grayscale preview mode (spec 54 bits model). Threshold is the legacy
-  // behavior; stretch/one-bit change the preview bits only — detection
-  // still uses thresholdLuma, so a mode switch never re-runs detection.
+  // Grayscale preview mode (spec 55): the mode feeds detection through
+  // the shared toMatchingGray plane (stretch converts before
+  // thresholding; threshold/one-bit detection is raw-luma thresholding,
+  // equivalent to the binarized plane), and a mode switch re-runs
+  // detection — the button is real, not preview-only.
   const [greyscaleMode, setGreyscaleMode] = useState<GrayscaleMode>("threshold");
+  // Effective threshold actually used by the last detection (spec 55):
+  // the detector silently replaced an above-mean DarkIndentation
+  // threshold with 75% of the region mean; the replacement is now
+  // surfaced in the settings card instead of hidden.
+  const [effectiveThreshold, setEffectiveThreshold] = useState<{
+    effectiveThresholdLuma: number;
+    isThresholdOverridden: boolean;
+    regionMeanLuma: number | null;
+  } | null>(null);
   const [minCircularity, setMinCircularity] = useState<number>(
     typeof pin1Conf.minCircularityPercent === "number" ? pin1Conf.minCircularityPercent : 45,
   );
@@ -248,7 +263,11 @@ export function usePin1Rule(props?: Pin1ToolProps) {
   );
 
   const localDetection = useCallback(
-    (inputSource: WhiteBoxMarkingInput, region: SearchRegion | null) => {
+    (
+      inputSource: WhiteBoxMarkingInput,
+      region: SearchRegion | null,
+      modeOverride?: GrayscaleMode,
+    ) => {
       const holes = detectRoundHolesInRegion({
         targetRgba: inputSource.rgba,
         targetWidth: inputSource.width,
@@ -259,7 +278,18 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         minCircularityPercent: minCircularity,
         minRadiusPx,
         maxRadiusPx,
+        greyscaleMode: modeOverride ?? greyscaleMode,
       });
+
+      const resolved = resolveEffectivePin1Threshold({
+        targetRgba: inputSource.rgba,
+        targetWidth: inputSource.width,
+        targetHeight: inputSource.height,
+        searchRegion: region,
+        polarity,
+        thresholdLuma,
+      });
+      setEffectiveThreshold(resolved);
 
       const visibleHoles = getVisibleHoles(holes);
       setDetectedHoles(visibleHoles);
@@ -279,6 +309,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     [
       polarity,
       thresholdLuma,
+      greyscaleMode,
       minCircularity,
       minRadiusPx,
       maxRadiusPx,
@@ -296,6 +327,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
       overrides?: {
         polarity?: HolePolarityType;
         thresholdLuma?: number;
+        greyscaleMode?: GrayscaleMode;
       },
     ): Promise<{ holes: Pin1HoleItem[]; res: Pin1MatchResult }> => {
       try {
@@ -308,6 +340,7 @@ export function usePin1Rule(props?: Pin1ToolProps) {
             RgbaBase64: rgbaToBase64(inputSource.rgba),
             Polarity: overrides?.polarity ?? polarity,
             ThresholdLuma: overrides?.thresholdLuma ?? thresholdLuma,
+            GreyscaleMode: overrides?.greyscaleMode ?? greyscaleMode,
             MinCircularityPercent: minCircularity,
             MinRadiusPx: minRadiusPx,
             MaxRadiusPx: maxRadiusPx,
@@ -332,14 +365,26 @@ export function usePin1Rule(props?: Pin1ToolProps) {
         const visibleRes = { ...res, detectedHoles: holes, activeHole: holes[0] ?? res.activeHole };
         setMatchResult(visibleRes);
 
+        const backendEffective = (res as any).effectiveThresholdLuma;
+
+        if (typeof backendEffective === "number") {
+          setEffectiveThreshold({
+            effectiveThresholdLuma: backendEffective,
+            isThresholdOverridden: (res as any).isThresholdOverridden === true,
+            regionMeanLuma:
+              typeof (res as any).regionMeanLuma === "number" ? (res as any).regionMeanLuma : null,
+          });
+        }
+
         return { holes, res: visibleRes };
       } catch {
-        return localDetection(inputSource, region);
+        return localDetection(inputSource, region, overrides?.greyscaleMode);
       }
     },
     [
       polarity,
       thresholdLuma,
+      greyscaleMode,
       minCircularity,
       minRadiusPx,
       maxRadiusPx,
@@ -523,6 +568,8 @@ export function usePin1Rule(props?: Pin1ToolProps) {
 
   const changeGreyscaleMode = (mode: GrayscaleMode) => {
     setGreyscaleMode(mode);
+
+    if (source) void executeDetection(source, searchRegion, { greyscaleMode: mode });
   };
 
   const handlePolarityChange = (val: HolePolarityType) => {
@@ -895,6 +942,9 @@ export function usePin1Rule(props?: Pin1ToolProps) {
     dragState,
     polarity,
     thresholdLuma,
+    effectiveThresholdLuma: effectiveThreshold?.effectiveThresholdLuma ?? thresholdLuma,
+    isThresholdOverridden: effectiveThreshold?.isThresholdOverridden ?? false,
+    thresholdRegionMeanLuma: effectiveThreshold?.regionMeanLuma ?? null,
     minCircularity,
     minRadiusPx,
     maxRadiusPx,

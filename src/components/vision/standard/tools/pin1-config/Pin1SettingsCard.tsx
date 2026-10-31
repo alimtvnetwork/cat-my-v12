@@ -6,6 +6,13 @@ import { HolePolarityType } from "./types";
 export interface Pin1SettingsCardProps {
   polarity: HolePolarityType;
   thresholdLuma: number;
+  /** Threshold actually used by the last detection (spec 55). When the
+   *  requested DarkIndentation threshold exceeds the region mean, the
+   *  detector replaces it with 75% of the mean — surfaced here, never
+   *  silent. Falls back to thresholdLuma when no detection ran yet. */
+  effectiveThresholdLuma?: number;
+  isThresholdOverridden?: boolean;
+  thresholdRegionMeanLuma?: number | null;
   minCircularity: number;
   tolerancePx: number;
   expectedX?: number;
@@ -124,6 +131,21 @@ export function Pin1SettingsCard(props: Pin1SettingsCardProps): React.JSX.Elemen
         <div className="flex justify-between items-center">
           <span>Greyscale Threshold:</span>
           <span className="font-mono font-bold text-ca-select">{props.thresholdLuma} / 255</span>
+        </div>
+        {props.isThresholdOverridden && (
+          <div className="text-[10px] text-amber-300 pt-0.5">
+            Using {props.effectiveThresholdLuma ?? props.thresholdLuma} instead — your value exceeds
+            the region mean
+            {typeof props.thresholdRegionMeanLuma === "number"
+              ? ` (${Math.round(props.thresholdRegionMeanLuma)} × 75%)`
+              : ""}
+            , so it could never match a dark hole.
+          </div>
+        )}
+        <div className="text-[10px] text-ca-ink-muted/80 pt-0.5">
+          Pin1 hunts dark targets, so this slider lives at the dark end of the scale (default 35);
+          the white-box marking slider lives at the bright end (default 170). Values are not
+          interchangeable between tools — carrying a number across gives opposite behavior.
         </div>
         <div className="text-[10px] text-ca-ink-muted/80 pt-0.5">
           (Parameters loaded from Pin 1 rule)
