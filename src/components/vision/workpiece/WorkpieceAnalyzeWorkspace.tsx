@@ -75,7 +75,9 @@ import { useRulesStore } from "@/lib/editor/store/rules-slice";
 import { useProjectStore } from "@/lib/projects/store";
 import { markSaved } from "@/lib/editor/store/save-status";
 import { projectRulesetToEnvelope, envelopeToProjectRuleset } from "@/lib/rules/envelopeAdapter";
-import type { RuleSetEnvelope } from "@/lib/rules/draftStore";
+import { getDraft, type RuleSetEnvelope } from "@/lib/rules/draftStore";
+import { loadRuleSet } from "@/lib/rules/loadRuleSet";
+import { toIntId } from "@/lib/rules/rule-id-alias";
 import {
   GUIDED_SIMULATION_ANALYSIS_EVENT,
   type GuidedSimulationAnalysisDetail,
@@ -240,6 +242,29 @@ export function WorkpieceAnalyzeWorkspace({
     [project.id, ruleset, updateRulesetRules, updateSavedVersion],
   );
 
+  useEffect(() => {
+    if (!rulesetId) return;
+    const numericId = toIntId(rulesetId);
+    let isCancelled = false;
+
+    // Check draft store first, then server for active version
+    getDraft(numericId).then((draft) => {
+      if (!isCancelled && draft && draft.Version > savedVersionRef.current) {
+        updateSavedVersion(draft.Version);
+      }
+    }).catch(() => {});
+
+    loadRuleSet(numericId, { suppressCapture: true }).then((serverEnv) => {
+      if (!isCancelled && serverEnv && serverEnv.Version > savedVersionRef.current) {
+        updateSavedVersion(serverEnv.Version);
+      }
+    }).catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rulesetId, updateSavedVersion]);
+
   const handleSaveRuleSet = useCallback(async () => {
     setSaving(true);
     try {
@@ -247,6 +272,27 @@ export function WorkpieceAnalyzeWorkspace({
       const committed = await saveRuleSet(envelope);
       onSaved(committed);
     } catch (err) {
+      // Auto-recover from E_BE_CONFLICT by fetching latest server version and retrying
+      const isConflict =
+        (err as { code?: string })?.code === "E_BE_CONFLICT" ||
+        (err instanceof Error && err.message.toLowerCase().includes("behind server"));
+
+      if (isConflict) {
+        try {
+          const envelope = getEnvelope();
+          const freshServerEnv = await loadRuleSet(envelope.RuleSetId, { suppressCapture: true });
+          if (freshServerEnv) {
+            updateSavedVersion(freshServerEnv.Version);
+            const retryEnvelope = { ...envelope, Version: freshServerEnv.Version };
+            const committed = await saveRuleSet(retryEnvelope);
+            onSaved(committed);
+            return;
+          }
+        } catch (retryErr) {
+          console.warn("[WorkpieceAnalyzeWorkspace] auto-conflict retry failed", retryErr);
+        }
+      }
+
       console.error("[WorkpieceAnalyzeWorkspace] save error", err);
       useErrorStore.getState().captureError(
         err,
@@ -261,7 +307,7 @@ export function WorkpieceAnalyzeWorkspace({
     } finally {
       setSaving(false);
     }
-  }, [getEnvelope, onSaved, setSaving]);
+  }, [getEnvelope, onSaved, setSaving, updateSavedVersion]);
 
   // The Save button lives on the upper bar; register this workspace's save
   // handler so the button can trigger it from outside this component.

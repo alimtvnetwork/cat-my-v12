@@ -966,7 +966,7 @@ export function getRoiHeaderRect(roi: WorkpieceRoi): {
   height: number;
 } {
   const height = 22;
-  const width = Math.max(220, Math.min(roi.width, 380));
+  const width = Math.max(220, Math.min(roi.width, 640));
   const x = roi.x;
   const y = Math.max(0, roi.y - height);
 
@@ -1121,14 +1121,30 @@ export function drawRoiHeaderGrip(
   isLocked: boolean,
   color = "#00e5ff",
 ): void {
-  const badgeText = `${labelPrefix} · [${Math.round(roi.width)}×${Math.round(roi.height)}]`;
   const headerRect = getRoiHeaderRect(roi);
-  const badgeW = headerRect.width;
   const badgeH = headerRect.height;
   const badgeX = headerRect.x;
   const badgeY = headerRect.y;
 
   ctx.save();
+  ctx.font = "bold 8px monospace";
+  const lockTag = isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED · DRAG";
+  const lockTagW = ctx.measureText(lockTag).width + 12;
+
+  // Shorten label cleanly if overly long to prevent text collision
+  let cleanLabel = labelPrefix;
+  if (cleanLabel.length > 28) {
+    cleanLabel = cleanLabel.replace(" SEARCH REGION", "");
+    if (cleanLabel.length > 26) {
+      cleanLabel = cleanLabel.slice(0, 24) + "…";
+    }
+  }
+
+  ctx.font = "bold 9px monospace";
+  const dimsText = `[${Math.round(roi.width)}×${Math.round(roi.height)}]`;
+  const badgeText = `${cleanLabel} · ${dimsText}`;
+  const textW = ctx.measureText(badgeText).width;
+  const badgeW = Math.max(headerRect.width, textW + lockTagW + 32);
 
   // Background
   ctx.fillStyle = "rgba(8, 14, 24, 0.95)";
@@ -1155,10 +1171,9 @@ export function drawRoiHeaderGrip(
   ctx.fillText(badgeText, badgeX + 20, badgeY + 14);
 
   // Lock status tag on right
-  const lockTag = isLocked ? "🔒 LOCKED" : "🔓 UNLOCKED · DRAG";
   ctx.font = "bold 8px monospace";
   ctx.fillStyle = isLocked ? "#f59e0b" : "#10b981";
-  ctx.fillText(lockTag, badgeX + badgeW - (isLocked ? 62 : 112), badgeY + 14);
+  ctx.fillText(lockTag, badgeX + badgeW - lockTagW, badgeY + 14);
 
   ctx.restore();
 }

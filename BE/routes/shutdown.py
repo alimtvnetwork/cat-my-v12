@@ -249,6 +249,9 @@ def _minimize_window() -> bool:
     try:
         import ctypes
         user32 = ctypes.windll.user32
+        # SC_MINIMIZE = 0xF020 via WM_SYSCOMMAND (0x0112) guarantees Chromium handles it natively
+        user32.PostMessageW(hwnd, 0x0112, 0xF020, 0)
+        user32.ShowWindowAsync(hwnd, 6)   # SW_MINIMIZE
         user32.ShowWindow(hwnd, 11)  # SW_FORCEMINIMIZE
         user32.ShowWindow(hwnd, 6)   # SW_MINIMIZE
         user32.CloseWindow(hwnd)
@@ -269,8 +272,11 @@ def _toggle_maximize_window() -> bool:
         import ctypes
         user32 = ctypes.windll.user32
         is_zoomed = bool(user32.IsZoomed(hwnd))
-        # Toggle: restore (9) if zoomed, maximize (3) if normal
+        # Toggle: restore (9, SC_RESTORE = 0xF120) if zoomed, maximize (3, SC_MAXIMIZE = 0xF030) if normal
         next_action = 9 if is_zoomed else 3
+        sys_cmd = 0xF120 if is_zoomed else 0xF030
+        user32.PostMessageW(hwnd, 0x0112, sys_cmd, 0)
+        user32.ShowWindowAsync(hwnd, next_action)
         user32.ShowWindow(hwnd, next_action)
         new_state = not is_zoomed
         logger.info("toggle_maximize_window_success", extra={"hwnd": hwnd, "pid": pid, "is_maximized": new_state})
@@ -285,36 +291,41 @@ def _close_window() -> bool:
     if hwnd:
         try:
             import ctypes
+            # Post both WM_CLOSE (0x0010) and SC_CLOSE (0xF060)
             ctypes.windll.user32.PostMessageW(hwnd, 0x0010, 0, 0)
+            ctypes.windll.user32.PostMessageW(hwnd, 0x0112, 0xF060, 0)
         except Exception as exc:
             logger.warning(f"post_wm_close_failed: {exc}")
 
-    # Immediately terminate browser process tree (<10ms)
-    if pid and sys.platform == "win32":
-        try:
-            import subprocess
-            subprocess.run(
-                ["taskkill", "/F", "/T", "/PID", str(pid)],
-                timeout=1.0,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except Exception as exc:
-            logger.warning(f"taskkill_pid_failed: {exc}")
+    # Immediately terminate browser process tree in background daemon thread (<1ms response delivery)
+    def _async_terminate(target_pid: int | None) -> None:
+        if target_pid and sys.platform == "win32":
+            try:
+                import subprocess
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(target_pid)],
+                    timeout=1.0,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception as exc:
+                logger.warning(f"taskkill_pid_failed: {exc}")
 
-    # Secondary sweep for any process matching our profile
-    if sys.platform == "win32":
-        try:
-            import subprocess
-            subprocess.run(
-                ["taskkill", "/F", "/IM", "chrome.exe", "/FI", "WINDOWTITLE eq CAT*"],
-                timeout=1.0,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except Exception:
-            pass
+        # Secondary sweep for any process matching our profile
+        if sys.platform == "win32":
+            try:
+                import subprocess
+                subprocess.run(
+                    ["taskkill", "/F", "/IM", "chrome.exe", "/FI", "WINDOWTITLE eq *CAT*"],
+                    timeout=1.0,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception:
+                pass
 
+    t = threading.Thread(target=_async_terminate, args=(pid,), daemon=True)
+    t.start()
     return True
 
 
