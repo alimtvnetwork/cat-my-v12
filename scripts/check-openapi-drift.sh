@@ -2,6 +2,13 @@
 
 # check-openapi-drift.sh
 # Validates that BE/openapi.snapshot.json is up-to-date with the live FastAPI app.
+#
+# Comparison is SEMANTIC (parsed JSON equality), not byte equality:
+# the committed snapshot must also pass the CI prettier gate
+# (prettier collapses short arrays, while json.dumps explodes them),
+# so formatting-only differences are not drift. Any real API change —
+# added/removed/changed routes, fields, defaults, or version — still
+# fails this check.
 
 set -e
 
@@ -33,7 +40,14 @@ with open('$TMP_FILE', 'w', encoding='utf-8') as f:
     f.write(json.dumps(app.openapi(), indent=2) + '\n')
 "
 
-if cmp -s BE/openapi.snapshot.json "$TMP_FILE"; then
+if "$PYTHON_CMD" -c "
+import json, sys
+with open('BE/openapi.snapshot.json', encoding='utf-8') as f:
+    snapshot = json.load(f)
+with open('$TMP_FILE', encoding='utf-8') as f:
+    live = json.load(f)
+sys.exit(0 if snapshot == live else 1)
+"; then
     echo "OK: OpenAPI spec is up-to-date."
     rm "$TMP_FILE"
     exit 0

@@ -7,9 +7,7 @@
   "paths": {
     "/system/status": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Get Status",
         "operationId": "get_status_system_status_get",
         "responses": {
@@ -2173,9 +2171,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "title": "PacketRequest"
       },
       "Pin1Request": {
@@ -2270,11 +2266,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "Width",
-          "Height",
-          "RgbaBase64"
-        ],
+        "required": ["Width", "Height", "RgbaBase64"],
         "title": "Pin1Request"
       },
       "ResultRequest": {
@@ -2311,10 +2303,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "packetId",
-          "performed"
-        ],
+        "required": ["packetId", "performed"],
         "title": "ResultRequest"
       },
       "SearchRegionRequest": {
@@ -2341,12 +2330,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "X",
-          "Y",
-          "Width",
-          "Height"
-        ],
+        "required": ["X", "Y", "Width", "Height"],
         "title": "SearchRegionRequest"
       },
       "ValidationError": {
@@ -2382,11 +2366,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "WhiteBoxRequest": {
@@ -2442,11 +2422,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "Width",
-          "Height",
-          "RgbaBase64"
-        ],
+        "required": ["Width", "Height", "RgbaBase64"],
         "title": "WhiteBoxRequest"
       }
     }
