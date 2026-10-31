@@ -972,3 +972,175 @@ false, squareRegionFromPoints at pattern-geometry.ts:119, zero
   or drawing, drawConveyorSimulation has exactly one caller;
   boolean names use is/has prefixes only. No builds/tests per
   program order.
+
+## 15. Wave 2 completion — grayscale + polarity + derivation + teach
+(31-Oct-25, verified by coordinator: 7 commits on origin, HEAD
+53390c79 at verification time; tree clean. Coordinator verified:
+toMatchingGray exists, Pin1 private preview deleted, derivation
+flag present. Follow-up wiring commit 80224380, below.)
+
+- Teach persistence: parallel commit c5a9c1bf checked FIRST and
+  verified, not duplicated (pinned-pattern-geometry.ts: pinPatternRule
+  rebases rule to image frame, squares region, uses saved boxes else
+  derives, wired into the analyzer test path with write-back). What
+  it did NOT cover, now fixed: teach never persisted greyscaleMode
+  — teach payloads now include greyscaleMode in ruleParams and
+  conditionPayload, plus patternRegionDrawn; the toolbar takes
+  optional savedPatternBoxCount + savedPatternBoxSource ("taught" |
+  "derived" | "none") and renders a badge: green "N saved", amber "N
+  derived (not taught)" with re-teach tooltip, red "No saved pattern
+  boxes" warning. No more silent empty rule at the UI level.
+- Shared matching conversion: toMatchingGray(rgba, mode, threshold)
+  (stretch → continuous full-range stretch; threshold/one-bit →
+  binarize bright→white) + invertGrayscaleRgba (explicit polarity
+  invert step) + rec601Luma (single Rec.601 weight definition). Used
+  by markWhiteBoxes, detectRoundHolesInRegion (stretch plane),
+  evaluateChipPixelsReal (stretch plane), and all analyzer luma reads
+  (inline 0.299/0.587/0.114 loops replaced). Pin1 mode buttons are
+  now REAL (mode feeds detection + re-runs on change), so no label
+  needed there; white-box mode buttons remain preview-only for
+  detection (BE MarkingOptions has no mode field) — labeled in the
+  shared card (see follow-up wiring).
+- One threshold implementation: Pin1Canvas private
+  createThresholdPreview DELETED; preview routes through
+  toGrayscalePreviewRgba + invertGrayscaleRgba on DarkIndentation
+  (uniform invert for every mode). Defined once: threshold =
+  binarize, stretch = continuous stretch, 1-bit = bright→white,
+  polarity as a separate explicit invert — killing the Pin1 1-bit
+  inversion and the three-way meaning drift. Stale spec-54
+  "whiten-only"/"unchanged" comments corrected. BEHAVIOR CHANGE:
+  Pin1 threshold preview becomes fully binarized (was whiten-only);
+  stretch+DarkIndentation becomes inverted stretch (was
+  whiten-targets-on-stretch). markWhiteBoxes' returned rgba is now
+  the mode plane instead of continuous gray (boxes are the consumer
+  everywhere; DefectCanvas renders its own preview).
+- Polarity for the pattern path: MatchPolarity ("bright" | "dark" |
+  "both"); findWhiteBoxes takes polarity (dark walks <= threshold;
+  "both" runs both walks with >50%-overlap dedup); constellation
+  matcher gains mode + polarity; pairing is bright-first — bright
+  candidates pair first, dark only fills references bright could not
+  pair, or wins wholesale when bright pairs nothing (prevents
+  dark-blob pairing theft on bright rules). Analyzer passes stored
+  mode (default "threshold") and stored polarity else "both", so
+  bright rules behave exactly as before while dark-on-light markings
+  become matchable.
+- Silent Pin1 threshold override — stopped, both ends: shared rule
+  (resolveEffectivePin1Threshold frontend, _effective_threshold
+  backend, same rule, used by BOTH pure-Python and cv2 paths):
+  DarkIndentation + requested ≥ region mean → max(15,
+  round(mean*0.75)), returning effective/isOverridden/regionMean.
+  Frontend settings card shows an amber notice when overridden;
+  backend Pin1Result gains effectiveThresholdLuma,
+  isThresholdOverridden, thresholdRegionMeanLuma; Pin1Options gains
+  greyscale_mode (stretch plane in both BE paths); Pin1Request gains
+  GreyscaleMode passed through. Existing BE unit tests call only
+  the public detect_pin1 API (new fields defaulted) — no signature
+  break.
+- Atmel golden table replaced by taught path (closest correct
+  behavior, recorded): EvaluateChipPixelsParams gains taughtBoxes
+  (absolute x/y/w/h + expectedLuma) and greyscaleMode; when taught
+  boxes are present they FULLY replace fixed Atmel geometry +
+  GOLDEN_ATMEL_LUMAS under identical per-box
+  measured-vs-expected-within-tolerance logic; PatternMatchResult
+  gains matchSource ("taught" | "golden-fallback"). Golden table kept
+  ONLY as a labeled fallback — deleting it outright would break
+  callers outside wave-2 ownership that pass no taught boxes yet.
+  analyzeRule2PatternReal gains optional taughtBoxes with the same
+  taught-path logic (reported relX/relY/width/height are the taught
+  box in the Atmel normalized frame so downstream units are
+  unchanged).
+- Analyzer fail-permanently fixes: boxes lacking expectedLuma are
+  backfilled from the filtered image at their reference position via
+  measureBoxLumaAt (same image the verdict measures, so values are
+  directly comparable); hasAnyExpectedLuma — previously computed but
+  never read — now drives lumaWarning, appended to both PASS and FAIL
+  messages ("…re-teach to lock reference values") plus
+  expectedLumaBackfilledCount in both debug objects. Dark-marking
+  positional path comes from polarity. Wave-1-verified binary-filter
+  pipeline and pin/parse logic NOT touched. The stale comment
+  claiming no-expectedLuma boxes are UNMATCHED was updated to
+  describe backfill. Note: a backfilled reference is self-referential
+  until re-taught — that is exactly what the warning says.
+- Dead luminance features — each decided: luminance-quantizer KEPT
+  (applyLuminanceFilter has a live production caller in
+  pinned-pattern-geometry.ts:125, the analyzer's binary-filter path —
+  the module was not dead); computeLuminancePercentiles KEPT as a
+  tested utility export, deliberately NOT wired into the preview
+  pipeline (preview stretch must match the matching-plane stretch
+  exactly; a percentile-clipped preview would diverge from the
+  full-range stretch the matcher uses; deleting would break its unit
+  test's import); StandardIntensityTool WIRED (metric/min/max read
+  from and write to settings.params.intensity via onChange; local
+  state display-only); ATMEL_24_MARKING_OFFSETS DELETED (dead second
+  golden table, zero references); toTwoBitGrayRgba export DELETED
+  (zero callers; internal toTwoBitGray kept, auto path);
+  measureBoxContrast DELETED (defined, never called);
+  hasAnyExpectedLuma POPULATED (drives the backfill warning).
+- Pattern-region derivation restoration (9fa1cc62 semantics):
+  computePatternGeometry gains isPatternRegionDrawn; region = drawn
+  region ONLY when isPatternRegionDrawn === true && patternRegion
+  present, else the box-derived region. useWhiteBoxMarking gains
+  isPatternRegionDrawn state (true on addPatternRegion + pattern-mode
+  drags; false on load/capture/clear; initialized from
+  initialSettings?.patternRegionDrawn else false), passed to
+  computePatternGeometry, applied as the drawn-only condition to the
+  boxesForPattern filter, persisted in teach payloads and in the
+  onSettingsChange effect. BEHAVIOR CHANGES: (a) saved patternRegions
+  without the flag are now treated as NOT drawn — derived wins, so
+  stale/tour/demo geometry can never persist as a user rule through
+  this path; (b) a freshly drawn region still overrides derivation
+  and filters boxes exactly as before; (c) the patternRegion display
+  state still initializes from saved settings, so canvas display vs.
+  formulated region consistency remains a WhiteBoxMarkingTool concern
+  (open, below). Tour/demo files themselves were not edited; the
+  drawn-flag default is the guard.
+- Threshold scales reconciled in UI text: Pin1 settings card carries
+  a static note (Pin1 slider at the dark end, default 35, vs.
+  white-box marking's bright end, default 170 — values not
+  interchangeable).
+- Verification: prettier passes on all 13 touched TS/TSX files; each
+  commit pulled --ff-only first, targeted adds only, origin-verified
+  via ls-remote; no builds/tests per program order (ruff not
+  installed in that shell; end-of-tunnel runs the full suites).
+
+### 15b. Coordinator follow-up wiring (commit 80224380)
+- StandardPin1ConfigTool now passes effectiveThresholdLuma /
+  isThresholdOverridden / thresholdRegionMeanLuma from the model to
+  Pin1SettingsCard (model exposes them, card accepted them — the
+  notice was previously unreachable in the dispatcher tool).
+- Pin1ReviewPanel gains the same three optional props + the amber
+  override notice, and Pin1MarkingTool passes them — so BOTH Pin1
+  tools show the notice, not just the dispatcher.
+- GreyscaleSliderCard: the card is SHARED between white-box (mode
+  preview-only) and Pin1 (mode real since wave 2), so a blanket
+  "preview-only" label would have been wrong in one context. Added
+  isModeReal (default false): Pin1ReviewPanel passes true (renders
+  "mode buttons feed detection and re-run it"); white-box keeps the
+  preview-only wording. Scale note is context-free (both ends named,
+  no "this slider" claim). Verified in code that usePin1Rule passes
+  greyscaleMode into detection and re-runs on mode change.
+
+### 15c. Left open after wave 2 (recorded, NOT faked)
+- Toolbar badge pass-through: WorkpieceAnalyzeWorkspace does NOT
+  pass savedPatternBoxCount/Source yet — and the workspace has no
+  rule-boxes source today (activeRule comes from the rules store;
+  no boxes field found). Needs rule-store plumbing for the active
+  rule's saved boxes; until then the badge renders nothing by design.
+- Taught-box caller wiring: NOT wired, deliberately. The conveyor
+  hook's referenceBoxes are golden geometry
+  (getAtmelReferenceBoxes), not taught boxes — relabeling them as
+  taught would be fake. The carrier evaluator's internal caller has
+  only tolerances in scope. Needs cross-tool plumbing: active rule's
+  taught boxes → usePatternMatchingRule → useConveyorSimulation,
+  and simulation-tool rule → carrier evaluator. The taught path
+  itself is ready and labeled (matchSource).
+- WhiteBoxMarkingTool patternRegion display vs. formulated region
+  consistency (see 15 §derivation (c)).
+- BE white-box MarkingOptions mode support: deliberately NOT done —
+  adding mode params to WhiteBoxRequest without domain support would
+  have been fake wiring; the preview-only label covers it.
+- Analyzer teach-raw vs. binary-filtered luma tension: left as
+  wave-1-tested behavior (backfill reads the filtered image,
+  consistent with verdict measurement).
+- Pre-existing user decisions unchanged: T104 expectedCount-vs-
+  edgeCount semantics; MBUD items 2–13; live-UI checks.
