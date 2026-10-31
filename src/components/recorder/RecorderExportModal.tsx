@@ -10,7 +10,10 @@ import {
   AlertCircle,
   Cloud,
   CloudUpload,
+  Copy,
+  HardDrive,
 } from "lucide-react";
+import { toast } from "sonner";
 import { HttpMethod } from "@/lib/constants";
 import { useRecorderStore } from "@/lib/recorder/recorder-store";
 import { exportSessionToZip } from "@/lib/recorder/zip-builder";
@@ -52,6 +55,93 @@ export function RecorderExportModal(): React.JSX.Element | null {
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState(false);
   const [isUploadingSupabase, setIsUploadingSupabase] = useState(false);
   const [supabaseStatus, setSupabaseStatus] = useState<SupabaseUploadResult | null>(null);
+
+  const [isSavingLocal, setIsSavingLocal] = useState(false);
+
+  const handleCopyIdePrompt = async () => {
+    const splitDbErrors = useErrorStore.getState().history;
+    const errorsBlock = splitDbErrors.slice(0, 5).map((e) => 
+      `- [${e.code}] ${e.message} (Trigger: ${e.triggerComponent || "N/A"})${e.stackTrace ? `\n  Stack: ${e.stackTrace.split("\n")[0]}` : ""}`
+    ).join("\n");
+
+    const promptText = `# Bug Report: ${summary.title || "Untitled Issue"}
+- **Category**: ${summary.category}
+- **Session ID**: \`${session.id}\`
+- **Initial Route**: \`${session.initialRoute}\`
+- **Events Recorded**: ${session.events.length}
+- **Screenshots**: ${session.screenshots.length}
+
+## Description
+${summary.description || "N/A"}
+
+### Expected Behavior
+${summary.expectedBehavior || "N/A"}
+
+### Actual Behavior
+${summary.actualBehavior || "N/A"}
+
+## Recent Diagnostic Errors (Split-DB)
+${errorsBlock || "None recorded"}
+
+## CLI Inspection Command
+\`\`\`pwsh
+python -m BE.cli.processing.main errors list --session-id ${session.id} --trace
+\`\`\`
+`;
+
+    try {
+      await navigator.clipboard.writeText(promptText);
+      toast.success("Copied Bug Report Prompt for IDE/AI to clipboard!");
+    } catch {
+      toast.info("Prompt generated (clipboard permission denied)");
+    }
+  };
+
+  const handleSaveLocalDisk = async () => {
+    setIsSavingLocal(true);
+    const effectiveUrl = baseUrl || "http://127.0.0.1:8787";
+    try {
+      const payload = {
+        session_id: session.id,
+        initialRoute: session.initialRoute,
+        summary,
+        screenshots: session.screenshots,
+        events: session.events,
+      };
+
+      let res = await fetch(`${effectiveUrl}/bug-reports/local`, {
+        method: HttpMethod.Post,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        res = await fetch("/bug-reports/local", {
+          method: HttpMethod.Post,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (res && res.ok) {
+        const data = await res.json();
+        const savedDir = data?.Results?.[0]?.savedDir || ".logs/recorded-bugs";
+        toast.success(`Saved bug report and ${session.screenshots.length} screenshots to ${savedDir}!`);
+        if (data?.Results?.[0]?.idePrompt) {
+          try {
+            await navigator.clipboard.writeText(data.Results[0].idePrompt);
+            toast.info("Copied IDE Prompt with local file links to clipboard!");
+          } catch {}
+        }
+      } else {
+        toast.error("Failed to save bug report to local disk");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save local bug report");
+    } finally {
+      setIsSavingLocal(false);
+    }
+  };
 
   const [summary, setSummary] = useState<BugReportSummary>({
     title: "",
@@ -442,6 +532,31 @@ ${summary.actualBehavior || "N/A"}`;
                   <CloudUpload className="h-3.5 w-3.5" />
                 )}
                 <span>Upload to Cloud / Submit Ticket (Supabase)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyIdePrompt}
+                title="Copy structured prompt for AI IDE (Antigravity format)"
+                className="flex items-center gap-1.5 rounded border border-cyan-500/40 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/25"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span>Copy Prompt for IDE</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSavingLocal}
+                onClick={handleSaveLocalDisk}
+                title="Save snapshots and metadata directly to local disk (.logs/recorded-bugs)"
+                className="flex items-center gap-1.5 rounded border border-purple-500/40 bg-purple-500/15 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:bg-purple-500/25 disabled:opacity-50"
+              >
+                {isSavingLocal ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <HardDrive className="h-3.5 w-3.5" />
+                )}
+                <span>Save to Disk</span>
               </button>
 
               <button

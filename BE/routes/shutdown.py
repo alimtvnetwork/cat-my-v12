@@ -26,6 +26,7 @@ import signal
 import sys
 import threading
 import traceback
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -93,8 +94,34 @@ WINDOW_TITLE_KEYWORDS = (
 )
 
 
+def _get_process_image_name(pid: int) -> str:
+    """Safely query process executable image path without shell tools."""
+    try:
+        import ctypes
+        import ctypes.wintypes as w
+
+        kernel32 = ctypes.windll.kernel32
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        hproc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not hproc:
+            return ""
+        try:
+            buf = ctypes.create_unicode_buffer(1024)
+            size = w.DWORD(1024)
+            if kernel32.QueryFullProcessImageNameW(hproc, 0, buf, ctypes.byref(size)):
+                return buf.value.lower()
+            return ""
+        finally:
+            kernel32.CloseHandle(hproc)
+    except Exception:
+        return ""
+
+
 def _find_window_hwnd() -> tuple[int | None, int | None]:
-    """Find the top-level Chromium embedded HMI window HWND and owning PID."""
+    """Find the top-level Chromium embedded HMI window HWND and owning PID.
+    
+    Guaranteed to strictly target the HMI browser process and never IDE/editor processes.
+    """
     if sys.platform != "win32":
         return None, None
 
@@ -124,6 +151,17 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
         user32.CloseWindow.argtypes = [w.HWND]
         user32.CloseWindow.restype = w.BOOL
 
+        # Check recorded browser PID from run.ps1 if present
+        preferred_pid: int | None = None
+        pid_file = Path(".logs/browser.pid")
+        if pid_file.exists():
+            try:
+                content = pid_file.read_text(encoding="utf-8").strip()
+                if content.isdigit():
+                    preferred_pid = int(content)
+            except Exception:
+                pass
+
         # Attach current thread to the interactive desktop station (Session 1 WinSta0\Default)
         hdesk = user32.OpenDesktopW("default", 0, False, 0x01FF)
         if hdesk:
@@ -148,6 +186,27 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
             user32.GetClassNameW(hwnd, cbuf, 256)
             cls_name = cbuf.value
 
+            # Chromium and Edge top-level windows always use Chrome_WidgetWin_1
+            if cls_name != "Chrome_WidgetWin_1":
+                return True
+
+            pid = w.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            current_pid = pid.value
+
+            # Verify process image name
+            image_name = _get_process_image_name(current_pid)
+            is_browser_proc = any(
+                image_name.endswith(b) for b in ("chrome.exe", "msedge.exe", "chromium.exe")
+            )
+            if not is_browser_proc:
+                return True
+
+            # If we have a recorded PID, check for exact match
+            if preferred_pid and current_pid == preferred_pid:
+                target.append((hwnd, current_pid))
+                return False
+
             tlen = user32.GetWindowTextLengthW(hwnd)
             title = ""
             if tlen > 0:
@@ -155,22 +214,13 @@ def _find_window_hwnd() -> tuple[int | None, int | None]:
                 user32.GetWindowTextW(hwnd, tbuf, tlen + 1)
                 title = tbuf.value.lower()
 
-            pid = w.DWORD()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-
-            is_candidate = False
-            if cls_name == "Chrome_WidgetWin_1":
-                if any(k in title for k in WINDOW_TITLE_KEYWORDS):
-                    is_candidate = True
-                elif "5173" in title or "cat" in title or "vision" in title:
-                    is_candidate = True
-            elif any(k in title for k in WINDOW_TITLE_KEYWORDS):
-                is_candidate = True
-
-            if is_candidate:
-                target.append((hwnd, pid.value))
+            # Window title heuristic for CAT HMI
+            if any(k in title for k in ("cat", "vision", "5173", "inspection", "industrial")):
+                target.append((hwnd, current_pid))
                 return False
 
+            # If no other candidate found, accept browser window
+            target.append((hwnd, current_pid))
             return True
 
         WNDENUMPROC = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)

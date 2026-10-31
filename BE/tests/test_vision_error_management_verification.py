@@ -972,6 +972,43 @@ def test_cli_errors_export_csv_format(mock_session_ctx: MagicMock):
     assert "correlationId" in result["csv"]
 
 
+def test_cli_errors_root_and_trace_execution(mock_session_ctx: MagicMock):
+    """Verify processing-cli errors list with --tier and --trace outputs unified errors."""
+    from BE.repos.sqlite_error_repo import get_error_repo
+    repo = get_error_repo()
+    test_cid = f"root-test-{uuid.uuid4().hex[:8]}"
+    repo.record_error(
+        correlation_id=test_cid,
+        error_code="E_ROOT_TEST",
+        message="Root system error test message",
+        stack_trace="Traceback (most recent call last):\n  File 'test.py', line 1, in <module>\n    raise RuntimeError('boom')",
+        subsystem="CORE_TEST",
+    )
+
+    ns = argparse.Namespace(
+        action="list",
+        limit=10,
+        tier="all",
+        trace=True,
+        code="E_ROOT_TEST",
+        level=None,
+        session_id=None,
+        correlation_id=None,
+        db_root=None,
+    )
+    result = cli_errors.handle(ns, mock_session_ctx)
+    assert result["total"] >= 1
+    found = any(item.get("Code") == "E_ROOT_TEST" and item.get("Tier") == "root" for item in result["items"])
+    assert found is True
+
+    # Test show for root error
+    ns_show = argparse.Namespace(action="show", correlation_id=test_cid, db_root=None)
+    show_res = cli_errors.handle(ns_show, mock_session_ctx)
+    assert show_res["Code"] == "E_ROOT_TEST"
+    assert show_res["Tier"] == "root"
+    assert "boom" in show_res["StackTrace"]
+
+
 def test_cli_ui_ls_execution(mock_session_ctx: MagicMock):
     """Verify processing-cli ui ls returns registered elements list."""
     ns = argparse.Namespace(action="ls", target=None, route=None, limit=50)

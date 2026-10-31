@@ -54,17 +54,19 @@ function facade() {
 function resolveBackendSyncTarget(): string | null {
   try {
     const raw = globalThis.localStorage?.getItem(BACKEND_STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      return DEFAULT_BACKEND_URL;
+    }
     const parsed = JSON.parse(raw) as unknown;
     const state = (parsed as { state?: unknown }).state;
-    const mode = (state as { mode?: unknown } | undefined)?.mode;
     const baseUrl = (state as { baseUrl?: unknown } | undefined)?.baseUrl;
-    if (mode !== BACKEND_MODE) return null;
-    if (typeof baseUrl === "string" && baseUrl.length > 0) return baseUrl;
+    if (typeof baseUrl === "string" && baseUrl.trim().length > 0) {
+      return baseUrl.trim();
+    }
 
     return DEFAULT_BACKEND_URL;
   } catch {
-    return null;
+    return DEFAULT_BACKEND_URL;
   }
 }
 /** Backend base URL for other loopback POST callers (bug reports).

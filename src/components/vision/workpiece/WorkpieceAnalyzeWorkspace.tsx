@@ -244,10 +244,19 @@ export function WorkpieceAnalyzeWorkspace({
     setSaving(true);
     try {
       const envelope = getEnvelope();
-      await saveRuleSet(envelope);
-      onSaved(envelope);
+      const committed = await saveRuleSet(envelope);
+      onSaved(committed);
     } catch (err) {
       console.error("[WorkpieceAnalyzeWorkspace] save error", err);
+      useErrorStore.getState().captureError(
+        err,
+        {
+          triggerComponent: "WorkpieceAnalyzeWorkspace",
+          triggerAction: "saveRuleSet",
+          source: "WorkpieceAnalyzeWorkspace",
+        },
+        "E_SAVE_RULE_SET",
+      );
       toast.error(err instanceof Error ? err.message : "Failed to save rule set.");
     } finally {
       setSaving(false);

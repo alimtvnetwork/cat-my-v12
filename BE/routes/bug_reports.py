@@ -298,4 +298,94 @@ async def post_bug_report_test(request: Request) -> JSONResponse:
     return JSONResponse(content=envelope.to_wire(), headers={CORRELATION_HEADER: correlation_id})
 
 
+
+
+@router.post("/local")
+async def post_bug_report_local(request: Request) -> JSONResponse:
+    """Save bug report session and screenshots directly to local disk (.logs/recorded-bugs/<id>/)."""
+    correlation_id = ensure_correlation_id(request.headers.get(CORRELATION_HEADER))
+    rejected = _reject_non_loopback(request)
+    if rejected is not None:
+        return rejected
+
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise AppError(ErrorCode.E_BE_BAD_REQUEST, "Invalid JSON body", {"Error": str(exc)})
+
+    import uuid
+    import base64
+    session_id = body.get("session_id") or f"bug-{uuid.uuid4().hex[:8]}"
+    out_dir = Path(".logs/recorded-bugs") / session_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    screenshots_dir = out_dir / "screenshots"
+    screenshots_dir.mkdir(exist_ok=True)
+
+    saved_images: list[dict[str, str]] = []
+    screenshots = body.get("screenshots") or []
+    for idx, snap in enumerate(screenshots, 1):
+        data_uri = snap.get("dataUri") or snap.get("data") or ""
+        label = snap.get("label") or f"step-{idx:02d}"
+        file_name = f"{label}.png"
+        img_path = screenshots_dir / file_name
+        if "," in data_uri:
+            data_uri = data_uri.split(",", 1)[1]
+        try:
+            img_bytes = base64.b64decode(data_uri)
+            img_path.write_bytes(img_bytes)
+            abs_url = f"file:///{img_path.resolve().as_posix()}"
+            saved_images.append({"name": file_name, "path": str(img_path), "fileUrl": abs_url})
+        except Exception:
+            pass
+
+    # Save summary metadata
+    meta_path = out_dir / "metadata.json"
+    meta_path.write_text(json.dumps(body, indent=2), encoding="utf-8")
+
+    # Save Markdown prompt file for IDE
+    md_path = out_dir / "prompt.md"
+    summary = body.get("summary") or {}
+    md_content = f"""# Bug Report: {summary.get('title') or 'Untitled Issue'}
+- **Session ID**: `{session_id}`
+- **Category**: {summary.get('category') or 'UiGlitch'}
+- **Initial Route**: {body.get('initialRoute') or '/'}
+
+## Description
+{summary.get('description') or 'No description provided.'}
+
+### Expected Behavior
+{summary.get('expectedBehavior') or 'N/A'}
+
+### Actual Behavior
+{summary.get('actualBehavior') or 'N/A'}
+
+## Screenshots & Local Artifacts
+"""
+    for img in saved_images:
+        md_content += f"- ![{img['name']}]({img['fileUrl']})\n"
+
+    md_content += f"""
+## Terminal Inspection Command
+```pwsh
+python -m BE.cli.processing.main errors list --session-id {session_id} --trace
+```
+"""
+    md_path.write_text(md_content, encoding="utf-8")
+
+    payload = {
+        "sessionId": session_id,
+        "savedDir": str(out_dir.resolve()),
+        "promptFile": str(md_path.resolve()),
+        "promptFileUrl": f"file:///{md_path.resolve().as_posix()}",
+        "screenshotCount": len(saved_images),
+        "savedImages": saved_images,
+        "idePrompt": md_content,
+    }
+    return JSONResponse(
+        content=success(payload, requested_at=str(request.url)).to_wire(),
+        headers={CORRELATION_HEADER: correlation_id},
+    )
+
+
 __all__ = ["router"]
+

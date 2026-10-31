@@ -242,6 +242,12 @@ try {
             throw "Timeout waiting for $FrontendHealthUrl"
         }
         Write-StepOk "frontend" "Vite dev server is ready at $FrontendBaseUrl"
+
+        Write-StepInfo "frontend" "Warming up Vite application bundle..."
+        try {
+            Invoke-WebRequest -Uri "$FrontendBaseUrl/" -UseBasicParsing -TimeoutSec 15 | Out-Null
+            Write-StepOk "frontend" "Vite application bundle warmed up"
+        } catch {}
     }
 
     if ($NoShell) {
@@ -300,7 +306,9 @@ try {
                     $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
                     $jobs += $chromeProcess
                     $chromeFound = $true
-                    Write-StepOk "shell" "Launched browser app using $p"
+                    $browserPidFile = Join-Path $LogDir "browser.pid"
+                    Set-Content -Path $browserPidFile -Value $chromeProcess.Id -Force
+                    Write-StepOk "shell" "Launched browser app using $p (PID $($chromeProcess.Id))"
                     break
                 }
             }

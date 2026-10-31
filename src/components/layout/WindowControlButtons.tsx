@@ -127,6 +127,8 @@ export function WindowControlButtons(): React.JSX.Element {
     };
   }, []);
 
+  const effectiveBackendUrl = baseUrl || "http://127.0.0.1:8787";
+
   const handleMinimize = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
 
@@ -137,27 +139,30 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     const headers = { "Content-Type": "application/json" };
-    fetch(`${baseUrl}/window/minimize`, {
+    // Try effective backend URL and local Vite proxy concurrently
+    fetch(`${effectiveBackendUrl}/window/minimize`, {
       method: HttpMethod.Post,
       headers,
     })
       .then((res) => {
         if (!res.ok) {
-          throw new Error(`Window minimize request failed with status ${res.status}`);
+          fetch("/window/minimize", { method: HttpMethod.Post, headers }).catch(() => {});
         }
       })
-      .catch((err: unknown) => {
-        useErrorStore.getState().captureError(
-          err,
-          {
-            endpoint: `${baseUrl}/window/minimize`,
-            method: HttpMethod.Post,
-            triggerComponent: "WindowControlButtons",
-            triggerAction: "minimize",
-            source: "WindowControlButtons",
-          },
-          "E_WINDOW_MINIMIZE",
-        );
+      .catch(() => {
+        fetch("/window/minimize", { method: HttpMethod.Post, headers }).catch((err: unknown) => {
+          useErrorStore.getState().captureError(
+            err,
+            {
+              endpoint: `${effectiveBackendUrl}/window/minimize`,
+              method: HttpMethod.Post,
+              triggerComponent: "WindowControlButtons",
+              triggerAction: "minimize",
+              source: "WindowControlButtons",
+            },
+            "E_WINDOW_MINIMIZE",
+          );
+        });
       });
 
     if (document.fullscreenElement) {
@@ -177,7 +182,7 @@ export function WindowControlButtons(): React.JSX.Element {
     }
 
     window.dispatchEvent(new CustomEvent("cat-vision:window-minimize"));
-  }, [baseUrl]);
+  }, [effectiveBackendUrl]);
 
   const handleToggleMaximize = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -190,7 +195,7 @@ export function WindowControlButtons(): React.JSX.Element {
 
     // Toggle via native backend Win32 loopback API (SW_RESTORE / SW_MAXIMIZE)
     // Avoid document.documentElement.requestFullscreen() which causes the "To exit full screen, press Esc" banner!
-    fetch(`${baseUrl}/window/maximize`, {
+    fetch(`${effectiveBackendUrl}/window/maximize`, {
       method: HttpMethod.Post,
     })
       .then(async (res) => {
@@ -208,14 +213,25 @@ export function WindowControlButtons(): React.JSX.Element {
             setIsFullscreen((prev) => !prev);
           }
         } else {
-          throw new Error(`Window maximize request failed with status ${res.status}`);
+          // Try local proxy
+          const proxyRes = await fetch("/window/maximize", { method: HttpMethod.Post });
+          if (proxyRes.ok) {
+            setIsFullscreen((prev) => !prev);
+          }
         }
       })
-      .catch((err: unknown) => {
+      .catch(async () => {
+        try {
+          const proxyRes = await fetch("/window/maximize", { method: HttpMethod.Post });
+          if (proxyRes.ok) {
+            setIsFullscreen((prev) => !prev);
+            return;
+          }
+        } catch {}
         useErrorStore.getState().captureError(
-          err,
+          new Error("Native window maximize failed"),
           {
-            endpoint: `${baseUrl}/window/maximize`,
+            endpoint: `${effectiveBackendUrl}/window/maximize`,
             method: HttpMethod.Post,
             triggerComponent: "WindowControlButtons",
             triggerAction: "toggleMaximize",
@@ -223,15 +239,8 @@ export function WindowControlButtons(): React.JSX.Element {
           },
           "E_WINDOW_MAXIMIZE",
         );
-
-        // Standalone browser fallback without backend only
-        if (document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        } else {
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
       });
-  }, [baseUrl]);
+  }, [effectiveBackendUrl]);
 
   const handleConfirmExit = useCallback(() => {
     const desktopApi = resolveDesktopBridge();
@@ -246,42 +255,18 @@ export function WindowControlButtons(): React.JSX.Element {
     setIsShuttingDown(true);
 
     const shutdownController = new AbortController();
-    const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 3000);
+    const shutdownTimeout = window.setTimeout(() => shutdownController.abort(), 2000);
 
     // Fire window close AND server shutdown in parallel so both window and server terminate instantly
-    const closePromise = fetch(`${baseUrl}/window/close`, {
+    const closePromise = fetch(`${effectiveBackendUrl}/window/close`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    }).catch((err: unknown) => {
-      useErrorStore.getState().captureError(
-        err,
-        {
-          endpoint: `${baseUrl}/window/close`,
-          method: HttpMethod.Post,
-          triggerComponent: "WindowControlButtons",
-          triggerAction: "closeWindow",
-          source: "WindowControlButtons",
-        },
-        "E_WINDOW_CLOSE",
-      );
-    });
+    }).catch(() => {});
 
-    const shutdownPromise = fetch(`${baseUrl}/shutdown`, {
+    const shutdownPromise = fetch(`${effectiveBackendUrl}/shutdown`, {
       method: HttpMethod.Post,
       signal: shutdownController.signal,
-    }).catch((err: unknown) => {
-      useErrorStore.getState().captureError(
-        err,
-        {
-          endpoint: `${baseUrl}/shutdown`,
-          method: HttpMethod.Post,
-          triggerComponent: "WindowControlButtons",
-          triggerAction: "confirmExit",
-          source: "WindowControlButtons",
-        },
-        "E_WINDOW_SHUTDOWN",
-      );
-    });
+    }).catch(() => {});
 
     // Also fire via Vite proxy
     fetch(`/window/close`, { method: HttpMethod.Post, signal: shutdownController.signal }).catch(() => {});
@@ -311,7 +296,7 @@ export function WindowControlButtons(): React.JSX.Element {
         setIsCloseNoop(true);
       }, 300);
     });
-  }, [baseUrl]);
+  }, [effectiveBackendUrl]);
 
   const requestExit = useCallback(() => {
     const runningLabel = readRunningWorkLabel();

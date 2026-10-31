@@ -89,7 +89,8 @@ export function pinPatternRule(
     imageWidth,
     imageHeight,
   );
-  const region = squareSearchRegion(rebased);
+  const isSquare = String(params.shapeType ?? "") === "square";
+  const region = isSquare ? squareSearchRegion(rebased) : rebased;
   const scaleX = imageWidth / Math.max(1, authoredWidth);
   const scaleY = imageHeight / Math.max(1, authoredHeight);
   const saved = savedBoxList(params);
@@ -104,7 +105,7 @@ export function pinPatternRule(
     height: region.height,
     params: {
       ...params,
-      shapeType: "square",
+      shapeType: isSquare ? "square" : (params.shapeType ?? "rectangle"),
       authoredFrameWidth: imageWidth,
       authoredFrameHeight: imageHeight,
       searchRegion: region,

@@ -1556,7 +1556,8 @@ export function VisualToolWorkpieceCanvas({
     const authoredH = Number(toolParams?.authoredFrameHeight ?? naturalH);
     const needsPin = parsedToolBoxes.length === 0;
     const needsRebase = authoredW !== naturalW || authoredH !== naturalH;
-    const needsSquare = roi.width !== roi.height || String(toolParams?.shapeType ?? "") !== "square";
+    const isSquareType = String(toolParams?.shapeType ?? "") === "square";
+    const needsSquare = isSquareType && roi.width !== roi.height;
 
     if (!needsPin && !needsRebase && !needsSquare) {
       return;
@@ -2646,8 +2647,8 @@ export function VisualToolWorkpieceCanvas({
       }
     }
 
-    // Moving ROI requires unlocked state AND dragging by explicit top header grip handle!
-    if (isEditable && onChangeRoi && !isRoiLocked && isInsideHeader) {
+    // Moving ROI requires unlocked state: drag from top header or interior ROI body
+    if (isEditable && onChangeRoi && !isRoiLocked && (isInsideHeader || isInsideRoi)) {
       setIsMovingRoi(true);
       setDragStartPos({ x, y, initialRoi: { ...roi } });
       (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -2785,13 +2786,19 @@ export function VisualToolWorkpieceCanvas({
       return;
     }
 
+    const naturalW = imageElement?.naturalWidth || 960;
+    const naturalH = imageElement?.naturalHeight || 540;
+
     if (isMovingRoi && dragStartPos && onChangeRoi) {
       const dx = x - dragStartPos.x;
       const dy = y - dragStartPos.y;
+      const initial = dragStartPos.initialRoi;
+      const maxAllowedX = Math.max(0, naturalW - initial.width);
+      const maxAllowedY = Math.max(0, naturalH - initial.height);
       const nextRoi = {
-        ...dragStartPos.initialRoi,
-        x: Math.max(0, dragStartPos.initialRoi.x + dx),
-        y: Math.max(0, dragStartPos.initialRoi.y + dy),
+        ...initial,
+        x: Math.round(Math.max(0, Math.min(maxAllowedX, initial.x + dx))),
+        y: Math.round(Math.max(0, Math.min(maxAllowedY, initial.y + dy))),
       };
 
       onChangeRoi(nextRoi);
@@ -2801,32 +2808,38 @@ export function VisualToolWorkpieceCanvas({
 
     if (activeCornerHandle && dragStartPos && onChangeRoi) {
       const shapeType = String((toolParams as any)?.shapeType || "rectangle").toLowerCase();
-      const nextRoi = { ...dragStartPos.initialRoi };
+      const initial = dragStartPos.initialRoi;
+      const nextRoi = { ...initial };
 
       if (activeCornerHandle === "se") {
-        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
-        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+        const rawW = Math.max(16, x - initial.x);
+        const rawH = Math.max(16, y - initial.y);
+        nextRoi.width = Math.min(naturalW - initial.x, rawW);
+        nextRoi.height = Math.min(naturalH - initial.y, rawH);
       } else if (activeCornerHandle === "nw") {
-        const dx = x - dragStartPos.initialRoi.x;
-        const dy = y - dragStartPos.initialRoi.y;
-        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
-        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
-        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
-        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+        const clampedX = Math.max(0, Math.min(initial.x + initial.width - 16, x));
+        const clampedY = Math.max(0, Math.min(initial.y + initial.height - 16, y));
+        nextRoi.width = (initial.x + initial.width) - clampedX;
+        nextRoi.height = (initial.y + initial.height) - clampedY;
+        nextRoi.x = clampedX;
+        nextRoi.y = clampedY;
       } else if (activeCornerHandle === "ne") {
-        const dy = y - dragStartPos.initialRoi.y;
-        nextRoi.y = Math.min(y, dragStartPos.initialRoi.y + dragStartPos.initialRoi.height - 16);
-        nextRoi.width = Math.max(16, x - dragStartPos.initialRoi.x);
-        nextRoi.height = Math.max(16, dragStartPos.initialRoi.height - dy);
+        const clampedY = Math.max(0, Math.min(initial.y + initial.height - 16, y));
+        const rawW = Math.max(16, x - initial.x);
+        nextRoi.width = Math.min(naturalW - initial.x, rawW);
+        nextRoi.height = (initial.y + initial.height) - clampedY;
+        nextRoi.y = clampedY;
       } else if (activeCornerHandle === "sw") {
-        const dx = x - dragStartPos.initialRoi.x;
-        nextRoi.x = Math.min(x, dragStartPos.initialRoi.x + dragStartPos.initialRoi.width - 16);
-        nextRoi.width = Math.max(16, dragStartPos.initialRoi.width - dx);
-        nextRoi.height = Math.max(16, y - dragStartPos.initialRoi.y);
+        const clampedX = Math.max(0, Math.min(initial.x + initial.width - 16, x));
+        const rawH = Math.max(16, y - initial.y);
+        nextRoi.width = (initial.x + initial.width) - clampedX;
+        nextRoi.height = Math.min(naturalH - initial.y, rawH);
+        nextRoi.x = clampedX;
       }
 
       if (shapeType === "square") {
-        const side = Math.max(nextRoi.width, nextRoi.height);
+        const maxSide = Math.min(naturalW - nextRoi.x, naturalH - nextRoi.y);
+        const side = Math.max(16, Math.min(maxSide, Math.max(nextRoi.width, nextRoi.height)));
         nextRoi.width = side;
         nextRoi.height = side;
       }

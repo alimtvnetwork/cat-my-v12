@@ -39,7 +39,7 @@ export function RecorderFloatingHud(): React.JSX.Element | null {
   return (
     <div
       data-recorder-hud="true"
-      className="fixed top-3 left-1/2 -translate-x-1/2 z-[10050] flex flex-col items-center gap-1.5"
+      className="fixed top-14 left-1/2 -translate-x-1/2 z-[10050] flex flex-col items-center gap-1.5 pointer-events-auto"
     >
       <div className="flex items-center gap-2 rounded-full border border-rose-500/50 bg-[#0c1017]/95 px-3.5 py-1.5 text-xs text-slate-200 shadow-2xl backdrop-blur-md">
         <span className="flex items-center gap-1.5 font-mono font-bold text-rose-400">
