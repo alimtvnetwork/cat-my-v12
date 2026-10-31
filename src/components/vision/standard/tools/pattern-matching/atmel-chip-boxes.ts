@@ -1,5 +1,14 @@
-import type { BoxMatchItem, PatternMatchResult, ReferenceBoxItem } from "@/lib/vision/pattern-matcher";
-import type { SearchRegion } from "@/lib/vision/white-box-marking";
+import type {
+  BoxMatchItem,
+  PatternMatchResult,
+  ReferenceBoxItem,
+} from "@/lib/vision/pattern-matcher";
+import {
+  rec601Luma,
+  toMatchingGray,
+  type GrayscaleMode,
+  type SearchRegion,
+} from "@/lib/vision/white-box-marking";
 
 export interface AtmelBoxDefinition {
   boxNumber: number;
@@ -83,8 +92,13 @@ export function buildAccuratePatternMatchResult(params: {
   defectBoxNumbers?: readonly number[];
   executionTimeMs?: number;
 }): PatternMatchResult {
-  const { chipX, chipY, hasDefect, defectBoxNumbers = DEFECT_BOX_NUMBERS, executionTimeMs = 3.8 } =
-    params;
+  const {
+    chipX,
+    chipY,
+    hasDefect,
+    defectBoxNumbers = DEFECT_BOX_NUMBERS,
+    executionTimeMs = 3.8,
+  } = params;
 
   const defectSet = hasDefect ? new Set(defectBoxNumbers) : new Set<number>();
   const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
@@ -144,12 +158,29 @@ export function buildAccuratePatternMatchResult(params: {
   };
 }
 
+// Spec 55 fallback-only table: these are the golden greyscale
+// values of ONE Atmel sample, kept ONLY as a labeled fallback for
+// callers that have not passed taught boxes yet. They are not a
+// search — when taughtBoxes is present, the taught constellation
+// replaces this table entirely, and every result carries
+// matchSource ("taught" vs "golden-fallback") so no caller can
+// mistake the fallback for a user-taught search.
 export const GOLDEN_ATMEL_LUMAS: readonly number[] = [
-  60.1, 39.9, 39.0, 70.4, 141.8, 78.8, 38.8, 38.1,
-  141.6, 159.9, 31.6,
-  54.3, 56.3, 53.8, 59.3, 58.6, 58.2, 51.9,
-  60.0, 57.6, 59.0, 61.0, 51.4, 53.7,
+  60.1, 39.9, 39.0, 70.4, 141.8, 78.8, 38.8, 38.1, 141.6, 159.9, 31.6, 54.3, 56.3, 53.8, 59.3, 58.6,
+  58.2, 51.9, 60.0, 57.6, 59.0, 61.0, 51.4, 53.7,
 ];
+
+/** One box of a user-taught constellation, in absolute target-image
+ *  pixels — the same shape the analyzer's reference boxes carry. */
+export interface TaughtChipBox {
+  boxNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** Taught reference greyscale (Rec.601 mean at teach time). */
+  expectedLuma: number;
+}
 
 export interface EvaluateChipPixelsParams {
   targetRgba: Uint8ClampedArray;
@@ -163,6 +194,14 @@ export interface EvaluateChipPixelsParams {
   toleranceLuma?: number;
   minMatchPercent?: number;
   hasDevice?: boolean;
+  /** Taught constellation. When present it FULLY replaces the fixed
+   *  Atmel geometry and golden luma table (same per-box
+   *  measured-vs-expected-within-tolerance logic). */
+  taughtBoxes?: readonly TaughtChipBox[];
+  /** Matching-plane mode for the luma read (default "threshold"):
+   *  only "stretch" changes the plane (continuous stretch); other
+   *  modes read raw Rec.601 luma through the shared helper. */
+  greyscaleMode?: GrayscaleMode;
 }
 
 export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): PatternMatchResult {
@@ -179,20 +218,16 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     toleranceLuma = 22,
     minMatchPercent = 80,
     hasDevice = true,
+    taughtBoxes,
+    greyscaleMode = "threshold",
   } = params;
 
-  const originX = Math.round(
-    searchRegion ? searchRegion.x : (chipX ?? 0),
-  );
-  const originY = Math.round(
-    searchRegion ? searchRegion.y : (chipY ?? 0),
-  );
+  const originX = Math.round(searchRegion ? searchRegion.x : (chipX ?? 0));
+  const originY = Math.round(searchRegion ? searchRegion.y : (chipY ?? 0));
   const effectiveW = Math.max(
     10,
     Math.round(
-      searchRegion
-        ? searchRegion.width
-        : (chipWidth ?? (chipX !== undefined ? 100 : targetWidth)),
+      searchRegion ? searchRegion.width : (chipWidth ?? (chipX !== undefined ? 100 : targetWidth)),
     ),
   );
   const effectiveH = Math.max(
@@ -205,37 +240,58 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
   );
   const scaleX = effectiveW / 100;
   const scaleY = effectiveH / 100;
+  // Spec 55: a taught constellation replaces the fixed Atmel
+  // geometry and golden table outright; absolute taught coords are
+  // used as-is (no origin/scale rebasing). Without it, the golden
+  // fallback runs but is labeled as such in the result.
+  const isTaught = Array.isArray(taughtBoxes) && taughtBoxes.length > 0;
+  const matchSource = isTaught ? "taught" : "golden-fallback";
+  // Stretch mode reads luma from the shared stretched plane;
+  // every other mode reads raw Rec.601 luma from the source.
+  const readRgba =
+    greyscaleMode === "stretch" ? toMatchingGray(targetRgba, "stretch", 0) : targetRgba;
 
   if (!hasDevice) {
-    const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
-    const emptyBoxes: BoxMatchItem[] = ATMEL_24_BOX_DEFINITIONS.map((def) => {
-      const boxX = Math.round(originX + def.relX * scaleX);
-      const boxY = Math.round(originY + def.relY * scaleY);
-      const boxW = Math.max(1, Math.round(def.width * scaleX));
-      const boxH = Math.max(1, Math.round(def.height * scaleY));
+    const emptyBoxes: BoxMatchItem[] = isTaught
+      ? taughtBoxes.map((box) => ({
+          boxNumber: box.boxNumber,
+          referenceX: box.x,
+          referenceY: box.y,
+          matchedX: box.x,
+          matchedY: box.y,
+          width: box.width,
+          height: box.height,
+          isMatched: false,
+        }))
+      : ATMEL_24_BOX_DEFINITIONS.map((def) => {
+          const boxX = Math.round(originX + def.relX * scaleX);
+          const boxY = Math.round(originY + def.relY * scaleY);
+          const boxW = Math.max(1, Math.round(def.width * scaleX));
+          const boxH = Math.max(1, Math.round(def.height * scaleY));
 
-      return {
-        boxNumber: def.boxNumber,
-        referenceX: boxX,
-        referenceY: boxY,
-        matchedX: boxX,
-        matchedY: boxY,
-        width: boxW,
-        height: boxH,
-        isMatched: false,
-      };
-    });
+          return {
+            boxNumber: def.boxNumber,
+            referenceX: boxX,
+            referenceY: boxY,
+            matchedX: boxX,
+            matchedY: boxY,
+            width: boxW,
+            height: boxH,
+            isMatched: false,
+          };
+        });
 
     return {
       isPass: false,
       score: 0.0,
       matchedCount: 0,
-      totalCount,
+      totalCount: emptyBoxes.length,
       offsetX: 0,
       offsetY: 0,
       patternBounds: { x: originX, y: originY, width: effectiveW, height: effectiveH },
       boxResults: emptyBoxes,
       executionTimeMs: 1.0,
+      matchSource,
     };
   }
 
@@ -245,12 +301,33 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
   let maxX = Number.NEGATIVE_INFINITY;
   let maxY = Number.NEGATIVE_INFINITY;
 
+  // One normalized box list for both paths: taught boxes carry
+  // absolute geometry + taught expectedLuma; the golden path carries
+  // scaled Atmel geometry + the fallback table. The per-box verdict
+  // logic below is identical for both — that is the point.
+  const boxesToCheck = isTaught
+    ? taughtBoxes.map((box) => ({
+        boxNumber: box.boxNumber,
+        x: box.x,
+        y: box.y,
+        width: box.width,
+        height: box.height,
+        expectedLuma: box.expectedLuma,
+      }))
+    : ATMEL_24_BOX_DEFINITIONS.map((def, idx) => ({
+        boxNumber: def.boxNumber,
+        x: Math.round(originX + def.relX * scaleX),
+        y: Math.round(originY + def.relY * scaleY),
+        width: Math.max(1, Math.round(def.width * scaleX)),
+        height: Math.max(1, Math.round(def.height * scaleY)),
+        expectedLuma: GOLDEN_ATMEL_LUMAS[idx] ?? 45,
+      }));
 
-  const boxResults: BoxMatchItem[] = ATMEL_24_BOX_DEFINITIONS.map((def, idx) => {
-    const boxX = Math.round(originX + def.relX * scaleX);
-    const boxY = Math.round(originY + def.relY * scaleY);
-    const boxW = Math.max(1, Math.round(def.width * scaleX));
-    const boxH = Math.max(1, Math.round(def.height * scaleY));
+  const boxResults: BoxMatchItem[] = boxesToCheck.map((box) => {
+    const boxX = box.x;
+    const boxY = box.y;
+    const boxW = box.width;
+    const boxH = box.height;
 
     let sum = 0;
     let count = 0;
@@ -259,17 +336,14 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
       for (let c = boxX; c < boxX + boxW; c += 1) {
         if (r >= 0 && r < targetHeight && c >= 0 && c < targetWidth) {
           const pixelIdx = (r * targetWidth + c) * 4;
-          const red = targetRgba[pixelIdx];
-          const green = targetRgba[pixelIdx + 1];
-          const blue = targetRgba[pixelIdx + 2];
-          sum += 0.299 * red + 0.587 * green + 0.114 * blue;
+          sum += rec601Luma(readRgba[pixelIdx], readRgba[pixelIdx + 1], readRgba[pixelIdx + 2]);
           count += 1;
         }
       }
     }
 
     const measuredLuma = count > 0 ? sum / count : 0;
-    const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
+    const expectedLuma = box.expectedLuma;
     const diff = Math.abs(measuredLuma - expectedLuma);
     const isMatched = diff <= toleranceLuma;
 
@@ -283,7 +357,7 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     maxY = Math.max(maxY, boxY + boxH);
 
     return {
-      boxNumber: def.boxNumber,
+      boxNumber: box.boxNumber,
       referenceX: boxX,
       referenceY: boxY,
       matchedX: boxX,
@@ -294,7 +368,7 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     };
   });
 
-  const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
+  const totalCount = boxesToCheck.length;
   const score = Math.round((matchedCount / totalCount) * 1000) / 10;
   const isPass = score >= minMatchPercent;
   const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
@@ -316,5 +390,6 @@ export function evaluateChipPixelsReal(params: EvaluateChipPixelsParams): Patter
     patternBounds,
     boxResults,
     executionTimeMs: elapsed > 0 ? elapsed : 3.8,
+    matchSource,
   };
 }

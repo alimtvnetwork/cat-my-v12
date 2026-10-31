@@ -1,4 +1,9 @@
-import { ATMEL_24_BOX_DEFINITIONS, GOLDEN_ATMEL_LUMAS } from "../atmel-chip-boxes";
+import {
+  ATMEL_24_BOX_DEFINITIONS,
+  GOLDEN_ATMEL_LUMAS,
+  rec601Luma,
+  type TaughtChipBox,
+} from "../atmel-chip-boxes";
 import type {
   DeviceMeasurement,
   MultiRuleToleranceParams,
@@ -23,41 +28,6 @@ const FALLBACK_CHIP_CENTER_X = 68.0;
 const FALLBACK_CHIP_CENTER_Y = 76.0;
 const FALLBACK_MARKING_WIDTH = 58.0;
 const FALLBACK_MARKING_HEIGHT = 44.0;
-
-// Expected relative positions of 24 laser marking features on the Atmel chip body (normalized -1..1 from center)
-const ATMEL_24_MARKING_OFFSETS: readonly { relX: number; relY: number; expectedLuma: number }[] = [
-  // Row 1: "MEGA32U4"
-  { relX: -0.42, relY: -0.28, expectedLuma: 87 },
-  { relX: -0.3, relY: -0.28, expectedLuma: 97 },
-  { relX: -0.18, relY: -0.28, expectedLuma: 82 },
-  { relX: -0.06, relY: -0.28, expectedLuma: 52 },
-  { relX: 0.06, relY: -0.28, expectedLuma: 40 },
-  { relX: 0.18, relY: -0.28, expectedLuma: 41 },
-  { relX: 0.3, relY: -0.28, expectedLuma: 55 },
-  { relX: 0.42, relY: -0.28, expectedLuma: 50 },
-
-  // Row 2: "-AU"
-  { relX: -0.35, relY: -0.08, expectedLuma: 79 },
-  { relX: -0.2, relY: -0.08, expectedLuma: 101 },
-  { relX: -0.05, relY: -0.08, expectedLuma: 89 },
-  { relX: 0.1, relY: -0.08, expectedLuma: 32 },
-
-  // Row 3: "1035E KR"
-  { relX: -0.38, relY: 0.12, expectedLuma: 50 },
-  { relX: -0.26, relY: 0.12, expectedLuma: 35 },
-  { relX: -0.14, relY: 0.12, expectedLuma: 31 },
-  { relX: -0.02, relY: 0.12, expectedLuma: 34 },
-  { relX: 0.1, relY: 0.12, expectedLuma: 36 },
-  { relX: 0.22, relY: 0.12, expectedLuma: 45 },
-  { relX: 0.34, relY: 0.12, expectedLuma: 28 },
-
-  // Row 4: "0G3455"
-  { relX: -0.36, relY: 0.32, expectedLuma: 29 },
-  { relX: -0.22, relY: 0.32, expectedLuma: 48 },
-  { relX: -0.08, relY: 0.32, expectedLuma: 27 },
-  { relX: 0.06, relY: 0.32, expectedLuma: 37 },
-  { relX: 0.2, relY: 0.32, expectedLuma: 39 },
-];
 
 export function evaluatePocket(
   pocket: PocketDef,
@@ -407,11 +377,18 @@ export function analyzeRule1Pin1Real(
 
 /**
  * Real Computer Vision: Rule 2 greyscale-pattern-match-24-box
- * Evaluates the 24 laser marking features on real pixel buffer against golden reference template.
+ * Evaluates laser marking features on real pixel buffer. When
+ * taughtBoxes is passed, the user's taught constellation (absolute
+ * geometry + taught expectedLuma) FULLY replaces the fixed Atmel
+ * geometry and golden reference table, using the same per-box
+ * measured-vs-expected-within-tolerance verdict. Without it, the
+ * golden fallback runs — callers must label that result as
+ * golden-fallback, never as a taught search.
  */
 export function analyzeRule2PatternReal(
   buffer: PixelBufferInput,
   tolerances: MultiRuleToleranceParams,
+  taughtBoxes?: readonly TaughtChipBox[],
 ): Rule2PatternResult {
   const { rgba, width, height } = buffer;
   const measuredDevice = measureDeviceEdges(buffer);
@@ -446,15 +423,47 @@ export function analyzeRule2PatternReal(
   const threshold = Math.max(0, Math.min(255, tolerances.greyscaleLevel));
   const toleranceLuma = Math.max(12, Math.min(38, 36 - Math.max(0, threshold - 128) * 0.12));
   const minContrast = Math.max(4, Math.min(18, 4 + Math.max(0, threshold - 120) * 0.08));
+  // Spec 55: taught boxes (absolute target pixels) replace the fixed
+  // Atmel geometry + golden table outright; reported relX/relY/width/
+  // height are the taught box expressed in the Atmel normalized
+  // frame so downstream consumers keep their units.
+  const isTaught = Array.isArray(taughtBoxes) && taughtBoxes.length > 0;
+  const boxesToCheck = isTaught
+    ? taughtBoxes.map((box) => ({
+        boxNumber: box.boxNumber,
+        label: `Taught ${box.boxNumber}`,
+        relX: (box.x - boxOriginX) / chipScaleX,
+        relY: (box.y - boxOriginY) / chipScaleY,
+        width: box.width / chipScaleX,
+        height: box.height / chipScaleY,
+        absX: box.x,
+        absY: box.y,
+        absW: box.width,
+        absH: box.height,
+        expectedLuma: box.expectedLuma,
+      }))
+    : ATMEL_24_BOX_DEFINITIONS.map((def, idx) => ({
+        boxNumber: def.boxNumber,
+        label: def.label,
+        relX: def.relX,
+        relY: def.relY,
+        width: def.width,
+        height: def.height,
+        absX: Math.round(boxOriginX + def.relX * chipScaleX),
+        absY: Math.round(boxOriginY + def.relY * chipScaleY),
+        absW: Math.max(1, Math.round(def.width * chipScaleX)),
+        absH: Math.max(1, Math.round(def.height * chipScaleY)),
+        expectedLuma: GOLDEN_ATMEL_LUMAS[idx] ?? 45,
+      }));
 
   let matchedCount = 0;
-  const totalCount = ATMEL_24_BOX_DEFINITIONS.length;
+  const totalCount = boxesToCheck.length;
 
-  const boxResults: Rule2BoxItem[] = ATMEL_24_BOX_DEFINITIONS.map((def, idx) => {
-    const boxX = Math.round(boxOriginX + def.relX * chipScaleX);
-    const boxY = Math.round(boxOriginY + def.relY * chipScaleY);
-    const boxW = Math.max(1, Math.round(def.width * chipScaleX));
-    const boxH = Math.max(1, Math.round(def.height * chipScaleY));
+  const boxResults: Rule2BoxItem[] = boxesToCheck.map((box) => {
+    const boxX = box.absX;
+    const boxY = box.absY;
+    const boxW = box.absW;
+    const boxH = box.absH;
 
     let sum = 0;
     let count = 0;
@@ -463,14 +472,14 @@ export function analyzeRule2PatternReal(
       for (let c = boxX; c < boxX + boxW; c += 1) {
         if (r >= 0 && r < height && c >= 0 && c < width) {
           const pIdx = (r * width + c) * 4;
-          sum += 0.299 * rgba[pIdx] + 0.587 * rgba[pIdx + 1] + 0.114 * rgba[pIdx + 2];
+          sum += rec601Luma(rgba[pIdx], rgba[pIdx + 1], rgba[pIdx + 2]);
           count += 1;
         }
       }
     }
 
     const measuredLuma = count > 0 ? Math.round(sum / count) : 0;
-    const expectedLuma = GOLDEN_ATMEL_LUMAS[idx] ?? 45;
+    const expectedLuma = box.expectedLuma;
     const diff = Math.abs(measuredLuma - expectedLuma);
     const localContrast = measureLocalContrast(buffer, boxX, boxY, boxW, boxH);
     const isMatched =
@@ -481,12 +490,12 @@ export function analyzeRule2PatternReal(
     }
 
     return {
-      boxNumber: def.boxNumber,
-      label: def.label,
-      relX: def.relX,
-      relY: def.relY,
-      width: def.width,
-      height: def.height,
+      boxNumber: box.boxNumber,
+      label: box.label,
+      relX: box.relX,
+      relY: box.relY,
+      width: box.width,
+      height: box.height,
       isMatched,
       measuredLuma,
     };
@@ -530,7 +539,7 @@ function measureLocalContrast(
       }
 
       const idx = (y * width + x) * 4;
-      const luma = 0.299 * rgba[idx] + 0.587 * rgba[idx + 1] + 0.114 * rgba[idx + 2];
+      const luma = rec601Luma(rgba[idx], rgba[idx + 1], rgba[idx + 2]);
       const isInner = x >= boxX && x < boxX + boxW && y >= boxY && y < boxY + boxH;
 
       if (isInner) {
