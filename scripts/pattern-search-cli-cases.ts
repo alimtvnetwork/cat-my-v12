@@ -172,15 +172,22 @@ export function runPatternSearchLogicCases(): CliCaseResult[] {
 
       return "Black pixel stayed 0 and white pixel stayed 255 after BT.601 binary";
     }),
-    runCase("Launchers skip a second browser when the app window is open", () => {
+    runCase("Launchers bind the frontend port and skip only a real app window", () => {
       const powershell = fs.readFileSync("run.ps1", "utf8");
       const shell = fs.readFileSync("run.sh", "utf8");
+      const command = fs.readFileSync("run.cmd", "utf8");
       const marker = "Skipping duplicate browser window";
 
       assertCase(powershell.includes(marker), "run.ps1 does not skip an open window");
       assertCase(shell.includes(marker), "run.sh does not skip an open window");
+      assertCase(powershell.includes("--strictPort"), "run.ps1 lets Vite hop off the launcher port");
+      assertCase(shell.includes("--strictPort"), "run.sh lets Vite hop off the launcher port");
+      assertCase(shell.includes("/healthz"), "run.sh waits on the wrong backend health path");
+      assertCase(powershell.includes('--type='), "run.ps1 treats a Chrome crash helper as the app window");
+      assertCase(!powershell.includes('.browser-profile")'), "run.ps1 skips the window because a profile string is present");
+      assertCase(command.includes("run.ps1"), "run.cmd does not start run.ps1");
 
-      return "run.ps1 and run.sh both skip a second app window";
+      return "run.cmd starts run.ps1, both launchers pin the port, and only a live app window is skipped";
     }),
     runCase("Status version matches version.json", () => {
       const versionFile = JSON.parse(fs.readFileSync("version.json", "utf8")) as { version: string };

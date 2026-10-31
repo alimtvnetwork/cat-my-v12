@@ -63,11 +63,11 @@ PIDS+=("$BE_PID")
 
 # Wait for backend to be healthy
 echo "Waiting for backend..."
-./scripts/dev/wait-for-http.sh "http://localhost:$BE_PORT/health" 30 || exit 1
+./scripts/dev/wait-for-http.sh "http://localhost:$BE_PORT/healthz" 30 || exit 1
 
 # Start frontend
 echo "Starting frontend on port $FE_PORT..."
-bun run dev -- --port "$FE_PORT" &
+bun run dev -- --host 127.0.0.1 --port "$FE_PORT" --strictPort &
 FE_PID=$!
 PIDS+=("$FE_PID")
 
@@ -78,7 +78,7 @@ echo "Waiting for frontend..."
 # Launch shell or skip
 if [ "$NO_SHELL" -eq 1 ]; then
     echo "Running in --no-shell mode. Skipping browser launch."
-elif pgrep -af "chromium|chrome|msedge" 2>/dev/null | grep -E "(--app=http://localhost:$FE_PORT|\.browser-profile)" >/dev/null 2>&1; then
+elif pgrep -af "chromium|chrome|msedge" 2>/dev/null | grep -E -- "--app=http://localhost:$FE_PORT" | grep -v -- "--type=" >/dev/null 2>&1; then
     echo "Inspection window or browser is already running. Skipping duplicate browser window."
 else
     echo "Packaging Chromium shell..."

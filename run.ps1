@@ -34,6 +34,33 @@ $BackendBaseUrl = "http://$HostIp`:$BePort"
 $UvCacheDir = Join-Path (Get-Location) ".uv-cache"
 $jobs = @()
 
+function Test-InspectionWindowOpen {
+    param([string]$AppUrl)
+
+    $needle = "--app=$AppUrl"
+
+    try {
+        $existing = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^(chrome|msedge|chromium)\.exe$' }
+
+        foreach ($proc in $existing) {
+            $line = [string]$proc.CommandLine
+
+            if ([string]::IsNullOrWhiteSpace($line) -or $line.Contains("--type=")) {
+                continue
+            }
+
+            if ($line.Contains($needle)) {
+                return $true
+            }
+        }
+    } catch {
+        return $false
+    }
+
+    return $false
+}
+
 try {
     Write-Host "Cleaning up cached builds..."
     if (Test-Path "BE\be.egg-info") {
@@ -74,35 +101,69 @@ try {
         Write-Host "Frontend dependencies are up to date, skipping bun install."
     }
 
-    Write-Host "Starting frontend on port $FePort..."
-    $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList "run dev -- --host $FrontendHostIp --port $FePort"
-    $jobs += $frontendProcess
+    $isFrontendReady = $false
 
-    Write-Host "Waiting for frontend..."
-    .\scripts\dev\wait-for-http.ps1 -Url $FrontendHealthUrl -TimeoutSec 180
+    try {
+        $existingFrontend = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+
+        if ($existingFrontend.StatusCode -lt 400) {
+            $isFrontendReady = $true
+            Write-Host "Frontend is already running at $FrontendBaseUrl. Reusing it."
+        }
+    } catch {
+        $isFrontendReady = $false
+    }
+
+    if (-not $isFrontendReady) {
+        Write-Host "Starting frontend on port $FePort..."
+        $frontendProcess = Start-Process -NoNewWindow -PassThru -FilePath "bun" -ArgumentList @(
+            "run", "dev", "--",
+            "--host", $FrontendHostIp,
+            "--port", "$FePort",
+            "--strictPort"
+        )
+        $jobs += $frontendProcess
+
+        Write-Host "Waiting for frontend..."
+        $frontendDeadline = (Get-Date).AddSeconds(180)
+
+        while ((Get-Date) -lt $frontendDeadline) {
+            $hasFrontendExited = $false
+
+            try {
+                $hasFrontendExited = $frontendProcess.HasExited
+            } catch {
+                $hasFrontendExited = $false
+            }
+
+            if ($hasFrontendExited) {
+                throw "Frontend exited with code $($frontendProcess.ExitCode) before $FrontendHealthUrl was ready. Free port $FePort and run .\run.ps1 again."
+            }
+
+            try {
+                $frontendResponse = Invoke-WebRequest -Uri $FrontendHealthUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+
+                if ($frontendResponse.StatusCode -lt 400) {
+                    $isFrontendReady = $true
+                    break
+                }
+            } catch {
+                Start-Sleep -Seconds 1
+            }
+        }
+
+        if (-not $isFrontendReady) {
+            throw "Timeout waiting for $FrontendHealthUrl"
+        }
+    }
 
     if ($NoShell) {
         Write-Host "Running in -NoShell mode. Skipping browser launch."
     } else {
-        $appNeedle = "--app=$FrontendBaseUrl"
         $userDataDir = Join-Path (Get-Location) ".browser-profile"
-        $alreadyOpen = $false
+        $isAlreadyOpen = Test-InspectionWindowOpen -AppUrl $FrontendBaseUrl
 
-        try {
-            $existing = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-                Where-Object { $_.Name -match '^(chrome|msedge|chromium)\.exe$' }
-
-            foreach ($proc in $existing) {
-                if ($proc.CommandLine -and ($proc.CommandLine.Contains($appNeedle) -or $proc.CommandLine.Contains(".browser-profile"))) {
-                    $alreadyOpen = $true
-                    break
-                }
-            }
-        } catch {
-            $alreadyOpen = $false
-        }
-
-        if ($alreadyOpen) {
+        if ($isAlreadyOpen) {
             Write-Host "Inspection window or browser is already running. Skipping duplicate browser window."
         } else {
             Write-Host "Packaging Chromium shell..."
@@ -149,29 +210,7 @@ try {
                 "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
             )
             $chromeFound = $false
-            $appNeedle = "--app=$FrontendBaseUrl"
-            $alreadyOpen = $false
 
-            try {
-                $existing = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-                    Where-Object { $_.Name -match '^(chrome|msedge|chromium)\.exe$' }
-
-                foreach ($proc in $existing) {
-                    if ($proc.CommandLine -and $proc.CommandLine.Contains($appNeedle)) {
-                        $alreadyOpen = $true
-                        break
-                    }
-                }
-            } catch {
-                $alreadyOpen = $false
-            }
-
-            if ($alreadyOpen) {
-                Write-Host "Inspection window or browser is already running. Skipping duplicate browser window."
-                $chromeFound = $true
-            }
-
-            if (-not $alreadyOpen) {
             foreach ($p in $chromePaths) {
                 if (Test-Path $p) {
                     $chromeProcess = Start-Process -PassThru -FilePath $p -ArgumentList $chromeArgs
@@ -179,7 +218,6 @@ try {
                     $chromeFound = $true
                     break
                 }
-            }
             }
 
             if (-not $chromeFound) {
